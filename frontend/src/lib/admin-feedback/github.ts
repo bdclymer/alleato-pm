@@ -251,15 +251,26 @@ export async function createGitHubIssue(input: CreateGitHubIssueInput) {
   // Then add labels separately so the "labeled" event triggers the Claude workflow
   try {
     await addLabels(config, issue.number, labels);
-  } catch {
-    // Non-fatal — issue was created, labels are secondary
+  } catch (error) {
+    console.warn(JSON.stringify({
+      event: "admin_feedback_github_labels_failed",
+      timestamp: new Date().toISOString(),
+      issueNumber: issue.number,
+      labels,
+      error: error instanceof Error ? error.message : String(error),
+    }));
   }
 
   // Post @claude comment to trigger auto-assignment to Claude Code
   try {
     await addIssueComment(config, issue.number, "@claude");
-  } catch {
-    // Non-fatal
+  } catch (error) {
+    console.warn(JSON.stringify({
+      event: "admin_feedback_github_claude_comment_failed",
+      timestamp: new Date().toISOString(),
+      issueNumber: issue.number,
+      error: error instanceof Error ? error.message : String(error),
+    }));
   }
 
   return issue;

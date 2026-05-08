@@ -4,10 +4,10 @@ This report identifies app-code patterns that can hide broken data paths or runt
 
 ## Summary
 
-- Critical: 64
-- High: 36
-- Medium: 18
-- Total: 118
+- Critical: 48
+- High: 35
+- Medium: 17
+- Total: 100
 
 ## Required Policy
 
@@ -50,14 +50,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `silent-catch` | `frontend/src/app/api/liveblocks-auth/route.ts:55` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/liveblocks/webhook/route.ts:153` | } catch { /* enrichment is best-effort */ } | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/monitoring/websocket/route.ts:100` | } catch (error) { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/budget/snapshots/route.ts:151` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/route.ts:85` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/download/route.ts:57` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/download/route.ts:69` | } catch { /* non-critical */ } | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/pdf-proxy/route.ts:57` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/void/route.ts:27` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void/route.ts:42` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/progress-reports/route.ts:95` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `synthetic-data` | `frontend/src/components/ai-chat/sidebar-history.tsx:113` | fallbackData: [], | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `silent-catch` | `frontend/src/components/dev-panel/AnnotationsTab.tsx:52` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/dev/design-violation-overlay.tsx:59` | } catch {} | Add structured reporting or rethrow with a typed error. |
@@ -73,17 +65,9 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-artifact.ts:44` | fallbackData: initialArtifactData, | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-artifact.ts:76` | fallbackData: null, | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-chat-visibility.ts:27` | fallbackData: initialVisibilityType, | Remove synthetic data and make the route/component show real empty/error state. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/acumatica/client.ts:221` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/admin-feedback/github.ts:254` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/admin-feedback/github.ts:261` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/ai/providers.ts:41` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/lib/ai/tools/action-tools.ts:716` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/lib/ai/tools/action-tools.ts:2061` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/app-error-reporter.ts:69` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/bot/teams-chat.ts:186` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/lib/db/helpers/01-core-to-parts.ts:210` | //         } catch (error) { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/docs.ts:33` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/supabase/auth-cookie.ts:136` | } catch { | Add structured reporting or rethrow with a typed error. |
 | HIGH | `silent-language` | `backend/src/services/pipeline/llm.py:21` | # which would silently fail or truncate for small models (max 1536). | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `backend/src/services/pipeline/llm.py:31` | # which would silently fail or truncate for small models (max 1536). | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `backend/src/services/scheduler.py:89` | while silently skipping every run. | Replace hidden failure path with telemetry and user-visible degraded state. |
@@ -91,7 +75,7 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | HIGH | `silent-language` | `frontend/src/app/(admin)/updates/page.tsx:219` | "Fixed DirectCostForm hanging on creation. Resolved race condition in cost code lookup that caused the submit handler to silently fail.", | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/app/(main)/[projectId]/budget/page.tsx:199` | // Intentionally swallowed: lock status fetch is non-critical | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/app/(main)/page.tsx:530` | // Intentionally swallowed: UI shows empty state on error | Replace hidden failure path with telemetry and user-visible degraded state. |
-| HIGH | `silent-language` | `frontend/src/app/api/projects/[projectId]/budget/snapshots/route.ts:81` | // surface it as an API error — do not ship zeroed totals silently | Replace hidden failure path with telemetry and user-visible degraded state. |
+| HIGH | `silent-language` | `frontend/src/app/api/projects/[projectId]/budget/snapshots/route.ts:99` | // surface it as an API error — do not ship zeroed totals silently | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/commitment-pcos/route.ts:23` | // Use service client so RLS doesn't silently filter junction table rows. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/prime-pcos/route.ts:23` | // Use service client so RLS doesn't silently filter junction table rows. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/app/api/projects/[projectId]/rfis/[rfiId]/route.ts:207` | // silently succeed without a traceable email send. | Replace hidden failure path with telemetry and user-visible degraded state. |
@@ -115,7 +99,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/strategist.ts:365` | - NEVER fail silently on search. If one search method fails, try another (keyword → semantic → broader terms). Only report failure after exhausting options. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/vpbd.ts:175` | - NEVER ask the user for a project ID — use projectName or phase filters to resolve silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/orchestrator.ts:587` | // Rule 1: do not silently swallow. Log and proceed with empty history | Replace hidden failure path with telemetry and user-visible degraded state. |
-| HIGH | `silent-language` | `frontend/src/lib/ai/providers.ts:42` | // Package not installed — skip silently | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/session-id.ts:12` | *   the uuid type check, every insert silently rejects, and zero bot | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/tools/operational.ts:1777` | // Postgres rejects dimension mismatches — every call was silently failing. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/auto-sitemap-utils.ts:192` | // Intentionally swallowed: individual file errors should not stop sitemap generation | Replace hidden failure path with telemetry and user-visible degraded state. |
@@ -126,7 +109,7 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | MEDIUM | `best-effort` | `frontend/src/app/api/liveblocks/webhook/route.ts:153` | } catch { /* enrichment is best-effort */ } | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts:67` | // Delete DB row first; storage removal is best-effort cleanup | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts:81` | // Remove from storage (best-effort — log errors but don't fail the request) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/route.ts:75` | // Best-effort: remove from storage (derive path from public URL) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
+| MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/route.ts:83` | // Best-effort: remove from storage (derive path from public URL) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/obsolete/route.ts:35` | // Record change history (best-effort — don't fail the request if this errors) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/obsolete/route.ts:76` | // Record change history (best-effort — don't fail the request if this errors) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/publish/route.ts:35` | // Record change history (best-effort — don't fail the request if this errors) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
@@ -136,5 +119,4 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]/route.ts:49` | // Delete DB row first; storage removal is best-effort cleanup | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]/route.ts:63` | // Remove from storage (best-effort — log errors but don't fail the request) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts:134` | // Resolve creator display name (best effort) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/lib/acumatica/client.ts:222` | // Best-effort logout | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/lib/acumatica/sync-service.ts:1396` | // via vendor_id matching (best-effort, not always deterministic). | Verify this non-blocking path records evidence and has an owner-visible failure signal. |

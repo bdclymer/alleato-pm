@@ -5,6 +5,14 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
+function reportDrawingDownloadSideEffectFailure(details: Record<string, unknown>) {
+  console.warn(JSON.stringify({
+    event: "drawing_download_side_effect_failed",
+    timestamp: new Date().toISOString(),
+    ...details,
+  }));
+}
+
 /**
  * GET /api/projects/[projectId]/drawings/[drawingId]/download
  * Download the current revision of a drawing
@@ -54,11 +62,15 @@ export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
           downloadUrl = signedUrlData.signedUrl;
         }
       }
-    } catch {
-      // Fall back to public URL if signed URL creation fails
+    } catch (error) {
+      reportDrawingDownloadSideEffectFailure({
+        operation: "create-signed-url",
+        drawingId,
+        revisionId: revision.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
-    // Log download for audit trail (non-critical - swallow errors)
     try {
       await serviceClient.from("drawing_downloads").insert({
         drawing_revision_id: revision.id,
@@ -66,7 +78,15 @@ export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
         ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
         user_agent: request.headers.get("user-agent") || null,
       });
-    } catch { /* non-critical */ }
+    } catch (error) {
+      reportDrawingDownloadSideEffectFailure({
+        operation: "record-download-audit",
+        drawingId,
+        revisionId: revision.id,
+        userId: user.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     return NextResponse.json({
       downloadUrl,

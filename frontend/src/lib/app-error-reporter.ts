@@ -66,8 +66,12 @@ function sendReport(payload: Record<string, unknown>): void {
       );
       if (sent) return;
     }
-  } catch {
-    // Fall back to fetch below.
+  } catch (error) {
+    console.warn(JSON.stringify({
+      event: "app_error_send_beacon_failed",
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error),
+    }));
   }
 
   fetch(REPORT_ENDPOINT, {
@@ -76,8 +80,12 @@ function sendReport(payload: Record<string, unknown>): void {
     body,
     credentials: "same-origin",
     keepalive: true,
-  }).catch(() => {
-    // Telemetry must never become a user-facing failure.
+  }).catch((error) => {
+    console.warn(JSON.stringify({
+      event: "app_error_fetch_report_failed",
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error),
+    }));
   });
 }
 

@@ -183,8 +183,14 @@ async function logCheckpoint(
       message_preview: ctx.messagePreview ?? null,
       extra: ctx.extra ?? {},
     });
-  } catch {
-    // Debug log must never break the handler
+  } catch (error) {
+    console.error("[teams-bot] debug log insert failed", {
+      checkpoint,
+      teamsUserId: ctx.teamsUserId ?? null,
+      supabaseUserId: ctx.supabaseUserId ?? null,
+      threadId: ctx.threadId ?? null,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 

@@ -4,6 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
+function reportPdfProxySignedUrlFailure(details: Record<string, unknown>) {
+  console.warn(JSON.stringify({
+    event: "drawing_pdf_proxy_signed_url_failed",
+    timestamp: new Date().toISOString(),
+    ...details,
+  }));
+}
+
 /**
  * GET /api/projects/[projectId]/drawings/[drawingId]/pdf-proxy
  *
@@ -54,8 +62,12 @@ export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
         fetchUrl = signedData.signedUrl;
       }
     }
-  } catch {
-    // Fall back to public URL
+  } catch (error) {
+    reportPdfProxySignedUrlFailure({
+      drawingId,
+      fileUrl,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   // Forward Range header so PDF.js chunked loading works

@@ -19,7 +19,12 @@ function decodeSessionValue(rawValue: string): string {
   let value = rawValue;
   try {
     value = decodeURIComponent(rawValue);
-  } catch {
+  } catch (error) {
+    console.warn(JSON.stringify({
+      event: "supabase_auth_cookie_decode_uri_failed",
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error),
+    }));
     value = rawValue;
   }
 
@@ -133,8 +138,13 @@ export function getBestSupabaseAuthToken(
       if (tokenData) {
         parsed.push(tokenData);
       }
-    } catch {
-      // Ignore invalid payloads and continue to other auth cookie keys.
+    } catch (error) {
+      console.warn(JSON.stringify({
+        event: "supabase_auth_cookie_parse_failed",
+        timestamp: new Date().toISOString(),
+        baseName,
+        error: error instanceof Error ? error.message : String(error),
+      }));
     }
   }
 

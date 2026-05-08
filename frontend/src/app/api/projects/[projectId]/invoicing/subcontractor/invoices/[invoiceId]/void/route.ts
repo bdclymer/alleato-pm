@@ -3,6 +3,24 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+async function readOptionalVoidReason(request: Request): Promise<string | null> {
+  const text = await request.text();
+  if (!text.trim()) return null;
+  try {
+    const body = JSON.parse(text) as { reason?: unknown };
+    return typeof body.reason === "string" ? body.reason.trim() || null : null;
+  } catch (error) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where:
+        "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void#POST",
+      message: "Void subcontractor invoice request body must be valid JSON when provided.",
+      status: 400,
+      cause: error,
+    });
+  }
+}
+
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void
 // Void a subcontractor invoice. Pre-condition: must not already be paid or void.
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
@@ -33,15 +51,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void#POST", message: "Authentication required." });
     }
 
-    let reason: string | null = null;
-    try {
-      const body = await request.json();
-      if (body && typeof body.reason === "string") {
-        reason = body.reason.trim() || null;
-      }
-    } catch {
-      // No body is fine
-    }
+    const reason = await readOptionalVoidReason(request);
 
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);

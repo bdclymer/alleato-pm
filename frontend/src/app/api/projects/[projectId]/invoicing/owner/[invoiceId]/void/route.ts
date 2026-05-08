@@ -4,6 +4,23 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
 
+async function readOptionalVoidReason(request: Request): Promise<string | null> {
+  const text = await request.text();
+  if (!text.trim()) return null;
+  try {
+    const body = JSON.parse(text) as { reason?: unknown };
+    return typeof body.reason === "string" ? body.reason.trim() || null : null;
+  } catch (error) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "projects/[projectId]/invoicing/owner/[invoiceId]/void#POST",
+      message: "Void invoice request body must be valid JSON when provided.",
+      status: 400,
+      cause: error,
+    });
+  }
+}
+
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/void
 // Void an owner invoice. Pre-condition: must not already be paid or void.
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
@@ -18,15 +35,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     const supabase = await createClient();
 
-    let reason: string | null = null;
-    try {
-      const body = await request.json();
-      if (body && typeof body.reason === "string") {
-        reason = body.reason.trim() || null;
-      }
-    } catch {
-      // No body is fine
-    }
+    const reason = await readOptionalVoidReason(request);
 
     const invoiceIdNum = parseInt(invoiceId, 10);
 

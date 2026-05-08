@@ -30,8 +30,13 @@ async function resolveDocsDir(): Promise<string | null> {
       if (stats.isDirectory()) {
         return candidate;
       }
-    } catch {
-      // ignore and continue to the next candidate
+    } catch (error) {
+      console.warn(JSON.stringify({
+        event: "docs_dir_candidate_unavailable",
+        timestamp: new Date().toISOString(),
+        candidate,
+        error: error instanceof Error ? error.message : String(error),
+      }));
     }
   }
   return null;

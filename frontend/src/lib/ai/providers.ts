@@ -38,8 +38,12 @@ if (process.env.NODE_ENV === "development") {
   try {
     // Dynamic import so it's never bundled for production
     devToolsMiddlewareFn = require("@ai-sdk/devtools").devToolsMiddleware;
-  } catch {
-    // Package not installed — skip silently
+  } catch (error) {
+    console.warn(JSON.stringify({
+      event: "ai_devtools_middleware_unavailable",
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error),
+    }));
   }
 }
 

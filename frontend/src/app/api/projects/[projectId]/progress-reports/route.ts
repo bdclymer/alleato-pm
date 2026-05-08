@@ -15,6 +15,14 @@ const createSchema = z.object({
   weekEnd: z.string().optional(),
 });
 
+function reportProgressReportEnrichmentFailure(details: Record<string, unknown>) {
+  console.warn(JSON.stringify({
+    event: "progress_report_ai_enrichment_failed",
+    timestamp: new Date().toISOString(),
+    ...details,
+  }));
+}
+
 export const GET = withApiGuardrails(
   "projects/[projectId]/progress-reports#GET",
   async ({ params }) => {
@@ -92,8 +100,13 @@ export const POST = withApiGuardrails(
           })
           .eq("id", result.reportId);
       }
-    } catch {
-      // Non-fatal — report is still usable, PM can regenerate manually
+    } catch (error) {
+      reportProgressReportEnrichmentFailure({
+        projectId: numericProjectId,
+        reportId: result.reportId,
+        userId: user.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     return NextResponse.json(result, { status: 201 });

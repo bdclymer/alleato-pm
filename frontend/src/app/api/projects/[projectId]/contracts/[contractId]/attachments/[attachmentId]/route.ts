@@ -6,6 +6,14 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
 
+function reportAttachmentCleanupFailure(details: Record<string, unknown>) {
+  console.warn(JSON.stringify({
+    event: "contract_attachment_storage_cleanup_failed",
+    timestamp: new Date().toISOString(),
+    ...details,
+  }));
+}
+
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string; attachmentId: string }>;
 }
@@ -82,8 +90,13 @@ export const DELETE = withApiGuardrails(
             .from("project-files")
             .remove([decodeURIComponent(pathMatch[1])]);
         }
-      } catch {
-        // Storage deletion failure is non-fatal — DB record is already gone
+      } catch (error) {
+        reportAttachmentCleanupFailure({
+          projectId,
+          contractId,
+          attachmentId,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 

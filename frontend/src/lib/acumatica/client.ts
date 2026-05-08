@@ -218,8 +218,12 @@ class AcumaticaClient {
         method: "POST",
         headers: { Cookie: this.session.cookies },
       });
-    } catch {
-      // Best-effort logout
+    } catch (error) {
+      console.warn(JSON.stringify({
+        event: "acumatica_logout_failed",
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : String(error),
+      }));
     } finally {
       this.session = null;
     }

@@ -14,6 +14,24 @@ import {
 } from "@/lib/budget/snapshot-totals";
 import type { Json } from "@/types/database.types";
 
+async function readOptionalSnapshotBody(
+  request: Request,
+): Promise<{ name?: string; description?: string }> {
+  const text = await request.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text) as { name?: string; description?: string };
+  } catch (error) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "projects/[projectId]/budget/snapshots#POST",
+      message: "Budget snapshot request body must be valid JSON when provided.",
+      status: 400,
+      cause: error,
+    });
+  }
+}
+
 /**
  * GET /api/projects/[id]/budget/snapshots
  *
@@ -145,12 +163,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       });
     }
 
-    let body: { name?: string; description?: string } = {};
-    try {
-      body = await request.json();
-    } catch {
-      // Empty body is fine — we'll auto-generate the name.
-    }
+    const body = await readOptionalSnapshotBody(request);
     const { name, description } = body;
 
     let lineItems;
