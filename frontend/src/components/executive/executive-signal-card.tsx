@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { AlertTriangle, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Collapsible,
@@ -160,7 +160,6 @@ export function ExecutiveSignalCard({
       : item.bullets.filter(Boolean).slice(0, 6);
   const citationCount = item.citations.length;
   const projectLabel = item.project.trim() || "No project linked";
-  const isUnlinkedProject = /no project linked/i.test(projectLabel);
   const resolveFollowUp = () => {
     if (!followUpId) return;
     const formData = new FormData();
@@ -198,15 +197,6 @@ export function ExecutiveSignalCard({
                 {actionLabel}
               </Badge>
             )}
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 font-medium",
-                isUnlinkedProject ? "text-destructive" : "text-foreground",
-              )}
-            >
-              {isUnlinkedProject && <AlertTriangle className="h-3 w-3" />}
-              {projectLabel}
-            </span>
           </div>
 
           <div className="text-base font-semibold leading-snug text-foreground">
