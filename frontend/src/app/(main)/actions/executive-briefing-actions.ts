@@ -475,15 +475,21 @@ export async function updateExecutiveRelatedTaskAction(formData: FormData) {
   );
 
   const taskId = formString(formData, "taskId");
+  const rawTitle = formString(formData, "title");
   const assigneePersonId = formString(formData, "assigneePersonId");
   const rawStatus = formString(formData, "status") || "open";
   const rawPriority = formString(formData, "priority") || "medium";
   const dueDate = formString(formData, "dueDate") || null;
+  const title = normalizeExecutiveImprovementText(rawTitle);
   const status = TASK_STATUS_VALUES.has(rawStatus) ? rawStatus : "open";
   const priority = TASK_PRIORITY_VALUES.has(rawPriority) ? rawPriority : "medium";
 
   if (!taskId) {
     throw new Error("Missing executive task id.");
+  }
+
+  if (!title) {
+    throw new Error("Task name is required.");
   }
 
   if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
@@ -517,6 +523,7 @@ export async function updateExecutiveRelatedTaskAction(formData: FormData) {
   const { error } = await supabase
     .from("tasks")
     .update({
+      title,
       assignee_person_id: assigneePersonIdForTask,
       assignee_name: assigneeName,
       assignee_email: assigneeEmail,
@@ -533,6 +540,38 @@ export async function updateExecutiveRelatedTaskAction(formData: FormData) {
 
   revalidatePath(EXECUTIVE_PATH);
   return { updated: true };
+}
+
+export async function deleteExecutiveRelatedTaskAction(formData: FormData) {
+  await requireCurrentUserAppCapability(
+    "view_executive_briefing",
+    "executive-briefing-actions#delete-related-task",
+    "Executive briefing access required.",
+  );
+
+  const taskId = formString(formData, "taskId");
+  if (!taskId) {
+    throw new Error("Missing executive task id.");
+  }
+
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", taskId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to delete executive task: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error("Executive task was not found or was already deleted.");
+  }
+
+  revalidatePath(EXECUTIVE_PATH);
+  return { deleted: true };
 }
 
 export async function createOperationalImprovementAction(formData: FormData) {
