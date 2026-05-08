@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarDays, ChevronDown, FileText, ListChecks } from "lucide-react";
+import { CalendarDays, ChevronDown, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Collapsible,
@@ -61,45 +61,6 @@ function DetailBlock({
   );
 }
 
-function SourceRow({
-  source,
-  sourceDetail,
-  date,
-  sourceUrl,
-}: {
-  source: BrandonBriefItem["source"];
-  sourceDetail: string;
-  date: string;
-  sourceUrl?: string;
-}) {
-  const content = (
-    <>
-      <span className="font-medium text-foreground">{source}</span>
-      <span>{sourceDetail}</span>
-      <span>{date}</span>
-    </>
-  );
-
-  if (sourceUrl) {
-    return (
-      <a
-        href={sourceUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 border-b border-border pb-0.5 text-muted-foreground hover:border-foreground hover:text-foreground"
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
-      {content}
-    </div>
-  );
-}
-
 export function ExecutiveSignalCard({
   item,
   employees,
@@ -138,6 +99,9 @@ export function ExecutiveSignalCard({
       : item.bullets.filter(Boolean).slice(0, 6);
   const citationCount = item.citations.length;
   const projectLabel = displayProjectLabel(item.project);
+  const sourceUrl = item.sourceUrl ?? item.citations[0]?.sourceUrl;
+  const sourceLabel = item.sourceDetail?.trim() || item.title;
+  const sourceMeta = `${sourceLabel} - ${item.date}`;
   const resolveFollowUp = () => {
     if (!followUpId) return;
     const formData = new FormData();
@@ -165,14 +129,22 @@ export function ExecutiveSignalCard({
           </p>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1 text-xs font-medium text-muted-foreground">
-            <span className="inline-flex items-center gap-2">
-              <CalendarDays className="h-3.5 w-3.5" />
-              {item.date}
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <FileText className="h-3.5 w-3.5" />
-              {item.source}
-            </span>
+            {sourceUrl ? (
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 border-b border-border pb-0.5 transition-colors hover:border-foreground hover:text-foreground"
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                {sourceMeta}
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <CalendarDays className="h-3.5 w-3.5" />
+                {sourceMeta}
+              </span>
+            )}
             <span className="inline-flex items-center gap-2">
               <ListChecks className="h-3.5 w-3.5" />
               {citationCount} source{citationCount === 1 ? "" : "s"}
@@ -223,10 +195,6 @@ export function ExecutiveSignalCard({
                   </span>
                 </>
               )}
-            </DetailBlock>
-
-            <DetailBlock label="Why it matters">
-              {item.whyItMatters ?? item.summary}
             </DetailBlock>
 
             {item.recommendedAction && (
@@ -298,31 +266,6 @@ export function ExecutiveSignalCard({
                 </Collapsible>
               </DetailBlock>
             )}
-
-            <DetailBlock label="Source">
-              <div className="space-y-2">
-                <SourceRow
-                  source={item.source}
-                  sourceDetail={item.sourceDetail}
-                  date={item.date}
-                  sourceUrl={item.sourceUrl}
-                />
-
-                {citationCount > 1 && (
-                  <div className="space-y-2 text-sm">
-                    {item.citations.slice(1).map((citation) => (
-                      <SourceRow
-                        key={`${citation.source}-${citation.sourceId ?? citation.sourceDetail}`}
-                        source={citation.source}
-                        sourceDetail={citation.sourceDetail}
-                        date={citation.date}
-                        sourceUrl={citation.sourceUrl}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </DetailBlock>
 
             <DetailBlock label="Tasks">
               <div className="space-y-4">
