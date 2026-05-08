@@ -24,6 +24,8 @@ JOB_HEALTH_SAMPLE_LIMIT = 5000
 MAX_RETURNED_SOURCES = 80
 MAX_RETURNED_ALERTS = 80
 MAX_RETURNED_STUCK_ITEMS = 25
+ALERT_TEXT_LIMIT = 1200
+ALERT_RESOURCE_ID_LIMIT = 500
 
 GRAPH_SOURCE_LABELS = {
     "outlook_email": "Outlook email",
@@ -50,6 +52,25 @@ def _iso(value: Optional[datetime]) -> Optional[str]:
 def _single_row(response: Any) -> Optional[Dict[str, Any]]:
     data = getattr(response, "data", None) or []
     return data[0] if data else None
+
+
+def _limit_text(value: Any, limit: int = ALERT_TEXT_LIMIT) -> str:
+    text = str(value or "")
+    if len(text) <= limit:
+        return text
+    if limit <= 3:
+        return text[:limit]
+    return f"{text[:limit - 3]}..."
+
+
+def _alert_metadata(alert: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "detected_at": alert.get("detectedAt"),
+        "code": _limit_text(alert.get("code"), 120),
+        "source": _limit_text(alert.get("source"), 120),
+        "resourceId": _limit_text(alert.get("resourceId"), ALERT_RESOURCE_ID_LIMIT),
+        "severity": _alert_severity(alert),
+    }
 
 
 def _parse_datetime(value: Any) -> Optional[datetime]:
@@ -409,19 +430,16 @@ def persist_source_sync_alerts(supabase: Any, alerts: Sequence[Dict[str, Any]]) 
         payload = {
             "alert_key": alert_key,
             "category": "source_sync",
-            "code": str(alert.get("code") or "source_sync_alert"),
+            "code": _limit_text(alert.get("code") or "source_sync_alert", 120),
             "severity": _alert_severity(alert),
-            "source": str(alert.get("source") or "unknown"),
-            "resource_id": str(alert.get("resourceId") or ""),
-            "title": str(alert.get("code") or "Source sync alert").replace("_", " ").title(),
-            "message": str(alert.get("message") or "Source sync alert detected."),
+            "source": _limit_text(alert.get("source") or "unknown", 120),
+            "resource_id": _limit_text(alert.get("resourceId") or "", ALERT_RESOURCE_ID_LIMIT),
+            "title": _limit_text(str(alert.get("code") or "Source sync alert").replace("_", " ").title(), 180),
+            "message": _limit_text(alert.get("message") or "Source sync alert detected."),
             "status": "active",
             "last_seen_at": now,
             "resolved_at": None,
-            "metadata": {
-                "detected_at": alert.get("detectedAt"),
-                "source": alert,
-            },
+            "metadata": _alert_metadata(alert),
         }
         existing = _single_row(
             supabase.table("system_alerts")

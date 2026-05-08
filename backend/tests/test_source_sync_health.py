@@ -321,3 +321,28 @@ def test_persist_source_sync_alerts_upserts_and_resolves():
     assert alert["alert_key"] == "source_sync:embedding_backlog:vectorization:document_chunks"
     assert alert["status"] == "resolved"
     assert alert["resolved_at"]
+
+
+def test_persist_source_sync_alerts_bounds_payload_fields():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+
+    persist_source_sync_alerts(
+        supabase,
+        [
+            {
+                "severity": "critical",
+                "code": "source_sync_error",
+                "source": "teams_chat",
+                "resourceId": "chat:" + ("a" * 1200),
+                "message": "Client error " + ("403 Forbidden " * 200),
+                "detectedAt": "2026-05-07T00:00:00+00:00",
+            }
+        ],
+    )
+
+    alert = supabase.tables["system_alerts"][0]
+    assert len(alert["resource_id"]) <= 500
+    assert len(alert["message"]) <= 1200
+    assert isinstance(alert["metadata"]["source"], str)
+    assert len(alert["metadata"]["resourceId"]) <= 500
