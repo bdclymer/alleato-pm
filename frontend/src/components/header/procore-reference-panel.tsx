@@ -24,6 +24,7 @@ import { SchemaTab } from "@/components/dev-panel/SchemaTab";
 import { ScreenshotsTab } from "@/components/dev-panel/ScreenshotsTab";
 import { SpecTab } from "@/components/dev-panel/SpecTab";
 import { apiFetch } from "@/lib/api-client";
+import { Button } from "@/components/ui/button";
 import { featureFromPathname } from "@/lib/procore-route-map";
 import { createClient } from "@/lib/supabase/client";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
@@ -178,7 +179,7 @@ export function ProcoreReferencePanel() {
   // Quick-action state
   const [isCheckingRoutes, setIsCheckingRoutes] = React.useState(false);
 
-  const feature = featureFromPathname(pathname);
+  const feature = featureFromPathname(pathname ?? "");
 
   // ── Auth ────────────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -371,14 +372,15 @@ export function ProcoreReferencePanel() {
       {open && (
         <div className="flex h-full flex-col">
           {/* ── Resize handle ── */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onMouseDown={handleDragMouseDown}
             aria-label="Drag to resize panel"
-            className="flex h-2 w-full shrink-0 cursor-row-resize items-center justify-center hover:bg-muted/60 transition-colors group focus:outline-none"
+            className="flex h-2 w-full shrink-0 cursor-row-resize items-center justify-center hover:bg-muted/60 transition-colors group focus:outline-none p-0 rounded-none"
           >
             <GripHorizontal className="h-3 w-8 text-muted-foreground/30 group-hover:text-muted-foreground/60" />
-          </button>
+          </Button>
 
           {/* ── Header ── */}
           <div className="flex h-9 shrink-0 items-center justify-between border-b border-border/60 px-2">
@@ -388,18 +390,19 @@ export function ProcoreReferencePanel() {
                 const count = badges[tab.id];
                 const showBadge = count !== undefined && count > 0;
                 return (
-                  <button
+                  <Button
                     key={tab.id}
                     type="button"
+                    variant="ghost"
                     onClick={() => {
                       setActiveTab(tab.id);
                       setScreenshotExpanded(false);
                       if (tab.id === "debug") setDebugCount(0);
                     }}
                     className={cn(
-                      "flex shrink-0 items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors",
+                      "flex h-auto shrink-0 items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors",
                       activeTab === tab.id
-                        ? "bg-primary/10 text-primary"
+                        ? "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
@@ -415,7 +418,7 @@ export function ProcoreReferencePanel() {
                         {count}
                       </span>
                     )}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -440,57 +443,67 @@ export function ProcoreReferencePanel() {
               )}
 
               {/* Copy context */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => void copyClaudeContext(feature)}
                 title="Copy context for Claude"
-                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                className="h-auto w-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 <ClipboardCopy className="h-3.5 w-3.5" />
-              </button>
+              </Button>
 
               {/* Clear cache */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => void clearCache()}
                 title="Clear Next.js cache"
-                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                className="h-auto w-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              </Button>
 
               {/* Regen types */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => void regenTypes()}
                 title="Regenerate Supabase types"
-                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                className="h-auto w-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 <FileCode className="h-3.5 w-3.5" />
-              </button>
+              </Button>
 
               {/* Check routes */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => void checkRoutes()}
                 disabled={isCheckingRoutes}
                 title="Check route conflicts"
-                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
+                className="h-auto w-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
               >
                 {isCheckingRoutes
                   ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                   : <GitBranch className="h-3.5 w-3.5" />}
-              </button>
+              </Button>
 
               {/* Close */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setOpen(false)}
                 aria-label="Close dev panel"
-                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                className="h-auto w-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 <X className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             </div>
           </div>
 

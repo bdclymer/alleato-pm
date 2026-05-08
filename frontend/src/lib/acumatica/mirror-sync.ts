@@ -547,12 +547,16 @@ async function writeCursor(
   await supabase.from("acumatica_sync_state").upsert(
     {
       entity_name: tableName,
-      cursor,
-      last_synced_at: new Date().toISOString(),
-      last_fetched: stats.fetched,
-      last_upserted: stats.upserted,
-      last_skipped: stats.skipped,
-      last_errors: stats.errors,
+      last_cursor: cursor,
+      last_success_at: new Date().toISOString(),
+      last_stats: {
+        fetched: stats.fetched,
+        upserted: stats.upserted,
+        skipped: stats.skipped,
+        errors: stats.errors,
+      },
+      status: stats.errors > 0 ? "error" : "success",
+      updated_at: new Date().toISOString(),
     },
     { onConflict: "entity_name" },
   );

@@ -1935,7 +1935,7 @@ export function ProjectCommandCenter({
         <div className="grid grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-x-20 xl:gap-y-0 2xl:gap-x-28">
           <div className="min-w-0 space-y-10">
             <ProjectCommandSurface healthCells={healthCells} />
-            <div className="grid gap-10 lg:grid-cols-2">
+            <div className="space-y-10">
               <RecentMeetingsSection
                 meetings={meetings}
                 projectId={projectId}

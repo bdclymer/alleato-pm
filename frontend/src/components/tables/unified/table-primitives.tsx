@@ -306,6 +306,7 @@ interface CellTextProps {
   emptyLabel?: string;
   muted?: boolean;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 /** Plain text cell. Renders `emptyLabel` when value is falsy. */
@@ -314,10 +315,11 @@ export function CellText({
   emptyLabel = "—",
   muted = false,
   className,
+  style,
 }: CellTextProps): React.ReactElement {
   const display = value?.trim() || emptyLabel;
   return (
-    <span className={cn(muted ? "text-muted-foreground" : undefined, className)}>
+    <span className={cn(muted ? "text-muted-foreground" : undefined, className)} style={style}>
       {display}
     </span>
   );
