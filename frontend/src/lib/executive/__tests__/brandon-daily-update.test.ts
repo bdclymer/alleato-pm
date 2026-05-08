@@ -26,28 +26,28 @@ describe("teams recency anchoring", () => {
     jest.clearAllMocks();
   });
 
-  it("uses created_at for teams rows when available", () => {
+  it("uses the source date for teams rows even when ingestion happened later", () => {
     const anchor = getRecencyAnchor({
       category: "teams_message",
       created_at: "2026-05-08T12:00:00.000Z",
-      date: "2026-05-08T00:00:00.000Z",
+      date: "2026-03-23T00:00:00.000Z",
       captured_at: "2026-05-07T23:50:00.000Z",
     });
 
-    expect(anchor).toBe("2026-05-08T12:00:00.000Z");
+    expect(anchor).toBe("2026-03-23T00:00:00.000Z");
   });
 
-  it("falls back to captured_at/date for teams rows when created_at is missing", () => {
+  it("falls back to captured_at and created_at only when the source date is missing", () => {
     const anchor = getRecencyAnchor({
       category: "teams_message",
-      date: "2026-05-07T00:00:00.000Z",
       captured_at: "2026-05-08T11:00:00.000Z",
+      created_at: "2026-05-08T12:00:00.000Z",
     });
 
     expect(anchor).toBe("2026-05-08T11:00:00.000Z");
   });
 
-  it("uses doc_created_at before doc_date for ranked Teams hits", () => {
+  it("uses doc_date before doc_created_at for ranked Teams hits", () => {
     const anchor = getHitDateAnchor({
       id: "hit-1",
       spec: {
@@ -62,15 +62,15 @@ describe("teams recency anchoring", () => {
       },
       row: {
         doc_category: "teams_message",
-        doc_date: "2026-05-05T00:00:00.000Z",
+        doc_date: "2026-03-23T00:00:00.000Z",
         doc_created_at: "2026-05-08T09:00:00.000Z",
       },
     } as const);
 
-    expect(anchor).toBe("2026-05-08T09:00:00.000Z");
+    expect(anchor).toBe("2026-03-23T00:00:00.000Z");
   });
 
-  it("counts recent Teams source coverage from created_at before day-stamped date", async () => {
+  it("does not count stale Teams source coverage just because it was ingested recently", async () => {
     jest.useFakeTimers().setSystemTime(new Date("2026-05-08T16:00:00.000Z"));
     const coverageFilters: string[] = [];
 
@@ -96,7 +96,7 @@ describe("teams recency anchoring", () => {
                   {
                     category: "teams_message",
                     type: "teams_dm_conversation",
-                    date: "2026-05-06T00:00:00.000Z",
+                    date: "2026-03-23T00:00:00.000Z",
                     created_at: "2026-05-06T21:21:31.964Z",
                     captured_at: null,
                   },
@@ -119,8 +119,8 @@ describe("teams recency anchoring", () => {
     const teams = coverage.find((source) => source.label === "Teams");
 
     expect(teams).toMatchObject({
-      count: 1,
-      status: "loaded",
+      count: 0,
+      status: "empty",
     });
     expect(coverageFilters).toContain(
       "date.gte.2026-05-06T00:00:00.000Z,created_at.gte.2026-05-06T00:00:00.000Z,captured_at.gte.2026-05-06T00:00:00.000Z",

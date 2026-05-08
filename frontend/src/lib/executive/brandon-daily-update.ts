@@ -449,18 +449,6 @@ function getWindowStartDateKey(windowDays: number): string {
 }
 
 export function getRecencyAnchor(row: RecentSourceRow): string | null {
-  if (row.category === "teams_message") {
-    return row.created_at ?? row.captured_at ?? row.date ?? null;
-  }
-
-  if (row.category === "email") {
-    return row.created_at ?? row.date ?? row.captured_at ?? null;
-  }
-
-  if (row.type === "meeting") {
-    return row.date ?? row.captured_at ?? row.created_at ?? null;
-  }
-
   return row.date ?? row.captured_at ?? row.created_at ?? null;
 }
 
@@ -483,10 +471,6 @@ export function getHitDateAnchor(
     created_at: hit.row.doc_created_at ?? null,
     captured_at: hit.metadata?.captured_at ?? null,
   };
-
-  if (rowSourceCategory === "teams_message") {
-    return anchorLikeSource.created_at ?? anchorLikeSource.captured_at ?? anchorLikeSource.date ?? null;
-  }
 
   return (
     anchorLikeSource.date ??

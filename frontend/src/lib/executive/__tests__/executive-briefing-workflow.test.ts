@@ -95,7 +95,67 @@ describe("executive briefing workflow", () => {
 
       const query = {
         select: jest.fn(() => query),
-        order: jest.fn(() => Promise.resolve({ data: [], error: null })),
+        order: jest.fn(() =>
+          Promise.resolve({
+            data: [
+              {
+                id: "follow-up-old",
+                fingerprint: "old-fingerprint",
+                section: "needsBrandon",
+                title: "Old Teams item",
+                summary: "Old Teams summary",
+                recommended_action: null,
+                why_it_matters: null,
+                owner: null,
+                status: null,
+                tone: "watch",
+                state: "open",
+                source_type: "Teams",
+                source_detail: "Teams DM Conversation: Accounting Team",
+                source_id: "teamsdm_f8040d175e4c02da_2026-03-23",
+                source_url: null,
+                project_label: "No project linked",
+                source_date: "Mar 23, 2026",
+                first_seen_recap_id: "recap-old",
+                last_seen_recap_id: "recap-old",
+                first_seen_at: "2026-05-08T12:00:00.000Z",
+                last_seen_at: "2026-05-08T12:00:00.000Z",
+                resolved_at: null,
+                resolved_by: null,
+                resolution_note: null,
+                payload: null,
+              },
+              {
+                id: "follow-up-current",
+                fingerprint: "current-fingerprint",
+                section: "waitingOnOthers",
+                title: "Current email item",
+                summary: "Current email summary",
+                recommended_action: null,
+                why_it_matters: null,
+                owner: null,
+                status: null,
+                tone: "watch",
+                state: "open",
+                source_type: "Email",
+                source_detail: "Email: Current",
+                source_id: "email-current",
+                source_url: null,
+                project_label: "60 Alleato Finance",
+                source_date: "May 7, 2026",
+                first_seen_recap_id: "recap-current",
+                last_seen_recap_id: "recap-current",
+                first_seen_at: "2026-05-08T12:00:00.000Z",
+                last_seen_at: "2026-05-08T12:00:00.000Z",
+                resolved_at: null,
+                resolved_by: null,
+                resolution_note: null,
+                payload: null,
+              },
+            ],
+            error: null,
+          }),
+        ),
       };
       return query;
     });
@@ -115,6 +175,9 @@ describe("executive briefing workflow", () => {
     ]);
     expect(mockLoadLiveDailyBriefSourceCoverage).toHaveBeenCalledWith(3);
     expect(mockGenerateDailyBrief).not.toHaveBeenCalled();
+    expect(dashboard.staleFollowUps.map((followUp) => followUp.id)).toEqual([
+      "follow-up-current",
+    ]);
   });
 
   it("stores Daily Brief version metadata when regenerating over an existing packet", async () => {

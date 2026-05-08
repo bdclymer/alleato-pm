@@ -74,6 +74,12 @@ function getDateRange(windowDays: number) {
   };
 }
 
+function parseDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function getAllItems(packet: BrandonDailyUpdatePacket): BrandonBriefItem[] {
   return [
     ...packet.sections.needsBrandon,
@@ -279,6 +285,14 @@ function daysOpen(firstSeenAt: string) {
   return Math.max(0, Math.floor(diff / 86_400_000));
 }
 
+function isFollowUpInsideSourceWindow(
+  followUp: ExecutiveBriefingFollowUp,
+  cutoffDateKey: string,
+) {
+  const anchor = parseDate(followUp.source_date) ?? parseDate(followUp.last_seen_at);
+  return anchor !== null && getEasternDateParts(anchor) >= cutoffDateKey;
+}
+
 function toDashboardFollowUp(row: FollowUpRow): ExecutiveBriefingFollowUp {
   return {
     ...row,
@@ -477,7 +491,7 @@ export async function getExecutiveBriefingDashboard(options?: {
   windowDays?: number;
 }) {
   const windowDays = options?.windowDays ?? DEFAULT_EXECUTIVE_WINDOW_DAYS;
-  const { recapDate } = getDateRange(windowDays);
+  const { recapDate, dateRangeStart } = getDateRange(windowDays);
   const existingDraft = await loadExistingDraft(recapDate);
   const storedPacket = parseStoredPacket(existingDraft?.briefing_packet ?? null);
   const packet = storedPacket
@@ -513,7 +527,9 @@ export async function getExecutiveBriefingDashboard(options?: {
     followUps.map((followUp) => [followUp.fingerprint, followUp]),
   );
   const staleFollowUps = openFollowUps.filter(
-    (followUp) => !liveFingerprints.has(followUp.fingerprint),
+    (followUp) =>
+      !liveFingerprints.has(followUp.fingerprint) &&
+      isFollowUpInsideSourceWindow(followUp, dateRangeStart),
   );
 
   return {
