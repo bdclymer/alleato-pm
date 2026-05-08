@@ -14,6 +14,7 @@ import {
   Eye,
 } from "lucide-react";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { DataTable } from "@/components/tables/DataTable";
 import {
   DropdownMenu,
@@ -66,8 +67,14 @@ export function SpecificationListTable({
     try {
       await deleteMutation.mutateAsync(deleteId);
       setDeleteId(null);
-    } catch {
-      // Error already handled by mutation
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "specification-list-table",
+        operation: "delete-specification",
+        error,
+        userVisibleFallback: "Specification was not deleted.",
+        metadata: { projectId, sectionId: deleteId },
+      });
     }
   };
 

@@ -25,6 +25,7 @@ import {
 } from "@/components/ds/inline-table";
 import { Grid, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   BUDGET_PRIMARY_TABS_LIST_CLASS,
   BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
@@ -96,7 +97,13 @@ export function OriginalBudgetModal({
       });
       onClose();
     } catch (error) {
-      // Error handling would show toast here
+      reportNonCriticalFailure({
+        area: "original-budget-modal",
+        operation: "save-original-budget",
+        error,
+        userVisibleFallback: "Original budget was not saved.",
+        metadata: { budgetLineId },
+      });
     } finally {
       setIsSaving(false);
     }

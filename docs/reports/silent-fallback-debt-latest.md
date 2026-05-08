@@ -4,10 +4,10 @@ This report identifies app-code patterns that can hide broken data paths or runt
 
 ## Summary
 
-- Critical: 108
-- High: 38
-- Medium: 38
-- Total: 184
+- Critical: 64
+- High: 36
+- Medium: 18
+- Total: 118
 
 ## Required Policy
 
@@ -36,12 +36,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `silent-catch` | `frontend/src/app/(admin)/test-matrix/page.tsx:204` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/(admin)/test-matrix/page.tsx:266` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/(admin)/test-matrix/page.tsx:284` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/(main)/settings/integrations/teams-link-panel.tsx:42` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/(main)/settings/integrations/telegram-link-panel.tsx:46` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/(tables)/documents/page.tsx:259` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/(tables)/meetings/[meetingId]/page.tsx:116` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/(tables)/progress-reports/page.tsx:235` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/(tables)/tasks/page.tsx:589` | try { localStorage.setItem(PANEL_STORAGE_KEY, String(leftPct)); } catch { /* ignore */ } | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/admin/prp-status/route.ts:88` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/admin/rag-eval/run/route.ts:141` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/annotations/route.ts:21` | } catch { | Add structured reporting or rethrow with a typed error. |
@@ -65,7 +59,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void/route.ts:42` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/projects/[projectId]/progress-reports/route.ts:95` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `synthetic-data` | `frontend/src/components/ai-chat/sidebar-history.tsx:113` | fallbackData: [], | Remove synthetic data and make the route/component show real empty/error state. |
-| CRITICAL | `silent-catch` | `frontend/src/components/budget/modals/OriginalBudgetModal.tsx:98` | } catch (error) { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/dev-panel/AnnotationsTab.tsx:52` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/dev/design-violation-overlay.tsx:59` | } catch {} | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/dev/design-violation-overlay.tsx:123` | } catch { /* silent */ } | Add structured reporting or rethrow with a typed error. |
@@ -75,44 +68,7 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `silent-catch` | `frontend/src/components/dev/dev-annotation-overlay.tsx:90` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/dev/dev-annotation-overlay.tsx:114` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/dev/UnifiedFeedbackWidget.tsx:56` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/domain/directory/AssignMemberDialog.tsx:65` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/drawings/OsdDrawingViewer.tsx:227` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/drawings/OsdDrawingViewer.tsx:402` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/drawings/OsdDrawingViewer.tsx:411` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/drawings/OsdDrawingViewer.tsx:470` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/drawings/OsdDrawingViewer.tsx:730` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/drawings/OsdDrawingViewer.tsx:736` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/drawings/OsdDrawingViewer.tsx:899` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/procore-reference-panel.tsx:143` | } catch { /* best-effort */ } | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:488` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:561` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:607` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:649` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:698` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:757` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:795` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:848` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:900` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:965` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1019` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1074` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1138` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1198` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1257` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1318` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1385` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1454` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1477` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1515` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/meetings/create-meeting-dialog.tsx:95` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/meetings/meeting-detail-content.tsx:216` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/project/create-project-dev-config.tsx:68` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/providers/chunk-error-recovery.tsx:51` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/scheduling/task-edit-modal.tsx:231` | } catch (error) { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/specifications/SpecificationEditModal.tsx:87` | } catch (error) { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/specifications/SpecificationListTable.tsx:69` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/tables/unified/unified-table-page.tsx:489` | } catch { /* ignore */ } | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/components/tables/unified/unified-table-page.tsx:500` | } catch { /* ignore */ } | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-artifact.ts:26` | fallbackData: initialArtifactData, | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-artifact.ts:44` | fallbackData: initialArtifactData, | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-artifact.ts:76` | fallbackData: null, | Remove synthetic data and make the route/component show real empty/error state. |
@@ -149,8 +105,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | HIGH | `silent-language` | `frontend/src/components/directory/settings/PermissionsTableTab.tsx:57` | // Intentionally swallowed: updatePermission handles error notifications | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/components/domain/change-events/change-event-form/AddCompanyModal.tsx:61` | // instead of swallowing the failure silently (per CLAUDE.md Rule 2). | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/components/domain/change-events/ChangeEventRevenueSection.tsx:78` | // Intentionally swallowed: error handling done by caller | Replace hidden failure path with telemetry and user-visible degraded state. |
-| HIGH | `silent-language` | `frontend/src/components/header/use-header-nav.ts:1478` | // Silently fail - project name is optional | Replace hidden failure path with telemetry and user-visible degraded state. |
-| HIGH | `silent-language` | `frontend/src/components/header/use-header-nav.ts:1516` | // Silently fail | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/components/project-home/inline-team-member-form.tsx:96` | // Intentionally swallowed: component shows appropriate state on error | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/cfo.ts:30` | What's committed but not yet billed? What change events exist without corresponding change orders? What change orders exist without matching commitment adjustments? These are the areas where money can silently disappear. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/chro.ts:170` | - NEVER ask the user for a project ID — use projectName to resolve silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
@@ -182,25 +136,5 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]/route.ts:49` | // Delete DB row first; storage removal is best-effort cleanup | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]/route.ts:63` | // Remove from storage (best-effort — log errors but don't fail the request) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts:134` | // Resolve creator display name (best effort) | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/drawings/OsdDrawingViewer.tsx:403` | // Best-effort prefetch; ignore failures. | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/procore-reference-panel.tsx:143` | } catch { /* best-effort */ } | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:489` | // Best-effort only; fallback label remains | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:562` | // Best-effort only | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:608` | // Best-effort; raw "Run" fallback is fine | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:650` | // Best-effort; "Progress Report" fallback is fine | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:699` | // Best-effort only; fallback label remains | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:758` | // Best-effort only; fallback label remains | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:796` | // Best-effort; raw ID fallback is fine | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:849` | // Best-effort only; fallback label remains | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:901` | // Best-effort only | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:966` | // Best-effort only | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:1020` | // Best-effort only; fallback label remains | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:1075` | // Best-effort only | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:1139` | // Best-effort only; fallback label remains | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:1199` | // Best-effort only | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:1258` | // Best-effort only | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:1319` | // Best-effort only | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:1386` | // Best-effort only; fallback label remains | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
-| MEDIUM | `best-effort` | `frontend/src/components/header/use-header-nav.ts:1455` | // Best-effort only | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/lib/acumatica/client.ts:222` | // Best-effort logout | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/lib/acumatica/sync-service.ts:1396` | // via vendor_id matching (best-effort, not always deterministic). | Verify this non-blocking path records evidence and has an owner-visible failure signal. |

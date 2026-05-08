@@ -4,6 +4,7 @@ import * as React from "react";
 import { CheckCircle2, AlertCircle, Copy, Loader2, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 interface LinkStatus {
   linked: boolean;
@@ -39,8 +40,13 @@ export function TeamsLinkPanel() {
         pollRef.current = null;
         setGenerated(null);
       }
-    } catch {
-      // silent
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "settings-integrations",
+        operation: "load-teams-link-status",
+        error,
+        userVisibleFallback: "Teams link status could not be refreshed.",
+      });
     }
   }, []);
 

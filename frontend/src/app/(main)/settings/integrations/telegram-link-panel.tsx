@@ -4,6 +4,7 @@ import * as React from "react";
 import { CheckCircle2, AlertCircle, Copy, ExternalLink, Loader2, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 const BOT_USERNAME = "alleatoAIbot";
 const BOT_URL = `https://t.me/${BOT_USERNAME}`;
@@ -43,8 +44,13 @@ export function TelegramLinkPanel() {
         pollRef.current = null;
         setGenerated(null);
       }
-    } catch {
-      // silent
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "settings-integrations",
+        operation: "load-telegram-link-status",
+        error,
+        userVisibleFallback: "Telegram link status could not be refreshed.",
+      });
     }
   }, []);
 

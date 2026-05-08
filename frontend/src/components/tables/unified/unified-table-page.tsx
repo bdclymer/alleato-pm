@@ -6,6 +6,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer, type PageContainerProps } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
@@ -486,7 +487,15 @@ export function UnifiedTablePage<T>({
       } else {
         setPanelWidth(Math.max(panelMinWidth, Math.min(panelMaxWidth, getPanelDefaultWidth())));
       }
-    } catch { /* ignore */ }
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "unified-table-page",
+        operation: "load-side-panel-preferences",
+        error,
+        userVisibleFallback: "Saved table panel preferences could not be restored.",
+        metadata: { panelStorageKey },
+      });
+    }
     setPanelMounted(true);
   }, [getPanelDefaultWidth, panelMaxWidth, panelMinWidth, panelStorageKey, sidePanel]);
 
@@ -497,7 +506,15 @@ export function UnifiedTablePage<T>({
           `alleato-panel-${panelStorageKey}`,
           JSON.stringify({ collapsed, width }),
         );
-      } catch { /* ignore */ }
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "unified-table-page",
+          operation: "save-side-panel-preferences",
+          error,
+          userVisibleFallback: "Table panel preferences were not saved.",
+          metadata: { panelStorageKey },
+        });
+      }
     },
     [panelStorageKey],
   );

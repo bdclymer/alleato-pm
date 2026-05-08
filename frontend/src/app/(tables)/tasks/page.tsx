@@ -51,6 +51,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import {
@@ -586,7 +587,17 @@ function useResizablePanel(containerRef: React.RefObject<HTMLDivElement | null>)
       isDragging.current = false;
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
-      try { localStorage.setItem(PANEL_STORAGE_KEY, String(leftPct)); } catch { /* ignore */ }
+      try {
+        localStorage.setItem(PANEL_STORAGE_KEY, String(leftPct));
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "tasks-table",
+          operation: "save-panel-width",
+          error,
+          userVisibleFallback: "Task panel width was not saved locally.",
+          metadata: { leftPct },
+        });
+      }
     }
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);

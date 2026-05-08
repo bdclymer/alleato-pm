@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   Dialog,
   DialogContent,
@@ -81,11 +82,18 @@ export function SpecificationEditModal({
   }, [specification, form]);
 
   const handleSubmit = async (data: EditSpecificationFormData) => {
+    if (!specification) return;
     try {
       await updateMutation.mutateAsync(data);
       onOpenChange(false);
     } catch (error) {
-      // Error already handled by mutation
+      reportNonCriticalFailure({
+        area: "specification-edit-modal",
+        operation: "update-specification",
+        error,
+        userVisibleFallback: "Specification was not saved.",
+        metadata: { projectId, sectionId: specification.id },
+      });
     }
   };
 

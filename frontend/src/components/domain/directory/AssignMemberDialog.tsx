@@ -4,6 +4,7 @@ import React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -62,8 +63,13 @@ function cleanPersonText(value: string | null | undefined): string {
     if (Array.isArray(parsed)) {
       return cleanPersonText(parsed.find((item) => typeof item === "string") as string | undefined);
     }
-  } catch {
-    // Some imported rows store email-only names as "(email)" instead of JSON.
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "assign-member-dialog",
+      operation: "parse-person-name",
+      error,
+      userVisibleFallback: "Imported person name was cleaned as plain text.",
+    });
   }
 
   return trimmed.replace(WRAPPED_VALUE_PATTERN, "").trim();

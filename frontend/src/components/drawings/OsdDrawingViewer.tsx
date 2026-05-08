@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ErrorState } from "@/components/ds";
 import { cn } from "@/lib/utils";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 type PdfDocumentProxy = Awaited<ReturnType<typeof pdfjs.getDocument>["promise"]>;
 type PdfLoadingTask = ReturnType<typeof pdfjs.getDocument>;
@@ -224,8 +225,14 @@ export function OsdDrawingViewer({
       cancelled = true;
       try {
         loadingTask?.destroy?.();
-      } catch {
-        // ignore
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "osd-drawing-viewer",
+          operation: "destroy-pdf-loading-task",
+          error,
+          userVisibleFallback: "PDF loading cleanup did not complete.",
+          metadata: { fileUrl },
+        });
       }
     };
   }, [fileUrl]);
@@ -399,8 +406,14 @@ export function OsdDrawingViewer({
         if (pageCacheRef.current.has(target)) continue;
         try {
           await renderPageToBlobUrl(pdf, target);
-        } catch {
-          // Best-effort prefetch; ignore failures.
+        } catch (error) {
+          reportNonCriticalFailure({
+            area: "osd-drawing-viewer",
+            operation: "prefetch-page",
+            error,
+            userVisibleFallback: "Drawing page prefetch failed.",
+            metadata: { target },
+          });
         }
       }
     });
@@ -408,8 +421,14 @@ export function OsdDrawingViewer({
     return () => {
       try {
         cancel(handle);
-      } catch {
-        // ignore
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "osd-drawing-viewer",
+          operation: "cancel-page-prefetch",
+          error,
+          userVisibleFallback: "Drawing page prefetch cancellation failed.",
+          metadata: { pageNumber },
+        });
       }
     };
   }, [pdf, pageNumber, numPages, renderPageToBlobUrl]);
@@ -467,8 +486,13 @@ export function OsdDrawingViewer({
     return () => {
       try {
         viewerRef.current?.destroy();
-      } catch {
-        // ignore
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "osd-drawing-viewer",
+          operation: "destroy-viewer",
+          error,
+          userVisibleFallback: "Drawing viewer cleanup did not complete.",
+        });
       }
       viewerRef.current = null;
       blobUrlRef.current = null;
@@ -727,14 +751,26 @@ function OsdHtmlOverlayItem({
         location: viewer.viewport.imageToViewportCoordinates(point),
         placement,
       });
-    } catch {
-      // ignore — viewer may not yet be ready
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "osd-drawing-viewer",
+        operation: "add-overlay",
+        error,
+        userVisibleFallback: "Drawing overlay could not be added.",
+        metadata: { overlayId: overlay.id },
+      });
     }
     return () => {
       try {
         viewer.removeOverlay(el);
-      } catch {
-        // ignore
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "osd-drawing-viewer",
+          operation: "remove-overlay",
+          error,
+          userVisibleFallback: "Drawing overlay cleanup did not complete.",
+          metadata: { overlayId: overlay.id },
+        });
       }
     };
   }, [viewerRef, overlay.xPct, overlay.yPct, overlay.placement, imageWidth, imageHeight]);
@@ -896,8 +932,14 @@ function AnnotationOverlay({
     drawingRef.current = false;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      // ignore
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "osd-drawing-viewer",
+        operation: "release-pointer-capture",
+        error,
+        userVisibleFallback: "Drawing pointer capture could not be released.",
+        metadata: { pointerId: e.pointerId },
+      });
     }
     if (inProgress) {
       onCommit(inProgress);

@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateMeeting } from "@/hooks/use-meetings";
 import { Loader2, Plus } from "lucide-react";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 interface CreateMeetingDialogProps {
   projectId: string;
@@ -92,8 +93,14 @@ export function CreateMeetingDialog({
       resetForm();
       setOpen(false);
       onSuccess?.();
-    } catch {
-      // Error is handled by the mutation's onError
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "meetings",
+        operation: "create-meeting",
+        error,
+        userVisibleFallback: "Meeting was not created.",
+        metadata: { projectId },
+      });
     }
   };
 

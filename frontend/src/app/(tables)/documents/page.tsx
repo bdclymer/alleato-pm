@@ -42,6 +42,7 @@ import {
 } from "@/features/documents/documents-table-config";
 import { useSupabaseUpload } from "@/hooks/use-supabase-upload";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 type DocumentFilterState = Record<string, FilterValue>;
 
@@ -256,8 +257,13 @@ export default function DocumentsPage() {
         ? result
         : (result.data ?? result.projects ?? []);
       setProjects(list as SimpleProject[]);
-    } catch {
-      // Non-critical — assignment will still work with IDs
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "documents-table",
+        operation: "load-project-options",
+        error,
+        userVisibleFallback: "Project assignment options could not be loaded.",
+      });
     }
   }, []);
 

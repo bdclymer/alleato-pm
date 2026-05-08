@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   ScheduleTask,
   ScheduleTaskCreate,
@@ -229,7 +230,13 @@ export function TaskEditModal({
         await onSave(taskData);
         onOpenChange(false);
       } catch (error) {
-        // Error is handled by the parent component
+        reportNonCriticalFailure({
+          area: "schedule-task-modal",
+          operation: isEditing ? "update-task" : "create-task",
+          error,
+          userVisibleFallback: "Schedule task was not saved.",
+          metadata: { projectId, taskId: task?.id ?? null },
+        });
       } finally {
         setIsSaving(false);
       }

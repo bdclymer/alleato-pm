@@ -3,6 +3,7 @@
 import { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { reportBrowserError } from "@/lib/app-error-reporter";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 /**
  * ChunkLoadErrorRecovery
@@ -48,8 +49,13 @@ function shouldAutoReload(): boolean {
 function markReload(): void {
   try {
     sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
-  } catch {
-    // Ignore — worst case we reload twice
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "chunk-error-recovery",
+      operation: "mark-reload",
+      error,
+      userVisibleFallback: "Chunk reload marker could not be saved.",
+    });
   }
 }
 

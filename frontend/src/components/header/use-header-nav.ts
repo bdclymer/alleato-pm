@@ -11,6 +11,7 @@ import {
 } from "@/lib/navigation-config";
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 interface Project {
   id: number;
@@ -68,6 +69,18 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = useSearchParams()!;
+  const reportHeaderNavFailure = useCallback(
+    (operation: string, error: unknown, metadata?: Record<string, unknown>) => {
+      reportNonCriticalFailure({
+        area: "header-nav",
+        operation,
+        error,
+        userVisibleFallback: "Header breadcrumb label fell back to the route label.",
+        metadata: { pathname, ...metadata },
+      });
+    },
+    [pathname],
+  );
 
   const [openPanel, setOpenPanel] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -485,8 +498,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setMeetingTitle(null);
           }
         }
-      } catch {
-        // Best-effort only; fallback label remains
+      } catch (error) {
+        reportHeaderNavFailure("resolve-project-meeting-title", error, {
+          meetingId,
+        });
       }
     };
 
@@ -558,8 +573,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
         } else {
           setDrawingTitle(null);
         }
-      } catch {
-        // Best-effort only
+      } catch (error) {
+        reportHeaderNavFailure("resolve-drawing-title", error, {
+          projectId,
+          drawingId,
+        });
       }
     };
 
@@ -604,8 +622,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
           testRunTitleCache.set(runId, title);
           setTestRunTitle(title);
         }
-      } catch {
-        // Best-effort; raw "Run" fallback is fine
+      } catch (error) {
+        reportHeaderNavFailure("resolve-test-run-title", error, { runId });
       }
     };
 
@@ -646,8 +664,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
           progressReportTitleCache.set(reportId, title);
           setProgressReportTitle(title);
         }
-      } catch {
-        // Best-effort; "Progress Report" fallback is fine
+      } catch (error) {
+        reportHeaderNavFailure("resolve-progress-report-title", error, {
+          reportId,
+        });
       }
     };
 
@@ -695,8 +715,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setVendorTitle(null);
           }
         }
-      } catch {
-        // Best-effort only; fallback label remains
+      } catch (error) {
+        reportHeaderNavFailure("resolve-vendor-title", error, { vendorId });
       }
     };
 
@@ -754,8 +774,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         } else {
           setContactTitle(null);
         }
-      } catch {
-        // Best-effort only; fallback label remains
+      } catch (error) {
+        reportHeaderNavFailure("resolve-contact-title", error, { contactId });
       }
     };
 
@@ -792,8 +812,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
           globalMeetingTitleCache.set(meetingId, title);
           setGlobalMeetingTitle(title);
         }
-      } catch {
-        // Best-effort; raw ID fallback is fine
+      } catch (error) {
+        reportHeaderNavFailure("resolve-global-meeting-title", error, {
+          meetingId,
+        });
       }
     };
 
@@ -845,8 +867,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setPrimeContractTitle(null);
           }
         }
-      } catch {
-        // Best-effort only; fallback label remains
+      } catch (error) {
+        reportHeaderNavFailure("resolve-prime-contract-title", error, {
+          projectId: segments[0],
+          contractId,
+        });
       }
     };
 
@@ -897,8 +922,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setCommitmentTitle(null);
           }
         }
-      } catch {
-        // Best-effort only
+      } catch (error) {
+        reportHeaderNavFailure("resolve-commitment-title", error, {
+          projectId: segments[0],
+          commitmentId,
+        });
       }
     };
 
@@ -962,8 +990,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setPrimePcoTitle(null);
           }
         }
-      } catch {
-        // Best-effort only
+      } catch (error) {
+        reportHeaderNavFailure("resolve-prime-pco-title", error, {
+          projectId: segments[0],
+          pcoId,
+        });
       }
     };
 
@@ -1016,8 +1047,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setChangeEventTitle(null);
           }
         }
-      } catch {
-        // Best-effort only; fallback label remains
+      } catch (error) {
+        reportHeaderNavFailure("resolve-change-event-title", error, {
+          projectId: segments[0],
+          changeEventId,
+        });
       }
     };
 
@@ -1071,8 +1105,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setPrimeCoTitle(null);
           }
         }
-      } catch {
-        // Best-effort only
+      } catch (error) {
+        reportHeaderNavFailure("resolve-prime-co-title", error, {
+          projectId: segments[0],
+          primeCoId,
+        });
       }
     };
 
@@ -1135,8 +1172,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setCommitmentCoTitle(null);
           }
         }
-      } catch {
-        // Best-effort only; fallback label remains
+      } catch (error) {
+        reportHeaderNavFailure("resolve-commitment-co-title", error, {
+          projectId: segments[0],
+          commitmentCoId,
+        });
       }
     };
 
@@ -1195,8 +1235,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setInvoiceTitle(null);
           }
         }
-      } catch {
-        // Best-effort only
+      } catch (error) {
+        reportHeaderNavFailure("resolve-invoice-title", error, {
+          projectId,
+          contractId,
+          invoiceId,
+        });
       }
     };
 
@@ -1254,8 +1298,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
         } else {
           setRfiTitle(null);
         }
-      } catch {
-        // Best-effort only
+      } catch (error) {
+        reportHeaderNavFailure("resolve-rfi-title", error, {
+          projectId,
+          rfiId,
+        });
       }
     };
 
@@ -1315,8 +1362,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
         } else {
           setSubmittalTitle(null);
         }
-      } catch {
-        // Best-effort only
+      } catch (error) {
+        reportHeaderNavFailure("resolve-submittal-title", error, {
+          projectId,
+          submittalId,
+        });
       }
     };
 
@@ -1382,8 +1432,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
             setCompanyTitle(null);
           }
         }
-      } catch {
-        // Best-effort only; fallback label remains
+      } catch (error) {
+        reportHeaderNavFailure("resolve-company-title", error, {
+          projectId: segments[0],
+          companyId,
+        });
       }
     };
 
@@ -1451,8 +1504,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
         const info = { commitmentLabel, invoiceLabel };
         subcontractorInvoiceTitleCache.set(cacheKey, info);
         setSubcontractorInvoiceInfo(info);
-      } catch {
-        // Best-effort only
+      } catch (error) {
+        reportHeaderNavFailure("resolve-subcontractor-invoice-title", error, {
+          projectId,
+          invoiceId,
+        });
       }
     };
 
@@ -1474,8 +1530,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
           if (project?.id === projectId) {
             setCurrentProject(project);
           }
-        } catch {
-          // Silently fail - project name is optional
+        } catch (error) {
+          reportHeaderNavFailure("load-current-project", error, { projectId });
         }
       } else {
         setCurrentProject(null);
@@ -1512,8 +1568,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
       }
 
       setProjects(allProjects);
-    } catch {
-      // Silently fail
+    } catch (error) {
+      reportHeaderNavFailure("load-project-switcher-options", error);
     } finally {
       setLoadingProjects(false);
     }

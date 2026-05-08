@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 import { AnnotationsTab } from "@/components/dev-panel/AnnotationsTab";
 import { ChatTab } from "@/components/dev-panel/ChatTab";
@@ -140,7 +141,14 @@ async function copyClaudeContext(feature: string | null) {
         parts.push(`- ${f.gap_id} [${f.severity}/${f.layer}]: ${f.description ?? "(no description)"}`);
       });
     }
-  } catch { /* best-effort */ }
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "procore-reference-panel",
+      operation: "copy-context-open-gaps",
+      error,
+      userVisibleFallback: "Open gaps were not included in copied context.",
+    });
+  }
 
   await navigator.clipboard.writeText(parts.join("\n"));
   toast.success("Context copied — paste into Claude Code");

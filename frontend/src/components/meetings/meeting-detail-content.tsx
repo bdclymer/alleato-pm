@@ -16,6 +16,7 @@ import * as React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -213,8 +214,13 @@ function FirefliesSectionContent({ value }: { value: string }) {
           {JSON.stringify(parsed, null, 2)}
         </pre>
       );
-    } catch {
-      // Fall through to markdown renderer
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "meeting-detail",
+        operation: "parse-json-content",
+        error,
+        userVisibleFallback: "Meeting content was rendered as markdown instead of JSON.",
+      });
     }
   }
 

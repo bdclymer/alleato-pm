@@ -38,6 +38,7 @@ import {
 } from "@/hooks/use-progress-reports";
 import type { ProgressReportAllListItem } from "@/lib/progress-reports/types";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { toast } from "sonner";
 
 type ReportFilterState = Record<string, FilterValue>;
@@ -232,8 +233,17 @@ export default function AllProgressReportsPage() {
       toast.success("Progress report deleted");
       setDeleteDialogOpen(false);
       setReportToDelete(null);
-    } catch {
-      // Error toast handled by mutation
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "progress-reports-table",
+        operation: "delete-progress-report",
+        error,
+        userVisibleFallback: "Progress report was not deleted.",
+        metadata: {
+          reportId: reportToDelete.id,
+          projectId: reportToDelete.project.id,
+        },
+      });
     } finally {
       setIsDeleting(false);
     }
