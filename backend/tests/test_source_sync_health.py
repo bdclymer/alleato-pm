@@ -264,6 +264,38 @@ def test_get_source_sync_health_reports_task_extraction_freshness():
     assert health["pipeline"]["tasksBySourceSystem"]["fireflies"] == 1
 
 
+def test_get_source_sync_health_caps_returned_sources_and_alerts():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    old = (datetime.now(timezone.utc) - timedelta(hours=8)).isoformat()
+    supabase.tables["source_sync_health_snapshots"] = [
+        {
+            "source": "teams_message",
+            "resource_id": f"channel-{index}",
+            "resource_name": f"Teams Channel {index}",
+            "status": "critical",
+            "last_sync_at": old,
+            "last_success_at": old,
+            "last_error_at": None,
+            "last_error_message": None,
+            "items_synced": 0,
+            "unprocessed_count": 0,
+            "unembedded_count": 100,
+            "uncompiled_count": 100,
+            "stale_minutes": 480,
+            "metadata": {},
+        }
+        for index in range(120)
+    ]
+
+    health = get_source_sync_health(supabase)
+
+    assert health["counts"]["sources"] == 120
+    assert health["counts"]["alerts"] >= 120
+    assert len(health["sources"]) == health["thresholds"]["maxReturnedSources"]
+    assert len(health["alerts"]) == health["thresholds"]["maxReturnedAlerts"]
+
+
 def test_persist_source_sync_alerts_upserts_and_resolves():
     supabase = _FakeSupabase()
     _seed_empty_tables(supabase)

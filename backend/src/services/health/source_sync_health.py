@@ -18,6 +18,12 @@ STALE_EXTRACTION_MINUTES = 24 * 60
 EMBEDDING_BACKLOG_WARNING = 25
 COMPILER_BACKLOG_WARNING = 25
 FAILED_JOB_WARNING = 1
+DOCUMENT_HEALTH_SAMPLE_LIMIT = 2500
+CHUNK_HEALTH_SAMPLE_LIMIT = 5000
+JOB_HEALTH_SAMPLE_LIMIT = 5000
+MAX_RETURNED_SOURCES = 80
+MAX_RETURNED_ALERTS = 80
+MAX_RETURNED_STUCK_ITEMS = 25
 
 GRAPH_SOURCE_LABELS = {
     "outlook_email": "Outlook email",
@@ -96,6 +102,22 @@ def _table_rows(
         offset += page_size
 
     return rows[:limit] if limit else rows
+
+
+def _sorted_sources(sources: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    status_rank = {"critical": 0, "warning": 1, "unknown": 2, "healthy": 3}
+    return sorted(
+        sources,
+        key=lambda source: (
+            status_rank.get(str(source.get("status")), 4),
+            source.get("source") or "",
+            source.get("resourceName") or "",
+        ),
+    )
+
+
+def _limited_rows(rows: Sequence[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
+    return list(rows[:limit])
 
 
 def _counter(rows: Iterable[Dict[str, Any]], key: str, fallback: str = "unknown") -> Dict[str, int]:
@@ -587,17 +609,25 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         supabase,
         "document_metadata",
         "id,title,url,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at,fireflies_id,project_id",
+        limit=DOCUMENT_HEALTH_SAMPLE_LIMIT,
     )
-    chunks = _table_rows(supabase, "document_chunks", "document_id,chunk_id")
+    chunks = _table_rows(
+        supabase,
+        "document_chunks",
+        "document_id,chunk_id",
+        limit=CHUNK_HEALTH_SAMPLE_LIMIT,
+    )
     fireflies_jobs = _table_rows(
         supabase,
         "fireflies_ingestion_jobs",
         "fireflies_id,stage,error_message,last_attempt_at,updated_at,metadata_id",
+        limit=JOB_HEALTH_SAMPLE_LIMIT,
     )
     source_jobs = _table_rows(
         supabase,
         "source_intelligence_jobs",
         "status,source_document_id,last_error,queued_at,started_at,finished_at,updated_at",
+        limit=JOB_HEALTH_SAMPLE_LIMIT,
     )
     packet_jobs = _table_rows(
         supabase,
@@ -792,6 +822,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
 
     alerts = detect_source_sync_alerts(sources, pipeline, now)
     stuck_items = _stuck_item_rows(fireflies_jobs, documents, now)
+    sorted_sources = _sorted_sources(sources)
     unhealthy = any(source["status"] in {"warning", "critical", "unknown"} for source in sources)
     status = "degraded" if unhealthy or alerts else "healthy"
 
@@ -806,15 +837,18 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
             "embeddingBacklogWarning": EMBEDDING_BACKLOG_WARNING,
             "compilerBacklogWarning": COMPILER_BACKLOG_WARNING,
             "failedJobWarning": FAILED_JOB_WARNING,
+            "documentHealthSampleLimit": DOCUMENT_HEALTH_SAMPLE_LIMIT,
+            "chunkHealthSampleLimit": CHUNK_HEALTH_SAMPLE_LIMIT,
+            "jobHealthSampleLimit": JOB_HEALTH_SAMPLE_LIMIT,
+            "maxReturnedSources": MAX_RETURNED_SOURCES,
+            "maxReturnedAlerts": MAX_RETURNED_ALERTS,
+            "maxReturnedStuckItems": MAX_RETURNED_STUCK_ITEMS,
         },
-        "sources": sorted(
-            sources,
-            key=lambda source: (source["status"] == "healthy", source["source"], source["resourceName"]),
-        ),
+        "sources": _limited_rows(sorted_sources, MAX_RETURNED_SOURCES),
         "pipeline": pipeline,
-        "alerts": alerts,
+        "alerts": _limited_rows(alerts, MAX_RETURNED_ALERTS),
         "recentRuns": _recent_run_rows(sync_runs),
-        "stuckItems": stuck_items,
+        "stuckItems": _limited_rows(stuck_items, MAX_RETURNED_STUCK_ITEMS),
         "counts": {
             "sources": len(sources),
             "alerts": len(alerts),
