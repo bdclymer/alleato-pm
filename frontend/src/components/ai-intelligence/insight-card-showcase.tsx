@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, Clock, ExternalLink, ThumbsDown, ThumbsUp } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge, InfoAlert, SectionHeader, StatusBadge } from "@/components/ds";
 import {
@@ -14,7 +16,10 @@ import {
   MorphingDialogTitle,
   MorphingDialogTrigger,
 } from "@/components/motion/morphing-dialog";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
 import type { ConfidenceLevel, InsightCard } from "@/lib/ai/intelligence/types";
 import { cn } from "@/lib/utils";
 
@@ -209,6 +214,56 @@ function InsightArticleCard({
   const whyItMatters = cleanInsightText(card.whyItMatters);
   const nextAction = cleanInsightText(card.nextAction);
   const visibleEvidence = card.evidence.slice(0, 3);
+  const [feedbackSignal, setFeedbackSignal] = useState<"wrong" | "stale" | null>(null);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+
+  async function submitFeedback(signal: "useful" | "wrong" | "stale") {
+    setFeedbackBusy(true);
+    try {
+      await apiFetch("/api/ai-assistant/packet-card-feedback", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          insightCardId: card.id,
+          signal,
+          reason:
+            signal === "useful"
+              ? "Card was marked useful from Project Intelligence."
+              : feedbackText || null,
+          correction: signal === "useful" ? null : feedbackText || null,
+          cardSnapshot: {
+            id: card.id,
+            title: card.title,
+            cardType: card.cardType,
+            currentStatus: card.currentStatus,
+            confidence: card.confidence,
+            summary: card.summary,
+            nextAction: card.nextAction,
+            evidenceCount: card.evidence.length,
+          },
+          metadata: {
+            projectId,
+            surface: "project_intelligence_card",
+          },
+        }),
+      });
+      toast.success(
+        signal === "useful"
+          ? "Card feedback saved"
+          : "Card review queued",
+      );
+      setFeedbackSignal(null);
+      setFeedbackText("");
+    } catch (error) {
+      toast.error("Could not save card feedback", {
+        description: error instanceof Error ? error.message : "Unexpected error",
+      });
+    } finally {
+      setFeedbackBusy(false);
+    }
+  }
 
   return (
     <MorphingDialog
@@ -291,6 +346,63 @@ function InsightArticleCard({
                     </div>
                   </InfoAlert>
                 ) : null}
+
+                <div className="space-y-3 border-t border-border pt-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={feedbackBusy}
+                      onClick={() => void submitFeedback("useful")}
+                    >
+                      <ThumbsUp className="mr-1.5 h-3.5 w-3.5" />
+                      Useful
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={feedbackSignal === "wrong" ? "default" : "outline"}
+                      size="sm"
+                      disabled={feedbackBusy}
+                      onClick={() => setFeedbackSignal("wrong")}
+                    >
+                      <ThumbsDown className="mr-1.5 h-3.5 w-3.5" />
+                      Wrong
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={feedbackSignal === "stale" ? "default" : "outline"}
+                      size="sm"
+                      disabled={feedbackBusy}
+                      onClick={() => setFeedbackSignal("stale")}
+                    >
+                      <Clock className="mr-1.5 h-3.5 w-3.5" />
+                      Stale
+                    </Button>
+                  </div>
+                  {feedbackSignal ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={feedbackText}
+                        onChange={(event) => setFeedbackText(event.target.value)}
+                        placeholder={
+                          feedbackSignal === "wrong"
+                            ? "What should this card say instead?"
+                            : "What is stale or missing?"
+                        }
+                        className="min-h-24"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={feedbackBusy}
+                        onClick={() => void submitFeedback(feedbackSignal)}
+                      >
+                        Queue review
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
 
                 {visibleEvidence.length > 0 ? (
                   <div className="space-y-4">

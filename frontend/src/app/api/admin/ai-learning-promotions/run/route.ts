@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
-import { generateRetrievalPromotionCandidates } from "@/lib/ai/services/feedback-event-service";
+import {
+  generateRetrievalPromotionCandidates,
+  generateTaskPromotionCandidates,
+} from "@/lib/ai/services/feedback-event-service";
 
 import { requireAdmin } from "../../intelligence-compiler/_shared";
 
 const RunLearningPromotionsSchema = z.object({
+  scope: z.enum(["all", "retrieval", "tasks"]).default("all"),
   windowDays: z.number().int().min(1).max(90).default(30),
   minHelpfulSignals: z.number().int().min(2).max(25).default(3),
   minProblemSignals: z.number().int().min(2).max(25).default(2),
@@ -24,7 +28,31 @@ export const POST = withApiGuardrails(
       "api.admin.ai-learning-promotions.run.POST",
     );
 
-    const result = await generateRetrievalPromotionCandidates(body);
-    return NextResponse.json(result);
+    const retrieval =
+      body.scope === "all" || body.scope === "retrieval"
+        ? await generateRetrievalPromotionCandidates(body)
+        : null;
+    const tasks =
+      body.scope === "all" || body.scope === "tasks"
+        ? await generateTaskPromotionCandidates(body)
+        : null;
+
+    return NextResponse.json({
+      inspectedRows:
+        (retrieval?.inspectedRows ?? 0) + (tasks?.inspectedRows ?? 0),
+      candidatesFound:
+        (retrieval?.candidatesFound ?? 0) + (tasks?.candidatesFound ?? 0),
+      candidatesCreated:
+        (retrieval?.candidatesCreated ?? 0) + (tasks?.candidatesCreated ?? 0),
+      candidatesSkipped:
+        (retrieval?.candidatesSkipped ?? 0) + (tasks?.candidatesSkipped ?? 0),
+      dryRun: body.dryRun,
+      retrieval,
+      tasks,
+      candidates: [
+        ...(retrieval?.candidates ?? []),
+        ...(tasks?.candidates ?? []),
+      ],
+    });
   },
 );
