@@ -108,7 +108,7 @@ function SourceRow({
         href={sourceUrl}
         target="_blank"
         rel="noreferrer"
-        className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground hover:decoration-foreground"
+        className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 border-b border-border pb-0.5 text-muted-foreground hover:border-foreground hover:text-foreground"
       >
         {content}
       </a>
