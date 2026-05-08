@@ -151,7 +151,7 @@ export function BrandonDailyUpdateWidgetCard({
     <div className="mb-4 rounded-lg border border-border bg-background p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="text-base font-semibold text-foreground">Daily update for Brandon</div>
+          <div className="text-base font-semibold text-foreground">Daily Brief for Brandon</div>
           <p className="mt-1 text-sm text-muted-foreground">
             What needs a decision, what is blocked on others, and what changed across the business.
           </p>
@@ -163,7 +163,7 @@ export function BrandonDailyUpdateWidgetCard({
           href="/executive"
           className="inline-flex items-center gap-1 text-sm font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Open executive brief
+          Open Daily Brief
           <FileText className="h-4 w-4" />
         </Link>
       </div>

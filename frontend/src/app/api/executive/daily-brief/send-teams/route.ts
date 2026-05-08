@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/executive/daily-brief/send-teams
  *
- * Generate (or load from cache) today's executive brief and deliver it as a
+ * Refresh today's Daily Brief from current source records and deliver it as a
  * conversational Teams message via the Archon bot.
  *
  * Auth: Bearer CRON_SECRET  OR  active Supabase session (any logged-in user
@@ -65,6 +65,7 @@ export const POST = withApiGuardrails("executive/daily-brief/send-teams#POST", a
 
   const result = await sendApprovedExecutiveBriefingToTeams({
     userId: body.userId,
+    sourceBackedOnly: true,
   });
   if (result.ok) {
     return NextResponse.json(result);

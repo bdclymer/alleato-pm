@@ -4,10 +4,12 @@ import { createServiceClient } from "@/lib/supabase/service";
 import {
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
   DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL,
-  generateBrandonDailyUpdate,
-  type BrandonBriefItem,
-  type BrandonDailyUpdatePacket,
-} from "@/lib/executive/brandon-daily-update";
+  generateDailyBrief,
+  loadLiveDailyBriefSourceCoverage,
+  type DailyBriefItem as BrandonBriefItem,
+  type DailyBriefPacket as BrandonDailyUpdatePacket,
+  type DailyBriefRefreshRecord,
+} from "@/lib/executive/daily-brief";
 
 type DailyRecapRow = Database["public"]["Tables"]["daily_recaps"]["Row"];
 type DailyRecapInsert = Database["public"]["Tables"]["daily_recaps"]["Insert"];
@@ -154,6 +156,69 @@ function projectCount(packet: BrandonDailyUpdatePacket) {
       .map((item) => item.project)
       .filter(Boolean),
   ).size;
+}
+
+function briefItemCounts(packet: BrandonDailyUpdatePacket) {
+  return {
+    needsBrandon: packet.sections.needsBrandon.length,
+    waitingOnOthers: packet.sections.waitingOnOthers.length,
+    importantUpdates: packet.sections.importantUpdates.length,
+  };
+}
+
+function buildRefreshRecord(
+  packet: BrandonDailyUpdatePacket,
+  version: number,
+  storedAt: string,
+): DailyBriefRefreshRecord {
+  return {
+    version,
+    generatedAt: packet.generatedAt,
+    storedAt,
+    windowDays: packet.windowDays,
+    itemCounts: briefItemCounts(packet),
+  };
+}
+
+function withDailyBriefVersionMetadata(
+  packet: BrandonDailyUpdatePacket,
+  previousPacket: BrandonDailyUpdatePacket | null,
+): BrandonDailyUpdatePacket {
+  const storedAt = new Date().toISOString();
+  const previousHistory = previousPacket?.refreshHistory ?? [];
+  const previousVersion = previousPacket
+    ? (previousPacket.briefVersion ?? Math.max(previousHistory.length, 1))
+    : 0;
+  const nextVersion = previousVersion + 1;
+  const history = [...previousHistory];
+
+  if (previousPacket) {
+    const previousRecord = buildRefreshRecord(
+      previousPacket,
+      previousVersion,
+      storedAt,
+    );
+    const alreadyRecorded = history.some(
+      (record) =>
+        record.version === previousRecord.version &&
+        record.generatedAt === previousRecord.generatedAt,
+    );
+    if (!alreadyRecorded) {
+      history.push(previousRecord);
+    }
+  }
+
+  return {
+    ...packet,
+    canonicalName: "Daily Brief",
+    audiencePreset: "brandon",
+    briefVersion: nextVersion,
+    refreshHistory: history.slice(-20),
+  };
+}
+
+function toSupabaseJson(value: unknown): Json {
+  return JSON.parse(JSON.stringify(value)) as Json;
 }
 
 function backfillCitations(item: BrandonBriefItem): BrandonBriefItem {
@@ -317,13 +382,20 @@ async function upsertFollowUps(
 
 export async function regenerateExecutiveBriefingDraft(options?: {
   windowDays?: number;
+  sourceBackedOnly?: boolean;
 }) {
   const windowDays = options?.windowDays ?? DEFAULT_EXECUTIVE_WINDOW_DAYS;
-  const packet = await generateBrandonDailyUpdate({ windowDays });
+  const packet = await generateDailyBrief({
+    windowDays,
+    preset: "brandon",
+    sourceBackedOnly: options?.sourceBackedOnly,
+  });
   const dateRange = getDateRange(windowDays);
   const existingDraft = await loadExistingDraft(dateRange.recapDate);
+  const previousPacket = parseStoredPacket(existingDraft?.briefing_packet ?? null);
+  const versionedPacket = withDailyBriefVersionMetadata(packet, previousPacket);
   const supabase = createServiceClient();
-  const recapText = buildRecapText(packet);
+  const recapText = buildRecapText(versionedPacket);
 
   const row: DailyRecapInsert = {
     id: existingDraft?.id,
@@ -334,10 +406,10 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     recap_text: recapText,
     recap_html: null,
     meeting_count:
-      packet.sourceCoverage.find((source) => source.label === "Meeting")
+      versionedPacket.sourceCoverage.find((source) => source.label === "Meeting")
         ?.count ?? 0,
-    project_count: projectCount(packet),
-    briefing_packet: packet as unknown as Json,
+    project_count: projectCount(versionedPacket),
+    briefing_packet: toSupabaseJson(versionedPacket),
     workflow_status: "approved",
     approved_at: new Date().toISOString(),
     approved_by: null,
@@ -371,7 +443,7 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     );
   }
 
-  await upsertFollowUps(data.id, packet);
+  await upsertFollowUps(data.id, versionedPacket);
 
   return {
     draft: {
@@ -380,7 +452,7 @@ export async function regenerateExecutiveBriefingDraft(options?: {
       workflowStatus: data.workflow_status as "draft" | "approved",
       approvedAt: data.approved_at,
       approvedBy: data.approved_by,
-      packet,
+      packet: versionedPacket,
       createdAt: data.created_at,
       updatedSummary: data.recap_text,
     },
@@ -407,7 +479,13 @@ export async function getExecutiveBriefingDashboard(options?: {
   const windowDays = options?.windowDays ?? DEFAULT_EXECUTIVE_WINDOW_DAYS;
   const { recapDate } = getDateRange(windowDays);
   const existingDraft = await loadExistingDraft(recapDate);
-  const packet = parseStoredPacket(existingDraft?.briefing_packet ?? null);
+  const storedPacket = parseStoredPacket(existingDraft?.briefing_packet ?? null);
+  const packet = storedPacket
+    ? {
+        ...storedPacket,
+        sourceCoverage: await loadLiveDailyBriefSourceCoverage(windowDays),
+      }
+    : null;
   const draft =
     existingDraft && packet
       ? {

@@ -7,7 +7,7 @@ import { ExecutiveBriefEmailForm } from "@/components/executive/executive-brief-
 import { Button } from "@/components/ui/button";
 import { AdminActionCards } from "./admin-action-cards";
 import { createServiceClient } from "@/lib/supabase/service";
-import { DEFAULT_EXECUTIVE_WINDOW_DAYS } from "@/lib/executive/brandon-daily-update";
+import { DEFAULT_EXECUTIVE_WINDOW_DAYS } from "@/lib/executive/daily-brief";
 import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -28,7 +28,7 @@ async function loadEmailFormData() {
       .single();
 
     const defaultRecipient = person?.email ?? "";
-    const defaultSubject = `Daily operating brief — ${draft.recapDate}`;
+    const defaultSubject = `Daily Brief — ${draft.recapDate}`;
     return { draftId: draft.id, defaultRecipient, defaultSubject };
   } catch {
     return null;
@@ -67,15 +67,15 @@ export default async function AdminActionsPage({
           focused on results, and keep triggers here.
         </p>
         <Button asChild variant="outline" size="sm">
-          <Link href="/executive">Open executive brief</Link>
+          <Link href="/executive">Open Daily Brief</Link>
         </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <ActionCard
-          title="Send Executive Brief"
+          title="Send Daily Brief"
           badge="Email"
-          description="Generate and send the Brandon daily operating brief. Same pipeline the scheduled job uses."
+          description="Send the current Daily Brief through the Brandon email preset. Same packet the scheduled delivery uses."
         >
           {emailData ? (
             <ExecutiveBriefEmailForm
@@ -85,7 +85,7 @@ export default async function AdminActionsPage({
             />
           ) : (
             <p className="text-sm text-muted-foreground">
-              No draft found. The executive briefing workflow may not have run yet today.
+              No Daily Brief draft found. The refresh workflow may not have run yet today.
             </p>
           )}
         </ActionCard>
@@ -113,7 +113,7 @@ function ActionStatusBanner({
       }
     >
       <div className="font-medium">
-        {status === "sent" ? "Executive brief email sent" : "Executive brief email failed"}
+        {status === "sent" ? "Daily Brief email sent" : "Daily Brief email failed"}
       </div>
       <p className="mt-1 opacity-90">{message}</p>
     </div>

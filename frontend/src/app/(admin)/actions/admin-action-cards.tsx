@@ -290,7 +290,7 @@ function ProcoreCrawlCard() {
   );
 }
 
-// ── 4. Executive brief regenerate ─────────────────────────────────────────────
+// ── 4. Daily Brief refresh ────────────────────────────────────────────────────
 
 function RegenerateBriefCard() {
   const [status, setStatus] = React.useState<ActionStatus>("idle");
@@ -299,26 +299,29 @@ function RegenerateBriefCard() {
 
   const run = async () => {
     setStatus("running");
-    setMessage(`Regenerating ${days}-day executive brief…`);
+    setMessage(`Refreshing ${days}-day Daily Brief…`);
     try {
-      const data = await apiFetch<{ message?: string }>("/api/executive/brandon-daily-update", {
-        method: "GET",
-      });
+      const data = await apiFetch<{ message?: string }>(
+        `/api/executive/daily-brief?fresh=true&mode=source-backed&days=${days}`,
+        {
+          method: "GET",
+        },
+      );
       setStatus("success");
-      setMessage("Brief regenerated. Reload the executive page to see it.");
+      setMessage("Daily Brief refreshed. Reload the executive page to see it.");
       void data;
     } catch (e) {
       setStatus("error");
-      setMessage(e instanceof Error ? e.message : "Regeneration failed.");
+      setMessage(e instanceof Error ? e.message : "Daily Brief refresh failed.");
     }
   };
 
   return (
     <ActionCard
-      title="Regenerate Brief"
+      title="Refresh Daily Brief"
       badge="AI"
       icon={RefreshCw}
-      description="Force-regenerate the Brandon executive brief for a given look-back window."
+      description="Refresh the canonical Daily Brief packet from current source records. Brandon delivery uses this same packet as a preset."
     >
       <div className="flex items-center gap-2">
         <Select
@@ -337,7 +340,7 @@ function RegenerateBriefCard() {
         </Select>
         <Button size="sm" onClick={run} disabled={status === "running"}>
           {status === "running" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-          Generate
+          Refresh
         </Button>
       </div>
       <StatusBadge status={status} message={message} />
@@ -565,7 +568,7 @@ function SeedTeamsConversationCard() {
   );
 }
 
-// ── Send executive brief to Teams ────────────────────────────────────────────
+// ── Send Daily Brief to Teams ─────────────────────────────────────────────────
 
 function SendBriefToTeamsCard() {
   const [status, setStatus] = React.useState<ActionStatus>("idle");
@@ -573,7 +576,7 @@ function SendBriefToTeamsCard() {
 
   const run = async () => {
     setStatus("running");
-    setMessage("Generating brief and sending to Teams…");
+    setMessage("Sending the current Daily Brief to Teams…");
     try {
       const data = await apiFetch<{ recipientName?: string; itemCount?: number }>(
         "/api/executive/daily-brief/send-teams",
@@ -591,10 +594,10 @@ function SendBriefToTeamsCard() {
 
   return (
     <ActionCard
-      title="Send Brief to Teams"
+      title="Send Daily Brief to Teams"
       badge="Teams"
       icon={MessageSquare}
-      description="Deliver today's executive operating brief as a conversational Teams message via the Archon bot. Uses the cached brief if already generated today."
+      description="Deliver today's Daily Brief through the Brandon Teams preset. Uses the current canonical packet if already refreshed today."
     >
       <Button size="sm" onClick={run} disabled={status === "running"} className="w-full">
         {status === "running" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="h-3.5 w-3.5" />}

@@ -1,6 +1,6 @@
 const mockCreateServiceClient = jest.fn();
 const mockSendProactiveMessage = jest.fn();
-const mockGetExecutiveBriefingDashboard = jest.fn();
+const mockRegenerateExecutiveBriefingDraft = jest.fn();
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: () => mockCreateServiceClient(),
@@ -13,8 +13,8 @@ jest.mock("@/lib/bot/teams-chat", () => ({
 
 jest.mock("@/lib/executive/executive-briefing-workflow", () => ({
   CEO_EXECUTIVE_BRIEFING_RECAP_KIND: "executive_briefing",
-  getExecutiveBriefingDashboard: (...args: unknown[]) =>
-    mockGetExecutiveBriefingDashboard(...args),
+  regenerateExecutiveBriefingDraft: (...args: unknown[]) =>
+    mockRegenerateExecutiveBriefingDraft(...args),
 }));
 
 jest.mock("../brandon-daily-update", () => ({
@@ -94,8 +94,8 @@ describe("executive briefing Teams delivery", () => {
     });
   });
 
-  it("does not send draft briefings to Teams", async () => {
-    mockGetExecutiveBriefingDashboard.mockResolvedValue({
+  it("regenerates the current brief before sending to Teams", async () => {
+    mockRegenerateExecutiveBriefingDraft.mockResolvedValue({
       draft: {
         id: "draft-1",
         workflowStatus: "draft",
@@ -107,19 +107,21 @@ describe("executive briefing Teams delivery", () => {
       userId: "user-1",
     });
 
-    expect(result).toEqual({
-      ok: false,
-      status: "skipped",
-      reason: "Executive briefing draft is not approved.",
+    expect(result).toMatchObject({
+      ok: true,
+      status: "sent",
       draftId: "draft-1",
-      workflowStatus: "draft",
-      userId: "user-1",
+      itemCount: 1,
     });
-    expect(mockSendProactiveMessage).not.toHaveBeenCalled();
+    expect(mockRegenerateExecutiveBriefingDraft).toHaveBeenCalledWith({
+      windowDays: 3,
+      sourceBackedOnly: true,
+    });
+    expect(mockSendProactiveMessage).toHaveBeenCalledTimes(1);
   });
 
-  it("sends approved briefings and records the sent flag", async () => {
-    mockGetExecutiveBriefingDashboard.mockResolvedValue({
+  it("refreshes the latest source-backed brief before sending and records the sent flag", async () => {
+    mockRegenerateExecutiveBriefingDraft.mockResolvedValue({
       draft: {
         id: "draft-1",
         workflowStatus: "approved",
@@ -135,9 +137,11 @@ describe("executive briefing Teams delivery", () => {
       ok: true,
       status: "sent",
       draftId: "draft-1",
-      userId: "user-1",
-      recipientName: "Brandon",
       itemCount: 1,
+    });
+    expect(mockRegenerateExecutiveBriefingDraft).toHaveBeenCalledWith({
+      windowDays: 3,
+      sourceBackedOnly: true,
     });
     expect(mockSendProactiveMessage).toHaveBeenCalledWith(
       "user-1",
@@ -145,12 +149,25 @@ describe("executive briefing Teams delivery", () => {
     );
   });
 
-  it("uses a neutral greeting when no real recipient name exists", () => {
-    const message = formatExecutiveBriefingTeamsMessage(packet, null);
+  it("uses a morning greeting before noon Eastern", () => {
+    const message = formatExecutiveBriefingTeamsMessage(packet, null, {
+      now: new Date("2026-05-08T13:00:00.000Z"),
+    });
 
     expect(message).toContain(
       "Good morning. Here's your approved daily operating brief",
     );
     expect(message).not.toContain("there");
+  });
+
+  it("uses an evening greeting for the 6pm Eastern send", () => {
+    const message = formatExecutiveBriefingTeamsMessage(packet, "Brandon", {
+      now: new Date("2026-05-08T22:00:00.000Z"),
+    });
+
+    expect(message).toContain(
+      "Good evening, Brandon! Here's your approved daily operating brief",
+    );
+    expect(message).not.toContain("Good morning");
   });
 });

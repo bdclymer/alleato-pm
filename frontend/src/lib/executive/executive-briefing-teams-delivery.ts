@@ -17,6 +17,7 @@ export type ExecutiveBriefingTeamsSendResult =
       draftId: string;
       recipients: Array<{ userId: string; recipientName: string | null }>;
       itemCount: number;
+      refreshedAt: string;
     }
   | {
       ok: false;
@@ -41,18 +42,35 @@ function formatSection(items: BrandonBriefItem[], cap = 5): string {
 export function formatExecutiveBriefingTeamsMessage(
   packet: BrandonDailyUpdatePacket,
   firstName: string | null,
+  options: { now?: Date } = {},
 ): string {
+  const now = options.now ?? new Date();
   const today = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     timeZone: "America/New_York",
-  }).format(new Date());
+  }).format(now);
 
   const { needsBrandon, waitingOnOthers, importantUpdates } = packet.sections;
   const totalItems =
     needsBrandon.length + waitingOnOthers.length + importantUpdates.length;
-  const greeting = firstName ? `Good morning, ${firstName}!` : "Good morning.";
+  const easternHour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: "America/New_York",
+    }).format(now),
+  );
+  const daypart =
+    easternHour < 12
+      ? "morning"
+      : easternHour < 17
+        ? "afternoon"
+        : "evening";
+  const greeting = firstName
+    ? `Good ${daypart}, ${firstName}!`
+    : `Good ${daypart}.`;
 
   const lines: string[] = [
     `${greeting} Here's your approved daily operating brief for **${today}**: ${totalItems} item${totalItems === 1 ? "" : "s"} across ${packet.windowDays} day${packet.windowDays === 1 ? "" : "s"}.`,
@@ -129,6 +147,7 @@ async function getTeamsRecipientFirstName(userId: string) {
 export async function sendApprovedExecutiveBriefingToTeams(
   options: {
     userId?: string | null;
+    sourceBackedOnly?: boolean;
   } = {},
 ): Promise<ExecutiveBriefingTeamsSendResult> {
   const targetUserIds = await resolveAllTeamsUserIds(options.userId);
@@ -146,7 +165,9 @@ export async function sendApprovedExecutiveBriefingToTeams(
   // Generate the brief once, then fan out to all recipients
   const { draft } = await regenerateExecutiveBriefingDraft({
     windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
+    sourceBackedOnly: options.sourceBackedOnly ?? true,
   });
+  const refreshedAt = new Date().toISOString();
 
   const itemCount =
     draft.packet.sections.needsBrandon.length +
@@ -183,5 +204,6 @@ export async function sendApprovedExecutiveBriefingToTeams(
     draftId: draft.id,
     recipients,
     itemCount,
+    refreshedAt,
   };
 }

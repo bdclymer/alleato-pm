@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { formatAIProviderFailure } from "@/lib/ai/provider-config";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   EMBEDDING,
@@ -54,9 +55,25 @@ export type BrandonBriefSourceCoverage = {
   warning?: string;
 };
 
+export type DailyBriefRefreshRecord = {
+  version: number;
+  generatedAt: string;
+  storedAt: string;
+  windowDays: number;
+  itemCounts: {
+    needsBrandon: number;
+    waitingOnOthers: number;
+    importantUpdates: number;
+  };
+};
+
 export type BrandonDailyUpdatePacket = {
   generatedAt: string;
   windowDays: number;
+  canonicalName?: "Daily Brief";
+  audiencePreset?: "brandon";
+  briefVersion?: number;
+  refreshHistory?: DailyBriefRefreshRecord[];
   retrievalOrder: string[];
   sections: {
     needsBrandon: BrandonBriefItem[];
@@ -360,6 +377,25 @@ const FALLBACK_KEYWORDS = [
   "retainage",
 ];
 
+const EXECUTIVE_BRIEFING_EMBEDDING_TIMEOUT_MS = 15_000;
+
+function withBriefingTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  label: string,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise
+      .then(resolve)
+      .catch(reject)
+      .finally(() => clearTimeout(timeout));
+  });
+}
+
 function compactText(value: unknown, maxLength = 720): string {
   return normalizeText(value).slice(0, maxLength);
 }
@@ -437,7 +473,9 @@ function isRecentSourceRow(
   return parsed !== null && getEasternDateKey(parsed) >= cutoffDateKey;
 }
 
-export function getHitDateAnchor(hit: RankedHit): string | null {
+export function getHitDateAnchor(
+  hit: Pick<RankedHit, "metadata" | "row">,
+): string | null {
   const rowSourceCategory = hit.metadata?.category ?? hit.row.doc_category ?? null;
   const anchorLikeSource: RecentSourceRow = {
     category: rowSourceCategory,
@@ -1061,6 +1099,7 @@ async function loadRecentSourceCoverage(
   const cutoffDateKey = getEasternDateKey(
     parseDate(cutoffIso) ?? new Date(cutoffIso),
   );
+  const queryCutoffIso = `${cutoffDateKey}T00:00:00.000Z`;
 
   const coverageQueries = await Promise.all(
     SOURCE_GROUPS.map(async (group) => {
@@ -1068,7 +1107,7 @@ async function loadRecentSourceCoverage(
         .from("document_metadata")
         .select("date,created_at,captured_at,category,type")
         .or(
-          `date.gte.${cutoffIso},created_at.gte.${cutoffIso},captured_at.gte.${cutoffIso}`,
+          `date.gte.${queryCutoffIso},created_at.gte.${queryCutoffIso},captured_at.gte.${queryCutoffIso}`,
         );
 
       if (group.label === "Email") {
@@ -1115,6 +1154,14 @@ async function loadRecentSourceCoverage(
   );
 
   return coverageQueries;
+}
+
+export async function loadLiveBrandonSourceCoverage(
+  windowDays = DEFAULT_EXECUTIVE_WINDOW_DAYS,
+): Promise<BrandonBriefSourceCoverage[]> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - Math.max(windowDays - 1, 0));
+  return loadRecentSourceCoverage(cutoff.toISOString());
 }
 
 function dedupeHits(hits: RankedHit[]): RankedHit[] {
@@ -1392,7 +1439,7 @@ async function synthesizeSections(
     "Titles should be specific, not bucket names. Bullets should be short facts, not paragraphs. " +
     "Tone must be one of risk, watch, good, neutral.";
   const user =
-    "Create the Brandon daily update from these retrieved source candidates. " +
+    "Create the Daily Brief using the Brandon audience preset from these retrieved source candidates. " +
     "Keep at most 4 needsBrandon, 4 waitingOnOthers, and 4 importantUpdates. " +
     "Only include items a construction business owner would reasonably care about today.\n\n" +
     JSON.stringify(candidatePayload, null, 2);
@@ -1433,7 +1480,10 @@ async function synthesizeSections(
       warnings: [],
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = formatAIProviderFailure(
+      error,
+      "Executive briefing synthesis",
+    );
     return {
       sections,
       modelUsed: synthesisModel,
@@ -1605,7 +1655,10 @@ async function enrichBriefSections(
       warnings: [],
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = formatAIProviderFailure(
+      error,
+      "Executive briefing evidence enrichment",
+    );
     return {
       sections: mapBriefSections(sections, (item) => ({
         ...item,
@@ -1619,33 +1672,69 @@ async function enrichBriefSections(
 }
 
 export async function generateBrandonDailyUpdate(
-  options: { windowDays?: number } = {},
+  options: { windowDays?: number; sourceBackedOnly?: boolean } = {},
 ): Promise<BrandonDailyUpdatePacket> {
   const windowDays = options.windowDays ?? DEFAULT_EXECUTIVE_WINDOW_DAYS;
+  const sourceBackedOnly = options.sourceBackedOnly ?? false;
   const windowStartDateKey = getWindowStartDateKey(windowDays);
   const cutoff = new Date(`${windowStartDateKey}T00:00:00-04:00`);
   const cutoffIso = cutoff.toISOString();
-  const openai = getOpenAI();
+  let openai: ReturnType<typeof getOpenAI> | null = null;
+  const preflightWarnings: string[] = [];
 
-  const embeddingsBySpec = await Promise.all(
-    QUERY_SPECS.map(async (spec) => ({
-      spec,
-      queryEmbedding: await generateEmbedding(
-        openai,
-        spec.query,
-        EMBEDDING.LARGE,
-      ),
-    })),
-  );
+  if (sourceBackedOnly) {
+    preflightWarnings.push(
+      "Daily Brief manual refresh used source-backed fallback mode, so vector search and LLM enrichment were skipped to keep the foreground action bounded.",
+    );
+  } else {
+    try {
+      openai = getOpenAI();
+    } catch (error) {
+      preflightWarnings.push(
+        `${formatAIProviderFailure(error, "Executive briefing provider setup")} The Daily Brief will continue with source-backed fallback retrieval.`,
+      );
+    }
+  }
 
-  const rawHitGroups = await Promise.all(
-    embeddingsBySpec.flatMap(({ spec, queryEmbedding }) =>
-      SOURCE_GROUPS.map(async (sourceGroup) => {
-        const rows = await runChunkSearch(queryEmbedding, sourceGroup);
-        return rows.map((row) => ({ spec, sourceGroup, row }));
-      }),
-    ),
-  );
+  if (!sourceBackedOnly && !openai) {
+    preflightWarnings.push(
+      "Daily Brief vector search was skipped because no OpenAI-compatible embedding client was available.",
+    );
+  }
+
+  let embeddingsBySpec: Array<{ spec: QuerySpec; queryEmbedding: string }>;
+  if (openai) {
+    try {
+      embeddingsBySpec = await Promise.all(
+        QUERY_SPECS.map(async (spec) => ({
+          spec,
+          queryEmbedding: await withBriefingTimeout(
+            generateEmbedding(openai, spec.query, EMBEDDING.LARGE),
+            EXECUTIVE_BRIEFING_EMBEDDING_TIMEOUT_MS,
+            `Daily Brief embedding query "${spec.title}"`,
+          ),
+        })),
+      );
+    } catch (error) {
+      preflightWarnings.push(
+        `${formatAIProviderFailure(error, "Executive briefing embedding generation")} The Daily Brief will continue with source-backed fallback retrieval.`,
+      );
+      embeddingsBySpec = [];
+    }
+  } else {
+    embeddingsBySpec = [];
+  }
+
+  const rawHitGroups = embeddingsBySpec.length
+    ? await Promise.all(
+        embeddingsBySpec.flatMap(({ spec, queryEmbedding }) =>
+          SOURCE_GROUPS.map(async (sourceGroup) => {
+            const rows = await runChunkSearch(queryEmbedding, sourceGroup);
+            return rows.map((row) => ({ spec, sourceGroup, row }));
+          }),
+        ),
+      )
+    : [];
   const rawHits = rawHitGroups.flat();
 
   const documentIds = [
@@ -1694,7 +1783,15 @@ export async function generateBrandonDailyUpdate(
     .map(makeFallbackItem)
     .filter((item): item is BrandonBriefItem => item !== null);
   const seededSections = assignHitsToSections(dedupedHits, fallbackItems);
-  const synthesizedResult = await synthesizeSections(seededSections);
+  const synthesizedResult = sourceBackedOnly
+    ? {
+        sections: seededSections,
+        modelUsed: "source-backed-fallback",
+        warnings: [
+          "Daily Brief synthesis skipped in source-backed fallback mode.",
+        ],
+      }
+    : await synthesizeSections(seededSections);
   const communicationSignalResult =
     await loadRecentCommunicationSignalItems(cutoffIso);
   const supportedResult = filterSupportedSections(
@@ -1703,7 +1800,14 @@ export async function generateBrandonDailyUpdate(
       communicationSignalResult.sections,
     ),
   );
-  const enrichedResult = await enrichBriefSections(supportedResult.sections);
+  const enrichedResult = sourceBackedOnly
+    ? {
+        sections: supportedResult.sections,
+        warnings: [
+          "Daily Brief evidence enrichment skipped in source-backed fallback mode.",
+        ],
+      }
+    : await enrichBriefSections(supportedResult.sections);
   const sections = enrichedResult.sections;
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
   const sourceCoverageWarnings = sourceCoverage
@@ -1711,6 +1815,7 @@ export async function generateBrandonDailyUpdate(
     .filter((warning): warning is string => Boolean(warning));
   const sourceHealthWarnings = [
     ...fallbackResult.warnings,
+    ...preflightWarnings,
     ...synthesizedResult.warnings,
     ...communicationSignalResult.warnings,
     ...supportedResult.warnings,

@@ -1,24 +1,26 @@
-# Brandon Daily Update
+# Daily Brief
 
 ## Purpose
 
-The Brandon Daily Update is an executive operating brief generated from recent company communication and meeting evidence. It is intended to answer three questions:
+The Daily Brief is the canonical executive operating brief generated from recent company communication and meeting evidence. The former "Brandon Daily Update" is now treated as the Brandon audience/channel preset for this same Daily Brief packet, not as a separate data pipeline. It is intended to answer three questions:
 
 1. What needs an owner-level decision or confirmation?
 2. What is waiting on another person, vendor, client, or internal team?
 3. What broader business signal is worth seeing today?
 
-The current source of truth is the persisted executive briefing draft in `daily_recaps` where `recap_kind = executive_briefing`. The older backend daily digest is a legacy meeting recap stored as `recap_kind = meeting_digest`; it should not be treated as the CEO operating brief.
+The current source of truth is the persisted Daily Brief draft in `daily_recaps` where `recap_kind = executive_briefing`. The older backend daily digest is a legacy meeting recap stored as `recap_kind = meeting_digest`; it should not be treated as the CEO operating brief.
 
-The main surface is a review and approval page. Teams delivery exists as both an explicit send endpoint and a weekday cron endpoint, and both paths send approved drafts only.
+The main surface is a review and approval page. Teams and email delivery are presets over the current approved/latest Daily Brief packet.
 
 ## Primary Entry Points
 
 - Page: `frontend/src/app/(main)/executive/page.tsx`
-- Generator: `frontend/src/lib/executive/brandon-daily-update.ts`
+- Canonical preset layer: `frontend/src/lib/executive/daily-brief.ts`
+- Legacy generator internals: `frontend/src/lib/executive/brandon-daily-update.ts`
 - Draft and follow-up workflow: `frontend/src/lib/executive/executive-briefing-workflow.ts`
 - Server actions: `frontend/src/app/(main)/actions/executive-briefing-actions.ts`
-- API route: `frontend/src/app/api/executive/brandon-daily-update/route.ts`
+- Canonical API route: `frontend/src/app/api/executive/daily-brief/route.ts`
+- Compatibility API alias: `frontend/src/app/api/executive/brandon-daily-update/route.ts`
 - Teams send route: `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
 - Approved-only Teams cron route: `frontend/src/app/api/cron/executive-daily-brief/route.ts`
 - Teams delivery helper: `frontend/src/lib/executive/executive-briefing-teams-delivery.ts`
@@ -35,11 +37,11 @@ http://localhost:3000/executive
 Manual API route:
 
 ```text
-http://localhost:3000/api/executive/brandon-daily-update?days=3
-http://localhost:3000/api/executive/brandon-daily-update?days=3&fresh=true
+http://localhost:3000/api/executive/daily-brief?days=3
+http://localhost:3000/api/executive/daily-brief?days=3&fresh=true
 ```
 
-The API route requires an authenticated user session. By default it returns the persisted draft for the day. Use `fresh=true` only when a caller intentionally wants to regenerate and save a new draft.
+The old `/api/executive/brandon-daily-update` route remains as a compatibility alias. New callers should use `/api/executive/daily-brief`.
 
 ## Data Flow
 
@@ -57,7 +59,7 @@ High-level flow:
   -> getExecutiveBriefingDashboard({ windowDays: 3 })
     -> load today's executive briefing draft from daily_recaps
     -> if no draft exists, regenerateExecutiveBriefingDraft()
-      -> generateBrandonDailyUpdate()
+      -> generateDailyBrief({ preset: "brandon" })
         -> embed query specs
         -> search_document_chunks by source group
         -> load document_metadata attribution
@@ -413,7 +415,14 @@ The page is intentionally framed as a review and approval surface. It is not an 
 
 ## API Route
 
-The API route is:
+The canonical API route is:
+
+```text
+GET /api/executive/daily-brief?days=3
+GET /api/executive/daily-brief?days=3&fresh=true
+```
+
+The legacy Brandon route remains as a compatibility alias:
 
 ```text
 GET /api/executive/brandon-daily-update?days=3
@@ -430,7 +439,7 @@ Behavior:
 
 Use the default behavior for inspection of the current reviewed draft. Use `fresh=true` only for deliberate regeneration.
 
-The widget route at `/api/executive/brandon-daily-update/widget` still returns a packet plus a widget payload for assistant/UI embedding.
+The canonical widget route at `/api/executive/daily-brief/widget` returns a packet plus a widget payload for assistant/UI embedding. `/api/executive/brandon-daily-update/widget` remains as a compatibility alias.
 
 ## Teams Delivery Route
 
@@ -514,7 +523,7 @@ Targeted lint:
 
 ```bash
 cd frontend
-npx eslint 'src/lib/executive/brandon-daily-update.ts' 'src/lib/executive/executive-briefing-workflow.ts' 'src/app/(main)/executive/page.tsx' 'src/app/(main)/actions/executive-briefing-actions.ts' 'src/app/api/executive/brandon-daily-update/route.ts'
+npx eslint 'src/lib/executive/daily-brief.ts' 'src/lib/executive/brandon-daily-update.ts' 'src/lib/executive/executive-briefing-workflow.ts' 'src/app/(main)/executive/page.tsx' 'src/app/(main)/actions/executive-briefing-actions.ts' 'src/app/api/executive/daily-brief/route.ts' 'src/app/api/executive/brandon-daily-update/route.ts'
 ```
 
 Manual generator check:
@@ -524,7 +533,7 @@ cd frontend
 set -a
 source ../.env
 set +a
-npm exec -- tsx -e "import { generateBrandonDailyUpdate } from './src/lib/executive/brandon-daily-update'; generateBrandonDailyUpdate({ windowDays: 3 }).then((packet) => console.log(JSON.stringify({ counts: { critical: packet.sections.needsBrandon.length, unblocks: packet.sections.waitingOnOthers.length, signals: packet.sections.importantUpdates.length }, generatedAt: packet.generatedAt, notes: packet.retrievalNotes }, null, 2))).catch((error) => { console.error(error); process.exit(1); });"
+npm exec -- tsx -e "import { generateDailyBrief } from './src/lib/executive/daily-brief'; generateDailyBrief({ windowDays: 3, preset: 'brandon' }).then((packet) => console.log(JSON.stringify({ counts: { critical: packet.sections.needsBrandon.length, unblocks: packet.sections.waitingOnOthers.length, signals: packet.sections.importantUpdates.length }, generatedAt: packet.generatedAt, notes: packet.retrievalNotes }, null, 2))).catch((error) => { console.error(error); process.exit(1); });"
 ```
 
 Browser verification:

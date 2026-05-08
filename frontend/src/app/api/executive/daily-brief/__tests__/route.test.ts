@@ -20,8 +20,8 @@ jest.mock("@/lib/executive/daily-brief", () => ({
     Number.isFinite(value) ? Math.min(Math.max(Math.trunc(value), 1), 14) : 3,
 }));
 
-import { GET } from "../route";
 import { NextRequest } from "next/server";
+import { GET } from "../route";
 
 const persistedPacket = {
   generatedAt: "2026-05-06T12:00:00.000Z",
@@ -41,7 +41,7 @@ const freshPacket = {
   generatedAt: "2026-05-06T13:00:00.000Z",
 };
 
-describe("/api/executive/brandon-daily-update", () => {
+describe("/api/executive/daily-brief", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRequireCurrentUserAppCapability.mockResolvedValue(undefined);
@@ -53,9 +53,9 @@ describe("/api/executive/brandon-daily-update", () => {
     });
   });
 
-  it("returns the persisted executive briefing draft by default", async () => {
+  it("returns the current canonical Daily Brief packet by default", async () => {
     const response = await GET(
-      new NextRequest("http://localhost/api/executive/brandon-daily-update"),
+      new NextRequest("http://localhost/api/executive/daily-brief"),
     );
 
     expect(response.status).toBe(200);
@@ -66,10 +66,10 @@ describe("/api/executive/brandon-daily-update", () => {
     expect(mockRegenerateExecutiveBriefingDraft).not.toHaveBeenCalled();
   });
 
-  it("regenerates only when fresh=true is requested", async () => {
+  it("refreshes the canonical packet only when fresh=true is requested", async () => {
     const response = await GET(
       new NextRequest(
-        "http://localhost/api/executive/brandon-daily-update?fresh=true&days=5",
+        "http://localhost/api/executive/daily-brief?fresh=true&days=5",
       ),
     );
 
@@ -80,5 +80,20 @@ describe("/api/executive/brandon-daily-update", () => {
       sourceBackedOnly: false,
     });
     expect(mockGetExecutiveBriefingDashboard).not.toHaveBeenCalled();
+  });
+
+  it("supports a source-backed refresh mode for foreground manual actions", async () => {
+    const response = await GET(
+      new NextRequest(
+        "http://localhost/api/executive/daily-brief?fresh=true&mode=source-backed&days=3",
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(freshPacket);
+    expect(mockRegenerateExecutiveBriefingDraft).toHaveBeenCalledWith({
+      windowDays: 3,
+      sourceBackedOnly: true,
+    });
   });
 });

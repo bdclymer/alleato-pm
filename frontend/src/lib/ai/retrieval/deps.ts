@@ -18,7 +18,7 @@ import { createProjectTools } from "@/lib/ai/tools/project-tools";
 import { createOperationalTools } from "@/lib/ai/tools/operational";
 import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
 import { createServiceClient } from "@/lib/supabase/service";
-import { generateBrandonDailyUpdate } from "@/lib/executive/brandon-daily-update";
+import { generateDailyBrief } from "@/lib/executive/daily-brief";
 import type { SourceSpecificRagKind } from "@/lib/ai/detect-rag-request";
 import { buildSourceSpecificRagAnswer } from "@/lib/ai/retrieval/source-specific-rag";
 import { loadReusableBriefingContext } from "@/lib/ai/retrieval/reusable-briefing";
@@ -172,10 +172,9 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
   };
 
   // 7. buildBrandonDaily
-  //    Generates the Brandon daily update packet using a 2-day window (same as
-  //    the window used by the existing chat route at line 2723).
+  //    Compatibility executor name for the Brandon preset of the canonical Daily Brief.
   const buildBrandonDaily = async (): Promise<unknown> => {
-    return generateBrandonDailyUpdate({ windowDays: 2 });
+    return generateDailyBrief({ windowDays: 2, preset: "brandon" });
   };
 
   // 8. resolveProjectFromQuery

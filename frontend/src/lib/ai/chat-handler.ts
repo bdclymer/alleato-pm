@@ -2895,7 +2895,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
           writeStrategistStatus(writer, {
             stage: "knowledge",
-            message: "Building Brandon's daily executive update",
+            message: "Loading Daily Brief with the Brandon preset",
             status: "loading",
           });
 
@@ -2921,6 +2921,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             input: {
               windowDays: 2,
               sourceOfTruth: "daily_recaps.recap_kind=executive_briefing",
+              preset: "brandon",
             },
             output: {
               needsBrandonCount: packet.sections.needsBrandon.length,
@@ -2966,7 +2967,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
           writeStrategistStatus(writer, {
             stage: "complete",
-            message: "Brandon daily update ready",
+            message: "Daily Brief ready",
             status: "success",
           });
           return;
