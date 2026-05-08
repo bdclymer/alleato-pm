@@ -23,6 +23,19 @@ describe("planRetrieval", () => {
     expect(plan.sources.externalSources).toBeUndefined();
   });
 
+  it("status question without selected project still emits packet retrieval", () => {
+    const message = "What's the status of the Vermillion Rise Warehouse project?";
+    const plan = planRetrieval({
+      message,
+      messages: [userMsg(message)],
+    });
+    expect(plan.responseFormat).toBe("briefing_template");
+    expect(plan.sources.intelligencePacket).toBeDefined();
+    expect(plan.sources.projectSnapshot).toBeDefined();
+    expect(plan.selectedProjectId).toBeUndefined();
+    expect(plan.reason).toBe("packet_first_resolve_from_text");
+  });
+
   it("source lookup question → source_lookup format with vector search only", () => {
     const message = "Show me the meeting where we discussed the slab pour timeline";
     const plan = planRetrieval({ message, messages: [userMsg(message)] });

@@ -13,6 +13,10 @@ export type ExecutorDeps = {
   loadReusableBriefing: (sessionId: string) => Promise<unknown>;
   runSourceSpecificRag: (kind: string, message: string) => Promise<unknown>;
   buildBrandonDaily: () => Promise<unknown>;
+  // Used when the plan asks for project-scoped retrieval but no explicit
+  // selectedProjectId was provided. Returns null if no project can be
+  // matched from the user's message text.
+  resolveProjectFromQuery?: (query: string) => Promise<{ projectId: number } | null>;
   externalTimeoutMs?: number;
 };
 
@@ -68,8 +72,33 @@ export async function executeRetrievalPlan(
     );
   }
 
-  if (plan.sources.intelligencePacket && plan.selectedProjectId) {
-    const projectId = plan.selectedProjectId;
+  // Resolve the projectId once for any project-scoped retrieval. If the plan
+  // didn't include selectedProjectId, fall back to resolving the project from
+  // the user's message text (e.g. "Vermillion Rise Warehouse"). Both
+  // intelligencePacket and projectSnapshot share this resolved id.
+  const needsProjectId =
+    Boolean(plan.sources.intelligencePacket) || Boolean(plan.sources.projectSnapshot);
+
+  let resolvedProjectId: number | undefined = plan.selectedProjectId;
+  if (needsProjectId && resolvedProjectId === undefined && deps.resolveProjectFromQuery) {
+    const start = Date.now();
+    try {
+      const resolved = await deps.resolveProjectFromQuery(ctx?.message ?? "");
+      if (resolved) {
+        resolvedProjectId = resolved.projectId;
+      } else {
+        warnings.push({
+          source: "project_resolution",
+          message: "could not resolve a project from the message text",
+        });
+      }
+    } finally {
+      durations.project_resolution = Date.now() - start;
+    }
+  }
+
+  if (plan.sources.intelligencePacket && resolvedProjectId !== undefined) {
+    const projectId = resolvedProjectId;
     tasks.push(
       time("intelligence_packet", async () => {
         result.intelligencePacket = (await deps.loadIntelligencePacket(projectId)) as never;
@@ -77,8 +106,8 @@ export async function executeRetrievalPlan(
     );
   }
 
-  if (plan.sources.projectSnapshot && plan.selectedProjectId) {
-    const projectId = plan.selectedProjectId;
+  if (plan.sources.projectSnapshot && resolvedProjectId !== undefined) {
+    const projectId = resolvedProjectId;
     tasks.push(
       time("project_snapshot", async () => {
         result.projectSnapshot = (await deps.loadProjectSnapshot(projectId)) as never;
@@ -103,7 +132,7 @@ export async function executeRetrievalPlan(
         const sourceResults = await Promise.all(
           sources.map(async (src) => {
             const r = await withTimeout(
-              deps.runExternalSourceSearch(src, query, plan.selectedProjectId),
+              deps.runExternalSourceSearch(src, query, resolvedProjectId),
               externalTimeout,
               src,
             );

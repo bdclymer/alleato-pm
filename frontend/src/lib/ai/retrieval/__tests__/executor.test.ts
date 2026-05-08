@@ -6,6 +6,7 @@ function makeStubDeps(opts: {
   delayEachMs?: number;
   externalSourceHangsMs?: number;
   externalTimeoutMs?: number;
+  resolvedProjectId?: number | null;
 } = {}): ExecutorDeps {
   const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
   return {
@@ -25,6 +26,13 @@ function makeStubDeps(opts: {
     loadReusableBriefing: jest.fn(async () => null as never),
     runSourceSpecificRag: jest.fn(async () => null as never),
     buildBrandonDaily: jest.fn(async () => ({ packet: {} } as never)),
+    resolveProjectFromQuery: jest.fn(async () =>
+      opts.resolvedProjectId === undefined
+        ? null
+        : opts.resolvedProjectId === null
+          ? null
+          : { projectId: opts.resolvedProjectId },
+    ),
     externalTimeoutMs: opts.externalTimeoutMs ?? 3000,
   };
 }
@@ -61,6 +69,27 @@ describe("executeRetrievalPlan", () => {
     expect(elapsed).toBeLessThan(380); // parallel ~200ms, not sequential 400ms
     expect(ctx.intelligencePacket).toBeDefined();
     expect(ctx.projectSnapshot).toBeDefined();
+  });
+
+  it("resolves project-scoped retrieval from message text when selectedProjectId is absent", async () => {
+    const plan: RetrievalPlan = {
+      intent: "latest_status",
+      responseFormat: "briefing_template",
+      sources: {
+        intelligencePacket: { mode: "additive" },
+        projectSnapshot: { reason: "intent" },
+      },
+      reason: "packet_first_resolve_from_text",
+    };
+    const deps = makeStubDeps({ resolvedProjectId: 983 });
+    const ctx = await executeRetrievalPlan(plan, deps, {
+      message: "What's the latest on Vermillion Rise?",
+    });
+
+    expect(deps.resolveProjectFromQuery).toHaveBeenCalledWith("What's the latest on Vermillion Rise?");
+    expect(deps.loadIntelligencePacket).toHaveBeenCalledWith(983);
+    expect(deps.loadProjectSnapshot).toHaveBeenCalledWith(983);
+    expect(ctx.warnings).toEqual([]);
   });
 
   it("captures warnings instead of throwing when an external source times out", async () => {

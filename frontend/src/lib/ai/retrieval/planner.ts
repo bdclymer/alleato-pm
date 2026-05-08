@@ -110,7 +110,11 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     };
   }
 
-  if (shouldUsePacketFirstIntent(intent) && selectedProjectId) {
+  // Packet-first intents (status, briefing, financial, change mgmt, etc.)
+  // emit project-scoped retrieval whether or not the user pre-selected a
+  // project. The executor resolves the project from the message text when no
+  // selectedProjectId is provided.
+  if (shouldUsePacketFirstIntent(intent)) {
     return {
       intent,
       responseFormat: "briefing_template",
@@ -121,7 +125,7 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
       },
       preconsult: detectPreconsult(message),
       selectedProjectId,
-      reason: "packet_first_with_project",
+      reason: selectedProjectId ? "packet_first_with_project" : "packet_first_resolve_from_text",
     };
   }
 
