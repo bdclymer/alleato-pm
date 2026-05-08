@@ -18,7 +18,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 
 export const POST = withApiGuardrails(
   "/api/settings/telegram/register-webhook#POST",
-  async ({ request }) => {
+  async ({ request, requestId }) => {
     const user = await getApiRouteUser();
     const supabase = createServiceClient();
     if (!user) {
@@ -85,7 +85,7 @@ export const POST = withApiGuardrails(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-        requestId: "",
+        requestId,
         where: "/api/settings/telegram/register-webhook",
         timeoutMs: 10_000,
         retries: 1,
@@ -99,7 +99,7 @@ export const POST = withApiGuardrails(
 // GET — check current webhook status
 export const GET = withApiGuardrails(
   "/api/settings/telegram/register-webhook#GET",
-  async () => {
+  async ({ requestId }) => {
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
@@ -118,7 +118,12 @@ export const GET = withApiGuardrails(
 
     const data = await fetchWithGuardrails(
       `https://api.telegram.org/bot${token}/getWebhookInfo`,
-      { requestId: "", where: "/api/settings/telegram/register-webhook#GET", timeoutMs: 8_000, retries: 0 },
+      {
+        requestId,
+        where: "/api/settings/telegram/register-webhook#GET",
+        timeoutMs: 8_000,
+        retries: 0,
+      },
     );
 
     return NextResponse.json({ registered: !!(data as { result?: { url?: string } }).result?.url, info: data });

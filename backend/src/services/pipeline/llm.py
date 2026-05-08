@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
+from ..ai_transport import retry_ai_call
 from .config import EMBEDDING_MODEL, EMBEDDING_DIMENSIONS
 from .models import DecisionItem, MeetingSegment, OpportunityItem, RiskItem, StructuredData, TaskItem
 
@@ -100,10 +101,14 @@ def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[flo
     errors: List[str] = []
     for provider in _provider_configs():
         try:
-            response = _client(provider).embeddings.create(
-                model=_model_for_provider(model, provider),
-                input=truncated,
-                dimensions=dimensions,
+            response = retry_ai_call(
+                lambda: _client(provider).embeddings.create(
+                    model=_model_for_provider(model, provider),
+                    input=truncated,
+                    dimensions=dimensions,
+                ),
+                provider_name=provider["name"],
+                operation="embedding batch",
             )
             embeddings = [item.embedding for item in response.data]
             if len(embeddings) != len(texts):
@@ -138,7 +143,11 @@ def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = 
             provider_kwargs["model"] = _model_for_provider(CHAT_MODEL, provider)
             if json_mode and provider["name"] != "AI Gateway":
                 provider_kwargs["response_format"] = {"type": "json_object"}
-            response = _client(provider).chat.completions.create(**provider_kwargs)
+            response = retry_ai_call(
+                lambda: _client(provider).chat.completions.create(**provider_kwargs),
+                provider_name=provider["name"],
+                operation="chat completion",
+            )
             return response.choices[0].message.content or ""
         except Exception as exc:
             message = f"{provider['name']}: {exc}"

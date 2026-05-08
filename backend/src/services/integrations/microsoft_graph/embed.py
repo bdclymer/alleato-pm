@@ -16,6 +16,8 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from ...ai_transport import retry_ai_call
+
 logger = logging.getLogger(__name__)
 
 CHUNK_MAX_CHARS = 3000
@@ -162,10 +164,14 @@ def _batch_embed(texts: List[str]) -> List[List[float]]:
             kwargs["base_url"] = provider["base_url"]
 
         try:
-            response = OpenAI(**kwargs).embeddings.create(
-                model=_model_for_provider(EMBEDDING_MODEL, provider),
-                input=truncated,
-                dimensions=EMBEDDING_DIMENSIONS,
+            response = retry_ai_call(
+                lambda: OpenAI(**kwargs).embeddings.create(
+                    model=_model_for_provider(EMBEDDING_MODEL, provider),
+                    input=truncated,
+                    dimensions=EMBEDDING_DIMENSIONS,
+                ),
+                provider_name=provider["name"],
+                operation="graph embedding batch",
             )
             embeddings = [item.embedding for item in response.data]
             if len(embeddings) != len(texts):
@@ -194,6 +200,14 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     Updates document_metadata.status to 'embedded' on success.
     Returns the number of chunks written.
     """
+    def _clear_ingestion_error(stage: str) -> None:
+        try:
+            supabase_client.from_("fireflies_ingestion_jobs").update(
+                {"stage": stage, "error_message": None}
+            ).eq("metadata_id", metadata_id).execute()
+        except Exception as exc:
+            logger.warning("[GraphEmbed] Could not clear ingestion error for %s: %s", metadata_id, exc)
+
     # Fetch document
     try:
         resp = (
@@ -217,6 +231,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         logger.warning("[GraphEmbed] Document %s has no content — skipping", metadata_id)
         # Still mark as embedded so we don't retry it forever
         supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
+        _clear_ingestion_error("embedded")
         return 0
 
     substantive_chars = _substantive_text_length(content)
@@ -232,6 +247,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         supabase_client.from_("document_metadata").update(
             {"status": "skipped_low_content"}
         ).eq("id", metadata_id).execute()
+        _clear_ingestion_error("embedded")
         return 0
 
     title = doc.get("title") or "Untitled"
@@ -240,6 +256,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     chunks = _split_text(full_text)
     if not chunks:
         supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
+        _clear_ingestion_error("embedded")
         return 0
 
     # Embed all chunks. Do not write unembedded chunks or mark the document
@@ -296,6 +313,8 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         }).eq("id", metadata_id).execute()
     except Exception as e:
         logger.warning("[GraphEmbed] Could not update status for %s: %s", metadata_id, e)
+
+    _clear_ingestion_error("embedded")
 
     logger.info("[GraphEmbed] %s → %d chunks embedded", metadata_id, len(rows))
     return len(rows)

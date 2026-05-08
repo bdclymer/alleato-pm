@@ -177,6 +177,34 @@ export default function NewCommitmentPcoPage() {
      
   }, [commitmentId, projectId]);
 
+  type PcoStatus = "open" | "pending" | "approved" | "rejected" | "void";
+
+  const mapStatusToApiStatus = (status: string): PcoStatus => {
+    if (
+      status === "open" ||
+      status === "pending" ||
+      status === "approved" ||
+      status === "rejected" ||
+      status === "void"
+    ) {
+      return status;
+    }
+
+    if (
+      status === "draft" ||
+      status === "pending_in_review" ||
+      status === "pending_not_pricing" ||
+      status === "pending_not_proceeding" ||
+      status === "pending_pricing" ||
+      status === "pending_proceeding" ||
+      status === "pending_revised"
+    ) {
+      return "pending";
+    }
+
+    return "open";
+  };
+
   const handleSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
     try {
@@ -188,7 +216,7 @@ export default function NewCommitmentPcoPage() {
           body: JSON.stringify({
             number: data.number,
             title: data.title,
-            status: data.status === "draft" ? "open" : data.status,
+            status: mapStatusToApiStatus(data.status),
             amount: data.amount,
             description: data.description || null,
             change_reason: data.change_reason || null,

@@ -9,7 +9,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAcumaticaClient } from "./client";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 type DbClient = SupabaseClient<Database>;
 type OutboundAuditLogInsert =
@@ -48,8 +48,8 @@ interface OutboundAuditLogRow {
   operation: OutboundAuditOperation;
   success: boolean;
   error_message: string | null;
-  request_payload: Record<string, unknown> | null;
-  response_payload: Record<string, unknown> | null;
+  request_payload: Json | null;
+  response_payload: Json | null;
 }
 
 async function flushOutboundAuditLogs(
@@ -113,6 +113,10 @@ function mapOutboundInvoiceStatus(status: string | null | undefined): string {
 
 function escapeODataString(value: string): string {
   return value.replace(/'/g, "''");
+}
+
+function toJsonValue(value: unknown): Json {
+  return value as Json;
 }
 
 function isProjectPermissionOrContextError(error: unknown): boolean {
@@ -335,8 +339,8 @@ export async function exportCommitmentsToAcumatica(
         operation: existed ? "update" : "create",
         success: true,
         error_message: null,
-        request_payload: payload,
-        response_payload: response,
+        request_payload: toJsonValue(payload),
+        response_payload: toJsonValue(response),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -356,7 +360,7 @@ export async function exportCommitmentsToAcumatica(
         operation: "error",
         success: false,
         error_message: message,
-        request_payload: payload,
+        request_payload: toJsonValue(payload),
         response_payload: null,
       });
     }
@@ -411,8 +415,8 @@ export async function exportCommitmentsToAcumatica(
         operation: existed ? "update" : "create",
         success: true,
         error_message: null,
-        request_payload: payload,
-        response_payload: response,
+        request_payload: toJsonValue(payload),
+        response_payload: toJsonValue(response),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -432,7 +436,7 @@ export async function exportCommitmentsToAcumatica(
         operation: "error",
         success: false,
         error_message: message,
-        request_payload: payload,
+        request_payload: toJsonValue(payload),
         response_payload: null,
       });
     }
@@ -547,8 +551,8 @@ export async function exportPrimeContractsToAcumatica(
         operation: project?.acumatica_project_id ? "update" : "create",
         success: true,
         error_message: null,
-        request_payload: payload,
-        response_payload: response,
+        request_payload: toJsonValue(payload),
+        response_payload: toJsonValue(response),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -568,7 +572,7 @@ export async function exportPrimeContractsToAcumatica(
         operation: "error",
         success: false,
         error_message: message,
-        request_payload: payload,
+        request_payload: toJsonValue(payload),
         response_payload: null,
       });
     }
@@ -673,8 +677,8 @@ export async function exportChangeOrdersToAcumatica(
         operation: existed ? "update" : "create",
         success: true,
         error_message: null,
-        request_payload: payload,
-        response_payload: response,
+        request_payload: toJsonValue(payload),
+        response_payload: toJsonValue(response),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -694,7 +698,7 @@ export async function exportChangeOrdersToAcumatica(
         operation: "error",
         success: false,
         error_message: message,
-        request_payload: payload,
+        request_payload: toJsonValue(payload),
         response_payload: null,
       });
     }
@@ -740,8 +744,8 @@ export async function exportChangeOrdersToAcumatica(
         operation: existed ? "update" : "create",
         success: true,
         error_message: null,
-        request_payload: payload,
-        response_payload: response,
+        request_payload: toJsonValue(payload),
+        response_payload: toJsonValue(response),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -761,7 +765,7 @@ export async function exportChangeOrdersToAcumatica(
         operation: "error",
         success: false,
         error_message: message,
-        request_payload: payload,
+        request_payload: toJsonValue(payload),
         response_payload: null,
       });
     }
@@ -1029,8 +1033,8 @@ export async function exportPaymentApplicationsToAcumatica(
         operation: existed ? "update" : "create",
         success: true,
         error_message: null,
-        request_payload: payload,
-        response_payload: response,
+        request_payload: toJsonValue(payload),
+        response_payload: toJsonValue(response),
       });
     } catch (error) {
       const baseMessage =
@@ -1056,7 +1060,7 @@ export async function exportPaymentApplicationsToAcumatica(
         operation: "error",
         success: false,
         error_message: message,
-        request_payload: payload,
+        request_payload: toJsonValue(payload),
         response_payload: null,
       });
     }
@@ -1229,8 +1233,8 @@ export async function exportOwnerInvoicesToAcumatica(
         operation: existed ? "update" : "create",
         success: true,
         error_message: null,
-        request_payload: payload,
-        response_payload: response,
+        request_payload: toJsonValue(payload),
+        response_payload: toJsonValue(response),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -1250,7 +1254,7 @@ export async function exportOwnerInvoicesToAcumatica(
         operation: "error",
         success: false,
         error_message: message,
-        request_payload: payload,
+        request_payload: toJsonValue(payload),
         response_payload: null,
       });
     }
@@ -1468,8 +1472,8 @@ export async function exportSubcontractorInvoiceToAcumatica(
       operation: existed ? "update" : "create",
       success: true,
       error_message: null,
-      request_payload: payload,
-      response_payload: response,
+      request_payload: toJsonValue(payload),
+      response_payload: toJsonValue(response),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -1489,7 +1493,7 @@ export async function exportSubcontractorInvoiceToAcumatica(
       operation: "error",
       success: false,
       error_message: message,
-      request_payload: payload,
+      request_payload: toJsonValue(payload),
       response_payload: null,
     });
   }

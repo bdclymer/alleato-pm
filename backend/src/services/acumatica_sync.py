@@ -92,6 +92,11 @@ def _now_iso() -> str:
     return datetime.utcnow().isoformat() + "Z"
 
 
+def _is_duplicate_key_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return "duplicate key value violates unique constraint" in message or "23505" in message
+
+
 def _normalize_cost_code(value: Optional[str]) -> Optional[str]:
     if not value:
         return None
@@ -409,6 +414,82 @@ class AcumaticaFinancialSyncService:
                 return row
         return None
 
+    def _remember_project_row(self, row: Dict[str, Any]) -> None:
+        for source in (
+            row.get("acumatica_project_id"),
+            row.get("project_number"),
+            row.get("job number"),
+            row.get("name_code"),
+        ):
+            for alias in _project_code_aliases(source):
+                self.project_map[alias] = row
+
+    def _find_existing_project_row(
+        self,
+        project_code: Optional[str],
+        formatted_job_number: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        if project_code:
+            response = (
+                self.supabase.table("projects")
+                .select("*")
+                .eq("acumatica_project_id", project_code)
+                .limit(1)
+                .execute()
+            )
+            rows = response.data or []
+            if rows:
+                self._remember_project_row(rows[0])
+                return rows[0]
+
+        if formatted_job_number:
+            for column in ("project_number", "job number"):
+                response = (
+                    self.supabase.table("projects")
+                    .select("*")
+                    .eq(column, formatted_job_number)
+                    .order("created_at")
+                    .limit(1)
+                    .execute()
+                )
+                rows = response.data or []
+                if rows:
+                    self._remember_project_row(rows[0])
+                    return rows[0]
+
+        for candidate in (project_code, formatted_job_number):
+            row = self._resolve_project_row(candidate)
+            if row:
+                return row
+
+        return None
+
+    def _update_project_from_acumatica(
+        self,
+        project_row: Dict[str, Any],
+        *,
+        project_code: str,
+        formatted_job_number: Optional[str],
+        project_name: str,
+    ) -> None:
+        payload: Dict[str, Any] = {
+            "acumatica_project_id": project_code,
+            "erp_system": "acumatica",
+            "erp_sync_status": "synced",
+        }
+
+        if formatted_job_number and not project_row.get("job number"):
+            payload["job number"] = formatted_job_number
+        if formatted_job_number and not project_row.get("project_number"):
+            payload["project_number"] = formatted_job_number
+        if project_name and not project_row.get("name"):
+            payload["name"] = project_name
+
+        self.supabase.table("projects").update(payload).eq("id", project_row["id"]).execute()
+
+        refreshed = {**project_row, **payload}
+        self._remember_project_row(refreshed)
+
     def _sync_projects(self, last_cursor: Optional[str]) -> EntitySyncResult:
         result = EntitySyncResult(entity="projects")
         records = self.session.fetch_entity("Project", top=200, modified_after=last_cursor)
@@ -435,23 +516,15 @@ class AcumaticaFinancialSyncService:
 
             formatted_job_number = _format_job_number(project_code)
             project_name = project.get("Description") or project.get("ProjectName") or f"Project {project_code}"
-            project_row = self._resolve_project_row(project_code)
+            project_row = self._find_existing_project_row(project_code, formatted_job_number)
 
             if project_row:
-                payload: Dict[str, Any] = {
-                    "acumatica_project_id": project_code,
-                    "erp_system": "acumatica",
-                    "erp_sync_status": "synced",
-                }
-
-                if formatted_job_number and not project_row.get("job number"):
-                    payload["job number"] = formatted_job_number
-                if formatted_job_number and not project_row.get("project_number"):
-                    payload["project_number"] = formatted_job_number
-                if project_name and not project_row.get("name"):
-                    payload["name"] = project_name
-
-                self.supabase.table("projects").update(payload).eq("id", project_row["id"]).execute()
+                self._update_project_from_acumatica(
+                    project_row,
+                    project_code=project_code,
+                    formatted_job_number=formatted_job_number,
+                    project_name=project_name,
+                )
                 updated += 1
                 continue
 
@@ -468,8 +541,33 @@ class AcumaticaFinancialSyncService:
                 "erp_system": "acumatica",
                 "erp_sync_status": "synced",
             }
-            self.supabase.table("projects").insert(insert_payload).execute()
-            created += 1
+            try:
+                self.supabase.table("projects").insert(insert_payload).execute()
+                created += 1
+            except Exception as exc:
+                if not _is_duplicate_key_error(exc):
+                    raise
+
+                conflict_row = self._find_existing_project_row(project_code, formatted_job_number)
+                if not conflict_row:
+                    raise RuntimeError(
+                        "[AcumaticaSync] Project insert hit duplicate-key conflict but no existing row could be resolved "
+                        f"for project_code={project_code!r} formatted_job_number={formatted_job_number!r}: {exc}"
+                    ) from exc
+
+                logger.warning(
+                    "[AcumaticaSync] Reused existing project row id=%s after duplicate-key conflict for project_code=%s job_number=%s",
+                    conflict_row.get("id"),
+                    project_code,
+                    formatted_job_number,
+                )
+                self._update_project_from_acumatica(
+                    conflict_row,
+                    project_code=project_code,
+                    formatted_job_number=formatted_job_number,
+                    project_name=project_name,
+                )
+                updated += 1
 
         result.upserted = created + updated
         result.skipped = skipped
@@ -1378,11 +1476,11 @@ class AcumaticaFinancialSyncService:
     _ACUMATICA_STATUS_MAP: Dict[str, str] = {
         "on hold": "Draft",
         "open": "Approved",
-        "pending approval": "Pending",
+        "pending approval": "Out for Signature",
         "pending receipt": "Approved",
-        "closed": "Closed",
-        "canceled": "Void",
-        "completed": "Executed",
+        "closed": "Complete",
+        "canceled": "Terminated",
+        "completed": "Complete",
     }
 
     def _map_commitment_status(self, acumatica_status: Optional[str]) -> str:
@@ -1491,9 +1589,31 @@ class AcumaticaFinancialSyncService:
     def _project_commitment_change_orders(self) -> EntitySyncResult:
         """Project Acumatica cost/commitment-side COs → contract_change_orders."""
         result = EntitySyncResult(entity="commitment_change_orders_domain")
-
-        # Load prime contract map: project_id → prime_contract UUID
-        prime_contract_map = self._get_primary_prime_contract_by_project()
+        valid_commitment_ids = {
+            row["id"]
+            for row in (
+                self.supabase.table("commitments_unified")
+                .select("id")
+                .is_("deleted_at", "null")
+                .execute()
+                .data
+                or []
+            )
+            if row.get("id")
+        }
+        existing_commitment_cos = (
+            self.supabase.table("contract_change_orders")
+            .select("acumatica_external_key, contract_id")
+            .not_.is_("acumatica_external_key", "null")
+            .execute()
+            .data
+            or []
+        )
+        contract_id_by_external_key = {
+            row["acumatica_external_key"]: row["contract_id"]
+            for row in existing_commitment_cos
+            if row.get("acumatica_external_key") and row.get("contract_id") in valid_commitment_ids
+        }
 
         rows_resp = (
             self.supabase.table("acumatica_change_orders")
@@ -1512,20 +1632,25 @@ class AcumaticaFinancialSyncService:
         rows: List[Dict[str, Any]] = []
 
         for row in acumatica_rows:
-            prime_contract_id = prime_contract_map.get(row["project_id"])
-            if not prime_contract_id:
+            external_key = row["external_key"]
+            contract_id = contract_id_by_external_key.get(external_key)
+            if not contract_id:
+                logger.warning(
+                    "[AcumaticaSync] Skipping commitment CO projection for %s because no active commitment mapping exists yet",
+                    external_key,
+                )
                 result.skipped += 1
                 continue
 
             rows.append(
                 {
-                    "contract_id": prime_contract_id,
+                    "contract_id": contract_id,
                     "change_order_number": row["reference_nbr"],
                     "description": row.get("description") or row["reference_nbr"],
                     "amount": row.get("commitments_change_total") or 0,
                     "status": self._map_co_status_commitment(row.get("status")),
                     "requested_date": row.get("change_date"),
-                    "acumatica_external_key": row["external_key"],
+                    "acumatica_external_key": external_key,
                     "updated_at": synced_at,
                 }
             )
@@ -1589,11 +1714,12 @@ class AcumaticaFinancialSyncService:
                 }
             )
 
-        # Upsert on (contract_number, project_id) — the natural business key
-        # This handles both new records and existing ones that need Acumatica linking
+        # Upsert on acumatica_external_key because the table now enforces that
+        # unique key directly and reruns can otherwise fail before the natural
+        # business-key conflict path is evaluated.
         for chunk in _chunked(sc_rows):
             self.supabase.table("subcontracts").upsert(
-                list(chunk), on_conflict="contract_number,project_id"
+                list(chunk), on_conflict="acumatica_external_key"
             ).execute()
 
         result.upserted = len(sc_rows)
@@ -1696,10 +1822,11 @@ class AcumaticaFinancialSyncService:
                 }
             )
 
-        # Upsert on (project_id, contract_number) — the natural business key
+        # Upsert on acumatica_external_key for the same reason as subcontracts:
+        # the table's unique ERP key must be the first-class sync conflict target.
         for chunk in _chunked(po_rows):
             self.supabase.table("purchase_orders").upsert(
-                list(chunk), on_conflict="project_id,contract_number"
+                list(chunk), on_conflict="acumatica_external_key"
             ).execute()
 
         result.upserted = len(po_rows)

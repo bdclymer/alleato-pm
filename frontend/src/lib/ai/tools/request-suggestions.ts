@@ -109,6 +109,7 @@ export const requestSuggestions = ({
         id: documentId,
         title: document.title,
         kind: document.kind,
+        content: "Suggestions have been added to the document",
         message: "Suggestions have been added to the document",
       };
     },

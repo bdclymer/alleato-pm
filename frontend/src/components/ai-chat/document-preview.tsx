@@ -34,10 +34,23 @@ export function DocumentPreview({
   args,
 }: DocumentPreviewProps) {
   const { artifact, setArtifact } = useArtifact();
+  const previewResult = (result ?? null) as
+    | { id: string; title?: string; kind?: ArtifactKind }
+    | null;
+  const previewArgs = (args ?? null) as
+    | { title?: string; kind?: ArtifactKind; [key: string]: unknown }
+    | null;
+
+  const previewResultId = previewResult?.id;
+  const previewResultTitle = previewResult?.title ?? "Document";
+  const previewResultKind = previewResult?.kind ?? "text";
+  const previewArgsTitle = previewArgs?.title;
+  const previewArgsKind = previewArgs?.kind;
+  const loadingKind = previewResult?.kind ?? previewArgs?.kind ?? "text";
 
   const { data: documents, isLoading: isDocumentsFetching } = useSWR<
     Document[]
-  >(result ? `/api/document?id=${result.id}` : null, fetcher);
+  >(previewResultId ? `/api/document?id=${previewResultId}` : null, fetcher);
 
   const previewDocument = useMemo(() => documents?.[0], [documents]);
   const hitboxRef = useRef<HTMLDivElement>(null);
@@ -63,7 +76,11 @@ export function DocumentPreview({
       return (
         <DocumentToolResult
           isReadonly={isReadonly}
-          result={{ id: result.id as string, title: result.title as string, kind: result.kind as ArtifactKind }}
+          result={{
+            id: previewResultId ?? "",
+            title: previewResultTitle,
+            kind: previewResultKind,
+          }}
           type="create"
         />
       );
@@ -72,7 +89,10 @@ export function DocumentPreview({
     if (args) {
       return (
         <DocumentToolCall
-          args={{ title: args.title as string, kind: args.kind as ArtifactKind }}
+          args={{
+            title: previewArgsTitle ?? "Document",
+            kind: previewArgsKind ?? "text",
+          }}
           isReadonly={isReadonly}
           type="create"
         />
@@ -81,7 +101,11 @@ export function DocumentPreview({
   }
 
   if (isDocumentsFetching) {
-    return <LoadingSkeleton artifactKind={(result?.kind ?? args?.kind) as ArtifactKind} />;
+    return (
+      <LoadingSkeleton
+        artifactKind={loadingKind}
+      />
+    );
   }
 
   const document: Document | null = previewDocument
@@ -105,7 +129,7 @@ export function DocumentPreview({
     <div className="relative w-full max-w-lg cursor-pointer">
       <HitboxLayer
         hitboxRef={hitboxRef}
-        result={result ?? {}}
+        result={previewResult}
         setArtifact={setArtifact}
       />
       <DocumentHeader
@@ -147,13 +171,15 @@ const PureHitboxLayer = ({
   setArtifact,
 }: {
   hitboxRef: React.RefObject<HTMLDivElement | null>;
-  result: Record<string, unknown>;
+  result: { id: string; title?: string; kind?: ArtifactKind } | null;
   setArtifact: (
     updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)
   ) => void;
 }) => {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
+      if (!result) return;
+
       const boundingBox = event.currentTarget.getBoundingClientRect();
 
       setArtifact((artifact) =>
@@ -161,9 +187,9 @@ const PureHitboxLayer = ({
           ? { ...artifact, isVisible: true }
           : {
               ...artifact,
-              title: result.title as string,
-              documentId: result.id as string,
-              kind: result.kind as ArtifactKind,
+              title: result.title ?? "Document",
+              documentId: result.id,
+              kind: result.kind ?? "text",
               isVisible: true,
               boundingBox: {
                 left: boundingBox.x,

@@ -87,7 +87,7 @@ export class Artifact<T extends string, M = unknown> {
     this.content = config.content;
     this.actions = config.actions || [];
     this.toolbar = config.toolbar || [];
-    this.initialize = config.initialize || (async () => ({}));
+    this.initialize = config.initialize;
     this.onStreamPart = config.onStreamPart;
   }
 }

@@ -57,6 +57,9 @@ export const POST = withApiGuardrails("admin/feedback/board/create", async ({ re
     .single();
 
   if (error) throw error;
+  if (!data) {
+    throw new Error("Failed to create feedback item");
+  }
 
   return NextResponse.json({ id: data.id }, { status: 201 });
 });

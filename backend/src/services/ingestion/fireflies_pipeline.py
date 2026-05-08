@@ -17,6 +17,8 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import requests
 
+from ..ai_transport import retry_ai_call
+
 # Reason: Add parent directory to Python path so supabase_helpers can be imported
 # when running this script directly (not as a module). This works both when
 # run directly and when imported as a module.
@@ -147,10 +149,14 @@ class EmbeddingGenerator:
         for provider in self._providers:
             try:
                 client = _client_for_provider(provider)
-                response = client.embeddings.create(
-                    model=_model_for_provider(self.model, provider),
-                    input=truncated,
-                    dimensions=3072,
+                response = retry_ai_call(
+                    lambda: client.embeddings.create(
+                        model=_model_for_provider(self.model, provider),
+                        input=truncated,
+                        dimensions=3072,
+                    ),
+                    provider_name=provider["name"],
+                    operation="fireflies embedding batch",
                 )
                 embeddings = [item.embedding for item in response.data]
                 if len(embeddings) != len(texts):
@@ -224,6 +230,21 @@ class FirefliesIngestionPipeline:
             )
             return int(inferred_id)
         return None
+
+    @staticmethod
+    def _build_summary_embedding_text(
+        title: str,
+        captured_at: Optional[datetime],
+        summary: str,
+    ) -> str:
+        parts: List[str] = []
+        if title:
+            parts.append(f"Meeting: {title}")
+        if captured_at:
+            parts.append(f"Date: {captured_at.isoformat()}")
+        if summary:
+            parts.append(summary)
+        return "\n".join(parts).strip()
 
     # ------------------------------------------------------------------
     # Public API
@@ -350,6 +371,22 @@ class FirefliesIngestionPipeline:
             embeddings = self.embedder.embed([chunk.text for chunk in chunks])
             for chunk, embedding in zip(chunks, embeddings):
                 chunk.embedding = embedding
+
+            summary_text = self._build_summary_embedding_text(
+                parsed.title,
+                parsed.captured_at,
+                parsed.summary or parsed.overview,
+            )
+            if summary_text:
+                summary_embeddings = self.embedder.embed([summary_text])
+                if summary_embeddings:
+                    self.store.upsert_document_metadata(
+                        {
+                            "id": document_id,
+                            "summary_embedding": summary_embeddings[0],
+                        }
+                    )
+
             # Replace existing chunks for this document so stale chunks from prior
             # transcript formats cannot survive after a re-sync.
             self.store.delete_chunks_for_document(document_id)
@@ -1747,11 +1784,15 @@ class FirefliesIngestionPipeline:
         for provider in providers:
             try:
                 client = _client_for_provider(provider)
-                response = client.chat.completions.create(
-                    model=_model_for_provider("gpt-4.1-nano", provider),
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0,
-                    max_tokens=512,
+                response = retry_ai_call(
+                    lambda: client.chat.completions.create(
+                        model=_model_for_provider("gpt-4.1-nano", provider),
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0,
+                        max_tokens=512,
+                    ),
+                    provider_name=provider["name"],
+                    operation="meeting memory extraction chat",
                 )
                 break
             except Exception as exc:

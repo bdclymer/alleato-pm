@@ -45,10 +45,16 @@ type CompanyEstimateQueryRow = Pick<
   | "updated_at"
   | "created_at"
 > & {
-  projects: {
-    name: string | null;
-    project_number: string | null;
-  } | null;
+  projects:
+    | {
+        name: string | null;
+        project_number: string | null;
+      }
+    | {
+        name: string | null;
+        project_number: string | null;
+      }[]
+    | null;
 };
 
 type EstimateMutationInput = Partial<Pick<EstimateRow, "estimate_type">>;
@@ -153,8 +159,12 @@ export class EstimateService {
       estimator: row.estimator ?? null,
       updated_at: row.updated_at,
       created_at: row.created_at,
-      project_name: row.projects?.name ?? null,
-      project_number: row.projects?.project_number ?? null,
+      project_name: (Array.isArray(row.projects)
+        ? row.projects[0]
+        : row.projects)?.name ?? null,
+      project_number: (Array.isArray(row.projects)
+        ? row.projects[0]
+        : row.projects)?.project_number ?? null,
     }));
   }
 

@@ -36,6 +36,17 @@ def _hash_content(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
+def _build_summary_embedding_text(title: str, meeting_date: Optional[str], summary: str) -> str:
+    parts: List[str] = []
+    if title:
+        parts.append(f"Meeting: {title}")
+    if meeting_date:
+        parts.append(f"Date: {meeting_date}")
+    if summary:
+        parts.append(summary)
+    return "\n".join(parts).strip()
+
+
 def _split_sentences(text: str) -> List[str]:
     parts = re.split(r"(?<=[.!?])\s+(?=[A-Z])", text)
     return [p.strip() for p in parts if p.strip()]
@@ -228,7 +239,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         raise ValueError(f"document_metadata not found: {metadata_id}")
 
     content = metadata.get("content") or metadata.get("raw_text")
-    meeting_summary = metadata.get("overview") or ""
+    meeting_summary = metadata.get("summary") or metadata.get("overview") or ""
     title = metadata.get("title") or "Untitled"
     project_id = metadata.get("project_id")
     started_at = metadata.get("started_at") or metadata.get("captured_at")
@@ -341,6 +352,13 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         if i < len(seg_embeddings):
             seg.summary_embedding = seg_embeddings[i]
 
+    summary_embedding = None
+    summary_embedding_text = _build_summary_embedding_text(title, started_at, meeting_summary)
+    if summary_embedding_text:
+        summary_embeddings = llm.batch_embed([summary_embedding_text])
+        if summary_embeddings:
+            summary_embedding = summary_embeddings[0]
+
     # 9. Build segment ID map for chunk → segment FK
     segment_id_map: Dict[int, str] = {
         row["segment_index"]: row["id"] for row in segment_rows
@@ -369,7 +387,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
 
     # 12. Update metadata status
     client.table("document_metadata").update(
-        {"status": "embedded"}
+        {
+            "status": "embedded",
+            **({"summary_embedding": summary_embedding} if summary_embedding is not None else {}),
+        }
     ).eq("id", metadata_id).execute()
 
     # 13. Advance job stage

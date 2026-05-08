@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createServiceClient } from "@/lib/supabase/service";
+import type { Json } from "@/types/database.types";
 import { BOARD_STATUSES } from "@/lib/admin-feedback/constants";
 
 export const DELETE = withApiGuardrails<{ itemId: string }>(
@@ -36,6 +37,7 @@ export const PATCH = withApiGuardrails<{ itemId: string }>(
     const updates = patchSchema.parse(body);
 
     const supabase = createServiceClient();
+    let mergedMetadataJson: Json | undefined;
 
     // Merge metadata if provided — never overwrite the whole object
     if (updates.metadata) {
@@ -45,15 +47,19 @@ export const PATCH = withApiGuardrails<{ itemId: string }>(
         .eq("id", params.itemId)
         .single();
 
-      updates.metadata = {
+      mergedMetadataJson = {
         ...(existing?.metadata as Record<string, unknown> ?? {}),
         ...updates.metadata,
-      };
+      } as Json;
     }
 
     const { error } = await supabase
       .from("admin_feedback_items")
-      .update({ ...updates, updated_at: new Date().toISOString() } as Record<string, unknown>)
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+        ...(mergedMetadataJson === undefined ? {} : { metadata: mergedMetadataJson }),
+      } as Record<string, unknown>)
       .eq("id", params.itemId)
       .eq("request_type", "feature_request");
 
