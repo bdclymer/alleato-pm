@@ -56,6 +56,35 @@ interface SourceSyncAlert {
   detectedAt: string | null;
 }
 
+interface SourceSyncRun {
+  id: string;
+  source: string;
+  stage: string;
+  status: string;
+  resourceId: string;
+  resourceName: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  itemsSeen: number;
+  itemsSynced: number;
+  itemsFailed: number;
+  errorCode: string | null;
+  errorMessage: string | null;
+  metadata: Record<string, unknown>;
+}
+
+interface SourceSyncStuckItem {
+  source: string;
+  resourceId: string;
+  resourceName: string;
+  stage: string;
+  status: string;
+  ageMinutes: number | null;
+  lastAttemptAt: string | null;
+  errorMessage: string | null;
+  metadata: Record<string, unknown>;
+}
+
 interface SourceSyncStatus {
   status: "healthy" | "degraded";
   healthy: boolean;
@@ -64,6 +93,8 @@ interface SourceSyncStatus {
   sources: SourceHealth[];
   pipeline: Record<string, StatusMap>;
   alerts: SourceSyncAlert[];
+  recentRuns: SourceSyncRun[];
+  stuckItems: SourceSyncStuckItem[];
   counts: {
     sources: number;
     alerts: number;
@@ -73,6 +104,7 @@ interface SourceSyncStatus {
     uncompiled: number;
     tasks: number;
     graphSubscriptions: number;
+    stuckItems: number;
   };
 }
 
@@ -156,6 +188,7 @@ function MetricTiles({ status }: { status: SourceSyncStatus }) {
     { label: "Active alerts", value: status.counts.alerts },
     { label: "Unembedded", value: status.counts.unembedded },
     { label: "Uncompiled", value: status.counts.uncompiled },
+    { label: "Stuck items", value: status.counts.stuckItems },
     { label: "Documents", value: status.counts.documents },
     { label: "Tasks", value: status.counts.tasks },
   ];
@@ -171,6 +204,125 @@ function MetricTiles({ status }: { status: SourceSyncStatus }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function statusVariant(status: string): "active" | "destructive" | "outline" {
+  if (status === "succeeded" || status === "healthy") return "active";
+  if (status === "failed" || status === "critical") return "destructive";
+  return "outline";
+}
+
+function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Run</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Finished</TableHead>
+          <TableHead className="text-right">Seen</TableHead>
+          <TableHead className="text-right">Synced</TableHead>
+          <TableHead className="text-right">Failed</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {runs.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+              No source sync run ledger rows found.
+            </TableCell>
+          </TableRow>
+        ) : (
+          runs.map((run) => (
+            <TableRow key={run.id} className={run.status === "failed" ? "bg-destructive/5" : ""}>
+              <TableCell className="max-w-80 whitespace-normal">
+                <div className="space-y-1">
+                  <p className="font-medium text-foreground">
+                    {run.source.replaceAll("_", " ")} / {run.stage.replaceAll("_", " ")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {run.resourceName || run.resourceId}
+                  </p>
+                  {run.errorMessage ? (
+                    <p className="text-xs text-destructive">{run.errorMessage}</p>
+                  ) : null}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant={statusVariant(run.status)} className="capitalize">
+                  {run.status.replaceAll("_", " ")}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {formatDate(run.finishedAt || run.startedAt)}
+              </TableCell>
+              <TableCell className="text-right tabular-nums">{run.itemsSeen}</TableCell>
+              <TableCell className="text-right tabular-nums">{run.itemsSynced}</TableCell>
+              <TableCell className="text-right tabular-nums">{run.itemsFailed}</TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  );
+}
+
+function StuckItemsTable({ items }: { items: SourceSyncStuckItem[] }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Item</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Stage</TableHead>
+          <TableHead className="text-right">Age</TableHead>
+          <TableHead>Last attempt</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+              No stuck source items found.
+            </TableCell>
+          </TableRow>
+        ) : (
+          items.map((item) => (
+            <TableRow
+              key={`${item.source}:${item.resourceId}:${item.stage}`}
+              className={item.status === "failed" ? "bg-destructive/5" : "bg-amber-500/5"}
+            >
+              <TableCell className="max-w-96 whitespace-normal">
+                <div className="space-y-1">
+                  <p className="font-medium text-foreground">{item.resourceName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.source.replaceAll("_", " ")} / {item.resourceId}
+                  </p>
+                  {item.errorMessage ? (
+                    <p className="text-xs text-destructive">{item.errorMessage}</p>
+                  ) : null}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant={statusVariant(item.status)} className="capitalize">
+                  {item.status.replaceAll("_", " ")}
+                </Badge>
+              </TableCell>
+              <TableCell className="capitalize text-sm text-muted-foreground">
+                {item.stage.replaceAll("_", " ")}
+              </TableCell>
+              <TableCell className="text-right tabular-nums">
+                {formatAge(item.ageMinutes)}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {formatDate(item.lastAttemptAt)}
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -518,6 +670,16 @@ export function SourceSyncHealthPanel() {
           <section className="space-y-4">
             <SectionRuleHeading label="Source freshness" />
             <SourceTable sources={status.sources} />
+          </section>
+
+          <section className="space-y-4">
+            <SectionRuleHeading label="Recent sync runs" />
+            <RunLedgerTable runs={status.recentRuns} />
+          </section>
+
+          <section className="space-y-4">
+            <SectionRuleHeading label="Stuck items" />
+            <StuckItemsTable items={status.stuckItems} />
           </section>
 
           <section className="space-y-4">

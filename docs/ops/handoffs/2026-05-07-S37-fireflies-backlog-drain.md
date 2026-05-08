@@ -9,7 +9,11 @@
 5) Current status: Deployed to main
 6) Files changed (absolute paths):
    - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/backend/src/services/scheduler.py`
+   - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/backend/src/services/health/source_sync_health.py`
    - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/backend/tests/test_scheduler_graph_jobs.py`
+   - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/backend/tests/test_source_sync_health.py`
+   - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/frontend/src/app/api/admin/source-sync/status/route.ts`
+   - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/frontend/src/components/ai-intelligence/source-sync-health-panel.tsx`
    - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/docs/PRPs/real-time-source-sync-intelligence-observability/TASKS.md`
    - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/docs/ops/handoffs/2026-05-07-S37-fireflies-backlog-drain.md`
 7) Commands run and outcome (pass/fail counts):
@@ -22,17 +26,23 @@
    - Render deploy `dep-d7uid67avr4c73cn9c80` — pass; live on commit `43d41c619cf6559b312dd29c6c3af68b1390bcac`, finished `2026-05-07T23:58:19.175495Z`.
    - `curl -fsS https://alleato-backend-3mmq.onrender.com/health` — pass; healthy at `2026-05-07T23:58:30Z`, AI Gateway/OpenAI/Supabase configured.
    - Production scheduler first interval — pass with surfaced failures; Fireflies backlog matched 10, processed 8, failed 2; Graph embedding succeeded; intelligence compiler claimed 2 and succeeded 2.
+   - `python -m pytest backend/tests/test_source_sync_health.py backend/tests/test_scheduler_graph_jobs.py` — pass, 9 passed.
+   - `python -m py_compile backend/src/services/health/source_sync_health.py backend/src/services/scheduler.py` — pass.
+   - `npm run check:routes` — pass.
+   - `npx eslint src/components/ai-intelligence/source-sync-health-panel.tsx src/app/api/admin/source-sync/status/route.ts` — pass.
+   - `cd frontend && npm run typecheck` — fail on unrelated existing TypeScript debt outside this source-sync slice.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - Live drain output in this session: `{'status': 'ok', 'limit': 1, 'stale_minutes': 120, 'matched': 1, 'processed': 1, 'failed': 0, 'results': [{'fireflies_id': '8614cd93-dd4f-53b0-8b02-87fb9b61274c', 'metadata_id': '8614cd93-dd4f-53b0-8b02-87fb9b61274c', 'status': 'processed', 'pipeline_status': 'done', 'previous_stage': 'raw_ingested'}]}`
    - Meeting verifier output in this session: 1575 total meetings, 1422 embedded summaries, 84 recent meetings, 14 recent embedded summaries, 25298/25298 embedded chunks, 24341 raw_ingested jobs, 3985 error jobs.
    - Production ledger row: `fireflies/vectorization/failed`, `items_seen=10`, `items_synced=8`, `items_failed=2`, `created_at=2026-05-07 23:55:00+00`.
    - Production ledger row: `microsoft_graph/vectorization/succeeded`, `items_seen=0`, `items_synced=0`, `items_failed=0`, `created_at=2026-05-07 23:53:41+00`.
    - Production ledger row: `intelligence_compiler/intelligence_compile/succeeded`, `items_seen=2`, `items_synced=2`, `items_failed=0`, `created_at=2026-05-07 23:48:49+00`.
+   - Live source-sync health payload from the updated backend function returned 20 recent run rows and 25 stuck item rows.
 9) Top 3 findings (frontend-visible issues first):
    - The source-sync page is accurately surfacing a real backlog, but the prior implementation had no automatic scheduled drain for stale Fireflies pipeline rows.
    - A bounded live drain proves the normal full pipeline can advance at least one stale row from `raw_ingested` to `done`.
    - Meeting health still fails because the backlog is large; deploy cadence and batch sizing are now the next operational levers.
-10) Recommended next action (one line): Build the user-facing stuck-items/last-sync view on top of `source_sync_runs` and add file-type-aware handling for image-only Fireflies backlog rows.
+10) Recommended next action (one line): Deploy the source-sync UI visibility extension, then add file-type-aware handling for image-only/financial parser Fireflies backlog rows.
 11) Handoff file path: docs/ops/handoffs/2026-05-07-S37-fireflies-backlog-drain.md
 12) Migration ledger evidence: No new migration in this slice.
 
@@ -47,7 +57,7 @@ Implemented and deployed a scheduled Fireflies pipeline backlog drain in `backen
 
 ## Exact Next Step
 
-Continue monitoring `source_sync_runs` and scheduler logs. The first production interval proved the drain works and exposed two image-only failures: `standard-beach-court-dimensions.jpg` and `Mech Screening Picture.png`.
+Deploy the source-sync UI visibility extension, then continue monitoring `source_sync_runs` and scheduler logs. The first production interval proved the drain works and exposed two image-only failures: `standard-beach-court-dimensions.jpg` and `Mech Screening Picture.png`. The updated health function also shows additional financial parser stuck rows that should be handled explicitly.
 
 ## Known Pitfalls
 

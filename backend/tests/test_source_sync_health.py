@@ -103,6 +103,7 @@ def _seed_empty_tables(supabase):
         "packet_refresh_jobs",
         "tasks",
         "source_sync_health_snapshots",
+        "source_sync_runs",
         "graph_subscriptions",
         "system_alerts",
     ]:
@@ -184,6 +185,60 @@ def test_get_source_sync_health_surfaces_stale_graph_and_vector_backlog():
     assert outlook["unembeddedCount"] == 1
     assert outlook["uncompiledCount"] == 1
     assert health["alerts"]
+
+
+def test_get_source_sync_health_includes_recent_runs_and_stuck_items():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    old = (datetime.now(timezone.utc) - timedelta(hours=6)).isoformat()
+    recent = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+    supabase.tables["source_sync_runs"] = [
+        {
+            "id": "run-1",
+            "source": "fireflies",
+            "resource_id": "fireflies_ingestion_jobs",
+            "resource_name": "Fireflies meetings",
+            "stage": "vectorization",
+            "status": "failed",
+            "started_at": recent,
+            "finished_at": recent,
+            "items_seen": 10,
+            "items_synced": 8,
+            "items_failed": 2,
+            "error_code": "BACKLOG_FAILED",
+            "error_message": "2 Fireflies backlog jobs failed",
+            "metadata": {"limit": 10},
+        }
+    ]
+    supabase.tables["document_metadata"] = [
+        {
+            "id": "doc-image",
+            "title": "Mech Screening Picture.png",
+            "type": "image/png",
+            "category": "file",
+            "status": "error",
+            "project_id": 43,
+            "created_at": old,
+        }
+    ]
+    supabase.tables["fireflies_ingestion_jobs"] = [
+        {
+            "fireflies_id": "ff-image",
+            "metadata_id": "doc-image",
+            "stage": "error",
+            "error_message": "Cannot extract text from file: Mech Screening Picture.png",
+            "last_attempt_at": recent,
+            "updated_at": recent,
+        }
+    ]
+
+    health = get_source_sync_health(supabase)
+
+    assert health["recentRuns"][0]["source"] == "fireflies"
+    assert health["recentRuns"][0]["itemsFailed"] == 2
+    assert health["stuckItems"][0]["resourceName"] == "Mech Screening Picture.png"
+    assert health["stuckItems"][0]["status"] == "failed"
+    assert health["counts"]["stuckItems"] == 1
 
 
 def test_get_source_sync_health_reports_task_extraction_freshness():

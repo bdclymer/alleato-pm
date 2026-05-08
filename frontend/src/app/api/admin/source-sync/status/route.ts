@@ -31,6 +31,35 @@ const SourceSyncAlertSchema = z.object({
   detectedAt: z.string().nullable(),
 });
 
+const SourceSyncRunSchema = z.object({
+  id: z.string(),
+  source: z.string(),
+  stage: z.string(),
+  status: z.string(),
+  resourceId: z.string(),
+  resourceName: z.string().nullable(),
+  startedAt: z.string().nullable(),
+  finishedAt: z.string().nullable(),
+  itemsSeen: z.number(),
+  itemsSynced: z.number(),
+  itemsFailed: z.number(),
+  errorCode: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()),
+});
+
+const SourceSyncStuckItemSchema = z.object({
+  source: z.string(),
+  resourceId: z.string(),
+  resourceName: z.string(),
+  stage: z.string(),
+  status: z.string(),
+  ageMinutes: z.number().nullable(),
+  lastAttemptAt: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()),
+});
+
 const SourceSyncStatusSchema = z.object({
   status: z.enum(["healthy", "degraded"]),
   healthy: z.boolean(),
@@ -39,6 +68,8 @@ const SourceSyncStatusSchema = z.object({
   sources: z.array(SourceHealthSchema),
   pipeline: z.record(z.string(), z.record(z.string(), z.number())),
   alerts: z.array(SourceSyncAlertSchema),
+  recentRuns: z.array(SourceSyncRunSchema),
+  stuckItems: z.array(SourceSyncStuckItemSchema),
   counts: z.object({
     sources: z.number(),
     alerts: z.number(),
@@ -48,6 +79,7 @@ const SourceSyncStatusSchema = z.object({
     uncompiled: z.number(),
     tasks: z.number(),
     graphSubscriptions: z.number(),
+    stuckItems: z.number(),
   }),
 });
 

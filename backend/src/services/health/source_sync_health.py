@@ -495,6 +495,82 @@ def _document_health(
     return {key: dict(value) for key, value in source_counts.items()}, rows
 
 
+def _recent_run_rows(sync_runs: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for run in sync_runs[:20]:
+        rows.append(
+            {
+                "id": str(run.get("id") or ""),
+                "source": str(run.get("source") or "unknown"),
+                "stage": str(run.get("stage") or "unknown"),
+                "status": str(run.get("status") or "unknown"),
+                "resourceId": str(run.get("resource_id") or "default"),
+                "resourceName": run.get("resource_name"),
+                "startedAt": run.get("started_at"),
+                "finishedAt": run.get("finished_at"),
+                "itemsSeen": int(run.get("items_seen") or 0),
+                "itemsSynced": int(run.get("items_synced") or 0),
+                "itemsFailed": int(run.get("items_failed") or 0),
+                "errorCode": run.get("error_code"),
+                "errorMessage": run.get("error_message"),
+                "metadata": run.get("metadata") or {},
+            }
+        )
+    return rows
+
+
+def _stuck_item_rows(
+    fireflies_jobs: Sequence[Dict[str, Any]],
+    documents: Sequence[Dict[str, Any]],
+    now: datetime,
+) -> List[Dict[str, Any]]:
+    document_by_id = {str(row.get("id")): row for row in documents if row.get("id")}
+    stuck: List[Dict[str, Any]] = []
+    stuck_stages = {"pending", "raw_ingested", "segmented", "chunked", "embedded", "structured_extracted", "error"}
+
+    for job in fireflies_jobs:
+        stage = str(job.get("stage") or "unknown")
+        if stage not in stuck_stages:
+            continue
+        updated_at = _parse_datetime(job.get("updated_at")) or _parse_datetime(job.get("last_attempt_at"))
+        age = _age_minutes(updated_at, now)
+        if stage != "error" and (age is None or age < STALE_FIREFLIES_MINUTES):
+            continue
+
+        metadata_id = str(job.get("metadata_id") or "")
+        document = document_by_id.get(metadata_id, {})
+        stuck.append(
+            {
+                "source": "fireflies",
+                "resourceId": metadata_id or str(job.get("fireflies_id") or ""),
+                "resourceName": document.get("title") or job.get("fireflies_id") or metadata_id or "Fireflies item",
+                "stage": stage,
+                "status": "failed" if stage == "error" else "stale",
+                "ageMinutes": age,
+                "lastAttemptAt": job.get("last_attempt_at") or job.get("updated_at"),
+                "errorMessage": job.get("error_message"),
+                "metadata": {
+                    "firefliesId": job.get("fireflies_id"),
+                    "metadataId": metadata_id or None,
+                    "documentStatus": document.get("status"),
+                    "documentType": document.get("type"),
+                    "documentCategory": document.get("category"),
+                    "projectId": document.get("project_id"),
+                    "documentUrl": document.get("url"),
+                },
+            }
+        )
+
+    stuck.sort(
+        key=lambda row: (
+            row["status"] != "failed",
+            -(row.get("ageMinutes") or 0),
+            str(row.get("resourceName") or ""),
+        )
+    )
+    return stuck[:25]
+
+
 def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     now = _utcnow()
 
@@ -508,13 +584,13 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     documents = _table_rows(
         supabase,
         "document_metadata",
-        "id,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at,fireflies_id",
+        "id,title,url,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at,fireflies_id,project_id",
     )
     chunks = _table_rows(supabase, "document_chunks", "document_id,chunk_id")
     fireflies_jobs = _table_rows(
         supabase,
         "fireflies_ingestion_jobs",
-        "stage,error_message,last_attempt_at,updated_at,metadata_id",
+        "fireflies_id,stage,error_message,last_attempt_at,updated_at,metadata_id",
     )
     source_jobs = _table_rows(
         supabase,
@@ -540,6 +616,14 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         supabase,
         "graph_subscriptions",
         "source,resource_id,resource_name,status,expiration_at,last_notification_at,last_error_message",
+    )
+    sync_runs = _table_rows(
+        supabase,
+        "source_sync_runs",
+        "id,source,resource_id,resource_name,stage,status,started_at,finished_at,items_seen,items_synced,items_failed,error_code,error_message,metadata",
+        limit=50,
+        order_by="started_at",
+        desc=True,
     )
 
     chunk_document_ids = {str(row.get("document_id")) for row in chunks if row.get("document_id")}
@@ -705,6 +789,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     }
 
     alerts = detect_source_sync_alerts(sources, pipeline, now)
+    stuck_items = _stuck_item_rows(fireflies_jobs, documents, now)
     unhealthy = any(source["status"] in {"warning", "critical", "unknown"} for source in sources)
     status = "degraded" if unhealthy or alerts else "healthy"
 
@@ -726,6 +811,8 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         ),
         "pipeline": pipeline,
         "alerts": alerts,
+        "recentRuns": _recent_run_rows(sync_runs),
+        "stuckItems": stuck_items,
         "counts": {
             "sources": len(sources),
             "alerts": len(alerts),
@@ -735,5 +822,6 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
             "uncompiled": sum(pipeline["uncompiledBySource"].values()),
             "tasks": len(tasks),
             "graphSubscriptions": len(subscriptions),
+            "stuckItems": len(stuck_items),
         },
     }
