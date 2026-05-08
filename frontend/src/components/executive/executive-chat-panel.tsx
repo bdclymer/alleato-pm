@@ -272,6 +272,8 @@ function ExecutiveChatSession({
   );
   const hasSentFirstMessage = useRef(false);
   const lastQueuedPromptId = useRef<string | null>(null);
+  const skipNextMessagesSync = useRef(false);
+  const prevInitialMessagesRef = useRef(initialMessages);
   const sessionIdRef = useRef(sessionId);
   const selectedModelRef = useRef(selectedModel);
 
@@ -314,6 +316,7 @@ function ExecutiveChatSession({
       onFinishMessage(sessionIdRef.current);
     },
     onError(error) {
+      skipNextMessagesSync.current = false;
       setLiveStatus({
         stage: "fallback",
         message: error.message,
@@ -323,24 +326,38 @@ function ExecutiveChatSession({
     },
   });
 
+  const sendExecutiveMessage = useCallback(
+    (message: { text: string; files?: FileList }) => {
+      skipNextMessagesSync.current = true;
+      void sendMessage(message);
+    },
+    [sendMessage],
+  );
+
   useEffect(() => {
+    if (prevInitialMessagesRef.current === initialMessages) return;
+    prevInitialMessagesRef.current = initialMessages;
+    if (skipNextMessagesSync.current) {
+      skipNextMessagesSync.current = false;
+      return;
+    }
     setMessages(initialMessages);
   }, [initialMessages, setMessages]);
 
   useEffect(() => {
     if (pendingFirstMessage && !hasSentFirstMessage.current) {
       hasSentFirstMessage.current = true;
-      sendMessage({ text: pendingFirstMessage });
+      sendExecutiveMessage({ text: pendingFirstMessage });
     }
-  }, [pendingFirstMessage, sendMessage]);
+  }, [pendingFirstMessage, sendExecutiveMessage]);
 
   useEffect(() => {
     if (!queuedPrompt) return;
     if (queuedPrompt.id === lastQueuedPromptId.current) return;
     if (!hasSentFirstMessage.current && pendingFirstMessage) return;
     lastQueuedPromptId.current = queuedPrompt.id;
-    sendMessage({ text: queuedPrompt.text });
-  }, [pendingFirstMessage, queuedPrompt, sendMessage]);
+    sendExecutiveMessage({ text: queuedPrompt.text });
+  }, [pendingFirstMessage, queuedPrompt, sendExecutiveMessage]);
 
   return (
     <ChatArea
@@ -358,7 +375,7 @@ function ExecutiveChatSession({
       selectedModel={selectedModel}
       onModelChange={onModelChange}
       onInputChange={setInput}
-      onSubmit={(message, files) => sendMessage({ text: message, files })}
+      onSubmit={(message, files) => sendExecutiveMessage({ text: message, files })}
       onToolApprovalResponse={addToolApprovalResponse}
       onStop={stop}
     />
@@ -397,6 +414,7 @@ export function ExecutiveChatPanel({
     id: string;
     text: string;
   } | null>(null);
+  const [chatStartError, setChatStartError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<AiAssistantModelId>(
     DEFAULT_AI_ASSISTANT_MODEL,
   );
@@ -450,14 +468,23 @@ export function ExecutiveChatPanel({
     async (message: string) => {
       const trimmed = message.trim();
       if (!trimmed) return;
+      setChatStartError(null);
       if (sessionId) {
         setQueuedPrompt({ id: `${Date.now()}:${trimmed}`, text: trimmed });
         return;
       }
-      const newSessionId = await createConversation();
-      setSessionId(newSessionId);
-      setPendingFirstMessage(trimmed);
-      setDraftInput("");
+      try {
+        const newSessionId = await createConversation();
+        setSessionId(newSessionId);
+        setPendingFirstMessage(trimmed);
+        setDraftInput("");
+      } catch (error) {
+        setChatStartError(
+          error instanceof Error
+            ? error.message
+            : "Could not start the executive chat session.",
+        );
+      }
     },
     [createConversation, sessionId],
   );
@@ -473,8 +500,9 @@ export function ExecutiveChatPanel({
 
   useEffect(() => {
     if (!sessionId) return;
+    if (pendingFirstMessage) return;
     void loadSessionMessages(sessionId);
-  }, [loadSessionMessages, sessionId]);
+  }, [loadSessionMessages, pendingFirstMessage, sessionId]);
 
   return (
     <section
@@ -558,6 +586,12 @@ export function ExecutiveChatPanel({
                   Ask
                 </Button>
               </div>
+              {chatStartError ? (
+                <div className="mt-2 flex items-start gap-2 text-xs text-destructive">
+                  <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span>{chatStartError}</span>
+                </div>
+              ) : null}
             </div>
           </div>
 

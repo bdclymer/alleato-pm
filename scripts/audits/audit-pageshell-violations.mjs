@@ -6,6 +6,7 @@
  *   - Uses deprecated ProjectToolPage or PageLayout         → DEPRECATED
  *   - Uses <PageContainer> AND has a manual <h1> in file    → DOUBLE HEADER
  *   - Uses neither PageShell nor acceptable legacy pattern  → MISSING PAGE SHELL
+ *   - Uses PageContainer/ProjectPageHeader but not PageShell → LEGACY PRIMITIVE LAYOUT
  *
  * Output:
  *   <file>\t<violation>\t<detail>
@@ -46,15 +47,19 @@ function rel(p) {
   return path.relative(REPO_ROOT, p);
 }
 
-function classify(text) {
+function classify(text, filePath) {
   const violations = [];
+  const relativePath = rel(filePath);
 
   const usesProjectToolPage = /\bProjectToolPage\b/.test(text);
   const usesPageLayoutDeprecated = /from ["'][^"']*\/layout\/PageLayout["']/.test(text) ||
     /import\s*\{[^}]*\bPageLayout\b[^}]*\}\s*from\s*["']@\/components\/layout/.test(text);
   const usesPageShell = /\bPageShell\b/.test(text);
-  const usesPageContainer = /<PageContainer[\s>]/.test(text);
+  const usesPageContainer = /\bPageContainer\b/.test(text);
+  const usesProjectPageHeader = /\bProjectPageHeader\b|\bPageHeader\b/.test(text);
   const hasManualH1 = /<h1[\s>]/.test(text);
+  const isRedirectOnly = /\bredirect\s*\(/.test(text) && !/<[A-Z_a-z][\w.:-]*(\s|>)/.test(text);
+  const isAuthPage = relativePath.includes("/auth/");
 
   if (usesProjectToolPage) {
     violations.push(["DEPRECATED_LAYOUT", "uses <ProjectToolPage>"]);
@@ -66,6 +71,18 @@ function classify(text) {
   if (usesPageContainer && hasManualH1 && !usesPageShell) {
     violations.push(["DOUBLE_HEADER", "<PageContainer> + manual <h1>"]);
   }
+  if (!usesPageShell && !isRedirectOnly) {
+    if (usesPageContainer || usesProjectPageHeader) {
+      violations.push([
+        "LEGACY_PRIMITIVE_LAYOUT",
+        "uses PageContainer/PageHeader primitives without PageShell",
+      ]);
+    } else if (isAuthPage) {
+      violations.push(["MISSING_PAGE_SHELL_AUTH", "auth page does not use PageShell"]);
+    } else {
+      violations.push(["MISSING_PAGE_SHELL", "does not use PageShell"]);
+    }
+  }
 
   return violations;
 }
@@ -74,7 +91,13 @@ async function main() {
   let totalPages = 0;
   let pagesWithViolations = 0;
   const violationRows = [];
-  const counts = { DEPRECATED_LAYOUT: 0, DOUBLE_HEADER: 0 };
+  const counts = {
+    DEPRECATED_LAYOUT: 0,
+    DOUBLE_HEADER: 0,
+    LEGACY_PRIMITIVE_LAYOUT: 0,
+    MISSING_PAGE_SHELL: 0,
+    MISSING_PAGE_SHELL_AUTH: 0,
+  };
 
   for await (const file of walkPageFiles(APP_ROOT)) {
     totalPages++;
@@ -84,7 +107,7 @@ async function main() {
     } catch {
       continue;
     }
-    const vs = classify(text);
+    const vs = classify(text, file);
     if (vs.length > 0) pagesWithViolations++;
     for (const [kind, detail] of vs) {
       counts[kind] = (counts[kind] || 0) + 1;
@@ -95,8 +118,11 @@ async function main() {
   console.log("=== PageShell Violations Audit ===");
   console.log(`Scanned: ${totalPages} page.tsx files under frontend/src/app/**`);
   console.log(`Pages with violations: ${pagesWithViolations}`);
-  console.log(`DEPRECATED_LAYOUT: ${counts.DEPRECATED_LAYOUT}`);
-  console.log(`DOUBLE_HEADER   : ${counts.DOUBLE_HEADER}`);
+  console.log(`DEPRECATED_LAYOUT       : ${counts.DEPRECATED_LAYOUT}`);
+  console.log(`DOUBLE_HEADER           : ${counts.DOUBLE_HEADER}`);
+  console.log(`LEGACY_PRIMITIVE_LAYOUT : ${counts.LEGACY_PRIMITIVE_LAYOUT}`);
+  console.log(`MISSING_PAGE_SHELL      : ${counts.MISSING_PAGE_SHELL}`);
+  console.log(`MISSING_PAGE_SHELL_AUTH : ${counts.MISSING_PAGE_SHELL_AUTH}`);
   console.log("");
   console.log("file\tviolation\tdetail");
   for (const row of violationRows.sort()) console.log(row);

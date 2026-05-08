@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { StatusBadge, type StatusVariant } from "@/components/ds/status-badge";
 import {
   type ColumnConfig,
   type FilterConfig,
@@ -55,13 +56,14 @@ export interface EditContext {
 
 export const meetingColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
-  { id: "date", label: "Date", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
+  { id: "date", label: "Date", defaultVisible: true },
   { id: "description", label: "Description", defaultVisible: true },
   { id: "participants", label: "Participants", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: false },
   { id: "category", label: "Category", defaultVisible: false },
   { id: "links", label: "Links", defaultVisible: true },
+  { id: "embedding", label: "Embedding", defaultVisible: true },
 ];
 
 export const meetingDefaultVisibleColumns = meetingColumns
@@ -176,6 +178,41 @@ export function getParticipantDisplayName(value: string): string {
   return formatParticipantDisplayName(value);
 }
 
+function getEmbeddingStatus(item: Meeting): {
+  label: string;
+  variant: StatusVariant;
+  sortValue: number;
+} {
+  const normalizedStatus = item.status?.trim().toLowerCase();
+
+  if (
+    normalizedStatus === "embedded" ||
+    normalizedStatus === "processed" ||
+    normalizedStatus === "compiled" ||
+    normalizedStatus === "segmented"
+  ) {
+    return { label: "Embedded", variant: "success", sortValue: 3 };
+  }
+
+  if (normalizedStatus === "error" || normalizedStatus === "embedding_error") {
+    return { label: "Error", variant: "error", sortValue: 0 };
+  }
+
+  if (normalizedStatus === "skipped_low_content") {
+    return { label: "Too short", variant: "neutral", sortValue: 1 };
+  }
+
+  if (normalizedStatus === "metadata_only" || normalizedStatus === "missing_metadata") {
+    return { label: "Metadata only", variant: "neutral", sortValue: 1 };
+  }
+
+  if (item.summary?.trim() || item.content?.trim()) {
+    return { label: "Pending", variant: "warning", sortValue: 2 };
+  }
+
+  return { label: "Not indexed", variant: "neutral", sortValue: 1 };
+}
+
 // ─── Inline edit primitives ───────────────────────────────────────────────────
 
 /**
@@ -203,6 +240,43 @@ function EditableCellWrapper({
       onClick={onClickToEdit}
     >
       {displayContent}
+    </div>
+  );
+}
+
+function HoverEditCell({
+  isEditing,
+  displayContent,
+  editLabel,
+  onEdit,
+  children,
+}: {
+  isEditing: boolean;
+  displayContent: React.ReactNode;
+  editLabel: string;
+  onEdit: (event: React.MouseEvent) => void;
+  children: React.ReactNode;
+}) {
+  if (isEditing) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="group/edit-cell inline-flex min-w-0 items-center gap-1.5">
+      <div className="min-w-0 transition-opacity group-hover/edit-cell:opacity-90">
+        {displayContent}
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0 opacity-0 transition-opacity hover:bg-accent/40 group-hover/edit-cell:opacity-100 focus-visible:opacity-100"
+        onClick={onEdit}
+        aria-label={editLabel}
+        title={editLabel}
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }
@@ -399,9 +473,62 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       sortValue: (item) => item.title ?? "",
     },
 
-    // ── Date: inline editable ────────────────────────────────────────────────
+    // ── Project: inline select ───────────────────────────────────────────────
     {
       ...meetingColumns[1],
+      render: (item) => {
+        const isEditing =
+          editContext?.editingCell?.meetingId === item.id &&
+          editContext?.editingCell?.field === "project";
+        const projectName = item.project?.trim();
+        const projectId = projectName
+          ? editContext?.projectIdByName.get(projectName)
+          : null;
+
+        return (
+          <HoverEditCell
+            isEditing={Boolean(isEditing)}
+            displayContent={
+              projectName ? (
+                projectId ? (
+                  <Link
+                    href={`/${projectId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    {projectName}
+                  </Link>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{projectName}</span>
+                )
+              ) : (
+                <span className="text-xs text-muted-foreground">No project</span>
+              )
+            }
+            editLabel={projectName ? "Change project" : "Assign project"}
+            onEdit={(e) => {
+              e.stopPropagation();
+              editContext?.handleCellClick(item, "project");
+            }}
+          >
+            <InlineProjectSelect
+              value={editContext?.editingValue ?? ""}
+              projectOptions={editContext?.projectOptions ?? []}
+              onSave={(v, move) =>
+                editContext?.handleInlineSave({ valueOverride: v, move })
+              }
+              onCancel={() => editContext?.handleInlineCancel()}
+            />
+          </HoverEditCell>
+        );
+      },
+      csvValue: (item) => item.project ?? "",
+      sortValue: (item) => item.project ?? "",
+    },
+
+    // ── Date: inline editable ────────────────────────────────────────────────
+    {
+      ...meetingColumns[2],
       render: (item) => {
         const isEditing =
           editContext?.editingCell?.meetingId === item.id &&
@@ -429,54 +556,6 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       },
       csvValue: (item) => item.date ?? "",
       sortValue: (item) => (item.date ? new Date(item.date).getTime() : 0),
-    },
-
-    // ── Project: inline select ───────────────────────────────────────────────
-    {
-      ...meetingColumns[2],
-      render: (item) => {
-        const isEditing =
-          editContext?.editingCell?.meetingId === item.id &&
-          editContext?.editingCell?.field === "project";
-
-        return (
-          <EditableCellWrapper
-            isEditing={Boolean(isEditing)}
-            displayContent={
-              item.project?.trim() ? (() => {
-                const pid = editContext?.projectIdByName.get((item.project ?? "").trim());
-                return pid ? (
-                  <Link
-                    href={`/${pid}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                  >
-                    {item.project}
-                    <ArrowUpRight className="h-3 w-3 shrink-0" />
-                  </Link>
-                ) : (
-                  <span className="text-xs text-muted-foreground">{item.project}</span>
-                );
-              })() : null
-            }
-            onClickToEdit={(e) => {
-              e.stopPropagation();
-              editContext?.handleCellClick(item, "project");
-            }}
-          >
-            <InlineProjectSelect
-              value={editContext?.editingValue ?? ""}
-              projectOptions={editContext?.projectOptions ?? []}
-              onSave={(v, move) =>
-                editContext?.handleInlineSave({ valueOverride: v, move })
-              }
-              onCancel={() => editContext?.handleInlineCancel()}
-            />
-          </EditableCellWrapper>
-        );
-      },
-      csvValue: (item) => item.project ?? "",
-      sortValue: (item) => item.project ?? "",
     },
 
     // ── Description: compact text preview ───────────────────────────────────
@@ -562,12 +641,13 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           editContext?.editingCell?.field === "category";
 
         return (
-          <EditableCellWrapper
+          <HoverEditCell
             isEditing={Boolean(isEditing)}
             displayContent={
               <TableTagBadge label={item.category} variant="outline" emptyLabel="No category" />
             }
-            onClickToEdit={(e) => {
+            editLabel={item.category?.trim() ? "Change category" : "Add category"}
+            onEdit={(e) => {
               e.stopPropagation();
               editContext?.handleCellClick(item, "category");
             }}
@@ -579,7 +659,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
               onCancel={() => editContext?.handleInlineCancel()}
               placeholder="Enter category…"
             />
-          </EditableCellWrapper>
+          </HoverEditCell>
         );
       },
       csvValue: (item) => item.category ?? "",
@@ -614,6 +694,18 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
         if (item.fireflies_link) return "fireflies";
         return "";
       },
+    },
+
+    // ── Embedding: summary vectorization status ─────────────────────────────
+    {
+      ...meetingColumns[8],
+      render: (item) => {
+        const status = getEmbeddingStatus(item);
+        return <StatusBadge status={status.label} variant={status.variant} />;
+      },
+      csvValue: (item) => getEmbeddingStatus(item).label,
+      sortValue: (item) => getEmbeddingStatus(item).sortValue,
+      sortable: true,
     },
   ];
 }

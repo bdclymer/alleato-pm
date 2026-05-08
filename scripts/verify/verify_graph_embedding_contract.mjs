@@ -54,6 +54,13 @@ requireContains('category == "email"', "Graph chunks must classify email chunks 
 requireContains('"onedrive_document"', "Graph chunks must preserve the existing OneDrive source_type name.");
 requireContains("MIN_EMBEDDABLE_CHARS_BY_TYPE", "Graph embedding must keep low-content comms out of the vector index.");
 requireContains("skipped_low_content", "Graph embedding must mark low-content skips loudly.");
+requireContains('["embedded", "complete"]', "Graph embedding must repair falsely completed Graph rows that have no chunks.");
+requireContains("_has_embedded_graph_chunks", "Graph embedding must detect completed Graph rows that are still missing embedded chunks.");
+requireContains('.not_.is_("embedding", "null")', "Graph embedding repair must detect null-embedding chunks, not only missing chunk rows.");
+requireContains("completed_without_embeddings", "Graph embedding repair must query completed rows missing embedded chunks directly when DB access is available.");
+requireContains("'raw_ingested', 'segmented', 'compiled', 'error'", "Graph embedding must retry content-bearing Graph error rows.");
+requireContains("repair_scan_limit", "Graph embedding repair must scan past the first page of already-good completed rows.");
+requireContains('order("created_at", desc=True)', "Graph embedding must prioritize newest Graph rows first.");
 requireNotContains("return [[] for _ in texts]", "Graph embeddings must not return empty vectors after provider failure.");
 
 if (!migration.includes("repair_graph_document_chunk_source_types_batch")) {

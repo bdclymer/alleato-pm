@@ -67,6 +67,20 @@ const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
   archived: "neutral",
   unknown: "neutral",
   none: "neutral",
+
+  // App error statuses
+  new: "error",
+  triaged: "info",
+  in_progress: "warning",
+  needs_human: "warning",
+  fixed: "success",
+  ignored: "neutral",
+
+  // Severity levels
+  critical: "error",
+  high: "warning",
+  medium: "info",
+  low: "neutral",
 };
 
 function resolveVariant(status: string): StatusVariant {

@@ -59,4 +59,22 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── Build crash guards ───────────────────────────────────────────
+# Prevent the two patterns that have caused production build failures:
+#   1. Server pages calling createServiceClient() without force-dynamic
+#      (Next.js tries to statically prerender them; env var missing in CI → crash)
+#   2. Module-level server client initialization
+#      (reads secret env var at import time → crash during next build)
+node scripts/check-server-prerender-safety.mjs
+if [ $? -ne 0 ]; then
+  echo "Server prerender safety violation found. Add 'export const dynamic = \"force-dynamic\"' to any page.tsx that calls createServiceClient()."
+  exit 1
+fi
+
+node scripts/check-no-module-level-server-init.mjs
+if [ $? -ne 0 ]; then
+  echo "Module-level server client initialization found. Use a lazy singleton getter instead."
+  exit 1
+fi
+
 npx lint-staged

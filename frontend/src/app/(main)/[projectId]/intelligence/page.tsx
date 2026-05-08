@@ -7,7 +7,6 @@ import { AlertTriangle } from "lucide-react";
 import {
   Button,
   EmptyState,
-  SectionHeader,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { InsightCardShowcase } from "@/components/ai-intelligence/insight-card-showcase";
@@ -19,7 +18,6 @@ import type {
   ClientProjectIntelligencePacket,
 } from "@/lib/ai/intelligence/types";
 import { createServiceClient } from "@/lib/supabase/service";
-import { cn } from "@/lib/utils";
 
 type ProjectLookup = {
   id: number;
@@ -99,18 +97,6 @@ function IntelligenceEmptyState({
   );
 }
 
-function PacketSignalLink({ href, label, value }: { href: string; label: string; value: string }) {
-  return (
-    <a
-      href={href}
-      className="group inline-flex min-w-0 items-baseline gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-    >
-      <span className="font-medium text-foreground">{value}</span>
-      <span className="truncate text-muted-foreground">{label}</span>
-    </a>
-  );
-}
-
 function PacketOverview({
   packet,
 }: {
@@ -124,42 +110,25 @@ function PacketOverview({
   const linkedEvidenceValue = linkedEvidenceCount || packet.cards.reduce((total, card) => total + card.evidence.length, 0);
 
   return (
-    <section id="packet-overview" className="space-y-5">
-      <nav
-        aria-label="Project intelligence summary"
-        className="flex flex-wrap items-baseline gap-x-8 gap-y-2"
-      >
-        <PacketSignalLink
-          href="#source-window"
-          value={formatLabel(packet.freshnessStatus)}
-          label={`as of ${formatDateTime(packet.generatedAt)}`}
-        />
-        <PacketSignalLink
-          href="#insight-cards"
-          value={String(packet.cards.length)}
-          label="insight cards"
-        />
-        <PacketSignalLink
-          href="#insight-cards"
-          value={String(linkedEvidenceValue)}
-          label={latestSourceAt ? `linked evidence, latest ${formatDate(latestSourceAt)}` : "linked evidence"}
-        />
-        <PacketSignalLink
-          href="#packet-overview"
-          value={formatLabel(packet.confidenceSummary.overall)}
-          label="confidence"
-        />
-      </nav>
-
-      <div className="space-y-5">
-        <div className="space-y-4">
-          <div id="source-window" className="scroll-mt-16">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Source window
-            </p>
-            <p className="mt-1 text-sm text-foreground">{buildSourceWindow(packet)}</p>
-          </div>
-        </div>
+    <section id="packet-overview" className="space-y-1 border-b border-border pb-6">
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5">
+        <span className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{formatLabel(packet.freshnessStatus)}</span>
+          {" "}· {formatDateTime(packet.generatedAt)}
+        </span>
+        <span className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{packet.cards.length}</span> cards
+        </span>
+        <span className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{linkedEvidenceValue}</span>
+          {" "}evidence{latestSourceAt ? `, latest ${formatDate(latestSourceAt)}` : ""}
+        </span>
+        <span className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{formatLabel(packet.confidenceSummary.overall)}</span> confidence
+        </span>
+        <span id="source-window" className="scroll-mt-16 text-sm text-muted-foreground">
+          {buildSourceWindow(packet)}
+        </span>
       </div>
     </section>
   );
@@ -168,40 +137,35 @@ function PacketOverview({
 function CoverageAndGaps({ packet }: { packet: ClientProjectIntelligencePacket }) {
   const gaps = getCoverageGaps(packet);
   const coverageRows = [
-    ["Document rows", packet.sourceCoverage.documentMetadataRows],
-    ["AI memory rows", packet.sourceCoverage.aiMemoryRows],
-    ["Project email rows", packet.sourceCoverage.projectEmailRows],
-    ["Stale items", packet.staleItemCount],
+    ["Documents", packet.sourceCoverage.documentMetadataRows],
+    ["AI memory", packet.sourceCoverage.aiMemoryRows],
+    ["Emails", packet.sourceCoverage.projectEmailRows],
+    ["Stale", packet.staleItemCount],
   ];
 
   return (
-    <section className="space-y-4">
-      <SectionHeader title="Coverage And Gaps" />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-1">
-          {coverageRows.map(([label, value]) => (
-            <div key={label} className="space-y-1">
-              <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                {label}
-              </dt>
-              <dd className="text-sm text-foreground">{String(getCoverageNumber(value))}</dd>
+    <section className="space-y-4 border-t border-border pt-6">
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        Coverage
+      </p>
+      <dl className="flex flex-wrap gap-x-8 gap-y-3">
+        {coverageRows.map(([label, value]) => (
+          <div key={label} className="flex items-baseline gap-2">
+            <dd className="text-sm font-medium text-foreground">{String(getCoverageNumber(value))}</dd>
+            <dt className="text-xs text-muted-foreground">{label}</dt>
+          </div>
+        ))}
+      </dl>
+      {gaps.length > 0 ? (
+        <div className="space-y-2 pt-1">
+          {gaps.map((gap) => (
+            <div key={gap} className="flex gap-2.5">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-status-warning" />
+              <p className="text-sm leading-6 text-muted-foreground">{gap}</p>
             </div>
           ))}
-        </dl>
-
-        <div className={cn("space-y-3", gaps.length === 0 && "text-muted-foreground")}>
-          {gaps.length > 0 ? (
-            gaps.map((gap) => (
-              <div key={gap} className="flex gap-3 rounded-lg border border-border p-3">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-warning" />
-                <p className="text-sm leading-6 text-foreground">{gap}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm">No source coverage gaps were recorded for this packet.</p>
-          )}
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }

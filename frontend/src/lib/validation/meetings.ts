@@ -18,6 +18,7 @@ export const meetingSchema = z
     participants_array: z.array(z.string()).nullable().optional(),
     status: z.string().nullable().optional(),
     summary: z.string().nullable().optional(),
+    summary_embedding: z.unknown().nullable().optional(),
     fireflies_link: z.string().nullable().optional(),
     created_at: z.string().nullable().optional(),
     updated_at: z.string().nullable().optional(),

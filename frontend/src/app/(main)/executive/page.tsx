@@ -1,14 +1,14 @@
-import { CheckCircledIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
-import { EmptyState, InfoAlert } from "@/components/ds";
+import { EmptyState } from "@/components/ds";
 import { ExecutiveChatSheet } from "@/components/executive/executive-chat-sheet";
-import {
-  ExecutiveSignalCard,
-  type ExecutiveRelatedTask,
-} from "@/components/executive/executive-signal-card";
 import { ExecutiveSourceActivity } from "@/components/executive/executive-source-activity";
+import {
+  ExecutiveProjectIssueList,
+  type ExecutiveProjectIssueEntry,
+} from "@/components/executive/executive-project-issue-list";
+import type { ExecutiveRelatedTask } from "@/components/executive/executive-signal-card";
 import type { ExecutiveProjectOption } from "@/components/executive/executive-project-link-form";
 import type { ExecutiveTaskAssigneeOption } from "@/components/executive/executive-task-draft-form";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
@@ -282,71 +282,6 @@ function SectionDivider({
   );
 }
 
-// ── Section Wrapper ────────────────────────────────────────────────────────────
-
-function ExecutiveListSection({
-  entries,
-  employees,
-  matchedTasksBySourceId,
-  projects,
-}: {
-  entries: ExecutiveActionQueueEntry[];
-  employees: ExecutiveTaskAssigneeOption[];
-  matchedTasksBySourceId: Map<string, MatchedTask[]>;
-  projects: ExecutiveProjectOption[];
-}) {
-  const unlinkedCount = entries.filter((entry) =>
-    isUnlinkedProject(entry.item.project),
-  ).length;
-
-  return (
-    <section className="space-y-4">
-      <SectionDivider title="Action Queue" count={entries.length} />
-      {unlinkedCount > 0 && (
-        <InfoAlert variant="error" className="text-xs leading-5">
-          {unlinkedCount} item{unlinkedCount === 1 ? "" : "s"} need project
-          linkage before they can become reliable project work.
-        </InfoAlert>
-      )}
-      {entries.length > 0 ? (
-        <div className="space-y-3">
-          {entries.map((entry) => {
-            const item = entry.item;
-            const relatedTasks = item.sourceId
-              ? (matchedTasksBySourceId.get(item.sourceId) ?? [])
-              : [];
-            return (
-              <ExecutiveSignalCard
-                key={`${entry.section}-${item.title}-${item.sourceId ?? item.sourceDetail}`}
-                item={item}
-                employees={employees}
-                hasMatchingTask={relatedTasks.length > 0}
-                relatedTasks={relatedTasks}
-                followUpId={entry.followUpId}
-                actionLabel={
-                  entry.section === "importantUpdates"
-                    ? undefined
-                    : actionQueueLabel(entry)
-                }
-                projectHref={projectHrefFromLabel(item.project)}
-                currentProjectId={projectIdFromLabel(item.project)}
-                projects={projects}
-              />
-            );
-          })}
-        </div>
-      ) : (
-        <EmptyState
-          icon={<CheckCircledIcon />}
-          title="No active executive actions"
-          description="Nothing high-confidence surfaced in the current packet."
-          className="py-8"
-        />
-      )}
-    </section>
-  );
-}
-
 function TodayMeetingsSection({ meetings }: { meetings: TodayMeeting[] }) {
   return (
     <section className="space-y-4">
@@ -605,6 +540,28 @@ export default async function ExecutiveDailyInsightsPage() {
     await loadExecutiveActionContext({
       items: actionQueueEntries.map((entry) => entry.item),
     });
+  const projectIssueEntries: ExecutiveProjectIssueEntry[] = actionQueueEntries.map(
+    (entry) => {
+      const item = entry.item;
+      const relatedTasks = item.sourceId
+        ? (matchedTasksBySourceId.get(item.sourceId) ?? [])
+        : [];
+
+      return {
+        id: `${entry.section}-${item.title}-${item.sourceId ?? item.sourceDetail}`,
+        section: entry.section,
+        item,
+        relatedTasks,
+        followUpId: entry.followUpId,
+        actionLabel:
+          entry.section === "importantUpdates"
+            ? undefined
+            : actionQueueLabel(entry),
+        projectHref: projectHrefFromLabel(item.project),
+        currentProjectId: projectIdFromLabel(item.project),
+      };
+    },
+  );
   const generatedAt = formatGeneratedAt(packet.generatedAt);
 
   return (
@@ -619,10 +576,9 @@ export default async function ExecutiveDailyInsightsPage() {
       <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* ── Main column ── */}
         <div className="space-y-8">
-          <ExecutiveListSection
-            entries={actionQueueEntries}
+          <ExecutiveProjectIssueList
+            entries={projectIssueEntries}
             employees={employees}
-            matchedTasksBySourceId={matchedTasksBySourceId}
             projects={projects}
           />
         </div>

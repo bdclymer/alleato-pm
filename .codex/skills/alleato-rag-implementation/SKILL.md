@@ -78,6 +78,18 @@ Use this skill when the user asks to:
 - debug retrieval quality over meetings, email, Teams, or documents
 - improve AI response quality, grounding, or confidence
 
+## Escalate To RAG Strategy Council
+
+Use `rag-strategy-council` before implementation when:
+
+- the user asks for consensus, expert debate, or the best strategy
+- a prior RAG/assistant fix did not hold
+- the failure could be in multiple layers at once
+- the proposed change would affect provider/tool routing, packet-first behavior, source-specific lookup, or retrieval architecture
+- the fix needs a durable implementation sequence instead of one patch
+
+The council report belongs under `docs/ai-plan/councils/`. Treat it as the source of truth for the next implementation slice.
+
 Do not use this skill for:
 
 - a generic greenfield RAG tutorial

@@ -89,6 +89,10 @@ const config = [
       'design-system/no-inline-currency': 'warn',
       'design-system/require-error-state': 'warn',
       'design-system/require-info-alert': 'warn',
+      // Gate 19: blocks raw <TableBody>/<TableRow> etc. in page/component files
+      'design-system/no-raw-table-primitives': 'warn',
+      // Gate 16: blocks raw fetch() to external URLs in API routes
+      'design-system/no-external-fetch-in-api-routes': 'warn',
     },
   },
   // Admin pages: relax heading rule — these are internal tools used only by the Alleato team.

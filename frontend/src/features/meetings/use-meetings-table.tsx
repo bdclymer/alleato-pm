@@ -245,6 +245,20 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     window.localStorage.setItem(migrationKey, "1");
   }, [tableState.visibleColumns, tableState.setVisibleColumns]);
 
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const migrationKey = "meetings:visibleColumns:add-embedding-2026-05-08";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    tableState.setVisibleColumns((prev) => {
+      if (prev.includes("embedding")) return prev;
+      return [...prev, "embedding"];
+    });
+
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState.setVisibleColumns]);
+
   // ── Derived data ─────────────────────────────────────────────────────────────
   const activeFilters = tableState.activeFilters as FilterState;
   const searchTerm = tableState.debouncedSearch.toLowerCase();

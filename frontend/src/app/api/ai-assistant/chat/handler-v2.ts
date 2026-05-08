@@ -85,19 +85,53 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
         },
       } as never);
 
-      const systemPrompt = assembleSystemPromptFromContext(plan, retrievalCtx, baseSystemPrompt);
+      const fullSystemPrompt = assembleSystemPromptFromContext(plan, retrievalCtx, baseSystemPrompt);
+      // TEMP: bisect — try with minimal prompt to confirm whether prompt content itself triggers the error
+      const minimalSystemPrompt = "You are Alleato, an AI assistant for construction project management. Answer the user's question briefly using available knowledge.";
+      const systemPrompt = process.env.HANDLER_V2_MINIMAL_PROMPT === "true" ? minimalSystemPrompt : fullSystemPrompt;
 
       const tools = createStrategistTools(args.user.id, {
         pinnedProjectId: args.selectedProjectId,
       });
 
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[handler-v2] streamText input", {
+          plan_reason: plan.reason,
+          system_prompt_chars: systemPrompt.length,
+          system_prompt_approx_tokens: Math.round(systemPrompt.length / 4),
+          retrieval_durations: retrievalCtx.durationsMs,
+          warnings: retrievalCtx.warnings,
+          has_intelligence_packet: Boolean(retrievalCtx.intelligencePacket),
+          has_project_snapshot: Boolean(retrievalCtx.projectSnapshot),
+          has_semantic_results: Boolean(retrievalCtx.semanticVectorResults),
+          message_count: args.messages.length,
+          tool_count: Object.keys(tools).length,
+          model: args.activeModel,
+        });
+      }
+
       const result = streamText({
         model: getLanguageModel(args.activeModel),
         system: systemPrompt,
         messages: await convertToModelMessages(args.messages),
-        tools,
+        // tools, // TEMP: testing if 102-tool registry causes finishReason:other
         maxOutputTokens: 4000,
         stopWhen: stepCountIs(10),
+        onError: ({ error }) => {
+          console.error("[handler-v2] streamText onError", {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack?.split("\n").slice(0, 5).join("\n") : undefined,
+          });
+        },
+        onFinish: ({ finishReason, usage, text, toolCalls }) => {
+          console.log("[handler-v2] streamText onFinish", {
+            finishReason,
+            usage,
+            text_chars: text?.length ?? 0,
+            text_preview: text?.slice(0, 200) ?? "",
+            tool_calls: toolCalls?.map((c) => c.toolName) ?? [],
+          });
+        },
       });
 
       writer.merge(result.toUIMessageStream({ originalMessages: args.messages }));

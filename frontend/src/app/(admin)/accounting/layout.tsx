@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
+import { AccountingNav } from "@/components/accounting/accounting-nav";
 
 export default async function AccountingLayout({
   children,
@@ -20,5 +21,10 @@ export default async function AccountingLayout({
     );
   }
 
-  return children;
+  return (
+    <>
+      <AccountingNav />
+      {children}
+    </>
+  );
 }

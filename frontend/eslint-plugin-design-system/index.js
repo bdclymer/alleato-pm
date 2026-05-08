@@ -23,6 +23,8 @@ const noRawHeading = require('./rules/no-raw-heading');
 const noInlineCurrency = require('./rules/no-inline-currency');
 const requireErrorState = require('./rules/require-error-state');
 const requireInfoAlert = require('./rules/require-info-alert');
+const noRawTablePrimitives = require('./rules/no-raw-table-primitives');
+const noExternalFetchInApiRoutes = require('./rules/no-external-fetch-in-api-routes');
 
 module.exports = {
   rules: {
@@ -44,6 +46,8 @@ module.exports = {
     'no-raw-heading': noRawHeading,
     'no-inline-currency': noInlineCurrency,
     'require-error-state': requireErrorState,
+    'no-raw-table-primitives': noRawTablePrimitives,
+    'no-external-fetch-in-api-routes': noExternalFetchInApiRoutes,
   },
   configs: {
     recommended: {

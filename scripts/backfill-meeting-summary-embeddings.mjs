@@ -2,16 +2,18 @@
 /**
  * Backfill document_metadata.summary_embedding for meetings missing it.
  *
- * Uses OpenAI text-embedding-3-large (3072 dimensions) to match the embedder worker.
- * Requires env vars: SUPABASE_URL, SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY), OPENAI_API_KEY
+ * Uses text-embedding-3-large (3072 dimensions) to match the embedder worker.
+ * Prefer AI Gateway, then direct OpenAI fallback, matching the backend pipeline.
+ * Requires env vars: DATABASE_URL, AI_GATEWAY_API_KEY or OPENAI_API_KEY
  *
  * Usage:
- *   node scripts/backfill-meeting-summary-embeddings.mjs [--dry-run] [--limit N] [--batch-size N]
+ *   node scripts/backfill-meeting-summary-embeddings.mjs [--dry-run] [--limit N] [--batch-size N] [--days N]
  */
 
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import postgres from 'postgres';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -35,12 +37,12 @@ try {
   // .env not found; rely on environment variables already set
 }
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+const DATABASE_URL = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+const AI_GATEWAY_API_KEY = process.env.AI_GATEWAY_API_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY || !OPENAI_API_KEY) {
-  console.error("Missing required env vars: SUPABASE_URL, SUPABASE_SERVICE_KEY/SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY");
+if (!DATABASE_URL || (!AI_GATEWAY_API_KEY && !OPENAI_API_KEY)) {
+  console.error("Missing required env vars: DATABASE_URL/SUPABASE_DB_URL and AI_GATEWAY_API_KEY or OPENAI_API_KEY");
   process.exit(1);
 }
 
@@ -48,46 +50,58 @@ const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const LIMIT = parseInt(args[args.indexOf("--limit") + 1]) || 0;
 const BATCH_SIZE = parseInt(args[args.indexOf("--batch-size") + 1]) || 20;
-
-async function supabaseQuery(path, method = "GET", body = null) {
-  const headers = {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
-    "Content-Type": "application/json",
-    Prefer: method === "PATCH" ? "return=minimal" : "return=representation",
-  };
-  const opts = { method, headers };
-  if (body) opts.body = JSON.stringify(body);
-
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`Supabase ${method} ${path}: ${resp.status} ${text}`);
-  }
-  if (method === "PATCH") return null;
-  return resp.json();
-}
+const DAYS = parseInt(args[args.indexOf("--days") + 1]) || 365;
+const sql = postgres(DATABASE_URL, { max: 1, ssl: "require" });
 
 async function embedTexts(texts) {
-  const resp = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "text-embedding-3-large",
-      dimensions: 3072,
-      input: texts,
-    }),
-  });
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`OpenAI embeddings: ${resp.status} ${text}`);
+  const attempts = [
+    AI_GATEWAY_API_KEY
+      ? {
+          label: "AI Gateway",
+          url: "https://ai-gateway.vercel.sh/v1/embeddings",
+          key: AI_GATEWAY_API_KEY,
+          model: "openai/text-embedding-3-large",
+        }
+      : null,
+    OPENAI_API_KEY
+      ? {
+          label: "OpenAI direct",
+          url: "https://api.openai.com/v1/embeddings",
+          key: OPENAI_API_KEY,
+          model: "text-embedding-3-large",
+        }
+      : null,
+  ].filter(Boolean);
+
+  const errors = [];
+  for (const attempt of attempts) {
+    const resp = await fetch(attempt.url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${attempt.key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: attempt.model,
+        dimensions: 3072,
+        input: texts,
+      }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      errors.push(`${attempt.label}: ${resp.status} ${text.slice(0, 300)}`);
+      continue;
+    }
+    const data = await resp.json();
+    if (!Array.isArray(data.data) || data.data.length !== texts.length) {
+      errors.push(`${attempt.label}: expected ${texts.length} embeddings, got ${data.data?.length ?? "unknown"}`);
+      continue;
+    }
+    console.log(`  Provider: ${attempt.label}`);
+    return data.data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
   }
-  const data = await resp.json();
-  // Sort by index to maintain order
-  return data.data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
+
+  throw new Error(`Embedding failed across all providers: ${errors.join(" | ")}`);
 }
 
 function buildEmbeddingText(meeting) {
@@ -100,21 +114,21 @@ function buildEmbeddingText(meeting) {
 }
 
 async function fetchAllCandidates() {
-  const PAGE_SIZE = 1000;
-  let all = [];
-  let offset = 0;
+  const rows = await sql`
+    select id, title, date, captured_at, created_at, summary, overview
+    from public.document_metadata
+    where summary_embedding is null
+      and (source = 'fireflies'
+        or type in ('meeting', 'meeting_transcript')
+        or category = 'meeting'
+        or fireflies_id is not null)
+      and coalesce(captured_at, date, created_at::timestamptz) >= now() - (${DAYS} || ' days')::interval
+      and length(coalesce(nullif(summary, ''), nullif(overview, ''), '')) > 0
+    order by coalesce(captured_at, date, created_at::timestamptz) desc nulls last
+    ${LIMIT ? sql`limit ${LIMIT}` : sql``}
+  `;
 
-  while (true) {
-    const page = await supabaseQuery(
-      `document_metadata?summary_embedding=is.null&or=(summary.neq.,overview.neq.)&select=id,title,date,summary,overview&order=date.desc&limit=${PAGE_SIZE}&offset=${offset}`
-    );
-    if (!page || page.length === 0) break;
-    all.push(...page.filter((m) => buildEmbeddingText(m).trim()));
-    if (page.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-
-  return all;
+  return rows.filter((m) => buildEmbeddingText(m).trim());
 }
 
 async function main() {
@@ -123,9 +137,16 @@ async function main() {
   console.log("=".repeat(60));
   console.log(`Model: text-embedding-3-large (3072 dimensions)`);
   console.log(`Batch size: ${BATCH_SIZE}`);
+  console.log(`Window: last ${DAYS} days`);
   if (LIMIT) console.log(`Limit: ${LIMIT}`);
   if (DRY_RUN) console.log("MODE: DRY RUN");
   console.log();
+
+  if (!DRY_RUN) {
+    console.log("Checking embedding provider...");
+    await embedTexts(["alleato meeting summary backfill provider preflight"]);
+    console.log();
+  }
 
   // Materialize all candidate meetings upfront so we iterate a stable set.
   // This prevents infinite loops when persistent failures leave rows NULL
@@ -187,11 +208,11 @@ async function main() {
     // Update each meeting
     for (let i = 0; i < batch.length; i++) {
       try {
-        await supabaseQuery(
-          `document_metadata?id=eq.${batch[i].id}`,
-          "PATCH",
-          { summary_embedding: embeddings[i] }
-        );
+        await sql`
+          update public.document_metadata
+          set summary_embedding = ${JSON.stringify(embeddings[i])}::halfvec
+          where id = ${batch[i].id}
+        `;
         success++;
       } catch (err) {
         console.error(`  Failed ${batch[i].id}: ${err.message}`);
@@ -223,4 +244,6 @@ async function main() {
 main().catch((err) => {
   console.error("FATAL:", err);
   process.exit(1);
+}).finally(async () => {
+  await sql.end({ timeout: 5 }).catch(() => {});
 });

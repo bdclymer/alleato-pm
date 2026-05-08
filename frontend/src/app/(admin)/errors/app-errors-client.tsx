@@ -1,29 +1,34 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
-  AlertTriangle,
-  CheckCircle2,
-  Circle,
   Copy,
   ExternalLink,
   FileText,
   Loader2,
-  Search,
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState, ErrorState } from "@/components/ds";
+import { ErrorState } from "@/components/ds";
+import { StatusBadge } from "@/components/ds/status-badge";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  TableRowActionsMenu,
+  type FilterValue,
+  type TableColumn,
+} from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -31,21 +36,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   AppErrorClassification,
   AppErrorEventForPacket,
 } from "@/lib/app-error-classification";
 import { apiFetch } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
+
+import {
+  appErrorColumnConfig,
+  appErrorDefaultVisibleColumns,
+  appErrorFilters,
+} from "@/features/app-errors/app-errors-table-config";
 
 type ErrorStatus = "new" | "triaged" | "in_progress" | "fixed" | "ignored" | "needs_human";
 
@@ -102,22 +104,6 @@ const STATUS_OPTIONS: { value: ErrorStatus; label: string }[] = [
   { value: "ignored", label: "Ignored" },
 ];
 
-const SEVERITY_CLASS: Record<string, string> = {
-  critical: "border-destructive/30 bg-destructive/10 text-destructive",
-  high: "border-status-warning/30 bg-status-warning/10 text-status-warning",
-  medium: "border-status-info/30 bg-status-info/10 text-status-info",
-  low: "border-border bg-muted text-muted-foreground",
-};
-
-const STATUS_CLASS: Record<ErrorStatus, string> = {
-  new: "border-destructive/30 bg-destructive/10 text-destructive",
-  triaged: "border-status-info/30 bg-status-info/10 text-status-info",
-  in_progress: "border-primary/30 bg-primary/10 text-primary",
-  needs_human: "border-status-warning/30 bg-status-warning/10 text-status-warning",
-  fixed: "border-status-success/30 bg-status-success/10 text-status-success",
-  ignored: "border-border bg-muted text-muted-foreground",
-};
-
 function relativeTime(value: string): string {
   const diffMs = Date.now() - new Date(value).getTime();
   const minutes = Math.floor(diffMs / 60_000);
@@ -129,17 +115,12 @@ function relativeTime(value: string): string {
   return `${days}d ago`;
 }
 
-function statusIcon(status: string) {
-  if (status === "fixed") return CheckCircle2;
-  if (status === "in_progress") return Loader2;
-  if (status === "needs_human" || status === "new") return AlertTriangle;
-  return Circle;
-}
-
 export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
   const [items, setItems] = useState(rows);
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ErrorStatus | "active" | "all">("active");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AppErrorGroupDetail | null>(null);
@@ -149,18 +130,58 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
   const [linearCreating, setLinearCreating] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const tableState = useUnifiedTableState({
+    entityKey: "app-errors",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table"],
+      page: 1,
+      perPage: 50,
+      search: "",
+      sortBy: "last_seen",
+      sortDirection: "desc",
+      visibleColumns: appErrorDefaultVisibleColumns,
+      filters: { status: "active", severity: undefined, source: undefined },
+    },
+  });
+
+  const activeFilters = useMemo<Record<string, FilterValue>>(
+    () => ({
+      status: searchParams?.get("status") || "active",
+      severity: searchParams?.get("severity") || undefined,
+      source: searchParams?.get("source") || undefined,
+    }),
+    [searchParams],
+  );
+
+  const hasActiveFilters = Boolean(
+    (activeFilters.status && activeFilters.status !== "active") ||
+      activeFilters.severity ||
+      activeFilters.source,
+  );
+
   const filtered = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const q = tableState.debouncedSearch.trim().toLowerCase();
+    const statusFilter = activeFilters.status as string | undefined;
+    const severityFilter = activeFilters.severity as string | undefined;
+    const sourceFilter = activeFilters.source as string | undefined;
+
     return items.filter((item) => {
       const statusMatches =
+        !statusFilter ||
         statusFilter === "all" ||
         (statusFilter === "active"
           ? !["fixed", "ignored"].includes(item.status)
           : item.status === statusFilter);
 
       if (!statusMatches) return false;
-      if (!normalizedQuery) return true;
+      if (severityFilter && item.severity !== severityFilter) return false;
+      if (sourceFilter && item.source !== sourceFilter) return false;
 
+      if (!q) return true;
       return [
         item.latest_message,
         item.latest_route,
@@ -170,19 +191,64 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
         item.signature,
       ]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(normalizedQuery));
+        .some((value) => String(value).toLowerCase().includes(q));
     });
-  }, [items, query, statusFilter]);
+  }, [items, tableState.debouncedSearch, activeFilters]);
 
-  const summary = useMemo(() => {
-    return {
-      active: items.filter((item) => !["fixed", "ignored"].includes(item.status)).length,
-      critical: items.filter((item) => item.severity === "critical").length,
-      events: items.reduce((sum, item) => sum + item.event_count, 0),
-    };
-  }, [items]);
+  const sortedItems = useMemo(() => {
+    const { sortBy, sortDirection } = tableState;
+    const dir = sortDirection === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "events") return dir * (a.event_count - b.event_count);
+      if (sortBy === "last_seen")
+        return dir * (new Date(a.last_seen_at).getTime() - new Date(b.last_seen_at).getTime());
+      if (sortBy === "severity") return dir * a.severity.localeCompare(b.severity);
+      if (sortBy === "status") return dir * a.status.localeCompare(b.status);
+      if (sortBy === "route") return dir * (a.latest_route ?? "").localeCompare(b.latest_route ?? "");
+      return 0;
+    });
+  }, [filtered, tableState]);
 
-  function updateStatus(id: string, status: ErrorStatus) {
+  const paginatedItems = useMemo(() => {
+    const start = (tableState.page - 1) * tableState.perPage;
+    return sortedItems.slice(start, start + tableState.perPage);
+  }, [sortedItems, tableState.page, tableState.perPage]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / tableState.perPage));
+
+
+  function handleFilterChange(updates: Record<string, FilterValue>) {
+    const merged = { ...activeFilters, ...updates };
+    tableState.setSearchParams(
+      Object.fromEntries(
+        Object.entries(merged).filter(([, v]) => v !== undefined && v !== ""),
+      ) as Record<string, string>,
+    );
+    tableState.setPage(1);
+  }
+
+  function handleSelectAll(allIds: string[]) {
+    tableState.setSelectedIds(
+      tableState.selectedIds.length === allIds.length ? [] : allIds,
+    );
+  }
+
+  function handleSelectRow(id: string) {
+    tableState.setSelectedIds(
+      tableState.selectedIds.includes(id)
+        ? tableState.selectedIds.filter((i) => i !== id)
+        : [...tableState.selectedIds, id],
+    );
+  }
+
+  const refreshItem = useCallback((group: AppErrorGroupRow) => {
+    setItems((current) =>
+      current.map((item) => (item.id === group.id ? { ...item, ...group } : item)),
+    );
+    setDetail((current) => (current?.group.id === group.id ? { ...current, group } : current));
+  }, []);
+
+  const updateStatus = useCallback((id: string, status: ErrorStatus) => {
     setPendingId(id);
     startTransition(() => {
       apiFetch<{ group: AppErrorGroupRow }>(`/api/admin/app-errors/${id}`, {
@@ -198,14 +264,7 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
         })
         .finally(() => setPendingId(null));
     });
-  }
-
-  function refreshItem(group: AppErrorGroupRow) {
-    setItems((current) =>
-      current.map((item) => (item.id === group.id ? { ...item, ...group } : item)),
-    );
-    setDetail((current) => (current?.group.id === group.id ? { ...current, group } : current));
-  }
+  }, [refreshItem]);
 
   function openDetails(id: string) {
     setSelectedGroupId(id);
@@ -275,171 +334,214 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
       .finally(() => setLinearCreating(false));
   }
 
+  const tableColumns: TableColumn<AppErrorGroupRow>[] = useMemo(
+    () => [
+      {
+        id: "severity",
+        label: "Severity",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (item) => item.severity,
+        render: (item) => <StatusBadge status={item.severity} />,
+        csvValue: (item) => item.severity,
+      },
+      {
+        id: "source",
+        label: "Source",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (item) => item.source,
+        render: (item) => (
+          <Badge variant="outline" className="capitalize">{item.source}</Badge>
+        ),
+        csvValue: (item) => item.source,
+      },
+      {
+        id: "message",
+        label: "Message",
+        alwaysVisible: true,
+        sortable: false,
+        render: (item) => (
+          <span className="text-sm text-foreground line-clamp-1">{item.latest_message}</span>
+        ),
+        csvValue: (item) => item.latest_message,
+      },
+      {
+        id: "route",
+        label: "Route",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (item) => item.latest_route ?? "",
+        render: (item) => (
+          <span className="truncate font-mono text-xs text-muted-foreground">
+            {item.latest_route ?? "-"}
+          </span>
+        ),
+        csvValue: (item) => item.latest_route ?? "",
+      },
+      {
+        id: "events",
+        label: "Events",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (item) => item.event_count,
+        render: (item) => (
+          <span className="tabular-nums font-medium">{item.event_count}</span>
+        ),
+        csvValue: (item) => String(item.event_count),
+      },
+      {
+        id: "last_seen",
+        label: "Last Seen",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (item) => new Date(item.last_seen_at).getTime(),
+        render: (item) => (
+          <span className="text-sm text-muted-foreground">{relativeTime(item.last_seen_at)}</span>
+        ),
+        csvValue: (item) => item.last_seen_at,
+      },
+      {
+        id: "status",
+        label: "Status",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (item) => item.status,
+        render: (item) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              disabled={isPending && pendingId === item.id}
+              className="cursor-pointer"
+              asChild
+            >
+              <span>
+                <StatusBadge status={item.status} />
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuRadioGroup
+                value={item.status}
+                onValueChange={(value) => updateStatus(item.id, value as ErrorStatus)}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <DropdownMenuRadioItem key={s.value} value={s.value}>
+                    {s.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+        csvValue: (item) => item.status,
+      },
+    ],
+    [isPending, pendingId, updateStatus],
+  );
+
   if (loadError) {
     return (
-      <ErrorState
-        title="Unable to load application errors"
-        description={loadError}
-      />
+      <ErrorState title="Unable to load application errors" description={loadError} />
     );
   }
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 sm:grid-cols-3">
-        <SummaryTile label="Active groups" value={summary.active} />
-        <SummaryTile label="Critical groups" value={summary.critical} />
-        <SummaryTile label="Captured events" value={summary.events} />
-      </section>
+    <>
 
-      <section className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative max-w-xl flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search route, message, request id, or signature"
-              className="pl-9"
+      <UnifiedTablePage
+        header={{
+          title: "Application Errors",
+          description: "Grouped runtime failures captured from browser, API, and server guardrails.",
+        }}
+        toolbar={{
+          totalItems: items.length,
+          filteredItems: filtered.length,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search route, message, request ID, or signature…",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          filters: appErrorFilters,
+          activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () =>
+            handleFilterChange({ status: "active", severity: undefined, source: undefined }),
+          columns: appErrorColumnConfig,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+        }}
+        data={{
+          items: paginatedItems,
+          isLoading: false,
+          isFetching: false,
+          error: null,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id,
+          onRowClick: (item) => openDetails(item.id),
+          activeRowId: selectedGroupId,
+          stickyHeader: true,
+          rowActions: (item) => (
+            <TableRowActionsMenu
+              items={[
+                {
+                  key: "view",
+                  label: "View details",
+                  icon: FileText,
+                  onSelect: () => openDetails(item.id),
+                },
+                ...(item.linear_issue_url
+                  ? [
+                      {
+                        key: "linear",
+                        label: "Open Linear issue",
+                        icon: ExternalLink,
+                        onSelect: () => window.open(item.linear_issue_url ?? "", "_blank"),
+                      },
+                    ]
+                  : []),
+              ]}
             />
-          </div>
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ErrorStatus | "active" | "all")}>
-            <SelectTrigger className="w-full sm:w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="all">All statuses</SelectItem>
-              {STATUS_OPTIONS.map((status) => (
-                <SelectItem key={status.value} value={status.value}>
-                  {status.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={<CheckCircle2 />}
-            title="No matching error groups"
-            description="Captured application failures will appear here once they are grouped."
-          />
-        ) : (
-          <div className="rounded-md border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Failure</TableHead>
-                  <TableHead>Route</TableHead>
-                  <TableHead className="text-right">Events</TableHead>
-                  <TableHead>Last Seen</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-24" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((item) => {
-                  const StatusIcon = statusIcon(item.status);
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell className="max-w-md whitespace-normal">
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className={cn("capitalize", SEVERITY_CLASS[item.severity] ?? SEVERITY_CLASS.medium)}>
-                              {item.severity}
-                            </Badge>
-                            <Badge variant="outline" className="capitalize">
-                              {item.source}
-                            </Badge>
-                            {item.latest_error_code && (
-                              <span className="font-mono text-xs text-muted-foreground">{item.latest_error_code}</span>
-                            )}
-                          </div>
-                          <p className="line-clamp-2 text-sm font-medium text-foreground">
-                            {item.latest_message}
-                          </p>
-                          <p className="font-mono text-xs text-muted-foreground">
-                            {item.latest_request_id ?? item.signature.slice(0, 24)}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="space-y-1">
-                          <p className="truncate font-mono text-xs text-foreground">
-                            {item.latest_route ?? "-"}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {item.latest_action ?? "No action captured"}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        <div className="space-y-1">
-                          <p className="font-medium">{item.event_count}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.affected_user_count} users
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p>{relativeTime(item.last_seen_at)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            first {relativeTime(item.first_seen_at)}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-48">
-                        <Select
-                          value={item.status}
-                          disabled={isPending && pendingId === item.id}
-                          onValueChange={(value) => updateStatus(item.id, value as ErrorStatus)}
-                        >
-                          <SelectTrigger className="h-8">
-                            <span className="flex items-center gap-2">
-                              <StatusIcon className={cn("h-3.5 w-3.5", item.status === "in_progress" && "animate-spin")} />
-                              <SelectValue />
-                            </span>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STATUS_OPTIONS.map((status) => (
-                              <SelectItem key={status.value} value={status.value}>
-                                <span className={cn("rounded px-1.5 py-0.5 text-xs", STATUS_CLASS[status.value])}>
-                                  {status.label}
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openDetails(item.id)}
-                            aria-label="Open error details"
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                          {item.linear_issue_url ? (
-                            <Button variant="ghost" size="icon" asChild>
-                              <a href={item.linear_issue_url} target="_blank" rel="noreferrer" aria-label="Open Linear issue">
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </Button>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </section>
+          ),
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (col) => tableState.setSortBy(col),
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: () => handleSelectAll(paginatedItems.map((i) => i.id)),
+          onSelectRow: handleSelectRow,
+        }}
+        emptyState={{
+          title: "No matching error groups",
+          description: "Captured application failures will appear here once they are grouped.",
+          filteredDescription: "No error groups match your current filters.",
+          isFiltered: Boolean(tableState.debouncedSearch) || hasActiveFilters,
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages,
+          perPage: tableState.perPage,
+          onPageChange: tableState.setPage,
+          onPerPageChange: (val) => tableState.setPerPage(Number(val)),
+        }}
+        layout={{ fullBleedTable: true }}
+        features={{
+          enableSearch: true,
+          enableFilters: true,
+          enableColumnToggle: true,
+          enableExport: true,
+          enableBulkDelete: false,
+          enableRowSelection: true,
+          enableRowActions: true,
+        }}
+      />
 
       <Sheet open={Boolean(selectedGroupId)} onOpenChange={closeDetails}>
         <SheetContent className="overflow-y-auto sm:max-w-none lg:w-1/2">
@@ -459,15 +561,11 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
             <div className="space-y-6 px-8 pb-8">
               <section className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className={cn("capitalize", SEVERITY_CLASS[detail.group.severity] ?? SEVERITY_CLASS.medium)}>
-                    {detail.group.severity}
-                  </Badge>
+                  <StatusBadge status={detail.group.severity} />
                   <Badge variant="outline" className="capitalize">
                     {detail.group.source}
                   </Badge>
-                  <Badge variant="outline">
-                    {detail.classification.category}
-                  </Badge>
+                  <Badge variant="outline">{detail.classification.category}</Badge>
                 </div>
                 <p className="text-sm font-medium text-foreground">
                   {detail.group.latest_message}
@@ -481,9 +579,9 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
               </section>
 
               <section className="grid gap-3 sm:grid-cols-3">
-                <SummaryTile label="Events" value={detail.group.event_count} />
-                <SummaryTile label="Users" value={detail.group.affected_user_count} />
-                <SummaryTile label="Projects" value={detail.group.affected_project_count} />
+                <MiniTile label="Events" value={detail.group.event_count} />
+                <MiniTile label="Users" value={detail.group.affected_user_count} />
+                <MiniTile label="Projects" value={detail.group.affected_project_count} />
               </section>
 
               <section className="space-y-3">
@@ -492,8 +590,14 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
                   <DiagnosisRow label="Likely owner" value={detail.classification.likelyOwner} />
                   <DiagnosisRow label="Likely cause" value={detail.classification.likelyCause} />
                   <DiagnosisRow label="Detection gap" value={detail.classification.detectionGap} />
-                  <DiagnosisRow label="Prevention step" value={detail.classification.preventionStep} />
-                  <DiagnosisRow label="Verification" value={detail.classification.suggestedVerification} />
+                  <DiagnosisRow
+                    label="Prevention step"
+                    value={detail.classification.preventionStep}
+                  />
+                  <DiagnosisRow
+                    label="Verification"
+                    value={detail.classification.suggestedVerification}
+                  />
                 </div>
               </section>
 
@@ -505,11 +609,7 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
                     Copy
                   </Button>
                 </div>
-                <Textarea
-                  readOnly
-                  value={detail.fixPacket}
-                  className="min-h-64 font-mono text-xs"
-                />
+                <Textarea readOnly value={detail.fixPacket} className="min-h-64 font-mono text-xs" />
               </section>
 
               <section className="space-y-3">
@@ -532,20 +632,22 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
                 <div className="grid gap-3 sm:grid-cols-[160px_1fr_auto]">
                   <Input
                     value={linearIssueId}
-                    onChange={(event) => setLinearIssueId(event.target.value)}
+                    onChange={(e) => setLinearIssueId(e.target.value)}
                     placeholder="AAI-123"
                   />
                   <Input
                     value={linearIssueUrl}
-                    onChange={(event) => setLinearIssueUrl(event.target.value)}
-                    placeholder="https://linear.app/..."
+                    onChange={(e) => setLinearIssueUrl(e.target.value)}
+                    placeholder="https://linear.app/…"
                   />
                   <Button
                     variant="outline"
                     onClick={saveLinearLink}
                     disabled={pendingId === detail.group.id}
                   >
-                    {pendingId === detail.group.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                    {pendingId === detail.group.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : null}
                     Save
                   </Button>
                 </div>
@@ -553,7 +655,7 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
 
               <section className="space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">Recent Events</h3>
-                <div className="divide-y divide-border rounded-md border border-border">
+                <div className="divide-y divide-border">
                   {detail.events.map((event) => (
                     <div key={event.id} className="space-y-2 p-3 text-xs">
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -565,7 +667,8 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
                         </span>
                       </div>
                       <p className="text-muted-foreground">
-                        {event.route ?? event.page_path ?? "Unknown route"} · {event.action ?? "Unknown action"}
+                        {event.route ?? event.page_path ?? "Unknown route"} ·{" "}
+                        {event.action ?? "Unknown action"}
                       </p>
                       {event.stack ? (
                         <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded bg-muted p-2 font-mono text-[11px] text-muted-foreground">
@@ -584,15 +687,15 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
           )}
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }
 
-function SummaryTile({ label, value }: { label: string; value: number }) {
+function MiniTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border border-border px-4 py-3">
+    <div className="space-y-1 rounded-md bg-muted px-4 py-3">
       <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">{value}</p>
+      <p className="text-2xl font-semibold tabular-nums text-foreground">{value}</p>
     </div>
   );
 }

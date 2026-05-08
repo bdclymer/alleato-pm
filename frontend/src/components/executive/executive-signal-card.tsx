@@ -57,6 +57,13 @@ const toneLabel: Record<Tone, string> = {
   neutral: "Update",
 };
 
+function contextPreview(value: string | null | undefined) {
+  if (!value) return null;
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (!normalized) return null;
+  return normalized.length > 520 ? `${normalized.slice(0, 520).trim()}...` : normalized;
+}
+
 function DetailBlock({
   label,
   children,
@@ -142,6 +149,7 @@ export function ExecutiveSignalCard({
   const router = useRouter();
   const tone = item.tone ?? "neutral";
   const primaryEvidence = item.evidence ?? item.citations[0]?.evidence;
+  const visibleContext = contextPreview(primaryEvidence);
   const evidenceCitations = item.citations.filter((citation) =>
     citation.evidence?.trim(),
   );
@@ -216,6 +224,13 @@ export function ExecutiveSignalCard({
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
             {item.summary}
           </p>
+
+          {visibleContext && (
+            <div className="max-w-3xl rounded-md bg-muted/30 px-3 py-2 text-sm leading-6 text-foreground">
+              <span className="font-medium">Context: </span>
+              <span className="text-muted-foreground">{visibleContext}</span>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span>{item.source}</span>

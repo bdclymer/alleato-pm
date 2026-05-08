@@ -323,23 +323,20 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
 def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str, Any]:
     """
     Find all document_metadata rows with source='microsoft_graph' that still need
-    embedding. Picks up both 'raw_ingested' (fresh syncs) and 'segmented' (items
-    that were accidentally routed through the Fireflies segmenter instead of the
-    graph embed path).
+    embedding. Picks up raw/segmented rows, content-bearing error rows that can
+    be retried, and rows that were accidentally routed through the Fireflies
+    segmenter instead of the graph embed path. Also repairs recent communication
+    rows that were marked embedded/complete before chunks were written, because
+    those rows otherwise look successful while remaining invisible to retrieval.
 
     Returns summary dict.
     """
     started_at = datetime.now(timezone.utc)
+    docs: List[Dict[str, Any]] = []
     try:
-        resp = (
-            supabase_client.from_("document_metadata")
-            .select("id, category")
-            .eq("source", "microsoft_graph")
-            .in_("status", ["raw_ingested", "segmented", "compiled"])
-            .limit(limit)
-            .execute()
-        )
-        docs = resp.data or []
+        docs = _fetch_graph_embedding_candidates(limit)
+        if docs is None:
+            docs = _fetch_graph_embedding_candidates_via_supabase(supabase_client, limit)
     except Exception as e:
         logger.error("[GraphEmbed] Failed to query pending docs: %s", e)
         _record_graph_embed_run(
@@ -400,6 +397,134 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         metadata={"limit": limit, **result},
     )
     return result
+
+
+def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any]]]:
+    """Fetch Graph docs that need embedding using SQL anti-joins when DB access is available."""
+    database_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
+    if not database_url:
+        return None
+
+    try:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+    except Exception as exc:
+        logger.warning("[GraphEmbed] psycopg2 unavailable; falling back to Supabase scan: %s", exc)
+        return None
+
+    query = """
+        with pending as (
+          select id, category, status, created_at
+          from public.document_metadata
+          where source = 'microsoft_graph'
+            and status in ('raw_ingested', 'segmented', 'compiled', 'error')
+            and length(coalesce(content, '')) > 0
+        ),
+        completed_without_embeddings as (
+          select dm.id, dm.category, dm.status, dm.created_at
+          from public.document_metadata dm
+          where dm.source = 'microsoft_graph'
+            and dm.status in ('embedded', 'complete')
+            and dm.category in ('email', 'teams_message', 'document')
+            and not exists (
+              select 1
+              from public.document_chunks dc
+              where dc.document_id = dm.id
+                and dc.embedding is not null
+            )
+        )
+        select id, category, status, created_at
+        from (
+          select * from pending
+          union all
+          select * from completed_without_embeddings
+        ) candidates
+        order by created_at desc nulls last
+        limit %s
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(database_url, sslmode="require")
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query, (limit,))
+            return [dict(row) for row in cur.fetchall()]
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def _fetch_graph_embedding_candidates_via_supabase(
+    supabase_client,
+    limit: int,
+) -> List[Dict[str, Any]]:
+    """Fallback candidate scan when the backend only has Supabase API access."""
+    try:
+        pending_resp = (
+            supabase_client.from_("document_metadata")
+            .select("id, category, status, created_at")
+            .eq("source", "microsoft_graph")
+            .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
+            .not_.is_("content", "null")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+
+        by_id: Dict[str, Dict[str, Any]] = {}
+        for doc in (pending_resp.data or []):
+            by_id[doc["id"]] = doc
+
+        repair_scan_limit = max(limit * 50, 1_000)
+        page_size = 500
+        scanned = 0
+        while len(by_id) < limit and scanned < repair_scan_limit:
+            repair_resp = (
+                supabase_client.from_("document_metadata")
+                .select("id, category, status, created_at")
+                .eq("source", "microsoft_graph")
+                .in_("status", ["embedded", "complete"])
+                .in_("category", ["email", "teams_message", "document"])
+                .order("created_at", desc=True)
+                .range(scanned, scanned + page_size - 1)
+                .execute()
+            )
+            repair_rows = repair_resp.data or []
+            if not repair_rows:
+                break
+            for doc in repair_rows:
+                if doc["id"] in by_id:
+                    continue
+                if not _has_embedded_graph_chunks(supabase_client, doc["id"]):
+                    by_id[doc["id"]] = doc
+                    if len(by_id) >= limit:
+                        break
+            scanned += len(repair_rows)
+
+        docs = sorted(
+            by_id.values(),
+            key=lambda row: str(row.get("created_at") or ""),
+            reverse=True,
+        )[:limit]
+        return docs
+    except Exception:
+        raise
+
+
+def _has_embedded_graph_chunks(supabase_client, metadata_id: str) -> bool:
+    """Return whether a Graph document already has searchable embedded chunks."""
+    try:
+        resp = (
+            supabase_client.from_("document_chunks")
+            .select("chunk_id")
+            .eq("document_id", metadata_id)
+            .not_.is_("embedding", "null")
+            .limit(1)
+            .execute()
+        )
+        return bool(resp.data)
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Could not inspect chunks for %s: %s", metadata_id, exc)
+        return False
 
 
 def _record_graph_embed_run(

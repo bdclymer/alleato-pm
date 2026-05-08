@@ -149,7 +149,7 @@ function KanbanCardShell(
       ref={ref}
       style={sortStyle}
       className={cn(
-        "group rounded-lg border border-border/60 bg-muted/20 shadow-xs transition-shadow hover:shadow-sm",
+        "group rounded-lg border border-border/60 bg-card shadow-xs transition-shadow hover:shadow-sm",
         cardPadding,
         interactive && "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
