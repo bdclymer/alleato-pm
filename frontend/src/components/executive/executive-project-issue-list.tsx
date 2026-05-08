@@ -98,11 +98,16 @@ function ProjectFilterRow({
   return (
     <div className="flex justify-end">
       <Select value={selectedProjectKey} onValueChange={onSelectProject}>
-        <SelectTrigger className="w-full md:w-80">
+        <SelectTrigger
+          variant="inline"
+          size="sm"
+          className="h-7 w-auto max-w-full gap-1 px-0 text-xs text-muted-foreground hover:text-foreground focus-visible:ring-0"
+          aria-label="Filter executive issues by project"
+        >
           <SelectValue placeholder="Select project" />
         </SelectTrigger>
         <SelectContent align="end">
-          <SelectItem value="all">All projects with issues</SelectItem>
+          <SelectItem value="all">All projects</SelectItem>
           {groups.map((group) => (
             <SelectItem key={group.key} value={group.key}>
               {displayProjectLabel(group.label)} ({group.entries.length})
