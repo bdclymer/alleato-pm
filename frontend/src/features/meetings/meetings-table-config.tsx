@@ -3,6 +3,14 @@ import * as React from "react";
 import { ArrowUpRight, FileText, Pencil, Trash2, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -358,47 +366,79 @@ function InlineProjectSelect({
   onSave: (v: string, move?: "next" | "prev") => void;
   onCancel: () => void;
 }) {
-  const [open, setOpen] = React.useState(true);
+  const wrapperRef = React.useRef<HTMLDivElement | null>(null);
 
-  // Preserve the pre-Radix behavior where Tab / Shift-Tab commits the current
-  // value and moves edit focus to the next / previous cell. The raw <select>
-  // had this via onKeyDown; <Select> opens a portal dropdown that swallows
-  // arrow keys but *not* Tab when the trigger itself is focused, so we handle
-  // it on the wrapping div (which captures Tab before the trigger blurs).
+  const selectedLabel =
+    projectOptions.find((option) => option.value === value)?.label ||
+    value ||
+    "No project";
+
+  React.useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        onCancel();
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [onCancel]);
+
   return (
     <div
+      ref={wrapperRef}
+      className="relative inline-block"
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onCancel();
+          return;
+        }
         if (e.key === "Tab") {
           e.preventDefault();
           onSave(value, e.shiftKey ? "prev" : "next");
         }
       }}
     >
-      <Select
-        open={open}
-        onOpenChange={setOpen}
-        value={value || "__none__"}
-        onValueChange={(nextValue) => {
-          onSave(nextValue === "__none__" ? "" : nextValue);
-        }}
+      <Button
+        type="button"
+        variant="ghost"
+        aria-label="Select project"
+        title="Select project"
+        className="h-7 min-w-40 max-w-72 justify-start border-0 bg-accent/25 px-2 text-left text-sm font-normal text-foreground focus-visible:ring-1"
       >
-        <SelectTrigger
-          aria-label="Select project"
-          title="Select project"
-          className="h-7 min-w-32 border-0 bg-accent/25 px-2 text-sm text-foreground focus:ring-1"
-        >
-          <SelectValue placeholder="No project" />
-        </SelectTrigger>
-        <SelectContent onEscapeKeyDown={onCancel}>
-          <SelectItem value="__none__">No project</SelectItem>
-          {projectOptions.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <span className="truncate">{selectedLabel}</span>
+      </Button>
+      <div className="absolute left-0 top-8 z-50 w-80 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-sm">
+        <Command>
+          <CommandInput autoFocus placeholder="Search projects..." />
+          <CommandList className="max-h-72 overflow-y-auto">
+            <CommandEmpty>No projects found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="No project"
+                onSelect={() => {
+                  onSave("");
+                }}
+              >
+                <span className="italic text-muted-foreground">No project</span>
+              </CommandItem>
+              {projectOptions.map((opt) => (
+                <CommandItem
+                  key={opt.value}
+                  value={opt.label}
+                  onSelect={() => {
+                    onSave(opt.value);
+                  }}
+                >
+                  <span className="truncate">{opt.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </div>
     </div>
   );
 }
