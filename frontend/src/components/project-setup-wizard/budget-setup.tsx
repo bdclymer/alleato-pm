@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -247,8 +248,15 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
-        } catch {
-          // Response body is empty or not valid JSON - use default message
+        } catch (error) {
+          reportNonCriticalFailure({
+            area: "project-setup-budget",
+            operation: "parse-create-budget-error",
+            error,
+            userVisibleFallback:
+              "Budget creation failed, but the response did not include a readable error body.",
+            metadata: { projectId },
+          });
         }
         throw new Error(errorMessage);
       }

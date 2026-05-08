@@ -28,6 +28,7 @@ import { Text } from "@/components/ds/text";
 import { Spinner } from "@/components/ui/spinner";
 import { Stack } from "@/components/layout/stack";
 import { StatusBadge } from "@/components/ds/status-badge";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 const RELATED_ITEM_TYPE_OPTIONS = [
   { value: "change_event", label: "Change Events" },
@@ -125,8 +126,14 @@ export function RelatedItemsTab({
       if (!res.ok) return;
       const payload = await res.json() as { data?: RelatedItem[] };
       setItems(payload.data ?? []);
-    } catch {
-      // no-op
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "commitment-related-items",
+        operation: "load-related-items",
+        error,
+        userVisibleFallback: "Related items could not be loaded.",
+        metadata: { commitmentId },
+      });
     } finally {
       setIsLoading(false);
     }

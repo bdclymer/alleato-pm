@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Mail, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -282,8 +283,14 @@ export function EmailsClient({
 
     try {
       await deleteEmail.mutateAsync(String(emailToDelete.id));
-    } catch {
-      // Error handled by mutation
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "project-emails",
+        operation: "delete-email",
+        error,
+        userVisibleFallback: "Email deletion failed and the row remains visible.",
+        metadata: { projectId, emailId: emailToDelete.id },
+      });
     } finally {
       setDeleteDialogOpen(false);
       setEmailToDelete(null);

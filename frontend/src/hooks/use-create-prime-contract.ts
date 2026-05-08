@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiFetch, apiFetchWithTimeout } from "@/lib/api-client";
 import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 
 const SUBMIT_TIMEOUT_MS = 20_000;
@@ -169,8 +170,15 @@ export function useCreatePrimeContract(projectId: string) {
             router.push(`/${projectId}/prime-contracts/${saved.id}`);
             return;
           }
-        } catch {
-          // recovery failed — fall through to error toast
+        } catch (recoveryError) {
+          reportNonCriticalFailure({
+            area: "prime-contract-create",
+            operation: "verify-save-after-network-error",
+            error: recoveryError,
+            userVisibleFallback:
+              "Prime contract creation could not be verified after a network failure.",
+            metadata: { projectId, contractNumber: data.number },
+          });
         }
       }
 

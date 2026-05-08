@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -390,8 +391,14 @@ export default function NewPrimeContractPcoPage() {
         if (email.length > 0) {
           setCreatedByLabel(email);
         }
-      } catch {
-        // Best-effort only; default "You" remains.
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "prime-contract-pcos",
+          operation: "load-current-user-label",
+          error,
+          userVisibleFallback: "Created-by label defaults to You.",
+          metadata: { projectId },
+        });
       }
     };
 

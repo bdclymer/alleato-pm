@@ -113,8 +113,17 @@ export default async function ProjectMeetingDetailPage({
       if (response.ok) {
         transcriptContent = await response.text();
       }
-    } catch {
-      // fallback below
+    } catch (storageError) {
+      console.warn(JSON.stringify({
+        event: "meeting_transcript_storage_fetch_failed",
+        projectId,
+        meetingId,
+        storageUrl,
+        error:
+          storageError instanceof Error
+            ? storageError.message
+            : String(storageError),
+      }));
     }
   }
 

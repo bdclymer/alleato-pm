@@ -4,6 +4,7 @@ import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PageShell } from "@/components/layout";
 import {
   PCOWorkspace,
@@ -257,8 +258,14 @@ export default function EditPCOPage() {
       }
 
       router.push(`/${projectId}/pcos`);
-    } catch {
-      // Individual mutation hooks handle their own error toasts
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "pcos",
+        operation: "save-existing-pco",
+        error,
+        userVisibleFallback: "PCO changes were not saved.",
+        metadata: { projectId, pcoId },
+      });
     } finally {
       setIsSaving(false);
       setIsSubmitting(false);

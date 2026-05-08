@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ChangeEventRfq } from "@/types/change-events";
 import { formatDate } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 type RfqWithResponseCount = ChangeEventRfq & { response_count?: number };
 type RfqLineItemOption = {
@@ -87,8 +88,14 @@ export function ChangeEventRfqsTab({
         ? json
         : (json.data ?? []);
       setRfqs(data);
-    } catch {
-      // Non-critical
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "change-event-rfqs",
+        operation: "load-rfqs",
+        error,
+        userVisibleFallback: "RFQs could not be loaded for this change event.",
+        metadata: { projectId, changeEventId },
+      });
     } finally {
       setIsLoading(false);
     }

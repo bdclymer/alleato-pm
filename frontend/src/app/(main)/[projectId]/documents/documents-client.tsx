@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -232,8 +233,14 @@ export function DocumentsClient({ projectId }: DocumentsClientProps): ReactEleme
       await deleteDocument.mutateAsync(String(documentToDelete.id));
       setDeleteDialogOpen(false);
       setDocumentToDelete(null);
-    } catch {
-      // Error toast handled by the hook
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "project-documents",
+        operation: "delete-document",
+        error,
+        userVisibleFallback: "Document deletion failed and the row remains visible.",
+        metadata: { projectId, documentId: documentToDelete.id },
+      });
     }
   };
 

@@ -18,6 +18,7 @@ import {
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
 import { AttachmentsTab } from "@/components/commitments/tabs/AttachmentsTab";
 import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
@@ -628,8 +629,15 @@ export default function CommitmentDetailPage() {
         `/api/projects/${projectId}/commitments/${commitmentId}/subcontractor-sov`,
       );
       setSubcontractorSovCount(payload.data?.lineItems?.length ?? 0);
-    } catch {
-      // no-op
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "commitment-detail",
+        operation: "load-subcontractor-sov-count",
+        error,
+        userVisibleFallback:
+          "Subcontractor schedule-of-values count could not be loaded.",
+        metadata: { commitmentId, projectId },
+      });
     }
   }, [commitmentId, projectId]);
 

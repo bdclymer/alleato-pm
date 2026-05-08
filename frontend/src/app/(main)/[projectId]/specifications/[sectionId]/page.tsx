@@ -12,6 +12,7 @@ import {
   Pencil,
 } from "lucide-react";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PageShell } from "@/components/layout";
 import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,13 @@ export default function SpecificationDetailPage() {
       await deleteRevisionMutation.mutateAsync(deletingRevisionId);
       setDeletingRevisionId(null);
     } catch (error) {
-      // Error already handled by mutation
+      reportNonCriticalFailure({
+        area: "specifications",
+        operation: "delete-revision",
+        error,
+        userVisibleFallback: "Specification revision was not deleted.",
+        metadata: { projectId, sectionId, revisionId: deletingRevisionId },
+      });
     }
   };
 
@@ -73,7 +80,13 @@ export default function SpecificationDetailPage() {
       await setCurrentRevisionMutation.mutateAsync(revisionId);
       toast.success("Current revision updated");
     } catch (error) {
-      // Error already handled by mutation
+      reportNonCriticalFailure({
+        area: "specifications",
+        operation: "set-current-revision",
+        error,
+        userVisibleFallback: "Current specification revision was not updated.",
+        metadata: { projectId, sectionId, revisionId },
+      });
     }
   };
 

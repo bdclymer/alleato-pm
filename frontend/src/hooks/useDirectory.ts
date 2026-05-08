@@ -6,6 +6,7 @@ import type {
   PersonWithDetails,
 } from "@/components/directory/DirectoryFilters";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 interface DirectoryGroup {
   key: string;
@@ -79,8 +80,14 @@ export function useDirectory(
         setData(parsed.data || []);
         setGroups(parsed.groups);
         setMeta(parsed.meta || meta);
-      } catch {
-        // ignore cache errors
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "directory",
+          operation: "restore-cache",
+          error,
+          userVisibleFallback: "Saved directory cache could not be restored.",
+          metadata: { projectId },
+        });
       }
     }
   }, [cacheKey]);
@@ -163,8 +170,15 @@ export function useDirectory(
             setData(parsed.data || []);
             setGroups(parsed.groups);
             setMeta(parsed.meta || meta);
-          } catch {
-            // ignore cache errors
+          } catch (error) {
+            reportNonCriticalFailure({
+              area: "directory",
+              operation: "restore-cache-after-fetch-error",
+              error,
+              userVisibleFallback:
+                "Saved directory cache could not be restored after the live fetch failed.",
+              metadata: { projectId },
+            });
           }
         }
       }

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { ArrowLeft, Edit, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail } from "lucide-react";
 import { toast } from "sonner";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -1003,8 +1004,14 @@ export default function InvoiceDetailPage() {
         message: emailMessage || undefined,
       });
       setEmailDialogOpen(false);
-    } catch {
-      // toast handled by hook
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "owner-invoice-detail",
+        operation: "send-invoice-email",
+        error,
+        userVisibleFallback: "Invoice email was not sent.",
+        metadata: { invoiceId: invoice.id, projectId },
+      });
     }
   };
 

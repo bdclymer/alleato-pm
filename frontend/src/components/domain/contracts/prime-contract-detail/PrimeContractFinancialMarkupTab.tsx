@@ -34,6 +34,7 @@ import {
 } from "@/components/ds/inline-table";
 import { EmptyState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { InfoBox } from "@/components/misc/info-box";
 import type { BudgetCode, VerticalMarkup } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
@@ -122,8 +123,14 @@ export function PrimeContractFinancialMarkupTab({
         setMarkupMapsToById(parsed);
         setSavedMarkupMapsToById(parsed);
       }
-    } catch {
-      // ignore localStorage parse issues
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "prime-contract-financial-markup",
+        operation: "load-markup-maps-preference",
+        error,
+        userVisibleFallback: "Saved markup mapping preferences could not be restored.",
+        metadata: { projectId },
+      });
     }
   }, [projectId]);
 
@@ -138,8 +145,14 @@ export function PrimeContractFinancialMarkupTab({
         setMarkupDisplayById(parsed);
         setSavedMarkupDisplayById(parsed);
       }
-    } catch {
-      // ignore localStorage parse issues
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "prime-contract-financial-markup",
+        operation: "load-markup-display-preference",
+        error,
+        userVisibleFallback: "Saved markup display preferences could not be restored.",
+        metadata: { projectId },
+      });
     }
   }, [projectId]);
 
@@ -158,8 +171,14 @@ export function PrimeContractFinancialMarkupTab({
         `prime-contract-markup-display:${projectId}`,
         JSON.stringify(nextDisplayById),
       );
-    } catch {
-      // ignore localStorage write failures
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "prime-contract-financial-markup",
+        operation: "save-markup-preferences",
+        error,
+        userVisibleFallback: "Markup preferences were not saved locally.",
+        metadata: { projectId },
+      });
     }
   };
 

@@ -17,6 +17,7 @@ import {
   synthesizeMissingBudgetCodes,
 } from "./sovBudgetCodeReconciliation";
 import { apiFetchWithTransientRouteRetry } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 interface UseSubcontractFormStateOptions {
   projectId: number;
@@ -116,8 +117,14 @@ export function useSubcontractFormState({
 
         const next = `SC-${String(max + 1).padStart(3, "0")}`;
         setValue("contractNumber", next, { shouldDirty: false });
-      } catch {
-        // Non-critical — leave field blank if generation fails
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "subcontract-form",
+          operation: "generate-contract-number",
+          error,
+          userVisibleFallback: "Contract number could not be generated automatically.",
+          metadata: { projectId, mode },
+        });
       }
     };
 

@@ -26,6 +26,7 @@ import {
   useCommitmentsList,
   useDeleteCommitment,
 } from "@/hooks/use-commitments-query";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type { CommitmentListItem } from "@/lib/validation/commitments";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -283,9 +284,22 @@ export function PrimeContractCommitmentsTab({
   const handleDeleteConfirm = async () => {
     if (!commitmentToDelete) return;
     setIsDeleting(true);
-    try { await deleteCommitment.mutateAsync(commitmentToDelete.id); }
-    catch { /* error toast handled by mutation */ }
-    finally { setIsDeleting(false); setDeleteDialogOpen(false); setCommitmentToDelete(null); }
+    try {
+      await deleteCommitment.mutateAsync(commitmentToDelete.id);
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "prime-contract-commitments",
+        operation: "delete-linked-commitment",
+        error,
+        userVisibleFallback:
+          "Linked commitment deletion failed and the row remains visible.",
+        metadata: { projectId, commitmentId: commitmentToDelete.id },
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setCommitmentToDelete(null);
+    }
   };
 
   const handleBulkDeleteConfirm = async () => {

@@ -12,6 +12,7 @@ import {
   RfiFormFields,
 } from "@/components/rfis/rfi-form-fields";
 import { useCreateRfi } from "@/hooks/use-rfis";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   rfiDraftSchema,
   rfiOpenSchema,
@@ -46,8 +47,14 @@ export default function NewRfiPage() {
     try {
       await createRfi.mutateAsync({ ...result.data, status });
       router.push(`/${projectId}/rfis`);
-    } catch {
-      // Error handled by mutation onError
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "rfis",
+        operation: "create-rfi",
+        error,
+        userVisibleFallback: "RFI was not created.",
+        metadata: { projectId, status },
+      });
     }
   };
 

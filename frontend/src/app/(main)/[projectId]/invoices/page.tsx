@@ -6,6 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { Plus, Eye, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { KpiRow, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
@@ -1204,8 +1205,15 @@ export default function ProjectInvoicesPage(): ReactElement {
                     due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
                   });
                   setCreateBpOpen(false);
-                } catch {
-                  // toast already shown by mutation onError
+                } catch (error) {
+                  reportNonCriticalFailure({
+                    area: "invoices",
+                    operation: "create-billing-period",
+                    error,
+                    userVisibleFallback:
+                      "Billing period creation failed and the dialog remains available.",
+                    metadata: { projectId },
+                  });
                 }
               }}
             >

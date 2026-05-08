@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { COST_TYPE_LABELS, type BudgetCode } from "./types";
 import { createClient } from "@/lib/supabase/client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { toast } from "sonner";
 import type { SovLineItem } from "@/lib/schemas/create-subcontract-schema";
 
@@ -93,8 +94,13 @@ export function CreateBudgetCodeModal({
           {} as Record<string, CostCode[]>,
         );
         setGroupedCostCodes(grouped);
-      } catch {
-        // Intentionally swallowed: component shows appropriate state on error
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "subcontract-budget-code-modal",
+          operation: "load-cost-codes",
+          error,
+          userVisibleFallback: "Cost code options could not be loaded.",
+        });
       } finally {
         setLoadingCostCodes(false);
       }

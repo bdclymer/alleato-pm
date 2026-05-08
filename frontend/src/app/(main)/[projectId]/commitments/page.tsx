@@ -6,6 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { ChevronDown, FileSignature, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, ShoppingCart, Trash2, Trash } from "lucide-react";
 import { toast } from "sonner";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 import {
   AlertDialog,
@@ -581,8 +582,14 @@ export default function ProjectCommitmentsPage(): ReactElement {
     setIsDeleting(true);
     try {
       await deleteCommitment.mutateAsync(commitmentToDelete.id);
-    } catch {
-      // Error toast is handled by the delete mutation hook
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "commitments",
+        operation: "delete-commitment-confirm",
+        error,
+        userVisibleFallback: "Commitment deletion failed and the row remains visible.",
+        metadata: { commitmentId: commitmentToDelete.id, projectId },
+      });
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);

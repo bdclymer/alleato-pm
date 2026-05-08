@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PageShell } from "@/components/layout";
 import { StatusBadge } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
@@ -382,8 +383,14 @@ export default function DrawingDetailPage() {
         },
       });
       setIsEditing(false);
-    } catch {
-      // error toast is handled inside useUpdateDrawing
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "drawing-detail",
+        operation: "update-drawing",
+        error,
+        userVisibleFallback: "Drawing updates were not saved.",
+        metadata: { projectId, drawingId },
+      });
     }
   };
 
@@ -402,7 +409,14 @@ export default function DrawingDetailPage() {
         document.body.removeChild(a);
         toast.success("Drawing downloaded successfully");
       }
-    } catch {
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "drawing-detail",
+        operation: "download-current-drawing",
+        error,
+        userVisibleFallback: "Current drawing could not be downloaded.",
+        metadata: { projectId, drawingId },
+      });
       toast.error("Failed to download drawing");
     }
   }, [projectId, drawingId, drawing]);
@@ -444,7 +458,16 @@ export default function DrawingDetailPage() {
     try {
       const data = await apiFetch<{ downloadUrl?: string }>(
         `/api/projects/${projectId}/drawings/${drawingId}/download`,
-      ).catch(() => null);
+      ).catch((error) => {
+        reportNonCriticalFailure({
+          area: "drawing-detail",
+          operation: "load-print-url",
+          error,
+          userVisibleFallback: "Drawing print URL could not be loaded.",
+          metadata: { projectId, drawingId },
+        });
+        return null;
+      });
       if (data?.downloadUrl) {
         const printWindow = window.open(data.downloadUrl, "_blank");
         if (printWindow) {
@@ -453,8 +476,14 @@ export default function DrawingDetailPage() {
           });
         }
       }
-    } catch {
-      // silently fail — print is best-effort
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "drawing-detail",
+        operation: "print-drawing",
+        error,
+        userVisibleFallback: "Drawing print action could not be completed.",
+        metadata: { projectId, drawingId },
+      });
     }
   }, [projectId, drawingId, currentRevision]);
 

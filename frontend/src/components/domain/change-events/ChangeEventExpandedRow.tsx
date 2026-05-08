@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 /* ── Types ────────────────────────────────────────────────────────── */
 
@@ -205,8 +206,15 @@ export function ChangeEventExpandedRow({
           const data = await markupsRes.json();
           setMarkups(data.markups || []);
         }
-      } catch {
-        // Silently fail
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "change-event-expanded-row",
+          operation: "load-line-items-and-markups",
+          error,
+          userVisibleFallback:
+            "Change event detail rows could not be fully loaded.",
+          metadata: { changeEventId },
+        });
       } finally {
         if (!cancelled) setIsLoading(false);
       }

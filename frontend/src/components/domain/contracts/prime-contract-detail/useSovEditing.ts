@@ -3,6 +3,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { toast } from "sonner";
 import type { ContractLineItem, BudgetCode } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 const normalizeSovDraftItems = (items: ContractLineItem[]) =>
   items.filter((item): item is ContractLineItem => Boolean(item)).map((item, index) => {
@@ -98,8 +99,15 @@ export function useSovEditing({ projectId, contractId, lineItems, setLineItems, 
       try {
         const restored = await apiFetch<ContractLineItem[]>(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
         setLineItems(restored ?? []);
-      } catch {
-        // Best-effort rollback after optimistic removal.
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "prime-contract-sov",
+          operation: "restore-line-items-after-delete-failure",
+          error,
+          userVisibleFallback:
+            "Line items could not be refreshed after the delete failed.",
+          metadata: { projectId, contractId, lineId },
+        });
       }
     };
     setLineItems((prev) => prev.filter((li) => li.id !== lineId));

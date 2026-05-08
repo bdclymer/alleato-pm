@@ -23,6 +23,7 @@ import {
   useGenerateMeetingPrep,
 } from "@/hooks/use-meeting-prep";
 import { useConfirm } from "@/hooks/use-confirm";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 export default function MeetingPrepPage() {
   const router = useRouter();
@@ -104,8 +105,14 @@ export default function MeetingPrepPage() {
         throw new Error("Meeting prep generation returned no content");
       }
       setContent(result.data.content);
-    } catch {
-      // Error handled by mutation onError
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "meeting-prep",
+        operation: "generate-meeting-prep",
+        error,
+        userVisibleFallback: "Meeting prep was not generated.",
+        metadata: { projectId, meetingId },
+      });
     }
   };
 
