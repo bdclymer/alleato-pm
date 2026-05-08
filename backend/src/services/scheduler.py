@@ -438,6 +438,10 @@ def _is_retryable_fireflies_error(error_message: Optional[str]) -> bool:
 def _parse_scheduler_datetime(value: Optional[str]) -> Optional[datetime]:
     if not value:
         return None
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
@@ -453,26 +457,21 @@ def _find_fireflies_pipeline_backlog_jobs(
     limit: int,
     stale_minutes: int,
 ) -> list[dict]:
+    """Find stale non-Graph pipeline jobs, newest source records first."""
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=stale_minutes)
-    raw_response = (
-        supabase.table("fireflies_ingestion_jobs")
-        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
-        .eq("stage", "raw_ingested")
-        .neq("metadata_id", "")
-        .order("updated_at", desc=False)
-        .limit(limit * 10)
-        .execute()
-    )
-    error_response = (
-        supabase.table("fireflies_ingestion_jobs")
-        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
-        .eq("stage", "error")
-        .neq("metadata_id", "")
-        .order("updated_at", desc=False)
-        .limit(limit * 10)
-        .execute()
-    )
-    rows = [*(raw_response.data or []), *(error_response.data or [])]
+    try:
+        rows = _find_fireflies_pipeline_backlog_jobs_sql(limit=limit, cutoff=cutoff)
+    except Exception:
+        logger.warning(
+            "[Scheduler] SQL backlog candidate query failed; falling back to Supabase scan",
+            exc_info=True,
+        )
+        rows = _find_fireflies_pipeline_backlog_jobs_supabase(
+            supabase,
+            limit=limit,
+            cutoff=cutoff,
+        )
+
     jobs: list[dict] = []
     for row in rows:
         if not row.get("metadata_id"):
@@ -491,6 +490,74 @@ def _find_fireflies_pipeline_backlog_jobs(
         if len(jobs) >= limit:
             break
     return jobs
+
+
+def _find_fireflies_pipeline_backlog_jobs_sql(*, limit: int, cutoff: datetime) -> list[dict]:
+    """Use Postgres ordering so small batches repair newest source data first."""
+    database_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL or SUPABASE_DB_URL is required for SQL backlog selection")
+
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+
+    query = """
+        select
+          fij.fireflies_id,
+          fij.metadata_id,
+          fij.stage,
+          fij.error_message,
+          fij.created_at,
+          fij.updated_at,
+          coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) as source_at
+        from public.fireflies_ingestion_jobs fij
+        join public.document_metadata dm on dm.id = fij.metadata_id
+        where fij.stage in ('raw_ingested', 'error')
+          and fij.metadata_id <> ''
+          and fij.updated_at <= %s
+          and coalesce(dm.source, '') <> 'microsoft_graph'
+        order by coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) desc nulls last,
+          fij.updated_at desc
+        limit %s
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(database_url, sslmode="require")
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query, (cutoff, max(limit * 20, limit)))
+            return [dict(row) for row in cur.fetchall()]
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def _find_fireflies_pipeline_backlog_jobs_supabase(
+    supabase,
+    *,
+    limit: int,
+    cutoff: datetime,
+) -> list[dict]:
+    raw_response = (
+        supabase.table("fireflies_ingestion_jobs")
+        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
+        .eq("stage", "raw_ingested")
+        .neq("metadata_id", "")
+        .lte("updated_at", cutoff.isoformat())
+        .order("updated_at", desc=True)
+        .limit(limit * 10)
+        .execute()
+    )
+    error_response = (
+        supabase.table("fireflies_ingestion_jobs")
+        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
+        .eq("stage", "error")
+        .neq("metadata_id", "")
+        .lte("updated_at", cutoff.isoformat())
+        .order("updated_at", desc=True)
+        .limit(limit * 10)
+        .execute()
+    )
+    return [*(raw_response.data or []), *(error_response.data or [])]
 
 
 def _run_fireflies_full_pipeline(metadata_id: str) -> dict:

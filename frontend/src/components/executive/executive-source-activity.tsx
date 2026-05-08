@@ -27,15 +27,17 @@ export function ExecutiveSourceActivity({
 
           return (
             <div key={source.label} className="flex items-center gap-3 py-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <div className="mt-0.5 shrink-0 text-primary">
                 <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-foreground">
-                  {source.label}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Latest {source.latest}
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="text-xs font-medium leading-5 text-foreground">
+                    {source.label}
+                  </span>
+                  <span className="text-xs leading-5 text-muted-foreground">
+                    Latest {source.latest}
+                  </span>
                 </div>
               </div>
               <div className="text-sm font-semibold tabular-nums text-foreground">

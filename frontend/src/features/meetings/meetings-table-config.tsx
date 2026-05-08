@@ -63,7 +63,7 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "type", label: "Type", defaultVisible: false },
   { id: "category", label: "Category", defaultVisible: false },
   { id: "links", label: "Links", defaultVisible: true },
-  { id: "embedding", label: "Embedding", defaultVisible: true },
+  { id: "embedding", label: "Embedding", defaultVisible: false },
 ];
 
 export const meetingDefaultVisibleColumns = meetingColumns
@@ -477,9 +477,14 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           );
         }
 
+        const embeddingStatus = getEmbeddingStatus(item);
+
         return (
           <div className="group/title inline-flex items-center gap-2 min-w-0 w-full">
-            <TableStatusDot status={item.status} />
+            <TableStatusDot
+              status={embeddingStatus.variant === "neutral" ? null : embeddingStatus.label}
+              fallbackLabel={`Embedding: ${embeddingStatus.label}`}
+            />
             <a
               href={`/meetings/${item.id}`}
               className="font-medium truncate hover:underline underline-offset-2"

@@ -332,13 +332,12 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const migrationKey = "meetings:visibleColumns:add-embedding-2026-05-08";
+    const migrationKey = "meetings:visibleColumns:hide-embedding-2026-05-08";
     if (window.localStorage.getItem(migrationKey) === "1") return;
 
-    tableState.setVisibleColumns((prev) => {
-      if (prev.includes("embedding")) return prev;
-      return [...prev, "embedding"];
-    });
+    tableState.setVisibleColumns((prev) =>
+      prev.filter((columnId) => columnId !== "embedding"),
+    );
 
     window.localStorage.setItem(migrationKey, "1");
   }, [tableState.setVisibleColumns]);

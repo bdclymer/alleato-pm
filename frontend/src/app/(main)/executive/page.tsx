@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { EmptyState } from "@/components/ds";
+import { ExecutiveBriefingRefreshButton } from "@/components/executive/executive-briefing-refresh-button";
 import { ExecutiveChatSheet } from "@/components/executive/executive-chat-sheet";
 import { ExecutiveSourceActivity } from "@/components/executive/executive-source-activity";
 import {
@@ -296,7 +297,7 @@ function TodayMeetingsSection({ meetings }: { meetings: TodayMeeting[] }) {
               className="block py-3 transition-colors hover:text-primary"
             >
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                <div className="mt-0.5 shrink-0 text-primary">
                   <CalendarDays className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 space-y-1">
@@ -570,7 +571,12 @@ export default async function ExecutiveDailyInsightsPage() {
       eyebrow="Executive briefing"
       title="Daily operating brief"
       description={`Prepared ${generatedAt} · ${packet.windowDays}-day window`}
-      actions={<ExecutiveChatSheet packet={packet} />}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <ExecutiveBriefingRefreshButton windowDays={packet.windowDays} />
+          <ExecutiveChatSheet packet={packet} />
+        </div>
+      }
       contentClassName="pb-16"
     >
       <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_340px]">

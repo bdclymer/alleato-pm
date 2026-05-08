@@ -198,14 +198,6 @@ export function ExecutiveSignalCard({
                 {actionLabel}
               </Badge>
             )}
-            {item.status && (
-              <Badge
-                variant="outline"
-                className="h-5 rounded-md px-1.5 text-[11px] font-normal"
-              >
-                {item.status}
-              </Badge>
-            )}
             <span
               className={cn(
                 "inline-flex items-center gap-1 font-medium",

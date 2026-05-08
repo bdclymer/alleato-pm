@@ -113,6 +113,7 @@ type RagRow = {
   text?: string | null;
   similarity?: number | null;
   source_type?: string | null;
+  doc_category?: string | null;
   doc_title?: string | null;
   doc_source?: string | null;
   doc_type?: string | null;
@@ -411,9 +412,9 @@ function getWindowStartDateKey(windowDays: number): string {
   return getEasternDateKey(start);
 }
 
-function getRecencyAnchor(row: RecentSourceRow): string | null {
+export function getRecencyAnchor(row: RecentSourceRow): string | null {
   if (row.category === "teams_message") {
-    return row.date ?? row.captured_at ?? null;
+    return row.created_at ?? row.captured_at ?? row.date ?? null;
   }
 
   if (row.category === "email") {
@@ -434,6 +435,27 @@ function isRecentSourceRow(
   const anchor = getRecencyAnchor(row);
   const parsed = parseDate(anchor);
   return parsed !== null && getEasternDateKey(parsed) >= cutoffDateKey;
+}
+
+export function getHitDateAnchor(hit: RankedHit): string | null {
+  const rowSourceCategory = hit.metadata?.category ?? hit.row.doc_category ?? null;
+  const anchorLikeSource: RecentSourceRow = {
+    category: rowSourceCategory,
+    date: hit.row.doc_date,
+    created_at: hit.row.doc_created_at ?? null,
+    captured_at: hit.metadata?.captured_at ?? null,
+  };
+
+  if (rowSourceCategory === "teams_message") {
+    return anchorLikeSource.created_at ?? anchorLikeSource.captured_at ?? anchorLikeSource.date ?? null;
+  }
+
+  return (
+    anchorLikeSource.date ??
+    anchorLikeSource.captured_at ??
+    anchorLikeSource.created_at ??
+    null
+  );
 }
 
 function formatDate(value: Date | null): string {
@@ -1639,7 +1661,7 @@ export async function generateBrandonDailyUpdate(
         ? metadata.get(hit.row.document_id)
         : undefined;
       const date = parseDate(
-        hit.row.doc_date ?? meta?.date ?? meta?.created_at ?? meta?.captured_at,
+        getHitDateAnchor({ ...hit, metadata: meta }),
       );
       const text = normalizeText(
         hit.row.chunk_text ??

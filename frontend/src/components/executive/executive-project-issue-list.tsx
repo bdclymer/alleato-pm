@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, FolderOpen } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { EmptyState, InfoAlert } from "@/components/ds";
 import {
   ExecutiveSignalCard,
@@ -10,7 +10,6 @@ import {
 import type { ExecutiveProjectOption } from "@/components/executive/executive-project-link-form";
 import type { ExecutiveTaskAssigneeOption } from "@/components/executive/executive-task-draft-form";
 import { SectionRuleHeading } from "@/components/layout";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import type { BrandonBriefItem } from "@/lib/executive/brandon-daily-update";
 
 export type ExecutiveProjectIssueEntry = {
@@ -114,34 +112,6 @@ function ProjectFilterRow({
         </Select>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <Button
-          type="button"
-          variant={selectedProjectKey === "all" ? "secondary" : "ghost"}
-          size="sm"
-          className="h-8 shrink-0 rounded-md px-3 text-xs"
-          onClick={() => onSelectProject("all")}
-        >
-          All
-        </Button>
-        {groups.map((group) => (
-          <Button
-            key={group.key}
-            type="button"
-            variant={selectedProjectKey === group.key ? "secondary" : "ghost"}
-            size="sm"
-            className={cn(
-              "h-8 shrink-0 rounded-md px-3 text-xs",
-              group.unlinked && "text-destructive hover:text-destructive",
-            )}
-            onClick={() => onSelectProject(group.key)}
-          >
-            {group.unlinked && <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />}
-            {group.label}
-            <span className="ml-1.5 text-muted-foreground">{group.entries.length}</span>
-          </Button>
-        ))}
-      </div>
     </div>
   );
 }
