@@ -127,7 +127,7 @@ function ProjectIssueGroupSection({
 }) {
   return (
     <section className="space-y-3">
-      <div className="flex flex-col gap-2 border-b border-border pb-3 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-semibold text-primary">
             <FolderOpen className="h-4 w-4" />

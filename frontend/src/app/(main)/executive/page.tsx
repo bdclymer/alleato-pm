@@ -579,7 +579,7 @@ export default async function ExecutiveDailyInsightsPage() {
       }
       contentClassName="pb-16"
     >
-      <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-20 2xl:gap-24">
         {/* ── Main column ── */}
         <div className="space-y-8">
           <ExecutiveProjectIssueList
