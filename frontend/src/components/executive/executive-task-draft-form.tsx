@@ -78,8 +78,8 @@ export function ExecutiveTaskDraftForm({
 
   if (hasMatchingTask) {
     return (
-      <span className="text-xs text-muted-foreground">
-        Task already in flight
+      <span className="inline-flex h-9 items-center rounded-md bg-muted px-3 text-xs font-medium text-muted-foreground">
+        Related task already exists
       </span>
     );
   }

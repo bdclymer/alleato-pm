@@ -388,26 +388,27 @@ export function ExecutiveSignalCard({
                   </div>
                 )}
 
-                {followUpId && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                    disabled={isResolving}
-                    onClick={resolveFollowUp}
-                  >
-                    {isResolving ? "Resolving..." : "Mark resolved"}
-                  </Button>
-                )}
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  {followUpId && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-9 px-4 text-xs font-medium"
+                      disabled={isResolving}
+                      onClick={resolveFollowUp}
+                    >
+                      {isResolving ? "Resolving..." : "Mark resolved"}
+                    </Button>
+                  )}
 
-                <ExecutiveTaskDraftForm
-                  sourceId={item.sourceId}
-                  title={item.title}
-                  description={item.recommendedAction ?? item.summary}
-                  employees={employees}
-                  hasMatchingTask={hasMatchingTask}
-                />
+                  <ExecutiveTaskDraftForm
+                    sourceId={item.sourceId}
+                    title={item.title}
+                    description={item.recommendedAction ?? item.summary}
+                    employees={employees}
+                    hasMatchingTask={hasMatchingTask}
+                  />
+                </div>
               </div>
             </DetailBlock>
           </div>
