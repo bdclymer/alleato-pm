@@ -13,7 +13,7 @@ import hashlib
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from ...ai_transport import retry_ai_call
@@ -414,18 +414,30 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
 
     query = """
         with pending as (
-          select id, category, status, created_at
+          select
+            id,
+            category,
+            status,
+            created_at,
+            coalesce(captured_at, date, created_at::timestamptz) as source_at
           from public.document_metadata
           where source = 'microsoft_graph'
             and status in ('raw_ingested', 'segmented', 'compiled', 'error')
             and length(coalesce(content, '')) > 0
+            and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '365 days'
         ),
         completed_without_embeddings as (
-          select dm.id, dm.category, dm.status, dm.created_at
+          select
+            dm.id,
+            dm.category,
+            dm.status,
+            dm.created_at,
+            coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) as source_at
           from public.document_metadata dm
           where dm.source = 'microsoft_graph'
             and dm.status in ('embedded', 'complete')
             and dm.category in ('email', 'teams_message', 'document')
+            and coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) >= now() - interval '365 days'
             and not exists (
               select 1
               from public.document_chunks dc
@@ -439,7 +451,7 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
           union all
           select * from completed_without_embeddings
         ) candidates
-        order by created_at desc nulls last
+        order by source_at desc nulls last, created_at desc nulls last
         limit %s
     """
     conn = None
@@ -461,11 +473,12 @@ def _fetch_graph_embedding_candidates_via_supabase(
     try:
         pending_resp = (
             supabase_client.from_("document_metadata")
-            .select("id, category, status, created_at")
+            .select("id, category, status, created_at, date")
             .eq("source", "microsoft_graph")
             .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
             .not_.is_("content", "null")
-            .order("created_at", desc=True)
+            .gte("date", (datetime.now(timezone.utc) - timedelta(days=365)).date().isoformat())
+            .order("date", desc=True)
             .limit(limit)
             .execute()
         )
@@ -480,11 +493,12 @@ def _fetch_graph_embedding_candidates_via_supabase(
         while len(by_id) < limit and scanned < repair_scan_limit:
             repair_resp = (
                 supabase_client.from_("document_metadata")
-                .select("id, category, status, created_at")
+                .select("id, category, status, created_at, date")
                 .eq("source", "microsoft_graph")
                 .in_("status", ["embedded", "complete"])
                 .in_("category", ["email", "teams_message", "document"])
-                .order("created_at", desc=True)
+                .gte("date", (datetime.now(timezone.utc) - timedelta(days=365)).date().isoformat())
+                .order("date", desc=True)
                 .range(scanned, scanned + page_size - 1)
                 .execute()
             )
@@ -502,7 +516,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
 
         docs = sorted(
             by_id.values(),
-            key=lambda row: str(row.get("created_at") or ""),
+            key=lambda row: str(row.get("date") or row.get("created_at") or ""),
             reverse=True,
         )[:limit]
         return docs

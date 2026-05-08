@@ -136,7 +136,10 @@ def init_scheduler() -> None:
             5,
             int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_INTERVAL_MINUTES", "10")),
         )
-        backlog_limit = max(1, int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_LIMIT", "10")))
+        backlog_limit = min(
+            3,
+            max(1, int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_LIMIT", "3"))),
+        )
         backlog_stale_minutes = max(
             1,
             int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_STALE_MINUTES", "120")),
@@ -215,7 +218,10 @@ def init_scheduler() -> None:
                 1,
                 int(os.getenv("GRAPH_EMBEDDING_INTERVAL_MINUTES", "5")),
             )
-            graph_embedding_limit = max(1, int(os.getenv("GRAPH_EMBEDDING_LIMIT", "100")))
+            graph_embedding_limit = min(
+                25,
+                max(1, int(os.getenv("GRAPH_EMBEDDING_LIMIT", "25"))),
+            )
             scheduler.add_job(
                 run_graph_embedding_job,
                 IntervalTrigger(minutes=graph_embedding_interval_minutes),
@@ -516,6 +522,7 @@ def _find_fireflies_pipeline_backlog_jobs_sql(*, limit: int, cutoff: datetime) -
           and fij.metadata_id <> ''
           and fij.updated_at <= %s
           and coalesce(dm.source, '') <> 'microsoft_graph'
+          and coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) >= now() - interval '365 days'
         order by coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) desc nulls last,
           fij.updated_at desc
         limit %s

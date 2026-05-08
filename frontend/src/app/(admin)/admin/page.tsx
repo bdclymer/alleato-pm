@@ -568,12 +568,12 @@ function MenuItemRow({ item }: { item: AdminMenuItem }) {
 
   const content = (
     <>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors group-hover:text-foreground">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-primary">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-sm font-medium text-foreground">{item.label}</span>
+          <span className="text-xs font-medium text-foreground">{item.label}</span>
           {item.badge ? (
             <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               {item.badge}
@@ -587,7 +587,7 @@ function MenuItemRow({ item }: { item: AdminMenuItem }) {
   );
 
   const className =
-    "group flex min-h-16 gap-3 px-1 py-3 transition-colors hover:bg-muted/40 sm:px-2";
+    "group flex min-h-16 gap-3 px-1 py-3 sm:px-2";
 
   if (!item.href) {
     return <div className={cn(className, "cursor-default")}>{content}</div>;
@@ -611,9 +611,6 @@ export default function AdminDashboardPage() {
         {sections.map((section) => (
           <section key={section.title} className="min-w-0 space-y-3">
             <SectionHeader title={section.title} count={section.items.length} />
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {section.description}
-            </p>
             <div className="divide-y divide-border/60">
               {section.items.map((item) => (
                 <MenuItemRow key={`${section.title}-${item.route}`} item={item} />

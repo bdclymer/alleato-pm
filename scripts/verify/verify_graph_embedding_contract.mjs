@@ -59,8 +59,10 @@ requireContains("_has_embedded_graph_chunks", "Graph embedding must detect compl
 requireContains('.not_.is_("embedding", "null")', "Graph embedding repair must detect null-embedding chunks, not only missing chunk rows.");
 requireContains("completed_without_embeddings", "Graph embedding repair must query completed rows missing embedded chunks directly when DB access is available.");
 requireContains("'raw_ingested', 'segmented', 'compiled', 'error'", "Graph embedding must retry content-bearing Graph error rows.");
+requireContains("interval '365 days'", "Graph embedding must not repair source records older than one year.");
+requireContains("source_at desc", "Graph embedding must prioritize newest source records first.");
 requireContains("repair_scan_limit", "Graph embedding repair must scan past the first page of already-good completed rows.");
-requireContains('order("created_at", desc=True)', "Graph embedding must prioritize newest Graph rows first.");
+requireContains('order("date", desc=True)', "Graph embedding fallback must prioritize newest Graph source dates first.");
 requireNotContains("return [[] for _ in texts]", "Graph embeddings must not return empty vectors after provider failure.");
 
 if (!migration.includes("repair_graph_document_chunk_source_types_batch")) {
