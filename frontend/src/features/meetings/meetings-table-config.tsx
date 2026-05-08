@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import Link from "next/link";
 import { ArrowUpRight, FileText, Pencil, Trash2, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,6 +41,7 @@ export interface EditContext {
   editingCell: { meetingId: string; field: EditableField } | null;
   editingValue: string;
   projectOptions: Array<{ value: string; label: string }>;
+  categoryOptions: Array<{ value: string; label: string }>;
   projectIdByName: Map<string, number>;
   handleCellClick: (meeting: Meeting, field: EditableField) => void;
   setEditingValue: (value: string) => void;
@@ -73,16 +73,32 @@ export const meetingDefaultVisibleColumns = meetingColumns
 // ─── Filter / detail field builders ─────────────────────────────────────────
 
 export function buildMeetingFilters(options: {
-  years: string[];
   types: string[];
   categories: string[];
 }): FilterConfig[] {
   return [
     {
-      id: "year",
-      label: "Year",
+      id: "datePreset",
+      label: "Date",
       type: "select",
-      options: options.years.map((year) => ({ value: year, label: year })),
+      options: [
+        { value: "today", label: "Today" },
+        { value: "yesterday", label: "Yesterday" },
+        { value: "this_week", label: "This week" },
+        { value: "this_month", label: "This month" },
+        { value: "this_year", label: "This year" },
+        { value: "custom", label: "Custom dates" },
+      ],
+    },
+    {
+      id: "dateFrom",
+      label: "From",
+      type: "date",
+    },
+    {
+      id: "dateTo",
+      label: "To",
+      type: "date",
     },
     {
       id: "type",
@@ -244,43 +260,6 @@ function EditableCellWrapper({
   );
 }
 
-function HoverEditCell({
-  isEditing,
-  displayContent,
-  editLabel,
-  onEdit,
-  children,
-}: {
-  isEditing: boolean;
-  displayContent: React.ReactNode;
-  editLabel: string;
-  onEdit: (event: React.MouseEvent) => void;
-  children: React.ReactNode;
-}) {
-  if (isEditing) {
-    return <>{children}</>;
-  }
-
-  return (
-    <div className="group/edit-cell inline-flex min-w-0 items-center gap-1.5">
-      <div className="min-w-0 transition-opacity group-hover/edit-cell:opacity-90">
-        {displayContent}
-      </div>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 shrink-0 opacity-0 transition-opacity hover:bg-accent/40 group-hover/edit-cell:opacity-100 focus-visible:opacity-100"
-        onClick={onEdit}
-        aria-label={editLabel}
-        title={editLabel}
-      >
-        <Pencil className="h-3.5 w-3.5" />
-      </Button>
-    </div>
-  );
-}
-
 function InlineTextInput({
   value,
   onChange,
@@ -377,6 +356,8 @@ function InlineProjectSelect({
   onSave: (v: string, move?: "next" | "prev") => void;
   onCancel: () => void;
 }) {
+  const [open, setOpen] = React.useState(true);
+
   // Preserve the pre-Radix behavior where Tab / Shift-Tab commits the current
   // value and moves edit focus to the next / previous cell. The raw <select>
   // had this via onKeyDown; <Select> opens a portal dropdown that swallows
@@ -393,6 +374,8 @@ function InlineProjectSelect({
       }}
     >
       <Select
+        open={open}
+        onOpenChange={setOpen}
         value={value || "__none__"}
         onValueChange={(nextValue) => {
           onSave(nextValue === "__none__" ? "" : nextValue);
@@ -408,6 +391,57 @@ function InlineProjectSelect({
         <SelectContent onEscapeKeyDown={onCancel}>
           <SelectItem value="__none__">No project</SelectItem>
           {projectOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function InlineCategorySelect({
+  value,
+  categoryOptions,
+  onSave,
+  onCancel,
+}: {
+  value: string;
+  categoryOptions: Array<{ value: string; label: string }>;
+  onSave: (v: string, move?: "next" | "prev") => void;
+  onCancel: () => void;
+}) {
+  const [open, setOpen] = React.useState(true);
+
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          onSave(value, e.shiftKey ? "prev" : "next");
+        }
+      }}
+    >
+      <Select
+        open={open}
+        onOpenChange={setOpen}
+        value={value || "__none__"}
+        onValueChange={(nextValue) => {
+          onSave(nextValue === "__none__" ? "" : nextValue);
+        }}
+      >
+        <SelectTrigger
+          aria-label="Select category"
+          title="Select category"
+          className="h-7 min-w-32 border-0 bg-accent/25 px-2 text-sm text-foreground focus:ring-1"
+        >
+          <SelectValue placeholder="No category" />
+        </SelectTrigger>
+        <SelectContent onEscapeKeyDown={onCancel}>
+          <SelectItem value="__none__">No category</SelectItem>
+          {categoryOptions.map((opt) => (
             <SelectItem key={opt.value} value={opt.value}>
               {opt.label}
             </SelectItem>
@@ -481,32 +515,18 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           editContext?.editingCell?.meetingId === item.id &&
           editContext?.editingCell?.field === "project";
         const projectName = item.project?.trim();
-        const projectId = projectName
-          ? editContext?.projectIdByName.get(projectName)
-          : null;
 
         return (
-          <HoverEditCell
+          <EditableCellWrapper
             isEditing={Boolean(isEditing)}
             displayContent={
               projectName ? (
-                projectId ? (
-                  <Link
-                    href={`/${projectId}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    {projectName}
-                  </Link>
-                ) : (
-                  <span className="text-xs text-muted-foreground">{projectName}</span>
-                )
+                <span className="text-xs text-muted-foreground">{projectName}</span>
               ) : (
                 <span className="text-xs text-muted-foreground">No project</span>
               )
             }
-            editLabel={projectName ? "Change project" : "Assign project"}
-            onEdit={(e) => {
+            onClickToEdit={(e) => {
               e.stopPropagation();
               editContext?.handleCellClick(item, "project");
             }}
@@ -519,7 +539,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
               }
               onCancel={() => editContext?.handleInlineCancel()}
             />
-          </HoverEditCell>
+          </EditableCellWrapper>
         );
       },
       csvValue: (item) => item.project ?? "",
@@ -641,25 +661,25 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           editContext?.editingCell?.field === "category";
 
         return (
-          <HoverEditCell
+          <EditableCellWrapper
             isEditing={Boolean(isEditing)}
             displayContent={
               <TableTagBadge label={item.category} variant="outline" emptyLabel="No category" />
             }
-            editLabel={item.category?.trim() ? "Change category" : "Add category"}
-            onEdit={(e) => {
+            onClickToEdit={(e) => {
               e.stopPropagation();
               editContext?.handleCellClick(item, "category");
             }}
           >
-            <InlineTextInput
+            <InlineCategorySelect
               value={editContext?.editingValue ?? ""}
-              onChange={(v) => editContext?.setEditingValue(v)}
-              onSave={(move) => editContext?.handleInlineSave({ move })}
+              categoryOptions={editContext?.categoryOptions ?? []}
+              onSave={(v, move) =>
+                editContext?.handleInlineSave({ valueOverride: v, move })
+              }
               onCancel={() => editContext?.handleInlineCancel()}
-              placeholder="Enter category…"
             />
-          </HoverEditCell>
+          </EditableCellWrapper>
         );
       },
       csvValue: (item) => item.category ?? "",

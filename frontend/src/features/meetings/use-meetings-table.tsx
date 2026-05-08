@@ -26,7 +26,9 @@ import {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
-  year: undefined,
+  datePreset: undefined,
+  dateFrom: undefined,
+  dateTo: undefined,
   type: undefined,
   category: undefined,
 };
@@ -43,16 +45,86 @@ type FilterState = Record<string, FilterValue>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getMeetingYear(dateValue: string | null | undefined): string | null {
-  if (!dateValue) return null;
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.getFullYear().toString();
-}
-
 function uniqueSorted(values: string[]): string[] {
   const unique = Array.from(new Set(values.filter((value) => value.trim() !== "")));
   return unique.sort((a, b) => a.localeCompare(b));
+}
+
+function toDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseMeetingDateKey(dateValue: string | null | undefined): string | null {
+  if (!dateValue) return null;
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return toDateKey(parsed);
+}
+
+function getPresetDateRange(preset: string | null | undefined): {
+  from: string;
+  to: string;
+} | null {
+  if (!preset || preset === "custom") return null;
+
+  const today = new Date();
+  const start = new Date(today);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+
+  if (preset === "today") {
+    return { from: toDateKey(start), to: toDateKey(end) };
+  }
+
+  if (preset === "yesterday") {
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() - 1);
+    return { from: toDateKey(start), to: toDateKey(end) };
+  }
+
+  if (preset === "this_week") {
+    start.setDate(start.getDate() - start.getDay());
+    return { from: toDateKey(start), to: toDateKey(end) };
+  }
+
+  if (preset === "this_month") {
+    start.setDate(1);
+    return { from: toDateKey(start), to: toDateKey(end) };
+  }
+
+  if (preset === "this_year") {
+    start.setMonth(0, 1);
+    return { from: toDateKey(start), to: toDateKey(end) };
+  }
+
+  return null;
+}
+
+function matchesDateFilters(meeting: Meeting, filters: FilterState): boolean {
+  const meetingDateKey = parseMeetingDateKey(meeting.date);
+  if (!meetingDateKey) {
+    return !filters.datePreset && !filters.dateFrom && !filters.dateTo;
+  }
+
+  const presetRange =
+    typeof filters.datePreset === "string"
+      ? getPresetDateRange(filters.datePreset)
+      : null;
+  const from =
+    presetRange?.from ??
+    (typeof filters.dateFrom === "string" ? filters.dateFrom : null);
+  const to =
+    presetRange?.to ??
+    (typeof filters.dateTo === "string" ? filters.dateTo : null);
+
+  if (from && meetingDateKey < from) return false;
+  if (to && meetingDateKey > to) return false;
+
+  return true;
 }
 
 function sanitizeMeetingPayload(data: Partial<Meeting>): Partial<Meeting> {
@@ -163,11 +235,15 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   const [editingValue, setEditingValue] = React.useState("");
 
   // ── Table state ─────────────────────────────────────────────────────────────
-  const initialYear = searchParams.get("year") ?? "";
+  const initialDatePreset = searchParams.get("date") ?? "";
+  const initialDateFrom = searchParams.get("date_from") ?? "";
+  const initialDateTo = searchParams.get("date_to") ?? "";
   const initialType = searchParams.get("type") ?? "";
   const initialCategory = searchParams.get("category") ?? "";
   const initialFilters: FilterState = {
-    year: initialYear || undefined,
+    datePreset: initialDatePreset || undefined,
+    dateFrom: initialDateFrom || undefined,
+    dateTo: initialDateTo || undefined,
     type: initialType || undefined,
     category: initialCategory || undefined,
   };
@@ -200,17 +276,23 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
 
   // Sync filter state from URL (handles browser back/forward navigation)
   React.useEffect(() => {
-    const nextYear = searchParams.get("year") ?? "";
+    const nextDatePreset = searchParams.get("date") ?? "";
+    const nextDateFrom = searchParams.get("date_from") ?? "";
+    const nextDateTo = searchParams.get("date_to") ?? "";
     const nextType = searchParams.get("type") ?? "";
     const nextCategory = searchParams.get("category") ?? "";
 
     tableState.setActiveFilters((prev) => {
-      const normalizedYear = nextYear || undefined;
+      const normalizedDatePreset = nextDatePreset || undefined;
+      const normalizedDateFrom = nextDateFrom || undefined;
+      const normalizedDateTo = nextDateTo || undefined;
       const normalizedType = nextType || undefined;
       const normalizedCategory = nextCategory || undefined;
 
       if (
-        prev.year === normalizedYear &&
+        prev.datePreset === normalizedDatePreset &&
+        prev.dateFrom === normalizedDateFrom &&
+        prev.dateTo === normalizedDateTo &&
         prev.type === normalizedType &&
         prev.category === normalizedCategory
       ) {
@@ -218,7 +300,9 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       }
 
       return {
-        year: normalizedYear,
+        datePreset: normalizedDatePreset,
+        dateFrom: normalizedDateFrom,
+        dateTo: normalizedDateTo,
         type: normalizedType,
         category: normalizedCategory,
       };
@@ -264,8 +348,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   const searchTerm = tableState.debouncedSearch.toLowerCase();
 
   const filteredMeetings = meetings.filter((meeting) => {
-    const meetingYear = getMeetingYear(meeting.date);
-    const matchesYear = !activeFilters.year || meetingYear === activeFilters.year;
+    const matchesDate = matchesDateFilters(meeting, activeFilters);
     const matchesType = !activeFilters.type || meeting.type === activeFilters.type;
     const matchesCategory =
       !activeFilters.category || meeting.category === activeFilters.category;
@@ -281,7 +364,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       searchTerm.length === 0 ||
       searchFields.some((field) => field.toLowerCase().includes(searchTerm));
 
-    return matchesYear && matchesType && matchesCategory && matchesSearch;
+    return matchesDate && matchesType && matchesCategory && matchesSearch;
   });
 
   // ── Projects for inline select ───────────────────────────────────────────────
@@ -301,6 +384,16 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     }
     return map;
   }, [projects]);
+  const categoryOptions = React.useMemo(
+    () =>
+      uniqueSorted(
+        meetings.map((meeting) => meeting.category ?? "").filter((value) => value !== ""),
+      ).map((category) => ({
+        value: category,
+        label: category,
+      })),
+    [meetings],
+  );
 
   // ── Inline edit handlers ─────────────────────────────────────────────────────
   const getInitialFieldValue = React.useCallback((meeting: Meeting, field: EditableField): string => {
@@ -406,6 +499,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     editingCell,
     editingValue,
     projectOptions,
+    categoryOptions,
     projectIdByName,
     handleCellClick,
     setEditingValue,
@@ -439,12 +533,6 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   }, [tableState.page, tableState.setPage, tableState.setSearchParams, totalPages]);
 
   // ── Filter options derived from raw data ─────────────────────────────────────
-  const years = uniqueSorted(
-    meetings
-      .map((meeting) => getMeetingYear(meeting.date))
-      .filter((value): value is string => Boolean(value)),
-  ).sort((a, b) => Number(b) - Number(a));
-
   const types = uniqueSorted(
     meetings.map((meeting) => meeting.type ?? "").filter((value) => value !== ""),
   );
@@ -453,7 +541,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     meetings.map((meeting) => meeting.category ?? "").filter((value) => value !== ""),
   );
 
-  const filters = buildMeetingFilters({ years, types, categories });
+  const filters = buildMeetingFilters({ types, categories });
 
   const detailFields = buildMeetingDetailFields({ projectOptions });
 
@@ -468,7 +556,9 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   const handleFilterChange = (nextFilters: FilterState) => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
-      year: typeof nextFilters.year === "string" ? nextFilters.year : null,
+      date: typeof nextFilters.datePreset === "string" ? nextFilters.datePreset : null,
+      date_from: typeof nextFilters.dateFrom === "string" ? nextFilters.dateFrom : null,
+      date_to: typeof nextFilters.dateTo === "string" ? nextFilters.dateTo : null,
       type: typeof nextFilters.type === "string" ? nextFilters.type : null,
       category: typeof nextFilters.category === "string" ? nextFilters.category : null,
       page: "1",
@@ -658,7 +748,9 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
 
   const isFiltered =
     Boolean(tableState.searchInput) ||
-    Boolean(activeFilters.year) ||
+    Boolean(activeFilters.datePreset) ||
+    Boolean(activeFilters.dateFrom) ||
+    Boolean(activeFilters.dateTo) ||
     Boolean(activeFilters.type) ||
     Boolean(activeFilters.category);
 
