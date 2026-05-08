@@ -17,9 +17,19 @@ const querySchema = z.object({
   toolId: z.coerce.number().int().positive().optional(),
 });
 
-async function requireAdmin() {
+// Throws AUTH_EXPIRED (401) for missing session and AUTH_FORBIDDEN (403) for
+// non-admin authenticated user. Distinguishing these matters: clients use 401
+// to redirect to login and 403 to show a permission error.
+async function requireAdmin(where: string) {
   const user = await getApiRouteUser();
-  if (!user) return null;
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where,
+      message: "Authentication required.",
+      status: 401,
+    });
+  }
 
   const supabase = createServiceClient();
   const { data: profile } = await supabase
@@ -28,12 +38,20 @@ async function requireAdmin() {
     .eq("id", user.id)
     .maybeSingle();
 
-  return profile?.is_admin ? user : null;
+  if (!profile?.is_admin) {
+    throw new GuardrailError({
+      code: "AUTH_FORBIDDEN",
+      where,
+      message: "Admin access required.",
+      status: 403,
+    });
+  }
+
+  return user;
 }
 
 export const GET = withApiGuardrails("/api/admin/feedback/tools#GET", async ({ request }) => {
-  const admin = await requireAdmin();
-  if (!admin) throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback/tools#GET", message: "Admin access required.", status: 403 });
+  const admin = await requireAdmin("/api/admin/feedback/tools#GET");
 
   const url = new URL(request.url);
   const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams));
@@ -95,8 +113,7 @@ const assignSchema = z.object({
 });
 
 export const POST = withApiGuardrails("/api/admin/feedback/tools#POST", async ({ request }) => {
-  const admin = await requireAdmin();
-  if (!admin) throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback/tools#POST", message: "Admin access required.", status: 403 });
+  const admin = await requireAdmin("/api/admin/feedback/tools#POST");
 
   const body = await request.json();
   const parsed = assignSchema.safeParse(body);

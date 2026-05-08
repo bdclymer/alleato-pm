@@ -237,10 +237,20 @@ async function requireFeedbackUser() {
   return requestUser;
 }
 
-async function requireAdminUser() {
+// Throws AUTH_EXPIRED (401) when there is no session and AUTH_FORBIDDEN (403)
+// when the session exists but the user is not an admin. Distinguishing these
+// matters: clients use 401 to redirect to login and 403 to show "no permission"
+// UX. Returning a single sentinel for both lost that distinction and caused the
+// PR-gate smoke test to flag every unauthenticated request as a 403.
+async function requireAdminUser(where: string) {
   const requestUser = await requireFeedbackUser();
   if (!requestUser) {
-    return null;
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where,
+      message: "Authentication required.",
+      status: 401,
+    });
   }
 
   const serviceSupabase = createServiceClient();
@@ -251,7 +261,12 @@ async function requireAdminUser() {
     .maybeSingle();
 
   if (error || profile?.is_admin !== true) {
-    return null;
+    throw new GuardrailError({
+      code: "AUTH_FORBIDDEN",
+      where,
+      message: "Admin access required.",
+      status: 403,
+    });
   }
 
   return requestUser;
@@ -416,10 +431,7 @@ const listQuerySchema = z.object({
 });
 
 export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request }) => {
-  const requestUser = await requireAdminUser();
-  if (!requestUser) {
-    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#GET", message: "Admin access required.", status: 403 });
-  }
+  const requestUser = await requireAdminUser("/api/admin/feedback#GET");
 
   const url = new URL(request.url);
   const parsed = listQuerySchema.safeParse(Object.fromEntries(url.searchParams));
@@ -485,10 +497,7 @@ const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
 };
 
 export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ request }) => {
-  const requestUser = await requireAdminUser();
-  if (!requestUser) {
-    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#PATCH", message: "Admin access required.", status: 403 });
-  }
+  const requestUser = await requireAdminUser("/api/admin/feedback#PATCH");
 
   const body = await request.json();
   const parsed = patchSchema.safeParse(body);
@@ -607,10 +616,7 @@ const sendToGitHubSchema = z.object({
 });
 
 export const PUT = withApiGuardrails("/api/admin/feedback#PUT", async ({ request }) => {
-  const requestUser = await requireAdminUser();
-  if (!requestUser) {
-    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#PUT", message: "Admin access required.", status: 403 });
-  }
+  const requestUser = await requireAdminUser("/api/admin/feedback#PUT");
 
   const body = await request.json();
   const parsed = sendToGitHubSchema.safeParse(body);
@@ -707,10 +713,7 @@ const deleteSchema = z.object({
 });
 
 export const DELETE = withApiGuardrails("/api/admin/feedback#DELETE", async ({ request }) => {
-  const requestUser = await requireAdminUser();
-  if (!requestUser) {
-    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#DELETE", message: "Admin access required.", status: 403 });
-  }
+  const requestUser = await requireAdminUser("/api/admin/feedback#DELETE");
 
   const body = await request.json();
   const parsed = deleteSchema.safeParse(body);

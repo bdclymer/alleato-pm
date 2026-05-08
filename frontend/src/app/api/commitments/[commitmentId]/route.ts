@@ -341,10 +341,33 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
 export const PUT = withApiGuardrails<{ commitmentId: string }>(
   "commitments/[commitmentId]#PUT",
   async ({ request, params }) => {
-  
     const { commitmentId } = await params;
     const supabase = await createClient();
-    const body = await request.json();
+
+    // Auth check FIRST — before parsing the request body. An unauthenticated
+    // request with an empty body must return 401, not 500 from a JSON parse
+    // error. Issue surfaced via api-smoke-contracts.mjs PR gate.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "commitments/[commitmentId]#PUT",
+        message: "Authentication required.",
+      });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "commitments/[commitmentId]#PUT",
+        message: "Request body is not valid JSON.",
+      });
+    }
 
     // Validate request body against the form's actual payload shape
     const parsed = commitmentEditSchema.safeParse(body);
@@ -355,14 +378,6 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       );
     }
     const validatedData = parsed.data;
-
-    // Get the current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]#PUT", message: "Authentication required." });
-    }
 
     // Determine the commitment type from the unified view
     const { data: unifiedData, error: unifiedError } = await supabase
@@ -540,10 +555,31 @@ export const DELETE = withApiGuardrails<{ commitmentId: string }>(
 export const PATCH = withApiGuardrails<{ commitmentId: string }>(
   "commitments/[commitmentId]#PATCH",
   async ({ request, params }) => {
-  
     const { commitmentId } = await params;
     const supabase = await createClient();
-    const body = await request.json();
+
+    // Auth check FIRST — see PUT handler comment.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "commitments/[commitmentId]#PATCH",
+        message: "Authentication required.",
+      });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "commitments/[commitmentId]#PATCH",
+        message: "Request body is not valid JSON.",
+      });
+    }
     const parsed = commitmentInlinePatchSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -554,13 +590,6 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
         },
         { status: 400 },
       );
-    }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]#PATCH", message: "Authentication required." });
     }
 
     const { data: unifiedData, error: unifiedError } = await supabase
