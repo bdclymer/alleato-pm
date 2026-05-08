@@ -18,10 +18,20 @@ type ResultRow = {
 };
 
 function normalizeTestCase(
-  value: ResultRow["test_cases"],
+  value: unknown,
 ): { test_number: string | null; test_type: string | null } | null {
-  if (!value) return null;
-  return Array.isArray(value) ? value[0] ?? null : value;
+  const candidate = Array.isArray(value) ? value[0] : value;
+  if (!candidate || typeof candidate !== "object") return null;
+
+  const row = candidate as Partial<{
+    test_number: string | null;
+    test_type: string | null;
+  }>;
+
+  return {
+    test_number: row.test_number ?? null,
+    test_type: row.test_type ?? null,
+  };
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -65,7 +75,11 @@ export const GET = withApiGuardrails<{ runId: string }>(
   if (resultsRes.error) {
     return NextResponse.json({ error: resultsRes.error.message }, { status: 500 });
   }
-  const data: ResultRow[] | null = resultsRes.data as unknown as ResultRow[] | null;
+  const data: ResultRow[] = (resultsRes.data ?? []).map((row) => ({
+    ...row,
+    case_id: row.case_id ?? undefined,
+    test_cases: row.test_cases ?? null,
+  }));
 
   const caseIds = (data ?? []).map((row) => row.case_id).filter((id): id is string => Boolean(id));
   const inactiveCaseIds = new Set<string>();

@@ -29,6 +29,14 @@ interface RuntimeSingleRowClient {
 }
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+function runtimeHeadQueryClient(client: SupabaseClient): RuntimeHeadQueryClient {
+  return client as RuntimeHeadQueryClient;
+}
+
+function runtimeSingleRowClient(client: SupabaseClient): RuntimeSingleRowClient {
+  return client as RuntimeSingleRowClient;
+}
+
 /**
  * DEV ONLY: Get Supabase table schemas for table page generator.
  * Only accessible in development/local environments.
@@ -199,7 +207,7 @@ async function discoverTablesByProbing(
 
   // Probing arbitrary table names requires bypassing the generated table union.
   // Safe: this is a dev-only diagnostic that ignores result data.
-  const untyped = supabase as unknown as RuntimeHeadQueryClient;
+	  const untyped = runtimeHeadQueryClient(supabase);
   const results = await Promise.allSettled(
     candidates.map(async (tableName) => {
       const { error } = await untyped
@@ -257,7 +265,7 @@ export const POST = withApiGuardrails(
     // Fetch a sample row to infer column types. tableName is dynamic, so we
     // bypass the generated table union here. Safe: dev-only, return shape is
     // narrowed to Record<string, unknown> below.
-    const untyped = supabase as unknown as RuntimeSingleRowClient;
+	    const untyped = runtimeSingleRowClient(supabase);
     const { data: sampleRow, error: sampleError } = await untyped
       .from(tableName)
       .select("*")

@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { FormLayout } from "@/components/layouts";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
@@ -773,7 +773,7 @@ export default function TableGeneratorPage() {
 
   if (process.env.NODE_ENV === "production") {
     return (
-      <div className="container mx-auto py-12">
+      <PageShell variant="content" title="Table Page Generator">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Not Available</AlertTitle>
@@ -781,25 +781,22 @@ export default function TableGeneratorPage() {
             This tool is only available in development environments.
           </AlertDescription>
         </Alert>
-      </div>
+      </PageShell>
     );
   }
 
   const kebab = toKebabCase(entityKey);
 
   return (
-    <>
-      <PageContainer>
-        <PageHeader
-          title="Table Page Generator"
-          description="Generate UnifiedTablePage + feature config from your Supabase schema"
-          breadcrumbs={[
-            { label: "Dev", href: "/dev" },
-            { label: "Table Generator" },
-          ]}
-        />
-      </PageContainer>
-
+    <PageShell
+      variant="form"
+      title="Table Page Generator"
+      description="Generate UnifiedTablePage + feature config from your Supabase schema"
+      breadcrumbs={[
+        { label: "Dev", href: "/dev" },
+        { label: "Table Generator" },
+      ]}
+    >
       <FormLayout>
         {/* Step 1: Select Table */}
         <div className="space-y-4">
@@ -1166,7 +1163,7 @@ export default function TableGeneratorPage() {
                 </div>
 
                 <div className="relative">
-                  <pre className="max-h-[500px] overflow-auto rounded-md border border-border bg-muted/30 p-4 text-xs leading-relaxed">
+                  <pre className="overflow-auto rounded-md border border-border bg-muted/30 p-4 text-xs leading-relaxed" style={{ maxHeight: "32rem" }}>
                     <code>
                       {activeTab === "config"
                         ? generatedConfigCode
@@ -1210,6 +1207,6 @@ export default function TableGeneratorPage() {
           </>
         )}
       </FormLayout>
-    </>
+    </PageShell>
   );
 }

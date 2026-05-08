@@ -5,14 +5,6 @@ import Link from "next/link";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ChevronDown, ChevronRight, RefreshCw, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
@@ -154,31 +146,31 @@ export default function ParityPage() {
 
       {report && (
         <div className="border border-border rounded-md overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-8" />
-                <TableHead>Tool</TableHead>
-                <TableHead className="text-right">Working</TableHead>
-                <TableHead className="text-right">Broken</TableHead>
-                <TableHead className="text-right">Not Built</TableHead>
-                <TableHead className="text-right">Not Tested</TableHead>
-                <TableHead className="text-right">Parity</TableHead>
-                <TableHead>Latest Run</TableHead>
-                <TableHead className="w-24" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <table className="w-full caption-bottom text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="h-10 w-8 px-2 text-left align-middle font-medium text-muted-foreground" />
+                <th className="h-10 px-2 text-left align-middle font-medium text-muted-foreground">Tool</th>
+                <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">Working</th>
+                <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">Broken</th>
+                <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">Not Built</th>
+                <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">Not Tested</th>
+                <th className="h-10 px-2 text-right align-middle font-medium text-muted-foreground">Parity</th>
+                <th className="h-10 px-2 text-left align-middle font-medium text-muted-foreground">Latest Run</th>
+                <th className="h-10 w-24 px-2 text-left align-middle font-medium text-muted-foreground" />
+              </tr>
+            </thead>
+            <tbody>
               {report.suites.map((s) => {
                 const isOpen = expanded.has(s.tool_name);
                 const hasDetail = s.broken.length > 0 || s.missing.length > 0;
                 return (
                   <Fragment key={s.tool_name}>
-                    <TableRow
-                      className={cn(hasDetail && "cursor-pointer hover:bg-muted/50")}
+                    <tr
+                      className={cn("border-b border-border", hasDetail && "cursor-pointer hover:bg-muted/50")}
                       onClick={() => hasDetail && toggleExpanded(s.tool_name)}
                     >
-                      <TableCell>
+                      <td className="p-2 align-middle">
                         {hasDetail ? (
                           isOpen ? (
                             <ChevronDown className="h-4 w-4" />
@@ -186,33 +178,33 @@ export default function ParityPage() {
                             <ChevronRight className="h-4 w-4" />
                           )
                         ) : null}
-                      </TableCell>
-                      <TableCell className="font-medium">{s.display_name}</TableCell>
-                      <TableCell className="text-right">
+                      </td>
+                      <td className="p-2 align-middle font-medium">{s.display_name}</td>
+                      <td className="p-2 text-right align-middle">
                         <span className="text-success">{s.counts.pass}</span>
-                      </TableCell>
-                      <TableCell className="text-right">
+                      </td>
+                      <td className="p-2 text-right align-middle">
                         <span className={cn(s.counts.fail > 0 && "text-destructive")}>
                           {s.counts.fail}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-right">
+                      </td>
+                      <td className="p-2 text-right align-middle">
                         <span className={cn(s.counts.missing > 0 && "text-warning")}>
                           {s.counts.missing}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
+                      </td>
+                      <td className="p-2 text-right align-middle text-muted-foreground">
                         {s.counts.not_tested}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
+                      </td>
+                      <td className="p-2 text-right align-middle font-mono text-sm">
                         {s.latest_run_id ? `${s.working_pct}%` : "—"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      </td>
+                      <td className="p-2 align-middle text-sm text-muted-foreground">
                         {s.latest_run_date
                           ? new Date(s.latest_run_date).toLocaleDateString()
                           : "Never"}
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="p-2 align-middle">
                         <Link
                           href={`/testing/${s.tool_name}`}
                           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
@@ -220,11 +212,11 @@ export default function ParityPage() {
                         >
                           Run <ExternalLink className="h-3 w-3" />
                         </Link>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                     {isOpen && hasDetail && (
-                      <TableRow>
-                        <TableCell colSpan={9} className="bg-muted/30 p-6">
+                      <tr className="border-b border-border">
+                        <td colSpan={9} className="bg-muted/30 p-6">
                           <div className="grid md:grid-cols-2 gap-6">
                             <DetailList
                               title="Broken (Bugs)"
@@ -251,14 +243,14 @@ export default function ParityPage() {
                               }))}
                             />
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     )}
                   </Fragment>
                 );
               })}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </div>
       )}
 

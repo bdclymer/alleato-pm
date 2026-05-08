@@ -1,7 +1,7 @@
 "use client";
 
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { type CSSProperties } from "react";
+import { type ComponentProps, type CSSProperties } from "react";
 import {
   RoomProvider,
   useCanRedo,
@@ -10,8 +10,7 @@ import {
   useSelf,
 } from "@liveblocks/react";
 import {
-  PageContainer,
-  ProjectPageHeader,
+  PageShell,
 } from "@/components/layout";
 import { Avatar } from "@/components/spreadsheet/components/Avatar";
 import { Sheet } from "@/components/spreadsheet/components/Sheet";
@@ -35,6 +34,7 @@ import { useSpreadsheet } from "@/components/spreadsheet/spreadsheet/react";
 import { createInitialStorage } from "@/components/spreadsheet/spreadsheet/utils";
 import { appendUnit } from "@/components/spreadsheet/utils/appendUnit";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import "@/components/spreadsheet/styles/spreadsheet-vars.css";
 
 const AVATARS_MAX = 4;
@@ -51,6 +51,8 @@ const initialStorage = createInitialStorage(
     ["", "", ""],
   ]
 );
+type RoomInitialStorage = NonNullable<ComponentProps<typeof RoomProvider>["initialStorage"]>;
+const spreadsheetInitialStorage = initialStorage as RoomInitialStorage;
 
 function SpreadsheetShell() {
   const spreadsheet = useSpreadsheet();
@@ -88,46 +90,54 @@ function SpreadsheetShell() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3 lg:justify-end">
-          <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1">
-            <button
-              className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-40"
+          <div className="flex items-center gap-1">
+            <Button
+              className="h-8 gap-1"
               disabled={rows.length >= GRID_MAX_ROWS}
               onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
+              size="sm"
               type="button"
+              variant="ghost"
             >
               <AddRowAfterIcon />
               <span>Add row</span>
-            </button>
-            <button
-              className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-40"
+            </Button>
+            <Button
+              className="h-8 gap-1"
               disabled={columns.length >= GRID_MAX_COLUMNS}
               onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
+              size="sm"
               type="button"
+              variant="ghost"
             >
               <AddColumnAfterIcon />
               <span>Add column</span>
-            </button>
+            </Button>
           </div>
-          <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1">
+          <div className="flex items-center gap-1">
             <Tooltip content="Undo">
-              <button
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-40"
+              <Button
+                className="h-8 w-8"
                 disabled={!canUndo}
                 onClick={() => history.undo()}
+                size="icon"
                 type="button"
+                variant="ghost"
               >
                 <UndoIcon />
-              </button>
+              </Button>
             </Tooltip>
             <Tooltip content="Redo">
-              <button
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-40"
+              <Button
+                className="h-8 w-8"
                 disabled={!canRedo}
                 onClick={() => history.redo()}
+                size="icon"
                 type="button"
+                variant="ghost"
               >
                 <RedoIcon />
-              </button>
+              </Button>
             </Tooltip>
           </div>
           <div className="flex items-center gap-2">
@@ -185,30 +195,28 @@ function SpreadsheetShell() {
 
 export default function SpreadsheetDemoPage() {
   return (
-    <>
-      <ProjectPageHeader
-        title="Collaborative Spreadsheet"
-        description="Liveblocks-backed shared grid for estimating, cost planning, and formula-driven team coordination."
-      />
-      <PageContainer className="space-y-8">
-        <section className="flex flex-wrap gap-2">
-          <Badge variant="outline">Real-time presence</Badge>
-          <Badge variant="outline">Formula evaluation</Badge>
-          <Badge variant="outline">Undo and redo history</Badge>
-          <Badge variant="outline">Row and column reordering</Badge>
-        </section>
-        <div className="spreadsheet-scope">
-          <RoomProvider
-            id={ROOM_ID}
-            initialPresence={{ cursor: null, selectedCell: null }}
-            initialStorage={initialStorage as any}
-          >
-            <TooltipProvider>
-              <SpreadsheetShell />
-            </TooltipProvider>
-          </RoomProvider>
-        </div>
-      </PageContainer>
-    </>
+    <PageShell
+      variant="detailWide"
+      title="Collaborative Spreadsheet"
+      description="Liveblocks-backed shared grid for estimating, cost planning, and formula-driven team coordination."
+    >
+      <section className="flex flex-wrap gap-2">
+        <Badge variant="outline">Real-time presence</Badge>
+        <Badge variant="outline">Formula evaluation</Badge>
+        <Badge variant="outline">Undo and redo history</Badge>
+        <Badge variant="outline">Row and column reordering</Badge>
+      </section>
+      <div className="spreadsheet-scope">
+        <RoomProvider
+          id={ROOM_ID}
+          initialPresence={{ cursor: null, selectedCell: null }}
+          initialStorage={spreadsheetInitialStorage}
+        >
+          <TooltipProvider>
+            <SpreadsheetShell />
+          </TooltipProvider>
+        </RoomProvider>
+      </div>
+    </PageShell>
   );
 }

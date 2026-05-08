@@ -18,6 +18,11 @@ for (const entry of [...state.files].reverse()) {
   const source = path.join(frontendRoot, entry.to);
   const target = path.join(frontendRoot, entry.from);
 
+  if (!existsSync(source) && existsSync(target)) {
+    restored.push(entry.from);
+    continue;
+  }
+
   if (!existsSync(source)) {
     throw new Error(`[build] Cannot restore missing disabled route file: ${entry.to}`);
   }

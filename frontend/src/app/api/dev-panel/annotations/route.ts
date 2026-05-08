@@ -18,9 +18,9 @@ export const GET = withApiGuardrails(
   let route = url;
   try {
     route = new URL(url).pathname;
-  } catch {
-    // url is already a pathname
-  }
+	  } catch (error) {
+	    console.warn("[dev-panel/annotations] Treating annotation URL as a pathname.", { url, error });
+	  }
 
   const supabase = await createClient();
 

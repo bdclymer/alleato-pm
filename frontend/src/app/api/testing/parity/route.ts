@@ -57,6 +57,42 @@ interface MissingItem {
 
 const MISSING_PREFIX = "MISSING:";
 
+type TestCaseSummary = {
+  id: string;
+  test_number: string;
+  test_name: string;
+  category: string;
+  priority: Priority;
+};
+
+function isPriority(value: unknown): value is Priority {
+  return value === "HIGH" || value === "MEDIUM" || value === "LOW";
+}
+
+function normalizeTestCaseSummary(value: unknown): TestCaseSummary | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  if (!candidate || typeof candidate !== "object") return null;
+
+  const row = candidate as Partial<TestCaseSummary>;
+  if (
+    typeof row.id !== "string" ||
+    typeof row.test_number !== "string" ||
+    typeof row.test_name !== "string" ||
+    typeof row.category !== "string" ||
+    !isPriority(row.priority)
+  ) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    test_number: row.test_number,
+    test_name: row.test_name,
+    category: row.category,
+    priority: row.priority,
+  };
+}
+
 export const GET = withApiGuardrails("testing/parity#GET", async ({ request }) => {
   const supabase = await createClient();
   const { searchParams } = new URL(request.url);
@@ -109,16 +145,8 @@ export const GET = withApiGuardrails("testing/parity#GET", async ({ request }) =
         return NextResponse.json({ error: resultsErr.message }, { status: 500 });
       }
 
-      type TC = {
-        id: string;
-        test_number: string;
-        test_name: string;
-        category: string;
-        priority: Priority;
-      };
-
       for (const r of results ?? []) {
-        const tc = r.test_cases as unknown as TC | null;
+        const tc = normalizeTestCaseSummary(r.test_cases);
         if (!tc) continue;
         if (priorityFilter && tc.priority !== priorityFilter) continue;
 

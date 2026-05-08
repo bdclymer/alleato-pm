@@ -52,10 +52,10 @@ export const POST = withApiGuardrails(
         const { data: urlData } = service.storage.from("dev-assets").getPublicUrl(fileName);
         screenshotUrl = urlData?.publicUrl ?? null;
       }
-    } catch {
-      // Non-fatal — annotation saves without screenshot
-    }
-  }
+	    } catch (error) {
+	      console.warn("[dev/annotate] Screenshot upload failed; saving annotation without screenshot.", { error });
+	    }
+	  }
 
   const { data, error } = await supabase
     .from("dev_annotations")

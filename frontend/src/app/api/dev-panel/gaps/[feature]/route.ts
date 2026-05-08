@@ -74,9 +74,9 @@ async function readArtifact(feature: string, filename: string): Promise<string |
   // Direct
   try {
     return await readFile(path.join(base, filename), "utf-8");
-  } catch {
-    // fall through
-  }
+	  } catch (error) {
+	    console.debug("[dev-panel/gaps] Artifact not found at feature root.", { feature, filename, error });
+	  }
 
   // Runs — most recent first
   try {
@@ -85,13 +85,14 @@ async function readArtifact(feature: string, filename: string): Promise<string |
     for (const entry of entries) {
       try {
         return await readFile(path.join(runsDir, entry, filename), "utf-8");
-      } catch {
-        continue;
-      }
-    }
-  } catch {
-    // no runs dir
-  }
+	      } catch (error) {
+	        console.debug("[dev-panel/gaps] Artifact not found in verification run.", { feature, filename, entry, error });
+	        continue;
+	      }
+	    }
+	  } catch (error) {
+	    console.debug("[dev-panel/gaps] Verification runs directory not available.", { feature, error });
+	  }
 
   return null;
 }
@@ -120,7 +121,9 @@ export const GET = withApiGuardrails<{ feature: string }>(
   let report: VerificationReport = {};
   try {
     if (verificationRaw) report = JSON.parse(verificationRaw) as VerificationReport;
-  } catch { /* ignore */ }
+	  } catch (error) {
+	    console.warn("[dev-panel/gaps] Failed to parse verification report.", { feature, error });
+	  }
 
   const mdDescriptions = markdownRaw ? parseMarkdownDescriptions(markdownRaw) : {};
 
@@ -132,7 +135,9 @@ export const GET = withApiGuardrails<{ feature: string }>(
         tasksByGapId[t.gap_id] = t;
       }
     }
-  } catch { /* ignore */ }
+	  } catch (error) {
+	    console.warn("[dev-panel/gaps] Failed to parse verification task list.", { feature, error });
+	  }
 
   // If we have no findings from the JSON report but we have markdown descriptions,
   // synthesize minimal findings from the markdown so something always shows.

@@ -37,9 +37,9 @@ export const GET = withApiGuardrails<{ feature: string }>(
     const raw = await readFile(manifestPath, "utf-8");
     const manifest = JSON.parse(raw) as { states?: typeof manifestStates };
     manifestStates = manifest.states ?? {};
-  } catch {
-    // manifest may not exist for all features
-  }
+	  } catch (error) {
+	    console.debug("[dev-panel/spec] Manifest unavailable for feature.", { feature, error });
+	  }
 
   // 3. Read PRP summary (first 3000 chars to keep response lean)
   let prpSummary: string | null = null;
@@ -48,10 +48,10 @@ export const GET = withApiGuardrails<{ feature: string }>(
       const prpPath = path.join(process.cwd(), "..", tool.prp_path);
       const raw = await readFile(prpPath, "utf-8");
       prpSummary = raw.slice(0, 3000);
-    } catch {
-      // PRP may not exist
-    }
-  }
+	    } catch (error) {
+	      console.debug("[dev-panel/spec] PRP summary unavailable for feature.", { feature, prpPath: tool.prp_path, error });
+	    }
+	  }
 
   return NextResponse.json({
     feature,
