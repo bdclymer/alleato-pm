@@ -17,7 +17,6 @@ import { createGitHubIssue } from "@/lib/admin-feedback/github";
 import { matchFeedbackToTool } from "@/lib/admin-feedback/tool-matcher";
 import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
 import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
-import { sendProactiveMessage } from "@/lib/bot/teams-chat";
 import { buildTaskFewShotBlock } from "@/lib/ai/services/task-training-service";
 
 export type ActionToolsOptions = {
@@ -713,8 +712,16 @@ export function createActionTools(
           let fewShotBlock = "";
           try {
             fewShotBlock = await buildTaskFewShotBlock(projectId);
-          } catch {
-            // non-critical
+          } catch (error) {
+            options.onTrace?.({
+              tool: "createTask",
+              input: { projectId, name, confirmed: false },
+              output: {
+                warning: "Task training examples could not be loaded.",
+                error: error instanceof Error ? error.message : String(error),
+              },
+              timestamp: new Date().toISOString(),
+            });
           }
 
           return {
@@ -1995,6 +2002,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         let githubIssueNumber: number | null = null;
         let githubIssueUrl: string | null = null;
 
+        let feedbackSideEffectError: string | null = null;
         try {
           const matchedTool = await matchFeedbackToTool(
             resolvedTitle,
@@ -2058,8 +2066,8 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             projectId: projectId ?? null,
             status: "candidate",
           });
-        } catch {
-          // Side effects are non-fatal — the feedback record is already saved
+        } catch (error) {
+          feedbackSideEffectError = error instanceof Error ? error.message : String(error);
         }
 
         const response = {
@@ -2070,6 +2078,9 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           feedbackId,
           githubIssueNumber,
           githubIssueUrl,
+          sideEffectWarning: feedbackSideEffectError
+            ? `Feedback was saved, but follow-up processing failed: ${feedbackSideEffectError}`
+            : null,
           tip: type === "feature_request"
             ? "You can track this on the Product Board at /product-board."
             : "You can track this in the Admin Feedback inbox.",
@@ -2307,6 +2318,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         const replay = await getReplayResponse("sendTeamsMessage", idempotencyKey);
         if (replay) return replay;
 
+        const { sendProactiveMessage } = await import("@/lib/bot/teams-chat");
         await sendProactiveMessage(supabaseUserId, message);
 
         const response = {

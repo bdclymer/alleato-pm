@@ -67,6 +67,18 @@ function errorEnvelopeFrom(
   };
 }
 
+async function resolveApiRouteUserForTelemetry(): Promise<Awaited<ReturnType<typeof getApiRouteUser>>> {
+  if (typeof getApiRouteUser !== "function") {
+    return null;
+  }
+
+  try {
+    return await getApiRouteUser();
+  } catch {
+    return null;
+  }
+}
+
 export function withApiGuardrails<TParams = RouteParams>(
   where: string,
   handler: WrappedHandler<UnwrapParams<TParams>>,
@@ -135,7 +147,7 @@ export function withApiGuardrails<TParams = RouteParams>(
       });
 
       if (where !== "/api/app-error-events#POST") {
-        const user = await getApiRouteUser();
+        const user = await resolveApiRouteUserForTelemetry();
         await recordAppErrorEvent({
           source: "api",
           severity: error.severity ?? catalog.alertSeverity,

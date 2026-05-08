@@ -2,6 +2,10 @@ import { createHash } from "crypto";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { toSessionUuid } from "@/lib/ai/session-id";
+import {
+  getOpenAICompatibleClientConfig,
+  getOpenAIModelId,
+} from "@/lib/ai/provider-config";
 
 type AgentLearningSource = "thumbs_down" | "admin_feedback" | "eval_failure";
 type AgentLearningStatus = "candidate" | "active" | "archived";
@@ -106,19 +110,8 @@ let cachedOpenAI: OpenAI | null = null;
 
 function getOpenAI(): OpenAI {
   if (!cachedOpenAI) {
-    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
-    if (gatewayKey) {
-      cachedOpenAI = new OpenAI({
-        apiKey: gatewayKey,
-        baseURL: "https://ai-gateway.vercel.sh/v1",
-      });
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
-      }
-      cachedOpenAI = new OpenAI({ apiKey });
-    }
+    const config = getOpenAICompatibleClientConfig("Agent learning embeddings");
+    cachedOpenAI = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
   }
 
   return cachedOpenAI;
@@ -198,7 +191,7 @@ function buildEmbeddingText(input: UpsertAgentLearningInput) {
 async function embedLearning(text: string) {
   try {
     const response = await getOpenAI().embeddings.create({
-      model: "text-embedding-3-large",
+      model: getOpenAIModelId("text-embedding-3-large"),
       dimensions: 3072,
       input: text,
     });

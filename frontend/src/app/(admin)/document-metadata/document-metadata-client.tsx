@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { ExternalLink, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, MoreHorizontal, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
@@ -26,6 +26,7 @@ import {
 import {
   CellText,
   TableDateValue,
+  TableExpandedRow,
   TruncatedCell,
   UnifiedTablePage,
   useUnifiedTableState,
@@ -155,6 +156,7 @@ function formatDuration(minutes: number | null) {
 
 const columns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
+  { id: "content", label: "Content", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
   { id: "source_system", label: "Source", defaultVisible: true },
   { id: "date", label: "Date", defaultVisible: true },
@@ -168,7 +170,6 @@ const columns: ColumnConfig[] = [
   { id: "division", label: "Division", defaultVisible: false },
   { id: "meeting_type", label: "Meeting Type", defaultVisible: false },
   { id: "host_email", label: "Host", defaultVisible: false },
-  { id: "content", label: "Content", defaultVisible: false },
   { id: "summary", label: "Summary", defaultVisible: false },
   { id: "participants", label: "Participants", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: false },
@@ -183,6 +184,8 @@ const defaultVisibleColumns = columns
 function buildTableColumns(
   allProjects: AllProject[],
   onProjectEdit: (item: DocumentMetadataItem, projectName: string, projectId: number | null) => Promise<void>,
+  expandedIds: Set<string>,
+  toggleExpand: (id: string) => void,
 ): TableColumn<DocumentMetadataItem>[] {
   return [
     {
@@ -196,6 +199,39 @@ function buildTableColumns(
     },
     {
       ...columns[1],
+      render: (item) => {
+        const isExpanded = expandedIds.has(item.id);
+        const hasContent = !!item.content;
+        return (
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground"
+              disabled={!hasContent}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpand(item.id);
+              }}
+              aria-label={isExpanded ? "Collapse content" : "Expand content"}
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </Button>
+            <TruncatedCell value={item.content} maxWidth={380} className="text-sm" />
+          </div>
+        );
+      },
+      csvValue: (item) => item.content ?? "",
+      sortable: false,
+      width: 440,
+    },
+    {
+      ...columns[2],
       render: (item) => <CellText value={item.project} muted />,
       csvValue: (item) => item.project ?? "",
       sortValue: (item) => item.project ?? "",
@@ -213,7 +249,7 @@ function buildTableColumns(
       ),
     },
     {
-      ...columns[2],
+      ...columns[3],
       render: (item) => (
         <CellText value={item.source_system ?? item.source} muted />
       ),
@@ -222,14 +258,14 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[3],
+      ...columns[4],
       render: (item) => <TableDateValue value={item.date} />,
       csvValue: (item) => item.date ?? "",
       sortValue: (item) => (item.date ? new Date(item.date).getTime() : 0),
       sortable: true,
     },
     {
-      ...columns[4],
+      ...columns[5],
       render: (item) =>
         item.status ? (
           <StatusBadge status={item.status} />
@@ -241,7 +277,7 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[5],
+      ...columns[6],
       render: (item) => (
         <span className="tabular-nums">
           {formatDuration(item.duration_minutes)}
@@ -252,21 +288,21 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[6],
+      ...columns[7],
       render: (item) => <CellText value={item.tags} muted />,
       csvValue: (item) => item.tags ?? "",
       sortValue: (item) => item.tags ?? "",
       sortable: true,
     },
     {
-      ...columns[7],
+      ...columns[8],
       render: (item) => <CellText value={item.file_name} muted />,
       csvValue: (item) => item.file_name ?? "",
       sortValue: (item) => item.file_name ?? "",
       sortable: true,
     },
     {
-      ...columns[8],
+      ...columns[9],
       render: (item) => {
         const href = item.source_web_url;
         return href ? (
@@ -281,47 +317,40 @@ function buildTableColumns(
       width: 220,
     },
     {
-      ...columns[9],
+      ...columns[10],
       render: (item) => <CellText value={item.keywords?.join(", ") ?? null} muted />,
       csvValue: (item) => item.keywords?.join(", ") ?? "",
       sortable: false,
     },
     {
-      ...columns[10],
+      ...columns[11],
       render: (item) => <CellText value={item.category} muted />,
       csvValue: (item) => item.category ?? "",
       sortValue: (item) => item.category ?? "",
       sortable: true,
     },
     {
-      ...columns[11],
+      ...columns[12],
       render: (item) => <CellText value={item.division} muted />,
       csvValue: (item) => item.division ?? "",
       sortValue: (item) => item.division ?? "",
       sortable: true,
     },
     {
-      ...columns[12],
+      ...columns[13],
       render: (item) => <CellText value={item.meeting_type} muted />,
       csvValue: (item) => item.meeting_type ?? "",
       sortValue: (item) => item.meeting_type ?? "",
       sortable: true,
     },
     {
-      ...columns[13],
+      ...columns[14],
       render: (item) => (
         <CellText value={item.host_email ?? item.organizer_email} muted />
       ),
       csvValue: (item) => item.host_email ?? item.organizer_email ?? "",
       sortValue: (item) => item.host_email ?? item.organizer_email ?? "",
       sortable: true,
-    },
-    {
-      ...columns[14],
-      render: (item) => <TruncatedCell value={item.content} maxWidth={400} className="text-sm" />,
-      csvValue: (item) => item.content ?? "",
-      sortable: false,
-      width: 420,
     },
     {
       ...columns[15],
@@ -520,6 +549,16 @@ export function DocumentMetadataClient({
   const router = useRouter();
 
   const [items, setItems] = React.useState(initialItems);
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
+
+  const toggleExpand = React.useCallback((id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   // Derive active filters from URL — authoritative, no useEffect lag
   const activeFilters = useMemo<FilterState>(
@@ -690,8 +729,8 @@ export function DocumentMetadataClient({
   );
 
   const tableColumns = useMemo(
-    () => buildTableColumns(allProjects, handleProjectEdit),
-    [allProjects, handleProjectEdit],
+    () => buildTableColumns(allProjects, handleProjectEdit, expandedIds, toggleExpand),
+    [allProjects, handleProjectEdit, expandedIds, toggleExpand],
   );
 
   const isFiltered =
@@ -854,9 +893,13 @@ export function DocumentMetadataClient({
   );
 
   const handleRowClick = React.useCallback((item: DocumentMetadataItem) => {
+    if (item.type === "meeting") {
+      router.push(`/meetings/${item.id}`);
+      return;
+    }
     setActiveItemId(item.id);
     setSheetOpen(true);
-  }, []);
+  }, [router]);
 
   const handleSheetNavigate = React.useCallback(
     (direction: "prev" | "next") => {
@@ -925,6 +968,19 @@ export function DocumentMetadataClient({
           rowActions: (item) => renderRowActions(item, handleDelete),
           onRowClick: handleRowClick,
           activeRowId: activeItemId,
+          renderExpandedRow: (item, colSpan) => {
+            if (!expandedIds.has(item.id) || !item.content) return null;
+            return (
+              <TableExpandedRow colSpan={colSpan}>
+                <div className="px-6 py-3 bg-muted/40 border-t border-border/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Full content</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                    {item.content}
+                  </p>
+                </div>
+              </TableExpandedRow>
+            );
+          },
         }}
         sorting={{
           sortBy: tableState.sortBy,

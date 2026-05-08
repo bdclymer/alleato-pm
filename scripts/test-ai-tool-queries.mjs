@@ -231,12 +231,8 @@ await runTest(
   () => supabase.from("company_context").select("*").limit(1)
 );
 
-// 13b. Company Knowledge — company_knowledge
-await runTest(
-  "Company Knowledge (knowledge)",
-  "company_knowledge",
-  () => supabase.from("company_knowledge").select("*").limit(5)
-);
+// 13b. Retired Company Knowledge table
+console.log("\nINFO Company Knowledge (knowledge): retired; use document_metadata/document_chunks.");
 
 // 14a. Supporting view — change_events_summary
 await runTest(

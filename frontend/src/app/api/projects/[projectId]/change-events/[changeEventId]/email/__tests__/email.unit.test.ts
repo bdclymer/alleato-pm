@@ -97,6 +97,32 @@ jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn().mockResolvedValue(mockSupabase),
 }));
 
+function createServiceTable(table: string) {
+  const insertResult =
+    table === "email_events"
+      ? { data: { id: "email-event-1" }, error: null }
+      : { data: { id: "project-email-1" }, error: null };
+
+  return {
+    insert: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue(insertResult),
+      }),
+    }),
+    update: jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+    }),
+  };
+}
+
+const mockServiceClient = {
+  from: jest.fn((table: string) => createServiceTable(table)),
+};
+
+jest.mock("@/lib/supabase/service", () => ({
+  createServiceClient: jest.fn(() => mockServiceClient),
+}));
+
 // ── Imports after mocks ────────────────────────────────────────────────────
 
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
@@ -125,12 +151,23 @@ async function callRoute(body: Record<string, unknown>) {
 // ── Tests ──────────────────────────────────────────────────────────────────
 
 describe("change-events email route — PDF attachment fallback (regression #193)", () => {
+  const originalResendApiKey = process.env.RESEND_API_KEY;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.RESEND_API_KEY = "test-resend-key";
     // Default: Resend sends successfully
     mockSend.mockResolvedValue({ data: { id: "email-id-1" }, error: null });
     // Default: PDF generation succeeds
     (renderPdfFromHtml as jest.Mock).mockResolvedValue(Buffer.from("fake-pdf-content"));
+  });
+
+  afterAll(() => {
+    if (originalResendApiKey === undefined) {
+      delete process.env.RESEND_API_KEY;
+    } else {
+      process.env.RESEND_API_KEY = originalResendApiKey;
+    }
   });
 
   /**

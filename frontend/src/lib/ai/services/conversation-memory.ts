@@ -20,6 +20,10 @@ import OpenAI from "openai";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "../providers";
 import { toSessionUuid } from "@/lib/ai/session-id";
+import {
+  getOpenAICompatibleClientConfig,
+  getOpenAIModelId,
+} from "@/lib/ai/provider-config";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -35,23 +39,14 @@ const MAX_MESSAGES_FOR_SUMMARY = 40;
 const MAX_CHARS_PER_MESSAGE = 1500;
 
 // ---------------------------------------------------------------------------
-// Lazy OpenAI client for embeddings (routed through AI Gateway when available)
+// Lazy OpenAI client for embeddings.
 // ---------------------------------------------------------------------------
 
 let _openai: OpenAI | null = null;
 function getOpenAIClient(): OpenAI {
   if (!_openai) {
-    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
-    if (gatewayKey) {
-      _openai = new OpenAI({
-        apiKey: gatewayKey,
-        baseURL: "https://ai-gateway.vercel.sh/v1",
-      });
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
-      _openai = new OpenAI({ apiKey });
-    }
+    const config = getOpenAICompatibleClientConfig("Conversation memory embeddings");
+    _openai = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
   }
   return _openai;
 }
@@ -110,7 +105,7 @@ async function embedAndStoreMemory(
 
   // Generate embedding
   const embeddingResponse = await client.embeddings.create({
-    model: "text-embedding-3-large",
+    model: getOpenAIModelId("text-embedding-3-large"),
     dimensions: 3072,
     input: summary.substring(0, 8000),
   });

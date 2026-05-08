@@ -47,5 +47,31 @@ if (
   process.exit(1);
 }
 
-console.log("Runtime config validation passed.");
+const isProductionRuntime =
+  process.env.ALLEATO_RUNTIME_ENV === "production" ||
+  process.env.VERCEL_ENV === "production" ||
+  process.env.NODE_ENV === "production";
 
+if (isProductionRuntime) {
+  const directDatabaseUrls = ["DATABASE_URL", "SUPABASE_DB_URL", "BOT_STATE_DATABASE_URL"]
+    .map((key) => [key, process.env[key]])
+    .filter(([, value]) => value?.trim())
+    .filter(([, value]) => {
+      try {
+        const url = new URL(value);
+        return /^db\.[a-z0-9]+\.supabase\.co$/i.test(url.hostname);
+      } catch {
+        return false;
+      }
+    })
+    .map(([key]) => key);
+
+  if (directDatabaseUrls.length > 0) {
+    console.error(
+      `Invalid production database config: ${directDatabaseUrls.join(", ")} must use the Supabase pooler host, not the direct db.<project-ref>.supabase.co host.`,
+    );
+    process.exit(1);
+  }
+}
+
+console.log("Runtime config validation passed.");

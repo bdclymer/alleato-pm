@@ -1,0 +1,177 @@
+{
+  "disabledAt": "2026-05-08T22:50:46.024Z",
+  "files": [
+    {
+      "from": "src/app/(admin)/api-docs/page.tsx",
+      "to": "src/app/(admin)/api-docs/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/redoc/page.tsx",
+      "to": "src/app/(admin)/redoc/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/spreadsheet-demo/page.tsx",
+      "to": "src/app/(admin)/spreadsheet-demo/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/template/form-standard/page.tsx",
+      "to": "src/app/(admin)/template/form-standard/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/template/form-template/page.tsx",
+      "to": "src/app/(admin)/template/form-template/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/testing/page.tsx",
+      "to": "src/app/(admin)/testing/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/testing/[tool]/page.tsx",
+      "to": "src/app/(admin)/testing/[tool]/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/testing/[tool]/cases/[caseId]/page.tsx",
+      "to": "src/app/(admin)/testing/[tool]/cases/[caseId]/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/testing/parity/page.tsx",
+      "to": "src/app/(admin)/testing/parity/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/testing/runs/page.tsx",
+      "to": "src/app/(admin)/testing/runs/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/testing/runs/[runId]/page.tsx",
+      "to": "src/app/(admin)/testing/runs/[runId]/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx",
+      "to": "src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/(admin)/dev/table-generator/page.tsx",
+      "to": "src/app/(admin)/dev/table-generator/page.tsx.nonprod"
+    },
+    {
+      "from": "src/app/api/dev-panel/annotations/route.ts",
+      "to": "src/app/api/dev-panel/annotations/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev-panel/comments/[feature]/route.ts",
+      "to": "src/app/api/dev-panel/comments/[feature]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev-panel/feedback/[feature]/route.ts",
+      "to": "src/app/api/dev-panel/feedback/[feature]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev-panel/gaps/[feature]/route.ts",
+      "to": "src/app/api/dev-panel/gaps/[feature]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev-panel/spec/[feature]/route.ts",
+      "to": "src/app/api/dev-panel/spec/[feature]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev-tools/check-routes/route.ts",
+      "to": "src/app/api/dev-tools/check-routes/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev-tools/clear-cache/route.ts",
+      "to": "src/app/api/dev-tools/clear-cache/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev-tools/regenerate-types/route.ts",
+      "to": "src/app/api/dev-tools/regenerate-types/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/annotate/route.ts",
+      "to": "src/app/api/dev/annotate/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/make-admin/route.ts",
+      "to": "src/app/api/dev/make-admin/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/schema/route.ts",
+      "to": "src/app/api/dev/schema/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/test-email/route.ts",
+      "to": "src/app/api/dev/test-email/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/test-results/[resultId]/route.ts",
+      "to": "src/app/api/dev/test-results/[resultId]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/test-runs/route.ts",
+      "to": "src/app/api/dev/test-runs/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/test-runs/[runId]/route.ts",
+      "to": "src/app/api/dev/test-runs/[runId]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/test-suites/[tool]/route.ts",
+      "to": "src/app/api/dev/test-suites/[tool]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/dev/violations/route.ts",
+      "to": "src/app/api/dev/violations/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/cases/route.ts",
+      "to": "src/app/api/testing/cases/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/cases/[caseId]/route.ts",
+      "to": "src/app/api/testing/cases/[caseId]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/parity/route.ts",
+      "to": "src/app/api/testing/parity/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/runs/route.ts",
+      "to": "src/app/api/testing/runs/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/runs/[runId]/route.ts",
+      "to": "src/app/api/testing/runs/[runId]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/runs/[runId]/results/route.ts",
+      "to": "src/app/api/testing/runs/[runId]/results/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/runs/[runId]/results/[resultId]/route.ts",
+      "to": "src/app/api/testing/runs/[runId]/results/[resultId]/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/runs/[runId]/results/[resultId]/github-issue/route.ts",
+      "to": "src/app/api/testing/runs/[runId]/results/[resultId]/github-issue/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/runs/[runId]/results/[resultId]/screenshots/route.ts",
+      "to": "src/app/api/testing/runs/[runId]/results/[resultId]/screenshots/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/suites/route.ts",
+      "to": "src/app/api/testing/suites/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/suites/[slug]/cases/route.ts",
+      "to": "src/app/api/testing/suites/[slug]/cases/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/tester-activity/route.ts",
+      "to": "src/app/api/testing/tester-activity/route.ts.nonprod"
+    },
+    {
+      "from": "src/app/api/testing/tools/[toolName]/route.ts",
+      "to": "src/app/api/testing/tools/[toolName]/route.ts.nonprod"
+    }
+  ]
+}

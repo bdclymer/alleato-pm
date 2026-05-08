@@ -11,6 +11,7 @@ describe("provider routing", () => {
     process.env = { ...originalEnv };
     delete process.env.AI_ASSISTANT_TOOL_PROVIDER_PATH;
     delete process.env.AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS;
+    delete process.env.AI_PROVIDER_PATH;
   });
 
   afterAll(() => {
@@ -22,13 +23,24 @@ describe("provider routing", () => {
       modelId: "openai/gpt-4.1",
     });
 
-    expect(decision.providerPath).toBe("ai_sdk_gateway_openai");
+    expect(decision.providerPath).toBe("ai_sdk_direct_openai");
     expect(decision.supportsToolCalling).toBe(true);
     expect(shouldEnableStreamingModelTools(decision)).toBe(true);
     expect(decision.diagnosticsArtifactPath).toBe(
       AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT,
     );
-    expect(decision.reason).toContain("Provider matrix");
+    expect(decision.reason).toContain("Direct OpenAI is the default");
+  });
+
+  it("routes through AI Gateway only when AI_PROVIDER_PATH=vercel_gateway", () => {
+    process.env.AI_PROVIDER_PATH = "vercel_gateway";
+
+    const decision = getAssistantToolCallingDecision({
+      modelId: "openai/gpt-4.1",
+    });
+
+    expect(decision.providerPath).toBe("ai_sdk_gateway_openai");
+    expect(decision.supportsToolCalling).toBe(true);
   });
 
   it("disables streaming model tools when AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true", () => {
@@ -38,7 +50,7 @@ describe("provider routing", () => {
       modelId: "openai/gpt-4.1",
     });
 
-    expect(decision.providerPath).toBe("ai_sdk_gateway_openai");
+    expect(decision.providerPath).toBe("ai_sdk_direct_openai");
     expect(decision.supportsToolCalling).toBe(false);
     expect(shouldEnableStreamingModelTools(decision)).toBe(false);
     expect(decision.reason).toContain("disabled by");

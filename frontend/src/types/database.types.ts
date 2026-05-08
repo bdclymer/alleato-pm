@@ -35301,28 +35301,6 @@ export type Database = {
           title: string
         }[]
       }
-      search_knowledge_base: {
-        Args: {
-          filter_category?: string
-          filter_project_id?: number
-          match_count?: number
-          match_threshold?: number
-          query_embedding: unknown
-        }
-        Returns: {
-          category: string
-          content: string
-          created_at: string
-          id: string
-          meeting_id: string
-          origin: string
-          project_id: number
-          similarity: number
-          source: string
-          tags: string[]
-          title: string
-        }[]
-      }
       search_meeting_chunks:
         | {
             Args: {

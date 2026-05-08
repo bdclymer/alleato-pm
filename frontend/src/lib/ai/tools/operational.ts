@@ -1223,8 +1223,7 @@ export function createOperationalTools(
             // Blended retrieval — all halfvec(3072):
             // search_document_chunks   → unified: meetings, emails, Teams, OneDrive, transcripts
             // search_all_knowledge     → insights (decisions/risks/opportunities)
-            // search_knowledge_base    → company_knowledge
-            const [chunksRes, knowledgeRes, knowledgeBaseRes] = await Promise.all([
+            const [chunksRes, knowledgeRes] = await Promise.all([
                
               (supabase as unknown as {
                 rpc: (
@@ -1243,23 +1242,15 @@ export function createOperationalTools(
                 match_count: targetCount,
                 match_threshold: targetThreshold,
               }),
-              supabase.rpc("search_knowledge_base", {
-                query_embedding: embeddingArg3072,
-                match_count: targetCount,
-                match_threshold: targetThreshold,
-                ...(resolvedProjectId ? { filter_project_id: resolvedProjectId } : {}),
-              }),
             ]);
 
             const knowledgeError = knowledgeRes.error;
-            const knowledgeBaseError = knowledgeBaseRes.error;
             const chunksError = (chunksRes as { error?: { message: string } }).error;
             // Surface any source failures; only abort if all sources failed
             const errorParts: string[] = [];
             if (knowledgeError) errorParts.push(`knowledge=${knowledgeError.message}`);
-            if (knowledgeBaseError) errorParts.push(`knowledgeBase=${knowledgeBaseError.message}`);
             if (chunksError) errorParts.push(`chunks=${chunksError.message}`);
-            if (knowledgeError && knowledgeBaseError && chunksError) {
+            if (knowledgeError && chunksError) {
               return {
                 error: `Semantic search failed: ${errorParts.join("; ")}`,
               };
@@ -1341,47 +1332,7 @@ export function createOperationalTools(
               });
             }
 
-            // 3) Knowledge base entries (company_knowledge with embeddings)
-            const rawKBRows = (knowledgeBaseRes.data ?? []) as AnyRow[];
-            const kbRows = rawKBRows.filter((row) => {
-              const rowProjectId = row.project_id;
-              if (typeof resolvedProjectId === "number") {
-                return rowProjectId === resolvedProjectId;
-              }
-              if (scope.isAdmin) return true;
-              return typeof rowProjectId === "number" && allowedProjectIdSet.has(rowProjectId);
-            });
-            for (const row of kbRows) {
-              const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
-              const kbId = String(row.id ?? "");
-              merged.push({
-                key: `knowledge_base:${kbId}`,
-                sourceTable: "knowledge_base",
-                recordId: kbId,
-                sourceDocumentId: null,
-                sourceChunkId: null,
-                content: `[${String(row.category ?? "general")}] ${String(row.title ?? "")}: ${String(row.content ?? "")}`,
-                similarity,
-                projectIds: typeof row.project_id === "number" ? [row.project_id] : [],
-                metadata: {
-                  sourceLabel: "Company Knowledge Base",
-                  knowledgeType: "company_knowledge",
-                  sourceRoute: "/knowledge",
-                  title: row.title,
-                  category: row.category,
-                  tags: row.tags,
-                  source: row.source,
-                  origin: row.origin,
-                  visibility: row.visibility,
-                  approvalStatus: row.approval_status,
-                  aiSearchable: row.ai_searchable,
-                },
-                createdAt:
-                  typeof row.created_at === "string" ? row.created_at : null,
-              });
-            }
-
-            // 4) Unified document chunks (meetings, emails, Teams, OneDrive, transcripts)
+            // 3) Unified document chunks (meetings, emails, Teams, OneDrive, transcripts)
             for (const row of chunkRows) {
               const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
               const srcType = String(row.source_type ?? "document");

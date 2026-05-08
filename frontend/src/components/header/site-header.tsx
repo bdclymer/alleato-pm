@@ -327,15 +327,6 @@ export function SiteHeader() {
             <NotificationBell />
           </React.Suspense>
           {user?.email === "megan@megankharrison.com" && <ProcoreReferenceToggle />}
-          {(isAppAdmin || userType === "developer") && (
-            <Link
-              href="/annotation-inbox"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              aria-label="Annotation inbox"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Link>
-          )}
           <HeaderUserMenu
             user={user}
             projectId={nav.projectId}

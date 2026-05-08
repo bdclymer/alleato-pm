@@ -52,23 +52,27 @@ function getAllRoutes() {
 }
 
 function getChangedRoutes() {
-  const diffFromBase = run(`git diff --name-only ${baseRef}...HEAD || true`)
-    .split("\n")
-    .map((v) => v.trim())
-    .filter(Boolean);
-  const diffStaged = run("git diff --name-only --cached || true")
-    .split("\n")
-    .map((v) => v.trim())
-    .filter(Boolean);
-  const diffWorking = run("git diff --name-only || true")
-    .split("\n")
-    .map((v) => v.trim())
-    .filter(Boolean);
+  const diffFromBase = run(`git diff --name-status ${baseRef}...HEAD || true`);
+  const diffStaged = run("git diff --name-status --cached || true");
+  const diffWorking = run("git diff --name-status || true");
 
-  const changedFiles = [...new Set([...diffFromBase, ...diffStaged, ...diffWorking])];
-  return changedFiles
+  const changedFiles = new Set();
+  for (const diff of [diffFromBase, diffStaged, diffWorking]) {
+    for (const line of diff.split("\n")) {
+      const [status, ...files] = line.trim().split(/\s+/);
+      if (!status) continue;
+      if (status === "D") continue;
+      const file = files[files.length - 1];
+      if (file) changedFiles.add(file);
+    }
+  }
+
+  return [...changedFiles]
     .filter(
-      (file) => file.startsWith("frontend/src/app/api/") && file.endsWith("/route.ts"),
+      (file) =>
+        file.startsWith("frontend/src/app/api/") &&
+        file.endsWith("/route.ts") &&
+        existsSync(file),
     )
     .sort();
 }
@@ -110,7 +114,15 @@ function getAddedRawErrorRoutes() {
 
 function analyzeRoute(route) {
   const content = readFileSync(route, "utf8");
-  const hasGuardrailWrapper = content.includes("withApiGuardrails");
+  let hasGuardrailWrapper = content.includes("withApiGuardrails");
+  const reExportMatch = content.match(/export\s+\{\s*(?:GET|POST|PUT|PATCH|DELETE|HEAD)(?:\s*,\s*(?:GET|POST|PUT|PATCH|DELETE|HEAD))*\s+\}\s+from\s+["'](.+)["']/);
+  if (!hasGuardrailWrapper && reExportMatch) {
+    const target = path.resolve(path.dirname(route), reExportMatch[1]);
+    const targetPath = target.endsWith(".ts") ? target : `${target}.ts`;
+    if (existsSync(targetPath)) {
+      hasGuardrailWrapper = readFileSync(targetPath, "utf8").includes("withApiGuardrails");
+    }
+  }
   const hasApiErrorResponse = content.includes("apiErrorResponse(");
   const hasStructuredPath = hasGuardrailWrapper || hasApiErrorResponse;
   const hasRawErrorResponse =

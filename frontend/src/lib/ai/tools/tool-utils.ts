@@ -1,6 +1,10 @@
 import OpenAI from "openai";
 import { createServiceClient } from "@/lib/supabase/service";
 import { type ToolGuardrails } from "./guardrails";
+import {
+  getOpenAICompatibleClientConfig,
+  getOpenAIModelId,
+} from "@/lib/ai/provider-config";
 
 // ---------------------------------------------------------------------------
 // Embedding config registry
@@ -37,9 +41,7 @@ export async function generateEmbedding(
   input: string,
   config: typeof EMBEDDING.LARGE | typeof EMBEDDING.SMALL,
 ): Promise<string> {
-  const modelId = process.env.AI_GATEWAY_API_KEY
-    ? `openai/${config.model}`
-    : config.model;
+  const modelId = getOpenAIModelId(config.model);
   const resp = await openai.embeddings.create({
     model: modelId,
     input,
@@ -101,7 +103,7 @@ export async function rerankWithLLM(
       : "";
 
     const response = await openai.chat.completions.create({
-      model: process.env.AI_GATEWAY_API_KEY ? "openai/gpt-4.1-mini" : "gpt-4.1-mini",
+      model: getOpenAIModelId("gpt-4.1-mini"),
       temperature: 0,
       max_tokens: 200,
       messages: [
@@ -233,25 +235,17 @@ export function withTrace<TInput extends Record<string, unknown>, TResult>(
   };
 }
 
-/** Lazy OpenAI singleton — AI Gateway with OPENAI_API_KEY fallback. */
+/** Lazy OpenAI singleton — direct OpenAI by default, Gateway only when explicitly selected. */
 let _openai: OpenAI | null = null;
 export function getOpenAI(): OpenAI {
   if (!_openai) {
-    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
-    if (gatewayKey) {
-      _openai = new OpenAI({ apiKey: gatewayKey, baseURL: "https://ai-gateway.vercel.sh/v1" });
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
-      _openai = new OpenAI({ apiKey });
-    }
+    const config = getOpenAICompatibleClientConfig("OpenAI tool client");
+    _openai = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
   }
   return _openai;
 }
 
-export function getOpenAIModelId(modelId: string): string {
-  return process.env.AI_GATEWAY_API_KEY ? `openai/${modelId}` : modelId;
-}
+export { getOpenAIModelId } from "@/lib/ai/provider-config";
 
 /**
  * withWriteTrace — for mutation tools.

@@ -2,7 +2,7 @@
  * Regression tests for tool-utils.ts shared infrastructure.
  *
  * Covers:
- * - getOpenAI(): AI Gateway vs OPENAI_API_KEY fallback (HIGH-1 from PR #292 review)
+ * - getOpenAI(): direct OpenAI default with explicit AI Gateway opt-in
  * - withWriteTrace(): must re-throw — not swallow — errors (HIGH-2 from PR #292 review)
  * - withTrace(): must return structured {error} instead of re-throwing
  * - asNumber(): edge-case coverage for budget total calculations
@@ -15,9 +15,13 @@
  */
 
 import OpenAI from "openai";
-import { withTrace, withWriteTrace, asNumber, isBriefingQuery, rankBriefingSourcePriority, generateEmbedding, EMBEDDING, rerankWithLLM, isToolErrorResult } from "../tool-utils";
+import { withTrace, withWriteTrace, asNumber, isBriefingQuery, rankBriefingSourcePriority, generateEmbedding, EMBEDDING, rerankWithLLM, isToolErrorResult, getOpenAIModelId } from "../tool-utils";
 import type { ToolTracePayload } from "../tool-utils";
 import { isMissingBudgetViewError } from "../financial";
+
+function readOpenAIBaseURL(client: OpenAI): string {
+  return Reflect.get(client, "baseURL") as string;
+}
 
 // ---------------------------------------------------------------------------
 // asNumber
@@ -257,7 +261,7 @@ describe("withWriteTrace()", () => {
 
 // ---------------------------------------------------------------------------
 // getOpenAI() — tested via module isolation to reset the lazy singleton
-// HIGH-1 regression guard: fallback from AI_GATEWAY_API_KEY → OPENAI_API_KEY
+// Regression guard: direct OpenAI is default; Gateway requires explicit opt-in.
 // ---------------------------------------------------------------------------
 
 describe("getOpenAI()", () => {
@@ -273,19 +277,31 @@ describe("getOpenAI()", () => {
     process.env = ORIG_ENV;
   });
 
-  it("uses AI Gateway baseURL when AI_GATEWAY_API_KEY is set", async () => {
+  it("uses direct OpenAI by default even when AI_GATEWAY_API_KEY is set", async () => {
+    process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
+    process.env.OPENAI_API_KEY = "test-openai-key";
+    delete process.env.AI_PROVIDER_PATH;
+
+    const { getOpenAI } = await import("../tool-utils");
+    const client = getOpenAI();
+    const baseURL = readOpenAIBaseURL(client);
+    expect(baseURL).not.toContain("ai-gateway.vercel.sh");
+  });
+
+  it("uses AI Gateway only when AI_PROVIDER_PATH=vercel_gateway", async () => {
+    process.env.AI_PROVIDER_PATH = "vercel_gateway";
     process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
     delete process.env.OPENAI_API_KEY;
 
     const { getOpenAI } = await import("../tool-utils");
     const client = getOpenAI();
-    // The OpenAI client stores the baseURL on its internal config
-    const baseURL = (client as unknown as { baseURL: string }).baseURL;
+    const baseURL = readOpenAIBaseURL(client);
     expect(baseURL).toContain("ai-gateway.vercel.sh");
   });
 
-  it("falls back to OPENAI_API_KEY when AI_GATEWAY_API_KEY is absent (HIGH-1 regression guard)", async () => {
+  it("uses OPENAI_API_KEY on the default provider path", async () => {
     delete process.env.AI_GATEWAY_API_KEY;
+    delete process.env.AI_PROVIDER_PATH;
     process.env.OPENAI_API_KEY = "test-openai-key";
 
     const { getOpenAI } = await import("../tool-utils");
@@ -294,10 +310,20 @@ describe("getOpenAI()", () => {
 
   it("throws a descriptive error when neither key is set", async () => {
     delete process.env.AI_GATEWAY_API_KEY;
+    delete process.env.AI_PROVIDER_PATH;
     delete process.env.OPENAI_API_KEY;
 
     const { getOpenAI } = await import("../tool-utils");
-    expect(() => getOpenAI()).toThrow("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
+    expect(() => getOpenAI()).toThrow("requires OPENAI_API_KEY");
+  });
+
+  it("throws a descriptive error when Gateway is selected without a Gateway key", async () => {
+    process.env.AI_PROVIDER_PATH = "vercel_gateway";
+    delete process.env.AI_GATEWAY_API_KEY;
+    process.env.OPENAI_API_KEY = "test-openai-key";
+
+    const { getOpenAI } = await import("../tool-utils");
+    expect(() => getOpenAI()).toThrow("AI_PROVIDER_PATH=vercel_gateway");
   });
 });
 
@@ -339,8 +365,8 @@ describe("isMissingBudgetViewError (#294 regression)", () => {
 // generateEmbedding — H1 regression guard (#294 review)
 //
 // Guards:
-// 1. Gateway prefix "openai/<model>" applied when AI_GATEWAY_API_KEY is set
-// 2. Bare model name used when no gateway key
+// 1. Gateway prefix "openai/<model>" applied only when AI_PROVIDER_PATH=vercel_gateway
+// 2. Bare model name used on the default direct OpenAI path
 // 3. dimensions omitted for SMALL config (vector(1536) default)
 // 4. dimensions included for LARGE config (halfvec(3072))
 // 5. Return value is JSON-stringified (do NOT double-stringify)
@@ -373,7 +399,17 @@ describe("generateEmbedding() (#294 H1 regression guard)", () => {
     expect(parsed).toEqual(FAKE_LARGE);
   });
 
-  it("applies gateway prefix when AI_GATEWAY_API_KEY is set", async () => {
+  it("uses bare model name by default even when AI_GATEWAY_API_KEY is set", async () => {
+    process.env.AI_GATEWAY_API_KEY = "test-key";
+    delete process.env.AI_PROVIDER_PATH;
+    const openai = mockOpenAI();
+    await generateEmbedding(openai, "hello", EMBEDDING.LARGE);
+    const call = (openai.embeddings.create as jest.Mock).mock.calls[0][0];
+    expect(call.model).toBe("text-embedding-3-large");
+  });
+
+  it("applies gateway prefix when AI_PROVIDER_PATH=vercel_gateway", async () => {
+    process.env.AI_PROVIDER_PATH = "vercel_gateway";
     process.env.AI_GATEWAY_API_KEY = "test-key";
     const openai = mockOpenAI();
     await generateEmbedding(openai, "hello", EMBEDDING.LARGE);
@@ -381,8 +417,9 @@ describe("generateEmbedding() (#294 H1 regression guard)", () => {
     expect(call.model).toBe("openai/text-embedding-3-large");
   });
 
-  it("uses bare model name when AI_GATEWAY_API_KEY is absent", async () => {
+  it("uses bare model name when AI_PROVIDER_PATH is absent", async () => {
     delete process.env.AI_GATEWAY_API_KEY;
+    delete process.env.AI_PROVIDER_PATH;
     const openai = mockOpenAI();
     await generateEmbedding(openai, "hello", EMBEDDING.LARGE);
     const call = (openai.embeddings.create as jest.Mock).mock.calls[0][0];
@@ -410,6 +447,14 @@ describe("generateEmbedding() (#294 H1 regression guard)", () => {
     await expect(generateEmbedding(openai, "hello", EMBEDDING.LARGE)).rejects.toThrow(
       "Embedding API returned empty data",
     );
+  });
+
+  it("normalizes model IDs for the selected provider path", () => {
+    delete process.env.AI_PROVIDER_PATH;
+    expect(getOpenAIModelId("openai/gpt-4.1-mini")).toBe("gpt-4.1-mini");
+
+    process.env.AI_PROVIDER_PATH = "vercel_gateway";
+    expect(getOpenAIModelId("gpt-4.1-mini")).toBe("openai/gpt-4.1-mini");
   });
 });
 

@@ -427,6 +427,9 @@ importers:
       postgres:
         specifier: ^3.4.8
         version: 3.4.8
+      prettier:
+        specifier: ^3.8.2
+        version: 3.8.2
       prosemirror-example-setup:
         specifier: ^1.2.3
         version: 1.2.3
@@ -21619,8 +21622,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier@3.8.2:
-    optional: true
+  prettier@3.8.2: {}
 
   pretty-format@27.5.1:
     dependencies:

@@ -4,6 +4,7 @@ import { FormattedTranscript } from "@/app/(main)/[projectId]/meetings/formatted
 import { parseTranscriptSections } from "@/app/(main)/[projectId]/meetings/[meetingId]/parse-transcript-sections";
 import { MarkdownSummary } from "@/app/(main)/[projectId]/meetings/[meetingId]/markdown-summary";
 import { MeetingDetailContent } from "@/components/meetings/meeting-detail-content";
+import { collectSegmentItems } from "@/lib/meetings/collect-segment-items";
 import type { Database } from "@/types/database.types";
 
 type MeetingSegment =
@@ -60,49 +61,12 @@ export default async function MeetingDetailPage({ params }: PageProps) {
   const { data: relatedMeetingsData } = await relatedQuery;
   const relatedMeetings = relatedMeetingsData || [];
 
-  const allTasks: string[] = [];
-  const allRisks: string[] = [];
-  const allDecisions: string[] = [];
-  const allOpportunities: string[] = [];
-
-  segments.forEach((segment) => {
-    if (segment.tasks && Array.isArray(segment.tasks)) {
-      segment.tasks.forEach((task: unknown) => {
-        const text =
-          typeof task === "string"
-            ? task
-            : (task as Record<string, unknown>)?.description;
-        if (text) allTasks.push(String(text));
-      });
-    }
-    if (segment.risks && Array.isArray(segment.risks)) {
-      segment.risks.forEach((risk: unknown) => {
-        const text =
-          typeof risk === "string"
-            ? risk
-            : (risk as Record<string, unknown>)?.description;
-        if (text) allRisks.push(String(text));
-      });
-    }
-    if (segment.decisions && Array.isArray(segment.decisions)) {
-      segment.decisions.forEach((decision: unknown) => {
-        const text =
-          typeof decision === "string"
-            ? decision
-            : (decision as Record<string, unknown>)?.description;
-        if (text) allDecisions.push(String(text));
-      });
-    }
-    if (segment.opportunities && Array.isArray(segment.opportunities)) {
-      segment.opportunities.forEach((opportunity: unknown) => {
-        const text =
-          typeof opportunity === "string"
-            ? opportunity
-            : (opportunity as Record<string, unknown>)?.description;
-        if (text) allOpportunities.push(String(text));
-      });
-    }
-  });
+  const {
+    tasks: allTasks,
+    risks: allRisks,
+    decisions: allDecisions,
+    opportunities: allOpportunities,
+  } = collectSegmentItems(segments);
 
   let transcriptContent = null;
   const storageUrl = meeting.url || meeting.source;

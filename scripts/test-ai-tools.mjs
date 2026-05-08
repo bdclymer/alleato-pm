@@ -191,24 +191,9 @@ async function main() {
   }
   console.log('');
 
-  // ---- Query J: company_knowledge ----
+  // ---- Query J: retired company_knowledge ----
   console.log('=== COMPANY KNOWLEDGE ===');
-  const { data: compKnow, error: compKnowErr } = await supabase
-    .from('company_knowledge')
-    .select('*')
-    .limit(5);
-
-  if (compKnowErr) {
-    console.log(`  Error: ${compKnowErr.message}`);
-  } else if (!compKnow || compKnow.length === 0) {
-    console.log('  No rows found in company_knowledge');
-  } else {
-    console.log(`  Found ${compKnow.length} row(s):`);
-    for (const row of compKnow) {
-      const preview = JSON.stringify(row).substring(0, 200);
-      console.log(`  - ${preview}...`);
-    }
-  }
+  console.log('  Retired: company knowledge now routes through document_metadata/document_chunks.');
   console.log('');
 
   // ---- Bonus: Check AI-related tables ----

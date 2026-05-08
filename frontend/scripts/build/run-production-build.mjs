@@ -8,6 +8,19 @@ const disableScript = path.join(frontendRoot, "scripts/build/disable-nonprod-rou
 const restoreScript = path.join(frontendRoot, "scripts/build/restore-nonprod-routes.mjs");
 const statePath = path.join(frontendRoot, ".next-nonprod-routes/disabled-routes.json");
 const nextDir = path.join(frontendRoot, ".next");
+const TRANSIENT_NEXT_BUILD_FAILURES = [
+  /Cannot find module for page: \/_document/,
+  /PageNotFoundError/,
+  /app-build-manifest\.json/,
+  /_buildManifest\.js\.tmp/,
+  /Cannot find module '.*\.next\/server\/app\/.*\/route\.js'/,
+  /Export encountered an error on .*\/route/,
+  /TurbopackInternalError: failed to write to .*\.next\//,
+  /ENOENT: no such file or directory, open '.*\.next\//,
+  /No such file or directory \(os error 2\)/,
+];
+const TURBOPACK_BUILD_ARGS = ["exec", "next", "build", "--turbopack"];
+const WEBPACK_BUILD_ARGS = ["exec", "next", "build"];
 
 let activeChild = null;
 let cleanedUp = false;
@@ -59,24 +72,42 @@ function runRestoreSync() {
   }
 }
 
-async function main() {
-  await runNodeScript(disableScript);
-
-  if (existsSync(nextDir)) {
-    rmSync(nextDir, { recursive: true, force: true });
-    console.log("[build] Removed frontend/.next before production build to prevent stale manifest/cache failures");
+function removeNextDir() {
+  if (!existsSync(nextDir)) {
+    return;
   }
 
+  rmSync(nextDir, { recursive: true, force: true });
+  console.log("[build] Removed frontend/.next before production build to prevent stale manifest/cache failures");
+}
+
+function isTransientNextBuildFailure(output) {
+  return TRANSIENT_NEXT_BUILD_FAILURES.some((pattern) => pattern.test(output));
+}
+
+async function runNextBuildAttempt({ attempt, args, label }) {
+  removeNextDir();
+
+  let buildOutput = "";
   const exitCode = await new Promise((resolve, reject) => {
-    activeChild = spawn("pnpm", ["exec", "next", "build", "--turbopack"], {
+    console.log(`[build] Starting ${label} production build attempt ${attempt}`);
+    activeChild = spawn("pnpm", args, {
       cwd: frontendRoot,
       env: {
         ...process.env,
         NODE_OPTIONS: "--max-old-space-size=7168",
       },
-      stdio: "inherit",
+      stdio: ["inherit", "pipe", "pipe"],
     });
 
+    activeChild.stdout.on("data", (chunk) => {
+      buildOutput += chunk.toString();
+      process.stdout.write(chunk);
+    });
+    activeChild.stderr.on("data", (chunk) => {
+      buildOutput += chunk.toString();
+      process.stderr.write(chunk);
+    });
     activeChild.on("error", reject);
     activeChild.on("exit", (code, signal) => {
       activeChild = null;
@@ -86,6 +117,32 @@ async function main() {
       }
       resolve(code ?? 1);
     });
+  });
+
+  if (exitCode !== 0 && label === "Turbopack" && isTransientNextBuildFailure(buildOutput)) {
+    if (attempt === 1) {
+      console.warn("[build] Turbopack hit a transient manifest/page-data artifact failure; clearing .next and retrying once.");
+      return runNextBuildAttempt({ attempt: 2, args, label });
+    }
+    console.warn("[build] Next build hit a transient manifest/page-data artifact failure; clearing .next and retrying once.");
+    console.warn("[build] Falling back to standard Next production build after repeated Turbopack artifact failures.");
+    return runNextBuildAttempt({
+      attempt: 1,
+      args: WEBPACK_BUILD_ARGS,
+      label: "Webpack",
+    });
+  }
+
+  return exitCode;
+}
+
+async function main() {
+  await runNodeScript(disableScript);
+
+  const exitCode = await runNextBuildAttempt({
+    attempt: 1,
+    args: TURBOPACK_BUILD_ARGS,
+    label: "Turbopack",
   });
 
   runRestoreSync();

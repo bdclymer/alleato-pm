@@ -56,22 +56,22 @@ async function assertAdminAccess(where: string) {
 }
 
 export const PATCH = withApiGuardrails(
-  "outlook-intake/[id]#PATCH",
+  "outlook-intake/[intakeId]#PATCH",
   async ({ request, params }) => {
-    const supabase = await assertAdminAccess("outlook-intake/[id]#PATCH");
-    const { id } = await params;
-    const intakeId = parseInt(id, 10);
+    const supabase = await assertAdminAccess("outlook-intake/[intakeId]#PATCH");
+    const { intakeId: rawIntakeId } = await params;
+    const intakeId = parseInt(rawIntakeId, 10);
 
     if (!Number.isFinite(intakeId) || intakeId <= 0) {
       throw new GuardrailError({
         code: "VALIDATION_ERROR",
-        where: "outlook-intake/[id]#PATCH",
+        where: "outlook-intake/[intakeId]#PATCH",
         message: "Invalid intake record ID.",
         status: 400,
       });
     }
 
-    const parsed = await parseJsonBody(request, PatchSchema, "outlook-intake/[id]#PATCH");
+    const parsed = await parseJsonBody(request, PatchSchema, "outlook-intake/[intakeId]#PATCH");
 
     let update: Record<string, unknown>;
 
@@ -103,7 +103,7 @@ export const PATCH = withApiGuardrails(
     if (error) {
       throw new GuardrailError({
         code: "INTERNAL_ERROR",
-        where: "outlook-intake/[id]#PATCH",
+        where: "outlook-intake/[intakeId]#PATCH",
         message: error.message,
       });
     }

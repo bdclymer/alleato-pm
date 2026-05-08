@@ -334,7 +334,14 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
     started_at = datetime.now(timezone.utc)
     docs: List[Dict[str, Any]] = []
     try:
-        docs = _fetch_graph_embedding_candidates(limit)
+        try:
+            docs = _fetch_graph_embedding_candidates(limit)
+        except Exception as exc:
+            logger.warning(
+                "[GraphEmbed] SQL candidate query failed; falling back to Supabase scan: %s",
+                exc,
+            )
+            docs = None
         if docs is None:
             docs = _fetch_graph_embedding_candidates_via_supabase(supabase_client, limit)
     except Exception as e:

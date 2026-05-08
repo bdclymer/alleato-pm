@@ -13,6 +13,7 @@ const permissionServiceMock = {
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+  getApiRouteUser: jest.fn().mockResolvedValue(null),
 }));
 
 const createClientMock = createClient as jest.Mock;

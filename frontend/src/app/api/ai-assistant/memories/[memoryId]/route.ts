@@ -6,20 +6,20 @@ import {
   updateMemoryContent,
 } from "@/lib/ai/services/ai-memory-service";
 
-/** PATCH /api/ai-assistant/memories/[id] — edit content or importance */
+/** PATCH /api/ai-assistant/memories/[memoryId] - edit content or importance */
 export const PATCH = withApiGuardrails(
-  "ai-assistant/memories/[id]#PATCH",
+  "ai-assistant/memories/[memoryId]#PATCH",
   async ({ request, params }) => {
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
-        where: "ai-assistant/memories/[id]#PATCH",
+        where: "ai-assistant/memories/[memoryId]#PATCH",
         message: "Authentication required.",
       });
     }
 
-    const { id } = params as { id: string };
+    const { memoryId } = params as { memoryId: string };
     const body = await request.json();
     const { content, importance } = body as {
       content?: string;
@@ -32,7 +32,7 @@ export const PATCH = withApiGuardrails(
 
     const result = await updateMemoryContent(
       user.id,
-      id,
+      memoryId,
       content?.trim() ?? "",
       importance,
     );
@@ -40,7 +40,7 @@ export const PATCH = withApiGuardrails(
     if (!result.success) {
       throw new GuardrailError({
         code: "INTERNAL_ERROR",
-        where: "ai-assistant/memories/[id]#PATCH",
+        where: "ai-assistant/memories/[memoryId]#PATCH",
         message: result.error ?? "Update failed",
       });
     }
@@ -49,26 +49,26 @@ export const PATCH = withApiGuardrails(
   },
 );
 
-/** DELETE /api/ai-assistant/memories/[id] — soft-delete (is_active = false) */
+/** DELETE /api/ai-assistant/memories/[memoryId] - soft-delete (is_active = false) */
 export const DELETE = withApiGuardrails(
-  "ai-assistant/memories/[id]#DELETE",
+  "ai-assistant/memories/[memoryId]#DELETE",
   async ({ params }) => {
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
-        where: "ai-assistant/memories/[id]#DELETE",
+        where: "ai-assistant/memories/[memoryId]#DELETE",
         message: "Authentication required.",
       });
     }
 
-    const { id } = params as { id: string };
-    const result = await deleteMemory(user.id, id);
+    const { memoryId } = params as { memoryId: string };
+    const result = await deleteMemory(user.id, memoryId);
 
     if (!result.success) {
       throw new GuardrailError({
         code: "INTERNAL_ERROR",
-        where: "ai-assistant/memories/[id]#DELETE",
+        where: "ai-assistant/memories/[memoryId]#DELETE",
         message: result.error ?? "Delete failed",
       });
     }

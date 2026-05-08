@@ -15,6 +15,10 @@
 
 import OpenAI from "openai";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  getOpenAICompatibleClientConfig,
+  getOpenAIModelId,
+} from "@/lib/ai/provider-config";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,17 +49,8 @@ export interface AiMemory {
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
   if (!_openai) {
-    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
-    if (gatewayKey) {
-      _openai = new OpenAI({
-        apiKey: gatewayKey,
-        baseURL: "https://ai-gateway.vercel.sh/v1",
-      });
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
-      _openai = new OpenAI({ apiKey });
-    }
+    const config = getOpenAICompatibleClientConfig("AI memory embeddings");
+    _openai = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
   }
   return _openai;
 }
@@ -63,7 +58,7 @@ function getOpenAI(): OpenAI {
 export async function embed(text: string): Promise<number[]> {
   // ai_memories.embedding is halfvec(3072) — must use text-embedding-3-large at 3072 dims
   const response = await getOpenAI().embeddings.create({
-    model: "text-embedding-3-large",
+    model: getOpenAIModelId("text-embedding-3-large"),
     dimensions: 3072,
     input: text.substring(0, 8000),
   });

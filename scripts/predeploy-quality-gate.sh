@@ -65,7 +65,14 @@ npm run build:production
 npm run test:unit:ci
 cd ..
 
-echo "4) Migration validation"
+echo "4) Supabase migration ledger clean check"
+if [ -n "${DATABASE_URL:-}" ] || [ -n "${SUPABASE_DB_PASSWORD:-}" ]; then
+  npm run db:migrations:verify-clean
+else
+  echo "Skipping: DATABASE_URL / SUPABASE_DB_PASSWORD not set. Migration ledger clean check requires linked DB credentials."
+fi
+
+echo "4b) Migration validation"
 node scripts/playwright-crawl/scripts/utils/validate-migrations.js
 
 echo "5) API smoke contracts"
@@ -84,6 +91,7 @@ fi
 
 echo "7) AI intelligence compiler health"
 if [ -n "${DATABASE_URL:-}" ] || [ -n "${SUPABASE_DB_URL:-}" ]; then
+  npm run rag:repair:intelligence-current-packets
   npm run rag:verify:intelligence-compiler
 else
   echo "Skipping: DATABASE_URL / SUPABASE_DB_URL not set. Intelligence compiler health runs via cron job."

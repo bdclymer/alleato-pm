@@ -16,6 +16,10 @@ import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { getLanguageModel } from "@/lib/ai/providers";
+import {
+  getOpenAICompatibleClientConfig,
+  getOpenAIModelId,
+} from "@/lib/ai/provider-config";
 import { apiErrorResponse } from "@/lib/api-error";
 
 const PROCORE_DOCS_MODEL = "gpt-4o-mini";
@@ -31,21 +35,12 @@ function getServiceSupabase() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
-// Gateway-aware OpenAI client for embeddings — matches ai-memory-service.ts pattern
+// OpenAI client for embeddings.
 let _openai: OpenAI | null = null;
 function getOpenAIClient(): OpenAI {
   if (!_openai) {
-    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
-    if (gatewayKey) {
-      _openai = new OpenAI({
-        apiKey: gatewayKey,
-        baseURL: "https://ai-gateway.vercel.sh/v1",
-      });
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
-      _openai = new OpenAI({ apiKey });
-    }
+    const config = getOpenAICompatibleClientConfig("Procore docs embeddings");
+    _openai = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
   }
   return _openai;
 }
@@ -118,7 +113,7 @@ async function searchWithExpansion(
   const embeddingResults = await Promise.all(
     queries.map((q) =>
       openai.embeddings.create({
-        model: "text-embedding-3-large",
+        model: getOpenAIModelId("text-embedding-3-large"),
         dimensions: 3072,
         input: q.substring(0, 8000),
       }),

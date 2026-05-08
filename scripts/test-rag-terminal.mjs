@@ -3,7 +3,7 @@
  *
  * Tests each layer independently so we can pinpoint exactly where it breaks:
  *   Layer 1 — Embedding generation (OpenAI / AI Gateway)
- *   Layer 2 — Vector search (Supabase RPCs: search_document_chunks, search_all_knowledge, search_knowledge_base)
+ *   Layer 2 — Vector search (Supabase RPCs: search_document_chunks, search_all_knowledge)
  *   Layer 3 — Chat completion (streamText equivalent via raw OpenAI)
  *
  * Run from repo root:
@@ -211,26 +211,7 @@ async function testVectorSearch(embeddingJson) {
     fail("search_all_knowledge threw", err?.message ?? err);
   }
 
-  // --- search_knowledge_base ---
-  info("RPC: search_knowledge_base");
-  try {
-    const t0 = Date.now();
-    const { data, error } = await supabase.rpc("search_knowledge_base", {
-      query_embedding: embeddingJson,
-      match_count: 5,
-      match_threshold: 0.2,
-      ...(PROJECT_ID ? { filter_project_id: PROJECT_ID } : {}),
-    });
-    const elapsed = Date.now() - t0;
-
-    if (error) {
-      fail("search_knowledge_base", error.message);
-    } else {
-      ok(`search_knowledge_base`, `${(data ?? []).length} results in ${elapsed}ms`);
-    }
-  } catch (err) {
-    fail("search_knowledge_base threw", err?.message ?? err);
-  }
+  info("RPC: search_knowledge_base retired; company knowledge now routes through document_chunks/search_all_knowledge");
 }
 
 // ---------------------------------------------------------------------------

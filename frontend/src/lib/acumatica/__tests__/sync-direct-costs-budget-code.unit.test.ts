@@ -1,4 +1,4 @@
-import { syncDirectCosts } from "../sync";
+import { syncDirectCosts } from "../sync-service";
 import { createAcumaticaClient } from "../client";
 
 jest.mock("../client", () => ({
@@ -40,6 +40,7 @@ function createSupabaseMock() {
     ],
     direct_costs: [
       { data: [], error: null },
+      { data: null, error: null },
       { data: { id: "direct-cost-1" }, error: null },
     ],
     companies: [
@@ -136,7 +137,8 @@ describe("syncDirectCosts — Acumatica project budget code mapping", () => {
       payload: [
         expect.objectContaining({
           budget_code_id: "pbc-null-1",
-          line_total: 100,
+          quantity: 2,
+          unit_cost: 50,
         }),
       ],
     });

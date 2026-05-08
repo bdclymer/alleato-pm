@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { recordAppErrorEvent } from "@/lib/app-error-telemetry";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 
 const jsonRecordSchema: z.ZodType<Record<string, unknown>> = z.record(z.string(), z.unknown());
@@ -27,44 +29,37 @@ const appErrorEventSchema = z.object({
   context: jsonRecordSchema.optional(),
 });
 
-export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { success: false, error: "Malformed JSON payload." },
-      { status: 400 },
+export const POST = withApiGuardrails(
+  "/api/app-error-events#POST",
+  async ({ request }) => {
+    const parsed = await parseJsonBody(
+      request,
+      appErrorEventSchema,
+      "/api/app-error-events#POST",
     );
-  }
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "/api/app-error-events#POST",
+        message: "Unauthorized telemetry request.",
+        status: 401,
+        severity: "medium",
+      });
+    }
 
-  const parsed = appErrorEventSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Invalid telemetry payload.",
-        details: parsed.error.issues.map((issue) => ({
-          path: issue.path.join("."),
-          message: issue.message,
-        })),
-      },
-      { status: 400 },
-    );
-  }
+    const result = await recordAppErrorEvent({
+      ...parsed,
+      userId: user.id,
+    });
 
-  const user = await getApiRouteUser();
-  const result = await recordAppErrorEvent({
-    ...parsed.data,
-    userId: user?.id ?? null,
-  });
+    if (result.error) {
+      return NextResponse.json(
+        { success: false, error: "Telemetry write failed." },
+        { status: 202 },
+      );
+    }
 
-  if (result.error) {
-    return NextResponse.json(
-      { success: false, error: "Telemetry write failed." },
-      { status: 202 },
-    );
-  }
-
-  return NextResponse.json({ success: true, eventId: result.eventId });
-}
+    return NextResponse.json({ success: true, eventId: result.eventId });
+  },
+);

@@ -1,3 +1,5 @@
+import { getAiProviderPath } from "./provider-config";
+
 export type AssistantProviderPath =
   | "ai_sdk_gateway_openai"
   | "ai_sdk_direct_openai"
@@ -17,6 +19,12 @@ export const AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT =
 
 const VALIDATED_AT = "2026-05-01T21:48:00.000Z";
 
+function getDefaultAssistantProviderPath(): AssistantProviderPath {
+  return getAiProviderPath() === "vercel_gateway"
+    ? "ai_sdk_gateway_openai"
+    : "ai_sdk_direct_openai";
+}
+
 export function getAssistantToolCallingDecision(input: {
   modelId: string;
 }): AssistantToolCallingDecision {
@@ -27,7 +35,7 @@ export function getAssistantToolCallingDecision(input: {
 
   if (disableStreamingTools) {
     return {
-      providerPath: "ai_sdk_gateway_openai",
+      providerPath: getDefaultAssistantProviderPath(),
       modelId: input.modelId,
       reason:
         "Streaming model tools disabled by AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS env override. Re-enable by unsetting the variable after verifying the provider matrix passes.",
@@ -49,10 +57,10 @@ export function getAssistantToolCallingDecision(input: {
   }
 
   return {
-    providerPath: "ai_sdk_gateway_openai",
+    providerPath: getDefaultAssistantProviderPath(),
     modelId: input.modelId,
     reason:
-      "Streaming model tools enabled. Provider matrix 2026-05-01 confirmed AI SDK Gateway and direct OpenAI both pass generateText + streamText with tool calls (finishReason=stop, 1 tool call, non-empty text). Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "Streaming model tools enabled on the configured AI SDK provider. Direct OpenAI is the default provider path; Vercel AI Gateway is used only with AI_PROVIDER_PATH=vercel_gateway. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
     validatedAt: VALIDATED_AT,
     supportsToolCalling: true,
     diagnosticsArtifactPath: AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT,

@@ -1037,19 +1037,18 @@ def _load_packet_cards_for_target(
     supabase: Any,
     target_id: str,
     *,
-    limit: int = 25,
+    limit: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
-    rows = getattr(
+    query = (
         supabase.table("insight_cards")
         .select("*")
         .eq("primary_target_id", target_id)
         .in_("current_status", list(ACTIVE_CARD_STATUSES))
         .order("last_seen_at", desc=True)
-        .limit(limit)
-        .execute(),
-        "data",
-        None,
-    ) or []
+    )
+    if limit is not None:
+        query = query.limit(limit)
+    rows = getattr(query.execute(), "data", None) or []
     return [row for row in rows if row.get("attribution_status") != "rejected"]
 
 
@@ -1198,16 +1197,19 @@ def compile_current_packet(
     supabase.table("intelligence_packet_cards").delete().eq(
         "packet_id", packet["id"]
     ).execute()
-    for index, card in enumerate(cards):
-        section = _section_for_card(card.get("card_type") or "")
+    packet_card_rows = [
+        {
+            "packet_id": packet["id"],
+            "insight_card_id": card["id"],
+            "section": _section_for_card(card.get("card_type") or ""),
+            "rank": index + 1,
+            "included_reason": "Active promoted card for the current intelligence packet.",
+        }
+        for index, card in enumerate(cards)
+    ]
+    for start in range(0, len(packet_card_rows), 500):
         supabase.table("intelligence_packet_cards").insert(
-            {
-                "packet_id": packet["id"],
-                "insight_card_id": card["id"],
-                "section": section,
-                "rank": index + 1,
-                "included_reason": "Active promoted card for the current intelligence packet.",
-            }
+            packet_card_rows[start : start + 500]
         ).execute()
 
     return {

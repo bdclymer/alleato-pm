@@ -58,6 +58,7 @@ requireContains('["embedded", "complete"]', "Graph embedding must repair falsely
 requireContains("_has_embedded_graph_chunks", "Graph embedding must detect completed Graph rows that are still missing embedded chunks.");
 requireContains('.not_.is_("embedding", "null")', "Graph embedding repair must detect null-embedding chunks, not only missing chunk rows.");
 requireContains("completed_without_embeddings", "Graph embedding repair must query completed rows missing embedded chunks directly when DB access is available.");
+requireContains("SQL candidate query failed; falling back to Supabase scan", "Graph embedding must fall back when direct Postgres candidate selection fails.");
 requireContains("'raw_ingested', 'segmented', 'compiled', 'error'", "Graph embedding must retry content-bearing Graph error rows.");
 requireContains("interval '365 days'", "Graph embedding must not repair source records older than one year.");
 requireContains("source_at desc", "Graph embedding must prioritize newest source records first.");

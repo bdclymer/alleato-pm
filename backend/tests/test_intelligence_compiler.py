@@ -26,6 +26,8 @@ class _TableQuery:
         self.action = "select"
         self.payload = None
         self.limit_count = None
+        self.range_start = None
+        self.range_end = None
 
     def select(self, *_args):
         self.action = "select"
@@ -62,13 +64,22 @@ class _TableQuery:
         self.limit_count = value
         return self
 
+    def range(self, start, end):
+        self.range_start = start
+        self.range_end = end
+        return self
+
     def execute(self):
         table = self.db.tables.setdefault(self.table_name, [])
         if self.action == "insert":
-            row = dict(self.payload)
-            row.setdefault("id", self.db.next_id(self.table_name))
-            table.append(row)
-            return _Result([row])
+            payloads = self.payload if isinstance(self.payload, list) else [self.payload]
+            inserted = []
+            for payload in payloads:
+                row = dict(payload)
+                row.setdefault("id", self.db.next_id(self.table_name))
+                table.append(row)
+                inserted.append(row)
+            return _Result(inserted)
 
         if self.action == "update":
             updated = []
@@ -86,7 +97,11 @@ class _TableQuery:
             ]
             return _Result([])
 
-        rows = self.rows[: self.limit_count] if self.limit_count is not None else self.rows
+        rows = self.rows
+        if self.range_start is not None and self.range_end is not None:
+            rows = rows[self.range_start : self.range_end + 1]
+        if self.limit_count is not None:
+            rows = rows[: self.limit_count]
         return _Result([dict(row) for row in rows])
 
 
@@ -276,6 +291,43 @@ def test_compile_current_packet_marks_empty_target_as_partial():
     assert len(supabase.tables["intelligence_packets"]) == 1
     assert supabase.tables["intelligence_packets"][0]["freshness_status"] == "partial"
     assert supabase.tables["intelligence_packets"][0]["source_coverage"]["gaps"]
+
+
+def test_compile_current_packet_includes_all_active_cards_not_just_latest_25():
+    supabase = _FakeSupabase()
+    supabase.tables["intelligence_targets"] = [
+        {
+            "id": "target-1",
+            "target_type": "client_project",
+            "name": "Large Signal Project",
+            "slug": "large-signal-project",
+            "status": "active",
+            "project_id": 44,
+        }
+    ]
+    supabase.tables["insight_cards"] = [
+        {
+            "id": f"card-{index}",
+            "primary_target_id": "target-1",
+            "title": f"Card {index}",
+            "card_type": "project_update",
+            "summary": "Summary",
+            "why_it_matters": "Why it matters",
+            "current_status": "open",
+            "attribution_status": "auto_assigned",
+            "confidence": "high",
+            "last_seen_at": f"2026-05-{index + 1:02d}T10:00:00+00:00",
+            "source_count": 1,
+            "metadata": {},
+        }
+        for index in range(30)
+    ]
+
+    result = compile_current_packet(supabase, "target-1")
+
+    assert result["status"] == "compiled"
+    assert result["card_count"] == 30
+    assert len(supabase.tables["intelligence_packet_cards"]) == 30
 
 
 def test_process_source_document_to_packet_records_status_metadata():

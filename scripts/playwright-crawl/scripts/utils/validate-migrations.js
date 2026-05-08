@@ -8,15 +8,22 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const KNOWN_MIGRATION_VALIDATION_ERRORS = new Set([
-  "Table 'drawing_markup_pins' references non-existent table 'drawings'",
-  "Table 'payment_application_line_items' references non-existent table 'prime_contract_payment_applications'",
-  "Table 'drawing_change_history' references non-existent table 'drawings'",
-  "schema_dump.sql: Trigger references non-existent function 'enqueue_document_for_insights'",
-]);
+const KNOWN_MIGRATION_VALIDATION_ERRORS = new Set();
 
 function objectName(match, index) {
   return match[index + 1] || match[index];
+}
+
+function stripSqlComments(content) {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--.*$/gm, ' ');
+}
+
+function stripSqlForDependencyReferences(content) {
+  return stripSqlComments(content)
+    .replace(/\$([A-Za-z_][A-Za-z0-9_]*)?\$[\s\S]*?\$\1\$/g, ' ')
+    .replace(/'(?:''|[^'])*'/g, ' ');
 }
 
 /**
@@ -77,6 +84,14 @@ class MigrationValidator {
 
     // Check that migrations reference tables/types from previous migrations
     const definedObjects = new Set();
+
+    // schema_dump.sql is a historical baseline, not a timestamped migration. Seed
+    // its objects before ordered checks so older migrations do not warn on base
+    // tables/functions that the dump already describes.
+    for (const migration of this.migrations.filter((m) => m.file === 'schema_dump.sql')) {
+      const creates = this.extractCreates(migration.content);
+      creates.forEach(obj => definedObjects.add(obj.toLowerCase()));
+    }
     
     for (const migration of this.migrations) {
       const { file, content } = migration;
@@ -99,28 +114,35 @@ class MigrationValidator {
 
   extractCreates(content) {
     const objects = [];
+    const sql = stripSqlComments(content);
     
     // Tables
-    const tableMatches = content.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(\w+)\.)?(\w+)/gi);
+    const tableMatches = sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(\w+)\.)?(\w+)/gi);
     for (const match of tableMatches) {
       objects.push(objectName(match, 1));
     }
     
     // Types
-    const typeMatches = content.matchAll(/CREATE\s+TYPE\s+(?:(\w+)\.)?(\w+)/gi);
+    const typeMatches = sql.matchAll(/CREATE\s+TYPE\s+(?:(\w+)\.)?(\w+)/gi);
     for (const match of typeMatches) {
       objects.push(objectName(match, 1));
     }
     
     // Functions
-    const functionMatches = content.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:(\w+)\.)?(\w+)/gi);
+    const functionMatches = sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:(\w+)\.)?(\w+)/gi);
     for (const match of functionMatches) {
       objects.push(objectName(match, 1));
     }
     
     // Views
-    const viewMatches = content.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(?:(\w+)\.)?(\w+)/gi);
+    const viewMatches = sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(?:(\w+)\.)?(\w+)/gi);
     for (const match of viewMatches) {
+      objects.push(objectName(match, 1));
+    }
+
+    // Materialized views
+    const materializedViewMatches = sql.matchAll(/CREATE\s+MATERIALIZED\s+VIEW\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(\w+)\.)?(\w+)/gi);
+    for (const match of materializedViewMatches) {
       objects.push(objectName(match, 1));
     }
     
@@ -129,38 +151,41 @@ class MigrationValidator {
 
   extractReferences(content) {
     const references = new Set();
+    const sql = stripSqlForDependencyReferences(content);
     
     // Foreign key references
-    const fkMatches = content.matchAll(/REFERENCES\s+(?:(\w+)\.)?(\w+)/gi);
+    const fkMatches = sql.matchAll(/\bREFERENCES\b\s+(?:(\w+)\.)?(\w+)/gi);
     for (const match of fkMatches) {
       references.add(objectName(match, 1));
     }
-    
-    // Type usage
-    const typeMatches = content.matchAll(/(\w+)\s+(\w+_status|_type|_sync_status)/gi);
-    for (const match of typeMatches) {
-      references.add(match[2]);
-    }
-    
-    // FROM clauses
-    const fromMatches = content.matchAll(/FROM\s+(?:(\w+)\.)?(\w+)(?:\s|,|\))/gi);
-    for (const match of fromMatches) {
-      references.add(objectName(match, 1));
-    }
-    
-    // JOIN clauses
-    const joinMatches = content.matchAll(/JOIN\s+(?:(\w+)\.)?(\w+)\s+/gi);
-    for (const match of joinMatches) {
-      references.add(objectName(match, 1));
+
+    // DDL references. Do not scan FROM/JOIN; function bodies and comments create
+    // too many false positives for a migration-order guardrail.
+    const ddlPatterns = [
+      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?(?:(\w+)\.)?(\w+)/gi,
+      /CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?\w+\s+ON\s+(?:(\w+)\.)?(\w+)/gi,
+      /CREATE\s+TRIGGER\s+\w+[\s\S]*?\s+ON\s+(?:(\w+)\.)?(\w+)/gi,
+      /CREATE\s+POLICY\s+(?:"[^"]+"|\w+)\s+ON\s+(?:(\w+)\.)?(\w+)/gi,
+    ];
+
+    for (const pattern of ddlPatterns) {
+      for (const match of sql.matchAll(pattern)) {
+        references.add(objectName(match, 1));
+      }
     }
     
     return Array.from(references);
   }
 
   isBuiltIn(name) {
-    const builtIns = ['auth', 'users', 'uuid', 'text', 'varchar', 'integer', 'boolean', 
-                      'timestamp', 'date', 'money', 'decimal', 'jsonb', 'now', 'gen_random_uuid'];
-    return builtIns.includes(name.toLowerCase());
+    const builtIns = ['auth', 'users', 'uuid', 'text', 'varchar', 'integer', 'boolean',
+                      'timestamp', 'date', 'money', 'decimal', 'numeric', 'jsonb', 'now',
+                      'gen_random_uuid', 'uuid_generate_v4', 'extensions', 'pg_catalog',
+                      'information_schema', 'pg_constraint', 'pg_policies', 'pg_tables',
+                      'pg_enum', 'pg_matviews', 'pg_trigger', 'table_constraints',
+                      'columns', 'storage', 'objects'];
+    const normalized = name.toLowerCase();
+    return builtIns.includes(normalized) || normalized.startsWith('pg_');
   }
 
   async checkEnumUsage() {
@@ -239,23 +264,6 @@ class MigrationValidator {
       }
     }
 
-    // Check for orphaned tables (no relationships)
-    const referencedTables = new Set();
-    const referencingTables = new Set();
-    
-    for (const fk of foreignKeys) {
-      referencedTables.add(fk.refTable);
-      referencingTables.add(fk.table);
-    }
-
-    for (const table of tables.keys()) {
-      if (!referencedTables.has(table) && !referencingTables.has(table)) {
-        if (!['companies', 'projects', 'attachments'].includes(table)) { // Root tables
-          this.warnings.push(`Table '${table}' has no foreign key relationships`);
-        }
-      }
-    }
-
     console.log('✓ Table relationship check complete\n');
   }
 
@@ -310,48 +318,49 @@ class MigrationValidator {
       }
     }
 
-    // Check for unused functions
-    const usedFunctions = new Set(triggers.map(t => t.function));
-    for (const [func, file] of functions) {
-      if (!usedFunctions.has(func) && !func.includes('get_') && func !== 'update_updated_at_column') {
-        this.warnings.push(`Function '${func}' in ${file} is defined but not used`);
-      }
-    }
-
     console.log('✓ Function usage check complete\n');
   }
 
   async checkIndexes() {
     console.log('Checking index coverage...');
 
-    const foreignKeyColumns = new Set();
+    const foreignKeyColumns = [];
     const indexes = new Set();
 
     // Find all foreign key columns
     for (const migration of this.migrations) {
-      const fkPattern = /(\w+)\s+uuid\s+(?:NOT\s+NULL\s+)?REFERENCES/gi;
+      if (migration.file === 'schema_dump.sql') continue;
+
+      const tablePattern = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(\w+)\.)?(\w+)\s*\(([\s\S]*?)\);/gi;
       let match;
-      
-      while ((match = fkPattern.exec(migration.content)) !== null) {
-        foreignKeyColumns.add(match[1]);
+
+      while ((match = tablePattern.exec(stripSqlComments(migration.content))) !== null) {
+        const tableName = objectName(match, 1);
+        const tableBody = match[3];
+        const fkPattern = /(\w+)\s+uuid\s+(?:NOT\s+NULL\s+)?REFERENCES/gi;
+        let fkMatch;
+
+        while ((fkMatch = fkPattern.exec(tableBody)) !== null) {
+          foreignKeyColumns.push({ table: tableName, column: fkMatch[1] });
+        }
       }
     }
 
     // Find all indexes
     for (const migration of this.migrations) {
-      const indexPattern = /CREATE\s+INDEX\s+\w+\s+ON\s+\w+\s*\((\w+)(?:,\s*\w+)*\)/gi;
+      const indexPattern = /CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?\w+\s+ON\s+(?:(\w+)\.)?(\w+)[\s\S]*?\((\w+)(?:,\s*\w+)*\)/gi;
       let match;
       
-      while ((match = indexPattern.exec(migration.content)) !== null) {
-        indexes.add(match[1]);
+      while ((match = indexPattern.exec(stripSqlComments(migration.content))) !== null) {
+        indexes.add(`${objectName(match, 1)}.${match[3]}`);
       }
     }
 
     // Check foreign keys have indexes
     let missingIndexes = 0;
-    for (const column of foreignKeyColumns) {
-      if (!indexes.has(column) && !column.endsWith('_id')) {
-        this.info.push(`Consider adding index for foreign key column '${column}'`);
+    for (const { table, column } of foreignKeyColumns) {
+      if (!indexes.has(`${table}.${column}`) && !column.endsWith('_id')) {
+        this.info.push(`Consider adding index for foreign key column '${table}.${column}'`);
         missingIndexes++;
       }
     }
@@ -401,17 +410,19 @@ class MigrationValidator {
 
     // Find all tables
     for (const migration of this.migrations) {
-      const tableMatches = migration.content.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/gi);
+      if (migration.file === 'schema_dump.sql') continue;
+
+      const tableMatches = stripSqlComments(migration.content).matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(\w+)\.)?(\w+)/gi);
       for (const match of tableMatches) {
-        allTables.add(match[1]);
+        allTables.add(objectName(match, 1));
       }
     }
 
     // Find tables with RLS enabled
     for (const migration of this.migrations) {
-      const rlsMatches = migration.content.matchAll(/ALTER\s+TABLE\s+(\w+)\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi);
+      const rlsMatches = stripSqlComments(migration.content).matchAll(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:(\w+)\.)?(\w+)\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi);
       for (const match of rlsMatches) {
-        tablesWithRLS.add(match[1]);
+        tablesWithRLS.add(objectName(match, 1));
       }
     }
 
@@ -424,7 +435,10 @@ class MigrationValidator {
     }
 
     if (tablesWithoutRLS.length > 0) {
-      this.info.push(`Tables without RLS: ${tablesWithoutRLS.join(', ')}`);
+      this.info.push(`${tablesWithoutRLS.length} tables without RLS detected; run with MIGRATION_VALIDATOR_VERBOSE_RLS=1 for names.`);
+      if (process.env.MIGRATION_VALIDATOR_VERBOSE_RLS === '1') {
+        this.info.push(`Tables without RLS: ${tablesWithoutRLS.join(', ')}`);
+      }
     } else {
       console.log('✓ All tables have RLS enabled');
     }

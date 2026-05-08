@@ -5,8 +5,8 @@
  * Uses the same RAG pipeline (query expansion + vector search) but returns
  * an AI SDK v6 UIMessage stream instead of a JSON blob.
  *
- * Embeddings follow the same pattern as ai-memory-service.ts (raw OpenAI SDK,
- * gateway-aware). Chat completion uses AI SDK streamText via getLanguageModel.
+ * Embeddings use the shared OpenAI provider config. Chat completion uses AI SDK
+ * streamText via getLanguageModel.
  */
 
 import {
@@ -21,6 +21,10 @@ import OpenAI from "openai";
 import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import { getLanguageModel } from "@/lib/ai/providers";
+import {
+  getOpenAICompatibleClientConfig,
+  getOpenAIModelId,
+} from "@/lib/ai/provider-config";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { z } from "zod";
@@ -29,21 +33,12 @@ export const maxDuration = 60;
 
 const PROCORE_DOCS_MODEL = "gpt-4o-mini";
 
-// Gateway-aware OpenAI client — matches ai-memory-service.ts pattern
+// OpenAI client for embeddings.
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
   if (!_openai) {
-    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
-    if (gatewayKey) {
-      _openai = new OpenAI({
-        apiKey: gatewayKey,
-        baseURL: "https://ai-gateway.vercel.sh/v1",
-      });
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
-      _openai = new OpenAI({ apiKey });
-    }
+    const config = getOpenAICompatibleClientConfig("Procore docs chat embeddings");
+    _openai = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
   }
   return _openai;
 }
@@ -107,7 +102,7 @@ async function searchWithExpansion(
   const embeddingResults = await Promise.all(
     queries.map((q) =>
       openai.embeddings.create({
-        model: "text-embedding-3-large",
+        model: getOpenAIModelId("text-embedding-3-large"),
         dimensions: 3072,
         input: q.substring(0, 8000),
       }),

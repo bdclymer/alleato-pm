@@ -4,10 +4,10 @@ This report identifies app-code patterns that can hide broken data paths or runt
 
 ## Summary
 
-- Critical: 48
+- Critical: 46
 - High: 35
 - Medium: 17
-- Total: 100
+- Total: 98
 
 ## Required Policy
 
@@ -65,8 +65,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-artifact.ts:44` | fallbackData: initialArtifactData, | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-artifact.ts:76` | fallbackData: null, | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `synthetic-data` | `frontend/src/hooks/use-chat-visibility.ts:27` | fallbackData: initialVisibilityType, | Remove synthetic data and make the route/component show real empty/error state. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/ai/tools/action-tools.ts:716` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/lib/ai/tools/action-tools.ts:2061` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/lib/db/helpers/01-core-to-parts.ts:210` | //         } catch (error) { | Add structured reporting or rethrow with a typed error. |
 | HIGH | `silent-language` | `backend/src/services/pipeline/llm.py:21` | # which would silently fail or truncate for small models (max 1536). | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `backend/src/services/pipeline/llm.py:31` | # which would silently fail or truncate for small models (max 1536). | Replace hidden failure path with telemetry and user-visible degraded state. |
@@ -100,10 +98,10 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/vpbd.ts:175` | - NEVER ask the user for a project ID — use projectName or phase filters to resolve silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/orchestrator.ts:587` | // Rule 1: do not silently swallow. Log and proceed with empty history | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/session-id.ts:12` | *   the uuid type check, every insert silently rejects, and zero bot | Replace hidden failure path with telemetry and user-visible degraded state. |
-| HIGH | `silent-language` | `frontend/src/lib/ai/tools/operational.ts:1777` | // Postgres rejects dimension mismatches — every call was silently failing. | Replace hidden failure path with telemetry and user-visible degraded state. |
+| HIGH | `silent-language` | `frontend/src/lib/ai/tools/operational.ts:1728` | // Postgres rejects dimension mismatches — every call was silently failing. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/auto-sitemap-utils.ts:192` | // Intentionally swallowed: individual file errors should not stop sitemap generation | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/schemas/common.ts:13` | * range validations silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
-| MEDIUM | `best-effort` | `backend/src/services/ingestion/fireflies_pipeline.py:412` | # Runs best-effort: failures don't block ingestion. | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
+| MEDIUM | `best-effort` | `backend/src/services/ingestion/fireflies_pipeline.py:422` | # Runs best-effort: failures don't block ingestion. | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `backend/src/services/intelligence/compiler.py:161` | # actual compiler exception with a best-effort metadata write failure. | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `backend/src/services/intelligence/email_compiler.py:1116` | # Best-effort error status — only on the head doc to avoid cascading failure writes. | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
 | MEDIUM | `best-effort` | `frontend/src/app/api/liveblocks/webhook/route.ts:153` | } catch { /* enrichment is best-effort */ } | Verify this non-blocking path records evidence and has an owner-visible failure signal. |
