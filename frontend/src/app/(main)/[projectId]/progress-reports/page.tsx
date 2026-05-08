@@ -26,14 +26,13 @@ const reportColumns: TableColumn<ProgressReportListItem>[] = [
   {
     id: "title",
     label: "Title",
-    getValue: (item) => item.title,
+    render: (item) => item.title,
     sortValue: (item) => item.title,
   },
   {
     id: "status",
     label: "Status",
-    getValue: (item) => item.status,
-    renderCell: (item) => (
+    render: (item) => (
       <Badge variant={statusVariant(item.status)}>{item.status}</Badge>
     ),
     sortValue: (item) => item.status,
@@ -41,8 +40,7 @@ const reportColumns: TableColumn<ProgressReportListItem>[] = [
   {
     id: "week",
     label: "Week",
-    getValue: (item) => item.week_start,
-    renderCell: (item) => (
+    render: (item) => (
       <span className="text-sm text-muted-foreground">
         {formatProgressReportDate(item.week_start)} – {formatProgressReportDate(item.week_end)}
       </span>
@@ -52,20 +50,19 @@ const reportColumns: TableColumn<ProgressReportListItem>[] = [
   {
     id: "photos",
     label: "Photos",
-    getValue: (item) => item.selected_photo_count,
+    render: (item) => item.selected_photo_count,
     sortValue: (item) => item.selected_photo_count,
   },
   {
     id: "recipients",
     label: "Recipients",
-    getValue: (item) => item.client_recipients.length,
+    render: (item) => item.client_recipients.length,
     sortValue: (item) => item.client_recipients.length,
   },
   {
     id: "created_at",
     label: "Created",
-    getValue: (item) => item.created_at,
-    renderCell: (item) => (
+    render: (item) => (
       <span className="text-sm text-muted-foreground">
         {new Date(item.created_at).toLocaleDateString()}
       </span>
@@ -114,8 +111,8 @@ function ProgressReportCard({
 }
 
 export default function ProgressReportsPage() {
-  const params = useParams<{ projectId: string }>() ?? { projectId: "" };
-  const pathname = usePathname();
+  const params = useParams<{ projectId: string }>()! ?? { projectId: "" };
+  const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<
     ReturnType<typeof useSearchParams>

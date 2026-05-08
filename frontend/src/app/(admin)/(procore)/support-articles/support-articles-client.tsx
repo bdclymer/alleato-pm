@@ -349,8 +349,8 @@ export function SupportArticlesClient({
   articles: initialArticles,
   errorMessage,
 }: SupportArticlesClientProps) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
+  const searchParams = useSearchParams()!;
+  const pathname = usePathname()!;
   const router = useRouter();
 
   // Local state so deletes reflect immediately without server round-trip

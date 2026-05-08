@@ -19,7 +19,7 @@ import {
 
 export default function BudgetSetupPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
 
   const [loading, setLoading] = useState(false);

@@ -47,7 +47,7 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const isTeamChatPage = pathname?.startsWith("/team-chat");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
   const isAiAssistant = pathname?.startsWith("/ai-assistant");

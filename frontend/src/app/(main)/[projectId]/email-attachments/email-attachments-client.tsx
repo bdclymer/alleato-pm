@@ -477,8 +477,8 @@ export function EmailAttachmentsClient({
   tabs,
 }: EmailAttachmentsClientProps): React.ReactElement {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
   const queryClient = useQueryClient();
   const isGlobal = scope === "global" || !projectId;
   const columnsConfig = isGlobal ? globalAttachmentColumns : attachmentColumns;

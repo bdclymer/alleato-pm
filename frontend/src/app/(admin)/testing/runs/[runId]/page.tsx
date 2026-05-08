@@ -429,7 +429,7 @@ function CaseDetail({
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function RunPage() {
-  const params = useParams<{ runId: string }>();
+  const params = useParams<{ runId: string }>()!;
   const router = useRouter();
   const runId = params.runId;
 

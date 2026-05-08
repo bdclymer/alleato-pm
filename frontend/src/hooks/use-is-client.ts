@@ -17,7 +17,7 @@ export function useIsClient(): ClientStatus {
     error: null,
   });
 
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params?.projectId as string | undefined;
 
   useEffect(() => {

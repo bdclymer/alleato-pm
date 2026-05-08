@@ -299,8 +299,8 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 
 export default function ApChecksPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
 
   const [checks, setChecks] = React.useState<ApCheck[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);

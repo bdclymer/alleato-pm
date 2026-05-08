@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
  */
 export function useProjectTitle(pageTitle?: string, includeProject = true) {
   const { selectedProject } = useProject();
-  const pathname = usePathname() ?? "";
+  const pathname = usePathname()! ?? "";
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") {

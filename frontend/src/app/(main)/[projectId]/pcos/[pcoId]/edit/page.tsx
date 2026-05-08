@@ -27,7 +27,7 @@ import type { ChangeEvent } from "@/types/change-events";
 // =============================================================================
 
 export default function EditPCOPage() {
-  const params = useParams<{ projectId: string; pcoId: string }>();
+  const params = useParams<{ projectId: string; pcoId: string }>()!;
   const router = useRouter();
   const projectId = params.projectId ?? "";
   const pcoId = params.pcoId ?? "";

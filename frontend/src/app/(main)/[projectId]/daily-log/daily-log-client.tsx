@@ -87,9 +87,9 @@ const tableColumns = [
 const defaultVisibleColumns = ["log_date", "weather_conditions", "created_by"];
 
 export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const [logs, setLogs] = React.useState(dailyLogs);
 
   // Keep local state in sync with prop changes

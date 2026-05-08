@@ -381,7 +381,7 @@ function ContactPreviewPane({
 }
 
 export default function DirectoryContactsPage(): ReactElement {
-  const pathname = usePathname() ?? "";
+  const pathname = usePathname()! ?? "";
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const { confirm, ConfirmDialog } = useConfirm();

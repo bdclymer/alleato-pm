@@ -77,7 +77,7 @@ const DEFAULT_SETTINGS: CommitmentSettings = {
 };
 
 export default function CommitmentSettingsPage() {
-  const params = useParams() ?? {};
+  const params = useParams()! ?? {};
   const router = useRouter();
   const projectId = params.projectId as string;
 

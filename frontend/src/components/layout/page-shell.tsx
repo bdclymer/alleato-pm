@@ -102,7 +102,7 @@ export function PageShell({
 }: PageShellProps) {
   const config = variantConfig[variant];
   const rootRef = React.useRef<HTMLDivElement | null>(null);
-  const pathname = usePathname();
+  const pathname = usePathname()!;
 
   React.useEffect(() => {
     if (variant !== "form") {

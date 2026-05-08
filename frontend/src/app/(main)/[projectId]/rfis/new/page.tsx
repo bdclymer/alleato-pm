@@ -20,7 +20,7 @@ import {
 
 export default function NewRfiPage() {
   const router = useRouter();
-  const params = useParams() ?? {};
+  const params = useParams()! ?? {};
   const projectId = Number(params.projectId);
   const createRfi = useCreateRfi(projectId);
 

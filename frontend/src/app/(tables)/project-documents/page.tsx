@@ -143,8 +143,8 @@ function renderGlobalList(
 
 export default function GlobalProjectDocumentsPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
 
   const { data: documents = [], isLoading } = useGlobalDocuments();
 

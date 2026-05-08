@@ -51,10 +51,10 @@ function escapeCsvField(field: string): string {
 }
 
 export default function CommitmentPcosPage(): ReactElement {
-  const params = useParams<{ projectId: string }>();
-  const pathname = usePathname();
+  const params = useParams<{ projectId: string }>()!;
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const projectIdParamRaw = params.projectId;
   const parsedProjectId = projectIdParamRaw ? parseInt(projectIdParamRaw, 10) : NaN;

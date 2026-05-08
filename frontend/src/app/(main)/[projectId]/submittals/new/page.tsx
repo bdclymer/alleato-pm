@@ -4,8 +4,8 @@ import { useParams, useSearchParams } from "next/navigation";
 import { SubmittalFormPage } from "@/features/submittals/submittal-form-page";
 
 export default function NewSubmittalPage() {
-  const params = useParams<{ projectId: string }>();
-  const searchParams = useSearchParams();
+  const params = useParams<{ projectId: string }>()!;
+  const searchParams = useSearchParams()!;
 
   const projectId = parseInt(params.projectId ?? "", 10);
   const packageId = searchParams.get("package_id") ?? undefined;

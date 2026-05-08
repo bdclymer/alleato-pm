@@ -21,8 +21,8 @@ function normalizeTab(value: string | null): TabId {
 }
 
 export function EmailSyncClient(): React.ReactElement {
-  const pathname = usePathname() ?? "/emails";
-  const searchParams = useSearchParams();
+  const pathname = usePathname()! ?? "/emails";
+  const searchParams = useSearchParams()!;
   const tabParam = searchParams?.get("tab") ?? null;
   const [activeTab, setActiveTab] = React.useState<TabId>(() => normalizeTab(tabParam));
 

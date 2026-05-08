@@ -366,8 +366,8 @@ export function OutlookIntakeClient({
   viewMode = "table",
 }: OutlookIntakeClientProps = {}): React.ReactElement {
   const router = useRouter();
-  const pathname = usePathname() ?? "/outlook-intake";
-  const rawSearchParams = useSearchParams();
+  const pathname = usePathname()! ?? "/outlook-intake";
+  const rawSearchParams = useSearchParams()!;
   const searchParams =
     rawSearchParams ?? (new URLSearchParams() as unknown as ReadonlyURLSearchParams);
   const queryClient = useQueryClient();
@@ -586,11 +586,11 @@ export function OutlookIntakeClient({
   const pageStart = (tableState.page - 1) * tableState.perPage;
   const paged = sorted.slice(pageStart, pageStart + tableState.perPage);
 
-  const updateFilters = (next: Record<string, string | undefined>) => {
+  const updateFilters = (next: Record<string, string | number | boolean | string[] | null | undefined>) => {
     tableState.setActiveFilters(next);
     tableState.setSearchParams({
-      match_status: next.match_status ?? null,
-      vectorized: next.vectorized ?? null,
+      match_status: (next.match_status ?? null) as string | null,
+      vectorized: (next.vectorized ?? null) as string | null,
       page: "1",
     });
     tableState.setPage(1);

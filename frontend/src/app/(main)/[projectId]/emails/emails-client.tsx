@@ -79,7 +79,7 @@ export function EmailsClient({
   embedded = false,
 }: EmailsClientProps): ReactElement {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const isGlobal = scope === "global" || !projectId;
   const isOutlook = source === "outlook";

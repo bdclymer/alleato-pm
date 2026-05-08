@@ -82,8 +82,8 @@ function getPageEntityContext(pathname: string): EntityContext {
  * List pages (e.g. /43/budget) -> project-tool-level room.
  */
 export function useEntityContext(): EntityContext | null {
-  const params = useParams() ?? {};
-  const pathname = usePathname() ?? "";
+  const params = useParams()! ?? {};
+  const pathname = usePathname()! ?? "";
 
   return React.useMemo(() => {
     // Project-scoped routes

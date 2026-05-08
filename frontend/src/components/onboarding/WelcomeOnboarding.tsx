@@ -38,7 +38,7 @@ export function WelcomeOnboarding({
   suppressAutoOpen = false,
   suppressStorageValue = "skipped",
 }: WelcomeOnboardingProps) {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const { profile: currentUserProfile } = useCurrentUserProfile();
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState(0);

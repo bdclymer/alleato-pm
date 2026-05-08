@@ -163,8 +163,8 @@ function statusLabel(status: string | null): string {
 
 export default function CommitmentCODetailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = useParams();
+  const searchParams = useSearchParams()!;
+  const params = useParams()!;
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const projectId = params.projectId as string;
   const commitmentCoId = params.commitmentCoId as string;

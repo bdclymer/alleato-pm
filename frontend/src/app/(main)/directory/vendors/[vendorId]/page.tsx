@@ -82,7 +82,7 @@ function DetailField({ label, value }: { label: string; value: React.ReactNode }
 
 export default function VendorDetailPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const vendorId = params.vendorId as string;
 
   const [vendor, setVendor] = React.useState<Vendor | null>(null);

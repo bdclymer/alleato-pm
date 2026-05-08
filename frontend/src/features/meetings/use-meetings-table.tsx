@@ -145,8 +145,8 @@ export interface UseMeetingsTableResult {
 
 export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string): UseMeetingsTableResult {
   const router = useRouter();
-  const pathname = usePathname() ?? "";
-  const rawSearchParams = useSearchParams();
+  const pathname = usePathname()! ?? "";
+  const rawSearchParams = useSearchParams()!;
   const searchParams = rawSearchParams ?? new URLSearchParams();
 
   const [meetings, setMeetings] = React.useState<Meeting[]>(initialMeetings);

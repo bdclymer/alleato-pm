@@ -108,7 +108,7 @@ function calcStats(results: TestResult[]) {
 
 export default function TestingPage() {
   // Suite (from ?suite=... URL param, defaults to photos for back-compat)
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const SUITE = searchParams.get("suite") ?? DEFAULT_SUITE;
 
   // Run management

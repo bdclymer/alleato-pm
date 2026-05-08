@@ -23,7 +23,7 @@ const SCROLLABLE_TAB_HEIGHT = "min-h-[600px] h-[70vh]";
 const VALID_TABS = ["overview", "screenshots", "spec", "gaps", "scenarios", "test-matrix", "feedback", "chat"];
 
 export function ToolDetailTabs({ slug, description }: Props) {
-  const searchParams = useSearchParams() ?? new URLSearchParams();
+  const searchParams = useSearchParams()! ?? new URLSearchParams();
   const tabParam = searchParams.get("tab");
   const defaultTab = VALID_TABS.includes(tabParam ?? "") ? (tabParam as string) : "scenarios";
 

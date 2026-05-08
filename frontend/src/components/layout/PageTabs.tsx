@@ -32,9 +32,9 @@ export function PageTabs({
   variant = "default",
   onTabClick,
 }: PageTabsProps): ReactElement {
-  const pathname = usePathname() ?? "";
+  const pathname = usePathname()! ?? "";
   const router = useRouter();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
+  const searchParams = useSearchParams()! ?? new URLSearchParams();
 
   // Find the active tab based on pathname
   const searchString = searchParams.toString();

@@ -394,7 +394,7 @@ function VendorPreviewPane({
 }
 
 export default function DirectoryVendorsPage(): ReactElement {
-  const pathname = usePathname() ?? "";
+  const pathname = usePathname()! ?? "";
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const initialSearch = searchParams.get("search") ?? "";

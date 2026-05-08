@@ -472,9 +472,9 @@ function buildGroupedItems(
 // ── Page component ──────────────────────────────────────────────────────────
 
 export default function SitemapPage() {
-  const rawSearchParams = useSearchParams();
+  const rawSearchParams = useSearchParams()!;
   const searchParams = rawSearchParams ?? new URLSearchParams();
-  const pathname = usePathname() ?? "";
+  const pathname = usePathname()! ?? "";
   const router = useRouter();
   const currentTab = parseSitemapTab(searchParams.get("tab"));
 

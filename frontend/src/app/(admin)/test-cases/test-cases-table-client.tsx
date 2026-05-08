@@ -490,8 +490,8 @@ function buildColumns(
 // TestCasesTableClient renders an admin UnifiedTablePage for Supabase test_cases rows.
 export function TestCasesTableClient({ initialRows }: TestCasesTableClientProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
   const [rows, setRows] = React.useState<TestCaseRow[]>(initialRows);
 
   React.useEffect(() => {

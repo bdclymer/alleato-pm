@@ -13,8 +13,8 @@ import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-sc
 
 export default function NewCommitmentPage() {
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
+  const params = useParams()!;
+  const searchParams = useSearchParams()!;
   const projectId = Number(params.projectId);
   const type = searchParams.get("type") || "subcontract"; // 'subcontract' or 'purchase_order'
 

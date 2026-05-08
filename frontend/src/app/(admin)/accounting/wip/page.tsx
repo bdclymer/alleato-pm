@@ -403,9 +403,9 @@ const DEFAULT_VISIBLE_COLUMNS = [
 ];
 
 export default function AccountingWipPage() {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const [rows, setRows] = React.useState<WipRow[]>([]);
   const [generatedAt, setGeneratedAt] = React.useState<string | null>(null);

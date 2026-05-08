@@ -65,9 +65,9 @@ const TABLE_ROUTE_ALIASES: Record<string, string> = {
 };
 
 export function useHeaderNav(): UseHeaderNavReturn {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const [openPanel, setOpenPanel] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);

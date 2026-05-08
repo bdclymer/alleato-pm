@@ -96,9 +96,9 @@ export function DirectCostsClient({
   directCosts,
   costCodeDetails,
 }: DirectCostsClientProps): ReactElement {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const summaryTab: SummaryTab = searchParams.get("summary_view") === "cost-code" ? "cost-code" : "summary";
 
   const tableState = useUnifiedTableState({

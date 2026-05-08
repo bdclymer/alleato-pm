@@ -33,7 +33,7 @@ type CommitmentAttachment = {
 
 export default function EditCommitmentPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const queryClient = useQueryClient();
   const projectId = Number(params.projectId);
   const commitmentId = params.commitmentId as string;

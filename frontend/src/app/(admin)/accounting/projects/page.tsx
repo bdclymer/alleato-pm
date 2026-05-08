@@ -307,9 +307,9 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 // ---------------------------------------------------------------------------
 
 export default function AccountingProjectsPage() {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const [allProjects, setAllProjects] = useState<AcumaticaProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);

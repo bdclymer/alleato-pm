@@ -42,8 +42,8 @@ import { KnowledgeUploadDialog } from "./knowledge-upload-dialog";
 
 export function KnowledgeTablePage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
   const { profile, isLoading: isLoadingProfile } = useCurrentUserProfile();
   const isAdmin = profile?.isAdmin === true;
 

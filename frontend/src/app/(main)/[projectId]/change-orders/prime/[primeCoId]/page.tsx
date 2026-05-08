@@ -348,8 +348,8 @@ function ChangeHistoryTimeline({ co }: { co: PrimeCO }) {
 
 export default function PrimeContractCODetailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = useParams();
+  const searchParams = useSearchParams()!;
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const primeCoId = params.primeCoId as string;
 

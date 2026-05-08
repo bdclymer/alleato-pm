@@ -181,9 +181,9 @@ function renderRowActions(item: FileItem) {
 const ACTIVE_GROUPS: FileGroup[] = ["pdf", "word", "spreadsheet", "presentation", "image", "text", "other"];
 
 export function FilesClient({ items, errorMessage }: FilesClientProps) {
-  const rawSearchParams = useSearchParams();
+  const rawSearchParams = useSearchParams()!;
   const searchParams = rawSearchParams ?? new URLSearchParams();
-  const pathname = usePathname() ?? "";
+  const pathname = usePathname()! ?? "";
   const router = useRouter();
 
   const activeGroup = (searchParams.get("group") ?? "") as FileGroup | "";

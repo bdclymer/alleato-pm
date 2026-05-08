@@ -77,9 +77,9 @@ function normalizePrimeContractChangeOrders(
 
 export default function ProjectContractsPage(): ReactElement {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
-  const params = useParams<{ projectId: string }>() ?? { projectId: "" };
+  const params = useParams<{ projectId: string }>()! ?? { projectId: "" };
   const projectId = params.projectId ?? "";
   const projectIdNumber = Number(projectId);
   const queryClient = useQueryClient();

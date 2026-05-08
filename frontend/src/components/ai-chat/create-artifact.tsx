@@ -74,7 +74,7 @@ export class Artifact<T extends string, M = unknown> {
   readonly content: ComponentType<ArtifactContent<M>>;
   readonly actions: ArtifactAction<M>[];
   readonly toolbar: ArtifactToolbarItem[];
-  readonly initialize?: (parameters: InitializeParameters) => void;
+  readonly initialize?: (parameters: InitializeParameters<M>) => void;
   readonly onStreamPart: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;

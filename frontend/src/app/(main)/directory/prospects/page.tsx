@@ -340,7 +340,7 @@ function ProspectPreviewPane({
 }
 
 export default function DirectoryProspectsPage(): ReactElement {
-  const pathname = usePathname() ?? "";
+  const pathname = usePathname()! ?? "";
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
 

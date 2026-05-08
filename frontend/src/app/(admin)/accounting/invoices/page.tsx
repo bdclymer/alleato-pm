@@ -336,8 +336,8 @@ const FILTERS = [
 
 export default function ArInvoicesPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
+  const searchParams = useSearchParams()!;
+  const pathname = usePathname()!;
 
   const [invoices, setInvoices] = React.useState<ArInvoice[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);

@@ -67,9 +67,9 @@ export function ChangeOrdersClient({
   primeCOs,
   commitmentCOs,
 }: ChangeOrdersClientProps): ReactElement {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const activeTab: ActiveTab =
     searchParams.get("tab") === "commitment" ? "commitment" : "prime";

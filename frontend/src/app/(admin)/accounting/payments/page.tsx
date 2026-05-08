@@ -287,8 +287,8 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 
 export default function ArPaymentsPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
 
   const [payments, setPayments] = React.useState<ArPayment[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);

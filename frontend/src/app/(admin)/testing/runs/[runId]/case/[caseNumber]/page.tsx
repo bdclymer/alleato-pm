@@ -8,7 +8,7 @@ import { PageShell } from "@/components/layout";
 // already supports per-case navigation via its cursor. This exists so
 // external deep links (e.g. from feedback) don't 404.
 export default function RunnerCasePage() {
-  const params = useParams<{ runId: string; caseNumber: string }>();
+  const params = useParams<{ runId: string; caseNumber: string }>()!;
   const router = useRouter();
   useEffect(() => {
     router.replace(`/testing/runs/${params.runId}`);

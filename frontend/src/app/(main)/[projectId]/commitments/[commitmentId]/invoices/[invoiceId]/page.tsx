@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { SubcontractorInvoiceDetail } from "@/components/invoicing/SubcontractorInvoiceDetail";
 
 export default function CommitmentInvoiceDetailPage() {
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const commitmentId = params.commitmentId as string;
   const invoiceId = Number(params.invoiceId as string);

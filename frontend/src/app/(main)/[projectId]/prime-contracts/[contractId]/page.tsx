@@ -156,8 +156,8 @@ const formatDateTime = (value: string): string => {
 
 export default function ProjectContractDetailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
-  const params = useParams() ?? {};
+  const searchParams = useSearchParams()! ?? new URLSearchParams();
+  const params = useParams()! ?? {};
   const projectId = params.projectId as string;
   const contractId = params.contractId as string;
   const { confirm, ConfirmDialog } = useConfirm();

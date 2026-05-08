@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 
 export default function SubcontractorInvoicingRedirect() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
 
   useEffect(() => {

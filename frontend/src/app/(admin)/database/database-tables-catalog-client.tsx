@@ -196,10 +196,9 @@ function buildTableColumns(
       onEdit: (item, value) => onEditField(item, "table_comment", value),
       render: (item) => (
         <CellText
-          value={item.table_comment}
+          value={item.table_comment ?? null}
           emptyLabel="-"
           className="block truncate"
-          style={{ maxWidth: "30rem" }}
         />
       ),
       sortValue: (item) => item.table_comment || "",
@@ -303,8 +302,8 @@ export function DatabaseTablesCatalogClient({
   initialRows: DatabaseTableCatalogRow[];
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
 
   const [rows, setRows] = React.useState<DatabaseTableCatalogRow[]>(initialRows);
 

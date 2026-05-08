@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { parse, unparse } from "papaparse";
 import { memo, useEffect, useMemo, useState } from "react";
-import { DataGrid, type RenderEditCellProps } from "react-data-grid";
+import { DataGrid, type Column, type RenderEditCellProps } from "react-data-grid";
 import { cn } from "@/lib/utils";
 
 import "react-data-grid/lib/styles.css";
@@ -71,18 +71,18 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
     return paddedData;
   }, [content]);
 
-  const columns = useMemo(() => {
-    const rowNumberColumn = {
+  const columns = useMemo((): Column<SheetEditorRow>[] => {
+    const rowNumberColumn: Column<SheetEditorRow> = {
       key: "rowNumber",
       name: "",
       frozen: true,
       width: 50,
-      renderCell: ({ rowIdx }: { rowIdx: number }) => rowIdx + 1,
+      renderCell: ({ rowIdx }) => rowIdx + 1,
       cellClass: "border-t border-r dark:bg-zinc-950 dark:text-zinc-50",
       headerCellClass: "border-t border-r dark:bg-zinc-900 dark:text-zinc-50",
     };
 
-    const dataColumns = Array.from({ length: MIN_COLS }, (_, i) => ({
+    const dataColumns: Column<SheetEditorRow>[] = Array.from({ length: MIN_COLS }, (_, i) => ({
       key: i.toString(),
       name: String.fromCharCode(65 + i),
       renderEditCell: renderSheetTextEditor,
@@ -100,7 +100,7 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
 
   const initialRows = useMemo(() => {
     return parseData.map((row, rowIndex) => {
-      const rowData: Record<string, unknown> = {
+      const rowData: SheetEditorRow = {
         id: rowIndex,
         rowNumber: rowIndex + 1,
       };
@@ -123,11 +123,11 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
     return unparse(data);
   };
 
-  const handleRowsChange = (newRows: Record<string, unknown>[]) => {
+  const handleRowsChange = (newRows: SheetEditorRow[]) => {
     setLocalRows(newRows);
 
     const updatedData = newRows.map((row) => {
-      return columns.slice(1).map((col) => row[col.key] || "");
+      return columns.slice(1).map((col) => String(row[col.key] ?? ""));
     });
 
     const newCsvContent = generateCsv(updatedData);

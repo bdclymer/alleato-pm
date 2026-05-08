@@ -53,7 +53,7 @@ export const PATCH = withApiGuardrails<{ itemId: string }>(
 
     const { error } = await supabase
       .from("admin_feedback_items")
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...updates, updated_at: new Date().toISOString() } as Record<string, unknown>)
       .eq("id", params.itemId)
       .eq("request_type", "feature_request");
 

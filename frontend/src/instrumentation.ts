@@ -33,11 +33,7 @@ export async function register() {
             "http://localhost:4318/v1/traces",
         }),
         instrumentations: [
-          new OpenAIInstrumentation({
-            // Capture prompt/completion text so you can see exactly what
-            // was sent to the model and what came back.
-            enrich: true,
-          }),
+          new OpenAIInstrumentation({}),
         ],
       });
 

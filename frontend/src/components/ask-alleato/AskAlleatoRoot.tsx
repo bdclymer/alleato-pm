@@ -18,7 +18,7 @@ function shouldHideForRoute(pathname: string) {
 }
 
 export function AskAlleatoRoot() {
-  const pathname = usePathname() ?? "/";
+  const pathname = usePathname()! ?? "/";
   const [open, setOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<AskAlleatoPanelTab>("feedback");
   const [onboardingOpen, setOnboardingOpen] = React.useState(false);

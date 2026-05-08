@@ -50,7 +50,7 @@ import {
 
 export default function CommitmentPcoDetailPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = parseInt(params.projectId as string, 10);
   const pcoId = params.pcoId as string;
 

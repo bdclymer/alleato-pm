@@ -592,8 +592,8 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
 
 export default function CommitmentDetailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
-  const params = useParams() ?? {};
+  const searchParams = useSearchParams()! ?? new URLSearchParams();
+  const params = useParams()! ?? {};
   const projectId = parseInt(params.projectId as string);
   const commitmentId = params.commitmentId as string;
   const queryClient = useQueryClient();

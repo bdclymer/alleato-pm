@@ -269,8 +269,8 @@ function getToolRowId(item: ProcoreToolRow): string {
 export function ProcoreToolsTableClient({
   tools,
 }: ProcoreToolsTableClientProps): ReactElement {
-  const pathname = usePathname();
-  const rawSearchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const rawSearchParams = useSearchParams()!;
   const searchParams = rawSearchParams ?? new URLSearchParams();
   const router = useRouter();
 

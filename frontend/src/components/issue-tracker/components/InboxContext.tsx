@@ -27,7 +27,7 @@ export function useInbox() {
 
 export function InboxProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname()!;
 
   useLayoutEffect(() => {
     // Reset when changing to dashboard

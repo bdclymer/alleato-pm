@@ -126,9 +126,9 @@ function BudgetTableSkeleton() {
 
 function BudgetPageContent() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const { confirm, ConfirmDialog } = useConfirm();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const projectId = params.projectId as string;
   useProjectTitle("Budget");
 

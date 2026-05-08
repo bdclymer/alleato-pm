@@ -118,8 +118,8 @@ function formatEmailDate(value: string | null): string {
 
 export default function ChangeEventDetailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
-  const params = useParams() ?? {};
+  const searchParams = useSearchParams()! ?? new URLSearchParams();
+  const params = useParams()! ?? {};
   const projectId = parseInt(params.projectId as string, 10);
   const changeEventId = params.changeEventId as string;
 

@@ -11,8 +11,8 @@ import { useParams } from "next/navigation";
  */
 export function ClientRedirect({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const params = useParams();
+  const pathname = usePathname()!;
+  const params = useParams()!;
   const { isClient, isLoading } = useIsClient();
   const projectId = params?.projectId as string | undefined;
 
@@ -57,7 +57,7 @@ export function ClientRedirect({ children }: { children: React.ReactNode }) {
 export function useClientAutoRedirect() {
   const router = useRouter();
   const { isClient, isLoading } = useIsClient();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params?.projectId as string | undefined;
 
   useEffect(() => {

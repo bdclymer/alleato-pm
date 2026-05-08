@@ -315,9 +315,9 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 // ---------------------------------------------------------------------------
 
 export default function ApBillsPage() {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const [bills, setBills] = React.useState<ApBill[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);

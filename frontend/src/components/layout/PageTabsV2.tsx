@@ -23,9 +23,9 @@ interface PageTabsV2Props {
  * Use PageTabs (v1) as the site standard
  */
 export function PageTabsV2({ tabs, className }: PageTabsV2Props) {
-  const pathname = usePathname() ?? "";
+  const pathname = usePathname()! ?? "";
   const router = useRouter();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
+  const searchParams = useSearchParams()! ?? new URLSearchParams();
 
   // Find the active tab based on pathname
   const searchString = searchParams.toString();

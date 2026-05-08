@@ -189,7 +189,7 @@ function getBestComposerTarget() {
 }
 
 export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: boolean }) {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const { profile, isLoading } = useCurrentUserProfile();
   const isMobile = useIsMobile();
   const pagePath = pathname ?? "/";

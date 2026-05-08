@@ -23,7 +23,7 @@ const BLOCK_INTERACTIONS_MIGRATION_KEY =
 
 export function UnifiedFeedbackWidget() {
   const [isReady, setIsReady] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const isMobile = useIsMobile();
   const isImmersiveChatRoute =
     pathname?.startsWith("/ai-assistant") || pathname?.startsWith("/ai-avatar");

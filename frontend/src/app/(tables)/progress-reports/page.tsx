@@ -132,8 +132,8 @@ function exportReports(reports: ProgressReportAllListItem[]) {
 
 export default function AllProgressReportsPage() {
   const router = useRouter();
-  const pathname = usePathname() ?? "/progress-reports";
-  const rawSearchParams = useSearchParams();
+  const pathname = usePathname()! ?? "/progress-reports";
+  const rawSearchParams = useSearchParams()!;
   const searchParams =
     rawSearchParams ?? (new URLSearchParams() as unknown as ReadonlyURLSearchParams);
   const reportsQuery = useAllProgressReports();

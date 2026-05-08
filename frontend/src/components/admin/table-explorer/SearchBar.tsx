@@ -12,7 +12,7 @@ interface SearchBarProps {
 
 export function SearchBar({ placeholder = "Search..." }: SearchBarProps) {
   const router = useRouter();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
+  const searchParams = useSearchParams()! ?? new URLSearchParams();
   const [isPending, startTransition] = useTransition();
   const [value, setValue] = useState(searchParams.get("q") ?? "");
 

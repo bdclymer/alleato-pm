@@ -20,7 +20,7 @@ import type { ChangeEvent } from "@/types/change-events";
 // =============================================================================
 
 export default function NewPCOPage() {
-  const params = useParams<{ projectId: string }>();
+  const params = useParams<{ projectId: string }>()!;
   const router = useRouter();
   const projectId = params.projectId ?? "";
   const projectIdNum = parseInt(projectId, 10);

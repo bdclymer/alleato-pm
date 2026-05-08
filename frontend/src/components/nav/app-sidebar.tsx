@@ -307,7 +307,7 @@ function ExpandedNavGroup({
 // =============================================================================
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname() ?? ""
+  const pathname = usePathname()! ?? ""
   const router = useRouter()
   const { state, isMobile } = useSidebar()
 

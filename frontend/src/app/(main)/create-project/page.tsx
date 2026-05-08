@@ -70,7 +70,7 @@ export default function CreateProjectPage() {
 
 function CreateProjectForm() {
   const router = useRouter();
-  const searchParams = useSearchParams() ?? new URLSearchParams();
+  const searchParams = useSearchParams()! ?? new URLSearchParams();
   const isOnboardingTestProject = searchParams.get("testProject") === "1";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileResetKey, setFileResetKey] = useState(0);

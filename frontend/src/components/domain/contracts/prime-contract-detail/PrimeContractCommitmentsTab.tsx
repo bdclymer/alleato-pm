@@ -145,8 +145,8 @@ export function PrimeContractCommitmentsTab({
   contractId,
 }: PrimeContractCommitmentsTabProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);

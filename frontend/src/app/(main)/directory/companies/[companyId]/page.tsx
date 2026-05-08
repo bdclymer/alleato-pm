@@ -159,7 +159,7 @@ function getInitials(firstName?: string | null, lastName?: string | null): strin
 
 export default function CompanyDetailsPage() {
   const router = useRouter();
-  const params = useParams() ?? {};
+  const params = useParams()! ?? {};
   const companyId = params.companyId as string;
   const { confirm, ConfirmDialog } = useConfirm();
 

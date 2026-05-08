@@ -79,7 +79,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 export function ProcoreCompareSidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const entityContext = useEntityContext();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);

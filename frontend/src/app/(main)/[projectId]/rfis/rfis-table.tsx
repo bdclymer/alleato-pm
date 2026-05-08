@@ -64,7 +64,7 @@ async function fetchRfis(
 
 export function RfisTable({ projectId }: RfisTableProps) {
   const router = useRouter();
-  const searchParamsRaw = useSearchParams();
+  const searchParamsRaw = useSearchParams()!;
   const searchParams = searchParamsRaw ?? new URLSearchParams();
   const queryClient = useQueryClient();
   const activeTabParam = searchParams.get("tab");

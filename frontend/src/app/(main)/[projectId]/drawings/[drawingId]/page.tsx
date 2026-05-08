@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
@@ -313,7 +314,7 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
 // ---------------------------------------------------------------------------
 
 export default function DrawingDetailPage() {
-  const params = useParams();
+  const params = useParams()!;
   const router = useRouter();
   const projectId = params.projectId as string;
   const drawingId = params.drawingId as string;

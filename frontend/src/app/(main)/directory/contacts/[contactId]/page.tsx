@@ -31,7 +31,7 @@ interface ContactWithRelations extends Omit<Contact, "company"> {
 }
 
 export default function ContactDetailsPage() {
-  const params = useParams() ?? {};
+  const params = useParams()! ?? {};
   const router = useRouter();
   const contactId = params.contactId as string;
 

@@ -63,7 +63,7 @@ export function DocumentPreview({
       return (
         <DocumentToolResult
           isReadonly={isReadonly}
-          result={{ id: result.id, title: result.title, kind: result.kind }}
+          result={{ id: result.id as string, title: result.title as string, kind: result.kind as ArtifactKind }}
           type="create"
         />
       );
@@ -72,7 +72,7 @@ export function DocumentPreview({
     if (args) {
       return (
         <DocumentToolCall
-          args={{ title: args.title, kind: args.kind }}
+          args={{ title: args.title as string, kind: args.kind as ArtifactKind }}
           isReadonly={isReadonly}
           type="create"
         />
@@ -81,7 +81,7 @@ export function DocumentPreview({
   }
 
   if (isDocumentsFetching) {
-    return <LoadingSkeleton artifactKind={result.kind ?? args.kind} />;
+    return <LoadingSkeleton artifactKind={(result?.kind ?? args?.kind) as ArtifactKind} />;
   }
 
   const document: Document | null = previewDocument
@@ -105,7 +105,7 @@ export function DocumentPreview({
     <div className="relative w-full max-w-lg cursor-pointer">
       <HitboxLayer
         hitboxRef={hitboxRef}
-        result={result}
+        result={result ?? {}}
         setArtifact={setArtifact}
       />
       <DocumentHeader
@@ -161,9 +161,9 @@ const PureHitboxLayer = ({
           ? { ...artifact, isVisible: true }
           : {
               ...artifact,
-              title: result.title,
-              documentId: result.id,
-              kind: result.kind,
+              title: result.title as string,
+              documentId: result.id as string,
+              kind: result.kind as ArtifactKind,
               isVisible: true,
               boundingBox: {
                 left: boundingBox.x,

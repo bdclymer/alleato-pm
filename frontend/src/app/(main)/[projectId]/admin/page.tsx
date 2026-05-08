@@ -7,7 +7,7 @@ import { MembersTab } from "./_components/members-tab";
 import { AuditLogTab } from "./_components/audit-log-tab";
 
 export default function ProjectAdminPage() {
-  const { projectId } = useParams<{ projectId: string }>() ?? { projectId: "" };
+  const { projectId } = useParams<{ projectId: string }>()! ?? { projectId: "" };
 
   return (
     <PageShell

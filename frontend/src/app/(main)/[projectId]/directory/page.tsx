@@ -1648,7 +1648,7 @@ function CompaniesSection({
 // ─── Main Page ────────────────────────────────────────────────────
 
 export default function ProjectDirectoryPage() {
-  const params = useParams() ?? {};
+  const params = useParams()! ?? {};
   const projectId = params.projectId as string;
 
   const { users: members, refetch: refetchMembers } = useProjectUsers(projectId, { type: "all" });

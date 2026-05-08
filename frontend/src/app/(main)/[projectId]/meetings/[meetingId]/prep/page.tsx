@@ -26,7 +26,7 @@ import { useConfirm } from "@/hooks/use-confirm";
 
 export default function MeetingPrepPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const meetingId = params.meetingId as string;
 

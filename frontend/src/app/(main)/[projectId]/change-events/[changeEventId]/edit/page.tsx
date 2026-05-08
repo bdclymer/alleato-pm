@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 
 export default function EditChangeEventRedirectPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const changeEventId = params.changeEventId as string;
 

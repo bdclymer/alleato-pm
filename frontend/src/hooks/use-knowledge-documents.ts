@@ -67,6 +67,28 @@ export function useKnowledgeDocuments(filters?: KnowledgeDocumentFilters) {
 }
 
 // ---------------------------------------------------------------------------
+// useUpdateKnowledgeDocument
+// ---------------------------------------------------------------------------
+
+export function useUpdateKnowledgeDocument() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; title?: string; tags?: string; status?: string }) =>
+      apiFetch(`/api/knowledge?id=${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: knowledgeDocumentKeys.all });
+      toast.success("Knowledge document updated");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // useDeleteKnowledgeDocument
 // ---------------------------------------------------------------------------
 

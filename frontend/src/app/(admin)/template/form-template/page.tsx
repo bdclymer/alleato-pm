@@ -81,7 +81,7 @@ function createLineItem() {
 
 export default function StandardFormPage() {
   const router = useRouter()
-  const params = useParams()
+  const params = useParams()!
   const projectId = params.projectId as string
 
   const form = useForm<FormValues>({

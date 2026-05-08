@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 
 export default function EditChangeOrderRedirectPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const changeOrderId = params.changeOrderId as string;
 

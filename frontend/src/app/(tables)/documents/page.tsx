@@ -191,8 +191,8 @@ function AssignProjectDialog({
 
 export default function DocumentsPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
 
   const [documents, setDocuments] = React.useState<PipelineDoc[]>([]);
   const [projects, setProjects] = React.useState<SimpleProject[]>([]);

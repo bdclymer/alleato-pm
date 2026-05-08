@@ -36,7 +36,7 @@ const EMPTY_FILTERS: RfiFilterState = {
 };
 
 export function RfisClient({ rfis, projectId }: RfisClientProps): ReactElement {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
 

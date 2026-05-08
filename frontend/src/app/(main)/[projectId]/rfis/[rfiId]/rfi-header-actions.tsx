@@ -28,7 +28,7 @@ interface RfiHeaderActionsProps {
 
 export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const updateRfi = useUpdateRfi(projectId);
   const deleteRfi = useDeleteRfi(projectId);
   const [deleteOpen, setDeleteOpen] = useState(false);

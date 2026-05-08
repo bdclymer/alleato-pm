@@ -53,8 +53,8 @@ function toTableRow(item: TransmittalSummary): TransmittalTableRow {
 }
 
 export default function TransmittalsClient(): ReactElement {
-  const params = useParams<{ projectId: string }>() ?? { projectId: "" };
-  const pathname = usePathname();
+  const params = useParams<{ projectId: string }>()! ?? { projectId: "" };
+  const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
 

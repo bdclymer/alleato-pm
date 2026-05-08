@@ -37,7 +37,7 @@ interface CompanyData {
 }
 
 export default function DirectoryCompaniesPage() {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] =
     React.useState<CompanyData | null>(null);

@@ -80,7 +80,7 @@ function ProcoreReferenceToggle() {
 }
 
 function AiChatButton() {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const isActive = pathname === "/ai-assistant" || pathname?.startsWith("/ai-assistant/");
   return (
     <Link
@@ -125,7 +125,7 @@ function SidebarToggleButton() {
  */
 export function SiteHeader() {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const nav = useHeaderNav();
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
     nav.projectId,

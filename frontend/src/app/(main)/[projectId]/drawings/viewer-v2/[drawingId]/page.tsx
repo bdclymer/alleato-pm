@@ -193,7 +193,7 @@ function LinkPinShape({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DrawingViewerV2Page() {
-  const params = useParams() ?? {};
+  const params = useParams()! ?? {};
   const router = useRouter();
   const projectId = params.projectId as string;
   const drawingId = params.drawingId as string;

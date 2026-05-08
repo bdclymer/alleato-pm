@@ -39,7 +39,7 @@ type Annotation = {
 };
 
 export function DevAnnotationOverlay() {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);

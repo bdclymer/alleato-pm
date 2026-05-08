@@ -349,7 +349,7 @@ function ChatWithSession({
 export function RagChatPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const activeSessionId = searchParams?.get("session") ?? null;
 
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);

@@ -44,7 +44,7 @@ export function CreateProjectDevConfigProvider({
 }: {
   children: ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const isCreateProjectRoute = pathname?.startsWith("/create-project") ?? false;
   const { profile } = useCurrentUserProfile({ enabled: isCreateProjectRoute });
   const isDevAdmin = process.env.NODE_ENV === "development" &&

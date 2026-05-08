@@ -100,7 +100,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function NewCommitmentPcoPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const commitmentId = params.commitmentId as string;
 
@@ -152,7 +152,7 @@ export default function NewCommitmentPcoPage() {
             id: commitData.id,
             contract_number: commitData.contract_number,
             title: commitData.title,
-            commitment_type: commitData.commitment_type ?? commitData.type,
+            commitment_type: commitData.commitment_type ?? commitData.type ?? null,
             vendor_name: commitData.vendor_name ?? commitData.vendor?.name ?? null,
           });
         }

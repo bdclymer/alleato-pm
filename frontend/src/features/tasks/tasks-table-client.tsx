@@ -64,8 +64,8 @@ export function TasksTableClient({
   allowDelete = true,
 }: TasksTableClientProps) {
   const router = useRouter();
-  const pathname = usePathname() ?? (projectId ? `/${projectId}/tasks` : "/tasks");
-  const searchParamsRaw = useSearchParams();
+  const pathname = usePathname()! ?? (projectId ? `/${projectId}/tasks` : "/tasks");
+  const searchParamsRaw = useSearchParams()!;
   const searchParams =
     (searchParamsRaw ?? new URLSearchParams()) as ReadonlyURLSearchParams;
 

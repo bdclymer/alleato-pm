@@ -723,7 +723,7 @@ function InvoiceEditForm({
  */
 export default function InvoiceDetailPage() {
   const router = useRouter();
-  const params = useParams() ?? {};
+  const params = useParams()! ?? {};
   const projectId = parseInt(params.projectId as string);
   const invoiceId = parseInt(params.invoiceId as string);
   useProjectTitle("Invoice Details");

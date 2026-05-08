@@ -22,8 +22,8 @@ interface SuiteMeta {
 // rendered as tonal tabs (not a dropdown, not a filter). Starting a run
 // uses the currently-selected suite_type.
 export default function ToolPage() {
-  const params = useParams<{ tool: string }>();
-  const searchParams = useSearchParams();
+  const params = useParams<{ tool: string }>()!;
+  const searchParams = useSearchParams()!;
   const router = useRouter();
   const toolName = params.tool;
 

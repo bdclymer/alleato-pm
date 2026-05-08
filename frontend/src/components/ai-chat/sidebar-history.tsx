@@ -100,7 +100,7 @@ export function getChatHistoryPaginationKey(
 
 export function SidebarHistory({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const id = pathname?.startsWith("/ai-sdk/chat/") ? pathname.split("/")[3] : null;
 
   const {

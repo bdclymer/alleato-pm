@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 
 export default function EditPrimeContractRedirectPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const contractId = params.contractId as string;
 
