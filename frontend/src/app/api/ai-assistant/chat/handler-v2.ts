@@ -96,7 +96,7 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
         system: systemPrompt,
         messages: await convertToModelMessages(args.messages),
         tools,
-        maxOutputTokens: 1500,
+        maxOutputTokens: 4000,
         stopWhen: stepCountIs(10),
       });
 
