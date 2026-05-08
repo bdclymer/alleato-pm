@@ -96,33 +96,20 @@ function ProjectFilterRow({
   onSelectProject: (projectKey: string) => void;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <SectionRuleHeading
-            label="Project Issues"
-            actions={
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {groups.reduce((total, group) => total + group.entries.length, 0)}
-              </span>
-            }
-          />
-        </div>
-        <Select value={selectedProjectKey} onValueChange={onSelectProject}>
-          <SelectTrigger className="w-full md:w-80">
-            <SelectValue placeholder="Select project" />
-          </SelectTrigger>
-          <SelectContent align="end">
-            <SelectItem value="all">All projects with issues</SelectItem>
-            {groups.map((group) => (
-              <SelectItem key={group.key} value={group.key}>
-                {displayProjectLabel(group.label)} ({group.entries.length})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
+    <div className="flex justify-end">
+      <Select value={selectedProjectKey} onValueChange={onSelectProject}>
+        <SelectTrigger className="w-full md:w-80">
+          <SelectValue placeholder="Select project" />
+        </SelectTrigger>
+        <SelectContent align="end">
+          <SelectItem value="all">All projects with issues</SelectItem>
+          {groups.map((group) => (
+            <SelectItem key={group.key} value={group.key}>
+              {displayProjectLabel(group.label)} ({group.entries.length})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
