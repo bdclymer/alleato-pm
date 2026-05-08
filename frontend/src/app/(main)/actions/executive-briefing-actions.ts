@@ -401,11 +401,12 @@ export async function createExecutiveTaskDraftAction(formData: FormData) {
 
   let assigneeName: string | null = null;
   let assigneeEmail: string | null = null;
+  let assigneePersonIdForTask: string | null = null;
 
   if (assigneePersonId) {
     const { data: person, error: personError } = await supabase
       .from("people")
-      .select("first_name, last_name, email")
+      .select("id, first_name, last_name, email")
       .eq("id", assigneePersonId)
       .single();
 
@@ -413,6 +414,7 @@ export async function createExecutiveTaskDraftAction(formData: FormData) {
       throw new Error(`Failed to load assignee: ${personError.message}`);
     }
 
+    assigneePersonIdForTask = person.id;
     assigneeName =
       [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
       null;
@@ -443,6 +445,7 @@ export async function createExecutiveTaskDraftAction(formData: FormData) {
       metadata_id: metadata.id,
       title: normalizedTitle,
       description: normalizedDescription,
+      assignee_person_id: assigneePersonIdForTask,
       assignee_name: assigneeName,
       assignee_email: assigneeEmail,
       due_date: dueDate,
@@ -462,6 +465,74 @@ export async function createExecutiveTaskDraftAction(formData: FormData) {
 
   revalidatePath(EXECUTIVE_PATH);
   return { created: !existingTask, taskId: existingTask?.id ?? null };
+}
+
+export async function updateExecutiveRelatedTaskAction(formData: FormData) {
+  await requireCurrentUserAppCapability(
+    "view_executive_briefing",
+    "executive-briefing-actions#update-related-task",
+    "Executive briefing access required.",
+  );
+
+  const taskId = formString(formData, "taskId");
+  const assigneePersonId = formString(formData, "assigneePersonId");
+  const rawStatus = formString(formData, "status") || "open";
+  const rawPriority = formString(formData, "priority") || "medium";
+  const dueDate = formString(formData, "dueDate") || null;
+  const status = TASK_STATUS_VALUES.has(rawStatus) ? rawStatus : "open";
+  const priority = TASK_PRIORITY_VALUES.has(rawPriority) ? rawPriority : "medium";
+
+  if (!taskId) {
+    throw new Error("Missing executive task id.");
+  }
+
+  if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+    throw new Error("Use a valid task due date.");
+  }
+
+  const supabase = createServiceClient();
+  let assigneeName: string | null = null;
+  let assigneeEmail: string | null = null;
+  let assigneePersonIdForTask: string | null = null;
+
+  if (assigneePersonId) {
+    const { data: person, error: personError } = await supabase
+      .from("people")
+      .select("id, first_name, last_name, email")
+      .eq("id", assigneePersonId)
+      .single();
+
+    if (personError) {
+      throw new Error(`Failed to load assignee: ${personError.message}`);
+    }
+
+    assigneePersonIdForTask = person.id;
+    assigneeName =
+      [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
+      person.email ||
+      null;
+    assigneeEmail = person.email ?? null;
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({
+      assignee_person_id: assigneePersonIdForTask,
+      assignee_name: assigneeName,
+      assignee_email: assigneeEmail,
+      status,
+      priority,
+      due_date: dueDate,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", taskId);
+
+  if (error) {
+    throw new Error(`Failed to update executive task: ${error.message}`);
+  }
+
+  revalidatePath(EXECUTIVE_PATH);
+  return { updated: true };
 }
 
 export async function createOperationalImprovementAction(formData: FormData) {

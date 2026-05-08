@@ -19,16 +19,20 @@ import {
   ExecutiveTaskDraftForm,
   type ExecutiveTaskAssigneeOption,
 } from "@/components/executive/executive-task-draft-form";
+import { ExecutiveRelatedTaskTable } from "@/components/executive/executive-related-task-table";
 import type { BrandonBriefItem } from "@/lib/executive/brandon-daily-update";
 import { resolveExecutiveFollowUpAction } from "@/app/(main)/actions/executive-briefing-actions";
 
 export type ExecutiveRelatedTask = {
   id: string;
+  title: string | null;
   description: string;
   status: string;
+  priority: string | null;
   dueDate: string | null;
   assigneeName: string | null;
   assigneeEmail: string | null;
+  assigneePersonId: string | null;
   metadataId: string;
   projectName: string | null;
 };
@@ -320,26 +324,13 @@ export function ExecutiveSignalCard({
               </div>
             </DetailBlock>
 
-            <DetailBlock label="Follow-up">
+            <DetailBlock label="Tasks">
               <div className="space-y-4">
                 {relatedTasks.length > 0 && (
-                  <div className="space-y-2">
-                    {relatedTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="space-y-1 border-l-2 border-border pl-3"
-                      >
-                        <div className="text-sm font-medium text-foreground">
-                          {task.description}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span>{task.status.replace(/_/g, " ")}</span>
-                          <span>{task.assigneeName ?? "Unassigned"}</span>
-                          {task.dueDate && <span>Due {task.dueDate}</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <ExecutiveRelatedTaskTable
+                    tasks={relatedTasks}
+                    employees={employees}
+                  />
                 )}
 
                 <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -355,13 +346,15 @@ export function ExecutiveSignalCard({
                     </Button>
                   )}
 
-                  <ExecutiveTaskDraftForm
-                    sourceId={item.sourceId}
-                    title={item.title}
-                    description={item.recommendedAction ?? item.summary}
-                    employees={employees}
-                    hasMatchingTask={hasMatchingTask}
-                  />
+                  {!hasMatchingTask && (
+                    <ExecutiveTaskDraftForm
+                      sourceId={item.sourceId}
+                      title={item.title}
+                      description={item.recommendedAction ?? item.summary}
+                      employees={employees}
+                      hasMatchingTask={false}
+                    />
+                  )}
                 </div>
               </div>
             </DetailBlock>

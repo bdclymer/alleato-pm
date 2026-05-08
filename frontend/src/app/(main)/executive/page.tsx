@@ -354,7 +354,7 @@ async function loadExecutiveActionContext(params: {
       ? supabase
           .from("tasks")
           .select(
-            "id, description, status, due_date, assignee_name, assignee_email, metadata_id, projects(name)",
+            "id, title, description, status, priority, due_date, assignee_person_id, assignee_name, assignee_email, metadata_id, projects(name)",
           )
           .in("metadata_id", metadataIds)
           .order("created_at", { ascending: false })
@@ -399,11 +399,14 @@ async function loadExecutiveActionContext(params: {
   const openTasks = ((tasksResult.data ?? []) as Array<Record<string, unknown>>)
     .map((task) => ({
       id: task.id as string,
+      title: (task.title as string | null) ?? null,
       description: task.description as string,
       status: task.status as string,
+      priority: (task.priority as string | null) ?? null,
       dueDate: (task.due_date as string | null) ?? null,
       assigneeName: (task.assignee_name as string | null) ?? null,
       assigneeEmail: (task.assignee_email as string | null) ?? null,
+      assigneePersonId: (task.assignee_person_id as string | null) ?? null,
       metadataId: task.metadata_id as string,
       projectName:
         ((task.projects as { name?: string | null } | null)?.name as
