@@ -53,22 +53,42 @@ def _execute(query: Any, *, attempts: int = 3) -> Any:
     raise RuntimeError(f"Supabase query failed after {attempts} attempts: {last_error}") from last_error
 
 
-def _requeue_rows(supabase: Any, table_name: str, rows: List[Dict[str, Any]], *, dry_run: bool) -> int:
+def _is_duplicate_active_job_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return "duplicate key value violates unique constraint" in message and "active" in message
+
+
+def _requeue_rows(
+    supabase: Any,
+    table_name: str,
+    rows: List[Dict[str, Any]],
+    *,
+    dry_run: bool,
+) -> Dict[str, Any]:
     if dry_run:
-        return len(rows)
+        return {"requeued": len(rows), "skipped_duplicate": 0, "skipped_ids": []}
     count = 0
+    skipped_ids: List[str] = []
     for row in rows:
-        supabase.table(table_name).update(
-            {
-                "status": "queued",
-                "started_at": None,
-                "finished_at": None,
-                "last_error": None,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }
-        ).eq("id", row["id"]).execute()
-        count += 1
-    return count
+        try:
+            _execute(
+                supabase.table(table_name).update(
+                    {
+                        "status": "queued",
+                        "started_at": None,
+                        "finished_at": None,
+                        "last_error": None,
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                ).eq("id", row["id"])
+            )
+            count += 1
+        except Exception as exc:  # noqa: BLE001 - ops script must continue past duplicate active rows
+            if _is_duplicate_active_job_error(exc):
+                skipped_ids.append(row["id"])
+                continue
+            raise
+    return {"requeued": count, "skipped_duplicate": len(skipped_ids), "skipped_ids": skipped_ids}
 
 
 def _find_stale_running(supabase: Any, table_name: str, cutoff_iso: str, limit: int) -> List[Dict[str, Any]]:
@@ -124,11 +144,11 @@ def main() -> int:
 
     source_by_id = {row["id"]: row for row in source_rows}
     packet_by_id = {row["id"]: row for row in packet_rows}
-    requeued_sources = _requeue_rows(supabase, "source_intelligence_jobs", list(source_by_id.values()), dry_run=args.dry_run)
-    requeued_packets = _requeue_rows(supabase, "packet_refresh_jobs", list(packet_by_id.values()), dry_run=args.dry_run)
+    source_requeue = _requeue_rows(supabase, "source_intelligence_jobs", list(source_by_id.values()), dry_run=args.dry_run)
+    packet_requeue = _requeue_rows(supabase, "packet_refresh_jobs", list(packet_by_id.values()), dry_run=args.dry_run)
 
     compiler_result = None
-    if not args.dry_run and (requeued_sources or requeued_packets):
+    if not args.dry_run and (source_requeue["requeued"] or packet_requeue["requeued"]):
         compiler_result = run_intelligence_compiler_batch(
             supabase,
             source_limit=max(0, args.source_limit),
@@ -141,10 +161,14 @@ def main() -> int:
             {
                 "dry_run": args.dry_run,
                 "stale_cutoff": cutoff_iso,
-                "source_jobs_requeued": requeued_sources,
-                "packet_jobs_requeued": requeued_packets,
+                "source_jobs_requeued": source_requeue["requeued"],
+                "source_jobs_skipped_duplicate": source_requeue["skipped_duplicate"],
+                "packet_jobs_requeued": packet_requeue["requeued"],
+                "packet_jobs_skipped_duplicate": packet_requeue["skipped_duplicate"],
                 "source_job_ids": list(source_by_id.keys()),
+                "source_job_skipped_ids": source_requeue["skipped_ids"],
                 "packet_job_ids": list(packet_by_id.keys()),
+                "packet_job_skipped_ids": packet_requeue["skipped_ids"],
                 "compiler_result": compiler_result,
             },
             default=str,
