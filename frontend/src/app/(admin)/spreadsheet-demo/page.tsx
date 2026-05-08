@@ -1,6 +1,7 @@
 "use client";
 
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { type ComponentProps, type CSSProperties } from "react";
 import {
   RoomProvider,
@@ -52,7 +53,17 @@ const initialStorage = createInitialStorage(
   ]
 );
 type RoomInitialStorage = NonNullable<ComponentProps<typeof RoomProvider>["initialStorage"]>;
-const spreadsheetInitialStorage = initialStorage as RoomInitialStorage;
+const spreadsheetInitialStorage = {
+  meta: new LiveObject({ title: "Collaborative Spreadsheet" }),
+  properties: new LiveObject({
+    progress: "none" as const,
+    priority: "none" as const,
+    assignedTo: "",
+  }),
+  labels: new LiveList<string>([]),
+  links: new LiveList<string>([]),
+  spreadsheet: initialStorage.spreadsheet,
+} satisfies RoomInitialStorage;
 
 function SpreadsheetShell() {
   const spreadsheet = useSpreadsheet();
