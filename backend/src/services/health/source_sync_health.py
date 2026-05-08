@@ -24,6 +24,8 @@ JOB_HEALTH_SAMPLE_LIMIT = 5000
 MAX_RETURNED_SOURCES = 80
 MAX_RETURNED_ALERTS = 80
 MAX_RETURNED_STUCK_ITEMS = 25
+MAX_RECOMPUTE_SNAPSHOT_WRITES = 25
+MAX_RECOMPUTE_ALERT_WRITES = 25
 ALERT_TEXT_LIMIT = 1200
 ALERT_RESOURCE_ID_LIMIT = 500
 
@@ -418,7 +420,12 @@ def _alert_severity(alert: Dict[str, Any]) -> str:
     return severity if severity in {"info", "warning", "critical"} else "warning"
 
 
-def persist_source_sync_alerts(supabase: Any, alerts: Sequence[Dict[str, Any]]) -> Dict[str, int]:
+def persist_source_sync_alerts(
+    supabase: Any,
+    alerts: Sequence[Dict[str, Any]],
+    *,
+    resolve_missing: bool = True,
+) -> Dict[str, int]:
     """Upsert active source-sync alerts and resolve alerts that disappeared."""
     now = _utcnow().isoformat()
     active_keys = {_alert_key(alert) for alert in alerts}
@@ -455,21 +462,22 @@ def persist_source_sync_alerts(supabase: Any, alerts: Sequence[Dict[str, Any]]) 
         supabase.table("system_alerts").upsert(payload, on_conflict="alert_key").execute()
         upserted += 1
 
-    existing_active = (
-        supabase.table("system_alerts")
-        .select("id,alert_key")
-        .eq("category", "source_sync")
-        .eq("status", "active")
-        .limit(1000)
-        .execute()
-    )
-    for row in existing_active.data or []:
-        if row.get("alert_key") in active_keys:
-            continue
-        supabase.table("system_alerts").update(
-            {"status": "resolved", "resolved_at": now, "last_seen_at": now}
-        ).eq("id", row["id"]).execute()
-        resolved += 1
+    if resolve_missing:
+        existing_active = (
+            supabase.table("system_alerts")
+            .select("id,alert_key")
+            .eq("category", "source_sync")
+            .eq("status", "active")
+            .limit(1000)
+            .execute()
+        )
+        for row in existing_active.data or []:
+            if row.get("alert_key") in active_keys:
+                continue
+            supabase.table("system_alerts").update(
+                {"status": "resolved", "resolved_at": now, "last_seen_at": now}
+            ).eq("id", row["id"]).execute()
+            resolved += 1
 
     return {"upserted": upserted, "resolved": resolved}
 

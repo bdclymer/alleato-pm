@@ -346,3 +346,21 @@ def test_persist_source_sync_alerts_bounds_payload_fields():
     assert len(alert["message"]) <= 1200
     assert isinstance(alert["metadata"]["source"], str)
     assert len(alert["metadata"]["resourceId"]) <= 500
+
+
+def test_persist_source_sync_alerts_can_skip_resolving_missing_alerts():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    supabase.tables["system_alerts"] = [
+        {
+            "id": "existing-alert",
+            "alert_key": "source_sync:old:source:resource",
+            "category": "source_sync",
+            "status": "active",
+        }
+    ]
+
+    result = persist_source_sync_alerts(supabase, [], resolve_missing=False)
+
+    assert result == {"upserted": 0, "resolved": 0}
+    assert supabase.tables["system_alerts"][0]["status"] == "active"

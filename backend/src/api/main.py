@@ -893,6 +893,8 @@ async def recompute_source_sync_health_status(
     """Recompute source sync health from current source, vector, task, and packet tables."""
     try:
         from src.services.health.source_sync_health import (
+            MAX_RECOMPUTE_ALERT_WRITES,
+            MAX_RECOMPUTE_SNAPSHOT_WRITES,
             get_source_sync_health,
             persist_source_sync_alerts,
             update_source_health_snapshot,
@@ -902,14 +904,23 @@ async def recompute_source_sync_health_status(
         client = get_supabase_client()
         health = get_source_sync_health(client)
         updated = 0
-        for source in health.get("sources", []):
+        for source in health.get("sources", [])[:MAX_RECOMPUTE_SNAPSHOT_WRITES]:
             update_source_health_snapshot(client, source)
             updated += 1
-        routed_alerts = persist_source_sync_alerts(client, health.get("alerts", []))
+        routed_alerts = persist_source_sync_alerts(
+            client,
+            health.get("alerts", [])[:MAX_RECOMPUTE_ALERT_WRITES],
+            resolve_missing=False,
+        )
         return {
             "status": "completed",
             "updatedSnapshots": updated,
             "routedAlerts": routed_alerts,
+            "writeCaps": {
+                "snapshots": MAX_RECOMPUTE_SNAPSHOT_WRITES,
+                "alerts": MAX_RECOMPUTE_ALERT_WRITES,
+                "resolveMissing": False,
+            },
             "health": health,
         }
     except Exception as exc:
