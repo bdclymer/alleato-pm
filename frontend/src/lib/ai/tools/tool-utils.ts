@@ -9,9 +9,21 @@ import { type ToolGuardrails } from "./guardrails";
 // pgvector index migration (e.g. halfvec(3072) → re-index all rows).
 
 export const EMBEDDING = {
-  /** halfvec(3072) — document_chunks, document_metadata, ai_memories, knowledge tables */
+  /**
+   * halfvec(3072) — the ONLY embedding model for active columns.
+   * Covers: document_chunks.embedding, document_metadata.summary_embedding,
+   * and all source types within document_chunks (ai_memory, meeting_*, email, etc).
+   * Use this for ALL new vector queries.
+   */
   LARGE: { model: "text-embedding-3-large", dimensions: 3072 } as const,
-  /** vector(1536) — conversation_memories.embedding (legacy short-term memory table) */
+  /**
+   * vector(1536) — DEPRECATED. The conversation_memories table this was designed
+   * for does not exist in the database. Do NOT use against any active column —
+   * document_chunks.embedding is halfvec(3072) and using SMALL against it produces
+   * silent garbage similarity scores. Retained only so the generateEmbedding type
+   * signature remains stable. If you are tempted to use EMBEDDING.SMALL in new
+   * code, stop — use EMBEDDING.LARGE.
+   */
   SMALL: { model: "text-embedding-3-small", dimensions: 1536 } as const,
 } as const;
 
@@ -138,6 +150,31 @@ export type ToolTracePayload = {
   timestamp: string;
 };
 
+/**
+ * Typed tool-error envelope returned by `withTrace` when an executor throws.
+ *
+ * The `__toolError: true` discriminator is a Rule 1 guardrail: the model is
+ * instructed (in `strategistSystemPrompt`) to recognize this exact shape and
+ * tell the user the data is unavailable instead of summarizing the message
+ * as if it were content. Plain `{ error: string }` shapes are reserved for
+ * soft business-logic signals (e.g. "no project access") and are NOT this
+ * envelope.
+ */
+export type ToolErrorResult = {
+  __toolError: true;
+  source: string;
+  message: string;
+  guidance: string;
+};
+
+export function isToolErrorResult(value: unknown): value is ToolErrorResult {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { __toolError?: unknown }).__toolError === true
+  );
+}
+
 export function asNumber(value: unknown): number {
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : 0;
@@ -154,8 +191,8 @@ export function withTrace<TInput extends Record<string, unknown>, TResult>(
   options: { onTrace?: (trace: ToolTracePayload) => void },
   execute: (input: TInput) => Promise<TResult>,
   errorGuidance: string,
-): (input: TInput) => Promise<TResult> {
-  return async (input: TInput): Promise<TResult> => {
+): (input: TInput) => Promise<TResult | ToolErrorResult> {
+  return async (input: TInput): Promise<TResult | ToolErrorResult> => {
     try {
       const output = await execute(input);
       options.onTrace?.({
@@ -168,17 +205,30 @@ export function withTrace<TInput extends Record<string, unknown>, TResult>(
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unknown tool error";
+      const stack = error instanceof Error ? error.stack : undefined;
       options.onTrace?.({
         tool: name,
         input,
         error: message,
         timestamp: new Date().toISOString(),
       });
-      return {
-        error: message,
+      console.error(
+        JSON.stringify({
+          event: "tool_error",
+          tool: name,
+          input,
+          error: message,
+          stack,
+          timestamp: new Date().toISOString(),
+        }),
+      );
+      const envelope: ToolErrorResult = {
+        __toolError: true,
         source: name,
+        message,
         guidance: errorGuidance,
-      } as TResult;
+      };
+      return envelope;
     }
   };
 }

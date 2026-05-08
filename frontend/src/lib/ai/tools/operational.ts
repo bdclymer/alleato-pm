@@ -1767,59 +1767,62 @@ export function createOperationalTools(
         "recallPastConversations",
         options,
         async ({ query, matchCount }) => {
-          try {
-            const openaiClient = getOpenAI();
-            // memories.embedding is vector(1536) — use text-embedding-3-small.
-            const queryEmbedding = await generateEmbedding(openaiClient, query, EMBEDDING.SMALL);
+          // GUARDRAIL: conversation_memories table does not exist in the DB.
+          // The live write path (conversation-memory.ts) stores summaries in
+          // the `memories` table (halfvec(3072), memory_type='conversation_summary').
+          // search_conversation_memories (halfvec overload) queries that table.
+          //
+          // Root bug: this function was calling generateEmbedding with EMBEDDING.SMALL
+          // (text-embedding-3-small, 1536 dims) against a halfvec(3072) column.
+          // Postgres rejects dimension mismatches — every call was silently failing.
+          //
+          // Fix: use EMBEDDING.LARGE (text-embedding-3-large, 3072 dims) to match
+          // memories.embedding column type. The halfvec overload of
+          // search_conversation_memories handles user-level filtering correctly.
+          // Fixed: 2026-05-08 (Problem 6 — embedding dimension inconsistency).
+          const openaiClient = getOpenAI();
+          // generateEmbedding throws on API failure — no silent empty results.
+          const queryEmbedding = await generateEmbedding(openaiClient, query, EMBEDDING.LARGE);
 
-            const { data, error } = await supabase.rpc(
-              "search_conversation_memories",
-              {
-                query_embedding: queryEmbedding,
-                match_count: matchCount ?? 5,
-                filter_user_id: userId,
-              },
-            );
+          const { data, error } = await supabase.rpc(
+            "search_conversation_memories",
+            {
+              query_embedding: queryEmbedding,
+              match_count: matchCount ?? 5,
+              filter_user_id: userId,
+            },
+          );
 
-            if (error) return { error: error.message };
-            const results = (data ?? []) as Array<{
-              id: number;
-              content: string;
-              metadata: Record<string, unknown>;
-              similarity: number;
-            }>;
+          if (error) throw new Error(`recallPastConversations RPC failed: ${error.message}`);
 
-            if (results.length === 0) {
-              return {
-                results: [],
-                message:
-                  "No past conversation memories found. This may be a new user or their conversations haven't been indexed yet.",
-              };
-            }
+          // search_conversation_memories returns id, content, metadata, similarity
+          const results = (data ?? []) as Array<{
+            id: number;
+            content: string;
+            metadata: Record<string, unknown>;
+            similarity: number;
+          }>;
 
+          if (results.length === 0) {
             return {
-              query,
-              resultCount: results.length,
-              results: results.map((r) => ({
-                summary: r.content,
-                similarity:
-                  Math.round((r.similarity as number) * 100) / 100,
-                sessionId: (r.metadata as Record<string, unknown>)
-                  ?.session_id,
-                date:
-                  (r.metadata as Record<string, unknown>)?.created_at ??
-                  (r.metadata as Record<string, unknown>)?.updated_at,
-              })),
-            };
-          } catch (err) {
-            const msg =
-              err instanceof Error ? err.message : "Unknown error";
-            return {
-              error: `Conversation memory recall failed: ${msg}`,
-              fallback:
-                "Unable to search past conversations. Proceed without historical context.",
+              results: [],
+              message:
+                "No past conversation memories found. This may be a new user or their conversations haven't been indexed yet.",
             };
           }
+
+          return {
+            query,
+            resultCount: results.length,
+            results: results.map((r) => ({
+              summary: r.content,
+              similarity: Math.round((r.similarity as number) * 100) / 100,
+              sessionId: (r.metadata as Record<string, unknown>)?.session_id,
+              date:
+                (r.metadata as Record<string, unknown>)?.created_at ??
+                (r.metadata as Record<string, unknown>)?.updated_at,
+            })),
+          };
         },
       ),
     }),

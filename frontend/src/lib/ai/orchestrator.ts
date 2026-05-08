@@ -18,6 +18,7 @@
  */
 
 import { ToolLoopAgent, stepCountIs, tool, type ToolSet } from "ai";
+import type { ModelMessage } from "@ai-sdk/provider-utils";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
@@ -529,6 +530,71 @@ export const agentRegistry: Record<string, AgentConfig> = {
 };
 
 // ---------------------------------------------------------------------------
+// Conversation history forwarding
+// ---------------------------------------------------------------------------
+
+/**
+ * Maximum number of recent user/assistant turns forwarded to a sub-agent.
+ *
+ * Bounded to control sub-agent prompt size and token spend. Increase only if
+ * follow-up coherence regressions appear; raising this directly multiplies
+ * sub-agent input tokens.
+ */
+const SUB_AGENT_HISTORY_TURNS = 6;
+
+/**
+ * Reduces the Strategist's calling messages into a clean user/assistant
+ * transcript suitable for a sub-agent. Strips tool-call and tool-result
+ * messages — the sub-agent has its own tools and must not be confused by
+ * tool calls it did not make.
+ */
+function extractConversationHistory(
+  messages: ModelMessage[] | undefined,
+  agentId: string,
+): ModelMessage[] {
+  if (!messages || messages.length === 0) return [];
+
+  try {
+    const textTurns: ModelMessage[] = [];
+
+    for (const message of messages) {
+      if (message.role !== "user" && message.role !== "assistant") continue;
+
+      const text =
+        typeof message.content === "string"
+          ? message.content
+          : message.content
+              .filter((part) => part.type === "text")
+              .map((part) => (part as { text: string }).text)
+              .join("\n")
+              .trim();
+
+      if (!text) continue;
+
+      textTurns.push({ role: message.role, content: text } as ModelMessage);
+    }
+
+    // Drop the trailing user turn — it is the question we already pass
+    // explicitly to the sub-agent, including it would duplicate it.
+    if (textTurns.length > 0 && textTurns[textTurns.length - 1].role === "user") {
+      textTurns.pop();
+    }
+
+    return textTurns.slice(-SUB_AGENT_HISTORY_TURNS);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "unknown error";
+    // Rule 1: do not silently swallow. Log and proceed with empty history
+    // rather than crashing the sub-agent consultation.
+    console.error(
+      `[orchestrator] Failed to extract conversation history for ${agentId}:`,
+      errorMessage,
+    );
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Agent Execution
 // ---------------------------------------------------------------------------
 
@@ -552,6 +618,7 @@ export async function consultAgent(
   options?: {
     onTrace?: (trace: Record<string, unknown>) => void;
     pinnedProjectId?: number;
+    conversationHistory?: ModelMessage[];
   },
 ): Promise<AgentResponse> {
   const config = agentRegistry[agentId];
@@ -593,8 +660,12 @@ export async function consultAgent(
     const SUB_AGENT_TIMEOUT_MS = Number(
       process.env.SUB_AGENT_TIMEOUT_MS ?? 15_000,
     );
+    const history = options?.conversationHistory ?? [];
     const generatePromise = agent.generate({
-      messages: [{ role: "user", content: userMessage }],
+      messages: [
+        ...history,
+        { role: "user", content: userMessage },
+      ],
     });
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(
@@ -666,6 +737,7 @@ export async function consultAgents(
   options?: {
     onTrace?: (trace: Record<string, unknown>) => void;
     pinnedProjectId?: number;
+    conversationHistory?: ModelMessage[];
   },
 ): Promise<AgentResponse[]> {
   const promises = agentIds.map((id) =>
@@ -707,10 +779,12 @@ function makeConsultTool(
           `Optional additional context to help the ${contextRole} understand the broader question being answered.`,
         ),
     }),
-    execute: async ({ question, context }) => {
+    execute: async ({ question, context }, { messages } = { messages: [], toolCallId: "" }) => {
+      const conversationHistory = extractConversationHistory(messages, agentId);
       const response = await consultAgent(agentId, question, userId, context, {
         onTrace: options.onTrace,
         pinnedProjectId: options.pinnedProjectId,
+        conversationHistory,
       });
       return {
         agent: response.agent,

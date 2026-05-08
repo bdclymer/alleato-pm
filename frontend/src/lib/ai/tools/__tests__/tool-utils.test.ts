@@ -15,7 +15,7 @@
  */
 
 import OpenAI from "openai";
-import { withTrace, withWriteTrace, asNumber, isBriefingQuery, rankBriefingSourcePriority, generateEmbedding, EMBEDDING, rerankWithLLM } from "../tool-utils";
+import { withTrace, withWriteTrace, asNumber, isBriefingQuery, rankBriefingSourcePriority, generateEmbedding, EMBEDDING, rerankWithLLM, isToolErrorResult } from "../tool-utils";
 import type { ToolTracePayload } from "../tool-utils";
 import { isMissingBudgetViewError } from "../financial";
 
@@ -121,8 +121,9 @@ describe("withTrace()", () => {
     expect(traces[0].error).toBeUndefined();
   });
 
-  it("returns structured {error} instead of re-throwing (Rule 1 guard)", async () => {
+  it("returns typed ToolErrorResult envelope on throw — never a bare {error: string} masquerading as data (Rule 1 guard)", async () => {
     const traces: ToolTracePayload[] = [];
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     const traced = withTrace(
       "testTool",
       { onTrace: (t) => traces.push(t) },
@@ -132,15 +133,41 @@ describe("withTrace()", () => {
       "Check your project access",
     );
 
-    // Must NOT throw
     const result = await traced({});
-    expect(result).toMatchObject({
-      error: "Query failed",
+
+    // Must NOT throw, must be the typed envelope, NOT a bare {error: string}
+    expect(isToolErrorResult(result)).toBe(true);
+    expect(result).toEqual({
+      __toolError: true,
       source: "testTool",
+      message: "Query failed",
       guidance: "Check your project access",
     });
+    // The old shape is gone — the model can no longer mistake an error for data
+    expect((result as Record<string, unknown>).error).toBeUndefined();
+
+    // Trace fired with full context
     expect(traces).toHaveLength(1);
     expect(traces[0].error).toBe("Query failed");
+
+    // Structured log written so log drains can detect tool failures
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const logged = JSON.parse(errorSpy.mock.calls[0][0] as string);
+    expect(logged.event).toBe("tool_error");
+    expect(logged.tool).toBe("testTool");
+    expect(logged.error).toBe("Query failed");
+
+    errorSpy.mockRestore();
+  });
+
+  it("isToolErrorResult discriminates envelope from soft-error business signals", () => {
+    expect(isToolErrorResult({ __toolError: true, source: "x", message: "y", guidance: "z" })).toBe(true);
+    // Soft-error shapes (e.g. resolveProject's "no access" return) are NOT envelopes
+    expect(isToolErrorResult({ error: "No project access" })).toBe(false);
+    expect(isToolErrorResult({ value: 42 })).toBe(false);
+    expect(isToolErrorResult(null)).toBe(false);
+    expect(isToolErrorResult(undefined)).toBe(false);
+    expect(isToolErrorResult("string")).toBe(false);
   });
 });
 
@@ -219,7 +246,7 @@ describe("withWriteTrace()", () => {
     const traced = withWriteTrace(
       "writeTool",
       { onTrace: (t) => traces.push(t) },
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
+       
       async () => { throw "string rejection"; },
     );
 
