@@ -411,7 +411,8 @@ def run_graph_sync(
 
     # ── SharePoint Sites ──────────────────────────────────────────────────────
     # Format: "hostname/site_name:folder_path" e.g. "alleato.sharepoint.com/AlleatoGroup:/SOP"
-    sp_raw = os.environ.get("SHAREPOINT_SYNC_FOLDERS", "")
+    sync_sharepoint = os.environ.get("GRAPH_SYNC_SHAREPOINT", "true").lower() == "true"
+    sp_raw = os.environ.get("SHAREPOINT_SYNC_FOLDERS", "") if sync_sharepoint else ""
     sp_entries = [e.strip() for e in sp_raw.split(",") if e.strip()]
     for entry in sp_entries:
         try:
