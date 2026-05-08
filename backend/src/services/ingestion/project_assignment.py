@@ -66,16 +66,25 @@ class ProjectAssigner:
             - confidence: 0.0-1.0 confidence score
         """
 
-        # If already assigned, keep it
-        if existing_project_id is not None and existing_project_id > 0:
-            return existing_project_id, "existing", 1.0
-
         projects = self._get_projects()
         if not projects:
             return None, "no_projects", 0.0
 
         # Strategy 1: Direct project number/name match in title (highest confidence)
         project_id, confidence = self._match_by_title(meeting_title, projects)
+        if (
+            existing_project_id is not None
+            and existing_project_id > 0
+            and project_id
+            and int(project_id) != int(existing_project_id)
+            and confidence >= 0.93
+        ):
+            return project_id, "title_correction", confidence
+
+        # If already assigned and no strong title conflict exists, keep it.
+        if existing_project_id is not None and existing_project_id > 0:
+            return existing_project_id, "existing", 1.0
+
         if project_id and confidence >= 0.8:
             return project_id, "title_match", confidence
 
@@ -266,7 +275,7 @@ class ProjectAssigner:
     def _normalize_text(value: Optional[str]) -> str:
         if not value:
             return ""
-        return re.sub(r"\s+", " ", value).strip().lower()
+        return re.sub(r"\s+", " ", re.sub(r"[^a-zA-Z0-9]+", " ", value)).strip().lower()
 
     @staticmethod
     def _contains_token(text: str, token: str) -> bool:

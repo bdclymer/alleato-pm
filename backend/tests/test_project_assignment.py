@@ -55,6 +55,46 @@ def test_assign_project_prefers_alias_in_title():
     assert confidence >= 0.9
 
 
+def test_assign_project_corrects_existing_project_when_title_has_strong_conflict():
+    assigner = _build_assigner(
+        [
+            {"id": 31, "name": "Uniqlo Phillipsburg NJ", "client": "Uniqlo", "aliases": []},
+            {"id": 876, "name": "Exol Morrisville", "client": "Exol", "aliases": ["Morrisville"]},
+        ]
+    )
+
+    project_id, method, confidence = assigner.assign_project(
+        meeting_title="Exol - Morrisville PA - Weekly Status Call - Exol/Alleato",
+        participants=["PM <pm@alleatogroup.com>"],
+        content="Permit submission and Symbotic schedule alignment.",
+        existing_project_id=31,
+    )
+
+    assert project_id == 876
+    assert method == "title_correction"
+    assert confidence >= 0.93
+
+
+def test_assign_project_does_not_correct_existing_project_on_client_only_title_match():
+    assigner = _build_assigner(
+        [
+            {"id": 47, "name": "Goodwill Bloomington Excel", "client": "Goodwill", "aliases": []},
+            {"id": 754, "name": "GW Allisonville Rd IN", "client": "Goodwill", "aliases": []},
+        ]
+    )
+
+    project_id, method, confidence = assigner.assign_project(
+        meeting_title="Goodwill Weekly OAC Meeting",
+        participants=[],
+        content="General Goodwill owner meeting notes.",
+        existing_project_id=47,
+    )
+
+    assert project_id == 47
+    assert method == "existing"
+    assert confidence == 1.0
+
+
 def test_assign_project_uses_email_domain_when_available():
     assigner = _build_assigner(
         [

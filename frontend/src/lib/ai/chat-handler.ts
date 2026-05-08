@@ -1480,7 +1480,24 @@ function createDeterministicProjectBriefing(params: {
     ...(recentMovement.length
       ? recentMovement.map((item) => {
           const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
-          return `- ${String(record.date ?? "undated")}: ${String(record.summary ?? record.title ?? "Recent project movement found.").slice(0, 260)} ${String(record.sourceRef ?? "")}`.trim();
+          const actions = Array.isArray(record.actionItems)
+            ? record.actionItems.map(String).filter(Boolean).slice(0, 2)
+            : [];
+          const bullets = Array.isArray(record.bulletPoints)
+            ? record.bulletPoints.map(String).filter(Boolean).slice(0, 2)
+            : [];
+          const topics = Array.isArray(record.topicsDiscussed)
+            ? record.topicsDiscussed.map(String).filter(Boolean).slice(0, 3)
+            : [];
+          const movementText = String(
+            record.summary ?? record.notes ?? record.title ?? "Recent project movement found.",
+          ).slice(0, 260);
+          const followOn = [
+            actions.length ? `Actions: ${actions.join("; ")}` : null,
+            bullets.length && actions.length === 0 ? `Notes: ${bullets.join("; ")}` : null,
+            topics.length ? `Topics: ${topics.join(", ")}` : null,
+          ].filter(Boolean).join(" ");
+          return `- ${String(record.date ?? "undated")}: ${movementText}${followOn ? ` ${followOn}` : ""} ${String(record.sourceRef ?? "")}`.trim();
         })
       : [`- I did not find recent meeting/document movement in the snapshot. ${sourceLine}`]),
     "",

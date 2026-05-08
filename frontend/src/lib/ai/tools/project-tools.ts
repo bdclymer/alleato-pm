@@ -21,12 +21,55 @@ export type CreateProjectToolsOptions = {
 };
 
 function parseTextList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => parseTextList(item));
+  }
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if (typeof record.text === "string") return parseTextList(record.text);
+    if (typeof record.title === "string") return parseTextList(record.title);
+    if (typeof record.summary === "string") return parseTextList(record.summary);
+    return Object.values(record).flatMap((item) => parseTextList(item));
+  }
+
   if (typeof value !== "string" || !value.trim()) return [];
 
   return value
     .split(/\r?\n|;|•|^\s*-\s*/gm)
     .map((line) => line.replace(/^\s*[-*]\s*/, "").trim())
     .filter((line) => line.length > 2);
+}
+
+function trimText(value: unknown, limit: number): string | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  return text.length > limit ? `${text.slice(0, limit - 1)}...` : text;
+}
+
+function communicationSource(doc: AnyRow): string {
+  const raw = `${doc.source_system ?? ""} ${doc.source ?? ""} ${doc.category ?? ""} ${doc.type ?? ""}`.toLowerCase();
+  if (raw.includes("teams")) return "Teams";
+  if (raw.includes("outlook") || raw.includes("email")) return "Email";
+  if (raw.includes("fireflies") || raw.includes("meeting")) return "Meeting";
+  if (raw.includes("sharepoint") || raw.includes("onedrive") || raw.includes("drive")) return "Document";
+  return "Document";
+}
+
+function communicationUrl(doc: AnyRow): string | null {
+  return (
+    trimText(doc.fireflies_link, 500) ??
+    trimText(doc.meeting_link, 500) ??
+    trimText(doc.source_web_url, 500) ??
+    trimText(doc.url, 500)
+  );
+}
+
+function communicationSourceRef(doc: AnyRow): string {
+  const source = communicationSource(doc);
+  const title = trimText(doc.title, 120) ?? "Untitled";
+  const date = trimText(doc.date, 30) ?? "undated";
+  return `[Source: ${source} - "${title}" - ${date}]`;
 }
 
 function extractAssignee(item: string): string | null {
@@ -259,7 +302,9 @@ export function createProjectTools(
               .limit(20),
             supabase
               .from("document_metadata")
-              .select("id, title, date, summary, overview, action_items, decisions, key_topics, source, category, type")
+              .select(
+                "id, title, date, summary, overview, notes, action_items, bullet_points, decisions, key_topics, topics_discussed, keywords, sentiment, source, source_system, category, type, fireflies_link, meeting_link, source_web_url, url",
+              )
               .eq("project_id", resolvedProjectId)
               .gte("date", since)
               .order("date", { ascending: false })
@@ -327,6 +372,11 @@ export function createProjectTools(
 
           const openNotifications = notifications.filter((row) => !row.read_at);
           const unexecutedCommitments = commitments.filter((row) => !row.executed);
+          const sourceCoverage = recentDocs.reduce<Record<string, number>>((acc, doc) => {
+            const source = communicationSource(doc);
+            acc[source] = (acc[source] ?? 0) + 1;
+            return acc;
+          }, {});
 
           const budgetDelta = revisedBudget - originalBudget;
           const forecastVariance =
@@ -509,14 +559,22 @@ export function createProjectTools(
               },
             },
             recentMovement: recentDocs.map((doc) => ({
-              sourceRef: `[Source: ${doc.source ?? doc.category ?? doc.type ?? "document"} ${doc.id}]`,
+              sourceRef: communicationSourceRef(doc),
+              sourceType: communicationSource(doc),
+              sourceUrl: communicationUrl(doc),
               title: doc.title,
               date: doc.date,
-              summary: String(doc.summary ?? doc.overview ?? "").slice(0, 700),
-              actionItems: parseTextList(doc.action_items).slice(0, 5),
-              decisions: doc.decisions,
-              keyTopics: doc.key_topics,
+              summary: trimText(doc.summary ?? doc.overview, 900),
+              notes: trimText(doc.notes, 1200),
+              actionItems: parseTextList(doc.action_items).slice(0, 8),
+              bulletPoints: parseTextList(doc.bullet_points).slice(0, 8),
+              decisions: parseTextList(doc.decisions).slice(0, 8),
+              keyTopics: parseTextList(doc.key_topics).slice(0, 8),
+              topicsDiscussed: parseTextList(doc.topics_discussed).slice(0, 8),
+              keywords: parseTextList(doc.keywords).slice(0, 12),
+              sentiment: doc.sentiment,
             })),
+            sourceCoverage,
             riskSignals,
             recommendedQuestions,
             responseContract: {

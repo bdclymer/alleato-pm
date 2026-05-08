@@ -21,12 +21,14 @@ class TestFirefliesActionItems:
                 {"name": "Jesse Dawson"},
             ],
             attendees_json=[],
+            source_date="2026-05-08T17:30:00+00:00",
         )
 
         assert len(rows) == 2
         assert rows[0]["description"] == "Candon to handle outstanding payments for Superior by tomorrow"
         assert rows[0]["assignee_name"] == "Candon Rusin"
         assert rows[0]["assignee_email"] == "crusin@alleatogroup.com"
+        assert rows[0]["due_date"] == "2026-05-09"
         assert rows[0]["project_ids"] == [67]
         assert rows[1]["description"] == "Follow up with Tyler to finalize coding and approval of all pending invoices today"
         assert rows[1]["assignee_name"] == "Tyler"
@@ -48,3 +50,24 @@ class TestFirefliesActionItems:
         assert len(rows) == 1
         assert rows[0]["description"] == "Monitor invoice approval deadlines by the 5th"
         assert rows[0]["project_ids"] == []
+
+    def test_build_task_rows_from_action_items_infers_due_dates_from_source_date(self):
+        rows = FirefliesIngestionPipeline._build_task_rows_from_action_items(
+            metadata_id="meeting-123",
+            action_items=[
+                "Finalize and submit pricing for phase one scope of work by May 18 (10:30)",
+                "Text Indiana office group chat about onboarding on May 11th (14:00)",
+                "Prepare new hire material list on Monday (26:00)",
+            ],
+            project_id=31,
+            speaker_email_map={},
+            speakers_json=[],
+            attendees_json=[],
+            source_date="2026-05-08T18:00:00+00:00",
+        )
+
+        assert [row["due_date"] for row in rows] == [
+            "2026-05-18",
+            "2026-05-11",
+            "2026-05-11",
+        ]

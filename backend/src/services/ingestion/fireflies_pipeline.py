@@ -10,7 +10,7 @@ import re
 import sys
 import unicodedata
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 from uuid import NAMESPACE_URL, uuid4, uuid5
@@ -204,6 +204,7 @@ class FirefliesIngestionPipeline:
         title: str,
         participants: List[str],
         content: str,
+        existing_project_id: Optional[int] = None,
     ) -> Optional[int]:
         assigner = self._get_project_assigner()
         if assigner is None:
@@ -215,13 +216,16 @@ class FirefliesIngestionPipeline:
                 meeting_title=title,
                 participants=participants,
                 content=content[:3000],
-                existing_project_id=None,
+                existing_project_id=existing_project_id,
             )
         except Exception as exc:
             logger.warning("[FirefliesIngestion] Project inference failed: %s", exc)
             return None
 
-        if inferred_id and confidence >= min_confidence:
+        if inferred_id and (
+            confidence >= min_confidence
+            or (method == "title_correction" and confidence >= 0.93)
+        ):
             logger.info(
                 "[FirefliesIngestion] Auto-assigned project_id=%s via %s (confidence=%.2f)",
                 inferred_id,
@@ -287,19 +291,24 @@ class FirefliesIngestionPipeline:
 
         existing = self.store.find_document_by_hash(content_hash)
         existing_by_fireflies = self.store.find_document_by_fireflies_id(parsed.fireflies_id)
-        inferred_project_id: Optional[int] = None
-        if project_id is None and (existing or {}).get("project_id") is None and (existing_by_fireflies or {}).get("project_id") is None:
-            inferred_project_id = self._infer_project_id_from_context(
-                title=parsed.title,
-                participants=parsed.attendees,
-                content=parsed.raw_text,
-            )
-        effective_project_id = (
+        existing_project_id = (
             project_id
             if project_id is not None
             else (existing or {}).get("project_id")
             or (existing_by_fireflies or {}).get("project_id")
-            or inferred_project_id
+        )
+        inferred_project_id: Optional[int] = self._infer_project_id_from_context(
+            title=parsed.title,
+            participants=parsed.attendees,
+            content=parsed.raw_text,
+            existing_project_id=existing_project_id,
+        )
+        effective_project_id = (
+            project_id
+            if project_id is not None
+            else inferred_project_id
+            or (existing or {}).get("project_id")
+            or (existing_by_fireflies or {}).get("project_id")
         )
         document_id = (
             (existing or {}).get("id")
@@ -366,6 +375,7 @@ class FirefliesIngestionPipeline:
                 speaker_email_map=parsed.speaker_email_map,
                 speakers_json=parsed.speakers_json,
                 attendees_json=parsed.attendees_json,
+                source_date=parsed.captured_at,
             ):
                 self.store.upsert_task(task)
             embeddings = self.embedder.embed([chunk.text for chunk in chunks])
@@ -1617,6 +1627,107 @@ class FirefliesIngestionPipeline:
             return "medium"
         return "medium"
 
+    @staticmethod
+    def _coerce_source_date(value: Optional[datetime | str]) -> Optional[datetime]:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            parsed = value
+        else:
+            raw = str(value).strip()
+            if not raw:
+                return None
+            try:
+                parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+
+    @staticmethod
+    def _next_weekday(source_date: datetime, weekday: int) -> datetime:
+        days_ahead = (weekday - source_date.weekday()) % 7
+        if days_ahead == 0:
+            days_ahead = 7
+        return source_date + timedelta(days=days_ahead)
+
+    @classmethod
+    def _infer_action_item_due_date(
+        cls,
+        action_item: str,
+        source_date: Optional[datetime | str],
+    ) -> Optional[str]:
+        source_dt = cls._coerce_source_date(source_date)
+        if not source_dt:
+            return None
+
+        text = (action_item or "").lower()
+        if re.search(r"\btoday\b", text):
+            return source_dt.date().isoformat()
+        if re.search(r"\btomorrow\b", text):
+            return (source_dt + timedelta(days=1)).date().isoformat()
+        if re.search(r"\basap\b|as soon as possible", text):
+            return (source_dt + timedelta(days=2)).date().isoformat()
+        if re.search(r"\bend of (the )?week\b", text):
+            friday = source_dt + timedelta(days=(4 - source_dt.weekday()) % 7)
+            return friday.date().isoformat()
+
+        month_match = re.search(
+            r"\b(?:by|before|on|due|no later than)?\s*"
+            r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+            r"jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
+            r"\s+(\d{1,2})(?:st|nd|rd|th)?\b",
+            text,
+        )
+        if month_match:
+            month_lookup = {
+                "jan": 1,
+                "feb": 2,
+                "mar": 3,
+                "apr": 4,
+                "may": 5,
+                "jun": 6,
+                "jul": 7,
+                "aug": 8,
+                "sep": 9,
+                "oct": 10,
+                "nov": 11,
+                "dec": 12,
+            }
+            month = month_lookup[month_match.group(1)[:3]]
+            day = int(month_match.group(2))
+            year = source_dt.year
+            try:
+                candidate = datetime(year, month, day, tzinfo=timezone.utc)
+            except ValueError:
+                return None
+            if candidate.date() < source_dt.date():
+                try:
+                    candidate = datetime(year + 1, month, day, tzinfo=timezone.utc)
+                except ValueError:
+                    return None
+            return candidate.date().isoformat()
+
+        weekday_lookup = {
+            "monday": 0,
+            "tuesday": 1,
+            "wednesday": 2,
+            "thursday": 3,
+            "friday": 4,
+            "saturday": 5,
+            "sunday": 6,
+        }
+        weekday_match = re.search(
+            r"\b(?:by|before|on|this|next)?\s*"
+            r"(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b",
+            text,
+        )
+        if weekday_match:
+            return cls._next_weekday(source_dt, weekday_lookup[weekday_match.group(1)]).date().isoformat()
+
+        return None
+
     # Patterns for low-value scheduling/admin noise that should not become tasks
     _LOW_VALUE_TASK_RE: re.Pattern = re.compile(
         r"""
@@ -1647,6 +1758,7 @@ class FirefliesIngestionPipeline:
         speaker_email_map: Optional[Dict[str, str]] = None,
         speakers_json: Optional[List[Dict[str, Any]]] = None,
         attendees_json: Optional[List[Dict[str, Any]]] = None,
+        source_date: Optional[datetime | str] = None,
     ) -> List[Dict[str, Any]]:
         rows: List[Dict[str, Any]] = []
         seen_descriptions: set[str] = set()
@@ -1674,6 +1786,7 @@ class FirefliesIngestionPipeline:
                 "metadata_id": metadata_id,
                 "description": description,
                 "assignee_name": assignee_name,
+                "due_date": cls._infer_action_item_due_date(description, source_date),
                 "priority": cls._infer_action_item_priority(description),
                 "status": "open",
                 "source_system": "fireflies",

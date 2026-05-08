@@ -1698,20 +1698,38 @@ def process_source_document(
         supabase.table("source_intelligence_jobs").update(update_payload).eq("id", job_id).execute()
 
     try:
-        project_id = document.get("project_id")
+        existing_project_id = document.get("project_id")
+        project_id = existing_project_id
         attribution_method = "existing_project_id" if project_id else "project_inference"
         confidence_score = 0.95 if project_id else 0.0
+        corrected_project_attribution = False
         project_name: Optional[str] = None
         target: Optional[Dict[str, Any]] = None
 
-        if not project_id:
-            inferred_project_id, method, confidence = _infer_project_id(
-                supabase,
-                title=str(document.get("title") or ""),
-                content=str(document.get("content") or ""),
-                participants=_participants(document),
-                existing_project_id=None,
-            )
+        inferred_project_id, method, confidence = _infer_project_id(
+            supabase,
+            title=str(document.get("title") or ""),
+            content=str(document.get("content") or ""),
+            participants=_participants(document),
+            existing_project_id=int(existing_project_id) if existing_project_id else None,
+        )
+        if (
+            existing_project_id
+            and inferred_project_id
+            and int(inferred_project_id) != int(existing_project_id)
+            and method == "title_correction"
+            and confidence >= 0.93
+        ):
+            project_id = inferred_project_id
+            attribution_method = method
+            confidence_score = confidence
+            corrected_project_attribution = True
+            supabase.table("document_metadata").update(
+                {
+                    "project_id": int(inferred_project_id),
+                }
+            ).eq("id", source_document_id).execute()
+        elif not project_id:
             project_id = inferred_project_id
             attribution_method = method
             confidence_score = confidence
@@ -1719,6 +1737,12 @@ def process_source_document(
         if project_id:
             project = _fetch_project(supabase, int(project_id))
             project_name = project.get("name")
+            if corrected_project_attribution and project_name:
+                supabase.table("document_metadata").update(
+                    {
+                        "project": project_name,
+                    }
+                ).eq("id", source_document_id).execute()
             target = ensure_client_project_target(
                 supabase,
                 int(project_id),
@@ -1733,9 +1757,23 @@ def process_source_document(
             candidate_project_name=project_name,
             confidence_score=confidence_score,
             attribution_method=f"intelligence_compiler:{attribution_method}",
-            evidence_terms=[project_name] if project_name else [],
-            matched_fields=["document_metadata.project_id"] if document.get("project_id") else [],
+            evidence_terms=[
+                value
+                for value in [
+                    project_name,
+                    str(document.get("title") or "") if corrected_project_attribution else None,
+                ]
+                if value
+            ],
+            matched_fields=(
+                ["document_metadata.title"]
+                if corrected_project_attribution
+                else ["document_metadata.project_id"] if document.get("project_id") else []
+            ),
             reasoning=(
+                "Existing document_metadata.project_id was corrected because the source title strongly matched another project."
+                if corrected_project_attribution
+                else
                 "Existing document_metadata.project_id was trusted as the project attribution."
                 if document.get("project_id")
                 else "Project attribution was inferred from source title, content, and participants."

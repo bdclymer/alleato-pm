@@ -169,7 +169,33 @@ def verify(window_hours: int, limit: int) -> VerifyResult:
             )
 
     quality = _summarize_quality(meeting_rows)
-    passed = len(non_meeting_violations) == 0 and len(link_violations) == 0
+    max_missing_assignee_pct = float(
+        getattr(verify, "max_missing_assignee_pct", 75.0)
+    )
+    max_generic_prefix_pct = float(getattr(verify, "max_generic_prefix_pct", 20.0))
+    quality_violations: List[Dict[str, Any]] = []
+    if quality["missing_assignee_pct"] > max_missing_assignee_pct:
+        quality_violations.append(
+            {
+                "metric": "missing_assignee_pct",
+                "actual": quality["missing_assignee_pct"],
+                "max": max_missing_assignee_pct,
+            }
+        )
+    if quality["generic_prefix_pct"] > max_generic_prefix_pct:
+        quality_violations.append(
+            {
+                "metric": "generic_prefix_pct",
+                "actual": quality["generic_prefix_pct"],
+                "max": max_generic_prefix_pct,
+            }
+        )
+
+    passed = (
+        len(non_meeting_violations) == 0
+        and len(link_violations) == 0
+        and len(quality_violations) == 0
+    )
     message = "Fireflies task integrity verification passed" if passed else "Fireflies task integrity verification failed"
 
     return VerifyResult(
@@ -182,6 +208,11 @@ def verify(window_hours: int, limit: int) -> VerifyResult:
             "non_meeting_violations": len(non_meeting_violations),
             "link_violations": len(link_violations),
             "quality": quality,
+            "quality_thresholds": {
+                "max_missing_assignee_pct": max_missing_assignee_pct,
+                "max_generic_prefix_pct": max_generic_prefix_pct,
+            },
+            "quality_violations": quality_violations,
             "non_meeting_examples": non_meeting_violations[:10],
             "link_examples": link_violations[:10],
         },
@@ -192,9 +223,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Verify transcript task integrity and linkage")
     parser.add_argument("--window-hours", type=int, default=24)
     parser.add_argument("--limit", type=int, default=1000)
+    parser.add_argument("--max-missing-assignee-pct", type=float, default=75.0)
+    parser.add_argument("--max-generic-prefix-pct", type=float, default=20.0)
     args = parser.parse_args()
 
     load_env()
+    verify.max_missing_assignee_pct = args.max_missing_assignee_pct  # type: ignore[attr-defined]
+    verify.max_generic_prefix_pct = args.max_generic_prefix_pct  # type: ignore[attr-defined]
     result = verify(window_hours=args.window_hours, limit=args.limit)
     print(
         json.dumps(

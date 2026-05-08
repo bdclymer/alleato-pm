@@ -121,6 +121,59 @@ def _apply_task_quality_gates(tasks: List[TaskItem]) -> List[TaskItem]:
     return filtered
 
 
+def _normalize_task_match_text(value: str | None) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
+
+
+def _task_overlap_score(left: str, right: str) -> float:
+    left_tokens = {token for token in _normalize_task_match_text(left).split() if len(token) > 2}
+    right_tokens = {token for token in _normalize_task_match_text(right).split() if len(token) > 2}
+    if not left_tokens or not right_tokens:
+        return 0.0
+    return len(left_tokens & right_tokens) / max(len(left_tokens), len(right_tokens))
+
+
+def _enrich_fireflies_tasks_with_llm_context(
+    direct_tasks: List[TaskItem],
+    llm_tasks: List[TaskItem],
+) -> List[TaskItem]:
+    """Keep Fireflies action-item text while preserving LLM owner/date enrichment.
+
+    Fireflies is the better source for "what action item existed"; the LLM pass is
+    better at normalizing owners, emails, and relative dates from the surrounding
+    notes/transcript context. This merge avoids dropping either signal.
+    """
+    enriched: List[TaskItem] = []
+    used_llm_indexes: set[int] = set()
+
+    for direct_task in direct_tasks:
+        best_index: int | None = None
+        best_score = 0.0
+        for index, llm_task in enumerate(llm_tasks):
+            if index in used_llm_indexes:
+                continue
+            score = _task_overlap_score(direct_task.description, llm_task.description)
+            if score > best_score:
+                best_score = score
+                best_index = index
+
+        matched = llm_tasks[best_index] if best_index is not None and best_score >= 0.45 else None
+        if matched and best_index is not None:
+            used_llm_indexes.add(best_index)
+
+        enriched.append(
+            TaskItem(
+                description=direct_task.description,
+                assignee=direct_task.assignee or (matched.assignee if matched else None),
+                assignee_email=direct_task.assignee_email or (matched.assignee_email if matched else None),
+                due_date=direct_task.due_date or (matched.due_date if matched else None),
+                priority=_normalize_task_priority(direct_task.priority or (matched.priority if matched else None)),
+            )
+        )
+
+    return enriched
+
+
 def run_extractor(metadata_id: str) -> Dict[str, Any]:
     """
     Extract and store structured data from a parsed meeting.
@@ -236,6 +289,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
                     speaker_email_map=parsed.speaker_email_map,
                     speakers_json=parsed.speakers_json,
                     attendees_json=parsed.attendees_json,
+                    source_date=parsed.captured_at or started_at,
                 )
             ]
             if speaker_email_map:
@@ -276,9 +330,12 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         len(structured.opportunities),
     )
     if direct_fireflies_tasks:
-        structured.tasks = direct_fireflies_tasks
+        structured.tasks = _enrich_fireflies_tasks_with_llm_context(
+            direct_fireflies_tasks,
+            structured.tasks,
+        )
         logger.info(
-            "[Extractor] Using %d direct Fireflies action items for task upserts",
+            "[Extractor] Using %d enriched direct Fireflies action items for task upserts",
             len(structured.tasks),
         )
     else:
