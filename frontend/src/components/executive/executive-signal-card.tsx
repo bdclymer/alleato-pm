@@ -250,22 +250,6 @@ export function ExecutiveSignalCard({
         </div>
       </CollapsibleTrigger>
 
-      {item.sourceId && (
-        <div className="flex items-center gap-3 px-5 pb-4 pl-11 text-xs text-muted-foreground">
-          <span>
-            {isUnlinkedProject
-              ? "Assign this source to a project."
-              : "Wrong project?"}
-          </span>
-          <ExecutiveProjectLinkForm
-            sourceId={item.sourceId}
-            projects={projects}
-            currentProjectId={currentProjectId}
-            label={isUnlinkedProject ? "Link project" : "Change project"}
-          />
-        </div>
-      )}
-
       <CollapsibleContent>
         <div className="px-5 pb-5">
           <div className="border-t border-border/70 pt-4">
