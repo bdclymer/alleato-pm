@@ -84,6 +84,7 @@ Every published article, grouped by category.
 
 | Article | Description |
 |---------|-------------|
+| [AI Capabilities Index](/docs/ai-capabilities-index) | **Start here** — every AI feature in one place, organized by job-to-be-done. |
 | [AI Assistant Overview](/docs/ai-assistant-overview) | Multi-agent C-Suite advisors — how routing works, all entry points. |
 | [Get a Project Briefing from the AI](/docs/ai-project-updates) | Ask for a project status update and what the AI searches. |
 | [What the AI Assistant Can Do (Actions)](/docs/ai-assistant-actions) | Create RFIs, tasks, change orders and more from chat — confirmation flow. |
