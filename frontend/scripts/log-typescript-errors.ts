@@ -21,10 +21,11 @@ interface TypeScriptError {
   category: string;
 }
 
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
+const FRONTEND_ROOT = path.resolve(__dirname, '..');
 const LOG_FILE = path.join(
-  __dirname,
-  '..',
-  'documentation',
+  REPO_ROOT,
+  'docs',
   'typescript-errors',
   'TYPESCRIPT-ERRORS-LOG.md'
 );
@@ -191,8 +192,9 @@ function updateStats(errorCount: number): void {
     const newTotal = currentTotal + errorCount;
     const updatedContent = content
       .replace(/Total Errors Logged \| \d+/, `Total Errors Logged | ${newTotal}`)
-      .replace(/Total Fix Sessions \| (\d+)/, (_, count) => {
-        return `Total Fix Sessions | ${parseInt(count, 10) + 1}`;
+      .replace(/(Total )?Fix Sessions \| (\d+)/, (_match, totalPrefix, count) => {
+        const label = totalPrefix ? 'Total Fix Sessions' : 'Fix Sessions';
+        return `${label} | ${parseInt(count, 10) + 1}`;
       })
       .replace(/Last Updated \| [\d-]+/, `Last Updated | ${new Date().toISOString().split('T')[0]}`);
     fs.writeFileSync(LOG_FILE, updatedContent);
@@ -206,7 +208,7 @@ async function main() {
   try {
     execSync('npx tsc --noEmit 2>&1', {
       encoding: 'utf-8',
-      cwd: path.join(__dirname, '..'),
+      cwd: FRONTEND_ROOT,
     });
     console.log('No TypeScript errors found!');
     return;

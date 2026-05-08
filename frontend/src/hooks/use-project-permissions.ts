@@ -11,6 +11,12 @@ interface ProjectPermissions {
   isLoading: boolean;
 }
 
+type PermissionTemplateRecord = {
+  rules_json?: Record<string, string[]> | null;
+};
+
+type PermissionTemplateJoin = PermissionTemplateRecord | PermissionTemplateRecord[] | null;
+
 /**
  * Fetches the current user's module permissions and user_type for a project.
  * Returns empty permissions when no projectId is provided.
@@ -24,14 +30,6 @@ export function useProjectPermissions(
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!projectId) {
-      setPermissions({});
-      setUserType(null);
-      setIsAppAdmin(false);
-      setIsLoading(false);
-      return;
-    }
-
     let cancelled = false;
     const supabase = createClient();
     const currentProjectId = projectId;
@@ -72,6 +70,13 @@ export function useProjectPermissions(
           return;
         }
 
+        if (!currentProjectId) {
+          setPermissions({});
+          setUserType(null);
+          setIsLoading(false);
+          return;
+        }
+
         // Look up person_id
         const { data: authLink } = await supabase
           .from("users_auth")
@@ -107,16 +112,18 @@ export function useProjectPermissions(
         } else {
           setUserType(membership.user_type || "employee");
            
-          const template = membership.permission_template as any;
+          const template = membership.permission_template as PermissionTemplateJoin;
           const rulesJson = Array.isArray(template)
             ? template[0]?.rules_json
             : template?.rules_json;
           const rules = (rulesJson as Record<string, string[]>) || {};
           setPermissions(rules);
         }
-      } catch {
+      } catch (error) {
+        console.error("Failed to load project permissions", error);
         setPermissions({});
         setUserType(null);
+        setIsAppAdmin(false);
       } finally {
         if (!cancelled) setIsLoading(false);
       }

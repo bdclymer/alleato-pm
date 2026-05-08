@@ -2,7 +2,11 @@
  * POST /api/cron/acumatica-sync
  *
  * Scheduled Acumatica integration pipeline:
- * 1) mirror tables (incremental), 2) vendor/company projection, 3) project-level direct costs + AR invoices/payments.
+ * 1) mirror tables (incremental)
+ * 2) vendor/company projection
+ * 3) global AP bills → subcontractor_invoices
+ * 4) global AP checks → commitment_payments
+ * 5) project-level direct costs + AR invoices/payments
  */
 
 import { NextResponse } from "next/server";
@@ -11,6 +15,8 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createServiceClient } from "@/lib/supabase/service";
 import { syncAllMirrorEntities } from "@/lib/acumatica/mirror-sync";
 import {
+  syncAPBillsToSubcontractorInvoices,
+  syncAPChecksToCommitmentPayments,
   syncARInvoices,
   syncARPayments,
   syncDirectCosts,
@@ -266,6 +272,11 @@ export const POST = withApiGuardrails("/api/cron/acumatica-sync#POST", async ({ 
   try {
     const mirrorResults = await syncAllMirrorEntities({ mode: "incremental" }, supabase);
     const vendorResult = await syncVendors(supabase);
+
+    // Global AP projections — run after mirror sync so source tables are fresh
+    const apBillsResult = await syncAPBillsToSubcontractorInvoices(supabase);
+    const apChecksResult = await syncAPChecksToCommitmentPayments(supabase);
+
     const syncUserId = await resolveSyncUserId(supabase);
     const projectBatch = await getProjectBatch(supabase);
 
@@ -289,6 +300,7 @@ export const POST = withApiGuardrails("/api/cron/acumatica-sync#POST", async ({ 
     await persistProjectBatchState(supabase, projectBatch);
 
     const mirrorErrorCount = mirrorResults.reduce((sum, item) => sum + item.errors, 0);
+    const apErrorCount = apBillsResult.errors.length + apChecksResult.errors.length;
     const projectErrorCount = projectResults.reduce(
       (sum, item) =>
         sum
@@ -297,7 +309,7 @@ export const POST = withApiGuardrails("/api/cron/acumatica-sync#POST", async ({ 
         + item.arPayments.errors.length,
       0,
     );
-    const totalErrorCount = mirrorErrorCount + vendorResult.errors.length + projectErrorCount;
+    const totalErrorCount = mirrorErrorCount + vendorResult.errors.length + apErrorCount + projectErrorCount;
     const status = totalErrorCount === 0 ? "success" : "partial_failure";
 
     const summary = {
@@ -311,6 +323,8 @@ export const POST = withApiGuardrails("/api/cron/acumatica-sync#POST", async ({ 
         errors: mirrorErrorCount,
       },
       vendors: vendorResult,
+      apBills: { created: apBillsResult.created, updated: apBillsResult.updated, errors: apBillsResult.errors.length },
+      apChecks: { created: apChecksResult.created, updated: apChecksResult.updated, errors: apChecksResult.errors.length },
       projects: {
         processed: projectResults.length,
         totalMapped: projectBatch.totalProjects,

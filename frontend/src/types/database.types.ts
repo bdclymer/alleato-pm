@@ -7624,7 +7624,7 @@ export type Database = {
           payment_method: string | null
           payment_number: string | null
           payment_ref: string | null
-          project_id: number
+          project_id: number | null
           purchase_order_id: string | null
           raw_payload: Json | null
           source: string
@@ -7647,7 +7647,7 @@ export type Database = {
           payment_method?: string | null
           payment_number?: string | null
           payment_ref?: string | null
-          project_id: number
+          project_id?: number | null
           purchase_order_id?: string | null
           raw_payload?: Json | null
           source?: string
@@ -7670,7 +7670,7 @@ export type Database = {
           payment_method?: string | null
           payment_number?: string | null
           payment_ref?: string | null
-          project_id?: number
+          project_id?: number | null
           purchase_order_id?: string | null
           raw_payload?: Json | null
           source?: string

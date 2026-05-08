@@ -65,7 +65,23 @@ const ENDPOINT_NAME = "Default";
 const ENTITY_BASE = `${BASE_URL}/entity/${ENDPOINT_NAME}/${API_VERSION}`;
 const AUTH_LOGIN = `${BASE_URL}/entity/auth/login`;
 const AUTH_LOGOUT = `${BASE_URL}/entity/auth/logout`;
-const COMPANY = process.env.ACUMATICA_COMPANY ?? "Alleato Group";
+
+const IS_DEV_ENV = process.env.ACUMATICA_ENV === "dev";
+
+function getCredentials() {
+  if (IS_DEV_ENV) {
+    return {
+      username: process.env.ACUMATICA_DEV_USER,
+      password: process.env.ACUMATICA_DEV_PASSWORD,
+      company: process.env.ACUMATICA_DEV_COMPANY ?? "Developer",
+    };
+  }
+  return {
+    username: process.env.ACCOUNTING_USER,
+    password: process.env.ACCOUNTING_PASSWORD,
+    company: process.env.ACUMATICA_COMPANY ?? "Alleato Group",
+  };
+}
 
 /** Session TTL — Acumatica defaults to ~20 min. We refresh early at 15 min. */
 const SESSION_TTL_MS = 15 * 60 * 1000;
@@ -149,19 +165,17 @@ class AcumaticaClient {
   }
 
   private async _doLogin(): Promise<void> {
-    const username = process.env.ACCOUNTING_USER;
-    const password = process.env.ACCOUNTING_PASSWORD;
+    const { username, password, company } = getCredentials();
 
     if (!username || !password) {
-      throw new Error(
-        "ACCOUNTING_USER and ACCOUNTING_PASSWORD must be set in environment variables",
-      );
+      const envPrefix = IS_DEV_ENV ? "ACUMATICA_DEV_USER / ACUMATICA_DEV_PASSWORD" : "ACCOUNTING_USER / ACCOUNTING_PASSWORD";
+      throw new Error(`Acumatica credentials not set. Required env vars: ${envPrefix}`);
     }
 
     const body: AcuLoginBody = {
       name: username,
       password: password,
-      company: COMPANY,
+      company,
     };
 
     const res = await fetch(AUTH_LOGIN, {

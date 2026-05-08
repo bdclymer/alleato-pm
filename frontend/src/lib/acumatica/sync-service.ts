@@ -24,6 +24,37 @@ import type {
 } from "./types";
 
 type DbClient = SupabaseClient<Database>;
+type PublicTables = Database["public"]["Tables"];
+type AcumaticaApBillProjection = Pick<
+  PublicTables["acumatica_ap_bills"]["Row"],
+  | "id"
+  | "reference_nbr"
+  | "document_type"
+  | "vendor_id"
+  | "company_id"
+  | "project_id"
+  | "date"
+  | "due_date"
+  | "status"
+  | "amount"
+  | "description"
+  | "vendor_ref"
+>;
+type AcumaticaCheckProjection = Pick<
+  PublicTables["acumatica_checks"]["Row"],
+  | "id"
+  | "external_key"
+  | "reference_nbr"
+  | "document_type"
+  | "vendor_id"
+  | "vendor_name"
+  | "payment_ref"
+  | "application_date"
+  | "status"
+  | "description"
+  | "payment_method"
+  | "payment_amount"
+>;
 
 export interface VendorSyncResult {
   created: number;
@@ -124,7 +155,6 @@ interface MappedDirectCostLineItem {
   quantity: number;
   uom: string | null;
   unit_cost: number;
-  line_total: number;
   line_order: number;
 }
 
@@ -367,15 +397,13 @@ export async function syncDirectCosts(
 
       const quantity = detail.Qty && detail.Qty > 0 ? detail.Qty : 1;
       const amount = detail.Amount ?? 0;
-      const lineTotal = amount;
-      const unitCost = quantity > 0 ? lineTotal / quantity : lineTotal;
+      const unitCost = quantity > 0 ? amount / quantity : amount;
       mappedLineItems.push({
         budget_code_id: projectCostCodeId,
         description: detail.Description ?? null,
         quantity,
         uom: detail.UOM ?? null,
         unit_cost: unitCost,
-        line_total: lineTotal,
         line_order: index + 1,
       });
     }
@@ -388,7 +416,7 @@ export async function syncDirectCosts(
     }
 
     // Sum amounts from the matching detail lines (only lines for our project)
-    const totalAmount = mappedLineItems.reduce((sum, line) => sum + line.line_total, 0);
+    const totalAmount = mappedLineItems.reduce((sum, line) => sum + line.unit_cost * line.quantity, 0);
 
     // Use the earliest detail date, or fall back to header CreatedDateTime
     const earliestDate = matchingDetails
@@ -434,7 +462,22 @@ export async function syncDirectCosts(
     };
 
     try {
-      const existingId = byDocumentKey.get(documentKey) ?? byRefNbr.get(refNbr);
+      let existingId = byDocumentKey.get(documentKey) ?? byRefNbr.get(refNbr);
+
+      // If not in our pre-loaded map, do a point-query to catch records created
+      // in prior partial runs (prevents duplicate key violations on re-sync).
+      if (!existingId) {
+        const { data: existing } = await supabase
+          .from("direct_costs")
+          .select("id")
+          .eq("acumatica_document_key", documentKey)
+          .maybeSingle();
+        if (existing?.id) {
+          existingId = existing.id;
+          byDocumentKey.set(documentKey, existingId);
+        }
+      }
+
       if (existingId) {
         const { error: updateError } = await supabase
           .from("direct_costs")
@@ -1111,4 +1154,367 @@ export async function syncCommitments(
     updated: subResult.updated + poResult.updated,
     errors: [...subResult.errors, ...poResult.errors],
   };
+}
+
+// ---------------------------------------------------------------------------
+// AP Bills → subcontractor_invoices (global, not per-project)
+// ---------------------------------------------------------------------------
+
+type InvoiceStatus = "draft" | "pending" | "approved" | "paid" | "void";
+
+function mapApBillStatus(acuStatus: string): InvoiceStatus {
+  switch (acuStatus) {
+    case "Open":      return "pending";
+    case "Closed":    return "paid";
+    case "On Hold":   return "draft";
+    case "Balanced":  return "pending";
+    default:          return "draft";
+  }
+}
+
+/**
+ * Pull all AP Bills from the acumatica_ap_bills mirror table and upsert
+ * into subcontractor_invoices.
+ *
+ * Linkage: bills that have a project_id and a vendor that matches exactly one
+ * subcontract (or PO) in that project are linked automatically. Bills with
+ * ambiguous or missing linkage are still imported (acumatica_ap_bill_id
+ * satisfies the relaxed CHECK constraint).
+ *
+ * Dedup key: acumatica_ap_bill_id (unique index on subcontractor_invoices).
+ */
+export async function syncAPBillsToSubcontractorInvoices(
+  supabaseClient?: DbClient,
+): Promise<SyncResult> {
+  const result: SyncResult = { created: 0, updated: 0, errors: [] };
+  const supabase = supabaseClient ?? (await createClient());
+  const now = new Date().toISOString();
+
+  // Load all AP bills linked to a local project (paginated — Supabase row limit is 1000)
+  const bills: AcumaticaApBillProjection[] = [];
+  {
+    let offset = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data, error: billsError } = await supabase
+        .from("acumatica_ap_bills")
+        .select("id, reference_nbr, document_type, vendor_id, company_id, project_id, date, due_date, status, amount, description, vendor_ref")
+        .not("project_id", "is", null)
+        .range(offset, offset + PAGE - 1);
+      if (billsError) {
+        result.errors.push(`Failed to load AP bills: ${billsError.message}`);
+        return result;
+      }
+      if (!data?.length) break;
+      bills.push(...data);
+      if (data.length < PAGE) break;
+      offset += PAGE;
+    }
+  }
+
+  if (!bills.length) return result;
+
+  // Build vendor lookup: acumatica_vendor_id → company.id
+  const { data: vendors } = await supabase
+    .from("companies")
+    .select("id, acumatica_vendor_id")
+    .eq("is_vendor", true)
+    .not("acumatica_vendor_id", "is", null);
+
+  const companyByVendorId = new Map<string, string>();
+  for (const v of vendors ?? []) {
+    if (v.acumatica_vendor_id) companyByVendorId.set(v.acumatica_vendor_id, v.id);
+  }
+
+  // Build subcontract lookup: (project_id, company_id) → [subcontract uuid, ...]
+  const { data: subcontracts } = await supabase
+    .from("subcontracts")
+    .select("id, project_id, contract_company_id")
+    .not("contract_company_id", "is", null);
+
+  const subsByProjectCompany = new Map<string, string[]>();
+  for (const s of subcontracts ?? []) {
+    if (!s.contract_company_id) continue;
+    const key = `${s.project_id}:${s.contract_company_id}`;
+    const arr = subsByProjectCompany.get(key) ?? [];
+    arr.push(s.id);
+    subsByProjectCompany.set(key, arr);
+  }
+
+  // Build purchase_order lookup: (project_id, company_id) → [po uuid, ...]
+  const { data: pos } = await supabase
+    .from("purchase_orders")
+    .select("id, project_id, contract_company_id")
+    .not("contract_company_id", "is", null);
+
+  const posByProjectCompany = new Map<string, string[]>();
+  for (const po of pos ?? []) {
+    if (!po.contract_company_id) continue;
+    const key = `${po.project_id}:${po.contract_company_id}`;
+    const arr = posByProjectCompany.get(key) ?? [];
+    arr.push(po.id);
+    posByProjectCompany.set(key, arr);
+  }
+
+  // Load existing subcontractor_invoices for dedup (paginated)
+  const existingByBillId = new Map<number, number>();
+  {
+    let offset = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data, error: existError } = await supabase
+        .from("subcontractor_invoices")
+        .select("id, acumatica_ap_bill_id")
+        .not("acumatica_ap_bill_id", "is", null)
+        .range(offset, offset + PAGE - 1);
+      if (existError) {
+        result.errors.push(`Failed to load existing invoices: ${existError.message}`);
+        return result;
+      }
+      if (!data?.length) break;
+      for (const row of data) {
+        if (row.acumatica_ap_bill_id != null) {
+          existingByBillId.set(row.acumatica_ap_bill_id as number, row.id as number);
+        }
+      }
+      if (data.length < PAGE) break;
+      offset += PAGE;
+    }
+  }
+
+  for (const bill of bills) {
+    // Prefer the pre-enriched company_id FK; fall back to vendor_id text lookup
+    const companyId: string | null = bill.company_id
+      ?? (bill.vendor_id ? companyByVendorId.get(bill.vendor_id) ?? null : null);
+    const projectId = bill.project_id as number;
+
+    // Attempt commitment linkage: prefer subcontract, fall back to PO
+    let subcontractId: string | null = null;
+    let purchaseOrderId: string | null = null;
+
+    if (companyId) {
+      const key = `${projectId}:${companyId}`;
+      const matchingSubs = subsByProjectCompany.get(key) ?? [];
+      const matchingPos = posByProjectCompany.get(key) ?? [];
+
+      if (matchingSubs.length === 1) {
+        subcontractId = matchingSubs[0];
+      } else if (matchingPos.length === 1) {
+        purchaseOrderId = matchingPos[0];
+      }
+      // Multiple matches or zero → leave both null (acumatica_ap_bill_id satisfies constraint)
+    }
+
+    const fields = {
+      project_id: projectId,
+      subcontract_id: subcontractId,
+      purchase_order_id: purchaseOrderId,
+      invoice_number: bill.reference_nbr ?? null,
+      billing_date: bill.date ?? null,
+      period_end: bill.due_date ?? null,
+      status: mapApBillStatus(bill.status ?? ""),
+      notes: bill.description ?? (bill.vendor_ref ? `Vendor ref: ${bill.vendor_ref}` : null),
+      submitted_at: bill.status && bill.status !== "On Hold" ? now : null,
+      approved_at: (bill.status === "Closed" || bill.status === "Balanced") ? now : null,
+      acumatica_ref_nbr: bill.reference_nbr ?? null,
+      acumatica_doc_type: bill.document_type ?? null,
+      acumatica_ap_bill_id: bill.id,
+      acumatica_sync_at: now,
+      updated_at: now,
+    };
+
+    try {
+      const existingId = existingByBillId.get(bill.id as number);
+      if (existingId) {
+        const { error } = await supabase
+          .from("subcontractor_invoices")
+          .update(fields)
+          .eq("id", existingId);
+        if (error) result.errors.push(`Bill ${bill.reference_nbr}: ${error.message}`);
+        else result.updated++;
+      } else {
+        const { error } = await supabase
+          .from("subcontractor_invoices")
+          .insert({ ...fields, created_at: now });
+        if (error) result.errors.push(`Bill ${bill.reference_nbr}: ${error.message}`);
+        else result.created++;
+      }
+    } catch (err) {
+      result.errors.push(`Bill ${bill.reference_nbr}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// AP Checks → commitment_payments (global, not per-project)
+// ---------------------------------------------------------------------------
+
+/**
+ * Pull all AP Checks from the acumatica_checks mirror table and upsert
+ * into commitment_payments.
+ *
+ * Linkage: for each check we attempt to find a matching subcontractor_invoice
+ * (and its subcontract/PO) via the acumatica_ap_bill_id FK. Checks that cannot
+ * be linked are still imported — the relaxed constraint allows both null.
+ *
+ * Dedup key: external_key = "Check|{reference_nbr}".
+ */
+export async function syncAPChecksToCommitmentPayments(
+  supabaseClient?: DbClient,
+): Promise<SyncResult> {
+  const result: SyncResult = { created: 0, updated: 0, errors: [] };
+  const supabase = supabaseClient ?? (await createClient());
+  const now = new Date().toISOString();
+
+  // Load all checks with pagination (Supabase default row limit is 1000)
+  const checks: AcumaticaCheckProjection[] = [];
+  {
+    let offset = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data, error: checksError } = await supabase
+        .from("acumatica_checks")
+        .select("id, external_key, reference_nbr, document_type, vendor_id, vendor_name, payment_ref, application_date, status, description, payment_method, payment_amount")
+        .range(offset, offset + PAGE - 1);
+      if (checksError) {
+        result.errors.push(`Failed to load AP checks: ${checksError.message}`);
+        return result;
+      }
+      if (!data?.length) break;
+      checks.push(...data);
+      if (data.length < PAGE) break;
+      offset += PAGE;
+    }
+  }
+
+  if (!checks.length) return result;
+
+  // Build lookup: subcontractor_invoices by acumatica_ap_bill_id
+  // We'll use this to infer which project/sub/PO a check might belong to
+  // via vendor_id matching (best-effort, not always deterministic).
+  const { data: subInvoices } = await supabase
+    .from("subcontractor_invoices")
+    .select("id, project_id, subcontract_id, purchase_order_id, acumatica_ap_bill_id, acumatica_ref_nbr")
+    .not("acumatica_ap_bill_id", "is", null);
+
+  // Map: acumatica_ap_bill_id → invoice row for downstream lookups
+  const invoiceByBillId = new Map<number, typeof subInvoices extends (infer T)[] | null ? T : never>();
+  for (const inv of subInvoices ?? []) {
+    if (inv.acumatica_ap_bill_id != null) {
+      invoiceByBillId.set(inv.acumatica_ap_bill_id as number, inv);
+    }
+  }
+
+  // Map: vendor_id → [invoices] — for single-project vendors, we can infer the link
+  const invoicesByVendorBillId = new Map<string, string[]>();
+  const { data: bills } = await supabase
+    .from("acumatica_ap_bills")
+    .select("id, vendor_id")
+    .not("vendor_id", "is", null);
+
+  const billIdToVendor = new Map<number, string>();
+  for (const b of bills ?? []) {
+    if (b.vendor_id) billIdToVendor.set(b.id, b.vendor_id);
+  }
+
+  // Load existing commitment_payments for dedup (paginated)
+  const existingByKey = new Map<string, number>();
+  {
+    let offset = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data, error: existError } = await supabase
+        .from("commitment_payments")
+        .select("id, external_key")
+        .range(offset, offset + PAGE - 1);
+      if (existError) {
+        result.errors.push(`Failed to load existing commitment_payments: ${existError.message}`);
+        return result;
+      }
+      if (!data?.length) break;
+      for (const row of data) existingByKey.set(row.external_key, row.id);
+      if (data.length < PAGE) break;
+      offset += PAGE;
+    }
+  }
+
+  for (const check of checks) {
+    // Use the mirror table's own external_key (format: "{DocumentType}|{ReferenceNbr}")
+    const externalKey = check.external_key;
+
+    // Infer project/commitment from vendor_id: find subcontractor_invoices where
+    // the linked AP bill has the same vendor_id. If exactly one project → link.
+    let projectId: number | null = null;
+    let subcontractId: string | null = null;
+    let purchaseOrderId: string | null = null;
+    let matchedInvoiceId: number | null = null;
+
+    if (check.vendor_id) {
+      // Find all sub-invoices whose AP bill belongs to this vendor
+      const vendorInvoices = (subInvoices ?? []).filter((inv) => {
+        const billVendor = inv.acumatica_ap_bill_id != null
+          ? billIdToVendor.get(inv.acumatica_ap_bill_id as number)
+          : null;
+        return billVendor === check.vendor_id;
+      });
+
+      const uniqueProjects = new Set(vendorInvoices.map((i) => i.project_id));
+      if (uniqueProjects.size === 1 && vendorInvoices.length > 0) {
+        const inv = vendorInvoices[0];
+        projectId = inv.project_id as number;
+        subcontractId = inv.subcontract_id as string | null;
+        purchaseOrderId = inv.purchase_order_id as string | null;
+        matchedInvoiceId = inv.id as number;
+      }
+    }
+
+    // Normalize payment_method — may be "{}" from Acumatica
+    const rawMethod = typeof check.payment_method === "string" ? check.payment_method.toLowerCase().trim() : "";
+    let paymentMethod: string | null = null;
+    if (rawMethod && rawMethod !== "{}") paymentMethod = rawMethod;
+
+    const fields = {
+      project_id: projectId,
+      subcontract_id: subcontractId,
+      purchase_order_id: purchaseOrderId,
+      subcontractor_invoice_id: matchedInvoiceId,
+      acumatica_check_id: check.id,
+      external_key: externalKey,
+      payment_number: check.reference_nbr ?? null,
+      payment_ref: typeof check.payment_ref === "string" ? check.payment_ref : null,
+      payment_method: paymentMethod,
+      payment_date: check.application_date ?? null,
+      vendor_id: check.vendor_id ?? null,
+      vendor_name: check.vendor_name ?? null,
+      amount: check.payment_amount ?? 0,
+      status: check.status ?? null,
+      source: "acumatica",
+      acumatica_sync_at: now,
+      updated_at: now,
+    };
+
+    try {
+      const existingId = existingByKey.get(externalKey);
+      if (existingId) {
+        const { error } = await supabase
+          .from("commitment_payments")
+          .update(fields)
+          .eq("id", existingId);
+        if (error) result.errors.push(`Check ${check.reference_nbr}: ${error.message}`);
+        else result.updated++;
+      } else {
+        const { error } = await supabase
+          .from("commitment_payments")
+          .insert({ ...fields, created_at: now });
+        if (error) result.errors.push(`Check ${check.reference_nbr}: ${error.message}`);
+        else result.created++;
+      }
+    } catch (err) {
+      result.errors.push(`Check ${check.reference_nbr}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return result;
 }
