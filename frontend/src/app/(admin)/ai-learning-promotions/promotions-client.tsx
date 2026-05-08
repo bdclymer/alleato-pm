@@ -90,7 +90,6 @@ type PromotionLearning = {
   preventionPrompt?: string;
   content?: string;
   visibility?: string;
-  sourceDocumentId?: string | null;
   candidateProjectName?: string | null;
   pagePath?: string | null;
   taskSnapshot?: Record<string, unknown> | null;

@@ -472,6 +472,29 @@ const columnLabels: Record<string, string> = {
   projectedOverUnder: "Projected +/-",
 };
 
+const budgetGrandTotalColumnKeys = new Set<keyof BudgetGrandTotals>([
+  "originalBudgetAmount",
+  "budgetModifications",
+  "approvedCOs",
+  "revisedBudget",
+  "pendingChanges",
+  "projectedBudget",
+  "committedCosts",
+  "jobToDateCostDetail",
+  "directCosts",
+  "pendingCostChanges",
+  "projectedCosts",
+  "forecastToComplete",
+  "estimatedCostAtCompletion",
+  "projectedOverUnder",
+]);
+
+function isBudgetGrandTotalColumn(
+  columnId: string,
+): columnId is keyof BudgetGrandTotals {
+  return budgetGrandTotalColumnKeys.has(columnId as keyof BudgetGrandTotals);
+}
+
 export function BudgetTable({
   data,
   grandTotals,
@@ -1166,6 +1189,38 @@ export function BudgetTable({
     return width ? { width: `${width}px`, minWidth: `${width}px` } : undefined;
   };
 
+  const renderGrandTotalFooterCell = (columnId: string) => {
+    const isUtilityColumn = columnId === "select" || columnId === "actions";
+    const isDescriptionColumn = columnId === "description";
+    const columnTotal = isBudgetGrandTotalColumn(columnId)
+      ? grandTotals[columnId]
+      : null;
+
+    return (
+      <td
+        key={columnId}
+        className={cn(
+          "py-4 text-sm",
+          columnId === "select" ? "pl-2 pr-1" : "px-2",
+          isDescriptionColumn && "font-semibold text-foreground",
+        )}
+        style={getColumnSizeStyle(columnId)}
+      >
+        {isDescriptionColumn ? (
+          "Grand Totals"
+        ) : columnTotal !== null ? (
+          <div className="text-right">
+            <CurrencyCell value={columnTotal} />
+          </div>
+        ) : isUtilityColumn ? null : (
+          <span className="sr-only">
+            No total for {columnLabels[columnId] ?? columnId}
+          </span>
+        )}
+      </td>
+    );
+  };
+
   const syncHorizontalScroll = (
     source: HTMLDivElement | null,
     target: HTMLDivElement | null,
@@ -1718,128 +1773,9 @@ export function BudgetTable({
           >
             <TableFooter className="bg-muted/50 border-t">
               <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
-                <td className="py-4 pl-2 pr-1" style={getColumnSizeStyle("select")} />
-                <td
-                  className="py-4 px-2 text-sm font-semibold text-foreground"
-                  style={getColumnSizeStyle("description")}
-                >
-                  Grand Totals
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("originalBudgetAmount")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.originalBudgetAmount} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("budgetModifications")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.budgetModifications} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("approvedCOs")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.approvedCOs} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("revisedBudget")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.revisedBudget} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("jobToDateCostDetail")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.jobToDateCostDetail} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("directCosts")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.directCosts} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("pendingChanges")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.pendingChanges} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("projectedBudget")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.projectedBudget} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("committedCosts")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.committedCosts} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("pendingCostChanges")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.pendingCostChanges} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("projectedCosts")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.projectedCosts} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("forecastToComplete")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.forecastToComplete} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("estimatedCostAtCompletion")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell
-                      value={grandTotals.estimatedCostAtCompletion}
-                    />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("projectedOverUnder")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.projectedOverUnder} />
-                  </div>
-                </td>
-                <td className="py-4 px-2 text-sm" style={getColumnSizeStyle("actions")} />
+                {table.getVisibleLeafColumns().map((column) =>
+                  renderGrandTotalFooterCell(column.id),
+                )}
               </tr>
             </TableFooter>
           </table>
