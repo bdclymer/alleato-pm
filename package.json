@@ -53,6 +53,7 @@
     "validate:runtime-config": "node scripts/validate-runtime-config.mjs",
     "quality:predeploy": "bash scripts/predeploy-quality-gate.sh",
     "verify:postdeploy": "bash scripts/postdeploy-verify.sh",
+    "codex:finish": "node scripts/ops/codex-finish.mjs",
     "linear:codex:check": "node scripts/ops/linear-codex-comment.mjs --check",
     "linear:codex:comment": "node scripts/ops/linear-codex-comment.mjs",
     "docs:validate-help": "npx tsx scripts/docs/validate-help-articles.ts",

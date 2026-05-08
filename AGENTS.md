@@ -22,6 +22,26 @@ Rule 8: Before closing any bug, ask: “What makes this never happen again?”
 - Default expectation: deliver working code, not just a plan. If details are missing, make reasonable assumptions and complete a working version.
 - Do not tell the user to perform actions that the agent can execute directly (e.g., migrations, type generation, lint/type checks, or local commands). Execute them and report the result.
 
+## Main Branch Finish Flow (MANDATORY)
+
+Default to completing finished Codex tasks directly on `main` and publishing them to `origin/main`; do not create branches or worktrees for routine completion.
+
+When a task is ready to close:
+
+```bash
+npm run codex:finish -- --message "Short imperative commit message" --files <task-owned paths>
+```
+
+Rules:
+
+- Use `--files` with the exact task-owned files whenever the checkout has unrelated dirt.
+- Use `--staged-only` only when exact hunk-level staging is needed because a task-owned file also contains unrelated existing edits.
+- Use `--all-dirty` only when the current task owns every dirty file in the checkout.
+- The command is expected to stage, run targeted checks, commit, rebase with autostash if `origin/main` moved, push to `origin/main`, and verify local `HEAD` equals `origin/main`.
+- If the command blocks, treat that as a real failure: report cause, detection gap, prevention step, exact failing command, owner file(s), and whether it is related to the current task or unrelated repo debt.
+- For state-only checks, use `npm run codex:finish -- --check`.
+- Do not claim work is pushed until `codex:finish` or an equivalent explicit `git push origin main` plus `HEAD == origin/main` verification succeeds.
+
 ## Parallel Session Orchestration (MANDATORY)
 
 When more than one Codex session is active, use `docs/ops/orchestration/` as the control plane.
