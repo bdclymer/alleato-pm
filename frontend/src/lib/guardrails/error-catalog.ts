@@ -118,6 +118,7 @@ export const ERROR_CATALOG = {
     httpStatus: 500,
     safeToRetry: false,
   },
+  /** @deprecated Use AUTH_FORBIDDEN */
   FORBIDDEN: {
     code: "FORBIDDEN",
     humanMessage: "You do not have permission to perform this action.",
@@ -127,6 +128,7 @@ export const ERROR_CATALOG = {
     httpStatus: 403,
     safeToRetry: false,
   },
+  /** @deprecated Use INVALID_PAYLOAD */
   VALIDATION_ERROR: {
     code: "VALIDATION_ERROR",
     humanMessage: "Request validation failed.",
@@ -166,6 +168,7 @@ export const ERROR_CATALOG = {
   // Codes below are in active use across api/ routes. Each route also passes
   // an explicit `status:` override, but registering them here ensures they
   // pass type checking AND surface in the error catalog for monitoring.
+  /** @deprecated Use DB_ERROR */
   DATABASE_ERROR: {
     code: "DATABASE_ERROR",
     humanMessage: "Database operation failed.",
@@ -193,6 +196,7 @@ export const ERROR_CATALOG = {
     httpStatus: 500,
     safeToRetry: false,
   },
+  /** @deprecated Use INVALID_PAYLOAD */
   INVALID_INPUT: {
     code: "INVALID_INPUT",
     humanMessage: "Request input is invalid.",
@@ -202,6 +206,7 @@ export const ERROR_CATALOG = {
     httpStatus: 400,
     safeToRetry: false,
   },
+  /** @deprecated Use INVALID_PAYLOAD */
   BAD_REQUEST: {
     code: "BAD_REQUEST",
     humanMessage: "Request could not be processed.",
@@ -211,6 +216,7 @@ export const ERROR_CATALOG = {
     httpStatus: 400,
     safeToRetry: false,
   },
+  /** @deprecated Use MISSING_ENV_VAR */
   MISSING_CONFIG: {
     code: "MISSING_CONFIG",
     humanMessage: "Service configuration is incomplete.",
@@ -247,6 +253,7 @@ export const ERROR_CATALOG = {
     httpStatus: 412,
     safeToRetry: false,
   },
+  /** @deprecated Use UPSTREAM_FAILURE */
   UPSTREAM_ERROR: {
     code: "UPSTREAM_ERROR",
     humanMessage: "Upstream service returned an error.",
@@ -256,6 +263,7 @@ export const ERROR_CATALOG = {
     httpStatus: 502,
     safeToRetry: true,
   },
+  /** @deprecated Use INVALID_PAYLOAD */
   VALIDATION: {
     code: "VALIDATION",
     humanMessage: "Request validation failed.",
@@ -265,6 +273,7 @@ export const ERROR_CATALOG = {
     httpStatus: 400,
     safeToRetry: false,
   },
+  /** @deprecated Use MISSING_ENV_VAR */
   CONFIGURATION_ERROR: {
     code: "CONFIGURATION_ERROR",
     humanMessage: "Service configuration error.",

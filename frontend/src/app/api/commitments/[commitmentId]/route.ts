@@ -352,7 +352,7 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     } = await supabase.auth.getUser();
     if (!user) {
       throw new GuardrailError({
-        code: "AUTH_EXPIRED",
+        code: "UNAUTHORIZED",
         where: "commitments/[commitmentId]#PUT",
         message: "Authentication required.",
       });
@@ -485,7 +485,7 @@ export const DELETE = withApiGuardrails<{ commitmentId: string }>(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]#DELETE", message: "Authentication required." });
+      throw new GuardrailError({ code: "UNAUTHORIZED", where: "commitments/[commitmentId]#DELETE", message: "Authentication required." });
     }
 
     // Determine the commitment type from the unified view
@@ -564,7 +564,7 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
     } = await supabase.auth.getUser();
     if (!user) {
       throw new GuardrailError({
-        code: "AUTH_EXPIRED",
+        code: "UNAUTHORIZED",
         where: "commitments/[commitmentId]#PATCH",
         message: "Authentication required.",
       });

@@ -24,7 +24,7 @@ async function requireAdmin(where: string) {
   const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({
-      code: "AUTH_EXPIRED",
+      code: "UNAUTHORIZED",
       where,
       message: "Authentication required.",
       status: 401,
@@ -51,7 +51,7 @@ async function requireAdmin(where: string) {
 }
 
 export const GET = withApiGuardrails("/api/admin/feedback/tools#GET", async ({ request }) => {
-  const admin = await requireAdmin("/api/admin/feedback/tools#GET");
+  await requireAdmin("/api/admin/feedback/tools#GET");
 
   const url = new URL(request.url);
   const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams));
@@ -113,9 +113,14 @@ const assignSchema = z.object({
 });
 
 export const POST = withApiGuardrails("/api/admin/feedback/tools#POST", async ({ request }) => {
-  const admin = await requireAdmin("/api/admin/feedback/tools#POST");
+  await requireAdmin("/api/admin/feedback/tools#POST");
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: "/api/admin/feedback/tools#POST", message: "Request body is not valid JSON." });
+  }
   const parsed = assignSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

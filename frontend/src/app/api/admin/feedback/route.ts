@@ -229,24 +229,16 @@ async function uploadScreenshot(userId: string, screenshotDataUrl: string) {
   };
 }
 
-async function requireFeedbackUser() {
-  const requestUser = await getApiRouteUser();
-  if (!requestUser) {
-    return null;
-  }
-  return requestUser;
-}
-
-// Throws AUTH_EXPIRED (401) when there is no session and AUTH_FORBIDDEN (403)
+// Throws UNAUTHORIZED (401) when there is no session and AUTH_FORBIDDEN (403)
 // when the session exists but the user is not an admin. Distinguishing these
 // matters: clients use 401 to redirect to login and 403 to show "no permission"
 // UX. Returning a single sentinel for both lost that distinction and caused the
 // PR-gate smoke test to flag every unauthenticated request as a 403.
 async function requireAdminUser(where: string) {
-  const requestUser = await requireFeedbackUser();
+  const requestUser = await getApiRouteUser();
   if (!requestUser) {
     throw new GuardrailError({
-      code: "AUTH_EXPIRED",
+      code: "UNAUTHORIZED",
       where,
       message: "Authentication required.",
       status: 401,
@@ -273,12 +265,17 @@ async function requireAdminUser(where: string) {
 }
 
 export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ request }) => {
-  const requestUser = await requireFeedbackUser();
+  const requestUser = await getApiRouteUser();
   if (!requestUser) {
-    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "/api/admin/feedback#POST", message: "Authentication required.", status: 401 });
+    throw new GuardrailError({ code: "UNAUTHORIZED", where: "/api/admin/feedback#POST", message: "Authentication required.", status: 401 });
   }
 
-  const rawBody = await request.json();
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: "/api/admin/feedback#POST", message: "Request body is not valid JSON." });
+  }
   const parsed = feedbackPayloadSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(
@@ -431,7 +428,7 @@ const listQuerySchema = z.object({
 });
 
 export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request }) => {
-  const requestUser = await requireAdminUser("/api/admin/feedback#GET");
+  await requireAdminUser("/api/admin/feedback#GET");
 
   const url = new URL(request.url);
   const parsed = listQuerySchema.safeParse(Object.fromEntries(url.searchParams));
@@ -497,9 +494,14 @@ const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
 };
 
 export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ request }) => {
-  const requestUser = await requireAdminUser("/api/admin/feedback#PATCH");
+  await requireAdminUser("/api/admin/feedback#PATCH");
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: "/api/admin/feedback#PATCH", message: "Request body is not valid JSON." });
+  }
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -616,9 +618,14 @@ const sendToGitHubSchema = z.object({
 });
 
 export const PUT = withApiGuardrails("/api/admin/feedback#PUT", async ({ request }) => {
-  const requestUser = await requireAdminUser("/api/admin/feedback#PUT");
+  await requireAdminUser("/api/admin/feedback#PUT");
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: "/api/admin/feedback#PUT", message: "Request body is not valid JSON." });
+  }
   const parsed = sendToGitHubSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -713,9 +720,14 @@ const deleteSchema = z.object({
 });
 
 export const DELETE = withApiGuardrails("/api/admin/feedback#DELETE", async ({ request }) => {
-  const requestUser = await requireAdminUser("/api/admin/feedback#DELETE");
+  await requireAdminUser("/api/admin/feedback#DELETE");
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: "/api/admin/feedback#DELETE", message: "Request body is not valid JSON." });
+  }
   const parsed = deleteSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
