@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarDays, ChevronDown, ListChecks } from "lucide-react";
+import { CalendarDays, ChevronDown, Eye, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Collapsible,
@@ -109,6 +109,9 @@ export function ExecutiveSignalCard({
   const sourceUrl = item.sourceUrl ?? item.citations[0]?.sourceUrl;
   const sourceLabel = item.sourceDetail?.trim() || item.title;
   const sourceMeta = `${sourceLabel} - ${item.date}`;
+  const hasRawEvidence = Boolean(
+    primaryEvidence || evidenceCitations.length > 0,
+  );
   const resolveFollowUp = () => {
     if (!followUpId) return;
     const formData = new FormData();
@@ -125,15 +128,19 @@ export function ExecutiveSignalCard({
       onOpenChange={setOpen}
       className="bg-background"
     >
-      <CollapsibleTrigger className="group flex w-full items-start gap-4 py-5 text-left outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+      <div className="flex w-full items-start gap-4 py-5">
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="text-base font-semibold leading-snug text-foreground">
-            {item.title}
-          </div>
+          <CollapsibleTrigger className="block w-full text-left outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            <div className="space-y-2">
+              <div className="text-base font-semibold leading-snug text-foreground">
+                {item.title}
+              </div>
 
-          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            {item.summary}
-          </p>
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                {item.summary}
+              </p>
+            </div>
+          </CollapsibleTrigger>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1 text-xs font-medium text-muted-foreground">
             {sourceUrl ? (
@@ -163,10 +170,53 @@ export function ExecutiveSignalCard({
                 {relatedTasks.length === 1 ? "" : "s"}
               </span>
             )}
+            {hasRawEvidence && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="size-5 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                aria-label={
+                  rawEvidenceOpen ? "Hide raw evidence" : "Show raw evidence"
+                }
+                title={
+                  rawEvidenceOpen ? "Hide raw evidence" : "Show raw evidence"
+                }
+                onClick={() => setRawEvidenceOpen((nextOpen) => !nextOpen)}
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
+
+          {rawEvidenceOpen && hasRawEvidence && (
+            <div className="max-w-3xl space-y-4 pt-2 text-sm leading-6 text-muted-foreground">
+              {evidenceCitations.length > 0 ? (
+                evidenceCitations.map((citation, index) => (
+                  <div
+                    key={`${citation.source}-${citation.sourceId ?? citation.sourceDetail}-${index}`}
+                    className="space-y-2"
+                  >
+                    {citationCount > 1 && (
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          {citation.source}
+                        </span>
+                        <span>{citation.sourceDetail}</span>
+                        <span>{citation.date}</span>
+                      </div>
+                    )}
+                    <p className="whitespace-pre-wrap">{citation.evidence}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="whitespace-pre-wrap">{primaryEvidence}</p>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 pt-0.5 text-xs font-medium text-muted-foreground">
+        <CollapsibleTrigger className="flex shrink-0 items-center gap-2 pt-0.5 text-xs font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <span>{open ? "Hide details" : "Show details"}</span>
           <ChevronDown
             className={cn(
@@ -174,8 +224,8 @@ export function ExecutiveSignalCard({
               open && "rotate-180",
             )}
           />
-        </div>
-      </CollapsibleTrigger>
+        </CollapsibleTrigger>
+      </div>
 
       <CollapsibleContent>
         <div className="pb-6">
@@ -220,57 +270,6 @@ export function ExecutiveSignalCard({
                     </li>
                   ))}
                 </ul>
-              </DetailBlock>
-            )}
-
-            {(primaryEvidence || evidenceCitations.length > 0) && (
-              <DetailBlock label="Raw evidence">
-                <Collapsible
-                  open={rawEvidenceOpen}
-                  onOpenChange={setRawEvidenceOpen}
-                >
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-0 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground"
-                    >
-                      {rawEvidenceOpen
-                        ? "Hide raw evidence"
-                        : "Show raw evidence"}
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-3">
-                    {evidenceCitations.length > 0 ? (
-                      <div className="space-y-4">
-                        {evidenceCitations.map((citation, index) => (
-                          <div
-                            key={`${citation.source}-${citation.sourceId ?? citation.sourceDetail}-${index}`}
-                            className="space-y-2"
-                          >
-                            {citationCount > 1 && (
-                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                                <span className="font-medium text-foreground">
-                                  {citation.source}
-                                </span>
-                                <span>{citation.sourceDetail}</span>
-                                <span>{citation.date}</span>
-                              </div>
-                            )}
-                            <p className="whitespace-pre-wrap text-muted-foreground">
-                              {citation.evidence}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="whitespace-pre-wrap text-muted-foreground">
-                        {primaryEvidence}
-                      </p>
-                    )}
-                  </CollapsibleContent>
-                </Collapsible>
               </DetailBlock>
             )}
 
