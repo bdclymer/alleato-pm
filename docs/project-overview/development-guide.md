@@ -1,6 +1,6 @@
 # Development Guide — Alleato-PM
 
-> Generated: 2026-03-22 | Source: CLAUDE.md, package.json, playwright.config.ts
+> Updated: 2026-05-07 | Source: CLAUDE.md, package.json, playwright.config.ts
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| Node.js | 18+ | Required by Next.js |
+| Node.js | 22+ (24 LTS preferred) | Required by Next.js |
 | Python | 3.11+ | Required by FastAPI backend |
 | pnpm | 10.13.1 | Package manager (two lockfiles: root + frontend/) |
 | Supabase CLI | latest | For migrations and type generation |
@@ -188,39 +188,16 @@ npm run quality:fix      # typecheck + lint with auto-fix
 
 ## Environment Variables
 
-Key variables required in `.env` (project root):
+> **Full reference:** [`docs/reference/ENV-VARS.md`](../reference/ENV-VARS.md) — complete listing grouped by service, includes build-crash vars and Render backend vars.
+
+Minimum required to run locally:
 
 ```bash
-# Supabase
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-
-# AI (via AI Gateway BYOK or direct)
-AI_GATEWAY_API_KEY=          # AI Gateway with BYOK mode
-OPENAI_API_KEY=              # Fallback if gateway key not set
-
-# ERP Integration
-ACCOUNTING_USER=             # Acumatica username
-ACCOUNTING_PASSWORD=         # Acumatica password
-
-# Procore (for crawlers/scripts)
-PROCORE_USER=bclymer@alleatogroup.com
-PROCORE_PASSWORD=Clymer926!
-
-# Test credentials
-TEST_USER_1=test1@mail.com
-TEST_PASSWORD_1=test12026!!!
-
-# Liveblocks
-LIVEBLOCKS_SECRET_KEY=
-NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=
-
-# Email
-RESEND_API_KEY=
-
-# File storage
-BLOB_READ_WRITE_TOKEN=       # Vercel Blob
+AI_GATEWAY_API_KEY=          # or OPENAI_API_KEY as fallback
+BACKEND_URL=http://localhost:8051
 ```
 
 ---
