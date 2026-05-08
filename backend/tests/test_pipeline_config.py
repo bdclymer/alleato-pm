@@ -13,13 +13,13 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
-from backend.src.services.pipeline.config import (
+from src.services.pipeline.config import (
     CHUNK_OVERLAP_CHARS,
     CHUNK_TARGET_CHARS,
     EMBEDDING_DIMENSIONS,
     EMBEDDING_MODEL,
 )
-from backend.src.services.pipeline.llm import _MODEL_DIMENSIONS
+from src.services.pipeline.llm import _MODEL_DIMENSIONS
 
 # Canonical mapping of model name -> native output dimension.
 # Update this table when adding support for a new embedding model.
@@ -102,7 +102,7 @@ def test_generate_meeting_digest_returns_empty_dict_on_non_json():
     Regression test for the unguarded json.loads crash path. The AI Gateway provider
     skips response_format=json_object, making non-JSON responses a real failure path.
     """
-    from backend.src.services.pipeline import llm
+    from src.services.pipeline import llm
 
     with patch.object(llm, "_call_llm", return_value="Sorry, I can't process that."):
         result = llm.generate_meeting_digest(
@@ -123,7 +123,7 @@ def test_generate_meeting_digest_returns_empty_dict_on_non_json():
 
 def test_generate_meeting_digest_returns_parsed_json_on_success():
     """generate_meeting_digest parses and returns JSON when the LLM responds correctly."""
-    from backend.src.services.pipeline import llm
+    from src.services.pipeline import llm
 
     expected = {"digest_text": "Test digest", "key_takeaways": ["Point A"]}
     with patch.object(llm, "_call_llm", return_value=json.dumps(expected)):
@@ -146,7 +146,7 @@ def test_segment_transcript_returns_empty_list_on_non_json():
     Regression test: segment_transcript is Step 1 of the pipeline -- a crash here
     kills all downstream chunking for the document with no error surfaced.
     """
-    from backend.src.services.pipeline import llm
+    from src.services.pipeline import llm
 
     with patch.object(llm, "_call_llm", return_value="Unable to parse transcript."):
         result = llm.segment_transcript(
@@ -161,7 +161,7 @@ def test_segment_transcript_returns_empty_list_on_non_json():
 
 def test_segment_transcript_returns_segments_on_success():
     """segment_transcript parses and returns segments when the LLM responds correctly."""
-    from backend.src.services.pipeline import llm
+    from src.services.pipeline import llm
 
     segments = [{"title": "Intro", "start_index": 0, "end_index": 5}]
     with patch.object(llm, "_call_llm", return_value=json.dumps({"segments": segments})):
@@ -174,7 +174,7 @@ def test_segment_transcript_returns_segments_on_success():
 
 def test_segment_transcript_returns_empty_list_on_missing_segments_key():
     """segment_transcript returns [] if the JSON is valid but 'segments' key is absent."""
-    from backend.src.services.pipeline import llm
+    from src.services.pipeline import llm
 
     with patch.object(llm, "_call_llm", return_value=json.dumps({"other_key": []})):
         result = llm.segment_transcript(
