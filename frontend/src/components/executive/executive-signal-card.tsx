@@ -33,13 +33,6 @@ export type ExecutiveRelatedTask = {
   projectName: string | null;
 };
 
-function contextPreview(value: string | null | undefined) {
-  if (!value) return null;
-  const normalized = value.replace(/\s+/g, " ").trim();
-  if (!normalized) return null;
-  return normalized.length > 520 ? `${normalized.slice(0, 520).trim()}...` : normalized;
-}
-
 function displayProjectLabel(value: string) {
   const label = value.replace(/\s+/g, " ").trim() || "No project linked";
   return label.replace(/^\d{2,5}\s*[-:]?\s+/, "").trim() || label;
@@ -113,6 +106,7 @@ export function ExecutiveSignalCard({
   projectHref,
   currentProjectId,
   projects,
+  defaultOpen = false,
 }: {
   item: BrandonBriefItem;
   employees: ExecutiveTaskAssigneeOption[];
@@ -123,13 +117,13 @@ export function ExecutiveSignalCard({
   projectHref?: string | null;
   currentProjectId?: number | null;
   projects: ExecutiveProjectOption[];
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [rawEvidenceOpen, setRawEvidenceOpen] = useState(false);
   const [isResolving, startResolveTransition] = useTransition();
   const router = useRouter();
   const primaryEvidence = item.evidence ?? item.citations[0]?.evidence;
-  const visibleContext = contextPreview(primaryEvidence);
   const evidenceCitations = item.citations.filter((citation) =>
     citation.evidence?.trim(),
   );
@@ -203,12 +197,6 @@ export function ExecutiveSignalCard({
       <CollapsibleContent>
         <div className="pb-6">
           <div className="border-t border-border/60 pt-4">
-            {visibleContext && (
-              <DetailBlock label="Context">
-                {visibleContext}
-              </DetailBlock>
-            )}
-
             <DetailBlock label="Project">
               {item.sourceId ? (
                 <ExecutiveProjectLinkForm

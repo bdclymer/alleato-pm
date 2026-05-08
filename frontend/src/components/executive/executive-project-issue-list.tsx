@@ -81,7 +81,7 @@ function groupIssuesByProject(entries: ExecutiveProjectIssueEntry[]): ProjectIss
   }
 
   return Array.from(groups.values()).sort((left, right) => {
-    if (left.unlinked !== right.unlinked) return left.unlinked ? -1 : 1;
+    if (left.unlinked !== right.unlinked) return left.unlinked ? 1 : -1;
     return left.label.localeCompare(right.label);
   });
 }
@@ -129,6 +129,8 @@ function ProjectFilterRow({
 
 function ProjectIssueGroupSection({
   group,
+  open,
+  onOpenChange,
   employees,
   projects,
 }: {
@@ -167,20 +169,21 @@ function ProjectIssueGroupSection({
 
       <CollapsibleContent className="pb-6">
         <div className="divide-y divide-border/70">
-        {group.entries.map((entry) => (
-          <ExecutiveSignalCard
-            key={entry.id}
-            item={entry.item}
-            employees={employees}
-            hasMatchingTask={entry.relatedTasks.length > 0}
-            relatedTasks={entry.relatedTasks}
-            followUpId={entry.followUpId}
-            actionLabel={entry.actionLabel}
-            projectHref={entry.projectHref}
-            currentProjectId={entry.currentProjectId}
-            projects={projects}
-          />
-        ))}
+          {group.entries.map((entry, index) => (
+            <ExecutiveSignalCard
+              key={entry.id}
+              item={entry.item}
+              employees={employees}
+              hasMatchingTask={entry.relatedTasks.length > 0}
+              relatedTasks={entry.relatedTasks}
+              followUpId={entry.followUpId}
+              actionLabel={entry.actionLabel}
+              projectHref={entry.projectHref}
+              currentProjectId={entry.currentProjectId}
+              projects={projects}
+              defaultOpen={index === 0}
+            />
+          ))}
         </div>
       </CollapsibleContent>
     </Collapsible>

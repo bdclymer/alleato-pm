@@ -4,10 +4,10 @@ This report identifies app-code patterns that can hide broken data paths or runt
 
 ## Summary
 
-- Critical: 46
+- Critical: 38
 - High: 35
 - Medium: 17
-- Total: 98
+- Total: 90
 
 ## Required Policy
 
@@ -38,14 +38,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `silent-catch` | `frontend/src/app/(admin)/test-matrix/page.tsx:284` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/admin/prp-status/route.ts:88` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/admin/rag-eval/run/route.ts:141` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/annotations/route.ts:21` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/gaps/[feature]/route.ts:77` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/gaps/[feature]/route.ts:92` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/gaps/[feature]/route.ts:123` | } catch { /* ignore */ } | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/gaps/[feature]/route.ts:135` | } catch { /* ignore */ } | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/spec/[feature]/route.ts:40` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/spec/[feature]/route.ts:51` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev/annotate/route.ts:55` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/dev/violations/route.ts:43` | } catch { /* non-fatal */ } | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/liveblocks-auth/route.ts:55` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/liveblocks/webhook/route.ts:153` | } catch { /* enrichment is best-effort */ } | Add structured reporting or rethrow with a typed error. |

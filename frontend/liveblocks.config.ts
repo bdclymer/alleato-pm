@@ -95,7 +95,7 @@ export type BallInCourtData = {
 
 // ── Global Liveblocks type declarations ─────────────────────────────────────
 
-import type { JsonObject, LiveList, LiveObject } from "@liveblocks/client";
+import type { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 
 declare global {
   interface Liveblocks {
@@ -115,7 +115,11 @@ declare global {
       labels: LiveList<string>;
       links: LiveList<string>;
       // Spreadsheet storage
-      spreadsheet?: LiveObject<Record<string, JsonObject>>;
+      spreadsheet?: LiveObject<{
+        cells: LiveMap<string, LiveObject<{ value: string }>>;
+        columns: LiveList<LiveObject<{ id: string; width: number }>>;
+        rows: LiveList<LiveObject<{ id: string; height: number }>>;
+      }>;
     };
 
     UserMeta: {
