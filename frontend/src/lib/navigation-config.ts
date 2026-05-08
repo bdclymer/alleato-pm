@@ -139,6 +139,7 @@ export const subcontractorTools: NavigationTool[] = [
 
 export const adminTools: NavigationTool[] = [
   { name: "Actions", path: "/actions", icon: Wrench, requiresProject: false, adminOnly: true },
+  { name: "Operations Readiness", path: "/operations-readiness", icon: CheckCircle, requiresProject: false, adminOnly: true },
   { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
   { name: "Database Tables", path: "/database", icon: Table, requiresProject: false, adminOnly: true },
   { name: "What's New", path: "/updates", icon: TrendingUp, requiresProject: false },
@@ -586,6 +587,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: LayoutDashboard,
     description: "Operational dashboard",
+    adminOnly: true,
+  },
+  {
+    name: "Operations Readiness",
+    path: "/operations-readiness",
+    requiresProject: false,
+    icon: CheckCircle,
+    description: "Source sync, task, packet, and daily brief readiness",
     adminOnly: true,
   },
   {
