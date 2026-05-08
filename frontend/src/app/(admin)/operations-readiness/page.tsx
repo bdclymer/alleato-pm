@@ -8,7 +8,7 @@ export default function OperationsReadinessPage() {
     <PageShell
       variant="dashboard"
       title="Operations Readiness"
-      description="One place to check source sync, generated tasks, project intelligence packets, and the daily brief."
+      description="Four operating answers: source data, generated tasks, project intelligence packets, and the daily brief."
       contentClassName="space-y-8"
     >
       <OperationsReadinessPanel />

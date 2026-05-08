@@ -236,12 +236,20 @@ export const GET = withApiGuardrails(
     const compilerUnavailable = "error" in compilerResult;
     const sourceBlocker = sourceUnavailable ? sourceResult.error : firstMeaningfulError(sourceResult);
     const sourceLevel: ReadinessLevel = sourceUnavailable
-      ? "unknown"
+      ? "blocked"
       : sourceResult.counts.unembedded > 0 || sourceResult.counts.uncompiled > 0
         ? "attention"
         : sourceResult.healthy
           ? "ready"
           : "blocked";
+    const sourceHasBacklog =
+      !sourceUnavailable &&
+      (sourceResult.counts.unembedded > 0 ||
+        sourceResult.counts.uncompiled > 0 ||
+        sourceResult.counts.stuckItems > 0);
+    const sourceBacklogAnswer = sourceUnavailable
+      ? null
+      : `No. ${formatCount(sourceResult.counts.unembedded)} synced items are not searchable and ${formatCount(sourceResult.counts.uncompiled)} are not in project intelligence packets.`;
 
     const packetQueued = compilerUnavailable
       ? 0
@@ -273,9 +281,9 @@ export const GET = withApiGuardrails(
         answer:
           sourceLevel === "ready"
             ? "Yes. Sources are synced, searchable, and compiled."
-            : sourceLevel === "unknown"
-              ? "Unknown. The source health service did not answer."
-              : "Not completely. Some data still needs sync, embedding, or compiler work.",
+            : sourceUnavailable
+              ? "No. The source health service did not answer, so sync and embedding cannot be trusted."
+              : sourceBacklogAnswer ?? "No. Source data is not fully ready.",
         level: sourceLevel,
         checkedAt: sourceUnavailable ? generatedAt : sourceResult.generatedAt,
         metrics: sourceUnavailable
@@ -316,12 +324,11 @@ export const GET = withApiGuardrails(
         question: "Have all generated tasks been updated?",
         answer:
           sourceUnavailable || (sourceResult.counts.tasks === 0 && newTasks === 0)
-            ? "Needs review. Task generation cannot be trusted without source health."
-            : "Current enough to review. Recent generated task changes are visible in Tasks.",
-        level:
-          sourceUnavailable || (!sourceUnavailable && sourceResult.counts.stuckItems > 0)
-            ? "attention"
-            : "ready",
+            ? "No. Task generation cannot be trusted until source health responds."
+            : sourceHasBacklog
+              ? `No. ${formatCount(newTasks)} tasks were created and ${formatCount(updatedTasks)} were updated in the last 24 hours, but source backlog can leave generated tasks incomplete.`
+              : `Yes. ${formatCount(newTasks)} tasks were created and ${formatCount(updatedTasks)} were updated in the last 24 hours.`,
+        level: sourceUnavailable ? "blocked" : sourceHasBacklog ? "attention" : "ready",
         checkedAt: generatedAt,
         metrics: [
           { label: "Total extracted tasks", value: sourceUnavailable ? "Unknown" : formatCount(sourceResult.counts.tasks) },
@@ -329,8 +336,10 @@ export const GET = withApiGuardrails(
           { label: "Updated in 24h", value: formatCount(updatedTasks) },
         ],
         blocker:
-          sourceUnavailable || (!sourceUnavailable && sourceResult.counts.stuckItems > 0)
-            ? "Task extraction depends on the same source pipeline; stuck source items can leave tasks stale."
+          sourceUnavailable
+            ? "Task extraction depends on source health, and source health is unavailable."
+            : sourceHasBacklog
+              ? "Task extraction depends on the same source pipeline; source backlog can leave tasks stale."
             : null,
         cause:
           "Generated tasks are derived from synced communication/document records, so task freshness follows source ingestion health.",
@@ -344,14 +353,14 @@ export const GET = withApiGuardrails(
         question: "Have project intelligence and packets been updated?",
         answer:
           compilerUnavailable
-            ? "Unknown. The compiler health service did not answer."
+            ? "No. The compiler health service did not answer, so packet freshness cannot be trusted."
             : packetFailed > 0
               ? "No. Packet refresh jobs are failing."
               : packetQueued > 0
                 ? "In progress. Packet work is queued or running."
                 : "Yes. Current packets are available.",
         level: compilerUnavailable
-          ? "unknown"
+          ? "blocked"
           : packetFailed > 0
             ? "blocked"
             : packetQueued > 0 || !compilerResult.healthy
@@ -398,8 +407,8 @@ export const GET = withApiGuardrails(
           : dailyBrief.sent_teams
             ? "Yes. The latest brief was generated and sent to Teams."
             : dailyBrief.workflow_status === "approved"
-              ? "Generated and approved, but not sent to Teams."
-              : "Generated as a draft, but not approved or sent.",
+              ? "No. The latest brief was generated and approved, but has not been sent to Teams."
+              : "No. The latest brief was generated as a draft, but has not been approved or sent.",
         level: !dailyBrief
           ? "blocked"
           : dailyBrief.sent_teams
@@ -452,9 +461,9 @@ export const GET = withApiGuardrails(
       status: blocked > 0 || unknown > 0 ? "blocked" : attention > 0 ? "attention" : "ready",
       summary:
         blocked > 0 || unknown > 0
-          ? "One or more readiness checks cannot be trusted yet."
+          ? "One or more operating answers are blocked or cannot be trusted yet."
           : attention > 0
-            ? "The core systems are available, but follow-up is needed."
+            ? "At least one operating answer is no and needs follow-up."
             : "All four operating answers are currently ready.",
       counts: { ready: items.filter((item) => item.level === "ready").length, attention, blocked, unknown },
       items,
