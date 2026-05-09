@@ -1618,12 +1618,20 @@ export function createProjectTools(
         "what needs attention NOW and what action items are outstanding. " +
         "Use when asked: 'what are my tasks', 'what do I need to do', 'what should I be working on', " +
         "'show me my action items', 'what's on my plate', 'what's open', 'what's urgent', " +
-        "'what needs attention', or any question about to-do items, open items, or follow-ups.",
+        "'what needs attention', or any question about to-do items, open items, or follow-ups. " +
+        "Also use for person-specific task questions: 'what are Brandon's tasks', " +
+        "'show tasks assigned to Brandon', 'what does Brandon need to do', " +
+        "'tasks for [person name]', 'what is [person] working on'. " +
+        "Pass the person's first or last name as assigneeName.",
       inputSchema: z.object({
         projectId: z
           .number()
           .optional()
           .describe("Optional project ID to filter by"),
+        assigneeName: z
+          .string()
+          .optional()
+          .describe("Optional person name to filter tasks by assignee (e.g. 'Brandon', 'Megan'). When provided, returns tasks assigned to or mentioning this person across all projects."),
         maxResults: z
           .number()
           .optional()
@@ -1633,7 +1641,7 @@ export function createProjectTools(
       execute: withTrace(
         "getActionItemsAndInsights",
         options,
-        async ({ projectId, maxResults }) => {
+        async ({ projectId, assigneeName, maxResults }) => {
         const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
         if (scopedProjectIds.length === 0) {
           return {
@@ -1693,13 +1701,21 @@ export function createProjectTools(
 
         // Query the tasks table directly — these are AI-extracted action items
         // from meetings/emails that have been compiled into trackable records
-        const tasksQuery = supabase
+        let tasksQuery = supabase
           .from("tasks")
-          .select("id, title, description, status, priority, due_date, assignee_name, assignee_email, source_system, project_id")
-          .in("project_id", scopedProjectIds)
+          .select("id, title, description, status, priority, due_date, assignee_name, assignee_email, assigned_by, source_system, project_id")
           .neq("status", "completed")
           .order("due_date", { ascending: true, nullsFirst: false })
           .limit(maxResults ?? 20);
+
+        if (assigneeName) {
+          const pattern = `%${assigneeName}%`;
+          tasksQuery = tasksQuery.or(
+            `assignee_name.ilike.${pattern},assignee_email.ilike.${pattern},assigned_by.ilike.${pattern},description.ilike.${pattern}`,
+          );
+        } else {
+          tasksQuery = tasksQuery.in("project_id", scopedProjectIds);
+        }
         const { data: taskRows, error: tasksError } = await tasksQuery;
         if (tasksError) {
           sourceErrors.push(`tasks lookup failed: ${tasksError.message}`);
@@ -1712,6 +1728,8 @@ export function createProjectTools(
           priority: t.priority,
           dueDate: t.due_date,
           assignee: t.assignee_name ?? t.assignee_email,
+          assignedBy: t.assigned_by,
+          projectId: t.project_id,
           sourceSystem: t.source_system,
           overdue: t.due_date ? t.due_date < now : false,
         }));
