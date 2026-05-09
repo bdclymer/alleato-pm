@@ -7,6 +7,7 @@ import {
   generateEmbedding,
   getOpenAI,
 } from "@/lib/ai/tools/tool-utils";
+import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
 
 type BriefTone = "neutral" | "good" | "watch" | "risk";
 type BriefSource = "Email" | "Teams" | "Meeting" | "Document";
@@ -240,6 +241,7 @@ type EnrichedBriefItem = {
   index: number;
   summary?: string;
   evidenceFacts?: string[];
+  bullets?: string[];
   recommendedAction?: string;
   whyItMatters?: string;
 };
@@ -1329,37 +1331,42 @@ function normalizeSynthesizedItem(
 
   const primaryCitation = mergedCitations[0] ?? primary.citations[0];
 
+  const evidenceFacts = (item.evidenceFacts ?? [])
+    .map((fact) =>
+      expandRelativeWeekdays(compactText(fact, 220), primary.date),
+    )
+    .filter(Boolean)
+    .slice(0, 6);
+  const summary = expandRelativeWeekdays(
+    compactText(item.summary, 420),
+    primary.date,
+  );
+  const recommendedAction = item.recommendedAction
+    ? expandRelativeWeekdays(
+        compactText(item.recommendedAction, 220),
+        primary.date,
+      )
+    : primary.recommendedAction;
+  const whyItMatters = item.whyItMatters
+    ? expandRelativeWeekdays(compactText(item.whyItMatters, 220), primary.date)
+    : primary.whyItMatters;
+
   return {
     ...primary,
     title: compactText(item.title, 120),
-    summary: expandRelativeWeekdays(
-      compactText(item.summary, 420),
-      primary.date,
-    ),
-    evidenceFacts: (item.evidenceFacts ?? [])
-      .map((fact) =>
-        expandRelativeWeekdays(compactText(fact, 220), primary.date),
-      )
-      .filter(Boolean)
-      .slice(0, 6),
-    bullets: (item.bullets ?? [])
-      .map((bullet) =>
-        expandRelativeWeekdays(compactText(bullet, 180), primary.date),
-      )
-      .filter(Boolean)
-      .slice(0, 4),
-    recommendedAction: item.recommendedAction
-      ? expandRelativeWeekdays(
-          compactText(item.recommendedAction, 220),
-          primary.date,
-        )
-      : primary.recommendedAction,
-    whyItMatters: item.whyItMatters
-      ? expandRelativeWeekdays(
-          compactText(item.whyItMatters, 220),
-          primary.date,
-        )
-      : primary.whyItMatters,
+    summary,
+    evidenceFacts,
+    bullets: getExecutiveBriefBullets({
+      bullets: item.bullets,
+      evidenceFacts,
+      summary,
+      recommendedAction,
+      whyItMatters,
+      status: item.status ?? primary.status,
+      citations: mergedCitations,
+    }),
+    recommendedAction,
+    whyItMatters,
     status: item.status ?? primary.status,
     tone: item.tone ?? primary.tone,
     source: primaryCitation.source,
@@ -1419,8 +1426,9 @@ async function synthesizeSections(
     "Use waitingOnOthers for project-team, client, vendor, estimating, finance, or design inputs that are pending. " +
     "Return ONLY valid JSON with keys needsBrandon, waitingOnOthers, importantUpdates. " +
     "Each item must include: title, summary, evidenceFacts, bullets, recommendedAction, whyItMatters, sourceIndexes (array of integers, ordered most-relevant first), status, tone. " +
+    "Owner-facing summaries are NOT paragraphs: bullets must contain 3 to 5 concise executive bullets. Each bullet must include the key business impact, deadline/date when present, and blocker or decision needed when present. " +
     "evidenceFacts must be a concise bulleted fact list synthesized from all selected sources for that item. Use direct facts with names, dates, dollars, blockers, and commitments. Do not include unsupported facts. " +
-    "Titles should be specific, not bucket names. Bullets should be short facts, not paragraphs. " +
+    "Titles should be specific, not bucket names. Bullets should be short facts, not paragraphs or run-on prose. " +
     "Tone must be one of risk, watch, good, neutral.";
   const user =
     "Create the Daily Brief using the Brandon audience preset from these retrieved source candidates. " +
@@ -1499,6 +1507,15 @@ function mapBriefSections(
   };
 }
 
+function enforceExecutiveBriefBullets(
+  sections: BrandonDailyUpdatePacket["sections"],
+): BrandonDailyUpdatePacket["sections"] {
+  return mapBriefSections(sections, (item) => ({
+    ...item,
+    bullets: getExecutiveBriefBullets(item),
+  }));
+}
+
 function itemEvidencePayload(item: BrandonBriefItem) {
   return item.citations.map((citation, citationIndex) => ({
     citationIndex,
@@ -1563,12 +1580,13 @@ async function enrichBriefSections(
   const system =
     "You turn executive briefing source evidence into usable operating intelligence. " +
     "Use only the supplied citation evidence. Do not invent, infer beyond the evidence, or add placeholder facts. " +
-    "For each item, write one tighter summary, 3 to 6 evidenceFacts, one recommendedAction, and whyItMatters. " +
+    "For each item, write one tighter summary, 3 to 5 owner-facing bullets, 3 to 6 evidenceFacts, one recommendedAction, and whyItMatters. " +
+    "Owner-facing bullets are the product contract: no paragraph summaries, no run-on prose, and each bullet must carry business impact plus deadline/date and blocker/decision when present. " +
     "Evidence facts must synthesize across all citations for the same item and remove repeated wording. " +
     "Prefer concrete names, dates, dollar amounts, projects, blockers, commitments, and owner/action state. " +
     "If the evidence does not support a fact, omit it. Return ONLY valid JSON.";
   const user =
-    'Enrich these executive briefing items. Return JSON as {"items":[{"section":"needsBrandon|waitingOnOthers|importantUpdates","index":0,"summary":"...","evidenceFacts":["..."],"recommendedAction":"...","whyItMatters":"..."}]}.\n\n' +
+    'Enrich these executive briefing items. Return JSON as {"items":[{"section":"needsBrandon|waitingOnOthers|importantUpdates","index":0,"summary":"...","bullets":["..."],"evidenceFacts":["..."],"recommendedAction":"...","whyItMatters":"..."}]}.\n\n' +
     JSON.stringify(payload, null, 2);
 
   try {
@@ -1610,30 +1628,45 @@ async function enrichBriefSections(
           )
           .filter(Boolean)
           .slice(0, 6);
+        const summary = enriched.summary
+          ? expandRelativeWeekdays(
+              compactCompleteText(enriched.summary, 500),
+              anchorDate,
+            )
+          : item.summary;
+        const recommendedAction = enriched.recommendedAction
+          ? expandRelativeWeekdays(
+              compactCompleteText(enriched.recommendedAction, 320),
+              anchorDate,
+            )
+          : item.recommendedAction;
+        const whyItMatters = enriched.whyItMatters
+          ? expandRelativeWeekdays(
+              compactCompleteText(enriched.whyItMatters, 320),
+              anchorDate,
+            )
+          : item.whyItMatters;
         return {
           ...item,
-          summary: enriched.summary
-            ? expandRelativeWeekdays(
-                compactCompleteText(enriched.summary, 500),
-                anchorDate,
-              )
-            : item.summary,
+          summary,
           evidenceFacts:
             evidenceFacts.length > 0
               ? evidenceFacts
               : fallbackEvidenceFacts(item),
-          recommendedAction: enriched.recommendedAction
-            ? expandRelativeWeekdays(
-                compactCompleteText(enriched.recommendedAction, 320),
-                anchorDate,
-              )
-            : item.recommendedAction,
-          whyItMatters: enriched.whyItMatters
-            ? expandRelativeWeekdays(
-                compactCompleteText(enriched.whyItMatters, 320),
-                anchorDate,
-              )
-            : item.whyItMatters,
+          bullets: getExecutiveBriefBullets({
+            bullets: enriched.bullets ?? item.bullets,
+            evidenceFacts:
+              evidenceFacts.length > 0
+                ? evidenceFacts
+                : fallbackEvidenceFacts(item),
+            summary,
+            recommendedAction,
+            whyItMatters,
+            status: item.status,
+            citations: item.citations,
+          }),
+          recommendedAction,
+          whyItMatters,
         };
       }),
       warnings: [],
@@ -1792,7 +1825,7 @@ export async function generateBrandonDailyUpdate(
         ],
       }
     : await enrichBriefSections(supportedResult.sections);
-  const sections = enrichedResult.sections;
+  const sections = enforceExecutiveBriefBullets(enrichedResult.sections);
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
   const sourceCoverageWarnings = sourceCoverage
     .map((source) => source.warning)

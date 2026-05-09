@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Trash2, UserPlus } from "lucide-react";
 import {
   deleteExecutiveRelatedTaskAction,
   updateExecutiveRelatedTaskAction,
@@ -91,6 +91,7 @@ function ExecutiveRelatedTaskRow({
   const [error, setError] = useState<string | null>(null);
   const taskLabel = taskText.trim() || initial.taskText;
   const isPending = isSaving || isDeleting;
+  const isUnassigned = assigneePersonId === "__unassigned";
   const hasChanges =
     taskText !== initial.taskText ||
     assigneePersonId !== initial.assigneePersonId ||
@@ -173,13 +174,24 @@ function ExecutiveRelatedTaskRow({
             <SelectTrigger
               variant="inline"
               size="sm"
-              className="h-8 w-full px-0 text-xs text-muted-foreground hover:text-foreground focus-visible:ring-0"
+              className={
+                isUnassigned
+                  ? "h-8 w-full px-0 text-xs font-medium text-primary hover:text-primary focus-visible:ring-0"
+                  : "h-8 w-full px-0 text-xs text-muted-foreground hover:text-foreground focus-visible:ring-0"
+              }
               aria-label={`Assignee for ${taskLabel}`}
             >
-              <SelectValue />
+              {isUnassigned ? (
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  <UserPlus className="h-3.5 w-3.5 shrink-0" />
+                  <span>Assign</span>
+                </span>
+              ) : (
+                <SelectValue />
+              )}
             </SelectTrigger>
             <SelectContent align="start">
-              <SelectItem value="__unassigned">Unassigned</SelectItem>
+              <SelectItem value="__unassigned">No assignee</SelectItem>
               {employees.map((employee) => (
                 <SelectItem key={employee.id} value={employee.id}>
                   {employee.label}

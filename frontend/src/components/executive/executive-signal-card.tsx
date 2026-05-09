@@ -21,6 +21,7 @@ import {
 } from "@/components/executive/executive-task-draft-form";
 import { ExecutiveRelatedTaskTable } from "@/components/executive/executive-related-task-table";
 import type { BrandonBriefItem } from "@/lib/executive/brandon-daily-update";
+import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
 import { resolveExecutiveFollowUpAction } from "@/app/(main)/actions/executive-briefing-actions";
 
 export type ExecutiveRelatedTask = {
@@ -109,6 +110,7 @@ export function ExecutiveSignalCard({
   const sourceUrl = item.sourceUrl ?? item.citations[0]?.sourceUrl;
   const sourceLabel = item.sourceDetail?.trim() || item.title;
   const sourceMeta = `${sourceLabel} - ${item.date}`;
+  const executiveBullets = getExecutiveBriefBullets(item);
   const hasRawEvidence = Boolean(
     primaryEvidence || evidenceCitations.length > 0,
   );
@@ -136,9 +138,13 @@ export function ExecutiveSignalCard({
                 {item.title}
               </div>
 
-              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                {item.summary}
-              </p>
+              <ol className="max-w-3xl list-decimal space-y-1.5 pl-5 text-sm leading-6 text-muted-foreground">
+                {executiveBullets.map((bullet) => (
+                  <li key={bullet} className="pl-1">
+                    {bullet}
+                  </li>
+                ))}
+              </ol>
             </div>
           </CollapsibleTrigger>
 
