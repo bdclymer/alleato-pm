@@ -468,11 +468,20 @@ Add an AI-powered layer to the existing dashboard.
 
 ## How to Pick Up Where You Left Off
 
-1. Open this file: `docs/AI-MASTER-PLAN.md`
+1. Open this file: `docs/ai-plan/AI-MASTER-PLAN.md`
 2. Find the first `[ ]` (unchecked) task
 3. That's your next task
 4. When done, mark it `[x]` and move to the next one
 5. If blocked, mark `[!]` and add a note about why
+
+## Related Strategy Docs
+
+| What | Where | Use When |
+|------|-------|----------|
+| Original best-in-class commercial construction AI vision | `docs/ai-plan/ai-plan.md` | Re-grounding on the six-month/gold-standard operating model and first flagship agents |
+| AI operating model | `docs/ai-plan/AI_OPERATING_MODEL_FOR_ALLEATO.md` | Defining authority levels, source evidence, guided approvals, Jesse Mode, and adoption strategy |
+| Construction workflow roadmap | `docs/ai-plan/AI_CONSTRUCTION_WORKFLOW_ROADMAP.md` | Prioritizing roadmap slices by profit, time, risk, and workflow impact |
+| Codex handoff summary | `docs/ai-plan/CODEX_HANDOFF_SUMMARY_AI_CONSTRUCTION_WORKFLOWS.md` | Starting a new Codex implementation thread without re-reading the original conversation |
 
 ## Decision Log
 
@@ -495,7 +504,7 @@ Add an AI-powered layer to the existing dashboard.
 
 | What | Where |
 |------|-------|
-| This plan | `docs/AI-MASTER-PLAN.md` |
+| This plan | `docs/ai-plan/AI-MASTER-PLAN.md` |
 | RAG assistant | `frontend/src/app/(chat)/ai-assistant/` |
 | AI providers config | `frontend/src/lib/ai/providers.ts` |
 | Strategist prompt | `frontend/src/lib/ai/agents/strategist.ts` |
@@ -509,8 +518,8 @@ Add an AI-powered layer to the existing dashboard.
 | Chat API route | `frontend/src/app/api/ai-assistant/chat/route.ts` |
 | Legacy system prompt | `frontend/src/lib/ai/rag-assistant-prompt.ts` (preserved, not used in C-Suite path) |
 | RAG tools audit | `docs/AI-RAG-TOOLS-AUDIT.md` |
-| User experience vision | `docs/AI-VISION-USER-EXPERIENCE.md` |
-| C-Suite architecture design | `docs/AI-CSUITE-ARCHITECTURE.md` |
+| User experience vision | `docs/ai-plan/AI-VISION.md` |
+| C-Suite architecture design | `docs/ai-plan/AI-CSUITE-ARCHITECTURE.md` |
 | AI database tables | `ai_insights`, `ai_tasks`, `ai_models`, `block_embeddings`, `chat_*` |
 | Document parser (PDF/DOCX) | `backend/src/services/pipeline/document_parser.py` |
 | Pipeline orchestrator (auto-routing) | `backend/src/services/pipeline/orchestrator.py` |

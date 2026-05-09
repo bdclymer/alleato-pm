@@ -365,4 +365,4 @@ If Brandon can say this and mean it, we've succeeded:
 | Predictive Analytics | Phase 4 (strategic) | Historical pattern analysis + prediction models |
 | Cross-Project Learning | Phase 4 (strategic) | Pattern recognition across project data |
 
-**Technical plan:** See `docs/AI-MASTER-PLAN.md` for the full implementation task list.
+**Technical plan:** See `docs/ai-plan/AI-MASTER-PLAN.md` for the full implementation task list.

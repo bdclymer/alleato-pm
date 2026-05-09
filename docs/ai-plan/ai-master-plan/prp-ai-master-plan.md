@@ -180,17 +180,17 @@ _This PRP includes all file paths, patterns, interfaces, and architecture decisi
 
 ```yaml
 # MUST READ — Architecture & Vision
-- file: docs/AI-MASTER-PLAN.md
+- file: docs/ai-plan/AI-MASTER-PLAN.md
   why: Single source of truth for all AI tasks and their completion status
   pattern: Task checklist with [x] for completed, [ ] for pending
   gotcha: Always update checkboxes when completing tasks
 
-- file: docs/AI-CSUITE-ARCHITECTURE.md
+- file: docs/ai-plan/AI-CSUITE-ARCHITECTURE.md
   why: Defines multi-agent architecture, routing table, tool assignments per agent
   pattern: Strategist orchestrator → specialist agents → tools → synthesize
   gotcha: Each agent gets its own system prompt, tools, and model config
 
-- file: docs/AI-VISION-USER-EXPERIENCE.md
+- file: docs/ai-plan/AI-VISION.md
   why: Business requirements and user experience specifications
   pattern: Owner-centric scenarios with specific metrics
   gotcha: Must give specifics with dollar amounts, dates, names — never generalities
