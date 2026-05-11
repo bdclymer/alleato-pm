@@ -1116,7 +1116,8 @@ export function UnifiedTablePage<T>({
       {(tabs || !toolbarInlineWithHeader) && (
         <div
           className={cn(
-            "flex flex-col gap-2 md:flex-row md:items-end md:justify-between md:gap-4",
+            "flex flex-col gap-2 md:flex-row md:items-end md:gap-4",
+            tabs ? "md:justify-between" : "md:justify-end",
             isCompactDensity ? "pb-1 pt-0" : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
           )}
         >
