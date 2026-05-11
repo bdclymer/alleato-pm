@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SchedulingService } from "@/lib/services/scheduling-service";
 import { ScheduleTaskCreate } from "@/types/scheduling";
+import { validateScheduleTaskCreateInput } from "@/lib/scheduling/task-validation";
 
 // =============================================================================
 // POST - Import Tasks
@@ -60,12 +61,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Validate individual tasks
-    const validationErrors: Array<{ index: number; error: string }> = [];
+    const validationErrors: Array<{ index: number; field: string; error: string }> = [];
     body.tasks.forEach((task, index) => {
-      if (!task.name || typeof task.name !== "string" || task.name.trim() === "") {
-        validationErrors.push({ index, error: "Task name is required" });
-      }
+      validateScheduleTaskCreateInput(task).forEach((error) => {
+        validationErrors.push({ index, ...error });
+      });
     });
 
     if (validationErrors.length > 0) {
@@ -110,27 +110,6 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           sort_order: maxSortOrder + i + 1,
         };
 
-        // Validate status
-        if (createData.status && !["not_started", "in_progress", "complete"].includes(createData.status)) {
-          createData.status = "not_started";
-        }
-
-        // Validate dates
-        if (createData.start_date && createData.finish_date) {
-          const start = new Date(createData.start_date);
-          const finish = new Date(createData.finish_date);
-          if (start > finish) {
-            // Swap dates if start is after finish
-            [createData.start_date, createData.finish_date] = [createData.finish_date, createData.start_date];
-          }
-        }
-
-        // Validate percent_complete
-        if (createData.percent_complete !== undefined) {
-          createData.percent_complete = Math.max(0, Math.min(100, createData.percent_complete));
-        }
-
-        // Create task
         await service.createTask(projectId, createData);
         results.imported++;
       } catch (error) {

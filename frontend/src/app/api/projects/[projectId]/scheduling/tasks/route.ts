@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SchedulingService } from "@/lib/services/scheduling-service";
 import { ScheduleTaskListParams, ScheduleTaskCreate } from "@/types/scheduling";
 import { apiErrorResponse } from "@/lib/api-error";
+import { validateScheduleTaskCreateInput } from "@/lib/scheduling/task-validation";
 
 // =============================================================================
 // GET - Fetch Schedule Tasks
@@ -119,31 +120,14 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     const body = await request.json();
 
-    // Basic validation
-    if (!body.name || typeof body.name !== "string" || body.name.trim() === "") {
+    const validationErrors = validateScheduleTaskCreateInput(body);
+    if (validationErrors.length > 0) {
       return NextResponse.json(
-        { error: "Task name is required" },
-        { status: 400 }
-      );
-    }
-
-    // Validate date constraints
-    if (body.start_date && body.finish_date) {
-      const start = new Date(body.start_date);
-      const finish = new Date(body.finish_date);
-      if (start > finish) {
-        return NextResponse.json(
-          { error: "Start date cannot be after finish date" },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validate milestone constraints
-    if (body.is_milestone && body.duration_days && body.duration_days !== 0) {
-      return NextResponse.json(
-        { error: "Milestones must have zero duration" },
-        { status: 400 }
+        {
+          error: validationErrors[0].error,
+          details: validationErrors,
+        },
+        { status: 400 },
       );
     }
 
