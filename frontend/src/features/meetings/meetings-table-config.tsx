@@ -43,7 +43,6 @@ export interface EditContext {
   editingValue: string;
   projectOptions: Array<{ value: string; label: string }>;
   categoryOptions: Array<{ value: string; label: string }>;
-  projectIdByName: Map<string, number>;
   handleCellClick: (meeting: Meeting, field: EditableField) => void;
   setEditingValue: (value: string) => void;
   handleInlineSave: (options?: {
@@ -474,7 +473,9 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
     {
       ...meetingColumns[1],
       render: (item) => {
-        const projectName = item.project?.trim();
+        const selectedProjectValue = item.project_id
+          ? String(item.project_id)
+          : "__none__";
 
         return (
           <div className="w-72" onClick={(event) => event.stopPropagation()}>
@@ -483,7 +484,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
                 { value: "__none__", label: "No project" },
                 ...(editContext?.projectOptions ?? []),
               ]}
-              value={projectName || "__none__"}
+              value={selectedProjectValue}
               onValueChange={(nextValue) => {
                 void editContext?.handleInlineFieldSave(
                   item,

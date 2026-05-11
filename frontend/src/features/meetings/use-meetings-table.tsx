@@ -367,19 +367,19 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   });
 
   // ── Projects for inline select ───────────────────────────────────────────────
-  const { projects } = useProjects();
+  const { projects } = useProjects({ limit: 500 });
   const projectOptions = projects
     .filter((project) => Boolean(project.name?.trim()))
     .map((project) => ({
-      value: project.name || "",
-      label: project.name || "Unnamed Project",
+      value: String(project.id),
+      label: project.project_number
+        ? `${project.project_number} - ${project.name?.trim() || "Unnamed Project"}`
+        : project.name?.trim() || "Unnamed Project",
     }));
-  const projectIdByName = React.useMemo(() => {
-    const map = new Map<string, number>();
+  const projectById = React.useMemo(() => {
+    const map = new Map<number, { id: number; name: string | null }>();
     for (const project of projects) {
-      const name = project.name?.trim();
-      if (!name) continue;
-      map.set(name, project.id);
+      map.set(project.id, { id: project.id, name: project.name?.trim() || null });
     }
     return map;
   }, [projects]);
@@ -433,13 +433,20 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       const updatePayload: Record<string, unknown> =
         field === "project"
           ? (() => {
-              const projectName = saveValue?.trim() || null;
-              if (!projectName) {
+              const projectId = saveValue ? Number(saveValue) : null;
+              if (!projectId) {
                 return { project: null, project_id: null };
               }
+              if (!Number.isFinite(projectId)) {
+                throw new Error("Select a valid project before saving.");
+              }
+              const project = projectById.get(projectId);
+              if (!project) {
+                throw new Error("Selected project was not loaded. Search again and retry.");
+              }
               return {
-                project: projectName,
-                project_id: projectIdByName.get(projectName) ?? null,
+                project: project.name,
+                project_id: project.id,
               };
             })()
           : { [field]: saveValue };
@@ -518,7 +525,6 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     editingValue,
     projectOptions,
     categoryOptions,
-    projectIdByName,
     handleCellClick,
     setEditingValue,
     handleInlineSave,
@@ -615,9 +621,15 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       payload.date = new Date(`${payload.date}T12:00:00`).toISOString();
     }
     if (payload.project !== undefined) {
-      const projectName = payload.project?.trim() || null;
-      payload.project = projectName;
-      payload.project_id = projectName ? (projectIdByName.get(projectName) ?? null) : null;
+      const projectId = payload.project ? Number(payload.project) : null;
+      if (projectId && Number.isFinite(projectId)) {
+        const project = projectById.get(projectId);
+        payload.project = project?.name ?? null;
+        payload.project_id = project?.id ?? null;
+      } else {
+        payload.project = null;
+        payload.project_id = null;
+      }
     }
 
     try {
