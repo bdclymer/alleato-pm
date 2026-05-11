@@ -41,6 +41,7 @@ import {
   TableTagBadge,
   formatParticipantDisplayName,
 } from "@/components/tables/unified";
+import { cn } from "@/lib/utils";
 import type { Meeting } from "@/lib/validation/meetings";
 
 // ─── Inline editing types ───────────────────────────────────────────────────
@@ -353,6 +354,15 @@ function formatDuration(minutes: number | null | undefined): string {
 }
 
 function formatSentiment(value: unknown): string {
+  const summary = parseSentimentSummary(value);
+  if (summary) {
+    return [
+      `positive ${summary.positive}%`,
+      `neutral ${summary.neutral}%`,
+      `negative ${summary.negative}%`,
+    ].join(", ");
+  }
+
   if (value == null) return "";
   if (typeof value === "string") return value.trim();
   if (typeof value === "number") return String(value);
@@ -377,6 +387,151 @@ function formatSentiment(value: unknown): string {
   return "";
 }
 
+type SentimentTone = "positive" | "neutral" | "negative";
+
+interface SentimentSummary {
+  positive: number;
+  neutral: number;
+  negative: number;
+  dominantTone: SentimentTone;
+  dominantValue: number;
+}
+
+function coercePercent(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(0, Math.min(100, Math.round(value)));
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value.replace("%", ""));
+    if (Number.isFinite(parsed)) return Math.max(0, Math.min(100, Math.round(parsed)));
+  }
+  return null;
+}
+
+function parseSentimentRecord(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{")) return null;
+
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseSentimentSummary(value: unknown): SentimentSummary | null {
+  const record = parseSentimentRecord(value);
+  if (!record) return null;
+
+  const positive =
+    coercePercent(record.positive_pct ?? record.positive ?? record.positivePercent) ?? 0;
+  const neutral =
+    coercePercent(record.neutral_pct ?? record.neutral ?? record.neutralPercent) ?? 0;
+  const negative =
+    coercePercent(record.negative_pct ?? record.negative ?? record.negativePercent) ?? 0;
+
+  if (positive === 0 && neutral === 0 && negative === 0) return null;
+
+  const entries: Array<[SentimentTone, number]> = [
+    ["positive", positive],
+    ["neutral", neutral],
+    ["negative", negative],
+  ];
+  const [dominantTone, dominantValue] = entries.reduce((current, next) =>
+    next[1] > current[1] ? next : current,
+  );
+
+  return { positive, neutral, negative, dominantTone, dominantValue };
+}
+
+const SENTIMENT_LABELS: Record<SentimentTone, string> = {
+  positive: "Positive",
+  neutral: "Neutral",
+  negative: "Negative",
+};
+
+const SENTIMENT_CLASSES: Record<SentimentTone, string> = {
+  positive: "border-success/20 bg-success/10 text-success",
+  neutral: "border-border bg-muted/50 text-muted-foreground",
+  negative: "border-destructive/20 bg-destructive/10 text-destructive",
+};
+
+function SentimentCell({ value }: { value: unknown }): React.ReactElement {
+  const summary = parseSentimentSummary(value);
+  const fallback = formatSentiment(value);
+
+  if (!summary && !fallback) {
+    return (
+      <span className="text-xs text-muted-foreground" title="No sentiment">
+        —
+      </span>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <Badge
+        variant="outline"
+        className="rounded-sm border-border/70 bg-muted/40 px-1.5 py-0 text-[11px] font-normal text-muted-foreground"
+      >
+        {fallback}
+      </Badge>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex w-36 items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                "rounded-sm px-1.5 py-0 text-[11px] font-normal",
+                SENTIMENT_CLASSES[summary.dominantTone],
+              )}
+            >
+              {SENTIMENT_LABELS[summary.dominantTone]} {summary.dominantValue}%
+            </Badge>
+            <div
+              className="flex h-1.5 min-w-12 flex-1 overflow-hidden rounded-full bg-muted"
+              aria-hidden="true"
+            >
+              <span className="bg-success" style={{ width: `${summary.positive}%` }} />
+              <span className="bg-muted-foreground/45" style={{ width: `${summary.neutral}%` }} />
+              <span className="bg-destructive" style={{ width: `${summary.negative}%` }} />
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="border bg-popover p-3 text-popover-foreground shadow-sm">
+          <div className="grid gap-1 text-xs">
+            <div className="flex items-center justify-between gap-8">
+              <span className="text-muted-foreground">Positive</span>
+              <span className="font-medium text-foreground">{summary.positive}%</span>
+            </div>
+            <div className="flex items-center justify-between gap-8">
+              <span className="text-muted-foreground">Neutral</span>
+              <span className="font-medium text-foreground">{summary.neutral}%</span>
+            </div>
+            <div className="flex items-center justify-between gap-8">
+              <span className="text-muted-foreground">Negative</span>
+              <span className="font-medium text-foreground">{summary.negative}%</span>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 function getKeywordTags(keywords: string[] | null | undefined): string[] {
   if (!Array.isArray(keywords)) return [];
 
@@ -386,6 +541,109 @@ function getKeywordTags(keywords: string[] | null | undefined): string[] {
         .map((keyword) => keyword.trim())
         .filter(Boolean),
     ),
+  );
+}
+
+interface OverviewItem {
+  title: string;
+  body: string;
+}
+
+function stripMarkdown(value: string): string {
+  return value
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseOverviewItems(value: string | null | undefined): OverviewItem[] {
+  const text = normalizeText(value);
+  if (!text) return [];
+
+  const normalized = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\s+-\s+\*\*/g, "\n- **")
+    .replace(/\s+-\s+/g, "\n- ");
+
+  const bulletItems = normalized
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^[-*]\s+/, "").trim())
+    .filter(Boolean);
+
+  const items = bulletItems.length > 1 ? bulletItems : [normalized.trim()];
+
+  return items.map((item) => {
+    const clean = stripMarkdown(item);
+    const [title, ...rest] = clean.split(/:\s+/);
+    const body = rest.join(": ").trim();
+
+    if (body) {
+      return { title: title.trim(), body };
+    }
+    return { title: clean, body: "" };
+  });
+}
+
+function formatOverview(value: string | null | undefined): string {
+  return parseOverviewItems(value)
+    .map((item) => (item.body ? `${item.title}: ${item.body}` : item.title))
+    .join("; ");
+}
+
+function OverviewCell({
+  value,
+}: {
+  value: string | null | undefined;
+}): React.ReactElement {
+  const items = parseOverviewItems(value);
+  if (items.length === 0) {
+    return (
+      <span className="text-xs text-muted-foreground" title="No overview">
+        —
+      </span>
+    );
+  }
+
+  const [firstItem] = items;
+  const remainingCount = Math.max(0, items.length - 1);
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="grid max-w-80 gap-0.5 whitespace-normal text-xs leading-snug">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate font-medium text-foreground/90">
+                {firstItem.title}
+              </span>
+              {remainingCount > 0 ? (
+                <span className="shrink-0 text-[11px] text-muted-foreground">
+                  +{remainingCount}
+                </span>
+              ) : null}
+            </div>
+            {firstItem.body ? (
+              <span className="truncate text-muted-foreground">{firstItem.body}</span>
+            ) : null}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-96 border bg-popover p-3 text-popover-foreground shadow-sm">
+          <ul className="space-y-2">
+            {items.map((item) => (
+              <li key={`${item.title}-${item.body}`} className="text-xs leading-relaxed">
+                <span className="font-medium text-foreground">{item.title}</span>
+                {item.body ? (
+                  <span className="text-muted-foreground">: {item.body}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -831,30 +1089,22 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       width: 220,
     },
 
-    // ── Sentiment: compact JSON/string preview ──────────────────────────────
+    // ── Sentiment: compact distribution preview ────────────────────────────
     {
       ...getMeetingColumn("sentiment"),
-      render: (item) => (
-        <TextPreviewCell
-          value={formatSentiment(item.sentiment)}
-          emptyLabel="No sentiment"
-          className="max-w-36"
-        />
-      ),
+      render: (item) => <SentimentCell value={item.sentiment} />,
       csvValue: (item) => formatSentiment(item.sentiment),
       sortValue: (item) => formatSentiment(item.sentiment),
-      width: 140,
+      width: 176,
     },
 
-    // ── Overview: compact text preview ──────────────────────────────────────
+    // ── Overview: compact takeaway preview ─────────────────────────────────
     {
       ...getMeetingColumn("overview"),
-      render: (item) => (
-        <TextPreviewCell value={item.overview} emptyLabel="No overview" />
-      ),
-      csvValue: (item) => item.overview ?? "",
-      sortValue: (item) => item.overview ?? "",
-      width: 240,
+      render: (item) => <OverviewCell value={item.overview} />,
+      csvValue: (item) => formatOverview(item.overview),
+      sortValue: (item) => formatOverview(item.overview),
+      width: 320,
     },
 
     // ── Action items: compact text preview ──────────────────────────────────
