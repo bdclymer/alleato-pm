@@ -239,6 +239,7 @@ export interface UnifiedTablePageProps<T> {
   };
   layout?: {
     fullBleedTable?: boolean;
+    alignHeaderWithFullBleedTable?: boolean;
     removeTableFrame?: boolean;
     plainFooterTotals?: boolean;
     headerAlignment?: "left" | "center";
@@ -371,6 +372,8 @@ export function UnifiedTablePage<T>({
   const shouldRenderTableView =
     activeView === "table" || (!canRenderCardView && !canRenderListView);
   const isFullBleedTable = layout?.fullBleedTable ?? false;
+  const alignHeaderWithFullBleedTable =
+    layout?.alignHeaderWithFullBleedTable ?? false;
   const removeTableFrame = layout?.removeTableFrame ?? false;
   const plainFooterTotals = layout?.plainFooterTotals ?? false;
   const headerAlignment = layout?.headerAlignment ?? "left";
@@ -1089,7 +1092,13 @@ export function UnifiedTablePage<T>({
       description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
       mobileActionsInline={header.mobileActionsInline ?? true}
-      className={cn("px-0 sm:px-0 lg:px-0", isCompactDensity && "[&>div]:pt-2 [&>div]:pb-2")}
+      className={cn(
+        "px-0 sm:px-0 lg:px-0",
+        isCompactDensity && "[&>div]:pt-2 [&>div]:pb-2",
+        isFullBleedTable &&
+          alignHeaderWithFullBleedTable &&
+          "-mx-1 sm:-mx-6 lg:-mx-8",
+      )}
       actions={
         toolbarInlineWithHeader ? (
           <div className="flex items-center gap-2">

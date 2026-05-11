@@ -830,7 +830,11 @@ function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
         },
         clientSide: true,
       }}
-      layout={{ fullBleedTable: true, toolbarInlineWithHeader: true }}
+      layout={{
+        fullBleedTable: true,
+        alignHeaderWithFullBleedTable: true,
+        toolbarInlineWithHeader: true,
+      }}
       features={{
         enableSearch: false,
         enableViews: false,
@@ -1145,7 +1149,11 @@ function StuckItemsTable({ items }: { items: SourceSyncStuckItem[] }) {
           or have been sitting in a processing stage too long.
         </p>
       }
-      layout={{ fullBleedTable: true, toolbarInlineWithHeader: true }}
+      layout={{
+        fullBleedTable: true,
+        alignHeaderWithFullBleedTable: true,
+        toolbarInlineWithHeader: true,
+      }}
       features={{
         enableSearch: true,
         enableViews: false,
@@ -1364,7 +1372,11 @@ function SourceTable({ sources }: { sources: SourceHealth[] }) {
         },
         clientSide: true,
       }}
-      layout={{ fullBleedTable: true, toolbarInlineWithHeader: true }}
+      layout={{
+        fullBleedTable: true,
+        alignHeaderWithFullBleedTable: true,
+        toolbarInlineWithHeader: true,
+      }}
       features={{
         enableSearch: false,
         enableViews: false,
