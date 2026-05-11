@@ -1205,7 +1205,7 @@ export function UnifiedTablePage<T>({
                   ? "mx-0 pl-0"
                   : "mx-0 pl-0"
                 : isFullBleedTable
-                  ? "-mx-1 sm:-mx-6 lg:-mx-8 lg:pl-2"
+                  ? "-mx-1 sm:-mx-6 lg:-mx-8"
                   : "mx-0",
             )}
             tabIndex={0}
@@ -1214,7 +1214,15 @@ export function UnifiedTablePage<T>({
             ref={tableScrollRef}
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
-            <Table className={cn(table.density === "compact" && "[&_thead_tr]:h-9 [&_th]:py-1.5 [&_th]:px-3 [&_td]:py-1.5 [&_td]:px-3 [&_td]:text-xs")}>
+            <Table
+              className={cn(
+                table.density === "compact" &&
+                  "[&_thead_tr]:h-9 [&_th]:py-1.5 [&_th]:px-3 [&_td]:py-1.5 [&_td]:px-3 [&_td]:text-xs",
+                isFullBleedTable &&
+                  !hasRowSelection &&
+                  "[&_th:first-child]:pl-0 [&_td:first-child]:pl-0 [&_th:last-child]:pr-0 [&_td:last-child]:pr-0",
+              )}
+            >
               <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-card")}>
                 {columnGroups && columnGroups.length > 0 && (
                   <TableRow className="border-b-0">
