@@ -2,11 +2,12 @@ import * as React from "react";
 
 import {
   ArrowUpRight,
-  FileAudio,
   FileText,
-  FileVideo,
+  Headphones,
+  type LucideIcon,
   Pencil,
   Trash2,
+  Video,
   Zap,
 } from "lucide-react";
 
@@ -35,7 +36,6 @@ import {
   type DetailFieldConfig,
   TableAvatarUsers,
   TableDateValue,
-  TableIconLinks,
   TableRowActionsMenu,
   TableStatusDot,
   TableTagBadge,
@@ -74,8 +74,8 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "date", label: "Date", defaultVisible: true },
   { id: "description", label: "Description", defaultVisible: true },
   { id: "participants", label: "Participants", defaultVisible: true },
-  { id: "video", label: "Video", defaultVisible: true },
-  { id: "audio", label: "Audio", defaultVisible: true },
+  { id: "video", label: "Video", defaultVisible: false },
+  { id: "audio", label: "Audio", defaultVisible: false },
   { id: "keywords", label: "Keywords", defaultVisible: true },
   { id: "sentiment", label: "Sentiment", defaultVisible: true },
   { id: "overview", label: "Overview", defaultVisible: true },
@@ -305,30 +305,36 @@ function TextPreviewCell({
   );
 }
 
-function MediaIconLink({
+function MinimalIconLink({
   href,
   icon: Icon,
   label,
 }: {
   href: string | null | undefined;
-  icon: typeof FileAudio;
+  icon: LucideIcon;
   label: string;
 }): React.ReactElement {
   const normalizedHref = normalizeText(href);
   if (!normalizedHref) return <EmptyCell />;
 
   return (
-    <a
-      href={normalizedHref}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      title={label}
-      className="inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent/20 hover:text-foreground"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <Icon className="h-4 w-4" />
-    </a>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href={normalizedHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={label}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent/20 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Icon className="h-3.5 w-3.5 stroke-[1.75]" />
+          </a>
+        </TooltipTrigger>
+        <TooltipContent sideOffset={6}>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -796,7 +802,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
     {
       ...getMeetingColumn("video"),
       render: (item) => (
-        <MediaIconLink href={item.video} icon={FileVideo} label="Open video" />
+        <MinimalIconLink href={item.video} icon={Video} label="Video" />
       ),
       csvValue: (item) => item.video ?? "",
       sortValue: (item) => item.video ?? "",
@@ -808,7 +814,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
     {
       ...getMeetingColumn("audio"),
       render: (item) => (
-        <MediaIconLink href={item.audio} icon={FileAudio} label="Open audio" />
+        <MinimalIconLink href={item.audio} icon={Headphones} label="Audio" />
       ),
       csvValue: (item) => item.audio ?? "",
       sortValue: (item) => item.audio ?? "",
@@ -978,33 +984,48 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       sortValue: (item) => item.category ?? "",
     },
 
-    // ── Links: transcript file icon + Fireflies icon ─────────────────────────
+    // ── Links: source and media actions ─────────────────────────────────────
     {
       ...getMeetingColumn("links"),
       render: (item) => {
         return (
-          <TableIconLinks
-            items={[
-              ...(item.source
-                ? [{ href: item.source, icon: FileText, label: "Open transcript / source file" }]
-                : []),
-              ...(item.fireflies_link
-                ? [{ href: item.fireflies_link, icon: Zap, label: "View Fireflies recording" }]
-                : []),
-            ]}
-            className="gap-3 [&_svg]:h-4.5 [&_svg]:w-4.5"
-          />
+          <div
+            className="flex items-center gap-1"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {item.source ? (
+              <MinimalIconLink href={item.source} icon={FileText} label="Transcript" />
+            ) : null}
+            {item.fireflies_link ? (
+              <MinimalIconLink href={item.fireflies_link} icon={Zap} label="Fireflies recording" />
+            ) : null}
+            {item.video ? (
+              <MinimalIconLink href={item.video} icon={Video} label="Video" />
+            ) : null}
+            {item.audio ? (
+              <MinimalIconLink href={item.audio} icon={Headphones} label="Audio" />
+            ) : null}
+          </div>
         );
       },
       csvValue: (item) =>
-        [item.source ? "transcript" : "", item.fireflies_link ? "fireflies" : ""]
+        [
+          item.source ? "transcript" : "",
+          item.fireflies_link ? "fireflies" : "",
+          item.video ? "video" : "",
+          item.audio ? "audio" : "",
+        ]
           .filter(Boolean)
           .join(", "),
       sortValue: (item) => {
-        if (item.source && item.fireflies_link) return "transcript,fireflies";
-        if (item.source) return "transcript";
-        if (item.fireflies_link) return "fireflies";
-        return "";
+        return [
+          item.source ? "transcript" : "",
+          item.fireflies_link ? "fireflies" : "",
+          item.video ? "video" : "",
+          item.audio ? "audio" : "",
+        ]
+          .filter(Boolean)
+          .join(",");
       },
     },
 

@@ -42,8 +42,6 @@ const EDITABLE_FIELD_ORDER: EditableField[] = [
 ];
 
 const REQUESTED_VISIBLE_COLUMNS = [
-  "video",
-  "audio",
   "keywords",
   "sentiment",
   "overview",
@@ -369,6 +367,19 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       }
       return next;
     });
+
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState.setVisibleColumns]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const migrationKey = "meetings:visibleColumns:move-media-to-links-2026-05-11";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    tableState.setVisibleColumns((prev) =>
+      prev.filter((columnId) => columnId !== "video" && columnId !== "audio"),
+    );
 
     window.localStorage.setItem(migrationKey, "1");
   }, [tableState.setVisibleColumns]);
