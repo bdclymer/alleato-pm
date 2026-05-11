@@ -192,6 +192,13 @@ const sections: AdminMenuSection[] = [
         icon: Brain,
       },
       {
+        label: "AI System Health",
+        href: "/ai-system-health",
+        route: "/ai-system-health",
+        description: "Conversations, tokens, spend, satisfaction, model mix, and self-learning loop on one screen.",
+        icon: LineChart,
+      },
+      {
         label: "AI Compiler Health",
         href: "/intelligence-compiler",
         route: "/intelligence-compiler",

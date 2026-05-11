@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { estimateCostWithFallback } from "@/lib/ai/model-pricing";
 
 /**
  * GET /api/ai-assistant/usage-stats
@@ -91,10 +92,29 @@ export const GET = withApiGuardrails(
 
     const totalTokens = totalInputTokens + totalOutputTokens;
 
-    // Estimate cost (Claude Sonnet 4.5 pricing)
-    const estimatedCost =
-      (totalInputTokens / 1_000_000) * 3.0 +
-      (totalOutputTokens / 1_000_000) * 15.0;
+    // Estimate cost per-message using the recorded modelId.
+    // Falls back to mid-tier pricing when the model is unrecognised.
+    let estimatedCost = 0;
+    let messagesWithUnknownModel = 0;
+
+    if (assistantMessages) {
+      for (const msg of assistantMessages) {
+        const meta = msg.metadata as Record<string, unknown> | null;
+        const usage = meta?.usage as {
+          inputTokens?: number;
+          outputTokens?: number;
+        } | null;
+        if (!usage) continue;
+        const modelId = (meta?.modelId as string | undefined) ?? "";
+        const { cost, matchedModel } = estimateCostWithFallback(
+          modelId,
+          usage.inputTokens ?? 0,
+          usage.outputTokens ?? 0,
+        );
+        estimatedCost += cost;
+        if (!matchedModel) messagesWithUnknownModel++;
+      }
+    }
 
     // Tally feedback
     let feedbackUp = 0;
@@ -129,6 +149,9 @@ export const GET = withApiGuardrails(
       avgTokensPerMessage:
         messagesWithUsage > 0 ? Math.round(totalTokens / messagesWithUsage) : 0,
       recentConversations,
+      totalInputTokens,
+      totalOutputTokens,
+      messagesWithUnknownModel,
     });
   },
 );
