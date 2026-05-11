@@ -299,10 +299,10 @@ export function defineReadTool<TInput extends Record<string, unknown>, TResult>(
   },
 ): Tool<TInput, TResult | ToolErrorResult> {
   const { errorGuidance, execute, ...toolDefinition } = definition;
-  const toolDefinitionWithTrace: Tool<TInput, TResult | ToolErrorResult> = {
+  const toolDefinitionWithTrace = {
     ...toolDefinition,
     execute: withTrace(name, options, execute, errorGuidance),
-  };
+  } as Tool<TInput, TResult | ToolErrorResult>;
   return tool(toolDefinitionWithTrace);
 }
 
@@ -312,10 +312,10 @@ export function defineWriteTool<TInput extends Record<string, unknown>, TResult>
   definition: SharedToolDefinition<TInput, TResult>,
 ): Tool<TInput, TResult> {
   const { execute, ...toolDefinition } = definition;
-  const toolDefinitionWithTrace: Tool<TInput, TResult> = {
+  const toolDefinitionWithTrace = {
     ...toolDefinition,
     execute: withWriteTrace(name, options, execute),
-  };
+  } as Tool<TInput, TResult>;
   return tool(toolDefinitionWithTrace);
 }
 
