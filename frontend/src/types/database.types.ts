@@ -34319,6 +34319,55 @@ export type Database = {
         }[]
       }
       convert_embeddings_to_vector: { Args: never; Returns: undefined }
+      create_ai_generated_task: {
+        Args: {
+          p_assignee_email?: string
+          p_assignee_name?: string
+          p_assignee_person_id?: string
+          p_description: string
+          p_due_date?: string
+          p_idempotency_key?: string
+          p_metadata_id: string
+          p_priority?: string
+          p_project_id?: number
+          p_status: string
+          p_title: string
+          p_user_id?: string
+        }
+        Returns: {
+          assigned_by: string | null
+          assignee_email: string | null
+          assignee_name: string | null
+          assignee_person_id: string | null
+          client_id: number | null
+          created_at: string
+          description: string
+          due_date: string | null
+          embedding: unknown
+          extraction_metadata: Json
+          extraction_model: string | null
+          extraction_prompt_version: string | null
+          extraction_source: string | null
+          file_name: string | null
+          id: string
+          metadata_id: string
+          priority: string | null
+          project_id: number | null
+          project_ids: number[] | null
+          segment_id: string | null
+          source_chunk_id: string | null
+          source_system: string
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_budget_snapshot:
         | {
             Args: {

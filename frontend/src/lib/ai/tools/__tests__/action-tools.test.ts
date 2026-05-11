@@ -2,14 +2,21 @@ jest.mock("../guardrails", () => ({
   createToolGuardrails: jest.fn(),
 }));
 
+jest.mock("@/lib/supabase/service", () => ({
+  createServiceClient: jest.fn(),
+}));
+
+import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "../guardrails";
 import {
+  createActionTools,
   normalizeGeneratedTaskPriority,
   normalizeGeneratedTaskStatus,
   previewCreateRFI,
 } from "../action-tools";
 
 const mockedCreateToolGuardrails = jest.mocked(createToolGuardrails);
+const mockedCreateServiceClient = jest.mocked(createServiceClient);
 
 describe("previewCreateRFI", () => {
   beforeEach(() => {
@@ -106,6 +113,10 @@ describe("previewCreateRFI", () => {
 });
 
 describe("generated task DB contract normalization", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("maps AI-friendly priority aliases to public.tasks priority values", () => {
     expect(normalizeGeneratedTaskPriority("normal")).toBe("medium");
     expect(normalizeGeneratedTaskPriority("medium")).toBe("medium");
@@ -124,5 +135,102 @@ describe("generated task DB contract normalization", () => {
     expect(normalizeGeneratedTaskStatus("cancelled")).toBe("cancelled");
     expect(normalizeGeneratedTaskStatus("open")).toBe("open");
     expect(normalizeGeneratedTaskStatus()).toBe("open");
+  });
+
+  it("creates confirmed generated tasks through the atomic RPC", async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: {
+        id: "task-1",
+        title: "Call Brandon",
+        description: "Call Brandon about framing RFI",
+        status: "done",
+        priority: "urgent",
+        due_date: "2026-05-12",
+        project_id: 43,
+        assignee_name: "Brandon",
+        assignee_email: null,
+        created_at: "2026-05-11T21:30:00Z",
+      },
+      error: null,
+    });
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "people") {
+        return {
+          select: jest.fn(() => ({
+            limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+          })),
+        };
+      }
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      throw new Error(`Unexpected table write in generated task test: ${tableName}`);
+    });
+
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from, rpc } as never);
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createGeneratedTask.execute;
+    if (!execute) throw new Error("createGeneratedTask execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Call Brandon",
+      description: "Call Brandon about framing RFI",
+      assignee: "Brandon",
+      dueDate: "2026-05-12",
+      priority: "critical",
+      status: "completed",
+      confirmed: true,
+      idempotencyKey: "task-key-1",
+    });
+
+    expect(rpc).toHaveBeenCalledWith(
+      "create_ai_generated_task",
+      expect.objectContaining({
+        p_title: "Call Brandon",
+        p_description: "Call Brandon about framing RFI",
+        p_status: "done",
+        p_priority: "urgent",
+        p_project_id: 43,
+        p_assignee_name: "Brandon",
+        p_idempotency_key: "task-key-1",
+      }),
+    );
+    expect(from).not.toHaveBeenCalledWith("document_metadata");
+    expect(from).not.toHaveBeenCalledWith("tasks");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ status: "success" }));
+    expect(output).toMatchObject({
+      success: true,
+      record: {
+        id: "task-1",
+        status: "done",
+        priority: "urgent",
+      },
+    });
   });
 });

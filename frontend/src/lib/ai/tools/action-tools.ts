@@ -936,75 +936,27 @@ export function createActionTools(
         const replay = await getReplayResponse("createGeneratedTask", idempotencyKey);
         if (replay) return replay;
 
-        const now = new Date().toISOString();
         const metadataId = randomUUID();
-        const { error: metadataError } = await supabase.from("document_metadata").insert({
-          id: metadataId,
-          title: `AI assistant task: ${title}`,
-          type: "ai_assistant_task",
-          source_system: "ai_assistant",
-          date: now,
-          captured_at: now,
-          project_id: effectiveProjectId,
-          content: taskDescription,
-          summary: taskDescription,
-          source_metadata: {
-            source: "ai_assistant",
-            tool: "createGeneratedTask",
-            user_id: userId,
-          } as Json,
-        });
-
-        if (metadataError) {
-          const failure = { success: false, error: metadataError.message };
-          await recordWriteAudit({
-            toolName: "createGeneratedTask",
-            idempotencyKey,
-            projectId: effectiveProjectId,
-            input,
-            status: "error",
-            response: failure,
-          });
-          return failure;
-        }
-
         const { data, error } = await supabase
-          .from("tasks")
-          .insert({
-            metadata_id: metadataId,
-            title,
-            description: taskDescription,
-            status: normalizedStatus,
-            due_date: dueDate ?? null,
-            priority: normalizedPriority,
-            project_id: effectiveProjectId,
-            project_ids: effectiveProjectId ? [effectiveProjectId] : null,
-            assignee_name: resolvedAssignee.assigneeName,
-            assignee_email: resolvedAssignee.assigneeEmail,
-            assignee_person_id: resolvedAssignee.assigneePersonId,
-            source_system: "ai_assistant",
-            extraction_source: "ai_assistant_chat",
-            extraction_metadata: {
-              source: "ai_assistant",
-              tool: "createGeneratedTask",
-              user_id: userId,
-              idempotency_key: idempotencyKey,
-            } as Json,
-            updated_at: now,
-          })
-          .select("id,title,description,status,priority,due_date,project_id,assignee_name,assignee_email,created_at")
-          .single();
+          .rpc("create_ai_generated_task", {
+            p_metadata_id: metadataId,
+            p_title: title,
+            p_description: taskDescription,
+            p_status: normalizedStatus,
+            p_due_date: dueDate ?? null,
+            p_priority: normalizedPriority,
+            p_project_id: effectiveProjectId,
+            p_assignee_name: resolvedAssignee.assigneeName,
+            p_assignee_email: resolvedAssignee.assigneeEmail,
+            p_assignee_person_id: resolvedAssignee.assigneePersonId,
+            p_user_id: userId,
+            p_idempotency_key: idempotencyKey,
+          });
 
         if (error) {
-          const { error: cleanupError } = await supabase
-            .from("document_metadata")
-            .delete()
-            .eq("id", metadataId);
           const failure = {
             success: false,
-            error: cleanupError
-              ? `Task insert failed: ${error.message}. Metadata cleanup also failed: ${cleanupError.message}`
-              : error.message,
+            error: error.message,
           };
           await recordWriteAudit({
             toolName: "createGeneratedTask",
