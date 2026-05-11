@@ -207,9 +207,18 @@ function buildTableColumns(
   return [
     {
       ...columns[0],
-      render: (item) => (
-        <span className="font-medium">{item.title ?? "Untitled"}</span>
-      ),
+      render: (item) =>
+        item.type === "meeting" ? (
+          <a
+            href={`/meetings/${item.id}`}
+            className="font-medium text-foreground hover:underline hover:text-primary"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {item.title ?? "Untitled"}
+          </a>
+        ) : (
+          <span className="font-medium">{item.title ?? "Untitled"}</span>
+        ),
       csvValue: (item) => item.title ?? "",
       sortValue: (item) => item.title ?? "",
       sortable: true,
