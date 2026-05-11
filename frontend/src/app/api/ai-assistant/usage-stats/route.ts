@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { estimateCostWithFallback } from "@/lib/ai/model-pricing";
 
 /**
  * GET /api/ai-assistant/usage-stats
@@ -22,91 +23,102 @@ export const GET = withApiGuardrails(
     }
 
     const supabase = createServiceClient();
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
     // Fetch all assistant messages with metadata (contains usage data)
-    const { data: assistantMessages } = await supabase
+    const { data: assistantMessages, error: msgError } = await supabase
       .from("chat_history")
       .select("id, session_id, metadata, created_at")
       .eq("role", "assistant")
       .order("created_at", { ascending: false })
       .limit(500);
 
-    // Fetch feedback entries
-    const { data: feedbackEntries } = await supabase
+    if (msgError) throw new Error(`chat_history(assistant) query failed: ${msgError.message}`);
+
+    // Fetch feedback entries — scoped to last 30 days to prevent unbounded growth
+    const { data: feedbackEntries, error: fbError } = await supabase
       .from("chat_history")
       .select("metadata")
       .eq("role", "system")
+      .gte("created_at", thirtyDaysAgo)
       .limit(500);
 
+    if (fbError) throw new Error(`chat_history(feedback) query failed: ${fbError.message}`);
+
     // Fetch conversations for titles
-    const { data: conversations } = await supabase
+    const { data: conversations, error: convError } = await supabase
       .from("conversations")
       .select("session_id, title, last_message_at")
       .order("last_message_at", { ascending: false })
       .limit(20);
 
+    if (convError) throw new Error(`conversations query failed: ${convError.message}`);
+
     // Count total conversations
-    const { count: totalConversations } = await supabase
+    const { count: totalConversations, error: convCountError } = await supabase
       .from("conversations")
       .select("id", { count: "exact", head: true });
 
+    if (convCountError) throw new Error(`conversations count query failed: ${convCountError.message}`);
+
     // Count total messages
-    const { count: totalMessages } = await supabase
+    const { count: totalMessages, error: msgCountError } = await supabase
       .from("chat_history")
       .select("id", { count: "exact", head: true })
       .in("role", ["user", "assistant"]);
 
-    // Aggregate token usage from metadata
+    if (msgCountError) throw new Error(`chat_history count query failed: ${msgCountError.message}`);
+
+    // Single pass: aggregate token usage and estimate cost per message
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
     let messagesWithUsage = 0;
+    let estimatedCost = 0;
+    let messagesWithUnknownModel = 0;
 
-    // Track per-session token usage
     const sessionTokens: Record<string, number> = {};
     const sessionMessageCounts: Record<string, number> = {};
 
-    if (assistantMessages) {
-      for (const msg of assistantMessages) {
-        const meta = msg.metadata as Record<string, unknown> | null;
-        const usage = meta?.usage as {
-          inputTokens?: number;
-          outputTokens?: number;
-          totalTokens?: number;
-        } | null;
+    for (const msg of assistantMessages ?? []) {
+      const meta = msg.metadata as Record<string, unknown> | null;
+      const usage = meta?.usage as {
+        inputTokens?: number;
+        outputTokens?: number;
+        totalTokens?: number;
+      } | null;
+      const sid = msg.session_id as string;
 
-        if (usage) {
-          totalInputTokens += usage.inputTokens ?? 0;
-          totalOutputTokens += usage.outputTokens ?? 0;
-          messagesWithUsage++;
-        }
+      sessionMessageCounts[sid] = (sessionMessageCounts[sid] ?? 0) + 1;
 
-        // Track per-session
-        const sid = msg.session_id as string;
-        sessionMessageCounts[sid] = (sessionMessageCounts[sid] ?? 0) + 1;
-        if (usage?.totalTokens) {
+      if (usage) {
+        const inTokens = usage.inputTokens ?? 0;
+        const outTokens = usage.outputTokens ?? 0;
+        totalInputTokens += inTokens;
+        totalOutputTokens += outTokens;
+        messagesWithUsage++;
+
+        if (usage.totalTokens) {
           sessionTokens[sid] = (sessionTokens[sid] ?? 0) + usage.totalTokens;
         }
+
+        const modelId = (meta?.modelId as string | undefined) ?? "";
+        const { cost, matchedModel } = estimateCostWithFallback(modelId, inTokens, outTokens);
+        estimatedCost += cost;
+        if (!matchedModel) messagesWithUnknownModel++;
       }
     }
 
     const totalTokens = totalInputTokens + totalOutputTokens;
 
-    // Estimate cost (Claude Sonnet 4.5 pricing)
-    const estimatedCost =
-      (totalInputTokens / 1_000_000) * 3.0 +
-      (totalOutputTokens / 1_000_000) * 15.0;
-
     // Tally feedback
     let feedbackUp = 0;
     let feedbackDown = 0;
 
-    if (feedbackEntries) {
-      for (const entry of feedbackEntries) {
-        const meta = entry.metadata as Record<string, unknown> | null;
-        if (meta?.type === "feedback") {
-          if (meta.feedback === "up") feedbackUp++;
-          if (meta.feedback === "down") feedbackDown++;
-        }
+    for (const entry of feedbackEntries ?? []) {
+      const meta = entry.metadata as Record<string, unknown> | null;
+      if (meta?.type === "feedback") {
+        if (meta.feedback === "up") feedbackUp++;
+        if (meta.feedback === "down") feedbackDown++;
       }
     }
 
@@ -123,12 +135,15 @@ export const GET = withApiGuardrails(
       totalConversations: totalConversations ?? 0,
       totalMessages: totalMessages ?? 0,
       totalTokens,
-      estimatedCost: Math.round(estimatedCost * 100) / 100,
+      estimatedCost,
       feedbackUp,
       feedbackDown,
       avgTokensPerMessage:
         messagesWithUsage > 0 ? Math.round(totalTokens / messagesWithUsage) : 0,
       recentConversations,
+      totalInputTokens,
+      totalOutputTokens,
+      messagesWithUnknownModel,
     });
   },
 );
