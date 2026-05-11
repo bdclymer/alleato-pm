@@ -491,7 +491,7 @@ function SentimentCell({ value }: { value: unknown }): React.ReactElement {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex w-36 items-center gap-2">
+          <div className="flex items-center">
             <Badge
               variant="outline"
               className={cn(
@@ -501,14 +501,6 @@ function SentimentCell({ value }: { value: unknown }): React.ReactElement {
             >
               {SENTIMENT_LABELS[summary.dominantTone]} {summary.dominantValue}%
             </Badge>
-            <div
-              className="flex h-1.5 min-w-12 flex-1 overflow-hidden rounded-full bg-muted"
-              aria-hidden="true"
-            >
-              <span className="bg-success" style={{ width: `${summary.positive}%` }} />
-              <span className="bg-muted-foreground/45" style={{ width: `${summary.neutral}%` }} />
-              <span className="bg-destructive" style={{ width: `${summary.negative}%` }} />
-            </div>
           </div>
         </TooltipTrigger>
         <TooltipContent className="border bg-popover p-3 text-popover-foreground shadow-sm">
@@ -674,7 +666,7 @@ function KeywordTagsCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex max-w-60 flex-wrap items-center gap-1">
+          <div className="flex max-w-60 flex-nowrap items-center gap-1 overflow-hidden">
             {visibleTags.map((tag) => (
               <Badge
                 key={tag}
@@ -1089,13 +1081,13 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       width: 220,
     },
 
-    // ── Sentiment: compact distribution preview ────────────────────────────
+    // ── Sentiment: compact percentage preview ──────────────────────────────
     {
       ...getMeetingColumn("sentiment"),
       render: (item) => <SentimentCell value={item.sentiment} />,
       csvValue: (item) => formatSentiment(item.sentiment),
       sortValue: (item) => formatSentiment(item.sentiment),
-      width: 176,
+      width: 124,
     },
 
     // ── Overview: compact takeaway preview ─────────────────────────────────
