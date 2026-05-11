@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   BarChart3,
@@ -23,7 +22,6 @@ import {
   PenTool,
   Receipt,
   Search,
-  SendHorizontal,
   Settings,
   Shield,
   Sparkles,
@@ -36,11 +34,23 @@ import {
 import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { EmptyState, IconBadge, SectionHeader } from "@/components/ds";
-
-const MessageResponse = dynamic(
-  () => import("@/components/ai-elements/message").then((m) => m.MessageResponse),
-  { ssr: false }
-);
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputActions,
+  PromptInputSubmit,
+  PromptInputTextarea,
+} from "@/components/ai-elements/prompt-input";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -56,14 +66,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -183,8 +191,6 @@ export default function ProcoreDocsPage() {
   const [chatOpen, setChatOpen] = useState(false);
 
   const [chatInput, setChatInput] = useState("");
-  const chatInputRef = useRef<HTMLTextAreaElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/procore-docs/chat" }),
@@ -200,12 +206,6 @@ export default function ProcoreDocsPage() {
   const searchTerm = search.trim();
   const isSearching = searchTerm.length > 0;
   const showHero = !selectedCategory && !isSearching;
-
-  const messageCount = messages.length;
-   
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messageCount]);
 
   // Load categories
   useEffect(() => {
@@ -274,13 +274,6 @@ export default function ProcoreDocsPage() {
     setChatInput("");
     sendMessage({ text: trimmed });
   }, [chatInput, isStreaming, sendMessage]);
-
-  const handleChatKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
 
   const selectCategory = (cat: string | null) => {
     setSelectedCategory(cat);
@@ -583,20 +576,23 @@ export default function ProcoreDocsPage() {
             </div>
           </SheetHeader>
 
-          {/* Messages */}
-          <ScrollArea className="min-h-0 flex-1 px-5 py-4">
-            <div className="space-y-4 pb-4">
-              {messages.length === 0 && (
-                <div className="py-12 text-center">
-                  <IconBadge size="xl" className="mx-auto mb-4 rounded-full"><Sparkles className="h-5 w-5" /></IconBadge>
-                  <p className="text-sm font-medium text-foreground mb-1">
-                    How can I help?
-                  </p>
-                  <p className="mx-auto mb-6 max-w-xs text-xs text-muted-foreground leading-relaxed">
-                    Ask me anything about Procore features, workflows, or best
-                    practices.
-                  </p>
-                  <div className="flex flex-col gap-2">
+          <Conversation className="min-h-0 px-5 py-4">
+            <ConversationContent className="gap-4 p-0 pb-4">
+              {messages.length === 0 ? (
+                <ConversationEmptyState className="py-12">
+                  <IconBadge size="xl" className="mx-auto mb-4 rounded-full">
+                    <Sparkles className="h-5 w-5" />
+                  </IconBadge>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">
+                      How can I help?
+                    </p>
+                    <p className="mx-auto max-w-xs text-xs leading-relaxed text-muted-foreground">
+                      Ask me anything about Procore features, workflows, or best
+                      practices.
+                    </p>
+                  </div>
+                  <div className="flex w-full max-w-xs flex-col gap-2">
                     {[
                       "How do I create a budget?",
                       "What are change orders?",
@@ -606,91 +602,82 @@ export default function ProcoreDocsPage() {
                         key={example}
                         type="button"
                         variant="outline"
-                        onClick={() => {
-                          setChatInput(example);
-                          chatInputRef.current?.focus();
-                        }}
-                        className="rounded-md border-border/50 bg-background px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground h-auto justify-start"
+                        onClick={() => setChatInput(example)}
+                        className="h-auto justify-start rounded-md border-border/50 bg-background px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         {example}
                       </Button>
                     ))}
                   </div>
-                </div>
+                </ConversationEmptyState>
+              ) : (
+                messages.map((message) => {
+                  const text = getMessageText(message.parts);
+
+                  return (
+                    <Message key={message.id} from={message.role}>
+                      <MessageContent
+                        className={cn(
+                          message.role === "user"
+                            ? "rounded-xl bg-primary px-4 py-3 text-primary-foreground"
+                            : "rounded-none bg-transparent px-0 py-0",
+                        )}
+                      >
+                        {message.role === "assistant" ? (
+                          <MessageResponse className="text-sm leading-relaxed text-foreground">
+                            {text}
+                          </MessageResponse>
+                        ) : (
+                          <p className="text-sm leading-relaxed">{text}</p>
+                        )}
+                      </MessageContent>
+                    </Message>
+                  );
+                })
               )}
 
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex",
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[85%] rounded-xl px-4 py-3",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/50"
-                    )}
-                  >
-                    {message.role === "user" ? (
-                      <p className="text-sm leading-relaxed">
-                        {getMessageText(message.parts)}
-                      </p>
-                    ) : (
-                      <MessageResponse className="text-sm leading-relaxed text-foreground">
-                        {getMessageText(message.parts)}
-                      </MessageResponse>
-                    )}
-                  </div>
-                </div>
-              ))}
-
               {chatErrorMessage && (
-                <p className="text-xs text-destructive">
-                  {chatErrorMessage}
-                </p>
+                <p className="text-xs text-destructive">{chatErrorMessage}</p>
               )}
 
               {isStreaming && messages.at(-1)?.role !== "assistant" && (
-                <div className="flex justify-start">
-                  <div className="rounded-xl bg-muted/50 px-4 py-3">
+                <Message from="assistant">
+                  <MessageContent className="rounded-xl bg-muted/50 px-4 py-3">
                     <div className="flex items-center gap-1.5">
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:0ms]" />
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:150ms]" />
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:300ms]" />
                     </div>
-                  </div>
-                </div>
+                  </MessageContent>
+                </Message>
               )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
+            </ConversationContent>
+            <ConversationScrollButton className="bottom-4 z-20" />
+          </Conversation>
 
           {/* Chat input */}
           <div className="bg-muted/20 px-5 py-4">
-            <div className="flex items-end gap-2">
-              <Textarea
-                ref={chatInputRef}
+            <PromptInput
+              value={chatInput}
+              onValueChange={setChatInput}
+              onSubmit={handleSendMessage}
+              isLoading={isStreaming}
+              disabled={isStreaming}
+              className="rounded-xl border-border/50 bg-background p-2"
+            >
+              <PromptInputTextarea
                 value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={handleChatKeyDown}
                 placeholder="Ask a question..."
-                disabled={isStreaming}
-                className="min-h-14 resize-none border-border/50 text-sm shadow-none"
-                rows={2}
+                className="min-h-12 px-2 py-2 text-sm"
               />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!chatInput.trim() || isStreaming}
-                size="icon"
-                className="h-9 w-9 shrink-0"
-              >
-                <SendHorizontal />
-              </Button>
-            </div>
+              <PromptInputActions className="justify-end">
+                <PromptInputSubmit
+                  disabled={!chatInput.trim() || isStreaming}
+                  status={status}
+                  className="h-9 w-9 shrink-0"
+                />
+              </PromptInputActions>
+            </PromptInput>
           </div>
         </SheetContent>
       </Sheet>

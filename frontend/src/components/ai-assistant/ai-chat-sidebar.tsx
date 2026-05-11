@@ -6,14 +6,29 @@ import {
   DefaultChatTransport,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
-import type { UIMessage } from "ai";
-import { BrainCircuit, Plus, Send, Square, X } from "lucide-react";
+import type { ChatStatus, UIMessage } from "ai";
+import { BrainCircuit, Plus, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useAiChatSidebarStore } from "@/lib/stores/ai-chat-sidebar-store";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AI_ASSISTANT_MODEL } from "@/lib/ai/assistant-models";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputActions,
+  PromptInputSubmit,
+  PromptInputTextarea,
+} from "@/components/ai-elements/prompt-input";
 
 const AI_CHAT_SIDEBAR_WIDTH = "var(--ai-chat-sidebar-width, 380px)";
 
@@ -54,13 +69,13 @@ function MessageBubble({ message }: { message: UIMessage }) {
   if (!text) return null;
 
   return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+    <Message from={message.role} className={!isUser ? "flex-row items-start" : undefined}>
       {!isUser && (
         <div className="mr-2 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10">
           <BrainCircuit className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
         </div>
       )}
-      <div
+      <MessageContent
         className={cn(
           "max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed",
           isUser
@@ -68,9 +83,9 @@ function MessageBubble({ message }: { message: UIMessage }) {
             : "bg-muted text-foreground",
         )}
       >
-        {text}
-      </div>
-    </div>
+        {isUser ? text : <MessageResponse>{text}</MessageResponse>}
+      </MessageContent>
+    </Message>
   );
 }
 
@@ -96,56 +111,56 @@ function ChatInput({
   onSubmit,
   onStop,
   disabled,
-  isStreaming,
+  status,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: (msg: string) => void;
   onStop: () => void;
   disabled: boolean;
-  isStreaming: boolean;
+  status: ChatStatus;
 }) {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (value.trim() && !disabled) onSubmit(value);
-    }
+  const isStreaming = status === "streaming" || status === "submitted";
+  const handleSubmit = () => {
+    if (value.trim() && !disabled) onSubmit(value);
   };
 
   return (
     <div className="shrink-0 px-3 pb-3 pt-2">
-      <div className="flex items-end gap-2 rounded-lg border border-input bg-background px-3 py-2">
-        <Textarea
+      <PromptInput
+        value={value}
+        onValueChange={onChange}
+        onSubmit={handleSubmit}
+        disabled={disabled}
+        isLoading={isStreaming}
+        className="rounded-lg border-input bg-background px-3 py-2"
+      >
+        <PromptInputTextarea
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
           placeholder="Ask anything..."
-          rows={1}
-          className="min-h-0 flex-1 resize-none border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:ring-0"
+          className="min-h-0 px-0 py-0 text-sm"
           style={{ maxHeight: "120px", overflowY: "auto" }}
         />
-        {isStreaming ? (
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={onStop}
-            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <Square className="h-3.5 w-3.5 fill-current" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            size="icon"
-            onClick={() => { if (value.trim()) onSubmit(value); }}
-            disabled={!value.trim() || disabled}
-            className="h-7 w-7 shrink-0"
-          >
-            <Send className="h-3.5 w-3.5" />
-          </Button>
-        )}
-      </div>
+        <PromptInputActions className="justify-end">
+          {isStreaming ? (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={onStop}
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+            >
+              <Square className="h-3.5 w-3.5 fill-current" />
+            </Button>
+          ) : (
+            <PromptInputSubmit
+              disabled={!value.trim() || disabled}
+              status={status}
+              className="h-7 w-7 shrink-0"
+            />
+          )}
+        </PromptInputActions>
+      </PromptInput>
       <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
         Shift+Enter for new line
       </p>
@@ -185,7 +200,7 @@ function EmptyState({
         onSubmit={onSubmit}
         onStop={() => {}}
         disabled={isSubmitting}
-        isStreaming={false}
+        status={isSubmitting ? "submitted" : "ready"}
       />
     </div>
   );
@@ -232,11 +247,6 @@ function ActiveChat({
   }, [pendingFirstMessage, sendMessage]);
 
   const [input, setInput] = React.useState("");
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, status]);
 
   const isStreaming = status === "streaming" || status === "submitted";
 
@@ -251,22 +261,22 @@ function ActiveChat({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="flex flex-col gap-3">
+      <Conversation className="min-h-0 px-4 py-4">
+        <ConversationContent className="gap-3 p-0">
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
           {isStreaming && <LoadingDots />}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
+        </ConversationContent>
+        <ConversationScrollButton className="bottom-3 z-20" />
+      </Conversation>
       <ChatInput
         value={input}
         onChange={setInput}
         onSubmit={handleSubmit}
         onStop={stop}
         disabled={isStreaming}
-        isStreaming={isStreaming}
+        status={status}
       />
     </div>
   );

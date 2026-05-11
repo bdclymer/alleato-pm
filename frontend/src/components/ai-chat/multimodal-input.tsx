@@ -41,7 +41,7 @@ import {
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputTools,
-} from '@/components/elements/prompt-input';
+} from "@/components/ai-elements/prompt-input";
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
@@ -323,8 +323,7 @@ function PureMultimodalInput({
 
       <PromptInput
         className="rounded-xl border border-border bg-background p-4 shadow-xs transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50"
-        onSubmit={(event) => {
-          event.preventDefault();
+        onSubmit={() => {
           if (!input.trim() && attachments.length === 0) {
             return;
           }

@@ -83,7 +83,7 @@ import {
   PromptInputTextarea,
   PromptInputActions,
   PromptInputAction,
-} from "@/components/chat/prompt-input";
+} from "@/components/ai-elements/prompt-input";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
