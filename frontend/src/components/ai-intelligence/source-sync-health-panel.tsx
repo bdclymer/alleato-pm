@@ -1724,11 +1724,6 @@ export function SourceSyncHealthPanel() {
 
           <section className="space-y-4">
             <SectionRuleHeading label="Source details" />
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              A source is stale when it has not checked for new data recently. A
-              source error means the provider rejected or timed out during the
-              last read.
-            </p>
             <SourceTable sources={status.sources} />
           </section>
 
