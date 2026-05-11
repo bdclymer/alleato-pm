@@ -106,6 +106,68 @@ services:
       - key: SLACK_WEBHOOK_URL
         sync: false
 
+  # Generates the approved executive Daily Brief on Render and then sends the
+  # stored packet to Teams through a short-lived delivery endpoint.
+  - type: cron
+    name: alleato-executive-daily-brief-morning
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile.executive-brief
+    dockerContext: .
+    schedule: "0 11 * * 1-5"
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL
+        value: https://projects.alleatogroup.com
+      - key: EXECUTIVE_DAILY_BRIEF_SEND_TEAMS
+        value: "true"
+      - key: EXECUTIVE_DAILY_BRIEF_SCHEDULE
+        value: "weekday-morning-0700-et"
+
+  - type: cron
+    name: alleato-executive-daily-brief-evening
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile.executive-brief
+    dockerContext: .
+    schedule: "30 22 * * 1-5"
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL
+        value: https://projects.alleatogroup.com
+      - key: EXECUTIVE_DAILY_BRIEF_SEND_TEAMS
+        value: "true"
+      - key: EXECUTIVE_DAILY_BRIEF_SCHEDULE
+        value: "weekday-evening-1830-et-dst"
+
   - type: web
     name: alleato-backend
     runtime: docker
