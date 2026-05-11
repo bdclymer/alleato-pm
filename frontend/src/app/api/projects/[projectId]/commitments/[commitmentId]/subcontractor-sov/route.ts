@@ -340,6 +340,7 @@ export const POST = withApiGuardrails(
       ]);
 
       const sendResults = await sendSsovInviteEmail({
+        supabase,
         recipients: contacts.map((contact: { id: string; name: string; email: string }) => ({
           id: contact.id,
           name: contact.name,

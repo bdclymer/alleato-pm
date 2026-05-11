@@ -84,6 +84,8 @@ function toIsoDate(value: string | null | undefined): string {
 
 type StatusEntity = "commitment" | "primeCo" | "invoice";
 
+// "primeCo" covers both prime contract change orders and commitment (subcontract) change orders —
+// Acumatica uses the same ChangeOrder entity with identical status semantics for both.
 const STATUS_MAP: Record<StatusEntity, Array<[string[], string]>> = {
   commitment: [
     [["executed", "approved", "closed"], "Open"],

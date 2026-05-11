@@ -227,6 +227,7 @@ async function grantSsovAccessToInvoiceContacts(args: {
 // ---------------------------------------------------------------------------
 
 export async function sendSsovInviteEmail(args: {
+  supabase: ServiceClient;
   recipients: Array<{ id: string; name: string; email: string }>;
   projectId: number;
   projectName: string;
@@ -238,6 +239,7 @@ export async function sendSsovInviteEmail(args: {
   submissionId: string;
 }) {
   const {
+    supabase,
     recipients,
     projectId,
     projectName,
@@ -266,10 +268,8 @@ export async function sendSsovInviteEmail(args: {
     year: "numeric",
   });
 
-  const adminSupabase = createServiceClient();
-
   // Fetch the Subcontractor system permission template ID once for the whole batch.
-  const { data: subcontractorTemplate } = await adminSupabase
+  const { data: subcontractorTemplate } = await supabase
     .from("permission_templates")
     .select("id")
     .eq("name", "Subcontractor")
@@ -278,24 +278,29 @@ export async function sendSsovInviteEmail(args: {
   const subcontractorTemplateId = subcontractorTemplate?.id ?? null;
 
   await grantSsovAccessToInvoiceContacts({
-    supabase: adminSupabase,
+    supabase,
     commitmentId,
     recipientPersonIds: recipients.map((recipient) => recipient.id),
   });
 
   // Check which recipients already have auth accounts
-  const { data: existingAuthLinks } = await adminSupabase
+  const { data: existingAuthLinks } = await supabase
     .from("users_auth")
     .select("person_id")
     .in("person_id", recipients.map((r) => r.id));
 
   const existingPersonIds = new Set((existingAuthLinks || []).map((row: { person_id: string }) => row.person_id));
 
+  // Resolve email templates once before the fan-out to avoid redundant awaits per recipient.
+  const [{ default: SOVInvitation }, { default: SubcontractorSovInvite }] = await Promise.all([
+    import("@/emails/subcontractor/SOVInvitation"),
+    import("@/emails/subcontractor/SubcontractorSovInvite"),
+  ]);
+
   // Send individually so each recipient gets personalized greeting + own idempotency key
   return Promise.all(
     recipients.map(async (recipient) => {
       const isNewUser = !existingPersonIds.has(recipient.id);
-      const { default: SOVInvitation } = await import("@/emails/subcontractor/SOVInvitation");
 
       if (isNewUser) {
         // Generate a Supabase magic invite link for account creation.
@@ -304,7 +309,7 @@ export async function sendSsovInviteEmail(args: {
         const passwordSetupUrl = `/auth/update-password?next=${encodeURIComponent(sovTabPath)}`;
         const confirmBaseUrl = `${appUrl}/auth/confirm`;
 
-        const { data: linkData, error: linkError } = await adminSupabase.auth.admin.generateLink({
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
           type: "invite",
           email: recipient.email,
           options: {
@@ -353,7 +358,7 @@ export async function sendSsovInviteEmail(args: {
 
         // Ensure the person has a subcontractor membership for this project so they
         // can access it after logging in.
-        await adminSupabase
+        await supabase
           .from("project_directory_memberships")
           .upsert(
             {
@@ -366,7 +371,6 @@ export async function sendSsovInviteEmail(args: {
             { onConflict: "person_id,project_id", ignoreDuplicates: false },
           );
 
-        const { default: SubcontractorSovInvite } = await import("@/emails/subcontractor/SubcontractorSovInvite");
         return sendEmail({
           template: "sov-invite-new-user",
           to: recipient.email,
@@ -387,7 +391,7 @@ export async function sendSsovInviteEmail(args: {
       }
 
       // Ensure existing users also have the subcontractor membership + template assigned.
-      await adminSupabase
+      await supabase
         .from("project_directory_memberships")
         .upsert(
           {
