@@ -3,16 +3,20 @@
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
+  ActivityIcon,
+  AlertTriangleIcon,
   CalendarIcon,
   CheckCircle2Icon,
   ClipboardIcon,
   FileTextIcon,
   GitBranchIcon,
+  ListChecksIcon,
   MailIcon,
   SendIcon,
   ShieldCheckIcon,
   SparklesIcon,
   SquarePenIcon,
+  TrendingUpIcon,
   UsersRoundIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,10 +32,18 @@ import type {
   AssistantWidgetPayload,
   CreateEventWidgetPayload,
   CreateTaskWidgetPayload,
+  CreativeDraftWidgetPayload,
   DecisionPacketWidgetPayload,
   DraftEmailWidgetPayload,
+  FinancialPulseWidgetPayload,
   MeetingIntelligenceWidgetPayload,
+  MeetingInsightsWidgetPayload,
+  OwnerActionQueueWidgetPayload,
+  OwnerSnapshotWidgetPayload,
   ProjectActionPreviewWidgetPayload,
+  RecordWritePreviewWidgetPayload,
+  RiskExposurePacketWidgetPayload,
+  SourceEvidenceDrawerWidgetPayload,
   TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
 import type { FeatureRequestPacketWidgetPayload } from "@/lib/feature-requests/types";
@@ -463,6 +475,461 @@ function MeetingIntelligenceWidget({ widget }: { widget: MeetingIntelligenceWidg
   );
 }
 
+function OwnerSnapshotWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: OwnerSnapshotWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
+  return (
+    <WidgetShell
+      eyebrow="Owner snapshot"
+      title={widget.title}
+      icon={<ActivityIcon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.status.replaceAll("_", " ")}</Badge>}
+    >
+      <div className="space-y-1">
+        <p className="text-sm text-foreground">{widget.summary}</p>
+        <p className="text-xs text-muted-foreground">
+          {widget.projectName} - As of {formatDateLabel(widget.asOf) ?? widget.asOf}
+        </p>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-3">
+        {widget.healthSignals.slice(0, 6).map((signal) => (
+          <div key={signal.label} className="rounded-md bg-muted/40 px-3 py-2">
+            <div className="text-[11px] font-medium uppercase text-muted-foreground">{signal.label}</div>
+            <div className="mt-1 truncate text-sm font-semibold text-foreground">{signal.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <div className="text-xs font-medium text-muted-foreground">Money</div>
+          <div className="mt-1 grid gap-1 text-sm text-foreground">
+            {Object.entries(widget.money).map(([label, value]) =>
+              value ? (
+                <div key={label} className="flex justify-between gap-3 border-b border-border/60 py-1 last:border-0">
+                  <span className="capitalize text-muted-foreground">{label.replace(/([A-Z])/g, " $1")}</span>
+                  <span className="font-medium">{value}</span>
+                </div>
+              ) : null,
+            )}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs font-medium text-muted-foreground">Owner actions</div>
+          <div className="mt-1 divide-y divide-border/60">
+            {widget.ownerActions.slice(0, 4).map((action) => (
+              <div key={action.id} className="py-2 text-sm">
+                <div className="font-medium text-foreground">{action.title}</div>
+                {action.projectName || action.ownerName ? (
+                  <div className="text-xs text-muted-foreground">
+                    {[action.projectName, action.ownerName].filter(Boolean).join(" - ")}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+            {widget.ownerActions.length === 0 ? (
+              <div className="py-2 text-sm text-muted-foreground">No owner actions were returned.</div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {widget.dataGaps.length > 0 ? (
+        <InfoAlert variant="warning">
+          <span>{widget.dataGaps.slice(0, 3).join(" ")}</span>
+        </InfoAlert>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          onClick={() => onSubmit(`Create a follow-up task from the owner snapshot for project ${widget.projectId}. Show a preview before writing.`)}
+        >
+          <CheckCircle2Icon className="h-4 w-4" />
+          Create task
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onSubmit(`Draft an owner update from this snapshot for ${widget.projectName}. Keep it source-backed and client-safe.`)}
+        >
+          <MailIcon className="h-4 w-4" />
+          Draft update
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onSubmit(`Ask the CFO to analyze the money impact for ${widget.projectName} using this snapshot.`)}
+        >
+          <TrendingUpIcon className="h-4 w-4" />
+          Ask CFO
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
+function OwnerActionQueueWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: OwnerActionQueueWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
+  return (
+    <WidgetShell
+      eyebrow="Owner action queue"
+      title={widget.title}
+      icon={<ListChecksIcon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.totalCount} actions</Badge>}
+    >
+      <p className="text-sm text-muted-foreground">{widget.subtitle}</p>
+      {widget.totalCount === 0 ? (
+        <InfoAlert>
+          <span>{widget.emptyState ?? "No owner actions matched this request."}</span>
+        </InfoAlert>
+      ) : (
+        <div className="space-y-3">
+          {widget.groups.map((group) => (
+            <div key={group.id}>
+              <div className="mb-1 text-xs font-medium uppercase text-muted-foreground">
+                {group.title}
+              </div>
+              <div className="divide-y divide-border/60">
+                {group.items.slice(0, 5).map((item) => (
+                  <div key={item.id} className="flex items-start justify-between gap-3 py-2">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-foreground">{item.title}</div>
+                      <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {item.projectName ? <span>{item.projectName}</span> : null}
+                        {item.ownerName ? <span>Owner: {item.ownerName}</span> : null}
+                        {item.dueDate ? <span>Due: {formatDateLabel(item.dueDate)}</span> : null}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0 text-xs"
+                      onClick={() => onSubmit(`Create or update the recommended action for this owner queue item. Show a preview first.\n\n${JSON.stringify(item, null, 2)}`)}
+                    >
+                      Act
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </WidgetShell>
+  );
+}
+
+function MeetingInsightsWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: MeetingInsightsWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
+  return (
+    <WidgetShell
+      eyebrow="Meeting insights"
+      title={widget.title}
+      icon={<UsersRoundIcon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.dateLabel}</Badge>}
+    >
+      <p className="text-sm text-muted-foreground">{widget.subtitle}</p>
+      <div className="grid gap-2 sm:grid-cols-5">
+        {[
+          ["Meetings", widget.metrics.meetingCount],
+          ["Decisions", widget.metrics.decisionCount],
+          ["Actions", widget.metrics.actionItemCount],
+          ["Risks", widget.metrics.riskCount],
+          ["Questions", widget.metrics.unresolvedQuestionCount],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-md bg-muted/40 px-3 py-2">
+            <div className="text-[11px] font-medium uppercase text-muted-foreground">{label}</div>
+            <div className="mt-1 text-lg font-semibold text-foreground">{value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[
+          ["Decisions", widget.decisions],
+          ["Open questions", widget.unresolvedQuestions],
+          ["Risks", widget.risks],
+          ["Suggested tasks", widget.suggestedTasks],
+        ].map(([label, items]) => {
+          const list = Array.isArray(items) ? items : [];
+          return (
+            <div key={label as string}>
+              <div className="text-xs font-medium text-muted-foreground">{label as string}</div>
+              <div className="mt-1 divide-y divide-border/60">
+                {list.slice(0, 4).map((item) => (
+                  <div key={item.id} className="py-2 text-sm">
+                    <div className="font-medium text-foreground">{item.title}</div>
+                    {"detail" in item && item.detail ? (
+                      <div className="text-xs text-muted-foreground">{item.detail}</div>
+                    ) : null}
+                  </div>
+                ))}
+                {list.length === 0 ? (
+                  <div className="py-2 text-sm text-muted-foreground">None returned.</div>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          onClick={() => onSubmit(`Create task previews from the suggested meeting tasks in ${widget.title}.`)}
+        >
+          <CheckCircle2Icon className="h-4 w-4" />
+          Create tasks
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onSubmit(`Draft a concise meeting recap from ${widget.title} with source-backed decisions and follow-ups.`)}
+        >
+          <FileTextIcon className="h-4 w-4" />
+          Draft recap
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
+function RiskExposurePacketWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: RiskExposurePacketWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
+  return (
+    <WidgetShell
+      eyebrow="Risk exposure"
+      title={widget.title}
+      icon={<AlertTriangleIcon className="h-4 w-4" />}
+      actions={<Badge variant={widget.severity === "critical" ? "destructive" : "outline"}>{widget.severity}</Badge>}
+    >
+      <p className="text-sm text-foreground">{widget.summary}</p>
+      {widget.estimatedImpact ? (
+        <div className="rounded-md bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Estimated impact: </span>
+          <span className="font-semibold text-foreground">{widget.estimatedImpact}</span>
+        </div>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => onSubmit(`Create a change event preview from this risk exposure packet.\n\n${JSON.stringify(widget, null, 2)}`)}>
+          <ShieldCheckIcon className="h-4 w-4" />
+          Create preview
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => onSubmit(`Draft an owner notice from this risk exposure packet. Keep it factual and source-backed.`)}>
+          <MailIcon className="h-4 w-4" />
+          Draft notice
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
+function FinancialPulseWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: FinancialPulseWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
+  return (
+    <WidgetShell
+      eyebrow="Financial pulse"
+      title={widget.title}
+      icon={<TrendingUpIcon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.scope}</Badge>}
+    >
+      <p className="text-sm text-muted-foreground">{widget.subtitle}</p>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {widget.kpis.slice(0, 6).map((kpi) => (
+          <div key={kpi.label} className="rounded-md bg-muted/40 px-3 py-2">
+            <div className="text-[11px] font-medium uppercase text-muted-foreground">{kpi.label}</div>
+            <div className="mt-1 text-sm font-semibold text-foreground">{kpi.value}</div>
+            {kpi.delta ? <div className="text-xs text-muted-foreground">{kpi.delta}</div> : null}
+          </div>
+        ))}
+      </div>
+      <Button size="sm" variant="outline" onClick={() => onSubmit(`Explain the financial pulse and recommend the next owner action.\n\n${JSON.stringify(widget, null, 2)}`)}>
+        <SparklesIcon className="h-4 w-4" />
+        Recommend action
+      </Button>
+    </WidgetShell>
+  );
+}
+
+function CreativeDraftWidget({
+  widget,
+  onSubmit,
+  onEditDraft,
+}: {
+  widget: CreativeDraftWidgetPayload;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  const [draftBody, setDraftBody] = useState(widget.draftBody);
+  const draft = [widget.draftTitle, draftBody].filter(Boolean).join("\n\n");
+
+  return (
+    <WidgetShell
+      eyebrow="Creative draft"
+      title={widget.title}
+      icon={<SparklesIcon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.sourceCheck.status.replaceAll("_", " ")}</Badge>}
+    >
+      <div className="grid gap-3 sm:grid-cols-[0.8fr_1.2fr]">
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">Source facts</div>
+          <div className="divide-y divide-border/60">
+            {widget.sourceFacts.slice(0, 5).map((fact) => (
+              <div key={`${fact.label}-${fact.value}`} className="py-2 text-sm">
+                <div className="font-medium text-foreground">{fact.label}</div>
+                <div className="text-xs text-muted-foreground">{fact.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <Textarea value={draftBody} onChange={(event) => setDraftBody(event.target.value)} className="min-h-56 resize-y" />
+      </div>
+      {widget.bannedClaims.length > 0 ? (
+        <InfoAlert variant="warning">
+          <span>Unsupported claims to avoid: {widget.bannedClaims.slice(0, 3).join("; ")}</span>
+        </InfoAlert>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => onSubmit(`Source-check and improve this ${widget.format} draft:\n\n${draft}`)}>
+          <FileTextIcon className="h-4 w-4" />
+          Source-check
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => onEditDraft(draft)}>
+          <SquarePenIcon className="h-4 w-4" />
+          Edit in chat
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => void copyToClipboard(draft)}>
+          <ClipboardIcon className="h-4 w-4" />
+          Copy
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
+function SourceEvidenceDrawerWidget({ widget }: { widget: SourceEvidenceDrawerWidgetPayload }) {
+  return (
+    <WidgetShell
+      eyebrow="Evidence"
+      title={widget.title}
+      icon={<FileTextIcon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.sources.length} sources</Badge>}
+    >
+      <div className="grid gap-2">
+        {widget.sources.slice(0, 8).map((source) => {
+          const body = (
+            <>
+              <div className="truncate text-sm font-medium text-foreground">{source.title}</div>
+              {source.snippet ? <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{source.snippet}</div> : null}
+            </>
+          );
+          return source.href ? (
+            <Link key={source.id} href={source.href} className="rounded-md border border-border px-3 py-2 hover:bg-muted/50">
+              {body}
+            </Link>
+          ) : (
+            <div key={source.id} className="rounded-md border border-border px-3 py-2">
+              {body}
+            </div>
+          );
+        })}
+      </div>
+    </WidgetShell>
+  );
+}
+
+function RecordWritePreviewWidget({
+  widget,
+  onSubmit,
+  onEditDraft,
+}: {
+  widget: RecordWritePreviewWidgetPayload;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  const [fields, setFields] = useState(widget.fields);
+  const payload = {
+    target: widget.target,
+    fields: Object.fromEntries(fields.map((field) => [field.label, field.value])),
+  };
+  const prompt = `${widget.confirmPrompt}\n\n${JSON.stringify(payload, null, 2)}`;
+
+  return (
+    <WidgetShell
+      eyebrow="Record write preview"
+      title={widget.title}
+      icon={<ShieldCheckIcon className="h-4 w-4" />}
+      actions={<Badge variant={widget.safetyLevel === "high" ? "destructive" : "outline"}>{widget.safetyLevel}</Badge>}
+    >
+      <div className="rounded-md bg-muted/40 px-3 py-2 text-sm">
+        <span className="text-muted-foreground">Target: </span>
+        <span className="font-medium text-foreground">{widget.target.table} - {widget.target.recordType.replaceAll("_", " ")}</span>
+      </div>
+      <div className="space-y-2">
+        {fields.map((field, index) => (
+          <label key={`${field.label}-${index}`} className="grid gap-1">
+            <span className="text-xs font-medium text-muted-foreground">{field.label}</span>
+            {field.multiline ? (
+              <Textarea
+                value={field.value}
+                onChange={(event) => {
+                  const next = [...fields];
+                  next[index] = { ...field, value: event.target.value };
+                  setFields(next);
+                }}
+                className="min-h-24 resize-y"
+              />
+            ) : (
+              <Input
+                value={field.value}
+                onChange={(event) => {
+                  const next = [...fields];
+                  next[index] = { ...field, value: event.target.value };
+                  setFields(next);
+                }}
+              />
+            )}
+          </label>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => onSubmit(prompt)}>
+          <ShieldCheckIcon className="h-4 w-4" />
+          {widget.actionLabel}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => onEditDraft(prompt)}>
+          <SquarePenIcon className="h-4 w-4" />
+          Edit in chat
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
 function CreateEventWidget({
   widget,
   onSubmit,
@@ -829,6 +1296,46 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
     props.widget.type === "task_summary" ? <TaskSummaryWidget widget={props.widget} /> : null,
   meeting_intelligence: (props) =>
     props.widget.type === "meeting_intelligence" ? <MeetingIntelligenceWidget widget={props.widget} /> : null,
+  owner_snapshot: (props) =>
+    props.widget.type === "owner_snapshot" ? (
+      <OwnerSnapshotWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
+  owner_action_queue: (props) =>
+    props.widget.type === "owner_action_queue" ? (
+      <OwnerActionQueueWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
+  meeting_insights: (props) =>
+    props.widget.type === "meeting_insights" ? (
+      <MeetingInsightsWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
+  risk_exposure_packet: (props) =>
+    props.widget.type === "risk_exposure_packet" ? (
+      <RiskExposurePacketWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
+  financial_pulse: (props) =>
+    props.widget.type === "financial_pulse" ? (
+      <FinancialPulseWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
+  creative_draft: (props) =>
+    props.widget.type === "creative_draft" ? (
+      <CreativeDraftWidget
+        widget={props.widget}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
+  source_evidence_drawer: (props) =>
+    props.widget.type === "source_evidence_drawer" ? (
+      <SourceEvidenceDrawerWidget widget={props.widget} />
+    ) : null,
+  record_write_preview: (props) =>
+    props.widget.type === "record_write_preview" ? (
+      <RecordWritePreviewWidget
+        widget={props.widget}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
   create_event: (props) =>
     props.widget.type === "create_event" ? (
       <CreateEventWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />

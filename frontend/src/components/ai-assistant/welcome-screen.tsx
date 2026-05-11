@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { AnimatedOrb } from "./animated-orb";
+import { AssistantShortcutPanel } from "./assistant-shortcut-panel";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 
 interface WelcomeScreenProps {
@@ -10,7 +11,7 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({
-  onSelectPrompt: _onSelectPrompt,
+  onSelectPrompt,
   children,
 }: WelcomeScreenProps) {
   const fullName = useCurrentUserName();
@@ -21,8 +22,8 @@ export function WelcomeScreen({
     : rawFirstName;
 
   return (
-    <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-40 pt-16 sm:px-6">
-      <div className="w-full max-w-2xl">
+    <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-40 pt-12 sm:px-6">
+      <div className="w-full max-w-3xl">
         <div className="space-y-3 text-center">
           <div className="orb-intro mx-auto flex h-24 w-24 items-center justify-center">
             <AnimatedOrb size={96} />
@@ -31,6 +32,11 @@ export function WelcomeScreen({
             Hi, {firstName}. How can I help?
           </h1>
         </div>
+
+        <AssistantShortcutPanel
+          onSelectPrompt={onSelectPrompt}
+          className="mx-auto mt-8 w-full"
+        />
 
         {children && <div className="mx-auto mt-8 w-full">{children}</div>}
       </div>

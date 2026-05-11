@@ -3,6 +3,14 @@ export type AssistantWidgetKind =
   | "create_task"
   | "task_summary"
   | "meeting_intelligence"
+  | "owner_snapshot"
+  | "owner_action_queue"
+  | "meeting_insights"
+  | "risk_exposure_packet"
+  | "financial_pulse"
+  | "creative_draft"
+  | "source_evidence_drawer"
+  | "record_write_preview"
   | "create_event"
   | "project_action_preview"
   | "decision_packet"
@@ -129,11 +137,261 @@ export type DecisionPacketWidgetPayload = {
   nextActions: string[];
 };
 
+export type SourceEvidenceItem = {
+  id: string;
+  title: string;
+  sourceType:
+    | "meeting"
+    | "email"
+    | "teams"
+    | "document"
+    | "project_record"
+    | "accounting"
+    | "knowledge";
+  date?: string;
+  snippet?: string;
+  href?: string;
+  confidence?: "low" | "medium" | "high";
+};
+
+export type OwnerActionItem = {
+  id: string;
+  title: string;
+  description?: string;
+  projectId?: number | null;
+  projectName?: string | null;
+  ownerName?: string | null;
+  dueDate?: string | null;
+  priority: "low" | "normal" | "high" | "critical";
+  sourceType?:
+    | "meeting"
+    | "email"
+    | "teams"
+    | "task"
+    | "rfi"
+    | "submittal"
+    | "change_event"
+    | "risk";
+  sourceTitle?: string | null;
+  href?: string;
+  recommendedAction:
+    | "review"
+    | "assign"
+    | "create_task"
+    | "draft_message"
+    | "create_rfi"
+    | "create_change_event"
+    | "save_insight";
+  confidence: "low" | "medium" | "high";
+};
+
+export type OwnerSnapshotWidgetPayload = {
+  type: "owner_snapshot";
+  id: string;
+  title: string;
+  projectId: number;
+  projectName: string;
+  status: "on_track" | "watch" | "critical" | "unknown";
+  asOf: string;
+  summary: string;
+  healthSignals: Array<{
+    label: string;
+    value: string;
+    status: "good" | "watch" | "critical" | "neutral";
+  }>;
+  money: {
+    contractValue?: string;
+    committed?: string;
+    exposure?: string;
+    unbilledChanges?: string;
+    marginSignal?: string;
+  };
+  schedule: {
+    status: "on_track" | "watch" | "critical" | "unknown";
+    blockers: string[];
+    upcomingMilestones: string[];
+  };
+  risks: Array<{
+    id?: string;
+    title: string;
+    severity: "low" | "medium" | "high" | "critical";
+    reason: string;
+    href?: string;
+  }>;
+  ownerActions: OwnerActionItem[];
+  recentMovement: Array<{
+    label: string;
+    sourceType: "meeting" | "email" | "teams" | "document" | "project_record" | "accounting" | "knowledge";
+    date?: string;
+    href?: string;
+  }>;
+  dataGaps: string[];
+  sources: SourceEvidenceItem[];
+};
+
+export type OwnerActionQueueWidgetPayload = {
+  type: "owner_action_queue";
+  id: string;
+  title: string;
+  subtitle: string;
+  totalCount: number;
+  groups: Array<{
+    id: string;
+    title: string;
+    priority: "now" | "next" | "watch";
+    items: OwnerActionItem[];
+  }>;
+  emptyState?: string;
+};
+
+export type MeetingInsightItem = {
+  id: string;
+  title: string;
+  detail?: string;
+  ownerName?: string | null;
+  dueDate?: string | null;
+  sourceTitle?: string | null;
+  sourceHref?: string | null;
+  confidence: "low" | "medium" | "high";
+};
+
+export type MeetingInsightsWidgetPayload = {
+  type: "meeting_insights";
+  id: string;
+  title: string;
+  subtitle: string;
+  dateLabel: string;
+  projectId?: number | null;
+  projectName?: string | null;
+  metrics: {
+    meetingCount: number;
+    decisionCount: number;
+    actionItemCount: number;
+    riskCount: number;
+    unresolvedQuestionCount: number;
+  };
+  decisions: MeetingInsightItem[];
+  promises: MeetingInsightItem[];
+  risks: MeetingInsightItem[];
+  unresolvedQuestions: MeetingInsightItem[];
+  suggestedTasks: OwnerActionItem[];
+  sources: SourceEvidenceItem[];
+};
+
+export type RiskExposurePacketWidgetPayload = {
+  type: "risk_exposure_packet";
+  id: string;
+  title: string;
+  severity: "low" | "medium" | "high" | "critical";
+  projectId?: number | null;
+  projectName?: string | null;
+  summary: string;
+  estimatedImpact?: string;
+  exposureType: "cost" | "schedule" | "contract" | "billing" | "vendor" | "quality" | "unknown";
+  evidence: SourceEvidenceItem[];
+  affectedRecords: Array<{
+    label: string;
+    recordType: string;
+    href?: string;
+  }>;
+  options: Array<{
+    label: string;
+    tradeoff: string;
+    recommended?: boolean;
+  }>;
+  nextActions: OwnerActionItem[];
+  dataGaps: string[];
+};
+
+export type FinancialPulseWidgetPayload = {
+  type: "financial_pulse";
+  id: string;
+  title: string;
+  subtitle: string;
+  asOf: string;
+  scope: "project" | "portfolio" | "company";
+  projectId?: number | null;
+  kpis: Array<{
+    label: string;
+    value: string;
+    delta?: string;
+    status: "good" | "watch" | "critical" | "neutral";
+  }>;
+  variances: Array<{
+    label: string;
+    actual: string;
+    expected?: string;
+    variance?: string;
+    href?: string;
+  }>;
+  alerts: RiskExposurePacketWidgetPayload[];
+  recommendedActions: OwnerActionItem[];
+  sources: SourceEvidenceItem[];
+};
+
+export type CreativeDraftWidgetPayload = {
+  type: "creative_draft";
+  id: string;
+  title: string;
+  audience: "owner" | "client" | "subcontractor" | "internal" | "public" | "proposal";
+  format: "email" | "linkedin" | "case_study" | "proposal_blurb" | "meeting_recap" | "memo";
+  tone: "direct" | "polished" | "warm" | "firm" | "executive";
+  sourceFacts: Array<{
+    label: string;
+    value: string;
+    sourceHref?: string;
+  }>;
+  bannedClaims: string[];
+  draftTitle?: string;
+  draftBody: string;
+  sourceCheck: {
+    status: "source_backed" | "needs_review" | "unsupported";
+    notes: string[];
+  };
+};
+
+export type SourceEvidenceDrawerWidgetPayload = {
+  type: "source_evidence_drawer";
+  id: string;
+  title: string;
+  sources: SourceEvidenceItem[];
+};
+
+export type RecordWritePreviewWidgetPayload = {
+  type: "record_write_preview";
+  id: string;
+  title: string;
+  safetyLevel: "medium" | "high";
+  actionLabel: string;
+  target: {
+    table: string;
+    recordType: "task" | "rfi" | "change_event" | "risk" | "email" | "project_status" | "budget" | "unknown";
+    projectId?: number | null;
+    existingRecordHref?: string;
+  };
+  fields: AssistantWidgetField[];
+  sourceEvidence: SourceEvidenceItem[];
+  validation: Array<{
+    label: string;
+    status: "pass" | "warning" | "fail";
+    message: string;
+  }>;
+  confirmPrompt: string;
+};
+
 export type AssistantWidgetPayload =
   | DraftEmailWidgetPayload
   | CreateTaskWidgetPayload
   | TaskSummaryWidgetPayload
   | MeetingIntelligenceWidgetPayload
+  | OwnerSnapshotWidgetPayload
+  | OwnerActionQueueWidgetPayload
+  | MeetingInsightsWidgetPayload
+  | RiskExposurePacketWidgetPayload
+  | FinancialPulseWidgetPayload
+  | CreativeDraftWidgetPayload
+  | SourceEvidenceDrawerWidgetPayload
+  | RecordWritePreviewWidgetPayload
   | CreateEventWidgetPayload
   | ProjectActionPreviewWidgetPayload
   | DecisionPacketWidgetPayload
@@ -338,6 +596,14 @@ export function isAssistantWidgetPayload(
       "create_task",
       "task_summary",
       "meeting_intelligence",
+      "owner_snapshot",
+      "owner_action_queue",
+      "meeting_insights",
+      "risk_exposure_packet",
+      "financial_pulse",
+      "creative_draft",
+      "source_evidence_drawer",
+      "record_write_preview",
       "create_event",
       "project_action_preview",
       "decision_packet",

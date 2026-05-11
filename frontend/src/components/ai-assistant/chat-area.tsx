@@ -2007,7 +2007,7 @@ export function ChatArea({
       ) : (
         <>
           <Conversation className="min-h-0">
-            <ConversationContent className="mx-auto w-full max-w-3xl px-0 pb-6 pt-6 md:pb-8 md:pt-8">
+            <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6 sm:px-6 md:pb-8 md:pt-8">
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
@@ -2136,7 +2136,7 @@ export function ChatArea({
                       key={msg.id}
                       from="user"
                     >
-                      <MessageContent className="user-message-enter rounded-full bg-muted px-2.5 py-0.5 text-foreground">
+                      <MessageContent className="user-message-enter rounded-full bg-muted px-3 py-1 text-foreground">
                         {imageParts.length > 0 && (
                           <div className="mb-2 flex flex-wrap gap-2">
                             {imageParts.map((image) => (
@@ -2430,7 +2430,7 @@ export function ChatArea({
         </>
       )}
 
-      <div className="z-20 shrink-0 px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 md:px-4">
+      <div className="z-20 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 sm:px-6">
         <div className="mx-auto w-full max-w-3xl">
           {chatError && (
             <InfoAlert variant="error" className="mb-2 py-2">

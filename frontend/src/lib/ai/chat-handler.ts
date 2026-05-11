@@ -120,6 +120,9 @@ import {
   buildAssistantWidgetsFromPrompt,
   type AssistantWidgetPayload,
   type MeetingIntelligenceWidgetPayload,
+  type OwnerActionItem,
+  type OwnerSnapshotWidgetPayload,
+  type SourceEvidenceItem,
   type TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
 import {
@@ -1881,6 +1884,307 @@ function createDeterministicProjectBriefing(params: {
   ].join("\n");
 }
 
+function isOwnerSnapshotWidgetRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return [
+    "owner snapshot",
+    "project snapshot",
+    "what should brandon look at first",
+    "show risks, money, meetings, and owner actions",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
+function statusFromSnapshot(snapshot: ProjectBriefingSnapshot): OwnerSnapshotWidgetPayload["status"] {
+  const project = readSnapshotObject(snapshot, "project");
+  const hardFacts = readSnapshotObject(snapshot, "hardFacts");
+  const budget = readSnapshotObject(hardFacts, "budget");
+  const rfis = readSnapshotObject(hardFacts, "rfis");
+  const submittals = readSnapshotObject(hardFacts, "submittals");
+  const schedule = readSnapshotObject(hardFacts, "schedule");
+  const healthStatus = String(project?.healthStatus ?? "").toLowerCase();
+
+  if (
+    healthStatus.includes("critical") ||
+    healthStatus.includes("red") ||
+    readNestedNumber(rfis, ["overdueCount"]) > 0 ||
+    readNestedNumber(submittals, ["overdueCount"]) > 0 ||
+    readNestedNumber(schedule, ["overdueCount"]) > 0
+  ) {
+    return "critical";
+  }
+
+  if (
+    healthStatus.includes("watch") ||
+    healthStatus.includes("risk") ||
+    String(budget?.status ?? "").toLowerCase().includes("over") ||
+    readNestedNumber(hardFacts, ["changeOrders", "pendingCount"]) > 0 ||
+    readNestedNumber(hardFacts, ["changeEvents", "openCount"]) > 0
+  ) {
+    return "watch";
+  }
+
+  if (healthStatus.includes("track") || healthStatus.includes("green")) {
+    return "on_track";
+  }
+
+  return "unknown";
+}
+
+function sourceEvidenceType(value: unknown): SourceEvidenceItem["sourceType"] {
+  const normalized = String(value ?? "").toLowerCase();
+  if (normalized.includes("meeting")) return "meeting";
+  if (normalized.includes("email") || normalized.includes("outlook")) return "email";
+  if (normalized.includes("team")) return "teams";
+  if (normalized.includes("account")) return "accounting";
+  if (normalized.includes("knowledge")) return "knowledge";
+  if (normalized.includes("project")) return "project_record";
+  return "document";
+}
+
+function buildOwnerActionsFromSnapshot(snapshot: ProjectBriefingSnapshot): OwnerActionItem[] {
+  const hardFacts = readSnapshotObject(snapshot, "hardFacts");
+  const project = readSnapshotObject(snapshot, "project");
+  const projectId = typeof project?.id === "number" ? project.id : null;
+  const projectName = typeof project?.name === "string" ? project.name : null;
+  const actions: OwnerActionItem[] = [];
+  const overdueTasks = readNestedNumber(hardFacts, ["schedule", "overdueCount"]);
+  const overdueRfis = readNestedNumber(hardFacts, ["rfis", "overdueCount"]);
+  const pendingCos = readNestedNumber(hardFacts, ["changeOrders", "pendingCount"]);
+  const openCes = readNestedNumber(hardFacts, ["changeEvents", "openCount"]);
+  const unexecutedCommitments = readNestedNumber(hardFacts, ["commitments", "unexecutedCount"]);
+
+  if (overdueTasks > 0 || overdueRfis > 0) {
+    actions.push({
+      id: "recovery-huddle",
+      title: "Run PM recovery huddle",
+      description: `${overdueTasks} overdue schedule task(s), ${overdueRfis} overdue RFI(s).`,
+      projectId,
+      projectName,
+      ownerName: "Project Manager",
+      priority: "critical",
+      sourceType: "task",
+      sourceTitle: "Project controls",
+      recommendedAction: "create_task",
+      confidence: "high",
+    });
+  }
+
+  if (pendingCos > 0 || openCes > 0) {
+    actions.push({
+      id: "change-exposure-log",
+      title: "Create change exposure decision log",
+      description: `${pendingCos} pending change order(s), ${openCes} open change event(s).`,
+      projectId,
+      projectName,
+      ownerName: "PM + Cost Lead",
+      priority: "high",
+      sourceType: "change_event",
+      sourceTitle: "Change management records",
+      recommendedAction: "create_change_event",
+      confidence: "high",
+    });
+  }
+
+  if (unexecutedCommitments > 0) {
+    actions.push({
+      id: "commitment-release-review",
+      title: "Review unexecuted commitments",
+      description: `${unexecutedCommitments} commitment(s) are not executed.`,
+      projectId,
+      projectName,
+      ownerName: "PM + Procurement Lead",
+      priority: "high",
+      sourceType: "risk",
+      sourceTitle: "Commitments",
+      recommendedAction: "review",
+      confidence: "high",
+    });
+  }
+
+  if (actions.length === 0) {
+    actions.push({
+      id: "baseline-confirmation",
+      title: "Confirm current owner baseline",
+      description: "Confirm budget, top risks, and next owner decision before the next briefing.",
+      projectId,
+      projectName,
+      ownerName: "Project Manager",
+      priority: "normal",
+      sourceType: "risk",
+      sourceTitle: "Project briefing snapshot",
+      recommendedAction: "review",
+      confidence: "medium",
+    });
+  }
+
+  return actions;
+}
+
+function buildOwnerSnapshotWidget(snapshot: ProjectBriefingSnapshot): OwnerSnapshotWidgetPayload | null {
+  const project = readSnapshotObject(snapshot, "project");
+  const hardFacts = readSnapshotObject(snapshot, "hardFacts");
+  const projectId = typeof project?.id === "number" ? project.id : null;
+  const projectName = typeof project?.name === "string" ? project.name : null;
+  if (!projectId || !projectName) return null;
+
+  const budget = readSnapshotObject(hardFacts, "budget");
+  const contract = readSnapshotObject(hardFacts, "contract");
+  const schedule = readSnapshotObject(hardFacts, "schedule");
+  const risks = readSnapshotArray(snapshot, "riskSignals").map(String).filter(Boolean);
+  const dataGaps = readSnapshotArray(snapshot, "dataGaps").map(String).filter(Boolean);
+  const recentMovement = readSnapshotArray(snapshot, "recentMovement")
+    .map((item, index) => {
+      const record = asRecord(item);
+      return {
+        label: String(record.title ?? record.summary ?? `Recent movement ${index + 1}`).slice(0, 140),
+        sourceType: sourceEvidenceType(record.sourceType),
+        date: typeof record.date === "string" ? record.date : undefined,
+        href: typeof record.sourceUrl === "string" ? record.sourceUrl : undefined,
+      };
+    })
+    .slice(0, 6);
+
+  const sources: SourceEvidenceItem[] = recentMovement.map((item, index) => ({
+    id: `source-${index + 1}`,
+    title: item.label,
+    sourceType: item.sourceType,
+    date: item.date,
+    href: item.href,
+    confidence: "medium",
+  }));
+
+  const pendingCos = readNestedNumber(hardFacts, ["changeOrders", "pendingCount"]);
+  const openCes = readNestedNumber(hardFacts, ["changeEvents", "openCount"]);
+  const overdueRfis = readNestedNumber(hardFacts, ["rfis", "overdueCount"]);
+  const overdueTasks = readNestedNumber(schedule, ["overdueCount"]);
+  const status = statusFromSnapshot(snapshot);
+
+  return {
+    type: "owner_snapshot",
+    id: `owner-snapshot-${projectId}`,
+    title: `Owner snapshot: ${projectName}`,
+    projectId,
+    projectName,
+    status,
+    asOf: new Date().toISOString(),
+    summary:
+      risks[0] ??
+      buildSnapshotNextStep(snapshot).replace(/^Next step:\s*/i, "") ??
+      "Project controls were checked for owner-facing risks, money movement, and action items.",
+    healthSignals: [
+      {
+        label: "Status",
+        value: status.replaceAll("_", " "),
+        status: status === "critical" ? "critical" : status === "watch" ? "watch" : "neutral",
+      },
+      {
+        label: "Pending COs",
+        value: String(pendingCos),
+        status: pendingCos > 0 ? "watch" : "neutral",
+      },
+      {
+        label: "Open CEs",
+        value: String(openCes),
+        status: openCes > 0 ? "watch" : "neutral",
+      },
+      {
+        label: "Overdue RFIs",
+        value: String(overdueRfis),
+        status: overdueRfis > 0 ? "critical" : "neutral",
+      },
+      {
+        label: "Overdue Tasks",
+        value: String(overdueTasks),
+        status: overdueTasks > 0 ? "critical" : "neutral",
+      },
+    ],
+    money: {
+      contractValue: currency(readNestedNumber(contract, ["revisedContractValue"])),
+      committed: undefined,
+      exposure: pendingCos > 0 ? `${pendingCos} pending change order(s)` : undefined,
+      unbilledChanges: currency(readNestedNumber(contract, ["pendingContractChanges"])),
+      marginSignal: String(budget?.status ?? "unknown"),
+    },
+    schedule: {
+      status: overdueTasks > 0 ? "critical" : "unknown",
+      blockers: overdueTasks > 0 ? [`${overdueTasks} overdue schedule task(s)`] : [],
+      upcomingMilestones: readSnapshotArray(schedule, "upcomingMilestones")
+        .map((item) => String(asRecord(item).name ?? "Upcoming milestone"))
+        .slice(0, 5),
+    },
+    risks: risks.slice(0, 5).map((risk, index) => ({
+      id: `risk-${index + 1}`,
+      title: risk,
+      severity: index === 0 && status === "critical" ? "critical" : "high",
+      reason: risk,
+    })),
+    ownerActions: buildOwnerActionsFromSnapshot(snapshot),
+    recentMovement,
+    dataGaps,
+    sources,
+  };
+}
+
+async function loadOwnerSnapshotWidget(params: {
+  tools: ToolSet;
+  selectedProjectId?: number;
+}): Promise<{
+  snapshot: ProjectBriefingSnapshot | null;
+  widget: OwnerSnapshotWidgetPayload | null;
+  content: string;
+  traceOutput: Record<string, unknown>;
+}> {
+  const executable = params.tools.getProjectBriefingSnapshot as ExecutableTool | undefined;
+  if (!executable?.execute) {
+    return {
+      snapshot: null,
+      widget: null,
+      content: "I could not load the project snapshot tool, so I cannot render an owner snapshot widget yet.",
+      traceOutput: { error: "getProjectBriefingSnapshot execute function missing" },
+    };
+  }
+
+  const output = await executable.execute(
+    params.selectedProjectId ? { projectId: params.selectedProjectId } : {},
+  );
+  const record = asRecord(output);
+  if (typeof record.error === "string") {
+    return {
+      snapshot: null,
+      widget: null,
+      content: record.error,
+      traceOutput: { error: record.error },
+    };
+  }
+
+  const widget = buildOwnerSnapshotWidget(record);
+  const project = readSnapshotObject(record, "project");
+  const projectName = typeof project?.name === "string" ? project.name : "the selected project";
+  const content = widget
+    ? [
+        `I built an owner snapshot for ${projectName}.`,
+        "",
+        `Start with: ${widget.summary}`,
+        "",
+        `Next: ${buildSnapshotNextStep(record).replace(/^Next step:\s*/i, "")}`,
+      ].join("\n")
+    : "I found project snapshot data, but it was missing the project identity needed to render the owner widget.";
+
+  return {
+    snapshot: record,
+    widget,
+    content,
+    traceOutput: {
+      projectId: project?.id ?? null,
+      projectName,
+      widgetBuilt: Boolean(widget),
+      riskCount: widget?.risks.length ?? 0,
+      actionCount: widget?.ownerActions.length ?? 0,
+      dataGapCount: widget?.dataGaps.length ?? 0,
+    },
+  };
+}
+
 function sourceLabel(result: SemanticSearchResult): string {
   return `[Source: ${String(result.sourceTable ?? "source")} ${String(result.recordId ?? "unknown")}]`;
 }
@@ -3016,7 +3320,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
       ? executiveBriefPacket
       : null;
     const priorProjectName = extractPriorProjectName(messages);
-    const projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
+    let projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
     const executiveBriefingRetrieval: ExecutiveBriefingRetrievalPacket | null = null;
     let assistantSourceHealthContext: AssistantSourceHealthContext | null = null;
     const sourceHealthRequested = shouldAttachAssistantSourceHealth(lastUserContent);
@@ -3285,6 +3589,76 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             stage: "complete",
             message: "Tasks table checked",
             status: "success",
+          });
+          return;
+        }
+
+        if (isOwnerSnapshotWidgetRequest(lastUserContent)) {
+          writeStrategistStatus(writer, {
+            stage: "snapshot",
+            message: "Building owner snapshot widget",
+            status: "loading",
+          });
+
+          const answer = await loadOwnerSnapshotWidget({
+            tools,
+            selectedProjectId,
+          });
+          projectBriefingSnapshot = answer.snapshot;
+
+          const dataParts = answer.widget
+            ? writeAssistantWidgetParts(writer, [answer.widget])
+            : [];
+
+          toolTrace.push({
+            tool: "ownerSnapshotWidget",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: selectedProjectId ?? null,
+            },
+            output: answer.traceOutput,
+            timestamp: new Date().toISOString(),
+          });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content: answer.content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content: answer.content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            dataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          await writeTextResponse(writer, "strategist-owner-snapshot", answer.content);
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: answer.widget ? "Owner snapshot ready" : "Owner snapshot unavailable",
+            status: answer.widget ? "success" : "warning",
           });
           return;
         }

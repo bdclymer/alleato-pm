@@ -77,9 +77,9 @@ function MessageBubble({ message }: { message: UIMessage }) {
       )}
       <MessageContent
         className={cn(
-          "max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed",
+          "max-w-[85%] rounded-lg px-3 py-1.5 text-sm leading-relaxed",
           isUser
-            ? "bg-primary text-primary-foreground"
+            ? "bg-muted text-foreground"
             : "bg-muted text-foreground",
         )}
       >
