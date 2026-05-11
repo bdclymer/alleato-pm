@@ -1103,12 +1103,6 @@ function StuckItemsTable({ items }: { items: SourceSyncStuckItem[] }) {
         onPerPageChange: (value) => tableState.setPerPage(Number(value)),
         clientSide: true,
       }}
-      topContent={
-        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-          These are individual files or messages that failed, are unsupported,
-          or have been sitting in a processing stage too long.
-        </p>
-      }
       layout={{
         fullBleedTable: true,
         alignHeaderWithFullBleedTable: true,
