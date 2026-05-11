@@ -3,7 +3,11 @@ jest.mock("../guardrails", () => ({
 }));
 
 import { createToolGuardrails } from "../guardrails";
-import { previewCreateRFI } from "../action-tools";
+import {
+  normalizeGeneratedTaskPriority,
+  normalizeGeneratedTaskStatus,
+  previewCreateRFI,
+} from "../action-tools";
 
 const mockedCreateToolGuardrails = jest.mocked(createToolGuardrails);
 
@@ -98,5 +102,27 @@ describe("previewCreateRFI", () => {
         output: output,
       }),
     );
+  });
+});
+
+describe("generated task DB contract normalization", () => {
+  it("maps AI-friendly priority aliases to public.tasks priority values", () => {
+    expect(normalizeGeneratedTaskPriority("normal")).toBe("medium");
+    expect(normalizeGeneratedTaskPriority("medium")).toBe("medium");
+    expect(normalizeGeneratedTaskPriority("critical")).toBe("urgent");
+    expect(normalizeGeneratedTaskPriority("urgent")).toBe("urgent");
+    expect(normalizeGeneratedTaskPriority("high")).toBe("high");
+    expect(normalizeGeneratedTaskPriority("low")).toBe("low");
+    expect(normalizeGeneratedTaskPriority()).toBe("medium");
+  });
+
+  it("maps AI-friendly status aliases to public.tasks status values", () => {
+    expect(normalizeGeneratedTaskStatus("completed")).toBe("done");
+    expect(normalizeGeneratedTaskStatus("done")).toBe("done");
+    expect(normalizeGeneratedTaskStatus("in_progress")).toBe("in_progress");
+    expect(normalizeGeneratedTaskStatus("blocked")).toBe("blocked");
+    expect(normalizeGeneratedTaskStatus("cancelled")).toBe("cancelled");
+    expect(normalizeGeneratedTaskStatus("open")).toBe("open");
+    expect(normalizeGeneratedTaskStatus()).toBe("open");
   });
 });

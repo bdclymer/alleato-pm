@@ -34,6 +34,28 @@ export type CreateRFIPreviewInput = {
   scheduleImpact?: "yes" | "no" | "tbd";
 };
 
+const generatedTaskPrioritySchema = z.enum(["low", "normal", "medium", "high", "critical", "urgent"]);
+const generatedTaskStatusSchema = z.enum(["open", "in_progress", "completed", "done", "blocked", "cancelled"]);
+
+export function normalizeGeneratedTaskPriority(
+  priority?: z.infer<typeof generatedTaskPrioritySchema> | null,
+): "low" | "medium" | "high" | "urgent" {
+  if (priority === "critical" || priority === "urgent") return "urgent";
+  if (priority === "high") return "high";
+  if (priority === "low") return "low";
+  return "medium";
+}
+
+export function normalizeGeneratedTaskStatus(
+  status?: z.infer<typeof generatedTaskStatusSchema> | null,
+): "open" | "in_progress" | "blocked" | "done" | "cancelled" {
+  if (status === "completed" || status === "done") return "done";
+  if (status === "in_progress") return "in_progress";
+  if (status === "blocked") return "blocked";
+  if (status === "cancelled") return "cancelled";
+  return "open";
+}
+
 export async function previewCreateRFI(
   userId: string,
   options: ActionToolsOptions,
@@ -868,8 +890,8 @@ export function createActionTools(
         description: z.string().optional().describe("Task detail or source context"),
         assignee: z.string().optional().describe("Person responsible"),
         dueDate: z.string().optional().describe("ISO due date"),
-        priority: z.enum(["low", "normal", "high", "critical"]).default("normal"),
-        status: z.enum(["open", "in_progress", "completed", "blocked"]).default("open"),
+        priority: generatedTaskPrioritySchema.default("normal"),
+        status: generatedTaskStatusSchema.default("open"),
         confirmed: z.boolean().default(false),
         idempotencyKey: z
           .string()
@@ -884,6 +906,8 @@ export function createActionTools(
         const effectiveProjectId = access.projectId;
         const resolvedAssignee = await resolveGeneratedTaskAssignee(assignee);
         const taskDescription = description?.trim() || title;
+        const normalizedPriority = normalizeGeneratedTaskPriority(priority);
+        const normalizedStatus = normalizeGeneratedTaskStatus(status);
 
         if (!confirmed) {
           return {
@@ -896,9 +920,9 @@ export function createActionTools(
                 project_id: effectiveProjectId,
                 title,
                 description: taskDescription,
-                status,
+                status: normalizedStatus,
                 due_date: dueDate ?? null,
-                priority,
+                priority: normalizedPriority,
                 assignee_name: resolvedAssignee.assigneeName,
                 assignee_email: resolvedAssignee.assigneeEmail,
                 assignee_person_id: resolvedAssignee.assigneePersonId,
@@ -950,9 +974,9 @@ export function createActionTools(
             metadata_id: metadataId,
             title,
             description: taskDescription,
-            status,
+            status: normalizedStatus,
             due_date: dueDate ?? null,
-            priority,
+            priority: normalizedPriority,
             project_id: effectiveProjectId,
             project_ids: effectiveProjectId ? [effectiveProjectId] : null,
             assignee_name: resolvedAssignee.assigneeName,
@@ -972,7 +996,16 @@ export function createActionTools(
           .single();
 
         if (error) {
-          const failure = { success: false, error: error.message };
+          const { error: cleanupError } = await supabase
+            .from("document_metadata")
+            .delete()
+            .eq("id", metadataId);
+          const failure = {
+            success: false,
+            error: cleanupError
+              ? `Task insert failed: ${error.message}. Metadata cleanup also failed: ${cleanupError.message}`
+              : error.message,
+          };
           await recordWriteAudit({
             toolName: "createGeneratedTask",
             idempotencyKey,
@@ -1014,8 +1047,8 @@ export function createActionTools(
         description: z.string().optional(),
         assignee: z.string().optional(),
         dueDate: z.string().nullable().optional(),
-        priority: z.enum(["low", "normal", "high", "critical"]).optional(),
-        status: z.enum(["open", "in_progress", "completed", "blocked"]).optional(),
+        priority: generatedTaskPrioritySchema.optional(),
+        status: generatedTaskStatusSchema.optional(),
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
@@ -1035,8 +1068,8 @@ export function createActionTools(
         };
         if (input.title !== undefined) updates.title = input.title;
         if (input.description !== undefined) updates.description = input.description;
-        if (input.status !== undefined) updates.status = input.status;
-        if (input.priority !== undefined) updates.priority = input.priority;
+        if (input.status !== undefined) updates.status = normalizeGeneratedTaskStatus(input.status);
+        if (input.priority !== undefined) updates.priority = normalizeGeneratedTaskPriority(input.priority);
         if (input.dueDate !== undefined) updates.due_date = input.dueDate || null;
         if (resolvedAssignee) {
           updates.assignee_name = resolvedAssignee.assigneeName;
