@@ -2,7 +2,6 @@
 import * as dotenv from "dotenv";
 import { resolve } from "path";
 import type { BrandonDailyUpdatePacket } from "../src/lib/executive/brandon-daily-update";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "../src/types/database.types";
 
 dotenv.config({ path: resolve(process.cwd(), "../.env") });
@@ -10,7 +9,6 @@ dotenv.config({ path: resolve(process.cwd(), ".env") });
 dotenv.config({ path: resolve(process.cwd(), ".env.local"), override: true });
 
 type RunStatus = "running" | "success" | "failed";
-type ServiceClient = SupabaseClient<Database>;
 type SourceSyncRunInsert = Database["public"]["Tables"]["source_sync_runs"]["Insert"];
 type SourceSyncRunUpdate = Database["public"]["Tables"]["source_sync_runs"]["Update"];
 
@@ -30,10 +28,6 @@ type ExecutiveBriefingWorkflowModule = {
   }): Promise<{ draft: ExecutiveBriefingDraft }>;
 };
 
-type SupabaseServiceModule = {
-  createServiceClient(): ServiceClient;
-};
-
 function envFlag(name: string, defaultValue: boolean): boolean {
   const value = process.env[name]?.trim().toLowerCase();
   if (!value) return defaultValue;
@@ -43,6 +37,61 @@ function envFlag(name: string, defaultValue: boolean): boolean {
 function compactError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message.replace(/\s+/g, " ").slice(0, 1800);
+}
+
+function supabaseRestConfig() {
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY;
+
+  if (!url) {
+    throw new Error("SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL is required.");
+  }
+  if (!key) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY is required.");
+  }
+
+  return {
+    restUrl: `${url.replace(/\/+$/, "")}/rest/v1`,
+    key,
+  };
+}
+
+async function supabaseRestFetch<T>(
+  path: string,
+  init: RequestInit,
+  timeoutMs = 30_000,
+): Promise<T> {
+  const { restUrl, key } = supabaseRestConfig();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${restUrl}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        apikey: key,
+        authorization: `Bearer ${key}`,
+        "content-type": "application/json",
+        ...(init.headers ?? {}),
+      },
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(
+        `Supabase REST ${response.status}: ${text.slice(0, 1000)}`,
+      );
+    }
+    return (text ? JSON.parse(text) : null) as T;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(
+        `Supabase REST request timed out after ${timeoutMs}ms: ${path}`,
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function toJson(value: unknown): Json {
@@ -85,7 +134,7 @@ function cliArg(name: string): string | null {
   return match ? match.slice(prefix.length) : null;
 }
 
-async function createRun(client: ServiceClient, startedAt: string): Promise<RunRow> {
+async function createRun(startedAt: string): Promise<RunRow> {
   const payload = {
     source: "executive_daily_brief",
     resource_id:
@@ -102,36 +151,46 @@ async function createRun(client: ServiceClient, startedAt: string): Promise<RunR
     items_skipped: 0,
     items_failed: 0,
     metadata: {
-      trigger: cliArg("--trigger") ?? process.env.EXECUTIVE_DAILY_BRIEF_TRIGGER ?? "render_cron",
+      trigger:
+        cliArg("--trigger") ??
+        process.env.EXECUTIVE_DAILY_BRIEF_TRIGGER ??
+        "render_cron",
       schedule: process.env.EXECUTIVE_DAILY_BRIEF_SCHEDULE ?? null,
       sendTeams: envFlag("EXECUTIVE_DAILY_BRIEF_SEND_TEAMS", true),
     },
   } satisfies SourceSyncRunInsert;
 
-  const response = await client.from("source_sync_runs").insert(payload).select("id").single();
-  if (response.error) {
-    throw new Error(`Failed to create executive daily brief run row: ${response.error.message}`);
-  }
-  return response.data ?? {};
+  const rows = await supabaseRestFetch<RunRow[]>(
+    "/source_sync_runs?select=id",
+    {
+      method: "POST",
+      headers: { prefer: "return=representation" },
+      body: JSON.stringify(payload),
+    },
+  );
+  return rows[0] ?? {};
 }
 
 async function updateRun(
-  client: ServiceClient,
   runId: string | undefined,
   payload: SourceSyncRunUpdate,
 ) {
   if (!runId) return;
-  const response = await client
-    .from("source_sync_runs")
-    .update({
-      ...payload,
-      finished_at: new Date().toISOString(),
-    })
-    .eq("id", runId);
-  if (response.error) {
+  try {
+    await supabaseRestFetch<unknown>(
+      `/source_sync_runs?id=eq.${encodeURIComponent(runId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          ...payload,
+          finished_at: new Date().toISOString(),
+        }),
+      },
+    );
+  } catch (error) {
     console.warn("[executive-daily-brief] Failed to update run row", {
       runId,
-      error: response.error.message,
+      error: compactError(error),
     });
   }
 }
@@ -142,14 +201,17 @@ async function sendStoredBriefToTeams(userId?: string | null) {
     throw new Error("CRON_SECRET is required for Teams delivery.");
   }
 
-  const response = await fetch(`${frontendBaseUrl()}/api/executive/daily-brief/send-teams`, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${cronSecret}`,
-      "content-type": "application/json",
+  const response = await fetch(
+    `${frontendBaseUrl()}/api/executive/daily-brief/send-teams`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${cronSecret}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(userId ? { userId } : {}),
     },
-    body: JSON.stringify(userId ? { userId } : {}),
-  });
+  );
   const body = await response.text();
   let parsed: unknown = body;
   try {
@@ -161,7 +223,9 @@ async function sendStoredBriefToTeams(userId?: string | null) {
   if (!response.ok) {
     throw new Error(
       `Teams delivery failed with ${response.status}: ${
-        typeof parsed === "string" ? parsed.slice(0, 1000) : JSON.stringify(parsed)
+        typeof parsed === "string"
+          ? parsed.slice(0, 1000)
+          : JSON.stringify(parsed)
       }`,
     );
   }
@@ -173,12 +237,9 @@ async function main() {
   const workflowModule = (await import(
     "../src/lib/executive/executive-briefing-workflow"
   )) as ExecutiveBriefingWorkflowModule;
-  const serviceModule = (await import("../src/lib/supabase/service")) as SupabaseServiceModule;
   const { regenerateExecutiveBriefingDraft } = workflowModule;
-  const { createServiceClient } = serviceModule;
-  const client = createServiceClient();
   const startedAt = new Date().toISOString();
-  const run = await createRun(client, startedAt);
+  const run = await createRun(startedAt);
   const startMs = Date.now();
 
   try {
@@ -200,9 +261,11 @@ async function main() {
       cliArg("--user-id") ??
       process.env.EXECUTIVE_DAILY_BRIEF_TEAMS_USER_ID ??
       null;
-    const deliveryResult = shouldSend ? await sendStoredBriefToTeams(userId) : null;
+    const deliveryResult = shouldSend
+      ? await sendStoredBriefToTeams(userId)
+      : null;
 
-    await updateRun(client, run.id, {
+    await updateRun(run.id, {
       status: "success" satisfies RunStatus,
       items_seen: totalItems,
       items_synced: shouldSend ? 1 : 0,
@@ -235,7 +298,7 @@ async function main() {
     );
   } catch (error) {
     const message = compactError(error);
-    await updateRun(client, run.id, {
+    await updateRun(run.id, {
       status: "failed" satisfies RunStatus,
       items_failed: 1,
       error_code: "EXECUTIVE_DAILY_BRIEF_FAILED",
