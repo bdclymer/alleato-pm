@@ -72,6 +72,14 @@ type StrategistLiveStatus = {
   timestamp?: string;
 };
 
+function formatChatError(error: Error): string {
+  const message = error.message?.trim();
+  if (!message) {
+    return "The assistant request failed before a response was returned.";
+  }
+  return `The assistant request failed before a response was returned: ${message}`;
+}
+
 function isStrategistLiveStatus(value: unknown): value is StrategistLiveStatus {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
@@ -250,6 +258,7 @@ function ChatWithSession({
     status,
     stop,
     addToolApprovalResponse,
+    error,
   } = useChat({
     id: sessionId,
     messages: initialMessages,
@@ -342,6 +351,7 @@ function ChatWithSession({
       responseQualityByMessageId={responseQualityByMessageId}
       traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
       liveStatus={liveStatus}
+      chatError={error ? formatChatError(error) : null}
       isLoadingMessages={isLoadingMessages}
       isStreaming={isStreaming}
       input={input}

@@ -60,7 +60,7 @@ export function getAssistantToolCallingDecision(input: {
     providerPath: getDefaultAssistantProviderPath(),
     modelId: input.modelId,
     reason:
-      "Streaming model tools enabled on the configured AI SDK provider. Direct OpenAI is the default provider path; Vercel AI Gateway is used only with AI_PROVIDER_PATH=vercel_gateway. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
+      "Streaming model tools enabled on the configured AI SDK provider. Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key. Disable by setting AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS=true.",
     validatedAt: VALIDATED_AT,
     supportsToolCalling: true,
     diagnosticsArtifactPath: AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT,

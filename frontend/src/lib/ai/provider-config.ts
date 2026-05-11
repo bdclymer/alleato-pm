@@ -4,11 +4,12 @@ export const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1";
 
 function normalizeProviderPath(rawValue: string | undefined): AiProviderPath {
   const value = rawValue?.trim().toLowerCase();
-  if (!value || value === "openai" || value === "direct_openai" || value === "direct") {
+  if (value === "openai" || value === "direct_openai" || value === "direct") {
     return "openai";
   }
 
   if (
+    !value ||
     value === "vercel_gateway" ||
     value === "ai_gateway" ||
     value === "gateway" ||
@@ -23,7 +24,12 @@ function normalizeProviderPath(rawValue: string | undefined): AiProviderPath {
 }
 
 export function getAiProviderPath(): AiProviderPath {
-  return normalizeProviderPath(process.env.AI_PROVIDER_PATH);
+  const explicitProviderPath = process.env.AI_PROVIDER_PATH?.trim();
+  if (explicitProviderPath) {
+    return normalizeProviderPath(explicitProviderPath);
+  }
+
+  return process.env.AI_GATEWAY_API_KEY?.trim() ? "vercel_gateway" : "openai";
 }
 
 export function usesAiGateway(): boolean {
@@ -55,7 +61,7 @@ export function getOpenAICompatibleClientConfig(purpose = "AI request"): {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) {
     throw new Error(
-      `${purpose} requires OPENAI_API_KEY. Direct OpenAI is the default provider; set AI_PROVIDER_PATH=vercel_gateway and AI_GATEWAY_API_KEY only when intentionally using Vercel AI Gateway.`,
+      `${purpose} requires OPENAI_API_KEY. Direct OpenAI is used only when AI_PROVIDER_PATH=openai is explicitly set or AI_GATEWAY_API_KEY is unavailable.`,
     );
   }
 
@@ -119,6 +125,6 @@ export function formatAIProviderFailure(
     `${purpose} failed on AI provider path "${providerPath}".${quotaHint}`,
     `Original provider error: ${message}`,
     "Detection gap: the app previously selected providers implicitly from whichever key existed.",
-    "Prevention: direct OpenAI is now the default; Vercel AI Gateway must be selected explicitly with AI_PROVIDER_PATH=vercel_gateway.",
+    "Prevention: Vercel AI Gateway is now preferred when AI_GATEWAY_API_KEY is configured; direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key.",
   ].join(" ");
 }

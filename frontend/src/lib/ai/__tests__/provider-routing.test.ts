@@ -18,7 +18,9 @@ describe("provider routing", () => {
     process.env = originalEnv;
   });
 
-  it("enables streaming model tools by default after 2026-05-01 matrix re-validation", () => {
+  it("enables streaming model tools on direct OpenAI when explicitly selected", () => {
+    process.env.AI_PROVIDER_PATH = "openai";
+
     const decision = getAssistantToolCallingDecision({
       modelId: "openai/gpt-4.1",
     });
@@ -29,11 +31,11 @@ describe("provider routing", () => {
     expect(decision.diagnosticsArtifactPath).toBe(
       AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT,
     );
-    expect(decision.reason).toContain("Direct OpenAI is the default");
+    expect(decision.reason).toContain("direct OpenAI requires AI_PROVIDER_PATH=openai");
   });
 
-  it("routes through AI Gateway only when AI_PROVIDER_PATH=vercel_gateway", () => {
-    process.env.AI_PROVIDER_PATH = "vercel_gateway";
+  it("routes through AI Gateway when AI_GATEWAY_API_KEY is configured", () => {
+    process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
 
     const decision = getAssistantToolCallingDecision({
       modelId: "openai/gpt-4.1",

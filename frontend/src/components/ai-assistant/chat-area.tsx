@@ -11,6 +11,7 @@ import {
   DEFAULT_AI_ASSISTANT_MODEL,
   type AiAssistantModelId,
 } from "@/lib/ai/assistant-models";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import type { UIMessage } from "ai";
 import { useProjects } from "@/hooks/use-projects";
 import {
@@ -1177,6 +1178,7 @@ interface ChatAreaProps {
   responseQualityByMessageId?: Record<string, ResponseQuality>;
   traceDiagnosticsByMessageId?: Record<string, AssistantTraceDiagnostics>;
   liveStatus?: StrategistLiveStatus | null;
+  chatError?: string | null;
   isLoadingMessages: boolean;
   isStreaming: boolean;
   input: string;
@@ -1201,6 +1203,7 @@ export function ChatArea({
   responseQualityByMessageId = {},
   traceDiagnosticsByMessageId = {},
   liveStatus,
+  chatError,
   isLoadingMessages,
   isStreaming,
   input,
@@ -2350,6 +2353,11 @@ export function ChatArea({
 
       <div className="z-20 shrink-0 px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 md:px-4">
         <div className="mx-auto w-full max-w-3xl">
+          {chatError && (
+            <InfoAlert variant="error" className="mb-2 py-2">
+              {chatError}
+            </InfoAlert>
+          )}
           {promptInputEl}
         </div>
       </div>

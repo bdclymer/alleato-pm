@@ -13,8 +13,23 @@ describe("AI provider config", () => {
     process.env = { ...originalEnv };
   });
 
-  it("defaults to direct OpenAI", () => {
+  it("prefers Vercel AI Gateway when the gateway key is configured", () => {
     delete process.env.AI_PROVIDER_PATH;
+    process.env.OPENAI_API_KEY = "test-openai-key";
+    process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
+
+    expect(getAiProviderPath()).toBe("vercel_gateway");
+    expect(usesAiGateway()).toBe(true);
+    expect(getOpenAIModelId("gpt-4.1-mini")).toBe("openai/gpt-4.1-mini");
+    expect(getOpenAICompatibleClientConfig("test request")).toMatchObject({
+      apiKey: "test-gateway-key",
+      baseURL: "https://ai-gateway.vercel.sh/v1",
+      providerPath: "vercel_gateway",
+    });
+  });
+
+  it("uses direct OpenAI when explicitly selected", () => {
+    process.env.AI_PROVIDER_PATH = "openai";
     process.env.OPENAI_API_KEY = "test-openai-key";
     process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
 
@@ -43,7 +58,7 @@ describe("AI provider config", () => {
   });
 
   it("fails loudly for a missing direct OpenAI key", () => {
-    delete process.env.AI_PROVIDER_PATH;
+    process.env.AI_PROVIDER_PATH = "openai";
     delete process.env.OPENAI_API_KEY;
 
     expect(() => getOpenAICompatibleClientConfig("Daily Brief refresh")).toThrow(
