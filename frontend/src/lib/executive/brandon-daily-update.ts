@@ -1672,11 +1672,31 @@ function operatingShortItem(
 ): ExecutiveOperatingBriefShortItem {
   const scored = scoreBriefItem(item, section);
   return {
-    item,
+    item: compactOperatingBriefItem(item),
     score: scored.score,
     materiality: scored.materiality,
     nextAction: item.recommendedAction ?? "Assign a named owner and next action today.",
     owner: item.owner,
+  };
+}
+
+function compactOperatingBriefItem(item: BrandonBriefItem): BrandonBriefItem {
+  const citations = item.citations.slice(0, 2).map((citation) => ({
+    ...citation,
+    evidence: citation.evidence
+      ? compactCompleteText(citation.evidence, 240)
+      : citation.evidence,
+  }));
+
+  return {
+    ...item,
+    summary: compactCompleteText(item.summary, 360),
+    evidence: item.evidence ? compactCompleteText(item.evidence, 240) : undefined,
+    evidenceFacts: (item.evidenceFacts ?? [])
+      .map((fact) => compactCompleteText(fact, 220))
+      .slice(0, 3),
+    bullets: item.bullets.map((bullet) => compactCompleteText(bullet, 220)).slice(0, 3),
+    citations,
   };
 }
 
@@ -1743,18 +1763,21 @@ export function buildExecutiveOperatingBrief(
   const topThreshold = ranked[4]?.score ?? ranked.at(-1)?.score ?? 0;
   const topExecutiveFocus = ranked
     .filter((entry, index) => index < 3 || entry.score >= Math.max(70, topThreshold))
-    .map((entry) => ({
-      item: entry.item,
-      score: entry.score,
-      materiality: entry.materiality,
-      lane: entry.lane,
-      whatChanged: entry.item.summary,
-      whyItMatters:
-        entry.item.whyItMatters ??
-        entry.materiality.join(", "),
-      recommendedNextMove: recommendedMove(entry.item),
-      owner: entry.item.owner,
-    }));
+    .map((entry) => {
+      const item = compactOperatingBriefItem(entry.item);
+      return {
+        item,
+        score: entry.score,
+        materiality: entry.materiality,
+        lane: entry.lane,
+        whatChanged: item.summary,
+        whyItMatters:
+          item.whyItMatters ??
+          entry.materiality.join(", "),
+        recommendedNextMove: recommendedMove(item),
+        owner: item.owner,
+      };
+    });
   const topKeys = new Set(
     topExecutiveFocus.map((entry) => `${entry.item.title}|${entry.item.project}|${entry.item.sourceId ?? entry.item.sourceDetail}`),
   );

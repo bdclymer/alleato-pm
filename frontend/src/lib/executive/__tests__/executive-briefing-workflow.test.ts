@@ -274,4 +274,125 @@ describe("executive briefing workflow", () => {
       ],
     });
   });
+
+  it("normalizes operating brief JSON before saving a regenerated packet", async () => {
+    const upsertedRows: unknown[] = [];
+    mockGenerateDailyBrief.mockResolvedValue({
+      ...freshPacket,
+      sections: {
+        needsBrandon: [
+          {
+            title: "Null byte item",
+            summary: "Invalid\u0000summary\ud800",
+            bullets: [],
+            source: "Email",
+            sourceDetail: "Email source",
+            sourceId: "source-1",
+            evidence: "Evidence",
+            date: "May 8, 2026",
+            citations: [
+              {
+                source: "Email",
+                sourceDetail: "Email source",
+                sourceId: "source-1",
+                evidence: "Evidence",
+                date: "May 8, 2026",
+              },
+            ],
+            project: "60 Alleato Finance",
+            recommendedAction: "Confirm today.",
+          },
+        ],
+        waitingOnOthers: [],
+        importantUpdates: [],
+      },
+      operatingBrief: {
+        startHere: ["Start\u0000here\ud800"],
+        hasUnusualExecutiveLoad: false,
+        topExecutiveFocus: [],
+        additionalMaterialItems: {
+          cashMargin: [],
+          scheduleField: [],
+          customerOwner: [],
+          subcontractorVendor: [],
+          designPreconstruction: [],
+          internalAccountability: [],
+        },
+        projectRiskRadar: [],
+        cashAndMarginWatch: [],
+        waitingOn: {
+          brandonWaitingOn: [],
+          othersWaitingOnBrandon: [],
+        },
+        peopleAndAccountability: [],
+        importantBusinessSignals: [],
+        recommendedMoves: ["Confirm\u0000today.\udc00"],
+        lowerPriorityMomentum: [],
+      },
+    });
+
+    const from = jest.fn((table: string) => {
+      if (table === "daily_recaps") {
+        const query = {
+          select: jest.fn(() => query),
+          eq: jest.fn(() => query),
+          order: jest.fn(() => query),
+          limit: jest.fn(() => query),
+          maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
+          upsert: jest.fn((row: unknown) => {
+            upsertedRows.push(row);
+            return {
+              select: jest.fn(() => ({
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: {
+                      id: "recap-2",
+                      recap_date: "2026-05-08",
+                      workflow_status: "approved",
+                      approved_at: "2026-05-08T16:30:00.000Z",
+                      approved_by: null,
+                      briefing_packet: (row as { briefing_packet: unknown })
+                        .briefing_packet,
+                      created_at: "2026-05-08T16:30:00.000Z",
+                      recap_text: "Fresh brief",
+                    },
+                    error: null,
+                  }),
+                ),
+              })),
+            };
+          }),
+        };
+        return query;
+      }
+
+      if (table === "executive_briefing_follow_ups") {
+        const query = {
+          select: jest.fn(() => query),
+          in: jest.fn(() => Promise.resolve({ data: [], error: null })),
+          upsert: jest.fn(() => ({
+            select: jest.fn(() => Promise.resolve({ data: [], error: null })),
+          })),
+        };
+        return query;
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    mockCreateServiceClient.mockReturnValue({ from });
+
+    await regenerateExecutiveBriefingDraft({ windowDays: 3 });
+
+    const savedPacket = (upsertedRows[0] as { briefing_packet: unknown })
+      .briefing_packet;
+    const savedRecapText = (upsertedRows[0] as { recap_text: string })
+      .recap_text;
+    expect(JSON.stringify(savedPacket)).not.toContain("\\u0000");
+    expect(JSON.stringify(savedPacket)).not.toContain("\u0000");
+    expect(JSON.stringify(savedPacket)).not.toContain("\\ud800");
+    expect(JSON.stringify(savedPacket)).not.toContain("\\udc00");
+    expect(savedRecapText).not.toContain("\u0000");
+    expect(savedRecapText).not.toContain("\ud800");
+  });
 });

@@ -246,8 +246,68 @@ function withDailyBriefVersionMetadata(
   };
 }
 
+function sanitizeSupabaseText(value: string): string {
+  let sanitized = "";
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code === 0) continue;
+
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const nextCode = value.charCodeAt(index + 1);
+      if (nextCode >= 0xdc00 && nextCode <= 0xdfff) {
+        sanitized += value[index] + value[index + 1];
+        index += 1;
+      }
+      continue;
+    }
+
+    if (code >= 0xdc00 && code <= 0xdfff) continue;
+
+    sanitized += value[index];
+  }
+
+  return sanitized;
+}
+
+function normalizeSupabaseJson(value: unknown): Json {
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === "string") {
+    return sanitizeSupabaseText(value);
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "boolean") return value;
+
+  if (typeof value === "bigint") return value.toString();
+
+  if (value instanceof Date) return value.toISOString();
+
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeSupabaseJson(item));
+  }
+
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => [key, normalizeSupabaseJson(item)]),
+    );
+  }
+
+  return null;
+}
+
 function toSupabaseJson(value: unknown): Json {
-  return JSON.parse(JSON.stringify(value)) as Json;
+  return normalizeSupabaseJson(value);
+}
+
+function toSupabaseText(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  return sanitizeSupabaseText(value);
 }
 
 function backfillCitations(item: BrandonBriefItem): BrandonBriefItem {
@@ -378,20 +438,20 @@ async function upsertFollowUps(
     return {
       fingerprint,
       section,
-      title: item.title,
-      summary: item.summary,
-      recommended_action: item.recommendedAction ?? null,
-      why_it_matters: item.whyItMatters ?? null,
-      owner: item.owner ?? null,
-      status: item.status ?? null,
+      title: toSupabaseText(item.title) ?? "",
+      summary: toSupabaseText(item.summary) ?? "",
+      recommended_action: toSupabaseText(item.recommendedAction),
+      why_it_matters: toSupabaseText(item.whyItMatters),
+      owner: toSupabaseText(item.owner),
+      status: toSupabaseText(item.status),
       tone: item.tone ?? null,
       state: existing?.state ?? "open",
-      source_type: item.source,
-      source_detail: item.sourceDetail,
-      source_id: item.sourceId ?? null,
-      source_url: item.sourceUrl ?? null,
-      project_label: item.project,
-      source_date: item.date,
+      source_type: toSupabaseText(item.source) ?? "Document",
+      source_detail: toSupabaseText(item.sourceDetail) ?? "",
+      source_id: toSupabaseText(item.sourceId),
+      source_url: toSupabaseText(item.sourceUrl),
+      project_label: toSupabaseText(item.project) ?? "No project linked",
+      source_date: toSupabaseText(item.date) ?? "",
       first_seen_recap_id: existing?.first_seen_recap_id ?? recapId,
       last_seen_recap_id: recapId,
       first_seen_at: existing?.first_seen_at ?? new Date().toISOString(),
@@ -399,7 +459,7 @@ async function upsertFollowUps(
       resolved_at: existing?.resolved_at ?? null,
       resolved_by: existing?.resolved_by ?? null,
       resolution_note: existing?.resolution_note ?? null,
-      payload: item as unknown as Json,
+      payload: toSupabaseJson(item),
     };
   });
 
@@ -432,7 +492,7 @@ export async function regenerateExecutiveBriefingDraft(options?: {
   const previousPacket = parseStoredPacket(existingDraft?.briefing_packet ?? null);
   const versionedPacket = withDailyBriefVersionMetadata(packet, previousPacket);
   const supabase = createServiceClient();
-  const recapText = buildRecapText(versionedPacket);
+  const recapText = toSupabaseText(buildRecapText(versionedPacket)) ?? "";
 
   const row: DailyRecapInsert = {
     id: existingDraft?.id,
@@ -451,10 +511,13 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     approved_at: new Date().toISOString(),
     approved_by: null,
     approval_notes: null,
-    model_used: (
-      process.env.EXECUTIVE_BRIEFING_SYNTHESIS_MODEL?.trim() ||
-      DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL
-    ).replace(/^openai\//, ""),
+    model_used:
+      toSupabaseText(
+        (
+          process.env.EXECUTIVE_BRIEFING_SYNTHESIS_MODEL?.trim() ||
+          DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL
+        ).replace(/^openai\//, ""),
+      ) ?? DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL,
     generation_time_seconds: null,
     meetings_analyzed: null,
     blockers: null,
@@ -475,8 +538,17 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     .single();
 
   if (error) {
+    const details = [
+      error.code ? `code=${error.code}` : null,
+      error.details ? `details=${error.details}` : null,
+      error.hint ? `hint=${error.hint}` : null,
+    ]
+      .filter(Boolean)
+      .join("; ");
     throw new Error(
-      `Failed to save executive briefing draft: ${error.message}`,
+      `Failed to save executive briefing draft: ${error.message}${
+        details ? ` (${details})` : ""
+      }`,
     );
   }
 
