@@ -1094,7 +1094,7 @@ export function UnifiedTablePage<T>({
       variant={header.variant}
       mobileActionsInline={header.mobileActionsInline ?? true}
       className={cn(
-        "px-0 sm:px-0 lg:px-0",
+        "mb-2 px-0 sm:px-0 lg:px-0",
         isCompactDensity && "[&>div]:pt-2 [&>div]:pb-2",
         isFullBleedTable && alignHeaderWithFullBleedTable && "mx-0",
       )}

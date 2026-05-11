@@ -19,7 +19,7 @@ export function TablePageWrapper({
 }: TablePageWrapperProps) {
   return (
     <PageContainer>
-      <PageHeader title={title} description={description} />
+      <PageHeader title={title} description={description} className="mb-2" />
       {children}
     </PageContainer>
   );
