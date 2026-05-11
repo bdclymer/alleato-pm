@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Inbox, MoreHorizontal, MoreVertical, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, GripVertical, Inbox, MoreHorizontal, MoreVertical, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
 import { MobileCardList } from "./mobile-card-list";
 
 const INTERACTIVE_ROW_TARGET_SELECTOR = [
@@ -1287,6 +1287,28 @@ export function UnifiedTablePage<T>({
                           : undefined;
                       const hasContextActions =
                         isSortable || isHideable || resolvedFeatures.enableColumnPinning;
+                      const dragHandle = resolvedFeatures.enableColumnReorder ? (
+                        <span
+                          draggable
+                          aria-label={`Drag ${column.label} column`}
+                          title="Drag to reorder column"
+                          className="inline-flex h-4 w-3 shrink-0 cursor-grab items-center justify-center text-muted-foreground/45 transition-colors hover:text-muted-foreground active:cursor-grabbing"
+                          onClick={(event) => event.stopPropagation()}
+                          onMouseDown={(event) => event.stopPropagation()}
+                          onDragStart={(event) => {
+                            event.stopPropagation();
+                            event.dataTransfer.effectAllowed = "move";
+                            event.dataTransfer.setData("text/plain", column.id);
+                            setDraggedColumnId(column.id);
+                          }}
+                          onDragEnd={(event) => {
+                            event.stopPropagation();
+                            setDraggedColumnId(null);
+                          }}
+                        >
+                          <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
+                        </span>
+                      ) : null;
                       return (
                           <TableHead
                             key={column.id}
@@ -1355,6 +1377,7 @@ export function UnifiedTablePage<T>({
                                     event.currentTarget.click();
                                   }}
                                 >
+                                  {columnAlignment !== "right" && dragHandle}
                                   {isSortable &&
                                     columnAlignment === "right" &&
                                     renderSortIcon(column.id)}
@@ -1362,6 +1385,7 @@ export function UnifiedTablePage<T>({
                                   {isSortable &&
                                     columnAlignment !== "right" &&
                                     renderSortIcon(column.id)}
+                                  {columnAlignment === "right" && dragHandle}
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
@@ -1440,7 +1464,9 @@ export function UnifiedTablePage<T>({
                                     : "justify-start",
                               )}
                             >
+                              {columnAlignment !== "right" && dragHandle}
                               <span>{column.label}</span>
+                              {columnAlignment === "right" && dragHandle}
                             </div>
                           )}
                           <div
