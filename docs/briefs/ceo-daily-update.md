@@ -457,25 +457,26 @@ Behavior:
 
 - authorizes with `CRON_SECRET` bearer auth or an active Supabase session
 - resolves the target Teams-linked user from the request body or latest Teams conversation reference
-- calls `getExecutiveBriefingDashboard({ windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS })`
-- skips delivery unless `workflow_status = approved`
+- loads the latest approved `daily_recaps.recap_kind = executive_briefing` packet
+- skips delivery if no approved packet exists
 - formats the persisted draft packet into a conversational Teams message
 - sends through `sendProactiveMessage()`
-- marks the `daily_recaps` executive briefing row as `sent_teams = true`
+- marks the `daily_recaps` executive briefing row as `sent_teams = true` and stamps `sent_at`
 
-The weekday cron route is:
+The scheduled weekday Daily Brief jobs run on Render, not Vercel:
 
 ```text
-GET|POST /api/cron/executive-daily-brief
+alleato-executive-daily-brief-morning  -> 0 11 * * 1-5
+alleato-executive-daily-brief-evening  -> 30 22 * * 1-5
 ```
 
 Behavior:
 
-- authorizes with `CRON_SECRET` bearer auth
-- uses the same approved-only delivery helper as the manual Teams route
-- returns `status: "skipped"` without sending when the current draft is still `draft`
-- is scheduled in `frontend/vercel.json` for weekday morning delivery at `0 11 * * 1-5`
-  and weekday evening delivery at `30 22 * * 1-5`
+- runs `frontend/scripts/run-executive-daily-brief.ts` in a Render Docker cron
+- regenerates and persists the approved source-backed packet before delivery
+- writes a durable `source_sync_runs` row with `source = executive_daily_brief`
+- exits non-zero on generation, persistence, or Teams delivery failure
+- calls the frontend Teams delivery route only after a packet has been persisted
 - as of May 11, 2026, those UTC schedules land at 7:00 AM and 6:30 PM Eastern daylight time
 
 ## Failure And Trust Rules
@@ -508,7 +509,7 @@ Missing source attribution, stale timestamps, or blank evidence should suppress 
 - Date normalization handles next weekdays and next-week phrases, but not all relative date phrases.
 - Source coverage can show zero email or Teams items if the current filtered hits do not pass confidence and recency thresholds.
 - The follow-up fingerprint includes title and recommended action, so large wording changes can create a new follow-up instead of updating an existing one.
-- Weekday Teams delivery is wired to approved-only drafts, but Vercel cron is UTC-only. The
+- Weekday Teams delivery is wired to approved-only drafts, but Render cron is UTC-only. The
   `30 22 * * 1-5` evening schedule is 6:30 PM Eastern during daylight saving time and
   needs seasonal adjustment if the target must stay at 6:30 PM after the clock changes.
 
@@ -562,13 +563,12 @@ Things to verify visually:
 
 ## Future Automation Path
 
-Recommended path before sending this automatically:
+Automation path:
 
-1. Keep generating a daily draft.
-2. Require manual approval on `/executive`.
-3. Store approved packets in `daily_recaps`.
-4. Use only approved drafts for delivery.
-5. Use the existing Teams send route for approved/manual delivery.
-6. Use `/api/cron/executive-daily-brief` for scheduled delivery; it sends only if `workflow_status = approved`.
+1. Render cron regenerates the source-backed Daily Brief packet.
+2. The approved packet is stored in `daily_recaps`.
+3. The run is recorded in `source_sync_runs`.
+4. The Teams delivery route sends only the stored approved packet.
+5. Delivery marks `sent_teams` / `sent_at` on the `daily_recaps` row.
 
 The current design should keep generation separate from delivery so a weak draft cannot silently reach Brandon.
