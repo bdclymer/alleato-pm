@@ -14,6 +14,7 @@ import {
   Play,
   RefreshCw,
   RotateCw,
+  Sparkles,
   Wrench,
   XCircle,
 } from "lucide-react";
@@ -127,6 +128,36 @@ interface RecomputeResult {
 interface ActionResult {
   label: string;
   payload: unknown;
+}
+
+interface ProjectIntelligenceSummary {
+  schema: "project_intelligence_summary_v1";
+  model: string;
+  sourceCount: number;
+  sourceIds: string[];
+  headline: string;
+  context: string;
+  risks: Array<{
+    title: string;
+    severity: "low" | "medium" | "high" | "critical";
+    recommendedAction: string;
+    sourceIds: string[];
+  }>;
+  decisions: Array<{
+    title: string;
+    owner: string | null;
+    followUp: string | null;
+    sourceIds: string[];
+  }>;
+  actionItems: Array<{
+    title: string;
+    owner: string | null;
+    dueDate: string | null;
+    priority: "low" | "medium" | "high" | "critical";
+    sourceIds: string[];
+  }>;
+  dataGaps: string[];
+  confidence: "low" | "medium" | "high";
 }
 
 interface OperationsIssue {
@@ -576,6 +607,64 @@ function OperationsBrief({ status }: { status: SourceSyncStatus }) {
           No active source sync issues were found.
         </InfoAlert>
       )}
+    </div>
+  );
+}
+
+function AiOperationsSummary({
+  summary,
+}: {
+  summary: ProjectIntelligenceSummary;
+}) {
+  return (
+    <div className="space-y-3 border-t border-border/60 pt-4">
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <p className="text-sm font-medium text-foreground">
+            {summary.headline}
+          </p>
+          <Badge variant="outline" className="capitalize">
+            {summary.confidence} confidence
+          </Badge>
+        </div>
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+          {summary.context}
+        </p>
+      </div>
+
+      {summary.actionItems.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase text-muted-foreground">
+            AI next actions
+          </p>
+          <div className="divide-y divide-border/60">
+            {summary.actionItems.slice(0, 4).map((item) => (
+              <div key={item.title} className="py-2 text-sm">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="font-medium text-foreground">
+                    {item.title}
+                  </span>
+                  {item.owner ? (
+                    <span className="text-xs text-muted-foreground">
+                      Owner: {item.owner}
+                    </span>
+                  ) : null}
+                  {item.dueDate ? (
+                    <span className="text-xs text-muted-foreground">
+                      Due: {item.dueDate}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <p className="text-xs text-muted-foreground">
+        AI brief used {summary.sourceCount} source sync records.
+      </p>
     </div>
   );
 }
@@ -1548,6 +1637,9 @@ export function SourceSyncHealthPanel() {
   const [lastRecompute, setLastRecompute] =
     React.useState<RecomputeResult | null>(null);
   const [lastAction, setLastAction] = React.useState<ActionResult | null>(null);
+  const [aiSummary, setAiSummary] =
+    React.useState<ProjectIntelligenceSummary | null>(null);
+  const [summarizing, setSummarizing] = React.useState(false);
   const criticalAlertCount =
     status?.alerts.filter((alert) => alert.severity === "critical").length ?? 0;
   const warningAlertCount = status
@@ -1602,6 +1694,28 @@ export function SourceSyncHealthPanel() {
       );
     } finally {
       setRecomputing(false);
+    }
+  };
+
+  const generateAiSummary = async () => {
+    setSummarizing(true);
+    setError(null);
+    try {
+      const summary = await apiFetch<ProjectIntelligenceSummary>(
+        "/api/admin/source-sync/summary",
+        {
+          method: "POST",
+        },
+      );
+      setAiSummary(summary);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to generate source sync AI brief.",
+      );
+    } finally {
+      setSummarizing(false);
     }
   };
 
@@ -1685,7 +1799,7 @@ export function SourceSyncHealthPanel() {
               variant="outline"
               size="sm"
               onClick={() => void recompute()}
-              disabled={loading || refreshing || recomputing}
+              disabled={loading || refreshing || recomputing || summarizing}
             >
               {recomputing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1693,6 +1807,20 @@ export function SourceSyncHealthPanel() {
                 <RotateCw className="h-4 w-4" />
               )}
               Recompute
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void generateAiSummary()}
+              disabled={loading || refreshing || recomputing || summarizing}
+            >
+              {summarizing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              AI brief
             </Button>
           </div>
         </div>
@@ -1718,7 +1846,10 @@ export function SourceSyncHealthPanel() {
         {loading ? (
           <LoadingState />
         ) : status ? (
-          <OperationsBrief status={status} />
+          <div className="space-y-4">
+            <OperationsBrief status={status} />
+            {aiSummary ? <AiOperationsSummary summary={aiSummary} /> : null}
+          </div>
         ) : null}
       </section>
 

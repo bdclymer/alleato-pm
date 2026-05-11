@@ -44,6 +44,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-05-07-S35-source-sync-observability.md` | S35 | AAI-339 | 2026-05-07 | No | Needs Rework | Handoff file missing in current checkout; live Linear shows AAI-339 In Progress. |
 | `docs/ops/handoffs/2026-05-11-S38-cmo-agent.md` | S38 | AAI-350 | 2026-05-11 | Yes | Pending Review | CMO Phase 1 implemented with migration ledger, generated types, CMO tools/agent/orchestrator registration, active V2 chat bridge, marketing review APIs/page, focused unit tests, typecheck/routes, and live browser evidence. General V2 tool enablement remains a follow-up risk. |
 | `docs/ops/handoffs/2026-05-11-S39-project-intelligence-summary.md` | S39 | AAI-351 | 2026-05-11 | Yes | Pending Review | Added shared AI SDK structured summarization service and focused Jest/lint evidence. Full frontend typecheck is blocked by pre-existing AI tool errors in `action-tools.ts` and `tool-utils.ts`, unrelated to S39 owned files. |
+| `docs/ops/handoffs/2026-05-11-S40-source-sync-summary.md` | S40 | AAI-352 | 2026-05-11 | Yes | Pending Review | Wired shared summarization into Source Sync with a summary route, source mapping service, focused Jest/lint/route checks, and an on-demand AI brief button. |
 
 ## Disposition Rules
 

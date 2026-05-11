@@ -1,0 +1,151 @@
+import {
+  summarizeProjectIntelligence,
+  type ProjectIntelligenceSummary,
+  type ProjectIntelligenceSummarySource,
+} from "@/lib/ai/services/project-intelligence-summary";
+import type { SourceSyncStatus } from "@/app/api/admin/source-sync/_contracts";
+
+const MAX_ALERT_SOURCES = 8;
+const MAX_STUCK_ITEM_SOURCES = 6;
+const MAX_RUN_SOURCES = 4;
+const MAX_SOURCE_HEALTH_SOURCES = 6;
+
+function compact(value: string | null | undefined): string {
+  return value?.trim() || "unknown";
+}
+
+function statusCountsText(status: SourceSyncStatus): string {
+  return [
+    `Overall status is ${status.status}.`,
+    `Generated at ${status.generatedAt}.`,
+    `${status.counts.documents} documents, ${status.counts.chunks} chunks, ${status.counts.tasks} tasks.`,
+    `${status.counts.unembedded} items are not searchable.`,
+    `${status.counts.uncompiled} items are not compiled into intelligence packets.`,
+    `${status.counts.stuckItems} items are stuck.`,
+    `${status.counts.alerts} alerts are active.`,
+    `${status.counts.graphSubscriptions} Graph subscriptions are tracked.`,
+  ].join(" ");
+}
+
+function severityRank(value: string): number {
+  if (value === "critical") return 3;
+  if (value === "warning") return 2;
+  if (value === "info") return 1;
+  return 0;
+}
+
+export function buildSourceSyncSummarySources(
+  status: SourceSyncStatus,
+): ProjectIntelligenceSummarySource[] {
+  const sources: ProjectIntelligenceSummarySource[] = [
+    {
+      id: "source-sync:counts",
+      type: "source_sync",
+      title: "Source sync aggregate counts",
+      text: statusCountsText(status),
+      capturedAt: status.generatedAt,
+    },
+  ];
+
+  const alertSources = [...status.alerts]
+    .sort((a, b) => severityRank(b.severity) - severityRank(a.severity))
+    .slice(0, MAX_ALERT_SOURCES)
+    .map<ProjectIntelligenceSummarySource>((alert, index) => ({
+      id: `source-sync:alert:${alert.code}:${alert.source}:${alert.resourceId}:${index}`,
+      type: "source_sync",
+      title: `${alert.severity} ${alert.code}`,
+      text: [
+        `Alert severity ${alert.severity}.`,
+        `Code ${alert.code}.`,
+        `Source ${alert.source}.`,
+        `Resource ${alert.resourceId}.`,
+        `Detected at ${compact(alert.detectedAt)}.`,
+        `Message: ${alert.message}`,
+      ].join(" "),
+      capturedAt: alert.detectedAt ?? status.generatedAt,
+    }));
+
+  const stuckItemSources = [...status.stuckItems]
+    .sort((a, b) => (b.ageMinutes ?? 0) - (a.ageMinutes ?? 0))
+    .slice(0, MAX_STUCK_ITEM_SOURCES)
+    .map<ProjectIntelligenceSummarySource>((item, index) => ({
+      id: `source-sync:stuck:${item.source}:${item.resourceId}:${item.stage}:${index}`,
+      type: "source_sync",
+      title: `Stuck ${item.stage} item`,
+      text: [
+        `Source ${item.source}.`,
+        `Resource ${item.resourceName} (${item.resourceId}).`,
+        `Stage ${item.stage}.`,
+        `Status ${item.status}.`,
+        `Age minutes ${item.ageMinutes ?? "unknown"}.`,
+        `Last attempt ${compact(item.lastAttemptAt)}.`,
+        item.errorMessage ? `Error: ${item.errorMessage}` : "No error message recorded.",
+      ].join(" "),
+      capturedAt: item.lastAttemptAt ?? status.generatedAt,
+    }));
+
+  const runSources = [...status.recentRuns]
+    .filter((run) => run.status !== "succeeded" || run.itemsFailed > 0 || run.errorMessage)
+    .sort((a, b) => (b.itemsFailed ?? 0) - (a.itemsFailed ?? 0))
+    .slice(0, MAX_RUN_SOURCES)
+    .map<ProjectIntelligenceSummarySource>((run) => ({
+      id: `source-sync:run:${run.id}`,
+      type: "source_sync",
+      title: `${run.source} ${run.stage} ${run.status}`,
+      text: [
+        `Run ${run.id}.`,
+        `Source ${run.source}.`,
+        `Stage ${run.stage}.`,
+        `Status ${run.status}.`,
+        `Resource ${compact(run.resourceName)} (${run.resourceId}).`,
+        `${run.itemsSeen} seen, ${run.itemsSynced} synced, ${run.itemsFailed} failed.`,
+        `Started ${compact(run.startedAt)}. Finished ${compact(run.finishedAt)}.`,
+        run.errorMessage ? `Error: ${run.errorMessage}` : "No run error message recorded.",
+      ].join(" "),
+      capturedAt: run.finishedAt ?? run.startedAt ?? status.generatedAt,
+    }));
+
+  const sourceHealthSources = [...status.sources]
+    .filter(
+      (source) =>
+        source.status !== "healthy" ||
+        source.unembeddedCount > 0 ||
+        source.uncompiledCount > 0 ||
+        source.unprocessedCount > 0,
+    )
+    .sort((a, b) => severityRank(b.status) - severityRank(a.status))
+    .slice(0, MAX_SOURCE_HEALTH_SOURCES)
+    .map<ProjectIntelligenceSummarySource>((source, index) => ({
+      id: `source-sync:source:${source.source}:${source.resourceId}:${index}`,
+      type: "source_sync",
+      title: `${source.source} ${source.status}`,
+      text: [
+        `Source ${source.source}.`,
+        `Resource ${source.resourceName} (${source.resourceId}).`,
+        `Status ${source.status}.`,
+        `${source.itemsSynced} synced.`,
+        `${source.unprocessedCount} unprocessed, ${source.unembeddedCount} unembedded, ${source.uncompiledCount} uncompiled.`,
+        `Last sync ${compact(source.lastSyncAt)}. Last success ${compact(source.lastSuccessAt)}.`,
+        source.lastErrorMessage ? `Last error: ${source.lastErrorMessage}` : "No last error recorded.",
+      ].join(" "),
+      capturedAt: source.lastErrorAt ?? source.lastSyncAt ?? status.generatedAt,
+    }));
+
+  return [
+    ...sources,
+    ...alertSources,
+    ...stuckItemSources,
+    ...runSources,
+    ...sourceHealthSources,
+  ];
+}
+
+export async function summarizeSourceSyncHealth(
+  status: SourceSyncStatus,
+): Promise<ProjectIntelligenceSummary> {
+  const sources = buildSourceSyncSummarySources(status);
+  return summarizeProjectIntelligence({
+    focus: "source_sync",
+    sources,
+  });
+}
