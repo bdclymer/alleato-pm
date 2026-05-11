@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import * as dotenv from "dotenv";
 import { resolve } from "path";
+import type { BrandonDailyUpdatePacket } from "../src/lib/executive/brandon-daily-update";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../src/types/database.types";
 
@@ -15,6 +16,22 @@ type SourceSyncRunUpdate = Database["public"]["Tables"]["source_sync_runs"]["Upd
 
 type RunRow = {
   id?: string;
+};
+
+type ExecutiveBriefingDraft = {
+  id: string;
+  recapDate: string;
+  packet: BrandonDailyUpdatePacket;
+};
+
+type ExecutiveBriefingWorkflowModule = {
+  regenerateExecutiveBriefingDraft(options: {
+    sourceBackedOnly?: boolean;
+  }): Promise<{ draft: ExecutiveBriefingDraft }>;
+};
+
+type SupabaseServiceModule = {
+  createServiceClient(): ServiceClient;
 };
 
 function envFlag(name: string, defaultValue: boolean): boolean {
@@ -138,8 +155,10 @@ async function sendStoredBriefToTeams(userId?: string | null) {
 }
 
 async function main() {
-  const workflowModule = await import("../src/lib/executive/executive-briefing-workflow");
-  const serviceModule = await import("../src/lib/supabase/service");
+  const workflowModule = (await import(
+    "../src/lib/executive/executive-briefing-workflow"
+  )) as ExecutiveBriefingWorkflowModule;
+  const serviceModule = (await import("../src/lib/supabase/service")) as SupabaseServiceModule;
   const { regenerateExecutiveBriefingDraft } = workflowModule;
   const { createServiceClient } = serviceModule;
   const client = createServiceClient();
