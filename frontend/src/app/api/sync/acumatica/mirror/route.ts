@@ -3,6 +3,7 @@ import { z } from "zod";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * POST /api/sync/acumatica/mirror
@@ -63,10 +64,11 @@ export const POST = withApiGuardrails("/api/sync/acumatica/mirror#POST", async (
     );
 
     let results;
+    const serviceSupabase = createServiceClient();
     if (typeof body.tier === "number") {
-      results = await syncMirrorTier(body.tier, { mode }, supabase);
+      results = await syncMirrorTier(body.tier, { mode }, serviceSupabase);
     } else {
-      results = await syncAllMirrorEntities({ mode }, supabase);
+      results = await syncAllMirrorEntities({ mode }, serviceSupabase);
     }
 
     const totalFetched = results.reduce(

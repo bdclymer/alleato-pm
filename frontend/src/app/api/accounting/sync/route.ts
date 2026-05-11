@@ -3,6 +3,7 @@ import { z } from "zod";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { syncAllMirrorEntities } from "@/lib/acumatica/mirror-sync";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * POST /api/accounting/sync
@@ -48,7 +49,7 @@ export const POST = withApiGuardrails("/api/accounting/sync#POST", async ({ requ
   const mode: "incremental" | "full" = body.mode ?? "incremental";
 
   try {
-    const results = await syncAllMirrorEntities({ mode });
+    const results = await syncAllMirrorEntities({ mode }, createServiceClient());
 
     const summary = results.map((r) => ({
       entity: r.entity,
@@ -56,6 +57,7 @@ export const POST = withApiGuardrails("/api/accounting/sync#POST", async ({ requ
       upserted: r.upserted,
       skipped: r.skipped,
       errors: r.errors,
+      errorMessages: r.errorMessages.slice(0, 5),
       durationMs: r.durationMs,
     }));
 

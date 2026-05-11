@@ -85,6 +85,8 @@ interface EntityConfig<TFlat> {
   tier: 0 | 1 | 2;
   /** Derive the stable unique key from a flat record. */
   externalKeyFn: (r: TFlat) => string;
+  /** Supabase conflict target used for the upsert. Defaults to external_key. */
+  upsertConflictTarget?: string;
   /** Map a flat Acumatica record to a Supabase row (without external_key / sync timestamps). */
   mapFn: (r: TFlat) => Record<string, unknown>;
 }
@@ -250,7 +252,10 @@ const arInvoiceConfig: EntityConfig<FlatInvoice> = {
   tableName: "acumatica_ar_invoices",
   pageSize: 200,
   tier: 2,
-  externalKeyFn: (r) => `Invoice:${r.Type ?? "Invoice"}:${r.ReferenceNbr}`,
+  upsertConflictTarget: "reference_nbr,type",
+  // Keep the legacy key shape because the table also enforces unique(reference_nbr, type).
+  // Changing this format makes existing invoices insert as duplicates instead of updating.
+  externalKeyFn: (r) => `${r.ReferenceNbr}|${r.Type ?? "Invoice"}`,
   mapFn: (r) => ({
     reference_nbr: aStr(r.ReferenceNbr),
     type: aStr(r.Type),
@@ -277,7 +282,8 @@ const arPaymentConfig: EntityConfig<FlatPayment> = {
   tableName: "acumatica_payments",
   pageSize: 200,
   tier: 2,
-  externalKeyFn: (r) => `Payment:${r.Type ?? "Payment"}:${r.ReferenceNbr}`,
+  // Match the existing mirror key shape used by older payment syncs.
+  externalKeyFn: (r) => `${r.Type ?? "Payment"}|${r.ReferenceNbr}`,
   mapFn: (r) => ({
     reference_nbr: aStr(r.ReferenceNbr),
     document_type: aStr(r.Type),
@@ -529,10 +535,10 @@ async function readCursor(
 ): Promise<string | null> {
   const { data } = await supabase
     .from("acumatica_sync_state")
-    .select("cursor")
+    .select("last_cursor")
     .eq("entity_name", tableName)
     .maybeSingle();
-  return (data?.cursor as string | null) ?? null;
+  return (data?.last_cursor as string | null) ?? null;
 }
 
 /**
@@ -718,7 +724,7 @@ export async function syncMirrorEntity<TFlat extends { LastModifiedDateTime?: st
             db,
             config.tableName,
             rowChunk,
-            "external_key",
+            config.upsertConflictTarget ?? "external_key",
           );
 
           if (upsertErr) {
