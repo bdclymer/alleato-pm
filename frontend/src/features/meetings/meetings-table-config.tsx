@@ -75,8 +75,6 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "date", label: "Date", defaultVisible: true },
   { id: "description", label: "Description", defaultVisible: true },
   { id: "participants", label: "Participants", defaultVisible: true },
-  { id: "video", label: "Video", defaultVisible: false },
-  { id: "audio", label: "Audio", defaultVisible: false },
   { id: "keywords", label: "Keywords", defaultVisible: true },
   { id: "sentiment", label: "Sentiment", defaultVisible: true },
   { id: "overview", label: "Overview", defaultVisible: true },
@@ -1046,30 +1044,6 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       },
       csvValue: (item) => parseParticipants(item).join("; "),
       sortValue: (item) => parseParticipants(item).length,
-    },
-
-    // ── Video: icon-only media link ─────────────────────────────────────────
-    {
-      ...getMeetingColumn("video"),
-      render: (item) => (
-        <MinimalIconLink href={item.video} icon={Video} label="Video" />
-      ),
-      csvValue: (item) => item.video ?? "",
-      sortValue: (item) => item.video ?? "",
-      align: "center",
-      width: 72,
-    },
-
-    // ── Audio: icon-only media link ─────────────────────────────────────────
-    {
-      ...getMeetingColumn("audio"),
-      render: (item) => (
-        <MinimalIconLink href={item.audio} icon={Headphones} label="Audio" />
-      ),
-      csvValue: (item) => item.audio ?? "",
-      sortValue: (item) => item.audio ?? "",
-      align: "center",
-      width: 72,
     },
 
     // ── Keywords: compact text preview ──────────────────────────────────────

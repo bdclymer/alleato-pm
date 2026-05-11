@@ -384,6 +384,19 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     window.localStorage.setItem(migrationKey, "1");
   }, [tableState.setVisibleColumns]);
 
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const migrationKey = "meetings:visibleColumns:remove-media-columns-2026-05-11";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    tableState.setVisibleColumns((prev) =>
+      prev.filter((columnId) => columnId !== "video" && columnId !== "audio"),
+    );
+
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState.setVisibleColumns]);
+
   // ── Derived data ─────────────────────────────────────────────────────────────
   const activeFilters = tableState.activeFilters as FilterState;
   const searchTerm = tableState.debouncedSearch.toLowerCase();
