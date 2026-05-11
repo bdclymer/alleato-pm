@@ -451,3 +451,40 @@ async def replay_stale_raw_ingested_jobs(
             status_code=500,
             detail=f"Failed to replay stale raw_ingested jobs: {exc}",
         )
+
+
+class ProjectBackfillRequest(BaseModel):
+    since_days: int = 30
+    limit: int = 5000
+    min_confidence: float = 0.70
+
+
+@router.post("/documents/project-backfill", dependencies=[Depends(require_admin_api_key)])
+async def run_project_backfill(
+    request: ProjectBackfillRequest,
+    background_tasks: BackgroundTasks,
+    store: SupabaseRagStore = Depends(get_rag_store),
+):
+    """Re-run project attribution for unassigned documents within the given window."""
+    from datetime import timedelta, timezone
+    from services.ingestion.communication_project_backfill import run_incremental_project_backfill
+
+    since = datetime.now(timezone.utc) - timedelta(days=request.since_days)
+
+    def _run():
+        result = run_incremental_project_backfill(
+            store._client,
+            limit=request.limit,
+            min_confidence=request.min_confidence,
+            since=since,
+        )
+        logger.info("[Admin] Project backfill complete: %s", result)
+
+    background_tasks.add_task(_run)
+    return {
+        "status": "started",
+        "since_days": request.since_days,
+        "since_iso": since.isoformat(),
+        "limit": request.limit,
+        "min_confidence": request.min_confidence,
+    }

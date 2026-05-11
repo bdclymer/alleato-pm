@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from typing import Any, Dict, Iterable, List
 
 from supabase import Client
@@ -49,8 +50,12 @@ def _is_target_document(document: Dict[str, Any]) -> bool:
     return document.get("category") in allowed_categories
 
 
-def _iter_unassigned_documents(client: Client, limit: int) -> Iterable[Dict[str, Any]]:
-    response = (
+def _iter_unassigned_documents(
+    client: Client,
+    limit: int,
+    since: datetime | None = None,
+) -> Iterable[Dict[str, Any]]:
+    query = (
         client.table("document_metadata")
         .select(
             "id,title,source,category,content,summary,overview,participants,participants_array,host_email,organizer_email,tags,project_id",
@@ -59,8 +64,10 @@ def _iter_unassigned_documents(client: Client, limit: int) -> Iterable[Dict[str,
         .in_("source", list(SOURCE_FILTERS.keys()))
         .order("created_at", desc=True)
         .limit(limit)
-        .execute()
     )
+    if since is not None:
+        query = query.gte("created_at", since.isoformat())
+    response = query.execute()
 
     for document in response.data or []:
         if _is_target_document(document):
@@ -72,6 +79,7 @@ def run_incremental_project_backfill(
     *,
     limit: int | None = None,
     min_confidence: float | None = None,
+    since: datetime | None = None,
 ) -> Dict[str, Any]:
     """Assign project_id on recent unassigned communication documents.
 
@@ -94,7 +102,7 @@ def run_incremental_project_backfill(
         "errors": [],
     }
 
-    for document in _iter_unassigned_documents(client, resolved_limit):
+    for document in _iter_unassigned_documents(client, resolved_limit, since=since):
         stats["scanned"] += 1
         try:
             content = " ".join(
