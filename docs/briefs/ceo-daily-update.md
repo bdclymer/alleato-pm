@@ -474,7 +474,9 @@ Behavior:
 - authorizes with `CRON_SECRET` bearer auth
 - uses the same approved-only delivery helper as the manual Teams route
 - returns `status: "skipped"` without sending when the current draft is still `draft`
-- is scheduled in `frontend/vercel.json` as `0 11 * * 1-5`
+- is scheduled in `frontend/vercel.json` for weekday morning delivery at `0 11 * * 1-5`
+  and weekday evening delivery at `30 22 * * 1-5`
+- as of May 11, 2026, those UTC schedules land at 7:00 AM and 6:30 PM Eastern daylight time
 
 ## Failure And Trust Rules
 
@@ -506,7 +508,9 @@ Missing source attribution, stale timestamps, or blank evidence should suppress 
 - Date normalization handles next weekdays and next-week phrases, but not all relative date phrases.
 - Source coverage can show zero email or Teams items if the current filtered hits do not pass confidence and recency thresholds.
 - The follow-up fingerprint includes title and recommended action, so large wording changes can create a new follow-up instead of updating an existing one.
-- Weekday Teams delivery is wired to approved-only drafts, but the exact delivery time should be revisited if Vercel cron UTC timing needs seasonal Eastern-time adjustment.
+- Weekday Teams delivery is wired to approved-only drafts, but Vercel cron is UTC-only. The
+  `30 22 * * 1-5` evening schedule is 6:30 PM Eastern during daylight saving time and
+  needs seasonal adjustment if the target must stay at 6:30 PM after the clock changes.
 
 ## How To Tune The Brief
 
