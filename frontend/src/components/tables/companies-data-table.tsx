@@ -368,7 +368,12 @@ export function CompaniesDataTable({ companies }: CompaniesDataTableProps) {
                   table.setPageSize(Number(value));
                 }}
               >
-                <SelectTrigger className="w-20" id="rows-per-page">
+                <SelectTrigger
+                  variant="inline"
+                  size="sm"
+                  className="h-8 w-16 px-1"
+                  id="rows-per-page"
+                >
                   <SelectValue
                     placeholder={table.getState().pagination.pageSize}
                   />

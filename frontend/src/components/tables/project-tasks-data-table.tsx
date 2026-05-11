@@ -351,7 +351,7 @@ export function ProjectTasksDataTable({ tasks }: ProjectTasksDataTableProps) {
                 table.setPageSize(Number(value));
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger variant="inline" size="sm" className="h-8 w-16 px-1">
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />

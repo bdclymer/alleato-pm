@@ -1779,7 +1779,7 @@ export function UnifiedTablePage<T>({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Rows per page</span>
             <Select value={String(pagination.perPage)} onValueChange={pagination.onPerPageChange}>
-              <SelectTrigger className="h-8 w-24">
+              <SelectTrigger variant="inline" size="sm" className="h-8 w-16 px-1">
                 <SelectValue placeholder={String(pagination.perPage)} />
               </SelectTrigger>
               <SelectContent>
