@@ -439,12 +439,14 @@ def write_attribution_candidates(supabase, doc_id: str, candidates: List[Dict[st
     """Write uncertain or correction attribution candidates."""
     rows = []
     for candidate in candidates:
+        if not candidate.get("project_id"):
+            continue
         confidence = _to_float(candidate.get("confidence"))
         rows.append(
             {
                 "source_document_id": doc_id,
                 "source_message_ids": candidate.get("source_message_ids") or [],
-                "candidate_project_id": int(candidate["project_id"]) if candidate.get("project_id") else None,
+                "candidate_project_id": int(candidate["project_id"]),
                 "candidate_project_name": candidate.get("project_name"),
                 "confidence": confidence,
                 "attribution_method": candidate.get("method") or candidate.get("attribution_method") or "unknown",

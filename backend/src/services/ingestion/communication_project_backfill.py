@@ -66,7 +66,7 @@ def _iter_unassigned_documents(
         .limit(limit)
     )
     if since is not None:
-        query = query.gte("created_at", since.isoformat())
+        query = query.gte("date", since.isoformat())
     response = query.execute()
 
     for document in response.data or []:
