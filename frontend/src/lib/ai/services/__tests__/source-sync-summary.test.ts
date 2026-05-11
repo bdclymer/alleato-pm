@@ -6,7 +6,9 @@ jest.mock("../project-intelligence-summary", () => ({
 import { summarizeProjectIntelligence } from "../project-intelligence-summary";
 import {
   buildSourceSyncSummarySources,
+  saveSourceSyncAiBriefSnapshot,
   summarizeSourceSyncHealth,
+  type SourceSyncRunSnapshotLedger,
 } from "../source-sync-summary";
 import type { SourceSyncStatus } from "@/app/api/admin/source-sync/_contracts";
 
@@ -14,7 +16,6 @@ const summarizeProjectIntelligenceMock =
   summarizeProjectIntelligence as jest.MockedFunction<
     typeof summarizeProjectIntelligence
   >;
-
 function makeStatus(overrides: Partial<SourceSyncStatus> = {}): SourceSyncStatus {
   return {
     status: "degraded",
@@ -204,5 +205,73 @@ describe("source-sync-summary", () => {
     });
 
     expect(buildSourceSyncSummarySources(status)).toHaveLength(20);
+  });
+
+  it("saves generated briefs into the source sync run ledger with structured metadata", async () => {
+    const ledger: SourceSyncRunSnapshotLedger = {
+      insertAiBriefSnapshot: jest.fn().mockResolvedValue({
+        data: {
+          id: "snapshot-run-1",
+          finished_at: "2026-05-11T20:05:00.000Z",
+          items_seen: 1,
+        },
+        error: null,
+      }),
+    };
+
+    const snapshot = await saveSourceSyncAiBriefSnapshot({
+      status: makeStatus(),
+      summary: await summarizeSourceSyncHealth(makeStatus()),
+      generatedByUserId: "user-1",
+      ledger,
+    });
+
+    expect(snapshot).toEqual({
+      id: "snapshot-run-1",
+      generatedAt: "2026-05-11T20:05:00.000Z",
+      sourceCount: 1,
+    });
+    expect(ledger.insertAiBriefSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "source_sync_ai_brief",
+        resource_id: "source-sync",
+        resource_name: "Source Sync AI Brief",
+        stage: "intelligence_compile",
+        status: "succeeded",
+        items_seen: 1,
+        items_synced: 1,
+        items_failed: 0,
+        metadata: expect.objectContaining({
+          kind: "source_sync_ai_brief",
+          generatedByUserId: "user-1",
+          statusGeneratedAt: "2026-05-11T20:00:00.000Z",
+          healthStatus: "degraded",
+          counts: expect.objectContaining({ alerts: 1 }),
+          summary: expect.objectContaining({
+            headline: "Source sync is behind.",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("fails loudly when the source sync AI brief snapshot cannot be saved", async () => {
+    const ledger: SourceSyncRunSnapshotLedger = {
+      insertAiBriefSnapshot: jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: "permission denied" },
+      }),
+    };
+
+    await expect(
+      saveSourceSyncAiBriefSnapshot({
+        status: makeStatus(),
+        summary: await summarizeSourceSyncHealth(makeStatus()),
+        generatedByUserId: "user-1",
+        ledger,
+      }),
+    ).rejects.toThrow(
+      "Failed to save source sync AI brief snapshot: permission denied",
+    );
   });
 });

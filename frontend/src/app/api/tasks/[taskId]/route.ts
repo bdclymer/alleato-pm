@@ -6,19 +6,23 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
+import { TASK_PRIORITY_VALUES, TASK_STATUS_VALUES } from "@/features/tasks/task-values";
 import type { Json } from "@/types/database.types";
 
 type JsonRecord = { [key: string]: Json | undefined };
 
+const TaskStatusSchema = z.enum(TASK_STATUS_VALUES);
+const TaskPrioritySchema = z.enum(TASK_PRIORITY_VALUES);
+
 const PatchBodySchema = z.object({
   description: z.string().trim().min(1).optional(),
-  status: z.string().min(1).optional(),
+  status: TaskStatusSchema.optional(),
   due_date: z
     .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()])
     .optional(),
   project_id: z.union([z.coerce.number().int().positive(), z.null()]).optional(),
   category: z.union([z.string().trim().min(1), z.null()]).optional(),
-  priority: z.union([z.string().trim().min(1), z.null()]).optional(),
+  priority: z.union([TaskPrioritySchema, z.null()]).optional(),
   assignee_user_id: z.union([z.string().uuid(), z.null()]).optional(),
 }).refine(
   (body) =>

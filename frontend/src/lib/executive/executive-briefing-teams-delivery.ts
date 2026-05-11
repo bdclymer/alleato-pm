@@ -1,16 +1,12 @@
 import { sendProactiveMessage } from "@/lib/bot/teams-chat";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
-  DEFAULT_EXECUTIVE_WINDOW_DAYS,
   type BrandonBriefItem,
   type BriefCitation,
   type BrandonDailyUpdatePacket,
 } from "@/lib/executive/brandon-daily-update";
 import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
-import {
-  CEO_EXECUTIVE_BRIEFING_RECAP_KIND,
-  regenerateExecutiveBriefingDraft,
-} from "@/lib/executive/executive-briefing-workflow";
+import { CEO_EXECUTIVE_BRIEFING_RECAP_KIND } from "@/lib/executive/executive-briefing-workflow";
 
 export type ExecutiveBriefingTeamsSendResult =
   | {
@@ -224,10 +220,42 @@ async function getTeamsRecipientFirstName(userId: string) {
   return displayName ? displayName.split(/\s+/)[0] : null;
 }
 
+async function loadLatestApprovedExecutiveBriefingDraft(): Promise<
+  | {
+      id: string;
+      workflowStatus: string;
+      packet: BrandonDailyUpdatePacket;
+    }
+  | null
+> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("daily_recaps")
+    .select("id, workflow_status, briefing_packet")
+    .eq("recap_kind", CEO_EXECUTIVE_BRIEFING_RECAP_KIND)
+    .eq("workflow_status", "approved")
+    .not("briefing_packet", "is", null)
+    .order("recap_date", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load approved executive briefing: ${error.message}`);
+  }
+
+  if (!data?.briefing_packet) return null;
+
+  return {
+    id: data.id,
+    workflowStatus: data.workflow_status,
+    packet: data.briefing_packet as BrandonDailyUpdatePacket,
+  };
+}
+
 export async function sendApprovedExecutiveBriefingToTeams(
   options: {
     userId?: string | null;
-    sourceBackedOnly?: boolean;
   } = {},
 ): Promise<ExecutiveBriefingTeamsSendResult> {
   const targetUserIds = await resolveAllTeamsUserIds(options.userId);
@@ -242,11 +270,15 @@ export async function sendApprovedExecutiveBriefingToTeams(
     };
   }
 
-  // Generate the brief once, then fan out to all recipients
-  const { draft } = await regenerateExecutiveBriefingDraft({
-    windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
-    sourceBackedOnly: options.sourceBackedOnly ?? true,
-  });
+  const draft = await loadLatestApprovedExecutiveBriefingDraft();
+  if (!draft) {
+    return {
+      ok: false,
+      status: "skipped",
+      reason: "No approved executive briefing packet is available to send.",
+    };
+  }
+
   const refreshedAt = new Date().toISOString();
 
   const itemCount =
@@ -268,7 +300,7 @@ export async function sendApprovedExecutiveBriefingToTeams(
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("daily_recaps")
-    .update({ sent_teams: true })
+    .update({ sent_teams: true, sent_at: refreshedAt })
     .eq("id", draft.id)
     .eq("recap_kind", CEO_EXECUTIVE_BRIEFING_RECAP_KIND);
 

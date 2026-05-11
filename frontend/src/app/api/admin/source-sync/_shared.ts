@@ -67,7 +67,7 @@ export function getBackendAdminApiKey(): string {
   return apiKey;
 }
 
-export async function requireAdmin(where: string): Promise<void> {
+export async function requireAdmin(where: string): Promise<{ userId: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -99,6 +99,8 @@ export async function requireAdmin(where: string): Promise<void> {
       details: profileError?.message,
     });
   }
+
+  return { userId: user.id };
 }
 
 export async function fetchBackendSourceSync(

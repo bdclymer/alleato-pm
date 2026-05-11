@@ -949,15 +949,15 @@ export function createActionTools(
             p_title: title,
             p_description: taskDescription,
             p_status: normalizedStatus,
-            p_due_date: dueDate ?? null,
+            p_due_date: dueDate,
             p_priority: normalizedPriority,
-            p_project_id: effectiveProjectId,
-            p_assignee_name: resolvedAssignee.assigneeName,
-            p_assignee_email: resolvedAssignee.assigneeEmail,
-            p_assignee_person_id: resolvedAssignee.assigneePersonId,
+            p_project_id: effectiveProjectId ?? undefined,
+            p_assignee_name: resolvedAssignee.assigneeName ?? undefined,
+            p_assignee_email: resolvedAssignee.assigneeEmail ?? undefined,
+            p_assignee_person_id: resolvedAssignee.assigneePersonId ?? undefined,
             p_user_id: userId,
             p_idempotency_key: idempotencyKey,
-            p_schedule_task_id: scheduleTaskId ?? null,
+            p_schedule_task_id: scheduleTaskId ?? undefined,
           });
 
         if (error) {

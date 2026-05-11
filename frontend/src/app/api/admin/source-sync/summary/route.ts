@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/api";
-import { summarizeSourceSyncHealth } from "@/lib/ai/services/source-sync-summary";
+import {
+  saveSourceSyncAiBriefSnapshot,
+  summarizeSourceSyncHealth,
+} from "@/lib/ai/services/source-sync-summary";
 
 import { SourceSyncStatusSchema } from "../_contracts";
 import { fetchBackendSourceSync, requireAdmin } from "../_shared";
@@ -9,7 +12,7 @@ import { fetchBackendSourceSync, requireAdmin } from "../_shared";
 export const POST = withApiGuardrails(
   "api.admin.source-sync.summary.POST",
   async ({ requestId }) => {
-    await requireAdmin("api.admin.source-sync.summary.POST");
+    const admin = await requireAdmin("api.admin.source-sync.summary.POST");
     const backendResponse = await fetchBackendSourceSync(
       requestId,
       "api.admin.source-sync.summary.POST",
@@ -24,6 +27,12 @@ export const POST = withApiGuardrails(
     );
 
     const summary = await summarizeSourceSyncHealth(status);
-    return NextResponse.json(summary);
+    const snapshot = await saveSourceSyncAiBriefSnapshot({
+      status,
+      summary,
+      generatedByUserId: admin.userId,
+    });
+
+    return NextResponse.json({ summary, snapshot });
   },
 );

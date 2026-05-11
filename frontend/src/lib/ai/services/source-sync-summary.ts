@@ -4,11 +4,47 @@ import {
   type ProjectIntelligenceSummarySource,
 } from "@/lib/ai/services/project-intelligence-summary";
 import type { SourceSyncStatus } from "@/app/api/admin/source-sync/_contracts";
+import { createServiceClient } from "@/lib/supabase/service";
+import type { Database, Json } from "@/types/database.types";
 
 const MAX_ALERT_SOURCES = 6;
 const MAX_STUCK_ITEM_SOURCES = 4;
 const MAX_RUN_SOURCES = 4;
 const MAX_SOURCE_HEALTH_SOURCES = 5;
+
+type SourceSyncRunInsert = Database["public"]["Tables"]["source_sync_runs"]["Insert"];
+type SourceSyncRunSnapshotRow = Pick<
+  Database["public"]["Tables"]["source_sync_runs"]["Row"],
+  "id" | "finished_at" | "items_seen"
+>;
+
+export type SourceSyncRunSnapshotLedger = {
+  insertAiBriefSnapshot(
+    insert: SourceSyncRunInsert,
+  ): Promise<{
+    data: SourceSyncRunSnapshotRow | null;
+    error: { message: string } | null;
+  }>;
+};
+
+export type SourceSyncAiBriefSnapshot = {
+  id: string;
+  generatedAt: string;
+  sourceCount: number;
+};
+
+function createSourceSyncRunSnapshotLedger(): SourceSyncRunSnapshotLedger {
+  const supabase = createServiceClient();
+  return {
+    insertAiBriefSnapshot(insert) {
+      return supabase
+        .from("source_sync_runs")
+        .insert(insert)
+        .select("id, finished_at, items_seen")
+        .single();
+    },
+  };
+}
 
 function compact(value: string | null | undefined): string {
   return value?.trim() || "unknown";
@@ -148,4 +184,68 @@ export async function summarizeSourceSyncHealth(
     focus: "source_sync",
     sources,
   });
+}
+
+function buildSourceSyncAiBriefMetadata({
+  status,
+  summary,
+  generatedByUserId,
+}: {
+  status: SourceSyncStatus;
+  summary: ProjectIntelligenceSummary;
+  generatedByUserId: string;
+}): Json {
+  return {
+    kind: "source_sync_ai_brief",
+    generatedByUserId,
+    statusGeneratedAt: status.generatedAt,
+    healthStatus: status.status,
+    counts: status.counts,
+    summary,
+  };
+}
+
+export async function saveSourceSyncAiBriefSnapshot({
+  status,
+  summary,
+  generatedByUserId,
+  ledger = createSourceSyncRunSnapshotLedger(),
+}: {
+  status: SourceSyncStatus;
+  summary: ProjectIntelligenceSummary;
+  generatedByUserId: string;
+  ledger?: SourceSyncRunSnapshotLedger;
+}): Promise<SourceSyncAiBriefSnapshot> {
+  const generatedAt = new Date().toISOString();
+  const insert: SourceSyncRunInsert = {
+    source: "source_sync_ai_brief",
+    resource_id: "source-sync",
+    resource_name: "Source Sync AI Brief",
+    stage: "intelligence_compile",
+    status: "succeeded",
+    started_at: generatedAt,
+    finished_at: generatedAt,
+    items_seen: summary.sourceCount,
+    items_synced: 1,
+    items_failed: 0,
+    metadata: buildSourceSyncAiBriefMetadata({
+      status,
+      summary,
+      generatedByUserId,
+    }),
+  };
+
+  const { data, error } = await ledger.insertAiBriefSnapshot(insert);
+
+  if (error || !data) {
+    throw new Error(
+      `Failed to save source sync AI brief snapshot: ${error?.message ?? "No snapshot row returned."}`,
+    );
+  }
+
+  return {
+    id: data.id,
+    generatedAt: data.finished_at ?? generatedAt,
+    sourceCount: data.items_seen,
+  };
 }

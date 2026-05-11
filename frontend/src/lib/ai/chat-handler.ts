@@ -122,6 +122,7 @@ import {
   type MeetingIntelligenceWidgetPayload,
   type OwnerActionItem,
   type OwnerSnapshotWidgetPayload,
+  type ProjectPickerWidgetPayload,
   type SourceEvidenceItem,
   type TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
@@ -1889,9 +1890,96 @@ function isOwnerSnapshotWidgetRequest(message: string): boolean {
   return [
     "owner snapshot",
     "project snapshot",
+    "snapshot for project",
     "what should brandon look at first",
     "show risks, money, meetings, and owner actions",
   ].some((phrase) => normalized.includes(phrase));
+}
+
+function extractProjectIdFromMessage(message: string): number | undefined {
+  const match = message.match(/\bproject\s*(?:id|#)?\s*:?\s*(\d{1,8})\b/i);
+  if (!match) return undefined;
+  const projectId = Number(match[1]);
+  return Number.isFinite(projectId) ? projectId : undefined;
+}
+
+function buildProjectPickerWidget(output: unknown): ProjectPickerWidgetPayload | null {
+  const record = asRecord(output);
+  const rawProjects = Array.isArray(record.projects) ? record.projects : [];
+  const projects = rawProjects
+    .map((item) => {
+      const project = asRecord(item);
+      const projectId = typeof project.id === "number" ? project.id : Number(project.id);
+      const name = typeof project.name === "string" ? project.name : null;
+      if (!Number.isFinite(projectId) || !name) return null;
+      const contractValue = readNestedNumber(project, ["totalContractValue"]);
+      const meetingCount = readNestedNumber(project, ["meetingCount"]);
+      const openCriticalItems = readNestedNumber(project, ["openCriticalItems"]);
+      return {
+        projectId,
+        name,
+        client: typeof project.client === "string" ? project.client : null,
+        phase: typeof project.phase === "string" ? project.phase : null,
+        state: typeof project.state === "string" ? project.state : null,
+        summary: typeof project.summary === "string" ? project.summary.slice(0, 220) : null,
+        contractValue: contractValue > 0 ? currency(contractValue) : null,
+        meetingCount: meetingCount > 0 ? meetingCount : null,
+        openCriticalItems: openCriticalItems > 0 ? openCriticalItems : null,
+        healthStatus: typeof project.healthStatus === "string" ? project.healthStatus : null,
+        prompt: `Give me the owner snapshot for project ${projectId}: ${name}.`,
+      };
+    })
+    .filter((project): project is ProjectPickerWidgetPayload["projects"][number] => Boolean(project))
+    .slice(0, 8);
+
+  return {
+    type: "project_picker",
+    id: "owner-snapshot-project-picker",
+    title: "Choose a project",
+    subtitle: "Pick the project to generate a source-backed owner snapshot.",
+    intent: "owner_snapshot",
+    projects,
+    emptyState: "No accessible current projects were available for this account.",
+  };
+}
+
+async function loadOwnerSnapshotProjectPicker(params: {
+  tools: ToolSet;
+}): Promise<{
+  widget: ProjectPickerWidgetPayload | null;
+  content: string;
+  traceOutput: Record<string, unknown>;
+}> {
+  const executable = params.tools.getPortfolioOverview as ExecutableTool | undefined;
+  if (!executable?.execute) {
+    return {
+      widget: null,
+      content: "Choose a project first, then I can render the owner snapshot widget.",
+      traceOutput: { error: "getPortfolioOverview execute function missing" },
+    };
+  }
+
+  const output = await executable.execute({ phase: "Current" });
+  const record = asRecord(output);
+  if (typeof record.error === "string") {
+    return {
+      widget: null,
+      content: record.error,
+      traceOutput: { error: record.error },
+    };
+  }
+
+  const widget = buildProjectPickerWidget(record);
+  return {
+    widget,
+    content: widget?.projects.length
+      ? "Choose a project below and I will generate the owner snapshot."
+      : "I could not find accessible current projects to show in the picker.",
+    traceOutput: {
+      projectCount: widget?.projects.length ?? 0,
+      source: "getPortfolioOverview",
+    },
+  };
 }
 
 function statusFromSnapshot(snapshot: ProjectBriefingSnapshot): OwnerSnapshotWidgetPayload["status"] {
@@ -3596,13 +3684,75 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         if (isOwnerSnapshotWidgetRequest(lastUserContent)) {
           writeStrategistStatus(writer, {
             stage: "snapshot",
-            message: "Building owner snapshot widget",
+            message: selectedProjectId
+              ? "Building owner snapshot widget"
+              : "Loading projects for owner snapshot",
             status: "loading",
           });
 
+          const requestedProjectId = selectedProjectId ?? extractProjectIdFromMessage(lastUserContent);
+          if (!requestedProjectId) {
+            const picker = await loadOwnerSnapshotProjectPicker({ tools });
+            const dataParts = picker.widget
+              ? writeAssistantWidgetParts(writer, [picker.widget])
+              : [];
+
+            toolTrace.push({
+              tool: "ownerSnapshotProjectPicker",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId: selectedProjectId ?? null,
+              },
+              output: picker.traceOutput,
+              timestamp: new Date().toISOString(),
+            });
+
+            const responseQuality = scoreResponseQuality({
+              toolTrace,
+              content: picker.content,
+            });
+            await persistAssistantMessage({
+              supabase,
+              sessionId,
+              userId: user.id,
+              content: picker.content,
+              toolTrace,
+              memoryUsage,
+              learningUsage,
+              totalUsage: undefined,
+              responseQuality,
+              councilMode,
+              modelId: activeModel,
+              loopDiagnostic: buildLoopDiagnostic({
+                stepStarts: stepStartDiagnostics,
+                steps: stepDiagnostics,
+              }),
+              projectBriefingSnapshot,
+              executiveBriefingRetrieval,
+              providerDecision,
+              selectedProjectId,
+              dataParts,
+              sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+            });
+
+            await supabase
+              .from("conversations")
+              .update({ last_message_at: new Date().toISOString() })
+              .eq("session_id", sessionId)
+              .eq("user_id", user.id);
+
+            await writeTextResponse(writer, "strategist-owner-snapshot-picker", picker.content);
+            writeStrategistStatus(writer, {
+              stage: "complete",
+              message: picker.widget ? "Project picker ready" : "Project picker unavailable",
+              status: picker.widget ? "success" : "warning",
+            });
+            return;
+          }
+
           const answer = await loadOwnerSnapshotWidget({
             tools,
-            selectedProjectId,
+            selectedProjectId: requestedProjectId,
           });
           projectBriefingSnapshot = answer.snapshot;
 
@@ -3614,7 +3764,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             tool: "ownerSnapshotWidget",
             input: {
               message: lastUserContent.slice(0, 240),
-              selectedProjectId: selectedProjectId ?? null,
+              selectedProjectId: requestedProjectId,
             },
             output: answer.traceOutput,
             timestamp: new Date().toISOString(),
@@ -3643,7 +3793,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
-            selectedProjectId,
+            selectedProjectId: requestedProjectId,
             dataParts,
             sourceHealth: assistantSourceHealthContext?.metadata ?? null,
           });

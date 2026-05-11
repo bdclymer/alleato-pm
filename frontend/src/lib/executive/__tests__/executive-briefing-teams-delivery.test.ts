@@ -1,6 +1,5 @@
 const mockCreateServiceClient = jest.fn();
 const mockSendProactiveMessage = jest.fn();
-const mockRegenerateExecutiveBriefingDraft = jest.fn();
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: () => mockCreateServiceClient(),
@@ -13,8 +12,6 @@ jest.mock("@/lib/bot/teams-chat", () => ({
 
 jest.mock("@/lib/executive/executive-briefing-workflow", () => ({
   CEO_EXECUTIVE_BRIEFING_RECAP_KIND: "executive_briefing",
-  regenerateExecutiveBriefingDraft: (...args: unknown[]) =>
-    mockRegenerateExecutiveBriefingDraft(...args),
 }));
 
 jest.mock("../brandon-daily-update", () => ({
@@ -94,6 +91,7 @@ const packet: BrandonDailyUpdatePacket = {
 function createQuery(result: { data: unknown; error: unknown }) {
   const query = {
     select: jest.fn(() => query),
+    not: jest.fn(() => query),
     order: jest.fn(() => query),
     limit: jest.fn(() => query),
     maybeSingle: jest.fn(() => Promise.resolve(result)),
@@ -116,22 +114,21 @@ describe("executive briefing Teams delivery", () => {
           });
         }
         if (table === "daily_recaps") {
-          return createQuery({ data: null, error: null });
+          return createQuery({
+            data: {
+              id: "draft-1",
+              workflow_status: "approved",
+              briefing_packet: packet,
+            },
+            error: null,
+          });
         }
         return createQuery({ data: null, error: null });
       }),
     });
   });
 
-  it("regenerates the current brief before sending to Teams", async () => {
-    mockRegenerateExecutiveBriefingDraft.mockResolvedValue({
-      draft: {
-        id: "draft-1",
-        workflowStatus: "draft",
-        packet,
-      },
-    });
-
+  it("sends the latest approved stored brief to Teams", async () => {
     const result = await sendApprovedExecutiveBriefingToTeams({
       userId: "user-1",
     });
@@ -141,23 +138,11 @@ describe("executive briefing Teams delivery", () => {
       status: "sent",
       draftId: "draft-1",
       itemCount: 1,
-    });
-    expect(mockRegenerateExecutiveBriefingDraft).toHaveBeenCalledWith({
-      windowDays: 3,
-      sourceBackedOnly: true,
     });
     expect(mockSendProactiveMessage).toHaveBeenCalledTimes(1);
   });
 
-  it("refreshes the latest source-backed brief before sending and records the sent flag", async () => {
-    mockRegenerateExecutiveBriefingDraft.mockResolvedValue({
-      draft: {
-        id: "draft-1",
-        workflowStatus: "approved",
-        packet,
-      },
-    });
-
+  it("records the sent flag after Teams delivery", async () => {
     const result = await sendApprovedExecutiveBriefingToTeams({
       userId: "user-1",
     });
@@ -167,10 +152,6 @@ describe("executive briefing Teams delivery", () => {
       status: "sent",
       draftId: "draft-1",
       itemCount: 1,
-    });
-    expect(mockRegenerateExecutiveBriefingDraft).toHaveBeenCalledWith({
-      windowDays: 3,
-      sourceBackedOnly: true,
     });
     expect(mockSendProactiveMessage).toHaveBeenCalledWith(
       "user-1",

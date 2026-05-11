@@ -1,4 +1,4 @@
-import { type Tool, type ToolExecutionOptions } from "ai";
+import { tool as defineAiSdkTool, type Tool, type ToolExecutionOptions } from "ai";
 import OpenAI from "openai";
 import { createServiceClient } from "@/lib/supabase/service";
 import { type ToolGuardrails } from "./guardrails";
@@ -299,10 +299,13 @@ export function defineReadTool<TInput extends Record<string, unknown>, TResult>(
   },
 ): Tool<TInput, TResult | ToolErrorResult> {
   const { errorGuidance, execute, ...toolDefinition } = definition;
-  const toolDefinitionWithTrace: Tool<TInput, TResult | ToolErrorResult> = {
-    ...toolDefinition,
-    execute: withTrace(name, options, execute, errorGuidance),
-  };
+  const tracedExecute: NonNullable<Tool<TInput, unknown>["execute"]> =
+    withTrace(name, options, execute, errorGuidance);
+  const toolDefinitionWithTrace = defineAiSdkTool<TInput, unknown>({
+      ...toolDefinition,
+      outputSchema: undefined,
+      execute: tracedExecute,
+    }) as Tool<TInput, TResult | ToolErrorResult>;
   return toolDefinitionWithTrace;
 }
 
@@ -312,10 +315,13 @@ export function defineWriteTool<TInput extends Record<string, unknown>, TResult>
   definition: SharedToolDefinition<TInput, TResult>,
 ): Tool<TInput, TResult> {
   const { execute, ...toolDefinition } = definition;
-  const toolDefinitionWithTrace: Tool<TInput, TResult> = {
-    ...toolDefinition,
-    execute: withWriteTrace(name, options, execute),
-  };
+  const tracedExecute: NonNullable<Tool<TInput, unknown>["execute"]> =
+    withWriteTrace(name, options, execute);
+  const toolDefinitionWithTrace = defineAiSdkTool<TInput, unknown>({
+      ...toolDefinition,
+      outputSchema: undefined,
+      execute: tracedExecute,
+    }) as Tool<TInput, TResult>;
   return toolDefinitionWithTrace;
 }
 

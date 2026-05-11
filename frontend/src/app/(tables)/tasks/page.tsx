@@ -843,7 +843,7 @@ function TaskDetail({
   const statusOptions = [
     { value: "open", label: "Open" },
     { value: "in_progress", label: "In Progress" },
-    { value: "complete", label: "Complete" },
+    { value: "done", label: "Done" },
     { value: "cancelled", label: "Cancelled" },
   ];
 

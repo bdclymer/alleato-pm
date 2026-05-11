@@ -160,6 +160,17 @@ interface ProjectIntelligenceSummary {
   confidence: "low" | "medium" | "high";
 }
 
+interface SourceSyncAiBriefSnapshot {
+  id: string;
+  generatedAt: string;
+  sourceCount: number;
+}
+
+interface SourceSyncAiBriefResponse {
+  summary: ProjectIntelligenceSummary;
+  snapshot: SourceSyncAiBriefSnapshot;
+}
+
 interface OperationsIssue {
   key: string;
   title: string;
@@ -613,8 +624,10 @@ function OperationsBrief({ status }: { status: SourceSyncStatus }) {
 
 function AiOperationsSummary({
   summary,
+  snapshot,
 }: {
   summary: ProjectIntelligenceSummary;
+  snapshot: SourceSyncAiBriefSnapshot | null;
 }) {
   return (
     <div className="space-y-3 border-t border-border/60 pt-4">
@@ -663,7 +676,10 @@ function AiOperationsSummary({
       ) : null}
 
       <p className="text-xs text-muted-foreground">
-        AI brief used {summary.sourceCount} source sync records.
+        AI brief used {summary.sourceCount} source sync records
+        {snapshot
+          ? ` and was saved as operations snapshot ${snapshot.id} at ${formatDate(snapshot.generatedAt)}.`
+          : "."}
       </p>
     </div>
   );
@@ -1639,6 +1655,8 @@ export function SourceSyncHealthPanel() {
   const [lastAction, setLastAction] = React.useState<ActionResult | null>(null);
   const [aiSummary, setAiSummary] =
     React.useState<ProjectIntelligenceSummary | null>(null);
+  const [aiSummarySnapshot, setAiSummarySnapshot] =
+    React.useState<SourceSyncAiBriefSnapshot | null>(null);
   const [summarizing, setSummarizing] = React.useState(false);
   const criticalAlertCount =
     status?.alerts.filter((alert) => alert.severity === "critical").length ?? 0;
@@ -1701,13 +1719,14 @@ export function SourceSyncHealthPanel() {
     setSummarizing(true);
     setError(null);
     try {
-      const summary = await apiFetch<ProjectIntelligenceSummary>(
+      const result = await apiFetch<SourceSyncAiBriefResponse>(
         "/api/admin/source-sync/summary",
         {
           method: "POST",
         },
       );
-      setAiSummary(summary);
+      setAiSummary(result.summary);
+      setAiSummarySnapshot(result.snapshot);
     } catch (err) {
       setError(
         err instanceof Error
@@ -1848,7 +1867,12 @@ export function SourceSyncHealthPanel() {
         ) : status ? (
           <div className="space-y-4">
             <OperationsBrief status={status} />
-            {aiSummary ? <AiOperationsSummary summary={aiSummary} /> : null}
+              {aiSummary ? (
+                <AiOperationsSummary
+                  summary={aiSummary}
+                  snapshot={aiSummarySnapshot}
+                />
+              ) : null}
           </div>
         ) : null}
       </section>

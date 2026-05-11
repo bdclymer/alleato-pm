@@ -5,10 +5,12 @@ import Link from "next/link";
 import {
   ActivityIcon,
   AlertTriangleIcon,
+  ArrowRightIcon,
   CalendarIcon,
   CheckCircle2Icon,
   ClipboardIcon,
   FileTextIcon,
+  FolderIcon,
   GitBranchIcon,
   ListChecksIcon,
   MailIcon,
@@ -41,6 +43,7 @@ import type {
   OwnerActionQueueWidgetPayload,
   OwnerSnapshotWidgetPayload,
   ProjectActionPreviewWidgetPayload,
+  ProjectPickerWidgetPayload,
   RecordWritePreviewWidgetPayload,
   RiskExposurePacketWidgetPayload,
   SourceEvidenceDrawerWidgetPayload,
@@ -1276,6 +1279,75 @@ export function AssistantSourceEvidenceWidget({
   );
 }
 
+function ProjectPickerWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: ProjectPickerWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
+  return (
+    <WidgetShell
+      title={widget.title}
+      eyebrow="Project picker"
+      icon={<FolderIcon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.projects.length} projects</Badge>}
+    >
+      <p className="text-sm leading-6 text-muted-foreground">{widget.subtitle}</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {widget.projects.map((project) => (
+          <Button
+            key={project.projectId}
+            type="button"
+            variant="outline"
+            className="group h-auto min-w-0 justify-start px-3 py-2.5 text-left whitespace-normal hover:bg-muted/50"
+            onClick={() => onSubmit(project.prompt)}
+          >
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-foreground">
+                  {project.name}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                  {project.client ? <span>{project.client}</span> : null}
+                  {project.phase ? <span>{project.phase}</span> : null}
+                  {project.state ? <span>{project.state}</span> : null}
+                </div>
+              </div>
+              <ArrowRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {project.contractValue ? (
+                <Badge variant="secondary" className="font-normal">
+                  {project.contractValue}
+                </Badge>
+              ) : null}
+              {typeof project.meetingCount === "number" ? (
+                <Badge variant="outline" className="font-normal">
+                  {project.meetingCount} meetings
+                </Badge>
+              ) : null}
+              {typeof project.openCriticalItems === "number" && project.openCriticalItems > 0 ? (
+                <Badge variant="outline" className="border-destructive/30 text-destructive">
+                  {project.openCriticalItems} critical
+                </Badge>
+              ) : null}
+            </div>
+            {project.summary ? (
+              <div className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                {project.summary}
+              </div>
+            ) : null}
+          </Button>
+        ))}
+      </div>
+      {widget.emptyState && widget.projects.length === 0 ? (
+        <InfoAlert variant="info">{widget.emptyState}</InfoAlert>
+      ) : null}
+    </WidgetShell>
+  );
+}
+
 type AssistantWidgetRendererComponent = (props: AssistantWidgetRendererProps) => ReactNode;
 
 const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], AssistantWidgetRendererComponent> = {
@@ -1296,6 +1368,10 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
     props.widget.type === "task_summary" ? <TaskSummaryWidget widget={props.widget} /> : null,
   meeting_intelligence: (props) =>
     props.widget.type === "meeting_intelligence" ? <MeetingIntelligenceWidget widget={props.widget} /> : null,
+  project_picker: (props) =>
+    props.widget.type === "project_picker" ? (
+      <ProjectPickerWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
   owner_snapshot: (props) =>
     props.widget.type === "owner_snapshot" ? (
       <OwnerSnapshotWidget widget={props.widget} onSubmit={props.onSubmit} />

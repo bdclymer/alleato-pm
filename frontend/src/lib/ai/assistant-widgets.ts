@@ -3,6 +3,7 @@ export type AssistantWidgetKind =
   | "create_task"
   | "task_summary"
   | "meeting_intelligence"
+  | "project_picker"
   | "owner_snapshot"
   | "owner_action_queue"
   | "meeting_insights"
@@ -101,6 +102,28 @@ export type MeetingIntelligenceWidgetPayload = {
   recommendedNextActions: string[];
   emptyState?: string;
   meetings: MeetingIntelligenceWidgetItem[];
+};
+
+export type ProjectPickerWidgetPayload = {
+  type: "project_picker";
+  id: string;
+  title: string;
+  subtitle: string;
+  intent: "owner_snapshot" | "meeting_insights" | "risk_review" | "financial_pulse" | "general";
+  projects: Array<{
+    projectId: number;
+    name: string;
+    client?: string | null;
+    phase?: string | null;
+    state?: string | null;
+    summary?: string | null;
+    contractValue?: string | null;
+    meetingCount?: number | null;
+    openCriticalItems?: number | null;
+    healthStatus?: string | null;
+    prompt: string;
+  }>;
+  emptyState?: string;
 };
 
 export type CreateEventWidgetPayload = {
@@ -384,6 +407,7 @@ export type AssistantWidgetPayload =
   | CreateTaskWidgetPayload
   | TaskSummaryWidgetPayload
   | MeetingIntelligenceWidgetPayload
+  | ProjectPickerWidgetPayload
   | OwnerSnapshotWidgetPayload
   | OwnerActionQueueWidgetPayload
   | MeetingInsightsWidgetPayload
@@ -596,6 +620,7 @@ export function isAssistantWidgetPayload(
       "create_task",
       "task_summary",
       "meeting_intelligence",
+      "project_picker",
       "owner_snapshot",
       "owner_action_queue",
       "meeting_insights",
