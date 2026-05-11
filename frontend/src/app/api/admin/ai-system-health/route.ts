@@ -201,10 +201,10 @@ export const GET = withApiGuardrails(WHERE, async () => {
 
   if (syncError) throw new Error(`source_sync_runs query failed: ${syncError.message}`);
 
-  const succeeded = syncRuns?.filter((r) => r.status === "success").length ?? 0;
-  const failed = syncRuns?.filter((r) => r.status !== "success").length ?? 0;
+  const succeeded = syncRuns?.filter((r) => r.status === "succeeded").length ?? 0;
+  const failed = syncRuns?.filter((r) => r.status === "failed").length ?? 0;
   const lastFailures = (syncRuns ?? [])
-    .filter((r) => r.status !== "success")
+    .filter((r) => r.status === "failed")
     .slice(0, 5)
     .map((r) => ({
       source: r.source,
