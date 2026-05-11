@@ -213,6 +213,16 @@ Investigation bug reports are in `.claude/investigations/<feature>/`.
 
 ---
 
+## AI And Assistant Features
+
+### CMO Agent
+
+| Type | File |
+|------|------|
+| PRP | [`cmo-agent/prp-cmo-agent.md`](./cmo-agent/prp-cmo-agent.md) |
+
+---
+
 ## Shared Resources
 
 | File | Purpose |
