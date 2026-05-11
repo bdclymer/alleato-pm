@@ -81,6 +81,7 @@ export interface TableColumn<T> extends ColumnConfig {
   csvValue?: (item: T) => string;
   sortable?: boolean;
   sortValue?: (item: T) => string | number | null | undefined;
+  align?: "left" | "center" | "right";
   editable?: boolean;
   editValue?: (item: T) => string;
   onEdit?: (item: T, value: string) => void | Promise<void>;
@@ -1277,6 +1278,7 @@ export function UnifiedTablePage<T>({
                   {orderedVisibleColumns.map((column) => {
                       const isSortable = column.sortable !== false && Boolean(sorting);
                       const isHideable = !column.alwaysVisible;
+                      const columnAlignment = column.align ?? headerAlignment;
                       const width = columnWidths[column.id] ?? column.width;
                       const isPinnedLeft = columnPinning.left.includes(column.id);
                       const pinnedStyle = getPinnedStyle(column.id);
@@ -1292,7 +1294,11 @@ export function UnifiedTablePage<T>({
                             key={column.id}
                             className={cn(
                               "relative align-middle",
-                              headerAlignment === "left" ? "text-left" : "text-center",
+                              columnAlignment === "right"
+                                ? "text-right"
+                                : columnAlignment === "center"
+                                  ? "text-center"
+                                  : "text-left",
                               isSortable && "cursor-pointer select-none group/th",
                             )}
                           aria-sort={
@@ -1338,16 +1344,26 @@ export function UnifiedTablePage<T>({
                                   className={cn(
                                     "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
                                     "text-xs",
+                                    "w-full",
                                     "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
-                                    headerAlignment === "left" ? "justify-start" : "justify-center",
+                                    columnAlignment === "right"
+                                      ? "justify-end"
+                                      : columnAlignment === "center"
+                                        ? "justify-center"
+                                        : "justify-start",
                                   )}
                                   onContextMenu={(event) => {
                                     event.preventDefault();
                                     event.currentTarget.click();
                                   }}
                                 >
+                                  {isSortable &&
+                                    columnAlignment === "right" &&
+                                    renderSortIcon(column.id)}
                                   <span>{column.label}</span>
-                                  {isSortable && renderSortIcon(column.id)}
+                                  {isSortable &&
+                                    columnAlignment !== "right" &&
+                                    renderSortIcon(column.id)}
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
@@ -1418,7 +1434,12 @@ export function UnifiedTablePage<T>({
                             <div
                               className={cn(
                                 "flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground",
-                                headerAlignment === "left" ? "justify-start" : "justify-center",
+                                "w-full",
+                                columnAlignment === "right"
+                                  ? "justify-end"
+                                  : columnAlignment === "center"
+                                    ? "justify-center"
+                                    : "justify-start",
                               )}
                             >
                               <span>{column.label}</span>

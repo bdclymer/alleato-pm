@@ -647,6 +647,7 @@ function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
         label: "Seen",
         sortable: true,
         sortValue: (run) => run.itemsSeen,
+        align: "right",
         width: 100,
         render: (run) => (
           <span className="block text-right tabular-nums">{run.itemsSeen}</span>
@@ -658,6 +659,7 @@ function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
         label: "Synced",
         sortable: true,
         sortValue: (run) => run.itemsSynced,
+        align: "right",
         width: 110,
         render: (run) => (
           <span className="block text-right tabular-nums">{run.itemsSynced}</span>
@@ -669,6 +671,7 @@ function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
         label: "Failed",
         sortable: true,
         sortValue: (run) => run.itemsFailed,
+        align: "right",
         width: 110,
         render: (run) => (
           <span className="block text-right tabular-nums">{run.itemsFailed}</span>
@@ -945,6 +948,7 @@ function StuckItemsTable({ items }: { items: SourceSyncStuckItem[] }) {
         label: "Age",
         sortable: true,
         sortValue: (item) => item.ageMinutes ?? -1,
+        align: "right",
         width: 110,
         render: (item) => (
           <span className="block text-right tabular-nums text-muted-foreground">
@@ -1158,6 +1162,7 @@ function SourceTable({ sources }: { sources: SourceHealth[] }) {
         label: "Age",
         sortable: true,
         sortValue: (source) => source.staleMinutes ?? -1,
+        align: "right",
         width: 110,
         render: (source) => (
           <span className="block text-right tabular-nums">
@@ -1171,6 +1176,7 @@ function SourceTable({ sources }: { sources: SourceHealth[] }) {
         label: "Synced",
         sortable: true,
         sortValue: (source) => source.itemsSynced,
+        align: "right",
         width: 110,
         render: (source) => (
           <span className="block text-right tabular-nums">
@@ -1184,6 +1190,7 @@ function SourceTable({ sources }: { sources: SourceHealth[] }) {
         label: "Unembedded",
         sortable: true,
         sortValue: (source) => source.unembeddedCount,
+        align: "right",
         width: 130,
         render: (source) => (
           <span className="block text-right tabular-nums">
@@ -1197,6 +1204,7 @@ function SourceTable({ sources }: { sources: SourceHealth[] }) {
         label: "Uncompiled",
         sortable: true,
         sortValue: (source) => source.uncompiledCount,
+        align: "right",
         width: 130,
         render: (source) => (
           <span className="block text-right tabular-nums">
