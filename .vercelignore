@@ -35,6 +35,9 @@
 /scripts/playwright-crawl
 /scripts/feature-tracker
 /scripts/change-events-crawl
+/scripts/adversarial-harness
+/scripts/visual-audit
+/scripts/mcp-servers
 
 # Frontend dev-only artifacts
 frontend/config/playwright

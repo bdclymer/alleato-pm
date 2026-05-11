@@ -21,9 +21,29 @@ const TRANSIENT_NEXT_BUILD_FAILURES = [
 ];
 const TURBOPACK_BUILD_ARGS = ["exec", "next", "build", "--turbopack"];
 const WEBPACK_BUILD_ARGS = ["exec", "next", "build"];
+const isVercel = process.env.VERCEL === "1" || process.env.VERCEL === "true";
 
 let activeChild = null;
 let cleanedUp = false;
+
+function formatDuration(ms) {
+  const seconds = ms / 1000;
+  if (seconds < 60) {
+    return `${seconds.toFixed(1)}s`;
+  }
+
+  return `${(seconds / 60).toFixed(1)}min`;
+}
+
+async function timedStep(label, step) {
+  const startedAt = Date.now();
+  console.log(`[build] ${label} started`);
+  try {
+    return await step();
+  } finally {
+    console.log(`[build] ${label} finished in ${formatDuration(Date.now() - startedAt)}`);
+  }
+}
 
 function runNodeScript(scriptPath) {
   return new Promise((resolve, reject) => {
@@ -72,13 +92,13 @@ function runRestoreSync() {
   }
 }
 
-function removeNextDir() {
+function removeNextDir(reason) {
   if (!existsSync(nextDir)) {
     return;
   }
 
   rmSync(nextDir, { recursive: true, force: true });
-  console.log("[build] Removed frontend/.next before production build to prevent stale manifest/cache failures");
+  console.log(`[build] Removed frontend/.next (${reason})`);
 }
 
 function isTransientNextBuildFailure(output) {
@@ -86,7 +106,11 @@ function isTransientNextBuildFailure(output) {
 }
 
 async function runNextBuildAttempt({ attempt, args, label }) {
-  removeNextDir();
+  if (!isVercel || attempt > 1 || label !== "Turbopack") {
+    removeNextDir("prevent stale manifest/cache failures");
+  } else {
+    console.log("[build] Preserving restored Vercel .next cache for first Turbopack attempt");
+  }
 
   let buildOutput = "";
   const exitCode = await new Promise((resolve, reject) => {
@@ -137,15 +161,19 @@ async function runNextBuildAttempt({ attempt, args, label }) {
 }
 
 async function main() {
-  await runNodeScript(disableScript);
+  await timedStep("Disable non-production routes", () => runNodeScript(disableScript));
 
-  const exitCode = await runNextBuildAttempt({
-    attempt: 1,
-    args: TURBOPACK_BUILD_ARGS,
-    label: "Turbopack",
+  const exitCode = await timedStep("Next production build", () =>
+    runNextBuildAttempt({
+      attempt: 1,
+      args: TURBOPACK_BUILD_ARGS,
+      label: "Turbopack",
+    }),
+  );
+
+  await timedStep("Restore non-production routes", () => {
+    runRestoreSync();
   });
-
-  runRestoreSync();
   process.exit(exitCode);
 }
 
