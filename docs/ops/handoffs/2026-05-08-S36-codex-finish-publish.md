@@ -6,7 +6,7 @@
 2) Task ID: AAI-346
 3) Linear issue: AAI-346
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-346/add-main-branch-codex-finish-publish-command
-5) Current status: Pending Review
+5) Current status: Accepted
 6) Files changed (absolute paths): /Users/meganharrison/Documents/alleato-pm/AGENTS.md; /Users/meganharrison/Documents/alleato-pm/package.json; /Users/meganharrison/Documents/alleato-pm/scripts/ops/codex-finish.mjs; /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-05-08-S36-codex-finish-publish.md; /Users/meganharrison/Documents/alleato-pm/docs/ops/orchestration/session-board.md; /Users/meganharrison/Documents/alleato-pm/docs/ops/orchestration/review-queue.md
 7) Commands run and outcome (pass/fail counts): PASS: `node --check scripts/ops/codex-finish.mjs`; PASS: `npm run codex:finish -- --check`; PASS: `node scripts/ops/codex-finish.mjs --help`; PASS: `npm run linear:codex:check -- docs/ops/handoffs/2026-05-08-S36-codex-finish-publish.md`; PASS: `npm run codex:finish -- --message "Add Codex main finish command" --staged-only` published commit `4544886fa` to `origin/main`.
 8) Evidence artifacts (screenshot/video/report/log paths): /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-05-08-S36-codex-finish-publish.md
@@ -19,15 +19,15 @@
 
 - Kickoff comment: Posted to AAI-346 on 2026-05-08 with scope, planned files, and verification target.
 - Milestone comments: Pending.
-- Completion/blocker comment: Pending final Linear comment.
+- Completion/blocker comment: Linear shows AAI-346 as Done; local review queue reconciled on 2026-05-11 by AAI-166.
 
 ## Current Status
 
-Added a focused `codex:finish` ops script and documented the default main-branch finish rule in `AGENTS.md`. Initial syntax/help/check-mode verification and Linear handoff validation passed. The implementation commit published to `origin/main` at `4544886fa`.
+Added a focused `codex:finish` ops script and documented the default main-branch finish rule in `AGENTS.md`. Initial syntax/help/check-mode verification and Linear handoff validation passed. The implementation commit published to `origin/main` at `4544886fa`, and live Linear status is Done.
 
 ## Exact Next Step
 
-Post the completion comment to AAI-346 and keep using `codex:finish` for future completed tasks.
+Keep using `codex:finish` for future completed tasks.
 
 ## Known Pitfalls
 

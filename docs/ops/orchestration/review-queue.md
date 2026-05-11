@@ -1,6 +1,6 @@
 # Review Queue
 
-Last updated: 2026-04-24
+Last updated: 2026-05-11
 
 Leader reviews all pending handoffs here.
 
@@ -35,7 +35,8 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-04-29-S25-vercel-build-performance.md` | S25 | AAI-249 | 2026-04-29 | Yes | Pending Review | Reduced Vercel production build graph by pruning unused deps, isolating 44 non-production route files during production build, deferring heavy root widgets, lazy-loading bot adapter graph, disabling docs static params, fixing Tailwind config warning, and wiring predeploy guardrails. Typecheck and production build passed in verification worker. |
 | `docs/ops/handoffs/2026-04-30-S26-alleato-ai-intelligence-prp.md` | S26 | AAI-270 | 2026-04-30 | Yes | Pending Review | Executed AI Intelligence PRP: provider matrix, packet schema/migration/seed, Westfield packet-first assistant path, conversation-memory embedding dimension fix, focused tests, RAG verifiers, latest-briefing verifier, migration ledger, and agent-browser evidence passed. Full build/lint not run. |
 | `docs/ops/handoffs/2026-04-30-S29-teams-conversation-compiler.md` | S29 | AAI-283 | 2026-04-30 | Partial | Blocked | Core Teams compiler implementation, migrations, API routes, single-row smoke, parser smoke, status RPC, and quality samples passed; PRP 25-row batch gate remains open because delegated runs compiled rows but did not return a clean `total_processed=25`, `succeeded>=20`, `failed=0` stats object inside 3 minutes. |
-| `docs/ops/handoffs/2026-05-08-S36-codex-finish-publish.md` | S36 | AAI-346 | 2026-05-08 | Yes | Pending Review | Added repo-level `codex:finish` command and AGENTS default finish rule; syntax/help/check-mode/handoff verification passed, and implementation commit `4544886fa` published to `origin/main`. |
+| `docs/ops/handoffs/2026-05-08-S36-codex-finish-publish.md` | S36 | AAI-346 | 2026-05-08 | Yes | Accepted | Live Linear shows AAI-346 Done; local evidence shows `codex:finish` syntax/help/check-mode/handoff verification passed and commit `4544886fa` published to `origin/main`. |
+| `docs/ops/handoffs/2026-05-11-S37-linear-handoff-backfill.md` | S37 | AAI-166 | 2026-05-11 | Yes | Pending Review | Reconciled S36 local status with live Linear, removed worker-status fake fallback rows for no-session dates, added `npm run worker-status`, and validated the S37 handoff. |
 
 ## Disposition Rules
 

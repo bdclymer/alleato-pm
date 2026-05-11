@@ -83,17 +83,13 @@ function parseSessionBoardSessions() {
 }
 
 const sessions = parseSessionBoardSessions();
-const fallbackSessions = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"].map(
-  (sessionId) => ({
-    sessionId,
-    status: "Unknown",
-    started: today,
-    updated: today,
-    ownedPaths: "",
-  })
-);
+if (sessions.length === 0) {
+  console.log(`Worker status for ${today}`);
+  console.log(`No active sessions found for ${today}.`);
+  process.exit(0);
+}
 
-const rows = (sessions.length > 0 ? sessions : fallbackSessions).map((session) => {
+const rows = sessions.map((session) => {
   const handoffMatches = [
     ...session.ownedPaths.matchAll(/docs\/ops\/handoffs\/[^`,\s|]+\.md/g),
   ].map((match) => match[0]);

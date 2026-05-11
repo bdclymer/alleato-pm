@@ -57,6 +57,7 @@
     "codex:finish": "node scripts/ops/codex-finish.mjs",
     "linear:codex:check": "node scripts/ops/linear-codex-comment.mjs --check",
     "linear:codex:comment": "node scripts/ops/linear-codex-comment.mjs",
+    "worker-status": "node scripts/ops/worker-status.mjs",
     "docs:validate-help": "npx tsx scripts/docs/validate-help-articles.ts",
     "docs:verify-help": "npx tsx scripts/docs/verify-help-system.ts",
     "docs:verify-help:browser": "HELP_VERIFY_BASE_URL=http://localhost:3000 npx tsx scripts/docs/verify-help-system.ts",
