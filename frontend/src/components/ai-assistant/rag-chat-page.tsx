@@ -464,6 +464,7 @@ export function RagChatPage() {
   const handleFinishMessage = useCallback((sessionId: string) => {
     queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
     setPendingSessionId(null);
+    setPendingFirstMessage(null);
     setPendingFirstFiles(undefined);
     void loadSessionMessages(sessionId);
   }, [queryClient, loadSessionMessages]);
