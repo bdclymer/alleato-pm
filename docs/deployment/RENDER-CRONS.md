@@ -4,7 +4,7 @@
 
 All scheduled backend jobs run on **Render as Docker cron jobs**, not GitHub Actions. GitHub Actions billing is currently locked — all workflows fail with `startup_failure`. Moving crons back to Actions would require restoring billing at github.com/settings/billing and is not recommended even then: Render crons use the existing Docker image with zero additional cost, while Actions minutes are rate-limited and billed per minute.
 
-The three crons share the same Dockerfile (`./backend/Dockerfile`, context `./backend`) as the `alleato-backend` web service. They run Python directly inside the container — no HTTP calls to the web service, so they work even when the web service is spun down or sleeping.
+Most crons share the same Dockerfile (`./backend/Dockerfile`, context `./backend`) as the `alleato-backend` web service. The executive Daily Brief crons use `./backend/Dockerfile.executive-brief` with the repo root as context so they can run the existing TypeScript brief generator on Render without Vercel function limits.
 
 Config lives in `render.yaml` at the repo root.
 
@@ -17,6 +17,8 @@ Config lives in `render.yaml` at the repo root.
 | `alleato-graph-sync` | Every 30 min (`*/30 * * * *`) | Microsoft Graph sync: Outlook emails, Teams messages, OneDrive files → embed → teams compiler | `backend/src/services/integrations/microsoft_graph/sync.py` | Exit 1 only if errors **and** `total_synced == 0`. Partial errors with some synced = exit 0. |
 | `alleato-task-extraction` | Daily 7:00 AM (`0 7 * * *`) | Extract action items from communications (window: last 2 days) | `backend/src/services/task_extraction.py` | Exit 1 only if errors **and** `inserted == 0`. |
 | `alleato-rag-health` | Daily 12:15 PM (`15 12 * * *`) | RAG meeting vectorization health check. Posts to Slack on failure. | `backend/src/services/health/rag_meeting_health.py` | Standard Python exit code (non-zero on failure). Posts to `SLACK_WEBHOOK_URL`. |
+| `alleato-executive-daily-brief-morning` | Weekdays 11:00 AM UTC (`0 11 * * 1-5`) | Generate the approved executive Daily Brief on Render and send the stored packet to Teams. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. |
+| `alleato-executive-daily-brief-evening` | Weekdays 10:30 PM UTC (`30 22 * * 1-5`) | Same as morning run; currently maps to 6:30 PM Eastern during daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. |
 
 ---
 

@@ -36,7 +36,7 @@ export type SourceSyncAiBriefSnapshot = {
 function createSourceSyncRunSnapshotLedger(): SourceSyncRunSnapshotLedger {
   const supabase = createServiceClient();
   return {
-    insertAiBriefSnapshot(insert) {
+    async insertAiBriefSnapshot(insert) {
       return supabase
         .from("source_sync_runs")
         .insert(insert)

@@ -27,9 +27,7 @@ export const POST = withApiGuardrails(
       });
     }
 
-    const result = await sendApprovedExecutiveBriefingToTeams({
-      sourceBackedOnly: true,
-    });
+    const result = await sendApprovedExecutiveBriefingToTeams();
     return NextResponse.json(result, {
       status: result.status === "blocked" ? 400 : 200,
     });

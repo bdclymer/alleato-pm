@@ -1929,7 +1929,7 @@ function buildProjectPickerWidget(output: unknown): ProjectPickerWidgetPayload |
         prompt: `Give me the owner snapshot for project ${projectId}: ${name}.`,
       };
     })
-    .filter((project): project is ProjectPickerWidgetPayload["projects"][number] => Boolean(project))
+    .filter((project): project is NonNullable<typeof project> => Boolean(project))
     .slice(0, 8);
 
   return {
@@ -1944,32 +1944,55 @@ function buildProjectPickerWidget(output: unknown): ProjectPickerWidgetPayload |
 }
 
 async function loadOwnerSnapshotProjectPicker(params: {
-  tools: ToolSet;
+  supabase: ReturnType<typeof createServiceClient>;
+  userId: string;
+  selectedProjectId?: number | null;
 }): Promise<{
   widget: ProjectPickerWidgetPayload | null;
   content: string;
   traceOutput: Record<string, unknown>;
 }> {
-  const executable = params.tools.getPortfolioOverview as ExecutableTool | undefined;
-  if (!executable?.execute) {
+  const guardrails = createToolGuardrails(params.userId, {
+    pinnedProjectId: params.selectedProjectId ?? undefined,
+  });
+  const scopedProjectIds = await guardrails.getScopedProjectIds();
+  if (scopedProjectIds.length === 0) {
     return {
       widget: null,
-      content: "Choose a project first, then I can render the owner snapshot widget.",
-      traceOutput: { error: "getPortfolioOverview execute function missing" },
+      content:
+        "No accessible projects were found for your account. Ask an admin to assign you to at least one project.",
+      traceOutput: { error: "no accessible projects" },
     };
   }
 
-  const output = await executable.execute({ phase: "Current" });
-  const record = asRecord(output);
-  if (typeof record.error === "string") {
+  async function fetchProjects(phase?: string) {
+    let query = params.supabase
+      .from("projects")
+      .select("id, name, client, phase, state, summary, health_status")
+      .eq("archived", false)
+      .in("id", scopedProjectIds)
+      .order("name", { ascending: true })
+      .limit(8);
+    if (phase) query = query.eq("phase", phase);
+    return query;
+  }
+
+  let { data: projects, error } = await fetchProjects("Current");
+  if (!error && (!projects || projects.length === 0)) {
+    const fallback = await fetchProjects();
+    projects = fallback.data;
+    error = fallback.error;
+  }
+
+  if (error) {
     return {
       widget: null,
-      content: record.error,
-      traceOutput: { error: record.error },
+      content: "I could not load project choices for the owner snapshot picker.",
+      traceOutput: { error: error.message },
     };
   }
 
-  const widget = buildProjectPickerWidget(record);
+  const widget = buildProjectPickerWidget({ projects: projects ?? [] });
   return {
     widget,
     content: widget?.projects.length
@@ -1977,7 +2000,7 @@ async function loadOwnerSnapshotProjectPicker(params: {
       : "I could not find accessible current projects to show in the picker.",
     traceOutput: {
       projectCount: widget?.projects.length ?? 0,
-      source: "getPortfolioOverview",
+      source: "projects",
     },
   };
 }
@@ -3692,7 +3715,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
           const requestedProjectId = selectedProjectId ?? extractProjectIdFromMessage(lastUserContent);
           if (!requestedProjectId) {
-            const picker = await loadOwnerSnapshotProjectPicker({ tools });
+            const picker = await loadOwnerSnapshotProjectPicker({
+              supabase,
+              userId: user.id,
+              selectedProjectId,
+            });
             const dataParts = picker.widget
               ? writeAssistantWidgetParts(writer, [picker.widget])
               : [];
