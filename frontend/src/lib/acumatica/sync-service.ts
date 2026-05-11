@@ -291,6 +291,21 @@ export async function syncDirectCosts(
 
   const acuProjectId = project.acumatica_project_id;
 
+  const { data: latestSyncLog, error: latestSyncLogError } = await supabase
+    .from("erp_sync_log")
+    .select("last_direct_cost_sync")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (latestSyncLogError) {
+    result.errors.push(`Failed to load prior direct cost sync cursor: ${latestSyncLogError.message}`);
+    return result;
+  }
+
+  const modifiedAfter = latestSyncLog?.last_direct_cost_sync ?? undefined;
+
   // 2. Fetch project transactions from Acumatica
   const acuClient = createAcumaticaClient();
   await acuClient.login();
@@ -306,6 +321,7 @@ export async function syncDirectCosts(
     const page = await acuClient.getProjectTransactions({
       $top: pageSize,
       $skip: skip,
+      modifiedAfter,
     });
     if (page.length === 0) break;
     allTransactions.push(...page);

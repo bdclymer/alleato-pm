@@ -11,6 +11,8 @@ function createQueryBuilder(result: QueryResult, calls: unknown[]) {
   const builder: Record<string, jest.Mock> & PromiseLike<QueryResult> = {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
     or: jest.fn().mockReturnThis(),
     not: jest.fn().mockReturnThis(),
     is: jest.fn().mockReturnThis(),
@@ -37,6 +39,9 @@ function createSupabaseMock() {
   const queues: Record<string, QueryResult[]> = {
     projects: [
       { data: { acumatica_project_id: "ACU-42" }, error: null },
+    ],
+    erp_sync_log: [
+      { data: { last_direct_cost_sync: "2026-05-10T12:00:00Z" }, error: null },
     ],
     direct_costs: [
       { data: [], error: null },
@@ -78,31 +83,33 @@ function createSupabaseMock() {
 describe("syncDirectCosts — Acumatica project budget code mapping", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const getProjectTransactions = jest
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          ReferenceNbr: "TX-1",
+          Status: "Released",
+          Module: "AP",
+          OriginalDocType: "Bill",
+          OriginalDocNbr: "INV-1",
+          Details: [
+            {
+              Project: "ACU-42",
+              CostCode: "01-100",
+              Description: "General Conditions",
+              Qty: 2,
+              Amount: 100,
+              UOM: "EA",
+              Date: "2026-04-01T00:00:00Z",
+            },
+          ],
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
     (createAcumaticaClient as jest.Mock).mockReturnValue({
       login: jest.fn().mockResolvedValue(undefined),
-      getProjectTransactions: jest
-        .fn()
-        .mockResolvedValueOnce([
-          {
-            ReferenceNbr: "TX-1",
-            Status: "Released",
-            Module: "AP",
-            OriginalDocType: "Bill",
-            OriginalDocNbr: "INV-1",
-            Details: [
-              {
-                Project: "ACU-42",
-                CostCode: "01-100",
-                Description: "General Conditions",
-                Qty: 2,
-                Amount: 100,
-                UOM: "EA",
-                Date: "2026-04-01T00:00:00Z",
-              },
-            ],
-          },
-        ])
-        .mockResolvedValueOnce([]),
+      getProjectTransactions,
     });
   });
 
@@ -142,5 +149,15 @@ describe("syncDirectCosts — Acumatica project budget code mapping", () => {
         }),
       ],
     });
+
+    const getProjectTransactions = (createAcumaticaClient as jest.Mock).mock.results[0]?.value
+      .getProjectTransactions as jest.Mock;
+    expect(getProjectTransactions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        $top: 100,
+        $skip: 0,
+        modifiedAfter: "2026-05-10T12:00:00Z",
+      }),
+    );
   });
 });
