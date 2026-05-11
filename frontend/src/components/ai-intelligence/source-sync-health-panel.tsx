@@ -1745,13 +1745,15 @@ export function SourceSyncHealthPanel() {
             <AlertList alerts={status.alerts} />
           </section>
 
-          <section className="space-y-4">
+          <section className="space-y-3">
             <SectionRuleHeading label="Raw counts" />
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
               These are backend counters for debugging. They are useful when
               fixing the system, but the brief above is the decision view.
             </p>
-            <PipelineCounts status={status} />
+            <div className="pt-1">
+              <PipelineCounts status={status} />
+            </div>
           </section>
         </>
       ) : null}
