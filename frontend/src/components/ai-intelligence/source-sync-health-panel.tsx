@@ -482,93 +482,80 @@ function groupAlerts(alerts: SourceSyncAlert[]): AlertGroup[] {
 
 function OperationsBrief({ status }: { status: SourceSyncStatus }) {
   const issues = buildOperationsIssues(status);
+  const primaryIssue = issues[0];
+  const priorityIssues = issues.slice(0, 3);
+  const nextSteps = priorityIssues.map((issue) => issue.nextStep);
   const criticalCount = status.alerts.filter(
     (alert) => alert.severity === "critical",
   ).length;
   const warningCount = status.alerts.length - criticalCount;
+  const statusSummary =
+    status.status === "healthy"
+      ? "Sources are current and intelligence is ready."
+      : "Sources are loading, but search and intelligence are behind.";
+  const keyCounts = [
+    { label: "Not searchable", value: status.counts.unembedded },
+    { label: "Not compiled", value: status.counts.uncompiled },
+    { label: "Stuck items", value: status.counts.stuckItems },
+    { label: "Documents", value: status.counts.documents },
+  ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 border-y border-border/60 py-4">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusPill status={status.status} />
-            <span className="text-sm text-muted-foreground">
-              {criticalCount} critical / {warningCount} warning
-            </span>
-          </div>
-          <p className="text-lg font-semibold text-foreground">
-            The system is synced enough to load, but intelligence is behind.
+        <div className="min-w-0 space-y-2">
+          <p className="text-sm font-medium text-foreground">
+            {statusSummary}
           </p>
-          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            This page is checking whether external sources have been pulled in,
-            converted into searchable embeddings, and compiled into project
-            intelligence packets. The main issues right now are backlog, stale
-            Microsoft sources, and provider errors that need targeted retries
-            rather than one giant sync.
-          </p>
+          {primaryIssue ? (
+            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+              Main blocker:{" "}
+              <span className="font-medium text-foreground">
+                {primaryIssue.title}
+              </span>
+              . {primaryIssue.detail}
+            </p>
+          ) : (
+            <p className="text-sm leading-6 text-muted-foreground">
+              No active source sync issues were found.
+            </p>
+          )}
         </div>
-        <div className="rounded-lg bg-muted/25 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+
+        <div className="space-y-1 text-sm lg:text-right">
+          <p className="text-xs font-medium uppercase text-muted-foreground">
             Last checked
           </p>
-          <p className="mt-2 text-sm font-medium text-foreground">
+          <p className="font-medium text-foreground">
             {formatDate(status.generatedAt)}
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-muted-foreground">Not searchable</p>
-              <p className="font-semibold tabular-nums text-foreground">
-                {status.counts.unembedded.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Not compiled</p>
-              <p className="font-semibold tabular-nums text-foreground">
-                {status.counts.uncompiled.toLocaleString()}
-              </p>
-            </div>
-          </div>
+          <p className="text-muted-foreground">
+            {criticalCount} critical / {warningCount} warning
+          </p>
         </div>
       </div>
 
-      {issues.length > 0 ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {issues.map((issue) => {
-            const Icon = issue.icon;
-            return (
-              <div key={issue.key} className="rounded-lg bg-muted/25 p-4">
-                <div className="flex items-start gap-3">
-                  <Icon
-                    className={cn(
-                      "mt-0.5 h-4 w-4 shrink-0",
-                      issue.severity === "critical"
-                        ? "text-destructive"
-                        : "text-amber-600",
-                    )}
-                  />
-                  <div className="min-w-0 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground">
-                        {issue.title}
-                      </p>
-                      {issue.count !== undefined ? (
-                        <span className="text-xs tabular-nums text-muted-foreground">
-                          {issue.count.toLocaleString()}
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="text-sm leading-5 text-muted-foreground">
-                      {issue.detail}
-                    </p>
-                    <p className="text-xs font-medium text-foreground">
-                      {issue.nextStep}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+        {keyCounts.map((metric) => (
+          <div key={metric.label} className="flex items-baseline gap-2">
+            <span className="text-xs text-muted-foreground">
+              {metric.label}
+            </span>
+            <span className="font-semibold tabular-nums text-foreground">
+              {metric.value.toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {nextSteps.length > 0 ? (
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 border-t border-border/60 pt-3 text-sm">
+          <span className="text-xs font-medium uppercase text-muted-foreground">
+            Fix next
+          </span>
+          <span className="font-medium text-foreground">
+            {nextSteps.join(" ")}
+          </span>
         </div>
       ) : (
         <InfoAlert variant="success">
@@ -609,33 +596,6 @@ function LoadingState() {
       <Skeleton className="h-16 w-full" />
       <Skeleton className="h-44 w-full" />
       <Skeleton className="h-32 w-full" />
-    </div>
-  );
-}
-
-function MetricTiles({ status }: { status: SourceSyncStatus }) {
-  const metrics = [
-    { label: "Sources", value: status.counts.sources },
-    { label: "Active alerts", value: status.counts.alerts },
-    { label: "Unembedded", value: status.counts.unembedded },
-    { label: "Uncompiled", value: status.counts.uncompiled },
-    { label: "Stuck items", value: status.counts.stuckItems },
-    { label: "Documents", value: status.counts.documents },
-    { label: "Tasks", value: status.counts.tasks },
-  ];
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-border/60 py-3">
-      {metrics.map((metric) => (
-        <div key={metric.label} className="min-w-24">
-          <p className="text-[11px] font-medium text-muted-foreground">
-            {metric.label}
-          </p>
-          <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
-            {metric.value.toLocaleString()}
-          </p>
-        </div>
-      ))}
     </div>
   );
 }
@@ -1614,11 +1574,6 @@ export function SourceSyncHealthPanel() {
               />
               {status ? <StatusPill status={status.status} /> : null}
             </div>
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Tracks source freshness, vectorization backlog, task extraction,
-              compiler work, and packet readiness from the same operational
-              view.
-            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -1673,10 +1628,7 @@ export function SourceSyncHealthPanel() {
         {loading ? (
           <LoadingState />
         ) : status ? (
-          <>
-            <OperationsBrief status={status} />
-            <MetricTiles status={status} />
-          </>
+          <OperationsBrief status={status} />
         ) : null}
       </section>
 
