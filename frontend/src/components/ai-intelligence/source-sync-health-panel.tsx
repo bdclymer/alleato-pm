@@ -625,14 +625,14 @@ function MetricTiles({ status }: { status: SourceSyncStatus }) {
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-border/60 py-3">
       {metrics.map((metric) => (
-        <div key={metric.label} className="rounded-lg bg-muted/25 p-4">
-          <p className="text-xs font-medium text-muted-foreground">
+        <div key={metric.label} className="min-w-24">
+          <p className="text-[11px] font-medium text-muted-foreground">
             {metric.label}
           </p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
-            {metric.value}
+          <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+            {metric.value.toLocaleString()}
           </p>
         </div>
       ))}
@@ -781,7 +781,7 @@ function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
 
   return (
     <UnifiedTablePage
-      header={{ title: "", variant: "compact" }}
+      header={{ title: "Recent sync runs", variant: "compact" }}
       toolbar={{
         totalItems: runs.length,
         filteredItems: runs.length,
@@ -830,7 +830,7 @@ function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
         },
         clientSide: true,
       }}
-      layout={{ fullBleedTable: true }}
+      layout={{ fullBleedTable: true, toolbarInlineWithHeader: true }}
       features={{
         enableSearch: false,
         enableViews: false,
@@ -1070,7 +1070,7 @@ function StuckItemsTable({ items }: { items: SourceSyncStuckItem[] }) {
 
   return (
     <UnifiedTablePage
-      header={{ title: "", variant: "compact" }}
+      header={{ title: "Stuck items", variant: "compact" }}
       toolbar={{
         totalItems: items.length,
         filteredItems: filteredItems.length,
@@ -1139,7 +1139,13 @@ function StuckItemsTable({ items }: { items: SourceSyncStuckItem[] }) {
         onPerPageChange: (value) => tableState.setPerPage(Number(value)),
         clientSide: true,
       }}
-      layout={{ fullBleedTable: true }}
+      topContent={
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+          These are individual files or messages that failed, are unsupported,
+          or have been sitting in a processing stage too long.
+        </p>
+      }
+      layout={{ fullBleedTable: true, toolbarInlineWithHeader: true }}
       features={{
         enableSearch: true,
         enableViews: false,
@@ -1304,7 +1310,7 @@ function SourceTable({ sources }: { sources: SourceHealth[] }) {
 
   return (
     <UnifiedTablePage
-      header={{ title: "", variant: "compact" }}
+      header={{ title: "Source details", variant: "compact" }}
       toolbar={{
         totalItems: sources.length,
         filteredItems: sources.length,
@@ -1358,7 +1364,7 @@ function SourceTable({ sources }: { sources: SourceHealth[] }) {
         },
         clientSide: true,
       }}
-      layout={{ fullBleedTable: true }}
+      layout={{ fullBleedTable: true, toolbarInlineWithHeader: true }}
       features={{
         enableSearch: false,
         enableViews: false,
@@ -1723,21 +1729,14 @@ export function SourceSyncHealthPanel() {
           </section>
 
           <section className="space-y-4">
-            <SectionRuleHeading label="Source details" />
             <SourceTable sources={status.sources} />
           </section>
 
           <section className="space-y-4">
-            <SectionRuleHeading label="Recent sync runs" />
             <RunLedgerTable runs={status.recentRuns} />
           </section>
 
           <section className="space-y-4">
-            <SectionRuleHeading label="Stuck items" />
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              These are individual files or messages that failed, are
-              unsupported, or have been sitting in a processing stage too long.
-            </p>
             <StuckItemsTable items={status.stuckItems} />
           </section>
 
