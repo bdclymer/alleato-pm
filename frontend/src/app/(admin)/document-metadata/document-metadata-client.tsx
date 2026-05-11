@@ -152,6 +152,22 @@ function formatDuration(minutes: number | null) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
+async function fetchDocumentContent(id: string): Promise<string | null> {
+  const response = await fetch(`/api/document-metadata/${encodeURIComponent(id)}/content`);
+  const payload = (await response.json().catch(() => null)) as {
+    content?: string | null;
+    error?: string;
+    details?: string;
+  } | null;
+
+  if (!response.ok) {
+    const message = payload?.details ?? payload?.error ?? "Document content request failed.";
+    throw new Error(message);
+  }
+
+  return payload?.content ?? null;
+}
+
 // ── Column metadata ──────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
@@ -185,7 +201,8 @@ function buildTableColumns(
   allProjects: AllProject[],
   onProjectEdit: (item: DocumentMetadataItem, projectName: string, projectId: number | null) => Promise<void>,
   expandedIds: Set<string>,
-  toggleExpand: (id: string) => void,
+  toggleExpand: (item: DocumentMetadataItem) => void,
+  loadingContentIds: Set<string>,
 ): TableColumn<DocumentMetadataItem>[] {
   return [
     {
@@ -201,7 +218,7 @@ function buildTableColumns(
       ...columns[1],
       render: (item) => {
         const isExpanded = expandedIds.has(item.id);
-        const hasContent = !!item.content;
+        const isLoadingContent = loadingContentIds.has(item.id);
         return (
           <div className="flex items-center gap-1.5 min-w-0">
             <Button
@@ -209,10 +226,10 @@ function buildTableColumns(
               variant="ghost"
               size="icon"
               className="h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground"
-              disabled={!hasContent}
+              disabled={isLoadingContent}
               onClick={(e) => {
                 e.stopPropagation();
-                toggleExpand(item.id);
+                toggleExpand(item);
               }}
               aria-label={isExpanded ? "Collapse content" : "Expand content"}
             >
@@ -550,15 +567,60 @@ export function DocumentMetadataClient({
 
   const [items, setItems] = React.useState(initialItems);
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
+  const [loadedContentIds, setLoadedContentIds] = React.useState<Set<string>>(new Set());
+  const [loadingContentIds, setLoadingContentIds] = React.useState<Set<string>>(new Set());
 
-  const toggleExpand = React.useCallback((id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
+  const loadContent = React.useCallback(
+    async (item: DocumentMetadataItem) => {
+      if (loadedContentIds.has(item.id)) return item.content;
+
+      setLoadingContentIds((prev) => new Set(prev).add(item.id));
+      try {
+        const content = await fetchDocumentContent(item.id);
+        setItems((prev) =>
+          prev.map((current) =>
+            current.id === item.id ? { ...current, content } : current,
+          ),
+        );
+        setLoadedContentIds((prev) => new Set(prev).add(item.id));
+        return content;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Document content could not be loaded.";
+        toast.error("Failed to load document content", { description: message });
+        throw error;
+      } finally {
+        setLoadingContentIds((prev) => {
+          const next = new Set(prev);
+          next.delete(item.id);
+          return next;
+        });
+      }
+    },
+    [loadedContentIds],
+  );
+
+  const toggleExpand = React.useCallback(
+    (item: DocumentMetadataItem) => {
+      if (expandedIds.has(item.id)) {
+        setExpandedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(item.id);
+          return next;
+        });
+        return;
+      }
+
+      void loadContent(item).then((content) => {
+        if (!content) {
+          toast.info("No content is available for this record.");
+          return;
+        }
+        setExpandedIds((prev) => new Set(prev).add(item.id));
+      });
+    },
+    [expandedIds, loadContent],
+  );
 
   // Derive active filters from URL — authoritative, no useEffect lag
   const activeFilters = useMemo<FilterState>(
@@ -729,8 +791,8 @@ export function DocumentMetadataClient({
   );
 
   const tableColumns = useMemo(
-    () => buildTableColumns(allProjects, handleProjectEdit, expandedIds, toggleExpand),
-    [allProjects, handleProjectEdit, expandedIds, toggleExpand],
+    () => buildTableColumns(allProjects, handleProjectEdit, expandedIds, toggleExpand, loadingContentIds),
+    [allProjects, handleProjectEdit, expandedIds, toggleExpand, loadingContentIds],
   );
 
   const isFiltered =
@@ -897,9 +959,10 @@ export function DocumentMetadataClient({
       router.push(`/meetings/${item.id}`);
       return;
     }
+    void loadContent(item);
     setActiveItemId(item.id);
     setSheetOpen(true);
-  }, [router]);
+  }, [loadContent, router]);
 
   const handleSheetNavigate = React.useCallback(
     (direction: "prev" | "next") => {
@@ -907,9 +970,12 @@ export function DocumentMetadataClient({
         direction === "prev"
           ? paginatedItems[activeIndex - 1]
           : paginatedItems[activeIndex + 1];
-      if (next) setActiveItemId(next.id);
+      if (next) {
+        void loadContent(next);
+        setActiveItemId(next.id);
+      }
     },
-    [paginatedItems, activeIndex],
+    [paginatedItems, activeIndex, loadContent],
   );
 
   const tabLabel =
