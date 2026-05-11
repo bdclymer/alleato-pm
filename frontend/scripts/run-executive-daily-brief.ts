@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 import { resolve } from "path";
 import type { BrandonDailyUpdatePacket } from "../src/lib/executive/brandon-daily-update";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../src/types/database.types";
+import type { Database, Json } from "../src/types/database.types";
 
 dotenv.config({ path: resolve(process.cwd(), "../.env") });
 dotenv.config({ path: resolve(process.cwd(), ".env") });
@@ -43,6 +43,21 @@ function envFlag(name: string, defaultValue: boolean): boolean {
 function compactError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message.replace(/\s+/g, " ").slice(0, 1800);
+}
+
+function toJson(value: unknown): Json {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" || typeof value === "boolean") return value;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (Array.isArray(value)) return value.map((item) => toJson(item));
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => [key, toJson(item)]),
+    );
+  }
+  return String(value);
 }
 
 function frontendBaseUrl(): string {
@@ -199,7 +214,7 @@ async function main() {
         generatedAt: draft.packet.generatedAt,
         generationMs: Date.now() - startMs,
         itemCounts,
-        deliveryResult,
+        deliveryResult: toJson(deliveryResult),
       },
     });
 
