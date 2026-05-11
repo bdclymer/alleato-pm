@@ -24,8 +24,10 @@
 /docs/.archive
 /docs/BMAD
 /docs/PRPs
+/docs/ai-plan/evals
 /docs/asrs
 /docs/change-order-process
+/docs/ops/evidence
 /docs/procore-reference/procore-workflow-images
 /docs/reports
 
@@ -42,6 +44,10 @@
 # Frontend dev-only artifacts
 frontend/config/playwright
 frontend/.devtools
+frontend/coverage
 frontend/e2e-recordings
+frontend/e2e-screenshots
 frontend/playwright-report
+frontend/storybook-static
 frontend/tests
+frontend/tsconfig*.tsbuildinfo

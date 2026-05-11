@@ -133,15 +133,13 @@ const nextConfig: NextConfig = {
   // Set the workspace root to silence Next.js warning about multiple lockfiles
   outputFileTracingRoot: path.join(__dirname, "../"),
   outputFileTracingExcludes: {
-    // Exclude ALL non-frontend directories from every serverless function.
-    // outputFileTracingRoot is ../ (repo root), so everything at the repo
-    // level is a candidate for tracing. Only the frontend/ runtime code
-    // should be bundled — everything else is dev-only or irrelevant.
-    "/*": [
+    // Exclude ALL non-runtime artifact directories from every serverless function.
+    // Keys are route globs; use /**/* so nested routes such as
+    // /api/admin/rag-eval/run do not accidentally trace repo evidence output.
+    "/**/*": [
       "../_bmad/**",
       "../_bmad-output/**",
       "../backend/**",
-      "../docs/**",
       "../docs-ai/**",
       "../dogfood-output/**",
       "../e2e-screenshots/**",
@@ -157,9 +155,29 @@ const nextConfig: NextConfig = {
       "../tmp/**",
       "../verify-output/**",
       "../vermillian/**",
+      "../docs/.archive/**",
+      "../docs/BMAD/**",
+      "../docs/PRPs/**",
+      "../docs/ai-plan/evals/**",
+      "../docs/asrs/**",
+      "../docs/change-order-process/**",
+      "../docs/ops/evidence/**",
+      "../docs/procore-reference/procore-workflow-images/**",
+      "../docs/reports/**",
+      "../scripts/adversarial-harness/**",
+      "../scripts/change-events-crawl/**",
+      "../scripts/feature-tracker/**",
+      "../scripts/mcp-servers/**",
+      "../scripts/playwright-crawl/**",
+      "../scripts/screenshot-capture/**",
+      "../scripts/visual-audit/**",
+      "./coverage/**",
       "./config/playwright/**",
+      "./e2e-screenshots/**",
       "./playwright-report/**",
+      "./storybook-static/**",
       "./tests/**",
+      "./tsconfig*.tsbuildinfo",
     ],
   },
   // Security headers (OWASP best practices)
