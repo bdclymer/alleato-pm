@@ -12,6 +12,7 @@ Rule 5: Do not introduce one-off handling when a shared abstraction is warranted
 Rule 6: For every failure, explain cause, detection gap, and prevention step.
 Rule 7: Before closing any task, ask: “How does this fail loudly?”
 Rule 8: Before closing any bug, ask: “What makes this never happen again?”
+Rule 9: Never ship band-aid fixes. If a change only satisfies the immediate error without addressing the underlying design, contract, ownership boundary, or guardrail gap, stop and replace it with a durable fix. Temporary mitigations are allowed only when explicitly labeled as temporary, paired with a tracked follow-up, and justified because the durable fix is blocked.
 
 ## General
 
