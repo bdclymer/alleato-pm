@@ -66,6 +66,19 @@ Set these in the Render dashboard under each cron's **Environment** tab. All are
 | `PYTHONPATH` | `/app:/app/src:/app/src/services` (set in render.yaml) |
 | `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
 
+### `alleato-executive-daily-brief-morning` / `alleato-executive-daily-brief-evening`
+
+| Var | Notes |
+|-----|-------|
+| `NEXT_PUBLIC_SUPABASE_URL` or `SUPABASE_URL` | Project URL from Supabase dashboard |
+| `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_KEY` | Service role key |
+| `AI_GATEWAY_API_KEY` | Primary AI provider key for generation |
+| `OPENAI_API_KEY` | Direct OpenAI fallback |
+| `CRON_SECRET` | Shared bearer secret used by the thin Teams delivery endpoint |
+| `EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL` | Production frontend URL, currently `https://projects.alleatogroup.com` |
+| `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS` | Set to `"true"` for scheduled delivery |
+| `EXECUTIVE_DAILY_BRIEF_SCHEDULE` | Human-readable schedule label persisted into `source_sync_runs.metadata` |
+
 ---
 
 ## How to Check if a Cron Ran
