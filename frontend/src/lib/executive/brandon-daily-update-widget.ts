@@ -1,6 +1,7 @@
 import type {
   BrandonBriefItem,
   BrandonDailyUpdatePacket,
+  ExecutiveOperatingBrief,
 } from "@/lib/executive/brandon-daily-update";
 
 type WidgetAction = {
@@ -292,12 +293,88 @@ function buildSection(
   };
 }
 
+function buildOperatingFocusSection(brief: ExecutiveOperatingBrief): WidgetNode {
+  return {
+    type: "Col",
+    gap: 3,
+    children: [
+      {
+        type: "Row",
+        align: "center",
+        children: [
+          {
+            type: "Text",
+            value: "Top executive focus",
+            weight: "semibold",
+            size: "sm",
+          },
+          { type: "Spacer" },
+          {
+            type: "Badge",
+            label: String(brief.topExecutiveFocus.length),
+            color: "info",
+            variant: "soft",
+            size: "sm",
+            pill: true,
+          },
+        ],
+      },
+      ...brief.topExecutiveFocus.map((entry, index) =>
+        buildItemRow(entry.item, index),
+      ),
+    ],
+  };
+}
+
+function buildRecommendedMovesSection(
+  brief: ExecutiveOperatingBrief,
+): WidgetNode {
+  return {
+    type: "Col",
+    gap: 2,
+    children: [
+      {
+        type: "Text",
+        value: "Recommended moves",
+        size: "sm",
+        weight: "semibold",
+      },
+      {
+        type: "Markdown",
+        value:
+          brief.recommendedMoves.length > 0
+            ? brief.recommendedMoves
+                .map((move, index) => `${index + 1}. ${move}`)
+                .join("\n")
+            : "No recommended moves generated.",
+      },
+    ],
+  };
+}
+
+function buildOverflowSummary(brief: ExecutiveOperatingBrief): WidgetNode {
+  const additionalCount = Object.values(brief.additionalMaterialItems).reduce(
+    (total, items) => total + items.length,
+    0,
+  );
+  return {
+    type: "Row",
+    gap: 2,
+    children: [
+      buildMetricTile("Additional material", additionalCount, "#175CD3"),
+      buildMetricTile("Risk radar", brief.projectRiskRadar.length, "#B42318"),
+      buildMetricTile("Cash / margin", brief.cashAndMarginWatch.length, "#B54708"),
+    ],
+  };
+}
+
 export function buildBrandonDailyUpdateWidget(
   packet: BrandonDailyUpdatePacket,
 ): WidgetCard {
   const actionCount = packet.sections.needsBrandon.length;
   const waitingCount = packet.sections.waitingOnOthers.length;
   const updateCount = packet.sections.importantUpdates.length;
+  const operatingBrief = packet.operatingBrief;
 
   return {
     type: "Card",
@@ -329,13 +406,14 @@ export function buildBrandonDailyUpdateWidget(
             children: [
               {
                 type: "Text",
-                value: "Daily update for Brandon",
+                value: "CEO operating brief for Brandon",
                 size: "lg",
                 weight: "semibold",
               },
               {
                 type: "Text",
                 value:
+                  operatingBrief?.startHere.join(" ") ??
                   "A fast executive scan of what needs a decision, what is blocked on others, and what changed across the business.",
                 size: "sm",
                 color: "secondary",
@@ -351,6 +429,17 @@ export function buildBrandonDailyUpdateWidget(
               buildMetricTile("Critical updates", updateCount, "#175CD3"),
             ],
           },
+          ...(operatingBrief
+            ? [
+                buildOverflowSummary(operatingBrief),
+                {
+                  type: "Divider",
+                  flush: true,
+                },
+                buildOperatingFocusSection(operatingBrief),
+                buildRecommendedMovesSection(operatingBrief),
+              ]
+            : []),
           {
             type: "Divider",
             flush: true,

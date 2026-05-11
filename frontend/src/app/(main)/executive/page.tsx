@@ -21,8 +21,12 @@ import {
   type ExecutiveBriefingFollowUp,
 } from "@/lib/executive/executive-briefing-workflow";
 import {
+  buildExecutiveOperatingBrief,
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
   type BrandonBriefItem,
+  type ExecutiveOperatingBrief,
+  type ExecutiveOperatingBriefRiskItem,
+  type ExecutiveOperatingBriefShortItem,
 } from "@/lib/executive/brandon-daily-update";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +55,18 @@ type ExecutiveActionQueueEntry = {
   item: BrandonBriefItem;
   followUpId?: string;
   daysOpen?: number;
+};
+
+const LANE_LABELS: Record<
+  keyof ExecutiveOperatingBrief["additionalMaterialItems"],
+  string
+> = {
+  cashMargin: "Cash / Billing / Margin",
+  scheduleField: "Schedule / Field",
+  customerOwner: "Customer / Owner",
+  subcontractorVendor: "Subcontractor / Vendor",
+  designPreconstruction: "Design / Preconstruction",
+  internalAccountability: "Internal Accountability",
 };
 
 function formatGeneratedAt(value: string) {
@@ -328,6 +344,271 @@ function TodayMeetingsSection({ meetings }: { meetings: TodayMeeting[] }) {
   );
 }
 
+function ExecutiveBriefStartHere({
+  brief,
+}: {
+  brief: ExecutiveOperatingBrief;
+}) {
+  return (
+    <section className="space-y-4">
+      <SectionDivider title="Start Here" />
+      {brief.hasUnusualExecutiveLoad ? (
+        <p className="text-sm font-medium text-destructive">
+          Today has more than the usual number of executive-level items.
+        </p>
+      ) : null}
+      <div className="space-y-2 text-sm leading-6 text-foreground">
+        {brief.startHere.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TopExecutiveFocusSection({
+  brief,
+}: {
+  brief: ExecutiveOperatingBrief;
+}) {
+  return (
+    <section className="space-y-4">
+      <SectionDivider
+        title="Top Executive Focus"
+        count={brief.topExecutiveFocus.length}
+      />
+      <div className="divide-y divide-border/70">
+        {brief.topExecutiveFocus.map((entry) => (
+          <article
+            key={`${entry.item.title}-${entry.item.sourceId ?? entry.item.sourceDetail}`}
+            className="py-4 first:pt-0"
+          >
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span className="font-medium text-primary">{entry.item.project}</span>
+              <span>{LANE_LABELS[entry.lane]}</span>
+              {entry.owner ? <span>Owner: {entry.owner}</span> : null}
+            </div>
+            <div className="mt-1 text-base font-semibold text-foreground">
+              {entry.item.title}
+            </div>
+            <dl className="mt-3 grid gap-3 text-sm leading-6 md:grid-cols-3">
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground">
+                  What changed
+                </dt>
+                <dd>{entry.whatChanged}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground">
+                  Why it matters
+                </dt>
+                <dd>{entry.whyItMatters}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground">
+                  Recommended next move
+                </dt>
+                <dd>{entry.recommendedNextMove}</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ShortItemList({
+  items,
+  empty,
+}: {
+  items: ExecutiveOperatingBriefShortItem[];
+  empty: string;
+}) {
+  if (items.length === 0) {
+    return <p className="py-2 text-sm text-muted-foreground">{empty}</p>;
+  }
+
+  return (
+    <div className="divide-y divide-border/70">
+      {items.map((entry) => (
+        <div
+          key={`${entry.item.title}-${entry.item.sourceId ?? entry.item.sourceDetail}`}
+          className="grid gap-2 py-3 text-sm leading-6 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.6fr)]"
+        >
+          <div>
+            <div className="font-medium text-foreground">{entry.item.title}</div>
+            <div className="text-xs text-muted-foreground">
+              {entry.item.project}
+              {entry.owner ? ` · Owner: ${entry.owner}` : ""}
+            </div>
+          </div>
+          <div className="text-muted-foreground">{entry.nextAction}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AdditionalMaterialItemsSection({
+  brief,
+}: {
+  brief: ExecutiveOperatingBrief;
+}) {
+  const lanes = Object.entries(brief.additionalMaterialItems).filter(
+    ([, items]) => items.length > 0,
+  ) as Array<
+    [
+      keyof ExecutiveOperatingBrief["additionalMaterialItems"],
+      ExecutiveOperatingBriefShortItem[],
+    ]
+  >;
+
+  return (
+    <section className="space-y-5">
+      <SectionDivider title="Additional Material Items" />
+      {lanes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No material overflow items beyond the top focus set.
+        </p>
+      ) : (
+        lanes.map(([lane, items]) => (
+          <div key={lane} className="space-y-2">
+            <div className="text-sm font-semibold text-foreground">
+              {LANE_LABELS[lane]}
+            </div>
+            <ShortItemList
+              items={items}
+              empty={`No current ${LANE_LABELS[lane].toLowerCase()} items.`}
+            />
+          </div>
+        ))
+      )}
+    </section>
+  );
+}
+
+function RiskTable({
+  title,
+  items,
+}: {
+  title: string;
+  items: ExecutiveOperatingBriefRiskItem[];
+}) {
+  return (
+    <section className="space-y-4">
+      <SectionDivider title={title} count={items.length} />
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No current items.</p>
+      ) : (
+        <div className="overflow-hidden border-y border-border/70">
+          <table className="w-full text-left text-sm">
+            <thead className="text-xs text-muted-foreground">
+              <tr className="border-b border-border/70">
+                <th className="py-2 pr-4 font-medium">Project / area</th>
+                <th className="py-2 pr-4 font-medium">Risk</th>
+                <th className="py-2 pr-4 font-medium">Impact</th>
+                <th className="py-2 font-medium">Next action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/70">
+              {items.map((entry) => (
+                <tr key={`${entry.item.title}-${entry.item.sourceId ?? entry.item.sourceDetail}`}>
+                  <td className="py-3 pr-4 align-top text-muted-foreground">
+                    {entry.item.project}
+                  </td>
+                  <td className="py-3 pr-4 align-top font-medium text-foreground">
+                    {entry.item.title}
+                  </td>
+                  <td className="py-3 pr-4 align-top text-muted-foreground">
+                    {entry.impact}
+                  </td>
+                  <td className="py-3 align-top text-muted-foreground">
+                    {entry.nextAction}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function WaitingSection({ brief }: { brief: ExecutiveOperatingBrief }) {
+  return (
+    <section className="space-y-5">
+      <SectionDivider title="Waiting on Others / Others Waiting on Brandon" />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-2">
+          <div className="text-sm font-semibold text-foreground">
+            Brandon is waiting on
+          </div>
+          <ShortItemList
+            items={brief.waitingOn.brandonWaitingOn}
+            empty="No active blockers waiting on someone else."
+          />
+        </div>
+        <div className="space-y-2">
+          <div className="text-sm font-semibold text-foreground">
+            Others are waiting on Brandon
+          </div>
+          <ShortItemList
+            items={brief.waitingOn.othersWaitingOnBrandon}
+            empty="No active owner decisions or approvals due."
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BusinessSignalsSection({
+  brief,
+}: {
+  brief: ExecutiveOperatingBrief;
+}) {
+  return (
+    <section className="space-y-4">
+      <SectionDivider title="Important Business Signals" />
+      {brief.importantBusinessSignals.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No pattern-level signal surfaced in this packet.
+        </p>
+      ) : (
+        <ul className="space-y-2 text-sm leading-6 text-foreground">
+          {brief.importantBusinessSignals.map((signal) => (
+            <li key={signal}>{signal}</li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function RecommendedMovesSection({
+  brief,
+}: {
+  brief: ExecutiveOperatingBrief;
+}) {
+  return (
+    <section className="space-y-4">
+      <SectionDivider title="Recommended Moves" count={brief.recommendedMoves.length} />
+      <ol className="space-y-2 text-sm leading-6 text-foreground">
+        {brief.recommendedMoves.map((move, index) => (
+          <li key={`${move}-${index}`} className="flex gap-3">
+            <span className="w-5 shrink-0 text-muted-foreground">
+              {index + 1}.
+            </span>
+            <span>{move}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 // ── Data Loading ───────────────────────────────────────────────────────────────
 
 async function loadExecutiveActionContext(params: {
@@ -517,6 +798,8 @@ export default async function ExecutiveDailyInsightsPage() {
   ]);
   const { draft, staleFollowUps, fingerprintMap } = dashboard;
   const packet = draft.packet;
+  const operatingBrief =
+    packet.operatingBrief ?? buildExecutiveOperatingBrief(packet.sections);
   const sectionEntries = [
     ...packet.sections.needsBrandon.map((item) => ({
       section: "needsBrandon" as const,
@@ -585,6 +868,43 @@ export default async function ExecutiveDailyInsightsPage() {
       <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-20 2xl:gap-24">
         {/* ── Main column ── */}
         <div className="space-y-8">
+          <ExecutiveBriefStartHere brief={operatingBrief} />
+          <TopExecutiveFocusSection brief={operatingBrief} />
+          <AdditionalMaterialItemsSection brief={operatingBrief} />
+          <RiskTable
+            title="Project Risk Radar"
+            items={operatingBrief.projectRiskRadar}
+          />
+          <RiskTable
+            title="Cash and Margin Watch"
+            items={operatingBrief.cashAndMarginWatch}
+          />
+          <WaitingSection brief={operatingBrief} />
+          <section className="space-y-4">
+            <SectionDivider
+              title="People and Accountability"
+              count={operatingBrief.peopleAndAccountability.length}
+            />
+            <ShortItemList
+              items={operatingBrief.peopleAndAccountability}
+              empty="No execution-critical accountability gaps surfaced."
+            />
+          </section>
+          <BusinessSignalsSection brief={operatingBrief} />
+          <RecommendedMovesSection brief={operatingBrief} />
+          {operatingBrief.lowerPriorityMomentum.length > 0 ? (
+            <section className="space-y-4">
+              <SectionDivider
+                title="Lower-Priority Momentum"
+                count={operatingBrief.lowerPriorityMomentum.length}
+              />
+              <ShortItemList
+                items={operatingBrief.lowerPriorityMomentum}
+                empty="No lower-priority momentum items."
+              />
+            </section>
+          ) : null}
+          <SectionDivider title="Tasking Surface" count={projectIssueEntries.length} />
           <ExecutiveProjectIssueList
             entries={projectIssueEntries}
             employees={employees}

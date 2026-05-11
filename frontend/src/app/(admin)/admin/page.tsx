@@ -192,6 +192,13 @@ const sections: AdminMenuSection[] = [
         icon: LineChart,
       },
       {
+        label: "AI Prompt Diagnostics",
+        href: "/ai-prompt-diagnostics",
+        route: "/ai-prompt-diagnostics",
+        description: "Inspect assembled assistant system prompts, context blocks, and prompt size before model calls.",
+        icon: Terminal,
+      },
+      {
         label: "AI Compiler Health",
         href: "/intelligence-compiler",
         route: "/intelligence-compiler",

@@ -122,6 +122,29 @@ function createFingerprint(item: BrandonBriefItem, section: FollowUpSection) {
 }
 
 function buildRecapText(packet: BrandonDailyUpdatePacket) {
+  if (packet.operatingBrief) {
+    const brief = packet.operatingBrief;
+    const lines = [
+      "CEO OPERATING BRIEF",
+      `Generated ${packet.generatedAt}`,
+      `Source window: last ${packet.windowDays} calendar day${packet.windowDays === 1 ? "" : "s"}`,
+      "",
+      "START HERE:",
+      ...brief.startHere.map((line) => `- ${line}`),
+      "",
+      "TOP EXECUTIVE FOCUS:",
+      ...brief.topExecutiveFocus.map(
+        (entry) =>
+          `- ${entry.item.project}: ${entry.item.title} | Next: ${entry.recommendedNextMove}`,
+      ),
+      "",
+      "RECOMMENDED MOVES:",
+      ...brief.recommendedMoves.map((move, index) => `${index + 1}. ${move}`),
+    ];
+
+    return lines.join("\n").trim();
+  }
+
   const sections = [
     ["Critical Actions", packet.sections.needsBrandon],
     ["Unblock Your People", packet.sections.waitingOnOthers],

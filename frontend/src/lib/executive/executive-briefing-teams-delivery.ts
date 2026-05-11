@@ -35,8 +35,8 @@ function formatItem(item: BrandonBriefItem): string {
   return `- **${item.title}** (${item.project})${action}`;
 }
 
-function formatSection(items: BrandonBriefItem[], cap = 5): string {
-  return items.slice(0, cap).map(formatItem).join("\n");
+function formatSection(items: BrandonBriefItem[]): string {
+  return items.map(formatItem).join("\n");
 }
 
 export function formatExecutiveBriefingTeamsMessage(
@@ -90,10 +90,15 @@ export function formatExecutiveBriefingTeamsMessage(
   }
 
   if (importantUpdates.length > 0) {
-    lines.push(
-      `**Project Signals** (${Math.min(importantUpdates.length, 3)} of ${importantUpdates.length})`,
-    );
-    lines.push(formatSection(importantUpdates, 3));
+    lines.push(`**Project Signals** (${importantUpdates.length})`);
+    lines.push(formatSection(importantUpdates));
+    lines.push("");
+  }
+
+  const recommendedMoves = packet.operatingBrief?.recommendedMoves ?? [];
+  if (recommendedMoves.length > 0) {
+    lines.push(`**Recommended Moves** (${recommendedMoves.length})`);
+    lines.push(recommendedMoves.map((move, index) => `${index + 1}. ${move}`).join("\n"));
     lines.push("");
   }
 

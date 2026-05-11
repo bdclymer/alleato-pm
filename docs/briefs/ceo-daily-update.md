@@ -236,6 +236,9 @@ Rules enforced in the synthesis prompt:
 - include exact calendar dates when using relative date phrasing
 - exclude vague sources
 - do not repeat the same source index in multiple sections
+- do not use hard caps for owner decisions, risks, or updates
+- include every material decision, blocker, cash/margin issue, schedule risk, customer issue, vendor issue, accountability gap, or executive move
+- rank the highest-leverage executive items first, then keep additional material items in overflow lanes instead of suppressing them
 - use `needsBrandon` only for owner-level decisions, confirmations, commitments, money/risk issues, or escalations
 - use `waitingOnOthers` for project-team, client, vendor, estimating, finance, or design inputs that are pending
 - keep titles specific instead of bucket names
@@ -389,27 +392,28 @@ reopenExecutiveFollowUpAction()
 
 The executive page renders:
 
-- headline summary
-- focus panels
-- operating posture
-- KPI row
+- Start Here
+- Top Executive Focus
+- Additional Material Items grouped by business impact
+- Project Risk Radar
+- Cash and Margin Watch
+- Waiting on Others / Others Waiting on Brandon
+- People and Accountability
+- Important Business Signals
+- Recommended Moves
+- Lower-Priority Momentum when useful
 - source activity
-- automation rule
-- stale follow-ups
-- critical actions
-- unblock your people
-- business signal
-- retrieval method
-- carry-forward rules
-- draft workflow
+- tasking surface for linked follow-ups
 
-Current section mapping:
+Compatibility section mapping:
 
 ```text
-needsBrandon -> Critical Actions
-waitingOnOthers -> Unblock Your People
-importantUpdates -> Business Signal
+needsBrandon -> Others are waiting on Brandon
+waitingOnOthers -> Brandon is waiting on
+importantUpdates -> Additional material items / risk radar / momentum
 ```
+
+The packet also stores `operatingBrief`, a deterministic CEO operating brief projection that scores items by financial impact, schedule impact, customer relationship impact, legal/contractual risk, urgency, whether Brandon is uniquely needed, compounding risk, and whether the item blocks other people. This is the rendering contract for the page, Teams message, and chat widget.
 
 The page is intentionally framed as a review and approval surface. It is not an automatic delivery endpoint; use the Teams send route for explicit delivery.
 

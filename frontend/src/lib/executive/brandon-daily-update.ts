@@ -11,6 +11,53 @@ import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullet
 
 type BriefTone = "neutral" | "good" | "watch" | "risk";
 type BriefSource = "Email" | "Teams" | "Meeting" | "Document";
+type ExecutivePriorityLane =
+  | "cashMargin"
+  | "scheduleField"
+  | "customerOwner"
+  | "subcontractorVendor"
+  | "designPreconstruction"
+  | "internalAccountability";
+
+export type ExecutiveOperatingBriefFocusItem = {
+  item: BrandonBriefItem;
+  score: number;
+  materiality: string[];
+  lane: ExecutivePriorityLane;
+  whatChanged: string;
+  whyItMatters: string;
+  recommendedNextMove: string;
+  owner?: string;
+};
+
+export type ExecutiveOperatingBriefShortItem = {
+  item: BrandonBriefItem;
+  score: number;
+  materiality: string[];
+  nextAction: string;
+  owner?: string;
+};
+
+export type ExecutiveOperatingBriefRiskItem = ExecutiveOperatingBriefShortItem & {
+  impact: string;
+};
+
+export type ExecutiveOperatingBrief = {
+  startHere: string[];
+  hasUnusualExecutiveLoad: boolean;
+  topExecutiveFocus: ExecutiveOperatingBriefFocusItem[];
+  additionalMaterialItems: Record<ExecutivePriorityLane, ExecutiveOperatingBriefShortItem[]>;
+  projectRiskRadar: ExecutiveOperatingBriefRiskItem[];
+  cashAndMarginWatch: ExecutiveOperatingBriefRiskItem[];
+  waitingOn: {
+    brandonWaitingOn: ExecutiveOperatingBriefShortItem[];
+    othersWaitingOnBrandon: ExecutiveOperatingBriefShortItem[];
+  };
+  peopleAndAccountability: ExecutiveOperatingBriefShortItem[];
+  importantBusinessSignals: string[];
+  recommendedMoves: string[];
+  lowerPriorityMomentum: ExecutiveOperatingBriefShortItem[];
+};
 
 export const DEFAULT_EXECUTIVE_WINDOW_DAYS = 3;
 export const DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL = "gpt-5.5";
@@ -81,6 +128,7 @@ export type BrandonDailyUpdatePacket = {
     waitingOnOthers: BrandonBriefItem[];
     importantUpdates: BrandonBriefItem[];
   };
+  operatingBrief?: ExecutiveOperatingBrief;
   sourceCoverage: BrandonBriefSourceCoverage[];
   retrievalNotes: string[];
 };
@@ -248,6 +296,15 @@ type EnrichedBriefItem = {
 
 type EnrichedBriefItemsPayload = {
   items?: EnrichedBriefItem[];
+};
+
+const EXECUTIVE_PRIORITY_LANE_LABELS: Record<ExecutivePriorityLane, string> = {
+  cashMargin: "Cash / Billing / Margin",
+  scheduleField: "Schedule / Field",
+  customerOwner: "Customer / Owner",
+  subcontractorVendor: "Subcontractor / Vendor",
+  designPreconstruction: "Design / Preconstruction",
+  internalAccountability: "Internal Accountability",
 };
 
 type RagRpcClient = {
@@ -1173,15 +1230,10 @@ function assignHitsToSections(
   };
 
   for (const hit of hits) {
-    const section = sections[hit.spec.section];
-    if (section.length >= (hit.spec.section === "needsBrandon" ? 4 : 3)) {
-      continue;
-    }
-    section.push(buildItem(hit));
+    sections[hit.spec.section].push(buildItem(hit));
   }
 
   for (const fallback of fallbacks) {
-    if (sections.importantUpdates.length >= 3) break;
     sections.importantUpdates.push(fallback);
   }
 
@@ -1192,12 +1244,6 @@ function mergeSeedItems(
   sections: BrandonDailyUpdatePacket["sections"],
   seedSections: BrandonDailyUpdatePacket["sections"],
 ): BrandonDailyUpdatePacket["sections"] {
-  const limits: Record<keyof BrandonDailyUpdatePacket["sections"], number> = {
-    needsBrandon: 4,
-    waitingOnOthers: 4,
-    importantUpdates: 4,
-  };
-
   const dedupe = (items: BrandonBriefItem[]) => {
     const seen = new Set<string>();
     return items.filter((item) => {
@@ -1212,15 +1258,15 @@ function mergeSeedItems(
     needsBrandon: dedupe([
       ...seedSections.needsBrandon,
       ...sections.needsBrandon,
-    ]).slice(0, limits.needsBrandon),
+    ]),
     waitingOnOthers: dedupe([
       ...seedSections.waitingOnOthers,
       ...sections.waitingOnOthers,
-    ]).slice(0, limits.waitingOnOthers),
+    ]),
     importantUpdates: dedupe([
       ...seedSections.importantUpdates,
       ...sections.importantUpdates,
-    ]).slice(0, limits.importantUpdates),
+    ]),
   };
 }
 
@@ -1432,8 +1478,8 @@ async function synthesizeSections(
     "Tone must be one of risk, watch, good, neutral.";
   const user =
     "Create the Daily Brief using the Brandon audience preset from these retrieved source candidates. " +
-    "Keep at most 4 needsBrandon, 4 waitingOnOthers, and 4 importantUpdates. " +
-    "Only include items a construction business owner would reasonably care about today.\n\n" +
+    "Do not use hard caps. Include every material decision, blocker, cash/margin issue, schedule risk, customer issue, vendor issue, accountability gap, or executive move that a construction business owner would reasonably care about today. " +
+    "Rank the highest-leverage executive items first in each section, but put additional material items in the same JSON arrays instead of suppressing them.\n\n" +
     JSON.stringify(candidatePayload, null, 2);
 
   try {
@@ -1535,6 +1581,277 @@ function fallbackEvidenceFacts(item: BrandonBriefItem): string[] {
     .map((citation) => compactCompleteText(citation.evidence, 260))
     .filter(Boolean)
     .slice(0, 6);
+}
+
+function briefItemText(item: BrandonBriefItem): string {
+  return [
+    item.title,
+    item.summary,
+    item.recommendedAction,
+    item.whyItMatters,
+    item.status,
+    item.owner,
+    item.project,
+    ...item.bullets,
+    ...(item.evidenceFacts ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function hasAny(value: string, words: string[]): boolean {
+  return words.some((word) => value.includes(word));
+}
+
+function scoreBriefItem(
+  item: BrandonBriefItem,
+  section: keyof BrandonDailyUpdatePacket["sections"],
+): { score: number; materiality: string[]; lane: ExecutivePriorityLane } {
+  const text = briefItemText(item);
+  let score = section === "needsBrandon" ? 24 : section === "waitingOnOthers" ? 16 : 8;
+  const materiality: string[] = [];
+
+  if (hasAny(text, ["$", "payment", "invoice", "billing", "cash", "retainage", "margin", "overage", "unbilled", "receivable", "change order", "buyout"])) {
+    score += 22;
+    materiality.push("Financial impact");
+  }
+  if (hasAny(text, ["schedule", "delay", "deadline", "late", "permit", "lead time", "shutdown", "field", "crew", "material shortage"])) {
+    score += 18;
+    materiality.push("Schedule impact");
+  }
+  if (hasAny(text, ["owner", "client", "customer", "relationship", "approval", "gpc", "uniqlo", "city"])) {
+    score += 16;
+    materiality.push("Customer relationship impact");
+  }
+  if (hasAny(text, ["contract", "legal", "insurance", "license", "coi", "workers compensation", "lien", "claim", "compliance"])) {
+    score += 16;
+    materiality.push("Legal or contractual risk");
+  }
+  if (hasAny(text, ["today", "same-day", "urgent", "due", "by ", "before", "tomorrow", "this week"])) {
+    score += 12;
+    materiality.push("Urgency");
+  }
+  if (hasAny(text, ["brandon", "executive", "approve", "decide", "escalate", "call", "confirm", "owner-level"])) {
+    score += 18;
+    materiality.push("Brandon uniquely needed");
+  }
+  if (hasAny(text, ["compounding", "drift", "leak", "repeat", "stale", "aging", "carry-forward"])) {
+    score += 10;
+    materiality.push("Compounding risk");
+  }
+  if (hasAny(text, ["blocked", "blocker", "waiting", "depends", "stuck", "hold"])) {
+    score += 12;
+    materiality.push("Blocking other people");
+  }
+  if (item.tone === "risk") score += 14;
+  if (item.tone === "watch") score += 6;
+
+  let lane: ExecutivePriorityLane = "internalAccountability";
+  if (hasAny(text, ["$", "payment", "invoice", "billing", "cash", "retainage", "margin", "overage", "unbilled", "receivable", "change order", "buyout"])) {
+    lane = "cashMargin";
+  } else if (hasAny(text, ["schedule", "delay", "field", "crew", "site", "material", "permit", "shutdown"])) {
+    lane = "scheduleField";
+  } else if (hasAny(text, ["owner", "client", "customer", "approval", "relationship"])) {
+    lane = "customerOwner";
+  } else if (hasAny(text, ["subcontractor", "vendor", "supplier", "quote", "pricing", "proposal"])) {
+    lane = "subcontractorVendor";
+  } else if (hasAny(text, ["design", "drawing", "preconstruction", "estimate", "pricing", "permit package", "survey"])) {
+    lane = "designPreconstruction";
+  }
+
+  return {
+    score,
+    materiality: materiality.length > 0 ? materiality : ["Material business signal"],
+    lane,
+  };
+}
+
+function operatingShortItem(
+  item: BrandonBriefItem,
+  section: keyof BrandonDailyUpdatePacket["sections"],
+): ExecutiveOperatingBriefShortItem {
+  const scored = scoreBriefItem(item, section);
+  return {
+    item,
+    score: scored.score,
+    materiality: scored.materiality,
+    nextAction: item.recommendedAction ?? "Assign a named owner and next action today.",
+    owner: item.owner,
+  };
+}
+
+function getImpactText(item: BrandonBriefItem): string {
+  const text = [
+    item.summary,
+    item.whyItMatters,
+    ...(item.evidenceFacts ?? []),
+    ...item.bullets,
+  ].join(" ");
+  const money = text.match(/\$[\d,]+(?:\.\d{2})?(?:\s*(?:million|m|k|\+))?/i)?.[0];
+  const schedule = text.match(/\b(?:\d+\s*(?:day|week|month)s?|due\s+[A-Z][a-z]+\s+\d+|deadline[^.;]*)/i)?.[0];
+  if (money && schedule) return `${money}; ${schedule}`;
+  if (money) return money;
+  if (schedule) return schedule;
+  if (hasAny(text.toLowerCase(), ["client", "owner", "relationship", "approval"])) {
+    return "Relationship impact stated; exact dollar or schedule impact unknown.";
+  }
+  return "Exact dollar, schedule, or relationship impact unknown.";
+}
+
+function recommendedMove(item: BrandonBriefItem): string {
+  if (item.recommendedAction) return item.recommendedAction;
+  const owner = item.owner ? ` with ${item.owner}` : "";
+  return `Confirm the owner, next step, and due date${owner}.`;
+}
+
+function uniqueRecommendedMoves(items: ExecutiveOperatingBriefShortItem[]): string[] {
+  const moves: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of items) {
+    const raw = recommendedMove(entry.item);
+    const key = raw.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    moves.push(raw);
+  }
+  return moves;
+}
+
+function businessSignalFromLane(
+  lane: ExecutivePriorityLane,
+  items: ExecutiveOperatingBriefShortItem[],
+): string | null {
+  if (items.length === 0) return null;
+  const label = EXECUTIVE_PRIORITY_LANE_LABELS[lane];
+  const top = items[0];
+  return `${label}: ${items.length} material item${items.length === 1 ? "" : "s"} surfaced; highest signal is ${top.item.project} - ${top.item.title}.`;
+}
+
+export function buildExecutiveOperatingBrief(
+  sections: BrandonDailyUpdatePacket["sections"],
+): ExecutiveOperatingBrief {
+  const all = [
+    ...sections.needsBrandon.map((item) => ({ section: "needsBrandon" as const, item })),
+    ...sections.waitingOnOthers.map((item) => ({ section: "waitingOnOthers" as const, item })),
+    ...sections.importantUpdates.map((item) => ({ section: "importantUpdates" as const, item })),
+  ].map(({ section, item }) => {
+    const scored = scoreBriefItem(item, section);
+    return { section, item, ...scored };
+  });
+
+  const ranked = all.sort((a, b) => b.score - a.score);
+  const topThreshold = ranked[4]?.score ?? ranked.at(-1)?.score ?? 0;
+  const topExecutiveFocus = ranked
+    .filter((entry, index) => index < 3 || entry.score >= Math.max(70, topThreshold))
+    .map((entry) => ({
+      item: entry.item,
+      score: entry.score,
+      materiality: entry.materiality,
+      lane: entry.lane,
+      whatChanged: entry.item.summary,
+      whyItMatters:
+        entry.item.whyItMatters ??
+        entry.materiality.join(", "),
+      recommendedNextMove: recommendedMove(entry.item),
+      owner: entry.item.owner,
+    }));
+  const topKeys = new Set(
+    topExecutiveFocus.map((entry) => `${entry.item.title}|${entry.item.project}|${entry.item.sourceId ?? entry.item.sourceDetail}`),
+  );
+  const additionalMaterialItems = (
+    Object.keys(EXECUTIVE_PRIORITY_LANE_LABELS) as ExecutivePriorityLane[]
+  ).reduce<Record<ExecutivePriorityLane, ExecutiveOperatingBriefShortItem[]>>(
+    (acc, lane) => {
+      acc[lane] = [];
+      return acc;
+    },
+    {} as Record<ExecutivePriorityLane, ExecutiveOperatingBriefShortItem[]>,
+  );
+  const lowerPriorityMomentum: ExecutiveOperatingBriefShortItem[] = [];
+
+  for (const entry of ranked) {
+    const key = `${entry.item.title}|${entry.item.project}|${entry.item.sourceId ?? entry.item.sourceDetail}`;
+    if (topKeys.has(key)) continue;
+    const short = operatingShortItem(entry.item, entry.section);
+    if (entry.score >= 45 || entry.item.tone === "risk") {
+      additionalMaterialItems[entry.lane].push(short);
+    } else {
+      lowerPriorityMomentum.push(short);
+    }
+  }
+
+  const riskRadar = ranked
+    .filter((entry) => entry.item.tone === "risk" || entry.score >= 58 || hasAny(briefItemText(entry.item), ["risk", "delay", "blocked", "margin", "overage", "unapproved", "unbilled"]))
+    .map((entry) => ({
+      ...operatingShortItem(entry.item, entry.section),
+      impact: getImpactText(entry.item),
+    }));
+
+  const cashAndMarginWatch = ranked
+    .filter((entry) => entry.lane === "cashMargin")
+    .map((entry) => ({
+      ...operatingShortItem(entry.item, entry.section),
+      impact: getImpactText(entry.item),
+    }));
+
+  const brandonWaitingOn = sections.waitingOnOthers
+    .map((item) => operatingShortItem(item, "waitingOnOthers"))
+    .sort((a, b) => b.score - a.score);
+  const othersWaitingOnBrandon = sections.needsBrandon
+    .map((item) => operatingShortItem(item, "needsBrandon"))
+    .sort((a, b) => b.score - a.score);
+  const peopleAndAccountability = ranked
+    .filter((entry) =>
+      hasAny(briefItemText(entry.item), [
+        "owner",
+        "assignee",
+        "assign",
+        "stale",
+        "aging",
+        "follow-up",
+        "accountability",
+        "unassigned",
+        "who owns",
+      ]),
+    )
+    .map((entry) => operatingShortItem(entry.item, entry.section));
+  const allShort = ranked.map((entry) => operatingShortItem(entry.item, entry.section));
+  const importantBusinessSignals = (
+    Object.keys(EXECUTIVE_PRIORITY_LANE_LABELS) as ExecutivePriorityLane[]
+  )
+    .map((lane) => {
+      const laneItems = allShort.filter(
+        (entry) => scoreBriefItem(entry.item, "importantUpdates").lane === lane,
+      );
+      return businessSignalFromLane(lane, laneItems);
+    })
+    .filter((signal): signal is string => Boolean(signal));
+
+  const recommendedMoves = uniqueRecommendedMoves(allShort).filter(Boolean);
+  const first = ranked[0];
+  const startHere = first
+    ? [
+        `Start with ${first.item.project}: ${first.item.title}.`,
+        `${first.materiality.join(", ")}. ${recommendedMove(first.item)}`,
+      ]
+    : ["No material executive items surfaced from the current source window."];
+
+  return {
+    startHere,
+    hasUnusualExecutiveLoad: topExecutiveFocus.length > 5 || riskRadar.length > 5,
+    topExecutiveFocus,
+    additionalMaterialItems,
+    projectRiskRadar: riskRadar,
+    cashAndMarginWatch,
+    waitingOn: {
+      brandonWaitingOn,
+      othersWaitingOnBrandon,
+    },
+    peopleAndAccountability,
+    importantBusinessSignals,
+    recommendedMoves,
+    lowerPriorityMomentum,
+  };
 }
 
 async function enrichBriefSections(
@@ -1826,6 +2143,7 @@ export async function generateBrandonDailyUpdate(
       }
     : await enrichBriefSections(supportedResult.sections);
   const sections = enforceExecutiveBriefBullets(enrichedResult.sections);
+  const operatingBrief = buildExecutiveOperatingBrief(sections);
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
   const sourceCoverageWarnings = sourceCoverage
     .map((source) => source.warning)
@@ -1851,6 +2169,7 @@ export async function generateBrandonDailyUpdate(
       "5. Older knowledge only as secondary context",
     ],
     sections,
+    operatingBrief,
     sourceCoverage,
     retrievalNotes: [
       `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,
@@ -1859,6 +2178,7 @@ export async function generateBrandonDailyUpdate(
       "Recent communication evidence leads the brief so stale memory does not dominate.",
       "Low-confidence items are excluded unless they have recent source evidence.",
       "Every surfaced item keeps its source title, date, and link when the ingestion data provides one.",
+      "The CEO operating brief ranks by financial impact, schedule impact, customer impact, contractual risk, urgency, Brandon uniqueness, compounding risk, and blocked work; material overflow is kept in additional lanes instead of dropped.",
       ...sourceHealthWarnings.map(
         (warning) => `Source health warning: ${warning}`,
       ),

@@ -1,8 +1,7 @@
 // Legacy chat handler — extracted from route.ts. Holds all special-case
 // agent dispatch branches (executive brief metadata, personal task register,
 // Brandon daily widget, source-specific RAG, source-lookup synthesis, RFI
-// preview, packet-first intent) plus the streamText fallback chain. The new
-// V2 path lives in handler-v2.ts and is gated by USE_RETRIEVAL_PLANNER.
+// preview, packet-first intent) plus the streamText fallback chain.
 import {
   consumeStream,
   convertToModelMessages,

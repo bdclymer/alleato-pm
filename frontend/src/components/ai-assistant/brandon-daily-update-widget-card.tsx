@@ -7,6 +7,7 @@ import { SectionRuleHeading } from "@/components/layout";
 import type {
   BrandonBriefItem,
   BrandonDailyUpdatePacket,
+  ExecutiveOperatingBrief,
 } from "@/lib/executive/brandon-daily-update";
 import { cn } from "@/lib/utils";
 
@@ -140,20 +141,64 @@ function Section({
   );
 }
 
+function TopFocus({
+  brief,
+}: {
+  brief: ExecutiveOperatingBrief;
+}) {
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <SectionRuleHeading label="Top executive focus" className="mb-0 pb-0" />
+        <Badge variant="outline">{brief.topExecutiveFocus.length}</Badge>
+      </div>
+      <div className="divide-y divide-border">
+        {brief.topExecutiveFocus.map((entry) => (
+          <article
+            key={`${entry.item.sourceId ?? entry.item.title}-${entry.item.date}`}
+            className="py-4 first:pt-2 last:pb-0"
+          >
+            <div className="text-sm font-semibold leading-5 text-foreground">
+              {entry.item.title}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {[entry.item.project, entry.owner ? `Owner: ${entry.owner}` : null]
+                .filter(Boolean)
+                .join(" • ")}
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {entry.recommendedNextMove}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function BrandonDailyUpdateWidgetCard({
   packet,
 }: {
   packet: BrandonDailyUpdatePacket;
 }) {
-  const firstAction = packet.sections.needsBrandon[0] ?? packet.sections.waitingOnOthers[0] ?? null;
+  const brief = packet.operatingBrief;
+  const firstAction =
+    brief?.topExecutiveFocus[0]?.item ??
+    packet.sections.needsBrandon[0] ??
+    packet.sections.waitingOnOthers[0] ??
+    null;
+  const startHere = brief?.startHere.join(" ");
 
   return (
     <div className="mb-4 rounded-lg border border-border bg-background p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="text-base font-semibold text-foreground">Daily Brief for Brandon</div>
+          <div className="text-base font-semibold text-foreground">
+            CEO Operating Brief for Brandon
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            What needs a decision, what is blocked on others, and what changed across the business.
+            {startHere ??
+              "What needs a decision, what is blocked on others, and what changed across the business."}
           </p>
           <div className="mt-2 text-xs text-muted-foreground">
             Updated {formatGeneratedAt(packet.generatedAt)} • last {packet.windowDays} day(s)
@@ -206,7 +251,20 @@ export function BrandonDailyUpdateWidgetCard({
       </div>
 
       <div className="mt-5 space-y-6">
-        <Section title="Action items for him" items={packet.sections.needsBrandon} />
+        {brief ? <TopFocus brief={brief} /> : null}
+        {brief && brief.recommendedMoves.length > 0 ? (
+          <section className="space-y-2">
+            <SectionRuleHeading label="Recommended moves" className="mb-0 pb-0" />
+            <ol className="space-y-2 text-sm leading-6 text-muted-foreground">
+              {brief.recommendedMoves.map((move, index) => (
+                <li key={`${move}-${index}`}>
+                  {index + 1}. {move}
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+        <Section title="Others waiting on Brandon" items={packet.sections.needsBrandon} />
         <Section title="Things he is waiting on" items={packet.sections.waitingOnOthers} />
         <Section title="Critical business updates" items={packet.sections.importantUpdates} />
       </div>
