@@ -44,14 +44,16 @@ export async function register() {
     }
 
     if (process.env.LANGFUSE_SECRET_KEY) {
-      const { NodeSDK } = await import("@opentelemetry/sdk-node");
       const { LangfuseSpanProcessor } = await import("@langfuse/otel");
+      const { NodeTracerProvider } = await import("@opentelemetry/sdk-trace-node");
 
-      const sdk = new NodeSDK({
-        spanProcessors: [new LangfuseSpanProcessor()],
-      });
+      const processor = new LangfuseSpanProcessor();
+      const provider = new NodeTracerProvider({ spanProcessors: [processor] });
+      provider.register();
 
-      sdk.start();
+      // Export so route handlers can flush before serverless function freezes
+      (globalThis as Record<string, unknown>).__langfuseProcessor = processor;
+
       console.log("[instrumentation] Langfuse tracing enabled");
     }
 

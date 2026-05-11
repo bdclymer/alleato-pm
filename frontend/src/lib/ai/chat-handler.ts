@@ -18,6 +18,8 @@ import {
 } from "ai";
 import { handleChatV2 } from "@/app/api/ai-assistant/chat/handler-v2";
 import { after } from "next/server";
+import { propagateAttributes } from "@langfuse/tracing";
+import { waitUntil } from "@vercel/functions";
 import { z } from "zod";
 
 import {
@@ -3599,7 +3601,9 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           timestamp: new Date().toISOString(),
         });
         logSystemPromptTokensInDev(systemPrompt, "chat-handler");
-        const result = streamText({
+        const result = propagateAttributes(
+          { userId: user.id, sessionId },
+          () => streamText({
             model: getLanguageModel(activeModel),
             system: systemPrompt,
             messages: modelMessages,
@@ -3617,8 +3621,6 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               metadata: {
                 intent: assistantIntent ?? "unknown",
                 modelId: activeModel,
-                userId: user.id,
-                sessionId,
               },
             },
             onError: ({ error }) => {
@@ -3659,7 +3661,13 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 outputTokens: usage?.outputTokens,
               });
             },
-          });
+          }),
+        );
+
+        const processor = (globalThis as Record<string, unknown>).__langfuseProcessor as { forceFlush?: () => Promise<void> } | undefined;
+        if (processor?.forceFlush) {
+          waitUntil(processor.forceFlush());
+        }
 
         writer.merge(
           result.toUIMessageStream({
