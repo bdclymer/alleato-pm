@@ -54,6 +54,29 @@ export interface PaymentApplication {
   updated_at: string;
 }
 
+export interface OwnerInvoiceSummary {
+  id: number;
+  prime_contract_id: string;
+  payment_application_id: string | null;
+  invoice_number: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  billing_date: string | null;
+  due_date: string | null;
+  status: string;
+  gross_amount: number | null;
+  retention_amount?: number | null;
+  net_amount: number | null;
+  paid_amount: number | null;
+  percent_complete: number | null;
+  total_amount?: number | null;
+  acumatica_ref_nbr: string | null;
+  acumatica_doc_type?: string | null;
+  acumatica_sync_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PaymentApplicationLineItem {
   id: string;
   payment_application_id: string;
@@ -93,6 +116,9 @@ export interface Payment {
   method: string | null;
   reference_number: string | null;
   notes: string | null;
+  acumatica_ref_nbr: string | null;
+  acumatica_doc_type: string | null;
+  acumatica_sync_at: string | null;
   created_at: string;
   updated_at: string;
   payment_application?: {

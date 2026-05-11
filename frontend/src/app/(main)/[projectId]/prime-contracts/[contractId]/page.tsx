@@ -76,6 +76,7 @@ import type {
   ContractLineItem,
   ContractTab,
   LineItemFormState,
+  OwnerInvoiceSummary,
   Payment,
   PaymentApplication,
   PrimeContractCO,
@@ -213,6 +214,8 @@ export default function ProjectContractDetailPage() {
   const { data: paymentApplications = [], isLoading: paymentsLoading } = usePaymentApplications(Number(projectId), contractId);
   const deletePaymentApp = useDeletePaymentApplication(Number(projectId), contractId);
   const queryClient = useQueryClient();
+  const [ownerInvoices, setOwnerInvoices] = useState<OwnerInvoiceSummary[]>([]);
+  const [ownerInvoicesLoading, setOwnerInvoicesLoading] = useState(false);
 
   // ── Payments received ───────────────────────────────────────────────────
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -356,6 +359,26 @@ export default function ProjectContractDetailPage() {
       }
     };
     fetchPayments();
+  }, [activeTab, contract, contractId, projectId]);
+
+  useEffect(() => {
+    if (activeTab !== "invoices" || !contract) return;
+    const fetchOwnerInvoices = async () => {
+      try {
+        setOwnerInvoicesLoading(true);
+        const response = await fetchWithTransientRouteRetry(
+          `/api/projects/${projectId}/invoicing/owner?prime_contract_id=${contractId}`,
+        );
+        if (!response.ok) throw new Error("Failed to load owner invoices");
+        const payload = (await response.json()) as { data?: OwnerInvoiceSummary[] };
+        setOwnerInvoices(payload.data ?? []);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to load owner invoices");
+      } finally {
+        setOwnerInvoicesLoading(false);
+      }
+    };
+    fetchOwnerInvoices();
   }, [activeTab, contract, contractId, projectId]);
 
   useEffect(() => {
@@ -1014,7 +1037,7 @@ export default function ProjectContractDetailPage() {
         {activeTab === "invoices" && (
           <PrimeContractInvoicesTab
             projectId={projectId} contractId={contractId} contract={contract} paymentApplications={paymentApplications}
-            paymentsLoading={paymentsLoading}
+            ownerInvoices={ownerInvoices} paymentsLoading={paymentsLoading} ownerInvoicesLoading={ownerInvoicesLoading}
             onDeleteInvoice={handleDeleteInvoice} formatCurrency={formatCurrency}
           />
         )}

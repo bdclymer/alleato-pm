@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DollarSign, RefreshCw } from "lucide-react";
+import { DollarSign, ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -24,6 +24,10 @@ interface PrimeContractPaymentsTabProps {
   setPayments: React.Dispatch<React.SetStateAction<Payment[]>>;
   setContract: React.Dispatch<React.SetStateAction<Contract | null>>;
   formatCurrency: (value: number | null | undefined) => string;
+}
+
+function buildAcumaticaPaymentHref(docType: string | null | undefined, refNbr: string): string {
+  return `https://alleatogroup.acumatica.com/Main?ScreenId=AR302000&DocType=${encodeURIComponent(docType ?? "Payment")}&RefNbr=${encodeURIComponent(refNbr)}`;
 }
 
 export function PrimeContractPaymentsTab({
@@ -112,6 +116,25 @@ export function PrimeContractPaymentsTab({
           </div>
         ),
       },
+      {
+        id: "acumatica_ref",
+        header: "Acumatica",
+        cell: ({ row }) => {
+          const refNbr = row.original.acumatica_ref_nbr;
+          if (!refNbr) return <span className="text-sm text-muted-foreground">--</span>;
+          return (
+            <a
+              href={buildAcumaticaPaymentHref(row.original.acumatica_doc_type, refNbr)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-mono text-xs text-primary hover:underline"
+            >
+              {refNbr}
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          );
+        },
+      },
     ],
     [formatCurrency],
   );
@@ -120,7 +143,7 @@ export function PrimeContractPaymentsTab({
     () => [
       { value: "Total Received", colSpan: 2, align: "left" },
       { value: formatCurrency(totalPaymentsReceived) },
-      { value: "", colSpan: 3 },
+      { value: "", colSpan: 4 },
     ],
     [formatCurrency, totalPaymentsReceived],
   );

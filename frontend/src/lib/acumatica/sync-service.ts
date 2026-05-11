@@ -816,7 +816,7 @@ export async function syncARPayments(
   // Get the project's primary prime contract and its associated company's customer_id
   const { data: primeContract } = await supabase
     .from("prime_contracts")
-    .select("id, contract_company_id")
+    .select("id, contract_number, contract_company_id")
     .eq("project_id", projectId)
     .limit(1)
     .single();
@@ -844,17 +844,37 @@ export async function syncARPayments(
     return result;
   }
 
+  const { data: project } = await supabase
+    .from("projects")
+    .select("acumatica_project_id")
+    .eq("id", projectId)
+    .single();
+
+  const matchTokens = [
+    primeContract.contract_number,
+    primeContract.contract_number?.replace(/^PC-/i, ""),
+    project?.acumatica_project_id,
+  ]
+    .filter((token): token is string => Boolean(token && token.length >= 4))
+    .map((token) => token.toLowerCase());
+
   const acuClient = createAcumaticaClient();
   await acuClient.login();
 
   const acuPayments = await acuClient.getPayments({ $top: 500 });
 
   // Filter payments to this project's customer
-  const customerPayments = acuPayments.filter(
-    (p) =>
-      p.CustomerID === acumaticaCustomerId &&
-      (p.Status === "Released" || p.Status === "Closed" || p.Status === "Open"),
-  );
+  const customerPayments = acuPayments.filter((p) => {
+    if (p.CustomerID !== acumaticaCustomerId) return false;
+    if (!(p.Status === "Released" || p.Status === "Closed" || p.Status === "Open")) return false;
+    if (p.Type?.toLowerCase().includes("credit memo")) return false;
+    if (matchTokens.length === 0) return true;
+    const haystack = [p.Description, p.ExternalRef, p.ReferenceNbr]
+      .filter((value): value is string => typeof value === "string")
+      .join(" ")
+      .toLowerCase();
+    return matchTokens.some((token) => haystack.includes(token));
+  });
 
   // Load existing payments with acumatica_ref_nbr
   const { data: existingPayments, error: fetchError } = await supabase
