@@ -1216,7 +1216,7 @@ export function UnifiedTablePage<T>({
             <Table
               className={cn(
                 table.density === "compact" &&
-                  "[&_thead_tr]:h-9 [&_th]:py-1.5 [&_th]:px-3 [&_td]:py-1.5 [&_td]:px-3 [&_td]:text-xs",
+                  "[&_thead_tr]:h-9 [&_th]:py-1.5 [&_th]:px-3 [&_td]:py-1.5 [&_td]:px-3 [&_td]:text-xs [&_th:has([role=checkbox])]:pl-0 [&_td:has([role=checkbox])]:pl-0",
                 isFullBleedTable &&
                   !hasRowSelection &&
                   "[&_th:first-child]:pl-0 [&_td:first-child]:pl-0 [&_th:last-child]:pr-0 [&_td:last-child]:pr-0",
@@ -1257,7 +1257,7 @@ export function UnifiedTablePage<T>({
                 <TableRow className="border-border/80">
                   {hasRowSelection && (
                     <TableHead
-                      className="px-2"
+                      className="pl-0 pr-2"
                       style={{
                         width: selectionColumnWidth,
                         minWidth: selectionColumnWidth,
@@ -1531,7 +1531,7 @@ export function UnifiedTablePage<T>({
                   >
                     {hasRowSelection && (
                       <TableCell
-                        className="px-2"
+                        className="pl-0 pr-2"
                         style={{
                           width: selectionColumnWidth,
                           minWidth: selectionColumnWidth,
