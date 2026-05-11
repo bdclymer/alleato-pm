@@ -24,7 +24,6 @@ import {
 import { toast } from "sonner";
 
 import { InfoAlert } from "@/components/ds/InfoAlert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -120,6 +119,19 @@ function WidgetShell({
   );
 }
 
+function WidgetMeta({ children, tone = "muted" }: { children: ReactNode; tone?: "muted" | "danger" }) {
+  return (
+    <span
+      className={cn(
+        "whitespace-nowrap text-right text-xs font-medium capitalize",
+        tone === "danger" ? "text-destructive" : "text-muted-foreground",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 async function copyToClipboard(text: string) {
   await navigator.clipboard.writeText(text);
   toast.success("Copied");
@@ -155,7 +167,7 @@ function DraftEmailWidget({
       eyebrow="Editable draft"
       title={widget.title}
       icon={<MailIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">Email</Badge>}
+      actions={<WidgetMeta>Email</WidgetMeta>}
     >
       {widget.emailFrom ? (
         <div className="flex items-center gap-2 text-sm">
@@ -229,7 +241,7 @@ function CreateTaskWidget({
       eyebrow="Action draft"
       title={widget.title}
       icon={<CheckCircle2Icon className="h-4 w-4" />}
-      actions={<Badge variant="outline">Task</Badge>}
+      actions={<WidgetMeta>Task</WidgetMeta>}
     >
       {!projectId ? (
         <InfoAlert variant="warning">
@@ -282,7 +294,7 @@ function TaskSummaryWidget({ widget }: { widget: TaskSummaryWidgetPayload }) {
       eyebrow="Verified task register"
       title={widget.title}
       icon={<CheckCircle2Icon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.totalCount} tasks</Badge>}
+      actions={<WidgetMeta>{widget.totalCount} tasks</WidgetMeta>}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-muted-foreground">{widget.subtitle}</span>
@@ -304,9 +316,8 @@ function TaskSummaryWidget({ widget }: { widget: TaskSummaryWidgetPayload }) {
                 >
                   {task.title}
                 </Link>
-                <div className="flex shrink-0 flex-wrap gap-1.5">
-                  {task.status ? <Badge variant="secondary">{task.status}</Badge> : null}
-                  {task.priority ? <Badge variant="outline">{task.priority}</Badge> : null}
+                <div className="shrink-0 text-right text-xs text-muted-foreground">
+                  {[task.status, task.priority].filter(Boolean).join(" / ")}
                 </div>
               </div>
               {task.description ? (
@@ -383,7 +394,7 @@ function MeetingIntelligenceWidget({ widget }: { widget: MeetingIntelligenceWidg
       eyebrow="Meeting intelligence"
       title={widget.title}
       icon={<UsersRoundIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.meetingCount} meetings</Badge>}
+      actions={<WidgetMeta>{widget.meetingCount} meetings</WidgetMeta>}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-muted-foreground">{widget.subtitle}</span>
@@ -433,13 +444,11 @@ function MeetingIntelligenceWidget({ widget }: { widget: MeetingIntelligenceWidg
                 >
                   {meeting.title}
                 </Link>
-                <div className="flex shrink-0 flex-wrap gap-1.5">
-                  {meeting.criticalRisks.length > 0 ? (
-                    <Badge variant="destructive">{meeting.criticalRisks.length} risks</Badge>
-                  ) : null}
-                  {meeting.decisions.length > 0 ? (
-                    <Badge variant="secondary">{meeting.decisions.length} decisions</Badge>
-                  ) : null}
+                <div className="shrink-0 text-right text-xs text-muted-foreground">
+                  {[
+                    meeting.criticalRisks.length > 0 ? `${meeting.criticalRisks.length} risks` : null,
+                    meeting.decisions.length > 0 ? `${meeting.decisions.length} decisions` : null,
+                  ].filter(Boolean).join(" / ")}
                 </div>
               </div>
               {meeting.summary ? (
@@ -490,7 +499,7 @@ function OwnerSnapshotWidget({
       eyebrow="Owner snapshot"
       title={widget.title}
       icon={<ActivityIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.status.replaceAll("_", " ")}</Badge>}
+      actions={<WidgetMeta>{widget.status.replaceAll("_", " ")}</WidgetMeta>}
     >
       <div className="space-y-1">
         <p className="text-sm text-foreground">{widget.summary}</p>
@@ -589,7 +598,7 @@ function OwnerActionQueueWidget({
       eyebrow="Owner action queue"
       title={widget.title}
       icon={<ListChecksIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.totalCount} actions</Badge>}
+      actions={<WidgetMeta>{widget.totalCount} actions</WidgetMeta>}
     >
       <p className="text-sm text-muted-foreground">{widget.subtitle}</p>
       {widget.totalCount === 0 ? (
@@ -597,15 +606,15 @@ function OwnerActionQueueWidget({
           <span>{widget.emptyState ?? "No owner actions matched this request."}</span>
         </InfoAlert>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {widget.groups.map((group) => (
             <div key={group.id}>
-              <div className="mb-1 text-xs font-medium uppercase text-muted-foreground">
+              <div className="mb-1 text-xs font-medium text-muted-foreground">
                 {group.title}
               </div>
               <div className="divide-y divide-border/60">
                 {group.items.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex items-start justify-between gap-3 py-2">
+                  <div key={item.id} className="flex items-start justify-between gap-4 py-2.5">
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-foreground">{item.title}</div>
                       <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -616,11 +625,11 @@ function OwnerActionQueueWidget({
                     </div>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="h-7 shrink-0 text-xs"
+                      variant="ghost"
+                      className="h-7 shrink-0 px-2 text-xs text-muted-foreground hover:text-foreground"
                       onClick={() => onSubmit(`Create or update the recommended action for this owner queue item. Show a preview first.\n\n${JSON.stringify(item, null, 2)}`)}
                     >
-                      Act
+                      Preview
                     </Button>
                   </div>
                 ))}
@@ -645,7 +654,7 @@ function MeetingInsightsWidget({
       eyebrow="Meeting insights"
       title={widget.title}
       icon={<UsersRoundIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.dateLabel}</Badge>}
+      actions={<WidgetMeta>{widget.dateLabel}</WidgetMeta>}
     >
       <p className="text-sm text-muted-foreground">{widget.subtitle}</p>
       <div className="grid gap-2 sm:grid-cols-5">
@@ -723,7 +732,11 @@ function RiskExposurePacketWidget({
       eyebrow="Risk exposure"
       title={widget.title}
       icon={<AlertTriangleIcon className="h-4 w-4" />}
-      actions={<Badge variant={widget.severity === "critical" ? "destructive" : "outline"}>{widget.severity}</Badge>}
+      actions={
+        <WidgetMeta tone={widget.severity === "critical" ? "danger" : "muted"}>
+          {widget.severity}
+        </WidgetMeta>
+      }
     >
       <p className="text-sm text-foreground">{widget.summary}</p>
       {widget.estimatedImpact ? (
@@ -758,7 +771,7 @@ function FinancialPulseWidget({
       eyebrow="Financial pulse"
       title={widget.title}
       icon={<TrendingUpIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.scope}</Badge>}
+      actions={<WidgetMeta>{widget.scope}</WidgetMeta>}
     >
       <p className="text-sm text-muted-foreground">{widget.subtitle}</p>
       <div className="grid gap-2 sm:grid-cols-3">
@@ -795,7 +808,7 @@ function CreativeDraftWidget({
       eyebrow="Creative draft"
       title={widget.title}
       icon={<SparklesIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.sourceCheck.status.replaceAll("_", " ")}</Badge>}
+      actions={<WidgetMeta>{widget.sourceCheck.status.replaceAll("_", " ")}</WidgetMeta>}
     >
       <div className="grid gap-3 sm:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-2">
@@ -840,7 +853,7 @@ function SourceEvidenceDrawerWidget({ widget }: { widget: SourceEvidenceDrawerWi
       eyebrow="Evidence"
       title={widget.title}
       icon={<FileTextIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.sources.length} sources</Badge>}
+      actions={<WidgetMeta>{widget.sources.length} sources</WidgetMeta>}
     >
       <div className="grid gap-2">
         {widget.sources.slice(0, 8).map((source) => {
@@ -886,7 +899,11 @@ function RecordWritePreviewWidget({
       eyebrow="Record write preview"
       title={widget.title}
       icon={<ShieldCheckIcon className="h-4 w-4" />}
-      actions={<Badge variant={widget.safetyLevel === "high" ? "destructive" : "outline"}>{widget.safetyLevel}</Badge>}
+      actions={
+        <WidgetMeta tone={widget.safetyLevel === "high" ? "danger" : "muted"}>
+          {widget.safetyLevel}
+        </WidgetMeta>
+      }
     >
       <div className="rounded-md bg-muted/40 px-3 py-2 text-sm">
         <span className="text-muted-foreground">Target: </span>
@@ -1013,7 +1030,7 @@ function ProjectActionPreviewWidget({
       eyebrow="Write preview"
       title={widget.title}
       icon={<ShieldCheckIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.actionType.replaceAll("_", " ")}</Badge>}
+      actions={<WidgetMeta>{widget.actionType.replaceAll("_", " ")}</WidgetMeta>}
     >
       {!projectId ? (
         <InfoAlert variant="warning">
@@ -1073,7 +1090,7 @@ function DecisionPacketWidget({
       eyebrow="Decision support"
       title={widget.title}
       icon={<SparklesIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">Confidence: {widget.confidence}</Badge>}
+      actions={<WidgetMeta>Confidence: {widget.confidence}</WidgetMeta>}
     >
       <div className="rounded-md bg-muted/40 px-3 py-2 text-sm text-foreground">
         {widget.recommendation}
@@ -1134,11 +1151,7 @@ function FeatureRequestPacketWidget({
       eyebrow="Request packet"
       title={widget.title}
       icon={<GitBranchIcon className="h-4 w-4" />}
-      actions={
-        <Badge variant={widget.readyForBuild ? "default" : "outline"}>
-          {widget.readinessLabel}
-        </Badge>
-      }
+      actions={<WidgetMeta>{widget.readinessLabel}</WidgetMeta>}
     >
       <div className="grid gap-2 text-sm text-foreground">
         <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
@@ -1242,7 +1255,7 @@ export function AssistantSourceEvidenceWidget({
       eyebrow="Evidence"
       title="Source evidence used"
       icon={<FileTextIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{validSources.length} sources</Badge>}
+      actions={<WidgetMeta>{validSources.length} sources</WidgetMeta>}
     >
       <div className="grid gap-2">
         {validSources.slice(0, 5).map((source, index) => {
@@ -1291,53 +1304,47 @@ function ProjectPickerWidget({
       title={widget.title}
       eyebrow="Project picker"
       icon={<FolderIcon className="h-4 w-4" />}
-      actions={<Badge variant="outline">{widget.projects.length} projects</Badge>}
+      actions={<WidgetMeta>{widget.projects.length} projects</WidgetMeta>}
     >
       <p className="text-sm leading-6 text-muted-foreground">{widget.subtitle}</p>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="-mx-1 divide-y divide-border/60">
         {widget.projects.map((project) => (
           <Button
             key={project.projectId}
             type="button"
-            variant="outline"
-            className="group h-auto min-w-0 justify-start px-3 py-2.5 text-left whitespace-normal hover:bg-muted/50"
+            variant="ghost"
+            className="group h-auto w-full min-w-0 justify-start rounded-md px-1 py-3 text-left whitespace-normal hover:bg-muted/40"
             onClick={() => onSubmit(project.prompt)}
           >
-            <div className="flex min-w-0 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-foreground">
-                  {project.name}
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-foreground">
+                    {project.name}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    {project.client ? <span>{project.client}</span> : null}
+                    {project.phase ? <span>{project.phase}</span> : null}
+                    {project.state ? <span>{project.state}</span> : null}
+                  </div>
                 </div>
-                <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-                  {project.client ? <span>{project.client}</span> : null}
-                  {project.phase ? <span>{project.phase}</span> : null}
-                  {project.state ? <span>{project.state}</span> : null}
+                <ArrowRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                {project.contractValue ? <span>{project.contractValue}</span> : null}
+                {typeof project.meetingCount === "number" ? (
+                  <span>{project.meetingCount} meetings</span>
+                ) : null}
+                {typeof project.openCriticalItems === "number" && project.openCriticalItems > 0 ? (
+                  <span className="text-destructive">{project.openCriticalItems} critical</span>
+                ) : null}
+              </div>
+              {project.summary ? (
+                <div className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                  {project.summary}
                 </div>
-              </div>
-              <ArrowRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {project.contractValue ? (
-                <Badge variant="secondary" className="font-normal">
-                  {project.contractValue}
-                </Badge>
-              ) : null}
-              {typeof project.meetingCount === "number" ? (
-                <Badge variant="outline" className="font-normal">
-                  {project.meetingCount} meetings
-                </Badge>
-              ) : null}
-              {typeof project.openCriticalItems === "number" && project.openCriticalItems > 0 ? (
-                <Badge variant="outline" className="border-destructive/30 text-destructive">
-                  {project.openCriticalItems} critical
-                </Badge>
               ) : null}
             </div>
-            {project.summary ? (
-              <div className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                {project.summary}
-              </div>
-            ) : null}
           </Button>
         ))}
       </div>
