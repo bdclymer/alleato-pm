@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { Input } from "@/components/ui/input";
 import {
@@ -370,8 +371,81 @@ function formatSentiment(value: unknown): string {
   return "";
 }
 
+function getKeywordTags(keywords: string[] | null | undefined): string[] {
+  if (!Array.isArray(keywords)) return [];
+
+  return Array.from(
+    new Set(
+      keywords
+        .map((keyword) => keyword.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
 function formatKeywords(keywords: string[] | null | undefined): string {
-  return Array.isArray(keywords) ? keywords.filter(Boolean).join(", ") : "";
+  return getKeywordTags(keywords).join(", ");
+}
+
+function KeywordTagsCell({
+  keywords,
+  maxVisible = 3,
+}: {
+  keywords: string[] | null | undefined;
+  maxVisible?: number;
+}): React.ReactElement {
+  const tags = getKeywordTags(keywords);
+  if (tags.length === 0) {
+    return (
+      <span className="text-xs text-muted-foreground" title="No keywords">
+        —
+      </span>
+    );
+  }
+
+  const visibleTags = tags.slice(0, maxVisible);
+  const hiddenTags = tags.slice(maxVisible);
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex max-w-60 flex-wrap items-center gap-1">
+            {visibleTags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="max-w-24 truncate rounded-sm border-border/70 bg-muted/40 px-1.5 py-0 text-[11px] font-normal text-muted-foreground"
+              >
+                {tag}
+              </Badge>
+            ))}
+            {hiddenTags.length > 0 ? (
+              <Badge
+                variant="secondary"
+                className="rounded-sm px-1.5 py-0 text-[11px] font-normal text-muted-foreground"
+              >
+                +{hiddenTags.length}
+              </Badge>
+            ) : null}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-80 border bg-popover p-3 text-popover-foreground shadow-sm">
+          <div className="flex flex-wrap gap-1">
+            {tags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="rounded-sm border-border/70 bg-muted/40 px-1.5 py-0 text-[11px] font-normal text-muted-foreground"
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 // ─── Inline edit primitives ───────────────────────────────────────────────────
@@ -745,16 +819,10 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
     // ── Keywords: compact text preview ──────────────────────────────────────
     {
       ...getMeetingColumn("keywords"),
-      render: (item) => (
-        <TextPreviewCell
-          value={formatKeywords(item.keywords)}
-          emptyLabel="No keywords"
-          className="max-w-48"
-        />
-      ),
+      render: (item) => <KeywordTagsCell keywords={item.keywords} />,
       csvValue: (item) => formatKeywords(item.keywords),
       sortValue: (item) => formatKeywords(item.keywords),
-      width: 180,
+      width: 220,
     },
 
     // ── Sentiment: compact JSON/string preview ──────────────────────────────
