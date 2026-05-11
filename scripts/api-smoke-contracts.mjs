@@ -108,8 +108,8 @@ const ENDPOINTS = [
   ["POST", `/api/projects/${PROJECT_ID}/commitments/export`, "Commitments export (auth + schema check)", [400, 401]],
   ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (unauthenticated)", [401]],
 
-  // Direct Costs
-  ["GET", `/api/projects/${PROJECT_ID}/direct-costs/export`, "Direct costs export", [200, 401]],
+  // Direct Costs — export route is POST-only (large CSV with body params)
+  ["POST", `/api/projects/${PROJECT_ID}/direct-costs/export`, "Direct costs export (auth check)", [400, 401]],
 
   // Invoicing
   ["GET", `/api/projects/${PROJECT_ID}/invoicing/subcontractor`, "Subcontractor invoicing", [200, 401]],
@@ -193,11 +193,12 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/transmittals`, "Transmittals", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/emails`, "Emails", [200, 401]],
 
-  // Entity Links (cross-entity relationships — added by entity-relationships feature)
-  ["GET", `/api/projects/${PROJECT_ID}/entity-links`, "Entity links list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/entity-links/${FAKE_UUID}`, "Entity link detail (fake id)", [200, 401, 404]],
-  ["POST", `/api/projects/${PROJECT_ID}/entity-links`, "Entity link create (auth check)", [400, 401]],
-  ["DELETE", `/api/projects/${PROJECT_ID}/entity-links/${FAKE_UUID}`, "Entity link delete (auth check)", [401]],
+  // Entity Links (cross-entity relationships) — top-level route, NOT project-scoped.
+  // GET requires entityType+entityId+projectId query params, returns 400 without them.
+  // The [linkId] sub-route only supports DELETE — there is no GET handler.
+  ["GET", "/api/entity-links", "Entity links list (auth + schema check)", [200, 400, 401]],
+  ["POST", "/api/entity-links", "Entity link create (auth check)", [400, 401]],
+  ["DELETE", `/api/entity-links/${FAKE_UUID}`, "Entity link delete (auth check)", [401, 404]],
 
   // Punch Items
   ["GET", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items", [200, 401]],
@@ -231,9 +232,11 @@ const ENDPOINTS = [
   ["GET",  "/api/knowledge?manage=true", "Knowledge documents (admin)",  [200, 401, 403]],
   ["POST", "/api/knowledge/upload",      "Knowledge upload (auth guard)", [201, 400, 401, 403]],
 
-  // Dev
-  ["GET", "/api/dev/violations", "Design violations", [200, 401]],
-  ["GET", "/api/dev/schema", "DB schema", [200, 401]],
+  // Dev — these routes are listed in scripts/build/nonprod-routes.json and are
+  // legitimately disabled in production builds (Next.js returns 404). Accept
+  // 404 in addition to the dev-environment statuses.
+  ["GET", "/api/dev/violations", "Design violations", [200, 401, 404]],
+  ["GET", "/api/dev/schema", "DB schema", [200, 401, 404]],
 
   // Misc
   ["GET", "/api/tasks", "Tasks list", [200, 401]],
@@ -241,7 +244,7 @@ const ENDPOINTS = [
   ["GET", "/api/initiative-cards", "Initiative cards", [200, 401]],
   ["GET", "/api/clients", "Clients", [200, 401]],
   ["GET", "/api/monitoring/dashboard", "Monitoring dashboard", [200, 401]],
-  ["GET", "/api/docs-search", "Docs search", [200, 401]],
+  ["POST", "/api/docs-search", "Docs search (auth check)", [400, 401]],
 
   // Auth checks — these must require auth
   ["POST", "/api/cron/daily-flags", "Cron unauthorized", [401]],

@@ -1,7 +1,13 @@
-import { getErrorCatalogEntry, type AlertSeverity } from "@/lib/guardrails/error-catalog";
+import {
+  getErrorCatalogEntry,
+  type AlertSeverity,
+  type ErrorCode,
+} from "@/lib/guardrails/error-catalog";
 
 export interface GuardrailErrorOptions {
-  code: string;
+  // ErrorCode is keyof ERROR_CATALOG. TypeScript surfaces unknown codes at
+  // compile time so they can't fall through to INTERNAL_ERROR (500) at runtime.
+  code: ErrorCode;
   where: string;
   message?: string;
   details?: unknown;
@@ -11,7 +17,7 @@ export interface GuardrailErrorOptions {
 }
 
 export class GuardrailError extends Error {
-  readonly code: string;
+  readonly code: ErrorCode;
   readonly where: string;
   readonly details?: unknown;
   readonly severity: AlertSeverity;
