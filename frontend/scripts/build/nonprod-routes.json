@@ -26,7 +26,6 @@
     "src/app/api/dev/make-admin/route.ts",
     "src/app/api/dev/schema/route.ts",
     "src/app/api/dev/test-email/route.ts",
-    "src/app/api/dev/test-results/[resultId]/route.ts",
     "src/app/api/dev/test-runs/route.ts",
     "src/app/api/dev/test-runs/[runId]/route.ts",
     "src/app/api/dev/test-suites/[tool]/route.ts",

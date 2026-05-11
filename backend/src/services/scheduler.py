@@ -42,6 +42,8 @@ FIREFLIES_RETRYABLE_ERROR_MARKERS = (
 )
 
 NON_VECTORIZABLE_ERROR_PREFIX = "NON_VECTORIZABLE"
+SHARED_PIPELINE_BACKLOG_SOURCE = "document_pipeline"
+SHARED_PIPELINE_BACKLOG_RESOURCE_NAME = "Shared document pipeline backlog"
 TEXT_COMPATIBLE_EXTENSIONS = {
     ".csv",
     ".doc",
@@ -690,6 +692,50 @@ def _mark_fireflies_item_non_vectorizable(
         )
 
 
+def _close_abandoned_fireflies_backlog_runs(stale_minutes: int = 120) -> int:
+    """Fail loudly on orphaned backlog runs that never wrote a terminal status."""
+    database_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
+    if not database_url:
+        return 0
+
+    import psycopg2
+
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=max(stale_minutes, 1))
+    conn = None
+    try:
+        conn = psycopg2.connect(database_url, sslmode="require")
+        with conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                update public.source_sync_runs
+                   set status = 'failed',
+                       finished_at = now(),
+                       error_code = 'ABANDONED_RUNNING_ROW',
+                       error_message = 'Shared document pipeline backlog run was left running and was auto-closed by a later scheduler pass.',
+                       metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(
+                         'auto_closed', true,
+                         'auto_closed_reason', 'abandoned_running_row',
+                         'auto_closed_at', to_char(now() at time zone 'utc', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"')
+                       )
+                 where resource_id = 'fireflies_ingestion_jobs'
+                   and stage = 'vectorization'
+                   and status = 'running'
+                   and started_at <= %s
+                """,
+                (cutoff,),
+            )
+            return cur.rowcount or 0
+    except Exception:
+        logger.warning(
+            "[Scheduler] Failed to auto-close abandoned shared pipeline backlog rows",
+            exc_info=True,
+        )
+        return 0
+    finally:
+        if conn is not None:
+            conn.close()
+
+
 def _record_fireflies_backlog_run(client, result: dict) -> None:
     try:
         from .health.source_sync_health import record_sync_run, update_sync_run
@@ -733,9 +779,9 @@ def _record_fireflies_backlog_run(client, result: dict) -> None:
         else:
             record_sync_run(
                 client,
-                source="fireflies",
+                source=SHARED_PIPELINE_BACKLOG_SOURCE,
                 resource_id="fireflies_ingestion_jobs",
-                resource_name="Fireflies pipeline backlog",
+                resource_name=SHARED_PIPELINE_BACKLOG_RESOURCE_NAME,
                 stage="vectorization",
                 status=status,
                 items_seen=result.get("matched", 0),
@@ -759,9 +805,9 @@ def _start_fireflies_backlog_run(client, result: dict) -> Optional[str]:
 
         row = record_sync_run(
             client,
-            source="fireflies",
+            source=SHARED_PIPELINE_BACKLOG_SOURCE,
             resource_id="fireflies_ingestion_jobs",
-            resource_name="Fireflies pipeline backlog",
+            resource_name=SHARED_PIPELINE_BACKLOG_RESOURCE_NAME,
             stage="vectorization",
             status="running",
             items_seen=result.get("matched", 0),
@@ -781,10 +827,11 @@ def _start_fireflies_backlog_run(client, result: dict) -> Optional[str]:
 
 
 def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -> dict:
-    """Drain stale Fireflies jobs through the normal full pipeline."""
+    """Drain stale shared document-pipeline rows through the normal full pipeline."""
     from .supabase_helpers import get_supabase_client
 
     client = get_supabase_client()
+    auto_closed_runs = _close_abandoned_fireflies_backlog_runs(stale_minutes=stale_minutes)
     jobs = _find_fireflies_pipeline_backlog_jobs(
         client,
         limit=limit,
@@ -798,6 +845,7 @@ def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -
         "processed": 0,
         "skipped": 0,
         "failed": 0,
+        "auto_closed_runs": auto_closed_runs,
         "results": [],
     }
     result["run_id"] = _start_fireflies_backlog_run(client, result)

@@ -110,6 +110,8 @@ export function TestRunsTab({ tool }: Props) {
 
   const updateResult = useCallback(
     async (resultId: string, patch: { status?: Status; notes?: string }) => {
+      if (!activeRun) return;
+
       // Optimistic
       setActiveRun((prev) =>
         prev
@@ -122,7 +124,7 @@ export function TestRunsTab({ tool }: Props) {
           : prev,
       );
       try {
-        await apiFetch(`/api/dev/test-results/${resultId}`, {
+        await apiFetch(`/api/testing/runs/${activeRun.id}/results/${resultId}`, {
           method: "PATCH",
           body: JSON.stringify(patch),
         });
@@ -130,7 +132,7 @@ export function TestRunsTab({ tool }: Props) {
         toast.error(`Save failed: ${(err as Error).message}`);
       }
     },
-    [],
+    [activeRun],
   );
 
   if (loading) {

@@ -112,6 +112,11 @@ def test_fireflies_backlog_drain_processes_retryable_jobs(monkeypatch):
     )
     monkeypatch.setattr(
         scheduler,
+        "_close_abandoned_fireflies_backlog_runs",
+        lambda stale_minutes: 3,
+    )
+    monkeypatch.setattr(
+        scheduler,
         "_find_fireflies_pipeline_backlog_jobs",
         lambda supabase_client, *, limit, stale_minutes: jobs,
     )
@@ -139,6 +144,7 @@ def test_fireflies_backlog_drain_processes_retryable_jobs(monkeypatch):
     assert result["failed"] == 0
     assert result["status"] == "ok"
     assert result["run_id"] == "run-1"
+    assert result["auto_closed_runs"] == 3
     assert recorded[0][0] is client
     assert recorded[0][1]["matched"] == 2
 
@@ -159,6 +165,11 @@ def test_fireflies_backlog_marks_non_vectorizable_items_without_pipeline(monkeyp
     monkeypatch.setattr(
         "src.services.supabase_helpers.get_supabase_client",
         lambda: client,
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_close_abandoned_fireflies_backlog_runs",
+        lambda stale_minutes: 1,
     )
     monkeypatch.setattr(
         scheduler,
@@ -206,6 +217,7 @@ def test_fireflies_backlog_marks_non_vectorizable_items_without_pipeline(monkeyp
     assert result["failed"] == 0
     assert result["status"] == "warning"
     assert result["run_id"] == "run-2"
+    assert result["auto_closed_runs"] == 1
     assert result["results"][0]["status"] == "skipped"
     assert recorded[0][1]["skipped"] == 1
 
@@ -215,3 +227,18 @@ def test_fireflies_backlog_retry_filter_only_allows_provider_failures():
     assert scheduler._is_retryable_fireflies_error("Fireflies embedding failed across all providers")
     assert not scheduler._is_retryable_fireflies_error("No segments found for metadata_id")
     assert not scheduler._is_retryable_fireflies_error(None)
+
+
+def test_start_fireflies_backlog_run_records_shared_pipeline_source(monkeypatch):
+    recorded = {}
+
+    monkeypatch.setattr(
+        "src.services.health.source_sync_health.record_sync_run",
+        lambda *_args, **kwargs: recorded.update(kwargs) or {"id": "run-shared"},
+    )
+
+    run_id = scheduler._start_fireflies_backlog_run(object(), {"matched": 4, "limit": 10, "stale_minutes": 120})
+
+    assert run_id == "run-shared"
+    assert recorded["source"] == scheduler.SHARED_PIPELINE_BACKLOG_SOURCE
+    assert recorded["resource_name"] == scheduler.SHARED_PIPELINE_BACKLOG_RESOURCE_NAME

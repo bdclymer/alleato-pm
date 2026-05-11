@@ -62,6 +62,12 @@ export interface VendorSyncResult {
   errors: string[];
 }
 
+type ExistingVendorCompany = {
+  id: string;
+  name: string | null;
+  acumatica_vendor_id: string | null;
+};
+
 function toCompanyVendorFields(v: FlatVendor, now: string) {
   return {
     acumatica_vendor_id: v.VendorID,
@@ -110,32 +116,81 @@ export async function syncVendors(supabaseClient?: DbClient): Promise<VendorSync
   const supabase = supabaseClient ?? (await createClient());
   const now = new Date().toISOString();
 
+  const { data: existingCompanies, error: existingCompaniesError } = await supabase
+    .from("companies")
+    .select("id, name, acumatica_vendor_id")
+    .eq("is_vendor", true);
+
+  if (existingCompaniesError) {
+    result.errors.push(`Failed to load existing vendor companies: ${existingCompaniesError.message}`);
+    return result;
+  }
+
+  const existingByAcuId = new Map<string, ExistingVendorCompany>();
+  const existingByName = new Map<string, ExistingVendorCompany>();
+
+  for (const row of (existingCompanies ?? []) as ExistingVendorCompany[]) {
+    if (row.acumatica_vendor_id) {
+      existingByAcuId.set(row.acumatica_vendor_id, row);
+    }
+    const normalizedName = row.name?.trim().toLowerCase();
+    if (normalizedName) {
+      existingByName.set(normalizedName, row);
+    }
+  }
+
   for (const acuVendor of activeVendors) {
     const acuId = acuVendor.VendorID;
     const payload = toCompanyVendorFields(acuVendor, now);
+    const normalizedVendorName = acuVendor.VendorName.trim().toLowerCase();
+    const existingCompany = existingByAcuId.get(acuId) ?? existingByName.get(normalizedVendorName);
 
     try {
-      const { error, data } = await supabase
-        .from("companies")
-        .upsert(payload, { onConflict: "acumatica_vendor_id" })
-        .select("id")
-        .single();
+      if (existingCompany) {
+        const { error } = await supabase
+          .from("companies")
+          .update(payload)
+          .eq("id", existingCompany.id);
 
-      if (error) {
-        result.errors.push(`${acuId} (${acuVendor.VendorName}): ${error.message}`);
-      } else if (data) {
-        // Determine created vs updated by checking if the row already existed.
-        // Supabase upsert doesn't expose this directly, so we track via
-        // acumatica_sync_at: if it matches `now` exactly we treat it as updated.
+        if (error) {
+          result.errors.push(`${acuId} (${acuVendor.VendorName}): ${error.message}`);
+          continue;
+        }
+
+        const updatedCompany = {
+          ...existingCompany,
+          ...payload,
+        };
+        existingByAcuId.set(acuId, updatedCompany);
+        existingByName.set(normalizedVendorName, updatedCompany);
         result.updated++;
+      } else {
+        const { data, error } = await supabase
+          .from("companies")
+          .insert(payload)
+          .select("id, name, acumatica_vendor_id")
+          .single();
+
+        if (error) {
+          result.errors.push(`${acuId} (${acuVendor.VendorName}): ${error.message}`);
+          continue;
+        }
+
+        const insertedCompany = data as ExistingVendorCompany;
+        if (insertedCompany.acumatica_vendor_id) {
+          existingByAcuId.set(insertedCompany.acumatica_vendor_id, insertedCompany);
+        }
+        const insertedName = insertedCompany.name?.trim().toLowerCase();
+        if (insertedName) {
+          existingByName.set(insertedName, insertedCompany);
+        }
+        result.created++;
       }
     } catch (err) {
       result.errors.push(`${acuId}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
-  // created count is not reliably distinguishable from updated via upsert,
-  // so we report all successes as updated. Callers can check logs for details.
   return result;
 }
 
