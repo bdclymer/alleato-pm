@@ -5,7 +5,7 @@ import {
   DefaultChatTransport,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -310,6 +310,20 @@ function ChatWithSession({
 
   const isStreaming = status === "submitted" || status === "streaming";
 
+  // Show the pending first message as an optimistic bubble while useChat's
+  // messages array is still empty (before sendMessage fires in useEffect).
+  // Prevents the welcome screen from flashing during new-session creation.
+  const displayMessages = useMemo<UIMessage[]>(() => {
+    if (pendingFirstMessage && messages.length === 0) {
+      return [{
+        id: "pending-first-message",
+        role: "user" as const,
+        parts: [{ type: "text" as const, text: pendingFirstMessage }],
+      }];
+    }
+    return messages;
+  }, [pendingFirstMessage, messages]);
+
   const handleSubmit = useCallback(
     (message: string, files?: FileList) => {
       if (!message.trim() || isStreaming) return;
@@ -321,7 +335,7 @@ function ChatWithSession({
 
   return (
     <ChatArea
-      messages={messages}
+      messages={displayMessages}
       toolTracesByMessageId={toolTracesByMessageId}
       sourcesByMessageId={sourcesByMessageId}
       memoryUsageByMessageId={memoryUsageByMessageId}
@@ -431,8 +445,12 @@ export function RagChatPage() {
       setTraceDiagnosticsByMessageId({});
       return;
     }
+    // Skip fetching for a session we just created and haven't sent to yet.
+    // The session is empty — fetching would return [] and wipe the live
+    // streaming messages via the ChatWithSession sync effect.
+    if (pendingSessionId === sessionId && pendingFirstMessage !== null) return;
     void loadSessionMessages(sessionId);
-  }, [activeSessionId, loadSessionMessages]);
+  }, [activeSessionId, loadSessionMessages, pendingSessionId, pendingFirstMessage]);
 
   const effectiveSessionId = activeSessionId || pendingSessionId;
 
@@ -446,6 +464,7 @@ export function RagChatPage() {
   const handleFinishMessage = useCallback((sessionId: string) => {
     queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
     setPendingSessionId(null);
+    setPendingFirstMessage(null);
     setPendingFirstFiles(undefined);
     void loadSessionMessages(sessionId);
   }, [queryClient, loadSessionMessages]);
