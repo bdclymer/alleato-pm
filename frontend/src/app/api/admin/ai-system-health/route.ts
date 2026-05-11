@@ -9,7 +9,7 @@ const WHERE = "api.admin.ai-system-health#GET";
 const SAMPLE_LIMIT = 5000;
 const DAYS_BACK = 30;
 
-type Window = {
+type MetricsWindow = {
   conversations: number;
   messages: number;
   inputTokens: number;
@@ -19,7 +19,7 @@ type Window = {
   feedbackDown: number;
 };
 
-function emptyWindow(): Window {
+function emptyWindow(): MetricsWindow {
   return { conversations: 0, messages: 0, inputTokens: 0, outputTokens: 0, cost: 0, feedbackUp: 0, feedbackDown: 0 };
 }
 
@@ -34,12 +34,14 @@ export const GET = withApiGuardrails(WHERE, async () => {
   const since30d = msAgo(24 * DAYS_BACK);
 
   // Pull all chat_history rows from last 30 days (capped at SAMPLE_LIMIT)
-  const { data: rows } = await supabase
+  const { data: rows, error: chatError } = await supabase
     .from("chat_history")
     .select("id, session_id, role, metadata, created_at")
     .gte("created_at", since30d)
     .order("created_at", { ascending: false })
     .limit(SAMPLE_LIMIT);
+
+  if (chatError) throw new Error(`chat_history query failed: ${chatError.message}`);
 
   const sampleTruncated = (rows?.length ?? 0) === SAMPLE_LIMIT;
   const sampleSize = rows?.length ?? 0;
@@ -74,6 +76,7 @@ export const GET = withApiGuardrails(WHERE, async () => {
   let totalToolCalls = 0;
   let messagesWithToolTrace = 0;
   let messagesWithUnknownModel = 0;
+  let assistantMessages30d = 0;
 
   for (const row of rows ?? []) {
     const ts = new Date(row.created_at as string).getTime();
@@ -84,7 +87,7 @@ export const GET = withApiGuardrails(WHERE, async () => {
     if (row.role === "system" && meta.type === "feedback") {
       const fb = meta.feedback as string | undefined;
       if (fb === "up" || fb === "down") {
-        const bump = (w: Window) => { if (fb === "up") w.feedbackUp++; else w.feedbackDown++; };
+        const bump = (w: MetricsWindow) => { if (fb === "up") w.feedbackUp++; else w.feedbackDown++; };
         if (ts >= cutoff24h) bump(windows.last24h);
         if (ts >= cutoff7d) bump(windows.last7d);
         bump(windows.last30d);
@@ -94,6 +97,8 @@ export const GET = withApiGuardrails(WHERE, async () => {
 
     // Only assistant messages carry usage/model data
     if (row.role !== "assistant") continue;
+
+    assistantMessages30d++;
 
     const usage = meta.usage as { inputTokens?: number; outputTokens?: number } | null | undefined;
     const inputTokens = usage?.inputTokens ?? 0;
@@ -111,7 +116,7 @@ export const GET = withApiGuardrails(WHERE, async () => {
       seriesMap[dayKey].cost += cost;
     }
 
-    const bump = (w: Window, sessions: Set<string>) => {
+    const bump = (w: MetricsWindow, sessions: Set<string>) => {
       w.messages++;
       w.inputTokens += inputTokens;
       w.outputTokens += outputTokens;
@@ -162,7 +167,6 @@ export const GET = withApiGuardrails(WHERE, async () => {
     }))
     .sort((a, b) => b.cost - a.cost);
 
-  const assistantMessages30d = rows?.filter((r) => r.role === "assistant").length ?? 0;
   const quality = {
     totalToolCalls,
     messagesWithToolTrace,
@@ -172,21 +176,30 @@ export const GET = withApiGuardrails(WHERE, async () => {
   };
 
   // Self-learning counts
-  const [{ count: feedbackEvents7d }, { count: candidateLearnings }, { count: activeLearnings }] =
-    await Promise.all([
-      supabase.from("ai_feedback_events").select("id", { count: "exact", head: true }).gte("created_at", msAgo(7 * 24)),
-      supabase.from("ai_learning_promotions").select("id", { count: "exact", head: true }).eq("status", "candidate"),
-      supabase.from("ai_learning_promotions").select("id", { count: "exact", head: true }).eq("status", "active"),
-    ]);
+  const [feedbackResult, candidateResult, activeResult] = await Promise.all([
+    supabase.from("ai_feedback_events").select("id", { count: "exact", head: true }).gte("created_at", msAgo(7 * 24)),
+    supabase.from("ai_learning_promotions").select("id", { count: "exact", head: true }).eq("status", "candidate"),
+    supabase.from("ai_learning_promotions").select("id", { count: "exact", head: true }).eq("status", "active"),
+  ]);
+
+  if (feedbackResult.error) throw new Error(`ai_feedback_events query failed: ${feedbackResult.error.message}`);
+  if (candidateResult.error) throw new Error(`ai_learning_promotions(candidate) query failed: ${candidateResult.error.message}`);
+  if (activeResult.error) throw new Error(`ai_learning_promotions(active) query failed: ${activeResult.error.message}`);
+
+  const feedbackEvents7d = feedbackResult.count ?? 0;
+  const candidateLearnings = candidateResult.count ?? 0;
+  const activeLearnings = activeResult.count ?? 0;
 
   // Pipeline health: last 24h sync runs
   const since24h = msAgo(24);
-  const { data: syncRuns } = await supabase
+  const { data: syncRuns, error: syncError } = await supabase
     .from("source_sync_runs")
     .select("source, stage, status, finished_at, error_message")
     .gte("finished_at", since24h)
     .order("finished_at", { ascending: false })
     .limit(200);
+
+  if (syncError) throw new Error(`source_sync_runs query failed: ${syncError.message}`);
 
   const succeeded = syncRuns?.filter((r) => r.status === "success").length ?? 0;
   const failed = syncRuns?.filter((r) => r.status !== "success").length ?? 0;
@@ -207,9 +220,9 @@ export const GET = withApiGuardrails(WHERE, async () => {
     modelBreakdown,
     quality,
     learning: {
-      feedbackEvents7d: feedbackEvents7d ?? 0,
-      candidateLearnings: candidateLearnings ?? 0,
-      activeLearnings: activeLearnings ?? 0,
+      feedbackEvents7d,
+      candidateLearnings,
+      activeLearnings,
     },
     pipeline: {
       succeeded,

@@ -22,46 +22,39 @@ export const FALLBACK_PRICING: ModelPricing = {
   estimated: true,
 };
 
+// All entries use the prefixed form (provider/model-id).
+// normalizeModelId() converts bare IDs to this form before lookup.
 const PRICING_MAP: Record<string, ModelPricing> = {
   // ── OpenAI via Vercel AI Gateway (estimated: aliases may change) ────────────
   "openai/gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10.0, provider: "openai", estimated: true },
   "openai/gpt-5.5": { inputPer1M: 3.0, outputPer1M: 15.0, provider: "openai", estimated: true },
   "openai/gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6, provider: "openai", estimated: true },
-  "gpt-5.4": { inputPer1M: 2.5, outputPer1M: 10.0, provider: "openai", estimated: true },
-  "gpt-5.5": { inputPer1M: 3.0, outputPer1M: 15.0, provider: "openai", estimated: true },
-  "gpt-5.4-mini": { inputPer1M: 0.15, outputPer1M: 0.6, provider: "openai", estimated: true },
 
-  // ── OpenAI GPT-4.1 family ───────────────────────────────────────────────────
+  // ── OpenAI GPT-4.1 family ────────────────────────────────────────────────────
   "openai/gpt-4.1": { inputPer1M: 2.0, outputPer1M: 8.0, provider: "openai" },
   "openai/gpt-4.1-mini": { inputPer1M: 0.4, outputPer1M: 1.6, provider: "openai" },
   "openai/gpt-4.1-nano": { inputPer1M: 0.1, outputPer1M: 0.4, provider: "openai" },
-  "gpt-4.1": { inputPer1M: 2.0, outputPer1M: 8.0, provider: "openai" },
-  "gpt-4.1-mini": { inputPer1M: 0.4, outputPer1M: 1.6, provider: "openai" },
-  "gpt-4.1-nano": { inputPer1M: 0.1, outputPer1M: 0.4, provider: "openai" },
 
-  // ── OpenAI GPT-4o family ───────────────────────────────────────────────────
+  // ── OpenAI GPT-4o family ──────────────────────────────────────────────────────
   "openai/gpt-4o": { inputPer1M: 2.5, outputPer1M: 10.0, provider: "openai" },
   "openai/gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6, provider: "openai" },
-  "gpt-4o": { inputPer1M: 2.5, outputPer1M: 10.0, provider: "openai" },
-  "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.6, provider: "openai" },
 
-  // ── OpenAI reasoning models ────────────────────────────────────────────────
+  // ── OpenAI reasoning models ────────────────────────────────────────────────────
   "openai/o4-mini": { inputPer1M: 1.1, outputPer1M: 4.4, provider: "openai" },
-  "o4-mini": { inputPer1M: 1.1, outputPer1M: 4.4, provider: "openai" },
 
-  // ── Anthropic Claude 4.x ──────────────────────────────────────────────────
+  // ── Anthropic Claude 4.x (hyphenated API IDs — matches Anthropic SDK output) ──
+  "anthropic/claude-opus-4-7": { inputPer1M: 15.0, outputPer1M: 75.0, provider: "anthropic" },
+  "anthropic/claude-sonnet-4-6": { inputPer1M: 3.0, outputPer1M: 15.0, provider: "anthropic" },
+  "anthropic/claude-haiku-4-5-20251001": { inputPer1M: 0.8, outputPer1M: 4.0, provider: "anthropic" },
+
+  // ── Anthropic Claude (dot-notation aliases) ──────────────────────────────────
   "anthropic/claude-sonnet-4.5": { inputPer1M: 3.0, outputPer1M: 15.0, provider: "anthropic" },
   "anthropic/claude-opus-4.5": { inputPer1M: 15.0, outputPer1M: 75.0, provider: "anthropic" },
   "anthropic/claude-haiku-4.5": { inputPer1M: 0.8, outputPer1M: 4.0, provider: "anthropic" },
-  "claude-sonnet-4.5": { inputPer1M: 3.0, outputPer1M: 15.0, provider: "anthropic" },
-  "claude-opus-4.5": { inputPer1M: 15.0, outputPer1M: 75.0, provider: "anthropic" },
-  "claude-haiku-4.5": { inputPer1M: 0.8, outputPer1M: 4.0, provider: "anthropic" },
 
-  // ── Embedding models (no output cost) ─────────────────────────────────────
+  // ── Embedding models (no output cost) ─────────────────────────────────────────
   "openai/text-embedding-3-large": { inputPer1M: 0.13, outputPer1M: 0, provider: "embedding" },
   "openai/text-embedding-3-small": { inputPer1M: 0.02, outputPer1M: 0, provider: "embedding" },
-  "text-embedding-3-large": { inputPer1M: 0.13, outputPer1M: 0, provider: "embedding" },
-  "text-embedding-3-small": { inputPer1M: 0.02, outputPer1M: 0, provider: "embedding" },
 };
 
 /** Normalises a model ID to the prefixed form (e.g. "gpt-4o" → "openai/gpt-4o"). */
@@ -70,14 +63,21 @@ export function normalizeModelId(id: string): string {
   const trimmed = id.trim().toLowerCase();
   if (trimmed.includes("/")) return trimmed;
   if (trimmed.startsWith("claude-")) return `anthropic/${trimmed}`;
-  if (trimmed.startsWith("text-embedding-")) return `openai/${trimmed}`;
-  return `openai/${trimmed}`;
+  if (
+    trimmed.startsWith("gpt-") ||
+    trimmed.startsWith("o1-") ||
+    trimmed.startsWith("o3-") ||
+    trimmed.startsWith("o4-") ||
+    trimmed.startsWith("text-embedding-")
+  )
+    return `openai/${trimmed}`;
+  // For unrecognized model IDs, return as-is to avoid wrong provider attribution
+  return trimmed;
 }
 
 export function getModelPricing(id: string): ModelPricing | null {
   if (!id) return null;
-  const normalized = normalizeModelId(id);
-  return PRICING_MAP[normalized] ?? PRICING_MAP[id.trim().toLowerCase()] ?? null;
+  return PRICING_MAP[normalizeModelId(id)] ?? null;
 }
 
 export function estimateCost(id: string, inputTokens: number, outputTokens: number): number {

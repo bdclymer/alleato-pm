@@ -10,6 +10,7 @@ import {
   Wrench,
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { KpiRow, type KpiBlockProps } from "@/components/ds/kpi";
@@ -23,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface Window {
+interface MetricsWindow {
   conversations: number;
   messages: number;
   inputTokens: number;
@@ -54,7 +55,7 @@ interface ModelEntry {
 
 interface HealthData {
   generatedAt: string;
-  windows: { last24h: Window; last7d: Window; last30d: Window };
+  windows: { last24h: MetricsWindow; last7d: MetricsWindow; last30d: MetricsWindow };
   series: SeriesEntry[];
   modelBreakdown: ModelEntry[];
   quality: {
@@ -128,15 +129,21 @@ function MetricBlock({
       <div className="mb-2 flex items-center gap-2 text-muted-foreground">
         <span className="h-4 w-4">{icon}</span>
         <span
-          className="text-[10px] font-bold uppercase tracking-[0.08em]"
-          style={{ color: tone === "critical" ? "hsl(var(--destructive))" : tone === "warning" ? "hsl(var(--warning))" : undefined }}
+          className={cn(
+            "text-[10px] font-bold uppercase tracking-[0.08em]",
+            tone === "critical" && "text-destructive",
+            tone === "warning" && "text-warning",
+          )}
         >
           {label}
         </span>
       </div>
       <p
-        className="text-2xl font-bold leading-none tracking-tight tabular-nums"
-        style={{ color: tone === "critical" ? "hsl(var(--destructive))" : tone === "warning" ? "hsl(var(--warning))" : undefined }}
+        className={cn(
+          "text-2xl font-bold leading-none tracking-tight tabular-nums",
+          tone === "critical" && "text-destructive",
+          tone === "warning" && "text-warning",
+        )}
       >
         {value}
       </p>
@@ -161,11 +168,11 @@ function DailyTrendChart({ series }: { series: SeriesEntry[] }) {
           <div
             key={s.date}
             title={`${s.date}: ${s.messages} msgs`}
-            className="flex-1 rounded-sm transition-colors"
-            style={{
-              height: `${height}px`,
-              backgroundColor: isToday ? "hsl(var(--primary))" : "hsl(var(--muted-foreground)/0.25)",
-            }}
+            className={cn(
+              "flex-1 rounded-sm transition-colors",
+              isToday ? "bg-primary" : "bg-muted-foreground/25",
+            )}
+            style={{ height: `${height}px` }}
           />
         );
       })}
