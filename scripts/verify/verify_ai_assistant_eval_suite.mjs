@@ -259,6 +259,20 @@ function extractToolNames(metadata) {
     .filter((name) => typeof name === "string");
 }
 
+function metadataPath(metadata, pathExpression) {
+  return String(pathExpression)
+    .split(".")
+    .filter(Boolean)
+    .reduce((value, key) => {
+      if (value == null) return undefined;
+      if (Array.isArray(value) && /^\d+$/.test(key)) return value[Number(key)];
+      if (typeof value === "object") return value[key];
+      return undefined;
+    }, metadata);
+}
+
+const qualityRank = { low: 1, medium: 2, high: 3 };
+
 function scoreCase(testCase, runOutput, persisted) {
   const failures = [];
   const warnings = [];
@@ -280,6 +294,10 @@ function scoreCase(testCase, runOutput, persisted) {
   const toolNames = extractToolNames(persisted?.metadata);
   observations.push(`tools fired: ${toolNames.join(", ") || "(none)"}`);
 
+  if (!persisted) {
+    failures.push("assistant message was not persisted to chat_history");
+  }
+
   // Tool coverage check (any-of semantics — passes if at least one of the
   // expected tools fired). Empty expectedToolNames means no expectation.
   const expectedTools = testCase.expectedToolNames ?? [];
@@ -289,6 +307,21 @@ function scoreCase(testCase, runOutput, persisted) {
       failures.push(
         `expected at least one of [${expectedTools.join(", ")}] to fire — none did`,
       );
+    }
+  }
+
+  // Required tool check (all-of semantics). Use this for action safety,
+  // planner, source-health, and task-management gates where any-of is too weak.
+  const expectedAllTools = testCase.expectedAllToolNames ?? [];
+  for (const name of expectedAllTools) {
+    if (!toolNames.includes(name)) {
+      failures.push(`expected required tool '${name}' to fire`);
+    }
+  }
+
+  for (const name of testCase.forbiddenToolNames ?? []) {
+    if (toolNames.includes(name)) {
+      failures.push(`forbidden tool fired: '${name}'`);
     }
   }
 
@@ -312,6 +345,13 @@ function scoreCase(testCase, runOutput, persisted) {
       failures.push(`mustInclude missing: "${phrase}"`);
     }
   }
+  for (const anyGroup of testCase.mustIncludeAny ?? []) {
+    const options = Array.isArray(anyGroup) ? anyGroup : [anyGroup];
+    const hit = options.some((phrase) => lower.includes(String(phrase).toLowerCase()));
+    if (!hit) {
+      failures.push(`mustIncludeAny missing one of: ${options.map((p) => `"${p}"`).join(", ")}`);
+    }
+  }
   for (const phrase of testCase.mustExclude ?? []) {
     if (lower.includes(phrase.toLowerCase())) {
       failures.push(`mustExclude present: "${phrase}"`);
@@ -327,6 +367,47 @@ function scoreCase(testCase, runOutput, persisted) {
     failures.push(
       `answer length ${finalText.length} < min ${testCase.minAnswerLength}`,
     );
+  }
+
+  const metadata = persisted?.metadata ?? {};
+  for (const pathExpression of testCase.requiredMetadataPaths ?? []) {
+    if (metadataPath(metadata, pathExpression) == null) {
+      failures.push(`required metadata missing: ${pathExpression}`);
+    }
+  }
+
+  const responseQuality = metadata.response_quality ?? {};
+  if (
+    typeof testCase.minResponseQualityScore === "number" &&
+    typeof responseQuality.score === "number" &&
+    responseQuality.score < testCase.minResponseQualityScore
+  ) {
+    failures.push(
+      `response_quality.score ${responseQuality.score} < ${testCase.minResponseQualityScore}`,
+    );
+  } else if (
+    typeof testCase.minResponseQualityScore === "number" &&
+    responseQuality.score == null
+  ) {
+    failures.push("response_quality.score missing");
+  }
+
+  if (testCase.minSourceQuality) {
+    const actual = responseQuality.sourceQuality;
+    if (!actual || qualityRank[actual] < qualityRank[testCase.minSourceQuality]) {
+      failures.push(
+        `response_quality.sourceQuality ${actual ?? "(missing)"} < ${testCase.minSourceQuality}`,
+      );
+    }
+  }
+
+  if (testCase.minConfidence) {
+    const actual = responseQuality.confidence;
+    if (!actual || qualityRank[actual] < qualityRank[testCase.minConfidence]) {
+      failures.push(
+        `response_quality.confidence ${actual ?? "(missing)"} < ${testCase.minConfidence}`,
+      );
+    }
   }
 
   return {

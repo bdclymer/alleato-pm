@@ -1,0 +1,185 @@
+#!/usr/bin/env node
+
+/**
+ * Static readiness gate for the AI Assistant operating model.
+ *
+ * This is intentionally quick: it verifies that the repo has enforceable
+ * checks for strategy, safe actions, task management, and source/RAG freshness.
+ * Live model quality still belongs to `rag:verify:eval-suite` and
+ * `rag:verify:assistant-routing`.
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const repoRoot = path.resolve(path.dirname(__filename), "../..");
+
+function read(relativePath) {
+  return fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
+}
+
+function readJson(relativePath) {
+  return JSON.parse(read(relativePath));
+}
+
+const failures = [];
+const warnings = [];
+const evidence = [];
+
+function pass(message) {
+  evidence.push({ status: "pass", message });
+}
+
+function warn(message) {
+  warnings.push(message);
+  evidence.push({ status: "warn", message });
+}
+
+function fail(message) {
+  failures.push(message);
+  evidence.push({ status: "fail", message });
+}
+
+function requireCondition(condition, message) {
+  if (condition) pass(message);
+  else fail(message);
+}
+
+const packageJson = readJson("package.json");
+const scripts = packageJson.scripts ?? {};
+const evalSuite = readJson("docs/ai-plan/evals/assistant-eval-suite.json");
+const evalRunner = read("scripts/verify/verify_ai_assistant_eval_suite.mjs");
+const chatHandler = read("frontend/src/lib/ai/chat-handler.ts");
+const actionTools = read("frontend/src/lib/ai/tools/action-tools.ts");
+const sourceHealth = read("frontend/src/lib/ai/source-health.ts");
+const integrationHealth = read("scripts/verify/verify_integration_health.py");
+
+const requiredScripts = [
+  "rag:verify:assistant-routing",
+  "rag:verify:eval-suite",
+  "rag:verify:intelligence-compiler",
+  "rag:verify:meetings",
+  "rag:verify:task-integrity",
+  "rag:verify:assistant-operational-readiness",
+];
+
+for (const scriptName of requiredScripts) {
+  requireCondition(Boolean(scripts[scriptName]), `package script exists: ${scriptName}`);
+}
+
+const requiredEvalCases = [
+  "owner-strategy-ulta-action-plan",
+  "action-task-preview-no-write",
+  "task-register-source-grounded",
+  "source-freshness-rag-health",
+];
+
+const casesById = new Map((evalSuite.cases ?? []).map((testCase) => [testCase.id, testCase]));
+for (const caseId of requiredEvalCases) {
+  const testCase = casesById.get(caseId);
+  requireCondition(Boolean(testCase), `eval case exists: ${caseId}`);
+  if (!testCase) continue;
+
+  requireCondition(
+    Array.isArray(testCase.mustExclude) && testCase.mustExclude.length > 0,
+    `${caseId} fails bad answer patterns explicitly`,
+  );
+  requireCondition(
+    Array.isArray(testCase.requiredMetadataPaths) && testCase.requiredMetadataPaths.length > 0,
+    `${caseId} requires persisted metadata evidence`,
+  );
+  requireCondition(
+    Array.isArray(testCase.expectedAllToolNames) ||
+      Array.isArray(testCase.expectedToolNames) ||
+      Array.isArray(testCase.expectedToolFamilies),
+    `${caseId} has a tool or source expectation`,
+  );
+}
+
+for (const field of [
+  "expectedAllToolNames",
+  "forbiddenToolNames",
+  "requiredMetadataPaths",
+  "minResponseQualityScore",
+  "minSourceQuality",
+  "minConfidence",
+]) {
+  requireCondition(evalRunner.includes(field), `eval runner enforces ${field}`);
+}
+
+requireCondition(
+  chatHandler.includes("intentPlanner") && chatHandler.includes("planAssistantIntent"),
+  "chat backend records intent planning before routing",
+);
+requireCondition(
+  chatHandler.includes("response_quality") && chatHandler.includes("scoreResponseQuality"),
+  "chat backend persists response quality scoring",
+);
+requireCondition(
+  chatHandler.includes("provider_decision") && chatHandler.includes("getAssistantToolCallingDecision"),
+  "chat backend persists provider/tool-calling decision",
+);
+requireCondition(
+  chatHandler.includes("persistRetrievalFeedbackFromToolTrace") &&
+    chatHandler.includes("recordRetrievalFeedbackBatch"),
+  "chat backend records retrieval feedback from tool traces",
+);
+requireCondition(
+  chatHandler.includes("assistantSourceHealth") && chatHandler.includes("source_health"),
+  "chat backend attaches source/RAG health metadata",
+);
+requireCondition(
+  chatHandler.includes("getMyTasks"),
+  "chat backend has a source-backed personal task route",
+);
+requireCondition(
+  actionTools.includes("createTask") &&
+    actionTools.includes("confirmed") &&
+    actionTools.includes("schedule_tasks"),
+  "chat backend exposes task action tooling",
+);
+requireCondition(
+  sourceHealth.includes("source_sync_health_snapshots") &&
+    sourceHealth.includes("unembedded_count") &&
+    sourceHealth.includes("uncompiled_count"),
+  "source health checks sync, embedding, and compilation freshness",
+);
+requireCondition(
+  integrationHealth.includes("source_sync_health_snapshots") &&
+    integrationHealth.includes("AI ASSISTANT SOURCE HEALTH"),
+  "integration health gate includes AI assistant source snapshots",
+);
+
+const sourceHealthCase = casesById.get("source-freshness-rag-health");
+if (sourceHealthCase && !sourceHealthCase.mustInclude?.includes("packet")) {
+  warn("source-freshness-rag-health should keep packet freshness visible in the answer contract");
+}
+
+const summary = {
+  status: failures.length > 0 ? "fail" : warnings.length > 0 ? "warn" : "pass",
+  generatedAt: new Date().toISOString(),
+  totals: {
+    checks: evidence.length,
+    passed: evidence.filter((item) => item.status === "pass").length,
+    warnings: warnings.length,
+    failures: failures.length,
+  },
+  failures,
+  warnings,
+  evidence,
+  nextLiveChecks: [
+    "npm run rag:verify:assistant-routing",
+    "npm run rag:verify:eval-suite -- --filter \"owner-strategy|action-task|task-register|source-freshness\"",
+    "python3 scripts/verify/verify_integration_health.py --skip-env",
+    "npm run rag:verify:intelligence-compiler",
+  ],
+};
+
+if (summary.status === "fail") {
+  console.error(JSON.stringify(summary, null, 2));
+  process.exit(1);
+}
+
+console.log(JSON.stringify(summary, null, 2));

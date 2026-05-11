@@ -133,13 +133,38 @@ def sync_teams_channel(
         return 0, delta_token or ""
 
     delta_path = f"/teams/{team_id}/channels/{channel_id}/messages/delta"
+    messages_path = f"/teams/{team_id}/channels/{channel_id}/messages"
 
     try:
         items, new_delta_token = graph.get_delta(delta_path, delta_token)
     except Exception as e:
-        logger.error(f"[Teams] Delta query failed for {team_name}/{channel_name}: {e}")
-        # Clear delta token on error so next sync retries from scratch
-        return 0, ""
+        status_code = getattr(getattr(e, "response", None), "status_code", None)
+        message = str(e)
+        token_recovery_error = status_code in {400, 410} or "400 Bad Request" in message or "410 Gone" in message
+        if token_recovery_error:
+            logger.warning(
+                "[Teams] Delta token failed for %s/%s; retrying full channel delta.",
+                team_name,
+                channel_name,
+            )
+            try:
+                items, new_delta_token = graph.get_delta(delta_path, None)
+            except Exception as retry_error:
+                retry_message = str(retry_error)
+                retry_status = getattr(getattr(retry_error, "response", None), "status_code", None)
+                if retry_status in {400, 410} or "400 Bad Request" in retry_message or "410 Gone" in retry_message:
+                    logger.warning(
+                        "[Teams] Full channel delta failed for %s/%s; falling back to message snapshot.",
+                        team_name,
+                        channel_name,
+                    )
+                    items = graph.get_all_pages(messages_path)
+                    new_delta_token = ""
+                else:
+                    raise
+        else:
+            logger.error("[Teams] Delta query failed for %s/%s: %s", team_name, channel_name, e)
+            raise
 
     synced = 0
     for msg in items:

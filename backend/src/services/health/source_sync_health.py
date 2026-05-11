@@ -37,6 +37,13 @@ GRAPH_SOURCE_LABELS = {
     "sharepoint_file": "SharePoint documents",
 }
 
+LEGACY_GRAPH_STATE_SOURCES = {
+    # Historical per-chat rows predate the current aggregate Teams DM exporter.
+    # Keeping them in health makes the assistant report stale sources forever
+    # even when teams_chat_export is the active source of truth.
+    "teams_chat",
+}
+
 DOCUMENT_SOURCE_LABELS = {
     "fireflies": "Fireflies meetings",
     "microsoft_graph": "Microsoft Graph documents",
@@ -63,6 +70,10 @@ def _limit_text(value: Any, limit: int = ALERT_TEXT_LIMIT) -> str:
     if limit <= 3:
         return text[:limit]
     return f"{text[:limit - 3]}..."
+
+
+def _metadata_dict(value: Any) -> Dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 def _alert_metadata(alert: Dict[str, Any]) -> Dict[str, Any]:
@@ -125,6 +136,26 @@ def _table_rows(
         offset += page_size
 
     return rows[:limit] if limit else rows
+
+
+def _chunk_rows_for_documents(supabase: Any, document_ids: Sequence[str]) -> List[Dict[str, Any]]:
+    """Fetch chunk rows for the sampled documents so backlog counts are not sample-skewed."""
+    ids = [str(document_id) for document_id in document_ids if document_id]
+    if not ids:
+        return []
+
+    rows: List[Dict[str, Any]] = []
+    batch_size = 100
+    for start in range(0, len(ids), batch_size):
+        batch = ids[start:start + batch_size]
+        response = (
+            supabase.table("document_chunks")
+            .select("document_id,chunk_id")
+            .in_("document_id", batch)
+            .execute()
+        )
+        rows.extend(dict(row) for row in response.data or [])
+    return rows
 
 
 def _sorted_sources(sources: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -541,7 +572,10 @@ def _document_health(
         document_id = str(document.get("id"))
         if document_id not in chunk_document_ids:
             source_counts[source]["unembedded"] += 1
-        if document_id not in compiled_document_ids:
+        compiler_metadata = _metadata_dict(document.get("source_metadata")).get("intelligence_compiler") or {}
+        compiler_status = str(compiler_metadata.get("status") or "")
+        metadata_compiled = compiler_status in {"succeeded", "skipped", "needs_review"}
+        if document_id not in compiled_document_ids and not metadata_compiled:
             source_counts[source]["uncompiled"] += 1
         captured = (
             _parse_datetime(document.get("captured_at"))
@@ -676,14 +710,12 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     documents = _table_rows(
         supabase,
         "document_metadata",
-        "id,title,url,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at,fireflies_id,project_id",
+        "id,title,url,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at,fireflies_id,project_id,source_metadata",
         limit=DOCUMENT_HEALTH_SAMPLE_LIMIT,
     )
-    chunks = _table_rows(
+    chunks = _chunk_rows_for_documents(
         supabase,
-        "document_chunks",
-        "document_id,chunk_id",
-        limit=CHUNK_HEALTH_SAMPLE_LIMIT,
+        [str(row.get("id")) for row in documents if row.get("id")],
     )
     fireflies_jobs = _table_rows(
         supabase,
@@ -746,6 +778,8 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         last_error = state.get("error_message") if state.get("sync_status") == "error" else None
         stale = _age_minutes(last_sync, now)
         source = str(state.get("source") or "microsoft_graph")
+        if source in LEGACY_GRAPH_STATE_SOURCES:
+            continue
         sources.append(
             _source_row(
                 source=source,
@@ -842,6 +876,8 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
 
     for snapshot in snapshots:
         snapshot_source = str(snapshot.get("source") or "unknown")
+        if snapshot_source in LEGACY_GRAPH_STATE_SOURCES:
+            continue
         snapshot_resource = str(snapshot.get("resource_id") or "default")
         if any(
             row["source"] == snapshot_source and row["resourceId"] == snapshot_resource

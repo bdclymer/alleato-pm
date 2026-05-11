@@ -1228,7 +1228,38 @@ def sync_outlook_emails(
                 new_sent_token = folder_delta
             logger.info(f"[Outlook] {folder_name}: fetched {len(folder_items)} items for {user_email}")
         except Exception as e:
-            logger.error(f"[Outlook] {folder_name} delta failed for {user_email}: {e}")
+            message = str(e)
+            status_code = getattr(getattr(e, "response", None), "status_code", None)
+            token_recovery_error = status_code in {400, 410} or "400 Bad Request" in message or "410 Gone" in message
+            if folder_token and token_recovery_error:
+                logger.warning(
+                    "[Outlook] %s delta token failed for %s; retrying full folder delta.",
+                    folder_name,
+                    user_email,
+                )
+                try:
+                    folder_items, folder_delta = graph.get_delta(base_path, None)
+                    items.extend(folder_items)
+                    if folder_name == "Inbox":
+                        new_inbox_token = folder_delta
+                    else:
+                        new_sent_token = folder_delta
+                    logger.info(
+                        "[Outlook] %s: recovered and fetched %d items for %s",
+                        folder_name,
+                        len(folder_items),
+                        user_email,
+                    )
+                    continue
+                except Exception as retry_error:
+                    logger.error(
+                        "[Outlook] %s full delta recovery failed for %s: %s",
+                        folder_name,
+                        user_email,
+                        retry_error,
+                    )
+            else:
+                logger.error(f"[Outlook] {folder_name} delta failed for {user_email}: {e}")
 
     new_delta_token = f"inbox:{new_inbox_token}|sent:{new_sent_token}" if (new_inbox_token or new_sent_token) else ""
 
@@ -1337,7 +1368,7 @@ def sync_outlook_emails(
                     supabase_client=supabase_client,
                     project_id=project_id,
                     project_email_id=project_email_id,
-                    document_metadata_id=doc_id if should_index_for_rag else None,
+                    document_metadata_id=existing_doc.get("id") if existing_doc else None,
                     msg=msg,
                     user_email=user_email,
                     body_text=body_text,
@@ -1496,6 +1527,11 @@ def sync_outlook_emails(
                         "file_path": storage_path,
                         "source_metadata": source_metadata,
                     }).execute()
+
+                if intake_email_id:
+                    supabase_client.from_("outlook_email_intake").update(
+                        {"document_metadata_id": doc_id, "updated_at": datetime.now(timezone.utc).isoformat()}
+                    ).eq("id", intake_email_id).execute()
 
             if should_index_for_rag and (attachment_count or link_count or attachment_errors or intake_email_id or intake_attachment_count or intake_errors or had_attachment_errors):
                 update_payload = {

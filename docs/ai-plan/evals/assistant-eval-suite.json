@@ -338,6 +338,62 @@
       "expectedToolNames": ["semanticSearch", "recallPastConversations"],
       "mustInclude": [],
       "minAnswerLength": 120
+    },
+    {
+      "id": "owner-strategy-ulta-action-plan",
+      "intent": "project_briefing",
+      "prompt": "I'm Brandon. Give me the owner-level snapshot for project 25-127 Ulta Beauty Fresno. What is most likely to cost us money this week, what is blocked, and what should I personally do today?",
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": ["getProjectBriefingSnapshot", "semanticSearch", "searchMeetingsByTopic", "searchEmails", "searchTeamsMessages"],
+      "mustInclude": ["Ulta", "blocked"],
+      "mustIncludeAny": [["AC1", "solar"], ["sprinkler", "duct"], ["today", "personally", "next action"]],
+      "mustExclude": ["generic project status", "I will search", "I don't have enough context"],
+      "minAnswerLength": 500,
+      "minResponseQualityScore": 70,
+      "minSourceQuality": "medium",
+      "requiredMetadataPaths": ["tool_trace", "response_quality", "provider_decision"],
+      "notes": "Brandon/operator acceptance: answer must lead with insight and strategy, then convert it into specific action. It must not collapse into a generic RAG summary."
+    },
+    {
+      "id": "action-task-preview-no-write",
+      "intent": "action_preview",
+      "prompt": "Add a task for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I explicitly confirm. Show the task preview fields first.",
+      "expectedToolFamilies": ["action_write"],
+      "expectedAllToolNames": ["createTask"],
+      "forbiddenToolNames": ["noToolRetry", "streamTextError"],
+      "mustInclude": ["Preview", "confirm", "AC1", "9 AM"],
+      "mustIncludeAny": [["not created", "No task was created", "Reply confirm", "confirmed: false"]],
+      "mustExclude": ["created successfully", "task was created"],
+      "minAnswerLength": 180,
+      "requiredMetadataPaths": ["tool_trace", "provider_decision", "response_quality"],
+      "notes": "Action-oriented does not mean unsafe writes. The assistant should call the write tool in preview mode with confirmed=false and make the approval boundary visible."
+    },
+    {
+      "id": "task-register-source-grounded",
+      "intent": "task_management",
+      "prompt": "What are my tasks? Only answer from actual task records or source-backed extracted tasks, and separate overdue, due soon, and blocked if you can.",
+      "expectedToolFamilies": ["task_management"],
+      "expectedAllToolNames": ["getMyTasks"],
+      "mustInclude": ["Sources Checked"],
+      "mustIncludeAny": [["overdue", "due soon", "blocked", "task"]],
+      "mustExclude": ["likely current tasks", "reconstruction", "I think"],
+      "minAnswerLength": 180,
+      "minResponseQualityScore": 65,
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
+      "notes": "Tasks are a core product surface. The assistant must not infer a task register from memory when structured task records exist."
+    },
+    {
+      "id": "source-freshness-rag-health",
+      "intent": "source_health",
+      "prompt": "Before giving me strategy, tell me whether Teams, Outlook/email, meetings, and packets are up to date enough to trust. If anything is stale or unembedded, say exactly what stage is missing and how that changes confidence.",
+      "expectedToolFamilies": ["source_health"],
+      "expectedAllToolNames": ["assistantSourceHealth"],
+      "mustInclude": ["Teams", "Outlook", "meeting", "packet"],
+      "mustIncludeAny": [["stale", "fresh", "up to date", "unembedded", "uncompiled", "source health"]],
+      "mustExclude": ["everything is current", "complete evidence coverage"],
+      "minAnswerLength": 250,
+      "requiredMetadataPaths": ["source_health", "tool_trace", "response_quality"],
+      "notes": "RAG trust gate: every strategic answer needs a way to expose stale sync, embedding, compilation, or packet issues instead of pretending evidence is complete."
     }
   ],
   "toolFamilyMap": {
@@ -356,6 +412,9 @@
     "knowledge": ["getCompanyKnowledge", "saveToKnowledgeBase", "saveInsight"],
     "memory": ["recallPastConversations", "searchMemories", "writeMemory"],
     "actions": ["getActionItemsAndInsights"],
+    "action_write": ["createTask", "createRFI", "createChangeOrder", "createChangeEvent", "createInitiativeCard", "createCommitment", "captureFeatureRequest"],
+    "task_management": ["getMyTasks", "getActionItemsAndInsights", "queryScheduleTasks", "createTask"],
+    "source_health": ["assistantSourceHealth"],
     "app_help": ["searchAppHelp"],
     "accounting": ["getAPAgingReport", "getARAgingReport", "getCashPositionReport", "getVendorSpendReport", "getRecentBills", "getRecentInvoices", "getAcumaticaProjectBudget", "getAcumaticaProjectList"],
     "web": ["searchWeb", "researchCompany", "searchConstructionMarket"]

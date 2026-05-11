@@ -102,16 +102,24 @@ def _save_sync_state(
     error: Optional[str] = None,
 ) -> None:
     """Upsert sync state after a run."""
-    supabase.from_("graph_sync_state").upsert({
-        "source": source,
-        "resource_id": resource_id,
-        "resource_name": resource_name,
-        "delta_token": delta_token,
-        "last_sync_at": datetime.now(timezone.utc).isoformat(),
-        "sync_status": status,
-        "error_message": error,
-        "items_synced": items_synced,
-    }, on_conflict="source,resource_id").execute()
+    try:
+        supabase.from_("graph_sync_state").upsert({
+            "source": source,
+            "resource_id": resource_id,
+            "resource_name": resource_name,
+            "delta_token": delta_token,
+            "last_sync_at": datetime.now(timezone.utc).isoformat(),
+            "sync_status": status,
+            "error_message": error,
+            "items_synced": items_synced,
+        }, on_conflict="source,resource_id").execute()
+    except Exception as exc:
+        logger.error(
+            "[GraphSync] Could not save sync state for %s/%s: %s",
+            source,
+            resource_id,
+            exc,
+        )
 
 
 def _get_active_project_keywords(supabase: Client) -> list[str]:
@@ -422,9 +430,9 @@ def run_graph_sync(
             resource_name = f"SharePoint: {site_name}{folder_path}"
             started_at = datetime.now(timezone.utc)
             try:
-                token = _get_delta_token(supabase, "onedrive_file", resource_id)
+                token = _get_delta_token(supabase, "sharepoint_file", resource_id)
                 count, new_token = sync_sharepoint_folder(supabase, hostname, site_name, folder_path, token)
-                _save_sync_state(supabase, "onedrive_file", resource_id, resource_name, new_token, count)
+                _save_sync_state(supabase, "sharepoint_file", resource_id, resource_name, new_token, count)
                 _record_sync_run_safe(
                     supabase,
                     source="sharepoint_file",
@@ -440,7 +448,7 @@ def run_graph_sync(
                 err = f"SharePoint sync failed for {resource_name}: {e}"
                 logger.error(f"[GraphSync] {err}")
                 summary["errors"].append(err)
-                _save_sync_state(supabase, "onedrive_file", resource_id, resource_name, "", 0, "error", str(e))
+                _save_sync_state(supabase, "sharepoint_file", resource_id, resource_name, "", 0, "error", str(e))
                 _record_sync_run_safe(
                     supabase,
                     source="sharepoint_file",

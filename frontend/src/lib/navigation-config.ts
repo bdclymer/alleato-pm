@@ -284,7 +284,6 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       ),
       { name: "Executive Dashboard", path: "/executive", icon: LayoutDashboard, requiresProject: false, adminOnly: true },
       { name: "Financial Insights", path: "/financial-insights", icon: TrendingUp, requiresProject: false, adminOnly: true },
-      { name: "Intelligence Planning", path: "/intelligence-planning", icon: Brain, requiresProject: false, adminOnly: true },
       { name: "Emails", path: "/emails", icon: Mail, requiresProject: false, adminOnly: true },
     ],
   },

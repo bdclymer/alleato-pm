@@ -33,6 +33,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timezone, timedelta
 from typing import Any
@@ -61,6 +62,7 @@ SOURCE_CHECKS = [
         "table": "document_metadata",
         "filters": {"category": "email"},
         "date_column": "created_at",
+        "sync_state_sources": ["outlook_email"],
         "critical": True,
     },
     {
@@ -68,6 +70,7 @@ SOURCE_CHECKS = [
         "table": "document_metadata",
         "filters": {"category": "teams_message"},
         "date_column": "created_at",
+        "sync_state_sources": ["teams_message", "teams_chat_export"],
         "critical": True,
     },
     {
@@ -82,17 +85,56 @@ SOURCE_CHECKS = [
         "table": "document_metadata",
         "filters": {"category": "document"},
         "date_column": "created_at",
+        "sync_state_sources": ["onedrive_file", "sharepoint_file"],
         "critical": False,  # May not have daily uploads
     },
 ]
 
+LEGACY_GRAPH_STATE_SOURCES = {"teams_chat"}
+
 CHUNK_SOURCE_TYPES = [
     {"type": "email", "min_chunks": 10, "label": "Email chunks"},
-    {"type": "teams_message", "min_chunks": 10, "label": "Teams message chunks"},
+    {
+        "types": ["teams_message", "teams_channel", "teams_dm"],
+        "min_chunks": 10,
+        "label": "Teams message chunks",
+    },
     {"type": "meeting_transcript", "min_chunks": 100, "label": "Meeting transcript chunks"},
     {"type": "meeting_segment_summary", "min_chunks": 50, "label": "Meeting segment summary chunks"},
     {"type": "meeting_summary", "min_chunks": 20, "label": "Meeting summary chunks"},
 ]
+
+
+def _active_onedrive_resource_ids() -> set[str]:
+    users = [u.strip() for u in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",") if u.strip()]
+    folders_raw = os.environ.get("ONEDRIVE_SYNC_FOLDERS") or os.environ.get("ONEDRIVE_SYNC_FOLDER", "/Projects")
+    folders = [folder.strip() for folder in folders_raw.split(",") if folder.strip()]
+    return {f"{user}:{folder}" for user in users for folder in folders}
+
+
+def _active_sharepoint_resource_ids() -> set[str]:
+    entries = [entry.strip() for entry in os.environ.get("SHAREPOINT_SYNC_FOLDERS", "").split(",") if entry.strip()]
+    resource_ids = set()
+    for entry in entries:
+        try:
+            site_part, folder_path = entry.split(":", 1) if ":" in entry else (entry, "/")
+            _, site_name = site_part.split("/", 1)
+            resource_ids.add(f"sharepoint:{site_name}:{folder_path}")
+        except ValueError:
+            continue
+    return resource_ids
+
+
+def _is_inactive_graph_resource(row: dict) -> bool:
+    source = row.get("source")
+    resource_id = row.get("resource_id")
+    if source == "onedrive_file" and str(resource_id).startswith("sharepoint:"):
+        return resource_id not in _active_sharepoint_resource_ids()
+    if source == "onedrive_file":
+        return resource_id not in _active_onedrive_resource_ids()
+    if source == "sharepoint_file":
+        return resource_id not in _active_sharepoint_resource_ids()
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -111,6 +153,23 @@ def get_client():
 # ---------------------------------------------------------------------------
 # Checks
 # ---------------------------------------------------------------------------
+
+def parse_db_datetime(value: str | None):
+    """Parse Supabase timestamps and normalize naive values to UTC."""
+    if not value:
+        return None
+    normalized = value.strip().replace("Z", "+00:00")
+    # Some Supabase values can contain fractional seconds shorter than Python's
+    # fromisoformat accepts in this runtime. Normalize to six digits.
+    match = re.match(r"^(.*T\d{2}:\d{2}:\d{2})\.(\d{1,6})([+-]\d{2}:\d{2})?$", normalized)
+    if match:
+        prefix, fraction, timezone_part = match.groups()
+        normalized = f"{prefix}.{fraction.ljust(6, '0')}{timezone_part or ''}"
+    dt = datetime.fromisoformat(normalized)
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
 
 def check_source_freshness(supabase, check: dict, max_stale_hours: int) -> dict:
     """Check if a data source has recent data."""
@@ -135,9 +194,31 @@ def check_source_freshness(supabase, check: dict, max_stale_hours: int) -> dict:
     if latest_result.data:
         latest_date = latest_result.data[0].get("created_at")
         if latest_date:
-            dt = datetime.fromisoformat(latest_date.replace("Z", "+00:00"))
+            dt = parse_db_datetime(latest_date)
             hours_ago = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
             is_stale = hours_ago > max_stale_hours
+
+    sync_hours_ago = None
+    sync_state_sources = check.get("sync_state_sources") or []
+    if sync_state_sources:
+        try:
+            sync_result = (
+                supabase.table("graph_sync_state")
+                .select("last_sync_at")
+                .in_("source", sync_state_sources)
+                .order("last_sync_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if sync_result.data:
+                sync_at = sync_result.data[0].get("last_sync_at")
+                if sync_at:
+                    sync_dt = parse_db_datetime(sync_at)
+                    sync_hours_ago = (datetime.now(timezone.utc) - sync_dt).total_seconds() / 3600
+                    if sync_hours_ago <= max_stale_hours:
+                        is_stale = False
+        except Exception:
+            pass
 
     status = "healthy"
     if total_count == 0:
@@ -151,6 +232,7 @@ def check_source_freshness(supabase, check: dict, max_stale_hours: int) -> dict:
         "total_count": total_count,
         "latest_date": latest_date,
         "hours_since_latest": round(hours_ago, 1) if hours_ago is not None else None,
+        "hours_since_sync": round(sync_hours_ago, 1) if sync_hours_ago is not None else None,
         "max_stale_hours": max_stale_hours,
         "critical": check.get("critical", True),
     }
@@ -172,10 +254,14 @@ def check_graph_sync_state(supabase) -> list[dict]:
 
     checks = []
     for row in result.data:
+        if row.get("source") in LEGACY_GRAPH_STATE_SOURCES:
+            continue
+        if _is_inactive_graph_resource(row):
+            continue
         last_sync = row.get("last_sync_at")
         hours_ago = None
         if last_sync:
-            dt = datetime.fromisoformat(last_sync.replace("Z", "+00:00"))
+            dt = parse_db_datetime(last_sync)
             hours_ago = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
 
         status = "healthy"
@@ -200,17 +286,92 @@ def check_graph_sync_state(supabase) -> list[dict]:
     return checks
 
 
+def check_ai_source_health_snapshots(supabase) -> list[dict]:
+    """Check the AI-facing source health snapshots used by /api/ai-assistant/chat."""
+    try:
+        result = (
+            supabase.table("source_sync_health_snapshots")
+            .select(
+                "source, resource_id, resource_name, status, last_sync_at, last_success_at, "
+                "last_error_at, last_error_message, stale_minutes, unembedded_count, "
+                "uncompiled_count, updated_at"
+            )
+            .order("updated_at", desc=True)
+            .limit(200)
+            .execute()
+        )
+    except Exception as e:
+        return [{
+            "name": "AI Source Health Snapshots",
+            "status": "error",
+            "error": str(e),
+            "critical": True,
+        }]
+
+    rows = result.data or []
+    if not rows:
+        return [{
+            "name": "AI Source Health Snapshots",
+            "status": "missing",
+            "detail": "No source_sync_health_snapshots rows found. The assistant cannot explain RAG freshness reliably.",
+            "critical": True,
+        }]
+
+    latest_rows_by_resource = {}
+    for row in rows:
+        if row.get("source") in LEGACY_GRAPH_STATE_SOURCES:
+            continue
+        if _is_inactive_graph_resource(row):
+            continue
+        key = (row.get("source"), row.get("resource_id") or row.get("resource_name"))
+        if key not in latest_rows_by_resource:
+            latest_rows_by_resource[key] = row
+
+    checks = []
+    for row in latest_rows_by_resource.values():
+        status = str(row.get("status") or "unknown").lower()
+        unembedded = int(row.get("unembedded_count") or 0)
+        uncompiled = int(row.get("uncompiled_count") or 0)
+        has_error = bool(row.get("last_error_message"))
+
+        if status in ("critical", "error") or has_error:
+            check_status = "error"
+        elif status == "warning" or unembedded > 0 or uncompiled > 0:
+            check_status = "stale"
+        elif status == "healthy":
+            check_status = "healthy"
+        else:
+            check_status = "unknown"
+
+        checks.append({
+            "name": f"AI Source: {row.get('resource_name') or row.get('resource_id') or row.get('source')}",
+            "status": check_status,
+            "source": row.get("source"),
+            "resource_id": row.get("resource_id"),
+            "last_sync_at": row.get("last_sync_at"),
+            "last_success_at": row.get("last_success_at"),
+            "stale_minutes": row.get("stale_minutes"),
+            "unembedded_count": unembedded,
+            "uncompiled_count": uncompiled,
+            "last_error_message": row.get("last_error_message"),
+            "critical": True,
+        })
+
+    return checks
+
+
 def check_chunk_coverage(supabase) -> list[dict]:
     """Check that document_chunks has adequate coverage for each source type."""
     checks = []
     for src in CHUNK_SOURCE_TYPES:
+        source_types = src.get("types") or [src["type"]]
         try:
-            result = (
-                supabase.table("document_chunks")
-                .select("id", count="exact")
-                .eq("source_type", src["type"])
-                .execute()
-            )
+            query = supabase.table("document_chunks").select("chunk_id", count="exact")
+            if len(source_types) == 1:
+                query = query.eq("source_type", source_types[0])
+            else:
+                query = query.in_("source_type", source_types)
+            result = query.execute()
             count = result.count or len(result.data or [])
         except Exception:
             count = 0
@@ -224,7 +385,7 @@ def check_chunk_coverage(supabase) -> list[dict]:
             "status": status,
             "chunk_count": count,
             "min_expected": src["min_chunks"],
-            "source_type": src["type"],
+            "source_type": ",".join(source_types),
         })
 
     return checks
@@ -282,6 +443,7 @@ def print_report(all_checks: list[dict]) -> int:
     sections = {
         "env": [],
         "source": [],
+        "ai_source": [],
         "graph": [],
         "chunks": [],
     }
@@ -290,6 +452,8 @@ def print_report(all_checks: list[dict]) -> int:
         name = c["name"]
         if name.startswith("Env:"):
             sections["env"].append(c)
+        elif name.startswith("AI Source"):
+            sections["ai_source"].append(c)
         elif name.startswith("Graph:"):
             sections["graph"].append(c)
         elif "chunk" in name.lower():
@@ -321,6 +485,28 @@ def print_report(all_checks: list[dict]) -> int:
         logger.info("  [%4s] %-25s  %5d records  latest: %s", icon, c["name"], count, hours_str)
         if c["status"] in ("stale", "missing") and c.get("critical"):
             has_critical_issues = True
+
+    # AI Source Health Snapshots
+    if sections["ai_source"]:
+        logger.info("")
+        logger.info("  AI ASSISTANT SOURCE HEALTH")
+        logger.info("  " + "-" * 60)
+        for c in sections["ai_source"]:
+            icon = "OK" if c["status"] == "healthy" else "FAIL"
+            stale = c.get("stale_minutes")
+            stale_str = f"{stale}m stale" if stale is not None else "staleness unknown"
+            logger.info(
+                "  [%4s] %-35s  %s  unembedded=%s  uncompiled=%s",
+                icon,
+                c["name"][:35],
+                stale_str,
+                c.get("unembedded_count", 0),
+                c.get("uncompiled_count", 0),
+            )
+            if c.get("last_error_message"):
+                logger.info("         Error: %s", c["last_error_message"][:100])
+            if c["status"] != "healthy" and c.get("critical"):
+                has_critical_issues = True
 
     # Graph Sync State
     if sections["graph"]:
@@ -397,7 +583,10 @@ def main():
     # 3. Graph sync state
     all_checks.extend(check_graph_sync_state(supabase))
 
-    # 4. Chunk coverage
+    # 4. AI-facing source health snapshots used by the assistant runtime
+    all_checks.extend(check_ai_source_health_snapshots(supabase))
+
+    # 5. Chunk coverage
     all_checks.extend(check_chunk_coverage(supabase))
 
     if args.json:

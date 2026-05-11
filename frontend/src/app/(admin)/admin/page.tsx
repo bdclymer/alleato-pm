@@ -171,13 +171,6 @@ const sections: AdminMenuSection[] = [
         icon: LineChart,
       },
       {
-        label: "Intelligence Planning",
-        href: "/intelligence-planning",
-        route: "/intelligence-planning",
-        description: "Planning surface for intelligence workflows and source coverage.",
-        icon: BrainCircuit,
-      },
-      {
         label: "Project Intelligence",
         route: "/[projectId]/intelligence",
         description: "Project-scoped intelligence page; open it from a specific project.",

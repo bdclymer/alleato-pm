@@ -20,6 +20,7 @@ import {
   Eye,
   Pencil,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { TbBrandOnedrive } from "react-icons/tb";
 import {
@@ -58,6 +59,7 @@ const PROJECT_COLUMNS: ColumnConfig[] = [
   { id: "category", label: "Category", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "onedrive", label: "OneDrive", defaultVisible: true },
+  { id: "intelligence", label: "Intelligence", defaultVisible: true },
   { id: "access", label: "Access", defaultVisible: true },
 ];
 
@@ -879,6 +881,21 @@ export default function PortfolioPage() {
     },
     {
       ...PROJECT_COLUMNS[9],
+      render: (item) => (
+        <a
+          href={`/${item.id}/intelligence`}
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Open project intelligence"
+          title="Open project intelligence"
+        >
+          <Sparkles className="w-4 h-4" />
+        </a>
+      ),
+      sortValue: () => "",
+    },
+    {
+      ...PROJECT_COLUMNS[10],
       render: (item) => (
         <EditableCell
           value={item.access || ""}

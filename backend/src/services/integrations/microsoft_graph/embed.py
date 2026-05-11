@@ -32,6 +32,30 @@ EMBEDDING_DIMENSIONS = 3072
 AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
 
 
+def _run_source_intelligence_compiler(supabase_client, metadata_id: str) -> None:
+    """Queue/evaluate newly searchable Graph sources for packet-first intelligence."""
+    try:
+        from ...intelligence.compiler import process_source_document_to_packet
+
+        result = process_source_document_to_packet(
+            supabase_client,
+            metadata_id,
+            compile_packet=False,
+        )
+        logger.info(
+            "[GraphEmbed] Intelligence compiler completed for %s: status=%s",
+            metadata_id,
+            result.get("status"),
+        )
+    except Exception as exc:
+        logger.warning(
+            "[GraphEmbed] Intelligence compiler failed for %s: %s",
+            metadata_id,
+            exc,
+            exc_info=True,
+        )
+
+
 def _provider_configs() -> List[Dict[str, str]]:
     providers: List[Dict[str, str]] = []
     gateway_key = os.getenv("AI_GATEWAY_API_KEY")
@@ -315,6 +339,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         logger.warning("[GraphEmbed] Could not update status for %s: %s", metadata_id, e)
 
     _clear_ingestion_error("embedded")
+    _run_source_intelligence_compiler(supabase_client, metadata_id)
 
     logger.info("[GraphEmbed] %s → %d chunks embedded", metadata_id, len(rows))
     return len(rows)
