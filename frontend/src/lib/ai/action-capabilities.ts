@@ -23,6 +23,7 @@ export const ASSISTANT_ACTION_CAPABILITIES: AssistantActionCapability[] = [
     actions: [
       "Project status",
       "RFI status",
+      "Tasks",
       "Project risk flags",
       "Progress report sections",
       "Progress report photo selections and captions",
@@ -31,6 +32,7 @@ export const ASSISTANT_ACTION_CAPABILITIES: AssistantActionCapability[] = [
   {
     title: "Prepare outputs",
     actions: [
+      "Task deletion previews",
       "Progress report PDF preview links",
       "Progress report PDF downloads",
       "Project summaries",

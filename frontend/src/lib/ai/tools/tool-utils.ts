@@ -1,3 +1,4 @@
+import { tool, type Tool, type ToolExecutionOptions } from "ai";
 import OpenAI from "openai";
 import { createServiceClient } from "@/lib/supabase/service";
 import { type ToolGuardrails } from "./guardrails";
@@ -191,12 +192,15 @@ export function asNumber(value: unknown): number {
 export function withTrace<TInput extends Record<string, unknown>, TResult>(
   name: string,
   options: { onTrace?: (trace: ToolTracePayload) => void },
-  execute: (input: TInput) => Promise<TResult>,
+  execute: (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult>,
   errorGuidance: string,
-): (input: TInput) => Promise<TResult | ToolErrorResult> {
-  return async (input: TInput): Promise<TResult | ToolErrorResult> => {
+): (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult | ToolErrorResult> {
+  return async (
+    input: TInput,
+    executionOptions?: ToolExecutionOptions,
+  ): Promise<TResult | ToolErrorResult> => {
     try {
-      const output = await execute(input);
+      const output = await execute(input, executionOptions);
       options.onTrace?.({
         tool: name,
         input,
@@ -235,7 +239,7 @@ export function withTrace<TInput extends Record<string, unknown>, TResult>(
   };
 }
 
-/** Lazy OpenAI singleton — direct OpenAI by default, Gateway only when explicitly selected. */
+/** Lazy OpenAI singleton — routes through AI Gateway when configured, otherwise direct OpenAI. */
 let _openai: OpenAI | null = null;
 export function getOpenAI(): OpenAI {
   if (!_openai) {
@@ -256,11 +260,14 @@ export { getOpenAIModelId } from "@/lib/ai/provider-config";
 export function withWriteTrace<TInput extends Record<string, unknown>, TResult>(
   name: string,
   options: { onTrace?: (trace: ToolTracePayload) => void },
-  execute: (input: TInput) => Promise<TResult>,
-): (input: TInput) => Promise<TResult> {
-  return async (input: TInput): Promise<TResult> => {
+  execute: (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult>,
+): (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult> {
+  return async (
+    input: TInput,
+    executionOptions?: ToolExecutionOptions,
+  ): Promise<TResult> => {
     try {
-      const output = await execute(input);
+      const output = await execute(input, executionOptions);
       options.onTrace?.({ tool: name, input, output, timestamp: new Date().toISOString() });
       return output;
     } catch (error) {
@@ -269,6 +276,47 @@ export function withWriteTrace<TInput extends Record<string, unknown>, TResult>(
       throw error;
     }
   };
+}
+
+type SharedToolDefinition<TInput extends Record<string, unknown>, TResult> = {
+  description?: string;
+  title?: string;
+  inputSchema: Tool<TInput, TResult>["inputSchema"];
+  inputExamples?: Tool<TInput, TResult>["inputExamples"];
+  needsApproval?: Tool<TInput, TResult>["needsApproval"];
+  strict?: Tool<TInput, TResult>["strict"];
+  execute: (
+    input: TInput,
+    executionOptions?: ToolExecutionOptions,
+  ) => Promise<TResult>;
+};
+
+export function defineReadTool<TInput extends Record<string, unknown>, TResult>(
+  name: string,
+  options: { onTrace?: (trace: ToolTracePayload) => void },
+  definition: SharedToolDefinition<TInput, TResult> & {
+    errorGuidance: string;
+  },
+): Tool<TInput, TResult | ToolErrorResult> {
+  const { errorGuidance, execute, ...toolDefinition } = definition;
+  const toolDefinitionWithTrace: Tool<TInput, TResult | ToolErrorResult> = {
+    ...toolDefinition,
+    execute: withTrace(name, options, execute, errorGuidance),
+  };
+  return tool(toolDefinitionWithTrace);
+}
+
+export function defineWriteTool<TInput extends Record<string, unknown>, TResult>(
+  name: string,
+  options: { onTrace?: (trace: ToolTracePayload) => void },
+  definition: SharedToolDefinition<TInput, TResult>,
+): Tool<TInput, TResult> {
+  const { execute, ...toolDefinition } = definition;
+  const toolDefinitionWithTrace: Tool<TInput, TResult> = {
+    ...toolDefinition,
+    execute: withWriteTrace(name, options, execute),
+  };
+  return tool(toolDefinitionWithTrace);
 }
 
 export async function resolveProject(

@@ -195,7 +195,7 @@
 
     /* Sidebar */
     --sidebar: hsl(0 0% 100%);
-    --sidebar-foreground: hsl(240 6% 25%);
+    --sidebar-foreground: hsl(240 6% 10%);
     --sidebar-primary: hsl(var(--brand-orange-500));
     --sidebar-primary-foreground: hsl(0 0% 100%);
     --sidebar-accent: hsl(var(--brand-orange-50));

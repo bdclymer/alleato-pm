@@ -34,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
+import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode, type TableDensity } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, GripVertical, Inbox, MoreHorizontal, MoreVertical, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
 import { MobileCardList } from "./mobile-card-list";
@@ -347,6 +347,21 @@ export function UnifiedTablePage<T>({
   React.useEffect(() => {
     setInternalView(toolbar.currentView);
   }, [toolbar.currentView]);
+
+  // ── Density state — global preference persisted in localStorage ─────────
+  const [density, setDensityState] = React.useState<TableDensity>(() => {
+    if (typeof window === "undefined") return table.density === "compact" ? "compact" : "default";
+    try {
+      const stored = localStorage.getItem("alleato:tableDensity") as TableDensity | null;
+      if (stored === "compact" || stored === "default" || stored === "comfortable") return stored;
+    } catch { /* ignore */ }
+    return table.density === "compact" ? "compact" : "default";
+  });
+
+  const handleDensityChange = React.useCallback((next: TableDensity) => {
+    setDensityState(next);
+    try { localStorage.setItem("alleato:tableDensity", next); } catch { /* ignore */ }
+  }, []);
 
   const activeView = internalView;
 
@@ -1058,6 +1073,8 @@ export function UnifiedTablePage<T>({
       onBulkDelete={toolbar.onBulkDelete}
       mobilePanelActions={toolbar.mobilePanelActions}
       customActions={toolbar.customActions}
+      density={density}
+      onDensityChange={handleDensityChange}
       enableSearch={resolvedFeatures.enableSearch}
       enableViews={resolvedFeatures.enableViews}
       enableFilters={resolvedFeatures.enableFilters}
@@ -1069,7 +1086,7 @@ export function UnifiedTablePage<T>({
 
   const tableToolbar = renderTableToolbar();
 
-  const isCompactDensity = table.density === "compact";
+  const isCompactDensity = density === "compact";
 
   // On mobile, force every button rendered through `header.actions` into a 40×40
   // icon-only shape. We hide text via `text-[0]` (works for raw text nodes that
@@ -1215,8 +1232,10 @@ export function UnifiedTablePage<T>({
           >
             <Table
               className={cn(
-                table.density === "compact" &&
-                  "[&_thead_tr]:h-9 [&_th]:py-1.5 [&_th]:px-3 [&_td]:py-1.5 [&_td]:px-3 [&_td]:text-xs [&_th:has([role=checkbox])]:pl-0 [&_td:has([role=checkbox])]:pl-0",
+                density === "compact" &&
+                  "[&_thead_tr]:h-8 [&_th]:py-1 [&_th]:px-3 [&_td]:py-1 [&_td]:px-3 [&_td]:text-xs [&_th:has([role=checkbox])]:pl-0 [&_td:has([role=checkbox])]:pl-0",
+                density === "comfortable" &&
+                  "[&_thead_tr]:h-14 [&_th]:py-4 [&_th]:px-4 [&_td]:py-4 [&_td]:px-4 [&_th:has([role=checkbox])]:pl-0 [&_td:has([role=checkbox])]:pl-0",
                 isFullBleedTable &&
                   !hasRowSelection &&
                   "[&_th:first-child]:pl-0 [&_td:first-child]:pl-0 [&_th:last-child]:pr-0 [&_td:last-child]:pr-0",

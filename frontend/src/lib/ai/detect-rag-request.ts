@@ -53,6 +53,17 @@ function previousWeekdayIsoDate(targetDay: number, now = new Date()): string {
   return isoDate(date);
 }
 
+function todayIsoDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
 const MONTH_NAMES: Record<string, number> = {
   january: 0, february: 1, march: 2, april: 3,
   may: 4, june: 5, july: 6, august: 7,
@@ -142,6 +153,28 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
       kind: "meetings_on_date",
       label: "Meeting transcripts",
       date,
+      limit: 20,
+    };
+  }
+
+  const asksForMeetingsToday =
+    normalized.includes("meeting") &&
+    normalized.includes("today") &&
+    (normalized.includes("completed") ||
+      normalized.includes("conducted") ||
+      normalized.includes("held") ||
+      normalized.includes("finished") ||
+      normalized.includes("insights") ||
+      normalized.includes("risks") ||
+      normalized.includes("critical") ||
+      normalized.includes("decisions") ||
+      normalized.includes("action items") ||
+      normalized.includes("tell me about"));
+  if (asksForMeetingsToday) {
+    return {
+      kind: "meetings_on_date",
+      label: "Meeting transcripts",
+      date: todayIsoDate(),
       limit: 20,
     };
   }

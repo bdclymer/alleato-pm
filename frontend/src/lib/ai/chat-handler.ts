@@ -16,7 +16,6 @@ import {
   type UIMessageStreamWriter,
   type ToolSet,
 } from "ai";
-import { handleChatV2 } from "@/app/api/ai-assistant/chat/handler-v2";
 import { after } from "next/server";
 import { propagateAttributes } from "@langfuse/tracing";
 import { waitUntil } from "@vercel/functions";
@@ -29,6 +28,7 @@ import {
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { buildAiSdkPromptPayload } from "@/lib/ai/prompt-diagnostics";
 import {
   DEFAULT_AI_ASSISTANT_MODEL,
   isAiAssistantModelId,
@@ -120,6 +120,8 @@ import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-upd
 import {
   buildAssistantWidgetsFromPrompt,
   type AssistantWidgetPayload,
+  type MeetingIntelligenceWidgetPayload,
+  type TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
 import {
   buildFeatureRequestPacketWidget,
@@ -837,6 +839,359 @@ async function loadPersonalTaskRegister(params: {
     sourceErrors,
     checkedSources,
   };
+}
+
+type GeneratedTaskSummaryItem = TaskSummaryWidgetPayload["items"][number];
+
+type GeneratedTaskSummaryAnswer = {
+  content: string;
+  widget: TaskSummaryWidgetPayload;
+  traceOutput: Record<string, unknown>;
+};
+
+function isGeneratedTasksTodayRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const mentionsTasks = /\b(tasks?|to-?dos?|action items?|follow-?ups?)\b/.test(normalized);
+  const asksGenerated =
+    /\b(generated|created|added|made|logged|entered)\b/.test(normalized) ||
+    normalized.includes("new tasks");
+  const mentionsToday = /\btoday\b/.test(normalized);
+  return mentionsTasks && asksGenerated && mentionsToday;
+}
+
+function getEasternDateString(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function getEasternOffset(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    timeZoneName: "shortOffset",
+    hour: "2-digit",
+  }).formatToParts(date);
+  const value = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT-05";
+  const match = value.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+  if (!match) return "-05:00";
+  const sign = match[1];
+  const hours = match[2].padStart(2, "0");
+  const minutes = (match[3] ?? "00").padStart(2, "0");
+  return `${sign}${hours}:${minutes}`;
+}
+
+function addUtcDays(dateString: string, days: number): string {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0));
+  return getEasternDateString(date);
+}
+
+function easternDayRange(date = new Date()): {
+  dateString: string;
+  startIso: string;
+  endIso: string;
+  label: string;
+} {
+  const dateString = getEasternDateString(date);
+  const nextDateString = addUtcDays(dateString, 1);
+  const startOffset = getEasternOffset(new Date(`${dateString}T12:00:00Z`));
+  const endOffset = getEasternOffset(new Date(`${nextDateString}T12:00:00Z`));
+  return {
+    dateString,
+    startIso: new Date(`${dateString}T00:00:00${startOffset}`).toISOString(),
+    endIso: new Date(`${nextDateString}T00:00:00${endOffset}`).toISOString(),
+    label: new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(date),
+  };
+}
+
+function formatShortDate(value?: string | null): string | null {
+  if (!value) return null;
+  const dateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(Number(year), Number(month) - 1, Number(day)));
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function buildTaskHref(item: Pick<GeneratedTaskSummaryItem, "id" | "projectId">): string {
+  const base = item.projectId ? `/${item.projectId}/tasks` : "/tasks";
+  return `${base}?task=${encodeURIComponent(item.id)}`;
+}
+
+function createGeneratedTasksTodayAnswer(params: {
+  rows: Record<string, unknown>[];
+  dateLabel: string;
+  startIso: string;
+  endIso: string;
+}): GeneratedTaskSummaryAnswer {
+  const allItems = params.rows.map((row): GeneratedTaskSummaryItem => {
+    const metadata = asRecord(row.document_metadata);
+    const project = asRecord(row.projects);
+    const id = asString(row.id) ?? crypto.randomUUID();
+    const projectId =
+      typeof row.project_id === "number"
+        ? row.project_id
+        : typeof metadata.project_id === "number"
+          ? metadata.project_id
+          : null;
+    const item: GeneratedTaskSummaryItem = {
+      id,
+      title:
+        asString(row.title) ??
+        asString(row.description)?.slice(0, 120) ??
+        "Untitled task",
+      description: asString(row.description),
+      status: asString(row.status),
+      priority: asString(row.priority),
+      dueDate: asString(row.due_date),
+      assigneeName: asString(row.assignee_name) ?? asString(row.assignee_email),
+      projectId,
+      projectName: asString(project.name),
+      sourceTitle: asString(metadata.title) ?? asString(row.file_name),
+      sourceSystem: asString(row.source_system) ?? asString(metadata.source_system),
+      sourceDate:
+        asString(metadata.date) ??
+        asString(metadata.captured_at) ??
+        asString(metadata.created_at),
+      createdAt: asString(row.created_at) ?? new Date().toISOString(),
+      href: "",
+    };
+    item.href = buildTaskHref(item);
+    return item;
+  });
+  const items = allItems.slice(0, 25);
+
+  const lines = [
+    `I checked the Tasks page source of truth: \`public.tasks.created_at\` for ${params.dateLabel}.`,
+    "",
+  ];
+
+  if (allItems.length === 0) {
+    lines.push("No task rows were created today in the Tasks table.");
+  } else {
+    lines.push(`Found ${allItems.length} task${allItems.length === 1 ? "" : "s"} generated today.`);
+    lines.push(
+      ...allItems.slice(0, 12).map((item) => {
+        const owner = item.assigneeName ? ` | Owner: ${item.assigneeName}` : "";
+        const project = item.projectName ? ` | Project: ${item.projectName}` : "";
+        const due = item.dueDate ? ` | Due: ${formatShortDate(item.dueDate)}` : "";
+        const source = item.sourceTitle ? ` | Source: ${item.sourceTitle}` : "";
+        return `- **${item.title}**${project}${owner}${due}${source}`;
+      }),
+    );
+  }
+
+  lines.push(
+    "",
+    "This answer is not inferred from meeting transcripts. It is a direct task-table lookup.",
+  );
+
+  return {
+    content: lines.join("\n"),
+    widget: {
+      type: "task_summary",
+      id: "generated-tasks-today",
+      title: "Tasks generated today",
+      subtitle:
+        allItems.length > items.length
+          ? `Direct lookup from the Tasks page table. Showing latest ${items.length}.`
+          : "Direct lookup from the Tasks page table",
+      totalCount: allItems.length,
+      dateLabel: params.dateLabel,
+      emptyState: "No task rows were created today in the Tasks table.",
+      items,
+    },
+    traceOutput: {
+      sourceOfTruth: "public.tasks.created_at",
+      startIso: params.startIso,
+      endIso: params.endIso,
+      resultCount: allItems.length,
+      taskIds: allItems.map((item) => item.id),
+    },
+  };
+}
+
+function isMeetingSourceSpecificRequest(request: SourceSpecificRagRequest): boolean {
+  return request.kind === "meetings_on_date" || request.kind === "recent_meetings";
+}
+
+function snippetFromContent(content?: string | null, maxLength = 220): string | null {
+  const normalized = content?.replace(/\s+/g, " ").trim();
+  if (!normalized) return null;
+  const firstSentence = normalized.match(/^(.+?[.!?])\s/)?.[1] ?? normalized;
+  return firstSentence.length > maxLength ? `${firstSentence.slice(0, maxLength).trim()}...` : firstSentence;
+}
+
+function extractMeetingSignals(content: string | null, terms: RegExp, limit: number): string[] {
+  if (!content) return [];
+  const sentences = content
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  const matches = sentences.filter((sentence) => terms.test(sentence));
+  return [...new Set(matches)].slice(0, limit);
+}
+
+function buildMeetingHref(row: SourceSpecificRagRow): string {
+  return row.project_id ? `/${row.project_id}/meetings/${row.id}` : `/meetings/${row.id}`;
+}
+
+function buildMeetingIntelligenceWidget(params: {
+  request: SourceSpecificRagRequest;
+  rows: SourceSpecificRagRow[];
+}): MeetingIntelligenceWidgetPayload | null {
+  if (!isMeetingSourceSpecificRequest(params.request)) return null;
+
+  const meetings = params.rows.slice(0, params.request.limit).map((row) => {
+    const criticalRisks = extractMeetingSignals(
+      row.content,
+      /\b(risk|critical|blocked|delay|delayed|issue|concern|exposure|problem|missing|late|overdue)\b/i,
+      3,
+    );
+    const decisions = extractMeetingSignals(
+      row.content,
+      /\b(decided|decision|approved|rejected|agreed|confirmed|selected)\b/i,
+      3,
+    );
+    const actionItems = extractMeetingSignals(
+      row.content,
+      /\b(action item|follow up|follow-up|needs to|must|assigned|owner|due|by friday|by monday)\b/i,
+      3,
+    );
+
+    return {
+      id: row.id,
+      title: row.title?.trim() || "Untitled meeting",
+      projectId: row.project_id,
+      projectName: null,
+      date: row.date ?? row.created_at,
+      source: row.source ?? row.category ?? row.type,
+      summary: snippetFromContent(row.content),
+      criticalRisks,
+      decisions,
+      actionItems,
+      href: buildMeetingHref(row),
+    };
+  });
+
+  const criticalRiskCount = meetings.reduce((count, meeting) => count + meeting.criticalRisks.length, 0);
+  const decisionCount = meetings.reduce((count, meeting) => count + meeting.decisions.length, 0);
+  const actionItemCount = meetings.reduce((count, meeting) => count + meeting.actionItems.length, 0);
+
+  return {
+    type: "meeting_intelligence",
+    id: "meeting-intelligence",
+    title:
+      params.request.kind === "meetings_on_date"
+        ? `Meetings on ${params.request.date}`
+        : "Recent meeting intelligence",
+    subtitle: "Structured readout from meeting source retrieval",
+    dateLabel:
+      params.request.kind === "meetings_on_date" && params.request.date
+        ? params.request.date
+        : "Last 60 days",
+    meetingCount: meetings.length,
+    criticalRiskCount,
+    decisionCount,
+    actionItemCount,
+    topInsights: [
+      meetings.length > 0
+        ? `Retrieved ${meetings.length} meeting record${meetings.length === 1 ? "" : "s"} from source-specific meeting retrieval.`
+        : "No matching meeting records were found for this request.",
+      criticalRiskCount > 0
+        ? `${criticalRiskCount} risk-oriented excerpt${criticalRiskCount === 1 ? "" : "s"} matched the meeting text.`
+        : "No risk-oriented excerpts matched the retrieved meeting text.",
+      decisionCount > 0
+        ? `${decisionCount} decision-oriented excerpt${decisionCount === 1 ? "" : "s"} matched the meeting text.`
+        : "No decision-oriented excerpts matched the retrieved meeting text.",
+    ],
+    recommendedNextActions:
+      meetings.length === 0
+        ? ["Check Fireflies/source-sync health before relying on this meeting window."]
+        : [
+            "Open the meeting records with risk or action badges first.",
+            "Convert verified action items into Tasks page records when ownership is clear.",
+          ],
+    emptyState: "No meeting rows matched this request.",
+    meetings,
+  };
+}
+
+async function loadGeneratedTasksTodayAnswer(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  selectedProjectId?: number | null;
+}): Promise<GeneratedTaskSummaryAnswer> {
+  const range = easternDayRange();
+  let query = params.supabase
+    .from("tasks")
+    .select(`
+      id,
+      title,
+      description,
+      status,
+      due_date,
+      priority,
+      project_id,
+      assignee_name,
+      assignee_email,
+      source_system,
+      created_at,
+      file_name,
+      projects (id, name),
+      document_metadata:tasks_metadata_id_fkey (
+        id,
+        title,
+        source_system,
+        date,
+        captured_at,
+        created_at,
+        project_id
+      )
+    `)
+    .gte("created_at", range.startIso)
+    .lt("created_at", range.endIso)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (params.selectedProjectId != null) {
+    query = query.eq("project_id", params.selectedProjectId);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`Generated-today task lookup failed: ${error.message}`);
+  }
+
+  return createGeneratedTasksTodayAnswer({
+    rows: (data ?? []) as Record<string, unknown>[],
+    dateLabel: range.label,
+    startIso: range.startIso,
+    endIso: range.endIso,
+  });
 }
 
 type SourceHealthStatus = "ok" | "warning" | "error" | "unknown";
@@ -2552,18 +2907,6 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
       });
     }
 
-    if (process.env.USE_RETRIEVAL_PLANNER === "true") {
-      const supabaseV2 = createServiceClient();
-      return handleChatV2({
-        user,
-        sessionId,
-        messages,
-        selectedProjectId,
-        activeModel,
-        supabase: supabaseV2,
-      });
-    }
-
     const supabase = createServiceClient();
     const toolTrace: Array<Record<string, unknown>> = [];
     let memoryUsage: MemoryUsageSummary | undefined;
@@ -2876,6 +3219,77 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           return;
         }
 
+        if (isGeneratedTasksTodayRequest(lastUserContent)) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Checking the Tasks table for rows created today",
+            status: "loading",
+          });
+
+          const answer = await loadGeneratedTasksTodayAnswer({
+            supabase,
+            selectedProjectId,
+          });
+          const dataPart: PersistedDataPart = {
+            type: "data-assistant-widget",
+            id: "assistant-widget-generated-tasks-today",
+            data: { widget: answer.widget },
+          };
+          writer.write(dataPart);
+
+          toolTrace.push({
+            tool: "getGeneratedTasksToday",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: selectedProjectId ?? null,
+            },
+            output: answer.traceOutput,
+            timestamp: new Date().toISOString(),
+          });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content: answer.content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content: answer.content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            dataParts: [dataPart],
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          await writeTextResponse(writer, "strategist-generated-tasks-today", answer.content);
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Tasks table checked",
+            status: "success",
+          });
+          return;
+        }
+
         const plannedWidgets: AssistantWidgetPayload[] = [
           ...buildAssistantWidgetsFromPrompt({
             prompt: lastUserContent,
@@ -3158,6 +3572,34 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             sourceSpecificAnswer.content,
             directSourceHealth,
           );
+          const meetingIntelligenceWidget = buildMeetingIntelligenceWidget({
+            request: sourceSpecificRagRequest,
+            rows: sourceSpecificAnswer.rows,
+          });
+          const sourceSpecificWidgetDataPart: PersistedDataPart | null =
+            meetingIntelligenceWidget
+              ? {
+                  type: "data-assistant-widget",
+                  id: `assistant-widget-${meetingIntelligenceWidget.id}`,
+                  data: { widget: meetingIntelligenceWidget },
+                }
+              : null;
+          if (sourceSpecificWidgetDataPart) {
+            writer.write(sourceSpecificWidgetDataPart);
+            toolTrace.push({
+              tool: "assistantComponentRegistry",
+              input: {
+                sourceTool: "sourceSpecificRagRetrieval",
+                kind: sourceSpecificRagRequest.kind,
+              },
+              output: {
+                widgetType: meetingIntelligenceWidget?.type,
+                widgetId: meetingIntelligenceWidget?.id,
+                meetingCount: meetingIntelligenceWidget?.meetingCount,
+              },
+              timestamp: new Date().toISOString(),
+            });
+          }
 
           writeStrategistStatus(writer, {
             stage: "synthesis",
@@ -3196,7 +3638,9 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             executiveBriefingRetrieval,
             providerDecision,
             selectedProjectId,
-            dataParts: assistantWidgetDataParts,
+            dataParts: sourceSpecificWidgetDataPart
+              ? [...assistantWidgetDataParts, sourceSpecificWidgetDataPart]
+              : assistantWidgetDataParts,
             sourceHealth: assistantSourceHealthContext?.metadata ?? null,
           });
 
@@ -3601,13 +4045,17 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           timestamp: new Date().toISOString(),
         });
         logSystemPromptTokensInDev(systemPrompt, "chat-handler");
+        const promptPayload = buildAiSdkPromptPayload({
+          where: "ai-assistant-chat",
+          systemPrompt,
+          messages: modelMessages,
+          tools: modelTools,
+        });
         const result = propagateAttributes(
           { userId: user.id, sessionId },
           () => streamText({
             model: getLanguageModel(activeModel),
-            system: systemPrompt,
-            messages: modelMessages,
-            ...(modelTools ? { tools: modelTools } : {}),
+            ...promptPayload,
             maxOutputTokens: 4000,
             timeout: {
               totalMs: 90_000,

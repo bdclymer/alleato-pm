@@ -123,8 +123,10 @@ import { AudioWaveform } from "./audio-waveform";
 import { BrandonDailyUpdateWidgetCard } from "./brandon-daily-update-widget-card";
 import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
 import {
+  AssistantDynamicToolRenderer,
   AssistantSourceEvidenceWidget,
   AssistantWidgetRenderer,
+  hasAssistantDynamicToolComponent,
 } from "./assistant-widget-renderer";
 import {
   isAssistantWidgetPayload,
@@ -469,6 +471,16 @@ function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string
     });
   }
 
+  if (
+    ["createGeneratedTask", "updateGeneratedTask", "deleteGeneratedTask"].includes(toolName) &&
+    recordId
+  ) {
+    links.push({
+      label: "Open Task",
+      href: projectId ? `/${projectId}/tasks?task=${recordId}` : `/tasks?task=${recordId}`,
+    });
+  }
+
   if (toolName === "updateProjectStatus" && projectId) {
     links.push({ label: "Open Project", href: `/${projectId}/home` });
   }
@@ -600,9 +612,9 @@ function ToolCallItem({
   const approvalId = part.approval?.id;
 
   const toolName = getToolNameFromType(part.type);
-  const isCreateTask = toolName === "createTask";
+  const isCreateTask = toolName === "createTask" || toolName === "createGeneratedTask";
   const previewTable = toStringValue(preview?.table);
-  const isTaskPreview = isCreateTask && previewTable === "schedule_tasks";
+  const isTaskPreview = isCreateTask && (previewTable === "schedule_tasks" || previewTable === "tasks");
 
   const output = asObject(part.output);
   const isConfirmedTask =
@@ -617,6 +629,23 @@ function ToolCallItem({
     toNumber(confirmedRecord.project_id) ??
     selectedProjectId ??
     null;
+  const taskName =
+    toStringValue(previewFields.name) ??
+    toStringValue(previewFields.title) ??
+    toStringValue(confirmedRecord.name) ??
+    toStringValue(confirmedRecord.title) ??
+    toStringValue(confirmedRecord.description) ??
+    "";
+  const taskAssignee =
+    toStringValue(previewFields.assignee) ??
+    toStringValue(previewFields.assignee_name) ??
+    toStringValue(confirmedRecord.assignee) ??
+    toStringValue(confirmedRecord.assignee_name);
+  const taskDueDate =
+    toStringValue(previewFields.finish_date) ??
+    toStringValue(previewFields.due_date) ??
+    toStringValue(confirmedRecord.finish_date) ??
+    toStringValue(confirmedRecord.due_date);
 
   return (
     <ToolDisplay className="mb-1.5">
@@ -725,9 +754,9 @@ function ToolCallItem({
                 <TaskFeedbackButtons
                   projectId={taskProjectId}
                   taskSnapshot={{
-                    name: toStringValue(previewFields.name) ?? "",
-                    assignee: toStringValue(previewFields.assignee) ?? null,
-                    dueDate: toStringValue(previewFields.finish_date) ?? null,
+                    name: taskName,
+                    assignee: taskAssignee,
+                    dueDate: taskDueDate,
                     priority: toStringValue(previewFields.priority) ?? "normal",
                     notes: null,
                     projectId: taskProjectId,
@@ -747,9 +776,9 @@ function ToolCallItem({
               projectId={taskProjectId}
               taskId={confirmedTaskId ?? undefined}
               taskSnapshot={{
-                name: toStringValue(confirmedRecord.name) ?? "",
-                assignee: toStringValue(confirmedRecord.assignee) ?? null,
-                dueDate: toStringValue(confirmedRecord.finish_date) ?? null,
+                name: taskName,
+                assignee: taskAssignee,
+                dueDate: taskDueDate,
                 priority: toStringValue(confirmedRecord.priority) ?? "normal",
                 notes: null,
                 projectId: taskProjectId,
@@ -1683,7 +1712,7 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
-        "overflow-hidden rounded-2xl border-0 bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-primary/15",
+        "overflow-hidden rounded-2xl border-0 bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-border",
         hasMessages ? "px-3 py-2 sm:px-4" : "px-4 py-4 sm:px-5",
       )}
     >
@@ -1730,6 +1759,8 @@ export function ChatArea({
         </div>
       )}
       <PromptInputTextarea
+        value={input}
+        onChange={(event) => onInputChange(event.currentTarget.value)}
         placeholder={
           isRecording
             ? "Listening..."
@@ -2042,19 +2073,43 @@ export function ChatArea({
                                         onEdit={handleToolEdit}
                                         onRun={handleToolRun}
                                         onApprovalResponse={onToolApprovalResponse}
+                                        sessionId={sessionId}
+                                        selectedProjectId={selectedProjectIdProp}
                                       />
                                     ))}
                                 </div>
                               )}
+                              {toolParts
+                                .filter((part) => hasAssistantDynamicToolComponent(part))
+                                .map((part) => (
+                                  <AssistantDynamicToolRenderer
+                                    key={`${part.toolCallId}-dynamic`}
+                                    part={part}
+                                    selectedProjectId={selectedProjectIdProp}
+                                    onSubmit={onSubmit}
+                                    onEditDraft={onInputChange}
+                                  />
+                                ))}
                               </>
                             ) : (
-                              <ToolCallItem
-                                part={toolParts[0]}
-                                onApprove={handleToolApprove}
-                                onEdit={handleToolEdit}
-                                onRun={handleToolRun}
-                                onApprovalResponse={onToolApprovalResponse}
-                              />
+                              hasAssistantDynamicToolComponent(toolParts[0]) ? (
+                                <AssistantDynamicToolRenderer
+                                  part={toolParts[0]}
+                                  selectedProjectId={selectedProjectIdProp}
+                                  onSubmit={onSubmit}
+                                  onEditDraft={onInputChange}
+                                />
+                              ) : (
+                                <ToolCallItem
+                                  part={toolParts[0]}
+                                  onApprove={handleToolApprove}
+                                  onEdit={handleToolEdit}
+                                  onRun={handleToolRun}
+                                  onApprovalResponse={onToolApprovalResponse}
+                                  sessionId={sessionId}
+                                  selectedProjectId={selectedProjectIdProp}
+                                />
+                              )
                             )}
                           </MessageContent>
                         </Message>
@@ -2081,7 +2136,7 @@ export function ChatArea({
                       key={msg.id}
                       from="user"
                     >
-                      <MessageContent className="user-message-enter rounded-[2rem] bg-neutral-150 px-2.5 py-1 text-foreground">
+                      <MessageContent className="user-message-enter rounded-full bg-muted px-2.5 py-0.5 text-foreground">
                         {imageParts.length > 0 && (
                           <div className="mb-2 flex flex-wrap gap-2">
                             {imageParts.map((image) => (
@@ -2151,20 +2206,44 @@ export function ChatArea({
                                         onEdit={handleToolEdit}
                                         onRun={handleToolRun}
                                         onApprovalResponse={onToolApprovalResponse}
+                                        sessionId={sessionId}
+                                        selectedProjectId={selectedProjectIdProp}
                                       />
                                     ))}
                                 </div>
                               )}
+                              {toolParts
+                                .filter((part) => hasAssistantDynamicToolComponent(part))
+                                .map((part) => (
+                                  <AssistantDynamicToolRenderer
+                                    key={`${part.toolCallId}-dynamic`}
+                                    part={part}
+                                    selectedProjectId={selectedProjectIdProp}
+                                    onSubmit={onSubmit}
+                                    onEditDraft={onInputChange}
+                                  />
+                                ))}
                             </div>
                           ) : toolParts.length === 1 ? (
                             <div className="mb-3">
-                              <ToolCallItem
-                                part={toolParts[0]}
-                                onApprove={handleToolApprove}
-                                onEdit={handleToolEdit}
-                                onRun={handleToolRun}
-                                onApprovalResponse={onToolApprovalResponse}
-                              />
+                              {hasAssistantDynamicToolComponent(toolParts[0]) ? (
+                                <AssistantDynamicToolRenderer
+                                  part={toolParts[0]}
+                                  selectedProjectId={selectedProjectIdProp}
+                                  onSubmit={onSubmit}
+                                  onEditDraft={onInputChange}
+                                />
+                              ) : (
+                                <ToolCallItem
+                                  part={toolParts[0]}
+                                  onApprove={handleToolApprove}
+                                  onEdit={handleToolEdit}
+                                  onRun={handleToolRun}
+                                  onApprovalResponse={onToolApprovalResponse}
+                                  sessionId={sessionId}
+                                  selectedProjectId={selectedProjectIdProp}
+                                />
+                              )}
                             </div>
                           ) : null}
 

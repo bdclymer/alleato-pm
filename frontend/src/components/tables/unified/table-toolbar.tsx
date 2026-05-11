@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 
 import {
+  AlignJustify,
   ArrowUpDown,
   CalendarIcon,
   Columns3,
@@ -60,6 +61,7 @@ import { cn } from "@/lib/utils";
 import { TableCountIndicator } from "./table-primitives";
 
 export type ViewMode = "table" | "card" | "list";
+export type TableDensity = "compact" | "default" | "comfortable";
 
 export interface FilterConfig {
   id: string;
@@ -120,6 +122,8 @@ export interface TableToolbarProps {
   mobilePanelActions?: ReactNode;
   /** Extra action buttons rendered in the toolbar icon row (e.g. ERP sync) */
   customActions?: ReactNode;
+  density?: TableDensity;
+  onDensityChange?: (density: TableDensity) => void;
   /** Feature flags. Omitted flags default to enabled. */
   features?: TableToolbarFeatures;
   /** @deprecated Use `features.search` instead */
@@ -525,6 +529,51 @@ function getFirstActiveFilterLabel(
   return active.label;
 }
 
+const DENSITY_OPTIONS: { value: TableDensity; label: string }[] = [
+  { value: "compact", label: "Compact" },
+  { value: "default", label: "Default" },
+  { value: "comfortable", label: "Comfortable" },
+];
+
+export function DensityToggle({
+  density = "default",
+  onDensityChange,
+}: {
+  density?: TableDensity;
+  onDensityChange?: (density: TableDensity) => void;
+}): ReactElement {
+  return (
+    <DropdownMenu>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Row density">
+                <AlignJustify className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>Row density</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuLabel>Row density</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {DENSITY_OPTIONS.map((option) => (
+          <DropdownMenuCheckboxItem
+            key={option.value}
+            checked={density === option.value}
+            onSelect={(e) => e.preventDefault()}
+            onCheckedChange={() => onDensityChange?.(option.value)}
+          >
+            {option.label}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function ColumnToggle({
   columns,
   visibleColumns,
@@ -622,6 +671,8 @@ export function TableToolbar({
   onBulkDelete,
   mobilePanelActions,
   customActions,
+  density = "default",
+  onDensityChange,
   features,
   enableSearch,
   enableViews,
@@ -755,6 +806,15 @@ export function TableToolbar({
                           : undefined
                       }
                       disabled={!onSortChange || sortOptions.length === 0}
+                    />
+                    <MobileSettingsRow
+                      icon={<AlignJustify className="h-5 w-5" />}
+                      label="Row density"
+                      value={density === "compact" ? "Compact" : density === "comfortable" ? "Comfortable" : "Default"}
+                      onClick={() => {
+                        const next: TableDensity = density === "compact" ? "default" : density === "default" ? "comfortable" : "compact";
+                        onDensityChange?.(next);
+                      }}
                     />
                     <MobileSettingsRow
                       icon={<Columns3 className="h-5 w-5" />}
@@ -997,6 +1057,8 @@ export function TableToolbar({
               onColumnVisibilityChange={onColumnVisibilityChange}
             />
           )}
+
+          <DensityToggle density={density} onDensityChange={onDensityChange} />
 
           {customActions}
 

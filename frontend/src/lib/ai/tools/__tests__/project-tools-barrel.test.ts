@@ -74,6 +74,7 @@ const CORE_TOOLS = [
   "getProjectBudgetSummary",
   "getActionItemsAndInsights",
   "getMeetingsByDate",
+  "getMeetingIntelligence",
   "searchDocuments",
   "getProjectDetails",
   // financial module

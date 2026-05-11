@@ -7,7 +7,7 @@
 
 import { tool } from "ai";
 import { z } from "zod";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import type { Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
@@ -288,6 +288,71 @@ export function createActionTools(
       assignee: trimmed,
       assigneePersonId: matches.length === 1 ? matches[0].id : null,
     };
+  }
+
+  async function resolveGeneratedTaskAssignee(
+    assignee?: string,
+  ): Promise<{
+    assigneeName: string | null;
+    assigneeEmail: string | null;
+    assigneePersonId: string | null;
+  }> {
+    const trimmed = assignee?.trim() || null;
+    if (!trimmed) {
+      return { assigneeName: null, assigneeEmail: null, assigneePersonId: null };
+    }
+
+    const normalized = trimmed.toLowerCase();
+    const { data, error } = await supabase
+      .from("people")
+      .select("id,first_name,last_name,email")
+      .limit(2000);
+
+    if (error) {
+      throw new Error(`Failed to resolve task assignee: ${error.message}`);
+    }
+
+    const matches = (data ?? []).filter((person) => {
+      const fullName = [person.first_name, person.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim()
+        .toLowerCase();
+      const email = person.email?.trim().toLowerCase() ?? "";
+      const firstName = person.first_name?.trim().toLowerCase() ?? "";
+      const lastName = person.last_name?.trim().toLowerCase() ?? "";
+
+      return (
+        email === normalized ||
+        fullName === normalized ||
+        (normalized.length >= 3 && (firstName === normalized || lastName === normalized))
+      );
+    });
+
+    const person = matches.length === 1 ? matches[0] : null;
+    return {
+      assigneeName: person
+        ? [person.first_name, person.last_name].filter(Boolean).join(" ").trim() || trimmed
+        : trimmed,
+      assigneeEmail: person?.email ?? (trimmed.includes("@") ? trimmed : null),
+      assigneePersonId: person?.id ?? null,
+    };
+  }
+
+  async function loadGeneratedTaskForWrite(taskId: string) {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("id,title,description,status,priority,due_date,project_id,assignee_name,assignee_email,metadata_id")
+      .eq("id", taskId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load task ${taskId}: ${error.message}`);
+    }
+    if (!data) {
+      return null;
+    }
+    return data;
   }
 
   function needsConfirmedWriteApproval(input: { confirmed?: boolean }): boolean {
@@ -782,6 +847,319 @@ export function createActionTools(
         };
         await recordWriteAudit({
           toolName: "createTask",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
+      }),
+    }),
+
+    createGeneratedTask: tool({
+      description:
+        "Create a task in the main Tasks page task register (public.tasks). " +
+        "Use this for AI-generated follow-ups, action items, or user-created tasks " +
+        "that should appear on /tasks or /[projectId]/tasks. Preview before writing.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if the task belongs to a project"),
+        title: z.string().describe("Short task title"),
+        description: z.string().optional().describe("Task detail or source context"),
+        assignee: z.string().optional().describe("Person responsible"),
+        dueDate: z.string().optional().describe("ISO due date"),
+        priority: z.enum(["low", "normal", "high", "critical"]).default("normal"),
+        status: z.enum(["open", "in_progress", "completed", "blocked"]).default("open"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z
+          .string()
+          .optional()
+          .describe("Optional idempotency key to prevent duplicate writes"),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("createGeneratedTask", options, async (input) => {
+        const { projectId, title, description, assignee, dueDate, priority, status, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
+        const effectiveProjectId = access.projectId;
+        const resolvedAssignee = await resolveGeneratedTaskAssignee(assignee);
+        const taskDescription = description?.trim() || title;
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message:
+              "Here's the task I'll add to the Tasks page. Reply **confirm** to proceed.",
+            preview: {
+              table: "tasks",
+              fields: {
+                project_id: effectiveProjectId,
+                title,
+                description: taskDescription,
+                status,
+                due_date: dueDate ?? null,
+                priority,
+                assignee_name: resolvedAssignee.assigneeName,
+                assignee_email: resolvedAssignee.assigneeEmail,
+                assignee_person_id: resolvedAssignee.assigneePersonId,
+                source_system: "ai_assistant",
+              },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createGeneratedTask", input);
+        const replay = await getReplayResponse("createGeneratedTask", idempotencyKey);
+        if (replay) return replay;
+
+        const now = new Date().toISOString();
+        const metadataId = randomUUID();
+        const { error: metadataError } = await supabase.from("document_metadata").insert({
+          id: metadataId,
+          title: `AI assistant task: ${title}`,
+          type: "ai_assistant_task",
+          source_system: "ai_assistant",
+          date: now,
+          captured_at: now,
+          project_id: effectiveProjectId,
+          content: taskDescription,
+          summary: taskDescription,
+          source_metadata: {
+            source: "ai_assistant",
+            tool: "createGeneratedTask",
+            user_id: userId,
+          } as Json,
+        });
+
+        if (metadataError) {
+          const failure = { success: false, error: metadataError.message };
+          await recordWriteAudit({
+            toolName: "createGeneratedTask",
+            idempotencyKey,
+            projectId: effectiveProjectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const { data, error } = await supabase
+          .from("tasks")
+          .insert({
+            metadata_id: metadataId,
+            title,
+            description: taskDescription,
+            status,
+            due_date: dueDate ?? null,
+            priority,
+            project_id: effectiveProjectId,
+            project_ids: effectiveProjectId ? [effectiveProjectId] : null,
+            assignee_name: resolvedAssignee.assigneeName,
+            assignee_email: resolvedAssignee.assigneeEmail,
+            assignee_person_id: resolvedAssignee.assigneePersonId,
+            source_system: "ai_assistant",
+            extraction_source: "ai_assistant_chat",
+            extraction_metadata: {
+              source: "ai_assistant",
+              tool: "createGeneratedTask",
+              user_id: userId,
+              idempotency_key: idempotencyKey,
+            } as Json,
+            updated_at: now,
+          })
+          .select("id,title,description,status,priority,due_date,project_id,assignee_name,assignee_email,created_at")
+          .single();
+
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "createGeneratedTask",
+            idempotencyKey,
+            projectId: effectiveProjectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const response = {
+          success: true,
+          message: `Task **"${title}"** was added to the Tasks page.`,
+          record: data,
+          links: {
+            tasksPage: effectiveProjectId ? `/${effectiveProjectId}/tasks?task=${data.id}` : `/tasks?task=${data.id}`,
+          },
+        };
+        await recordWriteAudit({
+          toolName: "createGeneratedTask",
+          idempotencyKey,
+          projectId: effectiveProjectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
+      }),
+    }),
+
+    updateGeneratedTask: tool({
+      description:
+        "Update an existing task in the main Tasks page task register (public.tasks). " +
+        "Use when the user asks to modify, reassign, reprioritize, close, or change a due date for a Tasks page item. Preview before writing.",
+      inputSchema: z.object({
+        taskId: z.string().uuid().describe("Task ID from public.tasks"),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        assignee: z.string().optional(),
+        dueDate: z.string().nullable().optional(),
+        priority: z.enum(["low", "normal", "high", "critical"]).optional(),
+        status: z.enum(["open", "in_progress", "completed", "blocked"]).optional(),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("updateGeneratedTask", options, async (input) => {
+        const current = await loadGeneratedTaskForWrite(input.taskId);
+        if (!current) return { success: false, error: "Task was not found in the Tasks table." };
+        const access = await enforceProjectWriteAccess(current.project_id ?? undefined);
+        if (!access.ok) return { success: false, error: access.error };
+
+        const resolvedAssignee =
+          input.assignee !== undefined
+            ? await resolveGeneratedTaskAssignee(input.assignee)
+            : null;
+        const updates: Record<string, unknown> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (input.title !== undefined) updates.title = input.title;
+        if (input.description !== undefined) updates.description = input.description;
+        if (input.status !== undefined) updates.status = input.status;
+        if (input.priority !== undefined) updates.priority = input.priority;
+        if (input.dueDate !== undefined) updates.due_date = input.dueDate || null;
+        if (resolvedAssignee) {
+          updates.assignee_name = resolvedAssignee.assigneeName;
+          updates.assignee_email = resolvedAssignee.assigneeEmail;
+          updates.assignee_person_id = resolvedAssignee.assigneePersonId;
+        }
+
+        if (Object.keys(updates).length === 1) {
+          return { success: false, error: "No task fields were provided to update." };
+        }
+
+        if (!input.confirmed) {
+          return {
+            action: "preview",
+            message:
+              "Here's the Tasks page item I'll update. Reply **confirm** to proceed.",
+            preview: {
+              table: "tasks",
+              id: input.taskId,
+              current,
+              updates,
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("updateGeneratedTask", input);
+        const replay = await getReplayResponse("updateGeneratedTask", idempotencyKey);
+        if (replay) return replay;
+
+        const { data, error } = await supabase
+          .from("tasks")
+          .update(updates)
+          .eq("id", input.taskId)
+          .select("id,title,description,status,priority,due_date,project_id,assignee_name,assignee_email,updated_at")
+          .single();
+
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "updateGeneratedTask",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const response = {
+          success: true,
+          message: `Task **"${data.title ?? data.description}"** was updated.`,
+          record: data,
+        };
+        await recordWriteAudit({
+          toolName: "updateGeneratedTask",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
+      }),
+    }),
+
+    deleteGeneratedTask: tool({
+      description:
+        "Delete an existing task from the main Tasks page task register (public.tasks). Preview before writing.",
+      inputSchema: z.object({
+        taskId: z.string().uuid().describe("Task ID from public.tasks"),
+        reason: z.string().optional().describe("Why the task should be deleted"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("deleteGeneratedTask", options, async (input) => {
+        const current = await loadGeneratedTaskForWrite(input.taskId);
+        if (!current) return { success: false, error: "Task was not found in the Tasks table." };
+        const access = await enforceProjectWriteAccess(current.project_id ?? undefined);
+        if (!access.ok) return { success: false, error: access.error };
+
+        if (!input.confirmed) {
+          return {
+            action: "preview",
+            message:
+              "Here's the Tasks page item I'll delete. Reply **confirm** to proceed.",
+            preview: {
+              table: "tasks",
+              id: input.taskId,
+              current,
+              reason: input.reason ?? null,
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("deleteGeneratedTask", input);
+        const replay = await getReplayResponse("deleteGeneratedTask", idempotencyKey);
+        if (replay) return replay;
+
+        const { error } = await supabase.from("tasks").delete().eq("id", input.taskId);
+
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "deleteGeneratedTask",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const response = {
+          success: true,
+          message: `Task **"${current.title ?? current.description}"** was deleted from the Tasks page.`,
+          deletedTask: current,
+          reason: input.reason ?? null,
+        };
+        await recordWriteAudit({
+          toolName: "deleteGeneratedTask",
           idempotencyKey,
           projectId: access.projectId,
           input,

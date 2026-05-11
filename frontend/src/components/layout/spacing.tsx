@@ -44,7 +44,7 @@ export interface DetailPanelProps {
 
 export function DetailPanel({ children, className }: DetailPanelProps) {
   return (
-    <div className={cn("rounded-md bg-muted/50 p-6 shadow-panel", className)}>
+    <div className={cn("rounded-md bg-muted/30 p-6 shadow-panel", className)}>
       {children}
     </div>
   );
@@ -79,6 +79,7 @@ export interface LabelValueRowProps {
   labelClassName?: string;
   valueClassName?: string;
   missing?: boolean;
+  stacked?: boolean;
 }
 
 export function LabelValueRow({
@@ -88,17 +89,19 @@ export function LabelValueRow({
   labelClassName,
   valueClassName,
   missing,
+  stacked,
 }: LabelValueRowProps) {
   return (
     <div
       className={cn(
-        "flex flex-row items-start gap-4",
+        stacked ? "flex flex-col gap-1" : "flex flex-row items-start gap-4",
         className,
       )}
     >
       <dt
         className={cn(
-          "w-36 shrink-0 pt-0.5 text-xs text-muted-foreground",
+          "shrink-0 text-xs text-muted-foreground",
+          !stacked && "w-36 pt-0.5",
           labelClassName,
         )}
       >
@@ -106,7 +109,8 @@ export function LabelValueRow({
       </dt>
       <dd
         className={cn(
-          "min-w-0 flex-1 text-left text-sm",
+          "min-w-0 text-sm",
+          stacked ? "text-left" : "flex-1 text-left",
           missing
             ? "text-muted-foreground/50"
             : "font-medium text-foreground",

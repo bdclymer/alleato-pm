@@ -9,6 +9,7 @@ import { createAppHelpTools } from "./app-help-tools";
 import { createForecastTools } from "./forecast-tools";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
+import type { MeetingIntelligenceWidgetPayload } from "@/lib/ai/assistant-widgets";
 
 // Existing AI tool outputs are heterogeneous Supabase rows from many tables/views.
 // Keep this broad row shape until the tool layer is split into typed modules.
@@ -122,6 +123,231 @@ function compactRows(rows: AnyRow[], limit = 8): AnyRow[] {
   return rows.slice(0, limit);
 }
 
+function isoDateOnly(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function getLocalIsoDate(timeZone: string, date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function timeZoneOffsetMs(date: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const hour = lookup.hour === "24" ? "00" : lookup.hour;
+  const asUtc = Date.UTC(
+    Number(lookup.year),
+    Number(lookup.month) - 1,
+    Number(lookup.day),
+    Number(hour),
+    Number(lookup.minute),
+    Number(lookup.second),
+  );
+  return asUtc - date.getTime();
+}
+
+function localMidnightUtcIso(dateString: string, timeZone: string): string {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const guess = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  return new Date(guess.getTime() - timeZoneOffsetMs(guess, timeZone)).toISOString();
+}
+
+function localDayRange(timeZone: string, date = new Date()): {
+  dateLabel: string;
+  startIso: string;
+  endIso: string;
+} {
+  const dateString = getLocalIsoDate(timeZone, date);
+  const nextDate = new Date(`${dateString}T12:00:00.000Z`);
+  nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+  const nextDateString = getLocalIsoDate(timeZone, nextDate);
+  return {
+    dateLabel: dateString,
+    startIso: localMidnightUtcIso(dateString, timeZone),
+    endIso: localMidnightUtcIso(nextDateString, timeZone),
+  };
+}
+
+function windowFromInput(input: {
+  startDate?: string;
+  endDate?: string;
+  relativeWindow?: "today" | "yesterday" | "last_7_days" | "last_30_days" | "last_60_days";
+  timeZone?: string;
+}): { dateLabel: string; startIso: string; endIso: string } {
+  const timeZone = input.timeZone || "America/New_York";
+  if (input.startDate && input.endDate) {
+    return {
+      dateLabel: input.startDate === input.endDate ? input.startDate : `${input.startDate} to ${input.endDate}`,
+      startIso: `${input.startDate}T00:00:00.000Z`,
+      endIso: `${input.endDate}T23:59:59.999Z`,
+    };
+  }
+
+  if (input.relativeWindow === "today" || !input.relativeWindow) {
+    return localDayRange(timeZone);
+  }
+
+  const now = new Date();
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  const start = new Date(end);
+  if (input.relativeWindow === "yesterday") {
+    start.setUTCDate(end.getUTCDate() - 2);
+    end.setUTCDate(end.getUTCDate() - 1);
+  } else if (input.relativeWindow === "last_7_days") {
+    start.setUTCDate(end.getUTCDate() - 7);
+  } else if (input.relativeWindow === "last_30_days") {
+    start.setUTCDate(end.getUTCDate() - 30);
+  } else {
+    start.setUTCDate(end.getUTCDate() - 60);
+  }
+
+  return {
+    dateLabel: `${isoDateOnly(start)} to ${isoDateOnly(new Date(end.getTime() - 1))}`,
+    startIso: start.toISOString(),
+    endIso: end.toISOString(),
+  };
+}
+
+function extractSentences(content: unknown, terms: RegExp, limit: number): string[] {
+  const text = String(content ?? "").replace(/\s+/g, " ").trim();
+  if (!text) return [];
+  return [
+    ...new Set(
+      text
+        .split(/(?<=[.!?])\s+/)
+        .map((sentence) => sentence.trim())
+        .filter((sentence) => sentence.length > 8 && terms.test(sentence)),
+    ),
+  ].slice(0, limit);
+}
+
+function buildMeetingIntelligenceFromRows(params: {
+  rows: AnyRow[];
+  insights: AnyRow[];
+  dateLabel: string;
+  intent: "completed" | "insights" | "risks" | "decisions" | "actions" | "summary";
+  limit: number;
+}): MeetingIntelligenceWidgetPayload {
+  const insightsByMeeting = new Map<string, AnyRow[]>();
+  for (const insight of params.insights) {
+    const id = String(insight.metadata_id ?? "");
+    if (!id) continue;
+    const rows = insightsByMeeting.get(id) ?? [];
+    rows.push(insight);
+    insightsByMeeting.set(id, rows);
+  }
+
+  const meetings = params.rows.slice(0, params.limit).map((row) => {
+    const meetingInsights = insightsByMeeting.get(String(row.id)) ?? [];
+    const riskInsights = meetingInsights.filter((insight) => lowerStatus(insight.type) === "risk");
+    const decisionInsights = meetingInsights.filter((insight) => lowerStatus(insight.type) === "decision");
+    const criticalRisks = [
+      ...riskInsights.map((insight) => trimText(insight.description, 240)).filter((value): value is string => Boolean(value)),
+      ...extractSentences(
+        `${row.summary ?? ""} ${row.overview ?? ""} ${row.content ?? ""}`,
+        /\b(risk|critical|blocked|delay|delayed|issue|concern|exposure|problem|missing|late|overdue)\b/i,
+        3,
+      ),
+    ].slice(0, 4);
+    const decisions = [
+      ...parseTextList(row.decisions),
+      ...decisionInsights.map((insight) => trimText(insight.description, 240)).filter((value): value is string => Boolean(value)),
+      ...extractSentences(
+        `${row.summary ?? ""} ${row.overview ?? ""} ${row.content ?? ""}`,
+        /\b(decided|decision|approved|rejected|agreed|confirmed|selected)\b/i,
+        3,
+      ),
+    ].slice(0, 4);
+    const actionItems = [
+      ...parseTextList(row.action_items),
+      ...extractSentences(
+        `${row.summary ?? ""} ${row.overview ?? ""} ${row.content ?? ""}`,
+        /\b(action item|follow up|follow-up|needs to|must|assigned|owner|due|by friday|by monday)\b/i,
+        3,
+      ),
+    ].slice(0, 5);
+    const projectId = asNumber(row.project_id) || null;
+    const id = String(row.id);
+
+    return {
+      id,
+      title: trimText(row.title, 160) ?? "Untitled meeting",
+      projectId,
+      projectName: trimText(row.project, 120),
+      date: trimText(row.date ?? row.created_at, 40),
+      source: trimText(row.source ?? row.source_system ?? row.category ?? row.type, 80),
+      summary: trimText(row.summary ?? row.overview ?? row.content, 260),
+      criticalRisks,
+      decisions,
+      actionItems,
+      href: projectId ? `/${projectId}/meetings/${id}` : `/meetings/${id}`,
+    };
+  });
+
+  const criticalRiskCount = meetings.reduce((sum, meeting) => sum + meeting.criticalRisks.length, 0);
+  const decisionCount = meetings.reduce((sum, meeting) => sum + meeting.decisions.length, 0);
+  const actionItemCount = meetings.reduce((sum, meeting) => sum + meeting.actionItems.length, 0);
+  const focus =
+    params.intent === "risks"
+      ? "Critical risks"
+      : params.intent === "decisions"
+        ? "Decisions"
+        : params.intent === "actions"
+          ? "Action items"
+          : params.intent === "insights"
+            ? "Meeting insights"
+            : "Meeting summary";
+
+  return {
+    type: "meeting_intelligence",
+    id: "meeting-intelligence",
+    title: focus,
+    subtitle: "Structured readout from meeting records, extracted insights, and transcript summaries",
+    dateLabel: params.dateLabel,
+    meetingCount: meetings.length,
+    criticalRiskCount,
+    decisionCount,
+    actionItemCount,
+    topInsights: [
+      meetings.length > 0
+        ? `${meetings.length} meeting record${meetings.length === 1 ? "" : "s"} matched this window.`
+        : "No meeting records matched this window.",
+      criticalRiskCount > 0
+        ? `${criticalRiskCount} risk signal${criticalRiskCount === 1 ? "" : "s"} found across the matched meetings.`
+        : "No risk signals were found in the matched meetings.",
+      decisionCount > 0
+        ? `${decisionCount} decision signal${decisionCount === 1 ? "" : "s"} found across the matched meetings.`
+        : "No decision signals were found in the matched meetings.",
+    ],
+    recommendedNextActions:
+      meetings.length === 0
+        ? ["Check meeting ingestion/source-sync health before using this window for an owner-ready update."]
+        : [
+            "Open the meeting cards with risk or action badges first.",
+            "Convert verified ownership items into Tasks page records.",
+            "Use the linked meeting records as the evidence trail before sending an owner update.",
+          ],
+    emptyState: "No meeting rows matched this request.",
+    meetings,
+  };
+}
+
 function withTrace<TInput extends Record<string, unknown>, TResult>(
   name: string,
   options: CreateProjectToolsOptions,
@@ -165,6 +391,108 @@ export function createProjectTools(
     ...scheduleTools,
     ...appHelpTools,
     ...forecastTools,
+
+    getMeetingIntelligence: tool({
+      description:
+        "Return structured meeting intelligence for completed meetings, risks, decisions, action items, and meeting insights. " +
+        "Use this for prompts like 'tell me about the meetings completed today', 'what insights did you gain from meetings', " +
+        "'were any critical risks identified in meetings', or 'what decisions/action items came out of meetings'. " +
+        "The output is designed for generative UI rendering as meeting intelligence cards.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Optional project ID to scope the meeting lookup"),
+        projectName: z.string().optional().describe("Optional project name to resolve if projectId is unknown"),
+        startDate: z.string().optional().describe("Start date in YYYY-MM-DD format"),
+        endDate: z.string().optional().describe("End date in YYYY-MM-DD format"),
+        relativeWindow: z
+          .enum(["today", "yesterday", "last_7_days", "last_30_days", "last_60_days"])
+          .optional()
+          .default("today")
+          .describe("Common date window when explicit dates are not provided"),
+        intent: z
+          .enum(["completed", "insights", "risks", "decisions", "actions", "summary"])
+          .optional()
+          .default("summary")
+          .describe("The meeting intelligence angle requested by the user"),
+        limit: z.number().optional().default(10).describe("Maximum number of meetings to return"),
+        timeZone: z.string().optional().default("America/New_York").describe("User timezone for relative windows"),
+      }),
+      execute: withTrace(
+        "getMeetingIntelligence",
+        options,
+        async ({ projectId, projectName, startDate, endDate, relativeWindow, intent, limit, timeZone }) => {
+          const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+          if (scopedProjectIds.length === 0) {
+            return {
+              ...buildMeetingIntelligenceFromRows({
+                rows: [],
+                insights: [],
+                dateLabel: startDate && endDate ? `${startDate} to ${endDate}` : "No accessible project scope",
+                intent: intent ?? "summary",
+                limit: limit ?? 10,
+              }),
+              error:
+                "You do not have access to that project or no project scope is available for this meeting lookup.",
+            };
+          }
+
+          let resolvedProjectId = projectId;
+          if (!resolvedProjectId && projectName) {
+            const resolved = await guardrails.getScopedProjectIds();
+            const { data } = await supabase
+              .from("projects")
+              .select("id")
+              .in("id", resolved)
+              .ilike("name", `%${projectName}%`)
+              .limit(1)
+              .maybeSingle();
+            resolvedProjectId = typeof data?.id === "number" ? data.id : undefined;
+          }
+
+          const window = windowFromInput({ startDate, endDate, relativeWindow, timeZone });
+          const targetLimit = Math.min(Math.max(limit ?? 10, 1), 25);
+          let meetingQuery = supabase
+            .from("document_metadata")
+            .select(
+              "id,title,source,source_system,category,type,date,created_at,content,summary,overview,action_items,decisions,bullet_points,project,project_id",
+            )
+            .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+            .gte("date", window.startIso)
+            .lte("date", window.endIso)
+            .order("date", { ascending: false })
+            .limit(targetLimit);
+
+          if (typeof resolvedProjectId === "number") {
+            meetingQuery = meetingQuery.eq("project_id", resolvedProjectId);
+          } else {
+            meetingQuery = meetingQuery.in("project_id", scopedProjectIds);
+          }
+
+          const { data: meetingRows, error } = await meetingQuery;
+          if (error) {
+            throw new Error(`Meeting intelligence lookup failed: ${error.message}`);
+          }
+
+          const ids = ((meetingRows ?? []) as AnyRow[]).map((row) => String(row.id)).filter(Boolean);
+          const { data: insightRows, error: insightError } = ids.length > 0
+            ? await supabase
+                .from("insights")
+                .select("metadata_id,type,description,owner_name,status,details,created_at")
+                .in("metadata_id", ids)
+            : { data: [], error: null };
+          if (insightError) {
+            throw new Error(`Meeting insight lookup failed: ${insightError.message}`);
+          }
+
+          return buildMeetingIntelligenceFromRows({
+            rows: (meetingRows ?? []) as AnyRow[],
+            insights: (insightRows ?? []) as AnyRow[],
+            dateLabel: window.dateLabel,
+            intent: intent ?? "summary",
+            limit: targetLimit,
+          });
+        },
+      ),
+    }),
 
     getProjectBriefingSnapshot: tool({
       description:

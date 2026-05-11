@@ -14,8 +14,11 @@
  * @see frontend/src/lib/ai/tools/tool-utils.ts
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import OpenAI from "openai";
-import { withTrace, withWriteTrace, asNumber, isBriefingQuery, rankBriefingSourcePriority, generateEmbedding, EMBEDDING, rerankWithLLM, isToolErrorResult, getOpenAIModelId } from "../tool-utils";
+import { z } from "zod";
+import { withTrace, withWriteTrace, defineReadTool, defineWriteTool, asNumber, isBriefingQuery, rankBriefingSourcePriority, generateEmbedding, EMBEDDING, rerankWithLLM, isToolErrorResult, getOpenAIModelId } from "../tool-utils";
 import type { ToolTracePayload } from "../tool-utils";
 import { isMissingBudgetViewError } from "../financial";
 
@@ -260,8 +263,74 @@ describe("withWriteTrace()", () => {
 });
 
 // ---------------------------------------------------------------------------
+// defineReadTool / defineWriteTool — production tool construction guardrail
+// ---------------------------------------------------------------------------
+
+describe("shared AI SDK tool constructors", () => {
+  it("defineReadTool wraps thrown executor failures in the typed ToolErrorResult envelope", async () => {
+    const traces: ToolTracePayload[] = [];
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const readTool = defineReadTool("readPacket", { onTrace: (t) => traces.push(t) }, {
+      description: "Read packet",
+      inputSchema: z.object({ requestId: z.string().uuid() }),
+      errorGuidance: "Tell the user the packet lookup failed.",
+      execute: async () => {
+        throw new Error("database unavailable");
+      },
+    });
+
+    const result = await readTool.execute?.({
+      requestId: "00000000-0000-4000-8000-000000000001",
+    }, {
+      toolCallId: "tool-call-1",
+      messages: [],
+    });
+
+    expect(result).toEqual({
+      __toolError: true,
+      source: "readPacket",
+      message: "database unavailable",
+      guidance: "Tell the user the packet lookup failed.",
+    });
+    expect(traces[0].error).toBe("database unavailable");
+    errorSpy.mockRestore();
+  });
+
+  it("defineWriteTool rethrows executor failures so mutation failures fail loudly", async () => {
+    const traces: ToolTracePayload[] = [];
+    const writeTool = defineWriteTool("writePacket", { onTrace: (t) => traces.push(t) }, {
+      description: "Write packet",
+      inputSchema: z.object({ requestId: z.string().uuid() }),
+      execute: async () => {
+        throw new Error("insert failed");
+      },
+    });
+
+    await expect(writeTool.execute?.({
+      requestId: "00000000-0000-4000-8000-000000000001",
+    }, {
+      toolCallId: "tool-call-1",
+      messages: [],
+    })).rejects.toThrow("insert failed");
+    expect(traces[0].error).toBe("insert failed");
+  });
+
+  it("keeps feature request tools on shared constructors instead of direct tool() calls", () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, "../feature-request-tools.ts"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("from \"ai\"");
+    expect(source).not.toContain("tool({");
+    expect(source).toContain("defineReadTool(");
+    expect(source).toContain("defineWriteTool(");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // getOpenAI() — tested via module isolation to reset the lazy singleton
-// Regression guard: direct OpenAI is default; Gateway requires explicit opt-in.
+// Regression guard: Gateway is preferred when AI_GATEWAY_API_KEY is configured.
 // ---------------------------------------------------------------------------
 
 describe("getOpenAI()", () => {
@@ -277,7 +346,7 @@ describe("getOpenAI()", () => {
     process.env = ORIG_ENV;
   });
 
-  it("uses direct OpenAI by default even when AI_GATEWAY_API_KEY is set", async () => {
+  it("uses AI Gateway by default when AI_GATEWAY_API_KEY is set", async () => {
     process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
     process.env.OPENAI_API_KEY = "test-openai-key";
     delete process.env.AI_PROVIDER_PATH;
@@ -285,10 +354,10 @@ describe("getOpenAI()", () => {
     const { getOpenAI } = await import("../tool-utils");
     const client = getOpenAI();
     const baseURL = readOpenAIBaseURL(client);
-    expect(baseURL).not.toContain("ai-gateway.vercel.sh");
+    expect(baseURL).toContain("ai-gateway.vercel.sh");
   });
 
-  it("uses AI Gateway only when AI_PROVIDER_PATH=vercel_gateway", async () => {
+  it("uses AI Gateway when AI_PROVIDER_PATH=vercel_gateway", async () => {
     process.env.AI_PROVIDER_PATH = "vercel_gateway";
     process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
     delete process.env.OPENAI_API_KEY;
@@ -365,8 +434,8 @@ describe("isMissingBudgetViewError (#294 regression)", () => {
 // generateEmbedding — H1 regression guard (#294 review)
 //
 // Guards:
-// 1. Gateway prefix "openai/<model>" applied only when AI_PROVIDER_PATH=vercel_gateway
-// 2. Bare model name used on the default direct OpenAI path
+// 1. Gateway prefix "openai/<model>" applied when AI Gateway is selected
+// 2. Bare model name used on the direct OpenAI path
 // 3. dimensions omitted for SMALL config (vector(1536) default)
 // 4. dimensions included for LARGE config (halfvec(3072))
 // 5. Return value is JSON-stringified (do NOT double-stringify)
@@ -399,13 +468,13 @@ describe("generateEmbedding() (#294 H1 regression guard)", () => {
     expect(parsed).toEqual(FAKE_LARGE);
   });
 
-  it("uses bare model name by default even when AI_GATEWAY_API_KEY is set", async () => {
+  it("uses gateway-prefixed model name by default when AI_GATEWAY_API_KEY is set", async () => {
     process.env.AI_GATEWAY_API_KEY = "test-key";
     delete process.env.AI_PROVIDER_PATH;
     const openai = mockOpenAI();
     await generateEmbedding(openai, "hello", EMBEDDING.LARGE);
     const call = (openai.embeddings.create as jest.Mock).mock.calls[0][0];
-    expect(call.model).toBe("text-embedding-3-large");
+    expect(call.model).toBe("openai/text-embedding-3-large");
   });
 
   it("applies gateway prefix when AI_PROVIDER_PATH=vercel_gateway", async () => {

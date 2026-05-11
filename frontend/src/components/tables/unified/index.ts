@@ -1,6 +1,6 @@
 "use client";
 
-export { TableToolbar, type ColumnConfig, type FilterConfig, type TableToolbarFeatures, type TableToolbarProps, type ViewMode } from "./table-toolbar";
+export { TableToolbar, DensityToggle, type ColumnConfig, type FilterConfig, type TableToolbarFeatures, type TableToolbarProps, type ViewMode, type TableDensity } from "./table-toolbar";
 export { DetailPanel, type DetailPanelProps, type DetailFieldConfig, type RelatedSectionConfig } from "./detail-panel";
 export {
   TableCountIndicator,

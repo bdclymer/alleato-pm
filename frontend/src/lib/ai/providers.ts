@@ -14,8 +14,8 @@ import {
 const THINKING_SUFFIX_REGEX = /-thinking$/;
 
 // ---------------------------------------------------------------------------
-// Direct OpenAI is the default provider path.
-// Vercel AI Gateway is opt-in with AI_PROVIDER_PATH=vercel_gateway.
+// AI Gateway is preferred when AI_GATEWAY_API_KEY is configured.
+// Direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key.
 // ---------------------------------------------------------------------------
 
 const openaiClientConfig = isTestEnvironment

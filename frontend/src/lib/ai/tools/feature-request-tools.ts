@@ -1,6 +1,5 @@
-import { tool } from "ai";
 import { z } from "zod";
-import type { ToolTracePayload } from "./tool-utils";
+import { defineReadTool, defineWriteTool, type ToolTracePayload } from "./tool-utils";
 import {
   attachLinearIssueToFeatureRequest,
   attachLinearSubIssueToFeatureRequest,
@@ -36,33 +35,28 @@ const requestTypeSchema = z.enum([
 ]);
 
 const stringArraySchema = z.array(z.string()).default([]);
+const optionalStringArraySchema = z.array(z.string()).optional();
+const featureRequestIdSchema = z.string().uuid().describe("Feature request packet UUID");
+const featureSubIssueIdSchema = z.string().uuid().describe("Feature request Linear sub-issue draft UUID");
+const linearIssueIdSchema = z.string().min(1).describe("Linear issue ID, for example AAI-123");
+const projectIdSchema = z.number().int().positive();
 
-function trace(
-  options: FeatureRequestToolsOptions,
-  toolName: string,
-  input: Record<string, unknown>,
-  output: unknown,
-) {
-  options.onTrace?.({
-    tool: toolName,
-    input,
-    output,
-    timestamp: new Date().toISOString(),
-  });
-}
+const FEATURE_REQUEST_READ_ERROR_GUIDANCE =
+  "Feature request packet data could not be checked. Tell the user exactly which packet lookup failed, then continue with any other available context instead of presenting missing data as fact.";
 
 export function createFeatureRequestTools(
   userId: string,
   options: FeatureRequestToolsOptions = {},
 ) {
   return {
-    findRelatedFeatureRequests: tool({
+    findRelatedFeatureRequests: defineReadTool("findRelatedFeatureRequests", options, {
       description:
         "Find existing AIS feature request packets before creating a duplicate. Use this before captureFeatureRequestPacket when a stakeholder asks for a feature, workflow improvement, dashboard, report, automation, AI capability, integration, data cleanup, or permission/admin change.",
       inputSchema: z.object({
-        query: z.string().describe("Request title, raw wording, or keywords to match against existing packets."),
-        projectId: z.number().optional().describe("Project ID when the request is project-scoped."),
+        query: z.string().min(2).describe("Request title, raw wording, or keywords to match against existing packets."),
+        projectId: projectIdSchema.optional().describe("Project ID when the request is project-scoped."),
       }),
+      errorGuidance: FEATURE_REQUEST_READ_ERROR_GUIDANCE,
       execute: async (input) => {
         const requests = await findRelatedFeatureRequests({
           query: input.query,
@@ -78,22 +72,21 @@ export function createFeatureRequestTools(
             detailHref: `/ai-assistant/feature-requests/${request.id}`,
           })),
         };
-        trace(options, "findRelatedFeatureRequests", input, output);
         return output;
       },
     }),
 
-    captureFeatureRequestPacket: tool({
+    captureFeatureRequestPacket: defineWriteTool("captureFeatureRequestPacket", options, {
       description:
         "Create a durable AIS feature request packet from stakeholder wording. Preserve raw wording exactly, summarize separately, add implementation-critical open questions, and return a feature_request_packet widget payload. Do not use this for lightweight bug board feedback unless the user wants implementation-ready packet work.",
       inputSchema: z.object({
-        title: z.string().optional(),
-        requesterName: z.string().default("Brandon"),
+        title: z.string().min(2).optional(),
+        requesterName: z.string().min(1).default("Brandon"),
         requestType: requestTypeSchema.default("workflow_improvement"),
-        rawRequest: z.string().describe("Exact stakeholder wording. Preserve it separately from the summary."),
-        assistantSummary: z.string().describe("Plain-English AIS understanding of the request."),
-        stakeholderProblem: z.string().optional(),
-        desiredOutcome: z.string().optional(),
+        rawRequest: z.string().min(5).describe("Exact stakeholder wording. Preserve it separately from the summary."),
+        assistantSummary: z.string().min(5).describe("Plain-English AIS understanding of the request."),
+        stakeholderProblem: z.string().min(2).optional(),
+        desiredOutcome: z.string().min(2).optional(),
         affectedUsers: stringArraySchema,
         affectedPages: stringArraySchema,
         affectedWorkflows: stringArraySchema,
@@ -102,8 +95,8 @@ export function createFeatureRequestTools(
         openQuestions: stringArraySchema,
         assumptions: stringArraySchema,
         priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
-        projectId: z.number().optional(),
-        linearDraftBody: z.string().optional(),
+        projectId: projectIdSchema.optional(),
+        linearDraftBody: z.string().min(10).optional(),
       }),
       execute: async (input) => {
         const request = await captureFeatureRequestPacket({
@@ -130,30 +123,29 @@ export function createFeatureRequestTools(
           detailHref: widget.detailHref,
           widget,
         };
-        trace(options, "captureFeatureRequestPacket", input, output);
         return output;
       },
     }),
 
-    updateFeatureRequestPacket: tool({
+    updateFeatureRequestPacket: defineWriteTool("updateFeatureRequestPacket", options, {
       description:
         "Update an existing AIS feature request packet with clarified scope, acceptance criteria, verification steps, assumptions, Linear draft data, or readiness-relevant details.",
       inputSchema: z.object({
-        requestId: z.string(),
-        title: z.string().optional(),
-        assistantSummary: z.string().optional(),
-        desiredOutcome: z.string().optional(),
-        affectedUsers: z.array(z.string()).optional(),
-        affectedPages: z.array(z.string()).optional(),
-        affectedWorkflows: z.array(z.string()).optional(),
-        acceptanceCriteria: z.array(z.string()).optional(),
-        verificationSteps: z.array(z.string()).optional(),
-        openQuestions: z.array(z.string()).optional(),
-        assumptions: z.array(z.string()).optional(),
+        requestId: featureRequestIdSchema,
+        title: z.string().min(2).optional(),
+        assistantSummary: z.string().min(5).optional(),
+        desiredOutcome: z.string().min(2).optional(),
+        affectedUsers: optionalStringArraySchema,
+        affectedPages: optionalStringArraySchema,
+        affectedWorkflows: optionalStringArraySchema,
+        acceptanceCriteria: optionalStringArraySchema,
+        verificationSteps: optionalStringArraySchema,
+        openQuestions: optionalStringArraySchema,
+        assumptions: optionalStringArraySchema,
         priority: z.enum(["low", "medium", "high", "critical"]).optional(),
-        linearIssueId: z.string().optional(),
-        linearIssueUrl: z.string().optional(),
-        linearDraftBody: z.string().optional(),
+        linearIssueId: linearIssueIdSchema.optional(),
+        linearIssueUrl: z.string().url().optional(),
+        linearDraftBody: z.string().min(10).optional(),
       }),
       execute: async (input) => {
         const request = await updateFeatureRequestPacket(input.requestId, {
@@ -172,17 +164,17 @@ export function createFeatureRequestTools(
             latestPlan: detail?.latestPlan ?? null,
           }),
         };
-        trace(options, "updateFeatureRequestPacket", input, output);
         return output;
       },
     }),
 
-    scoreFeatureRequestReadiness: tool({
+    scoreFeatureRequestReadiness: defineReadTool("scoreFeatureRequestReadiness", options, {
       description:
         "Score whether a feature request packet is ready for build. Use this before marking anything ready for Claude Code/Codex implementation.",
       inputSchema: z.object({
-        requestId: z.string(),
+        requestId: featureRequestIdSchema,
       }),
+      errorGuidance: FEATURE_REQUEST_READ_ERROR_GUIDANCE,
       execute: async (input) => {
         const detail = await getFeatureRequestDetail(input.requestId);
         if (!detail) {
@@ -197,26 +189,25 @@ export function createFeatureRequestTools(
           requestId: input.requestId,
           ...readiness,
         };
-        trace(options, "scoreFeatureRequestReadiness", input, output);
         return output;
       },
     }),
 
-    generateImplementationPlan: tool({
+    generateImplementationPlan: defineWriteTool("generateImplementationPlan", options, {
       description:
         "Generate and persist an implementation plan for an AIS feature request packet. This does not make the request ready for build by itself.",
       inputSchema: z.object({
-        requestId: z.string(),
-        summary: z.string().optional(),
-        affectedRoutes: z.array(z.string()).optional(),
-        affectedComponents: z.array(z.string()).optional(),
-        affectedTables: z.array(z.string()).optional(),
-        dataRequirements: z.array(z.string()).optional(),
-        implementationSteps: z.array(z.string()).optional(),
-        acceptanceCriteria: z.array(z.string()).optional(),
-        verificationSteps: z.array(z.string()).optional(),
-        risks: z.array(z.string()).optional(),
-        openQuestions: z.array(z.string()).optional(),
+        requestId: featureRequestIdSchema,
+        summary: z.string().min(5).optional(),
+        affectedRoutes: optionalStringArraySchema,
+        affectedComponents: optionalStringArraySchema,
+        affectedTables: optionalStringArraySchema,
+        dataRequirements: optionalStringArraySchema,
+        implementationSteps: optionalStringArraySchema,
+        acceptanceCriteria: optionalStringArraySchema,
+        verificationSteps: optionalStringArraySchema,
+        risks: optionalStringArraySchema,
+        openQuestions: optionalStringArraySchema,
       }),
       execute: async (input) => {
         const plan = await generateImplementationPlan({
@@ -239,17 +230,16 @@ export function createFeatureRequestTools(
               })
             : null,
         };
-        trace(options, "generateImplementationPlan", input, output);
         return output;
       },
     }),
 
-    generateClaudeCodeHandoff: tool({
+    generateClaudeCodeHandoff: defineWriteTool("generateClaudeCodeHandoff", options, {
       description:
         "Generate a Claude Code/Codex handoff markdown file from a feature request packet and latest implementation plan. If readiness is blocked, the handoff must include the missing requirements instead of pretending it is ready.",
       inputSchema: z.object({
-        requestId: z.string(),
-        sessionLabel: z.string().default("SAIS"),
+        requestId: featureRequestIdSchema,
+        sessionLabel: z.string().min(2).default("SAIS"),
       }),
       execute: async (input) => {
         const handoff = await generateClaudeCodeHandoff({
@@ -268,16 +258,15 @@ export function createFeatureRequestTools(
             latestPlan: handoff.plan,
           }),
         };
-        trace(options, "generateClaudeCodeHandoff", input, output);
         return output;
       },
     }),
 
-    draftLinearIssueFromFeatureRequest: tool({
+    draftLinearIssueFromFeatureRequest: defineWriteTool("draftLinearIssueFromFeatureRequest", options, {
       description:
         "Generate and persist a Linear parent issue draft from an AIS feature request packet. This only drafts the Linear issue body in the packet; use attachLinearIssueToFeatureRequest after the Linear connector creates the real issue.",
       inputSchema: z.object({
-        requestId: z.string(),
+        requestId: featureRequestIdSchema,
       }),
       execute: async (input) => {
         const result = await draftLinearIssueFromFeatureRequest({
@@ -298,21 +287,20 @@ export function createFeatureRequestTools(
               })
             : null,
         };
-        trace(options, "draftLinearIssueFromFeatureRequest", input, output);
         return output;
       },
     }),
 
-    draftLinearSubIssuesFromImplementationPlan: tool({
+    draftLinearSubIssuesFromImplementationPlan: defineWriteTool("draftLinearSubIssuesFromImplementationPlan", options, {
       description:
         "Generate and persist Linear sub-issue drafts from a feature request's latest implementation plan. Use this when the plan has multiple implementation steps, owners, routes, data changes, or verification slices.",
       inputSchema: z.object({
-        requestId: z.string(),
+        requestId: featureRequestIdSchema,
         drafts: z.array(z.object({
-          title: z.string(),
-          body: z.string(),
-          sourceStep: z.string().optional(),
-          sortOrder: z.number().optional(),
+          title: z.string().min(2),
+          body: z.string().min(10),
+          sourceStep: z.string().min(2).optional(),
+          sortOrder: z.number().int().nonnegative().optional(),
         })).optional(),
       }),
       execute: async (input) => {
@@ -336,17 +324,16 @@ export function createFeatureRequestTools(
             linearIssueUrl: draft.linear_issue_url,
           })),
         };
-        trace(options, "draftLinearSubIssuesFromImplementationPlan", input, output);
         return output;
       },
     }),
 
-    attachLinearIssueToFeatureRequest: tool({
+    attachLinearIssueToFeatureRequest: defineWriteTool("attachLinearIssueToFeatureRequest", options, {
       description:
         "Attach a real Linear issue ID and URL to an AIS feature request packet after the Linear connector creates the issue. Use this to close the loop back to the packet.",
       inputSchema: z.object({
-        requestId: z.string(),
-        linearIssueId: z.string(),
+        requestId: featureRequestIdSchema,
+        linearIssueId: linearIssueIdSchema,
         linearIssueUrl: z.string().url(),
       }),
       execute: async (input) => {
@@ -368,19 +355,18 @@ export function createFeatureRequestTools(
               })
             : null,
         };
-        trace(options, "attachLinearIssueToFeatureRequest", input, output);
         return output;
       },
     }),
 
-    attachLinearSubIssueToFeatureRequest: tool({
+    attachLinearSubIssueToFeatureRequest: defineWriteTool("attachLinearSubIssueToFeatureRequest", options, {
       description:
         "Attach a real Linear sub-issue ID and URL to a packet sub-issue draft after the Linear connector creates the Linear child issue.",
       inputSchema: z.object({
-        subIssueId: z.string(),
-        linearIssueId: z.string(),
+        subIssueId: featureSubIssueIdSchema,
+        linearIssueId: linearIssueIdSchema,
         linearIssueUrl: z.string().url(),
-        linearState: z.string().optional(),
+        linearState: z.string().min(1).optional(),
       }),
       execute: async (input) => {
         const subIssue = await attachLinearSubIssueToFeatureRequest({
@@ -396,21 +382,20 @@ export function createFeatureRequestTools(
           linearIssueId: subIssue.linear_issue_id,
           linearIssueUrl: subIssue.linear_issue_url,
         };
-        trace(options, "attachLinearSubIssueToFeatureRequest", input, output);
         return output;
       },
     }),
 
-    recordLinearStatusUpdateForFeatureRequest: tool({
+    recordLinearStatusUpdateForFeatureRequest: defineWriteTool("recordLinearStatusUpdateForFeatureRequest", options, {
       description:
         "Record a Linear status or comment sync event back onto the AIS feature request packet. Use this after checking Linear so packet history reflects execution state without losing stakeholder context.",
       inputSchema: z.object({
-        requestId: z.string(),
-        linearIssueId: z.string().optional(),
-        linearState: z.string().optional(),
-        commentBody: z.string().optional(),
+        requestId: featureRequestIdSchema,
+        linearIssueId: linearIssueIdSchema.optional(),
+        linearState: z.string().min(1).optional(),
+        commentBody: z.string().min(1).optional(),
         syncStatus: z.enum(["synced", "blocked"]).optional(),
-        syncError: z.string().optional(),
+        syncError: z.string().min(1).optional(),
       }),
       execute: async (input) => {
         const request = await recordLinearStatusUpdateForFeatureRequest({
@@ -435,7 +420,6 @@ export function createFeatureRequestTools(
               })
             : null,
         };
-        trace(options, "recordLinearStatusUpdateForFeatureRequest", input, output);
         return output;
       },
     }),

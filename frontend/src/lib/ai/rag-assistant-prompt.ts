@@ -348,7 +348,9 @@ You are not read-only. You can create and update records in Alleato. Always show
 | "Mark RFI #[n] as answered/closed" | \`updateRFIStatus\` |
 | "Create a submittal for [spec section]" | \`createSubmittal\` |
 | "Set up a subcontract / PO with [vendor]" | \`createCommitment\` |
-| "Create a task / assign [person] to [work]" | \`createTask\` |
+| "Create a Tasks page task / add an action item / assign [person] to [work]" | \`createGeneratedTask\` |
+| "Create a schedule/Gantt task" | \`createTask\` |
+| "Modify, reassign, close, or delete a Tasks page task" | \`updateGeneratedTask\` or \`deleteGeneratedTask\` |
 | "Log today's daily report / site activity" | \`logDailyReport\` |
 | "Log notes from today's meeting" | \`createMeetingNote\` |
 | "Flag a risk / log an issue / mark as concern" | \`flagProjectRisk\` |

@@ -42,7 +42,7 @@ describe("AI provider config", () => {
     });
   });
 
-  it("uses Vercel AI Gateway only when explicitly selected", () => {
+  it("uses Vercel AI Gateway when explicitly selected", () => {
     process.env.AI_PROVIDER_PATH = "vercel_gateway";
     process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
     delete process.env.OPENAI_API_KEY;

@@ -13,6 +13,7 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   SquarePenIcon,
+  UsersRoundIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,7 +30,9 @@ import type {
   CreateTaskWidgetPayload,
   DecisionPacketWidgetPayload,
   DraftEmailWidgetPayload,
+  MeetingIntelligenceWidgetPayload,
   ProjectActionPreviewWidgetPayload,
+  TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
 import type { FeatureRequestPacketWidgetPayload } from "@/lib/feature-requests/types";
 
@@ -196,7 +199,7 @@ function CreateTaskWidget({
   const [assignee, setAssignee] = useState(widget.defaultAssignee ?? "");
   const projectId = selectedProjectId ?? widget.projectId ?? null;
   const taskPrompt = [
-    "Create this task. Show the final write preview first and wait for my confirmation.",
+    "Create this as a Tasks page task using createGeneratedTask. Show the final write preview first and wait for my confirmation.",
     `Project ID: ${projectId ?? "[resolve project first]"}`,
     `Title: ${title}`,
     `Assignee: ${assignee || "Unassigned"}`,
@@ -234,6 +237,228 @@ function CreateTaskWidget({
           Edit in chat
         </Button>
       </div>
+    </WidgetShell>
+  );
+}
+
+function formatDateLabel(value?: string | null) {
+  if (!value) return null;
+  const dateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(Number(year), Number(month) - 1, Number(day)));
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function TaskSummaryWidget({ widget }: { widget: TaskSummaryWidgetPayload }) {
+  return (
+    <WidgetShell
+      eyebrow="Verified task register"
+      title={widget.title}
+      icon={<CheckCircle2Icon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.totalCount} tasks</Badge>}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <span className="text-muted-foreground">{widget.subtitle}</span>
+        <span className="font-medium text-foreground">{widget.dateLabel}</span>
+      </div>
+
+      {widget.items.length === 0 ? (
+        <InfoAlert>
+          <span>{widget.emptyState ?? "No task rows matched this request."}</span>
+        </InfoAlert>
+      ) : (
+        <div className="divide-y divide-border/70">
+          {widget.items.map((task) => (
+            <div key={task.id} className="grid gap-2 py-3 first:pt-0 last:pb-0">
+              <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                <Link
+                  href={task.href}
+                  className="min-w-0 text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+                >
+                  {task.title}
+                </Link>
+                <div className="flex shrink-0 flex-wrap gap-1.5">
+                  {task.status ? <Badge variant="secondary">{task.status}</Badge> : null}
+                  {task.priority ? <Badge variant="outline">{task.priority}</Badge> : null}
+                </div>
+              </div>
+              {task.description ? (
+                <p className="line-clamp-2 text-sm text-muted-foreground">
+                  {task.description}
+                </p>
+              ) : null}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                {task.assigneeName ? <span>Owner: {task.assigneeName}</span> : null}
+                {task.projectName ? <span>Project: {task.projectName}</span> : null}
+                {task.dueDate ? <span>Due: {formatDateLabel(task.dueDate)}</span> : null}
+                {task.sourceTitle ? <span>Source: {task.sourceTitle}</span> : null}
+                <span>Created: {formatDateLabel(task.createdAt) ?? task.createdAt}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </WidgetShell>
+  );
+}
+
+function toTextList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+function normalizeMeetingToolOutput(output: unknown): MeetingIntelligenceWidgetPayload | null {
+  const record = asRecord(output);
+  if (record.type === "meeting_intelligence") {
+    return record as MeetingIntelligenceWidgetPayload;
+  }
+
+  const meetings = Array.isArray(record.meetings) ? record.meetings : [];
+  if (meetings.length === 0 && typeof record.meetingCount !== "number") return null;
+
+  return {
+    type: "meeting_intelligence",
+    id: typeof record.id === "string" ? record.id : "meeting-intelligence",
+    title: typeof record.title === "string" ? record.title : "Meeting intelligence",
+    subtitle: typeof record.subtitle === "string" ? record.subtitle : "Structured meeting readout",
+    dateLabel: typeof record.dateLabel === "string" ? record.dateLabel : "Selected window",
+    meetingCount: typeof record.meetingCount === "number" ? record.meetingCount : meetings.length,
+    criticalRiskCount: typeof record.criticalRiskCount === "number" ? record.criticalRiskCount : 0,
+    decisionCount: typeof record.decisionCount === "number" ? record.decisionCount : 0,
+    actionItemCount: typeof record.actionItemCount === "number" ? record.actionItemCount : 0,
+    topInsights: toTextList(record.topInsights),
+    recommendedNextActions: toTextList(record.recommendedNextActions),
+    emptyState: typeof record.emptyState === "string" ? record.emptyState : undefined,
+    meetings: meetings.map((item, index) => {
+      const meeting = asRecord(item);
+      const id = typeof meeting.id === "string" ? meeting.id : `meeting-${index + 1}`;
+      const projectId = typeof meeting.projectId === "number" ? meeting.projectId : null;
+      return {
+        id,
+        title: typeof meeting.title === "string" ? meeting.title : "Untitled meeting",
+        projectId,
+        projectName: typeof meeting.projectName === "string" ? meeting.projectName : null,
+        date: typeof meeting.date === "string" ? meeting.date : null,
+        source: typeof meeting.source === "string" ? meeting.source : null,
+        summary: typeof meeting.summary === "string" ? meeting.summary : null,
+        criticalRisks: toTextList(meeting.criticalRisks),
+        decisions: toTextList(meeting.decisions),
+        actionItems: toTextList(meeting.actionItems),
+        href: typeof meeting.href === "string" ? meeting.href : projectId ? `/${projectId}/meetings/${id}` : `/meetings/${id}`,
+      };
+    }),
+  };
+}
+
+function MeetingIntelligenceWidget({ widget }: { widget: MeetingIntelligenceWidgetPayload }) {
+  return (
+    <WidgetShell
+      eyebrow="Meeting intelligence"
+      title={widget.title}
+      icon={<UsersRoundIcon className="h-4 w-4" />}
+      actions={<Badge variant="outline">{widget.meetingCount} meetings</Badge>}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <span className="text-muted-foreground">{widget.subtitle}</span>
+        <span className="font-medium text-foreground">{widget.dateLabel}</span>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-4">
+        {[
+          ["Meetings", widget.meetingCount],
+          ["Critical risks", widget.criticalRiskCount],
+          ["Decisions", widget.decisionCount],
+          ["Action items", widget.actionItemCount],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-md bg-muted/40 px-3 py-2">
+            <div className="text-[11px] font-medium uppercase text-muted-foreground">{label}</div>
+            <div className="mt-1 text-lg font-semibold text-foreground">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {widget.topInsights.length > 0 ? (
+        <div>
+          <div className="text-xs font-medium text-muted-foreground">Top insights</div>
+          <ul className="mt-1 space-y-1 text-sm text-foreground">
+            {widget.topInsights.slice(0, 4).map((insight) => (
+              <li key={insight} className="flex gap-2">
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                <span>{insight}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {widget.meetings.length === 0 ? (
+        <InfoAlert>
+          <span>{widget.emptyState ?? "No meeting rows matched this request."}</span>
+        </InfoAlert>
+      ) : (
+        <div className="divide-y divide-border/70">
+          {widget.meetings.map((meeting) => (
+            <div key={meeting.id} className="grid gap-2 py-3 first:pt-0 last:pb-0">
+              <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                <Link
+                  href={meeting.href}
+                  className="min-w-0 text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+                >
+                  {meeting.title}
+                </Link>
+                <div className="flex shrink-0 flex-wrap gap-1.5">
+                  {meeting.criticalRisks.length > 0 ? (
+                    <Badge variant="destructive">{meeting.criticalRisks.length} risks</Badge>
+                  ) : null}
+                  {meeting.decisions.length > 0 ? (
+                    <Badge variant="secondary">{meeting.decisions.length} decisions</Badge>
+                  ) : null}
+                </div>
+              </div>
+              {meeting.summary ? (
+                <p className="line-clamp-2 text-sm text-muted-foreground">{meeting.summary}</p>
+              ) : null}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                {meeting.projectName ? <span>Project: {meeting.projectName}</span> : null}
+                {meeting.date ? <span>Date: {formatDateLabel(meeting.date) ?? meeting.date}</span> : null}
+                {meeting.source ? <span>Source: {meeting.source}</span> : null}
+                {meeting.actionItems.length > 0 ? <span>Actions: {meeting.actionItems.length}</span> : null}
+              </div>
+              {meeting.criticalRisks.length > 0 ? (
+                <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {meeting.criticalRisks[0]}
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {widget.recommendedNextActions.length > 0 ? (
+        <div>
+          <div className="text-xs font-medium text-muted-foreground">Recommended next actions</div>
+          <ul className="mt-1 space-y-1 text-sm text-foreground">
+            {widget.recommendedNextActions.slice(0, 3).map((action) => (
+              <li key={action} className="flex gap-2">
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                <span>{action}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </WidgetShell>
   );
 }
@@ -584,35 +809,90 @@ export function AssistantSourceEvidenceWidget({
   );
 }
 
+type AssistantWidgetRendererComponent = (props: AssistantWidgetRendererProps) => ReactNode;
+
+const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], AssistantWidgetRendererComponent> = {
+  draft_email: (props) =>
+    props.widget.type === "draft_email" ? (
+      <DraftEmailWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />
+    ) : null,
+  create_task: (props) =>
+    props.widget.type === "create_task" ? (
+      <CreateTaskWidget
+        widget={props.widget}
+        selectedProjectId={props.selectedProjectId}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
+  task_summary: (props) =>
+    props.widget.type === "task_summary" ? <TaskSummaryWidget widget={props.widget} /> : null,
+  meeting_intelligence: (props) =>
+    props.widget.type === "meeting_intelligence" ? <MeetingIntelligenceWidget widget={props.widget} /> : null,
+  create_event: (props) =>
+    props.widget.type === "create_event" ? (
+      <CreateEventWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />
+    ) : null,
+  project_action_preview: (props) =>
+    props.widget.type === "project_action_preview" ? (
+      <ProjectActionPreviewWidget
+        widget={props.widget}
+        selectedProjectId={props.selectedProjectId}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
+  decision_packet: (props) =>
+    props.widget.type === "decision_packet" ? (
+      <DecisionPacketWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
+  feature_request_packet: (props) =>
+    props.widget.type === "feature_request_packet" ? (
+      <FeatureRequestPacketWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
+};
+
+type AssistantToolPartForRegistry = {
+  type: string;
+  state: string;
+  output?: unknown;
+};
+
+const assistantToolComponentRegistry: Record<string, (output: unknown) => AssistantWidgetPayload | null> = {
+  getMeetingIntelligence: normalizeMeetingToolOutput,
+};
+
+export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegistry): boolean {
+  return Boolean(assistantToolComponentRegistry[part.type.replace(/^tool-/, "")]);
+}
+
+export function AssistantDynamicToolRenderer({
+  part,
+  selectedProjectId,
+  onSubmit,
+  onEditDraft,
+}: {
+  part: AssistantToolPartForRegistry;
+  selectedProjectId?: number | null;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  if (part.state !== "output-available") return null;
+  const toolName = part.type.replace(/^tool-/, "");
+  const buildWidget = assistantToolComponentRegistry[toolName];
+  if (!buildWidget) return null;
+  const widget = buildWidget(part.output);
+  if (!widget) return null;
+  return (
+    <AssistantWidgetRenderer
+      widget={widget}
+      selectedProjectId={selectedProjectId}
+      onSubmit={onSubmit}
+      onEditDraft={onEditDraft}
+    />
+  );
+}
+
 export function AssistantWidgetRenderer(props: AssistantWidgetRendererProps) {
-  switch (props.widget.type) {
-    case "draft_email":
-      return <DraftEmailWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />;
-    case "create_task":
-      return (
-        <CreateTaskWidget
-          widget={props.widget}
-          selectedProjectId={props.selectedProjectId}
-          onSubmit={props.onSubmit}
-          onEditDraft={props.onEditDraft}
-        />
-      );
-    case "create_event":
-      return <CreateEventWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />;
-    case "project_action_preview":
-      return (
-        <ProjectActionPreviewWidget
-          widget={props.widget}
-          selectedProjectId={props.selectedProjectId}
-          onSubmit={props.onSubmit}
-          onEditDraft={props.onEditDraft}
-        />
-      );
-    case "decision_packet":
-      return <DecisionPacketWidget widget={props.widget} onSubmit={props.onSubmit} />;
-    case "feature_request_packet":
-      return <FeatureRequestPacketWidget widget={props.widget} onSubmit={props.onSubmit} />;
-    default:
-      return null;
-  }
+  return assistantWidgetComponentRegistry[props.widget.type]?.(props) ?? null;
 }

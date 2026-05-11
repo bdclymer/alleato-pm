@@ -58,6 +58,19 @@ describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regres
     expect(result?.limit).toBe(10);
   });
 
+  it('returns meetings_on_date for "meetings completed today"', () => {
+    const result = detectSourceSpecificRagRequest("Tell me about the meetings that were completed today");
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("meetings_on_date");
+    expect(result?.date).toMatch(/^20\d{2}-\d{2}-\d{2}$/);
+  });
+
+  it('returns meetings_on_date for critical-risk meeting questions today', () => {
+    const result = detectSourceSpecificRagRequest("Were there any critical risks identified in the meetings today?");
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("meetings_on_date");
+  });
+
   it('still returns meetings_on_date for explicit Friday query', () => {
     const result = detectSourceSpecificRagRequest("what meetings were conducted on friday");
     expect(result).not.toBeNull();

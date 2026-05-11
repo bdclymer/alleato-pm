@@ -1,6 +1,8 @@
 export type AssistantWidgetKind =
   | "draft_email"
   | "create_task"
+  | "task_summary"
+  | "meeting_intelligence"
   | "create_event"
   | "project_action_preview"
   | "decision_packet"
@@ -33,6 +35,64 @@ export type CreateTaskWidgetPayload = {
   defaultAssignee?: string;
   defaultPriority: "low" | "normal" | "high" | "critical";
   projectId?: number | null;
+};
+
+export type TaskSummaryWidgetItem = {
+  id: string;
+  title: string;
+  description?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  dueDate?: string | null;
+  assigneeName?: string | null;
+  projectId?: number | null;
+  projectName?: string | null;
+  sourceTitle?: string | null;
+  sourceSystem?: string | null;
+  sourceDate?: string | null;
+  createdAt: string;
+  href: string;
+};
+
+export type TaskSummaryWidgetPayload = {
+  type: "task_summary";
+  id: string;
+  title: string;
+  subtitle: string;
+  totalCount: number;
+  dateLabel: string;
+  emptyState?: string;
+  items: TaskSummaryWidgetItem[];
+};
+
+export type MeetingIntelligenceWidgetItem = {
+  id: string;
+  title: string;
+  projectId?: number | null;
+  projectName?: string | null;
+  date?: string | null;
+  source?: string | null;
+  summary?: string | null;
+  criticalRisks: string[];
+  decisions: string[];
+  actionItems: string[];
+  href: string;
+};
+
+export type MeetingIntelligenceWidgetPayload = {
+  type: "meeting_intelligence";
+  id: string;
+  title: string;
+  subtitle: string;
+  dateLabel: string;
+  meetingCount: number;
+  criticalRiskCount: number;
+  decisionCount: number;
+  actionItemCount: number;
+  topInsights: string[];
+  recommendedNextActions: string[];
+  emptyState?: string;
+  meetings: MeetingIntelligenceWidgetItem[];
 };
 
 export type CreateEventWidgetPayload = {
@@ -72,6 +132,8 @@ export type DecisionPacketWidgetPayload = {
 export type AssistantWidgetPayload =
   | DraftEmailWidgetPayload
   | CreateTaskWidgetPayload
+  | TaskSummaryWidgetPayload
+  | MeetingIntelligenceWidgetPayload
   | CreateEventWidgetPayload
   | ProjectActionPreviewWidgetPayload
   | DecisionPacketWidgetPayload
@@ -274,6 +336,8 @@ export function isAssistantWidgetPayload(
     [
       "draft_email",
       "create_task",
+      "task_summary",
+      "meeting_intelligence",
       "create_event",
       "project_action_preview",
       "decision_packet",

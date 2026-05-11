@@ -464,10 +464,10 @@ export function MeetingDetailContent({
             {format(new Date(meeting.date), "EEEE, MMMM d, yyyy")}
           </span>
         ) : null}
-        {meeting.duration ? (
+        {meeting.duration_minutes ? (
           <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
-            {meeting.duration} min
+            {meeting.duration_minutes} min
           </span>
         ) : null}
         {projectLabel ? (
