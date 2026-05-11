@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -18,17 +19,17 @@ import {
 
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { SectionRuleHeading } from "@/components/layout";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type ColumnConfig,
+  type FilterConfig,
+  type FilterValue,
+  type TableColumn,
+} from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -155,6 +156,50 @@ const PIPELINE_GROUPS: Array<{ key: string; title: string }> = [
   { key: "graphSubscriptionsByStatus", title: "Graph subscriptions" },
 ];
 
+const stuckItemColumnConfig: ColumnConfig[] = [
+  { id: "resourceName", label: "Resource name", alwaysVisible: true },
+  { id: "source", label: "Source", defaultVisible: true },
+  { id: "resourceId", label: "Resource ID", defaultVisible: true },
+  { id: "stage", label: "Stage", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "ageMinutes", label: "Age", defaultVisible: true },
+  { id: "lastAttemptAt", label: "Last attempt", defaultVisible: true },
+  { id: "errorMessage", label: "Error", defaultVisible: true },
+];
+
+const stuckItemDefaultVisibleColumns = stuckItemColumnConfig
+  .filter((column) => column.defaultVisible || column.alwaysVisible)
+  .map((column) => column.id);
+
+const runLedgerColumnConfig: ColumnConfig[] = [
+  { id: "run", label: "Run", alwaysVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "finished", label: "Finished", defaultVisible: true },
+  { id: "itemsSeen", label: "Seen", defaultVisible: true },
+  { id: "itemsSynced", label: "Synced", defaultVisible: true },
+  { id: "itemsFailed", label: "Failed", defaultVisible: true },
+  { id: "errorMessage", label: "Error", defaultVisible: false },
+];
+
+const runLedgerDefaultVisibleColumns = runLedgerColumnConfig
+  .filter((column) => column.defaultVisible || column.alwaysVisible)
+  .map((column) => column.id);
+
+const sourceHealthColumnConfig: ColumnConfig[] = [
+  { id: "source", label: "Source", alwaysVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "lastSyncAt", label: "Last sync", defaultVisible: true },
+  { id: "staleMinutes", label: "Age", defaultVisible: true },
+  { id: "itemsSynced", label: "Synced", defaultVisible: true },
+  { id: "unembeddedCount", label: "Unembedded", defaultVisible: true },
+  { id: "uncompiledCount", label: "Uncompiled", defaultVisible: true },
+  { id: "lastErrorMessage", label: "Error", defaultVisible: false },
+];
+
+const sourceHealthDefaultVisibleColumns = sourceHealthColumnConfig
+  .filter((column) => column.defaultVisible || column.alwaysVisible)
+  .map((column) => column.id);
+
 function formatDate(value: string | null): string {
   if (!value) return "Never";
   const date = new Date(value);
@@ -179,6 +224,30 @@ function statusTotal(statuses: StatusMap): number {
 
 function humanizeToken(value: string): string {
   return value.replaceAll("_", " ").replaceAll("-", " ");
+}
+
+function normalizeSearchValue(value: string | null | undefined): string {
+  return humanizeToken(value ?? "").toLowerCase();
+}
+
+function csvEscape(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
+function downloadCsv(filename: string, headers: string[], rows: string[][]) {
+  const csv = [
+    headers.map(csvEscape).join(","),
+    ...rows.map((row) => row.map(csvEscape).join(",")),
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
 }
 
 function shortMessage(value: string | null, maxLength = 220): string | null {
@@ -578,219 +647,730 @@ function statusVariant(status: string): "active" | "destructive" | "outline" {
 }
 
 function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
+  const [visibleColumns, setVisibleColumns] = React.useState(
+    runLedgerDefaultVisibleColumns,
+  );
+  const [sortBy, setSortBy] = React.useState<string | null>("finished");
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
+    "desc",
+  );
+  const [page, setPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(25);
+
+  const columns = React.useMemo<TableColumn<SourceSyncRun>[]>(
+    () => [
+      {
+        id: "run",
+        label: "Run",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (run) => `${run.source} ${run.stage} ${run.resourceName ?? run.resourceId}`,
+        width: 280,
+        render: (run) => (
+          <span className="block truncate font-medium text-foreground" title={`${humanizeToken(run.source)} / ${humanizeToken(run.stage)}`}>
+            {humanizeToken(run.source)} / {humanizeToken(run.stage)}
+          </span>
+        ),
+        csvValue: (run) => `${humanizeToken(run.source)} / ${humanizeToken(run.stage)}`,
+      },
+      {
+        id: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (run) => run.status,
+        width: 140,
+        render: (run) => (
+          <Badge variant={statusVariant(run.status)} className="capitalize">
+            {humanizeToken(run.status)}
+          </Badge>
+        ),
+        csvValue: (run) => humanizeToken(run.status),
+      },
+      {
+        id: "finished",
+        label: "Finished",
+        sortable: true,
+        sortValue: (run) =>
+          run.finishedAt || run.startedAt
+            ? new Date(run.finishedAt || run.startedAt || "").getTime()
+            : 0,
+        width: 190,
+        render: (run) => (
+          <span className="text-muted-foreground">
+            {formatDate(run.finishedAt || run.startedAt)}
+          </span>
+        ),
+        csvValue: (run) => formatDate(run.finishedAt || run.startedAt),
+      },
+      {
+        id: "itemsSeen",
+        label: "Seen",
+        sortable: true,
+        sortValue: (run) => run.itemsSeen,
+        width: 100,
+        render: (run) => (
+          <span className="block text-right tabular-nums">{run.itemsSeen}</span>
+        ),
+        csvValue: (run) => String(run.itemsSeen),
+      },
+      {
+        id: "itemsSynced",
+        label: "Synced",
+        sortable: true,
+        sortValue: (run) => run.itemsSynced,
+        width: 110,
+        render: (run) => (
+          <span className="block text-right tabular-nums">{run.itemsSynced}</span>
+        ),
+        csvValue: (run) => String(run.itemsSynced),
+      },
+      {
+        id: "itemsFailed",
+        label: "Failed",
+        sortable: true,
+        sortValue: (run) => run.itemsFailed,
+        width: 110,
+        render: (run) => (
+          <span className="block text-right tabular-nums">{run.itemsFailed}</span>
+        ),
+        csvValue: (run) => String(run.itemsFailed),
+      },
+      {
+        id: "errorMessage",
+        label: "Error",
+        sortable: true,
+        sortValue: (run) => run.errorMessage ?? "",
+        width: 360,
+        render: (run) => {
+          const message = shortMessage(run.errorMessage, 160);
+          return (
+            <span
+              className={cn(
+                "block truncate",
+                message ? "text-destructive" : "text-muted-foreground",
+              )}
+              title={run.errorMessage ?? "No error message reported"}
+            >
+              {message ?? "No error message reported"}
+            </span>
+          );
+        },
+        csvValue: (run) => run.errorMessage ?? "",
+      },
+    ],
+    [],
+  );
+
+  const handleExport = React.useCallback(() => {
+    downloadCsv(
+      "source-sync-run-ledger.csv",
+      runLedgerColumnConfig.map((column) => column.label),
+      runs.map((run) => [
+        `${humanizeToken(run.source)} / ${humanizeToken(run.stage)}`,
+        humanizeToken(run.status),
+        formatDate(run.finishedAt || run.startedAt),
+        String(run.itemsSeen),
+        String(run.itemsSynced),
+        String(run.itemsFailed),
+        run.errorMessage ?? "",
+      ]),
+    );
+  }, [runs]);
+
+  const totalPages = Math.max(1, Math.ceil(runs.length / perPage));
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Run</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Finished</TableHead>
-          <TableHead className="text-right">Seen</TableHead>
-          <TableHead className="text-right">Synced</TableHead>
-          <TableHead className="text-right">Failed</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {runs.length === 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={6}
-              className="py-8 text-center text-sm text-muted-foreground"
-            >
-              No source sync run ledger rows found.
-            </TableCell>
-          </TableRow>
-        ) : (
-          runs.map((run) => (
-            <TableRow
-              key={run.id}
-              className={run.status === "failed" ? "bg-destructive/5" : ""}
-            >
-              <TableCell className="max-w-80 whitespace-normal">
-                <div className="space-y-1">
-                  <p className="font-medium text-foreground">
-                    {run.source.replaceAll("_", " ")} /{" "}
-                    {run.stage.replaceAll("_", " ")}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {run.resourceName || run.resourceId}
-                  </p>
-                  {run.errorMessage ? (
-                    <p className="text-xs text-destructive">
-                      {run.errorMessage}
-                    </p>
-                  ) : null}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant={statusVariant(run.status)}
-                  className="capitalize"
-                >
-                  {run.status.replaceAll("_", " ")}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {formatDate(run.finishedAt || run.startedAt)}
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {run.itemsSeen}
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {run.itemsSynced}
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {run.itemsFailed}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+    <UnifiedTablePage
+      header={{ title: "", variant: "compact" }}
+      toolbar={{
+        totalItems: runs.length,
+        filteredItems: runs.length,
+        selectedCount: 0,
+        searchValue: "",
+        onSearchChange: () => undefined,
+        currentView: "table",
+        enabledViews: ["table"],
+        onViewChange: () => undefined,
+        columns: runLedgerColumnConfig,
+        visibleColumns,
+        onColumnVisibilityChange: setVisibleColumns,
+        onExport: handleExport,
+      }}
+      data={{ items: runs, isLoading: false, isFetching: false, error: null }}
+      table={{
+        columns,
+        getRowId: (run) => run.id,
+        stickyHeader: true,
+        density: "compact",
+        defaultPinnedLeftColumns: ["run"],
+      }}
+      sorting={{
+        sortBy,
+        sortDirection,
+        onSortChange: (nextSortBy, nextDirection) => {
+          setSortBy(nextSortBy);
+          setSortDirection(nextDirection);
+          setPage(1);
+        },
+      }}
+      emptyState={{
+        title: "No source sync runs",
+        description: "No source sync run ledger rows were found.",
+        filteredDescription: "No source sync runs match the current table settings.",
+        isFiltered: false,
+      }}
+      pagination={{
+        page,
+        totalPages,
+        perPage,
+        onPageChange: setPage,
+        onPerPageChange: (value) => {
+          setPerPage(Number(value));
+          setPage(1);
+        },
+        clientSide: true,
+      }}
+      layout={{ fullBleedTable: true }}
+      features={{
+        enableSearch: false,
+        enableViews: false,
+        enableFilters: false,
+        enableColumnToggle: true,
+        enableExport: true,
+        enableBulkDelete: false,
+        enableRowSelection: false,
+        enableRowActions: false,
+        enableRowReorder: false,
+      }}
+    />
   );
 }
 
 function StuckItemsTable({ items }: { items: SourceSyncStuckItem[] }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const tableState = useUnifiedTableState({
+    entityKey: "source-sync-stuck-items",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "ageMinutes",
+      sortDirection: "desc",
+      visibleColumns: stuckItemDefaultVisibleColumns,
+      filters: {
+        source: undefined,
+        stage: undefined,
+        status: undefined,
+      },
+    },
+  });
+
+  const filters = React.useMemo<FilterConfig[]>(() => {
+    const buildOptions = (key: "source" | "stage" | "status") =>
+      Array.from(new Set(items.map((item) => item[key]).filter(Boolean)))
+        .sort((a, b) => humanizeToken(a).localeCompare(humanizeToken(b)))
+        .map((value) => ({ value, label: humanizeToken(value) }));
+
+    return [
+      { id: "source", label: "Source", type: "select", options: buildOptions("source") },
+      { id: "stage", label: "Stage", type: "select", options: buildOptions("stage") },
+      { id: "status", label: "Status", type: "select", options: buildOptions("status") },
+    ];
+  }, [items]);
+
+  const filteredItems = React.useMemo(() => {
+    const search = normalizeSearchValue(tableState.debouncedSearch);
+    const sourceFilter = String(tableState.activeFilters.source ?? "");
+    const stageFilter = String(tableState.activeFilters.stage ?? "");
+    const statusFilter = String(tableState.activeFilters.status ?? "");
+
+    return items.filter((item) => {
+      if (sourceFilter && item.source !== sourceFilter) return false;
+      if (stageFilter && item.stage !== stageFilter) return false;
+      if (statusFilter && item.status !== statusFilter) return false;
+      if (!search) return true;
+
+      const searchable = [
+        item.resourceName,
+        item.resourceId,
+        item.source,
+        item.stage,
+        item.status,
+        item.errorMessage,
+      ]
+        .map(normalizeSearchValue)
+        .join(" ");
+
+      return searchable.includes(search);
+    });
+  }, [
+    items,
+    tableState.activeFilters.source,
+    tableState.activeFilters.stage,
+    tableState.activeFilters.status,
+    tableState.debouncedSearch,
+  ]);
+
+  const hasActiveFilters = Object.values(tableState.activeFilters).some(Boolean);
+
+  const handleFilterChange = React.useCallback(
+    (nextFilters: Record<string, FilterValue>) => {
+      tableState.setActiveFilters(nextFilters);
+      tableState.setPage(1);
+    },
+    [tableState],
+  );
+
+  const columns = React.useMemo<TableColumn<SourceSyncStuckItem>[]>(
+    () => [
+      {
+        id: "resourceName",
+        label: "Resource name",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (item) => item.resourceName,
+        width: 260,
+        render: (item) => (
+          <span className="block truncate font-medium text-foreground" title={item.resourceName}>
+            {item.resourceName || "Unnamed resource"}
+          </span>
+        ),
+        csvValue: (item) => item.resourceName,
+      },
+      {
+        id: "source",
+        label: "Source",
+        sortable: true,
+        sortValue: (item) => item.source,
+        width: 150,
+        render: (item) => (
+          <span className="capitalize text-muted-foreground">
+            {humanizeToken(item.source)}
+          </span>
+        ),
+        csvValue: (item) => humanizeToken(item.source),
+      },
+      {
+        id: "resourceId",
+        label: "Resource ID",
+        sortable: true,
+        sortValue: (item) => item.resourceId,
+        width: 240,
+        render: (item) => (
+          <span className="block truncate font-mono text-xs text-muted-foreground" title={item.resourceId}>
+            {item.resourceId}
+          </span>
+        ),
+        csvValue: (item) => item.resourceId,
+      },
+      {
+        id: "stage",
+        label: "Stage",
+        sortable: true,
+        sortValue: (item) => item.stage,
+        width: 150,
+        render: (item) => (
+          <span className="capitalize text-muted-foreground">
+            {humanizeToken(item.stage)}
+          </span>
+        ),
+        csvValue: (item) => humanizeToken(item.stage),
+      },
+      {
+        id: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (item) => item.status,
+        width: 140,
+        render: (item) => (
+          <Badge variant={statusVariant(item.status)} className="capitalize">
+            {humanizeToken(item.status)}
+          </Badge>
+        ),
+        csvValue: (item) => humanizeToken(item.status),
+      },
+      {
+        id: "ageMinutes",
+        label: "Age",
+        sortable: true,
+        sortValue: (item) => item.ageMinutes ?? -1,
+        width: 110,
+        render: (item) => (
+          <span className="block text-right tabular-nums text-muted-foreground">
+            {formatAge(item.ageMinutes)}
+          </span>
+        ),
+        csvValue: (item) => formatAge(item.ageMinutes),
+      },
+      {
+        id: "lastAttemptAt",
+        label: "Last attempt",
+        sortable: true,
+        sortValue: (item) =>
+          item.lastAttemptAt ? new Date(item.lastAttemptAt).getTime() : 0,
+        width: 190,
+        render: (item) => (
+          <span className="text-muted-foreground">
+            {formatDate(item.lastAttemptAt)}
+          </span>
+        ),
+        csvValue: (item) => formatDate(item.lastAttemptAt),
+      },
+      {
+        id: "errorMessage",
+        label: "Error",
+        sortable: true,
+        sortValue: (item) => item.errorMessage ?? "",
+        width: 360,
+        render: (item) => {
+          const message = shortMessage(item.errorMessage, 160);
+          return (
+            <span
+              className={cn(
+                "block truncate",
+                message ? "text-destructive" : "text-muted-foreground",
+              )}
+              title={item.errorMessage ?? "No error message reported"}
+            >
+              {message ?? "No error message reported"}
+            </span>
+          );
+        },
+        csvValue: (item) => item.errorMessage ?? "",
+      },
+    ],
+    [],
+  );
+
+  const handleExport = React.useCallback(() => {
+    downloadCsv(
+      "source-sync-stuck-items.csv",
+      stuckItemColumnConfig.map((column) => column.label),
+      filteredItems.map((item) => [
+        item.resourceName,
+        humanizeToken(item.source),
+        item.resourceId,
+        humanizeToken(item.stage),
+        humanizeToken(item.status),
+        formatAge(item.ageMinutes),
+        formatDate(item.lastAttemptAt),
+        item.errorMessage ?? "",
+      ]),
+    );
+  }, [filteredItems]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / tableState.perPage));
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Item</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Stage</TableHead>
-          <TableHead className="text-right">Age</TableHead>
-          <TableHead>Last attempt</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {items.length === 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={5}
-              className="py-8 text-center text-sm text-muted-foreground"
-            >
-              No stuck source items found.
-            </TableCell>
-          </TableRow>
-        ) : (
-          items.map((item) => (
-            <TableRow
-              key={`${item.source}:${item.resourceId}:${item.stage}`}
-              className={
-                item.status === "failed" ? "bg-destructive/5" : "bg-amber-500/5"
-              }
-            >
-              <TableCell className="max-w-96 whitespace-normal">
-                <div className="space-y-1">
-                  <p className="font-medium text-foreground">
-                    {item.resourceName}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.source.replaceAll("_", " ")} / {item.resourceId}
-                  </p>
-                  {item.errorMessage ? (
-                    <p className="text-xs text-destructive">
-                      {item.errorMessage}
-                    </p>
-                  ) : null}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant={statusVariant(item.status)}
-                  className="capitalize"
-                >
-                  {item.status.replaceAll("_", " ")}
-                </Badge>
-              </TableCell>
-              <TableCell className="capitalize text-sm text-muted-foreground">
-                {item.stage.replaceAll("_", " ")}
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {formatAge(item.ageMinutes)}
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {formatDate(item.lastAttemptAt)}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+    <UnifiedTablePage
+      header={{ title: "", variant: "compact" }}
+      toolbar={{
+        totalItems: items.length,
+        filteredItems: filteredItems.length,
+        selectedCount: 0,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search resource, source, ID, stage, status, or error...",
+        currentView: tableState.currentView,
+        enabledViews: ["table"],
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        filters,
+        activeFilters: tableState.activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () =>
+          handleFilterChange({
+            source: undefined,
+            stage: undefined,
+            status: undefined,
+          }),
+        columns: stuckItemColumnConfig,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+        onExport: handleExport,
+      }}
+      data={{
+        items: filteredItems,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+      }}
+      table={{
+        columns,
+        getRowId: (item) => `${item.source}:${item.resourceId}:${item.stage}`,
+        stickyHeader: true,
+        density: "compact",
+        defaultPinnedLeftColumns: ["resourceName"],
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setSearchParams({
+            sort: sortBy,
+            sort_dir: direction,
+            page: "1",
+          });
+          tableState.setPage(1);
+        },
+      }}
+      emptyState={{
+        title: "No stuck source items",
+        description: "No stuck files or messages are currently reported.",
+        filteredDescription: "No stuck items match the current search or filters.",
+        isFiltered: Boolean(tableState.debouncedSearch) || hasActiveFilters,
+      }}
+      pagination={{
+        page: tableState.page,
+        totalPages,
+        perPage: tableState.perPage,
+        onPageChange: tableState.setPage,
+        onPerPageChange: (value) => tableState.setPerPage(Number(value)),
+        clientSide: true,
+      }}
+      layout={{ fullBleedTable: true }}
+      features={{
+        enableSearch: true,
+        enableViews: false,
+        enableFilters: true,
+        enableColumnToggle: true,
+        enableExport: true,
+        enableBulkDelete: false,
+        enableRowSelection: false,
+        enableRowActions: false,
+        enableRowReorder: false,
+      }}
+    />
   );
 }
 
 function SourceTable({ sources }: { sources: SourceHealth[] }) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Source</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Last sync</TableHead>
-          <TableHead className="text-right">Age</TableHead>
-          <TableHead className="text-right">Synced</TableHead>
-          <TableHead className="text-right">Unembedded</TableHead>
-          <TableHead className="text-right">Uncompiled</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sources.length === 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={7}
-              className="py-8 text-center text-sm text-muted-foreground"
-            >
-              No source health rows found.
-            </TableCell>
-          </TableRow>
-        ) : (
-          sources.map((source) => (
-            <TableRow
-              key={`${source.source}:${source.resourceId}`}
+  const [visibleColumns, setVisibleColumns] = React.useState(
+    sourceHealthDefaultVisibleColumns,
+  );
+  const [sortBy, setSortBy] = React.useState<string | null>("status");
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
+    "desc",
+  );
+  const [page, setPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(25);
+
+  const columns = React.useMemo<TableColumn<SourceHealth>[]>(
+    () => [
+      {
+        id: "source",
+        label: "Source",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (source) => `${source.source} ${source.resourceName}`,
+        width: 280,
+        render: (source) => (
+          <span className="block truncate font-medium text-foreground" title={source.resourceName}>
+            {source.resourceName || humanizeToken(source.source)}
+          </span>
+        ),
+        csvValue: (source) => source.resourceName || humanizeToken(source.source),
+      },
+      {
+        id: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (source) => source.status,
+        width: 140,
+        render: (source) => <StatusPill status={source.status} />,
+        csvValue: (source) => humanizeToken(source.status),
+      },
+      {
+        id: "lastSyncAt",
+        label: "Last sync",
+        sortable: true,
+        sortValue: (source) =>
+          source.lastSyncAt ? new Date(source.lastSyncAt).getTime() : 0,
+        width: 190,
+        render: (source) => (
+          <span className="text-muted-foreground">
+            {formatDate(source.lastSyncAt)}
+          </span>
+        ),
+        csvValue: (source) => formatDate(source.lastSyncAt),
+      },
+      {
+        id: "staleMinutes",
+        label: "Age",
+        sortable: true,
+        sortValue: (source) => source.staleMinutes ?? -1,
+        width: 110,
+        render: (source) => (
+          <span className="block text-right tabular-nums">
+            {formatAge(source.staleMinutes)}
+          </span>
+        ),
+        csvValue: (source) => formatAge(source.staleMinutes),
+      },
+      {
+        id: "itemsSynced",
+        label: "Synced",
+        sortable: true,
+        sortValue: (source) => source.itemsSynced,
+        width: 110,
+        render: (source) => (
+          <span className="block text-right tabular-nums">
+            {source.itemsSynced}
+          </span>
+        ),
+        csvValue: (source) => String(source.itemsSynced),
+      },
+      {
+        id: "unembeddedCount",
+        label: "Unembedded",
+        sortable: true,
+        sortValue: (source) => source.unembeddedCount,
+        width: 130,
+        render: (source) => (
+          <span className="block text-right tabular-nums">
+            {source.unembeddedCount}
+          </span>
+        ),
+        csvValue: (source) => String(source.unembeddedCount),
+      },
+      {
+        id: "uncompiledCount",
+        label: "Uncompiled",
+        sortable: true,
+        sortValue: (source) => source.uncompiledCount,
+        width: 130,
+        render: (source) => (
+          <span className="block text-right tabular-nums">
+            {source.uncompiledCount}
+          </span>
+        ),
+        csvValue: (source) => String(source.uncompiledCount),
+      },
+      {
+        id: "lastErrorMessage",
+        label: "Error",
+        sortable: true,
+        sortValue: (source) => source.lastErrorMessage ?? "",
+        width: 360,
+        render: (source) => {
+          const message = shortMessage(source.lastErrorMessage, 160);
+          return (
+            <span
               className={cn(
-                source.status === "critical" && "bg-destructive/5",
-                source.status === "warning" && "bg-amber-500/5",
+                "block truncate",
+                message ? "text-destructive" : "text-muted-foreground",
               )}
+              title={source.lastErrorMessage ?? "No error message reported"}
             >
-              <TableCell className="max-w-64 whitespace-normal">
-                <div className="space-y-1">
-                  <p className="font-medium text-foreground">
-                    {source.resourceName}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {source.source.replaceAll("_", " ")} / {source.resourceId}
-                  </p>
-                  {shortMessage(source.lastErrorMessage) ? (
-                    <p className="text-xs leading-5 text-destructive">
-                      {shortMessage(source.lastErrorMessage)}
-                    </p>
-                  ) : null}
-                </div>
-              </TableCell>
-              <TableCell>
-                <StatusPill status={source.status} />
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {formatDate(source.lastSyncAt)}
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {formatAge(source.staleMinutes)}
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {source.itemsSynced}
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {source.unembeddedCount}
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {source.uncompiledCount}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+              {message ?? "No error message reported"}
+            </span>
+          );
+        },
+        csvValue: (source) => source.lastErrorMessage ?? "",
+      },
+    ],
+    [],
+  );
+
+  const handleExport = React.useCallback(() => {
+    downloadCsv(
+      "source-sync-source-details.csv",
+      sourceHealthColumnConfig.map((column) => column.label),
+      sources.map((source) => [
+        source.resourceName || humanizeToken(source.source),
+        humanizeToken(source.status),
+        formatDate(source.lastSyncAt),
+        formatAge(source.staleMinutes),
+        String(source.itemsSynced),
+        String(source.unembeddedCount),
+        String(source.uncompiledCount),
+        source.lastErrorMessage ?? "",
+      ]),
+    );
+  }, [sources]);
+
+  const totalPages = Math.max(1, Math.ceil(sources.length / perPage));
+
+  return (
+    <UnifiedTablePage
+      header={{ title: "", variant: "compact" }}
+      toolbar={{
+        totalItems: sources.length,
+        filteredItems: sources.length,
+        selectedCount: 0,
+        searchValue: "",
+        onSearchChange: () => undefined,
+        currentView: "table",
+        enabledViews: ["table"],
+        onViewChange: () => undefined,
+        columns: sourceHealthColumnConfig,
+        visibleColumns,
+        onColumnVisibilityChange: setVisibleColumns,
+        onExport: handleExport,
+      }}
+      data={{
+        items: sources,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+      }}
+      table={{
+        columns,
+        getRowId: (source) => `${source.source}:${source.resourceId}`,
+        stickyHeader: true,
+        density: "compact",
+        defaultPinnedLeftColumns: ["source"],
+      }}
+      sorting={{
+        sortBy,
+        sortDirection,
+        onSortChange: (nextSortBy, nextDirection) => {
+          setSortBy(nextSortBy);
+          setSortDirection(nextDirection);
+          setPage(1);
+        },
+      }}
+      emptyState={{
+        title: "No source health rows",
+        description: "No source sync health rows were found.",
+        filteredDescription: "No source sync rows match the current table settings.",
+        isFiltered: false,
+      }}
+      pagination={{
+        page,
+        totalPages,
+        perPage,
+        onPageChange: setPage,
+        onPerPageChange: (value) => {
+          setPerPage(Number(value));
+          setPage(1);
+        },
+        clientSide: true,
+      }}
+      layout={{ fullBleedTable: true }}
+      features={{
+        enableSearch: false,
+        enableViews: false,
+        enableFilters: false,
+        enableColumnToggle: true,
+        enableExport: true,
+        enableBulkDelete: false,
+        enableRowSelection: false,
+        enableRowActions: false,
+        enableRowReorder: false,
+      }}
+    />
   );
 }
 
