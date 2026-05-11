@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Database,
   FileText,
+  Info,
   Loader2,
   Mail,
   MessageSquare,
@@ -30,6 +31,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -156,6 +162,26 @@ const PIPELINE_GROUPS: Array<{ key: string; title: string }> = [
   { key: "graphSubscriptionsByStatus", title: "Graph subscriptions" },
 ];
 
+const FIREFLIES_STAGE_ORDER = [
+  "raw_ingested",
+  "chunked",
+  "embedded",
+  "done",
+  "error",
+];
+
+const FIREFLIES_STAGE_DETAILS: Record<string, string> = {
+  raw_ingested:
+    "The Fireflies record has been captured from the source, but text extraction and downstream processing are not complete yet.",
+  chunked:
+    "The source text has been split into searchable chunks. This comes before embedding.",
+  embedded:
+    "Chunks have vector embeddings, so they can be found by semantic search. This does not always mean the whole job is finished.",
+  done: "The Fireflies job completed all expected processing steps for that record.",
+  error:
+    "Processing failed and needs investigation or retry before the record can finish.",
+};
+
 const stuckItemColumnConfig: ColumnConfig[] = [
   { id: "resourceName", label: "Resource name", alwaysVisible: true },
   { id: "source", label: "Source", defaultVisible: true },
@@ -228,6 +254,14 @@ function humanizeToken(value: string): string {
 
 function normalizeSearchValue(value: string | null | undefined): string {
   return humanizeToken(value ?? "").toLowerCase();
+}
+
+function normalizePipelineKey(value: string): string {
+  return value.trim().toLowerCase().replaceAll(" ", "_").replaceAll("-", "_");
+}
+
+function formatPipelineLabel(value: string): string {
+  return value.replaceAll("_", " ").replaceAll(":", ": ");
 }
 
 function csvEscape(value: string): string {
@@ -1402,11 +1436,76 @@ function AlertList({ alerts }: { alerts: SourceSyncAlert[] }) {
   );
 }
 
+function orderedPipelineEntries(
+  groupKey: string,
+  values: StatusMap,
+): Array<[string, number]> {
+  const entries = Object.entries(values);
+  if (groupKey !== "firefliesJobsByStage") return entries;
+
+  return entries.sort(([left], [right]) => {
+    const leftIndex = FIREFLIES_STAGE_ORDER.indexOf(normalizePipelineKey(left));
+    const rightIndex = FIREFLIES_STAGE_ORDER.indexOf(
+      normalizePipelineKey(right),
+    );
+    const normalizedLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+    const normalizedRight =
+      rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+    if (normalizedLeft !== normalizedRight) {
+      return normalizedLeft - normalizedRight;
+    }
+    return left.localeCompare(right);
+  });
+}
+
+function PipelineCountLabel({
+  groupKey,
+  label,
+}: {
+  groupKey: string;
+  label: string;
+}) {
+  const detail =
+    groupKey === "firefliesJobsByStage"
+      ? FIREFLIES_STAGE_DETAILS[normalizePipelineKey(label)]
+      : undefined;
+  const formattedLabel = formatPipelineLabel(label);
+
+  if (!detail) {
+    return (
+      <span className="capitalize text-muted-foreground">{formattedLabel}</span>
+    );
+  }
+
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-muted-foreground">
+      <span className="capitalize">{formattedLabel}</span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="size-4 rounded-full p-0 text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-1"
+            aria-label={`${formattedLabel} meaning`}
+          >
+            <Info className="size-3" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-72">
+          {detail}
+        </TooltipContent>
+      </Tooltip>
+    </span>
+  );
+}
+
 function PipelineCounts({ status }: { status: SourceSyncStatus }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {PIPELINE_GROUPS.map((group) => {
         const values = status.pipeline[group.key] ?? {};
+        const entries = orderedPipelineEntries(group.key, values);
         return (
           <div key={group.key} className="space-y-3 rounded-lg bg-muted/25 p-4">
             <div className="flex items-center justify-between gap-3">
@@ -1416,17 +1515,15 @@ function PipelineCounts({ status }: { status: SourceSyncStatus }) {
               </span>
             </div>
             <div className="space-y-2">
-              {Object.entries(values).length === 0 ? (
+              {entries.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No rows found.</p>
               ) : (
-                Object.entries(values).map(([key, value]) => (
+                entries.map(([key, value]) => (
                   <div
                     key={key}
                     className="flex items-center justify-between gap-3 text-xs"
                   >
-                    <span className="capitalize text-muted-foreground">
-                      {key.replaceAll("_", " ").replaceAll(":", ": ")}
-                    </span>
+                    <PipelineCountLabel groupKey={group.key} label={key} />
                     <span className="tabular-nums text-foreground">
                       {value}
                     </span>
