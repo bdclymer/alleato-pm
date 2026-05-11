@@ -261,6 +261,15 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
         // tools, // TEMP: testing if 102-tool registry causes finishReason:other
         maxOutputTokens: 4000,
         stopWhen: stepCountIs(10),
+        experimental_telemetry: {
+          isEnabled: Boolean(process.env.LANGFUSE_SECRET_KEY),
+          functionId: "ai-assistant-chat-v2",
+          metadata: {
+            modelId: args.activeModel,
+            userId: args.user.id,
+            sessionId: args.sessionId,
+          },
+        },
         onError: ({ error }) => {
           console.error("[handler-v2] streamText onError", {
             message: error instanceof Error ? error.message : String(error),

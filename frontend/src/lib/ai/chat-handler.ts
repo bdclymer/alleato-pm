@@ -3612,11 +3612,13 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             },
             stopWhen: stepCountIs(10),
             experimental_telemetry: {
-              isEnabled: process.env.PHOENIX_TRACING === "true",
+              isEnabled: process.env.PHOENIX_TRACING === "true" || Boolean(process.env.LANGFUSE_SECRET_KEY),
               functionId: "ai-assistant-chat",
               metadata: {
                 intent: assistantIntent ?? "unknown",
                 modelId: activeModel,
+                userId: user.id,
+                sessionId,
               },
             },
             onError: ({ error }) => {

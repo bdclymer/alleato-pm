@@ -43,6 +43,18 @@ export async function register() {
       );
     }
 
+    if (process.env.LANGFUSE_SECRET_KEY) {
+      const { NodeSDK } = await import("@opentelemetry/sdk-node");
+      const { LangfuseSpanProcessor } = await import("@langfuse/otel");
+
+      const sdk = new NodeSDK({
+        spanProcessors: [new LangfuseSpanProcessor()],
+      });
+
+      sdk.start();
+      console.log("[instrumentation] Langfuse tracing enabled");
+    }
+
     const { validateEnvVars } = await import("@/lib/guardrails/env");
 
     validateEnvVars("instrumentation/startup", [
