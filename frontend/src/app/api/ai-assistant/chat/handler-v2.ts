@@ -14,6 +14,10 @@ import { buildExecutorDeps } from "@/lib/ai/retrieval/deps";
 import { assembleSystemPrompt } from "@/lib/ai/bot-core";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { getLanguageModel } from "@/lib/ai/providers";
+import {
+  createWeeklyMarketingContentWorkflow,
+  type CmoWeeklyContentWorkflowResult,
+} from "@/lib/ai/services/marketing-service";
 
 type HandlerArgs = {
   user: { id: string };
@@ -30,6 +34,70 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .filter((p) => (p as { type?: string }).type === "text")
     .map((p) => ((p as { text?: string }).text ?? ""))
     .join(" ");
+}
+
+function isCmoWeeklyContentWorkflowRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const asksForCalendar =
+    normalized.includes("content calendar") ||
+    normalized.includes("marketing plan") ||
+    normalized.includes("weekly content") ||
+    normalized.includes("next week's content") ||
+    normalized.includes("next week content");
+  const hasMarketingSourceLanguage = [
+    "project win",
+    "project wins",
+    "owner update",
+    "owner updates",
+    "leadership thought",
+    "leadership thoughts",
+    "social",
+    "linkedin",
+    "case study",
+    "testimonial",
+    "campaign",
+  ].some((phrase) => normalized.includes(phrase));
+
+  return asksForCalendar && hasMarketingSourceLanguage;
+}
+
+function formatCmoWeeklyContentWorkflowResponse(
+  result: CmoWeeklyContentWorkflowResult,
+): string {
+  const calendarLines = result.calendarItems.map((item, index) => {
+    const source = result.sourceCandidates[index];
+    return [
+      `- ${item.planned_date}: ${item.channel} / ${item.funnel_stage}`,
+      `  ${item.title}`,
+      `  Source: ${source.citationText}`,
+    ].join("\n");
+  });
+
+  return [
+    "I created a CMO weekly content calendar draft and saved the draft assets for review.",
+    "",
+    `Week start: ${result.weekStartDate}`,
+    `Source-backed intelligence items: ${result.intelligenceItems.length}`,
+    `Calendar items: ${result.calendarItems.length}`,
+    `Draft assets: ${result.assets.length}`,
+    "",
+    "Draft calendar:",
+    ...calendarLines,
+    "",
+    `Review page: ${result.reviewHref}`,
+    "",
+    "These are drafts only. Nothing is approved or externally published until the review status is changed.",
+  ].join("\n");
+}
+
+function writeTextResponse(
+  writer: Parameters<Parameters<typeof createUIMessageStream>[0]["execute"]>[0]["writer"],
+  id: string,
+  content: string,
+) {
+  writer.write({ type: "text-start", id });
+  writer.write({ type: "text-delta", id, delta: content });
+  writer.write({ type: "text-end", id });
 }
 
 export async function handleChatV2(args: HandlerArgs): Promise<Response> {
@@ -55,6 +123,82 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
           timestamp: new Date().toISOString(),
         },
       } as never);
+
+      if (isCmoWeeklyContentWorkflowRequest(lastUserContent)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "knowledge",
+            message: "Consulting CMO and saving weekly content drafts",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+        }
+
+        const workflowResult = await createWeeklyMarketingContentWorkflow({
+          createdBy: args.user.id,
+          projectId: args.selectedProjectId ?? null,
+        });
+        const content = formatCmoWeeklyContentWorkflowResponse(workflowResult);
+
+        writeTextResponse(writer, "strategist-cmo-weekly-content-v2", content);
+
+        await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "assistant",
+          content,
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            tool_trace: [
+              {
+                tool: "consultCMOPhase1Workflow",
+                input: {
+                  message: lastUserContent.slice(0, 240),
+                  selectedProjectId: args.selectedProjectId ?? null,
+                },
+                output: {
+                  weekStartDate: workflowResult.weekStartDate,
+                  sourceCandidateCount: workflowResult.sourceCandidates.length,
+                  intelligenceItemIds: workflowResult.intelligenceItems.map((item) => item.id),
+                  calendarItemIds: workflowResult.calendarItems.map((item) => item.id),
+                  assetIds: workflowResult.assets.map((asset) => asset.id),
+                  reviewHref: workflowResult.reviewHref,
+                },
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          },
+        });
+
+        await args.supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", args.sessionId)
+          .eq("user_id", args.user.id);
+
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "CMO content calendar saved",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
 
       // Run base system prompt assembly (memory load + project context)
       // and retrieval execution IN PARALLEL — they don't depend on each other.

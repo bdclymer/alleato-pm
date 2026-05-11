@@ -19,6 +19,7 @@ export const AGENT_NAMES = {
   CHRO: "chro",
   CRO: "cro",
   VP_BD: "vpbd",
+  CMO: "cmo",
 } as const;
 
 export type AgentName = (typeof AGENT_NAMES)[keyof typeof AGENT_NAMES];
@@ -31,6 +32,7 @@ export const AGENT_LABELS: Record<AgentName, string> = {
   chro: "CHRO",
   cro: "CRO",
   vpbd: "VP of Business Development",
+  cmo: "CMO",
 };
 
 /** Short descriptions for the agent selector UI */
@@ -41,6 +43,7 @@ export const AGENT_DESCRIPTIONS: Record<AgentName, string> = {
   chro: "People, capacity, and team health",
   cro: "Risk, compliance, contracts, and claims",
   vpbd: "Growth, client relationships, and market positioning",
+  cmo: "Brand, content strategy, campaigns, and marketing execution",
 };
 
 // ---------------------------------------------------------------------------

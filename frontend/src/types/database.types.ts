@@ -16091,6 +16091,359 @@ export type Database = {
           },
         ]
       }
+      marketing_content_assets: {
+        Row: {
+          asset_type: string
+          body: string
+          calendar_item_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          review_notes: string | null
+          source_citations: Json
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type: string
+          body: string
+          calendar_item_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          review_notes?: string | null
+          source_citations?: Json
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          body?: string
+          calendar_item_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          review_notes?: string | null
+          source_citations?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_content_assets_calendar_item_id_fkey"
+            columns: ["calendar_item_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_content_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_content_calendar_items: {
+        Row: {
+          angle: string
+          campaign_id: string | null
+          channel: string
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          funnel_stage: string
+          id: string
+          metadata: Json
+          owner_user_id: string | null
+          planned_date: string
+          project_id: number | null
+          rationale: string
+          source_item_ids: string[]
+          status: string
+          target_audience: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          angle: string
+          campaign_id?: string | null
+          channel: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          funnel_stage?: string
+          id?: string
+          metadata?: Json
+          owner_user_id?: string | null
+          planned_date: string
+          project_id?: number | null
+          rationale: string
+          source_item_ids?: string[]
+          status?: string
+          target_audience?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          angle?: string
+          campaign_id?: string | null
+          channel?: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          funnel_stage?: string
+          id?: string
+          metadata?: Json
+          owner_user_id?: string | null
+          planned_date?: string
+          project_id?: number | null
+          rationale?: string
+          source_item_ids?: string[]
+          status?: string
+          target_audience?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_content_calendar_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_intelligence_items: {
+        Row: {
+          company_id: string | null
+          confidence: string
+          created_at: string
+          created_by: string | null
+          id: string
+          item_type: string
+          metadata: Json
+          project_id: number | null
+          recommended_use: Json
+          source_date: string | null
+          source_id: string | null
+          source_table: string | null
+          source_title: string | null
+          source_url: string | null
+          status: string
+          strategic_rationale: string | null
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_type: string
+          metadata?: Json
+          project_id?: number | null
+          recommended_use?: Json
+          source_date?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          status?: string
+          strategic_rationale?: string | null
+          summary: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_type?: string
+          metadata?: Json
+          project_id?: number | null
+          recommended_use?: Json
+          source_date?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          status?: string
+          strategic_rationale?: string | null
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_intelligence_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_intelligence_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "marketing_intelligence_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_intelligence_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_intelligence_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "marketing_intelligence_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_intelligence_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_intelligence_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_performance_snapshots: {
+        Row: {
+          asset_id: string | null
+          calendar_item_id: string | null
+          channel: string
+          clicks: number | null
+          created_at: string
+          engagements: number | null
+          id: string
+          impressions: number | null
+          leads: number | null
+          measured_at: string
+          metadata: Json
+          notes: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          calendar_item_id?: string | null
+          channel: string
+          clicks?: number | null
+          created_at?: string
+          engagements?: number | null
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          measured_at?: string
+          metadata?: Json
+          notes?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          calendar_item_id?: string | null
+          channel?: string
+          clicks?: number | null
+          created_at?: string
+          engagements?: number | null
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          measured_at?: string
+          metadata?: Json
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_performance_snapshots_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_content_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_performance_snapshots_calendar_item_id_fkey"
+            columns: ["calendar_item_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_content_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_preps: {
         Row: {
           content: string

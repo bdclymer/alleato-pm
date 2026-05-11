@@ -112,7 +112,7 @@ function ExecutiveRelatedTaskRow({
       assigneePersonId === "__unassigned" ? "" : assigneePersonId,
     );
     formData.set("status", initial.status);
-    formData.set("priority", initial.priority);
+    formData.set("priority", initial.priority ?? "");
     formData.set("dueDate", dueDate);
 
     setError(null);

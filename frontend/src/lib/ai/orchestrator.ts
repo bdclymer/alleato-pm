@@ -38,6 +38,10 @@ import {
   type FeatureRequestToolsOptions,
 } from "@/lib/ai/tools/feature-request-tools";
 import {
+  createMarketingTools,
+  type MarketingToolsOptions,
+} from "@/lib/ai/tools/marketing";
+import {
   createProgressReportTools,
   type ProgressReportToolsOptions,
 } from "@/lib/ai/tools/progress-report-tools";
@@ -56,6 +60,7 @@ import { cooSystemPrompt } from "@/lib/ai/agents/coo";
 import { croSystemPrompt } from "@/lib/ai/agents/cro";
 import { chroSystemPrompt } from "@/lib/ai/agents/chro";
 import { vpbdSystemPrompt } from "@/lib/ai/agents/vpbd";
+import { cmoSystemPrompt } from "@/lib/ai/agents/cmo";
 import type {
   AgentName,
   AgentResponse,
@@ -66,6 +71,7 @@ type StrategistToolOptions = CreateProjectToolsOptions &
   CreateWebSearchToolsOptions &
   ActionToolsOptions &
   FeatureRequestToolsOptions &
+  MarketingToolsOptions &
   ProgressReportToolsOptions &
   CreateStructuredOutputToolsOptions;
 
@@ -527,6 +533,47 @@ export const agentRegistry: Record<string, AgentConfig> = {
       } as ToolSet; // ToolSet is an index signature — spread inference requires explicit cast
     },
   },
+
+  cmo: {
+    name: "CMO",
+    icon: "📣",
+    systemPrompt: cmoSystemPrompt,
+    modelId: "openai/gpt-5.4-mini",
+    description:
+      "Brand, reputation, content calendars, campaigns, thought leadership, website/newsletter content, case studies, testimonials, and marketing performance",
+    triggerKeywords: [
+      "brand",
+      "marketing",
+      "content",
+      "content calendar",
+      "campaign",
+      "social",
+      "linkedin",
+      "thought leadership",
+      "website",
+      "case study",
+      "case studies",
+      "testimonial",
+      "testimonials",
+      "newsletter",
+      "audience",
+      "positioning",
+      "reputation",
+      "story",
+      "publish",
+      "announcement",
+      "event",
+      "award",
+    ],
+    createTools: (userId: string, options?: StrategistToolOptions) => {
+      return {
+        ...createMarketingTools(userId, options),
+        ...createProjectTools(userId, options),
+        ...createWebSearchTools(options),
+        ...createDocumentIntelligenceTools(userId, options),
+      } as ToolSet;
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -904,6 +951,21 @@ export function createStrategistTools(
         "'Help me prep for a BD meeting'.",
       "The business development question to analyze. Be specific — include client names, project types, or sectors where relevant.",
       "VP BD",
+      userId,
+      options,
+    ),
+
+    consultCMO: makeConsultTool(
+      "cmo",
+      "Consult the CMO (Chief Marketing Officer) for brand, content, campaign, " +
+        "and marketing execution. Use this for ANY question about content calendars, " +
+        "LinkedIn or social posts, website/newsletter updates, case studies, " +
+        "testimonials, announcements, thought leadership, audience positioning, " +
+        "reputation, or turning project wins and owner updates into draft content. " +
+        "The CMO must call source-discovery and persistence tools before making " +
+        "factual marketing claims or saving draft assets.",
+      "The marketing question or content planning task to analyze. Include channels, audience, date range, and project context if the user mentioned them.",
+      "CMO",
       userId,
       options,
     ),

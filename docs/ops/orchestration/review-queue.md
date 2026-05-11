@@ -37,6 +37,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-04-30-S29-teams-conversation-compiler.md` | S29 | AAI-283 | 2026-04-30 | Partial | Blocked | Core Teams compiler implementation, migrations, API routes, single-row smoke, parser smoke, status RPC, and quality samples passed; PRP 25-row batch gate remains open because delegated runs compiled rows but did not return a clean `total_processed=25`, `succeeded>=20`, `failed=0` stats object inside 3 minutes. |
 | `docs/ops/handoffs/2026-05-08-S36-codex-finish-publish.md` | S36 | AAI-346 | 2026-05-08 | Yes | Accepted | Live Linear shows AAI-346 Done; local evidence shows `codex:finish` syntax/help/check-mode/handoff verification passed and commit `4544886fa` published to `origin/main`. |
 | `docs/ops/handoffs/2026-05-11-S37-linear-handoff-backfill.md` | S37 | AAI-166 | 2026-05-11 | Yes | Pending Review | Reconciled S36 local status with live Linear, removed worker-status fake fallback rows for no-session dates, added `npm run worker-status`, and validated the S37 handoff. |
+| `docs/ops/handoffs/2026-05-11-S38-cmo-agent.md` | S38 | AAI-350 | 2026-05-11 | Yes | Pending Review | CMO Phase 1 implemented with migration ledger, generated types, CMO tools/agent/orchestrator registration, active V2 chat bridge, marketing review APIs/page, focused unit tests, typecheck/routes, and live browser evidence. General V2 tool enablement remains a follow-up risk. |
 
 ## Disposition Rules
 

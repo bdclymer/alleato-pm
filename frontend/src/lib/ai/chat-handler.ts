@@ -35,6 +35,10 @@ import {
   createStrategistTools,
 } from "@/lib/ai/orchestrator";
 import {
+  createWeeklyMarketingContentWorkflow,
+  type CmoWeeklyContentWorkflowResult,
+} from "@/lib/ai/services/marketing-service";
+import {
   assembleSystemPrompt,
   type BotLearningUsageSummary,
   type MemoryUsageSummary,
@@ -1718,6 +1722,60 @@ function isRfiActionRequest(message: string): boolean {
   );
 }
 
+function isCmoWeeklyContentWorkflowRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const asksForCalendar =
+    normalized.includes("content calendar") ||
+    normalized.includes("marketing plan") ||
+    normalized.includes("weekly content") ||
+    normalized.includes("next week's content") ||
+    normalized.includes("next week content");
+  const hasMarketingSourceLanguage = [
+    "project win",
+    "project wins",
+    "owner update",
+    "owner updates",
+    "leadership thought",
+    "leadership thoughts",
+    "social",
+    "linkedin",
+    "case study",
+    "testimonial",
+    "campaign",
+  ].some((phrase) => normalized.includes(phrase));
+
+  return asksForCalendar && hasMarketingSourceLanguage;
+}
+
+function formatCmoWeeklyContentWorkflowResponse(
+  result: CmoWeeklyContentWorkflowResult,
+): string {
+  const calendarLines = result.calendarItems.map((item, index) => {
+    const source = result.sourceCandidates[index];
+    return [
+      `- ${item.planned_date}: ${item.channel} / ${item.funnel_stage}`,
+      `  ${item.title}`,
+      `  Source: ${source.citationText}`,
+    ].join("\n");
+  });
+
+  return [
+    "I created a CMO weekly content calendar draft and saved the draft assets for review.",
+    "",
+    `Week start: ${result.weekStartDate}`,
+    `Source-backed intelligence items: ${result.intelligenceItems.length}`,
+    `Calendar items: ${result.calendarItems.length}`,
+    `Draft assets: ${result.assets.length}`,
+    "",
+    "Draft calendar:",
+    ...calendarLines,
+    "",
+    `Review page: ${result.reviewHref}`,
+    "",
+    "These are drafts only. Nothing is approved or externally published until the review status is changed.",
+  ].join("\n");
+}
+
 function extractRfiTopic(message: string): string {
   const aboutMatch = message.match(/\babout\s+(.+?)(?:[.?!]|$)/i);
   const forMatch = message.match(/\bfor\s+(.+?)(?:[.?!]|$)/i);
@@ -2985,6 +3043,86 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           writeStrategistStatus(writer, {
             stage: "complete",
             message: "Daily Brief ready",
+            status: "success",
+          });
+          return;
+        }
+
+        if (isCmoWeeklyContentWorkflowRequest(lastUserContent)) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Consulting CMO and saving weekly content drafts",
+            status: "loading",
+          });
+
+          const workflowResult = await createWeeklyMarketingContentWorkflow({
+            createdBy: user.id,
+            projectId: selectedProjectId ?? null,
+          });
+          const content = formatCmoWeeklyContentWorkflowResponse(workflowResult);
+
+          toolTrace.push({
+            tool: "consultCMOPhase1Workflow",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: selectedProjectId ?? null,
+            },
+            output: {
+              weekStartDate: workflowResult.weekStartDate,
+              sourceCandidateCount: workflowResult.sourceCandidates.length,
+              intelligenceItemIds: workflowResult.intelligenceItems.map((item) => item.id),
+              calendarItemIds: workflowResult.calendarItems.map((item) => item.id),
+              assetIds: workflowResult.assets.map((asset) => asset.id),
+              reviewHref: workflowResult.reviewHref,
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          writeStrategistStatus(writer, {
+            stage: "synthesis",
+            message: "Writing CMO calendar handoff",
+            status: "loading",
+          });
+
+          await writeTextResponse(writer, "strategist-cmo-weekly-content", content);
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            dataParts: assistantWidgetDataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "CMO content calendar saved",
             status: "success",
           });
           return;
