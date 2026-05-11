@@ -516,6 +516,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
         .from("document_metadata")
         .update(updatePayload)
         .eq("id", meetingId)
+        .is("deleted_at", null)
         .select("*")
         .single();
 
@@ -699,6 +700,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
         .from("document_metadata")
         .update(payload)
         .eq("id", editingMeeting.id)
+        .is("deleted_at", null)
         .select("*")
         .single();
 
@@ -726,8 +728,9 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       const supabase = createClient();
       const { error } = await supabase
         .from("document_metadata")
-        .delete()
-        .eq("id", meetingToDelete.id);
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", meetingToDelete.id)
+        .is("deleted_at", null);
 
       if (error) throw new Error(error.message);
 
@@ -765,17 +768,11 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     try {
       const supabase = createClient();
 
-      const { error: segmentsDeleteError } = await supabase
-        .from("meeting_segments")
-        .delete()
-        .in("metadata_id", selectedIds);
-
-      if (segmentsDeleteError) throw new Error(segmentsDeleteError.message);
-
       const { error: meetingsDeleteError } = await supabase
         .from("document_metadata")
-        .delete()
-        .in("id", selectedIds);
+        .update({ deleted_at: new Date().toISOString() })
+        .in("id", selectedIds)
+        .is("deleted_at", null);
 
       if (meetingsDeleteError) throw new Error(meetingsDeleteError.message);
 

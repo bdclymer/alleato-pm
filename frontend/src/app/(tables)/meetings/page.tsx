@@ -13,6 +13,7 @@ export default async function MeetingsPage() {
     .from("document_metadata")
     .select("id,title,date,project,project_id,description,type,category,status,source,fireflies_link,url,participants,participants_array,notes,summary,overview,action_items,bullet_points,keywords,sentiment,duration_minutes,audio,video,created_at")
     .eq("type", "meeting")
+    .is("deleted_at", null)
     .order("date", { ascending: false });
 
   if (error) {

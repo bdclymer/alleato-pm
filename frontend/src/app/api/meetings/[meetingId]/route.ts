@@ -28,6 +28,7 @@ export const GET = withApiGuardrails<Promise<{ meetingId: string }>>(
       .from("document_metadata")
       .select("id, title")
       .eq("id", meetingId)
+      .is("deleted_at", null)
       .single();
 
     if (error || !data) {

@@ -10595,6 +10595,7 @@ export type Database = {
           created_at: string | null
           date: string | null
           decisions: Json | null
+          deleted_at: string | null
           description: string | null
           division: string | null
           duration_minutes: number | null
@@ -10667,6 +10668,7 @@ export type Database = {
           created_at?: string | null
           date?: string | null
           decisions?: Json | null
+          deleted_at?: string | null
           description?: string | null
           division?: string | null
           duration_minutes?: number | null
@@ -10739,6 +10741,7 @@ export type Database = {
           created_at?: string | null
           date?: string | null
           decisions?: Json | null
+          deleted_at?: string | null
           description?: string | null
           division?: string | null
           duration_minutes?: number | null

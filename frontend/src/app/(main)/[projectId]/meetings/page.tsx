@@ -22,6 +22,7 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
     .select("*")
     .eq("project_id", numericProjectId)
     .eq("type", "meeting")
+    .is("deleted_at", null)
     .order("date", { ascending: false });
 
   if (error) {

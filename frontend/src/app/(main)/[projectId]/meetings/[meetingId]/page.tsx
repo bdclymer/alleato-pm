@@ -33,6 +33,8 @@ export default async function ProjectMeetingDetailPage({
     .from("document_metadata")
     .select("*")
     .eq("id", meetingId)
+    .eq("project_id", numericProjectId)
+    .is("deleted_at", null)
     .single();
 
   if (error || !meetingData) {
@@ -55,6 +57,7 @@ export default async function ProjectMeetingDetailPage({
     .select("id, title, date, duration_minutes")
     .eq("project_id", numericProjectId)
     .eq("type", "meeting")
+    .is("deleted_at", null)
     .neq("id", meetingId)
     .order("date", { ascending: false })
     .limit(5);

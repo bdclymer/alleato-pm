@@ -33,6 +33,7 @@ export const meetingSchema = z
     fireflies_link: z.string().nullable().optional(),
     video: z.string().nullable().optional(),
     created_at: z.string().nullable().optional(),
+    deleted_at: z.string().nullable().optional(),
     updated_at: z.string().nullable().optional(),
   })
   .passthrough();

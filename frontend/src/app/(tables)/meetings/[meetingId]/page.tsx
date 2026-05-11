@@ -31,6 +31,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     .from("document_metadata")
     .select("*")
     .eq("id", meetingId)
+    .is("deleted_at", null)
     .single();
 
   if (error || !meetingData) {
@@ -52,6 +53,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     .from("document_metadata")
     .select("id, title, date, duration_minutes")
     .eq("type", "meeting")
+    .is("deleted_at", null)
     .neq("id", meetingId)
     .order("date", { ascending: false })
     .limit(5);

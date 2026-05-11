@@ -46,6 +46,8 @@ export const POST = withApiGuardrails(
       .from("document_metadata")
       .select("*")
       .eq("id", meetingId)
+      .eq("project_id", numericProjectId)
+      .is("deleted_at", null)
       .single();
 
     if (meetingError || !meeting) {
@@ -62,6 +64,7 @@ export const POST = withApiGuardrails(
       .eq("project_id", numericProjectId)
       .eq("type", "meeting")
       .eq("status", "complete")
+      .is("deleted_at", null)
       .neq("id", meetingId)
       .order("date", { ascending: false })
       .limit(1)

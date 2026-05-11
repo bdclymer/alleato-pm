@@ -21,6 +21,7 @@ export const GET = withApiGuardrails<{ projectId: string; meetingId: string }>(
       .select("*")
       .eq("id", meetingId)
       .eq("project_id", parseInt(projectId, 10))
+      .is("deleted_at", null)
       .single();
 
     if (error) {
@@ -65,6 +66,7 @@ export const PUT = withApiGuardrails<{ projectId: string; meetingId: string }>(
       .update(updateData)
       .eq("id", meetingId)
       .eq("project_id", parseInt(projectId, 10))
+      .is("deleted_at", null)
       .select()
       .single();
 
@@ -91,23 +93,22 @@ export const DELETE = withApiGuardrails<{ projectId: string; meetingId: string }
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]#DELETE", message: "Authentication required." });
     }
 
-    // Delete associated meeting segments first
-    await supabase
-      .from("meeting_segments")
-      .delete()
-      .eq("metadata_id", meetingId);
-
-    // Delete the meeting
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("document_metadata")
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", meetingId)
-      .eq("project_id", parseInt(projectId, 10));
+      .eq("project_id", parseInt(projectId, 10))
+      .is("deleted_at", null)
+      .select("id")
+      .single();
 
     if (error) {
+      if (error.code === "PGRST116") {
+        return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+      }
       return apiErrorResponse(error);
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, data });
     },
 );
