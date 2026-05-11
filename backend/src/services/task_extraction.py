@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -63,6 +64,12 @@ Source text:
 {text}"""
 
 
+@dataclass(frozen=True)
+class TaskExtractionResult:
+    tasks: list[dict[str, Any]]
+    error_message: str | None = None
+
+
 def _openai_client() -> tuple[OpenAI, str, str]:
     gateway_key = os.getenv("AI_GATEWAY_API_KEY")
     if gateway_key:
@@ -105,10 +112,10 @@ def _extract_tasks(
     client: OpenAI,
     model: str,
     source_occurred_at: datetime | None = None,
-) -> list[dict[str, Any]]:
+) -> TaskExtractionResult:
     text = _build_text(doc)
     if not text or len(text) < 80:
-        return []
+        return TaskExtractionResult(tasks=[])
 
     prompt = _EXTRACT_PROMPT.format(
         type_label=_type_label(doc.get("type")),
@@ -125,10 +132,15 @@ def _extract_tasks(
         raw = (resp.choices[0].message.content or "").strip()
         cleaned = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         parsed = json.loads(cleaned)
-        return parsed if isinstance(parsed, list) else []
+        if not isinstance(parsed, list):
+            return TaskExtractionResult(
+                tasks=[],
+                error_message="LLM response was not a JSON array",
+            )
+        return TaskExtractionResult(tasks=parsed)
     except Exception as exc:
         logger.warning("[TaskExtraction] LLM call failed for doc %s: %s", doc.get("id"), exc)
-        return []
+        return TaskExtractionResult(tasks=[], error_message=str(exc))
 
 
 def _parse_datetime(value: Any) -> datetime | None:
@@ -184,6 +196,7 @@ def _mark_task_extraction_state(
     source_occurred_at: datetime | None,
     window_days: int,
     inserted_count: int = 0,
+    error_message: str | None = None,
 ) -> None:
     source_metadata = doc.get("source_metadata")
     if not isinstance(source_metadata, dict):
@@ -196,6 +209,8 @@ def _mark_task_extraction_state(
         "window_days": window_days,
         "inserted_count": inserted_count,
     }
+    if error_message:
+        source_metadata["task_extraction"]["error_message"] = error_message
     client_db.table("document_metadata").update({"source_metadata": source_metadata}).eq("id", doc.get("id")).execute()
 
 
@@ -314,8 +329,22 @@ def run_task_extraction(
             skipped += 1
             continue
 
-        tasks = _extract_tasks(doc, client_ai, model_id, source_occurred_at)
+        extraction = _extract_tasks(doc, client_ai, model_id, source_occurred_at)
         docs_processed += 1
+
+        if extraction.error_message:
+            errors += 1
+            _mark_task_extraction_state(
+                client_db,
+                doc,
+                "llm_failed",
+                source_occurred_at,
+                window_days,
+                error_message=extraction.error_message,
+            )
+            continue
+
+        tasks = extraction.tasks
 
         if not tasks:
             _mark_task_extraction_state(client_db, doc, "no_tasks", source_occurred_at, window_days)
