@@ -34,6 +34,11 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
+  RelatedActionItemsList,
+  RelatedActionItemsSummary,
+  type RelatedScheduleActionItem,
+} from "@/components/scheduling/related-action-items";
+import {
   ScheduleTask,
   ScheduleTaskCreate,
   ScheduleTaskUpdate,
@@ -52,6 +57,7 @@ interface TaskEditModalProps {
   parentTaskId?: string | null;
   projectId: string;
   availableTasks?: Array<{ id: string; name: string }>;
+  relatedActionItems?: RelatedScheduleActionItem[];
   onSave: (data: ScheduleTaskCreate | ScheduleTaskUpdate) => Promise<void>;
 }
 
@@ -106,6 +112,7 @@ export function TaskEditModal({
   parentTaskId,
   projectId,
   availableTasks = [],
+  relatedActionItems = [],
   onSave,
 }: TaskEditModalProps) {
   const [formData, setFormData] = useState<FormData>({
@@ -484,6 +491,16 @@ export function TaskEditModal({
                   </p>
                 )}
               </div>
+            )}
+
+            {isEditing && (
+              <section className="space-y-3 pt-2">
+                <div className="flex items-center justify-between gap-3">
+                  <Label className="text-sm font-medium">Related action items</Label>
+                  <RelatedActionItemsSummary items={relatedActionItems} />
+                </div>
+                <RelatedActionItemsList items={relatedActionItems} />
+              </section>
             )}
           </div>
 

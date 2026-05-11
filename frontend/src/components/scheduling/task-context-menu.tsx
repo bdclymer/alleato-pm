@@ -43,11 +43,16 @@ import {
   Download,
   Upload,
   CheckSquare,
-  Square,
   MoreHorizontal,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScheduleTask, ScheduleContextAction } from "@/types/scheduling";
+import {
+  RelatedActionItemsList,
+  RelatedActionItemsSummary,
+  type RelatedScheduleActionItem,
+} from "@/components/scheduling/related-action-items";
 
 // =============================================================================
 // TYPES
@@ -67,6 +72,7 @@ interface TaskContextMenuProps {
   canIndent?: boolean;
   canOutdent?: boolean;
   hasCopiedTask?: boolean;
+  relatedActionItems?: RelatedScheduleActionItem[];
 }
 
 interface ContextMenuAction {
@@ -156,6 +162,7 @@ export function TaskContextMenu({
   canIndent = true,
   canOutdent = true,
   hasCopiedTask = false,
+  relatedActionItems = [],
 }: TaskContextMenuProps) {
   const [isOpen, setIsOpen] = useState(!!position);
 
@@ -397,6 +404,30 @@ export function TaskContextMenu({
             {action.dividerAfter && <DropdownMenuSeparator />}
           </div>
         ))}
+
+        {task && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <ListChecks className="mr-2 h-4 w-4" />
+                <span>Related action items</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {relatedActionItems.length}
+                </span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-80 p-0">
+                <div className="border-b px-3 py-2">
+                  <p className="text-sm font-medium">Related action items</p>
+                  <RelatedActionItemsSummary items={relatedActionItems} />
+                </div>
+                <div className="px-3">
+                  <RelatedActionItemsList items={relatedActionItems} compact />
+                </div>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </>
+        )}
 
         {/* Import/Export Submenu */}
         <DropdownMenuSub>

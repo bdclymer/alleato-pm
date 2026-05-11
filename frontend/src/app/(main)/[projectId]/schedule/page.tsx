@@ -30,6 +30,7 @@ import {
   TaskContextMenu,
   useTaskContextMenu,
 } from "@/components/scheduling/task-context-menu";
+import type { RelatedScheduleActionItem } from "@/components/scheduling/related-action-items";
 import {
   ScheduleGridView,
   ScheduleBoardView,
@@ -69,6 +70,7 @@ import {
 } from "@/types/scheduling";
 import { toast } from "sonner";
 import { useScheduleTasks } from "@/hooks/use-schedule-tasks";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // TYPES
@@ -81,6 +83,10 @@ type QuickAddTaskInput = {
   status?: TaskStatus;
   startDate?: string | null;
   finishDate?: string | null;
+};
+
+type RelatedActionItemsResponse = {
+  data?: RelatedScheduleActionItem[];
 };
 
 const SCHEDULE_FILTERS: FilterConfig[] = [
@@ -234,6 +240,9 @@ export default function ProjectSchedulePage() {
   );
   const [copiedTask, setCopiedTask] = useState<ScheduleTask | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [relatedActionItemsByTaskId, setRelatedActionItemsByTaskId] = useState<
+    Record<string, RelatedScheduleActionItem[]>
+  >({});
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -256,6 +265,26 @@ export default function ProjectSchedulePage() {
     projectId,
     enabled: true,
   });
+
+  const fetchRelatedActionItems = useCallback(async () => {
+    try {
+      const result = await apiFetch<RelatedActionItemsResponse>(
+        `/api/projects/${projectId}/scheduling/related-action-items`,
+        { cache: "no-store" },
+      );
+      const grouped: Record<string, RelatedScheduleActionItem[]> = {};
+      for (const item of result.data ?? []) {
+        grouped[item.schedule_task_id] = [...(grouped[item.schedule_task_id] ?? []), item];
+      }
+      setRelatedActionItemsByTaskId(grouped);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load related action items");
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    void fetchRelatedActionItems();
+  }, [fetchRelatedActionItems]);
 
   // Context menu
   const { contextMenu, openContextMenu, closeContextMenu, handleContextMenuAction } =
@@ -948,6 +977,9 @@ export default function ProjectSchedulePage() {
         parentTaskId={parentTaskIdForNew}
         projectId={projectId}
         availableTasks={flatTasks}
+        relatedActionItems={
+          editingTask ? relatedActionItemsByTaskId[editingTask.id] ?? [] : []
+        }
         onSave={handleSaveTask}
       />
       <TaskContextMenu
@@ -956,6 +988,9 @@ export default function ProjectSchedulePage() {
         onClose={closeContextMenu}
         onAction={handleContextMenuAction}
         hasCopiedTask={!!copiedTask}
+        relatedActionItems={
+          contextMenu.task ? relatedActionItemsByTaskId[contextMenu.task.id] ?? [] : []
+        }
       />
       <ImportExportModal
         open={isImportExportModalOpen}
