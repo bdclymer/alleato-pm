@@ -41,6 +41,18 @@ const EDITABLE_FIELD_ORDER: EditableField[] = [
   "category",
 ];
 
+const REQUESTED_VISIBLE_COLUMNS = [
+  "video",
+  "audio",
+  "keywords",
+  "sentiment",
+  "overview",
+  "action_items",
+  "bullet_points",
+  "duration_minutes",
+  "summary",
+];
+
 type FilterState = Record<string, FilterValue>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -342,6 +354,25 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     window.localStorage.setItem(migrationKey, "1");
   }, [tableState.setVisibleColumns]);
 
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const migrationKey = "meetings:visibleColumns:add-media-summary-2026-05-11";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    tableState.setVisibleColumns((prev) => {
+      const next = prev.filter((columnId) => columnId !== "content");
+      for (const columnId of REQUESTED_VISIBLE_COLUMNS) {
+        if (!next.includes(columnId)) {
+          next.push(columnId);
+        }
+      }
+      return next;
+    });
+
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState.setVisibleColumns]);
+
   // ── Derived data ─────────────────────────────────────────────────────────────
   const activeFilters = tableState.activeFilters as FilterState;
   const searchTerm = tableState.debouncedSearch.toLowerCase();
@@ -358,6 +389,12 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       meeting.participants ?? "",
       meeting.type ?? "",
       meeting.category ?? "",
+      meeting.overview ?? "",
+      meeting.action_items ?? "",
+      meeting.bullet_points ?? "",
+      meeting.summary ?? "",
+      meeting.content ?? "",
+      Array.isArray(meeting.keywords) ? meeting.keywords.join(" ") : "",
     ];
     const matchesSearch =
       searchTerm.length === 0 ||

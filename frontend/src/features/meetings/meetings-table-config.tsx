@@ -1,6 +1,14 @@
 import * as React from "react";
 
-import { ArrowUpRight, FileText, Pencil, Trash2, Zap } from "lucide-react";
+import {
+  ArrowUpRight,
+  FileAudio,
+  FileText,
+  FileVideo,
+  Pencil,
+  Trash2,
+  Zap,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
@@ -65,6 +73,16 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "date", label: "Date", defaultVisible: true },
   { id: "description", label: "Description", defaultVisible: true },
   { id: "participants", label: "Participants", defaultVisible: true },
+  { id: "video", label: "Video", defaultVisible: true },
+  { id: "audio", label: "Audio", defaultVisible: true },
+  { id: "keywords", label: "Keywords", defaultVisible: true },
+  { id: "sentiment", label: "Sentiment", defaultVisible: true },
+  { id: "overview", label: "Overview", defaultVisible: true },
+  { id: "action_items", label: "Action Items", defaultVisible: true },
+  { id: "bullet_points", label: "Bullet Points", defaultVisible: true },
+  { id: "duration_minutes", label: "Duration", defaultVisible: true },
+  { id: "summary", label: "Summary", defaultVisible: true },
+  { id: "content", label: "Content", defaultVisible: false },
   { id: "type", label: "Type", defaultVisible: false },
   { id: "category", label: "Category", defaultVisible: false },
   { id: "links", label: "Links", defaultVisible: true },
@@ -74,6 +92,14 @@ export const meetingColumns: ColumnConfig[] = [
 export const meetingDefaultVisibleColumns = meetingColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
+
+function getMeetingColumn(id: string): ColumnConfig {
+  const column = meetingColumns.find((candidate) => candidate.id === id);
+  if (!column) {
+    throw new Error(`Missing meeting column config for ${id}`);
+  }
+  return column;
+}
 
 // ─── Filter / detail field builders ─────────────────────────────────────────
 
@@ -232,6 +258,120 @@ function getEmbeddingStatus(item: Meeting): {
   }
 
   return { label: "Not indexed", variant: "neutral", sortValue: 1 };
+}
+
+function EmptyCell(): React.ReactElement {
+  return <span className="text-xs text-muted-foreground">—</span>;
+}
+
+function normalizeText(value: string | null | undefined): string {
+  return value?.trim() ?? "";
+}
+
+function TextPreviewCell({
+  value,
+  emptyLabel = "No value",
+  className = "max-w-56",
+}: {
+  value: string | null | undefined;
+  emptyLabel?: string;
+  className?: string;
+}): React.ReactElement {
+  const text = normalizeText(value);
+  if (!text) {
+    return (
+      <span className="text-xs text-muted-foreground" title={emptyLabel}>
+        —
+      </span>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={`block truncate text-xs text-muted-foreground ${className}`}>
+            {text}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-96 border bg-popover p-3 text-popover-foreground shadow-sm">
+          <p className="text-xs leading-relaxed text-foreground whitespace-pre-wrap">
+            {text}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function MediaIconLink({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string | null | undefined;
+  icon: typeof FileAudio;
+  label: string;
+}): React.ReactElement {
+  const normalizedHref = normalizeText(href);
+  if (!normalizedHref) return <EmptyCell />;
+
+  return (
+    <a
+      href={normalizedHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      title={label}
+      className="inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent/20 hover:text-foreground"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <Icon className="h-4 w-4" />
+    </a>
+  );
+}
+
+function formatDuration(minutes: number | null | undefined): string {
+  if (typeof minutes !== "number" || !Number.isFinite(minutes) || minutes <= 0) {
+    return "";
+  }
+
+  const roundedMinutes = Math.round(minutes);
+  const hours = Math.floor(roundedMinutes / 60);
+  const remainder = roundedMinutes % 60;
+
+  if (hours > 0 && remainder > 0) return `${hours}h ${remainder}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${remainder}m`;
+}
+
+function formatSentiment(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return String(value);
+  if (typeof value === "boolean") return value ? "Positive" : "Negative";
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => formatSentiment(entry))
+      .filter(Boolean)
+      .join(", ");
+  }
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const preferred =
+      record.label ??
+      record.sentiment ??
+      record.overall ??
+      record.tone ??
+      record.score;
+    if (preferred != null) return formatSentiment(preferred);
+    return JSON.stringify(record);
+  }
+  return "";
+}
+
+function formatKeywords(keywords: string[] | null | undefined): string {
+  return Array.isArray(keywords) ? keywords.filter(Boolean).join(", ") : "";
 }
 
 // ─── Inline edit primitives ───────────────────────────────────────────────────
@@ -415,7 +555,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
   return [
     // ── Title: link to project detail page ──────────────────────────────────
     {
-      ...meetingColumns[0],
+      ...getMeetingColumn("title"),
       render: (item) => {
         const isEditing =
           editContext?.editingCell?.meetingId === item.id &&
@@ -471,7 +611,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
     // ── Project: inline select ───────────────────────────────────────────────
     {
-      ...meetingColumns[1],
+      ...getMeetingColumn("project"),
       render: (item) => {
         const selectedProjectValue = item.project_id
           ? String(item.project_id)
@@ -507,7 +647,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
     // ── Date: inline editable ────────────────────────────────────────────────
     {
-      ...meetingColumns[2],
+      ...getMeetingColumn("date"),
       render: (item) => {
         const isEditing =
           editContext?.editingCell?.meetingId === item.id &&
@@ -539,7 +679,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
     // ── Description: compact text preview ───────────────────────────────────
     {
-      ...meetingColumns[3],
+      ...getMeetingColumn("description"),
       render: (item) => {
         const description = item.description?.trim();
         if (!description) {
@@ -569,7 +709,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
     // ── Participants: avatar stack with full tooltip ────────────────────────
     {
-      ...meetingColumns[4],
+      ...getMeetingColumn("participants"),
       render: (item) => {
         const participants = parseParticipants(item);
         return <TableAvatarUsers users={participants} />;
@@ -578,9 +718,134 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       sortValue: (item) => parseParticipants(item).length,
     },
 
+    // ── Video: icon-only media link ─────────────────────────────────────────
+    {
+      ...getMeetingColumn("video"),
+      render: (item) => (
+        <MediaIconLink href={item.video} icon={FileVideo} label="Open video" />
+      ),
+      csvValue: (item) => item.video ?? "",
+      sortValue: (item) => item.video ?? "",
+      align: "center",
+      width: 72,
+    },
+
+    // ── Audio: icon-only media link ─────────────────────────────────────────
+    {
+      ...getMeetingColumn("audio"),
+      render: (item) => (
+        <MediaIconLink href={item.audio} icon={FileAudio} label="Open audio" />
+      ),
+      csvValue: (item) => item.audio ?? "",
+      sortValue: (item) => item.audio ?? "",
+      align: "center",
+      width: 72,
+    },
+
+    // ── Keywords: compact text preview ──────────────────────────────────────
+    {
+      ...getMeetingColumn("keywords"),
+      render: (item) => (
+        <TextPreviewCell
+          value={formatKeywords(item.keywords)}
+          emptyLabel="No keywords"
+          className="max-w-48"
+        />
+      ),
+      csvValue: (item) => formatKeywords(item.keywords),
+      sortValue: (item) => formatKeywords(item.keywords),
+      width: 180,
+    },
+
+    // ── Sentiment: compact JSON/string preview ──────────────────────────────
+    {
+      ...getMeetingColumn("sentiment"),
+      render: (item) => (
+        <TextPreviewCell
+          value={formatSentiment(item.sentiment)}
+          emptyLabel="No sentiment"
+          className="max-w-36"
+        />
+      ),
+      csvValue: (item) => formatSentiment(item.sentiment),
+      sortValue: (item) => formatSentiment(item.sentiment),
+      width: 140,
+    },
+
+    // ── Overview: compact text preview ──────────────────────────────────────
+    {
+      ...getMeetingColumn("overview"),
+      render: (item) => (
+        <TextPreviewCell value={item.overview} emptyLabel="No overview" />
+      ),
+      csvValue: (item) => item.overview ?? "",
+      sortValue: (item) => item.overview ?? "",
+      width: 240,
+    },
+
+    // ── Action items: compact text preview ──────────────────────────────────
+    {
+      ...getMeetingColumn("action_items"),
+      render: (item) => (
+        <TextPreviewCell value={item.action_items} emptyLabel="No action items" />
+      ),
+      csvValue: (item) => item.action_items ?? "",
+      sortValue: (item) => item.action_items ?? "",
+      width: 240,
+    },
+
+    // ── Bullet points: compact text preview ─────────────────────────────────
+    {
+      ...getMeetingColumn("bullet_points"),
+      render: (item) => (
+        <TextPreviewCell value={item.bullet_points} emptyLabel="No bullet points" />
+      ),
+      csvValue: (item) => item.bullet_points ?? "",
+      sortValue: (item) => item.bullet_points ?? "",
+      width: 240,
+    },
+
+    // ── Duration: minutes formatted as h/m ──────────────────────────────────
+    {
+      ...getMeetingColumn("duration_minutes"),
+      render: (item) => {
+        const duration = formatDuration(item.duration_minutes);
+        return duration ? (
+          <span className="text-xs text-muted-foreground">{duration}</span>
+        ) : (
+          <EmptyCell />
+        );
+      },
+      csvValue: (item) => formatDuration(item.duration_minutes),
+      sortValue: (item) => item.duration_minutes ?? 0,
+      width: 96,
+    },
+
+    // ── Summary: compact text preview ───────────────────────────────────────
+    {
+      ...getMeetingColumn("summary"),
+      render: (item) => (
+        <TextPreviewCell value={item.summary} emptyLabel="No summary" />
+      ),
+      csvValue: (item) => item.summary ?? "",
+      sortValue: (item) => item.summary ?? "",
+      width: 240,
+    },
+
+    // ── Content: transcript/content preview, hidden by default ──────────────
+    {
+      ...getMeetingColumn("content"),
+      render: (item) => (
+        <TextPreviewCell value={item.content} emptyLabel="No content" />
+      ),
+      csvValue: (item) => item.content ?? "",
+      sortValue: (item) => item.content ?? "",
+      width: 280,
+    },
+
     // ── Type: inline text ────────────────────────────────────────────────────
     {
-      ...meetingColumns[5],
+      ...getMeetingColumn("type"),
       render: (item) => {
         const isEditing =
           editContext?.editingCell?.meetingId === item.id &&
@@ -613,7 +878,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
     // ── Category: inline text ────────────────────────────────────────────────
     {
-      ...meetingColumns[6],
+      ...getMeetingColumn("category"),
       render: (item) => {
         const isEditing =
           editContext?.editingCell?.meetingId === item.id &&
@@ -647,7 +912,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
     // ── Links: transcript file icon + Fireflies icon ─────────────────────────
     {
-      ...meetingColumns[7],
+      ...getMeetingColumn("links"),
       render: (item) => {
         return (
           <TableIconLinks
@@ -677,7 +942,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
     // ── Embedding: summary vectorization status ─────────────────────────────
     {
-      ...meetingColumns[8],
+      ...getMeetingColumn("embedding"),
       render: (item) => {
         const status = getEmbeddingStatus(item);
         return <StatusBadge status={status.label} variant={status.variant} />;
