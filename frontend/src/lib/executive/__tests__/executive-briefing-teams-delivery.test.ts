@@ -36,10 +36,15 @@ const packet: BrandonDailyUpdatePacket = {
       {
         title: "Signed owner approval is needed",
         summary: "The owner approval is ready but not signed.",
-        bullets: [],
+        bullets: [
+          "Owner approval is ready but still needs signature.",
+          "Deadline pressure is now visible in the source thread.",
+        ],
         recommendedAction: "Confirm the approver and deadline.",
+        whyItMatters: "The project cannot move cleanly until the owner approval is signed.",
         source: "Email",
         sourceDetail: "Owner approval email",
+        sourceUrl: "https://example.com/source",
         sourceId: "source-1",
         evidence: "The owner approval is ready but not signed.",
         date: "May 6, 2026",
@@ -47,6 +52,7 @@ const packet: BrandonDailyUpdatePacket = {
           {
             source: "Email",
             sourceDetail: "Owner approval email",
+            sourceUrl: "https://example.com/source",
             sourceId: "source-1",
             evidence: "The owner approval is ready but not signed.",
             date: "May 6, 2026",
@@ -57,6 +63,29 @@ const packet: BrandonDailyUpdatePacket = {
     ],
     waitingOnOthers: [],
     importantUpdates: [],
+  },
+  operatingBrief: {
+    startHere: ["Confirm the owner approval path first."],
+    hasUnusualExecutiveLoad: false,
+    topExecutiveFocus: [],
+    additionalMaterialItems: {
+      cashMargin: [],
+      scheduleField: [],
+      customerOwner: [],
+      subcontractorVendor: [],
+      designPreconstruction: [],
+      internalAccountability: [],
+    },
+    projectRiskRadar: [],
+    cashAndMarginWatch: [],
+    waitingOn: {
+      brandonWaitingOn: [],
+      othersWaitingOnBrandon: [],
+    },
+    peopleAndAccountability: [],
+    importantBusinessSignals: [],
+    recommendedMoves: ["Confirm the approval owner before end of day."],
+    lowerPriorityMomentum: [],
   },
   sourceCoverage: [],
   retrievalNotes: [],
@@ -145,7 +174,11 @@ describe("executive briefing Teams delivery", () => {
     });
     expect(mockSendProactiveMessage).toHaveBeenCalledWith(
       "user-1",
-      expect.stringContaining("approved daily operating brief"),
+      expect.stringContaining("**Daily Brief -"),
+    );
+    expect(mockSendProactiveMessage).toHaveBeenCalledWith(
+      "user-1",
+      expect.stringContaining("**Needs Your Decision** (1)"),
     );
   });
 
@@ -155,8 +188,12 @@ describe("executive briefing Teams delivery", () => {
     });
 
     expect(message).toContain(
-      "Good morning. Here's your approved daily operating brief",
+      "Good morning. **Daily Brief - Friday, May 8**",
     );
+    expect(message).toContain("**Start Here**");
+    expect(message).toContain("Next: Confirm the approver and deadline.");
+    expect(message).toContain("Value: The project cannot move cleanly");
+    expect(message).toContain("[Email - Owner approval email - May 6, 2026]");
     expect(message).not.toContain("there");
   });
 
@@ -166,7 +203,7 @@ describe("executive briefing Teams delivery", () => {
     });
 
     expect(message).toContain(
-      "Good evening, Brandon! Here's your approved daily operating brief",
+      "Good evening, Brandon! **Daily Brief - Friday, May 8**",
     );
     expect(message).not.toContain("Good morning");
   });

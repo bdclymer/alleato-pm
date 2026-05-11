@@ -3,8 +3,10 @@ import { createServiceClient } from "@/lib/supabase/service";
 import {
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
   type BrandonBriefItem,
+  type BriefCitation,
   type BrandonDailyUpdatePacket,
 } from "@/lib/executive/brandon-daily-update";
+import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
 import {
   CEO_EXECUTIVE_BRIEFING_RECAP_KIND,
   regenerateExecutiveBriefingDraft,
@@ -28,15 +30,71 @@ export type ExecutiveBriefingTeamsSendResult =
       userId?: string | null;
     };
 
-function formatItem(item: BrandonBriefItem): string {
-  const action = item.recommendedAction
-    ? `\n  -> ${item.recommendedAction}`
-    : "";
-  return `- **${item.title}** (${item.project})${action}`;
+function compactText(value: string | null | undefined, maxLength = 180): string {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim();
+  if (text.length <= maxLength) return text;
+
+  const clipped = text.slice(0, maxLength);
+  const sentenceEnd = Math.max(
+    clipped.lastIndexOf("."),
+    clipped.lastIndexOf("?"),
+    clipped.lastIndexOf("!"),
+  );
+  if (sentenceEnd >= 80) return clipped.slice(0, sentenceEnd + 1).trim();
+
+  const lastSpace = clipped.lastIndexOf(" ");
+  return `${clipped.slice(0, lastSpace > 0 ? lastSpace : maxLength).trim()}...`;
 }
 
-function formatSection(items: BrandonBriefItem[]): string {
-  return items.map(formatItem).join("\n");
+function formatCitation(citation: BriefCitation): string {
+  const label = [citation.source, citation.sourceDetail, citation.date]
+    .filter(Boolean)
+    .join(" - ");
+  return citation.sourceUrl ? `[${label}](${citation.sourceUrl})` : label;
+}
+
+function itemActionLabel(section: "decision" | "waiting" | "signal"): string {
+  if (section === "waiting") return "Follow-up";
+  if (section === "signal") return "Watch";
+  return "Next";
+}
+
+function formatItem(
+  item: BrandonBriefItem,
+  section: "decision" | "waiting" | "signal",
+): string {
+  const action = compactText(item.recommendedAction, 180);
+  const why = compactText(item.whyItMatters, 180);
+  const source = item.citations?.[0]
+    ? formatCitation(item.citations[0])
+    : formatCitation({
+        source: item.source,
+        sourceDetail: item.sourceDetail,
+        sourceUrl: item.sourceUrl,
+        sourceId: item.sourceId,
+        evidence: item.evidence,
+        date: item.date,
+      });
+  const bullets = getExecutiveBriefBullets(item)
+    .slice(0, 2)
+    .map((bullet) => `  - ${compactText(bullet, 190)}`);
+  const lines = [
+    `- **${compactText(item.title, 120)}** - ${item.project}`,
+    ...bullets,
+  ];
+
+  if (action) lines.push(`  ${itemActionLabel(section)}: ${action}`);
+  if (why) lines.push(`  Value: ${why}`);
+  lines.push(`  Source: ${source}`);
+
+  return lines.join("\n");
+}
+
+function formatSection(
+  items: BrandonBriefItem[],
+  section: "decision" | "waiting" | "signal",
+): string {
+  return items.map((item) => formatItem(item, section)).join("\n");
 }
 
 export function formatExecutiveBriefingTeamsMessage(
@@ -71,39 +129,56 @@ export function formatExecutiveBriefingTeamsMessage(
   const greeting = firstName
     ? `Good ${daypart}, ${firstName}!`
     : `Good ${daypart}.`;
+  const startHere =
+    packet.operatingBrief?.startHere
+      ?.map((item) => compactText(item, 170))
+      .filter(Boolean)
+      .slice(0, 3) ?? [];
 
   const lines: string[] = [
-    `${greeting} Here's your approved daily operating brief for **${today}**: ${totalItems} item${totalItems === 1 ? "" : "s"} across ${packet.windowDays} day${packet.windowDays === 1 ? "" : "s"}.`,
+    `${greeting} **Daily Brief - ${today}**`,
+    `${totalItems} item${totalItems === 1 ? "" : "s"} from the last ${packet.windowDays} day${packet.windowDays === 1 ? "" : "s"}. Start with the decisions and follow-ups below.`,
     "",
   ];
 
+  if (startHere.length > 0) {
+    lines.push("**Start Here**");
+    lines.push(startHere.map((item) => `- ${item}`).join("\n"));
+    lines.push("");
+  }
+
   if (needsBrandon.length > 0) {
-    lines.push(`**Needs Your Attention** (${needsBrandon.length})`);
-    lines.push(formatSection(needsBrandon));
+    lines.push(`**Needs Your Decision** (${needsBrandon.length})`);
+    lines.push(formatSection(needsBrandon, "decision"));
     lines.push("");
   }
 
   if (waitingOnOthers.length > 0) {
     lines.push(`**Waiting on Others** (${waitingOnOthers.length})`);
-    lines.push(formatSection(waitingOnOthers));
+    lines.push(formatSection(waitingOnOthers, "waiting"));
     lines.push("");
   }
 
   if (importantUpdates.length > 0) {
-    lines.push(`**Project Signals** (${importantUpdates.length})`);
-    lines.push(formatSection(importantUpdates));
+    lines.push(`**Business Signals** (${importantUpdates.length})`);
+    lines.push(formatSection(importantUpdates, "signal"));
     lines.push("");
   }
 
   const recommendedMoves = packet.operatingBrief?.recommendedMoves ?? [];
   if (recommendedMoves.length > 0) {
     lines.push(`**Recommended Moves** (${recommendedMoves.length})`);
-    lines.push(recommendedMoves.map((move, index) => `${index + 1}. ${move}`).join("\n"));
+    lines.push(
+      recommendedMoves
+        .slice(0, 5)
+        .map((move, index) => `${index + 1}. ${compactText(move, 180)}`)
+        .join("\n"),
+    );
     lines.push("");
   }
 
   lines.push(
-    "Reply to ask me anything about any of these, or ask me to follow up with someone.",
+    "Reply with the item title to dig in, or ask me to draft the follow-up.",
   );
 
   return lines.join("\n");
