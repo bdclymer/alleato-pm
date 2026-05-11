@@ -963,6 +963,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
               placeholder="No project"
               searchPlaceholder="Search projects..."
               emptyMessage="No projects found."
+              showIndicator={false}
               className="space-y-0"
               triggerClassName="h-7 border-0 bg-transparent px-1 text-xs font-normal text-muted-foreground hover:bg-accent/20 focus-visible:ring-1"
             />

@@ -33,6 +33,7 @@ interface SearchableSelectProps {
   addButton?: React.ReactNode;
   onCreateNew?: () => void;
   createNewLabel?: string;
+  showIndicator?: boolean;
   triggerTestId?: string;
   optionTestIdPrefix?: string;
   searchInputTestId?: string;
@@ -53,6 +54,7 @@ export function SearchableSelect({
   addButton,
   onCreateNew,
   createNewLabel = "+ Create New",
+  showIndicator = true,
   triggerTestId,
   optionTestIdPrefix,
   searchInputTestId,
@@ -104,7 +106,9 @@ export function SearchableSelect({
               <span className="truncate">
                 {selectedOption?.label || placeholder}
               </span>
-              <ChevronsUpDown className="shrink-0 opacity-50" />
+              {showIndicator ? (
+                <ChevronsUpDown className="shrink-0 opacity-50" />
+              ) : null}
             </Button>
           </PopoverTrigger>
           <PopoverContent
