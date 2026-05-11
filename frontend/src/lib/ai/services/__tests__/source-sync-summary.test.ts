@@ -117,6 +117,7 @@ describe("source-sync-summary", () => {
   it("maps source sync health into traceable summarization sources", () => {
     const sources = buildSourceSyncSummarySources(makeStatus());
 
+    expect(sources.length).toBeLessThanOrEqual(20);
     expect(sources[0]).toMatchObject({
       id: "source-sync:counts",
       type: "source_sync",
@@ -145,5 +146,63 @@ describe("source-sync-summary", () => {
         ]),
       }),
     );
+  });
+
+  it("caps rich source sync health below the shared summarizer source limit", () => {
+    const status = makeStatus({
+      alerts: Array.from({ length: 20 }, (_, index) => ({
+        severity: index % 2 === 0 ? "critical" : "warning",
+        code: "source_sync_error",
+        source: "graph",
+        resourceId: `alert-${index}`,
+        message: `Graph source ${index} failed.`,
+        detectedAt: "2026-05-11T19:30:00.000Z",
+      })),
+      stuckItems: Array.from({ length: 20 }, (_, index) => ({
+        source: "fireflies",
+        resourceId: `meeting-${index}`,
+        resourceName: `OAC meeting ${index}`,
+        stage: "embedded",
+        status: "stuck",
+        ageMinutes: 180 + index,
+        lastAttemptAt: "2026-05-11T17:00:00.000Z",
+        errorMessage: "Compiler did not pick up embedded meeting.",
+        metadata: {},
+      })),
+      sources: Array.from({ length: 20 }, (_, index) => ({
+        source: "graph",
+        resourceId: `mailbox-${index}`,
+        resourceName: `Mailbox ${index}`,
+        status: "critical",
+        lastSyncAt: "2026-05-11T19:00:00.000Z",
+        lastSuccessAt: "2026-05-11T18:00:00.000Z",
+        lastErrorAt: null,
+        lastErrorMessage: null,
+        itemsSynced: 42,
+        staleMinutes: 60,
+        unprocessedCount: 2,
+        unembeddedCount: 5,
+        uncompiledCount: 7,
+        metadata: {},
+      })),
+      recentRuns: Array.from({ length: 20 }, (_, index) => ({
+        id: `run-${index}`,
+        source: "graph",
+        stage: "embed",
+        status: "failed",
+        resourceId: `mailbox-${index}`,
+        resourceName: `Mailbox ${index}`,
+        startedAt: "2026-05-11T19:10:00.000Z",
+        finishedAt: "2026-05-11T19:12:00.000Z",
+        itemsSeen: 10,
+        itemsSynced: 5,
+        itemsFailed: 5,
+        errorCode: "embedding_failed",
+        errorMessage: "AI Gateway embedding request failed.",
+        metadata: {},
+      })),
+    });
+
+    expect(buildSourceSyncSummarySources(status)).toHaveLength(20);
   });
 });

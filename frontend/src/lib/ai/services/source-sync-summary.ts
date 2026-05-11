@@ -5,10 +5,10 @@ import {
 } from "@/lib/ai/services/project-intelligence-summary";
 import type { SourceSyncStatus } from "@/app/api/admin/source-sync/_contracts";
 
-const MAX_ALERT_SOURCES = 8;
-const MAX_STUCK_ITEM_SOURCES = 6;
+const MAX_ALERT_SOURCES = 6;
+const MAX_STUCK_ITEM_SOURCES = 4;
 const MAX_RUN_SOURCES = 4;
-const MAX_SOURCE_HEALTH_SOURCES = 6;
+const MAX_SOURCE_HEALTH_SOURCES = 5;
 
 function compact(value: string | null | undefined): string {
   return value?.trim() || "unknown";
