@@ -29527,6 +29527,7 @@ export type Database = {
           priority: string | null
           project_id: number | null
           project_ids: number[] | null
+          schedule_task_id: string | null
           segment_id: string | null
           source_chunk_id: string | null
           source_system: string
@@ -29554,6 +29555,7 @@ export type Database = {
           priority?: string | null
           project_id?: number | null
           project_ids?: number[] | null
+          schedule_task_id?: string | null
           segment_id?: string | null
           source_chunk_id?: string | null
           source_system?: string
@@ -29581,6 +29583,7 @@ export type Database = {
           priority?: string | null
           project_id?: number | null
           project_ids?: number[] | null
+          schedule_task_id?: string | null
           segment_id?: string | null
           source_chunk_id?: string | null
           source_system?: string
@@ -29699,6 +29702,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_schedule_task_id_fkey"
+            columns: ["schedule_task_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_tasks"
             referencedColumns: ["id"]
           },
           {
@@ -34330,6 +34340,7 @@ export type Database = {
           p_metadata_id: string
           p_priority?: string
           p_project_id?: number
+          p_schedule_task_id?: string
           p_status: string
           p_title: string
           p_user_id?: string
@@ -34354,6 +34365,7 @@ export type Database = {
           priority: string | null
           project_id: number | null
           project_ids: number[] | null
+          schedule_task_id: string | null
           segment_id: string | null
           source_chunk_id: string | null
           source_system: string

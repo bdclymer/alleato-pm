@@ -772,9 +772,9 @@ export function createActionTools(
 
     createTask: tool({
       description:
-        "Create an action item or task. Use when the user says 'add a task', " +
-        "'assign [person] to [work]', or 'remind me to [action] by [date]'. " +
-        "Always show a preview and ask for confirmation before writing.",
+        "Create a schedule/Gantt task backed by schedule_tasks. Use only when the user is creating " +
+        "a project schedule activity, milestone, or Gantt item. For action items, follow-ups, reminders, " +
+        "or Tasks page records, use createGeneratedTask instead. Always show a preview and ask for confirmation before writing.",
       inputSchema: z.object({
         projectId: z.number().describe("Project ID"),
         name: z.string().describe("Task name / description"),
@@ -881,11 +881,16 @@ export function createActionTools(
 
     createGeneratedTask: tool({
       description:
-        "Create a task in the main Tasks page task register (public.tasks). " +
-        "Use this for AI-generated follow-ups, action items, or user-created tasks " +
-        "that should appear on /tasks or /[projectId]/tasks. Preview before writing.",
+        "Create an action item in the main Tasks page task register (public.tasks). " +
+        "Use this for AI-generated follow-ups, reminders, accountability items, or user-created action items " +
+        "that should appear on /tasks or /[projectId]/tasks. If the action item supports a known schedule/Gantt task, pass scheduleTaskId to link it. Preview before writing.",
       inputSchema: z.object({
         projectId: z.number().optional().describe("Project ID if the task belongs to a project"),
+        scheduleTaskId: z
+          .string()
+          .uuid()
+          .optional()
+          .describe("Optional schedule_tasks.id when this action item supports a specific schedule/Gantt activity"),
         title: z.string().describe("Short task title"),
         description: z.string().optional().describe("Task detail or source context"),
         assignee: z.string().optional().describe("Person responsible"),
@@ -900,7 +905,7 @@ export function createActionTools(
       }),
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createGeneratedTask", options, async (input) => {
-        const { projectId, title, description, assignee, dueDate, priority, status, confirmed } = input;
+        const { projectId, scheduleTaskId, title, description, assignee, dueDate, priority, status, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
         const effectiveProjectId = access.projectId;
@@ -918,6 +923,7 @@ export function createActionTools(
               table: "tasks",
               fields: {
                 project_id: effectiveProjectId,
+                schedule_task_id: scheduleTaskId ?? null,
                 title,
                 description: taskDescription,
                 status: normalizedStatus,
@@ -951,6 +957,7 @@ export function createActionTools(
             p_assignee_person_id: resolvedAssignee.assigneePersonId,
             p_user_id: userId,
             p_idempotency_key: idempotencyKey,
+            p_schedule_task_id: scheduleTaskId ?? null,
           });
 
         if (error) {

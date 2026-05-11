@@ -63,7 +63,7 @@ export function formatTaskGenerationTrainingBlock(examples: FewShotTask[]): stri
   return [
     "## Task Generation Feedback",
     "",
-    "Users promoted these AI-generated tasks as good examples. Before calling createTask, use them as quality constraints for specificity, assignee fit, priority, and due-date shape. Do not copy an example unless the user asks for that exact task.",
+    "Users promoted these AI-generated action items as good examples. Before calling createGeneratedTask, use them as quality constraints for specificity, assignee fit, priority, and due-date shape. Do not copy an example unless the user asks for that exact action item.",
     "",
     ...examples.map(formatFewShotTaskLine),
   ].join("\n");

@@ -38,6 +38,7 @@ export interface TasksRow {
   metadata_id: string | null;
   segment_id: string | null;
   source_chunk_id: string | null;
+  schedule_task_id: string | null;
   description: string | null;
   assignee_person_id: string | null;
   assignee_name: string | null;
@@ -182,6 +183,7 @@ export function mapTaskRow(task: JoinedTaskRow): TasksRow {
     metadata_id: task.metadata_id ?? null,
     segment_id: task.segment_id ?? null,
     source_chunk_id: task.source_chunk_id ?? null,
+    schedule_task_id: task.schedule_task_id ?? null,
     description: nullableText(task.description),
     assignee_person_id: task.assignee_person_id ?? null,
     assignee_name: nullableText(task.assignee_name),

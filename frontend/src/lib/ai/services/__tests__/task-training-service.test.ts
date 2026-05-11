@@ -24,7 +24,7 @@ describe("task training service", () => {
     ]);
 
     expect(block).toContain("Task Generation Feedback");
-    expect(block).toContain("Before calling createTask");
+    expect(block).toContain("Before calling createGeneratedTask");
     expect(block).toContain("Confirm long-lead switchgear delivery date with vendor");
     expect(block).toContain("assignee: Sam");
     expect(block).toContain("priority: high");
