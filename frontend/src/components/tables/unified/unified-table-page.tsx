@@ -1096,9 +1096,7 @@ export function UnifiedTablePage<T>({
       className={cn(
         "px-0 sm:px-0 lg:px-0",
         isCompactDensity && "[&>div]:pt-2 [&>div]:pb-2",
-        isFullBleedTable &&
-          alignHeaderWithFullBleedTable &&
-          "-mx-1 sm:-mx-6 lg:-mx-8",
+        isFullBleedTable && alignHeaderWithFullBleedTable && "mx-0",
       )}
       actions={
         toolbarInlineWithHeader ? (
@@ -1206,7 +1204,7 @@ export function UnifiedTablePage<T>({
                   ? "mx-0 pl-0"
                   : "mx-0 pl-0"
                 : isFullBleedTable
-                  ? "-mx-1 sm:-mx-6 lg:-mx-8"
+                  ? "mx-0"
                   : "mx-0",
             )}
             tabIndex={0}

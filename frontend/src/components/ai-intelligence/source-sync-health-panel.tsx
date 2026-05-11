@@ -777,6 +777,7 @@ function RunLedgerTable({ runs }: { runs: SourceSyncRun[] }) {
         fullBleedTable: true,
         alignHeaderWithFullBleedTable: true,
         toolbarInlineWithHeader: true,
+        containerPadding: false,
       }}
       features={{
         enableSearch: false,
@@ -1091,6 +1092,7 @@ function StuckItemsTable({ items }: { items: SourceSyncStuckItem[] }) {
         fullBleedTable: true,
         alignHeaderWithFullBleedTable: true,
         toolbarInlineWithHeader: true,
+        containerPadding: false,
       }}
       features={{
         enableSearch: true,
@@ -1318,6 +1320,7 @@ function SourceTable({ sources }: { sources: SourceHealth[] }) {
         fullBleedTable: true,
         alignHeaderWithFullBleedTable: true,
         toolbarInlineWithHeader: true,
+        containerPadding: false,
       }}
       features={{
         enableSearch: false,
