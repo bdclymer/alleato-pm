@@ -485,10 +485,6 @@ function OperationsBrief({ status }: { status: SourceSyncStatus }) {
   const primaryIssue = issues[0];
   const priorityIssues = issues.slice(0, 3);
   const nextSteps = priorityIssues.map((issue) => issue.nextStep);
-  const criticalCount = status.alerts.filter(
-    (alert) => alert.severity === "critical",
-  ).length;
-  const warningCount = status.alerts.length - criticalCount;
   const statusSummary =
     status.status === "healthy"
       ? "Sources are current and intelligence is ready."
@@ -502,37 +498,21 @@ function OperationsBrief({ status }: { status: SourceSyncStatus }) {
 
   return (
     <div className="space-y-3 border-y border-border/60 py-4">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="min-w-0 space-y-2">
-          <p className="text-sm font-medium text-foreground">
-            {statusSummary}
+      <div className="min-w-0 space-y-2">
+        <p className="text-sm font-medium text-foreground">{statusSummary}</p>
+        {primaryIssue ? (
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+            Main blocker:{" "}
+            <span className="font-medium text-foreground">
+              {primaryIssue.title}
+            </span>
+            . {primaryIssue.detail}
           </p>
-          {primaryIssue ? (
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Main blocker:{" "}
-              <span className="font-medium text-foreground">
-                {primaryIssue.title}
-              </span>
-              . {primaryIssue.detail}
-            </p>
-          ) : (
-            <p className="text-sm leading-6 text-muted-foreground">
-              No active source sync issues were found.
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-1 text-sm lg:text-right">
-          <p className="text-xs font-medium uppercase text-muted-foreground">
-            Last checked
+        ) : (
+          <p className="text-sm leading-6 text-muted-foreground">
+            No active source sync issues were found.
           </p>
-          <p className="font-medium text-foreground">
-            {formatDate(status.generatedAt)}
-          </p>
-          <p className="text-muted-foreground">
-            {criticalCount} critical / {warningCount} warning
-          </p>
-        </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
@@ -1460,6 +1440,11 @@ export function SourceSyncHealthPanel() {
   const [lastRecompute, setLastRecompute] =
     React.useState<RecomputeResult | null>(null);
   const [lastAction, setLastAction] = React.useState<ActionResult | null>(null);
+  const criticalAlertCount =
+    status?.alerts.filter((alert) => alert.severity === "critical").length ?? 0;
+  const warningAlertCount = status
+    ? status.alerts.length - criticalAlertCount
+    : 0;
 
   const loadStatus = React.useCallback(
     async (mode: "initial" | "refresh" = "refresh") => {
@@ -1558,18 +1543,21 @@ export function SourceSyncHealthPanel() {
 
   return (
     <div className="space-y-8">
+      {status ? (
+        <p className="text-sm text-muted-foreground">
+          Last checked {formatDate(status.generatedAt)} · {criticalAlertCount}{" "}
+          critical / {warningAlertCount} warning
+        </p>
+      ) : null}
+
       <section className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <SectionRuleHeading
-                label="Source sync health"
-                className="mb-0 pb-0"
-              />
-              {status ? <StatusPill status={status.status} /> : null}
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
+            <SectionRuleHeading
+              label="Source sync health"
+              className="mb-0 pb-0"
+            />
+            {status ? <StatusPill status={status.status} /> : null}
             <Button
               type="button"
               variant="outline"
