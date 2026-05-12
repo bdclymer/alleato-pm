@@ -19,9 +19,40 @@ const TaskResponseSchema = z.object({
   source_context: z.string().nullable(),
 });
 
+const TASK_SELECT = `
+  *,
+  projects (id, name),
+  document_metadata:tasks_metadata_id_fkey (
+    id,
+    title,
+    type,
+    source,
+    source_system,
+    url,
+    source_web_url,
+    fireflies_link,
+    meeting_link,
+    project_id,
+    date,
+    captured_at,
+    created_at,
+    content,
+    raw_text,
+    summary,
+    action_items,
+    bullet_points,
+    notes
+  )
+`;
+
 export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
-  const scope = request.nextUrl.searchParams.get("scope") ?? "mine"; // "mine" | "all"
-  if (!["mine", "all", "brandon"].includes(scope)) {
+  const projectIdParam = request.nextUrl.searchParams.get("project_id");
+  const projectId = projectIdParam ? Number.parseInt(projectIdParam, 10) : null;
+
+  const rawScope = request.nextUrl.searchParams.get("scope") ?? "mine";
+  const scope = rawScope === "all" || rawScope === "mine" ? rawScope : "mine";
+
+  if (!["mine", "all"].includes(scope)) {
     throw new GuardrailError({
       code: "VALIDATION_ERROR",
       where: "/api/tasks#GET",
@@ -59,21 +90,72 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
     });
   }
 
-  // Admins-only guard for broad operational scopes.
-  if (scope === "all" || scope === "brandon") {
-    if (profileData?.is_admin !== true) {
-      throw new GuardrailError({
-        code: "FORBIDDEN",
-        where: "/api/tasks#GET",
-        message: scope === "brandon"
-          ? "Only admins can view Brandon task review."
-          : "Only admins can view all tasks.",
-        details: { userId: user.id, scope },
-      });
-    }
+  // Admins-only guard for "all" scope.
+  if (scope === "all" && profileData?.is_admin !== true) {
+    throw new GuardrailError({
+      code: "FORBIDDEN",
+      where: "/api/tasks#GET",
+      message: "Only admins can view all tasks.",
+      details: { userId: user.id, scope },
+    });
   }
 
   const supabase = await createClient();
+
+  // Project-scoped: use service client to bypass RLS; deduplicate across three query strategies.
+  if (projectId !== null && !Number.isNaN(projectId)) {
+    const [byProjectIds, byProjectId, viaDocsMeta] = await Promise.all([
+      serviceClient
+        .from("tasks")
+        .select(TASK_SELECT)
+        .contains("project_ids", [projectId])
+        .order("created_at", { ascending: false }),
+      serviceClient
+        .from("tasks")
+        .select(TASK_SELECT)
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false }),
+      serviceClient
+        .from("tasks")
+        .select(TASK_SELECT)
+        .eq("document_metadata.project_id", projectId)
+        .or("project_ids.is.null,project_ids.eq.{}")
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (byProjectIds.error ?? byProjectId.error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/tasks#GET",
+        message: "Failed to load project tasks.",
+        details: { projectId, byProjectIdsError: byProjectIds.error?.message, byProjectIdError: byProjectId.error?.message },
+      });
+    }
+
+    const seenIds = new Set<string>();
+    const allRows: JoinedTaskRow[] = [];
+    for (const task of [
+      ...(byProjectIds.data ?? []),
+      ...(byProjectId.data ?? []),
+      ...(viaDocsMeta.data ?? []),
+    ] as JoinedTaskRow[]) {
+      if (task.id && !seenIds.has(task.id)) {
+        seenIds.add(task.id);
+        allRows.push(task);
+      }
+    }
+
+    allRows.sort((a, b) => {
+      const at = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bt = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bt - at;
+    });
+
+    const tasks = allRows.map(mapTaskRow);
+    validateResponseContract(z.array(TaskResponseSchema.passthrough()), tasks, "/api/tasks#GET");
+    return NextResponse.json({ data: tasks, scope: "project", projectId });
+  }
+
   const currentUserEmail = user.email?.trim() ?? "";
   const { data: currentPerson, error: currentPersonError } = currentUserEmail
     ? await serviceClient
@@ -111,31 +193,7 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
 
   let query = supabase
     .from("tasks")
-    .select(`
-      *,
-      projects (id, name),
-      document_metadata:tasks_metadata_id_fkey (
-        id,
-        title,
-        type,
-        source,
-        source_system,
-        url,
-        source_web_url,
-        fireflies_link,
-        meeting_link,
-        project_id,
-        date,
-        captured_at,
-        created_at,
-        content,
-        raw_text,
-        summary,
-        action_items,
-        bullet_points,
-        notes
-      )
-    `)
+    .select(TASK_SELECT)
     .not("metadata_id", "is", null)
     .order("created_at", { ascending: false });
 
@@ -146,18 +204,6 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
     if (currentPerson?.id) filters.unshift(`assignee_person_id.eq.${currentPerson.id}`);
     if (fullName) filters.push(`assignee_name.ilike.${fullName}`);
     query = query.or(filters.join(","));
-  }
-
-  if (scope === "brandon") {
-    query = query.or(
-      [
-        "assigned_by.ilike.%brandon%",
-        "assignee_name.ilike.%brandon%",
-        "assignee_email.ilike.%bclymer@alleatogroup.com%",
-        "description.ilike.%brandon%",
-        "title.ilike.%brandon%",
-      ].join(","),
-    );
   }
 
   const interviewIds = (interviewMeetings ?? []).map((m) => m.id).filter(Boolean);
