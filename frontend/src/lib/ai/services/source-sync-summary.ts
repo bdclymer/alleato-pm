@@ -17,6 +17,10 @@ type SourceSyncRunSnapshotRow = Pick<
   Database["public"]["Tables"]["source_sync_runs"]["Row"],
   "id" | "finished_at" | "items_seen"
 >;
+type SourceSyncRunSnapshotListRow = Pick<
+  Database["public"]["Tables"]["source_sync_runs"]["Row"],
+  "id" | "finished_at" | "started_at" | "items_seen" | "metadata"
+>;
 
 export type SourceSyncRunSnapshotLedger = {
   insertAiBriefSnapshot(
@@ -25,12 +29,23 @@ export type SourceSyncRunSnapshotLedger = {
     data: SourceSyncRunSnapshotRow | null;
     error: { message: string } | null;
   }>;
+  listAiBriefSnapshots(limit: number): Promise<{
+    data: SourceSyncRunSnapshotListRow[] | null;
+    error: { message: string } | null;
+  }>;
 };
 
 export type SourceSyncAiBriefSnapshot = {
   id: string;
   generatedAt: string;
   sourceCount: number;
+};
+
+export type SourceSyncAiBriefSnapshotListItem = SourceSyncAiBriefSnapshot & {
+  headline: string | null;
+  confidence: "low" | "medium" | "high" | null;
+  healthStatus: string | null;
+  model: string | null;
 };
 
 function createSourceSyncRunSnapshotLedger(): SourceSyncRunSnapshotLedger {
@@ -42,6 +57,15 @@ function createSourceSyncRunSnapshotLedger(): SourceSyncRunSnapshotLedger {
         .insert(insert)
         .select("id, finished_at, items_seen")
         .single();
+    },
+    async listAiBriefSnapshots(limit) {
+      return supabase
+        .from("source_sync_runs")
+        .select("id, finished_at, started_at, items_seen, metadata")
+        .eq("source", "source_sync_ai_brief")
+        .eq("stage", "intelligence_compile")
+        .order("finished_at", { ascending: false, nullsFirst: false })
+        .limit(limit);
     },
   };
 }
@@ -68,6 +92,18 @@ function severityRank(value: string): number {
   if (value === "warning") return 2;
   if (value === "info") return 1;
   return 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readConfidence(value: unknown): "low" | "medium" | "high" | null {
+  return value === "low" || value === "medium" || value === "high" ? value : null;
 }
 
 export function buildSourceSyncSummarySources(
@@ -248,4 +284,34 @@ export async function saveSourceSyncAiBriefSnapshot({
     generatedAt: data.finished_at ?? generatedAt,
     sourceCount: data.items_seen,
   };
+}
+
+export async function listSourceSyncAiBriefSnapshots({
+  limit = 5,
+  ledger = createSourceSyncRunSnapshotLedger(),
+}: {
+  limit?: number;
+  ledger?: SourceSyncRunSnapshotLedger;
+} = {}): Promise<SourceSyncAiBriefSnapshotListItem[]> {
+  const normalizedLimit = Math.min(Math.max(Math.trunc(limit), 1), 10);
+  const { data, error } = await ledger.listAiBriefSnapshots(normalizedLimit);
+
+  if (error) {
+    throw new Error(`Failed to list source sync AI brief snapshots: ${error.message}`);
+  }
+
+  return (data ?? []).map((row) => {
+    const metadata = isRecord(row.metadata) ? row.metadata : {};
+    const summary = isRecord(metadata.summary) ? metadata.summary : {};
+
+    return {
+      id: row.id,
+      generatedAt: row.finished_at ?? row.started_at,
+      sourceCount: row.items_seen,
+      headline: readString(summary.headline),
+      confidence: readConfidence(summary.confidence),
+      healthStatus: readString(metadata.healthStatus),
+      model: readString(summary.model),
+    };
+  });
 }

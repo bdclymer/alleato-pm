@@ -6,6 +6,7 @@ jest.mock("../project-intelligence-summary", () => ({
 import { summarizeProjectIntelligence } from "../project-intelligence-summary";
 import {
   buildSourceSyncSummarySources,
+  listSourceSyncAiBriefSnapshots,
   saveSourceSyncAiBriefSnapshot,
   summarizeSourceSyncHealth,
   type SourceSyncRunSnapshotLedger,
@@ -217,6 +218,7 @@ describe("source-sync-summary", () => {
         },
         error: null,
       }),
+      listAiBriefSnapshots: jest.fn(),
     };
 
     const snapshot = await saveSourceSyncAiBriefSnapshot({
@@ -261,6 +263,7 @@ describe("source-sync-summary", () => {
         data: null,
         error: { message: "permission denied" },
       }),
+      listAiBriefSnapshots: jest.fn(),
     };
 
     await expect(
@@ -272,6 +275,62 @@ describe("source-sync-summary", () => {
       }),
     ).rejects.toThrow(
       "Failed to save source sync AI brief snapshot: permission denied",
+    );
+  });
+
+  it("lists recent saved source sync AI brief snapshots from ledger metadata", async () => {
+    const ledger: SourceSyncRunSnapshotLedger = {
+      insertAiBriefSnapshot: jest.fn(),
+      listAiBriefSnapshots: jest.fn().mockResolvedValue({
+        data: [
+          {
+            id: "snapshot-run-2",
+            finished_at: "2026-05-11T21:05:00.000Z",
+            started_at: "2026-05-11T21:04:59.000Z",
+            items_seen: 20,
+            metadata: {
+              healthStatus: "degraded",
+              summary: {
+                model: "openai/gpt-4.1-nano",
+                headline: "Source sync still needs attention.",
+                confidence: "medium",
+              },
+            },
+          },
+        ],
+        error: null,
+      }),
+    };
+
+    await expect(
+      listSourceSyncAiBriefSnapshots({ limit: 5, ledger }),
+    ).resolves.toEqual([
+      {
+        id: "snapshot-run-2",
+        generatedAt: "2026-05-11T21:05:00.000Z",
+        sourceCount: 20,
+        headline: "Source sync still needs attention.",
+        confidence: "medium",
+        healthStatus: "degraded",
+        model: "openai/gpt-4.1-nano",
+      },
+    ]);
+    expect(ledger.listAiBriefSnapshots).toHaveBeenCalledWith(5);
+  });
+
+  it("fails loudly when recent source sync AI brief snapshots cannot be listed", async () => {
+    const ledger: SourceSyncRunSnapshotLedger = {
+      insertAiBriefSnapshot: jest.fn(),
+      listAiBriefSnapshots: jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: "database unavailable" },
+      }),
+    };
+
+    await expect(
+      listSourceSyncAiBriefSnapshots({ ledger }),
+    ).rejects.toThrow(
+      "Failed to list source sync AI brief snapshots: database unavailable",
     );
   });
 });

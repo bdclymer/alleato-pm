@@ -47,6 +47,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-05-11-S40-source-sync-summary.md` | S40 | AAI-352 | 2026-05-11 | Yes | Pending Review | Wired shared summarization into Source Sync with a summary route, source mapping service, focused Jest/lint/route checks, and an on-demand AI brief button. |
 | `docs/ops/handoffs/2026-05-11-S41-source-sync-ai-brief-verify.md` | S41 | AAI-353 | 2026-05-11 | Yes | Pending Review | Live browser verification found and fixed the source-count cap bug, then confirmed the Source Sync AI brief rendered with 20 source sync records and captured screenshots/text evidence. |
 | `docs/ops/handoffs/2026-05-11-S42-source-sync-ai-brief-snapshots.md` | S42 | AAI-354 | 2026-05-11 | Partial | Pending Review | Implemented append-only Source Sync AI brief snapshots with focused Jest/lint evidence. Live browser verification is blocked by Supabase 522/auth timeout, so rerun after Supabase availability recovers. |
+| `docs/ops/handoffs/2026-05-11-S43-source-sync-ai-brief-history.md` | S43 | AAI-355 | 2026-05-11 | Partial | Pending Review | Added recent Source Sync AI brief history API/UI and focused Jest/lint/typecheck evidence. Live API probe is blocked by expired saved auth/Supabase HTML response. |
 
 ## Disposition Rules
 

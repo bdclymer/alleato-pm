@@ -166,9 +166,20 @@ interface SourceSyncAiBriefSnapshot {
   sourceCount: number;
 }
 
+interface SourceSyncAiBriefSnapshotListItem extends SourceSyncAiBriefSnapshot {
+  headline: string | null;
+  confidence: "low" | "medium" | "high" | null;
+  healthStatus: string | null;
+  model: string | null;
+}
+
 interface SourceSyncAiBriefResponse {
   summary: ProjectIntelligenceSummary;
   snapshot: SourceSyncAiBriefSnapshot;
+}
+
+interface SourceSyncAiBriefSnapshotsResponse {
+  snapshots: SourceSyncAiBriefSnapshotListItem[];
 }
 
 interface OperationsIssue {
@@ -681,6 +692,62 @@ function AiOperationsSummary({
           ? ` and was saved as operations snapshot ${snapshot.id} at ${formatDate(snapshot.generatedAt)}.`
           : "."}
       </p>
+    </div>
+  );
+}
+
+function RecentAiBriefSnapshots({
+  snapshots,
+  error,
+}: {
+  snapshots: SourceSyncAiBriefSnapshotListItem[];
+  error: string | null;
+}) {
+  if (!error && snapshots.length === 0) return null;
+
+  return (
+    <div className="space-y-3 border-t border-border/60 pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase text-muted-foreground">
+          Recent AI briefs
+        </p>
+        <span className="text-xs text-muted-foreground">
+          {snapshots.length} saved
+        </span>
+      </div>
+
+      {error ? <InfoAlert variant="error">{error}</InfoAlert> : null}
+
+      {snapshots.length > 0 ? (
+        <div className="divide-y divide-border/60">
+          {snapshots.map((snapshot) => (
+            <div
+              key={snapshot.id}
+              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm"
+            >
+              <div className="min-w-0 space-y-1">
+                <p className="truncate font-medium text-foreground">
+                  {snapshot.headline ?? "Source sync AI brief"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {snapshot.sourceCount} records · {snapshot.model ?? "model unknown"}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {snapshot.confidence ? (
+                  <Badge variant="outline" className="capitalize">
+                    {snapshot.confidence}
+                  </Badge>
+                ) : null}
+                {snapshot.healthStatus ? (
+                  <span className="capitalize">{snapshot.healthStatus}</span>
+                ) : null}
+                <span>{formatDate(snapshot.generatedAt)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1657,6 +1724,12 @@ export function SourceSyncHealthPanel() {
     React.useState<ProjectIntelligenceSummary | null>(null);
   const [aiSummarySnapshot, setAiSummarySnapshot] =
     React.useState<SourceSyncAiBriefSnapshot | null>(null);
+  const [recentAiBriefSnapshots, setRecentAiBriefSnapshots] = React.useState<
+    SourceSyncAiBriefSnapshotListItem[]
+  >([]);
+  const [recentAiBriefError, setRecentAiBriefError] = React.useState<
+    string | null
+  >(null);
   const [summarizing, setSummarizing] = React.useState(false);
   const criticalAlertCount =
     status?.alerts.filter((alert) => alert.severity === "critical").length ?? 0;
@@ -1688,9 +1761,26 @@ export function SourceSyncHealthPanel() {
     [],
   );
 
+  const loadRecentAiBriefSnapshots = React.useCallback(async () => {
+    try {
+      const result = await apiFetch<SourceSyncAiBriefSnapshotsResponse>(
+        "/api/admin/source-sync/summary",
+      );
+      setRecentAiBriefSnapshots(result.snapshots);
+      setRecentAiBriefError(null);
+    } catch (err) {
+      setRecentAiBriefError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load recent source sync AI briefs.",
+      );
+    }
+  }, []);
+
   React.useEffect(() => {
     void loadStatus("initial");
-  }, [loadStatus]);
+    void loadRecentAiBriefSnapshots();
+  }, [loadRecentAiBriefSnapshots, loadStatus]);
 
   const recompute = async () => {
     setRecomputing(true);
@@ -1727,6 +1817,7 @@ export function SourceSyncHealthPanel() {
       );
       setAiSummary(result.summary);
       setAiSummarySnapshot(result.snapshot);
+      await loadRecentAiBriefSnapshots();
     } catch (err) {
       setError(
         err instanceof Error
@@ -1873,8 +1964,17 @@ export function SourceSyncHealthPanel() {
                   snapshot={aiSummarySnapshot}
                 />
               ) : null}
+              <RecentAiBriefSnapshots
+                snapshots={recentAiBriefSnapshots}
+                error={recentAiBriefError}
+              />
           </div>
-        ) : null}
+        ) : (
+          <RecentAiBriefSnapshots
+            snapshots={recentAiBriefSnapshots}
+            error={recentAiBriefError}
+          />
+        )}
       </section>
 
       {status ? (

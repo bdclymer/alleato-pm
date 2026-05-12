@@ -2,12 +2,22 @@ import { NextResponse } from "next/server";
 
 import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/api";
 import {
+  listSourceSyncAiBriefSnapshots,
   saveSourceSyncAiBriefSnapshot,
   summarizeSourceSyncHealth,
 } from "@/lib/ai/services/source-sync-summary";
 
 import { SourceSyncStatusSchema } from "../_contracts";
 import { fetchBackendSourceSync, requireAdmin } from "../_shared";
+
+export const GET = withApiGuardrails(
+  "api.admin.source-sync.summary.GET",
+  async () => {
+    await requireAdmin("api.admin.source-sync.summary.GET");
+    const snapshots = await listSourceSyncAiBriefSnapshots();
+    return NextResponse.json({ snapshots });
+  },
+);
 
 export const POST = withApiGuardrails(
   "api.admin.source-sync.summary.POST",
