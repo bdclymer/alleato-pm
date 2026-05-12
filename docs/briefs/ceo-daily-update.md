@@ -477,6 +477,7 @@ Behavior:
 - writes a durable `source_sync_runs` row with `source = executive_daily_brief`
 - exits non-zero on generation, persistence, or Teams delivery failure
 - calls the frontend Teams delivery route only after a packet has been persisted
+- currently has Teams delivery paused with `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS=false` in `render.yaml`
 - uses `EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE=America/New_York` plus target local times so the UTC cron schedule remains correct across daylight saving time changes
 - exits 0 before generation on the extra UTC run that does not match the target local time
 

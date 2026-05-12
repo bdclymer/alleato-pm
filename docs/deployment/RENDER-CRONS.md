@@ -76,7 +76,7 @@ Set these in the Render dashboard under each cron's **Environment** tab. All are
 | `OPENAI_API_KEY` | Direct OpenAI fallback |
 | `CRON_SECRET` | Shared bearer secret used by the thin Teams delivery endpoint |
 | `EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL` | Production frontend URL, currently `https://projects.alleatogroup.com` |
-| `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS` | Set to `"true"` for scheduled delivery |
+| `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS` | Set to `"false"` while Teams delivery is paused; restore to `"true"` for scheduled delivery |
 | `EXECUTIVE_DAILY_BRIEF_SCHEDULE` | Human-readable schedule label persisted into `source_sync_runs.metadata` |
 | `EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE` | `America/New_York`; used by the worker to handle daylight saving time correctly |
 | `EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME` | `07:00` for morning, `18:30` for evening |
