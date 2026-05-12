@@ -14,7 +14,10 @@ Config lives in `render.yaml` at the repo root.
 
 | Name | Schedule (UTC) | Purpose | Key File | Exit Behavior |
 |------|---------------|---------|----------|---------------|
+| `alleato-source-sync-health` | Every 15 min (`*/15 * * * *`) | Recompute source-sync health snapshots and active alerts for operations/readiness pages | `backend/src/services/health/source_sync_health.py` | Exit 1 whenever overall health is not `healthy`, so stale Teams/Graph data fails loudly in Render instead of only writing a passive alert row. |
 | `alleato-graph-sync` | Every 30 min (`*/30 * * * *`) | Microsoft Graph sync: Outlook emails, Teams messages, OneDrive files → embed → teams compiler | `backend/src/services/integrations/microsoft_graph/sync.py` | Exit 1 only if errors **and** `total_synced == 0`. Partial errors with some synced = exit 0. |
+| `alleato-teams-channel-sync` | Every 30 min (`*/30 * * * *`) | Teams channel-message sync only, isolated from Outlook/OneDrive work | `backend/src/scripts/run_graph_sync_phase.py` | Exit 1 on source-sync errors. Skips embedding and Teams compiler so source freshness is not blocked by downstream work. |
+| `alleato-teams-dm-sync` | Minute 15 and 45 hourly (`15,45 * * * *`) | Teams direct-message export only, isolated from channel/Outlook/OneDrive work | `backend/src/scripts/run_graph_sync_phase.py` | Exit 1 on source-sync errors. Skips embedding and Teams compiler so source freshness is not blocked by downstream work. |
 | `alleato-task-extraction` | Daily 7:00 AM (`0 7 * * *`) | Extract action items from communications (window: last 2 days) | `backend/src/services/task_extraction.py` | Exit 1 only if errors **and** `inserted == 0`. |
 | `alleato-rag-health` | Daily 12:15 PM (`15 12 * * *`) | RAG meeting vectorization health check. Posts to Slack on failure. | `backend/src/services/health/rag_meeting_health.py` | Standard Python exit code (non-zero on failure). Posts to `SLACK_WEBHOOK_URL`. |
 | `alleato-executive-daily-brief-morning` | Weekdays 11:00 AM and noon UTC (`0 11,12 * * 1-5`) | Generate the approved executive Daily Brief on Render. Teams delivery is currently paused with `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS=false`; when re-enabled, sends the CEO Operating Brief Teams message at 7:00 AM America/New_York. One UTC run skips depending on daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or enabled Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. Non-target UTC runs exit 0 before generation. |
@@ -40,6 +43,31 @@ Set these in the Render dashboard under each cron's **Environment** tab. All are
 | `GRAPH_SYNC_OUTLOOK` | Set to `"true"` |
 | `GRAPH_SYNC_TEAMS` | Set to `"true"` |
 | `GRAPH_SYNC_ONEDRIVE` | Set to `"true"` |
+| `PYTHONPATH` | `/app:/app/src:/app/src/services` (set in render.yaml) |
+| `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
+
+### `alleato-teams-channel-sync`
+
+| Var | Notes |
+|-----|-------|
+| `SUPABASE_URL` | Project URL from Supabase dashboard |
+| `SUPABASE_SERVICE_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Service role key |
+| `MICROSOFT_CLIENT_ID` | Azure app registration client ID |
+| `MICROSOFT_CLIENT_SECRET` | Azure app registration client secret |
+| `MICROSOFT_TENANT_ID` | Azure tenant ID |
+| `PYTHONPATH` | `/app:/app/src:/app/src/services` (set in render.yaml) |
+| `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
+
+### `alleato-teams-dm-sync`
+
+| Var | Notes |
+|-----|-------|
+| `SUPABASE_URL` | Project URL from Supabase dashboard |
+| `SUPABASE_SERVICE_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Service role key |
+| `MICROSOFT_CLIENT_ID` | Azure app registration client ID |
+| `MICROSOFT_CLIENT_SECRET` | Azure app registration client secret |
+| `MICROSOFT_TENANT_ID` | Azure tenant ID |
+| `MICROSOFT_SYNC_USERS` | Comma-separated UPNs to sync. Missing/empty means the cron can run but will export no Teams DMs. |
 | `PYTHONPATH` | `/app:/app/src:/app/src/services` (set in render.yaml) |
 | `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
 
