@@ -505,6 +505,7 @@ export default async function ProjectIntelligencePage({
       packet = await loadCurrentIntelligencePacket({
         targetId: target.id,
         supabase,
+        includeSourcePreview: false,
       });
     } catch (error) {
       packetLoadError = error instanceof Error ? error.message : "Unexpected packet load failure.";

@@ -46,6 +46,20 @@ function printRows(label, rows) {
   }
 }
 
+function normalizeText(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9@.]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function subjectMatchesRule(subject, rule) {
+  const normalizedSubject = ` ${normalizeText(subject)} `;
+  const pattern = ` ${normalizeText(rule.pattern_normalized || rule.pattern)} `;
+  return pattern.trim().length > 0 && normalizedSubject.includes(pattern);
+}
+
 try {
   await sql`set statement_timeout = '45s'`;
 
@@ -107,47 +121,78 @@ try {
     printRows("Broad active rule examples:", broadPatterns.slice(0, exampleLimit));
   }
 
-  const subjectMismatches = await sql`
-    with candidate as (
-      select
-        e.id,
-        e.subject,
-        e.project_id as current_project_id,
-        current_project.name as current_project,
-        r.project_id as rule_project_id,
-        rule_project.name as rule_project,
-        r.pattern,
-        r.confidence,
-        row_number() over (
-          partition by e.id
-          order by r.confidence desc, r.priority asc, r.project_id asc
-        ) as rn
-      from public.outlook_email_intake e
-      join public.project_attribution_rules r
-        on r.status = 'active'
-       and r.rule_type = 'title_keyword'
-       and (
-          ' ' || regexp_replace(lower(coalesce(e.subject, '')), '[^a-z0-9@.]+', ' ', 'g') || ' '
-        ) like ('% ' || r.pattern_normalized || ' %')
-      left join public.projects current_project on current_project.id = e.project_id
-      left join public.projects rule_project on rule_project.id = r.project_id
-      where e.deleted_at is null
-        and e.received_at >= now() - (${windowDays}::text || ' days')::interval
-    )
+  const titleRules = await sql`
     select
-      id,
-      left(coalesce(subject, '(no subject)'), 140) as subject,
-      current_project_id,
-      current_project,
-      rule_project_id,
-      rule_project,
-      pattern
-    from candidate
-    where rn = 1
-      and current_project_id is distinct from rule_project_id
-    order by id desc
-    limit ${exampleLimit + 1}
+      r.project_id,
+      p.name as project_name,
+      r.pattern,
+      r.pattern_normalized,
+      r.confidence::float as confidence,
+      r.priority::int as priority
+    from public.project_attribution_rules r
+    left join public.projects p on p.id = r.project_id
+    where r.status = 'active'
+      and r.rule_type = 'title_keyword'
+    order by r.confidence desc, r.priority asc, r.project_id asc
   `;
+
+  const recentEmails = await sql`
+    select
+      e.id,
+      e.subject,
+      e.project_id as current_project_id,
+      p.name as current_project
+    from public.outlook_email_intake e
+    left join public.projects p on p.id = e.project_id
+    where e.deleted_at is null
+      and e.received_at >= now() - (${windowDays}::text || ' days')::interval
+      and nullif(trim(coalesce(e.subject, '')), '') is not null
+    order by e.id desc
+  `;
+
+  const subjectMismatches = [];
+  const ambiguousSubjects = [];
+
+  for (const email of recentEmails) {
+    const matches = titleRules
+      .filter((rule) => subjectMatchesRule(email.subject, rule))
+      .sort((a, b) => b.confidence - a.confidence || a.priority - b.priority || a.project_id - b.project_id);
+
+    if (matches.length === 0) continue;
+
+    const best = matches[0];
+    const tiedBestProjectIds = new Set(
+      matches
+        .filter((match) => match.confidence === best.confidence)
+        .map((match) => match.project_id),
+    );
+
+    if (tiedBestProjectIds.size > 1) {
+      ambiguousSubjects.push({
+        id: email.id,
+        subject: String(email.subject ?? "(no subject)").slice(0, 140),
+        confidence: best.confidence,
+        project_ids: [...tiedBestProjectIds].sort((a, b) => a - b),
+        patterns: matches
+          .filter((match) => match.confidence === best.confidence)
+          .map((match) => match.pattern)
+          .sort(),
+      });
+      continue;
+    }
+
+    if (email.current_project_id !== best.project_id) {
+      subjectMismatches.push({
+        id: email.id,
+        subject: String(email.subject ?? "(no subject)").slice(0, 140),
+        current_project_id: email.current_project_id,
+        current_project: email.current_project,
+        rule_project_id: best.project_id,
+        rule_project: best.project_name,
+        pattern: best.pattern,
+      });
+    }
+  }
 
   if (subjectMismatches.length > 0) {
     fail(
@@ -155,42 +200,6 @@ try {
     );
     printRows("Subject mismatch examples:", subjectMismatches.slice(0, exampleLimit));
   }
-
-  const ambiguousSubjects = await sql`
-    with matches as (
-      select
-        e.id,
-        e.subject,
-        r.project_id,
-        r.pattern,
-        r.confidence
-      from public.outlook_email_intake e
-      join public.project_attribution_rules r
-        on r.status = 'active'
-       and r.rule_type = 'title_keyword'
-       and (
-          ' ' || regexp_replace(lower(coalesce(e.subject, '')), '[^a-z0-9@.]+', ' ', 'g') || ' '
-        ) like ('% ' || r.pattern_normalized || ' %')
-      where e.deleted_at is null
-        and e.received_at >= now() - (${windowDays}::text || ' days')::interval
-    ),
-    grouped as (
-      select
-        id,
-        left(coalesce(subject, '(no subject)'), 140) as subject,
-        confidence,
-        count(distinct project_id)::int as project_count,
-        array_agg(distinct project_id order by project_id) as project_ids,
-        array_agg(distinct pattern order by pattern) as patterns
-      from matches
-      group by id, subject, confidence
-      having count(distinct project_id) > 1
-    )
-    select *
-    from grouped
-    order by id desc
-    limit ${exampleLimit + 1}
-  `;
 
   if (ambiguousSubjects.length > 0) {
     fail(`${ambiguousSubjects.length} recent subjects have equally confident matches to multiple projects.`);

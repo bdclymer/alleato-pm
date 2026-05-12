@@ -377,6 +377,7 @@ export async function resolveIntelligenceTarget(input: {
 export async function loadCurrentIntelligencePacket(input: {
   targetId: string;
   supabase: AlleatoSupabaseClient;
+  includeSourcePreview?: boolean;
 }): Promise<ClientProjectIntelligencePacket | null> {
   const { data, error } = await input.supabase
     .from("intelligence_packets")
@@ -395,6 +396,7 @@ export async function loadCurrentIntelligencePacket(input: {
   const cards = await loadPacketCards({
     targetId: input.targetId,
     supabase: input.supabase,
+    includeSourcePreview: input.includeSourcePreview,
   });
 
   return mapPacket(data, cards);
@@ -404,6 +406,7 @@ export async function loadPacketCards(input: {
   targetId: string;
   supabase: AlleatoSupabaseClient;
   includeCandidate?: boolean;
+  includeSourcePreview?: boolean;
 }): Promise<InsightCard[]> {
   const { data: packet, error: packetError } = await input.supabase
     .from("intelligence_packets")
@@ -468,13 +471,15 @@ export async function loadPacketCards(input: {
   }
   const evidenceRows = evidenceResults.flatMap((result) => result.data ?? []);
 
-  const sourceDocumentIds = Array.from(
-    new Set(
-      evidenceRows
-        .map((row) => row.source_document_id)
-        .filter((value): value is string => Boolean(value)),
-    ),
-  );
+  const sourceDocumentIds = input.includeSourcePreview === false
+    ? []
+    : Array.from(
+        new Set(
+          evidenceRows
+            .map((row) => row.source_document_id)
+            .filter((value): value is string => Boolean(value)),
+        ),
+      );
   const sourceDocumentResults = sourceDocumentIds.length > 0
     ? await Promise.all(
         chunkArray(sourceDocumentIds).map((ids) =>
