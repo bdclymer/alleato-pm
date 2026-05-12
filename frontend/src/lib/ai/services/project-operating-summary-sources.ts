@@ -49,8 +49,13 @@ export type ProjectOperatingSummarySourceSet = {
   missingCategories: ProjectOperatingSourceCoverage[];
 };
 
+const DOCUMENT_PER_CATEGORY_LIMIT = 120;
+
 const SOURCE_LIMITS = {
-  documents: 36,
+  documents: DOCUMENT_PER_CATEGORY_LIMIT,
+  meetings: DOCUMENT_PER_CATEGORY_LIMIT,
+  emails: DOCUMENT_PER_CATEGORY_LIMIT,
+  teams: DOCUMENT_PER_CATEGORY_LIMIT,
   rfis: 20,
   submittals: 20,
   drawings: 20,
@@ -518,9 +523,14 @@ export async function buildProjectOperatingSummarySources({
   projectId: number;
   supabase: AlleatoSupabaseClient;
 }): Promise<ProjectOperatingSummarySourceSet> {
+  const docSelectColumns = "id,title,type,category,source,source_system,date,captured_at,summary,overview,notes,action_items,decisions,key_topics,topics_discussed,source_web_url,url";
+
   const [
     projectRes,
-    docsRes,
+    meetingsRes,
+    emailsRes,
+    teamsRes,
+    otherDocsRes,
     rfiRes,
     submittalRes,
     drawingRes,
@@ -542,9 +552,35 @@ export async function buildProjectOperatingSummarySources({
       .single(),
     supabase
       .from("document_metadata")
-      .select("id,title,type,category,source,source_system,date,captured_at,summary,overview,notes,action_items,decisions,key_topics,topics_discussed,source_web_url,url")
+      .select(docSelectColumns)
       .eq("project_id", projectId)
       .is("deleted_at", null)
+      .eq("type", "meeting")
+      .order("date", { ascending: false, nullsFirst: false })
+      .limit(SOURCE_LIMITS.meetings),
+    supabase
+      .from("document_metadata")
+      .select(docSelectColumns)
+      .eq("project_id", projectId)
+      .is("deleted_at", null)
+      .eq("category", "email")
+      .order("date", { ascending: false, nullsFirst: false })
+      .limit(SOURCE_LIMITS.emails),
+    supabase
+      .from("document_metadata")
+      .select(docSelectColumns)
+      .eq("project_id", projectId)
+      .is("deleted_at", null)
+      .eq("category", "teams_message")
+      .order("date", { ascending: false, nullsFirst: false })
+      .limit(SOURCE_LIMITS.teams),
+    supabase
+      .from("document_metadata")
+      .select(docSelectColumns)
+      .eq("project_id", projectId)
+      .is("deleted_at", null)
+      .not("type", "in", "(meeting,email)")
+      .not("category", "in", "(email,teams_message)")
       .order("date", { ascending: false, nullsFirst: false })
       .limit(SOURCE_LIMITS.documents),
     supabase
@@ -635,6 +671,14 @@ export async function buildProjectOperatingSummarySources({
     throw new Error(`Failed to load project ${projectId} for operating summary sources: ${projectRes.error?.message ?? "not found"}`);
   }
 
+  const docsById = new Map<string, NonNullable<typeof meetingsRes.data>[number]>();
+  for (const bucket of [meetingsRes.data, emailsRes.data, teamsRes.data, otherDocsRes.data]) {
+    for (const row of bucket ?? []) {
+      docsById.set(row.id, row);
+    }
+  }
+  const docsData = Array.from(docsById.values());
+
   const project = projectRes.data;
   const projectName = project.name;
   const sources: ProjectOperatingSummarySource[] = [
@@ -667,7 +711,7 @@ export async function buildProjectOperatingSummarySources({
     }),
   ];
 
-  (docsRes.data ?? []).forEach((row) => {
+  docsData.forEach((row) => {
     const category = normalizeDocumentCategory(row as Record<string, unknown>);
     sources.push(
       makeSource({
@@ -974,10 +1018,10 @@ export async function buildProjectOperatingSummarySources({
 
   const availableCounts: Partial<Record<ProjectOperatingSourceCategory, number>> = {
     project_detail: project ? 1 : 0,
-    meeting: (docsRes.data ?? []).filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "meeting").length,
-    email: (docsRes.data ?? []).filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "email").length,
-    teams: (docsRes.data ?? []).filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "teams").length,
-    document: (docsRes.data ?? []).filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "document").length,
+    meeting: docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "meeting").length,
+    email: docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "email").length,
+    teams: docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "teams").length,
+    document: docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "document").length,
     rfi: countRows(rfiRes.data),
     submittal: countRows(submittalRes.data),
     drawing: countRows(drawingRes.data),
