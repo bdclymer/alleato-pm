@@ -3,7 +3,24 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Building2, Calendar, Check, ChevronsUpDown, FileText, Globe, MapPin, MoreHorizontal, Plus, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CalendarDays,
+  Check,
+  ChevronsUpDown,
+  CircleDollarSign,
+  ExternalLink,
+  FileText,
+  Globe,
+  Mail,
+  MapPin,
+  MoreHorizontal,
+  Phone,
+  Plus,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
@@ -11,8 +28,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
 import { PageShell } from "@/components/layout";
-import { ErrorState, EmptyState as DsEmptyState, SectionHeader as DsSectionHeader, StatusBadge, KpiRow } from "@/components/ds";
-import { DetailField } from "@/components/ds/DetailField";
+import { ErrorState, EmptyState as DsEmptyState, SectionHeader as DsSectionHeader, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -553,100 +569,210 @@ export default function CompanyDetailsPage() {
       return name.includes(query) || number.includes(query);
     });
   })();
+  const websiteUrl = company.website
+    ? company.website.startsWith("http")
+      ? company.website
+      : `https://${company.website}`
+    : null;
+  const primaryContact = contacts[0] ?? null;
+  const openInvoiceCount = invoices.filter((item) => isOpenInvoice(item.status)).length;
+  const latestMeeting = meetings
+    .filter((meeting) => meeting.date)
+    .sort((a, b) => new Date(b.date || "").getTime() - new Date(a.date || "").getTime())[0];
 
   return (
     <PageShell
-      variant="detail"
+      variant="detailWide"
       title={company.name}
-      statusBadge={<StatusBadge status={company.status || "Unknown"} />}
-      onBack={() => router.back()}
-      actions={
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Company actions">
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-              Edit Company
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => void openAddContactModal()}>
-              Add Contact
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      }
+      showHeader={false}
+      contentClassName="pt-0"
     >
-      {/* Company meta strip */}
-      {(company.type || companyLocation || company.website) && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 -mt-2 mb-2">
-          {company.type && (
-            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Building2 className="h-3.5 w-3.5 shrink-0" />
-              {company.type}
-            </span>
-          )}
-          {companyLocation && (
-            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5 shrink-0" />
-              {companyLocation}
-            </span>
-          )}
-          {company.website && (
-            <a
-              href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 text-sm text-primary hover:underline"
-            >
-              <Globe className="h-3.5 w-3.5 shrink-0" />
-              {company.website}
-            </a>
-          )}
+      <div className="overflow-hidden rounded-[2rem] border border-border bg-background shadow-sm">
+        <div className="border-b border-border bg-card/90 px-4 py-3 backdrop-blur sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Button variant="ghost" size="sm" onClick={() => router.back()} className="gap-2 active:scale-[0.98]">
+              <ArrowLeft className="h-4 w-4" />
+              Directory
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => void openAddContactModal()} className="gap-2 active:scale-[0.98]">
+                <UserPlus className="h-4 w-4" />
+                Add Contact
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Company actions" className="active:scale-[0.98]">
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                    Edit Company
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void openAddContactModal()}>
+                    Add Contact
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_288px] lg:gap-12">
-        <div className="space-y-8 min-w-0">
+        <section className="relative bg-card px-4 py-8 sm:px-8 lg:px-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:items-end">
+            <div className="min-w-0 space-y-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={company.status || "Unknown"} />
+                {company.type ? <Badge variant="outline">{company.type}</Badge> : null}
+                {company.acumatica_vendor_id ? <Badge variant="outline">ERP {company.acumatica_vendor_id}</Badge> : null}
+              </div>
+              <div className="space-y-4">
+                <h1 className="text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
+                  {company.name}
+                </h1>
+                <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-3">
+                  {companyLocation ? (
+                    <div className="flex min-w-0 items-center gap-2">
+                      <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{companyLocation}</span>
+                    </div>
+                  ) : null}
+                  {company.contact_phone ? (
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{company.contact_phone}</span>
+                    </div>
+                  ) : null}
+                  {company.contact_email ? (
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{company.contact_email}</span>
+                    </div>
+                  ) : null}
+                  {websiteUrl ? (
+                    <a
+                      href={websiteUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-w-0 items-center gap-2 text-foreground underline-offset-4 hover:underline"
+                    >
+                      <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{company.website}</span>
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            </div>
 
-          <section className="space-y-4">
-            <DsSectionHeader
-              title="Contacts"
-              count={contacts.length > 0 ? contacts.length : undefined}
-              action={{ label: "Add contact", onClick: () => void openAddContactModal() }}
-            />
-              {contacts.length === 0 ? (
-                <DsEmptyState title="No contacts associated with this company" description="Add contacts to track people associated with this company." />
+            <div className="rounded-[1.5rem] border border-border bg-foreground p-5 text-background shadow-xs">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Primary contact</p>
+              {primaryContact ? (
+                <div className="mt-5 flex items-start gap-4">
+                  <Avatar className="h-12 w-12 border border-white/15">
+                    <AvatarFallback className="bg-background/10 text-sm font-semibold text-background">
+                      {getInitials(primaryContact.first_name, primaryContact.last_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-semibold">
+                      {primaryContact.first_name} {primaryContact.last_name}
+                    </p>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      {primaryContact.job_title || primaryContact.email || "Company contact"}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => router.push(`/directory/contacts/${primaryContact.id}`)}
+                      className="mt-4 h-8 bg-background text-foreground hover:bg-muted active:scale-[0.98]"
+                    >
+                      Open profile
+                    </Button>
+                  </div>
+                </div>
               ) : (
-                <div className="max-w-3xl">
-                  <ul className="divide-y divide-border">
+                <div className="mt-5 space-y-4">
+                  <p className="text-sm leading-6 text-muted-foreground">No contact has been linked to this company yet.</p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void openAddContactModal()}
+                    className="bg-background text-foreground hover:bg-muted active:scale-[0.98]"
+                  >
+                    Add first contact
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <div className="grid border-y border-border bg-card sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Contacts", value: summary.contact_count, icon: Users },
+            { label: "Projects", value: summary.project_count, icon: Building2 },
+            { label: "Open invoices", value: openInvoiceCount, icon: CircleDollarSign },
+            { label: "Meetings", value: summary.meeting_count, icon: CalendarDays },
+          ].map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <div key={metric.label} className="flex items-center justify-between gap-4 border-b border-border p-5 last:border-b-0 sm:[&:nth-child(odd)]:border-r lg:border-b-0 lg:border-r lg:last:border-r-0">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{metric.label}</p>
+                  <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-foreground">{metric.value}</p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <Icon className="h-4 w-4" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <main className="min-w-0 bg-card px-4 py-6 sm:px-8 lg:px-10">
+            <div className="space-y-10">
+              <section className="space-y-4">
+                <DsSectionHeader
+                  title="Contacts"
+                  count={contacts.length > 0 ? contacts.length : undefined}
+                  action={{ label: "Add contact", onClick: () => void openAddContactModal() }}
+                />
+                {contacts.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
+                    <DsEmptyState title="No contacts associated with this company" description="Add contacts to track people associated with this company." />
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-border rounded-2xl border border-border">
                     {contacts.map((contact) => (
-                      <li key={contact.id}>
-                        <div className="flex items-center gap-1">
+                      <li key={contact.id} className="group">
+                        <div className="flex items-center gap-1 p-2">
                           <Button
                             type="button"
                             variant="ghost"
                             onClick={() => router.push(`/directory/contacts/${contact.id}`)}
-                            className="grid h-auto flex-1 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[auto_minmax(0,1fr)_minmax(220px,1fr)_180px] justify-start"
+                            className="grid h-auto flex-1 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-xl px-2 py-3 text-left transition-colors hover:bg-muted/50 md:grid-cols-[auto_minmax(0,1fr)_minmax(200px,1fr)_160px] justify-start active:scale-[0.99]"
                           >
-                            <Avatar className="h-9 w-9 border border-border">
-                              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                            <Avatar className="h-10 w-10 border border-border">
+                              <AvatarFallback className="bg-foreground text-xs font-semibold text-background">
                                 {getInitials(contact.first_name, contact.last_name)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-foreground">
+                              <p className="truncate text-sm font-semibold text-foreground">
                                 {contact.first_name} {contact.last_name}
                               </p>
                               <p className="truncate text-sm text-muted-foreground">
                                 {contact.job_title || "No job title"}
                               </p>
                             </div>
-                            <p className="truncate text-sm text-muted-foreground">
+                            <p className="hidden truncate text-sm text-muted-foreground md:block">
                               {contact.email || "No email"}
                             </p>
-                            <p className="truncate text-sm text-muted-foreground md:text-right">
+                            <p className="hidden truncate text-sm text-muted-foreground md:block md:text-right">
                               {contact.phone_business || contact.phone_mobile || "No phone"}
                             </p>
                           </Button>
@@ -655,7 +781,7 @@ export default function CompanyDetailsPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
+                                className="h-8 w-8 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
                                 aria-label="Contact actions"
                                 disabled={removingContactId === contact.id}
                               >
@@ -675,203 +801,255 @@ export default function CompanyDetailsPage() {
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
-            </section>
+                )}
+              </section>
 
-          <section className="space-y-4">
-            <DsSectionHeader
-              title="Projects"
-              count={associatedProjects.length > 0 ? associatedProjects.length : undefined}
-              action={{
-                label: "Add project",
-                onClick: () => {
-                  setAddToProjectOpen(true);
-                  setProjectQuery("");
-                  setProjectComboboxOpen(false);
-                  void loadProjects();
-                },
-              }}
-            />
-              {associatedProjects.length === 0 ? (
-                <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Number</TableHead>
-                      <TableHead className="text-right">State</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {associatedProjects.map((project) => (
-                      <TableRow key={project.id}>
-                        <TableCell>
-                          <Link
-                            href={`/${project.id}/home`}
-                            className="font-medium text-primary underline-offset-4 hover:underline"
-                          >
-                            {project.name || `Project ${project.id}`}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={statusVariant(project.company_status)}>
-                              {project.company_status || "Unknown"}
-                            </Badge>
-                            {project.archived ? <Badge variant="outline">Archived</Badge> : null}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">#{project.project_number || "-"}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">{project.state || "No status"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </section>
-
-          <section className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <DsSectionHeader title="Invoices" count={filteredInvoices.length > 0 ? filteredInvoices.length : undefined} />
-              <Tabs
-                value={invoiceFilter}
-                onValueChange={(value) => setInvoiceFilter(value as "open" | "all")}
-              >
-                <TabsList>
-                  <TabsTrigger value="open">Open</TabsTrigger>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-              {filteredInvoices.length === 0 ? (
-                <DsEmptyState
-                  title={invoiceFilter === "open" ? "No open invoices found" : "No invoices found"}
-                  description="Invoices from associated projects will appear here."
+              <section className="space-y-4">
+                <DsSectionHeader
+                  title="Projects"
+                  count={associatedProjects.length > 0 ? associatedProjects.length : undefined}
+                  action={{
+                    label: "Add project",
+                    onClick: () => {
+                      setAddToProjectOpen(true);
+                      setProjectQuery("");
+                      setProjectComboboxOpen(false);
+                      void loadProjects();
+                    },
+                  }}
                 />
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Contract</TableHead>
-                      <TableHead>Project</TableHead>
-                      <TableHead className="text-right">Period</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInvoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">{invoice.invoice_number || `Invoice ${invoice.id}`}</TableCell>
-                        <TableCell>
-                          <Badge variant={statusVariant(invoice.status)}>{invoice.status || "Unknown"}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {invoice.contract_number || invoice.prime_contract_id}: {invoice.contract_title || "Untitled"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {invoice.project_name || "Unknown project"} ({invoice.project_number || "-"})
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {formatDate(invoice.period_start)} to {formatDate(invoice.period_end)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </section>
-
-          <section className="space-y-4">
-            <DsSectionHeader title="Meetings" count={meetingsByProject.length > 0 ? meetings.length : undefined} />
-              {meetingsByProject.length === 0 ? (
-                <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Meeting</TableHead>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {meetingsByProject.flatMap(({ project, items }) =>
-                      items.slice(0, 6).map((meeting) => (
-                        <TableRow key={meeting.id}>
-                          <TableCell>
-                            <Link
-                              href={`/${meeting.project_id}/meetings/${meeting.id}`}
-                              className="font-medium text-primary underline-offset-4 hover:underline"
-                            >
-                              {meeting.title || "Untitled meeting"}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {project?.name || meeting.project_name || "Unknown project"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={statusVariant(meeting.status)}>{meeting.status || "Unknown"}</Badge>
-                              {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground">
-                            {formatDate(meeting.date)}
-                          </TableCell>
+                {associatedProjects.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
+                    <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead>Project</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Number</TableHead>
+                          <TableHead className="text-right">State</TableHead>
                         </TableRow>
-                      )),
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-            </section>
-        </div>
+                      </TableHeader>
+                      <TableBody>
+                        {associatedProjects.map((project) => (
+                          <TableRow key={project.id} className="hover:bg-muted/50/70">
+                            <TableCell>
+                              <Link
+                                href={`/${project.id}/home`}
+                                className="font-semibold text-foreground underline-offset-4 hover:underline"
+                              >
+                                {project.name || `Project ${project.id}`}
+                              </Link>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Badge variant={statusVariant(project.company_status)}>
+                                  {project.company_status || "Unknown"}
+                                </Badge>
+                                {project.archived ? <Badge variant="outline">Archived</Badge> : null}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-muted-foreground">#{project.project_number || "-"}</TableCell>
+                            <TableCell className="text-right text-muted-foreground">{project.state || "No status"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </section>
 
-        <aside className="space-y-8 lg:sticky lg:top-4 lg:self-start">
-          <section className="space-y-3">
-            <DsSectionHeader title="Details" />
-            <div className="space-y-2">
-              <DetailField label="Status" value={<StatusBadge status={company.status || "Unknown"} />} />
-              {company.type && <DetailField label="Type" value={company.type} />}
-              <DetailField label="Address" value={company.address || undefined} />
-              <DetailField label="Location" value={companyLocation || undefined} />
-              <DetailField
-                label="Website"
-                value={
-                  company.website ? (
-                    <a
-                      className="flex items-center gap-1 text-primary underline-offset-4 hover:underline"
-                      href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      <Globe className="h-3.5 w-3.5 shrink-0" />
-                      {company.website}
-                    </a>
-                  ) : undefined
-                }
-              />
+              <section className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <DsSectionHeader title="Invoices" count={filteredInvoices.length > 0 ? filteredInvoices.length : undefined} />
+                  <Tabs
+                    value={invoiceFilter}
+                    onValueChange={(value) => setInvoiceFilter(value as "open" | "all")}
+                  >
+                    <TabsList className="rounded-full">
+                      <TabsTrigger value="open" className="rounded-full">Open</TabsTrigger>
+                      <TabsTrigger value="all" className="rounded-full">All</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+                {filteredInvoices.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
+                    <DsEmptyState
+                      title={invoiceFilter === "open" ? "No open invoices found" : "No invoices found"}
+                      description="Invoices from associated projects will appear here."
+                    />
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead>Invoice</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Contract</TableHead>
+                          <TableHead>Project</TableHead>
+                          <TableHead className="text-right">Period</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredInvoices.map((invoice) => (
+                          <TableRow key={invoice.id} className="hover:bg-muted/50/70">
+                            <TableCell className="font-semibold text-foreground">{invoice.invoice_number || `Invoice ${invoice.id}`}</TableCell>
+                            <TableCell>
+                              <Badge variant={statusVariant(invoice.status)}>{invoice.status || "Unknown"}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {invoice.contract_number || invoice.prime_contract_id}: {invoice.contract_title || "Untitled"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {invoice.project_name || "Unknown project"} ({invoice.project_number || "-"})
+                            </TableCell>
+                            <TableCell className="text-right text-muted-foreground">
+                              {formatDate(invoice.period_start)} to {formatDate(invoice.period_end)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </section>
+
+              <section className="space-y-4">
+                <DsSectionHeader title="Meetings" count={meetingsByProject.length > 0 ? meetings.length : undefined} />
+                {meetingsByProject.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
+                    <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead>Meeting</TableHead>
+                          <TableHead>Project</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {meetingsByProject.flatMap(({ project, items }) =>
+                          items.slice(0, 6).map((meeting) => (
+                            <TableRow key={meeting.id} className="hover:bg-muted/50/70">
+                              <TableCell>
+                                <Link
+                                  href={`/${meeting.project_id}/meetings/${meeting.id}`}
+                                  className="font-semibold text-foreground underline-offset-4 hover:underline"
+                                >
+                                  {meeting.title || "Untitled meeting"}
+                                </Link>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {project?.name || meeting.project_name || "Unknown project"}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={statusVariant(meeting.status)}>{meeting.status || "Unknown"}</Badge>
+                                  {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right text-muted-foreground">
+                                {formatDate(meeting.date)}
+                              </TableCell>
+                            </TableRow>
+                          )),
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </section>
             </div>
-          </section>
+          </main>
 
-          <section className="space-y-3">
-            <DsSectionHeader title="Activity" />
-            <KpiRow
-              size="small"
-              metrics={[
-                { label: "Contacts", value: String(summary.contact_count) },
-                { label: "Projects", value: String(summary.project_count) },
-                { label: "Meetings", value: String(summary.meeting_count) },
-                { label: "Invoices", value: String(summary.invoice_count) },
-              ]}
-            />
-          </section>
-        </aside>
+          <aside className="border-t border-border bg-muted/30 px-4 py-6 sm:px-8 lg:border-l lg:border-t-0 lg:px-6">
+            <div className="space-y-6 lg:sticky lg:top-6">
+              <section className="rounded-2xl border border-border bg-background p-5">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Company file</p>
+                <div className="mt-5 space-y-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Address</p>
+                    <p className="mt-1 font-medium text-foreground">{company.address || "No address on file"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Location</p>
+                    <p className="mt-1 font-medium text-foreground">{companyLocation || "No location on file"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Website</p>
+                    {websiteUrl ? (
+                      <a
+                        href={websiteUrl}
+                        rel="noreferrer"
+                        target="_blank"
+                        className="mt-1 flex min-w-0 items-center gap-2 font-medium text-foreground underline-offset-4 hover:underline"
+                      >
+                        <span className="truncate">{company.website}</span>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      </a>
+                    ) : (
+                      <p className="mt-1 font-medium text-foreground">No website on file</p>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-border bg-background p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Next signal</p>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">
+                    {latestMeeting?.title || (openInvoiceCount > 0 ? `${openInvoiceCount} open invoice${openInvoiceCount === 1 ? "" : "s"}` : "Profile is quiet")}
+                  </p>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    {latestMeeting
+                      ? `${latestMeeting.project_name || "Project meeting"} on ${formatDate(latestMeeting.date)}`
+                      : openInvoiceCount > 0
+                        ? "Review the invoice list before changing project access."
+                        : "Add contacts, projects, or meetings to build out the company record."}
+                  </p>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-border bg-background p-5">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick actions</p>
+                <div className="mt-4 grid gap-2">
+                  <Button variant="outline" className="justify-start gap-2 active:scale-[0.98]" onClick={() => setEditOpen(true)}>
+                    <Building2 className="h-4 w-4" />
+                    Edit company
+                  </Button>
+                  <Button variant="outline" className="justify-start gap-2 active:scale-[0.98]" onClick={() => void openAddContactModal()}>
+                    <Plus className="h-4 w-4" />
+                    Add contact
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-start gap-2 active:scale-[0.98]"
+                    onClick={() => {
+                      setAddToProjectOpen(true);
+                      setProjectQuery("");
+                      setProjectComboboxOpen(false);
+                      void loadProjects();
+                    }}
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Add to project
+                  </Button>
+                </div>
+              </section>
+            </div>
+          </aside>
+        </div>
       </div>
       <Modal open={editOpen} onOpenChange={setEditOpen}>
         <ModalContent className="sm:max-w-xl">

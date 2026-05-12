@@ -944,6 +944,9 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
         const selectedProjectValue = item.project_id
           ? String(item.project_id)
           : "__none__";
+        const hasNoProject =
+          selectedProjectValue === "__none__" ||
+          (item.project ?? "").trim().toLowerCase() === "no project";
 
         return (
           <div className="w-72" onClick={(event) => event.stopPropagation()}>
@@ -965,7 +968,10 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
               emptyMessage="No projects found."
               showIndicator={false}
               className="space-y-0"
-              triggerClassName="h-7 border-0 bg-transparent px-1 text-xs font-normal text-muted-foreground hover:bg-accent/20 focus-visible:ring-1"
+              triggerClassName={cn(
+                "h-7 border-0 bg-transparent px-1 text-xs font-normal hover:bg-accent/20 focus-visible:ring-1",
+                hasNoProject ? "text-red-600" : "text-muted-foreground",
+              )}
             />
           </div>
         );

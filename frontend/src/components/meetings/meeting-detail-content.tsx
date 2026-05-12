@@ -560,15 +560,6 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Action Items — collapsed by default */}
-          {actionItemsContent ? (
-            <section className="border-t border-border pt-6">
-              <AccordionSection label="Action Items" defaultOpen={false}>
-                <FirefliesSectionContent value={actionItemsContent} />
-              </AccordionSection>
-            </section>
-          ) : null}
-
           {/* Summary Overview (paragraph form — only shown when bullets are in overview) */}
           {overviewContent && shorthandBullet ? (
             <section className="border-t border-border pt-6">
@@ -641,6 +632,27 @@ export function MeetingDetailContent({
               <AttendeeAvatarStack participants={participantsList} />
             </div>
           )}
+
+          {/* Action Items */}
+          {actionItemsContent ? (
+            <div className="space-y-3 border-t border-border pt-6">
+              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Action Items
+              </div>
+              <ul className="space-y-2">
+                {actionItemsContent
+                  .split("\n")
+                  .map((line) => line.replace(/^[-*]\s*/, "").trim())
+                  .filter(Boolean)
+                  .map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
+                      <span aria-hidden className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
 
           {/* Action Snapshot */}
           {hasActionItems && (

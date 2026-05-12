@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
@@ -50,10 +50,6 @@ import {
   ReasoningTrigger,
   ReasoningContent,
 } from "@/components/ai-elements/reasoning";
-import {
-  Suggestions,
-  Suggestion,
-} from "@/components/ai-elements/suggestion";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import {
   Tool as ToolDisplay,
@@ -943,199 +939,6 @@ function MemoryUsageBadge({
   );
 }
 
-// ─── Contextual suggestion generation ───────────────────────────────
-
-/**
- * Detect project disambiguation patterns in assistant responses.
- * When the AI lists numbered projects for the user to pick from,
- * extract project names so we can render them as clickable chips.
- */
-function extractProjectChoices(text: string): string[] {
-  // Strategy 1: Match numbered list like "1. **Project Name** — description"
-  const numberedMatches = text.match(
-    /\d+\.\s+\*{0,2}([^*\n—–-]+?)\*{0,2}\s*[—–-]/g,
-  );
-  if (numberedMatches && numberedMatches.length >= 2) {
-    return numberedMatches
-      .map((m) =>
-        m
-          .replace(/^\d+\.\s+/, "")
-          .replace(/\*+/g, "")
-          .replace(/\s*[—–-].*$/, "")
-          .trim(),
-      )
-      .filter((name) => name.length > 0 && name.length < 60)
-      .slice(0, 5);
-  }
-
-  // Strategy 2: Match inline list like "projects like X, Y, Z, and W" or
-  // "data for projects like X, Y, Z, and W" or "projects such as X, Y, and Z"
-  const inlineMatch = text.match(
-    /projects?\s+(?:like|such as|including)\s+([^.?!]+)/i,
-  );
-  if (inlineMatch) {
-    const listText = inlineMatch[1];
-    // Split on ", " and " and " to get individual project names
-    const names = listText
-      .split(/,\s*(?:and\s+)?|\s+and\s+/)
-      .map((n) => n.replace(/\*+/g, "").trim())
-      .filter((n) => n.length > 2 && n.length < 60);
-    if (names.length >= 2) return names.slice(0, 5);
-  }
-
-  // Strategy 3: Match "Westfield Collective, Vermillion Rise Warehouse, ..."
-  // when preceded by disambiguation-like phrases
-  const disambigMatch = text.match(
-    /(?:have data (?:on|for)|contracting data for|active projects?:?)\s+([A-Z][^.?!]{10,})/i,
-  );
-  if (disambigMatch) {
-    const listText = disambigMatch[1];
-    const names = listText
-      .split(/,\s*(?:and\s+)?|\s+and\s+/)
-      .map((n) => n.replace(/\*+/g, "").trim())
-      .filter((n) => n.length > 2 && n.length < 60 && /^[A-Z]/.test(n));
-    if (names.length >= 2) return names.slice(0, 5);
-  }
-
-  return [];
-}
-
-function generateSuggestions(
-  messages: UIMessage[],
-  isStreaming: boolean,
-): string[] {
-  if (isStreaming || messages.length === 0) return [];
-
-  const lastMsg = messages[messages.length - 1];
-  if (lastMsg.role !== "assistant") return [];
-
-  const text = getMessageText(lastMsg);
-  const textLower = text.toLowerCase();
-  const toolParts = getToolParts(lastMsg);
-  const toolNames = toolParts.map((p) => getToolNameFromType(p.type));
-  const previousUserMessage = [...messages]
-    .reverse()
-    .find((msg) => msg.role === "user");
-  const userIntentText = previousUserMessage
-    ? getMessageText(previousUserMessage).toLowerCase()
-    : "";
-  const outputs = toolParts.map((part) => asObject(part.output));
-  const hasPreview = outputs.some((output) => output.action === "preview");
-  const hasSuccessfulWrite = outputs.some(
-    (output) => output.success === true && output.record && typeof output.record === "object",
-  );
-  const hasErrors = outputs.some((output) => Boolean(output.error)) ||
-    toolParts.some((part) => part.state === "output-error");
-
-  // ── Project disambiguation: extract project names as clickable chips ──
-  const projectChoices = extractProjectChoices(text);
-  if (projectChoices.length >= 2) {
-    // The AI asked "which project?" — show project names as quick-pick buttons
-    return projectChoices.map(
-      (name) => `Tell me about ${name}`,
-    ).slice(0, 5);
-  }
-
-  const suggestions: string[] = [];
-
-  // Outcome-first suggestions
-  if (hasPreview) {
-    suggestions.push("Approve and run this draft");
-    suggestions.push("Edit the draft fields before running");
-    suggestions.push("What changes do you recommend before we execute?");
-  }
-
-  if (hasSuccessfulWrite) {
-    suggestions.push("What should I do next after this update?");
-    suggestions.push("Show related records that may be impacted");
-  }
-
-  if (hasErrors) {
-    suggestions.push("Retry with safer defaults");
-    suggestions.push("Explain exactly why that failed");
-  }
-
-  // Intent + tool outcome blend
-  if (userIntentText.includes("timeline") || userIntentText.includes("across sources")) {
-    suggestions.push("Show a cross-source timeline for the last 14 days");
-    suggestions.push("Filter the timeline to only meetings and AI insights");
-  }
-
-  if (userIntentText.includes("rfi") || userIntentText.includes("submittal")) {
-    suggestions.push("Show overdue RFIs and submittals only");
-  }
-
-  if (userIntentText.includes("change order") || userIntentText.includes("co")) {
-    suggestions.push("Summarize pending change orders by project");
-  }
-
-  if (userIntentText.includes("email") || userIntentText.includes("teams")) {
-    suggestions.push("Find communications that conflict with meeting decisions");
-  }
-
-  // Based on tools that were used
-  if (toolNames.includes("getPortfolioOverview")) {
-    suggestions.push("Which project needs the most attention?");
-    suggestions.push("Show me the financial breakdown");
-  }
-  if (
-    toolNames.includes("getFinancialAnalysis") ||
-    toolNames.includes("getProjectBudgetSummary")
-  ) {
-    suggestions.push("What's our change order exposure?");
-    suggestions.push("Compare budgets across projects");
-  }
-  if (toolNames.includes("getActionItemsAndInsights")) {
-    suggestions.push("Which items are overdue?");
-    suggestions.push("Help me prioritize these");
-  }
-  if (toolNames.includes("getProjectRiskAnalysis")) {
-    suggestions.push("How can we mitigate these risks?");
-    suggestions.push("Show me the financial details");
-  }
-  if (
-    toolNames.includes("searchDocuments") ||
-    toolNames.includes("getProjectDetails")
-  ) {
-    suggestions.push("What were the key decisions?");
-    suggestions.push("Show me related action items");
-  }
-
-  // Acumatica ERP tools
-  if (
-    toolNames.some((n) => n.startsWith("getAcumatica") || n.startsWith("getAP") || n.startsWith("getAR"))
-  ) {
-    suggestions.push("Show me the ERP budget details");
-    suggestions.push("What's our cash position?");
-  }
-
-  // Based on content keywords
-  if (suggestions.length < 3) {
-    if (textLower.includes("meeting") || textLower.includes("oac")) {
-      suggestions.push("Help me prepare talking points");
-    }
-    if (textLower.includes("budget") || textLower.includes("cost")) {
-      suggestions.push("Break down the budget for me");
-    }
-    if (textLower.includes("risk") || textLower.includes("concern")) {
-      suggestions.push("What's the mitigation plan?");
-    }
-    if (textLower.includes("action item") || textLower.includes("follow up")) {
-      suggestions.push("Who's responsible for each?");
-    }
-  }
-
-  // Fallback suggestions
-  if (suggestions.length === 0) {
-    suggestions.push("Tell me more");
-    suggestions.push("What should I focus on this week?");
-    suggestions.push("Any risks I should know about?");
-  }
-
-  // Deduplicate and limit to 4
-  return [...new Set(suggestions)].slice(0, 4);
-}
-
 const qualityRank: Record<ResponseQuality["sourceQuality"], number> = {
   low: 0,
   medium: 1,
@@ -1638,13 +1441,6 @@ export function ChatArea({
     [sessionId],
   );
 
-  const handleSuggestionClick = useCallback(
-    (suggestion: string) => {
-      onSubmit(suggestion);
-    },
-    [onSubmit],
-  );
-
   const handleToolApprove = useCallback(
     (part: ToolPart) => {
       const toolName = formatToolName(getToolNameFromType(part.type));
@@ -1696,11 +1492,6 @@ export function ChatArea({
       Boolean(lastMessageStatus) ||
       (lastIsAssistantWithToolCalls && !lastMessageText.trim()));
 
-  // Generate contextual follow-up suggestions
-  const suggestions = useMemo(
-    () => generateSuggestions(messages, isStreaming),
-    [messages, isStreaming],
-  );
   const composerIconButtonClass =
     "h-7 w-7 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8";
 
@@ -2002,7 +1793,7 @@ export function ChatArea({
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
         <div className="flex min-h-0 flex-1 pb-6 md:pb-8">
-          <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)} />
+          <WelcomeScreen />
         </div>
       ) : (
         <>
@@ -2408,21 +2199,6 @@ export function ChatArea({
                 </div>
               )}
 
-              {/* Follow-up suggestions */}
-              {!isStreaming && suggestions.length > 0 && (
-                <div className="py-2 pl-11">
-                  <Suggestions>
-                    {suggestions.map((suggestion) => (
-                      <Suggestion
-                        key={suggestion}
-                        suggestion={suggestion}
-                        onClick={handleSuggestionClick}
-                        className="h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm"
-                      />
-                    ))}
-                  </Suggestions>
-                </div>
-              )}
             </ConversationContent>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background/80 via-background/35 to-transparent" />
             <ConversationScrollButton className="bottom-4 z-20 md:bottom-6" />

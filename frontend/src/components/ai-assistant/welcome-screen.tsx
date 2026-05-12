@@ -2,16 +2,13 @@
 
 import type { ReactNode } from "react";
 import { AnimatedOrb } from "./animated-orb";
-import { AssistantShortcutPanel } from "./assistant-shortcut-panel";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 
 interface WelcomeScreenProps {
-  onSelectPrompt: (prompt: string) => void;
   children?: ReactNode;
 }
 
 export function WelcomeScreen({
-  onSelectPrompt,
   children,
 }: WelcomeScreenProps) {
   const fullName = useCurrentUserName();
@@ -32,11 +29,6 @@ export function WelcomeScreen({
             Hi, {firstName}. How can I help?
           </h1>
         </div>
-
-        <AssistantShortcutPanel
-          onSelectPrompt={onSelectPrompt}
-          className="mx-auto mt-8 w-full"
-        />
 
         {children && <div className="mx-auto mt-8 w-full">{children}</div>}
       </div>
