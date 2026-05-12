@@ -459,9 +459,24 @@ Behavior:
 - resolves the target Teams-linked user from the request body or latest Teams conversation reference
 - loads the latest approved `daily_recaps.recap_kind = executive_briefing` packet
 - skips delivery if no approved packet exists
-- formats the persisted draft packet into a conversational Teams message
+- formats the persisted draft packet into a CEO Operating Brief Teams message
 - sends through `sendProactiveMessage()`
 - marks the `daily_recaps` executive briefing row as `sent_teams = true` and stamps `sent_at`
+
+Teams message contract:
+
+- headline must be `CEO Operating Brief`, not a generic digest label
+- first screen must include the decision/blocker/business-signal snapshot
+- `Start Here - CEO Scan` gives Brandon the fastest read of what matters now
+- `Top Executive Focus` uses `operatingBrief.topExecutiveFocus` and must explain what changed, why it matters to the CEO, best next move, and materiality
+- `Decisions Needed From You` is for items where Brandon is the blocker or owner-level approval is needed
+- `Blocked / Waiting on Others` is for follow-ups that can become schedule, billing, customer, or vendor risk
+- `Risk Radar` prioritizes project-risk or cash/margin watch items before lower-value updates
+- `Business Signals / Accountability` covers important updates and people/accountability items
+- `Recommended Next Moves` is limited to the highest-value actions, not every possible task
+- source links stay attached to each item, and source-health warnings appear when retrieval is weak
+
+This format is intentionally not a prose summary. It should read like a commercial construction CEO exception report: decisions, blockers, financial/schedule/customer risk, owner accountability, and the next move.
 
 The scheduled weekday Daily Brief jobs run on Render, not Vercel:
 
@@ -477,7 +492,7 @@ Behavior:
 - writes a durable `source_sync_runs` row with `source = executive_daily_brief`
 - exits non-zero on generation, persistence, or Teams delivery failure
 - calls the frontend Teams delivery route only after a packet has been persisted
-- currently has Teams delivery paused with `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS=false` in `render.yaml`
+- currently has scheduled Teams delivery paused with `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS=false` in `render.yaml` while the new CEO Operating Brief message is reviewed
 - uses `EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE=America/New_York` plus target local times so the UTC cron schedule remains correct across daylight saving time changes
 - exits 0 before generation on the extra UTC run that does not match the target local time
 

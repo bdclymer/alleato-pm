@@ -40,7 +40,7 @@ from ..task_assignees import TaskAssigneeResolver
 
 logger = logging.getLogger(__name__)
 
-TASK_EXTRACTION_PROMPT_VERSION = "email_compiler.tasks.v2.gpt-5.5"
+TASK_EXTRACTION_PROMPT_VERSION = "email_compiler.tasks.v3.gpt-5.5"
 
 MIN_COMPILER_CHARS = 200
 AUTO_ASSIGN_CONFIDENCE = 0.85

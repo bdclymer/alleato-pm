@@ -33,6 +33,7 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
+import { SwipeableListRow } from "@/components/ds/SwipeableListRow";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -667,6 +668,7 @@ function TaskListItem({
   isChecked,
   onClick,
   onCheckedChange,
+  onDelete,
 }: {
   item: TasksRow;
   projects: ProjectOption[];
@@ -674,6 +676,7 @@ function TaskListItem({
   isChecked: boolean;
   onClick: () => void;
   onCheckedChange: (checked: boolean) => void;
+  onDelete?: () => void;
 }) {
   const ds = toDisplayStatus(item.status);
   const sourceLabel = getTaskSourceLabel(item);
@@ -691,6 +694,7 @@ function TaskListItem({
     : "bg-background group-hover:bg-neutral-100";
 
   return (
+    <SwipeableListRow onEdit={onClick} onDelete={onDelete}>
     <div
       role="button"
       tabIndex={0}
@@ -770,6 +774,7 @@ function TaskListItem({
         </span>
       </div>
     </div>
+    </SwipeableListRow>
   );
 }
 
@@ -2183,6 +2188,7 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
                           isChecked={item.id ? selectedTaskIds.includes(item.id) : false}
                           onClick={() => item.id && selectItem(item.id)}
                           onCheckedChange={(checked) => item.id && toggleTaskSelection(item.id, checked)}
+                          onDelete={() => item.id && deleteItem(item.id)}
                         />
                       ))}
                   </div>

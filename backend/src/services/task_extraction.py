@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -25,9 +26,10 @@ from .task_assignees import TaskAssigneeResolver, clean_text
 logger = logging.getLogger(__name__)
 
 TASK_EXTRACTION_MODEL = "gpt-5.5"
-TASK_EXTRACTION_PROMPT_VERSION = "task_extraction.v2.gpt-5.5"
+TASK_EXTRACTION_PROMPT_VERSION = "task_extraction.v4.gpt-5.5"
 TASK_EXTRACTION_DEFAULT_LIMIT = 100
 TASK_EXTRACTION_CANDIDATE_MULTIPLIER = 25
+TASK_FEEDBACK_EXAMPLES_LIMIT = 8
 
 # Source types that can contain action items.
 TASK_SOURCE_TYPES = (
@@ -41,6 +43,21 @@ TASK_SOURCE_TYPES = (
 # Never generate tasks from these.
 EXCLUDE_TYPES = ("interview", "Interview")
 
+TRIVIAL_TASK_PATTERNS = (
+    re.compile(r"\b(forward|accept|decline|cancel|rsvp)\b.{0,50}\b(calendar|teams?|meeting|invite|invitation)\b", re.I),
+    re.compile(r"\b(calendar|teams?|meeting)\b.{0,50}\b(forward|accept|decline|cancel|rsvp)\b", re.I),
+    re.compile(r"\b(add|invite)\b.{0,50}\b(to|into)\b.{0,30}\b(chat|thread|meeting|call)\b", re.I),
+    re.compile(r"\b(open|click)\b.{0,30}\b(link|url)\b", re.I),
+    re.compile(r"\b(reply|respond)\b.{0,40}\b(confirm|acknowledge|received|got it)\b", re.I),
+    re.compile(r"\b(mute|unmute|screen ?share|share (your )?screen|join (the )?(call|meeting))\b", re.I),
+    re.compile(r"\blet .{0,40} know\b.{0,80}\b(time|availability|available|free|quick sync|brief meeting|call)\b", re.I),
+)
+
+NARRATIVE_TASK_PATTERNS = (
+    re.compile(r"^\s*[A-Z][A-Za-z .'-]{1,80}\s+(asked|suggested|mentioned|noted|discussed|raised|clarified)\b", re.I),
+    re.compile(r"^\s*[A-Z][A-Za-z .'-]{1,80}\s+will\s+(forward|send|push|ask|check|review|follow up)\b", re.I),
+)
+
 _EXTRACT_PROMPT = """\
 You are extracting action items assigned to specific people from this {type_label}.
 
@@ -52,7 +69,27 @@ Rules:
 - Do NOT invent tasks — only extract what is explicitly stated
 - Each task must have a clear action verb and a named owner
 - Interpret relative dates like "tomorrow", "next Friday", or "end of week" using the source communication date, not today's date
+- Tasks must be PM-worthy: they should produce an artifact, decision, submitted item, scheduled inspection, confirmed price, or other persistent outcome
+- Do NOT extract meeting/email logistics or micro-actions: forwarding/accepting/canceling Teams or calendar invites, adding someone to a chat, clicking a link, confirming receipt, muting, screen sharing, or joining a call
+- Do NOT extract tasks that can be completed in under ~2 minutes inside the current conversation
+- Tasks may only be assigned to internal Alleato employees. If a client, vendor, subcontractor, architect, engineer, inspector, or other external party must act, do not create a task for that external person
+- Write titles/descriptions as imperative action items, not third-person narration. Use "Escalate Katie Conner's overdue payment" instead of "Brandon asked Katie Conner..."
 - If no qualifying tasks exist, return an empty array
+
+Negative examples — return [] for items like these:
+- "Mark suggested Brandon cancel his own Teams invite and accept the Teams invite Mark forwarded."
+- "Forward the Wednesday 3pm ET first meeting invite to Brandon Clymer and Kebba Mass."
+- "Brian Hammond will forward Brandon and Kebba the invite for the Wednesday call."
+- "Reply to confirm you received the file."
+- "Add Sarah to the chat."
+- "Let Douglas know if you have time this week for a brief design kick-off meeting."
+
+Rewrite examples:
+- Bad: "Brandon Clymer asked Katie Conner for the status of payment on her last two invoices, which are over 60 days late."
+  Good: "Escalate Katie Conner's overdue payment (2 invoices, 60+ days past due)."
+- Bad: "Brandon Clymer asked Joe Metz to send an updated CAD drawing that shows trays."
+  Good: "Request updated CAD from Joe Metz showing trays."
+{feedback_examples}
 
 Respond ONLY with a JSON array (no markdown, no explanation):
 [{{"title":"Short action title (max 10 words)","description":"Full context description",\
@@ -107,11 +144,75 @@ def _build_text(doc: dict[str, Any]) -> str:
     return "\n\n".join(parts)
 
 
+def _task_quality_rejection_reason(task: dict[str, Any]) -> str | None:
+    """Deterministic guardrail for common LLM false-positive task shapes."""
+    text = " ".join(
+        str(task.get(field) or "")
+        for field in ("title", "description")
+    ).strip()
+    if not text:
+        return "empty"
+    for pattern in TRIVIAL_TASK_PATTERNS:
+        if pattern.search(text):
+            return "trivial_logistics"
+    for pattern in NARRATIVE_TASK_PATTERNS:
+        if pattern.search(text):
+            return "narrative_phrasing"
+    return None
+
+
+def _prompt_safe_text(value: Any, max_chars: int = 240) -> str | None:
+    text = clean_text(value)
+    if not text:
+        return None
+    text = re.sub(r"[\r\n]+", " ", text)
+    return text[:max_chars]
+
+
+def _format_negative_feedback_examples(rows: list[dict[str, Any]]) -> str:
+    examples: list[str] = []
+    for row in rows[:TASK_FEEDBACK_EXAMPLES_LIMIT]:
+        snapshot = row.get("task_snapshot")
+        if not isinstance(snapshot, dict):
+            continue
+        task_name = _prompt_safe_text(snapshot.get("name"))
+        if not task_name:
+            continue
+        category = _prompt_safe_text(row.get("reason_category"), 80)
+        reason = _prompt_safe_text(row.get("reason"), 160)
+        detail = f" [{category}]" if category else ""
+        if reason:
+            detail = f"{detail} ({reason})"
+        examples.append(f'- "{task_name}"{detail}')
+
+    if not examples:
+        return ""
+
+    return "\nRecent user-rejected task examples — do NOT create tasks like these:\n" + "\n".join(examples)
+
+
+def _load_negative_feedback_examples(client_db: Any) -> str:
+    try:
+        result = (
+            client_db.table("ai_task_feedback")
+            .select("reason_category,reason,task_snapshot,created_at")
+            .eq("signal", "bad")
+            .order("created_at", desc=True)
+            .limit(TASK_FEEDBACK_EXAMPLES_LIMIT)
+            .execute()
+        )
+    except Exception as exc:
+        logger.warning("[TaskExtraction] Could not load task feedback examples: %s", exc)
+        return ""
+    return _format_negative_feedback_examples(result.data or [])
+
+
 def _extract_tasks(
     doc: dict[str, Any],
     client: OpenAI,
     model: str,
     source_occurred_at: datetime | None = None,
+    feedback_examples: str = "",
 ) -> TaskExtractionResult:
     text = _build_text(doc)
     if not text or len(text) < 80:
@@ -120,6 +221,7 @@ def _extract_tasks(
     prompt = _EXTRACT_PROMPT.format(
         type_label=_type_label(doc.get("type")),
         source_date=source_occurred_at.date().isoformat() if source_occurred_at else "unknown",
+        feedback_examples=feedback_examples,
         text=text,
     )
     try:
@@ -304,6 +406,7 @@ def run_task_extraction(
     errors = 0
     docs_processed = 0
     resolver = TaskAssigneeResolver(client_db)
+    feedback_examples = _load_negative_feedback_examples(client_db)
 
     for doc in docs:
         doc_id = doc.get("id")
@@ -329,7 +432,7 @@ def run_task_extraction(
             skipped += 1
             continue
 
-        extraction = _extract_tasks(doc, client_ai, model_id, source_occurred_at)
+        extraction = _extract_tasks(doc, client_ai, model_id, source_occurred_at, feedback_examples)
         docs_processed += 1
 
         if extraction.error_message:
@@ -352,6 +455,16 @@ def run_task_extraction(
 
         inserted_for_doc = 0
         for task in tasks:
+            rejection_reason = _task_quality_rejection_reason(task)
+            if rejection_reason:
+                logger.info(
+                    "[TaskExtraction] Skipping low-quality task: reason=%s title=%r",
+                    rejection_reason,
+                    task.get("title"),
+                )
+                skipped += 1
+                continue
+
             desc_key = (task.get("description") or "").lower().strip()
             if desc_key and desc_key in existing_descriptions:
                 skipped += 1

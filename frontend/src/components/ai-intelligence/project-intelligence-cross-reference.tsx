@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Clock, ExternalLink, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { Check, Clock, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
   TableDateValue,
   TableTagBadge,
+  CellLink,
+  CellText,
+  TruncatedCell,
   UnifiedTablePage,
   type TableColumn,
   type ViewMode,
@@ -58,12 +61,6 @@ function formatLabel(value: string | null | undefined): string {
   return value
     .replace(/_/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-function compactText(value: string | null | undefined, maxLength = 160): string {
-  const text = value?.replace(/\s+/g, " ").trim() ?? "";
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength).trim()}...`;
 }
 
 function evidenceCategory(evidence: InsightCardEvidence): string {
@@ -119,6 +116,11 @@ function buildSourceRows(
       evidenceByKey.get(source.id) ??
       null,
   }));
+}
+
+function cardHref(projectId: number, evidence: EvidenceWithCard | null): string | null {
+  if (!evidence) return null;
+  return `/${projectId}/intelligence#insight-card-${encodeURIComponent(evidence.cardId)}`;
 }
 
 function FeedbackButtons({
@@ -224,8 +226,10 @@ function useLocalTableState(defaultView: ViewMode = "table") {
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewMode>(defaultView);
   const [filters, setFilters] = useState<Record<string, string | number | boolean | string[] | null | undefined>>({});
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
 
-  return { search, setSearch, view, setView, filters, setFilters };
+  return { search, setSearch, view, setView, filters, setFilters, page, setPage, perPage, setPerPage };
 }
 
 export function ProjectIntelligenceSourceTables({
@@ -300,14 +304,14 @@ export function ProjectIntelligenceSourceTables({
         id: "label",
         label: "Source group",
         alwaysVisible: true,
-        render: (row) => (
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">{row.label}</p>
-            <p className="truncate text-xs text-muted-foreground">{row.tableNames.join(", ")}</p>
-          </div>
-        ),
+        render: (row) => <CellText value={row.label} className="font-medium" />,
         sortValue: (row) => row.label,
         sortable: true,
+      },
+      {
+        id: "tableNames",
+        label: "Data tables",
+        render: (row) => <TruncatedCell value={row.tableNames.join(", ")} maxWidth={260} className="text-muted-foreground" />,
       },
       {
         id: "availableCount",
@@ -339,9 +343,12 @@ export function ProjectIntelligenceSourceTables({
         id: "sampleTitles",
         label: "Examples",
         render: (row) => (
-          <span className="block max-w-xl truncate text-sm text-muted-foreground">
-            {row.sampleTitles.length > 0 ? row.sampleTitles.join("; ") : "No records found by source builder"}
-          </span>
+          <TruncatedCell
+            value={row.sampleTitles.length > 0 ? row.sampleTitles.join("; ") : null}
+            maxWidth={420}
+            emptyLabel="No records found by source builder"
+            className="text-muted-foreground"
+          />
         ),
       },
     ],
@@ -362,24 +369,38 @@ export function ProjectIntelligenceSourceTables({
         label: "Record",
         alwaysVisible: true,
         render: (row) => (
-          <div className="min-w-0">
-            {row.href ? (
-              <Link
-                href={row.href}
-                className="inline-flex max-w-xl items-center gap-1 truncate text-sm font-medium text-foreground underline-offset-2 hover:underline"
-                data-row-interactive="true"
-              >
-                <span className="truncate">{row.title ?? row.recordId}</span>
-                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              </Link>
-            ) : (
-              <span className="block max-w-xl truncate text-sm font-medium text-foreground">{row.title ?? row.recordId}</span>
-            )}
-            <p className="truncate text-xs text-muted-foreground">{compactText(row.text, 120)}</p>
-          </div>
+          <CellLink
+            value={row.title ?? row.recordId}
+            href={row.href ?? null}
+            className="block max-w-72 truncate font-medium"
+          />
         ),
         sortValue: (row) => row.title ?? row.recordId,
         sortable: true,
+      },
+      {
+        id: "projectName",
+        label: "Project",
+        render: (row) => (
+          <TruncatedCell
+            value={row.projectName}
+            maxWidth={180}
+            className="text-muted-foreground"
+          />
+        ),
+        sortValue: (row) => row.projectName ?? "",
+        sortable: true,
+      },
+      {
+        id: "text",
+        label: "Description",
+        render: (row) => (
+          <TruncatedCell
+            value={row.text}
+            maxWidth={420}
+            className="text-muted-foreground"
+          />
+        ),
       },
       {
         id: "capturedAt",
@@ -404,9 +425,13 @@ export function ProjectIntelligenceSourceTables({
         id: "card",
         label: "Intelligence card",
         render: (row) => (
-          <span className="block max-w-64 truncate text-sm text-muted-foreground">
-            {row.packetEvidence?.cardTitle ?? "Not used by current packet"}
-          </span>
+          <CellLink
+            value={row.packetEvidence?.cardTitle}
+            href={cardHref(projectId, row.packetEvidence)}
+            emptyLabel="Not used by current packet"
+            external
+            className="block max-w-64 truncate text-muted-foreground"
+          />
         ),
       },
       {
@@ -545,6 +570,17 @@ export function ProjectIntelligenceSourceTables({
           filteredDescription: "No associated records match the current filters.",
           isFiltered: sourceState.search.trim().length > 0 || Object.keys(sourceState.filters).length > 0,
         }}
+        pagination={{
+          page: sourceState.page,
+          totalPages: Math.max(1, Math.ceil(filteredSources.length / sourceState.perPage)),
+          perPage: sourceState.perPage,
+          onPageChange: sourceState.setPage,
+          onPerPageChange: (value) => {
+            sourceState.setPerPage(Number(value));
+            sourceState.setPage(1);
+          },
+          clientSide: true,
+        }}
         layout={{ containerPadding: false, removeTableFrame: true }}
         features={{
           enableViews: false,
@@ -571,6 +607,8 @@ export function ProjectIntelligenceTasksTable({
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewMode>("table");
   const [filters, setFilters] = useState<Record<string, string | number | boolean | string[] | null | undefined>>({});
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
 
   useEffect(() => {
     let cancelled = false;
@@ -579,7 +617,13 @@ export function ProjectIntelligenceTasksTable({
       setLoading(true);
       try {
         const response = await apiFetch<{ data?: TasksRow[] }>(`/api/tasks?project_id=${projectId}&scope=all`);
-        if (!cancelled) setTasks(response.data ?? []);
+        const projectTasks = (response.data ?? []).filter((task) => {
+          if (task.project_id === projectId) return true;
+          if (task.project_ids?.includes(projectId)) return true;
+          if (projectName && task.project_name === projectName) return true;
+          return false;
+        });
+        if (!cancelled) setTasks(projectTasks);
       } catch (error) {
         if (!cancelled) {
           toast.error("Failed to load project tasks", {
@@ -595,7 +639,7 @@ export function ProjectIntelligenceTasksTable({
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, projectName]);
 
   const taskFilters = useMemo(() => buildTasksFilters(tasks), [tasks]);
   const taskColumns = useMemo(() => buildTasksTableColumns(String(projectId)), [projectId]);
@@ -672,6 +716,17 @@ export function ProjectIntelligenceTasksTable({
         description: "No generated or assigned tasks are currently linked to this project.",
         filteredDescription: "No project tasks match the current filters.",
         isFiltered: search.trim().length > 0 || Object.keys(filters).length > 0,
+      }}
+      pagination={{
+        page,
+        totalPages: Math.max(1, Math.ceil(filteredTasks.length / perPage)),
+        perPage,
+        onPageChange: setPage,
+        onPerPageChange: (value) => {
+          setPerPage(Number(value));
+          setPage(1);
+        },
+        clientSide: true,
       }}
       layout={{ containerPadding: false, removeTableFrame: true }}
       features={{

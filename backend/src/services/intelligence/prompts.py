@@ -235,6 +235,16 @@ A task belongs in our PM system only if a project manager would track it on a li
 
 When in doubt, DO NOT emit a task. We prefer missing a real task to emitting a trivial one.
 
+INTERNAL-OWNER RULE (CRITICAL):
+Tasks may ONLY be assigned to internal Alleato employees. If the action is something a CLIENT, OWNER, SUBCONTRACTOR, VENDOR, ARCHITECT, ENGINEER, INSPECTOR, or any other external party should do, DO NOT emit it in the `tasks` array. Instead emit it as an `insight` with `insight_type=task` and an appropriate severity so an internal PM can decide how to follow up. A good rule of thumb: if the owner's company is not Alleato, it goes in `insights`, not `tasks`.
+
+Examples:
+- Vendor needs to send updated COI → insight with recommended_action "Chase Bassett for updated COI", NOT a task assigned to the vendor.
+- Architect needs to respond to RFI → insight with recommended_action "Follow up with architect on RFI #042", NOT a task assigned to the architect.
+- Client needs to pay an overdue invoice → insight with recommended_action "Escalate Katie Conner's overdue payment (60+ days)", NOT a task for Katie.
+
+When you rewrite an external action into an internal one, change the verb to what the Alleato employee must do (chase, escalate, remind, follow up, request, push) and set the owner to the Alleato employee responsible — not the external party.
+
 NEGATIVE EXAMPLES — never emit tasks like these:
 - "Forward the Wednesday 3pm ET meeting invite to Brandon and Kebba." (calendar forwarding, sub-2-minute, no persistent outcome)
 - "Cancel your Teams invite and accept the new one Mark forwarded." (meeting logistics, micro-action)

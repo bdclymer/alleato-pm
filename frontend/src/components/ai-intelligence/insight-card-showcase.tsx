@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -628,7 +628,7 @@ function InsightAccordionItem({
     : summary;
 
   return (
-    <AccordionItem value={card.id} className="border-border">
+    <AccordionItem id={`insight-card-${card.id}`} value={card.id} className="scroll-mt-20 border-border">
       <AccordionTrigger className="gap-4 py-4 hover:no-underline">
         <span className="flex min-w-0 flex-1 items-start gap-3 text-left">
           <span className={cn("mt-2 h-2 w-2 shrink-0 rounded-full", confidenceDot[card.confidence])} aria-hidden="true" />
@@ -713,6 +713,7 @@ export function InsightCardShowcase({
   projectId: number;
 }) {
   const [feedbackByCardId, setFeedbackByCardId] = useState<Record<string, InsightCardReviewFeedback>>({});
+  const [openCardIds, setOpenCardIds] = useState<string[]>([]);
   const cardsWithFeedback = useMemo(
     () =>
       cards.map((card) => ({
@@ -723,6 +724,14 @@ export function InsightCardShowcase({
   );
   const sortedCards = useMemo(() => sortCards(cardsWithFeedback), [cardsWithFeedback]);
 
+  useEffect(() => {
+    const cardId = window.location.hash.replace(/^#insight-card-/, "");
+    if (!cardId || cardId === window.location.hash) return;
+    if (!cards.some((card) => card.id === cardId)) return;
+
+    setOpenCardIds((current) => (current.includes(cardId) ? current : [...current, cardId]));
+  }, [cards]);
+
   if (cards.length === 0) return null;
 
   return (
@@ -730,7 +739,12 @@ export function InsightCardShowcase({
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Current read
       </p>
-      <Accordion type="multiple" className="divide-y divide-border">
+      <Accordion
+        type="multiple"
+        value={openCardIds}
+        onValueChange={setOpenCardIds}
+        className="divide-y divide-border"
+      >
         {sortedCards.map((card) => (
           <InsightAccordionItem
             key={card.id}
