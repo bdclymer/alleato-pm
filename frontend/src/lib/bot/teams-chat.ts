@@ -253,12 +253,27 @@ async function handleMessage(
     let resolvedVia: "platform_user_id" | "aad_object_id" | "email_auto_link" | null = null;
 
     // 1. Primary lookup: platform_user_id (channel-specific Teams ID)
-    const { data: mapping } = await supabase
+    const { data: mapping, error: mappingErr } = await supabase
       .from("bot_user_mappings")
       .select("supabase_user_id")
       .eq("platform", "teams")
       .eq("platform_user_id", teamsUserId)
       .maybeSingle();
+
+    // If Supabase itself is down (503/504), bail early with a transient error
+    // rather than falling through to "I don't recognize you" — the user IS
+    // linked, the DB just couldn't be reached.
+    if (mappingErr) {
+      await logCheckpoint("db_error_on_mapping_lookup", {
+        teamsUserId,
+        threadId: thread.id,
+        extra: { error: mappingErr.message, code: mappingErr.code },
+      });
+      await thread.post(
+        "⚠️ I'm having trouble connecting to the database right now. Please try again in a moment.",
+      );
+      return;
+    }
 
     if (mapping) {
       supabaseUserId = mapping.supabase_user_id;
