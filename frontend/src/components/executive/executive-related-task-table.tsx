@@ -45,7 +45,7 @@ function normalizedStatus(value: string) {
 
 function normalizedPriority(value: string | null) {
   return TASK_PRIORITIES.some((priority) => priority.value === value)
-    ? value
+    ? (value as (typeof TASK_PRIORITIES)[number]["value"])
     : "medium";
 }
 
