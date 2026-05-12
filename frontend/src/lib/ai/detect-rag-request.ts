@@ -46,6 +46,17 @@ function recentDateRange(days: number, now = new Date()): { startDate: string; e
   };
 }
 
+function priorDateRange(daysBackStart: number, daysBackEnd: number, now = new Date()): { startDate: string; endDate: string } {
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  end.setUTCDate(end.getUTCDate() - daysBackEnd);
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  start.setUTCDate(start.getUTCDate() - daysBackStart);
+  return {
+    startDate: isoDate(start),
+    endDate: isoDate(end),
+  };
+}
+
 function previousWeekdayIsoDate(targetDay: number, now = new Date()): string {
   const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const diff = (date.getUTCDay() - targetDay + 7) % 7;
@@ -94,6 +105,27 @@ function parseExplicitDateRange(message: string): { startDate: string; endDate: 
     startDate: isoDate(startDate),
     endDate: isoDate(endDate),
   };
+}
+
+function meetingWindowFromPhrase(message: string): { startDate: string; endDate: string } | null {
+  const explicitRange = parseExplicitDateRange(message);
+  if (explicitRange) return explicitRange;
+
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes("this week") ||
+    normalized.includes("past week") ||
+    normalized.includes("last 7 days") ||
+    normalized.includes("last seven days")
+  ) {
+    return recentDateRange(7);
+  }
+
+  if (normalized.includes("last week")) {
+    return priorDateRange(14, 7);
+  }
+
+  return null;
 }
 
 // Static phrase list — module-level to avoid per-call reallocation.
@@ -176,6 +208,18 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
       label: "Meeting transcripts",
       date: todayIsoDate(),
       limit: 20,
+    };
+  }
+
+  const explicitMeetingWindow =
+    normalized.includes("meeting") ? meetingWindowFromPhrase(message) : null;
+  if (explicitMeetingWindow) {
+    return {
+      kind: "recent_meetings",
+      label: "Recent meeting transcripts",
+      startDate: explicitMeetingWindow.startDate,
+      endDate: explicitMeetingWindow.endDate,
+      limit: 10,
     };
   }
 

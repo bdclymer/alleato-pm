@@ -4656,9 +4656,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             onFinish: ({ text, usage }) => {
               const lastUserMsg = messages.findLast((m) => m.role === "user");
               const inputText = lastUserMsg
-                ? (Array.isArray(lastUserMsg.parts)
-                    ? lastUserMsg.parts.filter((p) => (p as { type?: string }).type === "text").map((p) => ((p as { text?: string }).text ?? "")).join(" ")
-                    : "")
+                ? extractTextFromParts(lastUserMsg.parts)
                 : "";
               waitUntil(traceChatCompletion({
                 userId: user.id,

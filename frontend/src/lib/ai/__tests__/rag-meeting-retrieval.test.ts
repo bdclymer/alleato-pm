@@ -16,6 +16,14 @@ import {
 } from "../detect-rag-request";
 
 describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regression)", () => {
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-05-12T16:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('returns recent_meetings kind for "review recent meetings"', () => {
     const result = detectSourceSpecificRagRequest("review recent meetings");
     expect(result).not.toBeNull();
@@ -26,6 +34,28 @@ describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regres
     const result = detectSourceSpecificRagRequest("show me meetings this week");
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_meetings");
+    expect(result?.startDate).toBe("2026-05-05");
+    expect(result?.endDate).toBe("2026-05-12");
+  });
+
+  it("preserves explicit weekly meeting date ranges for source retrieval", () => {
+    const result = detectSourceSpecificRagRequest(
+      "summarize meeting insights from 2026-05-05 through 2026-05-12",
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("recent_meetings");
+    expect(result?.startDate).toBe("2026-05-05");
+    expect(result?.endDate).toBe("2026-05-12");
+  });
+
+  it("routes last week meeting summaries to the prior seven-day window", () => {
+    const result = detectSourceSpecificRagRequest("meeting summaries from last week");
+
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("recent_meetings");
+    expect(result?.startDate).toBe("2026-04-28");
+    expect(result?.endDate).toBe("2026-05-05");
   });
 
   it('returns recent_meetings kind for "tell me about our recent meetings"', () => {

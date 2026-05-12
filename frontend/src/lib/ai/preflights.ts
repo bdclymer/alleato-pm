@@ -234,6 +234,19 @@ export async function buildSourceSpecificRagAnswer(params: {
     return query.in("project_id", scope.allowedProjectIds);
   };
 
+  const applyMeetingProjectScope = <T extends {
+    in: (column: string, values: number[]) => T;
+    or: (filters: string) => T;
+  }>(
+    query: T,
+  ): T => {
+    if (typeof scope.pinnedProjectId === "number") {
+      return query.in("project_id", [scope.pinnedProjectId]);
+    }
+    if (scope.isAdmin) return query;
+    return query.or(`project_id.in.(${scope.allowedProjectIds.join(",")}),project_id.is.null`);
+  };
+
   if (request.kind === "meetings_on_date") {
     const { data, error } = await applyProjectScope(
       supabase
@@ -247,22 +260,57 @@ export async function buildSourceSpecificRagAnswer(params: {
     );
     if (error) throw new Error(error.message);
     rows = (data ?? []) as SourceSpecificRagRow[];
+
+    if (rows.length === 0) {
+      const { data: createdRows, error: createdError } = await applyMeetingProjectScope(
+        supabase
+          .from("document_metadata")
+          .select("id,title,source,category,type,date,created_at,content,project_id")
+          .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+          .gte("created_at", `${request.date}T00:00:00.000Z`)
+          .lte("created_at", `${request.date}T23:59:59.999Z`)
+          .order("created_at", { ascending: false })
+          .limit(request.limit),
+      );
+      if (createdError) throw new Error(createdError.message);
+      rows = (createdRows ?? []) as SourceSpecificRagRow[];
+    }
   }
 
   if (request.kind === "recent_meetings") {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 60);
-    const { data, error } = await applyProjectScope(
+    const startIso = request.startDate ? `${request.startDate}T00:00:00.000Z` : cutoff.toISOString();
+    const endIso = request.endDate ? `${request.endDate}T23:59:59.999Z` : null;
+    let query = applyMeetingProjectScope(
       supabase
         .from("document_metadata")
         .select("id,title,source,category,type,date,created_at,content,project_id")
         .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
-        .gte("date", cutoff.toISOString())
+        .gte("date", startIso)
         .order("date", { ascending: false })
         .limit(request.limit),
     );
+    if (endIso) query = query.lte("date", endIso);
+    const { data, error } = await query;
     if (error) throw new Error(error.message);
     rows = (data ?? []) as SourceSpecificRagRow[];
+
+    if (rows.length === 0) {
+      let createdQuery = applyMeetingProjectScope(
+        supabase
+          .from("document_metadata")
+          .select("id,title,source,category,type,date,created_at,content,project_id")
+          .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+          .gte("created_at", startIso)
+          .order("created_at", { ascending: false })
+          .limit(request.limit),
+      );
+      if (endIso) createdQuery = createdQuery.lte("created_at", endIso);
+      const { data: createdRows, error: createdError } = await createdQuery;
+      if (createdError) throw new Error(createdError.message);
+      rows = (createdRows ?? []) as SourceSpecificRagRow[];
+    }
   }
 
   if (request.kind === "recent_emails") {

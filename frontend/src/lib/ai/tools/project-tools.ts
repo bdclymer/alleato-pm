@@ -243,6 +243,7 @@ function buildMeetingIntelligenceFromRows(params: {
   dateLabel: string;
   intent: "completed" | "insights" | "risks" | "decisions" | "actions" | "summary";
   limit: number;
+  retrievalNote?: string;
 }): MeetingIntelligenceWidgetPayload {
   const insightsByMeeting = new Map<string, AnyRow[]>();
   for (const insight of params.insights) {
@@ -328,6 +329,7 @@ function buildMeetingIntelligenceFromRows(params: {
       meetings.length > 0
         ? `${meetings.length} meeting record${meetings.length === 1 ? "" : "s"} matched this window.`
         : "No meeting records matched this window.",
+      ...(params.retrievalNote ? [params.retrievalNote] : []),
       criticalRiskCount > 0
         ? `${criticalRiskCount} risk signal${criticalRiskCount === 1 ? "" : "s"} found across the matched meetings.`
         : "No risk signals were found in the matched meetings.",
@@ -450,29 +452,50 @@ export function createProjectTools(
 
           const window = windowFromInput({ startDate, endDate, relativeWindow, timeZone });
           const targetLimit = Math.min(Math.max(limit ?? 10, 1), 25);
-          let meetingQuery = supabase
-            .from("document_metadata")
-            .select(
-              "id,title,source,source_system,category,type,date,created_at,content,summary,overview,action_items,decisions,bullet_points,project,project_id",
-            )
-            .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
-            .gte("date", window.startIso)
-            .lte("date", window.endIso)
-            .order("date", { ascending: false })
-            .limit(targetLimit);
+          const selectFields =
+            "id,title,source,source_system,category,type,date,created_at,content,summary,overview,action_items,decisions,bullet_points,project,project_id";
+          const buildMeetingQuery = (dateColumn: "date" | "created_at") => {
+            let meetingQuery = supabase
+              .from("document_metadata")
+              .select(selectFields)
+              .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+              .gte(dateColumn, window.startIso)
+              .lte(dateColumn, window.endIso)
+              .order(dateColumn, { ascending: false })
+              .limit(targetLimit);
 
-          if (typeof resolvedProjectId === "number") {
-            meetingQuery = meetingQuery.eq("project_id", resolvedProjectId);
-          } else {
-            meetingQuery = meetingQuery.in("project_id", scopedProjectIds);
-          }
+            if (typeof resolvedProjectId === "number") {
+              meetingQuery = meetingQuery.eq("project_id", resolvedProjectId);
+            } else {
+              meetingQuery = meetingQuery.or(
+                `project_id.in.(${scopedProjectIds.join(",")}),project_id.is.null`,
+              );
+            }
 
-          const { data: meetingRows, error } = await meetingQuery;
+            return meetingQuery;
+          };
+
+          const { data: primaryMeetingRows, error } = await buildMeetingQuery("date");
           if (error) {
             throw new Error(`Meeting intelligence lookup failed: ${error.message}`);
           }
 
-          const ids = ((meetingRows ?? []) as AnyRow[]).map((row) => String(row.id)).filter(Boolean);
+          let meetingRows = (primaryMeetingRows ?? []) as AnyRow[];
+          let retrievalNote: string | undefined;
+          if (meetingRows.length === 0) {
+            const { data: createdAtMeetingRows, error: createdAtError } =
+              await buildMeetingQuery("created_at");
+            if (createdAtError) {
+              throw new Error(`Meeting intelligence created_at fallback failed: ${createdAtError.message}`);
+            }
+            meetingRows = (createdAtMeetingRows ?? []) as AnyRow[];
+            if (meetingRows.length > 0) {
+              retrievalNote =
+                "The primary meeting date field was empty for this window, so results were recovered from ingestion timestamps instead of returning a blank answer.";
+            }
+          }
+
+          const ids = meetingRows.map((row) => String(row.id)).filter(Boolean);
           const { data: insightRows, error: insightError } = ids.length > 0
             ? await supabase
                 .from("insights")
@@ -484,11 +507,12 @@ export function createProjectTools(
           }
 
           return buildMeetingIntelligenceFromRows({
-            rows: (meetingRows ?? []) as AnyRow[],
+            rows: meetingRows,
             insights: (insightRows ?? []) as AnyRow[],
             dateLabel: window.dateLabel,
             intent: intent ?? "summary",
             limit: targetLimit,
+            retrievalNote,
           });
         },
       ),
@@ -2238,46 +2262,55 @@ export function createProjectTools(
           const effectiveDate =
             !startDate && !endDate ? (date || today) : null;
 
-          let meetingsQuery = supabase
-            .from("document_metadata")
-            .select(
-              "id, title, date, project, project_id, summary, overview, participants, action_items, bullet_points, category, type",
-            )
-            .or("type.eq.meeting,category.eq.meeting")
-            .order("date", { ascending: false })
-            .limit(maxResults ?? 25);
+          const buildMeetingsByDateQuery = (dateColumn: "date" | "created_at") => {
+            let meetingsQuery = supabase
+              .from("document_metadata")
+              .select(
+                "id, title, date, created_at, project, project_id, summary, overview, participants, action_items, bullet_points, category, type",
+              )
+              .or("type.eq.meeting,category.eq.meeting")
+              .order(dateColumn, { ascending: false })
+              .limit(maxResults ?? 25);
 
-          if (resolvedProjectId) {
-            meetingsQuery = meetingsQuery.eq("project_id", resolvedProjectId);
-          } else {
-            // Cross-portfolio queries include both meetings tagged to one of
-            // the user's accessible projects AND meetings with NULL project_id
-            // (Fireflies ingests meetings before the auto-tagger has run, so
-            // ~40% of recent meetings are un-tagged and were previously
-            // invisible). 2026-05-02 fix.
-            const scopedIdsCsv = scopedProjectIds.join(",");
-            meetingsQuery = meetingsQuery.or(
-              `project_id.in.(${scopedIdsCsv}),project_id.is.null`,
-            );
-          }
+            if (resolvedProjectId) {
+              meetingsQuery = meetingsQuery.eq("project_id", resolvedProjectId);
+            } else {
+              // Cross-portfolio queries include both meetings tagged to one of
+              // the user's accessible projects AND meetings with NULL project_id
+              // (Fireflies ingests meetings before the auto-tagger has run, so
+              // recent meetings can be untagged during the same window).
+              const scopedIdsCsv = scopedProjectIds.join(",");
+              meetingsQuery = meetingsQuery.or(
+                `project_id.in.(${scopedIdsCsv}),project_id.is.null`,
+              );
+            }
 
-          if (effectiveDate) {
-            // date column stores full ISO timestamps (e.g. "2026-03-13T16:30:00+00:00")
-            // so we must use a range filter instead of exact string equality
-            meetingsQuery = meetingsQuery
-              .gte("date", `${effectiveDate}T00:00:00`)
-              .lt("date", `${effectiveDate}T23:59:59.999`);
-          } else {
-            if (startDate)
-              meetingsQuery = meetingsQuery.gte("date", `${startDate}T00:00:00`);
-            if (endDate)
-              meetingsQuery = meetingsQuery.lte("date", `${endDate}T23:59:59.999`);
-          }
+            if (effectiveDate) {
+              meetingsQuery = meetingsQuery
+                .gte(dateColumn, `${effectiveDate}T00:00:00`)
+                .lt(dateColumn, `${effectiveDate}T23:59:59.999`);
+            } else {
+              if (startDate)
+                meetingsQuery = meetingsQuery.gte(dateColumn, `${startDate}T00:00:00`);
+              if (endDate)
+                meetingsQuery = meetingsQuery.lte(dateColumn, `${endDate}T23:59:59.999`);
+            }
 
-          const { data: meetingRows, error } = await meetingsQuery;
+            return meetingsQuery;
+          };
+
+          const { data: primaryMeetingRows, error } = await buildMeetingsByDateQuery("date");
           if (error) return { error: error.message };
 
-          const meetings = (meetingRows ?? []) as AnyRow[];
+          let meetings = (primaryMeetingRows ?? []) as AnyRow[];
+          let usedCreatedAtFallback = false;
+          if (meetings.length === 0) {
+            const { data: createdAtMeetingRows, error: createdAtError } =
+              await buildMeetingsByDateQuery("created_at");
+            if (createdAtError) return { error: createdAtError.message };
+            meetings = (createdAtMeetingRows ?? []) as AnyRow[];
+            usedCreatedAtFallback = meetings.length > 0;
+          }
           const windowLabel = effectiveDate
             ? effectiveDate
             : `${startDate || "start"} to ${endDate || "today"}`;
@@ -2310,6 +2343,8 @@ export function createProjectTools(
             message:
               meetings.length === 0
                 ? `No meetings found for ${windowLabel}.`
+                : usedCreatedAtFallback
+                  ? `No meetings matched the primary date field for ${windowLabel}; returned meetings recovered from created_at instead.`
                 : undefined,
           };
         },
