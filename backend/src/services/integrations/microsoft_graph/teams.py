@@ -470,7 +470,7 @@ def _process_chat_message(
     if existing and existing.data:
         existing_resp = (
             supabase_client.from_("document_metadata")
-            .select("id, content, participants, project_id")
+            .select("id, content, participants, project_id, source_metadata")
             .eq("id", doc_id)
             .single()
             .execute()
@@ -533,6 +533,15 @@ def _process_chat_message(
         "status": "raw_ingested" if is_embedding_ready else "skipped_low_content",
         "tags": ",".join(tags),
         "project_id": project_id,
+        "source_metadata": {
+            **(((existing_doc or {}).get("source_metadata") or {}) if isinstance((existing_doc or {}).get("source_metadata"), dict) else {}),
+            "source_day": date_key,
+            "source_day_timezone": "UTC",
+            "teams_chat_id": chat_id,
+            "latest_message_at": created,
+            "latest_message_id": msg_id,
+            "conversation_doc_id": doc_id,
+        },
     }
     if existing_doc:
         supabase_client.from_("document_metadata").update(row).eq("id", doc_id).execute()

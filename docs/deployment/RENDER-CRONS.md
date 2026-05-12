@@ -20,6 +20,7 @@ Config lives in `render.yaml` at the repo root.
 | `alleato-teams-dm-sync` | Minute 15 and 45 hourly (`15,45 * * * *`) | Teams direct-message export only, isolated from channel/Outlook/OneDrive work | `backend/src/scripts/run_graph_sync_phase.py` | Exit 1 on source-sync errors. Skips embedding and Teams compiler so source freshness is not blocked by downstream work. |
 | `alleato-task-extraction` | Daily 7:00 AM (`0 7 * * *`) | Extract action items from communications (window: last 2 days) | `backend/src/services/task_extraction.py` | Exit 1 only if errors **and** `inserted == 0`. |
 | `alleato-rag-health` | Daily 12:15 PM (`15 12 * * *`) | RAG meeting vectorization health check. Posts to Slack on failure. | `backend/src/services/health/rag_meeting_health.py` | Standard Python exit code (non-zero on failure). Posts to `SLACK_WEBHOOK_URL`. |
+| `alleato-source-rag-health` | Every 4 hours at minute 5 (`5 */4 * * *`) | Multi-source RAG/source watchdog: Fireflies, Outlook, Teams channel, Teams DM, OneDrive, SharePoint, vectorization, compiler backlog, and task extraction | `backend/src/services/health/source_rag_health.py` | Exit 1 if any watched source is stale, unhealthy, or has critical pipeline alerts. Persists `system_alerts`; optionally calls `RAG_HEALTH_REMEDIATION_WEBHOOK_URL` for cloud remediation. |
 | `alleato-executive-daily-brief-morning` | Weekdays 11:00 AM and noon UTC (`0 11,12 * * 1-5`) | Generate the approved executive Daily Brief on Render. Teams delivery is currently paused with `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS=false`; when re-enabled, sends the CEO Operating Brief Teams message at 7:00 AM America/New_York. One UTC run skips depending on daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or enabled Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. Non-target UTC runs exit 0 before generation. |
 | `alleato-executive-daily-brief-evening` | Weekdays 10:30 PM and 11:30 PM UTC (`30 22,23 * * 1-5`) | Same as morning run, targeted at 6:30 PM America/New_York. Teams delivery is currently paused with `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS=false`. One UTC run skips depending on daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or enabled Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. Non-target UTC runs exit 0 before generation. |
 
@@ -91,6 +92,17 @@ Set these in the Render dashboard under each cron's **Environment** tab. All are
 | `AI_GATEWAY_API_KEY` | Vercel AI Gateway key |
 | `OPENAI_API_KEY` | Direct OpenAI key (fallback) |
 | `SLACK_WEBHOOK_URL` | Incoming webhook URL for failure alerts |
+| `PYTHONPATH` | `/app:/app/src:/app/src/services` (set in render.yaml) |
+| `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
+
+### `alleato-source-rag-health`
+
+| Var | Notes |
+|-----|-------|
+| `SUPABASE_URL` | Project URL from Supabase dashboard |
+| `SUPABASE_SERVICE_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Service role key |
+| `RAG_HEALTH_REMEDIATION_WEBHOOK_URL` | Optional webhook for Trigger.dev/Codex/cloud remediation dispatch. If unset, Render failure plus persisted `system_alerts` are still created. |
+| `RAG_HEALTH_REMEDIATION_WEBHOOK_TOKEN` | Optional bearer token for the remediation webhook |
 | `PYTHONPATH` | `/app:/app/src:/app/src/services` (set in render.yaml) |
 | `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
 

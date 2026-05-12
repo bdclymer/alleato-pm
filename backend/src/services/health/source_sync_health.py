@@ -228,6 +228,29 @@ def _source_name(source: str, resource_name: Optional[str] = None) -> str:
     return GRAPH_SOURCE_LABELS.get(source) or DOCUMENT_SOURCE_LABELS.get(source) or source.replace("_", " ").title()
 
 
+def _document_last_seen_at(document: Dict[str, Any], source: str) -> Optional[datetime]:
+    """Return the timestamp health should use for source freshness.
+
+    Teams DM conversation documents are daily buckets. Their ``date`` column is
+    intentionally the source day, not the ingestion timestamp, so using it for a
+    two-hour freshness threshold makes healthy same-day docs look stale in U.S.
+    timezones. Graph sync state still tracks true source-sync recency.
+    """
+    if source == "teams_chat_export" and document.get("type") == "teams_dm_conversation":
+        return (
+            _parse_datetime(document.get("source_last_modified_at"))
+            or _parse_datetime(document.get("created_at"))
+            or _parse_datetime(document.get("date"))
+        )
+
+    return (
+        _parse_datetime(document.get("captured_at"))
+        or _parse_datetime(document.get("date"))
+        or _parse_datetime(document.get("source_last_modified_at"))
+        or _parse_datetime(document.get("created_at"))
+    )
+
+
 def _health_status(
     *,
     stale_minutes: Optional[int],
@@ -605,12 +628,7 @@ def _document_health(
         metadata_compiled = compiler_status in {"succeeded", "skipped", "needs_review"}
         if document_id not in compiled_document_ids and not metadata_compiled:
             source_counts[source]["uncompiled"] += 1
-        captured = (
-            _parse_datetime(document.get("captured_at"))
-            or _parse_datetime(document.get("date"))
-            or _parse_datetime(document.get("source_last_modified_at"))
-            or _parse_datetime(document.get("created_at"))
-        )
+        captured = _document_last_seen_at(document, source)
         if captured and (source not in latest_by_source or captured > latest_by_source[source]):
             latest_by_source[source] = captured
 

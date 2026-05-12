@@ -68,6 +68,7 @@ interface DocumentMetadataItem {
   file_path: string | null;
   source_web_url: string | null;
   keywords: string[] | null;
+  source_metadata?: unknown;
 }
 
 interface AllProject {
@@ -150,6 +151,71 @@ function formatDuration(minutes: number | null) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function isTeamsDailyDocument(item: DocumentMetadataItem) {
+  return item.type === "teams_dm_conversation" || item.id.startsWith("teamsdm_");
+}
+
+function sourceDayFromMetadata(item: DocumentMetadataItem): string | null {
+  const metadata = item.source_metadata;
+  const sourceDay =
+    metadata &&
+    typeof metadata === "object" &&
+    !Array.isArray(metadata) &&
+    "source_day" in metadata &&
+    typeof metadata.source_day === "string"
+      ? metadata.source_day
+      : null;
+  if (sourceDay && /^\d{4}-\d{2}-\d{2}$/.test(sourceDay)) return sourceDay;
+
+  const idDate = item.id.match(/_(\d{4}-\d{2}-\d{2})$/)?.[1] ?? null;
+  if (idDate) return idDate;
+
+  const dateDay = item.date?.match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
+  return dateDay;
+}
+
+function displayDateParts(sourceDay: string) {
+  const [year, month, day] = sourceDay.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function formatDocumentDate(item: DocumentMetadataItem): string | null {
+  if (isTeamsDailyDocument(item)) {
+    const sourceDay = sourceDayFromMetadata(item);
+    const localDate = sourceDay ? displayDateParts(sourceDay) : null;
+    if (localDate) {
+      return localDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+  }
+
+  if (!item.date) return null;
+  return new Date(item.date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function documentDateSortValue(item: DocumentMetadataItem) {
+  if (isTeamsDailyDocument(item)) {
+    const sourceDay = sourceDayFromMetadata(item);
+    const localDate = sourceDay ? displayDateParts(sourceDay) : null;
+    if (localDate) return localDate.getTime();
+  }
+  return item.date ? new Date(item.date).getTime() : 0;
+}
+
+function DocumentDateValue({ item }: { item: DocumentMetadataItem }) {
+  const formatted = formatDocumentDate(item);
+  if (!formatted) return <CellText value={null} muted />;
+  return <span className="tabular-nums text-muted-foreground">{formatted}</span>;
 }
 
 async function fetchDocumentContent(id: string): Promise<string | null> {
@@ -285,9 +351,9 @@ function buildTableColumns(
     },
     {
       ...columns[4],
-      render: (item) => <TableDateValue value={item.date} />,
+      render: (item) => <DocumentDateValue item={item} />,
       csvValue: (item) => item.date ?? "",
-      sortValue: (item) => (item.date ? new Date(item.date).getTime() : 0),
+      sortValue: documentDateSortValue,
       sortable: true,
     },
     {
@@ -479,13 +545,7 @@ function DocumentCard({
   const typeConfig = getDocumentTypeConfig(item.type);
   const TypeIcon = typeConfig.icon;
 
-  const dateStr = item.date
-    ? new Date(item.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : null;
+  const dateStr = formatDocumentDate(item);
 
   const previewText = item.summary ?? item.content;
   const hasExternalLink = !!(item.fireflies_link ?? item.url ?? item.source_web_url);
@@ -568,9 +628,7 @@ function renderDocumentList(item: DocumentMetadataItem, onClick: (item: Document
   const typeConfig = getDocumentTypeConfig(item.type);
   const TypeIcon = typeConfig.icon;
 
-  const dateStr = item.date
-    ? new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-    : null;
+  const dateStr = formatDocumentDate(item);
 
   return (
     <Button
