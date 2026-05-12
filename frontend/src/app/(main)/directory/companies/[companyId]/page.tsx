@@ -25,7 +25,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
 import { PageShell } from "@/components/layout";
-import { ErrorState, EmptyState as DsEmptyState, SectionHeader as DsSectionHeader, StatusBadge } from "@/components/ds";
+import { ErrorState, EmptyState as DsEmptyState, SectionHeader as DsSectionHeader } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -638,15 +638,28 @@ export default function CompanyDetailsPage() {
 
         <section className="relative bg-card px-4 py-8 sm:px-8 lg:px-10">
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={company.status || "Unknown"} />
-              {company.type ? <Badge variant="outline">{company.type}</Badge> : null}
-              {company.acumatica_vendor_id ? <Badge variant="outline">ERP {company.acumatica_vendor_id}</Badge> : null}
-            </div>
             <h1 className="text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
               {company.name}
             </h1>
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              {company.status ? (
+                <div className="flex min-w-0 items-center gap-2">
+                  <Check className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{company.status}</span>
+                </div>
+              ) : null}
+              {company.type ? (
+                <div className="flex min-w-0 items-center gap-2">
+                  <Building2 className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{company.type}</span>
+                </div>
+              ) : null}
+              {company.acumatica_vendor_id ? (
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0" />
+                  <span className="truncate">ERP {company.acumatica_vendor_id}</span>
+                </div>
+              ) : null}
               {companyLocation ? (
                 <div className="flex min-w-0 items-center gap-2">
                   <MapPin className="h-4 w-4 shrink-0" />
