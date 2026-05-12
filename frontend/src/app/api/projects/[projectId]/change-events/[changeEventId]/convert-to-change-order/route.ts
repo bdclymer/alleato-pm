@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
