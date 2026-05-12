@@ -14,6 +14,7 @@ import {
   LayoutGrid,
   List,
   MoreVertical,
+  PanelRight,
   Search,
   SlidersHorizontal,
   Table2,
@@ -60,7 +61,7 @@ import { cn } from "@/lib/utils";
 
 import { TableCountIndicator } from "./table-primitives";
 
-export type ViewMode = "table" | "card" | "list";
+export type ViewMode = "table" | "card" | "list" | "split";
 export type TableDensity = "compact" | "default" | "comfortable";
 
 export interface FilterConfig {
@@ -230,6 +231,7 @@ export function ViewSwitcher({
     { mode: "table", icon: <Table2 className="h-3.5 w-3.5" />, label: "Table" },
     { mode: "card", icon: <LayoutGrid className="h-3.5 w-3.5" />, label: "Grid" },
     { mode: "list", icon: <List className="h-3.5 w-3.5" />, label: "List" },
+    { mode: "split", icon: <PanelRight className="h-3.5 w-3.5" />, label: "Split" },
   ];
 
   const filteredViews = views.filter((view) => enabledViews.includes(view.mode));
@@ -507,6 +509,7 @@ function MobileSettingsRow({
 function getViewLabel(view: ViewMode): string {
   if (view === "card") return "Grid";
   if (view === "list") return "List";
+  if (view === "split") return "Split";
   return "Table";
 }
 

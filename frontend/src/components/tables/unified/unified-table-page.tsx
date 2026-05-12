@@ -189,6 +189,15 @@ export interface UnifiedTablePageProps<T> {
   views?: {
     card?: (item: T) => ReactElement;
     list?: (item: T) => ReactElement;
+    split?: (context: {
+      items: T[];
+      getRowId: (item: T) => string;
+      activeRowId?: string | null;
+      selectedIds: string[];
+      onSelectRow?: (id: string, checked: boolean) => void;
+      onSelectAll?: (checked: boolean) => void;
+      onRowClick?: (item: T) => void;
+    }) => ReactElement;
     /** Group card items by a key. Returns the group label string (or "Ungrouped"). */
     cardGroupBy?: (item: T) => string;
   };
@@ -372,21 +381,24 @@ export function UnifiedTablePage<T>({
 
   // Derive available views from what renderers are actually provided.
   // Honour an explicit override from the caller; otherwise auto-include
-  // "card" / "list" only when the views prop supplies renderers.
+  // "card" / "list" / "split" only when the views prop supplies renderers.
   const effectiveEnabledViews: ViewMode[] = React.useMemo(() => {
     if (toolbar.enabledViews && toolbar.enabledViews.length > 0) return toolbar.enabledViews;
     const derived: ViewMode[] = ["table"];
     if (views?.card) derived.push("card");
     if (views?.list) derived.push("list");
+    if (views?.split) derived.push("split");
     return derived;
-  }, [toolbar.enabledViews, views?.card, views?.list]);
+  }, [toolbar.enabledViews, views?.card, views?.list, views?.split]);
 
   const canRenderCardView =
     resolvedFeatures.enableViews && activeView === "card" && Boolean(views?.card);
   const canRenderListView =
     resolvedFeatures.enableViews && activeView === "list" && Boolean(views?.list);
+  const canRenderSplitView =
+    resolvedFeatures.enableViews && activeView === "split" && Boolean(views?.split);
   const shouldRenderTableView =
-    activeView === "table" || (!canRenderCardView && !canRenderListView);
+    activeView === "table" || (!canRenderCardView && !canRenderListView && !canRenderSplitView);
   const isFullBleedTable = layout?.fullBleedTable ?? false;
   const alignHeaderWithFullBleedTable =
     layout?.alignHeaderWithFullBleedTable ?? false;
@@ -1816,6 +1828,20 @@ export function UnifiedTablePage<T>({
           })}
         </div>
       )}
+
+      {showTable && canRenderSplitView && (() => {
+        const SplitView = views?.split;
+        if (!SplitView) return null;
+        return SplitView({
+          items: rowOrderedItems,
+          getRowId: table.getRowId,
+          activeRowId: table.activeRowId,
+          selectedIds,
+          onSelectRow: selection ? handleSelectRow : undefined,
+          onSelectAll: selection ? handleSelectAll : undefined,
+          onRowClick: table.onRowClick,
+        });
+      })()}
 
       {pagination && pagination.totalPages > 1 && (
         <div className="flex flex-col gap-4 items-center justify-between pt-6 md:flex-row">

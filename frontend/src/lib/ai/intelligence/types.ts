@@ -76,14 +76,27 @@ export type InsightCardEvidence = {
   sourceChunkId: string | null;
   sourceMessageId: string | null;
   sourceType: string;
+  sourceCategory: string | null;
   sourceTitle: string | null;
   sourceOccurredAt: string | null;
   participants: string[];
+  sourceContentPreview: string | null;
   excerpt: string | null;
   summary: string | null;
   relevanceReason: string;
   evidenceRole: string;
   confidence: ConfidenceLevel;
+};
+
+export type InsightCardFeedbackSignal = "useful" | "wrong" | "stale";
+
+export type InsightCardReviewFeedback = {
+  id: string;
+  status: string;
+  signal: InsightCardFeedbackSignal;
+  reason: string | null;
+  correction: string | null;
+  createdAt: string;
 };
 
 export type InsightCard = {
@@ -101,6 +114,7 @@ export type InsightCard = {
   sourceCount: number;
   metadata: Record<string, unknown>;
   evidence: InsightCardEvidence[];
+  latestFeedback: InsightCardReviewFeedback | null;
 };
 
 export type ClientProjectIntelligencePacket = {

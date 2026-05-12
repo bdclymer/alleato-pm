@@ -70,7 +70,8 @@ export function useUnifiedTableState({
       if (
         normalized === "table" ||
         normalized === "card" ||
-        normalized === "list"
+        normalized === "list" ||
+        normalized === "split"
       ) {
         return allowedViews.includes(normalized) ? normalized : defaults.view;
       }
