@@ -6,6 +6,7 @@ RUN corepack enable && corepack prepare pnpm@10.13.1 --activate
 
 COPY package.json pnpm-lock.yaml ./
 COPY frontend/package.json ./frontend/package.json
+COPY frontend/patches ./frontend/patches
 
 RUN pnpm --dir frontend install --frozen-lockfile --ignore-scripts
 
