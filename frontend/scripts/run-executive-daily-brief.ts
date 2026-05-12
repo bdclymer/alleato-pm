@@ -16,6 +16,14 @@ type RunRow = {
   id?: string;
 };
 
+type LocalScheduleDecision = {
+  shouldRun: boolean;
+  timezone: string | null;
+  targetLocalTime: string | null;
+  currentLocalTime: string | null;
+  currentLocalWeekday: number | null;
+};
+
 type ExecutiveBriefingDraft = {
   id: string;
   recapDate: string;
@@ -134,6 +142,67 @@ function cliArg(name: string): string | null {
   return match ? match.slice(prefix.length) : null;
 }
 
+function csvNumbers(value: string | undefined, fallback: number[]): number[] {
+  if (!value?.trim()) return fallback;
+  const numbers = value
+    .split(",")
+    .map((item) => Number(item.trim()))
+    .filter((item) => Number.isInteger(item));
+  return numbers.length > 0 ? numbers : fallback;
+}
+
+function localParts(now: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hourCycle: "h23",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(now);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(
+    get("weekday"),
+  ) + 1;
+
+  return {
+    time: `${get("hour")}:${get("minute")}`,
+    weekday,
+  };
+}
+
+function localScheduleDecision(now = new Date()): LocalScheduleDecision {
+  const timezone =
+    process.env.EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE?.trim() || null;
+  const targetLocalTime =
+    process.env.EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME?.trim() || null;
+
+  if (!timezone || !targetLocalTime) {
+    return {
+      shouldRun: true,
+      timezone,
+      targetLocalTime,
+      currentLocalTime: null,
+      currentLocalWeekday: null,
+    };
+  }
+
+  const weekdays = csvNumbers(
+    process.env.EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS,
+    [1, 2, 3, 4, 5],
+  );
+  const current = localParts(now, timezone);
+
+  return {
+    shouldRun:
+      current.time === targetLocalTime && weekdays.includes(current.weekday),
+    timezone,
+    targetLocalTime,
+    currentLocalTime: current.time,
+    currentLocalWeekday: current.weekday,
+  };
+}
+
 async function createRun(startedAt: string): Promise<RunRow> {
   const payload = {
     source: "executive_daily_brief",
@@ -156,6 +225,10 @@ async function createRun(startedAt: string): Promise<RunRow> {
         process.env.EXECUTIVE_DAILY_BRIEF_TRIGGER ??
         "render_cron",
       schedule: process.env.EXECUTIVE_DAILY_BRIEF_SCHEDULE ?? null,
+      targetTimezone:
+        process.env.EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE ?? null,
+      targetLocalTime:
+        process.env.EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME ?? null,
       sendTeams: envFlag("EXECUTIVE_DAILY_BRIEF_SEND_TEAMS", true),
     },
   } satisfies SourceSyncRunInsert;
@@ -234,6 +307,24 @@ async function sendStoredBriefToTeams(userId?: string | null) {
 }
 
 async function main() {
+  const nowArg = cliArg("--now");
+  const schedule = localScheduleDecision(nowArg ? new Date(nowArg) : new Date());
+  if (!schedule.shouldRun) {
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          skipped: true,
+          reason: "outside_target_local_schedule",
+          schedule,
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+
   const workflowModule = (await import(
     "../src/lib/executive/executive-briefing-workflow"
   )) as ExecutiveBriefingWorkflowModule;

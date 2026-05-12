@@ -11,7 +11,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     schedule: "*/30 * * * *"
-    startCommand: >-
+    dockerCommand: >-
       python3 -c "
       import json, os, sys;
       sys.path.insert(0, '/app');
@@ -57,7 +57,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     schedule: "0 7 * * *"
-    startCommand: >-
+    dockerCommand: >-
       python3 -c "
       import json, sys;
       sys.path.insert(0, '/app');
@@ -89,7 +89,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     schedule: "15 12 * * *"
-    startCommand: python3 -m src.services.health.rag_meeting_health
+    dockerCommand: python3 -m src.services.health.rag_meeting_health
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -113,7 +113,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile.executive-brief
     dockerContext: .
-    schedule: "0 11 * * 1-5"
+    schedule: "0 11,12 * * 1-5"
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1
@@ -137,13 +137,19 @@ services:
         value: "true"
       - key: EXECUTIVE_DAILY_BRIEF_SCHEDULE
         value: "weekday-morning-0700-et"
+      - key: EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE
+        value: America/New_York
+      - key: EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME
+        value: "07:00"
+      - key: EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS
+        value: "1,2,3,4,5"
 
   - type: cron
     name: alleato-executive-daily-brief-evening
     runtime: docker
     dockerfilePath: ./backend/Dockerfile.executive-brief
     dockerContext: .
-    schedule: "30 22 * * 1-5"
+    schedule: "30 22,23 * * 1-5"
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1
@@ -166,7 +172,13 @@ services:
       - key: EXECUTIVE_DAILY_BRIEF_SEND_TEAMS
         value: "true"
       - key: EXECUTIVE_DAILY_BRIEF_SCHEDULE
-        value: "weekday-evening-1830-et-dst"
+        value: "weekday-evening-1830-et"
+      - key: EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE
+        value: America/New_York
+      - key: EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME
+        value: "18:30"
+      - key: EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS
+        value: "1,2,3,4,5"
 
   - type: web
     name: alleato-backend

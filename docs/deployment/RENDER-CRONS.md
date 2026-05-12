@@ -17,8 +17,8 @@ Config lives in `render.yaml` at the repo root.
 | `alleato-graph-sync` | Every 30 min (`*/30 * * * *`) | Microsoft Graph sync: Outlook emails, Teams messages, OneDrive files → embed → teams compiler | `backend/src/services/integrations/microsoft_graph/sync.py` | Exit 1 only if errors **and** `total_synced == 0`. Partial errors with some synced = exit 0. |
 | `alleato-task-extraction` | Daily 7:00 AM (`0 7 * * *`) | Extract action items from communications (window: last 2 days) | `backend/src/services/task_extraction.py` | Exit 1 only if errors **and** `inserted == 0`. |
 | `alleato-rag-health` | Daily 12:15 PM (`15 12 * * *`) | RAG meeting vectorization health check. Posts to Slack on failure. | `backend/src/services/health/rag_meeting_health.py` | Standard Python exit code (non-zero on failure). Posts to `SLACK_WEBHOOK_URL`. |
-| `alleato-executive-daily-brief-morning` | Weekdays 11:00 AM UTC (`0 11 * * 1-5`) | Generate the approved executive Daily Brief on Render and send the stored packet to Teams. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. |
-| `alleato-executive-daily-brief-evening` | Weekdays 10:30 PM UTC (`30 22 * * 1-5`) | Same as morning run; currently maps to 6:30 PM Eastern during daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. |
+| `alleato-executive-daily-brief-morning` | Weekdays 11:00 AM and noon UTC (`0 11,12 * * 1-5`) | Generate the approved executive Daily Brief on Render and send the stored packet to Teams at 7:00 AM America/New_York. One UTC run skips depending on daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. Non-target UTC runs exit 0 before generation. |
+| `alleato-executive-daily-brief-evening` | Weekdays 10:30 PM and 11:30 PM UTC (`30 22,23 * * 1-5`) | Same as morning run, targeted at 6:30 PM America/New_York. One UTC run skips depending on daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. Non-target UTC runs exit 0 before generation. |
 
 ---
 
@@ -78,6 +78,9 @@ Set these in the Render dashboard under each cron's **Environment** tab. All are
 | `EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL` | Production frontend URL, currently `https://projects.alleatogroup.com` |
 | `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS` | Set to `"true"` for scheduled delivery |
 | `EXECUTIVE_DAILY_BRIEF_SCHEDULE` | Human-readable schedule label persisted into `source_sync_runs.metadata` |
+| `EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE` | `America/New_York`; used by the worker to handle daylight saving time correctly |
+| `EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME` | `07:00` for morning, `18:30` for evening |
+| `EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS` | `1,2,3,4,5` for Monday-Friday in the target timezone |
 
 ---
 

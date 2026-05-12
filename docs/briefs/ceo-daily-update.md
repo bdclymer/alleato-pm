@@ -466,8 +466,8 @@ Behavior:
 The scheduled weekday Daily Brief jobs run on Render, not Vercel:
 
 ```text
-alleato-executive-daily-brief-morning  -> 0 11 * * 1-5
-alleato-executive-daily-brief-evening  -> 30 22 * * 1-5
+alleato-executive-daily-brief-morning  -> 0 11,12 * * 1-5
+alleato-executive-daily-brief-evening  -> 30 22,23 * * 1-5
 ```
 
 Behavior:
@@ -477,7 +477,8 @@ Behavior:
 - writes a durable `source_sync_runs` row with `source = executive_daily_brief`
 - exits non-zero on generation, persistence, or Teams delivery failure
 - calls the frontend Teams delivery route only after a packet has been persisted
-- as of May 11, 2026, those UTC schedules land at 7:00 AM and 6:30 PM Eastern daylight time
+- uses `EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE=America/New_York` plus target local times so the UTC cron schedule remains correct across daylight saving time changes
+- exits 0 before generation on the extra UTC run that does not match the target local time
 
 ## Failure And Trust Rules
 
