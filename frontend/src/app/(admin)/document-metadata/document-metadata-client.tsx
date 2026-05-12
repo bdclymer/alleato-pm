@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { ChevronDown, ChevronRight, ExternalLink, MoreHorizontal, Trash2 } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, Clock, ExternalLink, File, FileText, Mail, MessageSquare, MoreHorizontal, Trash2, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
@@ -437,59 +437,147 @@ function renderRowActions(
   );
 }
 
+// ── Type configuration ────────────────────────────────────────────────────────
+
+function getDocumentTypeConfig(type: string | null) {
+  if (type === "meeting") {
+    return { icon: Video, label: "Meeting", iconBg: "bg-primary/10", iconColor: "text-primary" };
+  }
+  if (type === "email") {
+    return { icon: Mail, label: "Email", iconBg: "bg-primary/10", iconColor: "text-primary" };
+  }
+  if (type?.startsWith("teams")) {
+    return { icon: MessageSquare, label: "Teams", iconBg: "bg-primary/10", iconColor: "text-primary" };
+  }
+  if (type === "document") {
+    return { icon: FileText, label: "Document", iconBg: "bg-muted", iconColor: "text-muted-foreground" };
+  }
+  return { icon: File, label: type ?? "File", iconBg: "bg-muted", iconColor: "text-muted-foreground" };
+}
+
 // ── Card renderer ────────────────────────────────────────────────────────────
 
-function renderDocumentCard(item: DocumentMetadataItem, onClick: (item: DocumentMetadataItem) => void) {
+function DocumentCard({
+  item,
+  onClick,
+}: {
+  item: DocumentMetadataItem;
+  onClick: (item: DocumentMetadataItem) => void;
+}) {
+  const typeConfig = getDocumentTypeConfig(item.type);
+  const TypeIcon = typeConfig.icon;
+
+  const dateStr = item.date
+    ? new Date(item.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  const previewText = item.summary ?? item.content;
+  const hasExternalLink = !!(item.fireflies_link ?? item.url ?? item.source_web_url);
+
   return (
     <Button
       type="button"
       variant="ghost"
-      className="w-full text-left cursor-pointer rounded-lg bg-card p-4 transition-colors hover:bg-muted/50 space-y-2 h-auto block"
+      className="w-full text-left h-auto p-0 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all active:scale-[0.99] flex flex-col overflow-hidden whitespace-normal"
       onClick={() => onClick(item)}
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium leading-snug line-clamp-2 flex-1">
-          {item.title ?? "Untitled"}
-        </p>
-        {item.status && <StatusBadge status={item.status} />}
-      </div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        {item.source_system && <span>{item.source_system}</span>}
-        {item.date && (
-          <span>{new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+      <div className="flex flex-col gap-2.5 p-4 w-full">
+        {/* Header: type icon + title + status */}
+        <div className="flex items-start gap-3">
+          <div className={`shrink-0 rounded-lg p-2 ${typeConfig.iconBg}`}>
+            <TypeIcon className={`h-4 w-4 ${typeConfig.iconColor}`} />
+          </div>
+          <div className="flex-1 min-w-0 pt-0.5">
+            <p className="text-sm font-semibold leading-snug line-clamp-2 text-foreground">
+              {item.title ?? "Untitled"}
+            </p>
+            {item.project && (
+              <p className="text-[11px] text-muted-foreground mt-0.5 truncate font-medium">
+                {item.project}
+              </p>
+            )}
+          </div>
+          {item.status && (
+            <div className="shrink-0 pt-0.5">
+              <StatusBadge status={item.status} />
+            </div>
+          )}
+        </div>
+
+        {/* Preview text */}
+        {previewText && (
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed pl-11">
+            {previewText}
+          </p>
         )}
-        {item.project && <span>{item.project}</span>}
-        {item.duration_minutes != null && (
-          <span>
-            {item.duration_minutes < 60
-              ? `${item.duration_minutes}m`
-              : `${Math.floor(item.duration_minutes / 60)}h${item.duration_minutes % 60 > 0 ? ` ${item.duration_minutes % 60}m` : ""}`}
-          </span>
-        )}
+
+        {/* Footer metadata */}
+        <div className="flex items-center justify-between gap-2 pl-11">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
+            {item.source_system && (
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium shrink-0">
+                {item.source_system}
+              </span>
+            )}
+            {dateStr && (
+              <span className="flex items-center gap-1 truncate">
+                <Calendar className="h-3 w-3 shrink-0" />
+                {dateStr}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {item.duration_minutes != null && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+                <Clock className="h-3 w-3" />
+                {formatDuration(item.duration_minutes)}
+              </span>
+            )}
+            {hasExternalLink && (
+              <ExternalLink className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+            )}
+          </div>
+        </div>
       </div>
-      {item.summary && (
-        <p className="text-xs text-muted-foreground line-clamp-2">{item.summary}</p>
-      )}
     </Button>
   );
+}
+
+function renderDocumentCard(
+  item: DocumentMetadataItem,
+  onClick: (item: DocumentMetadataItem) => void,
+) {
+  return <DocumentCard item={item} onClick={onClick} />;
 }
 
 // ── List renderer ────────────────────────────────────────────────────────────
 
 function renderDocumentList(item: DocumentMetadataItem, onClick: (item: DocumentMetadataItem) => void) {
+  const typeConfig = getDocumentTypeConfig(item.type);
+  const TypeIcon = typeConfig.icon;
+
+  const dateStr = item.date
+    ? new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : null;
+
   return (
     <Button
       type="button"
       variant="ghost"
-      className="w-full text-left flex items-center justify-between rounded-md px-4 py-2.5 transition-colors hover:bg-muted/50 gap-4 h-auto"
+      className="w-full text-left flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/50 h-auto"
       onClick={() => onClick(item)}
     >
+      <div className={`shrink-0 rounded-md p-1.5 ${typeConfig.iconBg}`}>
+        <TypeIcon className={`h-3.5 w-3.5 ${typeConfig.iconColor}`} />
+      </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{item.title ?? "Untitled"}</p>
+        <p className="text-sm font-medium truncate text-foreground">{item.title ?? "Untitled"}</p>
         <p className="text-xs text-muted-foreground truncate">
-          {[item.source_system, item.project, item.date ? new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null]
-            .filter(Boolean)
-            .join(" · ")}
+          {[item.source_system, item.project, dateStr].filter(Boolean).join(" · ")}
         </p>
       </div>
       {item.status && <StatusBadge status={item.status} />}
