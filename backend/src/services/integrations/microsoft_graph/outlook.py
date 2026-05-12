@@ -633,6 +633,48 @@ def _upsert_project_outlook_email(
     return int(lookup_rows[0]["id"])
 
 
+def _record_outlook_skip_audit(
+    *,
+    supabase_client,
+    msg: dict,
+    user_email: str,
+    body_text: str,
+    sender_name: str,
+    sender_addr: str,
+    source_metadata: dict,
+) -> None:
+    msg_id = str(msg.get("id") or "")
+    if not msg_id:
+        return
+
+    classification = source_metadata.get("intake_classification") or {}
+    now_iso = datetime.now(timezone.utc).isoformat()
+    payload = {
+        "graph_message_id": msg_id,
+        "mailbox_user_id": user_email,
+        "internet_message_id": msg.get("internetMessageId"),
+        "conversation_id": msg.get("conversationId"),
+        "subject": (msg.get("subject") or "(no subject)")[:500],
+        "body_preview": body_text[:1000],
+        "from_name": sender_name,
+        "from_email": sender_addr,
+        "received_at": msg.get("receivedDateTime"),
+        "web_link": msg.get("webLink"),
+        "classification_action": classification.get("action") or "skip",
+        "classification_category": classification.get("category") or "unknown",
+        "classification_confidence": classification.get("confidence"),
+        "classification_reason": classification.get("reason") or "Skipped before import.",
+        "classification_signals": classification.get("signals") or [],
+        "source_metadata": source_metadata,
+        "last_seen_at": now_iso,
+    }
+
+    supabase_client.from_("outlook_email_skip_audit").upsert(
+        payload,
+        on_conflict="graph_message_id",
+    ).execute()
+
+
 def _fetch_document_project_id(supabase_client, doc_id: Optional[str]) -> Optional[int]:
     if not doc_id:
         return None
@@ -1385,6 +1427,18 @@ def sync_outlook_emails(
         }
 
         if intake_classification.action == EmailIntakeAction.SKIP:
+            try:
+                _record_outlook_skip_audit(
+                    supabase_client=supabase_client,
+                    msg=msg,
+                    user_email=user_email,
+                    body_text=body_text,
+                    sender_name=sender_name,
+                    sender_addr=sender_addr,
+                    source_metadata=source_metadata,
+                )
+            except Exception as exc:
+                logger.warning("[Outlook] Skip audit write failed for %s: %s", msg_id, exc)
             logger.info(
                 "[Outlook] Skipping email before intake: msg=%s category=%s reason=%s subject=%s",
                 msg_id,

@@ -20,6 +20,19 @@ ACTIVE_JOB_STATUSES = ("queued", "running", "succeeded")
 ACTIVE_REFRESH_STATUSES = ("queued", "running")
 ACTIVE_CARD_STATUSES = ("open", "blocked", "needs_review", "stale")
 CONFIDENCE_RANK = {"low": 0, "medium": 1, "high": 2}
+SOURCE_CATEGORY_LABELS = {
+    "meeting": "Meetings",
+    "email": "Emails",
+    "teams": "Teams",
+    "document": "Documents",
+    "rfi": "RFIs",
+    "submittal": "Submittals",
+    "drawing": "Drawings",
+    "specification": "Specifications",
+    "daily_report": "Daily Reports",
+    "task": "Tasks",
+    "risk": "Risks",
+}
 
 
 def _utc_now() -> str:
@@ -80,6 +93,56 @@ def _single_row(response: Any) -> Optional[Dict[str, Any]]:
 
 def _clean_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
+def _source_category(value: Any) -> str:
+    raw = _clean_text(value).lower()
+    if any(term in raw for term in ("meeting", "fireflies", "transcript")):
+        return "meeting"
+    if any(term in raw for term in ("email", "outlook")):
+        return "email"
+    if any(term in raw for term in ("teams", "chat", "message")):
+        return "teams"
+    if "rfi" in raw:
+        return "rfi"
+    if "submittal" in raw:
+        return "submittal"
+    if "drawing" in raw:
+        return "drawing"
+    if "spec" in raw:
+        return "specification"
+    if "daily" in raw:
+        return "daily_report"
+    if "task" in raw:
+        return "task"
+    if "risk" in raw:
+        return "risk"
+    return "document"
+
+
+def _category_coverage_from_evidence(evidence: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    counts: Dict[str, int] = {}
+    latest_by_category: Dict[str, str] = {}
+
+    for row in evidence:
+        category = _source_category(row.get("source_type"))
+        counts[category] = counts.get(category, 0) + 1
+        occurred_at = row.get("source_occurred_at")
+        if occurred_at and str(occurred_at) > latest_by_category.get(category, ""):
+            latest_by_category[category] = str(occurred_at)
+
+    return [
+        {
+            "category": category,
+            "label": SOURCE_CATEGORY_LABELS.get(category, category.replace("_", " ").title()),
+            "availableCount": count,
+            "sourceCount": count,
+            "inPacketCount": count,
+            "latestAt": latest_by_category.get(category),
+            "tableNames": ["insight_card_evidence"],
+        }
+        for category, count in sorted(counts.items())
+    ]
 
 
 def _slugify(value: str) -> str:
@@ -1137,6 +1200,7 @@ def _packet_payload(
             "promotedCardCount": len(cards),
             "linkedEvidenceCount": len(evidence),
             "latestSourceAt": source_dates[-1] if source_dates else None,
+            "categoryCoverage": _category_coverage_from_evidence(evidence),
             "gaps": [] if cards else ["No promoted insight cards for this target."],
         },
         "review_queue_count": review_queue_count,

@@ -41,6 +41,11 @@ const TASK_SELECT = `
   )
 `;
 
+const TASK_SELECT_WITH_DOCUMENT_INNER = TASK_SELECT.replace(
+  "document_metadata:tasks_metadata_id_fkey (",
+  "document_metadata:tasks_metadata_id_fkey!inner (",
+);
+
 export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
   const projectIdParam = request.nextUrl.searchParams.get("project_id");
   const projectId = projectIdParam ? Number.parseInt(projectIdParam, 10) : null;
@@ -113,7 +118,7 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
         .order("created_at", { ascending: false }),
       serviceClient
         .from("tasks")
-        .select(TASK_SELECT)
+        .select(TASK_SELECT_WITH_DOCUMENT_INNER)
         .eq("document_metadata.project_id", projectId)
         .or("project_ids.is.null,project_ids.eq.{}")
         .order("created_at", { ascending: false }),

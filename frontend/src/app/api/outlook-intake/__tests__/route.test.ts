@@ -10,8 +10,12 @@ jest.mock("@/lib/supabase/server", () => ({
   getApiRouteUser: jest.fn(),
 }));
 
-const createClientMock = createClient as jest.MockedFunction<typeof createClient>;
-const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
+const createClientMock = createClient as jest.MockedFunction<
+  typeof createClient
+>;
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<
+  typeof getApiRouteUser
+>;
 
 interface QueryResult {
   data: unknown;
@@ -25,6 +29,7 @@ interface QueryBuilderMock {
   in: jest.Mock;
   is: jest.Mock;
   order: jest.Mock;
+  returns: jest.Mock;
   single: jest.Mock;
   then: jest.Mock;
 }
@@ -37,6 +42,7 @@ function createQueryBuilder(result: QueryResult): QueryBuilderMock {
     in: jest.fn().mockReturnThis(),
     is: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
+    returns: jest.fn().mockReturnThis(),
     single: jest.fn().mockResolvedValue(result),
     then: jest.fn((resolve: (value: QueryResult) => void) => resolve(result)),
   };
@@ -65,6 +71,16 @@ function makeIntakeRows(count: number) {
     created_at: "2026-05-06T20:00:00.000Z",
     projects: null,
     outlook_email_intake_attachments: [],
+    source_metadata: {
+      intake_classification: {
+        action: "quarantine",
+        category: "calendar_low_value",
+        confidence: 0.84,
+        reason:
+          "Calendar-related message has only low-value or ambiguous content.",
+        signals: ["calendar_header"],
+      },
+    },
   }));
 }
 
@@ -119,7 +135,7 @@ describe("/api/outlook-intake", () => {
     };
 
     createClientMock.mockResolvedValue(
-      supabase as unknown as Awaited<ReturnType<typeof createClient>>,
+      supabase as Awaited<ReturnType<typeof createClient>>,
     );
 
     const response = await GET(
@@ -138,12 +154,18 @@ describe("/api/outlook-intake", () => {
       id: 1,
       documentMetadataId: "document-1",
       documentStatus: "embedded",
+      intakeClassification: {
+        action: "quarantine",
+        category: "calendar_low_value",
+      },
     });
 
     expect(supabase.from).toHaveBeenCalledWith("outlook_email_intake");
     expect(supabase.from).toHaveBeenCalledWith("document_metadata");
     expect(
-      supabase.from.mock.calls.filter(([table]) => table === "document_metadata"),
+      supabase.from.mock.calls.filter(
+        ([table]) => table === "document_metadata",
+      ),
     ).toHaveLength(3);
 
     const intakeSelect = intakeBuilder.select.mock.calls[0]?.[0] ?? "";
@@ -177,7 +199,7 @@ describe("/api/outlook-intake", () => {
     };
 
     createClientMock.mockResolvedValue(
-      supabase as unknown as Awaited<ReturnType<typeof createClient>>,
+      supabase as Awaited<ReturnType<typeof createClient>>,
     );
 
     const response = await GET(
@@ -187,7 +209,10 @@ describe("/api/outlook-intake", () => {
 
     expect(response.status).toBe(200);
     expect(intakeBuilder.neq).toHaveBeenCalledWith("match_status", "ignored");
-    expect(intakeBuilder.eq).not.toHaveBeenCalledWith("match_status", expect.any(String));
+    expect(intakeBuilder.eq).not.toHaveBeenCalledWith(
+      "match_status",
+      expect.any(String),
+    );
   });
 
   it("allows explicitly filtering to ignored intake rows", async () => {
@@ -217,16 +242,65 @@ describe("/api/outlook-intake", () => {
     };
 
     createClientMock.mockResolvedValue(
-      supabase as unknown as Awaited<ReturnType<typeof createClient>>,
+      supabase as Awaited<ReturnType<typeof createClient>>,
     );
 
     const response = await GET(
-      new NextRequest("http://localhost/api/outlook-intake?match_status=ignored"),
+      new NextRequest(
+        "http://localhost/api/outlook-intake?match_status=ignored",
+      ),
       { params: Promise.resolve({}) },
     );
 
     expect(response.status).toBe(200);
     expect(intakeBuilder.eq).toHaveBeenCalledWith("match_status", "ignored");
-    expect(intakeBuilder.neq).not.toHaveBeenCalledWith("match_status", "ignored");
+    expect(intakeBuilder.neq).not.toHaveBeenCalledWith(
+      "match_status",
+      "ignored",
+    );
+  });
+
+  it("filters by intake classification action", async () => {
+    const intakeBuilder = createQueryBuilder({
+      data: [],
+      error: null,
+    });
+    const builders: Record<string, QueryBuilderMock[]> = {
+      user_profiles: [
+        createQueryBuilder({
+          data: { is_admin: true },
+          error: null,
+        }),
+      ],
+      outlook_email_intake: [intakeBuilder],
+      document_metadata: [],
+    };
+
+    const supabase = {
+      from: jest.fn((table: string) => {
+        const builder = builders[table]?.shift();
+        if (!builder) {
+          throw new Error(`Unexpected query for table: ${table}`);
+        }
+        return builder;
+      }),
+    };
+
+    createClientMock.mockResolvedValue(
+      supabase as Awaited<ReturnType<typeof createClient>>,
+    );
+
+    const response = await GET(
+      new NextRequest(
+        "http://localhost/api/outlook-intake?classification_action=quarantine",
+      ),
+      { params: Promise.resolve({}) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(intakeBuilder.eq).toHaveBeenCalledWith(
+      "source_metadata->intake_classification->>action",
+      "quarantine",
+    );
   });
 });

@@ -35,6 +35,10 @@ class _Table:
         self.payload = payload
         return self
 
+    def upsert(self, payload, **_kwargs):
+        self.payload = payload
+        return self
+
     def execute(self):
         rows = self.store.setdefault(self.name, [])
         if self.payload is None:
@@ -177,3 +181,43 @@ def test_reconcile_outlook_project_assignment_uses_document_metadata_project():
     assert intake["document_metadata_id"] == "outlook_message-1"
     assert intake["assignment_method"] == "document_metadata_reconcile"
     assert intake["assignment_confidence"] == 1.0
+
+
+def test_record_outlook_skip_audit_writes_classifier_snapshot():
+    supabase = _Supabase()
+    msg = {
+        "id": "message-1",
+        "subject": "Accepted: OAC Meeting",
+        "receivedDateTime": "2026-05-12T15:00:00Z",
+        "internetMessageId": "<message-1@example.com>",
+        "conversationId": "conversation-1",
+        "webLink": "https://outlook.office.com/mail/message-1",
+    }
+
+    outlook._record_outlook_skip_audit(
+        supabase_client=supabase,
+        msg=msg,
+        user_email="pm@example.com",
+        body_text="Accepted OAC Meeting When: Tuesday Where: Teams",
+        sender_name="Owner",
+        sender_addr="owner@example.com",
+        source_metadata={
+            "outlook_message_id": "message-1",
+            "intake_classification": {
+                "action": "skip",
+                "category": "calendar_rsvp",
+                "confidence": 0.98,
+                "reason": "RSVP response has no substantive typed content.",
+                "signals": ["rsvp_subject", "calendar_header"],
+            },
+        },
+    )
+
+    row = supabase.store["outlook_email_skip_audit"][0]
+    assert row["graph_message_id"] == "message-1"
+    assert row["mailbox_user_id"] == "pm@example.com"
+    assert row["classification_action"] == "skip"
+    assert row["classification_category"] == "calendar_rsvp"
+    assert row["classification_confidence"] == 0.98
+    assert row["classification_signals"] == ["rsvp_subject", "calendar_header"]
+    assert row["body_preview"] == "Accepted OAC Meeting When: Tuesday Where: Teams"

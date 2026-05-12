@@ -235,6 +235,11 @@ function countRows(data: unknown[] | null | undefined): number {
   return Array.isArray(data) ? data.length : 0;
 }
 
+function countResult(value: { count: number | null; error: { message: string } | null }): number | null {
+  if (value.error) return null;
+  return typeof value.count === "number" ? value.count : null;
+}
+
 function selectOperatingSummarySources(
   sources: ProjectOperatingSummarySource[],
 ): ProjectOperatingSummarySource[] {
@@ -299,9 +304,41 @@ function confidenceForSummary(summary: ProjectIntelligenceSummary): "high" | "me
   return summary.confidence;
 }
 
-function createOperatingCards(summary: ProjectIntelligenceSummary) {
+function createSourceCoverageCard(sourceSet: ProjectOperatingSummarySourceSet) {
+  const sourceIds: string[] = [];
+  const seenCategories = new Set<ProjectOperatingSourceCategory>();
+
+  for (const source of sourceSet.sources) {
+    if (seenCategories.has(source.category)) continue;
+    sourceIds.push(source.id);
+    seenCategories.add(source.category);
+  }
+
+  if (sourceIds.length === 0) return null;
+
+  const availableLabels = sourceSet.coverage
+    .filter((row) => row.availableCount > 0)
+    .map((row) => row.label);
+
+  return {
+    key: "operating-source-coverage",
+    section: "source_coverage",
+    rank: 7,
+    title: "Available project source coverage",
+    cardType: "project_update",
+    summary: `Project intelligence has available source records across: ${availableLabels.join(", ") || "available source categories"}.`,
+    whyItMatters: "Keeps the packet audit truthful even when the summary model does not cite every available source category.",
+    nextAction: null,
+    sourceIds: sourceIds.slice(0, 16),
+  };
+}
+
+function createOperatingCards(
+  summary: ProjectIntelligenceSummary,
+  sourceSet?: ProjectOperatingSummarySourceSet,
+) {
   const operating = summary.operatingSummary;
-  return [
+  const cards = [
     {
       key: "operating-current-read",
       section: "current_state",
@@ -412,6 +449,8 @@ function createOperatingCards(summary: ProjectIntelligenceSummary) {
       ].slice(0, 8),
     },
   ].filter((card) => card.sourceIds.length > 0);
+  const sourceCoverageCard = sourceSet ? createSourceCoverageCard(sourceSet) : null;
+  return sourceCoverageCard ? [...cards, sourceCoverageCard] : cards;
 }
 
 function formatCoverage(sourceSet: ProjectOperatingSummarySourceSet): string {
@@ -1016,12 +1055,45 @@ export async function buildProjectOperatingSummarySources({
     );
   });
 
+  const [
+    meetingCountRes,
+    emailCountRes,
+    teamsCountRes,
+    documentCountRes,
+  ] = await Promise.all([
+    supabase
+      .from("document_metadata")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .is("deleted_at", null)
+      .eq("type", "meeting"),
+    supabase
+      .from("document_metadata")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .is("deleted_at", null)
+      .eq("category", "email"),
+    supabase
+      .from("document_metadata")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .is("deleted_at", null)
+      .eq("category", "teams_message"),
+    supabase
+      .from("document_metadata")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .is("deleted_at", null)
+      .not("type", "in", "(meeting,email)")
+      .not("category", "in", "(email,teams_message)"),
+  ]);
+
   const availableCounts: Partial<Record<ProjectOperatingSourceCategory, number>> = {
     project_detail: project ? 1 : 0,
-    meeting: docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "meeting").length,
-    email: docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "email").length,
-    teams: docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "teams").length,
-    document: docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "document").length,
+    meeting: countResult(meetingCountRes) ?? docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "meeting").length,
+    email: countResult(emailCountRes) ?? docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "email").length,
+    teams: countResult(teamsCountRes) ?? docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "teams").length,
+    document: countResult(documentCountRes) ?? docsData.filter((row) => normalizeDocumentCategory(row as Record<string, unknown>) === "document").length,
     rfi: countRows(rfiRes.data),
     submittal: countRows(submittalRes.data),
     drawing: countRows(drawingRes.data),
@@ -1077,7 +1149,7 @@ export async function refreshProjectOperatingIntelligencePacket(input: {
 }) {
   const { sourceSet, selectedSources, summary } = await summarizeProjectOperatingIntelligence(input);
   const sources = sourceById(sourceSet.sources);
-  const cards = createOperatingCards(summary);
+  const cards = createOperatingCards(summary, sourceSet);
   const generatedAt = new Date().toISOString();
   const latestAt = latestDate(sourceSet.sources);
   const earliestAt = firstSourceDate(sourceSet.sources);

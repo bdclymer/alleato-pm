@@ -7,9 +7,9 @@ import {
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
 import type { ChatStatus, UIMessage } from "ai";
-import { BrainCircuit, Plus, Square } from "lucide-react";
+import { Plus, Sparkles, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api-client";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AI_ASSISTANT_MODEL } from "@/lib/ai/assistant-models";
 import {
@@ -35,6 +35,21 @@ const STARTER_ACTIONS = [
   "Draft follow-ups",
 ];
 
+const sentInitialMessages = new Set<string>();
+
+function formatCompactChatError(error: unknown) {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return "The assistant request failed before a response was returned.";
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <InfoAlert variant="error" className="mx-3 mb-2 py-2 text-xs leading-5">
+      {message}
+    </InfoAlert>
+  );
+}
+
 function MessageBubble({ message }: { message: UIMessage }) {
   const isUser = message.role === "user";
   const text =
@@ -49,7 +64,7 @@ function MessageBubble({ message }: { message: UIMessage }) {
     <Message from={message.role} className={!isUser ? "flex-row items-start" : undefined}>
       {!isUser && (
         <div className="mr-2 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10">
-          <BrainCircuit className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+          <Sparkles className="size-3.5 text-primary" strokeWidth={1.8} />
         </div>
       )}
       <MessageContent
@@ -161,13 +176,11 @@ function EmptyState({
   input,
   onChange,
   onSubmit,
-  isSubmitting,
   autoFocus,
 }: {
   input: string;
   onChange: (value: string) => void;
   onSubmit: (message: string) => void;
-  isSubmitting: boolean;
   autoFocus?: boolean;
 }) {
   return (
@@ -187,7 +200,6 @@ function EmptyState({
               variant="outline"
               size="xs"
               onClick={() => onSubmit(action)}
-              disabled={isSubmitting}
               className="rounded-full px-3 text-xs text-foreground hover:bg-muted"
             >
               {action}
@@ -195,13 +207,14 @@ function EmptyState({
           ))}
         </div>
       </div>
+      {errorMessage && <ErrorBanner message={errorMessage} />}
       <ChatInput
         value={input}
         onChange={onChange}
         onSubmit={onSubmit}
         onStop={() => {}}
-        disabled={isSubmitting}
-        status={isSubmitting ? "submitted" : "ready"}
+        disabled={false}
+        status="ready"
         autoFocus={autoFocus}
       />
     </div>
@@ -220,7 +233,7 @@ function ActiveChat({
   const sessionIdRef = React.useRef(sessionId);
   sessionIdRef.current = sessionId;
 
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, sendMessage, status, stop, error } = useChat({
     id: sessionId,
     messages: [],
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
@@ -240,13 +253,12 @@ function ActiveChat({
     }),
   });
 
-  const hasSentFirst = React.useRef(false);
   React.useEffect(() => {
-    if (pendingFirstMessage && !hasSentFirst.current) {
-      hasSentFirst.current = true;
+    if (pendingFirstMessage && !sentInitialMessages.has(sessionId)) {
+      sentInitialMessages.add(sessionId);
       sendMessage({ text: pendingFirstMessage });
     }
-  }, [pendingFirstMessage, sendMessage]);
+  }, [pendingFirstMessage, sendMessage, sessionId]);
 
   const [input, setInput] = React.useState("");
   const isStreaming = status === "streaming" || status === "submitted";
@@ -271,6 +283,7 @@ function ActiveChat({
         </ConversationContent>
         <ConversationScrollButton className="bottom-3 z-20" />
       </Conversation>
+      {error && <ErrorBanner message={formatCompactChatError(error)} />}
       <ChatInput
         value={input}
         onChange={setInput}
@@ -292,32 +305,23 @@ export function CompactAiChat({
   const [sessionId, setSessionId] = React.useState<string | null>(null);
   const [pendingFirstMessage, setPendingFirstMessage] = React.useState<string | null>(null);
   const [input, setInput] = React.useState("");
-  const [isCreating, setIsCreating] = React.useState(false);
 
   const handleFirstSubmit = React.useCallback(
-    async (message: string) => {
-      if (isCreating || !message.trim()) return;
-      setIsCreating(true);
-      try {
-        const data = await apiFetch<{ conversation: { session_id: string } }>(
-          "/api/ai-assistant/conversations",
-          { method: "POST", body: JSON.stringify({ title: message.slice(0, 50) }) },
-        );
-        setSessionId(data.conversation.session_id);
-        setPendingFirstMessage(message);
-        setInput("");
-      } finally {
-        setIsCreating(false);
-      }
+    (message: string) => {
+      if (!message.trim()) return;
+      setSessionId(window.crypto.randomUUID());
+      setPendingFirstMessage(message);
+      setInput("");
     },
-    [isCreating],
+    [],
   );
 
   const handleNewChat = React.useCallback(() => {
+    if (sessionId) sentInitialMessages.delete(sessionId);
     setSessionId(null);
     setPendingFirstMessage(null);
     setInput("");
-  }, []);
+  }, [sessionId]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -347,7 +351,6 @@ export function CompactAiChat({
           input={input}
           onChange={setInput}
           onSubmit={handleFirstSubmit}
-          isSubmitting={isCreating}
           autoFocus={autoFocusComposer}
         />
       )}

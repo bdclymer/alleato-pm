@@ -38,6 +38,7 @@ interface OutlookIntakeRow {
   has_attachments: boolean | null;
   web_link: string | null;
   created_at: string | null;
+  source_metadata: Record<string, unknown> | null;
   projects: IntakeProjectRow | null;
   outlook_email_intake_attachments: IntakeAttachmentRow[] | null;
 }
@@ -82,16 +83,19 @@ async function assertAdminAccess(where: string) {
   return supabase;
 }
 
-export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) => {
-  const supabase = await assertAdminAccess("outlook-intake#GET");
-  const { searchParams } = new URL(request.url);
-  const matchStatus = searchParams.get("match_status");
-  const unassigned = searchParams.get("unassigned") === "true";
+export const GET = withApiGuardrails(
+  "outlook-intake#GET",
+  async ({ request }) => {
+    const supabase = await assertAdminAccess("outlook-intake#GET");
+    const { searchParams } = new URL(request.url);
+    const matchStatus = searchParams.get("match_status");
+    const classificationAction = searchParams.get("classification_action");
+    const unassigned = searchParams.get("unassigned") === "true";
 
-  let query = supabase
-    .from("outlook_email_intake")
-    .select(
-      `
+    let query = supabase
+      .from("outlook_email_intake")
+      .select(
+        `
         id,
         graph_message_id,
         mailbox_user_id,
@@ -110,9 +114,10 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
         assignment_confidence,
         received_at,
         has_attachments,
-        web_link,
-        created_at,
-        projects!outlook_email_intake_project_id_fkey (
+	        web_link,
+	        created_at,
+	        source_metadata,
+	        projects!outlook_email_intake_project_id_fkey (
           id,
           name,
           project_number
@@ -125,105 +130,146 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
           created_at
         )
       `,
-    )
-    .is("deleted_at", null)
-    .order("received_at", { ascending: false, nullsFirst: false });
+      )
+      .returns<OutlookIntakeRow[]>()
+      .is("deleted_at", null)
+      .order("received_at", { ascending: false, nullsFirst: false });
 
-  if (matchStatus) {
-    query = query.eq("match_status", matchStatus);
-  } else {
-    query = query.neq("match_status", "ignored");
-  }
+    if (matchStatus) {
+      query = query.eq("match_status", matchStatus);
+    } else {
+      query = query.neq("match_status", "ignored");
+    }
 
-  if (unassigned) {
-    query = query.is("project_id", null);
-  }
+    if (unassigned) {
+      query = query.is("project_id", null);
+    }
 
-  const { data, error } = await query;
+    if (classificationAction) {
+      query = query.eq(
+        "source_metadata->intake_classification->>action",
+        classificationAction,
+      );
+    }
 
-  if (error) {
-    throw new GuardrailError({
-      code: "INTERNAL_ERROR",
-      where: "outlook-intake#GET",
-      message: error.message,
-    });
-  }
+    const { data, error } = await query;
 
-  const intakeRows = (data ?? []) as unknown as OutlookIntakeRow[];
-  const documentMetadataIds = [
-    ...new Set(
-      intakeRows
-        .map((row) => row.document_metadata_id)
-        .filter((id): id is string => Boolean(id)),
-    ),
-  ];
-  const documentStatusById = new Map<string, string | null>();
-
-  for (
-    let index = 0;
-    index < documentMetadataIds.length;
-    index += DOCUMENT_STATUS_LOOKUP_BATCH_SIZE
-  ) {
-    const documentMetadataIdBatch = documentMetadataIds.slice(
-      index,
-      index + DOCUMENT_STATUS_LOOKUP_BATCH_SIZE,
-    );
-    const { data: documentRows, error: documentError } = await supabase
-      .from("document_metadata")
-      .select("id, status")
-      .in("id", documentMetadataIdBatch);
-
-    if (documentError) {
+    if (error) {
       throw new GuardrailError({
         code: "INTERNAL_ERROR",
         where: "outlook-intake#GET",
-        message: documentError.message,
+        message: error.message,
       });
     }
 
-    for (const documentRow of documentRows ?? []) {
-      documentStatusById.set(documentRow.id, documentRow.status ?? null);
+    const intakeRows = data ?? [];
+    const documentMetadataIds = [
+      ...new Set(
+        intakeRows
+          .map((row) => row.document_metadata_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const documentStatusById = new Map<string, string | null>();
+
+    for (
+      let index = 0;
+      index < documentMetadataIds.length;
+      index += DOCUMENT_STATUS_LOOKUP_BATCH_SIZE
+    ) {
+      const documentMetadataIdBatch = documentMetadataIds.slice(
+        index,
+        index + DOCUMENT_STATUS_LOOKUP_BATCH_SIZE,
+      );
+      const { data: documentRows, error: documentError } = await supabase
+        .from("document_metadata")
+        .select("id, status")
+        .in("id", documentMetadataIdBatch);
+
+      if (documentError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "outlook-intake#GET",
+          message: documentError.message,
+        });
+      }
+
+      for (const documentRow of documentRows ?? []) {
+        documentStatusById.set(documentRow.id, documentRow.status ?? null);
+      }
     }
-  }
 
-  const rows = intakeRows.map((row) => ({
-    id: row.id,
-    graphMessageId: row.graph_message_id,
-    mailboxUserId: row.mailbox_user_id,
-    documentMetadataId: row.document_metadata_id,
-    documentStatus: row.document_metadata_id
-      ? (documentStatusById.get(row.document_metadata_id) ?? "missing_metadata")
-      : null,
-    conversationId: row.conversation_id,
-    subject: row.subject,
-    body: row.body,
-    bodyHtml: row.body_html,
-    bodyText: row.body_text,
-    fromName: row.from_name,
-    fromEmail: row.from_email,
-    toList: row.to_list ?? [],
-    matchStatus: row.match_status,
-    assignmentMethod: row.assignment_method,
-    assignmentConfidence: row.assignment_confidence,
-    receivedAt: row.received_at,
-    hasAttachments: row.has_attachments,
-    webLink: row.web_link,
-    createdAt: row.created_at,
-    project: row.projects
-      ? {
-          id: row.projects.id,
-          name: row.projects.name,
-          projectNumber: row.projects.project_number,
-        }
-      : null,
-    attachments: (row.outlook_email_intake_attachments ?? []).map((attachment) => ({
-      id: attachment.id,
-      fileName: attachment.file_name,
-      fileSize: attachment.file_size,
-      contentType: attachment.content_type,
-      createdAt: attachment.created_at,
-    })),
-  }));
+    const rows = intakeRows.map((row) => ({
+      id: row.id,
+      graphMessageId: row.graph_message_id,
+      mailboxUserId: row.mailbox_user_id,
+      documentMetadataId: row.document_metadata_id,
+      documentStatus: row.document_metadata_id
+        ? (documentStatusById.get(row.document_metadata_id) ??
+          "missing_metadata")
+        : null,
+      conversationId: row.conversation_id,
+      subject: row.subject,
+      body: row.body,
+      bodyHtml: row.body_html,
+      bodyText: row.body_text,
+      fromName: row.from_name,
+      fromEmail: row.from_email,
+      toList: row.to_list ?? [],
+      matchStatus: row.match_status,
+      assignmentMethod: row.assignment_method,
+      assignmentConfidence: row.assignment_confidence,
+      receivedAt: row.received_at,
+      hasAttachments: row.has_attachments,
+      webLink: row.web_link,
+      createdAt: row.created_at,
+      intakeClassification: normalizeIntakeClassification(row.source_metadata),
+      project: row.projects
+        ? {
+            id: row.projects.id,
+            name: row.projects.name,
+            projectNumber: row.projects.project_number,
+          }
+        : null,
+      attachments: (row.outlook_email_intake_attachments ?? []).map(
+        (attachment) => ({
+          id: attachment.id,
+          fileName: attachment.file_name,
+          fileSize: attachment.file_size,
+          contentType: attachment.content_type,
+          createdAt: attachment.created_at,
+        }),
+      ),
+    }));
 
-  return NextResponse.json(rows);
-});
+    return NextResponse.json(rows);
+  },
+);
+
+function normalizeIntakeClassification(
+  sourceMetadata: Record<string, unknown> | null,
+) {
+  const raw = sourceMetadata?.intake_classification;
+  if (!raw || typeof raw !== "object") return null;
+
+  const classification = raw as Record<string, unknown>;
+  return {
+    action:
+      typeof classification.action === "string" ? classification.action : null,
+    category:
+      typeof classification.category === "string"
+        ? classification.category
+        : null,
+    confidence:
+      typeof classification.confidence === "number"
+        ? classification.confidence
+        : null,
+    reason:
+      typeof classification.reason === "string" ? classification.reason : null,
+    signals: Array.isArray(classification.signals)
+      ? classification.signals.filter(
+          (signal): signal is string => typeof signal === "string",
+        )
+      : [],
+  };
+}

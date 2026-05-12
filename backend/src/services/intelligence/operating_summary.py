@@ -253,7 +253,7 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
         )
         .eq("project_id", int(project_id))
         .order("date", desc=True)
-        .limit(36)
+        .limit(500)
     )
     tasks = _fetch_optional_rows(
         supabase.table("tasks")
@@ -431,18 +431,17 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
                 )
             )
 
-    sources = sources[:MAX_SOURCES]
+    all_sources = sources
+    sources = all_sources[:MAX_SOURCES]
     coverage = []
     for category, label in CATEGORY_LABELS.items():
+        all_category_sources = [source for source in all_sources if source["category"] == category]
         category_sources = [source for source in sources if source["category"] == category]
-        available_count = len(category_sources)
-        if category == "task":
-            available_count = len(tasks) + len(schedule_tasks)
         coverage.append(
             {
                 "category": category,
                 "label": label,
-                "availableCount": available_count,
+                "availableCount": len(all_category_sources),
                 "sourceCount": len(category_sources),
                 "latestAt": sorted([s["capturedAt"] for s in category_sources if s.get("capturedAt")])[-1]
                 if any(s.get("capturedAt") for s in category_sources)
@@ -657,6 +656,43 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [card for card in cards if card["sourceIds"]]
 
 
+def _source_coverage_card(source_set: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    sources = source_set.get("sources") or []
+    selected: List[str] = []
+    seen_categories = set()
+
+    for source in sources:
+        category = source.get("category")
+        source_id = source.get("id")
+        if not category or not source_id or category in seen_categories:
+            continue
+        selected.append(source_id)
+        seen_categories.add(category)
+
+    if not selected:
+        return None
+
+    covered_labels = [
+        row.get("label") or row.get("category")
+        for row in source_set.get("coverage") or []
+        if row.get("availableCount", 0) > 0
+    ]
+
+    return {
+        "key": "operating-source-coverage",
+        "section": "source_coverage",
+        "rank": 7,
+        "type": "project_update",
+        "title": "Available project source coverage",
+        "summary": (
+            "Project intelligence has available source records across: "
+            f"{', '.join(str(label) for label in covered_labels) if covered_labels else 'available source categories'}."
+        ),
+        "why": "Keeps the packet audit truthful even when the summary model does not cite every available source category.",
+        "sourceIds": selected[:16],
+    }
+
+
 def refresh_project_operating_packet(
     supabase: Any,
     project_id: int,
@@ -671,6 +707,9 @@ def refresh_project_operating_packet(
     latest_dates = sorted(s["capturedAt"] for s in source_set["sources"] if s.get("capturedAt"))
     confidence = summary.get("confidence") if summary.get("confidence") in {"low", "medium", "high"} else "medium"
     cards = _card_defs(summary)
+    coverage_card = _source_coverage_card(source_set)
+    if coverage_card:
+        cards.append(coverage_card)
     linked_evidence_count = sum(len(card["sourceIds"]) for card in cards)
 
     source_coverage = {

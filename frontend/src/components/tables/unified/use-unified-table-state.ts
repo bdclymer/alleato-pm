@@ -48,6 +48,39 @@ export interface UnifiedTableState {
   setSearchParams: (updates: Record<string, string | null>) => void;
 }
 
+function mergeStoredColumnOrder(storedColumns: string[], defaultColumns: string[]): string[] {
+  if (!defaultColumns.length) return storedColumns;
+
+  const result = storedColumns.filter((id, index) => typeof id === "string" && storedColumns.indexOf(id) === index);
+
+  for (const defaultColumn of defaultColumns) {
+    if (result.includes(defaultColumn)) continue;
+
+    const defaultIndex = defaultColumns.indexOf(defaultColumn);
+    const nextDefault = defaultColumns
+      .slice(defaultIndex + 1)
+      .find((id) => result.includes(id));
+
+    if (nextDefault) {
+      result.splice(result.indexOf(nextDefault), 0, defaultColumn);
+      continue;
+    }
+
+    const previousDefault = [...defaultColumns.slice(0, defaultIndex)]
+      .reverse()
+      .find((id) => result.includes(id));
+
+    if (previousDefault) {
+      result.splice(result.indexOf(previousDefault) + 1, 0, defaultColumn);
+      continue;
+    }
+
+    result.push(defaultColumn);
+  }
+
+  return result;
+}
+
 export function useUnifiedTableState({
   entityKey,
   searchParams: searchParamsRaw,
@@ -115,16 +148,8 @@ export function useUnifiedTableState({
     try {
       const storedColumns = JSON.parse(stored) as string[];
       const defaultColumns = defaults.visibleColumns ?? [];
-      if (!defaultColumns.length) return storedColumns;
-
-      const storedSet = new Set(storedColumns);
-      const orderedStoredColumns = defaultColumns.filter((id) =>
-        storedSet.has(id),
-      );
-      const storedOnlyColumns = storedColumns.filter(
-        (id) => !defaultColumns.includes(id),
-      );
-      return [...orderedStoredColumns, ...storedOnlyColumns];
+      if (!Array.isArray(storedColumns)) return defaultColumns;
+      return mergeStoredColumnOrder(storedColumns, defaultColumns);
     } catch {
       return defaults.visibleColumns ?? [];
     }

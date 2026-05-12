@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BrainCircuit, X } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CompactAiChat } from "./compact-ai-chat";
@@ -99,7 +99,7 @@ export function GlobalAiWidget() {
           <div className="flex shrink-0 items-center justify-between border-b border-border/70 px-4 py-3">
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                <BrainCircuit className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                <Sparkles className="size-4 text-primary" strokeWidth={1.8} />
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-foreground">Ask Alleato</p>
@@ -136,7 +136,7 @@ export function GlobalAiWidget() {
           "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
         )}
       >
-        <BrainCircuit className="h-8 w-8" strokeWidth={1.6} />
+        <Sparkles className="size-6" strokeWidth={1.9} />
       </Button>
     </>
   );

@@ -301,6 +301,9 @@ importers:
       '@xyflow/react':
         specifier: ^12.10.0
         version: 12.10.0(@types/react@19.2.10)(immer@11.1.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      adaptivecards:
+        specifier: ^3.0.6
+        version: 3.0.6(swiper@12.1.3)
       agentation:
         specifier: ^3.0.2
         version: 3.0.2(patch_hash=661b419331bf53c13d33598327ef4d2c3900b88ad957be90c96f32f8ed6d1daf)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -5501,6 +5504,11 @@ packages:
 
   adaptivecards@1.2.3:
     resolution: {integrity: sha512-amQ5OSW3OpIkrxVKLjxVBPk/T49yuOtnqs1z5ZPfZr0+OpTovzmiHbyoAGDIsu5SNYHwOZFp/3LGOnRaALFa/g==}
+
+  adaptivecards@3.0.6:
+    resolution: {integrity: sha512-WDCIb2WXZ7cOHJ9HIHRNdhSt861HySVOdN2xPk2aKHAF3JvD8QGQ8/XcNFrDJxCteOog8MM7EBlXfSAR8JXKAg==}
+    peerDependencies:
+      swiper: ^12.1.2
 
   adler-32@1.3.1:
     resolution: {integrity: sha512-ynZ4w/nUUv5rrsR8UUGoe1VC9hZj6V5hU9Qw1HlMDJGEJw5S7TfTErWTjMys6M7vr0YWcPqs3qAr4ss0nDfP+A==}
@@ -16775,6 +16783,10 @@ snapshots:
   acorn@8.15.0: {}
 
   adaptivecards@1.2.3: {}
+
+  adaptivecards@3.0.6(swiper@12.1.3):
+    dependencies:
+      swiper: 12.1.3
 
   adler-32@1.3.1: {}
 

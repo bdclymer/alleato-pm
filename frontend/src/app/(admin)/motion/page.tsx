@@ -18,9 +18,49 @@ import { AnimatedBackground } from "@/components/motion/animated-background";
 import { AnimatedList } from "@/components/motion/animated-list";
 import { Marquee } from "@/components/motion/marquee";
 import { TabsTransitionPanel } from "@/components/motion/motion-tabs";
-
+import { AdaptiveCardRenderer } from "@/components/motion/adaptive-card-renderer";
+import { useState } from "react";
+import { Check, Copy, ExternalLink } from "lucide-react";
 import { TextEffect } from "@/components/motion/text-effect";
 import { Button } from "@/components/ui/button";
+
+import accountCard from "@/data/adaptive-card-samples/account.json";
+import authorVideoCard from "@/data/adaptive-card-samples/author-highlight-video.json";
+import bookARoomCard from "@/data/adaptive-card-samples/book-a-room.json";
+import cafeMenuCard from "@/data/adaptive-card-samples/cafe-menu.json";
+import communicationCard from "@/data/adaptive-card-samples/communication.json";
+import courseVideoCard from "@/data/adaptive-card-samples/course-video.json";
+import editorialCard from "@/data/adaptive-card-samples/editorial.json";
+import expenseReportCard from "@/data/adaptive-card-samples/expense-report.json";
+import insightsCard from "@/data/adaptive-card-samples/insights.json";
+import issueCard from "@/data/adaptive-card-samples/issue.json";
+import listCard from "@/data/adaptive-card-samples/list.json";
+import recipeCard from "@/data/adaptive-card-samples/recipe.json";
+import simpleEventCard from "@/data/adaptive-card-samples/simple-event.json";
+import simpleTimeOffCard from "@/data/adaptive-card-samples/simple-time-off-request.json";
+import standardVideoCard from "@/data/adaptive-card-samples/standard-video.json";
+import timeOffCard from "@/data/adaptive-card-samples/time-off-request.json";
+import workItemCard from "@/data/adaptive-card-samples/work_item.json";
+
+const ADAPTIVE_CARD_SAMPLES = [
+  { name: "Account / Project Summary", slug: "account", card: accountCard, tags: ["Badge", "targetWidth", "responsive"] },
+  { name: "Expense Report", slug: "expense-report", card: expenseReportCard, tags: ["ToggleVisibility", "Icon", "RichTextBlock"] },
+  { name: "Insights + Chart", slug: "insights", card: insightsCard, tags: ["Badge", "Chart.Donut", "ShowCard"] },
+  { name: "Issue Tracker", slug: "issue", card: issueCard, tags: ["Table", "Icon", "responsive"] },
+  { name: "Work Item", slug: "work-item", card: workItemCard, tags: ["Icon", "status dot", "responsive"] },
+  { name: "Communication", slug: "communication", card: communicationCard, tags: ["Icon", "ToggleVisibility"] },
+  { name: "Book a Room", slug: "book-a-room", card: bookARoomCard, tags: ["Input", "backgroundImage", "roundedCorners"] },
+  { name: "Simple Event", slug: "simple-event", card: simpleEventCard, tags: ["backgroundImage", "hero"] },
+  { name: "Time Off Request", slug: "time-off-request", card: timeOffCard, tags: ["Input.Date", "hero", "responsive"] },
+  { name: "Simple Time Off", slug: "simple-time-off", card: simpleTimeOffCard, tags: ["Input.Date", "ChoiceSet"] },
+  { name: "Course Video", slug: "course-video", card: courseVideoCard, tags: ["Rating", "RoundedCorners"] },
+  { name: "Author Video", slug: "author-video", card: authorVideoCard, tags: ["RoundedCorners", "person avatar"] },
+  { name: "Standard Video", slug: "standard-video", card: standardVideoCard, tags: ["logo", "metadata row"] },
+  { name: "Editorial", slug: "editorial", card: editorialCard, tags: ["backgroundImage", "bleed"] },
+  { name: "Café Menu", slug: "cafe-menu", card: cafeMenuCard, tags: ["backgroundImage", "tabs", "ShowCard"] },
+  { name: "Content List", slug: "list", card: listCard, tags: ["Layout.Flow", "thumbnails", "ToggleVisibility"] },
+  { name: "Recipe", slug: "recipe", card: recipeCard, tags: ["Image stretch", "FactSet"] },
+];
 
 export default function ComponentsPage() {
   return (
@@ -215,6 +255,18 @@ export default function ComponentsPage() {
         </ComponentSection>
 
         {/* Apple Style Dock */}
+
+        {/* Adaptive Card Samples */}
+        <ComponentSection
+          title="Adaptive Card Samples"
+          description="Official Microsoft Teams card samples — 17 production-quality cards from OfficeDev/Microsoft-Teams-Adaptive-Card-Samples"
+        >
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {ADAPTIVE_CARD_SAMPLES.map((sample) => (
+              <AdaptiveCardSample key={sample.slug} sample={sample} />
+            ))}
+          </div>
+        </ComponentSection>
       </div>
     </div>
   );
@@ -237,6 +289,76 @@ function ComponentSection({
       </div>
       {children}
     </section>
+  );
+}
+
+interface AdaptiveCardSampleEntry {
+  name: string;
+  slug: string;
+  card: object;
+  tags: string[];
+}
+
+function AdaptiveCardSample({ sample }: { sample: AdaptiveCardSampleEntry }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(JSON.stringify(sample.card, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  const designerUrl = `https://adaptivecards.io/designer/`;
+
+  return (
+    <div className="flex flex-col overflow-hidden rounded-lg bg-background shadow-xs">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {sample.name}
+          </p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {sample.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-block rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={handleCopy}
+            title="Copy JSON"
+          >
+            {copied ? (
+              <Check className="size-3.5 text-green-600" />
+            ) : (
+              <Copy className="size-3.5" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={() => window.open(designerUrl, "_blank")}
+            title="Open Designer"
+          >
+            <ExternalLink className="size-3.5" />
+          </Button>
+        </div>
+      </div>
+      {/* Card preview */}
+      <div className="overflow-auto p-4">
+        <AdaptiveCardRenderer card={sample.card} />
+      </div>
+    </div>
   );
 }
 

@@ -25,6 +25,8 @@ import {
   Flag,
   FileText,
   MessageSquare,
+  Eye,
+  Copy,
 } from "lucide-react";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
@@ -608,12 +610,114 @@ function SendBriefToTeamsCard() {
   );
 }
 
+// ── Preview Brandon's Teams Brief ─────────────────────────────────────────────
+
+function PreviewBriefTeamsMessageCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+  const [preview, setPreview] = React.useState<string | null>(null);
+  const [fresh, setFresh] = React.useState<"latest" | "fresh">("latest");
+
+  const run = async () => {
+    setStatus("running");
+    setPreview(null);
+    setMessage(
+      fresh === "fresh"
+        ? "Regenerating brief and rendering Teams message…"
+        : "Rendering the current Teams message…",
+    );
+    try {
+      const data = await apiFetch<{
+        message: string;
+        recipientName?: string;
+        itemCount?: number;
+        recapDate?: string;
+        generatedFresh?: boolean;
+      }>("/api/executive/daily-brief/preview-teams", {
+        method: "POST",
+        body: JSON.stringify({
+          fresh: fresh === "fresh",
+          firstName: "Brandon",
+        }),
+      });
+      setStatus("success");
+      setPreview(data.message);
+      setMessage(
+        `${data.generatedFresh ? "Regenerated" : "Loaded"} brief for ${data.recapDate ?? "today"} — ${data.itemCount ?? 0} item${(data.itemCount ?? 0) === 1 ? "" : "s"}. Not sent.`,
+      );
+    } catch (e) {
+      setStatus("error");
+      setMessage(e instanceof Error ? e.message : "Failed to render preview.");
+    }
+  };
+
+  const copy = async () => {
+    if (!preview) return;
+    try {
+      await navigator.clipboard.writeText(preview);
+      setMessage("Copied to clipboard.");
+    } catch {
+      setMessage("Copy failed — select the text manually.");
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Preview Brandon's Teams Brief"
+      badge="Teams"
+      icon={Eye}
+      description="Render the exact Teams message that would be sent to Brandon — without sending it. Use 'Regenerate' to rerun project intelligence first."
+    >
+      <div className="flex items-center gap-2">
+        <Select
+          value={fresh}
+          onValueChange={(value: "latest" | "fresh") => setFresh(value)}
+        >
+          <SelectTrigger size="sm" className="flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="latest">Use latest brief</SelectItem>
+            <SelectItem value="fresh">Regenerate first</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button size="sm" onClick={run} disabled={status === "running"}>
+          {status === "running" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Eye className="h-3.5 w-3.5" />
+          )}
+          Preview
+        </Button>
+      </div>
+      <StatusBadge status={status} message={message} />
+      {preview && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">
+              Teams message preview
+            </span>
+            <Button size="sm" variant="ghost" onClick={copy}>
+              <Copy className="h-3.5 w-3.5" />
+              Copy
+            </Button>
+          </div>
+          <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-md bg-muted/40 p-3 text-xs leading-relaxed text-foreground">
+            {preview}
+          </pre>
+        </div>
+      )}
+    </ActionCard>
+  );
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function AdminActionCards() {
   return (
     <>
       <SeedTeamsConversationCard />
+      <PreviewBriefTeamsMessageCard />
       <SendBriefToTeamsCard />
       <RegenerateBriefCard />
       <AccountingSyncCard />

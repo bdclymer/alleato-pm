@@ -260,6 +260,8 @@ export interface UnifiedTablePageProps<T> {
     cardGridClassName?: string;
     /** Remove PageContainer horizontal/vertical padding (default: true) */
     containerPadding?: boolean;
+    /** Minimum desktop table width in pixels. Use when columns should scroll horizontally instead of compressing. */
+    minWidth?: number;
   };
   features?: UnifiedTableFeatures;
   columnGroups?: Array<{ label: string; columnIds: string[] }>;
@@ -454,6 +456,7 @@ export function UnifiedTablePage<T>({
     right: table.defaultPinnedRightColumns ?? [],
   }));
   const [draggedColumnId, setDraggedColumnId] = React.useState<string | null>(null);
+  const draggedColumnIdRef = React.useRef<string | null>(null);
   const [rowOrderIds, setRowOrderIds] = React.useState<string[]>([]);
   const [draggedRowId, setDraggedRowId] = React.useState<string | null>(null);
   const [editingCell, setEditingCell] = React.useState<{ rowId: string; columnId: string } | null>(null);
@@ -840,9 +843,10 @@ export function UnifiedTablePage<T>({
 
   const handleColumnDrop = React.useCallback(
     (targetColumnId: string) => {
-      if (!draggedColumnId || draggedColumnId === targetColumnId) return;
+      const sourceColumnId = draggedColumnIdRef.current ?? draggedColumnId;
+      if (!sourceColumnId || sourceColumnId === targetColumnId) return;
       const currentOrder = orderedVisibleColumns.map((column) => column.id);
-      const oldIndex = currentOrder.indexOf(draggedColumnId);
+      const oldIndex = currentOrder.indexOf(sourceColumnId);
       const newIndex = currentOrder.indexOf(targetColumnId);
       if (oldIndex < 0 || newIndex < 0) return;
 
@@ -1252,6 +1256,7 @@ export function UnifiedTablePage<T>({
                   !hasRowSelection &&
                   "[&_th:first-child]:pl-0 [&_td:first-child]:pl-0 [&_th:last-child]:pr-0 [&_td:last-child]:pr-0",
               )}
+              style={layout?.minWidth ? { minWidth: layout.minWidth } : undefined}
             >
               <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-card")}>
                 {columnGroups && columnGroups.length > 0 && (
@@ -1323,17 +1328,19 @@ export function UnifiedTablePage<T>({
                           draggable
                           aria-label={`Drag ${column.label} column`}
                           title="Drag to reorder column"
-                          className="inline-flex h-4 w-3 shrink-0 cursor-grab items-center justify-center text-muted-foreground/45 transition-colors hover:text-muted-foreground active:cursor-grabbing"
+                          className="inline-flex h-4 w-3 shrink-0 cursor-grab items-center justify-center text-muted-foreground/45 opacity-0 transition-[color,opacity] hover:text-muted-foreground group-hover/th:opacity-100 group-focus-within/th:opacity-100 active:cursor-grabbing"
                           onClick={(event) => event.stopPropagation()}
                           onMouseDown={(event) => event.stopPropagation()}
                           onDragStart={(event) => {
                             event.stopPropagation();
                             event.dataTransfer.effectAllowed = "move";
                             event.dataTransfer.setData("text/plain", column.id);
+                            draggedColumnIdRef.current = column.id;
                             setDraggedColumnId(column.id);
                           }}
                           onDragEnd={(event) => {
                             event.stopPropagation();
+                            draggedColumnIdRef.current = null;
                             setDraggedColumnId(null);
                           }}
                         >
@@ -1362,18 +1369,18 @@ export function UnifiedTablePage<T>({
                               : undefined
                           }
                           style={columnStyle}
-                          draggable={resolvedFeatures.enableColumnReorder}
-                          onDragStart={() => setDraggedColumnId(column.id)}
                           onDragOver={(event) => {
                             if (!resolvedFeatures.enableColumnReorder) return;
+                            if (!draggedColumnIdRef.current && !draggedColumnId) return;
                             event.preventDefault();
                           }}
                           onDrop={() => {
                             if (!resolvedFeatures.enableColumnReorder) return;
+                            if (!draggedColumnIdRef.current && !draggedColumnId) return;
                             handleColumnDrop(column.id);
+                            draggedColumnIdRef.current = null;
                             setDraggedColumnId(null);
                           }}
-                          onDragEnd={() => setDraggedColumnId(null)}
                           onClick={() => {
                             if (isSortable) {
                               handleSortClick(column.id);

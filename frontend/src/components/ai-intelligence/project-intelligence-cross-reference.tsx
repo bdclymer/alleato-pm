@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { Check, Clock, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,14 +25,7 @@ import type {
   ProjectOperatingSourceCoverage,
   ProjectOperatingSummarySource,
 } from "@/lib/ai/services/project-operating-summary-sources";
-import {
-  buildTasksFilters,
-  buildTasksTableColumns,
-  tasksColumns,
-  tasksDefaultVisibleColumns,
-} from "@/features/tasks/tasks-table-config";
-import type { TasksRow } from "@/features/tasks/task-utils";
-import { getTaskSourceLabel } from "@/features/tasks/task-utils";
+import { TasksInbox } from "@/features/tasks/tasks-inbox";
 
 type EvidenceWithCard = InsightCardEvidence & {
   cardId: string;
@@ -331,18 +322,24 @@ export function ProjectIntelligenceSourceTables({
       },
       {
         id: "availableCount",
-        label: "Available",
+        label: "Available records",
         render: (row) => <span className="text-sm text-foreground">{row.availableCount}</span>,
         sortValue: (row) => row.availableCount,
         sortable: true,
       },
       {
         id: "inPacketCount",
-        label: "In packet",
+        label: "Used in packet",
         render: (row) => (
           <TableTagBadge
-            label={`${row.inPacketCount} in packet`}
-            variant={row.inPacketCount > 0 ? "default" : "outline"}
+            label={
+              row.inPacketCount > 0
+                ? `${row.inPacketCount} used`
+                : row.availableCount > 0
+                  ? "Available, unused"
+                  : "No records"
+            }
+            variant={row.inPacketCount > 0 ? "default" : row.availableCount > 0 ? "secondary" : "outline"}
           />
         ),
         sortValue: (row) => row.inPacketCount,
@@ -374,22 +371,10 @@ export function ProjectIntelligenceSourceTables({
   const sourceColumns = useMemo<TableColumn<SourceReferenceRow>[]>(
     () => [
       {
-        id: "category",
-        label: "Source",
-        render: (row) => (
-          <TableTagBadge
-            label={formatLabel(row.category)}
-            variant="outline"
-            className={sourceBadgeClass[row.category]}
-          />
-        ),
-        sortValue: (row) => row.category,
-        sortable: true,
-      },
-      {
         id: "title",
         label: "Record",
         alwaysVisible: true,
+        width: 320,
         render: (row) => (
           <CellLink
             value={row.title ?? row.recordId}
@@ -401,8 +386,23 @@ export function ProjectIntelligenceSourceTables({
         sortable: true,
       },
       {
+        id: "category",
+        label: "Source",
+        width: 140,
+        render: (row) => (
+          <TableTagBadge
+            label={formatLabel(row.category)}
+            variant="outline"
+            className={sourceBadgeClass[row.category]}
+          />
+        ),
+        sortValue: (row) => row.category,
+        sortable: true,
+      },
+      {
         id: "projectName",
         label: "Project",
+        width: 180,
         render: (row) => (
           <TruncatedCell
             value={row.projectName}
@@ -416,6 +416,7 @@ export function ProjectIntelligenceSourceTables({
       {
         id: "text",
         label: "Description",
+        width: 460,
         render: (row) => (
           <TruncatedCell
             value={row.text}
@@ -427,6 +428,7 @@ export function ProjectIntelligenceSourceTables({
       {
         id: "capturedAt",
         label: "Date",
+        width: 130,
         render: (row) => <TableDateValue value={row.capturedAt} />,
         sortValue: (row) => row.capturedAt ?? "",
         sortable: true,
@@ -434,6 +436,7 @@ export function ProjectIntelligenceSourceTables({
       {
         id: "packet_status",
         label: "Packet status",
+        width: 150,
         render: (row) => (
           <TableTagBadge
             label={row.packetEvidence ? "Linked" : "Available only"}
@@ -446,6 +449,7 @@ export function ProjectIntelligenceSourceTables({
       {
         id: "card",
         label: "Intelligence card",
+        width: 300,
         render: (row) => (
           <CellLink
             value={row.packetEvidence?.cardTitle}
@@ -459,6 +463,7 @@ export function ProjectIntelligenceSourceTables({
       {
         id: "confidence",
         label: "Confidence",
+        width: 130,
         render: (row) =>
           row.packetEvidence ? (
             <TableTagBadge
@@ -472,6 +477,7 @@ export function ProjectIntelligenceSourceTables({
       {
         id: "review",
         label: "Review",
+        width: 130,
         render: (row) => {
           const signal = row.packetEvidence ? reviewedEvidence[row.packetEvidence.id] : null;
           if (signal) {
@@ -584,7 +590,7 @@ export function ProjectIntelligenceSourceTables({
           columns: sourceColumns,
           getRowId: (row) => row.id,
           density: "compact",
-          defaultPinnedLeftColumns: ["category", "title"],
+          defaultPinnedLeftColumns: ["title", "category"],
         }}
         emptyState={{
           title: "No associated records found",
@@ -603,7 +609,7 @@ export function ProjectIntelligenceSourceTables({
           },
           clientSide: true,
         }}
-        layout={{ containerPadding: false, removeTableFrame: true }}
+        layout={{ containerPadding: false, removeTableFrame: true, minWidth: 1940 }}
         features={{
           enableViews: false,
           enableRowSelection: false,
@@ -623,142 +629,13 @@ export function ProjectIntelligenceTasksTable({
   projectId: number;
   projectName: string | null;
 }) {
-  const router = useRouter();
-  const [tasks, setTasks] = useState<TasksRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [view, setView] = useState<ViewMode>("table");
-  const [filters, setFilters] = useState<Record<string, string | number | boolean | string[] | null | undefined>>({});
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(25);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchTasks() {
-      setLoading(true);
-      try {
-        const response = await apiFetch<{ data?: TasksRow[] }>(`/api/tasks?project_id=${projectId}&scope=all`);
-        const projectTasks = (response.data ?? []).filter((task) => {
-          if (task.project_id === projectId) return true;
-          if (task.project_ids?.includes(projectId)) return true;
-          if (projectName && task.project_name === projectName) return true;
-          return false;
-        });
-        if (!cancelled) setTasks(projectTasks);
-      } catch (error) {
-        if (!cancelled) {
-          toast.error("Failed to load project tasks", {
-            description: error instanceof Error ? error.message : "Unexpected error",
-          });
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void fetchTasks();
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId, projectName]);
-
-  const taskFilters = useMemo(() => buildTasksFilters(tasks), [tasks]);
-  const taskColumns = useMemo(() => buildTasksTableColumns(String(projectId)), [projectId]);
-  const visibleColumns = useMemo(
-    () => tasksDefaultVisibleColumns.filter((column) => column !== "assignee_email"),
-    [],
-  );
-
-  const filteredTasks = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return tasks.filter((task) => {
-      const statusFilter = filters.status;
-      const sourceFilter = filters.source_system;
-      if (typeof statusFilter === "string" && statusFilter && task.status !== statusFilter) return false;
-      if (typeof sourceFilter === "string" && sourceFilter && getTaskSourceLabel(task) !== sourceFilter) return false;
-      if (!query) return true;
-      return [
-        task.title,
-        task.description,
-        task.assignee_name,
-        task.project_name,
-        task.source_title,
-        task.status,
-        task.priority,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
-    });
-  }, [filters, search, tasks]);
-
   return (
-    <UnifiedTablePage<TasksRow>
-      header={{
-        title: "Project Tasks",
-        description: projectName
-          ? `The same project task table filtered to ${projectName}.`
-          : "The same project task table filtered to this project.",
-        variant: "compact",
-        actions: (
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/${projectId}/tasks`}>Open task page</Link>
-          </Button>
-        ),
-      }}
-      toolbar={{
-        totalItems: tasks.length,
-        filteredItems: filteredTasks.length,
-        selectedCount: 0,
-        searchValue: search,
-        onSearchChange: setSearch,
-        searchPlaceholder: "Search project tasks...",
-        currentView: view,
-        onViewChange: setView,
-        enabledViews: ["table"],
-        filters: taskFilters,
-        activeFilters: filters,
-        onFilterChange: setFilters,
-        onClearFilters: () => setFilters({}),
-        columns: tasksColumns,
-        visibleColumns,
-      }}
-      data={{ items: filteredTasks, isLoading: loading, isFetching: false }}
-      table={{
-        columns: taskColumns,
-        getRowId: (task) => task.id ?? "",
-        density: "compact",
-        onRowClick: (task) => {
-          if (task.id) router.push(`/${projectId}/tasks?task=${encodeURIComponent(task.id)}`);
-        },
-      }}
-      emptyState={{
-        title: "No project tasks found",
-        description: "No generated or assigned tasks are currently linked to this project.",
-        filteredDescription: "No project tasks match the current filters.",
-        isFiltered: search.trim().length > 0 || Object.keys(filters).length > 0,
-      }}
-      pagination={{
-        page,
-        totalPages: Math.max(1, Math.ceil(filteredTasks.length / perPage)),
-        perPage,
-        onPageChange: setPage,
-        onPerPageChange: (value) => {
-          setPerPage(Number(value));
-          setPage(1);
-        },
-        clientSide: true,
-      }}
-      layout={{ containerPadding: false, removeTableFrame: true }}
-      features={{
-        enableViews: false,
-        enableRowSelection: false,
-        enableRowActions: false,
-        enableBulkDelete: false,
-        enableColumnReorder: false,
-        enableColumnPinning: false,
-      }}
+    <TasksInbox
+      projectId={String(projectId)}
+      projectName={projectName}
+      defaultScope="all"
+      defaultView="table"
+      showTabs={false}
     />
   );
 }

@@ -80,6 +80,34 @@ function ownerLine(item: BrandonBriefItem): string | null {
   return null;
 }
 
+function isUsefulStartHere(value: string): boolean {
+  const text = compactText(value, 240);
+  if (!text) return false;
+  if (
+    /Financial impact,\s*Customer relationship impact/i.test(text) ||
+    /Brandon uniquely needed,\s*Compounding risk/i.test(text)
+  ) {
+    return false;
+  }
+  return /\b(?:approve|decide|confirm|start|watch|follow|close|lock|send|ask|require|review|resolve|pick|select)\b/i.test(
+    text,
+  );
+}
+
+function usefulImpact(value: string | null | undefined): string | null {
+  const impact = compactText(value, 170);
+  if (!impact) return null;
+  if (/^\$?\d[\d,.]*$/.test(impact)) return null;
+  if (/^(?:unknown|n\/a|none)$/i.test(impact)) return null;
+  return impact;
+}
+
+function displayProjectName(value: string | null | undefined): string {
+  const project = compactText(value, 90);
+  if (!project || /^no project linked$/i.test(project)) return "Company-wide";
+  return project.replace(/^\d+\s+/, "").trim() || project;
+}
+
 function formatItemCard(
   item: BrandonBriefItem,
   options: {
@@ -89,7 +117,7 @@ function formatItemCard(
     whyFallback: string;
   },
 ): string {
-  const project = compactText(item.project || "Company-wide", 90);
+  const project = displayProjectName(item.project);
   const action =
     compactText(item.recommendedAction, 190) || options.actionFallback;
   const why = compactText(item.whyItMatters, 190) || options.whyFallback;
@@ -139,7 +167,7 @@ function formatItemSection(
 }
 
 function formatFocusItem(item: ExecutiveOperatingBriefFocusItem, index: number) {
-  const project = compactText(item.item.project || "Company-wide", 80);
+  const project = displayProjectName(item.item.project);
   const materiality = item.materiality.slice(0, 3).join(", ");
   return [
     `${index}. **${project}: ${compactText(item.item.title, 100)}**`,
@@ -156,10 +184,9 @@ function formatShortItem(
   item: ExecutiveOperatingBriefShortItem | ExecutiveOperatingBriefRiskItem,
   index: number,
 ) {
-  const project = compactText(item.item.project || "Company-wide", 80);
-  const riskImpact = "impact" in item && item.impact
-    ? `   Impact: ${compactText(item.impact, 170)}\n`
-    : "";
+  const project = displayProjectName(item.item.project);
+  const impact = "impact" in item ? usefulImpact(item.impact) : null;
+  const riskImpact = impact ? `   Impact: ${impact}\n` : "";
   return `${index}. **${project}: ${compactText(item.item.title, 100)}**\n${riskImpact}   Next: ${compactText(item.nextAction || item.item.recommendedAction, 180)}`;
 }
 
@@ -221,7 +248,7 @@ export function formatExecutiveBriefingTeamsMessage(
   const startHere =
     packet.operatingBrief?.startHere
       ?.map((item) => compactText(item, 170))
-      .filter(Boolean)
+      .filter(isUsefulStartHere)
       .slice(0, 3) ?? [];
 
   const decisionCount = needsBrandon.length;
@@ -230,7 +257,13 @@ export function formatExecutiveBriefingTeamsMessage(
   const topFocus = packet.operatingBrief?.topExecutiveFocus ?? [];
   const riskRadar = packet.operatingBrief?.projectRiskRadar ?? [];
   const cashWatch = packet.operatingBrief?.cashAndMarginWatch ?? [];
-  const peopleItems = packet.operatingBrief?.peopleAndAccountability ?? [];
+  const peopleItems = (packet.operatingBrief?.peopleAndAccountability ?? []).filter(
+    (entry) =>
+      !importantUpdates.some(
+        (item) =>
+          item.title === entry.item.title && item.project === entry.item.project,
+      ),
+  );
   const sourceHealth = formatSourceHealth(packet);
 
   const lines: string[] = [
@@ -286,7 +319,11 @@ export function formatExecutiveBriefingTeamsMessage(
 
   const riskItems = riskRadar.length > 0 ? riskRadar : cashWatch;
   if (riskItems.length > 0) {
-    lines.push(`**Risk Radar** (${riskItems.length})`);
+    lines.push(
+      riskItems.length > 3
+        ? `**Risk Radar** (top 3 of ${riskItems.length})`
+        : `**Risk Radar** (${riskItems.length})`,
+    );
     lines.push(formatShortItemList(riskItems));
     lines.push("");
   }
@@ -304,6 +341,7 @@ export function formatExecutiveBriefingTeamsMessage(
     }
     if (peopleItems.length > 0) {
       if (importantUpdates.length > 0) lines.push("");
+      lines.push("Accountability watch:");
       lines.push(formatShortItemList(peopleItems));
     }
     lines.push("");

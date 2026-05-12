@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useProject } from "@/contexts/project-context";
+import { useOptionalProject } from "@/contexts/project-context";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -118,7 +118,9 @@ export function PageHeader({
   // Subheadings are intentionally suppressed globally to keep page headers tighter.
   void description;
 
-  const { selectedProject, isLoading } = useProject();
+  const projectContext = useOptionalProject();
+  const selectedProject = projectContext?.selectedProject ?? null;
+  const isLoading = projectContext?.isLoading ?? false;
 
   // Only show project name when explicitly requested
   const shouldShowProjectName = showProjectName && selectedProject;

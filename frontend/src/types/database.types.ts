@@ -17899,6 +17899,78 @@ export type Database = {
           },
         ]
       }
+      outlook_email_skip_audit: {
+        Row: {
+          body_preview: string | null
+          classification_action: string
+          classification_category: string
+          classification_confidence: number | null
+          classification_reason: string
+          classification_signals: Json
+          conversation_id: string | null
+          created_at: string
+          first_seen_at: string
+          from_email: string | null
+          from_name: string | null
+          graph_message_id: string
+          id: number
+          internet_message_id: string | null
+          last_seen_at: string
+          mailbox_user_id: string
+          received_at: string | null
+          source_metadata: Json
+          subject: string
+          updated_at: string
+          web_link: string | null
+        }
+        Insert: {
+          body_preview?: string | null
+          classification_action?: string
+          classification_category: string
+          classification_confidence?: number | null
+          classification_reason: string
+          classification_signals?: Json
+          conversation_id?: string | null
+          created_at?: string
+          first_seen_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          graph_message_id: string
+          id?: never
+          internet_message_id?: string | null
+          last_seen_at?: string
+          mailbox_user_id: string
+          received_at?: string | null
+          source_metadata?: Json
+          subject: string
+          updated_at?: string
+          web_link?: string | null
+        }
+        Update: {
+          body_preview?: string | null
+          classification_action?: string
+          classification_category?: string
+          classification_confidence?: number | null
+          classification_reason?: string
+          classification_signals?: Json
+          conversation_id?: string | null
+          created_at?: string
+          first_seen_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          graph_message_id?: string
+          id?: never
+          internet_message_id?: string | null
+          last_seen_at?: string
+          mailbox_user_id?: string
+          received_at?: string | null
+          source_metadata?: Json
+          subject?: string
+          updated_at?: string
+          web_link?: string | null
+        }
+        Relationships: []
+      }
       owner_invoice_line_items: {
         Row: {
           acumatica_line_nbr: number | null
@@ -21128,6 +21200,101 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      project_attribution_rules: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          notes: string | null
+          pattern: string
+          pattern_normalized: string
+          priority: number
+          project_id: number
+          rule_type: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pattern: string
+          pattern_normalized: string
+          priority?: number
+          project_id: number
+          rule_type: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pattern?: string
+          pattern_normalized?: string
+          priority?: number
+          project_id?: number
+          rule_type?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_attribution_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_attribution_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_attribution_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_attribution_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_attribution_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_attribution_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_attribution_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_briefings: {
         Row: {

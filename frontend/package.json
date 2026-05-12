@@ -181,6 +181,7 @@
     "@use-gesture/react": "^10.3.1",
     "@vercel/functions": "^3.4.3",
     "@xyflow/react": "^12.10.0",
+    "adaptivecards": "^3.0.6",
     "agentation": "^3.0.2",
     "ai": "^6.0.175",
     "ansi-to-react": "^6.2.6",

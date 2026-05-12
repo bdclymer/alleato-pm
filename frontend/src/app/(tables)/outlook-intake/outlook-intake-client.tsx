@@ -6,9 +6,19 @@ import {
   usePathname,
   useRouter,
   useSearchParams,
-  type ReadonlyURLSearchParams,
 } from "next/navigation";
-import { Ban, Check, ChevronDown, ExternalLink, Inbox, Loader2, Mail, MessageSquare, MoreVertical, X } from "lucide-react";
+import {
+  Ban,
+  Check,
+  ChevronDown,
+  ExternalLink,
+  Inbox,
+  Loader2,
+  Mail,
+  MessageSquare,
+  MoreVertical,
+  X,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -79,6 +89,13 @@ interface OutlookIntakeEmail {
   hasAttachments: boolean | null;
   webLink: string | null;
   createdAt: string | null;
+  intakeClassification: {
+    action: string | null;
+    category: string | null;
+    confidence: number | null;
+    reason: string | null;
+    signals: string[];
+  } | null;
   project: {
     id: number;
     name: string | null;
@@ -88,10 +105,16 @@ interface OutlookIntakeEmail {
 }
 
 const columnsConfig = [
-  { id: "subject", label: "Subject", defaultVisible: true, alwaysVisible: true },
+  {
+    id: "subject",
+    label: "Subject",
+    defaultVisible: true,
+    alwaysVisible: true,
+  },
   { id: "from", label: "From", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
   { id: "match", label: "Status", defaultVisible: true },
+  { id: "classifier", label: "Classifier", defaultVisible: true },
   { id: "pipeline", label: "Pipeline", defaultVisible: true },
   { id: "received", label: "Date", defaultVisible: true },
   { id: "attachments", label: "Attachments", defaultVisible: true },
@@ -99,14 +122,22 @@ const columnsConfig = [
 ];
 
 const threadColumnsConfig = [
-  { id: "subject", label: "Subject", defaultVisible: true, alwaysVisible: true },
+  {
+    id: "subject",
+    label: "Subject",
+    defaultVisible: true,
+    alwaysVisible: true,
+  },
   { id: "participants", label: "Participants", defaultVisible: true },
   { id: "emailCount", label: "Emails", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
   { id: "latest", label: "Latest", defaultVisible: true },
 ];
 
-type PipelineInfo = { label: string; variant: "success" | "warning" | "error" | "info" | "neutral" };
+type PipelineInfo = {
+  label: string;
+  variant: "success" | "warning" | "error" | "info" | "neutral";
+};
 
 /** Map document_metadata.status → label + badge variant */
 function pipelineStatus(email: OutlookIntakeEmail): PipelineInfo {
@@ -145,17 +176,21 @@ function formatDate(value: string | null): string {
 }
 
 function senderLabel(email: OutlookIntakeEmail): string {
-  if (email.fromName && email.fromEmail) return `${email.fromName} <${email.fromEmail}>`;
+  if (email.fromName && email.fromEmail)
+    return `${email.fromName} <${email.fromEmail}>`;
   return email.fromName || email.fromEmail || "Unknown sender";
 }
 
 function projectLabel(project: OutlookIntakeEmail["project"]): string | null {
   if (!project) return null;
-  if (project.projectNumber && project.name) return `${project.projectNumber} - ${project.name}`;
+  if (project.projectNumber && project.name)
+    return `${project.projectNumber} - ${project.name}`;
   return project.projectNumber || project.name || `Project ${project.id}`;
 }
 
-function outlookIntakeToDetailRecord(email: OutlookIntakeEmail): EmailDetailRecord {
+function outlookIntakeToDetailRecord(
+  email: OutlookIntakeEmail,
+): EmailDetailRecord {
   const { label: pipelineLabel } = pipelineStatus(email);
 
   return {
@@ -178,20 +213,26 @@ function outlookIntakeToDetailRecord(email: OutlookIntakeEmail): EmailDetailReco
   };
 }
 
-
 interface InlineProjectSelectProps {
   emailId: number;
   project: OutlookIntakeEmail["project"];
   onSaved: () => void;
 }
 
-function InlineProjectSelect({ emailId, project, onSaved }: InlineProjectSelectProps): React.ReactElement {
+function InlineProjectSelect({
+  emailId,
+  project,
+  onSaved,
+}: InlineProjectSelectProps): React.ReactElement {
   const [open, setOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const { projects, isLoading } = useProjects({ enabled: open });
 
   async function handleSelect(projectId: number | null) {
-    if (projectId === (project?.id ?? null)) { setOpen(false); return; }
+    if (projectId === (project?.id ?? null)) {
+      setOpen(false);
+      return;
+    }
     setSaving(true);
     try {
       await apiFetch(`/api/outlook-intake/${emailId}`, {
@@ -231,7 +272,13 @@ function InlineProjectSelect({ emailId, project, onSaved }: InlineProjectSelectP
           ) : (
             <ChevronDown className="size-3 shrink-0 text-muted-foreground" />
           )}
-          <span className={label ? "truncate font-medium text-foreground" : "text-muted-foreground"}>
+          <span
+            className={
+              label
+                ? "truncate font-medium text-foreground"
+                : "text-muted-foreground"
+            }
+          >
             {label ?? "Assign project…"}
           </span>
         </Button>
@@ -265,9 +312,12 @@ function InlineProjectSelect({ emailId, project, onSaved }: InlineProjectSelectP
                   />
                   <span className="truncate">
                     {p.project_number ? (
-                      <><span className="font-medium">{p.project_number}</span> — {p.name}</>
+                      <>
+                        <span className="font-medium">{p.project_number}</span>{" "}
+                        — {p.name}
+                      </>
                     ) : (
-                      p.name ?? `Project ${p.id}`
+                      (p.name ?? `Project ${p.id}`)
                     )}
                   </span>
                 </CommandItem>
@@ -297,7 +347,10 @@ function groupByConversation(emails: OutlookIntakeEmail[]): ThreadGroup[] {
 
   for (const email of emails) {
     const key = email.conversationId ?? null;
-    if (!key) { noThread.push(email); continue; }
+    if (!key) {
+      noThread.push(email);
+      continue;
+    }
     const group = map.get(key) ?? [];
     group.push(email);
     map.set(key, group);
@@ -315,7 +368,10 @@ function groupByConversation(emails: OutlookIntakeEmail[]): ThreadGroup[] {
     const participants: string[] = [];
     for (const m of sorted) {
       const name = m.fromName ?? m.fromEmail ?? "";
-      if (name && !seen.has(name)) { seen.add(name); participants.push(name); }
+      if (name && !seen.has(name)) {
+        seen.add(name);
+        participants.push(name);
+      }
     }
     threads.push({
       conversationId: cid,
@@ -357,6 +413,7 @@ type OutlookIntakeClientProps = {
     countTestId?: string;
   }[];
   viewMode?: "table" | "threads";
+  classificationAction?: "import" | "quarantine";
 };
 
 export function OutlookIntakeClient({
@@ -364,19 +421,21 @@ export function OutlookIntakeClient({
   embedded,
   navigationTabs,
   viewMode = "table",
+  classificationAction,
 }: OutlookIntakeClientProps = {}): React.ReactElement {
   const router = useRouter();
   const pathname = usePathname()! ?? "/outlook-intake";
-  const rawSearchParams = useSearchParams()!;
-  const searchParams =
-    rawSearchParams ?? (new URLSearchParams() as unknown as ReadonlyURLSearchParams);
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [threadView, setThreadView] = React.useState(viewMode === "threads");
   const isThreadOnly = viewMode === "threads";
-  const [selectedEmail, setSelectedEmail] = React.useState<OutlookIntakeEmail | null>(null);
+  const [selectedEmail, setSelectedEmail] =
+    React.useState<OutlookIntakeEmail | null>(null);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [isBulkActing, setIsBulkActing] = React.useState(false);
-  const initialMatchStatus = searchParams.get("match_status") ?? "";
+  const initialMatchStatus = searchParams?.get("match_status") ?? "";
+  const initialClassificationAction =
+    classificationAction ?? searchParams?.get("classification_action") ?? "";
 
   React.useEffect(() => {
     if (isThreadOnly) setThreadView(true);
@@ -399,19 +458,37 @@ export function OutlookIntakeClient({
         .map((c) => c.id),
       filters: {
         match_status: initialMatchStatus || undefined,
+        classification_action: initialClassificationAction || undefined,
       },
     },
   });
 
-  const matchStatus = tableState.activeFilters.match_status as string | undefined;
-  const vectorizedFilter = tableState.activeFilters.vectorized as string | undefined;
+  const matchStatus = tableState.activeFilters.match_status as
+    | string
+    | undefined;
+  const classifierFilter = tableState.activeFilters.classification_action as
+    | string
+    | undefined;
+  const vectorizedFilter = tableState.activeFilters.vectorized as
+    | string
+    | undefined;
   const params = new URLSearchParams();
   if (matchStatus) params.set("match_status", matchStatus);
+  if (classifierFilter) params.set("classification_action", classifierFilter);
   if (unassigned) params.set("unassigned", "true");
   const queryString = params.toString();
 
-  const { data = [], isLoading, error } = useQuery<OutlookIntakeEmail[]>({
-    queryKey: ["outlook-intake", matchStatus ?? "", unassigned ? "unassigned" : "all"],
+  const {
+    data = [],
+    isLoading,
+    error,
+  } = useQuery<OutlookIntakeEmail[]>({
+    queryKey: [
+      "outlook-intake",
+      matchStatus ?? "",
+      classifierFilter ?? "",
+      unassigned ? "unassigned" : "all",
+    ],
     queryFn: ({ signal }) =>
       apiFetch<OutlookIntakeEmail[]>(
         `/api/outlook-intake${queryString ? `?${queryString}` : ""}`,
@@ -435,7 +512,10 @@ export function OutlookIntakeClient({
     return fields.some((field) => field.toLowerCase().includes(searchTerm));
   });
 
-  const threadGroups = React.useMemo(() => groupByConversation(filtered), [filtered]);
+  const threadGroups = React.useMemo(
+    () => groupByConversation(filtered),
+    [filtered],
+  );
 
   const threadColumns = React.useMemo<TableColumn<ThreadGroup>[]>(
     () => [
@@ -443,7 +523,9 @@ export function OutlookIntakeClient({
         id: "subject",
         label: "Subject",
         width: 360,
-        render: (thread) => <TruncatedCell value={thread.subject} maxWidth={340} />,
+        render: (thread) => (
+          <TruncatedCell value={thread.subject} maxWidth={340} />
+        ),
         sortable: true,
         sortValue: (thread) => thread.subject,
       },
@@ -452,7 +534,10 @@ export function OutlookIntakeClient({
         label: "Participants",
         width: 320,
         render: (thread) => (
-          <TruncatedCell value={thread.participants.join(", ")} maxWidth={300} />
+          <TruncatedCell
+            value={thread.participants.join(", ")}
+            maxWidth={300}
+          />
         ),
         sortable: true,
         sortValue: (thread) => thread.participants.join(", "),
@@ -469,7 +554,9 @@ export function OutlookIntakeClient({
         id: "project",
         label: "Project",
         width: 220,
-        render: (thread) => <CellText value={projectLabel(thread.emails[0]?.project)} muted />,
+        render: (thread) => (
+          <CellText value={projectLabel(thread.emails[0]?.project)} muted />
+        ),
         sortable: true,
         sortValue: (thread) => projectLabel(thread.emails[0]?.project) ?? "",
       },
@@ -491,7 +578,9 @@ export function OutlookIntakeClient({
         id: "subject",
         label: "Subject",
         width: 300,
-        render: (email) => <TruncatedCell value={email.subject} maxWidth={280} />,
+        render: (email) => (
+          <TruncatedCell value={email.subject} maxWidth={280} />
+        ),
         sortable: true,
         sortValue: (email) => email.subject,
       },
@@ -511,7 +600,9 @@ export function OutlookIntakeClient({
           <InlineProjectSelect
             emailId={email.id}
             project={email.project}
-            onSaved={() => queryClient.invalidateQueries({ queryKey: ["outlook-intake"] })}
+            onSaved={() =>
+              queryClient.invalidateQueries({ queryKey: ["outlook-intake"] })
+            }
           />
         ),
         sortable: true,
@@ -524,6 +615,28 @@ export function OutlookIntakeClient({
         render: (email) => <CellStatus value={email.matchStatus} />,
         sortable: true,
         sortValue: (email) => email.matchStatus,
+      },
+      {
+        id: "classifier",
+        label: "Classifier",
+        width: 150,
+        render: (email) => {
+          const classification = email.intakeClassification;
+          if (!classification?.action) {
+            return <StatusBadge status="Not classified" variant="neutral" />;
+          }
+          const variant =
+            classification.action === "quarantine" ? "warning" : "neutral";
+          const label =
+            classification.action === "quarantine"
+              ? "Quarantine"
+              : classification.action === "import"
+                ? "Import"
+                : classification.action;
+          return <StatusBadge status={label} variant={variant} />;
+        },
+        sortable: true,
+        sortValue: (email) => email.intakeClassification?.action ?? "",
       },
       {
         id: "pipeline",
@@ -540,7 +653,9 @@ export function OutlookIntakeClient({
         id: "received",
         label: "Date",
         width: 180,
-        render: (email) => <CellDate value={email.receivedAt || email.createdAt} showTime />,
+        render: (email) => (
+          <CellDate value={email.receivedAt || email.createdAt} showTime />
+        ),
         sortable: true,
         sortValue: (email) => email.receivedAt || email.createdAt || "",
       },
@@ -570,14 +685,18 @@ export function OutlookIntakeClient({
   );
 
   const sorted = React.useMemo(() => {
-    const sortColumn = columns.find((column) => column.id === tableState.sortBy);
+    const sortColumn = columns.find(
+      (column) => column.id === tableState.sortBy,
+    );
     const sortValue = sortColumn?.sortValue;
     if (!sortValue) return filtered;
 
     return [...filtered].sort((left, right) => {
       const leftValue = sortValue(left);
       const rightValue = sortValue(right);
-      const comparison = String(leftValue ?? "").localeCompare(String(rightValue ?? ""));
+      const comparison = String(leftValue ?? "").localeCompare(
+        String(rightValue ?? ""),
+      );
       return tableState.sortDirection === "asc" ? comparison : -comparison;
     });
   }, [columns, filtered, tableState.sortBy, tableState.sortDirection]);
@@ -586,10 +705,18 @@ export function OutlookIntakeClient({
   const pageStart = (tableState.page - 1) * tableState.perPage;
   const paged = sorted.slice(pageStart, pageStart + tableState.perPage);
 
-  const updateFilters = (next: Record<string, string | number | boolean | string[] | null | undefined>) => {
+  const updateFilters = (
+    next: Record<
+      string,
+      string | number | boolean | string[] | null | undefined
+    >,
+  ) => {
     tableState.setActiveFilters(next);
     tableState.setSearchParams({
       match_status: (next.match_status ?? null) as string | null,
+      classification_action: (next.classification_action ?? null) as
+        | string
+        | null,
       vectorized: (next.vectorized ?? null) as string | null,
       page: "1",
     });
@@ -606,13 +733,19 @@ export function OutlookIntakeClient({
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ match_status: "ignored" }),
-          })
-        )
+          }),
+        ),
       );
       const failed = results.filter((r) => r.status === "rejected").length;
       const succeeded = results.length - failed;
-      if (succeeded > 0) toast.success(`${succeeded} email${succeeded !== 1 ? "s" : ""} marked as filtered`);
-      if (failed > 0) toast.error(`${failed} email${failed !== 1 ? "s" : ""} failed to update`);
+      if (succeeded > 0)
+        toast.success(
+          `${succeeded} email${succeeded !== 1 ? "s" : ""} marked as filtered`,
+        );
+      if (failed > 0)
+        toast.error(
+          `${failed} email${failed !== 1 ? "s" : ""} failed to update`,
+        );
       setSelectedIds([]);
       void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
     } finally {
@@ -634,26 +767,40 @@ export function OutlookIntakeClient({
 
   // ── Thread view ──────────────────────────────────────────────────────────────
   if (threadView) {
-    const threadSortColumn = threadColumns.find((column) => column.id === tableState.sortBy);
+    const threadSortColumn = threadColumns.find(
+      (column) => column.id === tableState.sortBy,
+    );
     const getThreadSortValue = threadSortColumn?.sortValue;
     const sortedThreads = getThreadSortValue
       ? [...threadGroups].sort((left, right) => {
           const leftValue = getThreadSortValue(left);
           const rightValue = getThreadSortValue(right);
-          const comparison = String(leftValue ?? "").localeCompare(String(rightValue ?? ""));
+          const comparison = String(leftValue ?? "").localeCompare(
+            String(rightValue ?? ""),
+          );
           return tableState.sortDirection === "asc" ? comparison : -comparison;
         })
       : threadGroups;
-    const threadTotalPages = Math.max(1, Math.ceil(sortedThreads.length / tableState.perPage));
+    const threadTotalPages = Math.max(
+      1,
+      Math.ceil(sortedThreads.length / tableState.perPage),
+    );
     const threadPageStart = (tableState.page - 1) * tableState.perPage;
-    const pagedThreads = sortedThreads.slice(threadPageStart, threadPageStart + tableState.perPage);
+    const pagedThreads = sortedThreads.slice(
+      threadPageStart,
+      threadPageStart + tableState.perPage,
+    );
 
     return (
       <UnifiedTablePage
-        header={embedded ? { title: "", variant: "compact" } : {
-          title: "Outlook Threads",
-          description: "Synced Outlook conversations grouped by thread.",
-        }}
+        header={
+          embedded
+            ? { title: "", variant: "compact" }
+            : {
+                title: "Outlook Threads",
+                description: "Synced Outlook conversations grouped by thread.",
+              }
+        }
         tabs={navigationTabs}
         toolbar={{
           totalItems: threadGroups.length,
@@ -674,6 +821,15 @@ export function OutlookIntakeClient({
                 { value: "matched", label: "Matched" },
                 { value: "unmatched", label: "Unmatched" },
                 { value: "ignored", label: "Filtered" },
+              ],
+            },
+            {
+              id: "classification_action",
+              label: "Classifier",
+              type: "select",
+              options: [
+                { value: "import", label: "Import" },
+                { value: "quarantine", label: "Quarantine" },
               ],
             },
             {
@@ -712,7 +868,11 @@ export function OutlookIntakeClient({
           onSortChange: (sortBy, direction) => {
             tableState.setSortBy(sortBy);
             tableState.setSortDirection(direction);
-            tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+            tableState.setSearchParams({
+              sort: sortBy,
+              sort_dir: direction,
+              page: "1",
+            });
             tableState.setPage(1);
           },
         }}
@@ -764,245 +924,288 @@ export function OutlookIntakeClient({
   return (
     <>
       <UnifiedTablePage
-      header={embedded ? { title: "", variant: "compact" } : {
-        title: "Outlook Intake",
-        description: "All synced Outlook emails and attachments before and after project matching.",
-        actions: (
-          <Button size="sm" variant="outline" asChild>
-            <Link href="/outlook-emails">
-              <Mail />
-              Project Emails
-            </Link>
-          </Button>
-        ),
-      }}
-      tabs={navigationTabs}
-      toolbar={{
-        totalItems: data.length,
-        filteredItems: threadView ? groupByConversation(filtered).length : filtered.length,
-        selectedCount: selectedIds.length,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search Outlook intake...",
-        customActions: embedded ? null : (
-          <>
-            {selectedIds.length > 0 && (
+        header={
+          embedded
+            ? { title: "", variant: "compact" }
+            : {
+                title: "Outlook Intake",
+                description:
+                  "All synced Outlook emails and attachments before and after project matching.",
+                actions: (
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/outlook-emails">
+                      <Mail />
+                      Project Emails
+                    </Link>
+                  </Button>
+                ),
+              }
+        }
+        tabs={navigationTabs}
+        toolbar={{
+          totalItems: data.length,
+          filteredItems: threadView
+            ? groupByConversation(filtered).length
+            : filtered.length,
+          selectedCount: selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search Outlook intake...",
+          customActions: embedded ? null : (
+            <>
+              {selectedIds.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-muted-foreground"
+                  disabled={isBulkActing}
+                  onClick={handleBulkMarkFiltered}
+                >
+                  <Ban className="mr-1.5 size-3.5" />
+                  Filter {selectedIds.length} selected
+                </Button>
+              )}
               <Button
                 size="sm"
-                variant="outline"
-                className="text-muted-foreground"
-                disabled={isBulkActing}
-                onClick={handleBulkMarkFiltered}
+                variant={threadView ? "default" : "outline"}
+                onClick={() => setThreadView((v) => !v)}
+                aria-pressed={threadView}
               >
-                <Ban className="mr-1.5 size-3.5" />
-                Filter {selectedIds.length} selected
+                <MessageSquare className="mr-1.5 size-3.5" />
+                Threads
               </Button>
-            )}
-            <Button
-              size="sm"
-              variant={threadView ? "default" : "outline"}
-              onClick={() => setThreadView((v) => !v)}
-              aria-pressed={threadView}
+            </>
+          ),
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          filters: [
+            {
+              id: "match_status",
+              label: "Match",
+              type: "select",
+              options: [
+                { label: "Unassigned", value: "unassigned" },
+                { label: "Matched", value: "matched" },
+                { label: "Ignored", value: "ignored" },
+                { label: "Error", value: "error" },
+              ],
+            },
+            {
+              id: "classification_action",
+              label: "Classifier",
+              type: "select",
+              options: [
+                { label: "Import", value: "import" },
+                { label: "Quarantine", value: "quarantine" },
+              ],
+            },
+            {
+              id: "vectorized",
+              label: "Vectorized",
+              type: "select",
+              options: [
+                { label: "Yes", value: "yes" },
+                { label: "No", value: "no" },
+              ],
+            },
+          ],
+          activeFilters: tableState.activeFilters,
+          onFilterChange: (filters) =>
+            updateFilters({
+              match_status: filters.match_status as string | undefined,
+              classification_action: filters.classification_action as
+                | string
+                | undefined,
+              vectorized: filters.vectorized as string | undefined,
+            }),
+          onClearFilters: () => updateFilters({}),
+          columns: columnsConfig,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+        }}
+        data={{
+          items: paged,
+          isLoading,
+          error: error ?? undefined,
+        }}
+        table={{
+          density: "compact",
+          columns,
+          getRowId: (email) => String(email.id),
+          activeRowId: selectedEmail ? String(selectedEmail.id) : null,
+          onRowClick: (email) => {
+            setSelectedEmail(email);
+          },
+          rowActions: (email) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" aria-label="Row actions">
+                  <MoreVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {email.webLink ? (
+                  <DropdownMenuItem asChild>
+                    <a href={email.webLink} target="_blank" rel="noreferrer">
+                      <ExternalLink className="mr-2 size-4" />
+                      Open in Outlook
+                    </a>
+                  </DropdownMenuItem>
+                ) : null}
+                {email.matchStatus !== "ignored" ? (
+                  <DropdownMenuItem
+                    className="text-muted-foreground"
+                    onClick={async () => {
+                      try {
+                        await apiFetch(`/api/outlook-intake/${email.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ match_status: "ignored" }),
+                        });
+                        toast.success("Email marked as filtered");
+                        void queryClient.invalidateQueries({
+                          queryKey: ["outlook-intake"],
+                        });
+                      } catch (err) {
+                        toast.error(
+                          err instanceof Error
+                            ? err.message
+                            : "Failed to update",
+                        );
+                      }
+                    }}
+                  >
+                    <Ban className="mr-2 size-4" />
+                    Mark as filtered
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    className="text-muted-foreground"
+                    onClick={async () => {
+                      try {
+                        await apiFetch(`/api/outlook-intake/${email.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ match_status: "unassigned" }),
+                        });
+                        toast.success("Email restored");
+                        void queryClient.invalidateQueries({
+                          queryKey: ["outlook-intake"],
+                        });
+                      } catch (err) {
+                        toast.error(
+                          err instanceof Error
+                            ? err.message
+                            : "Failed to update",
+                        );
+                      }
+                    }}
+                  >
+                    <X className="mr-2 size-4" />
+                    Remove filter
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+        }}
+        selection={{
+          selectedIds,
+          onSelectAll: (checked) =>
+            setSelectedIds(checked ? paged.map((e) => String(e.id)) : []),
+          onSelectRow: (id, checked) =>
+            setSelectedIds((prev) =>
+              checked ? [...prev, id] : prev.filter((x) => x !== id),
+            ),
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({
+              sort: sortBy,
+              sort_dir: direction,
+              page: "1",
+            });
+            tableState.setPage(1);
+          },
+        }}
+        views={{
+          list: (email) => (
+            <div
+              className="space-y-2 border-b px-4 py-3"
+              onClick={() => {
+                setSelectedEmail(email);
+              }}
             >
-              <MessageSquare className="mr-1.5 size-3.5" />
-              Threads
-            </Button>
-          </>
-        ),
-        currentView: tableState.currentView,
-        onViewChange: (view) => {
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
-        },
-        filters: [
-          {
-            id: "match_status",
-            label: "Match",
-            type: "select",
-            options: [
-              { label: "Unassigned", value: "unassigned" },
-              { label: "Matched", value: "matched" },
-              { label: "Ignored", value: "ignored" },
-              { label: "Error", value: "error" },
-            ],
-          },
-          {
-            id: "vectorized",
-            label: "Vectorized",
-            type: "select",
-            options: [
-              { label: "Yes", value: "yes" },
-              { label: "No", value: "no" },
-            ],
-          },
-        ],
-        activeFilters: tableState.activeFilters,
-        onFilterChange: (filters) =>
-          updateFilters({
-            match_status: filters.match_status as string | undefined,
-            vectorized: filters.vectorized as string | undefined,
-          }),
-        onClearFilters: () => updateFilters({}),
-        columns: columnsConfig,
-        visibleColumns: tableState.visibleColumns,
-        onColumnVisibilityChange: tableState.setVisibleColumns,
-      }}
-      data={{
-        items: paged,
-        isLoading,
-        error: error ?? undefined,
-      }}
-      table={{
-        density: "compact",
-        columns,
-        getRowId: (email) => String(email.id),
-        activeRowId: selectedEmail ? String(selectedEmail.id) : null,
-        onRowClick: (email) => {
-          setSelectedEmail(email);
-        },
-        rowActions: (email) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" aria-label="Row actions">
-                <MoreVertical className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {email.webLink ? (
-                <DropdownMenuItem asChild>
-                  <a href={email.webLink} target="_blank" rel="noreferrer">
-                    <ExternalLink className="mr-2 size-4" />
-                    Open in Outlook
-                  </a>
-                </DropdownMenuItem>
-              ) : null}
-              {email.matchStatus !== "ignored" ? (
-                <DropdownMenuItem
-                  className="text-muted-foreground"
-                  onClick={async () => {
-                    try {
-                      await apiFetch(`/api/outlook-intake/${email.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ match_status: "ignored" }),
-                      });
-                      toast.success("Email marked as filtered");
-                      void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
-                    } catch (err) {
-                      toast.error(err instanceof Error ? err.message : "Failed to update");
-                    }
-                  }}
-                >
-                  <Ban className="mr-2 size-4" />
-                  Mark as filtered
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  className="text-muted-foreground"
-                  onClick={async () => {
-                    try {
-                      await apiFetch(`/api/outlook-intake/${email.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ match_status: "unassigned" }),
-                      });
-                      toast.success("Email restored");
-                      void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
-                    } catch (err) {
-                      toast.error(err instanceof Error ? err.message : "Failed to update");
-                    }
-                  }}
-                >
-                  <X className="mr-2 size-4" />
-                  Remove filter
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-      }}
-      selection={{
-        selectedIds,
-        onSelectAll: (checked) => setSelectedIds(checked ? paged.map((e) => String(e.id)) : []),
-        onSelectRow: (id, checked) =>
-          setSelectedIds((prev) => checked ? [...prev, id] : prev.filter((x) => x !== id)),
-      }}
-      sorting={{
-        sortBy: tableState.sortBy,
-        sortDirection: tableState.sortDirection,
-        onSortChange: (sortBy, direction) => {
-          tableState.setSortBy(sortBy);
-          tableState.setSortDirection(direction);
-          tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
-          tableState.setPage(1);
-        },
-      }}
-      views={{
-        list: (email) => (
-          <div
-            className="space-y-2 border-b px-4 py-3"
-            onClick={() => {
-              setSelectedEmail(email);
-            }}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="truncate font-medium">{email.subject}</div>
-                <div className="truncate text-sm text-muted-foreground">{senderLabel(email)}</div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{email.subject}</div>
+                  <div className="truncate text-sm text-muted-foreground">
+                    {senderLabel(email)}
+                  </div>
+                </div>
+                <StatusBadge status={email.matchStatus} />
               </div>
-              <StatusBadge status={email.matchStatus} />
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{email.attachments.length} attachments</span>
+                <span>{email.project?.name ?? "Unassigned"}</span>
+                <span>{formatDate(email.receivedAt || email.createdAt)}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span>{email.attachments.length} attachments</span>
-              <span>{email.project?.name ?? "Unassigned"}</span>
-              <span>{formatDate(email.receivedAt || email.createdAt)}</span>
-            </div>
-          </div>
-        ),
-      }}
-      emptyState={{
-        title: "No Outlook intake found",
-        description: "No synced Outlook intake records are stored yet.",
-        filteredDescription: "Try adjusting your search or match filter.",
-        isFiltered: Boolean(tableState.searchInput) || Boolean(matchStatus),
-        icon: <Inbox className="size-10 text-muted-foreground" />,
-      }}
-      pagination={{
-        page: tableState.page,
-        totalPages,
-        perPage: tableState.perPage,
-        onPageChange: (page) => {
-          tableState.setPage(page);
-          tableState.setSearchParams({ page: String(page) });
-        },
-        onPerPageChange: (perPage) => {
-          tableState.setPerPage(Number(perPage));
-          tableState.setPage(1);
-          tableState.setSearchParams({ per_page: perPage, page: "1" });
-        },
-      }}
-      layout={{
-        fullBleedTable: false,
-        containerPadding: !embedded,
-      }}
-      sidePanel={
-        selectedEmail
-          ? {
-              content: (
-                <EmailDetailPanel
-                  email={outlookIntakeToDetailRecord(selectedEmail)}
-                  onClose={() => setSelectedEmail(null)}
-                />
-              ),
-              variant: "wide",
-              defaultWidth: 680,
-              minWidth: 520,
-              storageKey: "outlook-intake-email-detail",
-              onClose: () => setSelectedEmail(null),
-            }
-          : undefined
-      }
-    />
+          ),
+        }}
+        emptyState={{
+          title: "No Outlook intake found",
+          description: "No synced Outlook intake records are stored yet.",
+          filteredDescription: "Try adjusting your search or filters.",
+          isFiltered:
+            Boolean(tableState.searchInput) ||
+            Boolean(matchStatus) ||
+            Boolean(classifierFilter),
+          icon: <Inbox className="size-10 text-muted-foreground" />,
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages,
+          perPage: tableState.perPage,
+          onPageChange: (page) => {
+            tableState.setPage(page);
+            tableState.setSearchParams({ page: String(page) });
+          },
+          onPerPageChange: (perPage) => {
+            tableState.setPerPage(Number(perPage));
+            tableState.setPage(1);
+            tableState.setSearchParams({ per_page: perPage, page: "1" });
+          },
+        }}
+        layout={{
+          fullBleedTable: false,
+          containerPadding: !embedded,
+        }}
+        sidePanel={
+          selectedEmail
+            ? {
+                content: (
+                  <EmailDetailPanel
+                    email={outlookIntakeToDetailRecord(selectedEmail)}
+                    onClose={() => setSelectedEmail(null)}
+                  />
+                ),
+                variant: "wide",
+                defaultWidth: 680,
+                minWidth: 520,
+                storageKey: "outlook-intake-email-detail",
+                onClose: () => setSelectedEmail(null),
+              }
+            : undefined
+        }
+      />
     </>
   );
 }

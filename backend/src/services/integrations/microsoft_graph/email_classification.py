@@ -1,0 +1,219 @@
+"""Email intake classification guardrails for Microsoft Graph messages."""
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
+
+class EmailIntakeAction(str, Enum):
+    IMPORT = "import"
+    QUARANTINE = "quarantine"
+    SKIP = "skip"
+
+
+@dataclass(frozen=True)
+class EmailIntakeClassification:
+    action: EmailIntakeAction
+    category: str
+    confidence: float
+    reason: str
+    signals: tuple[str, ...] = ()
+
+    def as_metadata(self) -> dict[str, Any]:
+        return {
+            "action": self.action.value,
+            "category": self.category,
+            "confidence": self.confidence,
+            "reason": self.reason,
+            "signals": list(self.signals),
+        }
+
+
+_RSVP_SUBJECT_RE = re.compile(
+    r"^\s*(accepted|declined|tentative|tentatively accepted|new time proposed)\s*:",
+    re.IGNORECASE,
+)
+_CALENDAR_SUBJECT_RE = re.compile(
+    r"\b("
+    r"invitation|meeting invitation|updated invitation|canceled event|cancelled event|"
+    r"event cancellation|meeting canceled|meeting cancelled|calendar"
+    r")\b",
+    re.IGNORECASE,
+)
+_CALENDAR_HEADER_NAMES = {
+    "content-class",
+    "x-ms-has-attach",
+    "x-ms-tnef-correlator",
+    "x-ms-olk-apptseqtime",
+    "x-ms-olk-autofilllocation",
+}
+_CALENDAR_HEADER_VALUES = (
+    "urn:content-classes:calendarmessage",
+    "method=reply",
+    "method=request",
+    "method=cancel",
+    "text/calendar",
+)
+_MEETING_BOILERPLATE_PATTERNS = (
+    re.compile(r"\baccepted\b.{0,80}\b(invitation|meeting|event)\b", re.IGNORECASE),
+    re.compile(r"\bdeclined\b.{0,80}\b(invitation|meeting|event)\b", re.IGNORECASE),
+    re.compile(r"\btentatively accepted\b.{0,80}\b(invitation|meeting|event)\b", re.IGNORECASE),
+    re.compile(r"\bthis meeting has been (canceled|cancelled|updated)\b", re.IGNORECASE),
+    re.compile(r"\bwhen:\b.{0,120}\bwhere:\b", re.IGNORECASE | re.DOTALL),
+    re.compile(r"\bjoin (microsoft )?teams meeting\b", re.IGNORECASE),
+)
+_LOW_VALUE_REPLY_TOKENS = {
+    "accept",
+    "accepted",
+    "decline",
+    "declined",
+    "tentative",
+    "tentatively",
+    "yes",
+    "no",
+    "ok",
+    "okay",
+    "thanks",
+    "thank",
+    "thx",
+    "received",
+    "confirmed",
+    "confirm",
+}
+_SUBSTANTIVE_KEYWORDS = (
+    "rfi",
+    "submittal",
+    "change order",
+    "change event",
+    "schedule",
+    "delay",
+    "permit",
+    "inspection",
+    "invoice",
+    "payment",
+    "cost",
+    "budget",
+    "drawing",
+    "revision",
+    "approval",
+    "owner",
+    "subcontractor",
+    "vendor",
+    "deliverable",
+    "scope",
+    "price",
+)
+
+
+def classify_graph_email_for_intake(msg: dict[str, Any], body_text: str) -> EmailIntakeClassification:
+    """Decide whether an Outlook message should enter project intelligence.
+
+    Calendar messages are only suppressed when they look system-generated or
+    low-value after quoted history, signatures, and common meeting boilerplate
+    are ignored. A meeting response with meaningful typed content imports as a
+    normal email.
+    """
+
+    subject = str(msg.get("subject") or "")
+    text = _normalize_text(body_text or msg.get("bodyPreview") or "")
+    header_signals = _calendar_header_signals(msg)
+    subject_signals = _calendar_subject_signals(subject)
+    body_signals = _calendar_body_signals(text)
+    signals = tuple((*subject_signals, *header_signals, *body_signals))
+
+    if not signals:
+        return EmailIntakeClassification(
+            action=EmailIntakeAction.IMPORT,
+            category="human_email",
+            confidence=0.95,
+            reason="No calendar or RSVP-only signals detected.",
+        )
+
+    has_attachment = bool(msg.get("hasAttachments"))
+    body_substantive_score = _substantive_score("", text)
+    if has_attachment or body_substantive_score >= 80:
+        return EmailIntakeClassification(
+            action=EmailIntakeAction.IMPORT,
+            category="calendar_reply_with_substance",
+            confidence=0.88,
+            reason="Calendar-related message contains substantive typed content.",
+            signals=signals,
+        )
+
+    if "rsvp_subject" in subject_signals and body_substantive_score < 30:
+        return EmailIntakeClassification(
+            action=EmailIntakeAction.SKIP,
+            category="calendar_rsvp",
+            confidence=0.98,
+            reason="RSVP response has no substantive typed content.",
+            signals=signals,
+        )
+
+    if ("calendar_header" in header_signals or "calendar_subject" in subject_signals) and body_substantive_score < 30:
+        return EmailIntakeClassification(
+            action=EmailIntakeAction.QUARANTINE,
+            category="calendar_low_value",
+            confidence=0.84,
+            reason="Calendar-related message has only low-value or ambiguous content.",
+            signals=signals,
+        )
+
+    return EmailIntakeClassification(
+        action=EmailIntakeAction.IMPORT,
+        category="calendar_reply_with_substance",
+        confidence=0.72,
+        reason="Calendar-related message is not safe to suppress.",
+        signals=signals,
+    )
+
+
+def _calendar_subject_signals(subject: str) -> tuple[str, ...]:
+    signals: list[str] = []
+    if _RSVP_SUBJECT_RE.search(subject):
+        signals.append("rsvp_subject")
+    if _CALENDAR_SUBJECT_RE.search(subject):
+        signals.append("calendar_subject")
+    return tuple(signals)
+
+
+def _calendar_header_signals(msg: dict[str, Any]) -> tuple[str, ...]:
+    for header in msg.get("internetMessageHeaders") or []:
+        if not isinstance(header, dict):
+            continue
+        name = str(header.get("name") or "").lower()
+        value = str(header.get("value") or "").lower()
+        if name in _CALENDAR_HEADER_NAMES or any(marker in value for marker in _CALENDAR_HEADER_VALUES):
+            return ("calendar_header",)
+    return ()
+
+
+def _calendar_body_signals(text: str) -> tuple[str, ...]:
+    matches = [pattern for pattern in _MEETING_BOILERPLATE_PATTERNS if pattern.search(text)]
+    return ("calendar_body",) if matches else ()
+
+
+def _substantive_score(subject: str, text: str) -> int:
+    normalized = _strip_calendar_boilerplate(f"{subject}\n{text}")
+    keyword_bonus = sum(20 for keyword in _SUBSTANTIVE_KEYWORDS if keyword in normalized)
+    tokens = re.findall(r"[a-z0-9][a-z0-9'-]*", normalized)
+    useful_tokens = [
+        token
+        for token in tokens
+        if len(token) > 2 and token not in _LOW_VALUE_REPLY_TOKENS
+    ]
+    return sum(len(token) for token in useful_tokens) + keyword_bonus
+
+
+def _strip_calendar_boilerplate(text: str) -> str:
+    cleaned = _normalize_text(text)
+    for pattern in _MEETING_BOILERPLATE_PATTERNS:
+        cleaned = pattern.sub(" ", cleaned)
+    cleaned = re.sub(r"\b(when|where|organizer|required|optional|importance|sensitivity):\b.*", " ", cleaned)
+    cleaned = re.sub(r"\b(microsoft teams|need help|meeting options|join on your computer).*$", " ", cleaned)
+    return re.sub(r"\s+", " ", cleaned).strip()
+
+
+def _normalize_text(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").lower()).strip()

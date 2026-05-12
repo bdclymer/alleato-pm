@@ -115,6 +115,33 @@ export function isPersonalTaskRegisterRequest(message: string): boolean {
     "due tomorrow on my side",
     "due today on my side",
     "what's due on my side",
+    // "what's on my list" / "what is on my list"
+    "what's on my list",
+    "what is on my list",
+    "on my list",
+    // "my action items" / "list of action items"
+    "my action items",
+    "my action item",
+    "list of action items",
+    // "what am i supposed to follow up on"
+    "supposed to follow up",
+    "what am i following up on",
+    "what do i need to follow up",
+    // "what's pending on my end" / "what's pending for me"
+    "pending on my end",
+    "pending for me",
+    // "what do i need to action"
+    "need to action",
+    // "what am i supposed to handle"
+    "supposed to handle",
+    // "what's still open on my side"
+    "open on my side",
+    // "any open loops"
+    "open loops",
+    // "what am i sitting on"
+    "what am i sitting on",
+    // colloquial: "what do i have on my plate"
+    "on my plate",
   ];
   if (directPhrases.some((phrase) => normalized.includes(phrase))) return true;
 
@@ -125,6 +152,16 @@ export function isPersonalTaskRegisterRequest(message: string): boolean {
 
   // "show me everything pending against my name" / "everything still open under my name"
   if (/\b(everything|all)\s+(still\s+)?(pending|open|outstanding)\b.*\b(my|me|mine)\b/.test(normalized)) {
+    return true;
+  }
+
+  // "what's on my list [of action items / this week / today]"
+  if (/what['']?s?\s+(on\s+)?my\s+list\b/.test(normalized)) {
+    return true;
+  }
+
+  // "what [do i / am i] [need to / have to] [do / handle / action / get done] today/this week"
+  if (/\bwhat\s+(do\s+i|am\s+i)\s+(need\s+to|have\s+to|supposed\s+to)\s+(do|handle|action|get\s+done)\b/.test(normalized)) {
     return true;
   }
 

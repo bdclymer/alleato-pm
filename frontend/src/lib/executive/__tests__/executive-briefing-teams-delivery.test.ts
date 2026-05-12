@@ -232,6 +232,8 @@ describe("executive briefing Teams delivery", () => {
     expect(message).toContain("Snapshot: 1 decision for you");
     expect(message).toContain("**Start Here - CEO Scan**");
     expect(message).toContain("**Top Executive Focus** (1)");
+    expect(message).toContain("**Test Project: GC schedule recovery needs executive commitment**");
+    expect(message).not.toContain("**983 Test Project:");
     expect(message).toContain("Best next move: Ask the PM for the weekend-work cost");
     expect(message).toContain("**Decisions Needed From You** (1)");
     expect(message).toContain("Decision needed: Confirm the approver and deadline.");

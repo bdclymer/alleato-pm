@@ -237,9 +237,10 @@ async function fetchDocumentContent(id: string): Promise<string | null> {
 // ── Column metadata ──────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
+  { id: "expand", label: "", alwaysVisible: true },
   { id: "title", label: "Title", alwaysVisible: true },
-  { id: "content", label: "Content", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
+  { id: "content", label: "Content", defaultVisible: true },
   { id: "source_system", label: "Source", defaultVisible: true },
   { id: "date", label: "Date", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
@@ -261,6 +262,10 @@ const defaultVisibleColumns = columns
   .filter((c) => c.defaultVisible !== false)
   .map((c) => c.id);
 
+const COL = Object.fromEntries(
+  columns.map((column, index) => [column.id, index]),
+) as Record<string, number>;
+
 // ── Table columns ─────────────────────────────────────────────────────────────
 
 function buildTableColumns(
@@ -272,7 +277,38 @@ function buildTableColumns(
 ): TableColumn<DocumentMetadataItem>[] {
   return [
     {
-      ...columns[0],
+      ...columns[COL.expand],
+      width: 40,
+      render: (item) => {
+        const isExpanded = expandedIds.has(item.id);
+        const isLoadingContent = loadingContentIds.has(item.id);
+        return (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 rounded text-muted-foreground hover:text-foreground"
+            disabled={isLoadingContent}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand(item);
+            }}
+            aria-label={isExpanded ? "Collapse content" : "Expand content"}
+          >
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
+      csvValue: () => "",
+      sortValue: () => 0,
+      sortable: false,
+    },
+    {
+      ...columns[COL.title],
       render: (item) =>
         item.type === "meeting" ? (
           <a
@@ -290,40 +326,7 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[1],
-      render: (item) => {
-        const isExpanded = expandedIds.has(item.id);
-        const isLoadingContent = loadingContentIds.has(item.id);
-        return (
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground"
-              disabled={isLoadingContent}
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleExpand(item);
-              }}
-              aria-label={isExpanded ? "Collapse content" : "Expand content"}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5" />
-              )}
-            </Button>
-            <TruncatedCell value={item.content} maxWidth={380} className="text-sm" />
-          </div>
-        );
-      },
-      csvValue: (item) => item.content ?? "",
-      sortable: false,
-      width: 440,
-    },
-    {
-      ...columns[2],
+      ...columns[COL.project],
       render: (item) => <CellText value={item.project} muted />,
       csvValue: (item) => item.project ?? "",
       sortValue: (item) => item.project ?? "",
@@ -341,7 +344,16 @@ function buildTableColumns(
       ),
     },
     {
-      ...columns[3],
+      ...columns[COL.content],
+      render: (item) => (
+        <TruncatedCell value={item.content} maxWidth={380} className="text-sm" />
+      ),
+      csvValue: (item) => item.content ?? "",
+      sortable: false,
+      width: 440,
+    },
+    {
+      ...columns[COL.source_system],
       render: (item) => (
         <CellText value={item.source_system ?? item.source} muted />
       ),
@@ -350,14 +362,14 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[4],
+      ...columns[COL.date],
       render: (item) => <DocumentDateValue item={item} />,
       csvValue: (item) => item.date ?? "",
       sortValue: documentDateSortValue,
       sortable: true,
     },
     {
-      ...columns[5],
+      ...columns[COL.status],
       render: (item) =>
         item.status ? (
           <StatusBadge status={item.status} />
@@ -369,7 +381,7 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[6],
+      ...columns[COL.duration_minutes],
       render: (item) => (
         <span className="tabular-nums">
           {formatDuration(item.duration_minutes)}
@@ -380,21 +392,21 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[7],
+      ...columns[COL.tags],
       render: (item) => <CellText value={item.tags} muted />,
       csvValue: (item) => item.tags ?? "",
       sortValue: (item) => item.tags ?? "",
       sortable: true,
     },
     {
-      ...columns[8],
+      ...columns[COL.file_name],
       render: (item) => <CellText value={item.file_name} muted />,
       csvValue: (item) => item.file_name ?? "",
       sortValue: (item) => item.file_name ?? "",
       sortable: true,
     },
     {
-      ...columns[9],
+      ...columns[COL.source_web_url],
       render: (item) => {
         const href = item.source_web_url;
         return href ? (
@@ -409,34 +421,34 @@ function buildTableColumns(
       width: 220,
     },
     {
-      ...columns[10],
+      ...columns[COL.keywords],
       render: (item) => <CellText value={item.keywords?.join(", ") ?? null} muted />,
       csvValue: (item) => item.keywords?.join(", ") ?? "",
       sortable: false,
     },
     {
-      ...columns[11],
+      ...columns[COL.category],
       render: (item) => <CellText value={item.category} muted />,
       csvValue: (item) => item.category ?? "",
       sortValue: (item) => item.category ?? "",
       sortable: true,
     },
     {
-      ...columns[12],
+      ...columns[COL.division],
       render: (item) => <CellText value={item.division} muted />,
       csvValue: (item) => item.division ?? "",
       sortValue: (item) => item.division ?? "",
       sortable: true,
     },
     {
-      ...columns[13],
+      ...columns[COL.meeting_type],
       render: (item) => <CellText value={item.meeting_type} muted />,
       csvValue: (item) => item.meeting_type ?? "",
       sortValue: (item) => item.meeting_type ?? "",
       sortable: true,
     },
     {
-      ...columns[14],
+      ...columns[COL.host_email],
       render: (item) => (
         <CellText value={item.host_email ?? item.organizer_email} muted />
       ),
@@ -445,20 +457,20 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[15],
+      ...columns[COL.summary],
       render: (item) => <TruncatedCell value={item.summary} maxWidth={300} className="text-sm" />,
       csvValue: (item) => item.summary ?? "",
       sortable: false,
       width: 320,
     },
     {
-      ...columns[16],
+      ...columns[COL.participants],
       render: (item) => <TruncatedCell value={item.participants} maxWidth={240} className="text-sm" />,
       csvValue: (item) => item.participants ?? "",
       sortable: false,
     },
     {
-      ...columns[17],
+      ...columns[COL.created_at],
       render: (item) => <TableDateValue value={item.created_at} />,
       csvValue: (item) => item.created_at ?? "",
       sortValue: (item) =>

@@ -123,6 +123,10 @@ export function useProject() {
   return context;
 }
 
+export function useOptionalProject() {
+  return useContext(ProjectContext) ?? null;
+}
+
 // Hook that requires a project to be selected
 export function useRequireProject() {
   const {

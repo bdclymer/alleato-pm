@@ -25,6 +25,16 @@ type SourceDocumentPreview = Pick<
   "id" | "type" | "category" | "content" | "raw_text" | "summary" | "overview" | "description" | "notes"
 >;
 
+const SUPABASE_IN_FILTER_CHUNK_SIZE = 100;
+
+function chunkArray<T>(items: T[], size = SUPABASE_IN_FILTER_CHUNK_SIZE): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
 function toRecord(value: Json | null): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {};
@@ -199,7 +209,62 @@ function mapCard(
   };
 }
 
+function sourceCoverageCategory(evidence: InsightCardEvidence): string {
+  const raw = `${evidence.sourceCategory ?? ""} ${evidence.sourceType ?? ""}`.toLowerCase();
+  if (raw.includes("meeting") || raw.includes("fireflies") || raw.includes("transcript")) return "meeting";
+  if (raw.includes("email") || raw.includes("outlook")) return "email";
+  if (raw.includes("teams") || raw.includes("chat") || raw.includes("message")) return "teams";
+  if (raw.includes("rfi")) return "rfi";
+  if (raw.includes("submittal")) return "submittal";
+  if (raw.includes("drawing")) return "drawing";
+  if (raw.includes("spec")) return "specification";
+  if (raw.includes("daily")) return "daily_report";
+  if (raw.includes("task")) return "task";
+  if (raw.includes("risk")) return "risk";
+  return "document";
+}
+
+function enrichSourceCoverage(
+  sourceCoverage: SourceCoverageSummary,
+  cards: InsightCard[],
+): SourceCoverageSummary {
+  if (Array.isArray(sourceCoverage.categoryCoverage)) {
+    return sourceCoverage;
+  }
+
+  const counts = new Map<string, { count: number; latestAt: string | null }>();
+  for (const card of cards) {
+    for (const evidence of card.evidence) {
+      const category = sourceCoverageCategory(evidence);
+      const current = counts.get(category) ?? { count: 0, latestAt: null };
+      const latestAt =
+        evidence.sourceOccurredAt && (!current.latestAt || evidence.sourceOccurredAt > current.latestAt)
+          ? evidence.sourceOccurredAt
+          : current.latestAt;
+      counts.set(category, { count: current.count + 1, latestAt });
+    }
+  }
+
+  return {
+    ...sourceCoverage,
+    categoryCoverage: Array.from(counts.entries()).map(([category, value]) => ({
+      category,
+      label: category.replace(/_/g, " ").replace(/\b\w/g, (character) => character.toUpperCase()),
+      availableCount: value.count,
+      sourceCount: value.count,
+      inPacketCount: value.count,
+      latestAt: value.latestAt,
+      tableNames: ["insight_card_evidence"],
+    })),
+  };
+}
+
 function mapPacket(row: IntelligencePacketRow, cards: InsightCard[]): ClientProjectIntelligencePacket {
+  const sourceCoverage = enrichSourceCoverage(
+    toRecord(row.source_coverage) as SourceCoverageSummary,
+    cards,
+  );
+
   return {
     id: row.id,
     targetId: row.target_id,
@@ -215,7 +280,7 @@ function mapPacket(row: IntelligencePacketRow, cards: InsightCard[]): ClientProj
     whyItMatters: row.why_it_matters,
     recommendedNextMoves: row.recommended_next_moves,
     confidenceSummary: toRecord(row.confidence_summary) as ConfidenceSummary,
-    sourceCoverage: toRecord(row.source_coverage) as SourceCoverageSummary,
+    sourceCoverage,
     reviewQueueCount: row.review_queue_count,
     staleItemCount: row.stale_item_count,
     packetJson: toRecord(row.packet_json),
@@ -365,81 +430,101 @@ export async function loadPacketCards(input: {
   }
 
   const packetCardRows = packetCards ?? [];
-  const cardIds = packetCardRows.map((row) => row.insight_card_id);
+  const cardIds = Array.from(new Set(packetCardRows.map((row) => row.insight_card_id)));
   if (cardIds.length === 0) return [];
 
-  let cardQuery = input.supabase
-    .from("insight_cards")
-    .select("*")
-    .in("id", cardIds);
-
-  if (!input.includeCandidate) {
-    cardQuery = cardQuery.neq("attribution_status", "rejected");
-  }
-
-  const { data: cardRows, error: cardsError } = await cardQuery;
+  const cardResults = await Promise.all(
+    chunkArray(cardIds).map((ids) =>
+      input.includeCandidate
+        ? input.supabase
+            .from("insight_cards")
+            .select("*")
+            .in("id", ids)
+        : input.supabase
+            .from("insight_cards")
+            .select("*")
+            .in("id", ids)
+            .neq("attribution_status", "rejected"),
+    ),
+  );
+  const cardsError = cardResults.find((result) => result.error)?.error;
   if (cardsError) {
     throw new Error(`Failed to load insight cards: ${cardsError.message}`);
   }
+  const cardRows = cardResults.flatMap((result) => result.data ?? []);
 
-  const { data: evidenceRows, error: evidenceError } = await input.supabase
-    .from("insight_card_evidence")
-    .select("*")
-    .in("insight_card_id", cardIds)
-    .order("source_occurred_at", { ascending: false, nullsFirst: false });
-
+  const evidenceResults = await Promise.all(
+    chunkArray(cardIds).map((ids) =>
+      input.supabase
+        .from("insight_card_evidence")
+        .select("*")
+        .in("insight_card_id", ids)
+        .order("source_occurred_at", { ascending: false, nullsFirst: false }),
+    ),
+  );
+  const evidenceError = evidenceResults.find((result) => result.error)?.error;
   if (evidenceError) {
     throw new Error(`Failed to load insight card evidence: ${evidenceError.message}`);
   }
+  const evidenceRows = evidenceResults.flatMap((result) => result.data ?? []);
 
   const sourceDocumentIds = Array.from(
     new Set(
-      (evidenceRows ?? [])
+      evidenceRows
         .map((row) => row.source_document_id)
         .filter((value): value is string => Boolean(value)),
     ),
   );
-  const { data: sourceDocumentRows, error: sourceDocumentError } =
-    sourceDocumentIds.length > 0
-      ? await input.supabase
-          .from("document_metadata")
-          .select("id,type,category,content,raw_text,summary,overview,description,notes")
-          .in("id", sourceDocumentIds)
-      : { data: [], error: null };
-
+  const sourceDocumentResults = sourceDocumentIds.length > 0
+    ? await Promise.all(
+        chunkArray(sourceDocumentIds).map((ids) =>
+          input.supabase
+            .from("document_metadata")
+            .select("id,type,category,content,raw_text,summary,overview,description,notes")
+            .in("id", ids),
+        ),
+      )
+    : [];
+  const sourceDocumentError = sourceDocumentResults.find((result) => result.error)?.error;
   if (sourceDocumentError) {
     throw new Error(`Failed to load insight card source content: ${sourceDocumentError.message}`);
   }
+  const sourceDocumentRows = sourceDocumentResults.flatMap((result) => result.data ?? []);
 
-  const { data: reviewRows, error: reviewError } = await input.supabase
-    .from("intelligence_reviews")
-    .select("*")
-    .eq("review_type", "packet_card_feedback")
-    .in("insight_card_id", cardIds)
-    .order("created_at", { ascending: false });
-
+  const reviewResults = await Promise.all(
+    chunkArray(cardIds).map((ids) =>
+      input.supabase
+        .from("intelligence_reviews")
+        .select("*")
+        .eq("review_type", "packet_card_feedback")
+        .in("insight_card_id", ids)
+        .order("created_at", { ascending: false }),
+    ),
+  );
+  const reviewError = reviewResults.find((result) => result.error)?.error;
   if (reviewError) {
     throw new Error(`Failed to load insight card feedback: ${reviewError.message}`);
   }
+  const reviewRows = reviewResults.flatMap((result) => result.data ?? []);
 
   const sourceDocumentById = new Map(
-    ((sourceDocumentRows ?? []) as SourceDocumentPreview[]).map((row) => [row.id, row]),
+    (sourceDocumentRows as SourceDocumentPreview[]).map((row) => [row.id, row]),
   );
   const evidenceByCard = new Map<string, InsightCardEvidence[]>();
-  for (const row of evidenceRows ?? []) {
+  for (const row of evidenceRows) {
     const existing = evidenceByCard.get(row.insight_card_id) ?? [];
     existing.push(mapEvidence(row, row.source_document_id ? sourceDocumentById.get(row.source_document_id) : undefined));
     evidenceByCard.set(row.insight_card_id, existing);
   }
 
   const feedbackByCard = new Map<string, InsightCardReviewFeedback>();
-  for (const row of reviewRows ?? []) {
+  for (const row of reviewRows) {
     if (!row.insight_card_id || feedbackByCard.has(row.insight_card_id)) continue;
     const feedback = mapReviewFeedback(row);
     if (feedback) feedbackByCard.set(row.insight_card_id, feedback);
   }
 
-  const cardsById = new Map((cardRows ?? []).map((row) => [row.id, row]));
+  const cardsById = new Map(cardRows.map((row) => [row.id, row]));
   return packetCardRows
     .map((packetCard) => {
       const card = cardsById.get(packetCard.insight_card_id);

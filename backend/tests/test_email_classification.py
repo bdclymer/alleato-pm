@@ -1,0 +1,83 @@
+from services.integrations.microsoft_graph.email_classification import (
+    EmailIntakeAction,
+    classify_graph_email_for_intake,
+)
+
+
+def _message(subject, body_preview="", headers=None, has_attachments=False):
+    return {
+        "subject": subject,
+        "bodyPreview": body_preview,
+        "hasAttachments": has_attachments,
+        "internetMessageHeaders": headers or [],
+    }
+
+
+def test_classifies_pure_accepted_invite_as_skip():
+    msg = _message(
+        "Accepted: Ulta Fresno OAC Meeting",
+        "Accepted Ulta Fresno OAC Meeting When: Tuesday, May 12 Where: Teams",
+        [{"name": "Content-Class", "value": "urn:content-classes:calendarmessage"}],
+    )
+
+    classification = classify_graph_email_for_intake(msg, msg["bodyPreview"])
+
+    assert classification.action == EmailIntakeAction.SKIP
+    assert classification.category == "calendar_rsvp"
+    assert classification.confidence >= 0.9
+
+
+def test_keeps_invite_response_with_substantive_comment():
+    body = (
+        "Accepted. I also need the revised drawing and the RFI response before "
+        "the meeting because the owner asked about the schedule impact."
+    )
+    msg = _message(
+        "Accepted: Ulta Fresno OAC Meeting",
+        body,
+        [{"name": "Content-Type", "value": "text/calendar; method=REPLY"}],
+    )
+
+    classification = classify_graph_email_for_intake(msg, body)
+
+    assert classification.action == EmailIntakeAction.IMPORT
+    assert classification.category == "calendar_reply_with_substance"
+
+
+def test_quarantines_low_value_calendar_update():
+    body = "This meeting has been updated. When: Wednesday 2 PM Where: Microsoft Teams"
+    msg = _message(
+        "Updated invitation: Coordination call",
+        body,
+        [{"name": "Content-Class", "value": "urn:content-classes:calendarmessage"}],
+    )
+
+    classification = classify_graph_email_for_intake(msg, body)
+
+    assert classification.action == EmailIntakeAction.QUARANTINE
+    assert classification.category == "calendar_low_value"
+
+
+def test_imports_calendar_message_with_attachment():
+    msg = _message(
+        "Updated invitation: Permit review",
+        "This meeting has been updated.",
+        [{"name": "Content-Class", "value": "urn:content-classes:calendarmessage"}],
+        has_attachments=True,
+    )
+
+    classification = classify_graph_email_for_intake(msg, msg["bodyPreview"])
+
+    assert classification.action == EmailIntakeAction.IMPORT
+
+
+def test_imports_normal_human_email():
+    msg = _message(
+        "Need pricing clarification",
+        "Can you send the revised subcontractor price before Friday?",
+    )
+
+    classification = classify_graph_email_for_intake(msg, msg["bodyPreview"])
+
+    assert classification.action == EmailIntakeAction.IMPORT
+    assert classification.category == "human_email"

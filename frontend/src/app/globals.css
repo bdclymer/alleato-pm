@@ -2031,15 +2031,13 @@
 @layer components {
   .global-ai-widget-launcher {
     position: fixed;
-    right: 20px;
-    bottom: max(20px, calc(env(safe-area-inset-bottom) + 20px));
-    width: 60px !important;
-    height: 60px !important;
+    right: calc(1rem + 56px);
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    width: 48px !important;
+    height: 48px !important;
     padding: 0 !important;
-    z-index: 2147483003;
-    box-shadow:
-      0 1px 6px 0 rgba(0, 0, 0, 0.06),
-      0 2px 32px 0 rgba(0, 0, 0, 0.16);
+    z-index: 40;
+    box-shadow: var(--shadow-sm);
   }
 
   .global-ai-widget-panel {
@@ -2058,6 +2056,11 @@
   }
 
   @media (min-width: 768px) {
+    .global-ai-widget-launcher {
+      right: calc(2rem + 56px);
+      bottom: 2rem;
+    }
+
     .global-ai-widget-panel {
       left: auto;
       right: 20px;

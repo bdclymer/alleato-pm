@@ -34,6 +34,16 @@ describe("personal daily brief routing", () => {
     expect(isPersonalTaskRegisterRequest("What's due tomorrow on my side?")).toBe(true);
     expect(isPersonalTaskRegisterRequest("list my tasks")).toBe(true);
     expect(isPersonalTaskRegisterRequest("give me my to-do list")).toBe(true);
+    // New natural-language patterns from eval failures
+    expect(isPersonalTaskRegisterRequest("What's on my list?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What is on my list?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What's on my list of action items?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What are my action items?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What am I supposed to follow up on?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What's pending on my end?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What do I need to action today?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("Any open loops I should know about?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What do I need to do today?")).toBe(true);
   });
 
   it("does not treat unrelated questions as personal task register requests", () => {
