@@ -122,10 +122,14 @@ export function createToolGuardrails(
       return [];
     }
 
+    if (typeof scope.pinnedProjectId === "number") {
+      return [scope.pinnedProjectId];
+    }
+
     const effectiveProjectId =
       typeof requestedProjectId === "number" && Number.isFinite(requestedProjectId)
         ? requestedProjectId
-        : scope.pinnedProjectId;
+        : null;
 
     if (typeof effectiveProjectId === "number") {
       if (!scope.isAdmin && !scope.allowedProjectIds.includes(effectiveProjectId)) {
@@ -146,6 +150,14 @@ export function createToolGuardrails(
       return { ok: false, error: "Invalid project ID." };
     }
 
+    if (typeof scope.pinnedProjectId === "number" && projectId !== scope.pinnedProjectId) {
+      return {
+        ok: false,
+        error:
+          "That tool call targeted a different project than the selected project context. Keep the selected project context or clear it before querying another project.",
+      };
+    }
+
     if (scope.isAdmin || scope.allowedProjectIds.includes(projectId)) {
       return { ok: true };
     }
@@ -160,10 +172,13 @@ export function createToolGuardrails(
   async function applyPinnedProject(
     requestedProjectId?: number | null,
   ): Promise<number | null> {
+    const scope = await getScope();
+    if (typeof scope.pinnedProjectId === "number") {
+      return scope.pinnedProjectId;
+    }
     if (typeof requestedProjectId === "number" && Number.isFinite(requestedProjectId)) {
       return requestedProjectId;
     }
-    const scope = await getScope();
     return scope.pinnedProjectId;
   }
 

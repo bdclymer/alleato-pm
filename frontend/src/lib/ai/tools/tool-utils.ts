@@ -153,6 +153,11 @@ export type ToolTracePayload = {
   timestamp: string;
 };
 
+type TraceOptions = {
+  onTrace?: (trace: ToolTracePayload) => void;
+  pinnedProjectId?: number;
+};
+
 /**
  * Typed tool-error envelope returned by `withTrace` when an executor throws.
  *
@@ -191,7 +196,7 @@ export function asNumber(value: unknown): number {
 
 export function withTrace<TInput extends Record<string, unknown>, TResult>(
   name: string,
-  options: { onTrace?: (trace: ToolTracePayload) => void },
+  options: TraceOptions,
   execute: (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult>,
   errorGuidance: string,
 ): (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult | ToolErrorResult> {
@@ -199,11 +204,12 @@ export function withTrace<TInput extends Record<string, unknown>, TResult>(
     input: TInput,
     executionOptions?: ToolExecutionOptions,
   ): Promise<TResult | ToolErrorResult> => {
+    const executionInput = applyPinnedProjectInput(input, options);
     try {
-      const output = await execute(input, executionOptions);
+      const output = await execute(executionInput, executionOptions);
       options.onTrace?.({
         tool: name,
-        input,
+        input: executionInput,
         output,
         timestamp: new Date().toISOString(),
       });
@@ -214,7 +220,7 @@ export function withTrace<TInput extends Record<string, unknown>, TResult>(
       const stack = error instanceof Error ? error.stack : undefined;
       options.onTrace?.({
         tool: name,
-        input,
+        input: executionInput,
         error: message,
         timestamp: new Date().toISOString(),
       });
@@ -222,7 +228,7 @@ export function withTrace<TInput extends Record<string, unknown>, TResult>(
         JSON.stringify({
           event: "tool_error",
           tool: name,
-          input,
+          input: executionInput,
           error: message,
           stack,
           timestamp: new Date().toISOString(),
@@ -259,22 +265,47 @@ export { getOpenAIModelId } from "@/lib/ai/provider-config";
  */
 export function withWriteTrace<TInput extends Record<string, unknown>, TResult>(
   name: string,
-  options: { onTrace?: (trace: ToolTracePayload) => void },
+  options: TraceOptions,
   execute: (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult>,
 ): (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult> {
   return async (
     input: TInput,
     executionOptions?: ToolExecutionOptions,
   ): Promise<TResult> => {
+    const executionInput = applyPinnedProjectInput(input, options);
     try {
-      const output = await execute(input, executionOptions);
-      options.onTrace?.({ tool: name, input, output, timestamp: new Date().toISOString() });
+      const output = await execute(executionInput, executionOptions);
+      options.onTrace?.({ tool: name, input: executionInput, output, timestamp: new Date().toISOString() });
       return output;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      options.onTrace?.({ tool: name, input, error: message, timestamp: new Date().toISOString() });
+      options.onTrace?.({ tool: name, input: executionInput, error: message, timestamp: new Date().toISOString() });
       throw error;
     }
+  };
+}
+
+function applyPinnedProjectInput<TInput extends Record<string, unknown>>(
+  input: TInput,
+  options: TraceOptions,
+): TInput {
+  const pinnedProjectId = options.pinnedProjectId;
+  if (
+    typeof pinnedProjectId !== "number" ||
+    !Number.isFinite(pinnedProjectId) ||
+    !Object.prototype.hasOwnProperty.call(input, "projectId")
+  ) {
+    return input;
+  }
+
+  const currentProjectId = input.projectId;
+  if (currentProjectId === pinnedProjectId) {
+    return input;
+  }
+
+  return {
+    ...input,
+    projectId: pinnedProjectId,
   };
 }
 
@@ -337,10 +368,10 @@ export async function resolveProject(
   }
 
   const effectiveProjectId =
-    typeof projectId === "number" && Number.isFinite(projectId)
-      ? projectId
-      : scopedProjectIds.length === 1
+    scopedProjectIds.length === 1
         ? scopedProjectIds[0]
+        : typeof projectId === "number" && Number.isFinite(projectId)
+          ? projectId
         : undefined;
 
   if (effectiveProjectId) {

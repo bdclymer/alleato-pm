@@ -128,6 +128,29 @@ describe("withTrace()", () => {
     expect(traces[0].error).toBeUndefined();
   });
 
+  it("overrides model-guessed projectId with pinned project context before executing and tracing", async () => {
+    const traces: ToolTracePayload[] = [];
+    const executor = jest.fn(async (input: { projectId?: number; projectName?: string }) => ({
+      projectId: input.projectId,
+      projectName: input.projectName,
+    }));
+    const traced = withTrace(
+      "testTool",
+      { pinnedProjectId: 43, onTrace: (t) => traces.push(t) },
+      executor,
+      "guidance text",
+    );
+
+    const result = await traced({ projectId: 24, projectName: "Westfield Collective" });
+
+    expect(executor).toHaveBeenCalledWith(
+      { projectId: 43, projectName: "Westfield Collective" },
+      undefined,
+    );
+    expect(result).toEqual({ projectId: 43, projectName: "Westfield Collective" });
+    expect(traces[0].input).toEqual({ projectId: 43, projectName: "Westfield Collective" });
+  });
+
   it("returns typed ToolErrorResult envelope on throw — never a bare {error: string} masquerading as data (Rule 1 guard)", async () => {
     const traces: ToolTracePayload[] = [];
     const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
@@ -229,6 +252,28 @@ describe("withWriteTrace()", () => {
     expect(traces[0].tool).toBe("writeTool");
     expect(traces[0].output).toEqual({ created: true });
     expect(traces[0].error).toBeUndefined();
+  });
+
+  it("overrides model-guessed projectId on write tools before execution and tracing", async () => {
+    const traces: ToolTracePayload[] = [];
+    const executor = jest.fn(async (input: { projectId?: number; title: string }) => ({
+      projectId: input.projectId,
+      title: input.title,
+    }));
+    const traced = withWriteTrace(
+      "writeTool",
+      { pinnedProjectId: 67, onTrace: (t) => traces.push(t) },
+      executor,
+    );
+
+    const result = await traced({ projectId: 12, title: "Follow up with owner" });
+
+    expect(executor).toHaveBeenCalledWith(
+      { projectId: 67, title: "Follow up with owner" },
+      undefined,
+    );
+    expect(result).toEqual({ projectId: 67, title: "Follow up with owner" });
+    expect(traces[0].input).toEqual({ projectId: 67, title: "Follow up with owner" });
   });
 
   it("re-throws errors — does not swallow them (HIGH-2 regression guard)", async () => {
