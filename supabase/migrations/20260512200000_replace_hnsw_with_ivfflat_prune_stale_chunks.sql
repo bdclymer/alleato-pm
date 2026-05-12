@@ -1,22 +1,23 @@
 -- =============================================================================
--- Replace 827 MB full HNSW index with IVFFlat + prune stale unembedded chunks
+-- Replace 827 MB full HNSW index with IVFFlat + update search function
 -- Root cause: HNSW index updates on every sync run exhaust available RAM and
 -- trigger OOM kills, causing the DB to restart every few minutes.
--- IVFFlat loads ~20 MB per query vs HNSW which loads hundreds of MB.
+-- IVFFlat loads ~30 MB per query vs HNSW which loads hundreds of MB.
+--
+-- The DROP and CREATE INDEX were applied manually via psql with
+-- SET statement_timeout = 0 because both exceed the migration timeout:
+--   DROP INDEX IF EXISTS idx_document_chunks_embedding_hnsw;
+--   SET maintenance_work_mem='256MB'; SET statement_timeout=0;
+--   CREATE INDEX idx_document_chunks_embedding_ivfflat ON document_chunks
+--     USING ivfflat (embedding halfvec_cosine_ops) WITH (lists = 200);
+--
+-- Stale chunk pruning also applied manually after index build completed:
+--   DELETE FROM document_chunks WHERE embedding IS NULL
+--     AND created_at < now() - interval '7 days';
 -- =============================================================================
 
--- 1. Drop the 827 MB full HNSW index — the primary OOM trigger.
-DROP INDEX IF EXISTS idx_document_chunks_embedding_hnsw;
-
--- 2. Replace with IVFFlat (lists=300 → ~340 rows/list, probe 10 = ~3,400 rows/query).
---    Same <=> operator works; search functions need no signature changes.
-CREATE INDEX idx_document_chunks_embedding_ivfflat
-ON document_chunks
-USING ivfflat (embedding halfvec_cosine_ops)
-WITH (lists = 300);
-
--- 3. Update search_document_chunks to set ivfflat.probes for recall quality.
---    hnsw.ef_search is silently ignored by IVFFlat so keeping it is harmless.
+-- Update search_document_chunks to set ivfflat.probes = 10 for recall quality.
+-- hnsw.ef_search is silently ignored by IVFFlat so keeping it is harmless.
 CREATE OR REPLACE FUNCTION search_document_chunks(
     query_embedding  halfvec(3072),
     filter_source_types text[] DEFAULT NULL,
@@ -72,10 +73,3 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION search_document_chunks(halfvec(3072), text[], bigint, int, float)
     TO anon, authenticated, service_role;
-
--- 4. Delete permanently stuck unembedded chunks (> 7 days old with no embedding).
---    These are invisible to all searches (WHERE embedding IS NOT NULL filters them)
---    and waste storage. The sync will re-add them if still relevant.
-DELETE FROM document_chunks
-WHERE embedding IS NULL
-  AND created_at < now() - interval '7 days';
