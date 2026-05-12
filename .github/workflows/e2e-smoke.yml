@@ -41,7 +41,7 @@ jobs:
             exit 0
           fi
           pnpm --dir frontend exec playwright test \
-            --config=config/playwright/playwright.config.ts \
+            --config=config/playwright/playwright.no-webserver.config.ts \
             --grep "smoke" \
             --project=chromium \
             --reporter=list
