@@ -13,6 +13,7 @@ import hashlib
 import logging
 import os
 import re
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -406,6 +407,9 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         except Exception as e:
             logger.error("[GraphEmbed] Error embedding %s: %s", doc_id, e)
             errors += 1
+        # Throttle DB writes — without this, 1000 docs fire hundreds of queries
+        # per second and saturate the Supabase connection pool.
+        time.sleep(0.1)
 
     logger.info(
         "[GraphEmbed] Done — %d docs embedded (%d total chunks, %d errors). By category: %s",

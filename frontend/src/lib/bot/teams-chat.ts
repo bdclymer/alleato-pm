@@ -253,16 +253,29 @@ async function handleMessage(
     let resolvedVia: "platform_user_id" | "aad_object_id" | "email_auto_link" | null = null;
 
     // 1. Primary lookup: platform_user_id (channel-specific Teams ID)
-    const { data: mapping, error: mappingErr } = await supabase
-      .from("bot_user_mappings")
-      .select("supabase_user_id")
-      .eq("platform", "teams")
-      .eq("platform_user_id", teamsUserId)
-      .maybeSingle();
+    // Retry up to 3 times with 3s delay — transient DB overload (503) during
+    // the 30-min sync cron should resolve within seconds, not require the user
+    // to re-link or get an error prompt.
+    let mapping: { supabase_user_id: string } | null = null;
+    let mappingErr: { message: string; code: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 3000));
+      const result = await supabase
+        .from("bot_user_mappings")
+        .select("supabase_user_id")
+        .eq("platform", "teams")
+        .eq("platform_user_id", teamsUserId)
+        .maybeSingle();
+      if (!result.error) {
+        mapping = result.data;
+        mappingErr = null;
+        break;
+      }
+      mappingErr = result.error as { message: string; code: string };
+    }
 
-    // If Supabase itself is down (503/504), bail early with a transient error
-    // rather than falling through to "I don't recognize you" — the user IS
-    // linked, the DB just couldn't be reached.
+    // All retries exhausted — DB still unreachable. Return a transient error
+    // rather than falling through to "I don't recognize you".
     if (mappingErr) {
       await logCheckpoint("db_error_on_mapping_lookup", {
         teamsUserId,
