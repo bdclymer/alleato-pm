@@ -41,7 +41,7 @@ export const POST = withApiGuardrails(
       if (text) body = JSON.parse(text);
     } catch (error) {
       throw new GuardrailError({
-        code: "INVALID_REQUEST",
+        code: "BAD_REQUEST",
         where: "executive/daily-brief/preview-teams#POST",
         message:
           error instanceof Error
@@ -71,7 +71,7 @@ export const POST = withApiGuardrails(
       );
     }
 
-    const message = formatExecutiveBriefingTeamsMessage(
+    const card = formatExecutiveBriefingTeamsMessage(
       draft.packet,
       firstName,
       { now: new Date() },
@@ -84,7 +84,7 @@ export const POST = withApiGuardrails(
 
     return NextResponse.json({
       success: true,
-      message,
+      card,
       recipientName: firstName,
       itemCount: totalItems,
       windowDays,

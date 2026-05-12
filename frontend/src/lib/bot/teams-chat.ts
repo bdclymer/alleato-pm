@@ -80,7 +80,7 @@ export function getTeamsChat(): Chat {
 
 export async function sendProactiveMessage(
   supabaseUserId: string,
-  text: string,
+  text: string | import("chat").ChatElement,
   preferDm = true,
 ): Promise<void> {
   // Ensure singleton is registered for lazy ThreadImpl resolution

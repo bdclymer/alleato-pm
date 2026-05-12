@@ -32,8 +32,8 @@ async function main() {
     { now: new Date() },
   );
 
-  process.stdout.write("\n========== TEAMS MESSAGE (would-be-sent to Brandon) ==========\n\n");
-  process.stdout.write(message);
+  process.stdout.write("\n========== TEAMS CARD (would-be-sent to Brandon) ==========\n\n");
+  process.stdout.write(JSON.stringify(message, null, 2));
   process.stdout.write("\n\n========== END ==========\n");
 }
 
