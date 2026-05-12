@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { Calendar, ChevronDown, ChevronRight, Clock, ExternalLink, File, FileText, Mail, MessageSquare, MoreHorizontal, Trash2, Video } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, Clock, ExternalLink, File, FileText, Mail, MessageSquare, MoreVertical, Trash2, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
@@ -413,7 +413,7 @@ function renderRowActions(
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal />
+          <MoreVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -518,7 +518,7 @@ function DocumentCard({
         {/* Footer metadata */}
         <div className="flex items-center justify-between gap-2 pl-11">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
-            {item.source_system && (
+            {item.source_system && !item.type?.startsWith("teams") && (
               <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium shrink-0">
                 {item.source_system}
               </span>

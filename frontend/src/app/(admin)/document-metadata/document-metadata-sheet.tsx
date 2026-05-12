@@ -98,6 +98,62 @@ function formatDuration(minutes: number | null) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
+interface TeamsMessage {
+  id: string;
+  timestamp: string;
+  sender: string;
+  text: string;
+}
+
+function parseTeamsContent(content: string): TeamsMessage[] | null {
+  const pattern = /\[message:(\d+)\]\s*\[([^\]]+)\]\s*([^:]+):\s*([\s\S]*?)(?=\s*\[message:|\s*$)/g;
+  const messages: TeamsMessage[] = [];
+  let match;
+  while ((match = pattern.exec(content)) !== null) {
+    const text = match[4].trim();
+    if (!text) continue;
+    messages.push({
+      id: match[1],
+      timestamp: match[2].trim(),
+      sender: match[3].trim(),
+      text,
+    });
+  }
+  return messages.length > 0 ? messages : null;
+}
+
+function TeamsConversation({ content }: { content: string }) {
+  const messages = parseTeamsContent(content);
+  if (!messages) {
+    return <p className="text-sm text-muted-foreground whitespace-pre-wrap">{content}</p>;
+  }
+  return (
+    <div className="space-y-4">
+      {messages.map((msg) => {
+        const time = (() => {
+          try {
+            return new Date(msg.timestamp).toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            });
+          } catch {
+            return msg.timestamp;
+          }
+        })();
+        return (
+          <div key={msg.id} className="space-y-0.5">
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm font-semibold text-foreground">{msg.sender}</span>
+              <span className="text-xs text-muted-foreground">{time}</span>
+            </div>
+            <p className="text-sm text-foreground leading-relaxed">{msg.text}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function isBinaryContent(content: string): boolean {
   // Detect raw PDF binary data — common patterns: %PDF header, /i255 tokens, or dense /N /N sequences
   if (content.startsWith("%PDF")) return true;
@@ -360,10 +416,14 @@ export function DocumentMetadataSheet({
             {/* Content — full text, skip binary/unreadable data */}
             {item.content && !isBinaryContent(item.content) && (
               <>
-                <Section label="Content">
-                  <Markdown className="text-sm text-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-0.5 [&_p]:leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:font-semibold">
-                    {item.content}
-                  </Markdown>
+                <Section label="Conversation">
+                  {item.type?.startsWith("teams") ? (
+                    <TeamsConversation content={item.content} />
+                  ) : (
+                    <Markdown className="text-sm text-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-0.5 [&_p]:leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:font-semibold">
+                      {item.content}
+                    </Markdown>
+                  )}
                 </Section>
                 <Separator />
               </>
