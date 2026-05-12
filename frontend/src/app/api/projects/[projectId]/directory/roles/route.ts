@@ -173,30 +173,28 @@ export const PUT = withApiGuardrails(
       );
     }
 
-    // Validate members belong to this project before changing assignments.
+    // Validate all person IDs exist in the people table.
     if (uniqueMemberPersonIds.length > 0) {
-      const { data: memberships, error: membershipError } = await supabase
-        .from("project_directory_memberships")
-        .select("person_id")
-        .eq("project_id", projectIdNum)
-        .eq("status", "active")
-        .in("person_id", uniqueMemberPersonIds);
+      const { data: existingPeople, error: peopleError } = await supabase
+        .from("people")
+        .select("id")
+        .in("id", uniqueMemberPersonIds);
 
-      if (membershipError) {
+      if (peopleError) {
         return NextResponse.json(
-          { error: `Failed to validate role members: ${membershipError.message}` },
+          { error: `Failed to validate people: ${peopleError.message}` },
           { status: 500 },
         );
       }
 
-      const validPersonIds = new Set((memberships || []).map((m) => m.person_id));
+      const validPersonIds = new Set((existingPeople || []).map((p) => p.id));
       const invalidPersonIds = uniqueMemberPersonIds.filter(
         (personId: string) => !validPersonIds.has(personId),
       );
 
       if (invalidPersonIds.length > 0) {
         return NextResponse.json(
-          { error: "Selected person must be an active member of this project" },
+          { error: "One or more selected people do not exist" },
           { status: 400 },
         );
       }

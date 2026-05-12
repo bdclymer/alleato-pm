@@ -1652,6 +1652,18 @@ export default function ProjectDirectoryPage() {
   const params = useParams()! ?? {};
   const projectId = params.projectId as string;
 
+  const [clientName, setClientName] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!projectId) return;
+    const supabase = createClient();
+    supabase
+      .from("projects")
+      .select("client")
+      .eq("id", parseInt(projectId, 10))
+      .single()
+      .then(({ data }) => { if (data?.client) setClientName(data.client); });
+  }, [projectId]);
+
   const { users: members, refetch: refetchMembers } = useProjectUsers(projectId, { type: "all" });
   const [addMemberOpen, setAddMemberOpen] = React.useState(false);
   const [addCompanyOpen, setAddCompanyOpen] = React.useState(false);
@@ -1700,6 +1712,7 @@ export default function ProjectDirectoryPage() {
     <PageShell
       variant="dashboard"
       title="Project Directory"
+      statusBadge={clientName ? <span className="text-sm text-muted-foreground">{clientName}</span> : undefined}
       contentClassName="space-y-12"
       actions={
         <Button variant="outline" size="sm">

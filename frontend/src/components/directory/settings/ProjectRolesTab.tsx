@@ -3,7 +3,7 @@
 import * as React from "react";
 import { X, ChevronDown, Loader2 } from "lucide-react";
 import { useProjectRoles, ProjectRole } from "@/hooks/use-project-roles";
-import { useProjectUsers } from "@/hooks/use-project-users";
+import { usePeople } from "@/hooks/use-people";
 import {
   Table,
   TableBody,
@@ -29,16 +29,15 @@ interface PersonOption {
 export function ProjectRolesTab({ projectId }: ProjectRolesTabProps) {
   const { roles, isLoading, error, updateRoleMembers } =
     useProjectRoles(projectId);
-  const { users } = useProjectUsers(projectId);
+  const { people } = usePeople();
 
-  // Create person options from users
   const personOptions: PersonOption[] = React.useMemo(() => {
-    return (users || []).map((user) => ({
-      id: user.id,
-      name: `${user.first_name} ${user.last_name}`,
-      company: user.company?.name || null,
+    return people.map((p) => ({
+      id: p.id,
+      name: `${p.first_name} ${p.last_name}`,
+      company: p.company?.name || null,
     }));
-  }, [users]);
+  }, [people]);
 
   if (isLoading) {
     return (
