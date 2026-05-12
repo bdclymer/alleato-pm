@@ -18,13 +18,24 @@ const THINKING_SUFFIX_REGEX = /-thinking$/;
 // Direct OpenAI requires AI_PROVIDER_PATH=openai or no gateway key.
 // ---------------------------------------------------------------------------
 
-const openaiClientConfig = isTestEnvironment
-  ? { apiKey: "test-key" }
-  : (() => {
-      const config = getOpenAICompatibleClientConfig("AI SDK provider");
-      return { apiKey: config.apiKey, baseURL: config.baseURL };
-    })();
-const openai = createOpenAI(openaiClientConfig);
+type OpenAIProvider = ReturnType<typeof createOpenAI>;
+type OpenAIChatModel = ReturnType<OpenAIProvider["chat"]>;
+
+let openaiProvider: OpenAIProvider | null = null;
+
+function getOpenAIProvider(): OpenAIProvider {
+  if (!openaiProvider) {
+    const openaiClientConfig = isTestEnvironment
+      ? { apiKey: "test-key" }
+      : (() => {
+          const config = getOpenAICompatibleClientConfig("AI SDK provider");
+          return { apiKey: config.apiKey, baseURL: config.baseURL };
+        })();
+    openaiProvider = createOpenAI(openaiClientConfig);
+  }
+
+  return openaiProvider;
+}
 
 // ---------------------------------------------------------------------------
 // DevTools middleware (local dev only — shows every step, tool call, prompt)
@@ -49,7 +60,7 @@ if (process.env.NODE_ENV === "development") {
  * Wraps a model with DevTools middleware in development.
  * In production, returns the model as-is (zero overhead).
  */
-function withDevTools(model: ReturnType<typeof openai.chat>) {
+function withDevTools(model: OpenAIChatModel) {
   if (devToolsMiddlewareFn) {
     return wrapLanguageModel({ model, middleware: devToolsMiddlewareFn() });
   }
@@ -84,7 +95,8 @@ export function getLanguageModel(modelId: string) {
     modelId.includes("reasoning") || modelId.endsWith("-thinking");
 
   if (isReasoningModel) {
-    const baseModelId = modelId.replace(THINKING_SUFFIX_REGEX, "");
+      const baseModelId = modelId.replace(THINKING_SUFFIX_REGEX, "");
+    const openai = getOpenAIProvider();
 
     return wrapLanguageModel({
       model: openai.chat(getOpenAIModelId(baseModelId)),
@@ -95,6 +107,7 @@ export function getLanguageModel(modelId: string) {
   // Use openai.chat() to route through /v1/chat/completions.
   // The default openai() uses /v1/responses; this route still uses chat
   // completions until the app-specific tool loop is validated on Responses.
+  const openai = getOpenAIProvider();
   return withDevTools(openai.chat(getOpenAIModelId(modelId)));
 }
 
@@ -102,6 +115,7 @@ export function getTitleModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
+  const openai = getOpenAIProvider();
   return withDevTools(openai.chat(getOpenAIModelId("gpt-4.1-nano")));
 }
 
@@ -109,10 +123,11 @@ export function getArtifactModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("artifact-model");
   }
+  const openai = getOpenAIProvider();
   return withDevTools(openai.chat(getOpenAIModelId("gpt-4.1-nano")));
 }
 
 /**
  * Shared AI SDK OpenAI-compatible provider.
  */
-export { openai as gatewayProvider };
+export { getOpenAIProvider as getGatewayProvider };
