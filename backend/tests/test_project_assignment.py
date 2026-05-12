@@ -314,6 +314,42 @@ def test_assign_project_uses_explicit_keyword_attribution_rule_before_contacts()
     assert confidence == 0.99
 
 
+def test_assign_project_title_keyword_rules_do_not_match_body_content():
+    supabase = _FakeSupabase(
+        {
+            "project_attribution_rules": [
+                {
+                    "project_id": 823,
+                    "rule_type": "title_keyword",
+                    "pattern": "Indianapolis",
+                    "confidence": 0.97,
+                    "priority": 40,
+                    "status": "active",
+                }
+            ],
+            "project_contact_references": [],
+            "project_directory_memberships": [],
+            "people": [],
+            "project_companies": [],
+            "companies": [],
+        }
+    )
+    assigner = ProjectAssigner(supabase)
+    assigner._project_cache = [
+        {"id": 823, "name": "Macomb Group Indianapolis", "client": "", "aliases": []}
+    ]
+
+    project_id, method, confidence = assigner.assign_project(
+        meeting_title="Alleato ACH Payment Form",
+        participants=[],
+        content="Mailing address: 123 Indianapolis Ave.",
+    )
+
+    assert project_id is None
+    assert method == "unassigned"
+    assert confidence == 0.0
+
+
 def test_assign_project_uses_explicit_email_attribution_rule():
     supabase = _FakeSupabase(
         {

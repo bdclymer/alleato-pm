@@ -167,7 +167,9 @@ class ProjectAssigner:
             matched = False
             method = f"attribution_rule:{rule_type}"
 
-            if rule_type in {"keyword", "phrase", "title_keyword"}:
+            if rule_type == "title_keyword":
+                matched = bool(pattern and (self._contains_token(title, pattern) or pattern in title))
+            elif rule_type in {"keyword", "phrase"}:
                 matched = bool(pattern and (self._contains_token(combined, pattern) or pattern in combined))
             elif rule_type == "email":
                 matched = raw_pattern in participant_emails
