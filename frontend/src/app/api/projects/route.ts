@@ -25,6 +25,90 @@ const CreateProjectSchema = z
   })
   .passthrough();
 
+type ProjectApiRow = Record<string, unknown> & {
+  id: number;
+  client?: string | null;
+};
+
+type PrimeContractClientRow = {
+  project_id: number;
+  client_id: string | null;
+  contract_company_id: string | null;
+};
+
+type CompanyNameRow = {
+  id: string;
+  name: string | null;
+};
+
+async function applyPrimeContractClientNames(
+  supabase: ReturnType<typeof createServiceClient>,
+  projects: ProjectApiRow[],
+): Promise<ProjectApiRow[]> {
+  const projectIds = projects.map((project) => project.id).filter(Number.isFinite);
+  if (projectIds.length === 0) {
+    return projects;
+  }
+
+  const { data: primeContracts, error: primeContractsError } = await supabase
+    .from("prime_contracts")
+    .select("project_id, client_id, contract_company_id, created_at")
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false });
+
+  if (primeContractsError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/projects#GET",
+      message: "Failed to fetch prime contract clients.",
+      details: { reason: primeContractsError.message },
+      cause: primeContractsError,
+    });
+  }
+
+  const primeClientByProjectId = new Map<number, string>();
+  for (const contract of (primeContracts ?? []) as PrimeContractClientRow[]) {
+    if (primeClientByProjectId.has(contract.project_id)) continue;
+
+    const companyId = contract.client_id ?? contract.contract_company_id;
+    if (companyId) {
+      primeClientByProjectId.set(contract.project_id, companyId);
+    }
+  }
+
+  const companyIds = Array.from(new Set(primeClientByProjectId.values()));
+  if (companyIds.length === 0) {
+    return projects;
+  }
+
+  const { data: companies, error: companiesError } = await supabase
+    .from("companies")
+    .select("id, name")
+    .in("id", companyIds);
+
+  if (companiesError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/projects#GET",
+      message: "Failed to fetch prime contract company names.",
+      details: { reason: companiesError.message },
+      cause: companiesError,
+    });
+  }
+
+  const companyNameById = new Map(
+    ((companies ?? []) as CompanyNameRow[])
+      .filter((company) => company.name)
+      .map((company) => [company.id, company.name as string]),
+  );
+
+  return projects.map((project) => {
+    const companyId = primeClientByProjectId.get(project.id);
+    const clientName = companyId ? companyNameById.get(companyId) : null;
+    return clientName ? { ...project, client: clientName } : project;
+  });
+}
+
 export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) => {
   const user = await getApiRouteUser();
   if (!user) {
@@ -141,8 +225,13 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
     });
   }
 
+  const projectsWithPrimeContractClients = await applyPrimeContractClientNames(
+    supabase,
+    (data ?? []) as ProjectApiRow[],
+  );
+
   return NextResponse.json({
-    data,
+    data: projectsWithPrimeContractClients,
     meta: {
       page,
       limit,

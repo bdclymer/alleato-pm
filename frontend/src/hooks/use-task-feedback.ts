@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { apiFetch } from "@/lib/api-client";
 import type {
   TaskFeedbackReasonCategory,
@@ -29,6 +29,12 @@ interface UseTaskFeedbackReturn {
 export function useTaskFeedback(options: UseTaskFeedbackOptions): UseTaskFeedbackReturn {
   const [signal, setSignal] = useState<FeedbackSignal | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reset the signal whenever the underlying task changes so stale feedback
+  // from a previously-selected task doesn't bleed into the new task's UI.
+  useEffect(() => {
+    setSignal(null);
+  }, [options.taskId]);
 
   const submitFeedback = useCallback(
     async (

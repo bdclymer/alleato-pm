@@ -1,4 +1,5 @@
 export const TASK_FEEDBACK_REASON_CATEGORIES = [
+  "trivial",
   "too_vague",
   "wrong_assignee",
   "wrong_due_date",
@@ -16,6 +17,7 @@ export const TASK_FEEDBACK_REASON_LABELS: Record<
   TaskFeedbackReasonCategory,
   string
 > = {
+  trivial: "Not task-worthy",
   too_vague: "Too vague",
   wrong_assignee: "Wrong assignee",
   wrong_due_date: "Wrong due date",
@@ -62,6 +64,7 @@ export function summarizeTaskFeedbackReasonCategories(
   if (total === 0) return [];
 
   const counts: Record<TaskFeedbackReasonSummaryCategory, number> = {
+    trivial: 0,
     too_vague: 0,
     wrong_assignee: 0,
     wrong_due_date: 0,

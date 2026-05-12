@@ -98,6 +98,20 @@ const rowsByTable: Record<string, Row[]> = {
       created_at: "2026-04-30T00:00:00.000Z",
     },
   ],
+  document_metadata: [
+    {
+      id: "doc-1",
+      type: "teams_message",
+      category: "chat",
+      content: "Contract language was discussed.",
+      raw_text: null,
+      summary: "Westfield is active.",
+      overview: null,
+      description: null,
+      notes: null,
+    },
+  ],
+  intelligence_reviews: [],
   projects: [],
 };
 
@@ -187,5 +201,8 @@ describe("intelligence packet service", () => {
     expect(packet?.sourceCoverage.projectEmailRows).toBe(0);
     expect(packet?.cards).toHaveLength(1);
     expect(packet?.cards[0]?.evidence[0]?.sourceDocumentId).toBe("doc-1");
+    expect(packet?.cards[0]?.evidence[0]?.sourceContentPreview).toBe(
+      "Contract language was discussed.",
+    );
   });
 });

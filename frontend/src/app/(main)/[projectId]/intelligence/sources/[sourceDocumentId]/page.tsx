@@ -2,10 +2,21 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, MailOpen } from "lucide-react";
 
 import { Badge, Button, StatusBadge } from "@/components/ds";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  cleanEmailText,
+  parseReadableEmailThread,
+  type ReadableEmailMessage,
+} from "@/lib/email/readable-email";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
 
@@ -37,16 +48,14 @@ function formatDateTime(value: string | null | undefined): string {
 
 function cleanSourceText(value: string | null | undefined): string {
   if (!value) return "";
-  return value
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return cleanEmailText(value).replace(/\n{3,}/g, "\n\n");
 }
 
 function getReadableContent(source: SourceDocument): string {
+  if (source.type === "email" || source.category === "email") {
+    return cleanSourceText(source.content || source.raw_text);
+  }
+
   return cleanSourceText(
     source.content ||
       source.raw_text ||
@@ -77,6 +86,16 @@ function getSourceContextHref(projectId: number, source: SourceDocument): string
   return null;
 }
 
+function emailTitle(message: ReadableEmailMessage, fallback: string | null | undefined, index: number): string {
+  return message.subject || fallback || `Email ${index + 1}`;
+}
+
+function emailSubtitle(message: ReadableEmailMessage): string {
+  return [message.from, message.date ? formatDateTime(message.date) : null]
+    .filter(Boolean)
+    .join(" - ");
+}
+
 export default async function IntelligenceSourcePage({ params }: PageProps) {
   const { projectId, sourceDocumentId } = await params;
   const numericProjectId = Number.parseInt(projectId, 10);
@@ -98,6 +117,10 @@ export default async function IntelligenceSourcePage({ params }: PageProps) {
   }
 
   const readableContent = getReadableContent(source);
+  const emailMessages =
+    source.type === "email" || source.category === "email"
+      ? parseReadableEmailThread(readableContent)
+      : [];
   const externalHref = getExternalSourceHref(source);
   const sourceContextHref = getSourceContextHref(numericProjectId, source);
   const participants = source.participants_array?.length
@@ -114,7 +137,11 @@ export default async function IntelligenceSourcePage({ params }: PageProps) {
     <PageShell
       variant="content"
       title={source.title ?? "Source context"}
-      description="Original source context used by the project intelligence packet."
+      description={
+        emailMessages.length > 0
+          ? "Full email source content used by the project intelligence packet."
+          : "Original source context used by the project intelligence packet."
+      }
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {sourceContextHref ? (
@@ -195,7 +222,77 @@ export default async function IntelligenceSourcePage({ params }: PageProps) {
 
       <section className="space-y-3">
         <SectionRuleHeading label="Source Content" />
-        {readableContent ? (
+        {emailMessages.length > 0 ? (
+          <div className="rounded-md border border-border bg-background">
+            <div className="border-b border-border px-4 py-4">
+              <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                <MailOpen className="h-3.5 w-3.5" />
+                Email thread
+              </p>
+              <p className="mt-2 text-lg font-semibold text-foreground">
+                {source.title || emailMessages[0]?.subject || "Untitled email"}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {emailMessages.length} message{emailMessages.length === 1 ? "" : "s"} parsed. Open an item to read the clean body text.
+              </p>
+            </div>
+            <Accordion type="multiple" className="px-4">
+              {emailMessages.map((message, index) => (
+                <AccordionItem key={message.id} value={message.id}>
+                  <AccordionTrigger className="hover:no-underline">
+                    <span className="min-w-0 text-left">
+                      <span className="block truncate text-sm font-semibold text-foreground">
+                        {emailTitle(message, source.title, index)}
+                      </span>
+                      {emailSubtitle(message) ? (
+                        <span className="mt-1 block truncate text-xs font-normal text-muted-foreground">
+                          {emailSubtitle(message)}
+                        </span>
+                      ) : null}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <dl className="grid gap-4 pb-4 text-sm sm:grid-cols-2">
+                      {message.from ? (
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">From</dt>
+                          <dd className="mt-1 break-words text-foreground">{message.from}</dd>
+                        </div>
+                      ) : null}
+                      {message.to ? (
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">To</dt>
+                          <dd className="mt-1 break-words text-foreground">{message.to}</dd>
+                        </div>
+                      ) : null}
+                      {message.cc ? (
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Cc</dt>
+                          <dd className="mt-1 break-words text-foreground">{message.cc}</dd>
+                        </div>
+                      ) : null}
+                      {message.date ? (
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Date</dt>
+                          <dd className="mt-1 text-foreground">{formatDateTime(message.date)}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                    {message.body ? (
+                      <div className="max-w-none whitespace-pre-wrap text-sm leading-7 text-foreground">
+                        {message.body}
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        No email body text was captured for this message; only the message headers are available.
+                      </p>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        ) : readableContent ? (
           <div className="max-w-none whitespace-pre-wrap text-sm leading-7 text-foreground">
             {readableContent}
           </div>

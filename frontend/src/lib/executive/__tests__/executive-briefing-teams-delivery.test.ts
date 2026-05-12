@@ -64,7 +64,38 @@ const packet: BrandonDailyUpdatePacket = {
   operatingBrief: {
     startHere: ["Confirm the owner approval path first."],
     hasUnusualExecutiveLoad: false,
-    topExecutiveFocus: [],
+    topExecutiveFocus: [
+      {
+        item: {
+          title: "GC schedule recovery needs executive commitment",
+          summary: "The project team is trying to recover a two-week schedule slip.",
+          bullets: ["Two-week recovery plan is not yet committed by the field team."],
+          recommendedAction: "Decide whether to authorize weekend work.",
+          whyItMatters: "Schedule recovery protects the customer relationship and revenue timing.",
+          source: "Teams",
+          sourceDetail: "Field ops thread",
+          sourceId: "teams-1",
+          evidence: "Weekend work is the fastest recovery path.",
+          date: "May 6, 2026",
+          citations: [
+            {
+              source: "Teams",
+              sourceDetail: "Field ops thread",
+              sourceId: "teams-1",
+              evidence: "Weekend work is the fastest recovery path.",
+              date: "May 6, 2026",
+            },
+          ],
+          project: "983 Test Project",
+        },
+        score: 88,
+        materiality: ["Schedule", "Customer"],
+        lane: "scheduleField",
+        whatChanged: "The recovery path now needs executive commitment.",
+        whyItMatters: "A missed commitment could affect turnover and customer confidence.",
+        recommendedNextMove: "Ask the PM for the weekend-work cost and customer approval path.",
+      },
+    ],
     additionalMaterialItems: {
       cashMargin: [],
       scheduleField: [],
@@ -73,7 +104,36 @@ const packet: BrandonDailyUpdatePacket = {
       designPreconstruction: [],
       internalAccountability: [],
     },
-    projectRiskRadar: [],
+    projectRiskRadar: [
+      {
+        item: {
+          title: "Vendor delay could hit install date",
+          summary: "Vendor delivery has slipped without a confirmed recovery plan.",
+          bullets: ["Vendor delivery date is not confirmed."],
+          recommendedAction: "Get a confirmed ship date and backup vendor option.",
+          whyItMatters: "Late material can push installation and create field downtime.",
+          source: "Email",
+          sourceDetail: "Vendor delivery thread",
+          sourceId: "email-2",
+          evidence: "Vendor delivery date is not confirmed.",
+          date: "May 6, 2026",
+          citations: [
+            {
+              source: "Email",
+              sourceDetail: "Vendor delivery thread",
+              sourceId: "email-2",
+              evidence: "Vendor delivery date is not confirmed.",
+              date: "May 6, 2026",
+            },
+          ],
+          project: "983 Test Project",
+        },
+        score: 72,
+        materiality: ["Schedule", "Vendor"],
+        nextAction: "Have purchasing confirm ship date and escalation path.",
+        impact: "Install date and field productivity are exposed.",
+      },
+    ],
     cashAndMarginWatch: [],
     waitingOn: {
       brandonWaitingOn: [],
@@ -155,11 +215,11 @@ describe("executive briefing Teams delivery", () => {
     });
     expect(mockSendProactiveMessage).toHaveBeenCalledWith(
       "user-1",
-      expect.stringContaining("**Daily Brief -"),
+      expect.stringContaining("**CEO Operating Brief -"),
     );
     expect(mockSendProactiveMessage).toHaveBeenCalledWith(
       "user-1",
-      expect.stringContaining("**Needs Your Decision** (1)"),
+      expect.stringContaining("**Decisions Needed From You** (1)"),
     );
   });
 
@@ -168,13 +228,17 @@ describe("executive briefing Teams delivery", () => {
       now: new Date("2026-05-08T13:00:00.000Z"),
     });
 
-    expect(message).toContain(
-      "Good morning. **Daily Brief - Friday, May 8**",
-    );
-    expect(message).toContain("**Start Here**");
-    expect(message).toContain("Next: Confirm the approver and deadline.");
-    expect(message).toContain("Value: The project cannot move cleanly");
+    expect(message).toContain("Good morning. **CEO Operating Brief - Friday, May 8**");
+    expect(message).toContain("Snapshot: 1 decision for you");
+    expect(message).toContain("**Start Here - CEO Scan**");
+    expect(message).toContain("**Top Executive Focus** (1)");
+    expect(message).toContain("Best next move: Ask the PM for the weekend-work cost");
+    expect(message).toContain("**Decisions Needed From You** (1)");
+    expect(message).toContain("Decision needed: Confirm the approver and deadline.");
+    expect(message).toContain("Why it matters: The project cannot move cleanly");
     expect(message).toContain("[Email - Owner approval email - May 6, 2026]");
+    expect(message).toContain("**Risk Radar** (1)");
+    expect(message).toContain("Impact: Install date and field productivity are exposed.");
     expect(message).not.toContain("there");
   });
 
@@ -183,9 +247,7 @@ describe("executive briefing Teams delivery", () => {
       now: new Date("2026-05-08T22:00:00.000Z"),
     });
 
-    expect(message).toContain(
-      "Good evening, Brandon! **Daily Brief - Friday, May 8**",
-    );
+    expect(message).toContain("Good evening, Brandon. **CEO Operating Brief - Friday, May 8**");
     expect(message).not.toContain("Good morning");
   });
 });

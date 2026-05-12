@@ -7,6 +7,12 @@
       "skillPath": "skill/SKILL.md",
       "computedHash": "8cdf2e788eaca3af7d02026ef9cec55b506100a00d130f938e3fb1ad669c0ad0"
     },
+    "premium-frontend-design": {
+      "source": "kv0906/cc-skills",
+      "sourceType": "github",
+      "skillPath": "advanced-frontend-skill/SKILL.md",
+      "computedHash": "954f360f8e3c2c9ecc97857044ace2da990f519a4b4df8e2bd89c467bcf9273f"
+    },
     "rag-implementation": {
       "source": "wshobson/agents",
       "sourceType": "github",

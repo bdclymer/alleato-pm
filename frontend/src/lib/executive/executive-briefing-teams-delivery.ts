@@ -4,6 +4,9 @@ import {
   type BrandonBriefItem,
   type BriefCitation,
   type BrandonDailyUpdatePacket,
+  type ExecutiveOperatingBriefFocusItem,
+  type ExecutiveOperatingBriefRiskItem,
+  type ExecutiveOperatingBriefShortItem,
 } from "@/lib/executive/brandon-daily-update";
 import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
 import { CEO_EXECUTIVE_BRIEFING_RECAP_KIND } from "@/lib/executive/executive-briefing-workflow";
@@ -42,6 +45,10 @@ function compactText(value: string | null | undefined, maxLength = 180): string 
   return `${clipped.slice(0, lastSpace > 0 ? lastSpace : maxLength).trim()}...`;
 }
 
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 function formatCitation(citation: BriefCitation): string {
   const label = [citation.source, citation.sourceDetail, citation.date]
     .filter(Boolean)
@@ -49,48 +56,130 @@ function formatCitation(citation: BriefCitation): string {
   return citation.sourceUrl ? `[${label}](${citation.sourceUrl})` : label;
 }
 
-function itemActionLabel(section: "decision" | "waiting" | "signal"): string {
-  if (section === "waiting") return "Follow-up";
-  if (section === "signal") return "Watch";
-  return "Next";
+function firstCitation(item: BrandonBriefItem): BriefCitation {
+  return item.citations?.[0] ?? {
+    source: item.source,
+    sourceDetail: item.sourceDetail,
+    sourceUrl: item.sourceUrl,
+    sourceId: item.sourceId,
+    evidence: item.evidence,
+    date: item.date,
+  };
 }
 
-function formatItem(
+function ownerLine(item: BrandonBriefItem): string | null {
+  const owner = compactText(item.owner, 80);
+  const status = compactText(item.status, 80);
+  if (owner && status) return `Owner/status: ${owner} - ${status}`;
+  if (owner) return `Owner: ${owner}`;
+  if (status) return `Status: ${status}`;
+  return null;
+}
+
+function formatItemCard(
   item: BrandonBriefItem,
-  section: "decision" | "waiting" | "signal",
+  options: {
+    index: number;
+    actionLabel: string;
+    actionFallback: string;
+    whyFallback: string;
+  },
 ): string {
-  const action = compactText(item.recommendedAction, 180);
-  const why = compactText(item.whyItMatters, 180);
-  const source = item.citations?.[0]
-    ? formatCitation(item.citations[0])
-    : formatCitation({
-        source: item.source,
-        sourceDetail: item.sourceDetail,
-        sourceUrl: item.sourceUrl,
-        sourceId: item.sourceId,
-        evidence: item.evidence,
-        date: item.date,
-      });
-  const bullets = getExecutiveBriefBullets(item)
+  const project = compactText(item.project || "Company-wide", 90);
+  const action =
+    compactText(item.recommendedAction, 190) || options.actionFallback;
+  const why = compactText(item.whyItMatters, 190) || options.whyFallback;
+  const source = formatCitation(firstCitation(item));
+  const evidence = getExecutiveBriefBullets(item)
+    .filter((bullet) => !action || bullet !== action)
     .slice(0, 2)
-    .map((bullet) => `  - ${compactText(bullet, 190)}`);
+    .map((bullet) => `   - ${compactText(bullet, 190)}`);
+  const ownership = ownerLine(item);
   const lines = [
-    `- **${compactText(item.title, 120)}** - ${item.project}`,
-    ...bullets,
+    `${options.index}. **${project}: ${compactText(item.title, 105)}**`,
+    `   ${options.actionLabel}: ${action}`,
+    `   Why it matters: ${why}`,
+    ...evidence,
   ];
 
-  if (action) lines.push(`  ${itemActionLabel(section)}: ${action}`);
-  if (why) lines.push(`  Value: ${why}`);
-  lines.push(`  Source: ${source}`);
+  if (ownership) lines.push(`   ${ownership}`);
+  lines.push(`   Source: ${source}`);
 
   return lines.join("\n");
 }
 
-function formatSection(
+function formatItemSection(
   items: BrandonBriefItem[],
-  section: "decision" | "waiting" | "signal",
+  options: {
+    actionLabel: string;
+    actionFallback: string;
+    whyFallback: string;
+    maxItems?: number;
+  },
 ): string {
-  return items.map((item) => formatItem(item, section)).join("\n");
+  const maxItems = options.maxItems ?? 3;
+  const visible = items.slice(0, maxItems);
+  const lines = visible.map((item, index) =>
+    formatItemCard(item, {
+      ...options,
+      index: index + 1,
+    }),
+  );
+  const hiddenCount = items.length - visible.length;
+  if (hiddenCount > 0) {
+    lines.push(
+      `_Plus ${pluralize(hiddenCount, "additional item")} in the approved brief._`,
+    );
+  }
+  return lines.join("\n\n");
+}
+
+function formatFocusItem(item: ExecutiveOperatingBriefFocusItem, index: number) {
+  const project = compactText(item.item.project || "Company-wide", 80);
+  const materiality = item.materiality.slice(0, 3).join(", ");
+  return [
+    `${index}. **${project}: ${compactText(item.item.title, 100)}**`,
+    `   What changed: ${compactText(item.whatChanged || item.item.summary, 180)}`,
+    `   CEO reason: ${compactText(item.whyItMatters || item.item.whyItMatters, 180)}`,
+    `   Best next move: ${compactText(item.recommendedNextMove || item.item.recommendedAction, 180)}`,
+    materiality ? `   Materiality: ${materiality}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function formatShortItem(
+  item: ExecutiveOperatingBriefShortItem | ExecutiveOperatingBriefRiskItem,
+  index: number,
+) {
+  const project = compactText(item.item.project || "Company-wide", 80);
+  const riskImpact = "impact" in item && item.impact
+    ? `   Impact: ${compactText(item.impact, 170)}\n`
+    : "";
+  return `${index}. **${project}: ${compactText(item.item.title, 100)}**\n${riskImpact}   Next: ${compactText(item.nextAction || item.item.recommendedAction, 180)}`;
+}
+
+function formatShortItemList(
+  items: Array<ExecutiveOperatingBriefShortItem | ExecutiveOperatingBriefRiskItem>,
+  maxItems = 3,
+) {
+  return items
+    .slice(0, maxItems)
+    .map((item, index) => formatShortItem(item, index + 1))
+    .join("\n\n");
+}
+
+function formatSourceHealth(packet: BrandonDailyUpdatePacket): string | null {
+  const warnings = packet.retrievalNotes
+    .filter((note) => /fail|warning|stale|empty|zero/i.test(note))
+    .slice(0, 2);
+  const weakSources = packet.sourceCoverage
+    .filter((source) => source.status === "warning" || source.status === "empty")
+    .slice(0, 3)
+    .map((source) => `${source.label}: ${source.status}`);
+  const notes = [...weakSources, ...warnings].filter(Boolean);
+  if (notes.length === 0) return null;
+  return `Source health: ${notes.map((note) => compactText(note, 120)).join("; ")}`;
 }
 
 export function formatExecutiveBriefingTeamsMessage(
@@ -123,7 +212,7 @@ export function formatExecutiveBriefingTeamsMessage(
         ? "afternoon"
         : "evening";
   const greeting = firstName
-    ? `Good ${daypart}, ${firstName}!`
+    ? `Good ${daypart}, ${firstName}.`
     : `Good ${daypart}.`;
   const startHere =
     packet.operatingBrief?.startHere
@@ -131,50 +220,112 @@ export function formatExecutiveBriefingTeamsMessage(
       .filter(Boolean)
       .slice(0, 3) ?? [];
 
+  const decisionCount = needsBrandon.length;
+  const waitingCount = waitingOnOthers.length;
+  const signalCount = importantUpdates.length;
+  const topFocus = packet.operatingBrief?.topExecutiveFocus ?? [];
+  const riskRadar = packet.operatingBrief?.projectRiskRadar ?? [];
+  const cashWatch = packet.operatingBrief?.cashAndMarginWatch ?? [];
+  const peopleItems = packet.operatingBrief?.peopleAndAccountability ?? [];
+  const sourceHealth = formatSourceHealth(packet);
+
   const lines: string[] = [
-    `${greeting} **Daily Brief - ${today}**`,
-    `${totalItems} item${totalItems === 1 ? "" : "s"} from the last ${packet.windowDays} day${packet.windowDays === 1 ? "" : "s"}. Start with the decisions and follow-ups below.`,
+    `${greeting} **CEO Operating Brief - ${today}**`,
+    `Snapshot: ${pluralize(decisionCount, "decision")} for you, ${pluralize(waitingCount, "blocker")} waiting on others, ${pluralize(signalCount, "business signal")} from the last ${packet.windowDays} day${packet.windowDays === 1 ? "" : "s"}.`,
+    `Read this as: what needs your call, what can slip margin/schedule/customer trust, and who should move next.`,
     "",
   ];
 
   if (startHere.length > 0) {
-    lines.push("**Start Here**");
-    lines.push(startHere.map((item) => `- ${item}`).join("\n"));
+    lines.push("**Start Here - CEO Scan**");
+    lines.push(startHere.map((item, index) => `${index + 1}. ${item}`).join("\n"));
+    lines.push("");
+  }
+
+  if (topFocus.length > 0) {
+    lines.push(`**Top Executive Focus** (${topFocus.length})`);
+    lines.push(
+      topFocus
+        .slice(0, 3)
+        .map((item, index) => formatFocusItem(item, index + 1))
+        .join("\n\n"),
+    );
+    if (topFocus.length > 3) {
+      lines.push(`_Plus ${pluralize(topFocus.length - 3, "additional focus item")}._`);
+    }
     lines.push("");
   }
 
   if (needsBrandon.length > 0) {
-    lines.push(`**Needs Your Decision** (${needsBrandon.length})`);
-    lines.push(formatSection(needsBrandon, "decision"));
+    lines.push(`**Decisions Needed From You** (${needsBrandon.length})`);
+    lines.push(
+      formatItemSection(needsBrandon, {
+        actionLabel: "Decision needed",
+        actionFallback: "Decide the owner, commitment, or approval path.",
+        whyFallback: "This item needs Brandon-level direction before the team can move cleanly.",
+      }),
+    );
     lines.push("");
   }
 
   if (waitingOnOthers.length > 0) {
-    lines.push(`**Waiting on Others** (${waitingOnOthers.length})`);
-    lines.push(formatSection(waitingOnOthers, "waiting"));
+    lines.push(`**Blocked / Waiting on Others** (${waitingOnOthers.length})`);
+    lines.push(
+      formatItemSection(waitingOnOthers, {
+        actionLabel: "Follow-up",
+        actionFallback: "Assign an owner and deadline for the next response.",
+        whyFallback: "This can become schedule, billing, or customer-risk drift if nobody owns the follow-up.",
+      }),
+    );
     lines.push("");
   }
 
-  if (importantUpdates.length > 0) {
-    lines.push(`**Business Signals** (${importantUpdates.length})`);
-    lines.push(formatSection(importantUpdates, "signal"));
+  const riskItems = riskRadar.length > 0 ? riskRadar : cashWatch;
+  if (riskItems.length > 0) {
+    lines.push(`**Risk Radar** (${riskItems.length})`);
+    lines.push(formatShortItemList(riskItems));
+    lines.push("");
+  }
+
+  if (importantUpdates.length > 0 || peopleItems.length > 0) {
+    lines.push(`**Business Signals / Accountability** (${importantUpdates.length + peopleItems.length})`);
+    if (importantUpdates.length > 0) {
+      lines.push(
+        formatItemSection(importantUpdates, {
+          actionLabel: "Watch",
+          actionFallback: "Keep this visible until it is tied to an owner or next action.",
+          whyFallback: "This is a material business signal across projects, customers, vendors, or internal execution.",
+        }),
+      );
+    }
+    if (peopleItems.length > 0) {
+      if (importantUpdates.length > 0) lines.push("");
+      lines.push(formatShortItemList(peopleItems));
+    }
     lines.push("");
   }
 
   const recommendedMoves = packet.operatingBrief?.recommendedMoves ?? [];
   if (recommendedMoves.length > 0) {
-    lines.push(`**Recommended Moves** (${recommendedMoves.length})`);
+    lines.push("**Recommended Next Moves**");
     lines.push(
       recommendedMoves
-        .slice(0, 5)
+        .slice(0, 4)
         .map((move, index) => `${index + 1}. ${compactText(move, 180)}`)
         .join("\n"),
     );
     lines.push("");
   }
 
+  if (sourceHealth) {
+    lines.push(`_${sourceHealth}_`);
+    lines.push("");
+  }
+
   lines.push(
-    "Reply with the item title to dig in, or ask me to draft the follow-up.",
+    totalItems > 0
+      ? "Reply with a number or project name and I can pull the source detail or draft the follow-up."
+      : "No owner-level exceptions surfaced in this window. Ask for a project, cash, schedule, or customer drill-down if you want one.",
   );
 
   return lines.join("\n");

@@ -28,7 +28,7 @@ import type {
   InsightCardReviewFeedback,
 } from "@/lib/ai/intelligence/types";
 import {
-  parseReadableEmailThread,
+  cleanEmailText,
   type ReadableEmailMessage,
 } from "@/lib/email/readable-email";
 import { cn } from "@/lib/utils";
@@ -101,6 +101,39 @@ function isSameMeaning(a: string | null | undefined, b: string | null | undefine
   return first === second || first.includes(second) || second.includes(first);
 }
 
+function getComparableTokens(value: string | null | undefined): string[] {
+  const normalized = normalizeForCompare(value);
+  if (!normalized) return [];
+  return normalized.split(" ").filter((token) => token.length > 2);
+}
+
+function hasHighTokenOverlap(candidate: string, reference: string): boolean {
+  const candidateTokens = getComparableTokens(candidate);
+  const referenceTokens = new Set(getComparableTokens(reference));
+  if (candidateTokens.length < 12 || referenceTokens.size < 12) return false;
+
+  const matchingTokens = candidateTokens.filter((token) => referenceTokens.has(token)).length;
+  return matchingTokens / candidateTokens.length >= 0.72;
+}
+
+function isDuplicateOfCardContent(value: string, card: InsightCard): boolean {
+  const cardText = [
+    card.title,
+    card.summary,
+    card.whyItMatters,
+    card.nextAction,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    isSameMeaning(value, card.summary) ||
+    isSameMeaning(value, card.whyItMatters) ||
+    isSameMeaning(value, card.nextAction) ||
+    hasHighTokenOverlap(value, cardText)
+  );
+}
+
 function isGenericReviewText(value: string | null | undefined): boolean {
   return isSameMeaning(value, genericReviewWhyItMatters) || isSameMeaning(value, genericReviewNextAction);
 }
@@ -158,39 +191,6 @@ function getEvidenceText(evidence: InsightCard["evidence"][number]): string {
   return cleanInsightText(evidence.summary || evidence.excerpt || evidence.relevanceReason);
 }
 
-function limitEvidenceText(value: string): string {
-  if (value.length <= 900) return value;
-  return `${value.slice(0, 900).trim()}...`;
-}
-
-function getReadableEvidenceContent(
-  evidence: InsightCard["evidence"][number] & { displayText?: string },
-): string {
-  const candidates = [
-    evidence.displayText,
-    evidence.excerpt,
-    evidence.summary,
-    evidence.sourceContentPreview,
-    evidence.relevanceReason,
-  ];
-
-  for (const candidate of candidates) {
-    const text = cleanInsightText(candidate);
-    if (
-      !text ||
-      isRawSourceDump(text) ||
-      isSourceMetadataDump(text) ||
-      isGenericReviewText(text) ||
-      isSameMeaning(text, evidence.sourceTitle)
-    ) {
-      continue;
-    }
-    return limitEvidenceText(text);
-  }
-
-  return "";
-}
-
 function getUniqueEvidence(card: InsightCard): Array<InsightCard["evidence"][number] & { displayText: string }> {
   const summary = cleanInsightText(card.summary);
   const seen = new Set<string>();
@@ -198,7 +198,13 @@ function getUniqueEvidence(card: InsightCard): Array<InsightCard["evidence"][num
   return card.evidence.flatMap((evidence) => {
     const displayText = getEvidenceText(evidence);
     const normalized = normalizeForCompare(displayText);
-    if (!displayText || !normalized || isSameMeaning(displayText, summary) || isSameMeaning(displayText, card.title)) {
+    if (
+      !displayText ||
+      !normalized ||
+      isSameMeaning(displayText, summary) ||
+      isSameMeaning(displayText, card.title) ||
+      isDuplicateOfCardContent(displayText, card)
+    ) {
       return [{ ...evidence, displayText: "" }];
     }
     if (seen.has(normalized)) return [{ ...evidence, displayText: "" }];
@@ -231,14 +237,114 @@ function emailSubtitle(message: ReadableEmailMessage): string {
     .join(" - ");
 }
 
+const exactEmailHeaderPattern = /^(Subject|Date|Sent|From|To|Cc):\s*(.*)$/i;
+const exactEmailMessageStartPattern = /^(From:|On .+wrote:|-{2,}\s*Original Message\s*-{2,})/i;
+
+function normalizeExactEmailText(value: string | null | undefined): string {
+  return cleanEmailText(value)
+    .replace(/([^\n])\s+(From|Sent|Date|To|Cc|Subject):\s+/g, "$1\n$2: ")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]{3,}/g, "  ")
+    .trim();
+}
+
+function emptyEmailMessage(index: number): ReadableEmailMessage {
+  return {
+    id: `email-message-${index}`,
+    subject: "",
+    date: "",
+    from: "",
+    to: "",
+    cc: "",
+    body: "",
+  };
+}
+
+function normalizeExactHeaderKey(value: string): keyof Omit<ReadableEmailMessage, "id" | "body"> {
+  const key = value.toLowerCase();
+  return key === "sent" ? "date" : (key as keyof Omit<ReadableEmailMessage, "id" | "body">);
+}
+
+function parseExactEmailHeaderBlock(
+  lines: string[],
+  startIndex: number,
+  message: ReadableEmailMessage,
+): number {
+  let index = startIndex;
+  let lastHeader: keyof Omit<ReadableEmailMessage, "id" | "body"> | null = null;
+
+  for (; index < lines.length; index += 1) {
+    const rawLine = lines[index] ?? "";
+    const line = rawLine.trim();
+    if (!line) {
+      index += 1;
+      break;
+    }
+
+    const match = line.match(exactEmailHeaderPattern);
+    if (match) {
+      const key = normalizeExactHeaderKey(match[1]);
+      message[key] = match[2].trim();
+      lastHeader = key;
+      continue;
+    }
+
+    if (lastHeader && /^\s/.test(rawLine)) {
+      message[lastHeader] = `${message[lastHeader]} ${line}`.trim();
+      continue;
+    }
+
+    break;
+  }
+
+  return index;
+}
+
+function parseExactEmailThread(value: string | null | undefined): ReadableEmailMessage[] {
+  const text = normalizeExactEmailText(value);
+  if (!text) return [];
+
+  const lines = text.split("\n");
+  const messages: ReadableEmailMessage[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    while (index < lines.length && !lines[index]?.trim()) index += 1;
+    if (index >= lines.length) break;
+
+    const message = emptyEmailMessage(messages.length);
+    const firstLine = lines[index]?.trim() ?? "";
+
+    if (/^On .+wrote:$/i.test(firstLine)) {
+      message.from = firstLine.replace(/^On\s+/i, "").replace(/\s+wrote:$/i, "");
+      index += 1;
+    } else if (/^-{2,}\s*Original Message\s*-{2,}$/i.test(firstLine)) {
+      index += 1;
+      index = parseExactEmailHeaderBlock(lines, index, message);
+    } else if (exactEmailHeaderPattern.test(firstLine)) {
+      index = parseExactEmailHeaderBlock(lines, index, message);
+    }
+
+    const bodyStart = index;
+    while (index < lines.length) {
+      const line = lines[index]?.trim() ?? "";
+      if (index > bodyStart && exactEmailMessageStartPattern.test(line)) break;
+      index += 1;
+    }
+
+    message.body = lines.slice(bodyStart, index).join("\n").trim();
+    if (message.subject || message.date || message.from || message.to || message.cc || message.body) {
+      messages.push(message);
+    }
+  }
+
+  return messages;
+}
+
 function buildEmailMessages(evidence: InsightCard["evidence"][number]): ReadableEmailMessage[] {
   if (!isEmailEvidence(evidence)) return [];
 
-  const messages = [
-    ...parseReadableEmailThread(evidence.sourceContentPreview),
-    ...parseReadableEmailThread(evidence.summary),
-    ...parseReadableEmailThread(evidence.excerpt),
-  ];
+  const messages = parseExactEmailThread(evidence.sourceContentPreview);
   const seen = new Set<string>();
   return messages.filter((message) => {
     const key = `${message.from}|${message.date}|${message.subject}|${message.body}`.toLowerCase();
@@ -339,7 +445,7 @@ function EvidenceList({
       <div className="space-y-4">
         {evidence.map((item) => {
           const sourceHref = buildEvidenceSourceHref(projectId, item);
-          const sourceContent = getReadableEvidenceContent(item);
+          const sourceType = formatLabel(item.sourceType);
 
           return (
             <div key={item.id} className="space-y-2 border-t border-border pt-3 first:border-t-0 first:pt-0">
@@ -358,10 +464,8 @@ function EvidenceList({
                 {item.sourceOccurredAt ? (
                   <span>{formatDate(item.sourceOccurredAt)}</span>
                 ) : null}
+                <span>{sourceType}</span>
               </div>
-              {sourceContent ? (
-                <p className="text-sm leading-7 text-foreground">{sourceContent}</p>
-              ) : null}
               <EmailThread evidence={item} />
             </div>
           );

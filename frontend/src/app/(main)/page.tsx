@@ -53,6 +53,7 @@ const PROJECT_COLUMNS: ColumnConfig[] = [
   { id: "name", label: "Project", alwaysVisible: true },
   { id: "jobNumber", label: "Job Number", defaultVisible: true },
   { id: "client", label: "Client", defaultVisible: true },
+  { id: "budget", label: "Budget", defaultVisible: true },
   { id: "startDate", label: "Start Date", defaultVisible: true },
   { id: "state", label: "State", defaultVisible: true },
   { id: "phase", label: "Phase", defaultVisible: true },
@@ -471,6 +472,7 @@ export default function PortfolioPage() {
       phase,
       estRevenue: toNullableNumber(p["est revenue"]),
       estProfit: toNullableNumber(p["est profit"]),
+      budget: toNullableNumber(p.budget),
       category,
       type,
       onedrive,
@@ -672,6 +674,32 @@ export default function PortfolioPage() {
     }
   }, [defaultVisibleColumns, isAdmin, tableState]);
 
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const migrationKey = "homepage-projects:visibleColumns:add-budget-2026-05-12";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    tableState.setVisibleColumns((previousColumns) => {
+      if (previousColumns.includes("budget")) {
+        return previousColumns;
+      }
+
+      const clientIndex = previousColumns.indexOf("client");
+      if (clientIndex === -1) {
+        return [...previousColumns, "budget"];
+      }
+
+      return [
+        ...previousColumns.slice(0, clientIndex + 1),
+        "budget",
+        ...previousColumns.slice(clientIndex + 1),
+      ];
+    });
+
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState]);
+
   const activeFilters = tableState.activeFilters;
 
   const projectTabs = React.useMemo(() => {
@@ -786,17 +814,21 @@ export default function PortfolioPage() {
     {
       ...PROJECT_COLUMNS[2],
       render: (item) => (
-        <EditableCell
-          value={item.client || ""}
-          projectId={item.id}
-          field="client"
-          onSave={handleInlineSave}
-        />
+        <span className="text-foreground">{item.client || "-"}</span>
       ),
       sortValue: (item) => item.client ?? "",
     },
     {
       ...PROJECT_COLUMNS[3],
+      render: (item) => (
+        <span className="block text-right font-medium tabular-nums">
+          {formatCurrency(item.budget)}
+        </span>
+      ),
+      sortValue: (item) => item.budget ?? 0,
+    },
+    {
+      ...PROJECT_COLUMNS[4],
       render: (item) => (
         <EditableCell
           value={item.startDate || ""}
@@ -810,7 +842,7 @@ export default function PortfolioPage() {
       sortValue: (item) => item.startDate ?? "",
     },
     {
-      ...PROJECT_COLUMNS[4],
+      ...PROJECT_COLUMNS[5],
       render: (item) => (
         <EditableCell
           value={item.state || ""}
@@ -822,7 +854,7 @@ export default function PortfolioPage() {
       sortValue: (item) => item.state ?? "",
     },
     {
-      ...PROJECT_COLUMNS[5],
+      ...PROJECT_COLUMNS[6],
       render: (item) => (
         <EditableCell
           value={item.phase || ""}
@@ -835,7 +867,7 @@ export default function PortfolioPage() {
       sortValue: (item) => item.phase ?? "",
     },
     {
-      ...PROJECT_COLUMNS[6],
+      ...PROJECT_COLUMNS[7],
       render: (item) => (
         <EditableCell
           value={item.category || ""}
@@ -847,7 +879,7 @@ export default function PortfolioPage() {
       sortValue: (item) => item.category ?? "",
     },
     {
-      ...PROJECT_COLUMNS[7],
+      ...PROJECT_COLUMNS[8],
       render: (item) => (
         <EditableCell
           value={item.type || ""}
@@ -859,7 +891,7 @@ export default function PortfolioPage() {
       sortValue: (item) => item.type ?? "",
     },
     {
-      ...PROJECT_COLUMNS[8],
+      ...PROJECT_COLUMNS[9],
       render: (item) => {
         const url = item.onedrive;
         if (!url) return <span className="text-muted-foreground">-</span>;
@@ -880,7 +912,7 @@ export default function PortfolioPage() {
       sortValue: (item) => item.onedrive ?? "",
     },
     {
-      ...PROJECT_COLUMNS[9],
+      ...PROJECT_COLUMNS[10],
       render: (item) => (
         <a
           href={`/${item.id}/intelligence`}
@@ -895,7 +927,7 @@ export default function PortfolioPage() {
       sortValue: () => "",
     },
     {
-      ...PROJECT_COLUMNS[10],
+      ...PROJECT_COLUMNS[11],
       render: (item) => (
         <EditableCell
           value={item.access || ""}

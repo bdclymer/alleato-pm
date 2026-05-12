@@ -536,6 +536,23 @@ def import_rows(
         )
         warnings.extend(f"Row {index}: {warning}" for warning in project_budget_code_warnings)
 
+        existing_budget_lines = client.select(
+            "budget_lines",
+            {
+                "select": "id",
+                "project_id": f"eq.{project_id}",
+                "cost_code_id": f"eq.{cost_code_id}",
+                "cost_type_id": f"eq.{cost_type_id}",
+                "limit": "1",
+            },
+        )
+        if existing_budget_lines:
+            skipped_duplicates += 1
+            warnings.append(
+                f'Row {index}: {"Would skip" if dry_run else "Skipped"} duplicate budget line for cost code "{cost_code_id}" and cost type "{row.cost_type}".'
+            )
+            continue
+
         if dry_run:
             imported_count += 1
             continue
@@ -570,12 +587,23 @@ def import_rows(
                 continue
             raise
 
-    total_budget, budget_warning = update_project_budget_summary(client, project_id)
-    if budget_warning:
-        warnings.append(
-            "Project budget summary field was not updated cleanly. "
-            f"Computed total is {total_budget:.2f}. Details: {budget_warning}"
+    if dry_run:
+        existing_budget_lines = client.select(
+            "budget_lines",
+            {
+                "select": "original_amount",
+                "project_id": f"eq.{project_id}",
+                "limit": "10000",
+            },
         )
+        total_budget = sum(parse_number(row.get("original_amount")) for row in existing_budget_lines)
+    else:
+        total_budget, budget_warning = update_project_budget_summary(client, project_id)
+        if budget_warning:
+            warnings.append(
+                "Project budget summary field was not updated cleanly. "
+                f"Computed total is {total_budget:.2f}. Details: {budget_warning}"
+            )
 
     return {
         "imported_count": imported_count,

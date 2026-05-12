@@ -62,6 +62,18 @@ export function ProjectsTable({
   onProjectClick,
   viewType = "list",
 }: ProjectsTableProps) {
+  const formatCurrency = React.useCallback((value: number | null | undefined) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      return "-";
+    }
+
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+  }, []);
+
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -191,12 +203,30 @@ export function ProjectsTable({
         </Button>
       ),
       cell: ({ row }) => (
-        <EditableCell
-          value={row.getValue("client")}
-          onSave={(value) => updateProject(row.original.id, "client", value)}
-        />
+        <span className="text-foreground">
+          {(row.getValue("client") as string | null) || "-"}
+        </span>
       ),
       size: 180,
+    },
+    {
+      accessorKey: "budget",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          className="ml-auto flex h-auto items-center gap-1 p-0 text-right hover:text-foreground"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Budget
+          <ArrowUpDown className="h-3.5 w-3.5" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="text-right font-medium tabular-nums text-foreground">
+          {formatCurrency(row.original.budget)}
+        </div>
+      ),
+      size: 130,
     },
     {
       accessorKey: "startDate",
@@ -439,6 +469,10 @@ export function ProjectsTable({
                             {project.client}
                           </div>
                         )}
+
+                        <div className="text-sm font-medium tabular-nums text-foreground">
+                          {formatCurrency(project.budget)}
+                        </div>
                       </div>
                     </Link>
                   </div>
@@ -606,6 +640,9 @@ export function ProjectsTable({
                     {project.state && (
                       <span className="text-muted-foreground">{project.state}</span>
                     )}
+                    <span className="font-medium tabular-nums text-foreground">
+                      {formatCurrency(project.budget)}
+                    </span>
                   </div>
                 </div>
               );

@@ -838,6 +838,8 @@ function TaskDetail({
   onBack,
   projects,
   projectsLoading,
+  users,
+  usersLoading,
 }: {
   task: TasksRow;
   updatingId: string | null;
@@ -848,7 +850,21 @@ function TaskDetail({
   onBack?: () => void;
   projects: ProjectOption[];
   projectsLoading: boolean;
+  users: UserOption[];
+  usersLoading: boolean;
 }) {
+  const selectedAssigneeValue = task.assignee_person_id
+    ? `person:${task.assignee_person_id}`
+    : task.assignee_email
+      ? `email:${task.assignee_email.toLowerCase()}`
+      : "__unassigned__";
+  const matchedAssigneeUser =
+    users.find((u) => u.person_id && task.assignee_person_id && u.person_id === task.assignee_person_id) ??
+    users.find(
+      (u) => u.email && task.assignee_email && u.email.toLowerCase() === task.assignee_email?.toLowerCase(),
+    ) ??
+    null;
+  const fallbackAssigneeLabel = task.assignee_name || task.assignee_email || null;
   const [isEditingText, setIsEditingText] = useState(false);
   const [taskTextDraft, setTaskTextDraft] = useState(task.description || task.title || "");
   const taskTextInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -1102,11 +1118,60 @@ function TaskDetail({
             </TaskDetailRow>
 
             <TaskDetailRow label="Assigned">
-              {task.assignee_name ? (
-                <span className="text-sm text-foreground">{task.assignee_name}</span>
-              ) : (
-                <span className="text-sm text-muted-foreground">Unassigned</span>
-              )}
+              <Select
+                value={selectedAssigneeValue}
+                onValueChange={(value) => {
+                  if (!task.id) return;
+                  if (value === "__unassigned__") {
+                    onUpdateTask(
+                      task.id,
+                      { assignee_user_id: null },
+                      {
+                        assignee_person_id: null,
+                        assignee_name: null,
+                        assignee_email: null,
+                      },
+                    );
+                    return;
+                  }
+                  const nextUser = users.find((u) => `person:${u.person_id ?? ""}` === value);
+                  if (!nextUser) return;
+                  onUpdateTask(
+                    task.id,
+                    { assignee_user_id: nextUser.id },
+                    {
+                      assignee_person_id: nextUser.person_id ?? null,
+                      assignee_name: userOptionLabel(nextUser),
+                      assignee_email: nextUser.email ?? null,
+                    },
+                  );
+                }}
+                disabled={updatingId === task.id || usersLoading}
+              >
+                <SelectTrigger className={cn(GHOST_SELECT_CLASS, "max-w-xs")}>
+                  <SelectValue
+                    placeholder={
+                      usersLoading
+                        ? "Loading…"
+                        : fallbackAssigneeLabel ?? "Unassigned"
+                    }
+                  >
+                    {matchedAssigneeUser
+                      ? userOptionLabel(matchedAssigneeUser)
+                      : fallbackAssigneeLabel ?? undefined}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unassigned__">Unassigned</SelectItem>
+                  {users
+                    .filter((u) => u.person_id)
+                    .map((user) => (
+                      <SelectItem key={user.id} value={`person:${user.person_id}`}>
+                        {userOptionLabel(user)}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </TaskDetailRow>
 
             <TaskDetailRow label="Project">
@@ -1212,6 +1277,9 @@ function TaskDetail({
                   projectId={taskProjectId}
                   taskId={task.id}
                   taskSnapshot={taskFeedbackSnapshot}
+                  onTrivial={() => {
+                    if (task.id) onDelete(task.id);
+                  }}
                 />
               </TaskDetailRow>
             )}
@@ -1950,7 +2018,7 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
               <div
                 ref={containerRef}
                 data-task-split-view
-                className="flex h-[calc(100dvh-12rem)] min-h-96 overflow-hidden border-t border-border/40"
+                className="flex min-h-0 flex-1 overflow-hidden border-t border-border/40"
               >
                 {/* Left: task list */}
                 <div
@@ -2154,6 +2222,8 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
                       onDelete={deleteItem}
                       projects={projects}
                       projectsLoading={projectsLoading}
+                      users={users}
+                      usersLoading={usersLoading}
                     />
                   )}
                 </div>
@@ -2171,6 +2241,8 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
                       onBack={() => setMobileShowDetail(false)}
                       projects={projects}
                       projectsLoading={projectsLoading}
+                      users={users}
+                      usersLoading={usersLoading}
                     />
                   </div>
                 )}
@@ -2252,6 +2324,8 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
               }}
               projects={projects}
               projectsLoading={projectsLoading}
+              users={users}
+              usersLoading={usersLoading}
             />
           )}
         </SheetContent>

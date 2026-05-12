@@ -101,6 +101,60 @@ RULES:
 - OWNER RULE: Set `owner` to the exact sender name from the message where the commitment was made (the `sender` field before the colon in each message line). If "Glenn Ducharme: I'll send the contract today", owner is "Glenn Ducharme". Never guess an owner from message content alone — if you cannot trace the task to a specific message sender, set owner to null and the task will be discarded.
 - ASSIGNED-BY RULE: When one person clearly directs another person to do work, set `assigned_by` to the sender who gave the direction. If the task is a self-commitment, set `assigned_by` to null.
 
+TASK PHRASING RULES (CRITICAL — applied to `task_text`):
+- Write task_text as an IMPERATIVE ACTION the owner must take, NOT as a third-person description of what happened in the conversation.
+- Start with a verb. Be specific about the artifact, deliverable, or next step.
+- Do NOT narrate the conversation. The owner already knows what was said — they need to know what to do.
+- Keep it short (under ~80 chars when possible). One sentence. No "X asked Y about Z" framing.
+- If you would naturally write "X asked / mentioned / suggested / noted / discussed / raised...", REWRITE it as the verb the owner must perform.
+
+REWRITE EXAMPLES (bad → good):
+- Bad: "Brandon Clymer asked Katie Conner for the status of payment on her last two invoices, which are over 60 days late."
+  Good: "Escalate Katie Conner's overdue payment (2 invoices, 60+ days past due)."
+- Bad: "Glenn mentioned that the COI from Bassett is missing additional insured language."
+  Good: "Request updated COI from Bassett naming Alleato as additional insured."
+- Bad: "Sarah brought up that the door swing on drawing A-201 looks wrong."
+  Good: "Submit RFI to architect to confirm door swing direction on drawing A-201."
+- Bad: "The team discussed needing to resequence the installer schedule."
+  Good: "Resequence installer schedule and circulate updated timeline."
+- Bad: "Mark said he'd follow up on the change order pricing."
+  Good: "Follow up on change order pricing." (owner: Mark)
+
+TASK-WORTHINESS RULES (CRITICAL — applied to the `tasks` array):
+A task belongs in our PM system only if a project manager would track it on a list. Before emitting any task, it must pass ALL of these checks:
+1. Produces an artifact or persistent outcome (a document, a sent file, a scheduled inspection, a submitted PO, a confirmed price). NOT a momentary in-meeting micro-action.
+2. Takes more than ~2 minutes of focused work outside the conversation. If it can be done in-chat in under 2 minutes (forward an invite, accept a meeting, mute a mic, click a link), DO NOT emit a task.
+3. Is about project work — not meeting logistics. REJECT anything about: accepting/declining/forwarding/canceling calendar invites or Teams invites, joining a call, sharing a meeting link, choosing a meeting time, sending a calendar reminder, muting/unmuting, screen sharing.
+4. Has a real owner who must follow through later. "Someone should..." or generic suggestions do NOT qualify.
+5. Survives the call. If it's only relevant to the next 5 minutes of the conversation, it's not a task.
+
+When in doubt, DO NOT emit a task. We prefer missing a real task to emitting a trivial one. Trivial tasks erode user trust in the entire feature.
+
+INTERNAL-OWNER RULE (CRITICAL):
+Tasks may ONLY be assigned to internal Alleato employees. If the action is something a CLIENT, OWNER, SUBCONTRACTOR, VENDOR, ARCHITECT, ENGINEER, INSPECTOR, or any other external party should do, DO NOT emit it in the `tasks` array. Instead emit it as an `insight` with `insight_type=task` and an appropriate severity — it will show up as project intelligence so an internal PM can decide how to follow up (typically by chasing, escalating, or reminding the external party). A good rule of thumb: if the owner's company is not Alleato, it goes in `insights`, not `tasks`.
+
+Examples:
+- Vendor needs to send updated COI → insight with recommended_action "Chase Bassett for updated COI", NOT a task assigned to the vendor.
+- Architect needs to respond to RFI → insight with recommended_action "Follow up with architect on RFI #042", NOT a task assigned to the architect.
+- Client needs to pay an overdue invoice → insight with recommended_action "Escalate Katie Conner's overdue payment (60+ days)", NOT a task for Katie.
+
+When you rewrite an external action into an internal one, change the verb to what the Alleato employee must do (chase, escalate, remind, follow up, request, push) and set the owner to the Alleato employee responsible — not the external party.
+
+NEGATIVE EXAMPLES — never emit tasks like these:
+- "Mark suggested Brandon cancel his own Teams invite and accept the Teams invite Mark forwarded." (meeting logistics, micro-action, no artifact)
+- "Forward the Wednesday 3pm ET first meeting invite to Brandon Clymer and Kebba Mass." (calendar forwarding, sub-2-minute, no persistent outcome)
+- "Open the link Glenn shared." (in-conversation micro-action)
+- "Reply to Sarah's message." (conversational, not a tracked deliverable)
+- "Confirm you got the file." (acknowledgment, not work)
+- "Add John to the chat." (chat administration, not project work)
+
+POSITIVE EXAMPLES — these ARE tasks:
+- "Send the signed subcontract to Bassett Sprinkler by Friday."
+- "Issue PO for in-rack sprinklers once Brandon approves pricing."
+- "Submit RFI #042 about door swing direction to the architect."
+- "Schedule fire marshal inspection for the week of June 10."
+- "Revise the budget forecast for cost code 03-300 and re-submit for approval."
+
 JSON SCHEMA:
 {TEAMS_COMPILER_JSON_SCHEMA}
 """.strip()
@@ -151,6 +205,50 @@ RULES:
 - Identify internal Alleato initiatives by name: "Alleato AI", "JobPlanner", "Financial workflow".
 - OWNER RULE: Set `owner` to the exact name from the `from:` field of the message where the commitment was made. If the delimiter says "from: Glenn Ducharme <g@alleato.com>" and Glenn wrote "I'll submit the RFI Monday", owner is "Glenn Ducharme". Never guess from message content alone — if you cannot trace the task to a specific sender, set owner to null and the task will be discarded.
 - ASSIGNED-BY RULE: When one person clearly directs another person to do work, set `assigned_by` to the sender who gave the direction. If the task is a self-commitment, set `assigned_by` to null.
+
+TASK PHRASING RULES (CRITICAL — applied to `task_text`):
+- Write task_text as an IMPERATIVE ACTION the owner must take, NOT as a third-person description of what happened in the conversation.
+- Start with a verb. Be specific about the artifact, deliverable, or next step.
+- Do NOT narrate the conversation. The owner already knows what was said — they need to know what to do.
+- Keep it short (under ~80 chars when possible). One sentence. No "X asked Y about Z" framing.
+- If you would naturally write "X asked / mentioned / suggested / noted / discussed / raised...", REWRITE it as the verb the owner must perform.
+
+REWRITE EXAMPLES (bad → good):
+- Bad: "Brandon Clymer asked Katie Conner for the status of payment on her last two invoices, which are over 60 days late."
+  Good: "Escalate Katie Conner's overdue payment (2 invoices, 60+ days past due)."
+- Bad: "Glenn mentioned that the COI from Bassett is missing additional insured language."
+  Good: "Request updated COI from Bassett naming Alleato as additional insured."
+- Bad: "Sarah brought up that the door swing on drawing A-201 looks wrong."
+  Good: "Submit RFI to architect to confirm door swing direction on drawing A-201."
+- Bad: "The team discussed needing to resequence the installer schedule."
+  Good: "Resequence installer schedule and circulate updated timeline."
+- Bad: "Mark said he'd follow up on the change order pricing."
+  Good: "Follow up on change order pricing." (owner: Mark)
+
+TASK-WORTHINESS RULES (CRITICAL — applied to the `tasks` array):
+A task belongs in our PM system only if a project manager would track it on a list. Before emitting any task, it must pass ALL of these checks:
+1. Produces an artifact or persistent outcome (a document, a sent file, a scheduled inspection, a submitted PO, a confirmed price). NOT a momentary micro-action.
+2. Takes more than ~2 minutes of focused work. If it can be done by clicking one button in an email client (forward, accept, decline, RSVP), DO NOT emit a task.
+3. Is about project work — not email/meeting logistics. REJECT anything about: forwarding/accepting/declining calendar invites, scheduling a quick sync, sending a meeting link, RSVPing, replying to confirm receipt.
+4. Has a real owner who must follow through later. Generic suggestions or "someone should..." do NOT qualify.
+5. Is not pure correspondence courtesy ("thanks for the update", "got it", "will review and circle back" without a concrete deliverable).
+
+When in doubt, DO NOT emit a task. We prefer missing a real task to emitting a trivial one.
+
+NEGATIVE EXAMPLES — never emit tasks like these:
+- "Forward the Wednesday 3pm ET meeting invite to Brandon and Kebba." (calendar forwarding, sub-2-minute, no persistent outcome)
+- "Cancel your Teams invite and accept the new one Mark forwarded." (meeting logistics, micro-action)
+- "RSVP to the kickoff invite." (sub-2-minute calendar action)
+- "Reply to confirm you received the file."
+- "Add Sarah to the email thread."
+- "Read the attached drawing." (consumption, not a tracked deliverable)
+
+POSITIVE EXAMPLES — these ARE tasks:
+- "Send the signed subcontract to Bassett Sprinkler by Friday."
+- "Issue PO for in-rack sprinklers once Brandon approves pricing."
+- "Submit RFI #042 about door swing direction to the architect."
+- "Provide updated COI naming Alleato as additional insured before mobilization."
+- "Revise pay app #6 to remove duplicate retention line and resubmit."
 
 JSON SCHEMA:
 {TEAMS_COMPILER_JSON_SCHEMA}

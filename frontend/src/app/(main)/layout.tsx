@@ -10,6 +10,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
 import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
 import { AiChatSidebarPanel } from "@/components/ai-assistant/ai-chat-sidebar";
+import { GlobalAiWidget } from "@/components/ai-assistant/global-ai-widget";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 import { WelcomeOnboarding } from "@/components/onboarding/WelcomeOnboarding";
 import { useProject } from "@/contexts/project-context";
@@ -22,6 +23,8 @@ function Overlays() {
   const { projectId } = useProject();
   const { userType, isLoading } = useProjectPermissions(projectId);
   const isSubcontractor = userType?.toLowerCase() === "subcontractor";
+  const pathname = usePathname();
+  const isAiAssistant = pathname?.startsWith("/ai-assistant");
 
   return (
     <React.Suspense fallback={null}>
@@ -32,6 +35,7 @@ function Overlays() {
           suppressAutoOpen={isSubcontractor}
           suppressStorageValue="skipped:subcontractor"
         />
+        {!isAiAssistant && <GlobalAiWidget />}
       </div>
     </React.Suspense>
   );
@@ -59,6 +63,9 @@ export default function MainLayout({
           <CreateProjectDevConfigProvider>
             {children}
           </CreateProjectDevConfigProvider>
+          <React.Suspense fallback={null}>
+            <GlobalAiWidget />
+          </React.Suspense>
         </SidebarInset>
       </SidebarProvider>
     );

@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { UnifiedTablePage } from "@/components/tables/unified";
+import { UnifiedTablePage, type ViewMode } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +13,6 @@ import {
   formatDate,
   getStatusVariant,
 } from "./direct-costs-table-utils";
-
-type ViewMode = "table" | "card" | "list";
 
 type TabItem = {
   label: string;

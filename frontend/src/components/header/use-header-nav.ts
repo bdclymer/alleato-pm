@@ -10,6 +10,7 @@ import {
   type HeaderNavigationTool,
 } from "@/lib/navigation-config";
 import { apiFetch } from "@/lib/api-client";
+import { useProject } from "@/contexts/project-context";
 import { createClient } from "@/lib/supabase/client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
@@ -18,6 +19,19 @@ interface Project {
   name: string;
   "job number": string | null;
   phase: string | null;
+}
+
+function normalizeProject(project: Project | null | undefined): Project | null {
+  if (!project) return null;
+
+  const id = Number(project.id);
+  if (!Number.isFinite(id)) return null;
+
+  return {
+    ...project,
+    id,
+    name: typeof project.name === "string" ? project.name.trim() : "",
+  };
 }
 
 interface Breadcrumb {
@@ -50,6 +64,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = useSearchParams()!;
+  const { selectedProject } = useProject();
   const reportHeaderNavFailure = useCallback(
     (operation: string, error: unknown, metadata?: Record<string, unknown>) => {
       reportNonCriticalFailure({
@@ -121,6 +136,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
     }
     return null;
   }, [pathname, searchParams]);
+  const contextProject = useMemo(() => {
+    const normalizedProject = normalizeProject(selectedProject as Project | null);
+    if (!normalizedProject || normalizedProject.id !== projectId) return null;
+    return normalizedProject;
+  }, [projectId, selectedProject]);
+  const breadcrumbProject = currentProject ?? contextProject;
 
   // Determine the currently active tool from the URL
   const activeToolName = useMemo(() => {
@@ -364,7 +385,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
 
       // Check if this segment is a project ID (numeric)
       if (index === 0 && /^\d+$/.test(segment)) {
-        label = currentProject?.name || `Project ${segment}`;
+        label = breadcrumbProject?.name || `Project ${segment}`;
         href = `/${segment}/home`;
       } else if (isGlobalMeetingDetailRoute && index === 1) {
         label = globalMeetingTitle || "Meeting";
@@ -459,7 +480,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, commitmentCoTitle, invoiceTitle, rfiTitle, submittalTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle, progressReportTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, breadcrumbProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, commitmentCoTitle, invoiceTitle, rfiTitle, submittalTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle, progressReportTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -1528,8 +1549,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
       if (projectId) {
         try {
           const project = await apiFetch<Project>(`/api/projects/${projectId}`);
-          if (project?.id === projectId) {
-            setCurrentProject(project);
+          const normalizedProject = normalizeProject(project);
+          if (normalizedProject?.id === projectId) {
+            setCurrentProject(normalizedProject);
           }
         } catch (error) {
           reportHeaderNavFailure("load-current-project", error, { projectId });

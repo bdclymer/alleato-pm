@@ -61,6 +61,7 @@ const packet: ClientProjectIntelligencePacket = {
       sourceCount: 1,
       metadata: {},
       evidence: [],
+      latestFeedback: null,
     },
     {
       id: "card-2",
@@ -77,6 +78,7 @@ const packet: ClientProjectIntelligencePacket = {
       sourceCount: 1,
       metadata: {},
       evidence: [],
+      latestFeedback: null,
     },
   ],
 };

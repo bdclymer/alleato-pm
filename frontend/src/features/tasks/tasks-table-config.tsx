@@ -2,6 +2,7 @@ import { ArrowUpRight, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   TableDateValue,
+  TableAvatarUsers,
   TableRowActionsMenu,
   TableTagBadge,
   type TableColumn,
@@ -95,9 +96,14 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
         return {
           ...column,
           render: (item) => (
-            <span className="block max-w-44 text-sm text-foreground truncate">
-              {item.assignee_name || "Unassigned"}
-            </span>
+            item.assignee_name ? (
+              <span className="flex min-w-0 max-w-56 items-center gap-2">
+                <TableAvatarUsers users={[item.assignee_name]} maxVisible={1} />
+                <span className="truncate text-sm text-foreground">{item.assignee_name}</span>
+              </span>
+            ) : (
+              <span className="text-sm text-muted-foreground">Unassigned</span>
+            )
           ),
           sortValue: (item) => item.assignee_name ?? "",
           sortable: true,

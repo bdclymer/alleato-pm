@@ -16,6 +16,7 @@ from typing import Any, Dict, List
 
 from ..supabase_helpers import get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
+from ..task_assignees import TaskAssigneeResolver
 from .models import DecisionItem, OpportunityItem, RiskItem, TaskItem
 from . import llm
 
@@ -465,6 +466,17 @@ def _upsert_task(
             resolved_project_id = int(project_ids[0])
         except (TypeError, ValueError):
             resolved_project_id = None
+
+    # Only employees can own tasks. Skip external owners.
+    assignee = TaskAssigneeResolver(client).resolve(task.assignee, task.assignee_email)
+    if not assignee.is_employee:
+        logger.info(
+            "Skipping non-employee task: assignee=%r person_type=%r description=%r",
+            task.assignee,
+            assignee.person_type,
+            (task.description or "")[:120],
+        )
+        return
 
     data = {
         "metadata_id": metadata_id,

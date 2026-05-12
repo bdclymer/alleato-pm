@@ -9,6 +9,11 @@ from typing import Any
 _SPACE_RE = re.compile(r"\s+")
 _NAME_CHARS_RE = re.compile(r"[^a-z0-9\s@._+-]")
 
+# Person types that count as internal Alleato staff and CAN own tasks.
+# Anything else (contacts, vendors, subs, clients) gets routed to project
+# intelligence instead of the tasks table.
+INTERNAL_PERSON_TYPES: frozenset[str] = frozenset({"employee"})
+
 
 def clean_text(value: Any) -> str | None:
     if value is None:
@@ -40,6 +45,12 @@ class ResolvedAssignee:
     email: str | None
     method: str
     confidence: float
+    person_type: str | None = None
+
+    @property
+    def is_employee(self) -> bool:
+        """True only if the assignee resolved to an internal Alleato employee."""
+        return (self.person_type or "").lower() in INTERNAL_PERSON_TYPES
 
     def row_values(self) -> dict[str, Any]:
         return {
@@ -52,6 +63,8 @@ class ResolvedAssignee:
         return {
             "assignee_resolution_method": self.method,
             "assignee_resolution_confidence": self.confidence,
+            "assignee_person_type": self.person_type,
+            "assignee_is_employee": self.is_employee,
         }
 
 
@@ -71,7 +84,7 @@ class TaskAssigneeResolver:
         while True:
             result = (
                 self._supabase.table("people")
-                .select("id,first_name,last_name,email")
+                .select("id,first_name,last_name,email,person_type")
                 .range(start, start + page_size - 1)
                 .execute()
             )
@@ -118,6 +131,7 @@ class TaskAssigneeResolver:
             email=source_email,
             method="unresolved",
             confidence=0.0,
+            person_type=None,
         )
 
 
@@ -141,4 +155,5 @@ def _resolved(
         email=normalize_email(person.get("email")) or fallback_email,
         method=method,
         confidence=confidence,
+        person_type=clean_text(person.get("person_type")),
     )

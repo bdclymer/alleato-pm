@@ -358,6 +358,17 @@ def run_task_extraction(
                 continue
 
             assignee = resolver.resolve(task.get("assignee_name"), task.get("assignee_email"))
+            # Only employees can own tasks. Skip external owners — they should
+            # surface as project intelligence, not assigned work.
+            if not assignee.is_employee:
+                logger.info(
+                    "[TaskExtraction] Skipping non-employee task: assignee=%r person_type=%r title=%r",
+                    task.get("assignee_name"),
+                    assignee.person_type,
+                    task.get("title"),
+                )
+                skipped += 1
+                continue
             row = {
                 "title": clean_text(task.get("title")),
                 "description": clean_text(task.get("description")) or clean_text(task.get("title")),

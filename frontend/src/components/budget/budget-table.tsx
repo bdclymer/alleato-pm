@@ -342,10 +342,15 @@ function getBudgetLineLabel(lineItem: BudgetLineItem) {
     : null;
   const fallbackDescription = `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}${costType ? ` (${costType})` : ""}`;
   const normalizedDescription = description.trim();
+  const isRedundantWithCode = Boolean(
+    costCodeDescription &&
+    normalizedDescription.toLowerCase().startsWith(costCodeDescription.toLowerCase()),
+  );
   const showDescription = Boolean(
     normalizedDescription &&
     normalizedDescription !== codeLabel &&
-    normalizedDescription !== fallbackDescription,
+    normalizedDescription !== fallbackDescription &&
+    !isRedundantWithCode,
   );
 
   return {

@@ -40,6 +40,7 @@ export interface Project {
   startDate?: string | null;
   estRevenue?: number | null;
   estProfit?: number | null;
+  budget?: number | null;
   notes: string;
   isFlagged?: boolean;
 }

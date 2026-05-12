@@ -104,6 +104,7 @@ export default function ProjectsPage() {
               phase,
               estRevenue: toNullableNumber(p["est revenue"]),
               estProfit: toNullableNumber(p["est profit"]),
+              budget: toNullableNumber(p.budget),
               category,
               onedrive: toNullableString(p.onedrive),
               // Legacy fields for backward compatibility
@@ -180,11 +181,12 @@ export default function ProjectsPage() {
       return;
     }
 
-    const headers = ["Job #", "Name", "Client", "Phase", "Category", "Status", "Start Date", "State", "Est. Revenue", "Est. Profit"];
+    const headers = ["Job #", "Name", "Client", "Budget", "Phase", "Category", "Status", "Start Date", "State", "Est. Revenue", "Est. Profit"];
     const rows = filteredProjects.map((p) => [
       p.jobNumber,
       p.name,
       p.client ?? "",
+      p.budget != null ? String(p.budget) : "",
       p.phase ?? "",
       p.category ?? "",
       p.status,
@@ -282,6 +284,7 @@ export default function ProjectsPage() {
           phase: p.phase || "",
           estRevenue: p["est revenue"] || null,
           estProfit: p["est profit"] || null,
+          budget: typeof p.budget === "number" ? p.budget : null,
           category: p.category || "",
           onedrive: p.onedrive || null,
           projectNumber: p["job number"] || p.id.toString(),

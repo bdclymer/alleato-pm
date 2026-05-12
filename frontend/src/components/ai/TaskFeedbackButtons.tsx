@@ -32,6 +32,12 @@ interface TaskFeedbackButtonsProps {
   taskSnapshot: TaskSnapshot;
   sessionId?: string | null;
   className?: string;
+  /**
+   * Called after the user submits feedback with reasonCategory="trivial".
+   * Intended for the caller to delete the task — a trivial task is one that
+   * should never have existed, so leaving it open clutters the inbox.
+   */
+  onTrivial?: () => void;
 }
 
 export function TaskFeedbackButtons({
@@ -40,6 +46,7 @@ export function TaskFeedbackButtons({
   taskSnapshot,
   sessionId,
   className,
+  onTrivial,
 }: TaskFeedbackButtonsProps) {
   const { signal, isSubmitting, submitFeedback } = useTaskFeedback({
     projectId,
@@ -77,12 +84,16 @@ export function TaskFeedbackButtons({
     }
 
     setBadReasonOpen(false);
+    const submittedCategory = badReasonCategory;
     try {
       await submitFeedback(
         "bad",
         badReason.trim() || undefined,
-        badReasonCategory,
+        submittedCategory,
       );
+      if (submittedCategory === "trivial" && onTrivial) {
+        onTrivial();
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to record feedback");
     }
@@ -119,7 +130,11 @@ export function TaskFeedbackButtons({
             <ThumbsDown className="h-3.5 w-3.5" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-3">
+        <PopoverContent
+          align="end"
+          collisionPadding={16}
+          className="w-72 p-3"
+        >
           <p className="mb-2 text-sm font-medium">
             What&apos;s wrong with this task?
           </p>

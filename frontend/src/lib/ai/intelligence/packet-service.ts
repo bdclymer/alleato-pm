@@ -8,6 +8,7 @@ import type {
   InsightCard,
   InsightCardEvidence,
   InsightCardEvidenceRow,
+  InsightCardReviewFeedback,
   InsightCardRow,
   IntelligencePacketCardRow,
   IntelligencePacketRow,
@@ -19,6 +20,10 @@ import type {
 } from "./types";
 
 type AlleatoSupabaseClient = SupabaseClient<Database>;
+type SourceDocumentPreview = Pick<
+  Database["public"]["Tables"]["document_metadata"]["Row"],
+  "id" | "type" | "category" | "content" | "raw_text" | "summary" | "overview" | "description" | "notes"
+>;
 
 function toRecord(value: Json | null): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -69,16 +74,77 @@ function mapTarget(
   };
 }
 
-function mapEvidence(row: InsightCardEvidenceRow): InsightCardEvidence {
+function cleanSourcePreview(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const cleaned = value
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\n{4,}/g, "\n\n\n")
+    .trim();
+  return cleaned || null;
+}
+
+function normalizePreview(value: string | null | undefined): string {
+  return cleanSourcePreview(value)
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim() ?? "";
+}
+
+function isMetadataOnlyPreview(value: string | null | undefined): boolean {
+  const text = normalizePreview(value);
+  return (
+    text.startsWith("subject ") ||
+    (text.includes(" subject ") && text.includes(" from ")) ||
+    (text.includes(" date ") && text.includes(" from ") && text.includes(" to ")) ||
+    (
+      text.includes("duration") &&
+      text.includes("organizer email") &&
+      (text.includes("fireflies link") || text.includes("participants"))
+    )
+  );
+}
+
+function getSourcePreview(source: SourceDocumentPreview | undefined): string | null {
+  if (!source) return null;
+  const sourceKind = `${source.type ?? ""} ${source.category ?? ""}`.toLowerCase();
+  const isEmailSource = sourceKind.includes("email");
+  const primaryContent = [source.content, source.raw_text]
+    .map((value) => cleanSourcePreview(value))
+    .find(Boolean);
+
+  if (isEmailSource) {
+    return primaryContent ?? null;
+  }
+
+  const nonMetadataPrimaryContent = [source.content, source.raw_text]
+    .map((value) => cleanSourcePreview(value))
+    .find((value) => value && !isMetadataOnlyPreview(value));
+
+  if (nonMetadataPrimaryContent) return nonMetadataPrimaryContent;
+
+  return [source.summary, source.overview, source.description, source.notes, source.content, source.raw_text]
+    .map((value) => cleanSourcePreview(value))
+    .find((value) => Boolean(value)) ?? null;
+}
+
+function mapEvidence(
+  row: InsightCardEvidenceRow,
+  sourceDocument: SourceDocumentPreview | undefined,
+): InsightCardEvidence {
   return {
     id: row.id,
     sourceDocumentId: row.source_document_id,
     sourceChunkId: row.source_chunk_id,
     sourceMessageId: row.source_message_id,
     sourceType: row.source_type,
+    sourceCategory: sourceDocument?.category ?? sourceDocument?.type ?? null,
     sourceTitle: row.source_title,
     sourceOccurredAt: row.source_occurred_at,
     participants: row.participants,
+    sourceContentPreview: getSourcePreview(sourceDocument),
     excerpt: row.excerpt,
     summary: row.summary,
     relevanceReason: row.relevance_reason,
@@ -87,10 +153,32 @@ function mapEvidence(row: InsightCardEvidenceRow): InsightCardEvidence {
   };
 }
 
+function isFeedbackSignal(value: unknown): value is InsightCardReviewFeedback["signal"] {
+  return value === "useful" || value === "wrong" || value === "stale";
+}
+
+function mapReviewFeedback(
+  row: Database["public"]["Tables"]["intelligence_reviews"]["Row"],
+): InsightCardReviewFeedback | null {
+  const proposedValue = toRecord(row.proposed_value);
+  const signal = proposedValue.signal;
+  if (!isFeedbackSignal(signal)) return null;
+
+  return {
+    id: row.id,
+    status: row.status,
+    signal,
+    reason: typeof proposedValue.reason === "string" ? proposedValue.reason : null,
+    correction: typeof proposedValue.correction === "string" ? proposedValue.correction : null,
+    createdAt: row.created_at,
+  };
+}
+
 function mapCard(
   row: InsightCardRow,
   packetCard: IntelligencePacketCardRow | undefined,
   evidence: InsightCardEvidence[],
+  latestFeedback: InsightCardReviewFeedback | null,
 ): InsightCard {
   return {
     id: row.id,
@@ -107,6 +195,7 @@ function mapCard(
     sourceCount: row.source_count,
     metadata: toRecord(row.metadata),
     evidence,
+    latestFeedback,
   };
 }
 
@@ -303,11 +392,51 @@ export async function loadPacketCards(input: {
     throw new Error(`Failed to load insight card evidence: ${evidenceError.message}`);
   }
 
+  const sourceDocumentIds = Array.from(
+    new Set(
+      (evidenceRows ?? [])
+        .map((row) => row.source_document_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+  const { data: sourceDocumentRows, error: sourceDocumentError } =
+    sourceDocumentIds.length > 0
+      ? await input.supabase
+          .from("document_metadata")
+          .select("id,type,category,content,raw_text,summary,overview,description,notes")
+          .in("id", sourceDocumentIds)
+      : { data: [], error: null };
+
+  if (sourceDocumentError) {
+    throw new Error(`Failed to load insight card source content: ${sourceDocumentError.message}`);
+  }
+
+  const { data: reviewRows, error: reviewError } = await input.supabase
+    .from("intelligence_reviews")
+    .select("*")
+    .eq("review_type", "packet_card_feedback")
+    .in("insight_card_id", cardIds)
+    .order("created_at", { ascending: false });
+
+  if (reviewError) {
+    throw new Error(`Failed to load insight card feedback: ${reviewError.message}`);
+  }
+
+  const sourceDocumentById = new Map(
+    ((sourceDocumentRows ?? []) as SourceDocumentPreview[]).map((row) => [row.id, row]),
+  );
   const evidenceByCard = new Map<string, InsightCardEvidence[]>();
   for (const row of evidenceRows ?? []) {
     const existing = evidenceByCard.get(row.insight_card_id) ?? [];
-    existing.push(mapEvidence(row));
+    existing.push(mapEvidence(row, row.source_document_id ? sourceDocumentById.get(row.source_document_id) : undefined));
     evidenceByCard.set(row.insight_card_id, existing);
+  }
+
+  const feedbackByCard = new Map<string, InsightCardReviewFeedback>();
+  for (const row of reviewRows ?? []) {
+    if (!row.insight_card_id || feedbackByCard.has(row.insight_card_id)) continue;
+    const feedback = mapReviewFeedback(row);
+    if (feedback) feedbackByCard.set(row.insight_card_id, feedback);
   }
 
   const cardsById = new Map((cardRows ?? []).map((row) => [row.id, row]));
@@ -315,7 +444,12 @@ export async function loadPacketCards(input: {
     .map((packetCard) => {
       const card = cardsById.get(packetCard.insight_card_id);
       return card
-        ? mapCard(card, packetCard, evidenceByCard.get(card.id) ?? [])
+        ? mapCard(
+            card,
+            packetCard,
+            evidenceByCard.get(card.id) ?? [],
+            feedbackByCard.get(card.id) ?? null,
+          )
         : null;
     })
     .filter((card): card is InsightCard => Boolean(card));

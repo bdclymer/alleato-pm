@@ -646,6 +646,16 @@ def write_tasks(
         if not description or not owner or task.get("needs_review") or _to_float(task.get("confidence")) < 0.7:
             continue
         assignee = resolver.resolve(owner, task.get("owner_email") or task.get("assignee_email"))
+        # Only employees can own tasks. External owners surface as project
+        # intelligence signals instead.
+        if not assignee.is_employee:
+            logger.info(
+                "Skipping non-employee task: owner=%r person_type=%r description=%r",
+                owner,
+                assignee.person_type,
+                description[:120],
+            )
+            continue
         rows.append(
             {
                 "metadata_id": head_doc_id,

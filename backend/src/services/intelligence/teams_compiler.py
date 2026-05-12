@@ -27,7 +27,7 @@ from ..task_assignees import TaskAssigneeResolver
 
 logger = logging.getLogger(__name__)
 
-TASK_EXTRACTION_PROMPT_VERSION = "teams_compiler.tasks.v2.gpt-5.5"
+TASK_EXTRACTION_PROMPT_VERSION = "teams_compiler.tasks.v5.gpt-5.5"
 
 MIN_COMPILER_CHARS = 200
 AUTO_ASSIGN_CONFIDENCE = 0.85
@@ -573,6 +573,18 @@ def write_tasks(
         if not description or not owner or task.get("needs_review") or _to_float(task.get("confidence")) < 0.7:
             continue
         assignee = resolver.resolve(owner, task.get("owner_email") or task.get("assignee_email"))
+        # Only employees can own tasks. External owners (clients, subs, vendors,
+        # unresolved names) still surface as project intelligence via
+        # _packet_signal_payloads → source_signal_candidates, but we do NOT
+        # create a task row that nobody on our team is accountable for.
+        if not assignee.is_employee:
+            logger.info(
+                "Skipping non-employee task: owner=%r person_type=%r description=%r",
+                owner,
+                assignee.person_type,
+                description[:120],
+            )
+            continue
         rows.append(
             {
                 "metadata_id": doc_id,
