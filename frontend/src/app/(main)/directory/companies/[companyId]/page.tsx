@@ -9,11 +9,7 @@ import {
   ChevronsUpDown,
   ExternalLink,
   FileText,
-  Globe,
-  Mail,
-  MapPin,
   MoreHorizontal,
-  Phone,
   Plus,
   UserPlus,
 } from "lucide-react";
@@ -596,72 +592,12 @@ export default function CompanyDetailsPage() {
   const latestMeeting = meetings
     .filter((meeting) => meeting.date)
     .sort((a, b) => new Date(b.date || "").getTime() - new Date(a.date || "").getTime())[0];
-  const companyMetaRow = (
-    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-      {company.status ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <Check className="h-4 w-4 shrink-0" />
-          <span className="truncate">{company.status}</span>
-        </div>
-      ) : null}
-      {company.type ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <Building2 className="h-4 w-4 shrink-0" />
-          <span className="truncate">{company.type}</span>
-        </div>
-      ) : null}
-      {company.acumatica_vendor_id ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <FileText className="h-4 w-4 shrink-0" />
-          <span className="truncate">ERP {company.acumatica_vendor_id}</span>
-        </div>
-      ) : null}
-      {companyLocation ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <MapPin className="h-4 w-4 shrink-0" />
-          <span className="truncate">{companyLocation}</span>
-        </div>
-      ) : null}
-      {company.contact_phone ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <Phone className="h-4 w-4 shrink-0" />
-          <span className="truncate">{company.contact_phone}</span>
-        </div>
-      ) : null}
-      {company.contact_email ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <Mail className="h-4 w-4 shrink-0" />
-          <span className="truncate">{company.contact_email}</span>
-        </div>
-      ) : null}
-      {websiteUrl ? (
-        <a
-          href={websiteUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="flex min-w-0 items-center gap-2 underline-offset-4 hover:underline"
-        >
-          <Globe className="h-4 w-4 shrink-0" />
-          <span className="truncate">{company.website}</span>
-          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-        </a>
-      ) : null}
-    </div>
-  );
 
   return (
     <PageShell
       variant="detailWide"
       title={company.name}
       onBack={() => router.back()}
-      titleContent={
-        <div className="min-w-0 space-y-3">
-          <h1 className="text-3xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
-            {company.name}
-          </h1>
-          {companyMetaRow}
-        </div>
-      }
       actions={
         <>
           <Button variant="outline" size="sm" onClick={() => void openAddContactModal()} className="gap-2 active:scale-[0.98]">
@@ -934,11 +870,31 @@ export default function CompanyDetailsPage() {
           <aside className="min-w-0">
             <div className="space-y-6 lg:sticky lg:top-6">
               <section className="rounded-2xl border border-border bg-background p-5">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Company file</p>
-                <div className="mt-5 space-y-4 text-sm">
+	                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Company file</p>
+	                <div className="mt-5 space-y-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Address</p>
-                    <p className="mt-1 font-medium text-foreground">{company.address || "No address on file"}</p>
+                    <p className="text-muted-foreground">Status</p>
+                    <p className="mt-1 font-medium text-foreground">{company.status || "No status on file"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Type</p>
+                    <p className="mt-1 font-medium text-foreground">{company.type || "No type on file"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">ERP Vendor ID</p>
+                    <p className="mt-1 font-medium text-foreground">{company.acumatica_vendor_id || "No ERP vendor ID on file"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Email</p>
+                    <p className="mt-1 font-medium text-foreground">{company.contact_email || "No email on file"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Phone</p>
+                    <p className="mt-1 font-medium text-foreground">{company.contact_phone || "No phone on file"}</p>
+                  </div>
+	                  <div>
+	                    <p className="text-muted-foreground">Address</p>
+	                    <p className="mt-1 font-medium text-foreground">{company.address || "No address on file"}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Location</p>
