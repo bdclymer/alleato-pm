@@ -26,6 +26,7 @@ export type SourceSpecificRagKind =
 export type SourceSpecificRagRequest = {
   kind: SourceSpecificRagKind;
   label: string;
+  query?: string;
   date?: string;
   startDate?: string;
   endDate?: string;
@@ -286,6 +287,7 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
     return {
       kind: "recent_teams_discussions",
       label: "Teams messages",
+      query: message,
       startDate: explicitRange?.startDate ?? recentRange.startDate,
       endDate: explicitRange?.endDate ?? recentRange.endDate,
       limit: 12,
@@ -331,6 +333,7 @@ export function detectSourceLookupRecentTeamsRequest(
   return {
     kind: "recent_teams_discussions",
     label: "Recent Teams messages",
+    query: message,
     startDate: explicitRange?.startDate ?? recentRange.startDate,
     endDate: explicitRange?.endDate ?? recentRange.endDate,
     limit: 20,

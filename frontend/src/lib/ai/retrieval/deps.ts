@@ -38,7 +38,7 @@ const DIRECT_EXEC_OPTIONS = { toolCallId: "direct", messages: [] as never[] };
 // label, optional date window, and limit. We derive these from the kind alone
 // (the message is not needed to hydrate the request shape for any current kind).
 // ---------------------------------------------------------------------------
-function buildSyntheticRagRequest(kind: SourceSpecificRagKind) {
+function buildSyntheticRagRequest(kind: SourceSpecificRagKind, message?: string) {
   const now = new Date();
   const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -60,6 +60,7 @@ function buildSyntheticRagRequest(kind: SourceSpecificRagKind) {
       return {
         kind,
         label: "Recent Teams discussions",
+        query: message,
         startDate: start,
         endDate: end,
         limit: 10,
@@ -163,7 +164,7 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
   const runSourceSpecificRag = async (kind: string, _message: string): Promise<unknown> => {
     const scope = await guardrails.getScope();
     const serviceSupabase = createServiceClient();
-    const request = buildSyntheticRagRequest(kind as SourceSpecificRagKind);
+    const request = buildSyntheticRagRequest(kind as SourceSpecificRagKind, _message);
     return buildSourceSpecificRagAnswer({
       supabase: serviceSupabase,
       request,

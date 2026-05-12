@@ -157,9 +157,10 @@ describe("detectSourceSpecificRagRequest — existing patterns not regressed", (
   });
 
   it('returns recent_teams_discussions for Teams queries', () => {
-    const result = detectSourceSpecificRagRequest("show me recent teams discussions");
+    const result = detectSourceSpecificRagRequest("show me recent teams discussions with Brandon");
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_teams_discussions");
+    expect(result?.query).toBe("show me recent teams discussions with Brandon");
   });
 
   it('returns null for general project queries that should use other paths', () => {
@@ -179,6 +180,7 @@ describe("detectSourceLookupRecentTeamsRequest — communication diagnosis recen
 
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_teams_discussions");
+    expect(result?.query).toContain("employees' messages");
     expect(result?.startDate).toBe("2026-04-02");
     expect(result?.endDate).toBe("2026-05-02");
     expect(result?.limit).toBe(20);

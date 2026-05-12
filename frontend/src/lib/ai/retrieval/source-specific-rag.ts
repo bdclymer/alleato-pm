@@ -13,6 +13,10 @@ import type {
   SourceSpecificRagRequest,
 } from "@/lib/ai/detect-rag-request";
 import type { ToolScope } from "@/lib/ai/tools/guardrails";
+import {
+  fetchRecentTeamsMessagesFromGraph,
+  type RecentTeamsMessagesResult,
+} from "@/lib/microsoft-graph/recent-teams-messages";
 
 export type SourceSpecificRagRow = {
   id: string;
@@ -30,6 +34,10 @@ export type SourceSpecificRagAnswer = {
   content: string;
   trace: Record<string, unknown>;
   rows: SourceSpecificRagRow[];
+};
+
+type SourceSpecificRagFormatOptions = {
+  liveTeams?: RecentTeamsMessagesResult | null;
 };
 
 function formatSourceSpecificDate(row: SourceSpecificRagRow): string {
@@ -74,8 +82,19 @@ function groupTeamsRows(rows: SourceSpecificRagRow[]): Array<{
 function formatSourceSpecificRagContent(
   request: SourceSpecificRagRequest,
   rows: SourceSpecificRagRow[],
+  options: SourceSpecificRagFormatOptions = {},
 ): string {
-  const sourceLine = `Source checked: ${request.label} in Supabase document_metadata/document_chunks-backed RAG index.`;
+  const liveTeams = options.liveTeams ?? null;
+  const sourceLine =
+    request.kind === "recent_teams_discussions"
+      ? `Source checked: live Microsoft Graph Teams messages first, then Supabase document_metadata/document_chunks-backed Teams index.`
+      : `Source checked: ${request.label} in Supabase document_metadata/document_chunks-backed RAG index.`;
+  const liveLine =
+    request.kind === "recent_teams_discussions" && liveTeams
+      ? liveTeams.status === "checked"
+        ? `- Live Microsoft Graph Teams retrieval checked ${liveTeams.checkedMailboxes.length} mailbox(es) and returned ${liveTeams.rows.length} live row(s).`
+        : `- Live Microsoft Graph Teams retrieval ${liveTeams.status}: ${liveTeams.warning ?? "no detail returned"}.`
+      : null;
   if (rows.length === 0) {
     const windowLabel = request.date
       ? ` for ${request.date}`
@@ -89,6 +108,7 @@ function formatSourceSpecificRagContent(
       "",
       `**Observability**`,
       `- ${sourceLine}`,
+      ...(liveLine ? [liveLine] : []),
       "- Retrieval returned 0 rows, so I am not inventing a list.",
       "",
       "**Next Step**",
@@ -112,6 +132,7 @@ function formatSourceSpecificRagContent(
       "",
       `**Observability**`,
       `- ${sourceLine}`,
+      ...(liveLine ? [liveLine] : []),
       `- Retrieved ${rows.length} Teams row(s), grouped into ${conversationGroups.length} conversation/day bucket(s), and answered from concrete Teams snippets/titles.`,
       "",
       "**Next Step**",
@@ -143,6 +164,7 @@ function formatSourceSpecificRagContent(
     "",
     `**Observability**`,
     `- ${sourceLine}`,
+    ...(liveLine ? [liveLine] : []),
     `- Retrieved ${rows.length} row(s) from ${request.label}; answer titles/dates are copied from Supabase rows.`,
     "",
     "**Next Step**",
@@ -157,6 +179,7 @@ export async function buildSourceSpecificRagAnswer(params: {
 }): Promise<SourceSpecificRagAnswer> {
   const { supabase, request, scope } = params;
   let rows: SourceSpecificRagRow[] = [];
+  let liveTeams: RecentTeamsMessagesResult | null = null;
 
   const adminOnlyKinds = new Set<SourceSpecificRagKind>([
     "recent_emails",
@@ -333,6 +356,13 @@ export async function buildSourceSpecificRagAnswer(params: {
   }
 
   if (request.kind === "recent_teams_discussions") {
+    liveTeams = await fetchRecentTeamsMessagesFromGraph({
+      startDate: request.startDate,
+      endDate: request.endDate,
+      query: request.query,
+      limit: request.limit,
+    });
+
     const { data, error } = await applyProjectScope(
       supabase
         .from("document_metadata")
@@ -346,10 +376,34 @@ export async function buildSourceSpecificRagAnswer(params: {
         .limit(request.limit),
     );
     if (error) throw new Error(error.message);
-    rows = (data ?? []) as SourceSpecificRagRow[];
+    const storedRows = (data ?? []) as SourceSpecificRagRow[];
+    const liveRows: SourceSpecificRagRow[] = (liveTeams.rows ?? []).map((message) => ({
+      id: `live-teams:${message.mailbox}:${message.id}`,
+      title: `Live Teams: ${message.chatLabel}`,
+      source: "microsoft_graph_live",
+      category: "teams_message",
+      type: "teams_live_message",
+      date: message.createdDateTime,
+      created_at: message.lastModifiedDateTime ?? message.createdDateTime,
+      content: [
+        `[Live Microsoft Graph Teams message]`,
+        `Mailbox: ${message.mailbox}`,
+        `Chat: ${message.chatLabel}`,
+        `Participants: ${message.participants.join(", ") || "unknown"}`,
+        `${message.senderName ?? "Unknown"}: ${message.content}`,
+      ].join("\n"),
+      project_id: null,
+    }));
+    const seen = new Set<string>();
+    rows = [...liveRows, ...storedRows].filter((row) => {
+      const key = `${row.title ?? ""}:${row.date ?? ""}:${row.content?.slice(0, 180) ?? ""}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, request.limit);
   }
 
-  const content = formatSourceSpecificRagContent(request, rows);
+  const content = formatSourceSpecificRagContent(request, rows, { liveTeams });
   return {
     content,
     rows,
@@ -367,6 +421,14 @@ export async function buildSourceSpecificRagAnswer(params: {
           type: row.type,
           projectId: row.project_id,
         })),
+        liveTeams: liveTeams
+          ? {
+              status: liveTeams.status,
+              rowCount: liveTeams.rows.length,
+              checkedMailboxes: liveTeams.checkedMailboxes,
+              warning: liveTeams.warning ?? null,
+            }
+          : null,
       },
       timestamp: new Date().toISOString(),
     },
