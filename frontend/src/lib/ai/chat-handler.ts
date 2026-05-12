@@ -3574,17 +3574,13 @@ function normalizeRetrievalQuery(trace: Record<string, unknown>): string | null 
 
 function normalizeRetrievalProjectId(
   fallbackProjectId: number | undefined,
-  trace: Record<string, unknown>,
-  result?: Record<string, unknown>,
+  _trace: Record<string, unknown>,
+  _result?: Record<string, unknown>,
 ): number | null {
-  const input = asRecord(trace.input);
-  const projectId =
-    asFiniteNumber(result?.projectId) ??
-    asFiniteNumber(result?.project_id) ??
-    asFiniteNumber(input.projectId) ??
-    fallbackProjectId ??
-    null;
-  return projectId;
+  // Only use the session-level pinned project ID — never trust IDs from tool
+  // output rows, since those can reference projects that no longer exist and
+  // will violate the ai_retrieval_feedback_project_id_fkey constraint.
+  return fallbackProjectId ?? null;
 }
 
 function normalizeSourceDocumentId(result: Record<string, unknown>): string | null {
