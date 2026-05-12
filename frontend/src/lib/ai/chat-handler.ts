@@ -41,6 +41,7 @@ import {
   type CmoWeeklyContentWorkflowResult,
 } from "@/lib/ai/services/marketing-service";
 import {
+  assembleLeanAdvisorSystemPrompt,
   assembleSystemPrompt,
   assembleTaskWriteSystemPrompt,
   type BotLearningUsageSummary,
@@ -277,6 +278,12 @@ const TASK_WRITE_MUTATION_TOOL_NAMES = new Set<string>([
   "updateGeneratedTask",
   "deleteGeneratedTask",
 ]);
+const LEAN_ADVISOR_INTENTS = new Set<AssistantIntent>([
+  "latest_status",
+  "risk_review",
+  "task_followup",
+]);
+const LEAN_ADVISOR_MAX_BASE_PROMPT_APPROX_TOKENS = 2500;
 
 function pickTools(tools: ToolSet, names: readonly string[]): ToolSet {
   const selected: ToolSet = {};
@@ -314,6 +321,24 @@ function assertTaskWritePromptBudget(params: {
       `Cause: promptApproxTokens=${params.promptApproxTokens}, modelToolCount=${params.modelToolCount}.`,
       "Detection gap: lightweight task writes previously reused the full strategist prompt/tool registry.",
       "Prevention: keep task_write on the lean prompt and scoped task tool policy.",
+    ].join(" "),
+  );
+}
+
+function assertLeanAdvisorBasePromptBudget(params: {
+  promptApproxTokens: number;
+  intent: AssistantIntent;
+}) {
+  if (params.promptApproxTokens <= LEAN_ADVISOR_MAX_BASE_PROMPT_APPROX_TOKENS) {
+    return;
+  }
+
+  throw new Error(
+    [
+      "Lean advisor prompt budget exceeded before packet/source injection.",
+      `Cause: intent=${params.intent}, promptApproxTokens=${params.promptApproxTokens}.`,
+      "Detection gap: owner status/risk/task prompts previously reused the full strategist prompt.",
+      "Prevention: keep lean advisor intents on the compact prompt and inject only retrieved evidence needed for the answer.",
     ].join(" "),
   );
 }
@@ -3936,27 +3961,42 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         });
 
         const isTaskWriteIntent = assistantIntent === "task_write";
-        let promptMode: "full_strategist" | "task_write_lean" = "full_strategist";
-        let systemPrompt = isTaskWriteIntent
-          ? await assembleTaskWriteSystemPrompt({
-              userId: user.id,
-              messageText: lastUserContent,
-              selectedProjectId,
-            })
-          : await assembleSystemPrompt({
-              userId: user.id,
-              messageText: lastUserContent,
-              selectedProjectId,
-              councilMode,
-              sessionId,
-              isFirstTurn: messages.length === 1,
-              onMemoryUsage: (usage) => {
-                memoryUsage = usage;
-              },
-              onLearningUsage: (usage) => {
-                learningUsage = usage;
-              },
-            });
+        const isLeanAdvisorIntent = LEAN_ADVISOR_INTENTS.has(assistantIntent);
+        let promptMode: "full_strategist" | "task_write_lean" | "lean_advisor" = "full_strategist";
+        let systemPrompt: string;
+        if (isTaskWriteIntent) {
+          systemPrompt = await assembleTaskWriteSystemPrompt({
+            userId: user.id,
+            messageText: lastUserContent,
+            selectedProjectId,
+          });
+        } else if (isLeanAdvisorIntent) {
+          systemPrompt = await assembleLeanAdvisorSystemPrompt({
+            messageText: lastUserContent,
+            selectedProjectId,
+            intentLabel: assistantIntent,
+          });
+          promptMode = "lean_advisor";
+          assertLeanAdvisorBasePromptBudget({
+            promptApproxTokens: getApproxTokenCount(systemPrompt),
+            intent: assistantIntent,
+          });
+        } else {
+          systemPrompt = await assembleSystemPrompt({
+            userId: user.id,
+            messageText: lastUserContent,
+            selectedProjectId,
+            councilMode,
+            sessionId,
+            isFirstTurn: messages.length === 1,
+            onMemoryUsage: (usage) => {
+              memoryUsage = usage;
+            },
+            onLearningUsage: (usage) => {
+              learningUsage = usage;
+            },
+          });
+        }
         if (isTaskWriteIntent) {
           promptMode = "task_write_lean";
           toolTrace.push({
@@ -3974,6 +4014,22 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             },
             timestamp: new Date().toISOString(),
           });
+        } else if (isLeanAdvisorIntent) {
+          toolTrace.push({
+            tool: "promptContextReducer",
+            input: {
+              intent: assistantIntent,
+              message: lastUserContent.slice(0, 240),
+            },
+            output: {
+              promptMode,
+              skippedGeneralMemory: true,
+              skippedWorkspaceArtifacts: true,
+              skippedExecutivePacket: true,
+              retainedPacketFirstRetrieval: shouldUsePacketFirstIntent(assistantIntent),
+            },
+            timestamp: new Date().toISOString(),
+          });
         }
         if (!isTaskWriteIntent && sourceHealthRequested) {
           const sourceHealth = await getAssistantSourceHealthContext("source_status_request");
@@ -3984,11 +4040,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
         const priorProjectContinuityContext =
           formatPriorProjectContinuityContext(priorProjectName);
-        if (!isTaskWriteIntent && priorProjectContinuityContext) {
+        if (!isTaskWriteIntent && !isLeanAdvisorIntent && priorProjectContinuityContext) {
           systemPrompt = systemPrompt + `\n\n---\n\n${priorProjectContinuityContext}`;
         }
 
-        if (!isTaskWriteIntent && executivePagePacket) {
+        if (!isTaskWriteIntent && !isLeanAdvisorIntent && executivePagePacket) {
           systemPrompt = systemPrompt + `\n\n---\n\n${formatExecutiveBriefPacketContext(executivePagePacket)}`;
         }
 

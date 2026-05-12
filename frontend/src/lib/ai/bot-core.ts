@@ -287,6 +287,82 @@ export async function assembleSystemPrompt(options: {
   return systemPrompt;
 }
 
+export async function assembleLeanAdvisorSystemPrompt(options: {
+  messageText: string;
+  selectedProjectId?: number;
+  intentLabel: string;
+}): Promise<string> {
+  const { messageText, selectedProjectId, intentLabel } = options;
+  const today = new Date().toISOString().split("T")[0];
+  const contextHealth: string[] = [];
+  const parts = [
+    "You are Alleato AI, a senior construction project advisor inside Alleato PM.",
+    [
+      "## Runtime Date Context",
+      `Today is ${today} (YYYY-MM-DD). Interpret relative dates against this date.`,
+    ].join("\n"),
+    [
+      "## Lean Advisor Contract",
+      `The request is classified as ${intentLabel}.`,
+      "Use the available tools before answering. Favor current packets, structured project data, meetings, emails, Teams messages, documents, and source-health metadata over generic construction advice.",
+      "Lead with the answer. Keep the response decision-oriented, specific, and grounded in the tool results. Explain source gaps when a relevant source is missing, empty, stale, or timed out.",
+      "For owner-style portfolio/status/risk questions, identify the 2-3 items that matter most, why they matter, and the first action to take.",
+      "Do not narrate tool usage. Do not end with generic optional offers.",
+    ].join("\n"),
+    [
+      "## User Request",
+      messageText.slice(0, 1200),
+    ].join("\n"),
+  ];
+
+  if (selectedProjectId) {
+    try {
+      const supabase = createServiceClient();
+      const { data: project } = await supabase
+        .from("projects")
+        .select("name, project_number, phase, client, health_status")
+        .eq("id", selectedProjectId)
+        .single();
+
+      if (project) {
+        const projectLine = [
+          project.name,
+          project.project_number ? `#${project.project_number}` : null,
+          project.phase ? `Phase: ${project.phase}` : null,
+          project.client ? `Client: ${project.client}` : null,
+          project.health_status ? `Status: ${project.health_status}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
+        parts.push(
+          [
+            "## Active Project Context",
+            `The user has pinned: **${projectLine}**.`,
+            "Assume project-specific questions refer to this project unless the user explicitly mentions a different one.",
+          ].join("\n"),
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown project context error";
+      contextHealth.push(`Pinned project context could not be loaded: ${message}`);
+    }
+  }
+
+  if (contextHealth.length > 0) {
+    parts.push(
+      [
+        "## Runtime Context Health",
+        "Some context providers failed before generation. If the missing context affects the answer, say what could not be checked.",
+        contextHealth.map((item) => `- ${item}`).join("\n"),
+      ].join("\n"),
+    );
+  }
+
+  return parts.join("\n\n---\n\n");
+}
+
 export async function assembleTaskWriteSystemPrompt(options: {
   userId: string;
   messageText: string;
