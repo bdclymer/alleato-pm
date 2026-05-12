@@ -226,6 +226,8 @@ export default async function ProjectHomePage({
       .from("document_metadata")
       .select("*")
       .eq("project_id", numericProjectId)
+      .eq("type", "meeting")
+      .is("deleted_at", null)
       .order("date", { ascending: false }),
 
     // Fetch prime contract change orders
