@@ -43,19 +43,6 @@ export async function register() {
       );
     }
 
-    if (process.env.LANGFUSE_SECRET_KEY) {
-      const { LangfuseSpanProcessor } = await import("@langfuse/otel");
-      const { NodeTracerProvider } = await import("@opentelemetry/sdk-trace-node");
-
-      const processor = new LangfuseSpanProcessor();
-      const provider = new NodeTracerProvider({ spanProcessors: [processor] });
-      provider.register();
-
-      // Export so route handlers can flush before serverless function freezes
-      (globalThis as Record<string, unknown>).__langfuseProcessor = processor;
-
-      console.log("[instrumentation] Langfuse tracing enabled");
-    }
 
     const { validateEnvVars } = await import("@/lib/guardrails/env");
 

@@ -6,8 +6,8 @@ import {
   convertToModelMessages,
   type UIMessage,
 } from "ai";
-import { propagateAttributes } from "@langfuse/tracing";
 import { waitUntil } from "@vercel/functions";
+import { traceChatCompletion } from "@/lib/ai/langfuse-trace";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { planRetrieval } from "@/lib/ai/retrieval/planner";
 import { executeRetrievalPlan } from "@/lib/ai/retrieval/executor";
@@ -622,41 +622,52 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       const modelMessages = await convertToModelMessages(args.messages);
-      const result = propagateAttributes(
-        { userId: args.user.id, sessionId: args.sessionId },
-        () => streamText({
-          model: getLanguageModel(args.activeModel),
-          system: systemPrompt,
-          messages: modelMessages,
-          // tools, // TEMP: testing if 102-tool registry causes finishReason:other
-          maxOutputTokens: 4000,
-          stopWhen: stepCountIs(10),
-          experimental_telemetry: {
-            isEnabled: Boolean(process.env.LANGFUSE_SECRET_KEY),
-            functionId: "ai-assistant-chat-v2",
-            metadata: { modelId: args.activeModel },
-          },
-          onError: ({ error }) => {
-            console.error("[handler-v2] streamText onError", {
-              message: error instanceof Error ? error.message : String(error),
-              stack: error instanceof Error ? error.stack?.split("\n").slice(0, 5).join("\n") : undefined,
-            });
-          },
-          onFinish: ({ finishReason, usage, text, toolCalls }) => {
-            console.log("[handler-v2] streamText onFinish", {
-              finishReason,
-              usage,
-              text_chars: text?.length ?? 0,
-              text_preview: text?.slice(0, 200) ?? "",
-              tool_calls: toolCalls?.map((c) => c.toolName) ?? [],
-            });
-            const processor = (globalThis as Record<string, unknown>).__langfuseProcessor as { forceFlush?: () => Promise<void> } | undefined;
-            if (processor?.forceFlush) {
-              waitUntil(processor.forceFlush());
-            }
-          },
-        }),
-      );
+      const lastUserMessage = modelMessages.findLast((m) => m.role === "user");
+      const inputText = lastUserMessage
+        ? (lastUserMessage.content as { text?: string }[] | string | undefined)
+          && typeof lastUserMessage.content === "string"
+          ? lastUserMessage.content
+          : (lastUserMessage.content as { type: string; text?: string }[])
+              ?.filter((p) => p.type === "text")
+              .map((p) => p.text ?? "")
+              .join(" ") ?? ""
+        : "";
+
+      const result = streamText({
+        model: getLanguageModel(args.activeModel),
+        system: systemPrompt,
+        messages: modelMessages,
+        // tools, // TEMP: testing if 102-tool registry causes finishReason:other
+        maxOutputTokens: 4000,
+        stopWhen: stepCountIs(10),
+        experimental_telemetry: {
+          isEnabled: process.env.PHOENIX_TRACING === "true",
+          functionId: "ai-assistant-chat-v2",
+        },
+        onError: ({ error }) => {
+          console.error("[handler-v2] streamText onError", {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack?.split("\n").slice(0, 5).join("\n") : undefined,
+          });
+        },
+        onFinish: ({ finishReason, usage, text, toolCalls }) => {
+          console.log("[handler-v2] streamText onFinish", {
+            finishReason,
+            usage,
+            text_chars: text?.length ?? 0,
+            text_preview: text?.slice(0, 200) ?? "",
+            tool_calls: toolCalls?.map((c) => c.toolName) ?? [],
+          });
+          waitUntil(traceChatCompletion({
+            userId: args.user.id,
+            sessionId: args.sessionId,
+            modelId: args.activeModel,
+            input: inputText,
+            output: text ?? "",
+            usage,
+          }));
+        },
+      });
 
       writer.merge(result.toUIMessageStream({ originalMessages: args.messages }));
     },

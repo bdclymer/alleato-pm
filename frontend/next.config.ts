@@ -106,6 +106,7 @@ const nextConfig: NextConfig = {
     "@arizeai/openinference-instrumentation-openai",
     "@langfuse/otel",
     "@langfuse/tracing",
+    "langfuse",
   ],
   webpack: (config) => {
     // react-pdf imports bare `pdfjs-dist`, whose non-minified 5.x ESM entry redeclares

@@ -16,8 +16,8 @@ import {
   type ToolSet,
 } from "ai";
 import { after } from "next/server";
-import { propagateAttributes } from "@langfuse/tracing";
 import { waitUntil } from "@vercel/functions";
+import { traceChatCompletion } from "@/lib/ai/langfuse-trace";
 import { z } from "zod";
 
 import {
@@ -4601,9 +4601,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           messages: modelMessages,
           tools: modelTools,
         });
-        const result = propagateAttributes(
-          { userId: user.id, sessionId },
-          () => streamText({
+        const result = streamText({
             model: getLanguageModel(activeModel),
             ...promptPayload,
             maxOutputTokens: 4000,
@@ -4614,12 +4612,8 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             },
             stopWhen: stepCountIs(10),
             experimental_telemetry: {
-              isEnabled: process.env.PHOENIX_TRACING === "true" || Boolean(process.env.LANGFUSE_SECRET_KEY),
+              isEnabled: process.env.PHOENIX_TRACING === "true",
               functionId: "ai-assistant-chat",
-              metadata: {
-                intent: assistantIntent ?? "unknown",
-                modelId: activeModel,
-              },
             },
             onError: ({ error }) => {
               streamErrorMessage =
@@ -4659,13 +4653,24 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 outputTokens: usage?.outputTokens,
               });
             },
-          }),
-        );
-
-        const processor = (globalThis as Record<string, unknown>).__langfuseProcessor as { forceFlush?: () => Promise<void> } | undefined;
-        if (processor?.forceFlush) {
-          waitUntil(processor.forceFlush());
-        }
+            onFinish: ({ text, usage }) => {
+              const lastUserMsg = messages.findLast((m) => m.role === "user");
+              const inputText = lastUserMsg
+                ? (Array.isArray(lastUserMsg.parts)
+                    ? lastUserMsg.parts.filter((p) => (p as { type?: string }).type === "text").map((p) => ((p as { text?: string }).text ?? "")).join(" ")
+                    : "")
+                : "";
+              waitUntil(traceChatCompletion({
+                userId: user.id,
+                sessionId,
+                modelId: activeModel,
+                input: inputText,
+                output: text ?? "",
+                usage,
+                metadata: { intent: assistantIntent ?? "unknown" },
+              }));
+            },
+          });
 
         writer.merge(
           result.toUIMessageStream({
