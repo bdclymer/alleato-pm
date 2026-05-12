@@ -236,7 +236,7 @@ async function loadLatestApprovedExecutiveBriefingDraft(): Promise<
     .eq("workflow_status", "approved")
     .not("briefing_packet", "is", null)
     .order("recap_date", { ascending: false })
-    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
