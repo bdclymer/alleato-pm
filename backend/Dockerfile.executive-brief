@@ -5,11 +5,13 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.13.1 --activate
 
 COPY package.json pnpm-lock.yaml ./
-COPY frontend/package.json ./frontend/package.json
+COPY frontend/package.json frontend/pnpm-lock.yaml ./frontend/
 COPY frontend/patches ./frontend/patches
 
-RUN pnpm --dir frontend install --frozen-lockfile --ignore-scripts
+WORKDIR /app/frontend
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
+WORKDIR /app
 COPY frontend ./frontend
 COPY scripts ./scripts
 
