@@ -36,6 +36,13 @@ export type CreateRFIPreviewInput = {
 
 const generatedTaskPrioritySchema = z.enum(["low", "normal", "medium", "high", "critical", "urgent"]);
 const generatedTaskStatusSchema = z.enum(["open", "in_progress", "completed", "done", "blocked", "cancelled"]);
+const projectCompanyTypeSchema = z.enum([
+  "YOUR_COMPANY",
+  "VENDOR",
+  "SUBCONTRACTOR",
+  "SUPPLIER",
+  "CONNECTED_COMPANY",
+]);
 
 export function normalizeGeneratedTaskPriority(
   priority?: z.infer<typeof generatedTaskPrioritySchema> | null,
@@ -379,6 +386,101 @@ export function createActionTools(
 
   function needsConfirmedWriteApproval(input: { confirmed?: boolean }): boolean {
     return input.confirmed === true;
+  }
+
+  function normalizeDirectoryText(value?: string | null): string | null {
+    const trimmed = value?.trim();
+    return trimmed ? trimmed : null;
+  }
+
+  async function findCompanyByName(name: string) {
+    const normalized = name.trim();
+    const { data, error } = await supabase
+      .from("companies")
+      .select("id,name,address,city,state,website,contact_phone,is_vendor")
+      .ilike("name", normalized)
+      .limit(2);
+
+    if (error) {
+      throw new Error(`Failed to resolve company "${name}": ${error.message}`);
+    }
+
+    return data?.length === 1 ? data[0] : null;
+  }
+
+  async function ensureProjectCompanyAssociation(params: {
+    projectId: number;
+    companyId: string;
+    companyType?: z.infer<typeof projectCompanyTypeSchema>;
+    emailAddress?: string | null;
+  }) {
+    const { data: existing, error: existingError } = await supabase
+      .from("project_companies")
+      .select("id,project_id,company_id,status,company_type,email_address,primary_contact_id")
+      .eq("project_id", params.projectId)
+      .eq("company_id", params.companyId)
+      .maybeSingle();
+
+    if (existingError) {
+      throw new Error(`Failed to check project company assignment: ${existingError.message}`);
+    }
+
+    if (existing) {
+      if (existing.status !== "ACTIVE") {
+        const { data: reactivated, error: reactivateError } = await supabase
+          .from("project_companies")
+          .update({
+            status: "ACTIVE",
+            company_type: params.companyType ?? existing.company_type ?? "VENDOR",
+            email_address: params.emailAddress ?? existing.email_address,
+          })
+          .eq("id", existing.id)
+          .select("id,project_id,company_id,status,company_type,email_address,primary_contact_id")
+          .single();
+
+        if (reactivateError) {
+          throw new Error(`Failed to reactivate project company assignment: ${reactivateError.message}`);
+        }
+        return { assignment: reactivated, action: "reactivated" as const };
+      }
+
+      return { assignment: existing, action: "already_assigned" as const };
+    }
+
+    const { data: assignment, error } = await supabase
+      .from("project_companies")
+      .insert({
+        project_id: params.projectId,
+        company_id: params.companyId,
+        company_type: params.companyType ?? "VENDOR",
+        email_address: params.emailAddress ?? null,
+        status: "ACTIVE",
+      })
+      .select("id,project_id,company_id,status,company_type,email_address,primary_contact_id")
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to assign company to project: ${error.message}`);
+    }
+
+    return { assignment, action: "assigned" as const };
+  }
+
+  async function findPersonByEmail(email?: string | null) {
+    const normalizedEmail = normalizeDirectoryText(email)?.toLowerCase();
+    if (!normalizedEmail) return null;
+
+    const { data, error } = await supabase
+      .from("people")
+      .select("id,first_name,last_name,email,company_id,person_type,status")
+      .ilike("email", normalizedEmail)
+      .limit(2);
+
+    if (error) {
+      throw new Error(`Failed to resolve contact by email: ${error.message}`);
+    }
+
+    return data?.length === 1 ? data[0] : null;
   }
 
   return {
@@ -993,6 +1095,410 @@ export function createActionTools(
           response,
         });
         return response;
+      }),
+    }),
+
+    createProjectCompany: tool({
+      description:
+        "Add a company to a project's directory. Use when the user says 'add [company] to this project', " +
+        "'add a vendor/subcontractor/supplier', or provides company directory details. Reuses an existing global company by exact name when possible, assigns it to the project, and previews before writing.",
+      inputSchema: z.object({
+        projectId: z.number().describe("Project ID"),
+        name: z.string().describe("Company name"),
+        companyType: projectCompanyTypeSchema.default("VENDOR"),
+        emailAddress: z.string().email().optional().describe("Project directory email for the company"),
+        businessPhone: z.string().optional().describe("Company business phone"),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zip: z.string().optional(),
+        website: z.string().optional(),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("createProjectCompany", options, async (input) => {
+        const access = await enforceProjectWriteAccess(input.projectId);
+        if (!access.ok) return { success: false, error: access.error };
+
+        const companyName = normalizeDirectoryText(input.name);
+        if (!companyName) {
+          return { success: false, error: "Company name is required." };
+        }
+
+        const normalized = {
+          name: companyName,
+          companyType: input.companyType,
+          emailAddress: normalizeDirectoryText(input.emailAddress),
+          businessPhone: normalizeDirectoryText(input.businessPhone),
+          address: normalizeDirectoryText(input.address),
+          city: normalizeDirectoryText(input.city),
+          state: normalizeDirectoryText(input.state),
+          zip: normalizeDirectoryText(input.zip),
+          website: normalizeDirectoryText(input.website),
+        };
+
+        if (!input.confirmed) {
+          return {
+            action: "preview",
+            message:
+              "Here's the company I'll add to the project directory. Reply **confirm** to proceed.",
+            preview: {
+              tables: ["companies", "project_companies"],
+              fields: {
+                project_id: input.projectId,
+                name: normalized.name,
+                company_type: normalized.companyType,
+                email_address: normalized.emailAddress,
+                contact_phone: normalized.businessPhone,
+                address: normalized.address,
+                city: normalized.city,
+                state: normalized.state,
+                zip_code: normalized.zip,
+                website: normalized.website,
+                status: "ACTIVE",
+              },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createProjectCompany", input);
+        const replay = await getReplayResponse("createProjectCompany", idempotencyKey);
+        if (replay) return replay;
+
+        try {
+          const existingCompany = await findCompanyByName(normalized.name);
+          let company = existingCompany;
+
+          if (!company) {
+            const { data, error } = await supabase
+              .from("companies")
+              .insert({
+                name: normalized.name,
+                address: normalized.address,
+                city: normalized.city,
+                state: normalized.state,
+                zip_code: normalized.zip,
+                contact_phone: normalized.businessPhone,
+                contact_email: normalized.emailAddress,
+                website: normalized.website,
+                is_vendor: normalized.companyType !== "YOUR_COMPANY",
+                status: "active",
+                type: normalized.companyType,
+              })
+              .select("id,name,address,city,state,website,contact_phone,is_vendor")
+              .single();
+
+            if (error) {
+              throw new Error(`Failed to create company: ${error.message}`);
+            }
+            company = data;
+          }
+
+          const assignmentResult = await ensureProjectCompanyAssociation({
+            projectId: input.projectId,
+            companyId: company.id,
+            companyType: normalized.companyType,
+            emailAddress: normalized.emailAddress,
+          });
+
+          const response = {
+            success: true,
+            message:
+              assignmentResult.action === "already_assigned"
+                ? `Company **${company.name}** was already active on this project.`
+                : `Company **${company.name}** was added to the project directory.`,
+            record: {
+              company,
+              projectCompany: assignmentResult.assignment,
+              companyAction: existingCompany ? "reused_existing_company" : "created_company",
+              assignmentAction: assignmentResult.action,
+            },
+            links: {
+              projectDirectory: `/${input.projectId}/directory`,
+              companyDirectory: "/directory/companies",
+            },
+          };
+          await recordWriteAudit({
+            toolName: "createProjectCompany",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "success",
+            response,
+          });
+          return response;
+        } catch (error) {
+          const failure = {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+          await recordWriteAudit({
+            toolName: "createProjectCompany",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+      }),
+    }),
+
+    createProjectContact: tool({
+      description:
+        "Add a contact to a project's directory. Use when the user says 'add [person] as a contact', " +
+        "'add this vendor contact to the project', or provides contact details. Reuses an existing person by email, links them to the project directory, optionally links their company, and previews before writing.",
+      inputSchema: z.object({
+        projectId: z.number().describe("Project ID"),
+        firstName: z.string().describe("Contact first name"),
+        lastName: z.string().describe("Contact last name"),
+        email: z.string().email().optional(),
+        jobTitle: z.string().optional(),
+        phoneBusiness: z.string().optional(),
+        phoneMobile: z.string().optional(),
+        companyId: z.string().uuid().optional().describe("Existing companies.id if known"),
+        companyName: z.string().optional().describe("Existing company name to link by exact name"),
+        role: z.string().optional().describe("Project-specific role, e.g. Architect, Owner Rep, Electrical PM"),
+        makePrimaryCompanyContact: z.boolean().default(false),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("createProjectContact", options, async (input) => {
+        const access = await enforceProjectWriteAccess(input.projectId);
+        if (!access.ok) return { success: false, error: access.error };
+
+        const firstName = normalizeDirectoryText(input.firstName);
+        const lastName = normalizeDirectoryText(input.lastName);
+        if (!firstName || !lastName) {
+          return { success: false, error: "First name and last name are required." };
+        }
+
+        const normalized = {
+          firstName,
+          lastName,
+          email: normalizeDirectoryText(input.email),
+          jobTitle: normalizeDirectoryText(input.jobTitle),
+          phoneBusiness: normalizeDirectoryText(input.phoneBusiness),
+          phoneMobile: normalizeDirectoryText(input.phoneMobile),
+          companyName: normalizeDirectoryText(input.companyName),
+          role: normalizeDirectoryText(input.role),
+        };
+
+        if (!input.confirmed) {
+          return {
+            action: "preview",
+            message:
+              "Here's the contact I'll add to the project directory. Reply **confirm** to proceed.",
+            preview: {
+              tables: ["people", "project_directory_memberships", "project_companies"],
+              fields: {
+                project_id: input.projectId,
+                first_name: normalized.firstName,
+                last_name: normalized.lastName,
+                email: normalized.email,
+                job_title: normalized.jobTitle,
+                phone_business: normalized.phoneBusiness,
+                phone_mobile: normalized.phoneMobile,
+                company_id: input.companyId ?? null,
+                company_name: normalized.companyName,
+                role: normalized.role,
+                person_type: "contact",
+                status: "active",
+                make_primary_company_contact: input.makePrimaryCompanyContact,
+              },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createProjectContact", input);
+        const replay = await getReplayResponse("createProjectContact", idempotencyKey);
+        if (replay) return replay;
+
+        try {
+          let companyId = input.companyId ?? null;
+          let companyName = normalized.companyName;
+          if (!companyId && normalized.companyName) {
+            const company = await findCompanyByName(normalized.companyName);
+            if (!company) {
+              throw new Error(`Company "${normalized.companyName}" was not found. Add the company first, then add the contact.`);
+            }
+            companyId = company.id;
+            companyName = company.name;
+          }
+
+          let projectCompany = null;
+          if (companyId) {
+            const association = await ensureProjectCompanyAssociation({
+              projectId: input.projectId,
+              companyId,
+              companyType: "VENDOR",
+              emailAddress: null,
+            });
+            projectCompany = association.assignment;
+          }
+
+          const existingPerson = await findPersonByEmail(normalized.email);
+          let person = existingPerson;
+
+          if (person) {
+            const updates: Record<string, unknown> = {
+              status: "active",
+              person_type: person.person_type || "contact",
+            };
+            if (companyId && person.company_id !== companyId) updates.company_id = companyId;
+            if (normalized.jobTitle) updates.job_title = normalized.jobTitle;
+            if (normalized.phoneBusiness) updates.phone_business = normalized.phoneBusiness;
+            if (normalized.phoneMobile) updates.phone_mobile = normalized.phoneMobile;
+
+            const { data, error } = await supabase
+              .from("people")
+              .update(updates)
+              .eq("id", person.id)
+              .select("id,first_name,last_name,email,company_id,person_type,status,job_title,phone_business,phone_mobile")
+              .single();
+
+            if (error) {
+              throw new Error(`Failed to update existing contact: ${error.message}`);
+            }
+            person = data;
+          } else {
+            const { data, error } = await supabase
+              .from("people")
+              .insert({
+                first_name: normalized.firstName,
+                last_name: normalized.lastName,
+                email: normalized.email,
+                job_title: normalized.jobTitle,
+                phone_business: normalized.phoneBusiness,
+                phone_mobile: normalized.phoneMobile,
+                company_id: companyId,
+                company: companyName,
+                person_type: "contact",
+                status: "active",
+              })
+              .select("id,first_name,last_name,email,company_id,person_type,status,job_title,phone_business,phone_mobile")
+              .single();
+
+            if (error) {
+              throw new Error(`Failed to create contact: ${error.message}`);
+            }
+            person = data;
+          }
+
+          const { data: existingMembership, error: existingMembershipError } = await supabase
+            .from("project_directory_memberships")
+            .select("id,project_id,person_id,role,status,user_type,invite_status")
+            .eq("project_id", input.projectId)
+            .eq("person_id", person.id)
+            .maybeSingle();
+
+          if (existingMembershipError) {
+            throw new Error(`Failed to check project contact membership: ${existingMembershipError.message}`);
+          }
+
+          let membership = existingMembership;
+          let membershipAction: "created" | "reactivated" | "already_assigned" = "already_assigned";
+          if (existingMembership) {
+            if (existingMembership.status !== "active" || (normalized.role && existingMembership.role !== normalized.role)) {
+              const { data, error } = await supabase
+                .from("project_directory_memberships")
+                .update({
+                  status: "active",
+                  role: normalized.role ?? existingMembership.role,
+                  user_type: existingMembership.user_type || "contact",
+                  invite_status: "accepted",
+                })
+                .eq("id", existingMembership.id)
+                .select("id,project_id,person_id,role,status,user_type,invite_status")
+                .single();
+
+              if (error) {
+                throw new Error(`Failed to reactivate project contact membership: ${error.message}`);
+              }
+              membership = data;
+              membershipAction = "reactivated";
+            }
+          } else {
+            const { data, error } = await supabase
+              .from("project_directory_memberships")
+              .insert({
+                project_id: input.projectId,
+                person_id: person.id,
+                role: normalized.role,
+                status: "active",
+                user_type: "contact",
+                invite_status: "accepted",
+              })
+              .select("id,project_id,person_id,role,status,user_type,invite_status")
+              .single();
+
+            if (error) {
+              throw new Error(`Failed to add contact to project directory: ${error.message}`);
+            }
+            membership = data;
+            membershipAction = "created";
+          }
+
+          let primaryContactUpdated = false;
+          if (input.makePrimaryCompanyContact && projectCompany) {
+            const { error } = await supabase
+              .from("project_companies")
+              .update({ primary_contact_id: person.id })
+              .eq("id", projectCompany.id);
+
+            if (error) {
+              throw new Error(`Failed to set primary company contact: ${error.message}`);
+            }
+            primaryContactUpdated = true;
+          }
+
+          const fullName = [person.first_name, person.last_name].filter(Boolean).join(" ");
+          const response = {
+            success: true,
+            message:
+              membershipAction === "already_assigned"
+                ? `Contact **${fullName}** was already active on this project.`
+                : `Contact **${fullName}** was added to the project directory.`,
+            record: {
+              person,
+              membership,
+              projectCompany,
+              personAction: existingPerson ? "reused_existing_person" : "created_person",
+              membershipAction,
+              primaryContactUpdated,
+            },
+            links: {
+              projectDirectory: `/${input.projectId}/directory`,
+              contactDirectory: "/directory/contacts",
+            },
+          };
+          await recordWriteAudit({
+            toolName: "createProjectContact",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "success",
+            response,
+          });
+          return response;
+        } catch (error) {
+          const failure = {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+          await recordWriteAudit({
+            toolName: "createProjectContact",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
       }),
     }),
 

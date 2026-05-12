@@ -236,3 +236,86 @@ describe("generated task DB contract normalization", () => {
     });
   });
 });
+
+describe("project directory action tools", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({
+      from: jest.fn(),
+      rpc: jest.fn(),
+    } as never);
+  });
+
+  it("previews project company creation before writing", async () => {
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createProjectCompany.execute;
+    if (!execute) throw new Error("createProjectCompany execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      name: "ABC Electric",
+      companyType: "SUBCONTRACTOR",
+      emailAddress: "estimating@abcelectric.test",
+      businessPhone: "555-0100",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      preview: {
+        tables: ["companies", "project_companies"],
+        fields: {
+          project_id: 43,
+          name: "ABC Electric",
+          company_type: "SUBCONTRACTOR",
+          email_address: "estimating@abcelectric.test",
+          contact_phone: "555-0100",
+          status: "ACTIVE",
+        },
+      },
+    });
+  });
+
+  it("previews project contact creation before writing", async () => {
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createProjectContact.execute;
+    if (!execute) throw new Error("createProjectContact execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      firstName: "Alex",
+      lastName: "Rivera",
+      email: "alex.rivera@abcelectric.test",
+      jobTitle: "Project Manager",
+      companyName: "ABC Electric",
+      role: "Electrical PM",
+      makePrimaryCompanyContact: true,
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      preview: {
+        tables: ["people", "project_directory_memberships", "project_companies"],
+        fields: {
+          project_id: 43,
+          first_name: "Alex",
+          last_name: "Rivera",
+          email: "alex.rivera@abcelectric.test",
+          job_title: "Project Manager",
+          company_name: "ABC Electric",
+          role: "Electrical PM",
+          person_type: "contact",
+          status: "active",
+          make_primary_company_contact: true,
+        },
+      },
+    });
+  });
+});

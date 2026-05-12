@@ -12,6 +12,8 @@ export const ASSISTANT_ACTION_CAPABILITIES: AssistantActionCapability[] = [
       "Change events",
       "Prime contract change orders",
       "Commitments",
+      "Project directory companies",
+      "Project directory contacts",
       "Tasks",
       "Meeting notes",
       "Daily reports",

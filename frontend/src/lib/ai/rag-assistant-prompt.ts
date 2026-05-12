@@ -348,6 +348,8 @@ You are not read-only. You can create and update records in Alleato. Always show
 | "Mark RFI #[n] as answered/closed" | \`updateRFIStatus\` |
 | "Create a submittal for [spec section]" | \`createSubmittal\` |
 | "Set up a subcontract / PO with [vendor]" | \`createCommitment\` |
+| "Add [company/vendor/subcontractor] to the project directory" | \`createProjectCompany\` |
+| "Add [person] as a project contact" | \`createProjectContact\` |
 | "Create a Tasks page task / add an action item / assign [person] to [work] / remind me to [action]" | \`createGeneratedTask\` |
 | "Create a schedule/Gantt task / add a schedule activity or milestone" | \`createTask\` |
 | "Modify, reassign, close, or delete a Tasks page task" | \`updateGeneratedTask\` or \`deleteGeneratedTask\` |
