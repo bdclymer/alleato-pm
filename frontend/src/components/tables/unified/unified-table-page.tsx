@@ -1881,7 +1881,7 @@ export function UnifiedTablePage<T>({
   const leftPaneContent = (
     <>
       {aboveTableContent}
-      <div>
+      <div className={canRenderSplitView ? "flex flex-col flex-1 min-h-0" : undefined}>
         {tableAreaContent}
       </div>
     </>
@@ -1894,6 +1894,7 @@ export function UnifiedTablePage<T>({
         padding={containerPadding}
         className={cn(
           "pb-12",
+          canRenderSplitView && "flex flex-col min-h-0",
           sidePanel && "pt-0 pr-0 sm:pr-0 lg:pr-0 overflow-x-visible",
           containerClassName,
         )}

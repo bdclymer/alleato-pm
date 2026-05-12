@@ -5,8 +5,7 @@ export const ADMIN_FEEDBACK_FALLBACK_ATTRIBUTE = "data-ai-target";
 export const ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE = "data-admin-feedback-root";
 export const OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT =
   "admin-feedback:open-composer";
-export const FEEDBACK_LAUNCHER_POSITION_CLASS =
-  "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 sm:bottom-8 sm:right-8";
+export const FEEDBACK_LAUNCHER_POSITION_CLASS = "feedback-launcher-position";
 
 export const ADMIN_FEEDBACK_REQUEST_TYPES = [
   "bug",

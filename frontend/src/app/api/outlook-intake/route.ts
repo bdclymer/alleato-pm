@@ -131,7 +131,6 @@ export const GET = withApiGuardrails(
         )
       `,
       )
-      .returns<OutlookIntakeRow[]>()
       .is("deleted_at", null)
       .order("received_at", { ascending: false, nullsFirst: false });
 
@@ -162,7 +161,7 @@ export const GET = withApiGuardrails(
       });
     }
 
-    const intakeRows = data ?? [];
+    const intakeRows: OutlookIntakeRow[] = (data ?? []) as OutlookIntakeRow[];
     const documentMetadataIds = [
       ...new Set(
         intakeRows

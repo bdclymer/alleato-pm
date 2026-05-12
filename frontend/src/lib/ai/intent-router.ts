@@ -46,6 +46,16 @@ const APP_HELP_PATTERNS = [
   /\bin the app\b/i,
 ];
 
+const OWNER_PORTFOLIO_BRIEFING_PATTERNS = [
+  /\b(active jobs?|active projects?|across (all )?(jobs|projects)|portfolio|everything|business)\b/i,
+  /\b(red flags?|watchlist|lose sleep|attention this week|rundown|catch me up|where everything stands|what should i focus|what should i personally handle|fires?)\b/i,
+];
+
+const OWNER_RISK_REVIEW_PATTERNS = [
+  /\b(risks?|risk review|red flags?|watchlist|blockers?|issues?|concerns?)\b/i,
+  /\b(worried|worry|nervous|bite us|could bite|blow up|burn us|go wrong|keep me up)\b/i,
+];
+
 export function classifyAssistantIntent(message: string): AssistantIntent {
   const text = message.trim();
   if (!text) return "general_conversation";
@@ -90,11 +100,14 @@ export function classifyAssistantIntent(message: string): AssistantIntent {
     return "task_followup";
   }
 
-  if (/\b(risk|worried|concern|blocker|issue)\b/i.test(text)) {
+  if (OWNER_RISK_REVIEW_PATTERNS.some((pattern) => pattern.test(text))) {
     return "risk_review";
   }
 
-  if (/\b(latest|status|update|current|what changed|briefing)\b/i.test(text)) {
+  if (
+    /\b(latest|status|update|current|what changed|briefing)\b/i.test(text) ||
+    OWNER_PORTFOLIO_BRIEFING_PATTERNS.some((pattern) => pattern.test(text))
+  ) {
     return "latest_status";
   }
 

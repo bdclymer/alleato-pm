@@ -79,12 +79,116 @@ if (!existsSync(AUTH_PATH)) {
   process.exit(1);
 }
 const authState = JSON.parse(await fs.readFile(AUTH_PATH, "utf8"));
-const cookieHeader = (authState.cookies ?? [])
+let cookieHeader = (authState.cookies ?? [])
   .map((c) => `${c.name}=${c.value}`)
   .join("; ");
 if (!cookieHeader) {
   console.error("Auth state has no cookies. Re-run auth.setup.ts.");
   process.exit(1);
+}
+
+// ─────────────────────────────────────────────────────── Auth refresh
+const SUPABASE_URL = "https://lgveqfnpkxvzbnnwuled.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndmVxZm5wa3h2emJubnd1bGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTQxNjYsImV4cCI6MjA3MDgzMDE2Nn0.g56kDPUokoJpWY7vXd3GTMXpOc4WFOU0hDVWfGMZtO8";
+const SUPABASE_EMAIL = "test1@mail.com";
+const SUPABASE_PASSWORD = "test12026!!!";
+const SUPABASE_COOKIE_NAME = "sb-lgveqfnpkxvzbnnwuled-auth-token";
+const REFRESH_BUFFER_SEC = 5 * 60; // refresh if expiring within 5 minutes
+
+function getCookieExpiry(header) {
+  // Find the auth cookie in the header string and decode its expiry.
+  // Cookie value format: base64-<base64-encoded-JSON>
+  // The JSON contains { expires_at: <unix-seconds> }
+  const match = header.match(
+    new RegExp(`${SUPABASE_COOKIE_NAME}=([^;]+)`),
+  );
+  if (!match) return null;
+  try {
+    let value = match[1];
+    if (value.startsWith("base64-")) value = value.slice("base64-".length);
+    const decoded = Buffer.from(value, "base64").toString("utf8");
+    const parsed = JSON.parse(decoded);
+    return typeof parsed.expires_at === "number" ? parsed.expires_at : null;
+  } catch {
+    return null;
+  }
+}
+
+async function refreshAuthIfNeeded() {
+  const expiresAt = getCookieExpiry(cookieHeader);
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  if (expiresAt !== null && expiresAt - nowSec > REFRESH_BUFFER_SEC) {
+    // Token still valid with enough headroom — nothing to do.
+    return cookieHeader;
+  }
+
+  // Token is missing, expired, or expiring soon — fetch a fresh one.
+  const res = await fetch(
+    `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ email: SUPABASE_EMAIL, password: SUPABASE_PASSWORD }),
+    },
+  );
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Auth refresh failed (HTTP ${res.status}): ${text.slice(0, 200)}`);
+  }
+
+  const session = await res.json();
+  const {
+    access_token,
+    token_type,
+    expires_in,
+    expires_at: newExpiresAt,
+    refresh_token,
+    user,
+  } = session;
+
+  // Encode new cookie value in the same format Supabase sets via the browser.
+  const payload = JSON.stringify({ access_token, token_type, expires_in, expires_at: newExpiresAt, refresh_token, user });
+  const encoded = `base64-${Buffer.from(payload).toString("base64")}`;
+
+  // Patch the in-memory authState and persist it back to the file.
+  const existingCookieIndex = (authState.cookies ?? []).findIndex(
+    (c) => c.name === SUPABASE_COOKIE_NAME,
+  );
+  const newCookie = {
+    name: SUPABASE_COOKIE_NAME,
+    value: encoded,
+    domain: "localhost",
+    path: "/",
+    httpOnly: true,
+    secure: false,
+    sameSite: "Lax",
+  };
+  if (existingCookieIndex >= 0) {
+    authState.cookies[existingCookieIndex] = {
+      ...authState.cookies[existingCookieIndex],
+      value: encoded,
+    };
+  } else {
+    authState.cookies = [...(authState.cookies ?? []), newCookie];
+  }
+  await fs.writeFile(AUTH_PATH, JSON.stringify(authState, null, 2));
+
+  // Rebuild the cookie header string.
+  cookieHeader = authState.cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+
+  const expiryIso = newExpiresAt
+    ? new Date(newExpiresAt * 1000).toISOString()
+    : "(unknown)";
+  console.log(`[auth] Token refreshed, expires ${expiryIso}`);
+
+  return cookieHeader;
 }
 
 const runStamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -122,16 +226,25 @@ function tokenizeUserId() {
 const userId = tokenizeUserId();
 
 async function postPromptAndDrain(testCase, sessionId, messageId) {
+  const currentCookieHeader = await refreshAuthIfNeeded();
+  const messages = Array.isArray(testCase.messages) && testCase.messages.length > 0
+    ? testCase.messages.map((message, index) => ({
+        id: message.id ?? (index === testCase.messages.length - 1 ? messageId : randomUUID()),
+        role: message.role,
+        parts: [{ type: "text", text: message.content ?? message.text ?? "" }],
+      }))
+    : [
+        {
+          id: messageId,
+          role: "user",
+          parts: [{ type: "text", text: testCase.prompt }],
+        },
+      ];
+
   const body = {
     id: sessionId,
     selectedProjectId: testCase.selectedProjectId,
-    messages: [
-      {
-        id: messageId,
-        role: "user",
-        parts: [{ type: "text", text: testCase.prompt }],
-      },
-    ],
+    messages,
   };
 
   const controller = new AbortController();
@@ -144,7 +257,7 @@ async function postPromptAndDrain(testCase, sessionId, messageId) {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: cookieHeader,
+        cookie: currentCookieHeader,
       },
       body: JSON.stringify(body),
       signal: controller.signal,
@@ -259,6 +372,17 @@ function extractToolNames(metadata) {
     .filter((name) => typeof name === "string");
 }
 
+function extractStreamToolNames(streamEvents) {
+  if (!Array.isArray(streamEvents)) return [];
+  return streamEvents
+    .map((event) => event?.toolName)
+    .filter((name) => typeof name === "string");
+}
+
+function uniqueStrings(values) {
+  return [...new Set(values.filter((value) => typeof value === "string"))];
+}
+
 function metadataPath(metadata, pathExpression) {
   return String(pathExpression)
     .split(".")
@@ -269,6 +393,18 @@ function metadataPath(metadata, pathExpression) {
       if (typeof value === "object") return value[key];
       return undefined;
     }, metadata);
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsForbiddenPhrase(text, phrase) {
+  const normalizedPhrase = String(phrase);
+  if (/^[A-Za-z0-9]+$/.test(normalizedPhrase)) {
+    return new RegExp(`\\b${escapeRegExp(normalizedPhrase)}\\b`, "i").test(text);
+  }
+  return text.toLowerCase().includes(normalizedPhrase.toLowerCase());
 }
 
 const qualityRank = { low: 1, medium: 2, high: 3 };
@@ -291,7 +427,9 @@ function scoreCase(testCase, runOutput, persisted) {
     failures.push(`HTTP ${runOutput.httpStatus}`);
   }
 
-  const toolNames = extractToolNames(persisted?.metadata);
+  const persistedToolNames = extractToolNames(persisted?.metadata);
+  const streamToolNames = extractStreamToolNames(runOutput.streamEvents);
+  const toolNames = uniqueStrings([...persistedToolNames, ...streamToolNames]);
   observations.push(`tools fired: ${toolNames.join(", ") || "(none)"}`);
 
   if (!persisted) {
@@ -358,7 +496,7 @@ function scoreCase(testCase, runOutput, persisted) {
     }
   }
   for (const phrase of suite.globalForbiddenPhrases ?? []) {
-    if (lower.includes(phrase.toLowerCase())) {
+    if (containsForbiddenPhrase(finalText, phrase)) {
       warnings.push(`global forbidden phrase: "${phrase}"`);
     }
   }
@@ -423,6 +561,9 @@ function scoreCase(testCase, runOutput, persisted) {
 }
 
 // ─────────────────────────────────────────────────────────── Run loop
+// Always start with a fresh token so we don't begin the run with a stale one.
+await refreshAuthIfNeeded();
+
 console.log(`AI Assistant eval suite — ${cases.length} cases`);
 console.log(`Endpoint: ${CHAT_ENDPOINT}`);
 console.log(`User id: ${userId ?? "(unknown)"}`);

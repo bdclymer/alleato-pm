@@ -280,7 +280,7 @@ function WorkCompletedGauge({ pctComplete, label, sub }: { pctComplete: number; 
 
 type BudgetTooltipPayload = Array<{
   name?: string;
-  value?: number | string | null;
+  value?: number | null;
 }>;
 
 const CustomTooltip = ({

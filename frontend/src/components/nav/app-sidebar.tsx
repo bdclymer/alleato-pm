@@ -27,6 +27,10 @@ import {
 } from "@/components/ui/sidebar"
 import { HeaderUserMenu } from "@/components/header/header-user-menu"
 import { createClient } from "@/lib/supabase/client"
+import {
+  getCurrentBrowserUser,
+  resetCurrentBrowserUserCache,
+} from "@/lib/supabase/current-user"
 import type { User } from "@supabase/supabase-js"
 
 import {
@@ -229,7 +233,7 @@ function ExpandedNavGroup({
   onToggle: () => void
 }) {
   return (
-    <div className="flex flex-col mt-4 first:mt-1">
+    <div className="flex flex-col mt-2.5 first:mt-0.5 md:mt-4 md:first:mt-1">
       <Button
         type="button"
         variant="ghost"
@@ -254,7 +258,7 @@ function ExpandedNavGroup({
         )}
       >
         <div className="overflow-hidden">
-          <div className="flex flex-col gap-0.5 pb-1">
+          <div className="flex flex-col gap-0 pb-1 md:gap-0.5">
             {tools.map((tool) => {
               const isExternal = tool.path.startsWith("http")
               const href = isExternal
@@ -267,7 +271,7 @@ function ExpandedNavGroup({
                 : isActivePath(pathname, tool.path))
               const Icon = tool.icon
               const linkClass = cn(
-                "flex items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors duration-150 md:gap-2 md:py-1.5 md:text-xs",
+                "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors duration-150",
                 isActive
                   ? "font-medium text-sidebar-foreground"
                   : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
@@ -281,7 +285,7 @@ function ExpandedNavGroup({
                   rel="noopener noreferrer"
                   className={linkClass}
                 >
-                  {Icon && <Icon className="h-4 w-4 shrink-0 md:h-3.5 md:w-3.5" strokeWidth={1.5} />}
+                  {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
                   <span className="truncate">{tool.name}</span>
                 </a>
               ) : (
@@ -290,7 +294,7 @@ function ExpandedNavGroup({
                   href={href}
                   className={linkClass}
                 >
-                  {Icon && <Icon className="h-4 w-4 shrink-0 md:h-3.5 md:w-3.5" strokeWidth={1.5} />}
+                  {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
                   <span className="truncate">{tool.name}</span>
                 </Link>
               )
@@ -316,8 +320,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   React.useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null))
-    const { data } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null))
+    void getCurrentBrowserUser(supabase).then((currentUser) => setUser(currentUser))
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => {
+      resetCurrentBrowserUserCache()
+      setUser(session?.user ?? null)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
   const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -325,6 +332,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Hover-to-peek: when collapsed, hovering expands temporarily
   // The sidebar reverts to collapsed when the mouse leaves
   const isPinned = state === "expanded"
+  const mobileDisplayName = React.useMemo(() => {
+    const fullName = typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : ""
+    const emailPrefix = typeof user?.email === "string" && user.email.includes("@") ? user.email.split("@")[0] : ""
+    return fullName || emailPrefix || "User"
+  }, [user])
   const isVisuallyExpanded = isPinned || (isHovering && !isMobile)
   // On mobile, the sidebar renders inside a Sheet — always show expanded navigation
   const isCollapsed = isMobile ? false : !isVisuallyExpanded
@@ -572,17 +584,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         )}
       </SidebarContent>
 
-      {/* User avatar — mobile sidebar only */}
+      {/* User row — mobile sidebar only */}
       {isMobile && (
-        <SidebarFooter className="border-t border-border/50 px-4 py-3">
-          <HeaderUserMenu
-            user={user}
-            projectId={projectId}
-            activeToolName=""
-            permissions={permissions}
-            isAppAdmin={isAppAdmin}
-            userType={userType}
-          />
+        <SidebarFooter className="border-t border-border/50 px-3 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <HeaderUserMenu
+              user={user}
+              projectId={projectId}
+              activeToolName=""
+              permissions={permissions}
+              isAppAdmin={isAppAdmin}
+              userType={userType}
+            />
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium text-foreground">{mobileDisplayName}</span>
+              {user?.email && (
+                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+              )}
+            </div>
+          </div>
         </SidebarFooter>
       )}
 

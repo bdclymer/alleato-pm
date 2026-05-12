@@ -51,6 +51,7 @@ import {
   type CreateStructuredOutputToolsOptions,
 } from "@/lib/ai/tools/structured-output";
 import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelligence";
+import { createAssistantSelfInspectionTools } from "@/lib/ai/assistant-self-knowledge";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
 import { identity } from "@/lib/ai/identity";
@@ -73,7 +74,9 @@ type StrategistToolOptions = CreateProjectToolsOptions &
   FeatureRequestToolsOptions &
   MarketingToolsOptions &
   ProgressReportToolsOptions &
-  CreateStructuredOutputToolsOptions;
+  CreateStructuredOutputToolsOptions & {
+    sessionId?: string;
+  };
 
 // ---------------------------------------------------------------------------
 // Agent Registry
@@ -850,6 +853,7 @@ export function createStrategistTools(
   options: {
     onTrace?: (trace: Record<string, unknown>) => void;
     pinnedProjectId?: number;
+    sessionId?: string;
   } = {},
 ) {
   // Include the base project tools so the Strategist can answer
@@ -862,17 +866,9 @@ export function createStrategistTools(
   const webSearchTools = createWebSearchTools(options);
   const structuredOutputTools = createStructuredOutputTools(options);
   const documentIntelligenceTools = createDocumentIntelligenceTools(userId, options);
-  // Do not expose risk-dedicated tools directly to the Strategist.
-  // This forces portfolio/project risk questions through consultCFO,
-  // where the specialist prompt requires risk-specific workflows.
-  const {
-    getPortfolioOverview: _portfolioOverviewTool,
-    getProjectsWithRisks: _riskRadarTool,
-    getProjectRiskAnalysis: _projectRiskTool,
-    ...strategistBaseTools
-  } = baseTools;
+  const strategistBaseTools = baseTools;
 
-  return {
+  const toolsWithoutSelfInspection = {
     ...webSearchTools,
     ...structuredOutputTools,
     ...actionTools,
@@ -974,6 +970,18 @@ export function createStrategistTools(
     // questions directly when no specialist route is needed
     ...strategistBaseTools,
   } as ToolSet; // ToolSet is an index signature — spread inference requires explicit cast
+
+  const selfInspectionTools = createAssistantSelfInspectionTools({
+    userId,
+    sessionId: options.sessionId,
+    availableToolNames: Object.keys(toolsWithoutSelfInspection).sort(),
+    onTrace: options.onTrace,
+  });
+
+  return {
+    ...selfInspectionTools,
+    ...toolsWithoutSelfInspection,
+  } as ToolSet;
 }
 
 // ---------------------------------------------------------------------------

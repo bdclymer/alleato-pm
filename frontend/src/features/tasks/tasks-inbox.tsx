@@ -342,12 +342,20 @@ function formatTeamsConversationDate(value: string): string {
 }
 
 function splitContextParagraphs(value: string): string[] {
+  if (!value.trim()) return [];
+
+  const naturalParagraphs = value.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+
+  if (naturalParagraphs.length > 1) {
+    return naturalParagraphs.map((p) =>
+      p.replace(/[^\S\n]+/g, " ").replace(/\s([,.;:!?])/g, "$1")
+    );
+  }
+
   const normalized = value
-    .replace(/\s+/g, " ")
+    .replace(/[^\S\n]+/g, " ")
     .replace(/\s([,.;:!?])/g, "$1")
     .trim();
-
-  if (!normalized) return [];
 
   const sentences = normalized
     .split(/(?<=[.!?])\s+(?=(?:[A-Z@]|\d|Thanks|Thank you|Please|Who|See|Let|Can|I|We)\b)/)

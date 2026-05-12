@@ -163,7 +163,11 @@ export async function regenerateExecutiveBriefingAction(formData: FormData) {
     "executive-briefing-actions#regenerate",
     "Executive briefing access required.",
   );
-  const windowDays = formNumber(formData, "windowDays", 2);
+  const windowDays = formNumber(
+    formData,
+    "windowDays",
+    DEFAULT_EXECUTIVE_WINDOW_DAYS,
+  );
   await regenerateExecutiveBriefingDraft({ windowDays, sourceBackedOnly: true });
   revalidatePath(EXECUTIVE_PATH);
 }

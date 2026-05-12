@@ -1,6 +1,7 @@
 import { soul } from "./soul";
 import { identity } from "./identity";
 import { I_DONT_KNOW_REFLEX_PROMPT } from "./persona-and-memory";
+import { getAssistantSelfKnowledgePrompt } from "./assistant-self-knowledge";
 
 /**
  * Builds the Alleato AI system prompt by composing:
@@ -20,6 +21,10 @@ ${soul}
 ${identity}
 
 ${I_DONT_KNOW_REFLEX_PROMPT}
+
+---
+
+${getAssistantSelfKnowledgePrompt()}
 
 ---
 

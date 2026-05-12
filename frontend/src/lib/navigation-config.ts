@@ -236,22 +236,6 @@ export const subcontractorSidebarGroup: SidebarNavGroup = {
 
 export const sidebarNavGroups: SidebarNavGroup[] = [
   {
-    id: "financial",
-    label: "Financial",
-    icon: DollarSign,
-    tools: financialManagementTools,
-  },
-  {
-    id: "operations",
-    label: "Operations",
-    icon: ClipboardList,
-    tools: [
-      { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
-      { name: "Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
-      ...projectManagementTools,
-    ],
-  },
-  {
     id: "company",
     label: "Company",
     icon: Building2,
@@ -267,6 +251,22 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
       { name: "Docs", path: "/docs", icon: BookOpen, requiresProject: false },
       { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
+    ],
+  },
+  {
+    id: "financial",
+    label: "Financial",
+    icon: DollarSign,
+    tools: financialManagementTools,
+  },
+  {
+    id: "operations",
+    label: "Operations",
+    icon: ClipboardList,
+    tools: [
+      { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
+      { name: "Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
+      ...projectManagementTools,
     ],
   },
   {

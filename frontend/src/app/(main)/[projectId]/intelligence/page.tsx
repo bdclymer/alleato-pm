@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import {
   Button,
   EmptyState,
+  Heading,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
@@ -72,19 +73,53 @@ function cleanText(value: string | null | undefined): string {
     .replace(/&gt;/g, ">")
     .replace(/\[message:[^\]]+\]/gi, "")
     .replace(/\[\d{4}-\d{2}-\d{2}[^\]]+\]/g, "")
+    .replace(/(?:^|\s)#{1,6}\s+/gm, " ")
+    .replace(/\*{1,3}([^*]*)\*{1,3}/g, "$1")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
 }
 
+function isMetadataNarrative(value: string | null | undefined): boolean {
+  const text = cleanText(value).toLowerCase();
+  if (!text) return true;
+  const emailCount = text.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/g)?.length ?? 0;
+  return (
+    text.length < 24 ||
+    text === "this source contains project-relevant language that should be reviewed before it is trusted in a current intelligence packet." ||
+    text === "review the source attribution and extracted signal, then promote or reject it." ||
+    (text.includes(" duration:") && text.includes(" participants:")) ||
+    (text.includes(" date:") && text.includes(" participants:") && emailCount >= 2) ||
+    text.startsWith("subject:") ||
+    emailCount >= 5
+  );
+}
+
+function firstUsefulText(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const text = cleanText(value);
+    if (text && !isMetadataNarrative(text)) return text;
+  }
+  return cleanText(values.find((value) => Boolean(cleanText(value))) ?? "");
+}
+
 function getCardText(card: InsightCard): string {
-  const summary = cleanText(card.summary);
-  if (summary) return summary;
-  return cleanText(card.whyItMatters || card.nextAction || card.title);
+  return firstUsefulText(
+    card.summary,
+    card.whyItMatters,
+    card.nextAction,
+    card.currentStatus,
+  );
 }
 
 function getSectionText(cards: InsightCard[], types: string[], fallback: string): string {
-  const card = cards.find((item) => types.includes(item.cardType));
-  return card ? getCardText(card) : fallback;
+  for (const card of cards) {
+    if (!types.includes(card.cardType)) continue;
+    const text = getCardText(card);
+    if (text && !isMetadataNarrative(text)) return text;
+  }
+  return fallback;
 }
 
 function splitIntoReadableItems(value: string): string[] {
@@ -285,31 +320,31 @@ function OperatingRead({
   const openItems = [...riskNarrative.questions, ...riskNarrative.actions].slice(0, 5);
 
   const sections: Array<{ label: string; text: string }> = [
-    { label: "Current status", text: cleanText(packet.currentStatus || packet.executiveSummary) || schedule },
+    {
+      label: "Current status",
+      text: firstUsefulText(
+        packet.currentStatus,
+        packet.executiveSummary,
+        packet.strategicRead,
+        schedule,
+      ),
+    },
     { label: "Schedule and milestones", text: schedule },
     { label: "Decisions and scope movement", text: decisions },
   ];
 
   return (
     <section className="space-y-5">
-      <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          Operating read
-        </p>
-        <SectionRuleHeading
-          label="What this packet says about the job right now"
-          className="mb-0 pb-0"
-        />
-      </div>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.6fr)]">
-        <div className="space-y-6">
-          {sections.map(({ label, text }) => (
-            <div key={label} className="space-y-2 border-t border-border/60 pt-4 first:border-t-0 first:pt-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">{label}</p>
-              <p className="text-sm leading-7 text-muted-foreground">{text}</p>
-            </div>
-          ))}
-        </div>
+      <Heading level={4} as="h2">
+        What this packet says about the job right now
+      </Heading>
+      <div className="space-y-6">
+        {sections.map(({ label, text }) => (
+          <div key={label} className="space-y-2 border-t border-border/60 pt-4 first:border-t-0 first:pt-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">{label}</p>
+            <p className="text-sm leading-7 text-muted-foreground">{text}</p>
+          </div>
+        ))}
         <div className="space-y-3 rounded-md bg-muted/30 px-5 py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">
             Open risk loop
@@ -353,10 +388,6 @@ function ActionQueue({
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Action queue
           </p>
-          <SectionRuleHeading
-            label="Decisions, blockers, and risks worth acting on"
-            className="mb-0 pb-0"
-          />
         </div>
         <Button asChild size="sm" variant="outline">
           <Link href={`/${projectId}/tasks`}>Open task page</Link>
@@ -468,6 +499,12 @@ function EvidenceCoverage({
   );
 }
 
+function reviewPreviewCards(packet: ClientProjectIntelligencePacket): InsightCard[] {
+  return [...packet.cards]
+    .sort((a, b) => cardPriority(a) - cardPriority(b) || (a.rank ?? 99) - (b.rank ?? 99))
+    .slice(0, 24);
+}
+
 export default async function ProjectIntelligencePage({
   params,
 }: {
@@ -512,14 +549,16 @@ export default async function ProjectIntelligencePage({
     }
   }
 
+  const reviewCards = packet ? reviewPreviewCards(packet) : [];
+
   return (
     <PageShell
       variant="dashboard"
       title="Project Intelligence"
       description={project.name ?? `Project ${project.id}`}
       actions={
-        <Button asChild size="sm" variant="outline">
-          <Link href="/ai-assistant">Ask assistant</Link>
+        <Button asChild size="sm" variant="default">
+          <Link href="/ai-assistant">Ask Alleato AI</Link>
         </Button>
       }
       contentClassName="space-y-12"
@@ -561,14 +600,14 @@ export default async function ProjectIntelligencePage({
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-foreground marker:hidden">
               Packet card review
               <span className="text-xs font-medium text-muted-foreground group-open:hidden">
-                Show card detail
+                Show top {reviewCards.length} cards
               </span>
               <span className="hidden text-xs font-medium text-muted-foreground group-open:inline">
                 Hide card detail
               </span>
             </summary>
             <div className="mt-6 space-y-10">
-              <InsightCardShowcase cards={packet.cards} projectId={numericProjectId} />
+              <InsightCardShowcase cards={reviewCards} projectId={numericProjectId} />
             </div>
           </details>
         </>

@@ -62,16 +62,10 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-sm transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
-          // Right: bottom-sheet on mobile → right panel on md+
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-sm transition-[transform,opacity] ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:duration-[250ms] data-[state=open]:duration-[400ms]",
           side === "right" && [
-            // Mobile: slide up from bottom
-            "data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom",
-            "inset-x-0 bottom-0 left-0 right-0 w-full max-h-[90dvh] h-auto rounded-t-2xl border-t",
-            // md (iPad): switch to right panel at 60%
-            "md:inset-x-auto md:left-auto md:inset-y-0 md:right-0 md:h-dvh md:max-h-dvh md:w-[60%] md:max-w-none md:rounded-none md:border-t-0 md:border-l",
-            "md:[--tw-enter-translate-y:0px] md:[--tw-enter-translate-x:100%]",
-            "md:[--tw-exit-translate-y:0px] md:[--tw-exit-translate-x:100%]",
+            "data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right",
+            "inset-y-0 right-0 h-dvh max-h-dvh w-full border-l sm:max-w-sm md:w-[60%] md:max-w-none",
             // lg (desktop): 45%
             "lg:w-[45%]",
           ],
@@ -85,9 +79,6 @@ function SheetContent({
         )}
         {...props}
       >
-        {side === "right" && (
-          <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-muted-foreground/25 flex-shrink-0 md:hidden" />
-        )}
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close className="absolute top-4 right-4 rounded-md p-1 text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none">

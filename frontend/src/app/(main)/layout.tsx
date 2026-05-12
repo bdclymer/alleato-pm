@@ -81,7 +81,15 @@ export default function MainLayout({
               <AiChatSidebarPanel key="ai-chat-sidebar-panel" />
             </React.Suspense>
             <div className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide">
-              {!isDrawingViewer && !isAiAssistant && <SiteHeader key="site-header" />}
+              {!isDrawingViewer && (
+                isAiAssistant ? (
+                  <div key="site-header-mobile" className="md:hidden">
+                    <SiteHeader key="site-header" />
+                  </div>
+                ) : (
+                  <SiteHeader key="site-header" />
+                )
+              )}
               <main
                 key="main-content"
                 className="flex flex-1 flex-col min-w-0 min-h-0"

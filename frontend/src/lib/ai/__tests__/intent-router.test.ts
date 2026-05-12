@@ -11,6 +11,20 @@ describe("intent router", () => {
     expect(shouldUsePacketFirstIntent(intent)).toBe(true);
   });
 
+  it("routes owner-style risk prompts to packet-first risk handling", () => {
+    const prompts = [
+      "What could bite us on Westfield right now?",
+      "Rank the risks and tell me what I should do first.",
+      "Anything on this job making you nervous?",
+    ];
+
+    for (const prompt of prompts) {
+      const intent = classifyAssistantIntent(prompt);
+      expect(intent).toBe("risk_review");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(true);
+    }
+  });
+
   it("preserves exact source lookup prompts", () => {
     const intent = classifyAssistantIntent("What source evidence supports that?");
 

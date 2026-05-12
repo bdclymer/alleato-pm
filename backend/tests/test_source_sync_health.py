@@ -111,6 +111,7 @@ def _seed_empty_tables(supabase):
         "source_sync_health_snapshots",
         "source_sync_runs",
         "graph_subscriptions",
+        "project_documents",
         "system_alerts",
     ]:
         supabase.tables.setdefault(table, [])
@@ -353,6 +354,55 @@ def test_get_source_sync_health_reports_task_extraction_freshness():
     assert task_source["status"] == "healthy"
     assert task_source["itemsSynced"] == 1
     assert health["pipeline"]["tasksBySourceSystem"]["fireflies"] == 1
+
+
+def test_get_source_sync_health_alerts_when_graph_docs_missing_project_documents():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    recent = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+    supabase.tables["document_metadata"] = [
+        {
+            "id": "onedrive_drive-item-1",
+            "title": "Scope.txt",
+            "source": "microsoft_graph",
+            "source_system": "microsoft_graph",
+            "category": "document",
+            "type": "document",
+            "status": "embedded",
+            "project_id": 25125,
+            "created_at": recent,
+            "tags": "onedrive,txt",
+        },
+        {
+            "id": "sharepoint_drive-item-2",
+            "title": "RFI.pdf",
+            "source": "microsoft_graph",
+            "source_system": "sharepoint",
+            "source_item_id": "drive-item-2",
+            "category": "document",
+            "type": "document",
+            "status": "embedded",
+            "project_id": 25125,
+            "created_at": recent,
+        },
+    ]
+    supabase.tables["project_documents"] = [
+        {
+            "id": 1,
+            "project_id": 25125,
+            "source_system": "sharepoint",
+            "source_item_id": "drive-item-2",
+            "deleted_at": None,
+        }
+    ]
+
+    health = get_source_sync_health(supabase)
+
+    promotion = health["pipeline"]["graphProjectDocumentPromotion"]
+    assert promotion["promoted"] == 1
+    assert promotion["missing"] == 1
+    assert promotion["missing_onedrive"] == 1
+    assert any(alert["code"] == "graph_project_document_promotion_gap" for alert in health["alerts"])
 
 
 def test_get_source_sync_health_caps_returned_sources_and_alerts():

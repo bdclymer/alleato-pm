@@ -23,6 +23,7 @@ from ...intelligence.compiler import process_source_document_to_packet
 from .client import get_graph_client
 from .email_classification import EmailIntakeAction, classify_graph_email_for_intake
 from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
+from .project_documents import upsert_project_document_by_source as _upsert_project_document_by_source
 from .project_inference import infer_project_id
 
 logger = logging.getLogger(__name__)
@@ -1130,31 +1131,6 @@ def _sync_email_attachment(
         })
 
     return True
-
-
-def _upsert_project_document_by_source(supabase_client, payload: dict) -> None:
-    """Upsert project_documents without relying on the partial source-item index."""
-    project_id = payload.get("project_id")
-    source_system = payload.get("source_system")
-    source_item_id = payload.get("source_item_id")
-    if not project_id or not source_system or not source_item_id:
-        raise ValueError("project_id, source_system, and source_item_id are required for source-backed documents")
-
-    existing = (
-        supabase_client.from_("project_documents")
-        .select("id")
-        .eq("project_id", project_id)
-        .eq("source_system", source_system)
-        .eq("source_item_id", source_item_id)
-        .is_("deleted_at", "null")
-        .limit(1)
-        .execute()
-    )
-    rows = existing.data or []
-    if rows:
-        supabase_client.from_("project_documents").update(payload).eq("id", rows[0]["id"]).execute()
-    else:
-        supabase_client.from_("project_documents").insert(payload).execute()
 
 
 def _sync_email_link(

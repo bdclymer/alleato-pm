@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import html
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -117,7 +118,7 @@ def classify_graph_email_for_intake(msg: dict[str, Any], body_text: str) -> Emai
     """
 
     subject = str(msg.get("subject") or "")
-    text = _normalize_text(body_text or msg.get("bodyPreview") or "")
+    text = _message_text_for_classification(msg, body_text)
     header_signals = _calendar_header_signals(msg)
     subject_signals = _calendar_subject_signals(subject)
     body_signals = _calendar_body_signals(text)
@@ -213,6 +214,33 @@ def _strip_calendar_boilerplate(text: str) -> str:
     cleaned = re.sub(r"\b(when|where|organizer|required|optional|importance|sensitivity):\b.*", " ", cleaned)
     cleaned = re.sub(r"\b(microsoft teams|need help|meeting options|join on your computer).*$", " ", cleaned)
     return re.sub(r"\s+", " ", cleaned).strip()
+
+
+def _message_text_for_classification(msg: dict[str, Any], body_text: str) -> str:
+    body = msg.get("body") if isinstance(msg.get("body"), dict) else {}
+    body_content = str(body.get("content") or "")
+    candidate = body_content or str(msg.get("bodyPreview") or "") or body_text
+    if body_content:
+        candidate = _strip_html(candidate)
+    candidate = _strip_storage_text_headers(candidate)
+    return _normalize_text(candidate)
+
+
+def _strip_storage_text_headers(value: str) -> str:
+    return re.sub(
+        r"(?is)^\s*subject:.*?\n\s*date:.*?\n\s*from:.*?\n\s*to:.*?\n\s*\n",
+        "",
+        value or "",
+        count=1,
+    )
+
+
+def _strip_html(value: str) -> str:
+    without_tags = re.sub(r"(?is)<(script|style).*?</\1>", " ", value or "")
+    without_tags = re.sub(r"(?is)<br\s*/?>", "\n", without_tags)
+    without_tags = re.sub(r"(?is)</p\s*>", "\n", without_tags)
+    without_tags = re.sub(r"(?is)<[^>]+>", " ", without_tags)
+    return html.unescape(without_tags)
 
 
 def _normalize_text(value: Any) -> str:

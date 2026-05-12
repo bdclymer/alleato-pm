@@ -9,6 +9,14 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from .client import get_graph_client
+from .project_documents import (
+    DOCUMENT_BUCKET,
+    graph_id_safe,
+    metadata_text_storage,
+    project_document_payload_from_graph_item,
+    source_path,
+    upsert_project_document_by_source,
+)
 from .project_inference import infer_project_id
 
 logger = logging.getLogger(__name__)
@@ -63,6 +71,36 @@ def _extract_text(content: bytes, extension: str) -> str:
     return ""
 
 
+def _promote_to_project_documents(
+    *,
+    supabase_client,
+    project_id: Optional[int],
+    source_system: str,
+    owner: str,
+    folder_path: str,
+    item: dict,
+    item_id: str,
+    name: str,
+    storage_path: str,
+    uploaded_by: str,
+) -> None:
+    if not project_id:
+        return
+
+    payload = project_document_payload_from_graph_item(
+        project_id=project_id,
+        source_system=source_system,
+        owner=owner,
+        folder_path=folder_path,
+        item=item,
+        item_id=item_id,
+        name=name,
+        storage_path=storage_path,
+        uploaded_by=uploaded_by,
+    )
+    upsert_project_document_by_source(supabase_client, payload)
+
+
 def sync_onedrive_folder(
     supabase_client,
     user_email: str,
@@ -112,7 +150,8 @@ def sync_onedrive_folder(
 
         # Check extension
         _, ext = os.path.splitext(name)
-        if ext.lower() not in SUPPORTED_EXTENSIONS:
+        ext = ext.lower()
+        if ext not in SUPPORTED_EXTENSIONS:
             continue
 
         if size > MAX_FILE_SIZE_BYTES:
@@ -121,10 +160,44 @@ def sync_onedrive_folder(
 
         item_id = item.get("id", "")
         doc_id = f"onedrive_{item_id}"
+        storage_path = metadata_text_storage("onedrive", user_email, item_id, ext)
 
         # Check if already ingested
-        existing = supabase_client.from_("document_metadata").select("id").eq("id", doc_id).execute()
+        existing = (
+            supabase_client.from_("document_metadata")
+            .select("id, project_id, content")
+            .eq("id", doc_id)
+            .limit(1)
+            .execute()
+        )
         if existing.data:
+            existing_doc = existing.data[0]
+            project_id = existing_doc.get("project_id")
+            if not project_id:
+                clean_content = str(existing_doc.get("content") or "")
+                project_id, assignment_method, _ = infer_project_id(
+                    supabase_client,
+                    title=name,
+                    content=clean_content,
+                    participants=[user_email],
+                )
+                if project_id:
+                    supabase_client.from_("document_metadata").update({
+                        "project_id": project_id,
+                        "tags": ",".join(["onedrive", ext.lstrip("."), f"project_auto:{assignment_method}"]),
+                    }).eq("id", doc_id).execute()
+            _promote_to_project_documents(
+                supabase_client=supabase_client,
+                project_id=project_id,
+                source_system="onedrive",
+                owner=user_email,
+                folder_path=folder_path,
+                item=item,
+                item_id=item_id,
+                name=name,
+                storage_path=storage_path,
+                uploaded_by=user_email,
+            )
             continue
 
         # Download file content
@@ -156,10 +229,9 @@ def sync_onedrive_folder(
         web_url = item.get("webUrl", "")
         created_by = item.get("createdBy", {}).get("user", {}).get("displayName", user_email)
 
-        # Upload raw text to Supabase Storage
-        storage_path = f"onedrive/{user_email}/{item_id}{ext}.txt"
+        # Upload extracted text to Supabase Storage for AI search.
         try:
-            supabase_client.storage.from_("documents").upload(
+            supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
                 storage_path,
                 text_content.encode("utf-8"),
                 {"content-type": "text/plain", "upsert": "true"},
@@ -190,7 +262,34 @@ def sync_onedrive_folder(
                 "status": "raw_ingested",
                 "tags": ",".join(["onedrive", ext.lstrip("."), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
                 "project_id": project_id,
+                "source_system": "onedrive",
+                "source_item_id": item_id,
+                "source_drive_id": graph_id_safe((item.get("parentReference") or {}).get("driveId")),
+                "source_path": source_path(folder_path, name),
+                "source_web_url": web_url or None,
+                "source_etag": item.get("eTag") or item.get("cTag"),
+                "source_last_modified_at": modified,
+                "source_size": size,
+                "storage_bucket": DOCUMENT_BUCKET,
+                "file_path": storage_path,
+                "source_metadata": {
+                    "graph_source": "onedrive",
+                    "graph_owner": user_email,
+                    "source_folder": folder_path,
+                },
             }).execute()
+            _promote_to_project_documents(
+                supabase_client=supabase_client,
+                project_id=project_id,
+                source_system="onedrive",
+                owner=user_email,
+                folder_path=folder_path,
+                item=item,
+                item_id=item_id,
+                name=name,
+                storage_path=storage_path,
+                uploaded_by=user_email,
+            )
             synced += 1
             if project_id:
                 logger.info(
@@ -250,16 +349,51 @@ def sync_sharepoint_folder(
         name = item.get("name", "")
         size = item.get("size", 0)
         _, ext = os.path.splitext(name)
-        if ext.lower() not in SUPPORTED_EXTENSIONS:
+        ext = ext.lower()
+        if ext not in SUPPORTED_EXTENSIONS:
             continue
         if size > MAX_FILE_SIZE_BYTES:
             continue
 
         item_id = item.get("id", "")
         doc_id = f"sharepoint_{item_id}"
+        storage_path = metadata_text_storage("sharepoint", site_name, item_id, ext)
 
-        existing = supabase_client.from_("document_metadata").select("id").eq("id", doc_id).execute()
+        existing = (
+            supabase_client.from_("document_metadata")
+            .select("id, project_id, content")
+            .eq("id", doc_id)
+            .limit(1)
+            .execute()
+        )
         if existing.data:
+            existing_doc = existing.data[0]
+            project_id = existing_doc.get("project_id")
+            if not project_id:
+                clean_content = str(existing_doc.get("content") or "")
+                project_id, assignment_method, _ = infer_project_id(
+                    supabase_client,
+                    title=name,
+                    content=clean_content,
+                    participants=[site_name],
+                )
+                if project_id:
+                    supabase_client.from_("document_metadata").update({
+                        "project_id": project_id,
+                        "tags": ",".join(["sharepoint", site_name.lower(), ext.lstrip("."), f"project_auto:{assignment_method}"]),
+                    }).eq("id", doc_id).execute()
+            _promote_to_project_documents(
+                supabase_client=supabase_client,
+                project_id=project_id,
+                source_system="sharepoint",
+                owner=site_name,
+                folder_path=folder_path,
+                item=item,
+                item_id=item_id,
+                name=name,
+                storage_path=storage_path,
+                uploaded_by="SharePoint sync",
+            )
             continue
 
         download_url = item.get("@microsoft.graph.downloadUrl", "")
@@ -287,9 +421,8 @@ def sync_sharepoint_folder(
         web_url = item.get("webUrl", "")
         created_by = item.get("createdBy", {}).get("user", {}).get("displayName", site_name)
 
-        storage_path = f"sharepoint/{site_name}/{item_id}{ext}.txt"
         try:
-            supabase_client.storage.from_("documents").upload(
+            supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
                 storage_path,
                 text_content.encode("utf-8"),
                 {"content-type": "text/plain", "upsert": "true"},
@@ -319,7 +452,35 @@ def sync_sharepoint_folder(
                 "status": "raw_ingested",
                 "tags": ",".join(["sharepoint", site_name.lower(), ext.lstrip("."), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
                 "project_id": project_id,
+                "source_system": "sharepoint",
+                "source_item_id": item_id,
+                "source_drive_id": graph_id_safe((item.get("parentReference") or {}).get("driveId")),
+                "source_site_id": graph_id_safe((item.get("parentReference") or {}).get("siteId")),
+                "source_path": source_path(folder_path, name),
+                "source_web_url": web_url or None,
+                "source_etag": item.get("eTag") or item.get("cTag"),
+                "source_last_modified_at": modified,
+                "source_size": size,
+                "storage_bucket": DOCUMENT_BUCKET,
+                "file_path": storage_path,
+                "source_metadata": {
+                    "graph_source": "sharepoint",
+                    "graph_owner": site_name,
+                    "source_folder": folder_path,
+                },
             }).execute()
+            _promote_to_project_documents(
+                supabase_client=supabase_client,
+                project_id=project_id,
+                source_system="sharepoint",
+                owner=site_name,
+                folder_path=folder_path,
+                item=item,
+                item_id=item_id,
+                name=name,
+                storage_path=storage_path,
+                uploaded_by="SharePoint sync",
+            )
             synced += 1
         except Exception as e:
             logger.warning(f"[SharePoint] Failed to insert metadata for {name}: {e}")

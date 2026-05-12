@@ -226,6 +226,7 @@ const PIPELINE_GROUPS: Array<{ key: string; title: string }> = [
   { key: "packetJobsByStatus", title: "Packet jobs" },
   { key: "tasksBySourceSystem", title: "Tasks by source" },
   { key: "graphSubscriptionsByStatus", title: "Graph subscriptions" },
+  { key: "graphProjectDocumentPromotion", title: "Project document promotion" },
 ];
 
 const FIREFLIES_STAGE_ORDER = [

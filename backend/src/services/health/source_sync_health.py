@@ -60,6 +60,8 @@ GRAPH_DOCUMENT_TYPE_SOURCE_KEYS = {
     "document": "onedrive_file",
 }
 
+GRAPH_PROJECT_DOCUMENT_SOURCES = {"onedrive", "sharepoint"}
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -205,6 +207,73 @@ def _graph_document_source_key(document: Dict[str, Any]) -> Optional[str]:
         if mapped:
             return mapped
     return "microsoft_graph"
+
+
+def _graph_project_document_source(document: Dict[str, Any]) -> Optional[str]:
+    source_system = str(document.get("source_system") or "").lower()
+    if source_system in GRAPH_PROJECT_DOCUMENT_SOURCES:
+        return source_system
+
+    document_id = str(document.get("id") or "")
+    if document_id.startswith("onedrive_"):
+        return "onedrive"
+    if document_id.startswith("sharepoint_"):
+        return "sharepoint"
+
+    tags = str(document.get("tags") or "").lower()
+    if "onedrive" in tags:
+        return "onedrive"
+    if "sharepoint" in tags:
+        return "sharepoint"
+    return None
+
+
+def _graph_project_document_item_id(document: Dict[str, Any], source: str) -> Optional[str]:
+    item_id = document.get("source_item_id")
+    if item_id:
+        return str(item_id)
+
+    document_id = str(document.get("id") or "")
+    prefix = f"{source}_"
+    if document_id.startswith(prefix) and len(document_id) > len(prefix):
+        return document_id[len(prefix):]
+    return None
+
+
+def _graph_project_document_promotion_counts(
+    documents: Sequence[Dict[str, Any]],
+    project_documents: Sequence[Dict[str, Any]],
+) -> Dict[str, int]:
+    existing = {
+        (
+            int(row["project_id"]),
+            str(row["source_system"]),
+            str(row["source_item_id"]),
+        )
+        for row in project_documents
+        if row.get("project_id")
+        and row.get("source_system") in GRAPH_PROJECT_DOCUMENT_SOURCES
+        and row.get("source_item_id")
+        and row.get("deleted_at") is None
+    }
+    counts: Counter[str] = Counter()
+    for document in documents:
+        project_id = document.get("project_id")
+        if not project_id:
+            continue
+        source = _graph_project_document_source(document)
+        if not source:
+            continue
+        item_id = _graph_project_document_item_id(document, source)
+        if not item_id:
+            continue
+        key = (int(project_id), source, item_id)
+        if key in existing:
+            counts["promoted"] += 1
+        else:
+            counts["missing"] += 1
+            counts[f"missing_{source}"] += 1
+    return dict(counts)
 
 
 def _source_key(document: Dict[str, Any]) -> str:
@@ -528,6 +597,22 @@ def detect_source_sync_alerts(
             }
         )
 
+    missing_project_documents = pipeline.get("graphProjectDocumentPromotion", {}).get("missing", 0)
+    if missing_project_documents:
+        alerts.append(
+            {
+                "severity": "warning",
+                "code": "graph_project_document_promotion_gap",
+                "source": "microsoft_graph",
+                "resourceId": "project_documents",
+                "message": (
+                    f"{missing_project_documents} assigned OneDrive/SharePoint document(s) "
+                    "are searchable in AI but missing from project Documents."
+                ),
+                "detectedAt": _iso(now),
+            }
+        )
+
     return alerts
 
 
@@ -757,7 +842,13 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     documents = _table_rows(
         supabase,
         "document_metadata",
-        "id,title,url,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at,fireflies_id,project_id,source_metadata",
+        "id,title,url,source,source_system,source_item_id,category,type,status,captured_at,date,created_at,source_last_modified_at,fireflies_id,project_id,source_metadata,tags",
+        limit=DOCUMENT_HEALTH_SAMPLE_LIMIT,
+    )
+    project_documents = _table_rows(
+        supabase,
+        "project_documents",
+        "id,project_id,source_system,source_item_id,deleted_at",
         limit=DOCUMENT_HEALTH_SAMPLE_LIMIT,
     )
     chunks = _chunk_rows_for_documents(
@@ -975,6 +1066,10 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "packetJobsByStatus": _counter(packet_jobs, "status"),
         "tasksBySourceSystem": _counter(tasks, "source_system"),
         "graphSubscriptionsByStatus": _counter(subscriptions, "status"),
+        "graphProjectDocumentPromotion": _graph_project_document_promotion_counts(
+            documents,
+            project_documents,
+        ),
     }
 
     alerts = detect_source_sync_alerts(sources, pipeline, now)

@@ -27,6 +27,25 @@ def test_classifies_pure_accepted_invite_as_skip():
     assert classification.confidence >= 0.9
 
 
+def test_formatted_storage_text_does_not_make_rsvp_substantive():
+    msg = _message(
+        "Accepted: Ulta Fresno OAC Meeting",
+        "Accepted Ulta Fresno OAC Meeting When: Tuesday, May 12 Where: Teams",
+        [{"name": "Content-Class", "value": "urn:content-classes:calendarmessage"}],
+    )
+    formatted_body = """Subject: Accepted: Ulta Fresno OAC Meeting
+Date: 2026-05-12T12:00:00Z
+From: Scheduler <scheduler@example.com>
+To: Brandon Clymer <bclymer@alleatogroup.com>
+
+Accepted Ulta Fresno OAC Meeting When: Tuesday, May 12 Where: Teams"""
+
+    classification = classify_graph_email_for_intake(msg, formatted_body)
+
+    assert classification.action == EmailIntakeAction.SKIP
+    assert classification.category == "calendar_rsvp"
+
+
 def test_keeps_invite_response_with_substantive_comment():
     body = (
         "Accepted. I also need the revised drawing and the RFI response before "

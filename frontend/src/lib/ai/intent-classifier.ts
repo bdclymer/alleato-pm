@@ -77,6 +77,23 @@ export type IntentPlannerDecision = z.infer<typeof intentPlannerSchema> & {
   deterministicIntent: AssistantIntent;
 };
 
+function shouldPreferDeterministicIntent(
+  deterministicIntent: AssistantIntent,
+  modelIntent: AssistantIntent,
+): boolean {
+  if (deterministicIntent === "general_conversation") return false;
+  if (deterministicIntent === modelIntent) return false;
+
+  // High-signal local rules are safer than a vague model planner downgrade.
+  // These downgrades are especially damaging because they skip the packet/tool
+  // routes and make the assistant answer like a generic chatbot.
+  return (
+    modelIntent === "general_conversation" ||
+    (modelIntent === "task_followup" && deterministicIntent !== "task_followup") ||
+    deterministicIntent === "task_write"
+  );
+}
+
 export async function planAssistantIntent(params: {
   message: string;
   selectedProjectId?: number;
@@ -138,6 +155,19 @@ export async function planAssistantIntent(params: {
   );
 
   if (isTimeoutResult(result)) return fallback;
+
+  if (
+    shouldPreferDeterministicIntent(
+      params.deterministicIntent,
+      result.object.intent,
+    )
+  ) {
+    return {
+      ...fallback,
+      confidence: "medium",
+      rationale: `Deterministic intent '${params.deterministicIntent}' overrode model planner intent '${result.object.intent}' to prevent routing downgrade.`,
+    };
+  }
 
   return {
     ...result.object,

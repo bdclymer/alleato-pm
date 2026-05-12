@@ -35,6 +35,7 @@ import {
 import {
   createStrategistTools,
 } from "@/lib/ai/orchestrator";
+import { getAssistantRetrievalOrderSummary } from "@/lib/ai/assistant-self-knowledge";
 import {
   createWeeklyMarketingContentWorkflow,
   type CmoWeeklyContentWorkflowResult,
@@ -183,6 +184,100 @@ const TASK_WRITE_TOOL_NAMES = [
   "deleteGeneratedTask",
 ] as const;
 
+const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
+  task_write: TASK_WRITE_TOOL_NAMES,
+  financial_analysis: [
+    "getFinancialAnalysis",
+    "getProjectBudgetSummary",
+    "getMarginAnalysis",
+    "getBudgetLineItems",
+    "getCommitmentsOverview",
+    "getChangeOrderDetails",
+    "getDirectCostsSummary",
+    "getCostTrends",
+    "queryBudgetData",
+    "queryChangeOrders",
+    "queryCommitments",
+    "queryDirectCosts",
+    "getCashPositionReport",
+    "getARAgingReport",
+    "getAPAgingReport",
+    "getRecentInvoices",
+    "getRecentBills",
+    "getAcumaticaProjectBudget",
+    "getAcumaticaProjectList",
+    "findProject",
+  ],
+  latest_status: [
+    "getPortfolioOverview",
+    "getProjectsWithRisks",
+    "getProjectBriefingSnapshot",
+    "getActionItemsAndInsights",
+    "getProjectDetails",
+    "findProject",
+  ],
+  risk_review: [
+    "getProjectRiskAnalysis",
+    "getProjectsWithRisks",
+    "getPortfolioOverview",
+    "getProjectBriefingSnapshot",
+    "getActionItemsAndInsights",
+    "getRFIStatus",
+    "getSubmittalStatus",
+    "getScheduleAnalysis",
+    "getChangeOrderDetails",
+    "getFinancialAnalysis",
+    "findProject",
+  ],
+  change_management_review: [
+    "getChangeOrderDetails",
+    "queryChangeOrders",
+    "getProjectBudgetSummary",
+    "getFinancialAnalysis",
+    "getProjectBriefingSnapshot",
+    "searchEmails",
+    "searchTeamsMessages",
+    "searchMeetingsByTopic",
+    "semanticSearch",
+    "findProject",
+  ],
+  decision_lookup: [
+    "getProjectBriefingSnapshot",
+    "getMeetingIntelligence",
+    "searchEmails",
+    "searchTeamsMessages",
+    "searchMeetingsByTopic",
+    "getMeetingDetails",
+    "semanticSearch",
+    "findProject",
+  ],
+  task_followup: [
+    "getActionItemsAndInsights",
+    "getProjectBriefingSnapshot",
+    "searchMeetingsByTopic",
+    "searchEmails",
+    "searchTeamsMessages",
+    "semanticSearch",
+    "findProject",
+  ],
+  source_lookup: [],
+  app_help: ["searchAppHelp"],
+  target_briefing: [
+    "getProjectBriefingSnapshot",
+    "getProjectDetails",
+    "getProjectRiskAnalysis",
+    "findProject",
+  ],
+};
+
+const TASK_WRITE_MAX_PROMPT_APPROX_TOKENS = 4000;
+const TASK_WRITE_MAX_MODEL_TOOLS = TASK_WRITE_TOOL_NAMES.length;
+const TASK_WRITE_MUTATION_TOOL_NAMES = new Set<string>([
+  "createGeneratedTask",
+  "updateGeneratedTask",
+  "deleteGeneratedTask",
+]);
+
 function pickTools(tools: ToolSet, names: readonly string[]): ToolSet {
   const selected: ToolSet = {};
   for (const name of names) {
@@ -194,6 +289,33 @@ function pickTools(tools: ToolSet, names: readonly string[]): ToolSet {
 
 function getApproxTokenCount(value: string): number {
   return Math.ceil(value.length / 4);
+}
+
+function getScopedToolsForIntent(tools: ToolSet, intent: AssistantIntent): ToolSet {
+  const names = INTENT_TOOL_NAMES[intent];
+  if (!names) return tools;
+  return pickTools(tools, names);
+}
+
+function assertTaskWritePromptBudget(params: {
+  promptApproxTokens: number;
+  modelToolCount: number;
+}) {
+  if (
+    params.promptApproxTokens <= TASK_WRITE_MAX_PROMPT_APPROX_TOKENS &&
+    params.modelToolCount <= TASK_WRITE_MAX_MODEL_TOOLS
+  ) {
+    return;
+  }
+
+  throw new Error(
+    [
+      "Task-write prompt budget exceeded before calling the AI SDK.",
+      `Cause: promptApproxTokens=${params.promptApproxTokens}, modelToolCount=${params.modelToolCount}.`,
+      "Detection gap: lightweight task writes previously reused the full strategist prompt/tool registry.",
+      "Prevention: keep task_write on the lean prompt and scoped task tool policy.",
+    ].join(" "),
+  );
 }
 
 type ExecutableTool = {
@@ -3358,6 +3480,7 @@ async function persistAssistantMessage(params: {
           : null,
         response_quality: responseQuality,
         loop_diagnostic: loopDiagnostic ?? null,
+        assistant_retrieval_order: getAssistantRetrievalOrderSummary(),
         project_briefing_snapshot: projectBriefingSnapshot ?? null,
         executive_briefing_retrieval: executiveBriefingRetrieval ?? null,
         source_health: sourceHealth ?? null,
@@ -3696,6 +3819,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         toolTrace.push(trace);
       },
       pinnedProjectId: selectedProjectId,
+      sessionId,
     });
     const lastUserContent = lastUserMessage
       ? extractTextFromParts(lastUserMessage.parts)
@@ -5237,10 +5361,40 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         // Disable tools when source_lookup context is already injected — the
         // model should synthesize from the loaded sources, not call more tools.
         const sourceLookupContextInjected = assistantIntent === "source_lookup";
+        const conciseOwnerBriefingIntent = [
+          "latest_status",
+          "risk_review",
+          "target_briefing",
+        ].includes(assistantIntent);
+        const scopedTools = getScopedToolsForIntent(tools as ToolSet, assistantIntent);
+        const scopedToolNames = Object.keys(scopedTools);
         const modelTools =
           streamingModelToolsEnabled && !sourceLookupContextInjected
-            ? (tools as ToolSet)
+            ? scopedTools
             : undefined;
+        const streamMaxOutputTokens = conciseOwnerBriefingIntent ? 2400 : 4000;
+        const streamMaxSteps = conciseOwnerBriefingIntent ? 6 : 10;
+        if (conciseOwnerBriefingIntent) {
+          systemPrompt +=
+            "\n\n# Owner Briefing Shape\nAnswer like a construction owner asked between calls: concise, specific, and decision-oriented. Lead with the answer, then group evidence under short sections for what changed, risks, and first actions. Do not end with generic optional offers.";
+        }
+        const modelToolNames = modelTools ? Object.keys(modelTools) : [];
+        const promptTelemetry = {
+          promptMode,
+          systemPromptChars: systemPrompt.length,
+          systemPromptApproxTokens: getApproxTokenCount(systemPrompt),
+          messageCount: modelMessages.length,
+          fullToolCount: Object.keys(tools).length,
+          scopedToolCount: scopedToolNames.length,
+          modelToolCount: modelToolNames.length,
+          modelToolNames,
+        };
+        if (isTaskWriteIntent) {
+          assertTaskWritePromptBudget({
+            promptApproxTokens: promptTelemetry.systemPromptApproxTokens,
+            modelToolCount: promptTelemetry.modelToolCount,
+          });
+        }
         toolTrace.push({
           tool: "streamingToolPolicy",
           input: {
@@ -5250,6 +5404,13 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           output: {
             streamingModelToolsEnabled,
             sourceLookupContextInjected,
+            promptMode,
+            fullToolCount: promptTelemetry.fullToolCount,
+            scopedToolCount: promptTelemetry.scopedToolCount,
+            modelToolCount: promptTelemetry.modelToolCount,
+            modelToolNames: promptTelemetry.modelToolNames,
+            streamMaxOutputTokens,
+            streamMaxSteps,
             reason: sourceLookupContextInjected
               ? "tools disabled: source_lookup context pre-loaded"
               : providerDecision.reason,
@@ -5271,13 +5432,13 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         const result = streamText({
             model: getLanguageModel(activeModel),
             ...promptPayload,
-            maxOutputTokens: 4000,
+            maxOutputTokens: streamMaxOutputTokens,
             timeout: {
               totalMs: 90_000,
               stepMs: 45_000,
               chunkMs: 45_000,
             },
-            stopWhen: stepCountIs(10),
+            stopWhen: stepCountIs(streamMaxSteps),
             experimental_telemetry: {
               isEnabled: process.env.PHOENIX_TRACING === "true",
               functionId: "ai-assistant-chat",
@@ -5341,6 +5502,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
         let content = "";
         let totalUsage: Awaited<typeof result.totalUsage> | undefined;
+        let finalContentSource: "primary" | "retry" | "tool_only" = "primary";
         try {
           content = (await result.text).trim();
           totalUsage = await result.totalUsage;
@@ -5370,6 +5532,33 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             error: errorMessage,
             timestamp: new Date().toISOString(),
           });
+        }
+
+        const taskWriteMutationToolCallNames = stepDiagnostics
+          .flatMap((s) => s.toolCallNames ?? [])
+          .filter((name) => TASK_WRITE_MUTATION_TOOL_NAMES.has(name));
+        if (
+          !content &&
+          assistantIntent === "task_write" &&
+          taskWriteMutationToolCallNames.length > 0 &&
+          !streamErrorMessage
+        ) {
+          content = "Task preview created. Review the preview card and confirm when ready.";
+          finalContentSource = "tool_only";
+          toolTrace.push({
+            tool: "taskWriteToolOnlyCompletion",
+            input: {
+              intent: assistantIntent,
+              primaryModel: activeModel,
+            },
+            output: {
+              suppressedNoToolRetry: true,
+              toolCallNames: taskWriteMutationToolCallNames,
+              contentLength: content.length,
+            },
+            timestamp: new Date().toISOString(),
+          });
+          await writeTextResponse(writer, "task-write-tool-only-completion", content);
         }
 
         if (!content) {
@@ -5418,6 +5607,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               modelId: activeModel,
               toolTrace,
             }));
+          finalContentSource = noToolRetryContent ? "retry" : "primary";
 
           const fallbackTextId = "strategist-failure-response";
           await writeTextResponse(writer, fallbackTextId, content);
@@ -5460,15 +5650,16 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 const retryContent = retryResultOrTimeout.text.trim();
                 if (retryContent) {
                   // Write to stream FIRST — only mutate content after writes succeed
-                  await writeTextResponse(
-                    writer,
-                    "meta-commentary-correction",
-                    `\n\n${retryContent}`,
-                  );
-                  // Now safe to mutate — client has the content
-                  content = retryContent;
-                  toolTrace.push({
-                    tool: "metaCommentaryRetry",
+	                  await writeTextResponse(
+	                    writer,
+	                    "meta-commentary-correction",
+	                    `\n\n${retryContent}`,
+	                  );
+	                  // Now safe to mutate — client has the content
+	                  content = retryContent;
+	                  finalContentSource = "retry";
+	                  toolTrace.push({
+	                    tool: "metaCommentaryRetry",
                     input: {
                       primaryModel: activeModel,
                       retryModel: "openai/gpt-4.1",
@@ -5566,6 +5757,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           stepCount: rawStepCount || stepDiagnostics.length,
           toolCallNames,
           selectedProjectId: selectedProjectId ?? null,
+          metadata: {
+            ...promptTelemetry,
+            outputChars: content.length,
+            finalContentSource,
+          },
         }));
       },
       onError: (error) => {

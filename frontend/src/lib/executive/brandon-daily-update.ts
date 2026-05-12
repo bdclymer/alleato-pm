@@ -59,7 +59,7 @@ export type ExecutiveOperatingBrief = {
   lowerPriorityMomentum: ExecutiveOperatingBriefShortItem[];
 };
 
-export const DEFAULT_EXECUTIVE_WINDOW_DAYS = 3;
+export const DEFAULT_EXECUTIVE_WINDOW_DAYS = 1;
 export const DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL = "gpt-5.5";
 
 export type BriefCitation = {

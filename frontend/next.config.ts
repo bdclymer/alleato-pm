@@ -100,6 +100,9 @@ const nextConfig: NextConfig = {
     "swagger-ui-dist",
     "xlsx",
     // OpenTelemetry + tracing — native Node.js modules, never in client bundles
+    // @opentelemetry/api must also be external: its ESM build uses `self` (browser/worker global)
+    // which crashes middleware when webpack bundles it for Node.js runtime.
+    "@opentelemetry/api",
     "@opentelemetry/sdk-node",
     "@opentelemetry/sdk-trace-node",
     "@opentelemetry/exporter-trace-otlp-http",

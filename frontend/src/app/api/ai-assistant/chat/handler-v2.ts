@@ -603,6 +603,7 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
 
       const tools = createStrategistTools(args.user.id, {
         pinnedProjectId: args.selectedProjectId,
+        sessionId: args.sessionId,
       });
 
       if (process.env.NODE_ENV !== "production") {

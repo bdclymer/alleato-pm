@@ -44,6 +44,10 @@ import {
 } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
 import { createClient } from "@/lib/supabase/client";
+import {
+  getCurrentBrowserUser,
+  resetCurrentBrowserUserCache,
+} from "@/lib/supabase/current-user";
 import { apiFetch } from "@/lib/api-client";
 import { headerSelectTriggerClassName } from "./header-control-styles";
 
@@ -139,13 +143,14 @@ export function SiteHeader() {
     const supabase = createClient();
 
     const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user ?? null);
+      const currentUser = await getCurrentBrowserUser(supabase);
+      setUser(currentUser);
     };
 
-    fetchUser();
+    void fetchUser();
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      resetCurrentBrowserUserCache();
       setUser(session?.user ?? null);
     });
 

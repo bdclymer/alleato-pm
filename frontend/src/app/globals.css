@@ -2029,9 +2029,16 @@
 }
 
 @layer components {
-  .global-ai-widget-launcher {
+  .feedback-launcher-position {
     position: fixed;
     right: calc(1rem + 56px);
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 40;
+  }
+
+  .global-ai-widget-launcher {
+    position: fixed;
+    right: 1rem;
     bottom: calc(1rem + env(safe-area-inset-bottom));
     width: 48px !important;
     height: 48px !important;
@@ -2056,8 +2063,13 @@
   }
 
   @media (min-width: 768px) {
-    .global-ai-widget-launcher {
+    .feedback-launcher-position {
       right: calc(2rem + 56px);
+      bottom: 2rem;
+    }
+
+    .global-ai-widget-launcher {
+      right: 2rem;
       bottom: 2rem;
     }
 
@@ -2068,6 +2080,13 @@
       width: 376px;
       height: calc(100dvh - 120px);
       max-height: 704px;
+    }
+
+    .global-ai-widget-panel-expanded {
+      bottom: 80px;
+      width: min(520px, calc(100vw - 40px));
+      height: calc(100dvh - 104px);
+      max-height: 820px;
     }
   }
 }

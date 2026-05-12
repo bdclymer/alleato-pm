@@ -3,6 +3,7 @@ import { CalendarDays } from "lucide-react";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { EmptyState } from "@/components/ds";
 import { ExecutiveBriefingRefreshButton } from "@/components/executive/executive-briefing-refresh-button";
+import { ExecutiveBriefingWindowToggle } from "@/components/executive/executive-briefing-window-toggle";
 import { ExecutiveChatSheet } from "@/components/executive/executive-chat-sheet";
 import { ExecutiveSourceActivity } from "@/components/executive/executive-source-activity";
 import {
@@ -20,6 +21,7 @@ import {
   getFollowUpFingerprint,
   type ExecutiveBriefingFollowUp,
 } from "@/lib/executive/executive-briefing-workflow";
+import { clampDailyBriefWindowDays } from "@/lib/executive/daily-brief";
 import {
   buildExecutiveOperatingBrief,
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
@@ -776,7 +778,11 @@ async function loadTodayMeetings(): Promise<TodayMeeting[]> {
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
-export default async function ExecutiveDailyInsightsPage() {
+export default async function ExecutiveDailyInsightsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const canViewExecutiveBriefing = await canCurrentUserAccessAppCapability(
     "view_executive_briefing",
   );
@@ -790,10 +796,17 @@ export default async function ExecutiveDailyInsightsPage() {
     );
   }
 
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const rawWindowDays = Array.isArray(resolvedSearchParams.windowDays)
+    ? resolvedSearchParams.windowDays[0]
+    : resolvedSearchParams.windowDays;
+  const requestedWindowDays = rawWindowDays ? Number(rawWindowDays) : NaN;
+  const windowDays = Number.isFinite(requestedWindowDays)
+    ? clampDailyBriefWindowDays(requestedWindowDays)
+    : DEFAULT_EXECUTIVE_WINDOW_DAYS;
+
   const [dashboard, todayMeetings] = await Promise.all([
-    getExecutiveBriefingDashboard({
-      windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
-    }),
+    getExecutiveBriefingDashboard({ windowDays }),
     loadTodayMeetings(),
   ]);
   const { draft, staleFollowUps, fingerprintMap } = dashboard;
@@ -856,10 +869,15 @@ export default async function ExecutiveDailyInsightsPage() {
       variant="detailWide"
       eyebrow="Executive briefing"
       title="Daily operating brief"
-      description={`Prepared ${generatedAt} · ${packet.windowDays}-day window`}
+      description={`Prepared ${generatedAt} · ${packet.windowDays}-day window${
+        packet.windowDays !== windowDays
+          ? ` (selected: ${windowDays}-day — click Regenerate to apply)`
+          : ""
+      }`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <ExecutiveBriefingRefreshButton windowDays={packet.windowDays} />
+          <ExecutiveBriefingWindowToggle windowDays={windowDays} />
+          <ExecutiveBriefingRefreshButton windowDays={windowDays} />
           <ExecutiveChatSheet packet={packet} />
         </div>
       }
