@@ -106,6 +106,24 @@ function getCoverageGaps(packet: ClientProjectIntelligencePacket): string[] {
     : [];
 }
 
+function getPacketSourceUsageByCategory(
+  packet: ClientProjectIntelligencePacket,
+  fallbackUsage: Record<string, number>,
+): Record<string, number> {
+  const categoryCoverage = packet.sourceCoverage.categoryCoverage;
+  if (!Array.isArray(categoryCoverage)) return fallbackUsage;
+
+  return categoryCoverage.reduce<Record<string, number>>((acc, row) => {
+    if (!row || typeof row !== "object") return acc;
+    const category = "category" in row ? row.category : null;
+    const sourceCount = "sourceCount" in row ? row.sourceCount : null;
+    if (typeof category === "string") {
+      acc[category] = typeof sourceCount === "number" && Number.isFinite(sourceCount) ? sourceCount : 0;
+    }
+    return acc;
+  }, {});
+}
+
 function buildSourceWindow(packet: ClientProjectIntelligencePacket): string {
   if (packet.coveredStartAt && packet.coveredEndAt) {
     return `${formatDate(packet.coveredStartAt)} - ${formatDate(packet.coveredEndAt)}`;
@@ -246,13 +264,14 @@ function SourceUtilizationPanel({
     acc[category] = (acc[category] ?? 0) + 1;
     return acc;
   }, {});
+  const packetSourceUsageByCategory = getPacketSourceUsageByCategory(packet, packetUsageByCategory);
   const evidencePreviewRows = evidenceRows
     .filter((evidence) => evidence.sourceTitle || evidence.sourceDocumentId || evidence.sourceMessageId)
     .slice(0, 8);
   const availableCategories = operatingSourceSet.coverage.filter((category) => category.availableCount > 0);
   const notUsedAvailableCategories = operatingSourceSet.coverage.filter((category) => {
     if (category.category === "project_detail") return false;
-    return category.availableCount > 0 && (packetUsageByCategory[category.category] ?? 0) === 0;
+    return category.availableCount > 0 && (packetSourceUsageByCategory[category.category] ?? 0) === 0;
   });
 
   return (
@@ -276,9 +295,9 @@ function SourceUtilizationPanel({
         </div>
         <div className="divide-y divide-border border-y border-border">
           {operatingSourceSet.coverage.map((category) => {
-            const packetEvidenceCount = packetUsageByCategory[category.category] ?? 0;
+            const packetSourceCount = packetSourceUsageByCategory[category.category] ?? 0;
             const hasAvailableData = category.availableCount > 0;
-            const isUsedByPacket = packetEvidenceCount > 0;
+            const isUsedByPacket = packetSourceCount > 0;
             return (
               <div key={category.category} className="grid gap-3 py-3 md:grid-cols-[minmax(11rem,16rem)_1fr]">
                 <div className="flex min-w-0 items-center gap-2">
@@ -297,7 +316,7 @@ function SourceUtilizationPanel({
                     <span className="font-medium text-foreground">{category.availableCount}</span> available
                   </p>
                   <p className={isUsedByPacket ? "text-muted-foreground" : "text-status-warning"}>
-                    <span className="font-medium text-foreground">{packetEvidenceCount}</span> in packet
+                    <span className="font-medium text-foreground">{packetSourceCount}</span> in packet
                   </p>
                   <p className="text-muted-foreground">
                     {category.latestAt ? formatDate(category.latestAt) : "No date"}
