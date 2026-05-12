@@ -1,5 +1,64 @@
 # Render deployment configuration
 services:
+  - type: cron
+    name: alleato-acumatica-financial-sync
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "15 0 * * *"
+    dockerCommand: >-
+      python3 -c "
+      import json, os, sys;
+      sys.path.insert(0, '/app');
+      from src.services.acumatica_sync import run_acumatica_financial_sync;
+      result = run_acumatica_financial_sync();
+      print(json.dumps(result, indent=2));
+      sys.exit(1 if result.get('errors') else 0)
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: ACUMATICA_BASE_URL
+        sync: false
+      - key: ACCOUNTING_USER
+        sync: false
+      - key: ACCOUNTING_PASSWORD
+        sync: false
+      - key: ACUMATICA_FINANCIAL_SYNC_ENABLED
+        value: "true"
+
+  - type: cron
+    name: alleato-source-sync-health
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "*/15 * * * *"
+    dockerCommand: >-
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.scheduler import _run_source_sync_health_recompute;
+      result = _run_source_sync_health_recompute();
+      print(json.dumps(result, indent=2));
+      health = result.get('health', {});
+      sys.exit(1 if health.get('status') == 'critical' else 0)
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+
   - type: web
     name: alleato-backend
     runtime: docker

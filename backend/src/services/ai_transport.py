@@ -11,6 +11,8 @@ T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 _TRANSIENT_MESSAGE_SNIPPETS = (
+    "streamidtoolowerror",
+    "stream id too low",
     "server disconnected",
     "connectionterminated",
     "connection terminated",
@@ -27,6 +29,11 @@ _TRANSIENT_MESSAGE_SNIPPETS = (
 )
 
 
+def is_transient_ai_error_message(message: str) -> bool:
+    normalized = str(message or "").lower()
+    return any(snippet in normalized for snippet in _TRANSIENT_MESSAGE_SNIPPETS)
+
+
 def is_transient_ai_error(exc: Exception) -> bool:
     if isinstance(
         exc,
@@ -39,8 +46,7 @@ def is_transient_ai_error(exc: Exception) -> bool:
     ):
         return True
 
-    message = str(exc).lower()
-    return any(snippet in message for snippet in _TRANSIENT_MESSAGE_SNIPPETS)
+    return is_transient_ai_error_message(str(exc))
 
 
 def retry_ai_call(

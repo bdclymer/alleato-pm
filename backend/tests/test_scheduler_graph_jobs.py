@@ -15,6 +15,9 @@ except ModuleNotFoundError:
         pass
 
     class _FakeCronTrigger:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
         @classmethod
         def from_crontab(cls, *_args, **_kwargs):
             return cls()
@@ -34,6 +37,28 @@ except ModuleNotFoundError:
     sys.modules.setdefault("apscheduler.triggers.interval", triggers_interval_module)
 
 from src.services import scheduler
+
+
+class _RecordingScheduler:
+    def __init__(self):
+        self.jobs = []
+        self.running = False
+
+    def add_job(self, func, trigger, id=None, name=None, replace_existing=None, max_instances=None, kwargs=None):
+        self.jobs.append(
+            {
+                "func": func,
+                "trigger": trigger,
+                "id": id,
+                "name": name,
+                "replace_existing": replace_existing,
+                "max_instances": max_instances,
+                "kwargs": kwargs or {},
+            }
+        )
+
+    def start(self):
+        self.running = True
 
 
 def test_scheduled_graph_sync_defaults_to_fetch_only(monkeypatch):
@@ -225,6 +250,8 @@ def test_fireflies_backlog_marks_non_vectorizable_items_without_pipeline(monkeyp
 def test_fireflies_backlog_retry_filter_only_allows_provider_failures():
     assert scheduler._is_retryable_fireflies_error("OpenAI quota exceeded")
     assert scheduler._is_retryable_fireflies_error("Fireflies embedding failed across all providers")
+    assert scheduler._is_retryable_fireflies_error("Server disconnected")
+    assert scheduler._is_retryable_fireflies_error("StreamIDTooLowError: 395 is lower than 397")
     assert not scheduler._is_retryable_fireflies_error("No segments found for metadata_id")
     assert not scheduler._is_retryable_fireflies_error(None)
 
@@ -242,3 +269,77 @@ def test_start_fireflies_backlog_run_records_shared_pipeline_source(monkeypatch)
     assert run_id == "run-shared"
     assert recorded["source"] == scheduler.SHARED_PIPELINE_BACKLOG_SOURCE
     assert recorded["resource_name"] == scheduler.SHARED_PIPELINE_BACKLOG_RESOURCE_NAME
+
+
+def test_init_scheduler_registers_acumatica_job_with_runtime_envs(monkeypatch):
+    recording_scheduler = _RecordingScheduler()
+
+    monkeypatch.setattr(scheduler, "AsyncIOScheduler", lambda: recording_scheduler)
+    monkeypatch.delenv("DISABLE_SCHEDULER", raising=False)
+    monkeypatch.setenv("FIREFLIES_SYNC_ENABLED", "false")
+    monkeypatch.setenv("FIREFLIES_PIPELINE_BACKLOG_ENABLED", "false")
+    monkeypatch.setenv("ACUMATICA_FINANCIAL_SYNC_ENABLED", "true")
+    monkeypatch.setenv("ACUMATICA_BASE_URL", "https://example.acumatica.com")
+    monkeypatch.setenv("ACCOUNTING_USER", "sync-user")
+    monkeypatch.setenv("ACCOUNTING_PASSWORD", "secret")
+    monkeypatch.delenv("ACUMATICA_SERVICE_URL", raising=False)
+    monkeypatch.setenv("SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED", "false")
+    monkeypatch.setenv("GRAPH_SYNC_ENABLED", "false")
+    monkeypatch.setenv("INTELLIGENCE_COMPILER_ENABLED", "false")
+    monkeypatch.setenv("TASK_EXTRACTION_ENABLED", "false")
+
+    scheduler.init_scheduler()
+
+    job_ids = {job["id"] for job in recording_scheduler.jobs}
+    assert "daily_digest" in job_ids
+    assert "acumatica_financial_sync" in job_ids
+    assert recording_scheduler.running is True
+
+
+def test_run_source_sync_health_recompute_persists_snapshots_and_alerts(monkeypatch):
+    calls = {"snapshots": [], "alerts": []}
+    client = object()
+
+    monkeypatch.setattr(
+        "src.services.supabase_helpers.get_supabase_client",
+        lambda: client,
+    )
+    monkeypatch.setattr(
+        "src.services.health.source_sync_health.get_source_sync_health",
+        lambda supabase_client: {
+            "status": "warning",
+            "sources": [
+                {"source": "fireflies", "resourceId": "recent_transcripts"},
+                {"source": "microsoft_graph", "resourceId": "graph_embed"},
+            ],
+            "alerts": [
+                {"code": "source_sync_stale", "source": "fireflies", "resourceId": "recent_transcripts"},
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        "src.services.health.source_sync_health.update_source_health_snapshot",
+        lambda supabase_client, source: calls["snapshots"].append((supabase_client, source)),
+    )
+    monkeypatch.setattr(
+        "src.services.health.source_sync_health.persist_source_sync_alerts",
+        lambda supabase_client, alerts, resolve_missing: calls["alerts"].append(
+            (supabase_client, alerts, resolve_missing)
+        ) or {"upserted": len(alerts), "resolved": 0},
+    )
+
+    result = scheduler._run_source_sync_health_recompute()
+
+    assert result["status"] == "completed"
+    assert result["updatedSnapshots"] == 2
+    assert calls["snapshots"] == [
+        (client, {"source": "fireflies", "resourceId": "recent_transcripts"}),
+        (client, {"source": "microsoft_graph", "resourceId": "graph_embed"}),
+    ]
+    assert calls["alerts"] == [
+        (
+            client,
+            [{"code": "source_sync_stale", "source": "fireflies", "resourceId": "recent_transcripts"}],
+            False,
+        )
+    ]

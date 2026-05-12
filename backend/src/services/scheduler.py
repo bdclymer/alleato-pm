@@ -27,6 +27,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from .ai_transport import is_transient_ai_error_message
+
 logger = logging.getLogger(__name__)
 
 scheduler: Optional[AsyncIOScheduler] = None
@@ -83,25 +85,26 @@ class ConfigurationError(RuntimeError):
     """
 
 
-def validate_scheduler_config() -> None:
-    """Check required env vars before any jobs are registered.
+def _env_flag_enabled(name: str, default: str = "true") -> bool:
+    return os.getenv(name, default).lower() not in ("0", "false", "no")
 
-    Raises ConfigurationError naming the missing var so a misconfigured
-    deployment fails loudly at start-up rather than appearing healthy
-    while silently skipping every run.
-    """
-    checks = [
-        # (enabled_var, required_var, job_label)
-        ("FIREFLIES_SYNC_ENABLED", "FIREFLIES_API_KEY", "Fireflies sync"),
-        ("ACUMATICA_FINANCIAL_SYNC_ENABLED", "ACUMATICA_SERVICE_URL", "Acumatica financial sync"),
-    ]
-    for enabled_var, required_var, job_label in checks:
-        job_enabled = os.getenv(enabled_var, "true").lower() not in ("0", "false", "no")
-        if job_enabled and not os.getenv(required_var):
-            raise ConfigurationError(
-                f"{job_label} is enabled but {required_var} is not set. "
-                f"Set {required_var} or disable the job with {enabled_var}=false."
-            )
+
+def _missing_required_vars(*names: str) -> list[str]:
+    return [name for name in names if not os.getenv(name)]
+
+
+def _log_job_misconfiguration(job_label: str, enabled_var: str, required_vars: tuple[str, ...]) -> bool:
+    missing = _missing_required_vars(*required_vars)
+    if not missing:
+        return False
+    logger.critical(
+        "[Scheduler] %s disabled — missing env var(s): %s. Set %s or disable the job with %s=false.",
+        job_label,
+        ", ".join(missing),
+        ", ".join(required_vars),
+        enabled_var,
+    )
+    return True
 
 
 def init_scheduler() -> None:
@@ -112,26 +115,32 @@ def init_scheduler() -> None:
         logger.info("[Scheduler] Disabled via DISABLE_SCHEDULER env var")
         return
 
-    validate_scheduler_config()
     scheduler = AsyncIOScheduler()
 
     # Fireflies transcript sync — every 15 minutes by default
-    if os.getenv("FIREFLIES_SYNC_ENABLED", "true").lower() not in ("0", "false", "no"):
-        sync_interval_minutes = max(5, int(os.getenv("FIREFLIES_SYNC_INTERVAL_MINUTES", "15")))
-        sync_limit = max(1, int(os.getenv("FIREFLIES_SYNC_LIMIT", "10")))
-        scheduler.add_job(
-            run_fireflies_sync_job,
-            IntervalTrigger(minutes=sync_interval_minutes),
-            id="fireflies_sync",
-            name="Fireflies Transcript Sync",
-            replace_existing=True,
-            max_instances=1,
-            kwargs={"limit": sync_limit},
-        )
-        logger.info(
-            "[Scheduler] Fireflies sync every %d min (limit=%d)",
-            sync_interval_minutes, sync_limit,
-        )
+    if _env_flag_enabled("FIREFLIES_SYNC_ENABLED"):
+        if _log_job_misconfiguration(
+            "Fireflies sync",
+            "FIREFLIES_SYNC_ENABLED",
+            ("FIREFLIES_API_KEY",),
+        ):
+            logger.info("[Scheduler] Fireflies sync job was not registered.")
+        else:
+            sync_interval_minutes = max(5, int(os.getenv("FIREFLIES_SYNC_INTERVAL_MINUTES", "15")))
+            sync_limit = max(1, int(os.getenv("FIREFLIES_SYNC_LIMIT", "10")))
+            scheduler.add_job(
+                run_fireflies_sync_job,
+                IntervalTrigger(minutes=sync_interval_minutes),
+                id="fireflies_sync",
+                name="Fireflies Transcript Sync",
+                replace_existing=True,
+                max_instances=1,
+                kwargs={"limit": sync_limit},
+            )
+            logger.info(
+                "[Scheduler] Fireflies sync every %d min (limit=%d)",
+                sync_interval_minutes, sync_limit,
+            )
 
     if os.getenv("FIREFLIES_PIPELINE_BACKLOG_ENABLED", "true").lower() not in ("0", "false", "no"):
         backlog_interval_minutes = max(
@@ -174,19 +183,44 @@ def init_scheduler() -> None:
         replace_existing=True,
     )
 
-    if os.getenv("ACUMATICA_FINANCIAL_SYNC_ENABLED", "true").lower() not in ("0", "false", "no"):
-        # Default cadence: once daily at 00:15 UTC.
-        # Override with ACUMATICA_FINANCIAL_SYNC_CRON (5-field crontab).
-        sync_cron = os.getenv("ACUMATICA_FINANCIAL_SYNC_CRON", "15 0 * * *")
+    if _env_flag_enabled("ACUMATICA_FINANCIAL_SYNC_ENABLED"):
+        if _log_job_misconfiguration(
+            "Acumatica financial sync",
+            "ACUMATICA_FINANCIAL_SYNC_ENABLED",
+            ("ACUMATICA_BASE_URL", "ACCOUNTING_USER", "ACCOUNTING_PASSWORD"),
+        ):
+            logger.info("[Scheduler] Acumatica financial sync job was not registered.")
+        else:
+            # Default cadence: once daily at 00:15 UTC.
+            # Override with ACUMATICA_FINANCIAL_SYNC_CRON (5-field crontab).
+            sync_cron = os.getenv("ACUMATICA_FINANCIAL_SYNC_CRON", "15 0 * * *")
+            scheduler.add_job(
+                run_acumatica_financial_sync_job,
+                CronTrigger.from_crontab(sync_cron),
+                id="acumatica_financial_sync",
+                name="Acumatica Financial Sync",
+                replace_existing=True,
+                max_instances=1,
+            )
+            logger.info("[Scheduler] Acumatica financial sync cron: %s (UTC)", sync_cron)
+
+    if _env_flag_enabled("SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED"):
+        health_interval_minutes = max(
+            5,
+            int(os.getenv("SOURCE_SYNC_HEALTH_RECOMPUTE_INTERVAL_MINUTES", "15")),
+        )
         scheduler.add_job(
-            run_acumatica_financial_sync_job,
-            CronTrigger.from_crontab(sync_cron),
-            id="acumatica_financial_sync",
-            name="Acumatica Financial Sync",
+            run_source_sync_health_recompute_job,
+            IntervalTrigger(minutes=health_interval_minutes),
+            id="source_sync_health_recompute",
+            name="Source Sync Health Recompute",
             replace_existing=True,
             max_instances=1,
         )
-        logger.info("[Scheduler] Acumatica financial sync cron: %s (UTC)", sync_cron)
+        logger.info(
+            "[Scheduler] Source sync health recompute every %d min",
+            health_interval_minutes,
+        )
 
     # Microsoft Graph sync (Outlook + Teams + OneDrive) — hourly by default
     # Auto-enable when Graph credentials are configured (unless explicitly disabled)
@@ -423,6 +457,25 @@ async def run_acumatica_financial_sync_job() -> None:
         logger.warning("[Scheduler] Acumatica financial sync failed (will retry): %s", e, exc_info=True)
 
 
+async def run_source_sync_health_recompute_job() -> None:
+    """Scheduled job: persist current source-sync snapshots and active alerts."""
+    import asyncio
+
+    logger.info("[Scheduler] Running source sync health recompute job")
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_source_sync_health_recompute)
+        logger.info(
+            "[Scheduler] Source sync health recompute complete: snapshots=%d alerts_upserted=%d alerts_resolved=%d overall=%s",
+            result.get("updatedSnapshots", 0),
+            result.get("routedAlerts", {}).get("upserted", 0),
+            result.get("routedAlerts", {}).get("resolved", 0),
+            result.get("health", {}).get("status"),
+        )
+    except Exception as e:
+        logger.warning("[Scheduler] Source sync health recompute failed (will retry): %s", e, exc_info=True)
+
+
 def _run_fireflies_sync(limit: int = 10):
     """Synchronous wrapper for Fireflies transcript sync."""
     from .supabase_helpers import SupabaseRagStore, get_supabase_client
@@ -440,7 +493,9 @@ def _is_retryable_fireflies_error(error_message: Optional[str]) -> bool:
     if not error_message:
         return False
     normalized = error_message.lower()
-    return any(marker in normalized for marker in FIREFLIES_RETRYABLE_ERROR_MARKERS)
+    return any(marker in normalized for marker in FIREFLIES_RETRYABLE_ERROR_MARKERS) or (
+        is_transient_ai_error_message(normalized)
+    )
 
 
 def _parse_scheduler_datetime(value: Optional[str]) -> Optional[datetime]:
@@ -922,6 +977,41 @@ def _run_acumatica_financial_sync():
     from .acumatica_sync import run_acumatica_financial_sync
 
     return run_acumatica_financial_sync()
+
+
+def _run_source_sync_health_recompute() -> dict:
+    """Synchronous wrapper for source-sync health persistence."""
+    from .health.source_sync_health import (
+        MAX_RECOMPUTE_ALERT_WRITES,
+        MAX_RECOMPUTE_SNAPSHOT_WRITES,
+        get_source_sync_health,
+        persist_source_sync_alerts,
+        update_source_health_snapshot,
+    )
+    from .supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+    health = get_source_sync_health(client)
+    updated = 0
+    for source in health.get("sources", [])[:MAX_RECOMPUTE_SNAPSHOT_WRITES]:
+        update_source_health_snapshot(client, source)
+        updated += 1
+    routed_alerts = persist_source_sync_alerts(
+        client,
+        health.get("alerts", [])[:MAX_RECOMPUTE_ALERT_WRITES],
+        resolve_missing=False,
+    )
+    return {
+        "status": "completed",
+        "updatedSnapshots": updated,
+        "routedAlerts": routed_alerts,
+        "writeCaps": {
+            "snapshots": MAX_RECOMPUTE_SNAPSHOT_WRITES,
+            "alerts": MAX_RECOMPUTE_ALERT_WRITES,
+            "resolveMissing": False,
+        },
+        "health": health,
+    }
 
 
 async def run_graph_sync_job() -> None:

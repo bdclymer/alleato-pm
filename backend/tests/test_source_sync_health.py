@@ -45,6 +45,11 @@ class _TableQuery:
         self.rows = [row for row in self.rows if row.get(key) == value]
         return self
 
+    def in_(self, key, values):
+        allowed = set(values)
+        self.rows = [row for row in self.rows if row.get(key) in allowed]
+        return self
+
     def order(self, key, desc=False):
         self.rows = sorted(self.rows, key=lambda row: row.get(key) or "", reverse=desc)
         return self
