@@ -452,6 +452,32 @@ export async function persistChatMessage(params: {
   }
 }
 
+/**
+ * Load recent conversation history from chat_history for a given session.
+ * Returns messages in chronological order, ready to pass as conversationHistory.
+ * Caps at the last N turns to keep context manageable.
+ */
+export async function loadConversationHistory(
+  sessionId: string,
+  maxTurns = 10,
+): Promise<ModelMessage[]> {
+  const supabase = createServiceClient();
+  const sessionUuid = toSessionUuid(sessionId);
+  const { data, error } = await supabase
+    .from("chat_history")
+    .select("role, content")
+    .eq("session_id", sessionUuid)
+    .order("created_at", { ascending: false })
+    .limit(maxTurns * 2);
+
+  if (error || !data?.length) return [];
+
+  // Reverse to chronological order (oldest first)
+  return (data as Array<{ role: "user" | "assistant"; content: string }>)
+    .reverse()
+    .map((row) => ({ role: row.role, content: row.content }) as ModelMessage);
+}
+
 // ---------------------------------------------------------------------------
 // Utility
 // ---------------------------------------------------------------------------

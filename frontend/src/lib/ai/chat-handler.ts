@@ -227,6 +227,24 @@ type ExecutiveBriefingRetrievalPacket = {
   sources: ExecutiveBriefingSourceOutput[];
 };
 
+type ProjectLocationRecord = {
+  id: number;
+  name: string | null;
+  project_number: string | null;
+  acumatica_project_id: string | null;
+  address: string | null;
+  state: string | null;
+  phase: string | null;
+  aliases: string[] | null;
+};
+
+type ProjectLocationAnswer = {
+  content: string;
+  traceOutput: Record<string, unknown>;
+  project: ProjectLocationRecord;
+  projectId?: number;
+};
+
 function isBrandonDailyUpdatePacket(value: unknown): value is BrandonDailyUpdatePacket {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
@@ -2907,6 +2925,22 @@ function extractPriorProjectName(messages: UIMessage[]): string | undefined {
       return projectName;
     }
 
+    const activeProjectMatch =
+      content.match(/\b(?:on|for|about)\s+([A-Z][A-Za-z0-9&.'-]*(?:\s+[A-Z][A-Za-z0-9&.'-]*){1,4})\b/) ??
+      content.match(/\b([A-Z][A-Za-z0-9&.'-]*(?:\s+[A-Z][A-Za-z0-9&.'-]*){1,4})\s+(?:project|job)\b/i);
+    const activeProjectName = activeProjectMatch?.[1]?.trim();
+    if (
+      activeProjectName &&
+      !/^(this|that|the|active|current|selected|project|job)$/i.test(activeProjectName)
+    ) {
+      return activeProjectName;
+    }
+
+    const unionCollectiveMatch = content.match(/\bUnion Collective\b/i);
+    if (unionCollectiveMatch) {
+      return unionCollectiveMatch[0];
+    }
+
     const vermillionMatch = content.match(/\bVermillion Rise(?:\s+Warehouse)?\b/i);
     if (vermillionMatch) {
       return vermillionMatch[0];
@@ -2914,6 +2948,248 @@ function extractPriorProjectName(messages: UIMessage[]): string | undefined {
   }
 
   return undefined;
+}
+
+function shouldAnswerProjectLocationDirectly(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const asksForLocation =
+    /\b(address|street address|site address|located|location)\b/.test(normalized) ||
+    /\bwhere\b.{0,80}\b(project|job|site|located|going to be)\b/.test(normalized);
+
+  if (!asksForLocation) return false;
+
+  return (
+    /\b(this|that|it|project|job|site)\b/.test(normalized) ||
+    /\bwhere\b/.test(normalized)
+  );
+}
+
+function normalizeProjectContext(value: string | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function projectMatchesContext(project: ProjectLocationRecord, query: string): boolean {
+  const normalizedQuery = normalizeProjectContext(query);
+  if (!normalizedQuery) return false;
+
+  const candidates = [
+    project.name,
+    project.project_number,
+    project.acumatica_project_id,
+    ...(Array.isArray(project.aliases) ? project.aliases : []),
+  ]
+    .map((candidate) => normalizeProjectContext(candidate ?? undefined))
+    .filter(Boolean);
+
+  return candidates.some((candidate) =>
+    candidate.includes(normalizedQuery) || normalizedQuery.includes(candidate),
+  );
+}
+
+function formatPriorProjectContinuityContext(projectName: string | undefined): string | null {
+  const cleanProjectName = projectName?.trim();
+  if (!cleanProjectName) return null;
+
+  return [
+    "# Conversation Continuity Guardrail",
+    `The current conversation already established the project context as **${cleanProjectName}**.`,
+    "If the user says this project, that project, it, the site, or asks a follow-up, resolve against that project first.",
+    "Do not ask the user to repeat the project name unless the prior context conflicts with the new request.",
+    "Do not answer with process narration like \"I can look it up\". Either use the available source context/tool results or state exactly which source was checked and what was missing.",
+  ].join("\n");
+}
+
+function formatProjectLocationAnswer(project: ProjectLocationRecord, source: string): string {
+  const projectName = project.name ?? `Project ${project.id}`;
+  const projectLabel = [
+    projectName,
+    project.project_number ? `#${project.project_number}` : null,
+  ].filter(Boolean).join(" ");
+
+  if (project.address?.trim()) {
+    const location = [project.address.trim(), project.state?.trim()].filter(Boolean).join(", ");
+    return [
+      `Yes. **${projectLabel}** is listed at **${location}**.`,
+      "",
+      `Source checked: the structured project record (${source}).`,
+    ].join("\n");
+  }
+
+  const state = project.state?.trim();
+  return [
+    `I can see **${projectLabel}** in the project record, but the structured street address field is blank.`,
+    state
+      ? `The location signal I do have is **${state}**. I do not see a stored street address on the project record.`
+      : "I do not see a stored street address or state on the project record.",
+    "",
+    "What failed before: I should have kept the prior Union Collective context and answered from the project record instead of asking you to repeat the project name.",
+  ].join("\n");
+}
+
+function locationRagQuery(project: ProjectLocationRecord): string {
+  return [
+    project.name,
+    project.project_number,
+    project.acumatica_project_id,
+    "address",
+    "street address",
+    "site address",
+    "location",
+    "located",
+  ].filter(Boolean).join(" ");
+}
+
+function appendLocationRagFallback(params: {
+  baseContent: string;
+  output: SemanticSearchOutput | null;
+  error?: string;
+}): string {
+  const results = params.output?.results ?? [];
+  const sourceLine =
+    "Second pass checked RAG/semantic search across vectorized meetings, Teams, email, documents, insights, and memories.";
+
+  if (params.error) {
+    return [
+      params.baseContent,
+      "",
+      "**Additional Retrieval Check**",
+      `- ${sourceLine}`,
+      `- RAG search failed: ${params.error}`,
+    ].join("\n");
+  }
+
+  if (results.length === 0) {
+    return [
+      params.baseContent,
+      "",
+      "**Additional Retrieval Check**",
+      `- ${sourceLine}`,
+      "- RAG returned 0 matching source rows with a street address, so I am not going to invent one.",
+    ].join("\n");
+  }
+
+  const sourceBullets = results.slice(0, 3).map((result, index) => {
+    const content = String(result.content ?? "").replace(/\s+/g, " ").trim();
+    const excerpt = content.length > 260 ? `${content.slice(0, 260).trim()}...` : content;
+    return `${index + 1}. ${sourceTitle(result)} — ${sourceDate(result)} ${sourceLabel(result)}: ${excerpt || "No excerpt text stored."}`;
+  });
+
+  return [
+    params.baseContent,
+    "",
+    "**Additional Retrieval Check**",
+    `- ${sourceLine}`,
+    `- RAG returned ${results.length} related source row${results.length === 1 ? "" : "s"}, but none should be treated as a confirmed street address unless the excerpt explicitly contains it.`,
+    ...sourceBullets,
+  ].join("\n");
+}
+
+async function loadProjectLocationAnswer(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  selectedProjectId?: number;
+  priorProjectName?: string;
+  message: string;
+}): Promise<ProjectLocationAnswer | null> {
+  const selectColumns = "id,name,project_number,acumatica_project_id,address,state,phase,aliases";
+
+  if (typeof params.selectedProjectId === "number") {
+    const { data, error } = await params.supabase
+      .from("projects")
+      .select(selectColumns)
+      .eq("id", params.selectedProjectId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Project location lookup failed: ${error.message}`);
+    }
+
+    if (data) {
+      const project = data as ProjectLocationRecord;
+      return {
+        content: formatProjectLocationAnswer(project, "selected project context"),
+        project,
+        projectId: project.id,
+        traceOutput: {
+          resolvedBy: "selectedProjectId",
+          projectId: project.id,
+          addressPresent: Boolean(project.address?.trim()),
+          statePresent: Boolean(project.state?.trim()),
+        },
+      };
+    }
+  }
+
+  const queryText = [params.priorProjectName, params.message].filter(Boolean).join(" ");
+  const resolvedTarget = await resolveIntelligenceTarget({
+    query: queryText,
+    selectedProjectId: params.selectedProjectId,
+    supabase: params.supabase,
+  });
+
+  if (resolvedTarget?.projectId) {
+    const { data, error } = await params.supabase
+      .from("projects")
+      .select(selectColumns)
+      .eq("id", resolvedTarget.projectId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Project location lookup failed: ${error.message}`);
+    }
+
+    if (data) {
+      const project = data as ProjectLocationRecord;
+      return {
+        content: formatProjectLocationAnswer(project, resolvedTarget.source),
+        project,
+        projectId: project.id,
+        traceOutput: {
+          resolvedBy: "intelligenceTarget",
+          projectId: project.id,
+          targetId: resolvedTarget.id,
+          targetSlug: resolvedTarget.slug,
+          targetSource: resolvedTarget.source,
+          priorProjectName: params.priorProjectName ?? null,
+          addressPresent: Boolean(project.address?.trim()),
+          statePresent: Boolean(project.state?.trim()),
+        },
+      };
+    }
+  }
+
+  const { data, error } = await params.supabase
+    .from("projects")
+    .select(selectColumns)
+    .eq("archived", false)
+    .limit(2000);
+
+  if (error) {
+    throw new Error(`Project location lookup failed: ${error.message}`);
+  }
+
+  const projects = (data ?? []) as ProjectLocationRecord[];
+  const project = projects.find((candidate) =>
+    projectMatchesContext(candidate, params.priorProjectName ?? params.message),
+  );
+
+  if (!project) return null;
+
+  return {
+    content: formatProjectLocationAnswer(project, "prior conversation project context"),
+    project,
+    projectId: project.id,
+    traceOutput: {
+      resolvedBy: "priorProjectName",
+      projectId: project.id,
+      priorProjectName: params.priorProjectName ?? null,
+      addressPresent: Boolean(project.address?.trim()),
+      statePresent: Boolean(project.state?.trim()),
+    },
+  };
 }
 
 function extractLookupTerms(message: string): string[] {
@@ -3479,6 +3755,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
       ? executiveBriefPacket
       : null;
     const priorProjectName = extractPriorProjectName(messages);
+    const projectLocationQuestion = shouldAnswerProjectLocationDirectly(lastUserContent);
     let projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
     const executiveBriefingRetrieval: ExecutiveBriefingRetrievalPacket | null = null;
     let assistantSourceHealthContext: AssistantSourceHealthContext | null = null;
@@ -3532,6 +3809,12 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           if (sourceHealth) {
             systemPrompt = systemPrompt + `\n\n---\n\n${sourceHealth.promptInjection}`;
           }
+        }
+
+        const priorProjectContinuityContext =
+          formatPriorProjectContinuityContext(priorProjectName);
+        if (priorProjectContinuityContext) {
+          systemPrompt = systemPrompt + `\n\n---\n\n${priorProjectContinuityContext}`;
         }
 
         if (executivePagePacket) {
@@ -4060,6 +4343,136 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                   type: widget?.type ?? part.type,
                 };
               }),
+            },
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        if (projectLocationQuestion) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Checking project location context",
+            status: "loading",
+          });
+
+          const locationAnswer = await loadProjectLocationAnswer({
+            supabase,
+            selectedProjectId,
+            priorProjectName,
+            message: lastUserContent,
+          });
+
+          if (locationAnswer) {
+            let content = locationAnswer.content;
+            let ragOutput: SemanticSearchOutput | null = null;
+            let ragError: string | undefined;
+            const addressPresent = Boolean(locationAnswer.project.address?.trim());
+
+            if (!addressPresent) {
+              const semanticSearchTool = (tools as Record<string, ExecutableTool>).semanticSearch;
+              const ragQuery = locationRagQuery(locationAnswer.project);
+
+              if (semanticSearchTool?.execute) {
+                const searchOutput = await withTimeout(
+                  semanticSearchTool.execute({
+                    query: ragQuery,
+                    projectId: locationAnswer.projectId,
+                    matchCount: 8,
+                    threshold: 0.35,
+                    skipRerank: false,
+                  }),
+                  18_000,
+                  "semanticSearch timed out during project location fallback retrieval",
+                );
+
+                if (isTimeoutResult(searchOutput)) {
+                  ragError = searchOutput.error;
+                } else {
+                  ragOutput = normalizeSemanticSearchOutput(searchOutput);
+                  ragError =
+                    typeof ragOutput?.error === "string" ? ragOutput.error : undefined;
+                }
+              } else {
+                ragError = "semanticSearch tool was not executable during project location fallback retrieval";
+              }
+
+              content = appendLocationRagFallback({
+                baseContent: content,
+                output: ragOutput,
+                error: ragError,
+              });
+            }
+
+            toolTrace.push({
+              tool: "projectLocationContextLookup",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId: selectedProjectId ?? null,
+                priorProjectName: priorProjectName ?? null,
+              },
+              output: {
+                ...locationAnswer.traceOutput,
+                ragFallbackAttempted: !addressPresent,
+                ragFallbackResultCount: ragOutput?.results?.length ?? 0,
+                ragFallbackError: ragError ?? null,
+              },
+              timestamp: new Date().toISOString(),
+            });
+
+            const responseQuality = scoreResponseQuality({
+              toolTrace,
+              content,
+            });
+
+            await persistAssistantMessage({
+              supabase,
+              sessionId,
+              userId: user.id,
+              content,
+              toolTrace,
+              memoryUsage,
+              learningUsage,
+              totalUsage: undefined,
+              responseQuality,
+              councilMode,
+              modelId: activeModel,
+              loopDiagnostic: buildLoopDiagnostic({
+                stepStarts: stepStartDiagnostics,
+                steps: stepDiagnostics,
+              }),
+              projectBriefingSnapshot,
+              executiveBriefingRetrieval,
+              providerDecision,
+              selectedProjectId: locationAnswer.projectId ?? selectedProjectId,
+              dataParts: assistantWidgetDataParts,
+              sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+            });
+
+            await supabase
+              .from("conversations")
+              .update({ last_message_at: new Date().toISOString() })
+              .eq("session_id", sessionId)
+              .eq("user_id", user.id);
+
+            await writeTextResponse(writer, "strategist-project-location", content);
+            writeStrategistStatus(writer, {
+              stage: "complete",
+              message: "Project location checked",
+              status: "success",
+            });
+            return;
+          }
+
+          toolTrace.push({
+            tool: "projectLocationContextLookup",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: selectedProjectId ?? null,
+              priorProjectName: priorProjectName ?? null,
+            },
+            output: {
+              resolved: false,
+              reason: "No selected project or prior project context resolved to a project record.",
             },
             timestamp: new Date().toISOString(),
           });

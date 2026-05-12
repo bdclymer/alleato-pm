@@ -26,6 +26,11 @@ export const META_COMMENTARY_PHRASES = [
   "i'll look that up",
   "i'll look into",
   "i'll find",
+  "i can look it up",
+  "i searched broadly",
+  "tell me the project name",
+  "give me the project name",
+  "provide the project name",
   "searching for that", // was: "searching for" — too broad (matches "I found what you were searching for")
   "looking that up",
   "give me a moment",
