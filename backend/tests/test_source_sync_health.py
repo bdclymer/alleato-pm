@@ -280,6 +280,58 @@ def test_get_source_sync_health_includes_recent_runs_and_stuck_items():
     assert health["counts"]["stuckItems"] == 1
 
 
+def test_get_source_sync_health_attributes_shared_queue_stuck_items_by_real_source():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    recent = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+    supabase.tables["document_metadata"] = [
+        {
+            "id": "doc-email",
+            "title": "Owner email thread",
+            "source": "microsoft_graph",
+            "source_system": "microsoft_graph",
+            "category": "outlook_email",
+            "type": "email",
+            "status": "error",
+            "created_at": recent,
+        },
+        {
+            "id": "doc-teams",
+            "title": "Teams DM conversation",
+            "source": "microsoft_graph",
+            "source_system": "microsoft_graph",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "status": "error",
+            "created_at": recent,
+        },
+    ]
+    supabase.tables["fireflies_ingestion_jobs"] = [
+        {
+            "fireflies_id": "outlook_1",
+            "metadata_id": "doc-email",
+            "stage": "error",
+            "error_message": "Server disconnected",
+            "last_attempt_at": recent,
+            "updated_at": recent,
+        },
+        {
+            "fireflies_id": "teamsdm_1",
+            "metadata_id": "doc-teams",
+            "stage": "error",
+            "error_message": "ConnectionTerminated",
+            "last_attempt_at": recent,
+            "updated_at": recent,
+        },
+    ]
+
+    health = get_source_sync_health(supabase)
+
+    stuck_sources = {item["resourceId"]: item["source"] for item in health["stuckItems"]}
+    assert stuck_sources["doc-email"] == "outlook_email"
+    assert stuck_sources["doc-teams"] == "teams_chat_export"
+
+
 def test_get_source_sync_health_reports_task_extraction_freshness():
     supabase = _FakeSupabase()
     _seed_empty_tables(supabase)

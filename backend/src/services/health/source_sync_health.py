@@ -49,6 +49,17 @@ DOCUMENT_SOURCE_LABELS = {
     "microsoft_graph": "Microsoft Graph documents",
 }
 
+GRAPH_DOCUMENT_TYPE_SOURCE_KEYS = {
+    "email": "outlook_email",
+    "outlook_email": "outlook_email",
+    "teams_message": "teams_message",
+    "teams_dm": "teams_chat_export",
+    "teams_dm_conversation": "teams_chat_export",
+    "onedrive_file": "onedrive_file",
+    "sharepoint_file": "sharepoint_file",
+    "document": "onedrive_file",
+}
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -182,9 +193,26 @@ def _counter(rows: Iterable[Dict[str, Any]], key: str, fallback: str = "unknown"
     return dict(counts)
 
 
+def _graph_document_source_key(document: Dict[str, Any]) -> Optional[str]:
+    source = str(document.get("source") or document.get("source_system") or "")
+    if source not in {"microsoft_graph", "graph"}:
+        return None
+
+    doc_type = str(document.get("type") or "")
+    category = str(document.get("category") or "")
+    for candidate in (doc_type, category):
+        mapped = GRAPH_DOCUMENT_TYPE_SOURCE_KEYS.get(candidate)
+        if mapped:
+            return mapped
+    return "microsoft_graph"
+
+
 def _source_key(document: Dict[str, Any]) -> str:
     category = document.get("category") or document.get("type")
     source_system = document.get("source_system") or document.get("source")
+    graph_source = _graph_document_source_key(document)
+    if graph_source:
+        return graph_source
     if category in GRAPH_SOURCE_LABELS:
         return str(category)
     if source_system == "fireflies" or document.get("fireflies_id"):
@@ -663,11 +691,12 @@ def _stuck_item_rows(
 
         metadata_id = str(job.get("metadata_id") or "")
         document = document_by_id.get(metadata_id, {})
+        source = _source_key(document) if document else "fireflies"
         error_message = job.get("error_message")
         is_non_vectorizable = isinstance(error_message, str) and error_message.startswith("NON_VECTORIZABLE")
         stuck.append(
             {
-                "source": "fireflies",
+                "source": source,
                 "resourceId": metadata_id or str(job.get("fireflies_id") or ""),
                 "resourceName": document.get("title") or job.get("fireflies_id") or metadata_id or "Fireflies item",
                 "stage": stage,
@@ -771,6 +800,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         compiled_document_ids,
         now,
     )
+    document_by_id = {str(row.get("id")): row for row in documents if row.get("id")}
 
     sources: List[Dict[str, Any]] = []
     for state in graph_states:
@@ -809,14 +839,19 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
 
     latest_fireflies = max(
         (
-            parsed
-            for parsed in (_parse_datetime(row.get("updated_at")) for row in fireflies_jobs)
-            if parsed
+            _parse_datetime(row.get("updated_at"))
+            for row in fireflies_jobs
+            if _source_key(document_by_id.get(str(row.get("metadata_id") or ""), {})) == "fireflies"
         ),
         default=None,
     )
-    if fireflies_jobs and not any(row["source"] == "fireflies" for row in sources):
-        fireflies_errors = [row.get("error_message") for row in fireflies_jobs if row.get("error_message")]
+    fireflies_error_rows = [
+        row
+        for row in fireflies_jobs
+        if _source_key(document_by_id.get(str(row.get("metadata_id") or ""), {})) == "fireflies"
+    ]
+    if fireflies_error_rows and not any(row["source"] == "fireflies" for row in sources):
+        fireflies_errors = [row.get("error_message") for row in fireflies_error_rows if row.get("error_message")]
         stale = _age_minutes(latest_fireflies, now)
         sources.append(
             _source_row(
@@ -832,9 +867,9 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
                 last_success_at=latest_fireflies if not fireflies_errors else None,
                 last_error_at=latest_fireflies if fireflies_errors else None,
                 last_error_message=fireflies_errors[0] if fireflies_errors else None,
-                items_synced=len(fireflies_jobs),
+                items_synced=len(fireflies_error_rows),
                 stale_minutes=stale,
-                unprocessed_count=sum(1 for row in fireflies_jobs if row.get("stage") != "complete"),
+                unprocessed_count=sum(1 for row in fireflies_error_rows if row.get("stage") != "complete"),
                 unembedded_count=document_counts.get("fireflies", {}).get("unembedded", 0),
                 uncompiled_count=document_counts.get("fireflies", {}).get("uncompiled", 0),
                 metadata={"source": "fireflies_ingestion_jobs"},
