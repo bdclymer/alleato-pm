@@ -11,6 +11,8 @@ from typing import Optional, Dict, Any, List, Tuple
 from supabase import Client
 import os
 import re
+from difflib import SequenceMatcher
+import logging
 
 
 PUBLIC_EMAIL_DOMAINS = {
@@ -25,6 +27,8 @@ PUBLIC_EMAIL_DOMAINS = {
     "yahoo.com",
 }
 
+logger = logging.getLogger(__name__)
+
 
 class ProjectAssigner:
     """Automatically assigns meetings to projects based on heuristics and context."""
@@ -33,6 +37,7 @@ class ProjectAssigner:
         self.client = supabase_client
         self._project_cache: Optional[List[Dict[str, Any]]] = None
         self._contact_signal_cache: Optional[Dict[int, Dict[str, set[str]]]] = None
+        self._attribution_rule_cache: Optional[List[Dict[str, Any]]] = None
 
     def _get_projects(self) -> List[Dict[str, Any]]:
         """Get all active projects with matching signals."""
@@ -70,7 +75,24 @@ class ProjectAssigner:
         if not projects:
             return None, "no_projects", 0.0
 
-        # Strategy 1: Direct project number/name match in title (highest confidence)
+        # Strategy 1: Explicit attribution matrix rules (highest confidence)
+        rule_project_id, rule_method, rule_confidence = self._match_by_attribution_rules(
+            meeting_title=meeting_title,
+            participants=participants,
+            content=content or "",
+        )
+        if (
+            existing_project_id is not None
+            and existing_project_id > 0
+            and rule_project_id
+            and int(rule_project_id) != int(existing_project_id)
+            and rule_confidence >= 0.93
+        ):
+            return rule_project_id, rule_method, rule_confidence
+        if existing_project_id is None and rule_project_id and rule_confidence >= 0.8:
+            return rule_project_id, rule_method, rule_confidence
+
+        # Strategy 2: Direct or fuzzy project number/name match in title
         project_id, confidence = self._match_by_title(meeting_title, projects)
         if (
             existing_project_id is not None
@@ -85,20 +107,23 @@ class ProjectAssigner:
         if existing_project_id is not None and existing_project_id > 0:
             return existing_project_id, "existing", 1.0
 
+        if rule_project_id and rule_confidence >= 0.8:
+            return rule_project_id, rule_method, rule_confidence
+
         if project_id and confidence >= 0.8:
             return project_id, "title_match", confidence
 
-        # Strategy 2: Project-directory participant signals
+        # Strategy 3: Project-directory participant signals
         contact_project_id, contact_method, contact_conf = self._match_by_project_contacts(participants)
         if contact_project_id and contact_conf >= 0.7:
             return contact_project_id, contact_method, contact_conf
 
-        # Strategy 3: Participant email domains recorded on project metadata
+        # Strategy 4: Participant email domains recorded on project metadata
         email_project_id, email_conf = self._match_by_email_domains(participants, projects)
         if email_project_id and email_conf >= 0.7:
             return email_project_id, "email_domain", email_conf
 
-        # Strategy 4: Content keywords (if provided)
+        # Strategy 5: Content keywords (if provided)
         if content:
             content_project_id, content_conf = self._match_by_content(content, projects)
             if content_project_id and content_conf >= 0.6:
@@ -110,6 +135,56 @@ class ProjectAssigner:
 
         # No confident assignment
         return None, "unassigned", 0.0
+
+    def _match_by_attribution_rules(
+        self,
+        meeting_title: str,
+        participants: List[str],
+        content: str,
+    ) -> Tuple[Optional[int], str, float]:
+        """Match by explicit project attribution rules owned in the database."""
+        rules = self._get_attribution_rules()
+        if not rules:
+            return None, "no_attribution_rules", 0.0
+
+        title = self._normalize_text(meeting_title)
+        body = self._normalize_text(content[:3000])
+        combined = f"{title} {body}".strip()
+        participant_emails = self._extract_emails(participants)
+        participant_domains = self._extract_domains(participants)
+
+        scored_matches: List[Tuple[int, float, str, int]] = []
+        for rule in rules:
+            project_id = rule.get("project_id")
+            raw_pattern = str(rule.get("pattern") or "").strip().lower()
+            pattern = self._normalize_text(raw_pattern)
+            rule_type = str(rule.get("rule_type") or "").lower()
+            if not project_id or not raw_pattern:
+                continue
+
+            confidence = float(rule.get("confidence") or 0.9)
+            priority = int(rule.get("priority") or 100)
+            matched = False
+            method = f"attribution_rule:{rule_type}"
+
+            if rule_type in {"keyword", "phrase", "title_keyword"}:
+                matched = bool(pattern and (self._contains_token(combined, pattern) or pattern in combined))
+            elif rule_type == "email":
+                matched = raw_pattern in participant_emails
+            elif rule_type == "domain":
+                matched = raw_pattern.removeprefix("@") in participant_domains
+
+            if matched:
+                scored_matches.append((int(project_id), confidence, method, priority))
+
+        if not scored_matches:
+            return None, "no_attribution_rule_match", 0.0
+
+        scored_matches.sort(key=lambda item: (-item[1], item[3], item[0]))
+        best_project_id, confidence, method, _priority = scored_matches[0]
+        if len(scored_matches) > 1 and scored_matches[1][1] == confidence and scored_matches[1][0] != best_project_id:
+            return None, "ambiguous_attribution_rule", 0.0
+        return best_project_id, method, confidence
 
     def _match_by_title(
         self,
@@ -139,6 +214,10 @@ class ProjectAssigner:
                 score = max(score, 0.95)
             if client_name and client_name in title_lower:
                 score = max(score, 0.90)
+            if project_name and self._fuzzy_phrase_match(project_name, title_lower):
+                score = max(score, 0.88)
+            if client_name and self._fuzzy_phrase_match(client_name, title_lower):
+                score = max(score, 0.84)
 
             # Alias/abbreviation matches (e.g., "WFC")
             for alias in self._extract_aliases(project):
@@ -147,6 +226,8 @@ class ProjectAssigner:
                     continue
                 if self._contains_token(title_lower, alias_norm):
                     score = max(score, 0.92 if len(alias_norm) <= 5 else 0.90)
+                elif len(alias_norm) >= 8 and self._fuzzy_phrase_match(alias_norm, title_lower):
+                    score = max(score, 0.86)
 
             if score > 0:
                 scored_matches.append((int(project_id), score))
@@ -184,7 +265,7 @@ class ProjectAssigner:
 
     def _match_by_project_contacts(self, participants: List[str]) -> Tuple[Optional[int], str, float]:
         """Match participants to project directory contacts and project companies."""
-        participant_emails = self._extract_emails(participants)
+        participant_emails = self._extract_assignable_emails(participants)
         participant_domains = self._extract_domains(participants)
         if not participant_emails and not participant_domains:
             return None, "no_participant_email", 0.0
@@ -289,6 +370,19 @@ class ProjectAssigner:
         return [str(a).strip() for a in aliases if str(a).strip()]
 
     @staticmethod
+    def _fuzzy_phrase_match(needle: str, haystack: str) -> bool:
+        needle_tokens = needle.split()
+        haystack_tokens = haystack.split()
+        if len(needle) < 8 or not needle_tokens or len(haystack_tokens) < len(needle_tokens):
+            return False
+        window_size = len(needle_tokens)
+        for start in range(0, len(haystack_tokens) - window_size + 1):
+            window = " ".join(haystack_tokens[start : start + window_size])
+            if SequenceMatcher(None, needle, window).ratio() >= 0.88:
+                return True
+        return False
+
+    @staticmethod
     def _extract_domains(values: List[str]) -> set[str]:
         domains: set[str] = set()
         for value in values:
@@ -308,6 +402,15 @@ class ProjectAssigner:
                 continue
             for match in re.findall(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", value):
                 emails.add(match.lower())
+        return emails
+
+    @staticmethod
+    def _extract_assignable_emails(values: List[str]) -> set[str]:
+        emails: set[str] = set()
+        for email in ProjectAssigner._extract_emails(values):
+            domain = email.rsplit("@", 1)[-1]
+            if ProjectAssigner._is_assignable_domain(domain):
+                emails.add(email)
         return emails
 
     @staticmethod
@@ -392,7 +495,7 @@ class ProjectAssigner:
                 continue
             project_signals = ensure_project(int(project_id))
             email = str(person.get("email") or "").strip().lower()
-            if email:
+            if email and self._extract_assignable_emails([email]):
                 project_signals["emails"].add(email)
                 project_signals["domains"].update(self._extract_domains([email]))
             company_domain = company_domains.get(
@@ -408,7 +511,7 @@ class ProjectAssigner:
                 continue
             project_signals = ensure_project(int(project_id))
             email = str(person.get("email") or "").strip().lower()
-            if email:
+            if email and self._extract_assignable_emails([email]):
                 project_signals["emails"].add(email)
                 project_signals["domains"].update(self._extract_domains([email]))
             company_domain = company_domains.get(str(person.get("company_id")))
@@ -421,7 +524,7 @@ class ProjectAssigner:
                 continue
             project_signals = ensure_project(int(project_id))
             email = str(project_company.get("email_address") or "").strip().lower()
-            if email:
+            if email and self._extract_assignable_emails([email]):
                 project_signals["emails"].add(email)
                 project_signals["domains"].update(self._extract_domains([email]))
             company_domain = company_domains.get(str(project_company.get("company_id")))
@@ -446,6 +549,24 @@ class ProjectAssigner:
                 domains.update(self._extract_domains([str(value)]))
 
         return domains
+
+    def _get_attribution_rules(self) -> List[Dict[str, Any]]:
+        if self._attribution_rule_cache is not None:
+            return self._attribution_rule_cache
+        try:
+            rows = (
+                self.client.table("project_attribution_rules")
+                .select("id,project_id,rule_type,pattern,confidence,priority,status")
+                .eq("status", "active")
+                .execute()
+                .data
+                or []
+            )
+        except Exception as exc:
+            logger.warning("[ProjectAssigner] project_attribution_rules unavailable: %s", exc)
+            rows = []
+        self._attribution_rule_cache = rows
+        return rows
 
 
 def batch_assign_projects(

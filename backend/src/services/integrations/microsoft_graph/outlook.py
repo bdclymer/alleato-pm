@@ -21,6 +21,7 @@ from urllib.parse import urlparse
 
 from ...intelligence.compiler import process_source_document_to_packet
 from .client import get_graph_client
+from .email_classification import EmailIntakeAction, classify_graph_email_for_intake
 from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
 from .project_inference import infer_project_id
 
@@ -630,6 +631,83 @@ def _upsert_project_outlook_email(
     if not lookup_rows:
         raise RuntimeError(f"project_emails insert for Outlook message {msg_id} returned no row")
     return int(lookup_rows[0]["id"])
+
+
+def _fetch_document_project_id(supabase_client, doc_id: Optional[str]) -> Optional[int]:
+    if not doc_id:
+        return None
+    row = (
+        supabase_client.from_("document_metadata")
+        .select("project_id")
+        .eq("id", doc_id)
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    if not row or row[0].get("project_id") is None:
+        return None
+    return int(row[0]["project_id"])
+
+
+def _reconcile_outlook_project_assignment(
+    *,
+    supabase_client,
+    msg_id: str,
+    document_metadata_id: Optional[str],
+    project_email_id: Optional[int],
+    intake_email_id: Optional[int],
+    inferred_project_id: Optional[int],
+    assignment_method: Optional[str],
+    assignment_confidence: Optional[float],
+) -> Optional[int]:
+    """Keep all Outlook sync tables on the same canonical project_id.
+
+    The document row is the canonical source because database triggers, manual
+    attribution review, and compiler corrections all converge there. Without
+    this reconciliation, the email-facing tables can keep an earlier heuristic
+    assignment while document_metadata has already moved to a better project.
+    """
+
+    canonical_project_id = _fetch_document_project_id(supabase_client, document_metadata_id)
+    if canonical_project_id is None:
+        canonical_project_id = int(inferred_project_id) if inferred_project_id else None
+    if canonical_project_id is None:
+        return None
+
+    sync_method = assignment_method or "project_inference"
+    sync_confidence = assignment_confidence if assignment_confidence is not None else 0.0
+    if inferred_project_id and int(inferred_project_id) != int(canonical_project_id):
+        sync_method = "document_metadata_reconcile"
+        sync_confidence = 1.0
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    if project_email_id:
+        supabase_client.from_("project_emails").update(
+            {"project_id": canonical_project_id, "updated_at": now_iso}
+        ).eq("id", project_email_id).execute()
+    elif msg_id:
+        supabase_client.from_("project_emails").update(
+            {"project_id": canonical_project_id, "updated_at": now_iso}
+        ).eq("graph_message_id", msg_id).execute()
+
+    intake_update = {
+        "project_id": canonical_project_id,
+        "match_status": "matched",
+        "status": "Matched",
+        "assignment_method": sync_method,
+        "assignment_confidence": sync_confidence,
+        "updated_at": now_iso,
+    }
+    if document_metadata_id:
+        intake_update["document_metadata_id"] = document_metadata_id
+
+    if intake_email_id:
+        supabase_client.from_("outlook_email_intake").update(intake_update).eq("id", intake_email_id).execute()
+    elif msg_id:
+        supabase_client.from_("outlook_email_intake").update(intake_update).eq("graph_message_id", msg_id).execute()
+
+    return canonical_project_id
 
 
 def _upsert_project_outlook_attachment(
@@ -1293,6 +1371,56 @@ def sync_outlook_emails(
             logger.debug("[Outlook] Noise email skipped: %s", subject)
             continue
 
+        intake_classification = classify_graph_email_for_intake(msg, body_text)
+        source_metadata = {
+            "outlook_message_id": msg_id,
+            "mailbox_user_id": user_email,
+            "internet_message_id": msg.get("internetMessageId"),
+            "conversation_id": msg.get("conversationId"),
+            "outlook_web_link": email_web_link,
+            "has_attachments": bool(msg.get("hasAttachments")),
+            "inline_content_ids": sorted(cid_refs),
+            "links": extracted_links,
+            "intake_classification": intake_classification.as_metadata(),
+        }
+
+        if intake_classification.action == EmailIntakeAction.SKIP:
+            logger.info(
+                "[Outlook] Skipping email before intake: msg=%s category=%s reason=%s subject=%s",
+                msg_id,
+                intake_classification.category,
+                intake_classification.reason,
+                subject,
+            )
+            continue
+
+        if intake_classification.action == EmailIntakeAction.QUARANTINE:
+            try:
+                _upsert_outlook_intake_email(
+                    supabase_client=supabase_client,
+                    project_id=None,
+                    project_email_id=None,
+                    document_metadata_id=None,
+                    msg=msg,
+                    user_email=user_email,
+                    body_text=body_text,
+                    sender_name=sender_name,
+                    sender_addr=sender_addr,
+                    assignment_method="intake_classification_quarantine",
+                    assignment_confidence=intake_classification.confidence,
+                    source_metadata=source_metadata,
+                )
+            except Exception as exc:
+                logger.warning("[Outlook] Quarantine intake write failed for %s: %s", msg_id, exc)
+            logger.info(
+                "[Outlook] Quarantined low-value email: msg=%s category=%s reason=%s subject=%s",
+                msg_id,
+                intake_classification.category,
+                intake_classification.reason,
+                subject,
+            )
+            continue
+
         should_index_for_rag = _is_relevant_email(msg, project_keywords) and len(body_text) >= MIN_BODY_CHARS
 
         try:
@@ -1327,16 +1455,6 @@ def sync_outlook_emails(
             if project_id:
                 tags.append(f"project_auto:{assignment_method}")
 
-            source_metadata = {
-                "outlook_message_id": msg_id,
-                "mailbox_user_id": user_email,
-                "internet_message_id": msg.get("internetMessageId"),
-                "conversation_id": msg.get("conversationId"),
-                "outlook_web_link": email_web_link,
-                "has_attachments": bool(msg.get("hasAttachments")),
-                "inline_content_ids": sorted(cid_refs),
-                "links": extracted_links,
-            }
             effective_source_metadata = source_metadata
 
             attachment_count = 0
@@ -1532,6 +1650,25 @@ def sync_outlook_emails(
                     supabase_client.from_("outlook_email_intake").update(
                         {"document_metadata_id": doc_id, "updated_at": datetime.now(timezone.utc).isoformat()}
                     ).eq("id", intake_email_id).execute()
+
+                reconciled_project_id = _reconcile_outlook_project_assignment(
+                    supabase_client=supabase_client,
+                    msg_id=msg_id,
+                    document_metadata_id=doc_id,
+                    project_email_id=project_email_id,
+                    intake_email_id=intake_email_id,
+                    inferred_project_id=project_id,
+                    assignment_method=assignment_method,
+                    assignment_confidence=assignment_confidence,
+                )
+                if reconciled_project_id and int(reconciled_project_id) != int(project_id or 0):
+                    logger.warning(
+                        "[Outlook] Reconciled project assignment for %s from %s to document_metadata project_id=%s",
+                        msg_id,
+                        project_id,
+                        reconciled_project_id,
+                    )
+                    project_id = reconciled_project_id
 
             if should_index_for_rag and (attachment_count or link_count or attachment_errors or intake_email_id or intake_attachment_count or intake_errors or had_attachment_errors):
                 update_payload = {

@@ -139,3 +139,41 @@ def test_outlook_intake_email_updates_existing_graph_message():
     assert row["to_list"] == ["owner@example.com"]
     assert row["mailbox_user_id"] == "pm@example.com"
     assert row["match_status"] == "matched"
+
+
+def test_reconcile_outlook_project_assignment_uses_document_metadata_project():
+    supabase = _Supabase()
+    supabase.store["document_metadata"] = [
+        {"id": "outlook_message-1", "project_id": 178}
+    ]
+    supabase.store["project_emails"] = [
+        {"id": 9, "graph_message_id": "message-1", "project_id": 31}
+    ]
+    supabase.store["outlook_email_intake"] = [
+        {
+            "id": 7,
+            "graph_message_id": "message-1",
+            "project_id": 31,
+            "match_status": "matched",
+            "assignment_method": "project_directory_email",
+        }
+    ]
+
+    project_id = outlook._reconcile_outlook_project_assignment(
+        supabase_client=supabase,
+        msg_id="message-1",
+        document_metadata_id="outlook_message-1",
+        project_email_id=9,
+        intake_email_id=7,
+        inferred_project_id=31,
+        assignment_method="project_directory_email",
+        assignment_confidence=0.9,
+    )
+
+    assert project_id == 178
+    assert supabase.store["project_emails"][0]["project_id"] == 178
+    intake = supabase.store["outlook_email_intake"][0]
+    assert intake["project_id"] == 178
+    assert intake["document_metadata_id"] == "outlook_message-1"
+    assert intake["assignment_method"] == "document_metadata_reconcile"
+    assert intake["assignment_confidence"] == 1.0
