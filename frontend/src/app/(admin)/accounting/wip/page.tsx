@@ -4,7 +4,6 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 import { StatusBadge } from "@/components/ds";
-import { PageShell } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api-client";
 import {
@@ -551,8 +550,7 @@ export default function AccountingWipPage() {
     Object.values(tableState.activeFilters).some((value) => value !== undefined && value !== null && value !== "");
 
   return (
-    <PageShell variant="table" title="WIP Report" showHeader={false}>
-      <UnifiedTablePage
+    <UnifiedTablePage
       header={{
         title: "WIP Report",
         description: generatedAt
@@ -669,6 +667,5 @@ export default function AccountingWipPage() {
         toolbarInlineWithHeader: true,
       }}
       />
-    </PageShell>
   );
 }

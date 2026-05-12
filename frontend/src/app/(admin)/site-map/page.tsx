@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
-import { PageShell } from "@/components/layout";
 import SiteMapClient, { type InventoryRoute } from "./site-map-client";
 
 type InventoryCsvRow = {
@@ -145,9 +144,5 @@ function readRouteInventory(): InventoryRoute[] {
 }
 
 export default function SiteMapPage() {
-  return (
-    <PageShell variant="table" title="Site Map" showHeader={false}>
-      <SiteMapClient routes={readRouteInventory()} />
-    </PageShell>
-  );
+  return <SiteMapClient routes={readRouteInventory()} />;
 }

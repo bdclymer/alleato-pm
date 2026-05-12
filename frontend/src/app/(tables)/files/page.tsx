@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 
-import { PageShell } from "@/components/layout";
 import { createServiceClient } from "@/lib/supabase/service";
 import { FilesClient } from "./files-client";
 
@@ -16,9 +15,5 @@ export default async function FilesPage() {
     .order("date", { ascending: false })
     .limit(10000);
 
-  return (
-    <PageShell variant="table" title="Files" showHeader={false}>
-      <FilesClient items={data ?? []} errorMessage={error?.message ?? null} />
-    </PageShell>
-  );
+  return <FilesClient items={data ?? []} errorMessage={error?.message ?? null} />;
 }
