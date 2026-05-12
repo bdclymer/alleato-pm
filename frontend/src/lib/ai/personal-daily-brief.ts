@@ -92,20 +92,43 @@ export function isPersonalTaskRegisterRequest(message: string): boolean {
   const normalized = message.toLowerCase();
   if (isPersonalDailyBriefRequest(message)) return false;
 
-  return [
+  const directPhrases = [
     "what are my tasks",
     "what're my tasks",
     "my tasks",
     "my task list",
     "my to-do",
     "my todo",
+    "todo list",
+    "to-do list",
     "what do i need to do",
+    "what do i need to handle",
     "what am i supposed to do",
     "what is on my plate",
     "what's on my plate",
     "tasks assigned to me",
     "open tasks for me",
-  ].some((phrase) => normalized.includes(phrase));
+    "what am i behind on",
+    "what do i owe",
+    "pending against my name",
+    "pending under my name",
+    "due tomorrow on my side",
+    "due today on my side",
+    "what's due on my side",
+  ];
+  if (directPhrases.some((phrase) => normalized.includes(phrase))) return true;
+
+  // "pull up my <task synonym>" / "show my <task synonym>"
+  if (/\b(pull up|show|bring up|open up|list|give me)\s+(my|the)\s+(task list|todo list|to-do list|tasks|todos|to-dos|action items)\b/.test(normalized)) {
+    return true;
+  }
+
+  // "show me everything pending against my name" / "everything still open under my name"
+  if (/\b(everything|all)\s+(still\s+)?(pending|open|outstanding)\b.*\b(my|me|mine)\b/.test(normalized)) {
+    return true;
+  }
+
+  return false;
 }
 
 export function identityLooksLikeBrandon(

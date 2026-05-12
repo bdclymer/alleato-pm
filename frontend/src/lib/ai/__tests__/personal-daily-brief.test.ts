@@ -24,6 +24,25 @@ describe("personal daily brief routing", () => {
     expect(isPersonalTaskRegisterRequest("what needs my attention today?")).toBe(false);
   });
 
+  it("recognizes CEO verbiage variants as personal task register requests", () => {
+    expect(isPersonalTaskRegisterRequest("What's on my plate this week?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("Pull up my todo list.")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What am I behind on?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What do I owe people right now?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("Show me everything that's still pending against my name.")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What do I need to handle today?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("What's due tomorrow on my side?")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("list my tasks")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("give me my to-do list")).toBe(true);
+  });
+
+  it("does not treat unrelated questions as personal task register requests", () => {
+    // These should NOT route to the personal task register even though they share keywords.
+    expect(isPersonalTaskRegisterRequest("What tasks are open on Westfield?")).toBe(false);
+    expect(isPersonalTaskRegisterRequest("How is the schedule on Vermillion?")).toBe(false);
+    expect(isPersonalTaskRegisterRequest("Mark the AC1 solar approval task done.")).toBe(false);
+  });
+
   it("detects follow-up questions about executive briefing generation metadata", () => {
     expect(isExecutiveBriefingMetadataQuestion("When was this regenerated?")).toBe(true);
     expect(isExecutiveBriefingMetadataQuestion("what time was the briefing report generated")).toBe(true);
