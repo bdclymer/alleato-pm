@@ -453,7 +453,7 @@ function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { valu
     <div className="space-y-2">
       <div className="space-y-2.5 text-xs leading-5 text-foreground">
         {splitContextParagraphs(visibleBody).map((paragraph, index) => (
-          <p key={`${paragraph.slice(0, 24)}-${index}`} className="break-words">
+          <p key={`${paragraph.slice(0, 24)}-${index}`} className="break-words whitespace-pre-line">
             {paragraph}
           </p>
         ))}
@@ -1447,9 +1447,9 @@ export function TasksInbox({
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(Boolean(rawTaskId) && defaultView === "table");
+  const [sheetOpen, setSheetOpen] = useState(Boolean(rawTaskId));
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const [selectedTaskContext, setSelectedTaskContext] = useState<string | null | undefined>(undefined);
+  const [selectedTaskDetails, setSelectedTaskDetails] = useState<TasksRow | null | undefined>(undefined);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -1480,35 +1480,44 @@ export function TasksInbox({
   useEffect(() => {
     if (!rawTaskId) return;
     setSelectedId(rawTaskId);
-    if (tableState.currentView === "table") {
-      setSheetOpen(true);
-    }
-  }, [rawTaskId, tableState.currentView]);
+    setSheetOpen(true);
+  }, [rawTaskId]);
 
-  const selected = useMemo(
+  const selectedListItem = useMemo(
     () => items.find((i) => i.id === selectedId) ?? null,
     [items, selectedId],
   );
 
-  // Merge lazily loaded source_context into the selected task for the detail panel.
-  const selectedWithContext = useMemo(
-    () => selected
-      ? { ...selected, source_context: selectedTaskContext !== undefined ? selectedTaskContext : selected.source_context }
-      : null,
-    [selected, selectedTaskContext],
-  );
+  // Merge lazily loaded detail data into the selected task for deep links and source context.
+  const selectedWithContext = useMemo(() => {
+    if (selectedTaskDetails) {
+      return { ...(selectedListItem ?? selectedTaskDetails), ...selectedTaskDetails };
+    }
+    return selectedListItem;
+  }, [selectedListItem, selectedTaskDetails]);
 
-  // Lazy-load source_context when a task is selected (heavy content fields excluded from list query).
+  // Lazy-load the selected task when opened from the URL or list.
+  // List queries intentionally exclude heavy source text, so the detail fetch is the source of truth for context.
   useEffect(() => {
     if (!selectedId) {
-      setSelectedTaskContext(undefined);
+      setSelectedTaskDetails(undefined);
       return;
     }
-    setSelectedTaskContext(undefined);
+    setSelectedTaskDetails(undefined);
     let cancelled = false;
     void apiFetch<{ task: TasksRow }>(`/api/tasks/${selectedId}`)
-      .then((data) => { if (!cancelled) setSelectedTaskContext(data.task.source_context ?? null); })
-      .catch(() => { if (!cancelled) setSelectedTaskContext(null); });
+      .then((data) => { if (!cancelled) setSelectedTaskDetails(data.task ?? null); })
+      .catch((err) => {
+        if (cancelled) return;
+        reportNonCriticalFailure({
+          area: "tasks-table",
+          operation: "load-selected-task-detail",
+          error: err,
+          userVisibleFallback: "The selected task detail could not be loaded.",
+          metadata: { selectedId },
+        });
+        setSelectedTaskDetails(null);
+      });
     return () => { cancelled = true; };
   }, [selectedId]);
 
@@ -2249,7 +2258,7 @@ export function TasksInbox({
                 {/* Right: detail panel (desktop) */}
                 <div
                   data-task-detail-panel
-                  className="hidden h-full min-w-0 flex-1 overflow-y-auto overscroll-contain bg-muted/20 lg:block"
+                  className="hidden h-full min-w-0 flex-1 overflow-y-auto overscroll-contain lg:block"
                 >
                   {!selectedWithContext ? (
                     <EmptyDetail
@@ -2352,7 +2361,7 @@ export function TasksInbox({
       </AlertDialog>
 
       <Sheet
-        open={sheetOpen && tableState.currentView === "table"}
+        open={sheetOpen}
         onOpenChange={setSheetOpen}
       >
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">

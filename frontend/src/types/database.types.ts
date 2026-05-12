@@ -35672,6 +35672,14 @@ export type Database = {
         Args: { page: Database["public"]["Tables"]["qa_page_audit"]["Row"] }
         Returns: string
       }
+      reconcile_outlook_project_surfaces: {
+        Args: never
+        Returns: {
+          document_metadata_rows_updated: number
+          intake_rows_updated: number
+          project_email_rows_updated: number
+        }[]
+      }
       record_app_error_event: { Args: { payload: Json }; Returns: string }
       refresh_budget_rollup:
         | {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import type { PermissionModule } from "@/lib/navigation-config";
 
 interface ProjectPermissions {
@@ -37,17 +38,24 @@ export function useProjectPermissions(
     async function fetchPermissions() {
       setIsLoading(true);
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const user = await getCurrentBrowserUser(supabase);
         if (!user || cancelled) return;
 
-        // Check app admin
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("is_admin")
-          .eq("id", user.id)
-          .maybeSingle();
+        // Run profile check and auth link lookup in parallel — saves one round trip
+        const [{ data: profile }, { data: authLink }] = await Promise.all([
+          supabase
+            .from("user_profiles")
+            .select("is_admin")
+            .eq("id", user.id)
+            .maybeSingle(),
+          currentProjectId
+            ? supabase
+                .from("users_auth")
+                .select("person_id")
+                .eq("auth_user_id", user.id)
+                .maybeSingle()
+            : Promise.resolve({ data: null, error: null }),
+        ]);
 
         if (cancelled) return;
         const admin = profile?.is_admin === true;
@@ -70,22 +78,9 @@ export function useProjectPermissions(
           return;
         }
 
-        if (!currentProjectId) {
+        if (!currentProjectId || !authLink) {
           setPermissions({});
           setUserType(null);
-          setIsLoading(false);
-          return;
-        }
-
-        // Look up person_id
-        const { data: authLink } = await supabase
-          .from("users_auth")
-          .select("person_id")
-          .eq("auth_user_id", user.id)
-          .maybeSingle();
-
-        if (!authLink || cancelled) {
-          setPermissions({});
           setIsLoading(false);
           return;
         }

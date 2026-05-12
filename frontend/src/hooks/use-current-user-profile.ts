@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 
 type UserMetadata = {
   full_name?: string;
@@ -148,34 +149,40 @@ export const useCurrentUserProfile = (options?: { enabled?: boolean }) => {
 
     const loadProfile = async () => {
       const supabase = createClient();
-      const { data, error: fetchError } = await supabase.auth.getUser();
 
-      if (fetchError) {
+      let user: User | null = null;
+      try {
+        user = await getCurrentBrowserUser(supabase);
+      } catch (fetchError) {
         if (isMounted) {
-          setError(fetchError.message);
+          setError(fetchError instanceof Error ? fetchError.message : String(fetchError));
           setIsLoading(false);
         }
         return;
       }
 
-      if (data.user && isMounted) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("user_profiles")
-          .select("is_admin, full_name, role, onboarding_completed_at")
-          .eq("id", data.user.id)
-          .maybeSingle();
+      if (user && isMounted) {
+        const [
+          { data: profileData, error: profileError },
+          { data: personData, error: personError },
+        ] = await Promise.all([
+          supabase
+            .from("user_profiles")
+            .select("is_admin, full_name, role, onboarding_completed_at")
+            .eq("id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("people")
+            .select(
+              "first_name, last_name, profile_photo_url, company, job_title, phone_mobile, phone_business",
+            )
+            .eq("auth_user_id", user.id)
+            .maybeSingle(),
+        ]);
 
         if (profileError && isMounted) {
           setError(profileError.message);
         }
-
-        const { data: personData, error: personError } = await supabase
-          .from("people")
-          .select(
-            "first_name, last_name, profile_photo_url, company, job_title, phone_mobile, phone_business",
-          )
-          .eq("auth_user_id", data.user.id)
-          .maybeSingle();
 
         if (personError && isMounted) {
           setError(personError.message);
@@ -185,7 +192,7 @@ export const useCurrentUserProfile = (options?: { enabled?: boolean }) => {
           personData?.first_name,
           personData?.last_name,
         );
-        const baseProfile = buildProfile(data.user, {
+        const baseProfile = buildProfile(user, {
           fullName: directoryFullName || profileData?.full_name || undefined,
           avatarUrl: personData?.profile_photo_url || undefined,
           company: personData?.company || undefined,

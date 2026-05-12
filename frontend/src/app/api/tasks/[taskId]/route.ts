@@ -10,9 +10,37 @@ import { TASK_PRIORITY_VALUES, TASK_STATUS_VALUES } from "@/features/tasks/task-
 import type { Json } from "@/types/database.types";
 import { mapTaskRow, type JoinedTaskRow } from "@/features/tasks/task-utils";
 
+const TASK_COLUMNS = `
+  id,
+  metadata_id,
+  segment_id,
+  source_chunk_id,
+  schedule_task_id,
+  description,
+  assignee_person_id,
+  assignee_name,
+  assignee_email,
+  project_id,
+  client_id,
+  due_date,
+  priority,
+  status,
+  source_system,
+  created_at,
+  updated_at,
+  project_ids,
+  file_name,
+  title,
+  assigned_by,
+  extraction_source,
+  extraction_model,
+  extraction_prompt_version,
+  extraction_metadata
+`;
+
 // Full select including heavy content fields — only used for single-task fetches.
 const TASK_SELECT_FULL = `
-  *,
+  ${TASK_COLUMNS},
   projects (id, name),
   document_metadata:tasks_metadata_id_fkey (
     id,
@@ -152,7 +180,25 @@ export const GET = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/[taskId]#GET", message: "Authentication required." });
     }
 
-    const { data, error } = await supabase
+    const serviceClient = createServiceClient();
+    const { data: profileData, error: profileError } = await serviceClient
+      .from("user_profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "tasks/[taskId]#GET",
+        message: "Failed to verify task access.",
+        details: { reason: profileError.message },
+        cause: profileError,
+      });
+    }
+
+    const readClient = profileData?.is_admin === true ? serviceClient : supabase;
+    const { data, error } = await readClient
       .from("tasks")
       .select(TASK_SELECT_FULL)
       .eq("id", taskId)

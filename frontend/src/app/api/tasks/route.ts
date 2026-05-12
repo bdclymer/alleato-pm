@@ -19,10 +19,38 @@ const TaskResponseSchema = z.object({
   source_context: z.string().nullable(),
 });
 
+const TASK_COLUMNS = `
+  id,
+  metadata_id,
+  segment_id,
+  source_chunk_id,
+  schedule_task_id,
+  description,
+  assignee_person_id,
+  assignee_name,
+  assignee_email,
+  project_id,
+  client_id,
+  due_date,
+  priority,
+  status,
+  source_system,
+  created_at,
+  updated_at,
+  project_ids,
+  file_name,
+  title,
+  assigned_by,
+  extraction_source,
+  extraction_model,
+  extraction_prompt_version,
+  extraction_metadata
+`;
+
 // Lean select for list queries — excludes heavy content fields to prevent statement timeouts.
 // source_context is lazy-loaded per-task via GET /api/tasks/[taskId] when a task is opened.
 const TASK_SELECT = `
-  *,
+  ${TASK_COLUMNS},
   projects (id, name),
   document_metadata:tasks_metadata_id_fkey (
     id,
@@ -192,7 +220,8 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
     });
   }
 
-  let query = supabase
+  const taskClient = scope === "all" ? serviceClient : supabase;
+  let query = taskClient
     .from("tasks")
     .select(TASK_SELECT)
     .not("metadata_id", "is", null)
