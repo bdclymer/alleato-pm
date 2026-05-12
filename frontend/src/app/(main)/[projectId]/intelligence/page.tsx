@@ -93,6 +93,7 @@ function categorizePacketEvidence(
   if (combined.includes("drawing") || combined.includes("plan")) return "drawing";
   if (combined.includes("spec")) return "specification";
   if (combined.includes("daily report") || combined.includes("daily log")) return "daily_report";
+  if (combined.includes("project detail")) return "project_detail";
   if (combined.includes("task") || combined.includes("risk")) return "task";
   if (combined.includes("document") || combined.includes("file") || combined.includes("onedrive")) return "document";
   return "other";
@@ -251,8 +252,7 @@ function SourceUtilizationPanel({
   const availableCategories = operatingSourceSet.coverage.filter((category) => category.availableCount > 0);
   const notUsedAvailableCategories = operatingSourceSet.coverage.filter((category) => {
     if (category.category === "project_detail") return false;
-    const packetCategory = category.category === "risk" ? "task" : category.category;
-    return category.availableCount > 0 && (packetUsageByCategory[packetCategory] ?? 0) === 0;
+    return category.availableCount > 0 && (packetUsageByCategory[category.category] ?? 0) === 0;
   });
 
   return (
@@ -260,7 +260,7 @@ function SourceUtilizationPanel({
       <SectionRuleHeading label="What Intelligence Is Actually Using" className="mb-0 pb-0" />
       <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
         Available source capsules are the project operating inputs now gathered for structured summarization.
-        Packet evidence is what the older card packet has linked today.
+        Packet evidence is what the current synced operating packet has linked today.
       </p>
       <p className="text-xs leading-5 text-muted-foreground">
         Packet <span className="font-mono text-foreground">{packet.id}</span> ·{" "}
@@ -276,11 +276,7 @@ function SourceUtilizationPanel({
         </div>
         <div className="divide-y divide-border border-y border-border">
           {operatingSourceSet.coverage.map((category) => {
-            const packetCategory =
-              category.category === "project_detail" || category.category === "risk"
-                ? "task"
-                : category.category;
-            const packetEvidenceCount = packetUsageByCategory[packetCategory] ?? 0;
+            const packetEvidenceCount = packetUsageByCategory[category.category] ?? 0;
             const hasAvailableData = category.availableCount > 0;
             const isUsedByPacket = packetEvidenceCount > 0;
             return (
