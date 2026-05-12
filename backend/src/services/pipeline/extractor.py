@@ -452,6 +452,26 @@ def _upsert_insight(
     ).execute()
 
 
+_TITLE_CLAUSE_RE = re.compile(
+    r"(?:,\s+(?:especially|including|particularly|such as|e\.g\.|for example)"
+    r"|;\s+|\.\s+| — | and explore | to support (?!a\b))",
+    re.I,
+)
+_TIMESTAMP_RE = re.compile(r"\s*\(\d{2}:\d{2}:\d{2}\)\s*$")
+
+
+def _derive_title(description: str | None) -> str:
+    """Generate a concise imperative title (max ~65 chars) from a task description."""
+    text = _TIMESTAMP_RE.sub("", (description or "").strip())
+    m = _TITLE_CLAUSE_RE.search(text)
+    if m and m.start() > 15:
+        text = text[: m.start()].strip()
+    if len(text) > 65:
+        cut = text[:65].rsplit(" ", 1)[0]
+        text = cut if len(cut) >= 20 else text[:65]
+    return text.rstrip(",.;:- ")[:120]
+
+
 def _upsert_task(
     client,
     task: TaskItem,
@@ -480,6 +500,7 @@ def _upsert_task(
 
     data = {
         "metadata_id": metadata_id,
+        "title": _derive_title(task.description),
         "description": task.description,
         "assignee_name": task.assignee,
         "due_date": task.due_date,
