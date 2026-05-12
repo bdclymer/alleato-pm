@@ -455,6 +455,18 @@ function getDocumentTypeConfig(type: string | null) {
   return { icon: File, label: type ?? "File", iconBg: "bg-muted", iconColor: "text-muted-foreground" };
 }
 
+// ── Status dot ───────────────────────────────────────────────────────────────
+
+function StatusDot({ status }: { status: string }) {
+  const s = status.toLowerCase();
+  let color = "bg-muted-foreground/50";
+  if (["complete", "completed", "closed", "paid", "synced"].includes(s)) color = "bg-green-500";
+  else if (["pending", "in progress", "submitted", "open", "partial"].includes(s)) color = "bg-yellow-500";
+  else if (["rejected", "overdue", "failed", "cancelled", "void"].includes(s)) color = "bg-red-500";
+  else if (["processed", "embedded"].includes(s)) color = "bg-primary/60";
+  return <span className={`shrink-0 rounded-full size-2 mt-1 ${color}`} title={status} aria-label={status} />;
+}
+
 // ── Card renderer ────────────────────────────────────────────────────────────
 
 function DocumentCard({
@@ -486,12 +498,12 @@ function DocumentCard({
       onClick={() => onClick(item)}
     >
       <div className="flex flex-col gap-2.5 p-4 w-full">
-        {/* Header: type icon + title + status */}
-        <div className="flex items-start gap-3">
-          <div className={`shrink-0 rounded-lg p-2 ${typeConfig.iconBg}`}>
-            <TypeIcon className={`h-4 w-4 ${typeConfig.iconColor}`} />
+        {/* Header: type icon + title + status dot */}
+        <div className="flex items-start gap-2.5">
+          <div className={`shrink-0 rounded-md p-1.5 ${typeConfig.iconBg}`}>
+            <TypeIcon className={`h-3.5 w-3.5 ${typeConfig.iconColor}`} />
           </div>
-          <div className="flex-1 min-w-0 pt-0.5">
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold leading-snug line-clamp-2 text-foreground">
               {item.title ?? "Untitled"}
             </p>
@@ -501,22 +513,18 @@ function DocumentCard({
               </p>
             )}
           </div>
-          {item.status && (
-            <div className="shrink-0 pt-0.5">
-              <StatusBadge status={item.status} />
-            </div>
-          )}
+          {item.status && <StatusDot status={item.status} />}
         </div>
 
         {/* Preview text */}
         {previewText && (
-          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed pl-11">
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
             {previewText}
           </p>
         )}
 
         {/* Footer metadata */}
-        <div className="flex items-center justify-between gap-2 pl-11">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 flex-1">
             {item.source_system && !item.type?.startsWith("teams") && (
               <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium shrink-0">
