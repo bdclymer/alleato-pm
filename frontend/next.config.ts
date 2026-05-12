@@ -99,10 +99,13 @@ const nextConfig: NextConfig = {
     "redoc",
     "swagger-ui-dist",
     "xlsx",
-    // OpenTelemetry + Phoenix tracing — native Node.js modules, never in client bundles
+    // OpenTelemetry + tracing — native Node.js modules, never in client bundles
     "@opentelemetry/sdk-node",
+    "@opentelemetry/sdk-trace-node",
     "@opentelemetry/exporter-trace-otlp-http",
     "@arizeai/openinference-instrumentation-openai",
+    "@langfuse/otel",
+    "@langfuse/tracing",
   ],
   webpack: (config) => {
     // react-pdf imports bare `pdfjs-dist`, whose non-minified 5.x ESM entry redeclares
