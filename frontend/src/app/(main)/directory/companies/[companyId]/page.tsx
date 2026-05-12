@@ -6,10 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Building2,
-  CalendarDays,
   Check,
   ChevronsUpDown,
-  CircleDollarSign,
   ExternalLink,
   FileText,
   Globe,
@@ -19,7 +17,6 @@ import {
   Phone,
   Plus,
   UserPlus,
-  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -221,6 +218,8 @@ export default function CompanyDetailsPage() {
     phone_business: "",
     job_title: "",
   });
+
+  const [settingPrimaryContactId, setSettingPrimaryContactId] = React.useState<string | null>(null);
 
   const [addToProjectOpen, setAddToProjectOpen] = React.useState(false);
   const [projects, setProjects] = React.useState<ProjectOption[]>([]);
@@ -463,6 +462,25 @@ export default function CompanyDetailsPage() {
     }
   }
 
+  async function handleSetPrimaryContact(contactId: string) {
+    if (!companyId) return;
+    const supabase = createClient();
+    setSettingPrimaryContactId(contactId);
+    try {
+      const { error } = await supabase
+        .from("companies")
+        .update({ primary_contact_id: contactId })
+        .eq("id", companyId);
+      if (error) throw error;
+      await loadDetails();
+      toast.success("Primary contact updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to set primary contact");
+    } finally {
+      setSettingPrimaryContactId(null);
+    }
+  }
+
   async function handleRemoveContactFromCompany(contact: Contact) {
     if (!data?.company.id) return;
 
@@ -574,7 +592,7 @@ export default function CompanyDetailsPage() {
       ? company.website
       : `https://${company.website}`
     : null;
-  const primaryContact = contacts[0] ?? null;
+  const primaryContact = contacts.find((c) => c.id === company.primary_contact_id) ?? contacts[0] ?? null;
   const openInvoiceCount = invoices.filter((item) => isOpenInvoice(item.status)).length;
   const latestMeeting = meetings
     .filter((meeting) => meeting.date)
@@ -619,118 +637,49 @@ export default function CompanyDetailsPage() {
         </div>
 
         <section className="relative bg-card px-4 py-8 sm:px-8 lg:px-10">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:items-end">
-            <div className="min-w-0 space-y-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={company.status || "Unknown"} />
-                {company.type ? <Badge variant="outline">{company.type}</Badge> : null}
-                {company.acumatica_vendor_id ? <Badge variant="outline">ERP {company.acumatica_vendor_id}</Badge> : null}
-              </div>
-              <div className="space-y-4">
-                <h1 className="text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
-                  {company.name}
-                </h1>
-                <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-3">
-                  {companyLocation ? (
-                    <div className="flex min-w-0 items-center gap-2">
-                      <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{companyLocation}</span>
-                    </div>
-                  ) : null}
-                  {company.contact_phone ? (
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{company.contact_phone}</span>
-                    </div>
-                  ) : null}
-                  {company.contact_email ? (
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{company.contact_email}</span>
-                    </div>
-                  ) : null}
-                  {websiteUrl ? (
-                    <a
-                      href={websiteUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex min-w-0 items-center gap-2 text-foreground underline-offset-4 hover:underline"
-                    >
-                      <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{company.website}</span>
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    </a>
-                  ) : null}
-                </div>
-              </div>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={company.status || "Unknown"} />
+              {company.type ? <Badge variant="outline">{company.type}</Badge> : null}
+              {company.acumatica_vendor_id ? <Badge variant="outline">ERP {company.acumatica_vendor_id}</Badge> : null}
             </div>
-
-            <div className="rounded-[1.5rem] border border-border bg-foreground p-5 text-background shadow-xs">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Primary contact</p>
-              {primaryContact ? (
-                <div className="mt-5 flex items-start gap-4">
-                  <Avatar className="h-12 w-12 border border-white/15">
-                    <AvatarFallback className="bg-background/10 text-sm font-semibold text-background">
-                      {getInitials(primaryContact.first_name, primaryContact.last_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-semibold">
-                      {primaryContact.first_name} {primaryContact.last_name}
-                    </p>
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
-                      {primaryContact.job_title || primaryContact.email || "Company contact"}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => router.push(`/directory/contacts/${primaryContact.id}`)}
-                      className="mt-4 h-8 bg-background text-foreground hover:bg-muted active:scale-[0.98]"
-                    >
-                      Open profile
-                    </Button>
-                  </div>
+            <h1 className="text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
+              {company.name}
+            </h1>
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              {companyLocation ? (
+                <div className="flex min-w-0 items-center gap-2">
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{companyLocation}</span>
                 </div>
-              ) : (
-                <div className="mt-5 space-y-4">
-                  <p className="text-sm leading-6 text-muted-foreground">No contact has been linked to this company yet.</p>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => void openAddContactModal()}
-                    className="bg-background text-foreground hover:bg-muted active:scale-[0.98]"
-                  >
-                    Add first contact
-                  </Button>
+              ) : null}
+              {company.contact_phone ? (
+                <div className="flex min-w-0 items-center gap-2">
+                  <Phone className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{company.contact_phone}</span>
                 </div>
-              )}
+              ) : null}
+              {company.contact_email ? (
+                <div className="flex min-w-0 items-center gap-2">
+                  <Mail className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{company.contact_email}</span>
+                </div>
+              ) : null}
+              {websiteUrl ? (
+                <a
+                  href={websiteUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex min-w-0 items-center gap-2 underline-offset-4 hover:underline"
+                >
+                  <Globe className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{company.website}</span>
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                </a>
+              ) : null}
             </div>
           </div>
         </section>
-
-        <div className="grid border-y border-border bg-card sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: "Contacts", value: summary.contact_count, icon: Users },
-            { label: "Projects", value: summary.project_count, icon: Building2 },
-            { label: "Open invoices", value: openInvoiceCount, icon: CircleDollarSign },
-            { label: "Meetings", value: summary.meeting_count, icon: CalendarDays },
-          ].map((metric) => {
-            const Icon = metric.icon;
-            return (
-              <div key={metric.label} className="flex items-center justify-between gap-4 border-b border-border p-5 last:border-b-0 sm:[&:nth-child(odd)]:border-r lg:border-b-0 lg:border-r lg:last:border-r-0">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{metric.label}</p>
-                  <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-foreground">{metric.value}</p>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                  <Icon className="h-4 w-4" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
 
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
           <main className="min-w-0 bg-card px-4 py-6 sm:px-8 lg:px-10">
@@ -742,64 +691,71 @@ export default function CompanyDetailsPage() {
                   action={{ label: "Add contact", onClick: () => void openAddContactModal() }}
                 />
                 {contacts.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
-                    <DsEmptyState title="No contacts associated with this company" description="Add contacts to track people associated with this company." />
-                  </div>
+                  <DsEmptyState title="No contacts associated with this company" description="Add contacts to track people associated with this company." />
                 ) : (
-                  <ul className="divide-y divide-border rounded-2xl border border-border">
-                    {contacts.map((contact) => (
-                      <li key={contact.id} className="group">
-                        <div className="flex items-center gap-1 p-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => router.push(`/directory/contacts/${contact.id}`)}
-                            className="grid h-auto flex-1 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-xl px-2 py-3 text-left transition-colors hover:bg-muted/50 md:grid-cols-[auto_minmax(0,1fr)_minmax(200px,1fr)_160px] justify-start active:scale-[0.99]"
-                          >
-                            <Avatar className="h-10 w-10 border border-border">
-                              <AvatarFallback className="bg-foreground text-xs font-semibold text-background">
-                                {getInitials(contact.first_name, contact.last_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-foreground">
+                  <ul className="divide-y divide-border">
+                    {contacts.map((contact) => {
+                      const isPrimary = contact.id === (company.primary_contact_id ?? primaryContact?.id);
+                      return (
+                        <li key={contact.id} className="group flex items-center gap-2 py-2">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
+                              {getInitials(contact.first_name, contact.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/directory/contacts/${contact.id}`}
+                                className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
+                              >
                                 {contact.first_name} {contact.last_name}
-                              </p>
-                              <p className="truncate text-sm text-muted-foreground">
-                                {contact.job_title || "No job title"}
-                              </p>
+                              </Link>
+                              {isPrimary && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Primary</Badge>
+                              )}
                             </div>
-                            <p className="hidden truncate text-sm text-muted-foreground md:block">
-                              {contact.email || "No email"}
+                            <p className="truncate text-xs text-muted-foreground">
+                              {contact.job_title || contact.email || "No title"}
                             </p>
-                            <p className="hidden truncate text-sm text-muted-foreground md:block md:text-right">
-                              {contact.phone_business || contact.phone_mobile || "No phone"}
-                            </p>
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            {!isPrimary && (
                               <Button
                                 variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
-                                aria-label="Contact actions"
-                                disabled={removingContactId === contact.id}
+                                size="sm"
+                                className="h-7 text-xs text-muted-foreground"
+                                disabled={settingPrimaryContactId === contact.id}
+                                onClick={() => void handleSetPrimaryContact(contact.id)}
                               >
-                                <MoreHorizontal />
+                                {settingPrimaryContactId === contact.id ? "Saving..." : "Set primary"}
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onSelect={() => void handleRemoveContactFromCompany(contact)}
-                              >
-                                Remove from Company
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </li>
-                    ))}
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  aria-label="Contact actions"
+                                  disabled={removingContactId === contact.id}
+                                >
+                                  <MoreHorizontal className="h-3.5 w-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onSelect={() => void handleRemoveContactFromCompany(contact)}
+                                >
+                                  Remove from Company
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </section>
@@ -1000,6 +956,32 @@ export default function CompanyDetailsPage() {
                     )}
                   </div>
                 </div>
+              </section>
+
+              <section className="rounded-2xl border border-border bg-background p-5">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Primary contact</p>
+                {primaryContact ? (
+                  <div className="mt-4 flex items-center gap-3">
+                    <Avatar className="h-9 w-9 shrink-0">
+                      <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
+                        {getInitials(primaryContact.first_name, primaryContact.last_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <Link
+                        href={`/directory/contacts/${primaryContact.id}`}
+                        className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
+                      >
+                        {primaryContact.first_name} {primaryContact.last_name}
+                      </Link>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {primaryContact.job_title || primaryContact.email || "Company contact"}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">No primary contact set.</p>
+                )}
               </section>
 
               <section className="rounded-2xl border border-border bg-background p-5">

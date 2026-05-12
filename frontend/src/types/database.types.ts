@@ -8074,6 +8074,7 @@ export type Database = {
           name: string
           notes: string | null
           payment_method: string | null
+          primary_contact_id: string | null
           state: string | null
           status: string | null
           tax_id: string | null
@@ -8112,6 +8113,7 @@ export type Database = {
           name: string
           notes?: string | null
           payment_method?: string | null
+          primary_contact_id?: string | null
           state?: string | null
           status?: string | null
           tax_id?: string | null
@@ -8150,6 +8152,7 @@ export type Database = {
           name?: string
           notes?: string | null
           payment_method?: string | null
+          primary_contact_id?: string | null
           state?: string | null
           status?: string | null
           tax_id?: string | null
@@ -8161,7 +8164,15 @@ export type Database = {
           website?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_primary_contact_id_fkey"
+            columns: ["primary_contact_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_context: {
         Row: {
