@@ -1,4 +1,3 @@
-import { sendProactiveMessage } from "@/lib/bot/teams-chat";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   type BrandonBriefItem,
@@ -28,6 +27,11 @@ export type ExecutiveBriefingTeamsSendResult =
       workflowStatus?: string;
       userId?: string | null;
     };
+
+async function sendTeamsMessage(userId: string, message: string) {
+  const { sendProactiveMessage } = await import("@/lib/bot/teams-chat");
+  await sendProactiveMessage(userId, message);
+}
 
 function compactText(value: string | null | undefined, maxLength = 180): string {
   const text = String(value ?? "").replace(/\s+/g, " ").trim();
@@ -443,7 +447,7 @@ export async function sendApprovedExecutiveBriefingToTeams(
     targetUserIds.map(async (userId) => {
       const firstName = await getTeamsRecipientFirstName(userId);
       const message = formatExecutiveBriefingTeamsMessage(draft.packet, firstName);
-      await sendProactiveMessage(userId, message);
+      await sendTeamsMessage(userId, message);
       recipients.push({ userId, recipientName: firstName });
     }),
   );

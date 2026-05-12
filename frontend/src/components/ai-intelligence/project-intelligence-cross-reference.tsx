@@ -56,6 +56,22 @@ const confidenceVariant: Record<ConfidenceLevel, "default" | "secondary" | "outl
   low: "outline",
 };
 
+const sourceBadgeClass: Record<ProjectOperatingSummarySource["category"], string> = {
+  project_detail: "border-sky-200 bg-sky-50 text-sky-700",
+  meeting: "border-violet-200 bg-violet-50 text-violet-700",
+  email: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  teams: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  document: "border-slate-200 bg-slate-50 text-slate-700",
+  acumatica: "border-amber-200 bg-amber-50 text-amber-800",
+  rfi: "border-cyan-200 bg-cyan-50 text-cyan-700",
+  submittal: "border-teal-200 bg-teal-50 text-teal-700",
+  drawing: "border-blue-200 bg-blue-50 text-blue-700",
+  specification: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700",
+  daily_report: "border-lime-200 bg-lime-50 text-lime-800",
+  task: "border-orange-200 bg-orange-50 text-orange-700",
+  risk: "border-rose-200 bg-rose-50 text-rose-700",
+};
+
 function formatLabel(value: string | null | undefined): string {
   if (!value) return "Unknown";
   return value
@@ -360,7 +376,13 @@ export function ProjectIntelligenceSourceTables({
       {
         id: "category",
         label: "Source",
-        render: (row) => <TableTagBadge label={formatLabel(row.category)} variant="outline" />,
+        render: (row) => (
+          <TableTagBadge
+            label={formatLabel(row.category)}
+            variant="outline"
+            className={sourceBadgeClass[row.category]}
+          />
+        ),
         sortValue: (row) => row.category,
         sortable: true,
       },
