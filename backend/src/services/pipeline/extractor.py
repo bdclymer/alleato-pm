@@ -472,6 +472,14 @@ def _derive_title(description: str | None) -> str:
     return text.rstrip(",.;:- ")[:120]
 
 
+_TRADE_ROLE_NAMES: frozenset[str] = frozenset({
+    "mechanical", "electrical", "plumbing", "structural", "civil",
+    "interior", "landscape", "architecture", "architectural",
+    "contractor", "subcontractor", "electrician", "owner", "team",
+    "everyone", "all", "unknown", "tbd",
+})
+
+
 def _upsert_task(
     client,
     task: TaskItem,
@@ -486,6 +494,15 @@ def _upsert_task(
             resolved_project_id = int(project_ids[0])
         except (TypeError, ValueError):
             resolved_project_id = None
+
+    # Reject role/trade names that are not real people.
+    if (task.assignee or "").strip().lower() in _TRADE_ROLE_NAMES:
+        logger.info(
+            "Skipping trade-role assignee: assignee=%r description=%r",
+            task.assignee,
+            (task.description or "")[:80],
+        )
+        return
 
     # Only employees can own tasks. Skip external owners.
     assignee = TaskAssigneeResolver(client).resolve(task.assignee, task.assignee_email)
