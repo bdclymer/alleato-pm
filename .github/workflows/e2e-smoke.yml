@@ -27,7 +27,7 @@ jobs:
         run: pnpm --dir frontend install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm --dir frontend exec playwright install chromium --with-deps
+        run: pnpm --dir frontend exec playwright install chromium
 
       - name: Run E2E smoke tests
         env:
