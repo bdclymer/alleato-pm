@@ -5,13 +5,18 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
-function redirectTo(url: string, headers?: HeadersInit): NextResponse {
+function isReachableUrl(url: string | null | undefined): url is string {
+  if (!url) return false;
   try {
-    return NextResponse.redirect(new URL(url), { headers });
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
   } catch {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    return NextResponse.redirect(new URL(url, appUrl), { headers });
+    return false;
   }
+}
+
+function redirectTo(url: string, headers?: HeadersInit): NextResponse {
+  return NextResponse.redirect(new URL(url), { headers });
 }
 
 /**
@@ -40,7 +45,7 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
 
     const { data: document, error } = await supabase
       .from("project_documents")
-      .select("id, file_name, file_url, storage_bucket, storage_path")
+      .select("id, file_name, file_url, storage_bucket, storage_path, source_web_url")
       .eq("id", Number(documentId))
       .eq("project_id", Number(projectId))
       .is("deleted_at", null)
@@ -58,6 +63,7 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
       return apiErrorResponse(error);
     }
 
+    // Prefer durable Supabase Storage copy
     if (document.storage_bucket && document.storage_path) {
       const serviceClient = createServiceClient();
       const { data: signedUrlData, error: signedUrlError } =
@@ -83,34 +89,29 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
           error: signedUrlError?.message ?? "Signed URL was not returned.",
         }),
       );
+    }
 
-      if (!document.file_url) {
-        throw new GuardrailError({
-          code: "INTERNAL_ERROR",
-          where: "projects/[projectId]/documents/[documentId]/download#GET",
-          message: "Document storage copy exists, but a signed download link could not be created.",
-          status: 502,
-        });
-      }
+    // Fall back to source_web_url (OneDrive/SharePoint direct link) if reachable
+    if (isReachableUrl(document.source_web_url)) {
+      return redirectTo(document.source_web_url, {
+        "x-document-source": "source-web-url",
+      });
+    }
 
+    // Fall back to file_url — only redirect if it is an absolute http(s) URL.
+    // Relative paths and non-http schemes (e.g. onedrive://) would produce a
+    // "This site can't be reached" browser error, so we reject them explicitly.
+    if (isReachableUrl(document.file_url)) {
       return redirectTo(document.file_url, {
-        "x-document-source": "source-url-fallback",
-        "x-document-storage-error":
-          signedUrlError?.message ?? "Signed URL was not returned.",
+        "x-document-source": "file-url",
       });
     }
 
-    if (!document.file_url) {
-      throw new GuardrailError({
-        code: "NOT_FOUND",
-        where: "projects/[projectId]/documents/[documentId]/download#GET",
-        message: "Document does not have a storage copy or source URL.",
-        status: 404,
-      });
-    }
-
-    return redirectTo(document.file_url, {
-      "x-document-source": "source-url",
+    throw new GuardrailError({
+      code: "NOT_FOUND",
+      where: "projects/[projectId]/documents/[documentId]/download#GET",
+      message: "This document does not have a downloadable file attached. It may have been synced from OneDrive without a local copy.",
+      status: 404,
     });
   },
 );

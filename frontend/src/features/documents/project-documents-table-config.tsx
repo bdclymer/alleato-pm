@@ -4,10 +4,10 @@ import { formatDate } from "@/lib/format";
 import {
   Download,
   Eye,
+  FilePen,
   FolderOpen,
   Lock,
   MoreHorizontal,
-  Pencil,
   Trash2,
 } from "lucide-react";
 
@@ -379,7 +379,7 @@ export function renderDocumentRowActions(
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => onEdit(item)}>
-          <Pencil className="mr-2 h-4 w-4" />
+          <FilePen className="mr-2 h-4 w-4" />
           Edit
         </DropdownMenuItem>
         <DropdownMenuSeparator />

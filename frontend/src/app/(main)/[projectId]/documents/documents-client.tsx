@@ -38,6 +38,7 @@ import {
   renderDocumentRowActions,
 } from "@/features/documents/project-documents-table-config";
 import { DocumentUploadDialog } from "@/features/documents/document-upload-dialog";
+import { DocumentEditDialog } from "@/features/documents/document-edit-dialog";
 
 // =============================================================================
 // Types
@@ -71,6 +72,8 @@ export function DocumentsClient({ projectId }: DocumentsClientProps): ReactEleme
 
   // Dialog state
   const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [documentToEdit, setDocumentToEdit] = React.useState<ProjectDocument | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [documentToDelete, setDocumentToDelete] = React.useState<ProjectDocument | null>(null);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
@@ -216,9 +219,9 @@ export function DocumentsClient({ projectId }: DocumentsClientProps): ReactEleme
     );
   };
 
-  const handleEdit = (_item: ProjectDocument) => {
-    // Future: open edit dialog
-    toast.info("Edit functionality coming soon");
+  const handleEdit = (item: ProjectDocument) => {
+    setDocumentToEdit(item);
+    setEditDialogOpen(true);
   };
 
   const handleDeleteIntent = (item: ProjectDocument) => {
@@ -446,6 +449,14 @@ export function DocumentsClient({ projectId }: DocumentsClientProps): ReactEleme
       <DocumentUploadDialog
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
+        projectId={numericProjectId}
+      />
+
+      {/* Edit Dialog */}
+      <DocumentEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        document={documentToEdit}
         projectId={numericProjectId}
       />
 
