@@ -127,6 +127,11 @@ import {
   type TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
 import {
+  buildTaskSourceReviewPrompt,
+  detectTaskSourceReviewRequest,
+  loadTaskSourceReviewPacket,
+} from "@/lib/ai/task-source-review";
+import {
   buildFeatureRequestPacketWidget,
   captureFeatureRequestFromChat,
   getFeatureRequestDetail,
@@ -3401,6 +3406,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
     const actionFollowUpResponse = shouldUseActionFollowUpResponse(lastUserContent);
     const sourceQualityFollowUpResponse = shouldUseSourceQualityFollowUpResponse(lastUserContent);
     const sourceSpecificRagRequest = detectSourceSpecificRagRequest(lastUserContent);
+    const taskSourceReviewRequest = detectTaskSourceReviewRequest(lastUserContent);
     const sourceLookupRecentTeamsRequest = sourceSpecificRagRequest
       ? null
       : detectSourceLookupRecentTeamsRequest(lastUserContent);
@@ -3419,6 +3425,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         message: lastUserContent,
         selectedProjectId: selectedProjectId ?? null,
         deterministicIntent: deterministicAssistantIntent,
+        taskSourceReview: taskSourceReviewRequest,
         sourceSpecificRagKind: sourceSpecificRagRequest?.kind ?? null,
         sourceLookupRecentTeamsKind: sourceLookupRecentTeamsRequest?.kind ?? null,
       },
@@ -3669,6 +3676,101 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           writeStrategistStatus(writer, {
             stage: "complete",
             message: "Task register checked",
+            status: "success",
+          });
+          return;
+        }
+
+        if (taskSourceReviewRequest) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Opening the task row and source meeting evidence",
+            status: "loading",
+          });
+
+          const packet = await loadTaskSourceReviewPacket({
+            supabase,
+            selectedProjectId,
+            message: lastUserContent,
+          });
+          if (!packet) {
+            throw new Error("Task source review router matched, but no packet was produced.");
+          }
+
+          const dataPart: PersistedDataPart | null = packet.widget
+            ? {
+                type: "data-assistant-widget",
+                id: "assistant-widget-task-source-review",
+                data: { widget: packet.widget },
+              }
+            : null;
+          if (dataPart) writer.write(dataPart);
+
+          toolTrace.push({
+            tool: "taskSourceReview",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: selectedProjectId ?? null,
+              request: taskSourceReviewRequest,
+            },
+            output: packet.traceOutput,
+            timestamp: new Date().toISOString(),
+          });
+
+          writeStrategistStatus(writer, {
+            stage: "synthesis",
+            message: "Reviewing whether the source meeting supports the task",
+            status: "loading",
+          });
+
+          const review = await generateText({
+            model: getLanguageModel(activeModel),
+            system: buildTaskSourceReviewPrompt(packet),
+            prompt: lastUserContent,
+          });
+          const content = review.text.trim() || [
+            "I found the task/source evidence, but the model returned an empty review.",
+            "That is a failure in synthesis, not a missing task lookup.",
+          ].join("\n");
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: review.usage,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            dataParts: dataPart ? [dataPart] : [],
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          await writeTextResponse(writer, "strategist-task-source-review", content);
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Task source review complete",
             status: "success",
           });
           return;

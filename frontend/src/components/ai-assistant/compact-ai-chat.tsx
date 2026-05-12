@@ -7,7 +7,7 @@ import {
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
 import type { ChatStatus, UIMessage } from "ai";
-import { Plus, Sparkles, Square } from "lucide-react";
+import { MessageCircle, Plus, Sparkles, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,54 @@ const STARTER_ACTIONS = [
 
 const sentInitialMessages = new Set<string>();
 
+export type CompactAiChatView = "chat" | "history";
+
+type ConversationSummary = {
+  id: string;
+  title: string;
+  preview: string;
+  updatedAt: number;
+};
+
+function getMessageText(message: UIMessage) {
+  return (
+    message.parts
+      ?.filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("")
+      .trim() ?? ""
+  );
+}
+
+function buildConversationSummary(
+  sessionId: string,
+  messages: UIMessage[],
+): ConversationSummary | null {
+  const textMessages = messages
+    .map((message) => ({
+      role: message.role,
+      text: getMessageText(message),
+    }))
+    .filter((message) => message.text);
+
+  if (textMessages.length === 0) return null;
+
+  const firstUserMessage = textMessages.find(
+    (message) => message.role === "user",
+  )?.text;
+  const latestAssistantMessage = [...textMessages]
+    .reverse()
+    .find((message) => message.role === "assistant")?.text;
+  const latestMessage = textMessages[textMessages.length - 1]?.text;
+
+  return {
+    id: sessionId,
+    title: firstUserMessage?.slice(0, 48) || "New question",
+    preview: latestAssistantMessage || latestMessage || "Draft conversation",
+    updatedAt: Date.now(),
+  };
+}
+
 function formatCompactChatError(error: unknown) {
   if (error instanceof Error && error.message.trim()) return error.message;
   return "The assistant request failed before a response was returned.";
@@ -61,7 +109,10 @@ function MessageBubble({ message }: { message: UIMessage }) {
   if (!text) return null;
 
   return (
-    <Message from={message.role} className={!isUser ? "flex-row items-start" : undefined}>
+    <Message
+      from={message.role}
+      className={!isUser ? "flex-row items-start" : undefined}
+    >
       {!isUser && (
         <div className="mr-2 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10">
           <Sparkles className="size-3.5 text-primary" strokeWidth={1.8} />
@@ -70,7 +121,9 @@ function MessageBubble({ message }: { message: UIMessage }) {
       <MessageContent
         className={cn(
           "compact-ai-message-bubble rounded-lg px-3 py-1.5 text-sm leading-relaxed",
-          isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+          isUser
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground",
         )}
       >
         {isUser ? text : <MessageResponse>{text}</MessageResponse>}
@@ -81,7 +134,10 @@ function MessageBubble({ message }: { message: UIMessage }) {
 
 function LoadingDots() {
   return (
-    <div className="flex items-center gap-1 pl-8" aria-label="Assistant is responding">
+    <div
+      className="flex items-center gap-1 pl-8"
+      aria-label="Assistant is responding"
+    >
       {[0, 1, 2].map((index) => (
         <div
           key={index}
@@ -223,18 +279,25 @@ function EmptyState({
 function ActiveChat({
   sessionId,
   pendingFirstMessage,
+  initialMessages,
   autoFocusComposer,
+  onMessagesChange,
+  onAssistantActivity,
 }: {
   sessionId: string;
   pendingFirstMessage: string | null;
+  initialMessages?: UIMessage[];
   autoFocusComposer?: boolean;
+  onMessagesChange?: (sessionId: string, messages: UIMessage[]) => void;
+  onAssistantActivity?: () => void;
 }) {
   const sessionIdRef = React.useRef(sessionId);
+  const seenAssistantMessageIdsRef = React.useRef(new Set<string>());
   sessionIdRef.current = sessionId;
 
   const { messages, sendMessage, status, stop, error } = useChat({
     id: sessionId,
-    messages: [],
+    messages: initialMessages ?? [],
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     transport: new DefaultChatTransport({
       api: "/api/ai-assistant/chat",
@@ -258,6 +321,21 @@ function ActiveChat({
       sendMessage({ text: pendingFirstMessage });
     }
   }, [pendingFirstMessage, sendMessage, sessionId]);
+
+  React.useEffect(() => {
+    onMessagesChange?.(sessionId, messages);
+
+    for (const message of messages) {
+      if (
+        message.role === "assistant" &&
+        getMessageText(message) &&
+        !seenAssistantMessageIdsRef.current.has(message.id)
+      ) {
+        seenAssistantMessageIdsRef.current.add(message.id);
+        onAssistantActivity?.();
+      }
+    }
+  }, [messages, onAssistantActivity, onMessagesChange, sessionId]);
 
   const [input, setInput] = React.useState("");
   const isStreaming = status === "streaming" || status === "submitted";
@@ -296,14 +374,94 @@ function ActiveChat({
   );
 }
 
+function CompactChatHistory({
+  summaries,
+  onOpenConversation,
+  onStartChat,
+}: {
+  summaries: ConversationSummary[];
+  onOpenConversation: (sessionId: string) => void;
+  onStartChat: () => void;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        {summaries.length > 0 ? (
+          <div className="divide-y divide-border/70">
+            {summaries.map((summary) => (
+              <Button
+                key={summary.id}
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenConversation(summary.id)}
+                className="h-auto w-full justify-start gap-3 rounded-none px-0 py-3 text-left hover:bg-muted/50"
+              >
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                  <Sparkles className="size-5 text-primary" strokeWidth={1.8} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center justify-between gap-3">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {summary.title}
+                    </p>
+                    <p className="shrink-0 text-xs text-muted-foreground">
+                      Now
+                    </p>
+                  </div>
+                  <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">
+                    {summary.preview}
+                  </p>
+                </div>
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center px-8 text-center">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <MessageCircle className="size-5" />
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              No messages yet
+            </p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Start a question and it will appear here for this session.
+            </p>
+          </div>
+        )}
+      </div>
+      <div className="shrink-0 border-t border-border/70 px-4 py-4">
+        <Button
+          type="button"
+          onClick={onStartChat}
+          className="mx-auto flex h-11 rounded-full px-5 text-sm font-medium"
+        >
+          Ask a question
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function CompactAiChat({
   autoFocusComposer,
+  view = "chat",
+  onViewChange,
+  onAssistantActivity,
 }: {
   autoFocusComposer?: boolean;
+  view?: CompactAiChatView;
+  onViewChange?: (view: CompactAiChatView) => void;
+  onAssistantActivity?: () => void;
 }) {
   const [sessionId, setSessionId] = React.useState<string | null>(null);
-  const [pendingFirstMessage, setPendingFirstMessage] = React.useState<string | null>(null);
+  const [pendingFirstMessage, setPendingFirstMessage] = React.useState<
+    string | null
+  >(null);
   const [input, setInput] = React.useState("");
+  const [messagesBySession, setMessagesBySession] = React.useState<
+    Record<string, UIMessage[]>
+  >({});
+  const [summaries, setSummaries] = React.useState<ConversationSummary[]>([]);
 
   const handleFirstSubmit = React.useCallback(
     (message: string) => {
@@ -311,8 +469,9 @@ export function CompactAiChat({
       setSessionId(window.crypto.randomUUID());
       setPendingFirstMessage(message);
       setInput("");
+      onViewChange?.("chat");
     },
-    [],
+    [onViewChange],
   );
 
   const handleNewChat = React.useCallback(() => {
@@ -320,7 +479,50 @@ export function CompactAiChat({
     setSessionId(null);
     setPendingFirstMessage(null);
     setInput("");
-  }, [sessionId]);
+    onViewChange?.("chat");
+  }, [onViewChange, sessionId]);
+
+  const handleMessagesChange = React.useCallback(
+    (nextSessionId: string, messages: UIMessage[]) => {
+      setMessagesBySession((current) => ({
+        ...current,
+        [nextSessionId]: messages,
+      }));
+
+      const summary = buildConversationSummary(nextSessionId, messages);
+      if (!summary) return;
+
+      setSummaries((current) => {
+        const withoutCurrent = current.filter(
+          (item) => item.id !== nextSessionId,
+        );
+        return [summary, ...withoutCurrent].sort(
+          (a, b) => b.updatedAt - a.updatedAt,
+        );
+      });
+    },
+    [],
+  );
+
+  const handleOpenConversation = React.useCallback(
+    (nextSessionId: string) => {
+      setSessionId(nextSessionId);
+      setPendingFirstMessage(null);
+      setInput("");
+      onViewChange?.("chat");
+    },
+    [onViewChange],
+  );
+
+  if (view === "history") {
+    return (
+      <CompactChatHistory
+        summaries={summaries}
+        onOpenConversation={handleOpenConversation}
+        onStartChat={handleNewChat}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -343,7 +545,10 @@ export function CompactAiChat({
           key={sessionId}
           sessionId={sessionId}
           pendingFirstMessage={pendingFirstMessage}
+          initialMessages={messagesBySession[sessionId]}
           autoFocusComposer={autoFocusComposer}
+          onMessagesChange={handleMessagesChange}
+          onAssistantActivity={onAssistantActivity}
         />
       ) : (
         <EmptyState

@@ -120,7 +120,7 @@ export const GET = withApiGuardrails(
       query = query.eq("mailbox_user_id", mailbox);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.returns<OutlookSkipAuditRow[]>();
 
     if (error) {
       throw new GuardrailError({
@@ -130,7 +130,7 @@ export const GET = withApiGuardrails(
       });
     }
 
-    const rows = ((data ?? []) as OutlookSkipAuditRow[]).map((row) => ({
+    const rows = (data ?? []).map((row) => ({
       id: row.id,
       graphMessageId: row.graph_message_id,
       mailboxUserId: row.mailbox_user_id,

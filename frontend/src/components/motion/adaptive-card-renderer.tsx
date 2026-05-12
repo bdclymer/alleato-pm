@@ -8,6 +8,10 @@ interface AdaptiveCardRendererProps {
   className?: string;
 }
 
+type AdaptiveCardWithParseError = AdaptiveCards.AdaptiveCard & {
+  onParseError?: () => void;
+};
+
 export function AdaptiveCardRenderer({
   card,
   className,
@@ -19,7 +23,7 @@ export function AdaptiveCardRenderer({
     if (!ref.current) return;
 
     try {
-      const adaptiveCard = new AdaptiveCards.AdaptiveCard();
+      const adaptiveCard: AdaptiveCardWithParseError = new AdaptiveCards.AdaptiveCard();
 
       // Suppress validation warnings for unsupported Teams-specific elements
       adaptiveCard.onParseError = () => {};
