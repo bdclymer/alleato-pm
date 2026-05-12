@@ -172,10 +172,12 @@ function formatShortDate(value: string | null): string {
   return format(date, "MMM d, yyyy");
 }
 
-const TASK_LIST_MIN_WIDTH = "76rem";
+const TASK_LIST_MIN_WIDTH = "88rem";
 const TASK_LIST_GRID_TEMPLATE =
-  "44px minmax(18rem, 1.7fr) minmax(9rem, 0.8fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(8rem, 0.7fr) minmax(7rem, 0.55fr)";
+  "44px minmax(20rem, 1.7fr) minmax(12rem, 0.9fr) minmax(9rem, 0.75fr) minmax(8rem, 0.65fr) minmax(7rem, 0.55fr) minmax(7rem, 0.55fr) minmax(8rem, 0.65fr) minmax(7rem, 0.5fr)";
 const TASK_LIST_PINNED_TASK_LEFT = "44px";
+const TASK_DETAIL_CONTROL_CLASS =
+  "h-9 w-full max-w-sm justify-between border-border/60 bg-background px-3 text-sm shadow-none";
 
 function TaskListHeader({
   allVisibleSelected,
@@ -212,6 +214,7 @@ function TaskListHeader({
       >
         Task
       </div>
+      <div className="px-2">Project</div>
       <div className="px-2">Assigned</div>
       <div className="px-2">Source</div>
       <div className="px-2">Source date</div>
@@ -247,6 +250,16 @@ function projectOptionLabel(project: ProjectOption): string {
   return projectNumber
     ? `${projectNumber} - ${project.name ?? "Unnamed project"}`
     : project.name ?? `Project ${project.id}`;
+}
+
+function taskProjectLabel(task: TasksRow, projects: ProjectOption[]): string {
+  if (task.project_name) return task.project_name;
+
+  const projectId = task.project_id ?? task.project_ids?.[0] ?? null;
+  if (!projectId) return "Unassigned";
+
+  const project = projects.find((item) => item.id === projectId);
+  return project ? projectOptionLabel(project) : `Project ${projectId}`;
 }
 
 function userOptionLabel(user: UserOption): string {
@@ -616,12 +629,14 @@ function useResizablePanel(containerRef: React.RefObject<HTMLDivElement | null>)
 
 function TaskListItem({
   item,
+  projects,
   isSelected,
   isChecked,
   onClick,
   onCheckedChange,
 }: {
   item: TasksRow;
+  projects: ProjectOption[];
   isSelected: boolean;
   isChecked: boolean;
   onClick: () => void;
@@ -637,6 +652,7 @@ function TaskListItem({
   const assignedDate = formatShortDate(item.created_at);
   const sourceDate = formatShortDate(item.source_date);
   const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
+  const projectLabel = taskProjectLabel(item, projects);
   const pinnedCellClassName = isSelected
     ? "bg-accent"
     : "bg-background group-hover:bg-neutral-100";
@@ -695,6 +711,9 @@ function TaskListItem({
             {item.description || item.title || "Untitled task"}
           </p>
         </div>
+      </div>
+      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={projectLabel}>
+        {projectLabel}
       </div>
       <div className="min-w-0 truncate px-2 text-xs text-foreground" title={assignedTo}>
         {assignedTo}
@@ -1038,7 +1057,7 @@ function TaskDetail({
                     onUpdateTask(task.id, { due_date: dueDate }, { due_date: dueDate });
                   }}
                   disabled={updatingId === task.id}
-                  className="h-8 max-w-44"
+                  className={TASK_DETAIL_CONTROL_CLASS}
                   aria-label="Task due date"
                 />
                 {task.due_date ? (
@@ -1088,7 +1107,7 @@ function TaskDetail({
                   }}
                   disabled={updatingId === task.id || projectsLoading}
                 >
-                  <SelectTrigger className="h-8 max-w-md">
+                  <SelectTrigger className={cn(TASK_DETAIL_CONTROL_CLASS, "max-w-md")}>
                     <SelectValue placeholder={projectsLoading ? "Loading projects..." : "Select project"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -1117,7 +1136,7 @@ function TaskDetail({
                 }}
                 disabled={updatingId === task.id}
               >
-                <SelectTrigger className="h-8 w-full max-w-56 justify-between border-border/60 bg-background px-3 text-sm shadow-none">
+                <SelectTrigger className={TASK_DETAIL_CONTROL_CLASS}>
                   {updatingId === task.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
@@ -1145,7 +1164,7 @@ function TaskDetail({
                 }}
                 disabled={updatingId === task.id}
               >
-                <SelectTrigger className="h-8 w-full max-w-56 justify-between border-border/60 bg-background px-3 text-sm shadow-none">
+                <SelectTrigger className={TASK_DETAIL_CONTROL_CLASS}>
                   {updatingId === task.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
@@ -1175,7 +1194,7 @@ function TaskDetail({
               >
                 <SelectTrigger
                   className={cn(
-                    "h-8 w-full max-w-56 justify-between border-border/60 bg-background px-3 text-sm shadow-none",
+                    TASK_DETAIL_CONTROL_CLASS,
                     STATUS_SELECT_CLASSES[ds],
                   )}
                 >
@@ -1908,6 +1927,7 @@ export default function TasksPage() {
                 <TaskListItem
                   key={item.id}
                   item={item}
+                  projects={projects}
                   isSelected={selectedId === item.id}
                   isChecked={item.id ? selectedTaskIds.includes(item.id) : false}
                   onClick={() => item.id && selectItem(item.id)}

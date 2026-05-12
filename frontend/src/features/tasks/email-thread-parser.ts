@@ -39,8 +39,17 @@ type ParsedContextField = {
   bodyStart: number;
 };
 
-export function cleanSourceContextText(value: string): string {
+const MEETING_METADATA_SECTION_PATTERN =
+  /(?:^|\n)\s*#{1,6}\s*(?:User|Speakers|Meeting Attendees|Meeting Attendance|Meeting Info|Analytics)\s*```(?:json)?[\s\S]*?```/gi;
+
+function removeMeetingMetadataBlocks(value: string): string {
   return value
+    .replace(MEETING_METADATA_SECTION_PATTERN, "\n")
+    .replace(/```(?:json)?\s*(?:\{[\s\S]*?\}|\[[\s\S]*?\])\s*```/gi, "\n");
+}
+
+export function cleanSourceContextText(value: string): string {
+  return removeMeetingMetadataBlocks(value)
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
