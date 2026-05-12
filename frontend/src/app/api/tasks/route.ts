@@ -151,9 +151,25 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
       return bt - at;
     });
 
-    const tasks = allRows.map(mapTaskRow);
+    // Apply scope filtering within the project: "mine" = assigned to the logged-in user.
+    const currentUserEmail = user.email?.trim().toLowerCase() ?? "";
+    const fullName = profileData?.full_name?.trim().toLowerCase() ?? "";
+    const { data: currentPerson } = currentUserEmail
+      ? await serviceClient.from("people").select("id").ilike("email", currentUserEmail).maybeSingle()
+      : { data: null };
+
+    const scopedRows = scope === "mine"
+      ? allRows.filter((t) => {
+          if (currentPerson?.id && t.assignee_person_id === currentPerson.id) return true;
+          if (currentUserEmail && t.assignee_email?.toLowerCase() === currentUserEmail) return true;
+          if (fullName && t.assignee_name?.toLowerCase() === fullName) return true;
+          return false;
+        })
+      : allRows;
+
+    const tasks = scopedRows.map(mapTaskRow);
     validateResponseContract(z.array(TaskResponseSchema.passthrough()), tasks, "/api/tasks#GET");
-    return NextResponse.json({ data: tasks, scope: "project", projectId });
+    return NextResponse.json({ data: tasks, scope, projectId });
   }
 
   const currentUserEmail = user.email?.trim() ?? "";
