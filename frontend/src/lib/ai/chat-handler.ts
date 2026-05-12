@@ -3767,7 +3767,14 @@ async function persistRetrievalFeedbackFromToolTrace(params: {
     }),
   );
 
-  await recordRetrievalFeedbackBatch(rows);
+  // Retrieval feedback is observability-only — never let it crash a chat response.
+  // A stale project_id from tool results can violate the FK constraint; swallow it.
+  await recordRetrievalFeedbackBatch(rows).catch((err: unknown) => {
+    console.error("[chat] persistRetrievalFeedbackFromToolTrace failed (non-fatal)", {
+      error: err instanceof Error ? err.message : String(err),
+      rowCount: rows.length,
+    });
+  });
 }
 
 
