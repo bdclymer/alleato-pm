@@ -1403,9 +1403,18 @@ function EmptyDetail({
 interface TasksInboxProps {
   projectId?: string | null;
   projectName?: string | null;
+  defaultScope?: Scope;
+  defaultView?: "table" | "split";
+  showTabs?: boolean;
 }
 
-export function TasksInbox({ projectId = null, projectName = null }: TasksInboxProps) {
+export function TasksInbox({
+  projectId = null,
+  projectName = null,
+  defaultScope = "mine",
+  defaultView = "split",
+  showTabs = true,
+}: TasksInboxProps) {
   const isProjectScoped = Boolean(projectId);
 
   const router = useRouter();
@@ -1417,17 +1426,18 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
   const isAdmin = profile?.isAdmin === true;
 
   const rawScope = searchParams.get("scope");
+  const rawTaskId = searchParams.get("task");
   const initialScope: Scope =
     rawScope === "all" || rawScope === "mine"
       ? rawScope
-      : "mine";
+      : defaultScope;
 
   const [scope, setScope] = useState<Scope>(initialScope);
   const [items, setItems] = useState<TasksRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>("open");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(rawTaskId);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
@@ -1437,8 +1447,9 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(Boolean(rawTaskId) && defaultView === "table");
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [selectedTaskContext, setSelectedTaskContext] = useState<string | null | undefined>(undefined);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -1454,7 +1465,7 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
     pathname,
     router,
     defaults: {
-      view: "split",
+      view: defaultView,
       allowedViews: ["table", "split"],
       page: 1,
       perPage: 25,
@@ -1466,10 +1477,40 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
     },
   });
 
+  useEffect(() => {
+    if (!rawTaskId) return;
+    setSelectedId(rawTaskId);
+    if (tableState.currentView === "table") {
+      setSheetOpen(true);
+    }
+  }, [rawTaskId, tableState.currentView]);
+
   const selected = useMemo(
     () => items.find((i) => i.id === selectedId) ?? null,
     [items, selectedId],
   );
+
+  // Merge lazily loaded source_context into the selected task for the detail panel.
+  const selectedWithContext = useMemo(
+    () => selected
+      ? { ...selected, source_context: selectedTaskContext !== undefined ? selectedTaskContext : selected.source_context }
+      : null,
+    [selected, selectedTaskContext],
+  );
+
+  // Lazy-load source_context when a task is selected (heavy content fields excluded from list query).
+  useEffect(() => {
+    if (!selectedId) {
+      setSelectedTaskContext(undefined);
+      return;
+    }
+    setSelectedTaskContext(undefined);
+    let cancelled = false;
+    void apiFetch<{ task: TasksRow }>(`/api/tasks/${selectedId}`)
+      .then((data) => { if (!cancelled) setSelectedTaskContext(data.task.source_context ?? null); })
+      .catch(() => { if (!cancelled) setSelectedTaskContext(null); });
+    return () => { cancelled = true; };
+  }, [selectedId]);
 
   // ---- Fetch ----
   const fetchItems = useCallback(async () => {
@@ -1544,9 +1585,9 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
     const nextScope: Scope =
       rawScope === "all" || rawScope === "mine"
         ? rawScope
-        : "mine";
+        : defaultScope;
     if (nextScope !== scope) handleScopeChange(nextScope);
-  }, [handleScopeChange, rawScope, scope]);
+  }, [defaultScope, handleScopeChange, rawScope, scope]);
 
   const scopeTabs = useMemo(() => {
     const basePath = isProjectScoped ? `/${projectId}/tasks` : "/tasks";
@@ -1864,6 +1905,7 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
   function selectItem(id: string) {
     setSelectedId(id);
     setMobileShowDetail(true);
+    tableState.setSearchParams({ task: id });
   }
 
   const openCount = useMemo(
@@ -1969,7 +2011,7 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
             title: "Tasks",
             description,
           }}
-          tabs={!profileLoading ? scopeTabs : undefined}
+          tabs={showTabs && !profileLoading ? scopeTabs : undefined}
           toolbar={{
             totalItems: items.length,
             filteredItems: baseFilteredItems.length,
@@ -2209,7 +2251,7 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
                   data-task-detail-panel
                   className="hidden h-full min-w-0 flex-1 overflow-y-auto overscroll-contain bg-muted/20 lg:block"
                 >
-                  {!selected ? (
+                  {!selectedWithContext ? (
                     <EmptyDetail
                       total={total}
                       openCount={openCount}
@@ -2220,7 +2262,7 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
                     />
                   ) : (
                     <TaskDetail
-                      task={selected}
+                      task={selectedWithContext}
                       updatingId={updatingId}
                       deletingId={deletingId}
                       onUpdateStatus={updateStatus}
@@ -2235,10 +2277,10 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
                 </div>
 
                 {/* Mobile: full-screen detail */}
-                {mobileShowDetail && selected && (
+                {mobileShowDetail && selectedWithContext && (
                   <div className="flex h-full flex-1 flex-col overflow-y-auto overscroll-contain bg-background lg:hidden">
                     <TaskDetail
-                      task={selected}
+                      task={selectedWithContext}
                       updatingId={updatingId}
                       deletingId={deletingId}
                       onUpdateStatus={updateStatus}
@@ -2317,9 +2359,9 @@ export function TasksInbox({ projectId = null, projectName = null }: TasksInboxP
           <SheetHeader className="sr-only">
             <SheetTitle>Task detail</SheetTitle>
           </SheetHeader>
-          {selected && (
+          {selectedWithContext && (
             <TaskDetail
-              task={selected}
+              task={selectedWithContext}
               updatingId={updatingId}
               deletingId={deletingId}
               onUpdateStatus={updateStatus}

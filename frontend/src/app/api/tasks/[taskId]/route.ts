@@ -8,6 +8,34 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import { TASK_PRIORITY_VALUES, TASK_STATUS_VALUES } from "@/features/tasks/task-values";
 import type { Json } from "@/types/database.types";
+import { mapTaskRow, type JoinedTaskRow } from "@/features/tasks/task-utils";
+
+// Full select including heavy content fields — only used for single-task fetches.
+const TASK_SELECT_FULL = `
+  *,
+  projects (id, name),
+  document_metadata:tasks_metadata_id_fkey (
+    id,
+    title,
+    type,
+    source,
+    source_system,
+    url,
+    source_web_url,
+    fireflies_link,
+    meeting_link,
+    project_id,
+    date,
+    captured_at,
+    created_at,
+    content,
+    raw_text,
+    summary,
+    action_items,
+    bullet_points,
+    notes
+  )
+`;
 
 type JsonRecord = { [key: string]: Json | undefined };
 
@@ -109,6 +137,37 @@ async function resolveAssignee(userId: string | null) {
     assignee_name: profile.full_name ?? profile.email ?? null,
   };
 }
+
+export const GET = withApiGuardrails(
+  "tasks/[taskId]#GET",
+  async ({ request, params }) => {
+    const { taskId } = await params;
+    if (!taskId) {
+      return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/[taskId]#GET", message: "Authentication required." });
+    }
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .select(TASK_SELECT_FULL)
+      .eq("id", taskId)
+      .maybeSingle();
+
+    if (error) {
+      return apiErrorResponse(error);
+    }
+    if (!data) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ task: mapTaskRow(data as JoinedTaskRow) });
+  },
+);
 
 export const PATCH = withApiGuardrails(
   "tasks/[taskId]#PATCH",

@@ -19,6 +19,8 @@ const TaskResponseSchema = z.object({
   source_context: z.string().nullable(),
 });
 
+// Lean select for list queries — excludes heavy content fields to prevent statement timeouts.
+// source_context is lazy-loaded per-task via GET /api/tasks/[taskId] when a task is opened.
 const TASK_SELECT = `
   *,
   projects (id, name),
@@ -35,13 +37,7 @@ const TASK_SELECT = `
     project_id,
     date,
     captured_at,
-    created_at,
-    content,
-    raw_text,
-    summary,
-    action_items,
-    bullet_points,
-    notes
+    created_at
   )
 `;
 
@@ -191,27 +187,12 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
     });
   }
 
-  // Exclude interview/test transcripts so the tasks table stays focused on real source records.
-  const { data: interviewMeetings, error: interviewError } = await supabase
-    .from("document_metadata")
-    .select("id")
-    .or("type.eq.interview,title.ilike.%test%");
-
-  if (interviewError) {
-    throw new GuardrailError({
-      code: "INTERNAL_ERROR",
-      where: "/api/tasks#GET",
-      message: "Failed to load interview metadata.",
-      details: { reason: interviewError.message },
-      cause: interviewError,
-    });
-  }
-
   let query = supabase
     .from("tasks")
     .select(TASK_SELECT)
     .not("metadata_id", "is", null)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(1000);
 
   // Scope: mine → prefer durable people FK, with email/name fallback for legacy rows.
   if (scope === "mine" && currentUserEmail) {
@@ -220,11 +201,6 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
     if (currentPerson?.id) filters.unshift(`assignee_person_id.eq.${currentPerson.id}`);
     if (fullName) filters.push(`assignee_name.ilike.${fullName}`);
     query = query.or(filters.join(","));
-  }
-
-  const interviewIds = (interviewMeetings ?? []).map((m) => m.id).filter(Boolean);
-  if (interviewIds.length > 0) {
-    query = query.not("metadata_id", "in", `(${interviewIds.join(",")})`);
   }
 
   const { data, error } = await query;
