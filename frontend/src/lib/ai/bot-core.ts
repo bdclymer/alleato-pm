@@ -287,6 +287,90 @@ export async function assembleSystemPrompt(options: {
   return systemPrompt;
 }
 
+export async function assembleTaskWriteSystemPrompt(options: {
+  userId: string;
+  messageText: string;
+  selectedProjectId?: number;
+}): Promise<string> {
+  const { messageText, selectedProjectId } = options;
+  const today = new Date().toISOString().split("T")[0];
+  const contextHealth: string[] = [];
+  const parts = [
+    "You are Alleato AI inside Alleato PM.",
+    [
+      "## Runtime Date Context",
+      `Today is ${today} (YYYY-MM-DD). Interpret relative dates against this date.`,
+    ].join("\n"),
+    [
+      "## Task Write Contract",
+      "The user is asking to create, modify, close, reassign, reprioritize, reschedule, or delete a Tasks page action item.",
+      "Use the available Tasks page tools. For new follow-ups, reminders, and action items, call `createGeneratedTask` with `confirmed: false` so the UI can render a preview card.",
+      "For updates or deletes, first use the available task lookup tool when the user did not provide a task id, then call `updateGeneratedTask` or `deleteGeneratedTask` with `confirmed: false` if a matching task is found.",
+      "Do not answer with a plain-text task preview when a tool call can produce the preview. If the target task cannot be identified, say exactly what identifying detail is missing.",
+    ].join("\n"),
+  ];
+
+  if (selectedProjectId) {
+    try {
+      const supabase = createServiceClient();
+      const { data: project } = await supabase
+        .from("projects")
+        .select("name, project_number, phase, client, health_status")
+        .eq("id", selectedProjectId)
+        .single();
+
+      if (project) {
+        const projectLine = [
+          project.name,
+          project.project_number ? `#${project.project_number}` : null,
+          project.phase ? `Phase: ${project.phase}` : null,
+          project.client ? `Client: ${project.client}` : null,
+          project.health_status ? `Status: ${project.health_status}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
+        parts.push(
+          [
+            "## Active Project Context",
+            `The user has pinned: **${projectLine}**.`,
+            "Use this project for project-specific task writes unless the user explicitly names a different project.",
+          ].join("\n"),
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown project context error";
+      contextHealth.push(`Pinned project context could not be loaded: ${message}`);
+    }
+  }
+
+  if (shouldLoadTaskTrainingContext(messageText)) {
+    try {
+      const taskTrainingBlock = await buildTaskGenerationTrainingBlock({
+        projectId: selectedProjectId ?? null,
+      });
+      if (taskTrainingBlock) parts.push(taskTrainingBlock);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown task training error";
+      contextHealth.push(`Task generation feedback context could not be loaded: ${message}`);
+    }
+  }
+
+  if (contextHealth.length > 0) {
+    parts.push(
+      [
+        "## Runtime Context Health",
+        "Some context providers failed before generation. Do not ignore this.",
+        ...contextHealth.map((item) => `- ${item}`),
+      ].join("\n"),
+    );
+  }
+
+  return parts.join("\n\n");
+}
+
 // ---------------------------------------------------------------------------
 // Non-streaming generation (for chat platform bots)
 // ---------------------------------------------------------------------------
@@ -299,6 +383,14 @@ export async function generateBotResponse(
   options: BotCoreOptions,
 ): Promise<BotCoreResult> {
   const toolTrace: Array<Record<string, unknown>> = [];
+
+  // Auto-load history from DB when a sessionId is present and no history was
+  // explicitly provided. This makes it impossible for a caller to forget —
+  // passing sessionId is enough to get multi-turn memory automatically.
+  if (options.sessionId && !options.conversationHistory) {
+    const prior = await loadConversationHistory(options.sessionId);
+    if (prior.length) options.conversationHistory = prior;
+  }
 
   const tools = createStrategistTools(options.userId, {
     onTrace: (trace) => {
@@ -318,7 +410,7 @@ export async function generateBotResponse(
   });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
-    ? options.conversationHistory
+    ? [...options.conversationHistory, { role: "user" as const, content: options.messageText }]
     : [{ role: "user" as const, content: options.messageText }];
 
   const result = await generateText({
@@ -357,6 +449,11 @@ export async function generateBotResponse(
 export async function streamBotResponse(options: BotCoreOptions) {
   const toolTrace: Array<Record<string, unknown>> = [];
 
+  if (options.sessionId && !options.conversationHistory) {
+    const prior = await loadConversationHistory(options.sessionId);
+    if (prior.length) options.conversationHistory = prior;
+  }
+
   const tools = createStrategistTools(options.userId, {
     onTrace: (trace) => {
       toolTrace.push(trace);
@@ -375,7 +472,7 @@ export async function streamBotResponse(options: BotCoreOptions) {
   });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
-    ? options.conversationHistory
+    ? [...options.conversationHistory, { role: "user" as const, content: options.messageText }]
     : [{ role: "user" as const, content: options.messageText }];
 
   const result = streamText({

@@ -8,7 +8,6 @@ import pg from "pg";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   generateBotResponse,
-  loadConversationHistory,
   persistChatMessage,
   runPostResponseTasks,
 } from "@/lib/ai/bot-core";
@@ -406,14 +405,10 @@ async function handleMessage(
       threadId: thread.id,
     });
 
-    const conversationHistory = await loadConversationHistory(sessionId);
     const result = await generateBotResponse({
       userId: supabaseUserId,
       messageText,
       sessionId,
-      conversationHistory: conversationHistory.length
-        ? [...conversationHistory, { role: "user" as const, content: messageText }]
-        : undefined,
     });
 
     await logCheckpoint("after_generate", {
