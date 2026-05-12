@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Building2,
   Check,
   ChevronsUpDown,
@@ -597,103 +596,97 @@ export default function CompanyDetailsPage() {
   const latestMeeting = meetings
     .filter((meeting) => meeting.date)
     .sort((a, b) => new Date(b.date || "").getTime() - new Date(a.date || "").getTime())[0];
+  const companyMetaRow = (
+    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+      {company.status ? (
+        <div className="flex min-w-0 items-center gap-2">
+          <Check className="h-4 w-4 shrink-0" />
+          <span className="truncate">{company.status}</span>
+        </div>
+      ) : null}
+      {company.type ? (
+        <div className="flex min-w-0 items-center gap-2">
+          <Building2 className="h-4 w-4 shrink-0" />
+          <span className="truncate">{company.type}</span>
+        </div>
+      ) : null}
+      {company.acumatica_vendor_id ? (
+        <div className="flex min-w-0 items-center gap-2">
+          <FileText className="h-4 w-4 shrink-0" />
+          <span className="truncate">ERP {company.acumatica_vendor_id}</span>
+        </div>
+      ) : null}
+      {companyLocation ? (
+        <div className="flex min-w-0 items-center gap-2">
+          <MapPin className="h-4 w-4 shrink-0" />
+          <span className="truncate">{companyLocation}</span>
+        </div>
+      ) : null}
+      {company.contact_phone ? (
+        <div className="flex min-w-0 items-center gap-2">
+          <Phone className="h-4 w-4 shrink-0" />
+          <span className="truncate">{company.contact_phone}</span>
+        </div>
+      ) : null}
+      {company.contact_email ? (
+        <div className="flex min-w-0 items-center gap-2">
+          <Mail className="h-4 w-4 shrink-0" />
+          <span className="truncate">{company.contact_email}</span>
+        </div>
+      ) : null}
+      {websiteUrl ? (
+        <a
+          href={websiteUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="flex min-w-0 items-center gap-2 underline-offset-4 hover:underline"
+        >
+          <Globe className="h-4 w-4 shrink-0" />
+          <span className="truncate">{company.website}</span>
+          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+        </a>
+      ) : null}
+    </div>
+  );
 
   return (
     <PageShell
       variant="detailWide"
       title={company.name}
-      showHeader={false}
-      contentClassName="pt-0"
+      onBack={() => router.back()}
+      titleContent={
+        <div className="min-w-0 space-y-3">
+          <h1 className="text-3xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
+            {company.name}
+          </h1>
+          {companyMetaRow}
+        </div>
+      }
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => void openAddContactModal()} className="gap-2 active:scale-[0.98]">
+            <UserPlus className="h-4 w-4" />
+            Add Contact
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Company actions" className="active:scale-[0.98]">
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                Edit Company
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => void openAddContactModal()}>
+                Add Contact
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
     >
       <div className="overflow-hidden rounded-[2rem] border border-border bg-background shadow-sm">
-        <div className="border-b border-border bg-card/90 px-4 py-3 backdrop-blur sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button variant="ghost" size="sm" onClick={() => router.back()} className="gap-2 active:scale-[0.98]">
-              <ArrowLeft className="h-4 w-4" />
-              Directory
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => void openAddContactModal()} className="gap-2 active:scale-[0.98]">
-                <UserPlus className="h-4 w-4" />
-                Add Contact
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Company actions" className="active:scale-[0.98]">
-                    <MoreHorizontal />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-                    Edit Company
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => void openAddContactModal()}>
-                    Add Contact
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-
-        <section className="relative bg-card px-4 py-8 sm:px-8 lg:px-10">
-          <div className="space-y-4">
-            <h1 className="text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
-              {company.name}
-            </h1>
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              {company.status ? (
-                <div className="flex min-w-0 items-center gap-2">
-                  <Check className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{company.status}</span>
-                </div>
-              ) : null}
-              {company.type ? (
-                <div className="flex min-w-0 items-center gap-2">
-                  <Building2 className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{company.type}</span>
-                </div>
-              ) : null}
-              {company.acumatica_vendor_id ? (
-                <div className="flex min-w-0 items-center gap-2">
-                  <FileText className="h-4 w-4 shrink-0" />
-                  <span className="truncate">ERP {company.acumatica_vendor_id}</span>
-                </div>
-              ) : null}
-              {companyLocation ? (
-                <div className="flex min-w-0 items-center gap-2">
-                  <MapPin className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{companyLocation}</span>
-                </div>
-              ) : null}
-              {company.contact_phone ? (
-                <div className="flex min-w-0 items-center gap-2">
-                  <Phone className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{company.contact_phone}</span>
-                </div>
-              ) : null}
-              {company.contact_email ? (
-                <div className="flex min-w-0 items-center gap-2">
-                  <Mail className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{company.contact_email}</span>
-                </div>
-              ) : null}
-              {websiteUrl ? (
-                <a
-                  href={websiteUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex min-w-0 items-center gap-2 underline-offset-4 hover:underline"
-                >
-                  <Globe className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{company.website}</span>
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                </a>
-              ) : null}
-            </div>
-          </div>
-        </section>
-
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
           <main className="min-w-0 bg-card px-4 py-6 sm:px-8 lg:px-10">
             <div className="space-y-10">
