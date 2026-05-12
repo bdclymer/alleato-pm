@@ -740,7 +740,7 @@ export function TableToolbar({
                   className="relative h-11 w-11 shrink-0 p-0"
                   aria-label="Open table settings"
                 >
-                  <MoreVertical className="h-5 w-5" />
+                  <MoreVertical className="h-6 w-6" />
                   <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
                 </Button>
               </SheetTrigger>
