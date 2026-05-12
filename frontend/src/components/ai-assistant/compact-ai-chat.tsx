@@ -207,7 +207,6 @@ function EmptyState({
           ))}
         </div>
       </div>
-      {errorMessage && <ErrorBanner message={errorMessage} />}
       <ChatInput
         value={input}
         onChange={onChange}
