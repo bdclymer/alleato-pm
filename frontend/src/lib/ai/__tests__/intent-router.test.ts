@@ -33,4 +33,43 @@ describe("intent router", () => {
     expect(intent).toBe("app_help");
     expect(shouldUsePacketFirstIntent(intent)).toBe(false);
   });
+
+  describe("task_write intent routing", () => {
+    const WRITE_CASES = [
+      "Remind me to call the owner about the permit by Friday",
+      "remind me about the concrete pour inspection",
+      "Add a task for the PM to confirm the AC1 solar approval owner",
+      "add task: follow up with the subcontractor on steel delivery",
+      "Create a task for Mike to review the updated submittal log",
+      "Note for myself to check on the permit status Monday morning",
+      "Flag this for follow-up with the owner",
+      "Flag it for follow-up",
+      "Throw this on my list to review later",
+      "Put this on my list",
+      "Get someone on the concrete curing delay",
+      "Assign this to Sarah before end of week",
+      "action item: confirm RFI response deadline with design team",
+      "Generate a task from this meeting note",
+      "Make a task to revisit the budget next week",
+    ];
+
+    it.each(WRITE_CASES)(
+      'classifies "%s" as task_write (not task_followup)',
+      (message) => {
+        const intent = classifyAssistantIntent(message);
+        expect(intent).toBe("task_write");
+      },
+    );
+
+    it("does not trigger packet-first retrieval for task_write", () => {
+      expect(shouldUsePacketFirstIntent("task_write")).toBe(false);
+    });
+
+    it("does not reclassify plain task-list read requests as task_write", () => {
+      // These should remain task_followup — they are reads, not writes
+      expect(classifyAssistantIntent("What are my open tasks?")).toBe("task_followup");
+      expect(classifyAssistantIntent("Show me my action items")).toBe("task_followup");
+      expect(classifyAssistantIntent("What's on my plate this week?")).toBe("task_followup");
+    });
+  });
 });

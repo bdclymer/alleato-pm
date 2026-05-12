@@ -4535,6 +4535,43 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           return;
         }
 
+        if (assistantIntent === "task_write") {
+          // Skip packet retrieval entirely. Injecting project intelligence for
+          // a write request primes the model for a reading pattern and causes
+          // it to describe the task in text rather than calling createGeneratedTask.
+          // Instead, reinforce the MANDATORY TASK WRITE PROTOCOL inline so the
+          // model has exactly one instruction in focus: call the tool.
+          systemPrompt =
+            systemPrompt +
+            "\n\n---\n\n## ACTIVE TASK WRITE INTENT\n\n" +
+            "The intent planner classified this request as **task_write**. " +
+            "You MUST call `createGeneratedTask` (or `updateGeneratedTask` / `deleteGeneratedTask` for modifications/deletions) RIGHT NOW. " +
+            "Do NOT write a text description of what the task would look like. " +
+            "Do NOT ask clarifying questions before calling the tool — call it with `confirmed: false` to show the preview card, using your best inference for any missing fields. " +
+            "The UI will render the preview card and ask the user to confirm or edit. Your only job is to call the tool.";
+
+          toolTrace.push({
+            tool: "taskWriteIntentRouter",
+            input: {
+              intent: assistantIntent,
+              message: lastUserContent.slice(0, 240),
+            },
+            output: {
+              skippedPacketRetrieval: true,
+              injectedTaskWriteOverride: true,
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Creating task preview",
+            status: "loading",
+          });
+          // Fall through to streamText — tools are enabled and the override
+          // in the system prompt ensures the model calls createGeneratedTask.
+        }
+
         if (shouldUsePacketFirstIntent(assistantIntent)) {
           writeStrategistStatus(writer, {
             stage: "knowledge",

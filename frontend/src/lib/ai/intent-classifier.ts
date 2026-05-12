@@ -48,6 +48,7 @@ const INTENT_VALUES = [
   "change_management_review",
   "decision_lookup",
   "task_followup",
+  "task_write",
   "source_lookup",
   "strategy_brainstorm",
   "implementation_planning",
@@ -89,13 +90,15 @@ export async function planAssistantIntent(params: {
     intent: params.deterministicIntent,
     confidence: "low",
     responseMode:
-      params.deterministicIntent === "source_lookup"
-        ? "retrieve_sources"
-        : shouldUsePacketFirstIntent(params.deterministicIntent)
-          ? "build_project_packet"
-          : params.deterministicIntent === "app_help"
-            ? "explain_app_workflow"
-            : "answer_directly",
+      params.deterministicIntent === "task_write"
+        ? "draft_safe_action"
+        : params.deterministicIntent === "source_lookup"
+          ? "retrieve_sources"
+          : shouldUsePacketFirstIntent(params.deterministicIntent)
+            ? "build_project_packet"
+            : params.deterministicIntent === "app_help"
+              ? "explain_app_workflow"
+              : "answer_directly",
     requiredTools: [],
     shouldAskClarifyingQuestion: false,
     rationale: "Model planner unavailable; using deterministic fallback intent.",
@@ -111,10 +114,11 @@ export async function planAssistantIntent(params: {
         "You are the intent planner for a construction project-management AI assistant.",
         "Classify the user's real goal before any response is drafted.",
         "Choose the route that will make the assistant feel like a thoughtful advisor, not a tool dispatcher.",
+        "CRITICAL: If the user says anything like 'remind me to', 'add a task', 'create a task', 'note for myself', 'flag for follow-up', 'throw this on my list', 'put this on my list', 'log that I need to', 'action item:', 'get someone on [X]', 'assign this to', or any phrasing that implies WRITING a task or action item — choose task_write with responseMode draft_safe_action. Do NOT choose task_followup for these — task_followup is for READING existing tasks, task_write is for CREATING new ones.",
         "If the user asks for exact evidence, messages, Teams, email, transcript, or document context, choose source_lookup.",
-        "If the user asks for current project state, risks, money, changes, decisions, or follow-ups, choose the matching project-intelligence intent.",
+        "If the user asks for current project state, risks, money, changes, decisions, or follow-ups (reading), choose the matching project-intelligence intent.",
         "If the user asks how to use the app, choose app_help.",
-        "If they ask to create or draft an operational record, choose the domain intent and responseMode draft_safe_action.",
+        "If they ask to create or draft an operational record other than a task (RFI, commitment, company), choose the domain intent and responseMode draft_safe_action.",
         "Do not answer the user. Return only the structured planning object.",
       ].join("\n"),
       prompt: [

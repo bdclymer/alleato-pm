@@ -6,11 +6,32 @@ export type AssistantIntent =
   | "change_management_review"
   | "decision_lookup"
   | "task_followup"
+  | "task_write"
   | "source_lookup"
   | "strategy_brainstorm"
   | "implementation_planning"
   | "app_help"
   | "general_conversation";
+
+// Phrases that unambiguously mean "create / modify / delete a task record".
+// These must be checked BEFORE task_followup so write-intent is not mis-routed
+// to packet-retrieval, which primes the model for a reading pattern and causes
+// it to describe the task in text instead of calling createGeneratedTask.
+const TASK_WRITE_PATTERNS = [
+  /\b(remind me to|remind me about)\b/i,
+  /\b(add a task|add task|create a task|create task|make a task|log a task|log that I need to)\b/i,
+  /\b(flag (this |it )?for follow[- ]?up|throw (this |it )?on (my )?list)\b/i,
+  /\bnote for myself\b/i,
+  /\baction item:\s/i,
+  /\bget someone on\b/i,
+  /\bput (this |it )?on (my |the )?list\b/i,
+  /\bassign (this |that |it )?to\b/i,
+  /\bschedule a task\b/i,
+  /\bgenerate (a )?task\b/i,
+  /\bmake (a )?task\b/i,
+  // "Add a task for the PM to…" / "Add a task for X to…"
+  /\badd a task for\b/i,
+];
 
 const SOURCE_LOOKUP_PATTERNS = [
   /\b(source|evidence|citation|transcript|email|teams|message|messages|meeting|document)\b/i,
@@ -28,6 +49,17 @@ const APP_HELP_PATTERNS = [
 export function classifyAssistantIntent(message: string): AssistantIntent {
   const text = message.trim();
   if (!text) return "general_conversation";
+
+  // task_write must be checked FIRST — before source_lookup, decision_lookup,
+  // financial_analysis, and task_followup — because write triggers like
+  // "Add a task for the PM to confirm the approval owner" contain keywords
+  // (approval, meeting, budget) that match domain patterns. Write intent
+  // must win: routing to any packet-first or retrieval path primes the model
+  // for a reading pattern and causes it to describe the task in text instead
+  // of calling createGeneratedTask.
+  if (TASK_WRITE_PATTERNS.some((pattern) => pattern.test(text))) {
+    return "task_write";
+  }
 
   if (SOURCE_LOOKUP_PATTERNS.some((pattern) => pattern.test(text))) {
     return "source_lookup";
@@ -49,6 +81,8 @@ export function classifyAssistantIntent(message: string): AssistantIntent {
     return "decision_lookup";
   }
 
+  // task_followup is for READING existing tasks (list, status, overdue).
+  // task_write (checked above) handles CREATING new task records.
   if (
     /\b(follow[- ]?up|missed|task|tasks|todo|to-do|next action|owner|action item|open item|on my plate|what do i need|what should i|what's open|what is open)\b/i.test(text) ||
     /\b(what are my|show me my|give me my)\b.{0,30}\b(tasks?|items?|actions?|todos?)\b/i.test(text)
@@ -76,6 +110,11 @@ export function classifyAssistantIntent(message: string): AssistantIntent {
 }
 
 export function shouldUsePacketFirstIntent(intent: AssistantIntent): boolean {
+  // task_write is intentionally excluded: loading a project packet primes the
+  // model for a reading/retrieval pattern and causes it to describe the task
+  // in text rather than calling createGeneratedTask. Write intents go straight
+  // to streamText so the MANDATORY TASK WRITE PROTOCOL in the system prompt
+  // can take effect.
   return (
     intent === "target_briefing" ||
     intent === "latest_status" ||
