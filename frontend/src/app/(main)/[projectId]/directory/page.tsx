@@ -841,7 +841,6 @@ function ProjectTeamSection({
             Manage Roles
           </Button>
         }
-        count={filteredRows.length}
         search={search}
         onSearch={setSearch}
         searchPlaceholder="Search roles or members..."
@@ -1098,6 +1097,15 @@ function MembersDataTable({
         },
       },
       {
+        id: "type",
+        header: "Type",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground capitalize">
+            {row.original.person_type ?? "—"}
+          </span>
+        ),
+      },
+      {
         id: "role",
         header: "Job Title",
         cell: ({ row }) => (
@@ -1308,7 +1316,6 @@ function ExternalMembersSection({
             Add Members
           </Button>
         }
-        count={filtered.length}
         search={search}
         onSearch={setSearch}
         searchPlaceholder="Search by name, role or company..."
@@ -1616,7 +1623,6 @@ function CompaniesSection({
             Add Company
           </Button>
         }
-        count={filteredRows.length}
         search={search}
         onSearch={setSearch}
         searchPlaceholder="Search companies..."
