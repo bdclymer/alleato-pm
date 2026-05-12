@@ -686,9 +686,8 @@ export default function CompanyDetailsPage() {
         </>
       }
     >
-      <div className="overflow-hidden rounded-[2rem] border border-border bg-background shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <main className="min-w-0 bg-card px-4 py-6 sm:px-8 lg:px-10">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
+          <main className="min-w-0">
             <div className="space-y-10">
               <section className="space-y-4">
                 <DsSectionHeader
@@ -932,7 +931,7 @@ export default function CompanyDetailsPage() {
             </div>
           </main>
 
-          <aside className="border-t border-border bg-muted/30 px-4 py-6 sm:px-8 lg:border-l lg:border-t-0 lg:px-6">
+          <aside className="min-w-0">
             <div className="space-y-6 lg:sticky lg:top-6">
               <section className="rounded-2xl border border-border bg-background p-5">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Company file</p>
@@ -1037,7 +1036,6 @@ export default function CompanyDetailsPage() {
               </section>
             </div>
           </aside>
-        </div>
       </div>
       <Modal open={editOpen} onOpenChange={setEditOpen}>
         <ModalContent className="sm:max-w-xl">
