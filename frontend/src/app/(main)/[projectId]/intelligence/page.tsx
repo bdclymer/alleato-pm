@@ -2,18 +2,30 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle2,
+  Database,
+  FileText,
+  ShieldCheck,
+  XCircle,
+} from "lucide-react";
 
 import {
   Button,
   EmptyState,
 } from "@/components/ds";
-import { PageShell } from "@/components/layout";
+import { PageShell, SectionRuleHeading } from "@/components/layout";
 import { InsightCardShowcase } from "@/components/ai-intelligence/insight-card-showcase";
 import {
   loadCurrentIntelligencePacket,
   resolveIntelligenceTarget,
 } from "@/lib/ai/intelligence/packet-service";
+import {
+  buildProjectOperatingSummarySources,
+  type ProjectOperatingSummarySourceSet,
+} from "@/lib/ai/services/project-operating-summary-sources";
 import type {
   ClientProjectIntelligencePacket,
 } from "@/lib/ai/intelligence/types";
@@ -59,6 +71,33 @@ function getCoverageNumber(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+function normalizeSourceKey(value: string | null | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/[_-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function categorizePacketEvidence(
+  sourceType: string | null | undefined,
+  sourceCategory: string | null | undefined,
+): string {
+  const combined = `${normalizeSourceKey(sourceType)} ${normalizeSourceKey(sourceCategory)}`.trim();
+  if (combined.includes("fireflies") || combined.includes("meeting") || combined.includes("transcript")) return "meeting";
+  if (combined.includes("outlook") || combined.includes("email")) return "email";
+  if (combined.includes("teams") || combined.includes("message") || combined.includes("chat")) return "teams";
+  if (combined.includes("acumatica") || combined.includes("erp") || combined.includes("direct cost")) return "acumatica";
+  if (combined.includes("rfi")) return "rfi";
+  if (combined.includes("submittal")) return "submittal";
+  if (combined.includes("drawing") || combined.includes("plan")) return "drawing";
+  if (combined.includes("spec")) return "specification";
+  if (combined.includes("daily report") || combined.includes("daily log")) return "daily_report";
+  if (combined.includes("task") || combined.includes("risk")) return "task";
+  if (combined.includes("document") || combined.includes("file") || combined.includes("onedrive")) return "document";
+  return "other";
+}
+
 function getCoverageGaps(packet: ClientProjectIntelligencePacket): string[] {
   const gaps = packet.sourceCoverage.gaps;
   return Array.isArray(gaps)
@@ -73,6 +112,14 @@ function buildSourceWindow(packet: ClientProjectIntelligencePacket): string {
   if (packet.coveredStartAt) return `From ${formatDate(packet.coveredStartAt)}`;
   if (packet.coveredEndAt) return `Through ${formatDate(packet.coveredEndAt)}`;
   return formatDateTime(packet.generatedAt);
+}
+
+function buildSourceHref(
+  projectId: number,
+  sourceDocumentId: string | null,
+): string | null {
+  if (!sourceDocumentId) return null;
+  return `/${projectId}/intelligence/sources/${encodeURIComponent(sourceDocumentId)}`;
 }
 
 function IntelligenceEmptyState({
@@ -99,8 +146,10 @@ function IntelligenceEmptyState({
 
 function PacketOverview({
   packet,
+  operatingSourceSet,
 }: {
   packet: ClientProjectIntelligencePacket;
+  operatingSourceSet: ProjectOperatingSummarySourceSet;
 }) {
   const linkedEvidenceCount = getCoverageNumber(packet.sourceCoverage.linkedEvidenceCount);
   const latestSourceAt =
@@ -108,27 +157,227 @@ function PacketOverview({
       ? packet.sourceCoverage.latestSourceAt
       : null;
   const linkedEvidenceValue = linkedEvidenceCount || packet.cards.reduce((total, card) => total + card.evidence.length, 0);
+  const sourceDocumentCount = new Set(
+    packet.cards.flatMap((card) =>
+      card.evidence
+        .map((evidence) => evidence.sourceDocumentId)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ).size;
+  const stats = [
+    {
+      label: "Freshness",
+      value: formatLabel(packet.freshnessStatus),
+      detail: formatDateTime(packet.generatedAt),
+      icon: ShieldCheck,
+    },
+    {
+      label: "Cards",
+      value: String(packet.cards.length),
+      detail: `${linkedEvidenceValue} linked evidence`,
+      icon: FileText,
+    },
+    {
+      label: "Evidence",
+      value: String(linkedEvidenceValue),
+      detail: `${sourceDocumentCount} source documents`,
+      icon: Database,
+    },
+    {
+      label: "Available",
+      value: String(operatingSourceSet.sources.length),
+      detail: "source capsules gathered",
+      icon: Database,
+    },
+    {
+      label: "Confidence",
+      value: formatLabel(packet.confidenceSummary.overall),
+      detail: packet.confidenceSummary.reason ?? "Based on linked packet evidence",
+      icon: ShieldCheck,
+    },
+    {
+      label: "Window",
+      value: buildSourceWindow(packet),
+      detail: latestSourceAt ? `Latest source ${formatDate(latestSourceAt)}` : "Source window",
+      icon: CalendarDays,
+    },
+  ];
 
   return (
-    <section id="packet-overview" className="space-y-1 border-b border-border pb-6">
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5">
-        <span className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{formatLabel(packet.freshnessStatus)}</span>
-          {" "}· {formatDateTime(packet.generatedAt)}
-        </span>
-        <span className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{packet.cards.length}</span> cards
-        </span>
-        <span className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{linkedEvidenceValue}</span>
-          {" "}evidence{latestSourceAt ? `, latest ${formatDate(latestSourceAt)}` : ""}
-        </span>
-        <span className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{formatLabel(packet.confidenceSummary.overall)}</span> confidence
-        </span>
-        <span id="source-window" className="scroll-mt-16 text-sm text-muted-foreground">
-          {buildSourceWindow(packet)}
-        </span>
+    <section id="packet-overview" className="border-y border-border">
+      <dl className="grid divide-y divide-border sm:grid-cols-2 sm:divide-x md:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.label} className="min-w-0 px-0 py-4 md:px-5">
+              <dt className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                <Icon className="h-3.5 w-3.5" />
+                {stat.label}
+              </dt>
+              <dd className="mt-2 truncate text-sm font-semibold text-foreground">{stat.value}</dd>
+              <dd className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{stat.detail}</dd>
+            </div>
+          );
+        })}
+      </dl>
+    </section>
+  );
+}
+
+function SourceUtilizationPanel({
+  packet,
+  projectId,
+  operatingSourceSet,
+}: {
+  packet: ClientProjectIntelligencePacket;
+  projectId: number;
+  operatingSourceSet: ProjectOperatingSummarySourceSet;
+}) {
+  const evidenceRows = packet.cards.flatMap((card) =>
+    card.evidence.map((evidence) => ({
+      ...evidence,
+      cardId: card.id,
+      cardTitle: card.title,
+    })),
+  );
+  const packetUsageByCategory = evidenceRows.reduce<Record<string, number>>((acc, evidence) => {
+    const category = categorizePacketEvidence(evidence.sourceType, evidence.sourceCategory);
+    acc[category] = (acc[category] ?? 0) + 1;
+    return acc;
+  }, {});
+  const evidencePreviewRows = evidenceRows
+    .filter((evidence) => evidence.sourceTitle || evidence.sourceDocumentId || evidence.sourceMessageId)
+    .slice(0, 8);
+  const availableCategories = operatingSourceSet.coverage.filter((category) => category.availableCount > 0);
+  const notUsedAvailableCategories = operatingSourceSet.coverage.filter((category) => {
+    if (category.category === "project_detail") return false;
+    const packetCategory = category.category === "risk" ? "task" : category.category;
+    return category.availableCount > 0 && (packetUsageByCategory[packetCategory] ?? 0) === 0;
+  });
+
+  return (
+    <section id="source-utilization" className="space-y-6 border-y border-border py-6">
+      <SectionRuleHeading label="What Intelligence Is Actually Using" className="mb-0 pb-0" />
+      <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+        Available source capsules are the project operating inputs now gathered for structured summarization.
+        Packet evidence is what the older card packet has linked today.
+      </p>
+      <p className="text-xs leading-5 text-muted-foreground">
+        Packet <span className="font-mono text-foreground">{packet.id}</span> ·{" "}
+        {packet.compilerVersion ?? "Unknown compiler"}
+      </p>
+
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SectionRuleHeading label="Available Sources vs Packet Usage" className="mb-0 pb-0" />
+          <p className="text-xs text-muted-foreground">
+            {availableCategories.length} source categories have available project data
+          </p>
+        </div>
+        <div className="divide-y divide-border border-y border-border">
+          {operatingSourceSet.coverage.map((category) => {
+            const packetCategory =
+              category.category === "project_detail" || category.category === "risk"
+                ? "task"
+                : category.category;
+            const packetEvidenceCount = packetUsageByCategory[packetCategory] ?? 0;
+            const hasAvailableData = category.availableCount > 0;
+            const isUsedByPacket = packetEvidenceCount > 0;
+            return (
+              <div key={category.category} className="grid gap-3 py-3 md:grid-cols-[minmax(11rem,16rem)_1fr]">
+                <div className="flex min-w-0 items-center gap-2">
+                  {hasAvailableData ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-status-success" />
+                  ) : (
+                    <XCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{category.label}</p>
+                    <p className="text-xs text-muted-foreground">{category.tableNames.join(", ")}</p>
+                  </div>
+                </div>
+                <div className="grid gap-3 text-sm md:grid-cols-[8rem_8rem_9rem_1fr]">
+                  <p className="text-muted-foreground">
+                    <span className="font-medium text-foreground">{category.availableCount}</span> available
+                  </p>
+                  <p className={isUsedByPacket ? "text-muted-foreground" : "text-status-warning"}>
+                    <span className="font-medium text-foreground">{packetEvidenceCount}</span> in packet
+                  </p>
+                  <p className="text-muted-foreground">
+                    {category.latestAt ? formatDate(category.latestAt) : "No date"}
+                  </p>
+                  <div className="min-w-0 space-y-1">
+                    {category.sampleTitles.length > 0 ? (
+                      category.sampleTitles.map((title) => (
+                        <p key={title} className="truncate text-xs text-muted-foreground">
+                          {title}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No records found by the source builder.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {notUsedAvailableCategories.length > 0 ? (
+        <div className="space-y-2">
+          <SectionRuleHeading
+            label="Available But Not Used By Current Packet"
+            icon={<AlertTriangle className="h-4 w-4 text-status-warning" />}
+            className="mb-0 pb-0"
+          />
+          <p className="text-sm leading-6 text-muted-foreground">
+            {notUsedAvailableCategories.map((category) => category.label).join(", ")} have available project data,
+            but the older card packet has no linked evidence from those categories. The assistant now loads the
+            operating source map and structured operating summary first; the remaining gap is regenerating the durable
+            card packet so this old-packet warning disappears.
+          </p>
+        </div>
+      ) : null}
+
+      <div className="space-y-3">
+        <SectionRuleHeading
+          label="Sample Packet Evidence Records"
+          icon={<Database className="h-4 w-4" />}
+          className="mb-0 pb-0"
+        />
+        {evidencePreviewRows.length > 0 ? (
+          <div className="divide-y divide-border border-y border-border">
+            {evidencePreviewRows.map((evidence) => {
+              const sourceHref = buildSourceHref(projectId, evidence.sourceDocumentId);
+              return (
+                <div key={evidence.id} className="grid gap-2 py-3 text-sm md:grid-cols-[8rem_1fr_8rem]">
+                  <p className="text-muted-foreground">{formatLabel(evidence.sourceType)}</p>
+                  <div className="min-w-0">
+                    {sourceHref ? (
+                      <Link
+                        href={sourceHref}
+                        className="block truncate font-medium text-foreground underline-offset-4 hover:underline"
+                      >
+                        {evidence.sourceTitle ?? evidence.sourceDocumentId}
+                      </Link>
+                    ) : (
+                      <p className="truncate font-medium text-foreground">
+                        {evidence.sourceTitle ?? evidence.sourceMessageId ?? evidence.sourceChunkId ?? "Untitled source"}
+                      </p>
+                    )}
+                    <p className="truncate text-xs text-muted-foreground">Card: {evidence.cardTitle}</p>
+                  </div>
+                  <p className="text-muted-foreground">{formatDate(evidence.sourceOccurredAt)}</p>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm leading-6 text-muted-foreground">
+            No packet evidence records were loaded.
+          </p>
+        )}
       </div>
     </section>
   );
@@ -136,28 +385,47 @@ function PacketOverview({
 
 function CoverageAndGaps({ packet }: { packet: ClientProjectIntelligencePacket }) {
   const gaps = getCoverageGaps(packet);
-  const coverageRows = [
+  const latestSourceAt =
+    typeof packet.sourceCoverage.latestSourceAt === "string"
+      ? packet.sourceCoverage.latestSourceAt
+      : null;
+  const coverageRows: Array<[string, unknown]> = [
+    ["Promoted cards", packet.sourceCoverage.promotedCardCount ?? packet.cards.length],
+    [
+      "Linked evidence",
+      packet.sourceCoverage.linkedEvidenceCount ??
+        packet.cards.reduce((total, card) => total + card.evidence.length, 0),
+    ],
+    ["Stale", packet.staleItemCount],
+  ];
+  const optionalRows: Array<[string, unknown]> = [
     ["Documents", packet.sourceCoverage.documentMetadataRows],
     ["AI memory", packet.sourceCoverage.aiMemoryRows],
     ["Emails", packet.sourceCoverage.projectEmailRows],
-    ["Stale", packet.staleItemCount],
-  ];
+  ].filter((row): row is [string, number] => typeof row[1] === "number" && row[1] > 0);
 
   return (
     <section className="space-y-4 border-t border-border pt-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        Coverage
-      </p>
-      <dl className="flex flex-wrap gap-x-8 gap-y-3">
-        {coverageRows.map(([label, value]) => (
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="text-sm font-semibold text-foreground">Coverage</p>
+        <p className="text-xs text-muted-foreground">Compiler inputs and known gaps</p>
+      </div>
+      <dl className="flex flex-wrap gap-x-8 gap-y-3 border-b border-border pb-4">
+        {[...coverageRows, ...optionalRows].map(([label, value]) => (
           <div key={label} className="flex items-baseline gap-2">
             <dd className="text-sm font-medium text-foreground">{String(getCoverageNumber(value))}</dd>
             <dt className="text-xs text-muted-foreground">{label}</dt>
           </div>
         ))}
+        {latestSourceAt ? (
+          <div className="flex items-baseline gap-2">
+            <dd className="text-sm font-medium text-foreground">{formatDate(latestSourceAt)}</dd>
+            <dt className="text-xs text-muted-foreground">Latest source</dt>
+          </div>
+        ) : null}
       </dl>
       {gaps.length > 0 ? (
-        <div className="space-y-2 pt-1">
+        <div className="space-y-2">
           {gaps.map((gap) => (
             <div key={gap} className="flex gap-2.5">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-status-warning" />
@@ -205,6 +473,10 @@ export default async function ProjectIntelligencePage({
         supabase,
       })
     : null;
+  const operatingSourceSet = await buildProjectOperatingSummarySources({
+    projectId: numericProjectId,
+    supabase,
+  });
 
   return (
     <PageShell
@@ -216,7 +488,7 @@ export default async function ProjectIntelligencePage({
           <Link href="/ai-assistant">Ask assistant</Link>
         </Button>
       }
-      contentClassName="space-y-8"
+      contentClassName="space-y-10"
     >
       {!target ? (
         <IntelligenceEmptyState
@@ -230,7 +502,12 @@ export default async function ProjectIntelligencePage({
         />
       ) : (
           <>
-            <PacketOverview packet={packet} />
+            <PacketOverview packet={packet} operatingSourceSet={operatingSourceSet} />
+            <SourceUtilizationPanel
+              packet={packet}
+              projectId={numericProjectId}
+              operatingSourceSet={operatingSourceSet}
+            />
             <InsightCardShowcase cards={packet.cards} projectId={numericProjectId} />
             <CoverageAndGaps packet={packet} />
           </>

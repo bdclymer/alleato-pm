@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Clock, ExternalLink, ThumbsDown, ThumbsUp } from "lucide-react";
+import {
+  Check,
+  Clock,
+  ExternalLink,
+  MailOpen,
+  ThumbsDown,
+  ThumbsUp,
+} from "lucide-react";
 import { toast } from "sonner";
 
-import { Badge, StatusBadge } from "@/components/ds";
+import { StatusBadge } from "@/components/ds";
 import {
   Accordion,
   AccordionContent,
@@ -15,7 +22,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
-import type { ConfidenceLevel, InsightCard } from "@/lib/ai/intelligence/types";
+import type {
+  ConfidenceLevel,
+  InsightCard,
+  InsightCardReviewFeedback,
+} from "@/lib/ai/intelligence/types";
+import {
+  parseReadableEmailThread,
+  type ReadableEmailMessage,
+} from "@/lib/email/readable-email";
 import { cn } from "@/lib/utils";
 
 const confidenceVariant: Record<ConfidenceLevel, "success" | "warning" | "error"> = {
@@ -30,11 +45,15 @@ const confidenceDot: Record<ConfidenceLevel, string> = {
   low: "bg-status-error",
 };
 
+const genericReviewWhyItMatters =
+  "This source contains project-relevant language that should be reviewed before it is trusted in a current intelligence packet.";
+const genericReviewNextAction = "Review the source attribution and extracted signal, then promote or reject it.";
+
 function formatLabel(value: string | null | undefined): string {
   if (!value) return "Unknown";
   return value
     .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function formatDate(value: string | null | undefined): string {
@@ -68,6 +87,50 @@ function cleanInsightText(value: string | null | undefined): string {
     .trim();
 }
 
+function normalizeForCompare(value: string | null | undefined): string {
+  return cleanInsightText(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isSameMeaning(a: string | null | undefined, b: string | null | undefined): boolean {
+  const first = normalizeForCompare(a);
+  const second = normalizeForCompare(b);
+  if (!first || !second) return false;
+  return first === second || first.includes(second) || second.includes(first);
+}
+
+function isGenericReviewText(value: string | null | undefined): boolean {
+  return isSameMeaning(value, genericReviewWhyItMatters) || isSameMeaning(value, genericReviewNextAction);
+}
+
+function isRawSourceDump(value: string | null | undefined): boolean {
+  const text = normalizeForCompare(value);
+  return (
+    text.startsWith("subject ") ||
+    (text.includes(" subject ") && text.includes(" from ")) ||
+    (text.includes(" date ") && text.includes(" from ") && text.includes(" to "))
+  );
+}
+
+function isSourceMetadataDump(value: string | null | undefined): boolean {
+  const text = normalizeForCompare(value);
+  return (
+    text.includes("duration") &&
+    text.includes("organizer email") &&
+    (text.includes("fireflies link") || text.includes("participants"))
+  );
+}
+
+function isEmailEvidence(evidence: InsightCard["evidence"][number]): boolean {
+  return evidence.sourceType.toLowerCase() === "email" || evidence.sourceCategory?.toLowerCase() === "email";
+}
+
+function isNegativeFeedback(feedback: InsightCardReviewFeedback | null): boolean {
+  return feedback?.signal === "wrong" || feedback?.signal === "stale";
+}
+
 function buildEvidenceSourceHref(
   projectId: number,
   evidence: InsightCard["evidence"][number],
@@ -76,16 +139,246 @@ function buildEvidenceSourceHref(
   return `/${projectId}/intelligence/sources/${encodeURIComponent(evidence.sourceDocumentId)}`;
 }
 
+function getLatestSourceDate(card: InsightCard): string | null {
+  const dates = card.evidence
+    .map((evidence) => evidence.sourceOccurredAt)
+    .filter((value): value is string => Boolean(value))
+    .sort();
+  return dates.at(-1) ?? null;
+}
+
+function getPrimarySourceLabel(card: InsightCard): string {
+  const sourceTypes = Array.from(new Set(card.evidence.map((evidence) => formatLabel(evidence.sourceType))));
+  if (sourceTypes.length === 0) return "No linked source";
+  if (sourceTypes.length === 1) return sourceTypes[0];
+  return `${sourceTypes.slice(0, 2).join(" + ")}${sourceTypes.length > 2 ? ` +${sourceTypes.length - 2}` : ""}`;
+}
+
 function getEvidenceText(evidence: InsightCard["evidence"][number]): string {
   return cleanInsightText(evidence.summary || evidence.excerpt || evidence.relevanceReason);
 }
 
-function CardFeedback({
+function limitEvidenceText(value: string): string {
+  if (value.length <= 900) return value;
+  return `${value.slice(0, 900).trim()}...`;
+}
+
+function getReadableEvidenceContent(
+  evidence: InsightCard["evidence"][number] & { displayText?: string },
+): string {
+  const candidates = [
+    evidence.displayText,
+    evidence.excerpt,
+    evidence.summary,
+    evidence.sourceContentPreview,
+    evidence.relevanceReason,
+  ];
+
+  for (const candidate of candidates) {
+    const text = cleanInsightText(candidate);
+    if (
+      !text ||
+      isRawSourceDump(text) ||
+      isSourceMetadataDump(text) ||
+      isGenericReviewText(text) ||
+      isSameMeaning(text, evidence.sourceTitle)
+    ) {
+      continue;
+    }
+    return limitEvidenceText(text);
+  }
+
+  return "";
+}
+
+function getUniqueEvidence(card: InsightCard): Array<InsightCard["evidence"][number] & { displayText: string }> {
+  const summary = cleanInsightText(card.summary);
+  const seen = new Set<string>();
+
+  return card.evidence.flatMap((evidence) => {
+    const displayText = getEvidenceText(evidence);
+    const normalized = normalizeForCompare(displayText);
+    if (!displayText || !normalized || isSameMeaning(displayText, summary) || isSameMeaning(displayText, card.title)) {
+      return [{ ...evidence, displayText: "" }];
+    }
+    if (seen.has(normalized)) return [{ ...evidence, displayText: "" }];
+    seen.add(normalized);
+    return [{ ...evidence, displayText }];
+  });
+}
+
+function sortCards(cards: InsightCard[]): InsightCard[] {
+  return [...cards].sort((a, b) => {
+    const aNegative = isNegativeFeedback(a.latestFeedback);
+    const bNegative = isNegativeFeedback(b.latestFeedback);
+    if (aNegative !== bNegative) return aNegative ? 1 : -1;
+
+    const aDate = getLatestSourceDate(a) ?? "";
+    const bDate = getLatestSourceDate(b) ?? "";
+    if (aDate !== bDate) return bDate.localeCompare(aDate);
+
+    return a.title.localeCompare(b.title);
+  });
+}
+
+function emailTitle(message: ReadableEmailMessage, fallback: string | null | undefined, index: number): string {
+  return message.subject || fallback || `Email ${index + 1}`;
+}
+
+function emailSubtitle(message: ReadableEmailMessage): string {
+  return [message.from, message.date ? formatDate(message.date) : null]
+    .filter(Boolean)
+    .join(" - ");
+}
+
+function buildEmailMessages(evidence: InsightCard["evidence"][number]): ReadableEmailMessage[] {
+  if (!isEmailEvidence(evidence)) return [];
+
+  const messages = [
+    ...parseReadableEmailThread(evidence.sourceContentPreview),
+    ...parseReadableEmailThread(evidence.summary),
+    ...parseReadableEmailThread(evidence.excerpt),
+  ];
+  const seen = new Set<string>();
+  return messages.filter((message) => {
+    const key = `${message.from}|${message.date}|${message.subject}|${message.body}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function EmailThread({
+  evidence,
+}: {
+  evidence: InsightCard["evidence"][number];
+}) {
+  const emailMessages = buildEmailMessages(evidence);
+  if (emailMessages.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <MailOpen className="h-3.5 w-3.5" />
+        Email thread
+      </p>
+      <Accordion type="multiple" className="rounded-md border border-border bg-background px-3">
+        {emailMessages.map((message, index) => (
+          <AccordionItem key={`${message.id}-${index}`} value={`${message.id}-${index}`}>
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <span className="min-w-0 text-left">
+                <span className="block truncate text-sm font-medium text-foreground">
+                  {emailTitle(message, evidence.sourceTitle, index)}
+                </span>
+                {emailSubtitle(message) ? (
+                  <span className="mt-1 block truncate text-xs font-normal text-muted-foreground">
+                    {emailSubtitle(message)}
+                  </span>
+                ) : null}
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <dl className="grid gap-3 pb-4 text-xs sm:grid-cols-2 xl:grid-cols-4">
+                {message.from ? (
+                  <div>
+                    <dt className="font-semibold uppercase tracking-[0.08em] text-muted-foreground">From</dt>
+                    <dd className="mt-1 break-words text-foreground">{message.from}</dd>
+                  </div>
+                ) : null}
+                {message.to ? (
+                  <div>
+                    <dt className="font-semibold uppercase tracking-[0.08em] text-muted-foreground">To</dt>
+                    <dd className="mt-1 break-words text-foreground">{message.to}</dd>
+                  </div>
+                ) : null}
+                {message.cc ? (
+                  <div>
+                    <dt className="font-semibold uppercase tracking-[0.08em] text-muted-foreground">Cc</dt>
+                    <dd className="mt-1 break-words text-foreground">{message.cc}</dd>
+                  </div>
+                ) : null}
+                {message.date ? (
+                  <div>
+                    <dt className="font-semibold uppercase tracking-[0.08em] text-muted-foreground">Date</dt>
+                    <dd className="mt-1 text-foreground">{formatDate(message.date) || message.date}</dd>
+                  </div>
+                ) : null}
+              </dl>
+              {message.body ? (
+                <div className="max-w-3xl whitespace-pre-wrap text-sm leading-7 text-foreground">
+                  {message.body}
+                </div>
+              ) : (
+                <p className="text-sm leading-6 text-muted-foreground">
+                  No email body text was captured for this message.
+                </p>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
+  );
+}
+
+function EvidenceList({
   card,
   projectId,
 }: {
   card: InsightCard;
   projectId: number;
+}) {
+  const evidence = getUniqueEvidence(card).slice(0, 6);
+  if (evidence.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        Sources
+      </p>
+      <div className="space-y-4">
+        {evidence.map((item) => {
+          const sourceHref = buildEvidenceSourceHref(projectId, item);
+          const sourceContent = getReadableEvidenceContent(item);
+
+          return (
+            <div key={item.id} className="space-y-2 border-t border-border pt-3 first:border-t-0 first:pt-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                {sourceHref ? (
+                  <Link
+                    href={sourceHref}
+                    className="inline-flex min-w-0 items-center gap-1 font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    <span className="truncate">{item.sourceTitle ?? "Untitled source"}</span>
+                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  </Link>
+                ) : (
+                  <span className="font-medium text-foreground">{item.sourceTitle ?? "Untitled source"}</span>
+                )}
+                {item.sourceOccurredAt ? (
+                  <span>{formatDate(item.sourceOccurredAt)}</span>
+                ) : null}
+              </div>
+              {sourceContent ? (
+                <p className="text-sm leading-7 text-foreground">{sourceContent}</p>
+              ) : null}
+              <EmailThread evidence={item} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CardFeedback({
+  card,
+  projectId,
+  onFeedbackRecorded,
+}: {
+  card: InsightCard;
+  projectId: number;
+  onFeedbackRecorded: (cardId: string, feedback: InsightCardReviewFeedback) => void;
 }) {
   const [feedbackSignal, setFeedbackSignal] = useState<"wrong" | "stale" | null>(null);
   const [feedbackText, setFeedbackText] = useState("");
@@ -94,7 +387,10 @@ function CardFeedback({
   async function submitFeedback(signal: "useful" | "wrong" | "stale") {
     setFeedbackBusy(true);
     try {
-      await apiFetch("/api/ai-assistant/packet-card-feedback", {
+      const response = await apiFetch<{
+        reviewId: string;
+        status: string;
+      }>("/api/ai-assistant/packet-card-feedback", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -119,6 +415,14 @@ function CardFeedback({
           metadata: { projectId, surface: "project_intelligence_card" },
         }),
       });
+      onFeedbackRecorded(card.id, {
+        id: response.reviewId,
+        status: response.status,
+        signal,
+        reason: signal === "useful" ? "Card was marked useful from Project Intelligence." : feedbackText || null,
+        correction: signal === "useful" ? null : feedbackText || null,
+        createdAt: new Date().toISOString(),
+      });
       toast.success(signal === "useful" ? "Card feedback saved" : "Card review queued");
       setFeedbackSignal(null);
       setFeedbackText("");
@@ -132,7 +436,7 @@ function CardFeedback({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 border-t border-border pt-4">
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
@@ -178,7 +482,7 @@ function CardFeedback({
         <div className="space-y-2">
           <Textarea
             value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
+            onChange={(event) => setFeedbackText(event.target.value)}
             placeholder={
               feedbackSignal === "wrong"
                 ? "What should this card say instead?"
@@ -203,123 +507,94 @@ function CardFeedback({
 function InsightAccordionItem({
   card,
   projectId,
-  value,
+  onFeedbackRecorded,
 }: {
   card: InsightCard;
   projectId: number;
-  value: string;
+  onFeedbackRecorded: (cardId: string, feedback: InsightCardReviewFeedback) => void;
 }) {
   const summary = cleanInsightText(card.summary);
   const whyItMatters = cleanInsightText(card.whyItMatters);
   const nextAction = cleanInsightText(card.nextAction);
-  const visibleEvidence = card.evidence.slice(0, 4);
+  const usefulWhyItMatters = whyItMatters && !isGenericReviewText(whyItMatters) ? whyItMatters : "";
+  const usefulNextAction = nextAction && !isGenericReviewText(nextAction) ? nextAction : "";
+  const negativeFeedback = isNegativeFeedback(card.latestFeedback) ? card.latestFeedback : null;
+  const displaySummary = isRawSourceDump(summary) || isSourceMetadataDump(summary)
+    ? ""
+    : summary;
 
   return (
-    <AccordionItem value={value}>
-      <AccordionTrigger className="group py-4 hover:no-underline">
-        <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
-          <span
-            className={cn("h-1.5 w-1.5 shrink-0 rounded-full", confidenceDot[card.confidence])}
-            aria-hidden="true"
-          />
-          <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground">
-            {card.title}
+    <AccordionItem value={card.id} className="border-border">
+      <AccordionTrigger className="gap-4 py-4 hover:no-underline">
+        <span className="flex min-w-0 flex-1 items-start gap-3 text-left">
+          <span className={cn("mt-2 h-2 w-2 shrink-0 rounded-full", confidenceDot[card.confidence])} aria-hidden="true" />
+          <span className="min-w-0 space-y-1">
+            <span className="block truncate text-sm font-medium text-foreground">{card.title}</span>
+            <span className="block truncate text-xs font-normal text-muted-foreground">
+              {formatLabel(card.cardType)} · {getPrimarySourceLabel(card)}
+              {getLatestSourceDate(card) ? ` · ${formatDate(getLatestSourceDate(card))}` : ""}
+            </span>
           </span>
-          <div className="hidden shrink-0 items-center gap-2 sm:flex">
-            <span className="text-xs text-muted-foreground">{formatLabel(card.cardType)}</span>
-            <StatusBadge
-              status={formatLabel(card.currentStatus)}
-              className="text-xs"
-            />
-          </div>
-        </div>
-      </AccordionTrigger>
-
-      <AccordionContent>
-        <div className="space-y-5 pb-2 pl-4">
-          <div className="flex flex-wrap gap-2 sm:hidden">
-            <span className="text-xs text-muted-foreground">{formatLabel(card.cardType)}</span>
-            <StatusBadge status={formatLabel(card.currentStatus)} className="text-xs" />
-            <StatusBadge
-              status={formatLabel(card.confidence)}
-              variant={confidenceVariant[card.confidence]}
-              className="text-xs"
-            />
-          </div>
-
-          {summary ? (
-            <p className="text-sm leading-7 text-muted-foreground">{summary}</p>
+        </span>
+        <span className="hidden shrink-0 items-center gap-2 sm:flex">
+          {negativeFeedback ? (
+            <StatusBadge status="Review queued" variant="warning" className="text-xs" />
           ) : null}
-
-          {(whyItMatters || nextAction) ? (
-            <div className="space-y-3 rounded-md bg-muted/40 px-4 py-3">
-              {whyItMatters ? (
+          <StatusBadge status={formatLabel(card.confidence)} variant={confidenceVariant[card.confidence]} className="text-xs" />
+        </span>
+      </AccordionTrigger>
+      <AccordionContent>
+        <div className="space-y-5 pb-5 pl-5 pr-2">
+          {negativeFeedback ? (
+            <div className="rounded-md border border-status-warning/30 bg-status-warning/10 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-status-warning">
+                Review queued
+              </p>
+              <p className="mt-1 text-sm leading-6 text-foreground">
+                This card was marked {negativeFeedback.signal}.
+              </p>
+              {negativeFeedback.correction || negativeFeedback.reason ? (
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {negativeFeedback.correction || negativeFeedback.reason}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          {displaySummary ? (
+            <section className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Read
+              </p>
+              <p className="max-w-4xl text-sm leading-7 text-foreground">{displaySummary}</p>
+            </section>
+          ) : null}
+          {(usefulWhyItMatters || usefulNextAction) ? (
+            <section className="grid gap-4 md:grid-cols-2">
+              {usefulWhyItMatters ? (
                 <div className="space-y-1">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     Why it matters
                   </p>
-                  <p className="text-sm leading-6 text-foreground">{whyItMatters}</p>
+                  <p className="text-sm leading-7 text-foreground">{usefulWhyItMatters}</p>
                 </div>
               ) : null}
-              {nextAction ? (
+              {usefulNextAction ? (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    <Check className="h-3.5 w-3.5" />
                     Next action
                   </p>
-                  <p className="text-sm leading-6 text-foreground">{nextAction}</p>
+                  <p className="text-sm leading-7 text-foreground">{usefulNextAction}</p>
                 </div>
               ) : null}
-            </div>
+            </section>
           ) : null}
-
-          {visibleEvidence.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Evidence
-              </p>
-              <div className="divide-y divide-border">
-                {visibleEvidence.map((evidence) => {
-                  const sourceHref = buildEvidenceSourceHref(projectId, evidence);
-                  const evidenceText = getEvidenceText(evidence);
-
-                  return (
-                    <div key={evidence.id} className="space-y-1 py-3 first:pt-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {formatLabel(evidence.sourceType)}
-                        </Badge>
-                        {sourceHref ? (
-                          <Link
-                            href={sourceHref}
-                            className="inline-flex min-w-0 items-center gap-1 text-xs font-medium text-foreground underline-offset-4 hover:underline"
-                          >
-                            <span className="truncate">
-                              {evidence.sourceTitle ?? "Untitled source"}
-                            </span>
-                            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
-                          </Link>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            {evidence.sourceTitle ?? "Untitled source"}
-                          </span>
-                        )}
-                        {evidence.sourceOccurredAt ? (
-                          <span className="text-xs text-muted-foreground">
-                            {formatDate(evidence.sourceOccurredAt)}
-                          </span>
-                        ) : null}
-                      </div>
-                      {evidenceText ? (
-                        <p className="text-xs leading-5 text-muted-foreground">{evidenceText}</p>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-
-          <CardFeedback card={card} projectId={projectId} />
+          <EvidenceList card={card} projectId={projectId} />
+          <CardFeedback
+            card={card}
+            projectId={projectId}
+            onFeedbackRecorded={onFeedbackRecorded}
+          />
         </div>
       </AccordionContent>
     </AccordionItem>
@@ -333,24 +608,36 @@ export function InsightCardShowcase({
   cards: InsightCard[];
   projectId: number;
 }) {
+  const [feedbackByCardId, setFeedbackByCardId] = useState<Record<string, InsightCardReviewFeedback>>({});
+  const cardsWithFeedback = useMemo(
+    () =>
+      cards.map((card) => ({
+        ...card,
+        latestFeedback: feedbackByCardId[card.id] ?? card.latestFeedback,
+      })),
+    [cards, feedbackByCardId],
+  );
+  const sortedCards = useMemo(() => sortCards(cardsWithFeedback), [cardsWithFeedback]);
+
   if (cards.length === 0) return null;
 
   return (
-    <section id="insight-cards" className="scroll-mt-16 space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Insight cards
-          <span className="ml-2 font-normal text-muted-foreground/60">{cards.length}</span>
-        </p>
-      </div>
-
-      <Accordion type="multiple" className="w-full">
-        {cards.map((card, index) => (
+    <section id="insight-cards" className="scroll-mt-16 space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        Current read
+      </p>
+      <Accordion type="multiple" className="divide-y divide-border">
+        {sortedCards.map((card) => (
           <InsightAccordionItem
             key={card.id}
             card={card}
             projectId={projectId}
-            value={`card-${index}`}
+            onFeedbackRecorded={(cardId, feedback) => {
+              setFeedbackByCardId((current) => ({
+                ...current,
+                [cardId]: feedback,
+              }));
+            }}
           />
         ))}
       </Accordion>

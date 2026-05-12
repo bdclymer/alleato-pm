@@ -1,9 +1,6 @@
 jest.mock("server-only", () => ({}));
 jest.mock("ai", () => ({
-  generateText: jest.fn(),
-  Output: {
-    object: jest.fn((config) => ({ kind: "object", ...config })),
-  },
+  generateObject: jest.fn(),
 }));
 jest.mock("@/lib/ai/providers", () => ({
   getLanguageModel: jest.fn((modelId: string) => ({ modelId })),
@@ -15,12 +12,11 @@ jest.mock("@/lib/ai/provider-config", () => ({
   ),
 }));
 
-import { generateText, Output } from "ai";
+import { generateObject } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { summarizeProjectIntelligence } from "../project-intelligence-summary";
 
-const generateTextMock = generateText as jest.MockedFunction<typeof generateText>;
-const outputObjectMock = Output.object as jest.MockedFunction<typeof Output.object>;
+const generateObjectMock = generateObject as jest.MockedFunction<typeof generateObject>;
 const getLanguageModelMock = getLanguageModel as jest.MockedFunction<typeof getLanguageModel>;
 
 const validOutput = {
@@ -54,14 +50,89 @@ const validOutput = {
   ],
   dataGaps: ["No final owner approval is present in the provided sources."],
   confidence: "high" as const,
+  operatingSummary: {
+    currentExecutiveRead:
+      "The project is waiting on pricing detail before the owner can approve the next design move.",
+    timeline: [
+      {
+        title: "Owner requested revised pricing",
+        occurredAt: "2026-05-11T12:00:00.000Z",
+        significance: "Pricing is the next gating item before approval.",
+        sourceIds: ["email-1"],
+      },
+    ],
+    recentChanges: [
+      {
+        title: "Lobby finish pricing moved back into review",
+        changedArea: "financial" as const,
+        impact: "Owner approval depends on a clearer cost packet.",
+        sourceIds: ["email-1"],
+      },
+    ],
+    financialPosition: {
+      summary: "Known financial detail is limited to the requested revised pricing packet.",
+      knownAmounts: [],
+      exposure: [
+        {
+          title: "Approval depends on revised pricing",
+          sourceIds: ["email-1"],
+        },
+      ],
+    },
+    scheduleAndProcurement: {
+      summary: "Procurement could be delayed if approval waits on pricing.",
+      blockers: [
+        {
+          title: "Pricing packet not yet confirmed as sent",
+          sourceIds: ["meeting-1"],
+        },
+      ],
+      upcomingDates: [
+        {
+          title: "Revised pricing packet target",
+          date: "2026-05-13",
+          sourceIds: ["meeting-1"],
+        },
+      ],
+    },
+    projectControls: {
+      rfis: [],
+      submittals: [],
+      drawings: [],
+      specifications: [],
+      dailyReports: [],
+      tasks: [],
+    },
+    openQuestions: [
+      {
+        title: "Has the owner approved the revised finish pricing?",
+        owner: null,
+        neededBy: null,
+        sourceIds: ["email-1"],
+      },
+    ],
+    recommendedFocus: [
+      {
+        title: "Send the owner a priced decision packet",
+        reason: "It is the clearest way to unblock approval.",
+        priority: "high" as const,
+        sourceIds: ["email-1", "meeting-1"],
+      },
+    ],
+    sourceCoverage: {
+      coveredTypes: ["email", "meeting"],
+      missingTypes: ["rfi", "submittal", "drawing", "specification", "daily_report"],
+      weakestAreas: ["No structured project controls were provided."],
+    },
+  },
 };
 
 describe("summarizeProjectIntelligence", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    generateTextMock.mockResolvedValue({
-      output: validOutput,
-    } as Awaited<ReturnType<typeof generateText>>);
+    generateObjectMock.mockResolvedValue({
+      object: validOutput,
+    } as Awaited<ReturnType<typeof generateObject>>);
   });
 
   it("uses AI SDK structured output with traceable source context", async () => {
@@ -84,29 +155,27 @@ describe("summarizeProjectIntelligence", () => {
       ],
     });
 
-    expect(getLanguageModelMock).toHaveBeenCalledWith("openai/gpt-4.1-nano");
-    expect(outputObjectMock).toHaveBeenCalledWith(
+    expect(getLanguageModelMock).toHaveBeenCalledWith("openai/gpt-5.4-mini");
+    expect(generateObjectMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "project_intelligence_summary",
-      }),
-    );
-    expect(generateTextMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        output: expect.objectContaining({ kind: "object" }),
+        schemaName: "project_intelligence_summary",
         prompt: expect.stringContaining("Available source IDs: email-1, meeting-1"),
       }),
     );
-    expect(generateTextMock).toHaveBeenCalledWith(
+    expect(generateObjectMock).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: expect.stringContaining("Owner requested revised lobby finish pricing"),
       }),
     );
     expect(summary).toMatchObject({
       schema: "project_intelligence_summary_v1",
-      model: "openai/gpt-4.1-nano",
+      model: "openai/gpt-5.4-mini",
       sourceCount: 2,
       sourceIds: ["email-1", "meeting-1"],
       headline: validOutput.headline,
+      operatingSummary: expect.objectContaining({
+        currentExecutiveRead: validOutput.operatingSummary.currentExecutiveRead,
+      }),
     });
   });
 
@@ -114,12 +183,12 @@ describe("summarizeProjectIntelligence", () => {
     await expect(
       summarizeProjectIntelligence({ sources: [] }),
     ).rejects.toThrow("Project intelligence summary requires at least one source");
-    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(generateObjectMock).not.toHaveBeenCalled();
   });
 
   it("rejects model output that cites unknown source IDs", async () => {
-    generateTextMock.mockResolvedValueOnce({
-      output: {
+    generateObjectMock.mockResolvedValueOnce({
+      object: {
         ...validOutput,
         actionItems: [
           {
@@ -128,7 +197,7 @@ describe("summarizeProjectIntelligence", () => {
           },
         ],
       },
-    } as Awaited<ReturnType<typeof generateText>>);
+    } as Awaited<ReturnType<typeof generateObject>>);
 
     await expect(
       summarizeProjectIntelligence({

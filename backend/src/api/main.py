@@ -719,6 +719,11 @@ class IntelligenceCompilerRunRequest(BaseModel):
     max_processing_time_ms: Optional[int] = None
 
 
+class OperatingSummaryRefreshRequest(BaseModel):
+    project_id: int
+    model: Optional[str] = None
+
+
 @app.post("/api/pipeline/process", tags=["Ingestion"], summary="Run full RAG pipeline for a document")
 async def pipeline_process_endpoint(
     payload: PipelineProcessRequest,
@@ -857,6 +862,47 @@ async def run_intelligence_compiler(
         raise HTTPException(
             status_code=500,
             detail=f"Intelligence compiler run failed for job {job_id}: {exc}",
+        ) from exc
+
+
+@app.post(
+    "/api/intelligence/projects/operating-summary/refresh",
+    tags=["Intelligence"],
+    summary="Refresh a project operating-summary packet",
+)
+async def refresh_project_operating_summary(
+    request: OperatingSummaryRefreshRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Compile all available project operating sources into the current packet.
+
+    This is the Render-owned production refresh path for packet-first project
+    intelligence. The frontend should read the synced packet from Supabase and
+    use this endpoint to refresh, not run long AI generation in page render.
+    """
+    if request.project_id < 1:
+        raise HTTPException(status_code=422, detail="project_id must be positive")
+
+    try:
+        from src.services.intelligence.operating_summary import refresh_project_operating_packet
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        return refresh_project_operating_packet(
+            client,
+            request.project_id,
+            model=request.model,
+        )
+    except Exception as exc:
+        logger.error(
+            "[OperatingSummaryAPI] refresh failed project_id=%s: %s",
+            request.project_id,
+            exc,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Operating summary refresh failed for project {request.project_id}: {exc}",
         ) from exc
 
 

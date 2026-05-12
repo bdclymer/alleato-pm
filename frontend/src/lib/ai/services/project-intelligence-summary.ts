@@ -1,21 +1,30 @@
-import { Output, generateText } from "ai";
+import { generateObject } from "ai";
 import { z } from "zod";
 import { formatAIProviderFailure } from "@/lib/ai/provider-config";
 import { getLanguageModel } from "@/lib/ai/providers";
 
-const DEFAULT_SUMMARY_MODEL = "openai/gpt-4.1-nano";
-const MAX_SOURCE_TEXT_CHARS = 2400;
-const MAX_SOURCES = 20;
+const DEFAULT_SUMMARY_MODEL = "openai/gpt-5.4-mini";
+const MAX_SOURCE_TEXT_CHARS = 1600;
+const MAX_SOURCES = 96;
 
-const citedItemSchema = z.object({
-  title: z.string().min(3),
-  sourceIds: z
-    .array(z.string().min(1))
-    .min(1)
-    .describe("IDs from the provided source list that support this item."),
-});
+function createCitedItemSchema(sourceIds?: string[]) {
+  const sourceIdSchema = sourceIds?.length
+    ? z.enum(sourceIds as [string, ...string[]])
+    : z.string().min(1);
 
-export const projectIntelligenceSummarySchema = z.object({
+  return z.object({
+    title: z.string().min(3),
+    sourceIds: z
+      .array(sourceIdSchema)
+      .min(1)
+      .describe("IDs from the provided source list that support this item."),
+  });
+}
+
+function createProjectIntelligenceSummarySchema(sourceIds?: string[]) {
+  const citedItemSchema = createCitedItemSchema(sourceIds);
+
+  return z.object({
   headline: z
     .string()
     .min(8)
@@ -59,7 +68,97 @@ export const projectIntelligenceSummarySchema = z.object({
   confidence: z
     .enum(["low", "medium", "high"])
     .describe("Confidence based only on source specificity and agreement."),
-});
+  operatingSummary: z.object({
+    currentExecutiveRead: z
+      .string()
+      .min(20)
+      .describe("A concise but specific read of the project's current state."),
+    timeline: z
+      .array(
+        citedItemSchema.extend({
+          occurredAt: z
+            .string()
+            .nullable()
+            .describe("ISO timestamp/date when explicit in the source, otherwise null."),
+          significance: z.string().min(8),
+        }),
+      )
+      .max(12)
+      .describe("Chronological project history and recent change trail."),
+    recentChanges: z
+      .array(
+        citedItemSchema.extend({
+          changedArea: z.enum([
+            "scope",
+            "design",
+            "financial",
+            "schedule",
+            "procurement",
+            "rfi",
+            "submittal",
+            "drawing",
+            "specification",
+            "daily_report",
+            "task",
+            "risk",
+            "other",
+          ]),
+          impact: z.string().min(8),
+        }),
+      )
+      .max(10),
+    financialPosition: z
+      .object({
+        summary: z.string().min(10),
+        knownAmounts: z.array(citedItemSchema).max(8),
+        exposure: z.array(citedItemSchema).max(8),
+      })
+      .describe("Budget, change, commitment, Acumatica, and cost exposure read."),
+    scheduleAndProcurement: z.object({
+      summary: z.string().min(10),
+      blockers: z.array(citedItemSchema).max(8),
+      upcomingDates: z
+        .array(
+          citedItemSchema.extend({
+            date: z.string().nullable(),
+          }),
+        )
+        .max(8),
+    }),
+    projectControls: z.object({
+      rfis: z.array(citedItemSchema).max(8),
+      submittals: z.array(citedItemSchema).max(8),
+      drawings: z.array(citedItemSchema).max(8),
+      specifications: z.array(citedItemSchema).max(8),
+      dailyReports: z.array(citedItemSchema).max(8),
+      tasks: z.array(citedItemSchema).max(8),
+    }),
+    openQuestions: z
+      .array(
+        citedItemSchema.extend({
+          owner: z.string().nullable(),
+          neededBy: z.string().nullable(),
+        }),
+      )
+      .max(10),
+    recommendedFocus: z
+      .array(
+        citedItemSchema.extend({
+          reason: z.string().min(8),
+          priority: z.enum(["low", "medium", "high", "critical"]),
+        }),
+      )
+      .max(8),
+    sourceCoverage: z.object({
+      coveredTypes: z.array(z.string().min(1)).max(20),
+      missingTypes: z.array(z.string().min(1)).max(20),
+      weakestAreas: z.array(z.string().min(5)).max(8),
+    }),
+  }),
+  });
+}
+
+export const projectIntelligenceSummarySchema = createProjectIntelligenceSummarySchema();
 
 export type ProjectIntelligenceSummary = z.infer<
   typeof projectIntelligenceSummarySchema
@@ -72,7 +171,22 @@ export type ProjectIntelligenceSummary = z.infer<
 
 export type ProjectIntelligenceSummarySource = {
   id: string;
-  type: "email" | "meeting" | "teams" | "document" | "source_sync" | "task" | "ai_insight" | "other";
+  type:
+    | "email"
+    | "meeting"
+    | "teams"
+    | "document"
+    | "acumatica"
+    | "rfi"
+    | "submittal"
+    | "drawing"
+    | "specification"
+    | "daily_report"
+    | "task"
+    | "risk"
+    | "source_sync"
+    | "ai_insight"
+    | "other";
   text: string;
   title?: string | null;
   projectName?: string | null;
@@ -82,7 +196,12 @@ export type ProjectIntelligenceSummarySource = {
 
 export type SummarizeProjectIntelligenceInput = {
   sources: ProjectIntelligenceSummarySource[];
-  focus?: "project_brief" | "source_sync" | "handoff" | "daily_digest";
+  focus?:
+    | "project_brief"
+    | "project_operating_summary"
+    | "source_sync"
+    | "handoff"
+    | "daily_digest";
   projectName?: string | null;
   model?: string;
 };
@@ -135,6 +254,20 @@ function collectCitedSourceIds(summary: z.infer<typeof projectIntelligenceSummar
     ...summary.risks.flatMap((risk) => risk.sourceIds),
     ...summary.decisions.flatMap((decision) => decision.sourceIds),
     ...summary.actionItems.flatMap((actionItem) => actionItem.sourceIds),
+    ...summary.operatingSummary.timeline.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.recentChanges.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.financialPosition.knownAmounts.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.financialPosition.exposure.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.scheduleAndProcurement.blockers.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.scheduleAndProcurement.upcomingDates.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.projectControls.rfis.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.projectControls.submittals.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.projectControls.drawings.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.projectControls.specifications.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.projectControls.dailyReports.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.projectControls.tasks.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.openQuestions.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.recommendedFocus.flatMap((item) => item.sourceIds),
   ];
 }
 
@@ -179,21 +312,21 @@ export async function summarizeProjectIntelligence(
   }
 
   const model = input.model ?? DEFAULT_SUMMARY_MODEL;
+  const runtimeSchema = createProjectIntelligenceSummarySchema(sourceIds);
 
   try {
-    const result = await generateText({
+    const result = await generateObject({
       model: getLanguageModel(model),
-      output: Output.object({
-        schema: projectIntelligenceSummarySchema,
-        name: "project_intelligence_summary",
-        description:
-          "A traceable project intelligence summary with risks, decisions, action items, and data gaps.",
-      }),
+      schema: runtimeSchema,
+      schemaName: "project_intelligence_summary",
+      schemaDescription:
+        "A traceable construction project operating summary with timeline, project controls, risks, decisions, actions, and data gaps.",
       system: `You summarize construction project intelligence for operators.
 
 Rules:
 - Use only the provided sources.
 - Cite supporting source IDs exactly as provided for every risk, decision, and action item.
+- Cite source IDs for every operatingSummary item that references project facts.
 - Do not invent owners, due dates, dollar amounts, project names, or source IDs.
 - Use null when owner or due date is not explicit.
 - Prefer concrete operational language over generic advice.
@@ -210,14 +343,14 @@ Rules:
         .join("\n"),
     });
 
-    assertKnownSourceIds(result.output, new Set(sourceIds));
+    assertKnownSourceIds(result.object, new Set(sourceIds));
 
     return {
       schema: "project_intelligence_summary_v1",
       model,
       sourceCount: normalizedSources.length,
       sourceIds,
-      ...result.output,
+      ...result.object,
     };
   } catch (error) {
     if (
