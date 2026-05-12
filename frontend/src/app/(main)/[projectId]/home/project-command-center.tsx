@@ -775,9 +775,6 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
                         {roleName}
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs text-primary">
-                      {isCreating ? "..." : "Assign"}
-                    </span>
                   </>
                 )}
               </Button>
