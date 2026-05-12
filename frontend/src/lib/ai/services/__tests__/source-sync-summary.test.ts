@@ -293,7 +293,24 @@ describe("source-sync-summary", () => {
               summary: {
                 model: "openai/gpt-4.1-nano",
                 headline: "Source sync still needs attention.",
+                context: "Graph sync is behind and needs operator follow-up.",
                 confidence: "medium",
+                risks: [
+                  {
+                    title: "Embeddings are stale",
+                    severity: "high",
+                    recommendedAction: "Run targeted embedding retry.",
+                  },
+                ],
+                actionItems: [
+                  {
+                    title: "Retry Graph embedding",
+                    owner: "Ops",
+                    dueDate: "2026-05-12",
+                    priority: "high",
+                  },
+                ],
+                dataGaps: ["Confirm whether Graph webhook delivery recovered."],
               },
             },
           },
@@ -310,9 +327,26 @@ describe("source-sync-summary", () => {
         generatedAt: "2026-05-11T21:05:00.000Z",
         sourceCount: 20,
         headline: "Source sync still needs attention.",
+        context: "Graph sync is behind and needs operator follow-up.",
         confidence: "medium",
         healthStatus: "degraded",
         model: "openai/gpt-4.1-nano",
+        risks: [
+          {
+            title: "Embeddings are stale",
+            severity: "high",
+            recommendedAction: "Run targeted embedding retry.",
+          },
+        ],
+        actionItems: [
+          {
+            title: "Retry Graph embedding",
+            owner: "Ops",
+            dueDate: "2026-05-12",
+            priority: "high",
+          },
+        ],
+        dataGaps: ["Confirm whether Graph webhook delivery recovered."],
       },
     ]);
     expect(ledger.listAiBriefSnapshots).toHaveBeenCalledWith(5);

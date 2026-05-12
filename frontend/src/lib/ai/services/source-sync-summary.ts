@@ -43,9 +43,22 @@ export type SourceSyncAiBriefSnapshot = {
 
 export type SourceSyncAiBriefSnapshotListItem = SourceSyncAiBriefSnapshot & {
   headline: string | null;
+  context: string | null;
   confidence: "low" | "medium" | "high" | null;
   healthStatus: string | null;
   model: string | null;
+  risks: Array<{
+    title: string;
+    severity: string | null;
+    recommendedAction: string | null;
+  }>;
+  actionItems: Array<{
+    title: string;
+    owner: string | null;
+    dueDate: string | null;
+    priority: string | null;
+  }>;
+  dataGaps: string[];
 };
 
 function createSourceSyncRunSnapshotLedger(): SourceSyncRunSnapshotLedger {
@@ -104,6 +117,52 @@ function readString(value: unknown): string | null {
 
 function readConfidence(value: unknown): "low" | "medium" | "high" | null {
   return value === "low" || value === "medium" || value === "high" ? value : null;
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map(readString).filter((item): item is string => Boolean(item))
+    : [];
+}
+
+function readRisks(value: unknown): SourceSyncAiBriefSnapshotListItem["risks"] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!isRecord(item)) return null;
+      const title = readString(item.title);
+      if (!title) return null;
+      return {
+        title,
+        severity: readString(item.severity),
+        recommendedAction: readString(item.recommendedAction),
+      };
+    })
+    .filter((item): item is SourceSyncAiBriefSnapshotListItem["risks"][number] =>
+      Boolean(item),
+    );
+}
+
+function readActionItems(
+  value: unknown,
+): SourceSyncAiBriefSnapshotListItem["actionItems"] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!isRecord(item)) return null;
+      const title = readString(item.title);
+      if (!title) return null;
+      return {
+        title,
+        owner: readString(item.owner),
+        dueDate: readString(item.dueDate),
+        priority: readString(item.priority),
+      };
+    })
+    .filter(
+      (item): item is SourceSyncAiBriefSnapshotListItem["actionItems"][number] =>
+        Boolean(item),
+    );
 }
 
 export function buildSourceSyncSummarySources(
@@ -309,9 +368,13 @@ export async function listSourceSyncAiBriefSnapshots({
       generatedAt: row.finished_at ?? row.started_at,
       sourceCount: row.items_seen,
       headline: readString(summary.headline),
+      context: readString(summary.context),
       confidence: readConfidence(summary.confidence),
       healthStatus: readString(metadata.healthStatus),
       model: readString(summary.model),
+      risks: readRisks(summary.risks),
+      actionItems: readActionItems(summary.actionItems),
+      dataGaps: readStringArray(summary.dataGaps),
     };
   });
 }

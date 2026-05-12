@@ -168,9 +168,22 @@ interface SourceSyncAiBriefSnapshot {
 
 interface SourceSyncAiBriefSnapshotListItem extends SourceSyncAiBriefSnapshot {
   headline: string | null;
+  context: string | null;
   confidence: "low" | "medium" | "high" | null;
   healthStatus: string | null;
   model: string | null;
+  risks: Array<{
+    title: string;
+    severity: string | null;
+    recommendedAction: string | null;
+  }>;
+  actionItems: Array<{
+    title: string;
+    owner: string | null;
+    dueDate: string | null;
+    priority: string | null;
+  }>;
+  dataGaps: string[];
 }
 
 interface SourceSyncAiBriefResponse {
@@ -721,30 +734,101 @@ function RecentAiBriefSnapshots({
       {snapshots.length > 0 ? (
         <div className="divide-y divide-border/60">
           {snapshots.map((snapshot) => (
-            <div
-              key={snapshot.id}
-              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm"
-            >
-              <div className="min-w-0 space-y-1">
-                <p className="truncate font-medium text-foreground">
-                  {snapshot.headline ?? "Source sync AI brief"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {snapshot.sourceCount} records · {snapshot.model ?? "model unknown"}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                {snapshot.confidence ? (
-                  <Badge variant="outline" className="capitalize">
-                    {snapshot.confidence}
-                  </Badge>
+            <details key={snapshot.id} className="group py-2 text-sm">
+              <summary className="flex cursor-pointer list-none flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <div className="min-w-0 space-y-1">
+                  <p className="truncate font-medium text-foreground">
+                    {snapshot.headline ?? "Source sync AI brief"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {snapshot.sourceCount} records ·{" "}
+                    {snapshot.model ?? "model unknown"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  {snapshot.confidence ? (
+                    <Badge variant="outline" className="capitalize">
+                      {snapshot.confidence}
+                    </Badge>
+                  ) : null}
+                  {snapshot.healthStatus ? (
+                    <span className="capitalize">{snapshot.healthStatus}</span>
+                  ) : null}
+                  <span>{formatDate(snapshot.generatedAt)}</span>
+                </div>
+              </summary>
+
+              <div className="space-y-3 pt-3 text-sm">
+                {snapshot.context ? (
+                  <p className="max-w-3xl leading-6 text-muted-foreground">
+                    {snapshot.context}
+                  </p>
                 ) : null}
-                {snapshot.healthStatus ? (
-                  <span className="capitalize">{snapshot.healthStatus}</span>
+
+                {snapshot.actionItems.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      Actions
+                    </p>
+                    <div className="space-y-1">
+                      {snapshot.actionItems.map((item) => (
+                        <div key={item.title} className="text-sm">
+                          <span className="font-medium text-foreground">
+                            {item.title}
+                          </span>
+                          {item.owner || item.dueDate || item.priority ? (
+                            <span className="text-muted-foreground">
+                              {" "}
+                              {[
+                                item.owner ? `Owner: ${item.owner}` : null,
+                                item.dueDate ? `Due: ${item.dueDate}` : null,
+                                item.priority ? `Priority: ${item.priority}` : null,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ) : null}
-                <span>{formatDate(snapshot.generatedAt)}</span>
+
+                {snapshot.risks.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      Risks
+                    </p>
+                    <div className="space-y-1">
+                      {snapshot.risks.map((risk) => (
+                        <div key={risk.title} className="text-sm">
+                          <span className="font-medium text-foreground">
+                            {risk.title}
+                          </span>
+                          {risk.recommendedAction ? (
+                            <span className="text-muted-foreground">
+                              {" "}
+                              {risk.recommendedAction}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {snapshot.dataGaps.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      Data gaps
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {snapshot.dataGaps.join(" ")}
+                    </p>
+                  </div>
+                ) : null}
               </div>
-            </div>
+            </details>
           ))}
         </div>
       ) : null}
