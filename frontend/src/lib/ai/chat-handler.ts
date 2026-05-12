@@ -41,6 +41,7 @@ import {
 } from "@/lib/ai/services/marketing-service";
 import {
   assembleSystemPrompt,
+  assembleTaskWriteSystemPrompt,
   type BotLearningUsageSummary,
   type MemoryUsageSummary,
   runPostResponseTasks,
@@ -174,6 +175,26 @@ type LoopDiagnostic = {
   finalFinishReason: string;
   totalWarningCount: number;
 };
+
+const TASK_WRITE_TOOL_NAMES = [
+  "getActionItemsAndInsights",
+  "createGeneratedTask",
+  "updateGeneratedTask",
+  "deleteGeneratedTask",
+] as const;
+
+function pickTools(tools: ToolSet, names: readonly string[]): ToolSet {
+  const selected: ToolSet = {};
+  for (const name of names) {
+    const candidate = tools[name];
+    if (candidate) selected[name] = candidate;
+  }
+  return selected;
+}
+
+function getApproxTokenCount(value: string): number {
+  return Math.ceil(value.length / 4);
+}
 
 type ExecutableTool = {
   execute?: (input: Record<string, unknown>) => Promise<unknown>;
@@ -3790,21 +3811,47 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           status: "loading",
         });
 
-        let systemPrompt = await assembleSystemPrompt({
-          userId: user.id,
-          messageText: lastUserContent,
-          selectedProjectId,
-          councilMode,
-          sessionId,
-          isFirstTurn: messages.length === 1,
-          onMemoryUsage: (usage) => {
-            memoryUsage = usage;
-          },
-          onLearningUsage: (usage) => {
-            learningUsage = usage;
-          },
-        });
-        if (sourceHealthRequested) {
+        const isTaskWriteIntent = assistantIntent === "task_write";
+        let promptMode: "full_strategist" | "task_write_lean" = "full_strategist";
+        let systemPrompt = isTaskWriteIntent
+          ? await assembleTaskWriteSystemPrompt({
+              userId: user.id,
+              messageText: lastUserContent,
+              selectedProjectId,
+            })
+          : await assembleSystemPrompt({
+              userId: user.id,
+              messageText: lastUserContent,
+              selectedProjectId,
+              councilMode,
+              sessionId,
+              isFirstTurn: messages.length === 1,
+              onMemoryUsage: (usage) => {
+                memoryUsage = usage;
+              },
+              onLearningUsage: (usage) => {
+                learningUsage = usage;
+              },
+            });
+        if (isTaskWriteIntent) {
+          promptMode = "task_write_lean";
+          toolTrace.push({
+            tool: "promptContextReducer",
+            input: {
+              intent: assistantIntent,
+              message: lastUserContent.slice(0, 240),
+            },
+            output: {
+              promptMode,
+              skippedGeneralMemory: true,
+              skippedWorkspaceArtifacts: true,
+              skippedSourceHealth: true,
+              skippedExecutivePacket: true,
+            },
+            timestamp: new Date().toISOString(),
+          });
+        }
+        if (!isTaskWriteIntent && sourceHealthRequested) {
           const sourceHealth = await getAssistantSourceHealthContext("source_status_request");
           if (sourceHealth) {
             systemPrompt = systemPrompt + `\n\n---\n\n${sourceHealth.promptInjection}`;
@@ -3813,11 +3860,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
         const priorProjectContinuityContext =
           formatPriorProjectContinuityContext(priorProjectName);
-        if (priorProjectContinuityContext) {
+        if (!isTaskWriteIntent && priorProjectContinuityContext) {
           systemPrompt = systemPrompt + `\n\n---\n\n${priorProjectContinuityContext}`;
         }
 
-        if (executivePagePacket) {
+        if (!isTaskWriteIntent && executivePagePacket) {
           systemPrompt = systemPrompt + `\n\n---\n\n${formatExecutiveBriefPacketContext(executivePagePacket)}`;
         }
 
@@ -4879,7 +4926,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           // the synthesis step changes.
           // See docs/ai-plan/evals/dogfood/2026-05-02T16-13-17-228Z/report.md
           // case 05-recent-emails for the dogfood failure that surfaced this.
-          const sourceLookupHeader = `# Source Lookup Results\n\nThe user is asking for what was said / what happened in source channels (meetings, Teams, email, documents). I ran source retrieval before synthesis. If a Recent Teams Window is present, treat it as the current primary evidence and use older semantic matches only as secondary pattern context. Read the sources carefully, extract the actual commitments / issues / decisions / sentiment the user is asking about, and synthesize a useful answer with specific quotes or paraphrased points and source citations. Do NOT just list the source previews verbatim — that's what we used to do and it wasn't useful. If the sources don't actually contain what the user asked about, say so honestly.`;
+          const sourceLookupHeader = `# Source Lookup Results\n\nRetrieval is complete. Do NOT call any additional tools — all available source evidence is already loaded below. If a Recent Teams Window is present, treat it as the current primary evidence and use older semantic matches only as secondary pattern context. Read the sources carefully, extract the actual commitments / issues / decisions / sentiment the user is asking about, and synthesize a useful answer with specific quotes or paraphrased points and source citations. Do NOT just list the source previews verbatim. If the sources don't actually contain what the user asked about, say so honestly and explain what the search did return.`;
           systemPrompt = [
             systemPrompt,
             "---",
@@ -5187,7 +5234,13 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
 
         const streamingModelToolsEnabled = shouldEnableStreamingModelTools(providerDecision);
-        const modelTools = streamingModelToolsEnabled ? (tools as ToolSet) : undefined;
+        // Disable tools when source_lookup context is already injected — the
+        // model should synthesize from the loaded sources, not call more tools.
+        const sourceLookupContextInjected = assistantIntent === "source_lookup";
+        const modelTools =
+          streamingModelToolsEnabled && !sourceLookupContextInjected
+            ? (tools as ToolSet)
+            : undefined;
         toolTrace.push({
           tool: "streamingToolPolicy",
           input: {
@@ -5196,7 +5249,10 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           },
           output: {
             streamingModelToolsEnabled,
-            reason: providerDecision.reason,
+            sourceLookupContextInjected,
+            reason: sourceLookupContextInjected
+              ? "tools disabled: source_lookup context pre-loaded"
+              : providerDecision.reason,
           },
           timestamp: new Date().toISOString(),
         });
@@ -5207,6 +5263,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           messages: modelMessages,
           tools: modelTools,
         });
+
+        // Populated by onFinish; used for Langfuse trace after persistence.
+        let rawFinishUsage: { inputTokens?: number; outputTokens?: number; cachedInputTokens?: number } | undefined;
+        let rawStepCount = 0;
+
         const result = streamText({
             model: getLanguageModel(activeModel),
             ...promptPayload,
@@ -5259,20 +5320,13 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 outputTokens: usage?.outputTokens,
               });
             },
-            onFinish: ({ text, usage }) => {
-              const lastUserMsg = messages.findLast((m) => m.role === "user");
-              const inputText = lastUserMsg
-                ? extractTextFromParts(lastUserMsg.parts)
-                : "";
-              waitUntil(traceChatCompletion({
-                userId: user.id,
-                sessionId,
-                modelId: activeModel,
-                input: inputText,
-                output: text ?? "",
-                usage,
-                metadata: { intent: assistantIntent ?? "unknown" },
-              }));
+            onFinish: ({ usage: finishUsage, steps }) => {
+              // Capture raw step/usage data for the post-persist trace below.
+              // We do NOT trace here because `text` may be empty (tool-only
+              // first attempt) — the actual final content (after retry) is
+              // captured after persistAssistantMessage.
+              rawFinishUsage = finishUsage;
+              rawStepCount = steps?.length ?? 0;
             },
           });
 
@@ -5485,6 +5539,34 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             learnings: learningUsage.learnings,
           });
         }
+
+        // Trace the ACTUAL final response (after retries) so Langfuse
+        // reflects what the user received, not the tool-only first attempt.
+        const toolCallNames = stepDiagnostics.flatMap((s) => s.toolCallNames ?? []);
+        const wasRetried = toolTrace.some(
+          (t) => t.tool === "noToolRetry" || t.tool === "metaCommentaryRetry",
+        );
+        const retryEntry = toolTrace.find(
+          (t) => t.tool === "noToolRetry" || t.tool === "metaCommentaryRetry",
+        );
+        waitUntil(traceChatCompletion({
+          userId: user.id,
+          sessionId,
+          modelId: activeModel,
+          input: lastUserContent,
+          output: content,
+          usage: rawFinishUsage ?? totalUsage,
+          intent: assistantIntent ?? "unknown",
+          qualityScore: responseQuality.score,
+          qualityReasons: responseQuality.reasons,
+          wasRetried,
+          retryReason: wasRetried
+            ? (retryEntry?.input as Record<string, unknown>)?.reason as string | undefined
+            : undefined,
+          stepCount: rawStepCount || stepDiagnostics.length,
+          toolCallNames,
+          selectedProjectId: selectedProjectId ?? null,
+        }));
       },
       onError: (error) => {
         const message = error instanceof Error ? error.message : String(error);

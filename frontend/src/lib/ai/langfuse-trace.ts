@@ -22,6 +22,14 @@ type TraceParams = {
   input: string;
   output: string;
   usage?: { inputTokens?: number; outputTokens?: number; cachedInputTokens?: number };
+  intent?: string;
+  qualityScore?: number;
+  qualityReasons?: string[];
+  wasRetried?: boolean;
+  retryReason?: string;
+  stepCount?: number;
+  toolCallNames?: string[];
+  selectedProjectId?: number | null;
   metadata?: Record<string, unknown>;
 };
 
@@ -29,24 +37,48 @@ export async function traceChatCompletion(params: TraceParams): Promise<void> {
   const lf = getClient();
   if (!lf) return;
 
+  const tags: string[] = [];
+  if (params.intent) tags.push(`intent:${params.intent}`);
+  if (params.wasRetried) tags.push("retried");
+  if ((params.qualityScore ?? 100) < 60) tags.push("low_quality");
+  if ((params.qualityScore ?? 100) >= 80) tags.push("high_quality");
+
+  const traceMetadata: Record<string, unknown> = {
+    intent: params.intent ?? "unknown",
+    qualityScore: params.qualityScore,
+    qualityReasons: params.qualityReasons,
+    wasRetried: params.wasRetried ?? false,
+    retryReason: params.retryReason,
+    stepCount: params.stepCount,
+    toolCallNames: params.toolCallNames,
+    selectedProjectId: params.selectedProjectId,
+    ...params.metadata,
+  };
+
   const trace = lf.trace({
     name: "ai-assistant-chat",
     userId: params.userId,
     sessionId: params.sessionId,
     input: params.input,
-    output: params.output,
-    metadata: params.metadata,
+    output: params.output || null,
+    tags,
+    metadata: traceMetadata,
   });
 
   trace.generation({
     name: "streamText",
     model: params.modelId,
     input: params.input,
-    output: params.output,
+    output: params.output || null,
     usage: {
       input: params.usage?.inputTokens,
       output: params.usage?.outputTokens,
       unit: "TOKENS",
+    },
+    metadata: {
+      cachedInputTokens: params.usage?.cachedInputTokens,
+      stepCount: params.stepCount,
+      toolCallNames: params.toolCallNames,
     },
   });
 
