@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 
-import { PageShell } from "@/components/layout";
 import { DEFAULT_PROJECT_PHASE_FILTER } from "@/lib/portfolio/projects-page-filters";
 import { createClient } from "@/lib/supabase/server";
 import { DocumentMetadataClient } from "./document-metadata-client";
@@ -30,12 +29,10 @@ export default async function DocumentMetadataPage() {
   const items = (data ?? []).map((item) => ({ ...item, content: null }));
 
   return (
-    <PageShell variant="table" title="Document Metadata" showHeader={false}>
-      <DocumentMetadataClient
-        items={items}
-        errorMessage={error?.message ?? null}
-        allProjects={allProjects}
-      />
-    </PageShell>
+    <DocumentMetadataClient
+      items={items}
+      errorMessage={error?.message ?? null}
+      allProjects={allProjects}
+    />
   );
 }
