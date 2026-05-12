@@ -38,7 +38,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "*/15 * * * *"
+    schedule: "*/30 * * * *"
     dockerCommand: >-
       python3 -c "
       import json, sys;
@@ -64,7 +64,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "*/30 * * * *"
+    schedule: "0 * * * *"
     dockerCommand: >-
       timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding --skip-teams-compiler
     envVars:
@@ -90,7 +90,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "15,45 * * * *"
+    schedule: "30 * * * *"
     dockerCommand: >-
       timeout 25m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
     envVars:
