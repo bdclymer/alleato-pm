@@ -1,5 +1,6 @@
 import { PageShell } from "@/components/layout";
 import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
+import { generateEmailVoicePromotionCandidates } from "@/lib/ai/services/feedback-event-service";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
 
@@ -88,6 +89,12 @@ export default async function OutlookDraftFeedbackPage() {
   }
 
   const events = (data ?? []).map(feedbackSummary);
+  const suggestions = await generateEmailVoicePromotionCandidates({
+    windowDays: 30,
+    minSignals: 2,
+    limit: 10,
+    dryRun: true,
+  });
 
   return (
     <PageShell
@@ -96,6 +103,53 @@ export default async function OutlookDraftFeedbackPage() {
       description="Review Brandon draft feedback captured from assistant Outlook draft widgets."
     >
       <section className="space-y-4">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold text-foreground">
+              Suggested voice-profile updates
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              {suggestions.candidatesFound} suggestion
+              {suggestions.candidatesFound === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          {suggestions.candidates.length === 0 ? (
+            <div className="rounded-md border border-border px-3 py-4 text-sm text-muted-foreground">
+              No repeated feedback pattern has crossed the suggestion threshold yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-border rounded-md border border-border">
+              {suggestions.candidates.map((candidate) => {
+                const learning = asRecord(candidate.proposedLearning);
+                return (
+                  <div key={candidate.signature} className="space-y-2 px-3 py-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {textValue(learning.title) ?? "Voice-profile update"}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {textValue(learning.profileSection) ?? "Profile"} ·{" "}
+                          {candidate.sourceEventIds.length} feedback events ·{" "}
+                          confidence {Math.round(candidate.confidence * 100)}%
+                        </div>
+                      </div>
+                      <span className="text-xs font-medium capitalize text-muted-foreground">
+                        {candidate.riskLevel} risk
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {textValue(learning.proposedRule) ??
+                        "Review repeated feedback before updating the profile."}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-foreground">
             Recent draft feedback

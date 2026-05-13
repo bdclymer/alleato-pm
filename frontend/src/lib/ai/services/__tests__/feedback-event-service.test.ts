@@ -3,6 +3,7 @@ import {
   applyAttributionRulePromotion,
   applyMemoryPromotion,
   applyPositiveTaskExamplePromotion,
+  generateEmailVoicePromotionCandidates,
   generateRetrievalPromotionCandidates,
   generateTaskPromotionCandidates,
   recordPacketCardFeedback,
@@ -59,6 +60,29 @@ type TaskFeedbackFixture = {
   promoted: boolean;
 };
 
+type AiFeedbackEventFixture = {
+  id: string;
+  created_at: string;
+  user_id: string | null;
+  project_id: number | null;
+  target_id: string | null;
+  session_id: string | null;
+  source_table: string | null;
+  source_record_id: string | null;
+  event_type: string;
+  event_family: string;
+  surface: string;
+  subject_type: string;
+  subject_id: string | null;
+  signal: string;
+  reason_category: string | null;
+  free_text: string | null;
+  before_snapshot: Record<string, unknown>;
+  after_snapshot: Record<string, unknown>;
+  source_context: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+};
+
 const createServiceClientMock = createServiceClient as jest.Mock;
 const upsertAgentLearningMock = upsertAgentLearning as jest.Mock;
 const writeMemoryMock = writeMemory as jest.Mock;
@@ -113,6 +137,41 @@ function taskFeedback(
     session_id: null,
     learning_id: null,
     promoted: false,
+    ...overrides,
+  };
+}
+
+function emailDraftFeedbackEvent(
+  overrides: Partial<AiFeedbackEventFixture>,
+): AiFeedbackEventFixture {
+  return {
+    id: crypto.randomUUID(),
+    created_at: "2026-05-13T22:00:00.000Z",
+    user_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    project_id: null,
+    target_id: null,
+    session_id: null,
+    source_table: "microsoft_graph_messages",
+    source_record_id: "draft-message-id",
+    event_type: "outlook_email_draft_feedback_recorded",
+    event_family: "assistant_response",
+    surface: "outlook_assistant",
+    subject_type: "outlook_email_draft",
+    subject_id: "draft-message-id",
+    signal: "corrected",
+    reason_category: "too_formal",
+    free_text: "This sounds too polished.",
+    before_snapshot: {},
+    after_snapshot: {},
+    source_context: {
+      mailboxUserId: "bclymer@alleatogroup.com",
+      graphDraftMessageId: "draft-message-id",
+      voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+      voiceProfileVersion: "2026-05-13",
+    },
+    metadata: {
+      visibility: "private",
+    },
     ...overrides,
   };
 }
@@ -237,6 +296,38 @@ function mockTaskPromotionGeneratorSupabase(params: {
   createServiceClientMock.mockReturnValue({
     from: jest.fn((table: string) => {
       if (table === "ai_task_feedback") return taskQuery;
+      if (table === "ai_learning_promotions") return promotionsQuery;
+      throw new Error(`Unexpected table: ${table}`);
+    }),
+  });
+}
+
+function mockEmailVoicePromotionGeneratorSupabase(params: {
+  feedbackRows: AiFeedbackEventFixture[];
+  existingPromotions?: Array<{ proposed_learning: Record<string, unknown> }>;
+}) {
+  const feedbackQuery = {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    gte: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockResolvedValue({
+      data: params.feedbackRows,
+      error: null,
+    }),
+  };
+  const promotionsQuery = {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    in: jest.fn().mockResolvedValue({
+      data: params.existingPromotions ?? [],
+      error: null,
+    }),
+  };
+
+  createServiceClientMock.mockReturnValue({
+    from: jest.fn((table: string) => {
+      if (table === "ai_feedback_events") return feedbackQuery;
       if (table === "ai_learning_promotions") return promotionsQuery;
       throw new Error(`Unexpected table: ${table}`);
     }),
@@ -714,6 +805,59 @@ describe("feedback event service retrieval promotions", () => {
       feedbackId,
       rationale:
         "User marked this generated task as good. After admin review, it can be used as a bounded few-shot task-quality example.",
+    });
+  });
+
+  it("creates Brandon email voice profile candidates from repeated draft feedback", async () => {
+    mockEmailVoicePromotionGeneratorSupabase({
+      feedbackRows: [
+        emailDraftFeedbackEvent({
+          id: "11111111-1111-4111-8111-111111111111",
+          free_text: "Too formal.",
+        }),
+        emailDraftFeedbackEvent({
+          id: "22222222-2222-4222-8222-222222222222",
+          source_record_id: "draft-message-id-2",
+          subject_id: "draft-message-id-2",
+          source_context: {
+            mailboxUserId: "bclymer@alleatogroup.com",
+            graphDraftMessageId: "draft-message-id-2",
+            voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+            voiceProfileVersion: "2026-05-13",
+          },
+          free_text: "Still too polished.",
+        }),
+      ],
+    });
+
+    const result = await generateEmailVoicePromotionCandidates({
+      dryRun: true,
+      minSignals: 2,
+    });
+
+    expect(result.inspectedRows).toBe(2);
+    expect(result.groupsInspected).toBe(1);
+    expect(result.candidatesFound).toBe(1);
+    expect(result.candidatesCreated).toBe(0);
+    expect(result.candidates[0]).toMatchObject({
+      promotionType: "user_preference",
+      projectId: null,
+      destinationTable: "docs/ai-plan/brandon-email-voice-profile.md",
+      destinationRecordId: "docs/ai-plan/brandon-email-voice-profile.md",
+      sourceEventIds: [
+        "11111111-1111-4111-8111-111111111111",
+        "22222222-2222-4222-8222-222222222222",
+      ],
+    });
+    expect(result.candidates[0]?.proposedLearning).toMatchObject({
+      ruleKind: "email_voice_profile_update",
+      profilePath: "docs/ai-plan/brandon-email-voice-profile.md",
+      profileSection: "Avoid",
+      reasonCategory: "too_formal",
+      signal: "corrected",
+      signalCount: 2,
+      proposedRule:
+        "Use plainer wording and remove polished consultant phrasing from Brandon draft replies.",
     });
   });
 

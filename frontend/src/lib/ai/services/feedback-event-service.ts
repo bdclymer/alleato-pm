@@ -256,6 +256,13 @@ export interface GenerateTaskPromotionCandidatesParams {
   dryRun?: boolean;
 }
 
+export interface GenerateEmailVoicePromotionCandidatesParams {
+  windowDays?: number;
+  minSignals?: number;
+  limit?: number;
+  dryRun?: boolean;
+}
+
 export interface TaskPromotionCandidatePreview {
   signature: string;
   promotionType: Extract<AiLearningPromotionType, "positive_task_example">;
@@ -275,6 +282,28 @@ export interface GenerateTaskPromotionCandidatesResult {
   candidatesSkipped: number;
   dryRun: boolean;
   candidates: TaskPromotionCandidatePreview[];
+}
+
+export interface EmailVoicePromotionCandidatePreview {
+  signature: string;
+  promotionType: Extract<AiLearningPromotionType, "user_preference">;
+  projectId: null;
+  confidence: number;
+  riskLevel: AiLearningRiskLevel;
+  destinationTable: "docs/ai-plan/brandon-email-voice-profile.md";
+  destinationRecordId: string;
+  sourceEventIds: string[];
+  proposedLearning: Json;
+}
+
+export interface GenerateEmailVoicePromotionCandidatesResult {
+  inspectedRows: number;
+  groupsInspected: number;
+  candidatesFound: number;
+  candidatesCreated: number;
+  candidatesSkipped: number;
+  dryRun: boolean;
+  candidates: EmailVoicePromotionCandidatePreview[];
 }
 
 export interface ApplyRetrievalWeightPromotionParams {
@@ -1122,6 +1151,266 @@ function taskPromotionTitle(row: AiTaskFeedbackRow): string {
   const snapshot = taskSnapshotRecord(row);
   const name = optionalLearningString(snapshot, "name") ?? "AI-generated task";
   return `Promote task example: ${name.slice(0, 120)}`;
+}
+
+const BRANDON_EMAIL_VOICE_PROFILE_PATH =
+  "docs/ai-plan/brandon-email-voice-profile.md";
+const BRANDON_EMAIL_VOICE_PROFILE_VERSION = "2026-05-13";
+
+const EMAIL_VOICE_REASON_RULES: Record<
+  string,
+  { proposedRule: string; profileSection: string; riskLevel: AiLearningRiskLevel }
+> = {
+  too_formal: {
+    profileSection: "Avoid",
+    proposedRule:
+      "Use plainer wording and remove polished consultant phrasing from Brandon draft replies.",
+    riskLevel: "low",
+  },
+  too_long: {
+    profileSection: "Structure",
+    proposedRule:
+      "Cut draft replies down before presenting them. Keep only the answer, the direct ask, and the next action unless the thread requires detail.",
+    riskLevel: "low",
+  },
+  too_short: {
+    profileSection: "Structure",
+    proposedRule:
+      "Add enough context for the recipient to act when a short reply would be ambiguous.",
+    riskLevel: "medium",
+  },
+  too_soft: {
+    profileSection: "Core Voice",
+    proposedRule:
+      "Make the direction more direct when Brandon is assigning work, asking for cost clarity, or deciding what to carry.",
+    riskLevel: "medium",
+  },
+  too_direct: {
+    profileSection: "Core Voice",
+    proposedRule:
+      "Keep the direction clear, but add a brief courtesy phrase when the recipient relationship or thread tone needs it.",
+    riskLevel: "medium",
+  },
+  wrong_tone: {
+    profileSection: "Core Voice",
+    proposedRule:
+      "Rewrite drafts to sound less ghostwritten: shorter sentences, practical wording, and fewer transitions.",
+    riskLevel: "medium",
+  },
+  wrong_assumption: {
+    profileSection: "Drafting Rules",
+    proposedRule:
+      "Do not infer uncertain facts in Brandon replies. Ask for confirmation or state what needs to be verified.",
+    riskLevel: "low",
+  },
+  missing_context: {
+    profileSection: "Drafting Rules",
+    proposedRule:
+      "Use the email thread context before drafting and include the missing job, trade, cost, or responsibility detail when it changes the ask.",
+    riskLevel: "medium",
+  },
+  good_tone: {
+    profileSection: "Core Voice",
+    proposedRule:
+      "Reinforce the current direct, practical, short Brandon tone when drafting similar replies.",
+    riskLevel: "low",
+  },
+  good_structure: {
+    profileSection: "Structure",
+    proposedRule:
+      "Reinforce the structure that worked: answer first, direct ask second, simple next step last.",
+    riskLevel: "low",
+  },
+  other: {
+    profileSection: "Drafting Rules",
+    proposedRule:
+      "Review repeated custom Outlook draft feedback and update the Brandon voice profile with the specific recurring preference.",
+    riskLevel: "medium",
+  },
+};
+
+function feedbackEventRecord(value: Json | null): Record<string, unknown> {
+  return jsonRecord(value);
+}
+
+function emailVoiceGroupKey(row: AiFeedbackEventRow): string | null {
+  if (row.event_type !== "outlook_email_draft_feedback_recorded") return null;
+  const metadata = feedbackEventRecord(row.metadata);
+  const sourceContext = feedbackEventRecord(row.source_context);
+  const voiceProfilePath =
+    optionalLearningString(sourceContext, "voiceProfilePath") ??
+    optionalLearningString(metadata, "voiceProfilePath") ??
+    BRANDON_EMAIL_VOICE_PROFILE_PATH;
+  const reasonCategory = row.reason_category || "other";
+  return [
+    "email_voice_profile",
+    voiceProfilePath,
+    reasonCategory,
+    row.signal,
+  ].join("|");
+}
+
+function emailVoiceSignature(groupKey: string): string {
+  return `outlook_email_voice|${groupKey}`;
+}
+
+function emailVoiceConfidence(signalCount: number, inspectedRows: number): number {
+  const base = signalCount / Math.max(inspectedRows, signalCount);
+  const volumeBonus = Math.min(0.25, signalCount * 0.04);
+  return Math.min(0.9, Math.max(0.6, base + volumeBonus));
+}
+
+function emailVoiceTitle(reasonCategory: string, signal: string): string {
+  return `Update Brandon email voice profile: ${reasonCategory.replaceAll("_", " ")} (${signal})`;
+}
+
+export async function generateEmailVoicePromotionCandidates(
+  params: GenerateEmailVoicePromotionCandidatesParams = {},
+): Promise<GenerateEmailVoicePromotionCandidatesResult> {
+  const windowDays = Math.min(90, Math.max(1, params.windowDays ?? 30));
+  const minSignals = Math.min(25, Math.max(2, params.minSignals ?? 2));
+  const limit = Math.min(100, Math.max(1, params.limit ?? 25));
+  const dryRun = params.dryRun ?? false;
+  const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from("ai_feedback_events")
+    .select("*")
+    .eq("event_type", "outlook_email_draft_feedback_recorded")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(1_000);
+
+  if (error) {
+    throw new AiFeedbackEventError(
+      "ai_feedback_events",
+      "select",
+      error.message,
+    );
+  }
+
+  const rows = (data ?? []) as AiFeedbackEventRow[];
+  const grouped = new Map<string, AiFeedbackEventRow[]>();
+  for (const row of rows) {
+    const key = emailVoiceGroupKey(row);
+    if (!key) continue;
+    const existing = grouped.get(key) ?? [];
+    existing.push(row);
+    grouped.set(key, existing);
+  }
+
+  const existingSignatures = await existingPromotionSignaturesForType(
+    supabase,
+    "user_preference",
+  );
+  const candidates: EmailVoicePromotionCandidatePreview[] = [];
+
+  for (const [groupKey, groupRows] of grouped) {
+    if (candidates.length >= limit) break;
+    if (groupRows.length < minSignals) continue;
+
+    const representative = groupRows[0];
+    if (!representative) continue;
+
+    const reasonCategory = representative.reason_category || "other";
+    const rule = EMAIL_VOICE_REASON_RULES[reasonCategory] ?? EMAIL_VOICE_REASON_RULES.other;
+    const sourceEventIds = groupRows.map((row) => row.id);
+    const signature = emailVoiceSignature(groupKey);
+    if (existingSignatures.has(signature)) continue;
+
+    const sourceContext = feedbackEventRecord(representative.source_context);
+    const metadata = feedbackEventRecord(representative.metadata);
+    const voiceProfilePath =
+      optionalLearningString(sourceContext, "voiceProfilePath") ??
+      optionalLearningString(metadata, "voiceProfilePath") ??
+      BRANDON_EMAIL_VOICE_PROFILE_PATH;
+    const voiceProfileVersion =
+      optionalLearningString(sourceContext, "voiceProfileVersion") ??
+      optionalLearningString(metadata, "voiceProfileVersion") ??
+      BRANDON_EMAIL_VOICE_PROFILE_VERSION;
+
+    const proposedLearning: Json = {
+      signature,
+      ruleKind: "email_voice_profile_update",
+      title: emailVoiceTitle(reasonCategory, representative.signal),
+      profilePath: voiceProfilePath,
+      profileVersion: voiceProfileVersion,
+      profileSection: rule.profileSection,
+      proposedRule: rule.proposedRule,
+      reasonCategory,
+      signal: representative.signal,
+      evidenceWindowDays: windowDays,
+      signalCount: groupRows.length,
+      sampleFeedback: groupRows
+        .map((row) => row.free_text)
+        .filter((text): text is string => typeof text === "string" && text.trim().length > 0)
+        .slice(0, 5),
+      rationale:
+        "Repeated Outlook draft feedback for Brandon crossed the configured threshold. Review before updating the Markdown voice profile.",
+    };
+
+    candidates.push({
+      signature,
+      promotionType: "user_preference",
+      projectId: null,
+      confidence: emailVoiceConfidence(groupRows.length, rows.length),
+      riskLevel: rule.riskLevel,
+      destinationTable: "docs/ai-plan/brandon-email-voice-profile.md",
+      destinationRecordId: voiceProfilePath,
+      sourceEventIds,
+      proposedLearning,
+    });
+  }
+
+  if (dryRun || candidates.length === 0) {
+    return {
+      inspectedRows: rows.length,
+      groupsInspected: grouped.size,
+      candidatesFound: candidates.length,
+      candidatesCreated: 0,
+      candidatesSkipped: candidates.length,
+      dryRun,
+      candidates,
+    };
+  }
+
+  const payload: AiLearningPromotionInsert[] = candidates.map((candidate) => ({
+    status: "candidate",
+    promotion_type: candidate.promotionType,
+    project_id: null,
+    target_id: null,
+    source_event_ids: candidate.sourceEventIds,
+    destination_table: candidate.destinationTable,
+    destination_record_id: candidate.destinationRecordId,
+    confidence: candidate.confidence,
+    risk_level: candidate.riskLevel,
+    proposed_learning: candidate.proposedLearning,
+    review_notes: null,
+  }));
+
+  const { data: created, error: insertError } = await supabase
+    .from("ai_learning_promotions")
+    .insert(payload)
+    .select("*");
+
+  if (insertError || !created) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "insert_batch",
+      insertError?.message ?? "batch insert returned no rows",
+    );
+  }
+
+  return {
+    inspectedRows: rows.length,
+    groupsInspected: grouped.size,
+    candidatesFound: candidates.length,
+    candidatesCreated: created.length,
+    candidatesSkipped: candidates.length - created.length,
+    dryRun,
+    candidates,
+  };
 }
 
 export async function generateTaskPromotionCandidates(
