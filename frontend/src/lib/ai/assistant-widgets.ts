@@ -456,6 +456,27 @@ export type AssistantWidgetDataPart = {
   };
 };
 
+export const ASSISTANT_WIDGET_TYPES = [
+  "draft_email",
+  "calendar_invite",
+  "create_task",
+  "task_summary",
+  "meeting_intelligence",
+  "project_picker",
+  "owner_snapshot",
+  "owner_action_queue",
+  "meeting_insights",
+  "risk_exposure_packet",
+  "financial_pulse",
+  "creative_draft",
+  "source_evidence_drawer",
+  "record_write_preview",
+  "create_event",
+  "project_action_preview",
+  "decision_packet",
+  "feature_request_packet",
+] as const satisfies readonly AssistantWidgetKind[];
+
 function normalizePrompt(prompt: string): string {
   return prompt.trim().replace(/\s+/g, " ");
 }
@@ -673,25 +694,6 @@ export function isAssistantWidgetPayload(
   const record = value as Record<string, unknown>;
   return (
     typeof record.type === "string" &&
-    [
-      "draft_email",
-      "calendar_invite",
-      "create_task",
-      "task_summary",
-      "meeting_intelligence",
-      "project_picker",
-      "owner_snapshot",
-      "owner_action_queue",
-      "meeting_insights",
-      "risk_exposure_packet",
-      "financial_pulse",
-      "creative_draft",
-      "source_evidence_drawer",
-      "record_write_preview",
-      "create_event",
-      "project_action_preview",
-      "decision_packet",
-      "feature_request_packet",
-    ].includes(record.type)
+    ASSISTANT_WIDGET_TYPES.includes(record.type as AssistantWidgetKind)
   );
 }
