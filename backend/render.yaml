@@ -63,6 +63,14 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -89,6 +97,14 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -117,6 +133,14 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -167,6 +191,14 @@ services:
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: ALLEATO_RUNTIME_ENV
         value: production
       - key: AI_GATEWAY_REQUIRED
@@ -209,8 +241,8 @@ services:
         value: https://alleato-procore.vercel.app,https://www.alleato-procore.vercel.app
       # YokeFlow Agent Platform
       - key: DATABASE_URL
-        sync: false  # PostgreSQL connection string for YokeFlow
+        sync: false # PostgreSQL connection string for YokeFlow
       - key: CLAUDE_CODE_OAUTH_TOKEN
-        sync: false  # Claude SDK authentication token
+        sync: false # Claude SDK authentication token
       - key: UI_PASSWORD
-        sync: false  # Optional: Set to enable YokeFlow authentication
+        sync: false # Optional: Set to enable YokeFlow authentication

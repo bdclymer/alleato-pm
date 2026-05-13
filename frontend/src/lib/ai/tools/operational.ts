@@ -7,7 +7,19 @@ import {
 } from "@/lib/supabase/service";
 import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
 import { createStructuredQueryTools } from "./structured-queries";
-import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace, getOpenAI, getOpenAIModelId, generateEmbedding, EMBEDDING, isBriefingQuery, rerankWithLLM, rankBriefingSourcePriority } from "./tool-utils";
+import {
+  type ToolTracePayload,
+  asNumber,
+  resolveProject,
+  withTrace as _withTrace,
+  getOpenAI,
+  getOpenAIModelId,
+  generateEmbedding,
+  EMBEDDING,
+  isBriefingQuery,
+  rerankWithLLM,
+  rankBriefingSourcePriority,
+} from "./tool-utils";
 import {
   searchMemories as searchAiMemories,
   writeMemory as writeAiMemory,
@@ -84,11 +96,14 @@ async function loadActiveRetrievalWeights({
     .limit(50);
 
   if (error) {
-    throw new Error(`Failed to load retrieval weights for ${toolName}: ${error.message}`);
+    throw new Error(
+      `Failed to load retrieval weights for ${toolName}: ${error.message}`,
+    );
   }
 
-  return ((data ?? []) as RetrievalWeightScoringRow[]).filter((weight) =>
-    weight.project_id === null || weight.project_id === (projectId ?? null),
+  return ((data ?? []) as RetrievalWeightScoringRow[]).filter(
+    (weight) =>
+      weight.project_id === null || weight.project_id === (projectId ?? null),
   );
 }
 
@@ -99,8 +114,14 @@ function normalizeEmail(value: string | null | undefined): string | null {
   return match?.[0] ?? null;
 }
 
-function includesEmail(values: string[] | null | undefined, email: string): boolean {
-  return Array.isArray(values) && values.some((value) => normalizeEmail(value) === email);
+function includesEmail(
+  values: string[] | null | undefined,
+  email: string,
+): boolean {
+  return (
+    Array.isArray(values) &&
+    values.some((value) => normalizeEmail(value) === email)
+  );
 }
 
 function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
@@ -114,7 +135,9 @@ function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
     minute: "2-digit",
     second: "2-digit",
   }).formatToParts(date);
-  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const lookup = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
   const hour = lookup.hour === "24" ? "00" : lookup.hour;
   const asUtc = Date.UTC(
     Number(lookup.year),
@@ -135,7 +158,9 @@ function startOfBusinessDay(daysBack: number, timeZone: string): Date {
     month: "2-digit",
     day: "2-digit",
   }).formatToParts(now);
-  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const lookup = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
   const localMidnightGuess = Date.UTC(
     Number(lookup.year),
     Number(lookup.month) - 1,
@@ -145,7 +170,9 @@ function startOfBusinessDay(daysBack: number, timeZone: string): Date {
     0,
   );
   const guessDate = new Date(localMidnightGuess);
-  return new Date(localMidnightGuess - getTimeZoneOffsetMs(guessDate, timeZone));
+  return new Date(
+    localMidnightGuess - getTimeZoneOffsetMs(guessDate, timeZone),
+  );
 }
 
 function emailMatchesDirection(
@@ -159,11 +186,16 @@ function emailMatchesDirection(
 
   const sentByParticipant = normalizeEmail(row.from_email) === participantEmail;
   const sentToParticipant =
-    includesEmail(row.to_list, participantEmail) || includesEmail(row.cc_list, participantEmail);
+    includesEmail(row.to_list, participantEmail) ||
+    includesEmail(row.cc_list, participantEmail);
 
   if (direction === "from") return sentByParticipant;
   if (direction === "to") return sentToParticipant;
-  return sentByParticipant || sentToParticipant || normalizeEmail(row.mailbox_user_id) === participantEmail;
+  return (
+    sentByParticipant ||
+    sentToParticipant ||
+    normalizeEmail(row.mailbox_user_id) === participantEmail
+  );
 }
 
 function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
@@ -184,7 +216,11 @@ function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
       });
       const latest = sorted[0];
       const senders = Array.from(
-        new Set(sorted.map((row) => normalizeEmail(row.from_email)).filter((email): email is string => Boolean(email))),
+        new Set(
+          sorted
+            .map((row) => normalizeEmail(row.from_email))
+            .filter((email): email is string => Boolean(email)),
+        ),
       );
       const recipients = Array.from(
         new Set(
@@ -208,9 +244,15 @@ function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
           : null,
         hasAttachments: sorted.some((row) => row.has_attachments === true),
         projectIds: Array.from(
-          new Set(sorted.map((row) => row.project_id).filter((id): id is number => typeof id === "number")),
+          new Set(
+            sorted
+              .map((row) => row.project_id)
+              .filter((id): id is number => typeof id === "number"),
+          ),
         ),
-        webLinks: sorted.map((row) => row.web_link).filter((link): link is string => Boolean(link)),
+        webLinks: sorted
+          .map((row) => row.web_link)
+          .filter((link): link is string => Boolean(link)),
         messageIds: sorted.map((row) => row.id),
       };
     })
@@ -231,7 +273,9 @@ export function createOperationalTools(
   options: CreateOperationalToolsOptions = {},
 ) {
   const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled() ? createRagServiceClient() : supabase;
+  const ragSupabase = isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : supabase;
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
   });
@@ -397,7 +441,9 @@ export function createOperationalTools(
           // Collect unique company UUIDs from subcontracts
           // contract_company_id is a UUID referencing companies.id (not vendors.id)
           const companyIds = Array.from(
-            new Set(subs.map((s) => s.contract_company_id as string).filter(Boolean)),
+            new Set(
+              subs.map((s) => s.contract_company_id as string).filter(Boolean),
+            ),
           );
 
           // Fetch companies by UUID — parallel with SOV fetch
@@ -423,7 +469,9 @@ export function createOperationalTools(
           if (vendorName) {
             const lower = vendorName.toLowerCase();
             companies = companies.filter((c) =>
-              String(c.name ?? "").toLowerCase().includes(lower),
+              String(c.name ?? "")
+                .toLowerCase()
+                .includes(lower),
             );
           }
 
@@ -432,7 +480,8 @@ export function createOperationalTools(
           // Index SOVs by commitment_id
           const sovByCommitment = new Map<string, AnyRow>();
           sovData.forEach((s) => {
-            if (s.commitment_id) sovByCommitment.set(s.commitment_id as string, s);
+            if (s.commitment_id)
+              sovByCommitment.set(s.commitment_id as string, s);
           });
 
           // Build company lookup map (UUID → company row)
@@ -481,9 +530,7 @@ export function createOperationalTools(
           );
 
           return {
-            project: resolvedId
-              ? { id: resolvedId, name: resolvedName }
-              : null,
+            project: resolvedId ? { id: resolvedId, name: resolvedName } : null,
             portfolioSummary: {
               totalVendors: ranked.length,
               totalCommittedValue,
@@ -576,7 +623,8 @@ export function createOperationalTools(
 
           // Cost and schedule impact flags
           const withCostImpact = rfis.filter(
-            (r) => r.cost_impact && r.cost_impact !== "No" && r.cost_impact !== "no",
+            (r) =>
+              r.cost_impact && r.cost_impact !== "No" && r.cost_impact !== "no",
           );
           const withScheduleImpact = rfis.filter(
             (r) =>
@@ -736,7 +784,10 @@ export function createOperationalTools(
           // Division/spec section distribution
           const divisionCounts = new Map<string, number>();
           submittals.forEach((s) => {
-            const d = (s.division as string) ?? (s.specification_section as string) ?? "Unclassified";
+            const d =
+              (s.division as string) ??
+              (s.specification_section as string) ??
+              "Unclassified";
             divisionCounts.set(d, (divisionCounts.get(d) ?? 0) + 1);
           });
 
@@ -806,7 +857,9 @@ export function createOperationalTools(
           // Get projects
           let projQuery = supabase
             .from("projects")
-            .select("id, name, phase, health_status, health_score, budget, budget_used, completion_percentage")
+            .select(
+              "id, name, phase, health_status, health_score, budget, budget_used, completion_percentage",
+            )
             .eq("archived", false)
             .order("name", { ascending: true })
             .limit(30);
@@ -830,7 +883,9 @@ export function createOperationalTools(
             await Promise.all([
               supabase
                 .from("prime_contract_financial_summary")
-                .select("project_id, original_contract_amount, revised_contract_amount, pending_change_orders, approved_change_orders")
+                .select(
+                  "project_id, original_contract_amount, revised_contract_amount, pending_change_orders, approved_change_orders",
+                )
                 .in("project_id", pIds),
               supabase
                 .from("rfis")
@@ -842,7 +897,9 @@ export function createOperationalTools(
                 .in("project_id", pIds),
               supabase
                 .from("schedule_tasks")
-                .select("project_id, status, finish_date, percent_complete, is_milestone")
+                .select(
+                  "project_id, status, finish_date, percent_complete, is_milestone",
+                )
                 .in("project_id", pIds),
               supabase
                 .from("change_events_summary")
@@ -903,7 +960,9 @@ export function createOperationalTools(
             const ces = ceByProject.get(pid) ?? [];
 
             const openRfis = rfis.filter(
-              (r) => (r.status as string) !== "closed" && (r.status as string) !== "Closed",
+              (r) =>
+                (r.status as string) !== "closed" &&
+                (r.status as string) !== "Closed",
             );
             const overdueRfis = openRfis.filter(
               (r) => r.due_date && (r.due_date as string) < now,
@@ -917,7 +976,10 @@ export function createOperationalTools(
             );
             const contractValue = fins.reduce(
               (sum, f) =>
-                sum + asNumber(f.revised_contract_amount ?? f.original_contract_amount),
+                sum +
+                asNumber(
+                  f.revised_contract_amount ?? f.original_contract_amount,
+                ),
               0,
             );
             const pendingCOs = fins.reduce(
@@ -925,7 +987,9 @@ export function createOperationalTools(
               0,
             );
             const openCEs = ces.filter(
-              (c) => (c.status as string) !== "closed" && (c.status as string) !== "void",
+              (c) =>
+                (c.status as string) !== "closed" &&
+                (c.status as string) !== "void",
             );
 
             return {
@@ -1084,10 +1148,7 @@ export function createOperationalTools(
                 critical: 0,
               };
               existing.total += 1;
-              if (
-                i.severity === "critical" ||
-                i.severity === "high"
-              ) {
+              if (i.severity === "critical" || i.severity === "high") {
                 existing.critical += 1;
               }
               insightByMonth.set(key, existing);
@@ -1158,7 +1219,9 @@ export function createOperationalTools(
         projectName: z
           .string()
           .optional()
-          .describe("Optional project name to resolve to ID (e.g. 'Uniqlo', 'Cedar Park')"),
+          .describe(
+            "Optional project name to resolve to ID (e.g. 'Uniqlo', 'Cedar Park')",
+          ),
         matchCount: z
           .number()
           .optional()
@@ -1180,7 +1243,14 @@ export function createOperationalTools(
       execute: withTrace(
         "semanticSearch",
         options,
-        async ({ query, projectId, projectName, matchCount, threshold, skipRerank }) => {
+        async ({
+          query,
+          projectId,
+          projectName,
+          matchCount,
+          threshold,
+          skipRerank,
+        }) => {
           const scope = await guardrails.getScope();
           const allowAdminCommsSources = scope.isAdmin;
           const allowedProjectIds = scope.allowedProjectIds;
@@ -1188,7 +1258,12 @@ export function createOperationalTools(
           // Resolve project name to ID if provided
           let resolvedProjectId = projectId;
           if (!resolvedProjectId && projectName) {
-            const resolved = await resolveProject(supabase, guardrails, undefined, projectName);
+            const resolved = await resolveProject(
+              supabase,
+              guardrails,
+              undefined,
+              projectName,
+            );
             if (!("error" in resolved)) {
               resolvedProjectId = resolved.id;
             }
@@ -1215,7 +1290,11 @@ export function createOperationalTools(
           try {
             // All active RAG tables use halfvec(3072) — single embedding generation.
             const openai = getOpenAI();
-            const embeddingArg3072 = await generateEmbedding(openai, query, EMBEDDING.LARGE);
+            const embeddingArg3072 = await generateEmbedding(
+              openai,
+              query,
+              EMBEDDING.LARGE,
+            );
             const briefing = isBriefingQuery(query);
             // Briefing queries cast a wider net (more candidates, lower threshold) so the
             // LLM reranker has recent comms to surface. Non-briefing queries use tighter defaults.
@@ -1223,19 +1302,26 @@ export function createOperationalTools(
             const targetThreshold = threshold ?? (briefing ? 0.2 : 0.3);
             // Chunks use even broader recall — reranker filters out noise
             const chunkCount = targetCount * 2;
-            const chunkThreshold = Math.min(targetThreshold, briefing ? 0.15 : 0.25);
+            const chunkThreshold = Math.min(
+              targetThreshold,
+              briefing ? 0.15 : 0.25,
+            );
 
             // Blended retrieval — all halfvec(3072):
             // search_document_chunks   → unified: meetings, emails, Teams, OneDrive, transcripts
             // search_all_knowledge     → insights (decisions/risks/opportunities)
             const [chunksRes, knowledgeRes] = await Promise.all([
-               
-              (ragSupabase as unknown as {
-                rpc: (
-                  name: string,
-                  args: Record<string, unknown>,
-                ) => Promise<{ data: Array<Record<string, unknown>> | null; error: { message: string } | null }>;
-              }).rpc("search_document_chunks", {
+              (
+                ragSupabase as unknown as {
+                  rpc: (
+                    name: string,
+                    args: Record<string, unknown>,
+                  ) => Promise<{
+                    data: Array<Record<string, unknown>> | null;
+                    error: { message: string } | null;
+                  }>;
+                }
+              ).rpc("search_document_chunks", {
                 query_embedding: embeddingArg3072,
                 filter_source_types: null,
                 filter_project_id: resolvedProjectId ?? null,
@@ -1250,10 +1336,12 @@ export function createOperationalTools(
             ]);
 
             const knowledgeError = knowledgeRes.error;
-            const chunksError = (chunksRes as { error?: { message: string } }).error;
+            const chunksError = (chunksRes as { error?: { message: string } })
+              .error;
             // Surface any source failures; only abort if all sources failed
             const errorParts: string[] = [];
-            if (knowledgeError) errorParts.push(`knowledge=${knowledgeError.message}`);
+            if (knowledgeError)
+              errorParts.push(`knowledge=${knowledgeError.message}`);
             if (chunksError) errorParts.push(`chunks=${chunksError.message}`);
             if (knowledgeError && chunksError) {
               return {
@@ -1277,7 +1365,8 @@ export function createOperationalTools(
               return projectIds.some((id) => allowedProjectIdSet.has(id));
             });
             // Unified document_chunks: meetings, emails, Teams, OneDrive, transcripts
-            const rawChunkRows = ((chunksRes as { data?: unknown[] }).data ?? []) as AnyRow[];
+            const rawChunkRows = ((chunksRes as { data?: unknown[] }).data ??
+              []) as AnyRow[];
             // Project filtering is done in the RPC now; still apply comms gating here
             // because this tool uses the service role client (bypasses RLS).
             const chunkRows = rawChunkRows
@@ -1290,12 +1379,20 @@ export function createOperationalTools(
 
                 if (scope.isAdmin) return true;
 
-                return typeof docProjectId === "number" && allowedProjectIdSet.has(docProjectId);
+                return (
+                  typeof docProjectId === "number" &&
+                  allowedProjectIdSet.has(docProjectId)
+                );
               })
               .filter((row) => {
                 if (allowAdminCommsSources) return true;
                 const sourceType = String(row.source_type ?? "");
-                return !["email", "teams_message", "teams_channel", "teams_dm"].includes(sourceType);
+                return ![
+                  "email",
+                  "teams_message",
+                  "teams_channel",
+                  "teams_dm",
+                ].includes(sourceType);
               });
 
             const merged: Array<{
@@ -1312,7 +1409,8 @@ export function createOperationalTools(
             }> = [];
 
             for (const row of knowledgeRows) {
-              const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
+              const similarity =
+                Math.round(asNumber(row.similarity) * 1000) / 1000;
               const sourceTable = String(row.source_table ?? "knowledge");
               const recordId = String(row.record_id ?? "");
               merged.push({
@@ -1339,28 +1437,39 @@ export function createOperationalTools(
 
             // 3) Unified document chunks (meetings, emails, Teams, OneDrive, transcripts)
             for (const row of chunkRows) {
-              const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
+              const similarity =
+                Math.round(asNumber(row.similarity) * 1000) / 1000;
               const srcType = String(row.source_type ?? "document");
               merged.push({
                 key: `doc_chunk:${String(row.chunk_id ?? row.document_id ?? "")}`,
                 sourceTable: srcType,
                 recordId: String(row.document_id ?? ""),
-                sourceDocumentId: typeof row.document_id === "string" ? row.document_id : null,
-                sourceChunkId: typeof row.chunk_id === "string" ? row.chunk_id : null,
+                sourceDocumentId:
+                  typeof row.document_id === "string" ? row.document_id : null,
+                sourceChunkId:
+                  typeof row.chunk_id === "string" ? row.chunk_id : null,
                 content: String(row.chunk_text ?? ""),
                 similarity,
-                projectIds: typeof row.doc_project_id === "number" ? [row.doc_project_id] : [],
+                projectIds:
+                  typeof row.doc_project_id === "number"
+                    ? [row.doc_project_id]
+                    : [],
                 metadata: {
                   title: row.doc_title,
                   category: row.doc_category,
                   source: row.doc_source,
                   source_type: srcType,
                   date: row.doc_date,
-                  ...(row.doc_metadata && typeof row.doc_metadata === "object" ? row.doc_metadata as Record<string, unknown> : {}),
+                  ...(row.doc_metadata && typeof row.doc_metadata === "object"
+                    ? (row.doc_metadata as Record<string, unknown>)
+                    : {}),
                 },
                 createdAt:
-                  typeof row.doc_date === "string" ? row.doc_date :
-                  typeof row.doc_created_at === "string" ? row.doc_created_at : null,
+                  typeof row.doc_date === "string"
+                    ? row.doc_date
+                    : typeof row.doc_created_at === "string"
+                      ? row.doc_created_at
+                      : null,
               });
             }
 
@@ -1406,9 +1515,13 @@ export function createOperationalTools(
                 );
                 let group = [chunks[0]];
                 for (let i = 1; i < chunks.length; i++) {
-                  const prevIdx = (group[group.length - 1].metadata?.chunk_index as number) ?? 0;
-                  const currIdx = (chunks[i].metadata?.chunk_index as number) ?? 0;
-                  if (currIdx <= prevIdx + 2) { // gap ≤ 2: merge near-adjacent chunks
+                  const prevIdx =
+                    (group[group.length - 1].metadata?.chunk_index as number) ??
+                    0;
+                  const currIdx =
+                    (chunks[i].metadata?.chunk_index as number) ?? 0;
+                  if (currIdx <= prevIdx + 2) {
+                    // gap ≤ 2: merge near-adjacent chunks
                     group.push(chunks[i]);
                   } else {
                     stitched.push(mergeGroup(group));
@@ -1420,7 +1533,9 @@ export function createOperationalTools(
               return [...others, ...stitched];
             };
 
-            const mergeGroup = (group: (typeof merged)[number][]): (typeof merged)[number] => {
+            const mergeGroup = (
+              group: (typeof merged)[number][],
+            ): (typeof merged)[number] => {
               if (group.length === 1) return group[0];
               return {
                 ...group[0],
@@ -1430,7 +1545,9 @@ export function createOperationalTools(
               };
             };
 
-            const stitchedItems = stitchTranscriptChunks(Array.from(dedupedMap.values()));
+            const stitchedItems = stitchTranscriptChunks(
+              Array.from(dedupedMap.values()),
+            );
             // Time-decay: blend semantic similarity with recency.
             // Briefing queries weight recency higher (25%) so recent meetings/emails surface above
             // older but semantically similar documents. Non-briefing uses 10% recency.
@@ -1500,8 +1617,15 @@ export function createOperationalTools(
             // LLM reranker: always re-score candidates by actual relevance to the query
             let results: typeof candidates;
             if (candidates.length > 0 && !skipRerank) {
-              const rerankedIndices = await rerankWithLLM(openai, query, candidates, targetCount);
-              results = rerankedIndices.map((i) => candidates[i]).filter(Boolean);
+              const rerankedIndices = await rerankWithLLM(
+                openai,
+                query,
+                candidates,
+                targetCount,
+              );
+              results = rerankedIndices
+                .map((i) => candidates[i])
+                .filter(Boolean);
               // Fill remaining slots if reranker returned fewer than targetCount
               if (results.length < targetCount) {
                 const usedIndices = new Set(rerankedIndices);
@@ -1524,7 +1648,8 @@ export function createOperationalTools(
 
               const diversified: typeof results = [];
               const orderedSourceTypes = Array.from(bySource.keys()).sort(
-                (a, b) => rankBriefingSourcePriority(a) - rankBriefingSourcePriority(b),
+                (a, b) =>
+                  rankBriefingSourcePriority(a) - rankBriefingSourcePriority(b),
               );
 
               for (const sourceType of orderedSourceTypes) {
@@ -1558,7 +1683,10 @@ export function createOperationalTools(
               query,
               resultCount: results.length,
               results: results.map((r) => ({
-                content: r.content.substring(0, r.sourceTable === "meeting_transcript" ? 5000 : 2500),
+                content: r.content.substring(
+                  0,
+                  r.sourceTable === "meeting_transcript" ? 5000 : 2500,
+                ),
                 sourceTable: r.sourceTable,
                 recordId: r.recordId,
                 sourceDocumentId: r.sourceDocumentId,
@@ -1738,7 +1866,11 @@ export function createOperationalTools(
           // Fixed: 2026-05-08 (Problem 6 — embedding dimension inconsistency).
           const openaiClient = getOpenAI();
           // generateEmbedding throws on API failure — no silent empty results.
-          const queryEmbedding = await generateEmbedding(openaiClient, query, EMBEDDING.LARGE);
+          const queryEmbedding = await generateEmbedding(
+            openaiClient,
+            query,
+            EMBEDDING.LARGE,
+          );
 
           const { data, error } = await supabase.rpc(
             "search_conversation_memories",
@@ -1749,7 +1881,10 @@ export function createOperationalTools(
             },
           );
 
-          if (error) throw new Error(`recallPastConversations RPC failed: ${error.message}`);
+          if (error)
+            throw new Error(
+              `recallPastConversations RPC failed: ${error.message}`,
+            );
 
           // search_conversation_memories returns id, content, metadata, similarity
           const results = (data ?? []) as Array<{
@@ -1798,7 +1933,9 @@ export function createOperationalTools(
       inputSchema: z.object({
         topic: z
           .string()
-          .describe("The topic to search for (e.g. 'ASRS', 'sprinkler design', 'pricing')"),
+          .describe(
+            "The topic to search for (e.g. 'ASRS', 'sprinkler design', 'pricing')",
+          ),
         projectId: z
           .number()
           .optional()
@@ -1822,7 +1959,12 @@ export function createOperationalTools(
           // Resolve project name
           let resolvedProjectId = projectId;
           if (!resolvedProjectId && projectName) {
-            const resolved = await resolveProject(supabase, guardrails, undefined, projectName);
+            const resolved = await resolveProject(
+              supabase,
+              guardrails,
+              undefined,
+              projectName,
+            );
             if (!("error" in resolved)) {
               resolvedProjectId = resolved.id;
             }
@@ -1864,12 +2006,18 @@ export function createOperationalTools(
             (async () => {
               try {
                 const openai = getOpenAI();
-                const emb = await generateEmbedding(openai, topic, EMBEDDING.LARGE);
+                const emb = await generateEmbedding(
+                  openai,
+                  topic,
+                  EMBEDDING.LARGE,
+                );
                 return supabase.rpc("match_document_metadata_by_summary", {
                   query_embedding: emb,
                   match_count: targetCount * 2,
                   match_threshold: 0.3,
-                  ...(resolvedProjectId ? { p_project_id: resolvedProjectId } : {}),
+                  ...(resolvedProjectId
+                    ? { p_project_id: resolvedProjectId }
+                    : {}),
                 });
               } catch {
                 return { data: [], error: null };
@@ -1900,21 +2048,28 @@ export function createOperationalTools(
           const ids = Array.from(meetingIds).slice(0, targetCount);
           let meetingQuery = supabase
             .from("document_metadata")
-            .select("id, title, date, project, project_id, summary, overview, participants, action_items")
+            .select(
+              "id, title, date, project, project_id, summary, overview, participants, action_items",
+            )
             .in("id", ids)
             .order("date", { ascending: false });
           if (resolvedProjectId) {
             meetingQuery = meetingQuery.eq("project_id", resolvedProjectId);
           }
           if (!scope.isAdmin) {
-            meetingQuery = meetingQuery.in("project_id", scope.allowedProjectIds);
+            meetingQuery = meetingQuery.in(
+              "project_id",
+              scope.allowedProjectIds,
+            );
           }
 
           const meetingsRes = await meetingQuery;
           const meetings = (meetingsRes.data ?? []) as AnyRow[];
 
           return {
-            searchScope: resolvedProjectId ? `Filtered to project ${resolvedProjectId}` : "All projects",
+            searchScope: resolvedProjectId
+              ? `Filtered to project ${resolvedProjectId}`
+              : "All projects",
             topic,
             totalResults: meetings.length,
             results: meetings.map((m) => ({
@@ -1980,12 +2135,17 @@ export function createOperationalTools(
             let searchQuery = supabase
               .from("document_metadata")
               .select("id, title")
-              .or("type.eq.meeting,category.eq.meeting,type.eq.meeting_transcript")
+              .or(
+                "type.eq.meeting,category.eq.meeting,type.eq.meeting_transcript",
+              )
               .ilike("title", `%${meetingTitle}%`)
               .order("date", { ascending: false })
               .limit(1);
             if (!scope.isAdmin) {
-              searchQuery = searchQuery.in("project_id", scope.allowedProjectIds);
+              searchQuery = searchQuery.in(
+                "project_id",
+                scope.allowedProjectIds,
+              );
             }
             const { data: found } = await searchQuery.maybeSingle();
 
@@ -2005,17 +2165,18 @@ export function createOperationalTools(
             .from("document_metadata")
             .select("*")
             .eq("id", resolvedId);
-          const scopedMeetingLookup =
-            scope.isAdmin
-              ? meetingLookup
-              : meetingLookup.in("project_id", scope.allowedProjectIds);
+          const scopedMeetingLookup = scope.isAdmin
+            ? meetingLookup
+            : meetingLookup.in("project_id", scope.allowedProjectIds);
 
           const [meetingRes, insightsRes] = await Promise.all([
             scopedMeetingLookup.single(),
             // Structured insights extracted from this meeting (decisions/risks/opportunities)
             supabase
               .from("insights")
-              .select("type, description, owner_name, status, details, created_at")
+              .select(
+                "type, description, owner_name, status, details, created_at",
+              )
               .eq("metadata_id", resolvedId)
               .order("type"),
           ]);
@@ -2023,9 +2184,13 @@ export function createOperationalTools(
           // If direct ID lookup failed and we have a title, the ID may have been guessed
           if (meetingRes.error || !meetingRes.data) {
             if (meetingTitle) {
-              return { error: `Meeting with title "${meetingTitle}" could not be retrieved. Try searchMeetingsByTopic first.` };
+              return {
+                error: `Meeting with title "${meetingTitle}" could not be retrieved. Try searchMeetingsByTopic first.`,
+              };
             }
-            return { error: `Meeting ID "${resolvedId}" not found. IMPORTANT: Do not guess meeting IDs — use searchMeetingsByTopic or getMeetingsByDate to get the real ID first, then call getMeetingDetails with that exact ID.` };
+            return {
+              error: `Meeting ID "${resolvedId}" not found. IMPORTANT: Do not guess meeting IDs — use searchMeetingsByTopic or getMeetingsByDate to get the real ID first, then call getMeetingDetails with that exact ID.`,
+            };
           }
 
           const m = meetingRes.data as AnyRow;
@@ -2034,7 +2199,9 @@ export function createOperationalTools(
           // Group insights by type for easy consumption
           const decisions = allInsights.filter((i) => i.type === "decision");
           const risks = allInsights.filter((i) => i.type === "risk");
-          const opportunities = allInsights.filter((i) => i.type === "opportunity");
+          const opportunities = allInsights.filter(
+            (i) => i.type === "opportunity",
+          );
 
           return {
             sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
@@ -2096,7 +2263,9 @@ export function createOperationalTools(
           .describe("Clear, descriptive title for the knowledge entry"),
         content: z
           .string()
-          .describe("The knowledge content — be thorough and include context, rationale, and specifics"),
+          .describe(
+            "The knowledge content — be thorough and include context, rationale, and specifics",
+          ),
         category: z
           .enum([
             "lessons_learned",
@@ -2112,11 +2281,15 @@ export function createOperationalTools(
         tags: z
           .array(z.string())
           .optional()
-          .describe("Tags for searchability (e.g. ['ASRS', 'fire suppression', 'pricing'])"),
+          .describe(
+            "Tags for searchability (e.g. ['ASRS', 'fire suppression', 'pricing'])",
+          ),
         source: z
           .string()
           .optional()
-          .describe("Source of the knowledge (e.g. 'Meeting: Sprinkler Pricing Review 2026-03-13', 'Brandon Clymer')"),
+          .describe(
+            "Source of the knowledge (e.g. 'Meeting: Sprinkler Pricing Review 2026-03-13', 'Brandon Clymer')",
+          ),
       }),
       execute: withTrace(
         "saveToKnowledgeBase",
@@ -2143,11 +2316,17 @@ export function createOperationalTools(
         "when available.",
       inputSchema: z.object({
         title: z.string().describe("Concise insight title"),
-        description: z
-          .string()
-          .describe("Detailed description of the insight"),
+        description: z.string().describe("Detailed description of the insight"),
         insightType: z
-          .enum(["risk", "decision", "opportunity", "cost_impact", "design_consideration", "lesson_learned", "action_required"])
+          .enum([
+            "risk",
+            "decision",
+            "opportunity",
+            "cost_impact",
+            "design_consideration",
+            "lesson_learned",
+            "action_required",
+          ])
           .describe("Type of insight"),
         severity: z
           .enum(["low", "medium", "high", "critical"])
@@ -2156,15 +2335,24 @@ export function createOperationalTools(
           .describe("Severity/importance level"),
         projectId: z.number().optional().describe("Project ID if applicable"),
         projectName: z.string().optional().describe("Project name if known"),
-        meetingId: z.string().optional().describe("Source meeting ID if applicable"),
+        meetingId: z
+          .string()
+          .optional()
+          .describe("Source meeting ID if applicable"),
         meetingName: z.string().optional().describe("Source meeting name"),
         meetingDate: z.string().optional().describe("Source meeting date"),
-        quotes: z.string().optional().describe("Relevant quotes from the discussion"),
+        quotes: z
+          .string()
+          .optional()
+          .describe("Relevant quotes from the discussion"),
         stakeholders: z
           .array(z.string())
           .optional()
           .describe("People involved or affected"),
-        financialImpact: z.number().optional().describe("Estimated financial impact in dollars"),
+        financialImpact: z
+          .number()
+          .optional()
+          .describe("Estimated financial impact in dollars"),
       }),
       execute: withTrace(
         "saveInsight",
@@ -2188,7 +2376,12 @@ export function createOperationalTools(
             let resolvedProjectId = projectId;
             let resolvedProjectName = projectName;
             if (!resolvedProjectId && projectName) {
-              const resolved = await resolveProject(supabase, guardrails, undefined, projectName);
+              const resolved = await resolveProject(
+                supabase,
+                guardrails,
+                undefined,
+                projectName,
+              );
               if (!("error" in resolved)) {
                 resolvedProjectId = resolved.id;
                 resolvedProjectName = resolved.name;
@@ -2216,7 +2409,8 @@ export function createOperationalTools(
               .select("id, title, insight_type, severity, project_name")
               .single();
 
-            if (error) return { error: `Failed to save insight: ${error.message}` };
+            if (error)
+              return { error: `Failed to save insight: ${error.message}` };
 
             return {
               success: true,
@@ -2317,9 +2511,9 @@ export function createOperationalTools(
           .string()
           .describe(
             "The memory content — 1-2 sentences, specific. " +
-            "Include names, numbers, dates when relevant. " +
-            "Example: 'User prefers bullet-point financial summaries over prose paragraphs' " +
-            "or 'Brandon Clymer committed to ROM estimates for Vermillion Rise by March 15, 2026'",
+              "Include names, numbers, dates when relevant. " +
+              "Example: 'User prefers bullet-point financial summaries over prose paragraphs' " +
+              "or 'Brandon Clymer committed to ROM estimates for Vermillion Rise by March 15, 2026'",
           ),
         projectId: z
           .number()
@@ -2332,7 +2526,7 @@ export function createOperationalTools(
           .optional()
           .describe(
             "How important is this to surface in future sessions? " +
-            "0.1 = minor detail, 0.5 = useful context, 1.0 = critical to remember",
+              "0.1 = minor detail, 0.5 = useful context, 1.0 = critical to remember",
           ),
         confidence: z
           .number()
@@ -2345,14 +2539,21 @@ export function createOperationalTools(
           .optional()
           .describe(
             "Who should see this memory? " +
-            "private = only this user (default for preferences/context), " +
-            "team = all users (use for facts/lessons about projects that benefit everyone)",
+              "private = only this user (default for preferences/context), " +
+              "team = all users (use for facts/lessons about projects that benefit everyone)",
           ),
       }),
       execute: withTrace(
         "writeMemory",
         options,
-        async ({ type, content, projectId, importance, confidence, visibility }) => {
+        async ({
+          type,
+          content,
+          projectId,
+          importance,
+          confidence,
+          visibility,
+        }) => {
           const result = await writeAiMemory({
             userId,
             type: type as MemoryType,
@@ -2428,7 +2629,10 @@ export function createOperationalTools(
           }
 
           if (!projectName) {
-            return { error: "Provide a projectName to search for, or set listAll: true" };
+            return {
+              error:
+                "Provide a projectName to search for, or set listAll: true",
+            };
           }
 
           if (!scope.isAdmin && scope.allowedProjectIds.length === 0) {
@@ -2461,14 +2665,18 @@ export function createOperationalTools(
           // to the original query when no DB match is found (project may exist only
           // in emails/Teams but not yet in the database).
           const resolvedQuery =
-            matches.length > 0 ? String(matches[0].name ?? projectName) : projectName;
+            matches.length > 0
+              ? String(matches[0].name ?? projectName)
+              : projectName;
 
           // Step 2: Run communication searches using the resolved name.
           // Emails + Teams are admin-only; documents are allowed for all.
-          const commsAccess = await requireAdminForCommunications("Email and Teams");
+          const commsAccess =
+            await requireAdminForCommunications("Email and Teams");
 
           const docsPromise = searchDocumentChunksByCategory({
-            supabase,
+            supabase: ragSupabase,
+            metadataSupabase: supabase,
             query: resolvedQuery,
             category: "document",
             matchCount: 4,
@@ -2478,7 +2686,8 @@ export function createOperationalTools(
 
           const emailPromise = commsAccess.ok
             ? searchDocumentChunksByCategory({
-                supabase,
+                supabase: ragSupabase,
+                metadataSupabase: supabase,
                 query: resolvedQuery,
                 category: "email",
                 matchCount: 6,
@@ -2489,7 +2698,8 @@ export function createOperationalTools(
 
           const teamsPromise = commsAccess.ok
             ? searchDocumentChunksByCategory({
-                supabase,
+                supabase: ragSupabase,
+                metadataSupabase: supabase,
                 query: resolvedQuery,
                 category: "teams_message",
                 matchCount: 6,
@@ -2573,7 +2783,9 @@ export function createOperationalTools(
         participantEmail: z
           .string()
           .optional()
-          .describe("Optional participant email for questions like emails to Brandon or from Brandon."),
+          .describe(
+            "Optional participant email for questions like emails to Brandon or from Brandon.",
+          ),
         direction: z
           .enum(["mailbox", "to", "from", "to_or_from"])
           .optional()
@@ -2585,12 +2797,16 @@ export function createOperationalTools(
           .string()
           .optional()
           .default("America/New_York")
-          .describe("Business timezone for interpreting 'today'. Default America/New_York."),
+          .describe(
+            "Business timezone for interpreting 'today'. Default America/New_York.",
+          ),
         groupByThread: z
           .boolean()
           .optional()
           .default(true)
-          .describe("Return consolidated conversation groups instead of individual messages. Default true."),
+          .describe(
+            "Return consolidated conversation groups instead of individual messages. Default true.",
+          ),
         limit: z
           .number()
           .optional()
@@ -2617,18 +2833,22 @@ export function createOperationalTools(
           let currentUserEmail: string | null = null;
 
           if (!normalizedMailboxFilter && !normalizedParticipantEmail) {
-            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+            const { data: userData, error: userError } =
+              await supabase.auth.admin.getUserById(userId);
             if (userError) {
-              return { error: `Could not resolve the signed-in user's email: ${userError.message}` };
+              return {
+                error: `Could not resolve the signed-in user's email: ${userError.message}`,
+              };
             }
             currentUserEmail = normalizeEmail(userData.user?.email);
           }
 
           const effectiveParticipantEmail =
-            normalizedParticipantEmail ?? normalizedMailboxFilter ?? currentUserEmail;
-          const effectiveDirection: RecentEmailDirection = normalizedParticipantEmail
-            ? direction
-            : "mailbox";
+            normalizedParticipantEmail ??
+            normalizedMailboxFilter ??
+            currentUserEmail;
+          const effectiveDirection: RecentEmailDirection =
+            normalizedParticipantEmail ? direction : "mailbox";
 
           if (!effectiveParticipantEmail) {
             return {
@@ -2637,9 +2857,18 @@ export function createOperationalTools(
             };
           }
 
-          const safeDaysBack = Number.isFinite(daysBack) && daysBack >= 0 ? Math.floor(daysBack) : 1;
-          const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(Math.floor(limit), 100) : 50;
-          const since = startOfBusinessDay(safeDaysBack, timeZone || "America/New_York");
+          const safeDaysBack =
+            Number.isFinite(daysBack) && daysBack >= 0
+              ? Math.floor(daysBack)
+              : 1;
+          const safeLimit =
+            Number.isFinite(limit) && limit > 0
+              ? Math.min(Math.floor(limit), 100)
+              : 50;
+          const since = startOfBusinessDay(
+            safeDaysBack,
+            timeZone || "America/New_York",
+          );
           const fetchLimit = Math.min(Math.max(safeLimit * 6, 100), 600);
 
           let query = supabase
@@ -2667,11 +2896,18 @@ export function createOperationalTools(
           ]);
 
           if (emailResult.error) {
-            return { error: `Failed to fetch emails: ${emailResult.error.message}` };
+            return {
+              error: `Failed to fetch emails: ${emailResult.error.message}`,
+            };
           }
 
-          const data = ((emailResult.data ?? []) as RecentEmailRow[]).filter((row) =>
-            emailMatchesDirection(row, effectiveParticipantEmail, effectiveDirection),
+          const data = ((emailResult.data ?? []) as RecentEmailRow[]).filter(
+            (row) =>
+              emailMatchesDirection(
+                row,
+                effectiveParticipantEmail,
+                effectiveDirection,
+              ),
           );
           const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
           const dataCutoffNote = lastSyncedAt
@@ -2679,7 +2915,10 @@ export function createOperationalTools(
             : "Sync time unknown — emails received since the last sync may not appear.";
 
           if (data.length === 0) {
-            const rangeLabel = safeDaysBack === 0 ? "today" : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
+            const rangeLabel =
+              safeDaysBack === 0
+                ? "today"
+                : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
             return {
               emails: [],
               threads: [],
@@ -2696,18 +2935,27 @@ export function createOperationalTools(
 
           const emails = data.slice(0, safeLimit).map((e) => ({
             subject: e.subject,
-            from: e.from_name ? `${e.from_name} <${e.from_email}>` : (e.from_email ?? "Unknown"),
+            from: e.from_name
+              ? `${e.from_name} <${e.from_email}>`
+              : (e.from_email ?? "Unknown"),
             to: Array.isArray(e.to_list) ? e.to_list.join(", ") : e.to_list,
             receivedAt: e.received_at,
             mailbox: e.mailbox_user_id,
-            preview: e.body_text ? e.body_text.slice(0, 200).replace(/\s+/g, " ").trim() : null,
+            preview: e.body_text
+              ? e.body_text.slice(0, 200).replace(/\s+/g, " ").trim()
+              : null,
             hasAttachments: e.has_attachments,
             projectId: e.project_id,
             webLink: e.web_link,
           }));
 
-          const threads = groupByThread ? groupRecentEmailsByThread(data, safeLimit) : [];
-          const rangeLabel = safeDaysBack === 0 ? "today" : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
+          const threads = groupByThread
+            ? groupRecentEmailsByThread(data, safeLimit)
+            : [];
+          const rangeLabel =
+            safeDaysBack === 0
+              ? "today"
+              : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
           return {
             emails,
             threads,
@@ -2761,7 +3009,8 @@ export function createOperationalTools(
           if (!access.ok) return { error: access.error };
           const scope = await guardrails.getScope();
           return searchDocumentChunksByCategory({
-            supabase,
+            supabase: ragSupabase,
+            metadataSupabase: supabase,
             query,
             category: "email",
             matchCount: matchCount ?? 8,
@@ -2805,7 +3054,8 @@ export function createOperationalTools(
           if (!access.ok) return { error: access.error };
           const scope = await guardrails.getScope();
           return searchDocumentChunksByCategory({
-            supabase,
+            supabase: ragSupabase,
+            metadataSupabase: supabase,
             query,
             category: "teams_message",
             matchCount: matchCount ?? 8,
@@ -2846,7 +3096,8 @@ export function createOperationalTools(
         async ({ query, matchCount }) => {
           const scope = await guardrails.getScope();
           return searchDocumentChunksByCategory({
-            supabase,
+            supabase: ragSupabase,
+            metadataSupabase: supabase,
             query,
             category: "document",
             matchCount: matchCount ?? 8,
@@ -2867,8 +3118,22 @@ export function createOperationalTools(
 // ---------------------------------------------------------------------------
 // Shared helper: embed query → search document_chunks filtered by category
 // ---------------------------------------------------------------------------
+function sourceTypesForCategory(category: string) {
+  switch (category) {
+    case "email":
+      return ["email"];
+    case "teams_message":
+      return ["teams_channel", "teams_dm", "microsoft_graph"];
+    case "document":
+      return ["document", "onedrive_document"];
+    default:
+      return null;
+  }
+}
+
 async function searchDocumentChunksByCategory({
   supabase,
+  metadataSupabase,
   query,
   category,
   matchCount,
@@ -2877,6 +3142,7 @@ async function searchDocumentChunksByCategory({
   filterProjectId,
 }: {
   supabase: ReturnType<typeof createServiceClient>;
+  metadataSupabase: ReturnType<typeof createServiceClient>;
   query: string;
   category: string;
   matchCount: number;
@@ -2894,36 +3160,41 @@ async function searchDocumentChunksByCategory({
     });
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
-     
-    const { data, error } = await (supabase as unknown as {
-      rpc: (
-        name: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ data: Array<Record<string, unknown>> | null; error: { message: string } | null }>;
-    }).rpc(
-      "search_document_chunks_by_category",
-      {
-        query_embedding: JSON.stringify(queryEmbedding),
-        filter_category: category,
-        filter_project_id:
-          typeof filterProjectId === "number"
-            ? filterProjectId
-            : scope.pinnedProjectId ?? null,
-        match_count: matchCount,
-        match_threshold: 0.45,
-      },
-    );
+    const { data, error } = await (
+      supabase as unknown as {
+        rpc: (
+          name: string,
+          args: Record<string, unknown>,
+        ) => Promise<{
+          data: Array<Record<string, unknown>> | null;
+          error: { message: string } | null;
+        }>;
+      }
+    ).rpc("search_document_chunks", {
+      query_embedding: queryEmbedding,
+      filter_source_types: sourceTypesForCategory(category),
+      filter_project_id:
+        typeof filterProjectId === "number"
+          ? filterProjectId
+          : (scope.pinnedProjectId ?? null),
+      match_count: matchCount,
+      match_threshold: 0.45,
+    });
 
     if (error) {
       const message = (error as { message: string }).message;
-      const isTimeout = message.includes("canceling statement due to statement timeout") ||
+      const isTimeout =
+        message.includes("canceling statement due to statement timeout") ||
         message.includes("statement timeout");
       if (
-        message.includes("structure of query does not match function result type") ||
+        message.includes(
+          "structure of query does not match function result type",
+        ) ||
         isTimeout
       ) {
         return searchDocumentChunksByCategoryFallback({
           supabase,
+          metadataSupabase,
           query,
           category,
           matchCount,
@@ -2944,14 +3215,13 @@ async function searchDocumentChunksByCategory({
       document_id: string;
       chunk_index: number;
       chunk_text: string;
+      source_type: string | null;
       similarity: number;
       doc_title: string | null;
       doc_category: string | null;
       doc_source: string | null;
-      doc_type: string | null;
       doc_date: string | null;
-      doc_participants: string | null;
-      doc_tags: string | null;
+      doc_participants?: string | null;
       doc_project_id: number | null;
       doc_metadata: Record<string, unknown> | null;
       doc_created_at: string | null;
@@ -3004,9 +3274,12 @@ async function searchDocumentChunksByCategory({
         content: r.chunk_text.substring(0, 2000),
         similarity: Math.round(r.similarity * 1000) / 1000,
         date: r.doc_date ?? r.doc_created_at,
-        participants: r.doc_participants,
+        participants:
+          typeof r.doc_metadata?.participants === "string"
+            ? r.doc_metadata.participants
+            : null,
         source: r.doc_source,
-        type: r.doc_type,
+        type: r.doc_category ?? r.source_type,
         projectId: r.doc_project_id,
         documentId: r.document_id,
         sourceDocumentId: r.document_id,
@@ -3026,6 +3299,7 @@ async function searchDocumentChunksByCategory({
 
 async function searchDocumentChunksByCategoryFallback({
   supabase,
+  metadataSupabase,
   query,
   category,
   matchCount,
@@ -3035,6 +3309,7 @@ async function searchDocumentChunksByCategoryFallback({
   rpcError,
 }: {
   supabase: ReturnType<typeof createServiceClient>;
+  metadataSupabase?: ReturnType<typeof createServiceClient>;
   query: string;
   category: string;
   matchCount: number;
@@ -3044,7 +3319,9 @@ async function searchDocumentChunksByCategoryFallback({
   rpcError: string;
 }) {
   const effectiveProjectId =
-    typeof filterProjectId === "number" ? filterProjectId : scope.pinnedProjectId ?? null;
+    typeof filterProjectId === "number"
+      ? filterProjectId
+      : (scope.pinnedProjectId ?? null);
 
   if (!scope.isAdmin && scope.allowedProjectIds.length === 0) {
     return {
@@ -3054,9 +3331,12 @@ async function searchDocumentChunksByCategoryFallback({
     };
   }
 
-  let docsQuery = supabase
+  const appSupabase = metadataSupabase ?? supabase;
+  let docsQuery = appSupabase
     .from("document_metadata")
-    .select("id, title, category, source, type, date, participants, tags, project_id, created_at")
+    .select(
+      "id, title, category, source, type, date, participants, tags, project_id, created_at",
+    )
     .eq("category", category)
     .limit(200);
 
@@ -3074,7 +3354,10 @@ async function searchDocumentChunksByCategoryFallback({
   const docs = ((docRows ?? []) as AnyRow[]).filter((doc) => {
     if (scope.isAdmin) return true;
     const projectId = doc.project_id;
-    return typeof projectId === "number" && scope.allowedProjectIds.includes(projectId);
+    return (
+      typeof projectId === "number" &&
+      scope.allowedProjectIds.includes(projectId)
+    );
   });
 
   if (docs.length === 0) {
@@ -3093,7 +3376,9 @@ async function searchDocumentChunksByCategoryFallback({
     .map((doc) => doc.id)
     .filter((id): id is string => typeof id === "string")
     .slice(0, 40);
-  const docsById = new Map(documentIds.map((id) => [id, docs.find((doc) => doc.id === id)]));
+  const docsById = new Map(
+    documentIds.map((id) => [id, docs.find((doc) => doc.id === id)]),
+  );
 
   const { data: chunkRows, error: chunksError } = await supabase
     .from("document_chunks")
@@ -3111,7 +3396,9 @@ async function searchDocumentChunksByCategoryFallback({
   const ranked = ((chunkRows ?? []) as AnyRow[])
     .map((chunk) => {
       const doc = docsById.get(String(chunk.document_id));
-      const haystack = [doc?.title, doc?.source, chunk.text].join(" ").toLowerCase();
+      const haystack = [doc?.title, doc?.source, chunk.text]
+        .join(" ")
+        .toLowerCase();
       const score = queryTerms.reduce(
         (total, term) => total + (haystack.includes(term) ? 1 : 0),
         0,
@@ -3122,8 +3409,10 @@ async function searchDocumentChunksByCategoryFallback({
     .filter((row) => row.doc && row.score > 0)
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      const aDate = typeof a.doc?.date === "string" ? Date.parse(a.doc.date) : 0;
-      const bDate = typeof b.doc?.date === "string" ? Date.parse(b.doc.date) : 0;
+      const aDate =
+        typeof a.doc?.date === "string" ? Date.parse(a.doc.date) : 0;
+      const bDate =
+        typeof b.doc?.date === "string" ? Date.parse(b.doc.date) : 0;
       return bDate - aDate;
     })
     .slice(0, matchCount);
@@ -3146,12 +3435,15 @@ async function searchDocumentChunksByCategoryFallback({
       documentId: String(chunk.document_id ?? ""),
       sourceDocumentId: String(chunk.document_id ?? ""),
       sourceChunkId: String(chunk.chunk_id ?? ""),
-      chunkIndex: typeof chunk.chunk_index === "number" ? chunk.chunk_index : null,
+      chunkIndex:
+        typeof chunk.chunk_index === "number" ? chunk.chunk_index : null,
       citation: formatCitation(sourceLabel, {
         doc_title: typeof doc?.title === "string" ? doc.title : null,
         doc_date: typeof doc?.date === "string" ? doc.date : null,
-        doc_created_at: typeof doc?.created_at === "string" ? doc.created_at : null,
-        doc_participants: typeof doc?.participants === "string" ? doc.participants : null,
+        doc_created_at:
+          typeof doc?.created_at === "string" ? doc.created_at : null,
+        doc_participants:
+          typeof doc?.participants === "string" ? doc.participants : null,
         doc_source: typeof doc?.source === "string" ? doc.source : null,
       }),
     })),
@@ -3190,7 +3482,7 @@ type ChunkResultRow = {
   doc_title: string | null;
   doc_date: string | null;
   doc_created_at: string | null;
-  doc_participants: string | null;
+  doc_participants?: string | null;
   doc_source: string | null;
 };
 
@@ -3205,12 +3497,17 @@ function formatCitation(sourceLabel: string, r: ChunkResultRow): string {
     : null;
 
   if (sourceLabel === "email") {
-    const parts = [r.doc_participants ? `from ${r.doc_participants}` : null, dateStr].filter(Boolean);
+    const parts = [
+      r.doc_participants ? `from ${r.doc_participants}` : null,
+      dateStr,
+    ].filter(Boolean);
     return `Email${parts.length ? " " + parts.join(", ") : ""}: "${r.doc_title ?? "untitled"}"`;
   }
 
   if (sourceLabel === "Teams message") {
-    const parts = [r.doc_source ? `in ${r.doc_source}` : null, dateStr].filter(Boolean);
+    const parts = [r.doc_source ? `in ${r.doc_source}` : null, dateStr].filter(
+      Boolean,
+    );
     return `Teams message${parts.length ? " " + parts.join(", ") : ""}: "${r.doc_title ?? "untitled"}"`;
   }
 

@@ -2,17 +2,28 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 
 type PipelinePhase = "parse" | "embed" | "extract";
 
 export const POST = withApiGuardrails(
   "documents/trigger-pipeline#POST",
   async ({ request }) => {
-  
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "documents/trigger-pipeline#POST", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "documents/trigger-pipeline#POST",
+        message: "Authentication required.",
+      });
     }
 
     const { phase, documentIds } = (await request.json()) as {
@@ -36,9 +47,12 @@ export const POST = withApiGuardrails(
     };
 
     const { currentStage } = stageMapping[phase];
+    const jobClient = isRagDatabaseReadsEnabled()
+      ? createRagServiceClient()
+      : createServiceClient();
 
     // Get documents ready for this phase
-    let query = supabase
+    let query = jobClient
       .from("fireflies_ingestion_jobs")
       .select("fireflies_id, metadata_id")
       .eq("stage", currentStage)
@@ -125,19 +139,28 @@ export const POST = withApiGuardrails(
       total: jobs.length,
       results,
     });
-    },
+  },
 );
 
 // Get count of documents ready for each phase
 export const GET = withApiGuardrails(
   "documents/trigger-pipeline#GET",
   async () => {
-  
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "documents/trigger-pipeline#GET", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "documents/trigger-pipeline#GET",
+        message: "Authentication required.",
+      });
     }
+    const jobClient = isRagDatabaseReadsEnabled()
+      ? createRagServiceClient()
+      : createServiceClient();
 
     // Count documents in each stage
     const stages = [
@@ -148,7 +171,7 @@ export const GET = withApiGuardrails(
 
     const counts = await Promise.all(
       stages.map(async ({ stage, readyFor }) => {
-        const { count, error } = await supabase
+        const { count, error } = await jobClient
           .from("fireflies_ingestion_jobs")
           .select("*", { count: "exact", head: true })
           .eq("stage", stage)
@@ -163,5 +186,5 @@ export const GET = withApiGuardrails(
     );
 
     return NextResponse.json({ phaseCounts: counts });
-    },
+  },
 );

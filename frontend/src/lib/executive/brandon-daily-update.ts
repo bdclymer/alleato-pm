@@ -1,7 +1,11 @@
 import { generateText } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { formatAIProviderFailure } from "@/lib/ai/provider-config";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 import {
   EMBEDDING,
   generateEmbedding,
@@ -38,15 +42,19 @@ export type ExecutiveOperatingBriefShortItem = {
   owner?: string;
 };
 
-export type ExecutiveOperatingBriefRiskItem = ExecutiveOperatingBriefShortItem & {
-  impact: string;
-};
+export type ExecutiveOperatingBriefRiskItem =
+  ExecutiveOperatingBriefShortItem & {
+    impact: string;
+  };
 
 export type ExecutiveOperatingBrief = {
   startHere: string[];
   hasUnusualExecutiveLoad: boolean;
   topExecutiveFocus: ExecutiveOperatingBriefFocusItem[];
-  additionalMaterialItems: Record<ExecutivePriorityLane, ExecutiveOperatingBriefShortItem[]>;
+  additionalMaterialItems: Record<
+    ExecutivePriorityLane,
+    ExecutiveOperatingBriefShortItem[]
+  >;
   projectRiskRadar: ExecutiveOperatingBriefRiskItem[];
   cashAndMarginWatch: ExecutiveOperatingBriefRiskItem[];
   waitingOn: {
@@ -523,7 +531,8 @@ function isRecentSourceRow(
 export function getHitDateAnchor(
   hit: Pick<RankedHit, "metadata" | "row">,
 ): string | null {
-  const rowSourceCategory = hit.metadata?.category ?? hit.row.doc_category ?? null;
+  const rowSourceCategory =
+    hit.metadata?.category ?? hit.row.doc_category ?? null;
   const anchorLikeSource: RecentSourceRow = {
     category: rowSourceCategory,
     date: hit.row.doc_date,
@@ -1063,7 +1072,9 @@ async function runChunkSearch(
   queryEmbedding: string,
   sourceGroup: SourceGroup,
 ): Promise<RagRow[]> {
-  const supabase = createServiceClient() as unknown as RagRpcClient;
+  const supabase = (isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : createServiceClient()) as unknown as RagRpcClient;
   const { data, error } = await supabase.rpc("search_document_chunks", {
     query_embedding: queryEmbedding,
     filter_source_types: sourceGroup.sourceTypes,
@@ -1378,9 +1389,7 @@ function normalizeSynthesizedItem(
   const primaryCitation = mergedCitations[0] ?? primary.citations[0];
 
   const evidenceFacts = (item.evidenceFacts ?? [])
-    .map((fact) =>
-      expandRelativeWeekdays(compactText(fact, 220), primary.date),
-    )
+    .map((fact) => expandRelativeWeekdays(compactText(fact, 220), primary.date))
     .filter(Boolean)
     .slice(0, 6);
   const summary = expandRelativeWeekdays(
@@ -1608,38 +1617,124 @@ function scoreBriefItem(
   section: keyof BrandonDailyUpdatePacket["sections"],
 ): { score: number; materiality: string[]; lane: ExecutivePriorityLane } {
   const text = briefItemText(item);
-  let score = section === "needsBrandon" ? 24 : section === "waitingOnOthers" ? 16 : 8;
+  let score =
+    section === "needsBrandon" ? 24 : section === "waitingOnOthers" ? 16 : 8;
   const materiality: string[] = [];
 
-  if (hasAny(text, ["$", "payment", "invoice", "billing", "cash", "retainage", "margin", "overage", "unbilled", "receivable", "change order", "buyout"])) {
+  if (
+    hasAny(text, [
+      "$",
+      "payment",
+      "invoice",
+      "billing",
+      "cash",
+      "retainage",
+      "margin",
+      "overage",
+      "unbilled",
+      "receivable",
+      "change order",
+      "buyout",
+    ])
+  ) {
     score += 22;
     materiality.push("Financial impact");
   }
-  if (hasAny(text, ["schedule", "delay", "deadline", "late", "permit", "lead time", "shutdown", "field", "crew", "material shortage"])) {
+  if (
+    hasAny(text, [
+      "schedule",
+      "delay",
+      "deadline",
+      "late",
+      "permit",
+      "lead time",
+      "shutdown",
+      "field",
+      "crew",
+      "material shortage",
+    ])
+  ) {
     score += 18;
     materiality.push("Schedule impact");
   }
-  if (hasAny(text, ["owner", "client", "customer", "relationship", "approval", "gpc", "uniqlo", "city"])) {
+  if (
+    hasAny(text, [
+      "owner",
+      "client",
+      "customer",
+      "relationship",
+      "approval",
+      "gpc",
+      "uniqlo",
+      "city",
+    ])
+  ) {
     score += 16;
     materiality.push("Customer relationship impact");
   }
-  if (hasAny(text, ["contract", "legal", "insurance", "license", "coi", "workers compensation", "lien", "claim", "compliance"])) {
+  if (
+    hasAny(text, [
+      "contract",
+      "legal",
+      "insurance",
+      "license",
+      "coi",
+      "workers compensation",
+      "lien",
+      "claim",
+      "compliance",
+    ])
+  ) {
     score += 16;
     materiality.push("Legal or contractual risk");
   }
-  if (hasAny(text, ["today", "same-day", "urgent", "due", "by ", "before", "tomorrow", "this week"])) {
+  if (
+    hasAny(text, [
+      "today",
+      "same-day",
+      "urgent",
+      "due",
+      "by ",
+      "before",
+      "tomorrow",
+      "this week",
+    ])
+  ) {
     score += 12;
     materiality.push("Urgency");
   }
-  if (hasAny(text, ["brandon", "executive", "approve", "decide", "escalate", "call", "confirm", "owner-level"])) {
+  if (
+    hasAny(text, [
+      "brandon",
+      "executive",
+      "approve",
+      "decide",
+      "escalate",
+      "call",
+      "confirm",
+      "owner-level",
+    ])
+  ) {
     score += 18;
     materiality.push("Brandon uniquely needed");
   }
-  if (hasAny(text, ["compounding", "drift", "leak", "repeat", "stale", "aging", "carry-forward"])) {
+  if (
+    hasAny(text, [
+      "compounding",
+      "drift",
+      "leak",
+      "repeat",
+      "stale",
+      "aging",
+      "carry-forward",
+    ])
+  ) {
     score += 10;
     materiality.push("Compounding risk");
   }
-  if (hasAny(text, ["blocked", "blocker", "waiting", "depends", "stuck", "hold"])) {
+  if (
+    hasAny(text, ["blocked", "blocker", "waiting", "depends", "stuck", "hold"])
+  ) {
     score += 12;
     materiality.push("Blocking other people");
   }
@@ -1647,21 +1742,69 @@ function scoreBriefItem(
   if (item.tone === "watch") score += 6;
 
   let lane: ExecutivePriorityLane = "internalAccountability";
-  if (hasAny(text, ["$", "payment", "invoice", "billing", "cash", "retainage", "margin", "overage", "unbilled", "receivable", "change order", "buyout"])) {
+  if (
+    hasAny(text, [
+      "$",
+      "payment",
+      "invoice",
+      "billing",
+      "cash",
+      "retainage",
+      "margin",
+      "overage",
+      "unbilled",
+      "receivable",
+      "change order",
+      "buyout",
+    ])
+  ) {
     lane = "cashMargin";
-  } else if (hasAny(text, ["schedule", "delay", "field", "crew", "site", "material", "permit", "shutdown"])) {
+  } else if (
+    hasAny(text, [
+      "schedule",
+      "delay",
+      "field",
+      "crew",
+      "site",
+      "material",
+      "permit",
+      "shutdown",
+    ])
+  ) {
     lane = "scheduleField";
-  } else if (hasAny(text, ["owner", "client", "customer", "approval", "relationship"])) {
+  } else if (
+    hasAny(text, ["owner", "client", "customer", "approval", "relationship"])
+  ) {
     lane = "customerOwner";
-  } else if (hasAny(text, ["subcontractor", "vendor", "supplier", "quote", "pricing", "proposal"])) {
+  } else if (
+    hasAny(text, [
+      "subcontractor",
+      "vendor",
+      "supplier",
+      "quote",
+      "pricing",
+      "proposal",
+    ])
+  ) {
     lane = "subcontractorVendor";
-  } else if (hasAny(text, ["design", "drawing", "preconstruction", "estimate", "pricing", "permit package", "survey"])) {
+  } else if (
+    hasAny(text, [
+      "design",
+      "drawing",
+      "preconstruction",
+      "estimate",
+      "pricing",
+      "permit package",
+      "survey",
+    ])
+  ) {
     lane = "designPreconstruction";
   }
 
   return {
     score,
-    materiality: materiality.length > 0 ? materiality : ["Material business signal"],
+    materiality:
+      materiality.length > 0 ? materiality : ["Material business signal"],
     lane,
   };
 }
@@ -1675,7 +1818,8 @@ function operatingShortItem(
     item: compactOperatingBriefItem(item),
     score: scored.score,
     materiality: scored.materiality,
-    nextAction: item.recommendedAction ?? "Assign a named owner and next action today.",
+    nextAction:
+      item.recommendedAction ?? "Assign a named owner and next action today.",
     owner: item.owner,
   };
 }
@@ -1691,11 +1835,15 @@ function compactOperatingBriefItem(item: BrandonBriefItem): BrandonBriefItem {
   return {
     ...item,
     summary: compactCompleteText(item.summary, 360),
-    evidence: item.evidence ? compactCompleteText(item.evidence, 240) : undefined,
+    evidence: item.evidence
+      ? compactCompleteText(item.evidence, 240)
+      : undefined,
     evidenceFacts: (item.evidenceFacts ?? [])
       .map((fact) => compactCompleteText(fact, 220))
       .slice(0, 3),
-    bullets: item.bullets.map((bullet) => compactCompleteText(bullet, 220)).slice(0, 3),
+    bullets: item.bullets
+      .map((bullet) => compactCompleteText(bullet, 220))
+      .slice(0, 3),
     citations,
   };
 }
@@ -1707,12 +1855,18 @@ function getImpactText(item: BrandonBriefItem): string {
     ...(item.evidenceFacts ?? []),
     ...item.bullets,
   ].join(" ");
-  const money = text.match(/\$[\d,]+(?:\.\d{2})?(?:\s*(?:million|m|k|\+))?/i)?.[0];
-  const schedule = text.match(/\b(?:\d+\s*(?:day|week|month)s?|due\s+[A-Z][a-z]+\s+\d+|deadline[^.;]*)/i)?.[0];
+  const money = text.match(
+    /\$[\d,]+(?:\.\d{2})?(?:\s*(?:million|m|k|\+))?/i,
+  )?.[0];
+  const schedule = text.match(
+    /\b(?:\d+\s*(?:day|week|month)s?|due\s+[A-Z][a-z]+\s+\d+|deadline[^.;]*)/i,
+  )?.[0];
   if (money && schedule) return `${money}; ${schedule}`;
   if (money) return money;
   if (schedule) return schedule;
-  if (hasAny(text.toLowerCase(), ["client", "owner", "relationship", "approval"])) {
+  if (
+    hasAny(text.toLowerCase(), ["client", "owner", "relationship", "approval"])
+  ) {
     return "Relationship impact stated; exact dollar or schedule impact unknown.";
   }
   return "Exact dollar, schedule, or relationship impact unknown.";
@@ -1724,7 +1878,9 @@ function recommendedMove(item: BrandonBriefItem): string {
   return `Confirm the owner, next step, and due date${owner}.`;
 }
 
-function uniqueRecommendedMoves(items: ExecutiveOperatingBriefShortItem[]): string[] {
+function uniqueRecommendedMoves(
+  items: ExecutiveOperatingBriefShortItem[],
+): string[] {
   const moves: string[] = [];
   const seen = new Set<string>();
   for (const entry of items) {
@@ -1751,9 +1907,18 @@ export function buildExecutiveOperatingBrief(
   sections: BrandonDailyUpdatePacket["sections"],
 ): ExecutiveOperatingBrief {
   const all = [
-    ...sections.needsBrandon.map((item) => ({ section: "needsBrandon" as const, item })),
-    ...sections.waitingOnOthers.map((item) => ({ section: "waitingOnOthers" as const, item })),
-    ...sections.importantUpdates.map((item) => ({ section: "importantUpdates" as const, item })),
+    ...sections.needsBrandon.map((item) => ({
+      section: "needsBrandon" as const,
+      item,
+    })),
+    ...sections.waitingOnOthers.map((item) => ({
+      section: "waitingOnOthers" as const,
+      item,
+    })),
+    ...sections.importantUpdates.map((item) => ({
+      section: "importantUpdates" as const,
+      item,
+    })),
   ].map(({ section, item }) => {
     const scored = scoreBriefItem(item, section);
     return { section, item, ...scored };
@@ -1762,7 +1927,9 @@ export function buildExecutiveOperatingBrief(
   const ranked = all.sort((a, b) => b.score - a.score);
   const topThreshold = ranked[4]?.score ?? ranked.at(-1)?.score ?? 0;
   const topExecutiveFocus = ranked
-    .filter((entry, index) => index < 3 || entry.score >= Math.max(70, topThreshold))
+    .filter(
+      (entry, index) => index < 3 || entry.score >= Math.max(70, topThreshold),
+    )
     .map((entry) => {
       const item = compactOperatingBriefItem(entry.item);
       return {
@@ -1771,15 +1938,16 @@ export function buildExecutiveOperatingBrief(
         materiality: entry.materiality,
         lane: entry.lane,
         whatChanged: item.summary,
-        whyItMatters:
-          item.whyItMatters ??
-          entry.materiality.join(", "),
+        whyItMatters: item.whyItMatters ?? entry.materiality.join(", "),
         recommendedNextMove: recommendedMove(item),
         owner: item.owner,
       };
     });
   const topKeys = new Set(
-    topExecutiveFocus.map((entry) => `${entry.item.title}|${entry.item.project}|${entry.item.sourceId ?? entry.item.sourceDetail}`),
+    topExecutiveFocus.map(
+      (entry) =>
+        `${entry.item.title}|${entry.item.project}|${entry.item.sourceId ?? entry.item.sourceDetail}`,
+    ),
   );
   const additionalMaterialItems = (
     Object.keys(EXECUTIVE_PRIORITY_LANE_LABELS) as ExecutivePriorityLane[]
@@ -1804,7 +1972,20 @@ export function buildExecutiveOperatingBrief(
   }
 
   const riskRadar = ranked
-    .filter((entry) => entry.item.tone === "risk" || entry.score >= 58 || hasAny(briefItemText(entry.item), ["risk", "delay", "blocked", "margin", "overage", "unapproved", "unbilled"]))
+    .filter(
+      (entry) =>
+        entry.item.tone === "risk" ||
+        entry.score >= 58 ||
+        hasAny(briefItemText(entry.item), [
+          "risk",
+          "delay",
+          "blocked",
+          "margin",
+          "overage",
+          "unapproved",
+          "unbilled",
+        ]),
+    )
     .map((entry) => ({
       ...operatingShortItem(entry.item, entry.section),
       impact: getImpactText(entry.item),
@@ -1838,7 +2019,9 @@ export function buildExecutiveOperatingBrief(
       ]),
     )
     .map((entry) => operatingShortItem(entry.item, entry.section));
-  const allShort = ranked.map((entry) => operatingShortItem(entry.item, entry.section));
+  const allShort = ranked.map((entry) =>
+    operatingShortItem(entry.item, entry.section),
+  );
   const importantBusinessSignals = (
     Object.keys(EXECUTIVE_PRIORITY_LANE_LABELS) as ExecutivePriorityLane[]
   )
@@ -1861,7 +2044,8 @@ export function buildExecutiveOperatingBrief(
 
   return {
     startHere,
-    hasUnusualExecutiveLoad: topExecutiveFocus.length > 5 || riskRadar.length > 5,
+    hasUnusualExecutiveLoad:
+      topExecutiveFocus.length > 5 || riskRadar.length > 5,
     topExecutiveFocus,
     additionalMaterialItems,
     projectRiskRadar: riskRadar,
@@ -2106,9 +2290,7 @@ export async function generateBrandonDailyUpdate(
       const meta = hit.row.document_id
         ? metadata.get(hit.row.document_id)
         : undefined;
-      const date = parseDate(
-        getHitDateAnchor({ ...hit, metadata: meta }),
-      );
+      const date = parseDate(getHitDateAnchor({ ...hit, metadata: meta }));
       const text = normalizeText(
         hit.row.chunk_text ??
           hit.row.text ??

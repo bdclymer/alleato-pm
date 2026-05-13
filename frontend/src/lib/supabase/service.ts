@@ -37,13 +37,24 @@ export function createServiceClient() {
 }
 
 export function isRagDatabaseReadsEnabled() {
-  return (process.env.RAG_DATABASE_READS_ENABLED ?? "").trim().toLowerCase() === "true";
+  return (
+    (process.env.RAG_DATABASE_READS_ENABLED ?? "").trim().toLowerCase() ===
+    "true"
+  );
+}
+
+export function isRagDatabaseWritesEnabled() {
+  return (
+    (process.env.RAG_DATABASE_WRITES_ENABLED ?? "").trim().toLowerCase() ===
+    "true"
+  );
 }
 
 export function createRagServiceClient() {
   const supabaseUrl = process.env.RAG_SUPABASE_URL;
   const supabaseServiceKey =
-    process.env.RAG_SUPABASE_SERVICE_ROLE_KEY ?? process.env.RAG_SUPABASE_SERVICE_KEY;
+    process.env.RAG_SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.RAG_SUPABASE_SERVICE_KEY;
 
   if (!supabaseUrl) {
     throw new Error(

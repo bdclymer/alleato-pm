@@ -22,7 +22,9 @@ if [[ -f "$PID_FILE" ]]; then
   managed_pid="$(cat "$PID_FILE" 2>/dev/null || true)"
   if [[ -n "${managed_pid:-}" ]] && is_matching_next_pid "$managed_pid"; then
     if is_server_healthy; then
-      echo "[frontend-dev] Server already running (PID $managed_pid) and healthy at http://localhost:3000 — skipping restart."
+      echo "[frontend-dev] Server already running (PID $managed_pid) and healthy at http://localhost:3000 — following existing process."
+      # Keep this process alive as long as the server lives (preview_start expects a long-running process)
+      while kill -0 "$managed_pid" 2>/dev/null; do sleep 1; done
       exit 0
     fi
     # Server process exists but isn't responding — kill and restart
@@ -44,9 +46,10 @@ if [[ -n "${other_next_pids:-}" ]]; then
   # Check if any of these are actually healthy
   if is_server_healthy; then
     echo "[frontend-dev] Found healthy Next dev server (unmanaged) — adopting it rather than restarting."
-    # Write the first PID to the managed file and exit
     first_pid="$(echo "$other_next_pids" | head -1)"
     echo "$first_pid" > "$PID_FILE"
+    # Keep this process alive as long as the server lives (preview_start expects a long-running process)
+    while kill -0 "$first_pid" 2>/dev/null; do sleep 1; done
     exit 0
   fi
   echo "[frontend-dev] Found existing Next dev process(es) not managed by this script — killing them:"

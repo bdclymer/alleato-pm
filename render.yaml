@@ -1,7 +1,6 @@
 # Render deployment configuration for Alleato-Procore
 # This file should be in the repository root for Render to auto-detect
 services:
-
   - type: cron
     name: alleato-acumatica-financial-sync
     runtime: docker
@@ -65,6 +64,14 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -91,6 +98,14 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -120,6 +135,14 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -156,6 +179,12 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: AI_GATEWAY_API_KEY
         sync: false
       - key: OPENAI_API_KEY
@@ -180,6 +209,12 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: AI_GATEWAY_API_KEY
         sync: false
       - key: OPENAI_API_KEY
@@ -207,6 +242,12 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_URL
         sync: false
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_TOKEN
@@ -232,6 +273,12 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: AI_GATEWAY_API_KEY
         sync: false
       - key: OPENAI_API_KEY
@@ -269,6 +316,12 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: AI_GATEWAY_API_KEY
         sync: false
       - key: OPENAI_API_KEY
@@ -331,6 +384,14 @@ services:
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
       - key: USE_UNIFIED_AGENT
         value: true
       - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED

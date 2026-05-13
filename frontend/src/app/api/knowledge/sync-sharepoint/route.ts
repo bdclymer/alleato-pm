@@ -4,7 +4,11 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseWritesEnabled,
+} from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
 
 // ---------------------------------------------------------------------------
@@ -16,7 +20,14 @@ const KNOWLEDGE_BASE_SHARE_URL =
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
 
-const TEXT_EXTENSIONS = new Set([".pdf", ".doc", ".docx", ".txt", ".md", ".csv"]);
+const TEXT_EXTENSIONS = new Set([
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".txt",
+  ".md",
+  ".csv",
+]);
 
 // ---------------------------------------------------------------------------
 // Graph helpers
@@ -27,8 +38,13 @@ function getGraphToken(): Promise<string> {
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
   const tenantId = process.env.MICROSOFT_TENANT_ID;
 
-  const missing = (["MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_SECRET", "MICROSOFT_TENANT_ID"] as const)
-    .filter((k) => !process.env[k]);
+  const missing = (
+    [
+      "MICROSOFT_CLIENT_ID",
+      "MICROSOFT_CLIENT_SECRET",
+      "MICROSOFT_TENANT_ID",
+    ] as const
+  ).filter((k) => !process.env[k]);
 
   if (missing.length > 0) {
     throw new Error(`Missing Microsoft Graph env vars: ${missing.join(", ")}`);
@@ -43,7 +59,11 @@ function getGraphToken(): Promise<string> {
 
   return fetch(
     `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
-    { method: "POST", body, headers: { "Content-Type": "application/x-www-form-urlencoded" } },
+    {
+      method: "POST",
+      body,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    },
   )
     .then((r) => r.json())
     .then((d) => d.access_token as string);
@@ -54,10 +74,18 @@ function shareIdFromUrl(url: string): string {
   return `u!${encoded}`;
 }
 
-async function graphGet(pathOrUrl: string, token: string): Promise<Record<string, unknown>> {
-  const url = pathOrUrl.startsWith("https://") ? pathOrUrl : `${GRAPH_BASE}${pathOrUrl}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) throw new Error(`Graph GET ${url} → ${res.status} ${res.statusText}`);
+async function graphGet(
+  pathOrUrl: string,
+  token: string,
+): Promise<Record<string, unknown>> {
+  const url = pathOrUrl.startsWith("https://")
+    ? pathOrUrl
+    : `${GRAPH_BASE}${pathOrUrl}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok)
+    throw new Error(`Graph GET ${url} → ${res.status} ${res.statusText}`);
   return res.json();
 }
 
@@ -84,10 +112,19 @@ async function walkFolder(
     `?$select=id,name,size,folder,file,lastModifiedDateTime,webUrl,eTag,cTag`;
 
   while (url) {
-    const data = await graphGet(url, token) as { value?: GraphItem[]; "@odata.nextLink"?: string };
+    const data = (await graphGet(url, token)) as {
+      value?: GraphItem[];
+      "@odata.nextLink"?: string;
+    };
     for (const child of data.value ?? []) {
       if (child.folder) {
-        await walkFolder(driveId, child.id, token, [...pathParts, child.name], out);
+        await walkFolder(
+          driveId,
+          child.id,
+          token,
+          [...pathParts, child.name],
+          out,
+        );
       } else {
         out.push({ pathParts, item: child });
       }
@@ -106,10 +143,16 @@ function metadataId(driveId: string, itemId: string): string {
   // Node has crypto built-in:
   const { createHash } = require("crypto") as typeof import("crypto");
   const namespace = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"; // UUID namespace URL bytes
-  const nsBytes = namespace.replace(/-/g, "").match(/../g)!.map((h) => parseInt(h, 16));
+  const nsBytes = namespace
+    .replace(/-/g, "")
+    .match(/../g)!
+    .map((h) => parseInt(h, 16));
   const name = `microsoft_graph:${driveId}:${itemId}`;
   const nameBytes = Buffer.from(name, "utf-8");
-  const hash = createHash("sha1").update(Buffer.from(nsBytes)).update(nameBytes).digest();
+  const hash = createHash("sha1")
+    .update(Buffer.from(nsBytes))
+    .update(nameBytes)
+    .digest();
   hash[6] = (hash[6] & 0x0f) | 0x50; // version 5
   hash[8] = (hash[8] & 0x3f) | 0x80; // variant
   const hex = hash.toString("hex");
@@ -126,7 +169,9 @@ function buildRow(
   driveId: string,
   siteId: string | null,
 ): Record<string, unknown> {
-  const ext = item.name.includes(".") ? `.${item.name.split(".").pop()!.toLowerCase()}` : "";
+  const ext = item.name.includes(".")
+    ? `.${item.name.split(".").pop()!.toLowerCase()}`
+    : "";
   const sourcePath = [...pathParts, item.name].join(" / ");
   const storageKey = `knowledge-base/${item.id}${ext}`;
   const category = pathParts[0] ? toTitleCase(pathParts[0]) : "General";
@@ -155,7 +200,10 @@ function buildRow(
     storage_bucket: "documents",
     workflow_target: "knowledge",
     tags: "knowledge-base,sharepoint",
-    source_metadata: { source_folder: pathParts, storage_candidate_path: storageKey },
+    source_metadata: {
+      source_folder: pathParts,
+      storage_candidate_path: storageKey,
+    },
   };
 }
 
@@ -195,14 +243,19 @@ export const POST = withApiGuardrails(
       });
     }
 
-    const body = (await request.json().catch(() => ({}))) as { shareUrl?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      shareUrl?: string;
+    };
     const shareUrl = body.shareUrl ?? KNOWLEDGE_BASE_SHARE_URL;
 
-    logger.info({ msg: "knowledge/sync-sharepoint: starting", data: { userId: user.id } });
+    logger.info({
+      msg: "knowledge/sync-sharepoint: starting",
+      data: { userId: user.id },
+    });
 
     const token = await getGraphToken();
     const shareId = shareIdFromUrl(shareUrl);
-    const root = await graphGet(`/shares/${shareId}/driveItem`, token) as {
+    const root = (await graphGet(`/shares/${shareId}/driveItem`, token)) as {
       id: string;
       name?: string;
       parentReference?: { driveId?: string; siteId?: string };
@@ -215,7 +268,8 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({
         code: "UPSTREAM_FAILURE",
         where: "knowledge/sync-sharepoint#POST",
-        message: "Could not resolve SharePoint drive. Check that the sharing link is still valid.",
+        message:
+          "Could not resolve SharePoint drive. Check that the sharing link is still valid.",
       });
     }
 
@@ -223,34 +277,56 @@ export const POST = withApiGuardrails(
     await walkFolder(driveId, root.id, token, [], allFiles);
 
     const eligible = allFiles.filter(({ item }) => {
-      const ext = item.name.includes(".") ? `.${item.name.split(".").pop()!.toLowerCase()}` : "";
+      const ext = item.name.includes(".")
+        ? `.${item.name.split(".").pop()!.toLowerCase()}`
+        : "";
       return TEXT_EXTENSIONS.has(ext);
     });
 
-    const rows = eligible.map(({ pathParts, item }) => buildRow(pathParts, item, driveId, siteId));
+    const rows = eligible.map(({ pathParts, item }) =>
+      buildRow(pathParts, item, driveId, siteId),
+    );
 
     // Upsert using service client (bypasses RLS)
     const serviceClient = createServiceClient();
+    const ragWriteClient = isRagDatabaseWritesEnabled()
+      ? createRagServiceClient()
+      : serviceClient;
     let upserted = 0;
     let errors = 0;
 
     for (const row of rows) {
       try {
         await serviceClient.from("document_metadata").upsert(row as never);
-        await serviceClient.from("fireflies_ingestion_jobs").upsert(
-          { fireflies_id: row.id, metadata_id: row.id, stage: "raw_ingested", error_message: null } as never,
-          { onConflict: "fireflies_id" },
-        );
+        await ragWriteClient
+          .from("fireflies_ingestion_jobs")
+          .upsert(
+            {
+              fireflies_id: row.id,
+              metadata_id: row.id,
+              stage: "raw_ingested",
+              error_message: null,
+            } as never,
+            { onConflict: "fireflies_id" },
+          );
         upserted++;
       } catch (err) {
-        logger.error({ msg: "knowledge/sync-sharepoint: row upsert failed", data: { file: row.file_name, err } });
+        logger.error({
+          msg: "knowledge/sync-sharepoint: row upsert failed",
+          data: { file: row.file_name, err },
+        });
         errors++;
       }
     }
 
     logger.info({
       msg: "knowledge/sync-sharepoint: complete",
-      data: { total: allFiles.length, eligible: eligible.length, upserted, errors },
+      data: {
+        total: allFiles.length,
+        eligible: eligible.length,
+        upserted,
+        errors,
+      },
     });
 
     return NextResponse.json({

@@ -94,6 +94,10 @@ def rag_database_writes_enabled() -> bool:
     return _env_flag_enabled("RAG_DATABASE_WRITES_ENABLED")
 
 
+def rag_database_reads_enabled() -> bool:
+    return _env_flag_enabled("RAG_DATABASE_READS_ENABLED")
+
+
 @lru_cache(maxsize=1)
 def get_rag_supabase_client() -> Client:
     """Return a cached Supabase client for the isolated AI/RAG project."""
@@ -116,6 +120,14 @@ def get_rag_write_client() -> Client:
     """
 
     if rag_database_writes_enabled():
+        return get_rag_supabase_client()
+    return get_supabase_client()
+
+
+def get_rag_read_client() -> Client:
+    """Return the client used for high-churn RAG read tables."""
+
+    if rag_database_reads_enabled():
         return get_rag_supabase_client()
     return get_supabase_client()
 

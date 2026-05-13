@@ -11,6 +11,8 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from src.services.supabase_helpers import get_rag_read_client
+
 
 STALE_SYNC_MINUTES = 120
 STALE_FIREFLIES_MINUTES = 240
@@ -158,11 +160,12 @@ def _chunk_rows_for_documents(supabase: Any, document_ids: Sequence[str]) -> Lis
         return []
 
     rows: List[Dict[str, Any]] = []
+    chunk_client = get_rag_read_client()
     batch_size = 100
     for start in range(0, len(ids), batch_size):
         batch = ids[start:start + batch_size]
         response = (
-            supabase.table("document_chunks")
+            chunk_client.table("document_chunks")
             .select("document_id,chunk_id")
             .in_("document_id", batch)
             .execute()
@@ -856,7 +859,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         [str(row.get("id")) for row in documents if row.get("id")],
     )
     fireflies_jobs = _table_rows(
-        supabase,
+        get_rag_read_client(),
         "fireflies_ingestion_jobs",
         "fireflies_id,stage,error_message,last_attempt_at,updated_at,metadata_id",
         limit=JOB_HEALTH_SAMPLE_LIMIT,

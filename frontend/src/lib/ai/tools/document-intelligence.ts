@@ -1,6 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 import {
   type ToolTracePayload,
   withTrace as _withTrace,
@@ -54,6 +58,9 @@ export function createDocumentIntelligenceTools(
   options: CreateDocumentIntelligenceToolsOptions = {},
 ) {
   const supabase = createServiceClient();
+  const ragSupabase = isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : supabase;
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
   });
@@ -70,9 +77,20 @@ export function createDocumentIntelligenceTools(
         "detectMissingSubmittals.",
       inputSchema: z.object({
         projectId: z.number().optional().describe("Project ID if known"),
-        projectName: z.string().optional().describe("Project name to search for"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Project name to search for"),
         status: z
-          .enum(["open", "submitted", "approved", "rejected", "draft", "distributed", "all"])
+          .enum([
+            "open",
+            "submitted",
+            "approved",
+            "rejected",
+            "draft",
+            "distributed",
+            "all",
+          ])
           .optional()
           .default("all")
           .describe("Filter by status. Default: all"),
@@ -113,7 +131,8 @@ export function createDocumentIntelligenceTools(
           }
 
           const { data: submittals, error } = await query.limit(200);
-          if (error) return { error: `Failed to fetch submittals: ${error.message}` };
+          if (error)
+            return { error: `Failed to fetch submittals: ${error.message}` };
 
           const rows = (submittals ?? []) as unknown as AnyRow[];
 
@@ -132,7 +151,9 @@ export function createDocumentIntelligenceTools(
           const overdue = rows.filter((r) => {
             const due = r.final_due_date ?? r.required_approval_date;
             if (!due) return false;
-            return new Date(due as string) < new Date() && r.status !== "approved";
+            return (
+              new Date(due as string) < new Date() && r.status !== "approved"
+            );
           });
 
           return {
@@ -177,7 +198,10 @@ export function createDocumentIntelligenceTools(
               "'fire sprinkler pipe material', 'Section 08-1113 doors'",
           ),
         projectId: z.number().optional().describe("Project ID to scope search"),
-        projectName: z.string().optional().describe("Project name to search for"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Project name to search for"),
         topK: z
           .number()
           .optional()
@@ -202,12 +226,16 @@ export function createDocumentIntelligenceTools(
           }
 
           const openai = getOpenAI();
-          const embedding = await generateEmbedding(openai, query, EMBEDDING.LARGE);
+          const embedding = await generateEmbedding(
+            openai,
+            query,
+            EMBEDDING.LARGE,
+          );
 
           // Search document_chunks — OneDrive docs are where specs live.
           // Use search_document_chunks RPC which handles halfvec(3072).
           const { data: chunks, error } = await (
-            supabase as unknown as {
+            ragSupabase as unknown as {
               rpc: (
                 name: string,
                 args: Record<string, unknown>,
@@ -229,9 +257,15 @@ export function createDocumentIntelligenceTools(
           const results = (chunks ?? []) as AnyRow[];
 
           // Filter to docs that look like specs by title pattern
-          const specKeywords = ["spec", "specification", "division", "section", "csi"];
+          const specKeywords = [
+            "spec",
+            "specification",
+            "division",
+            "section",
+            "csi",
+          ];
           const specResults = results.filter((r) => {
-            const meta = r.metadata as AnyRow | null;
+            const meta = (r.doc_metadata ?? r.metadata) as AnyRow | null;
             const title = ((meta?.title as string) ?? "").toLowerCase();
             return specKeywords.some((kw) => title.includes(kw));
           });
@@ -242,13 +276,16 @@ export function createDocumentIntelligenceTools(
           // Group chunks by source document
           const byDoc = new Map<string, { title: string; chunks: string[] }>();
           for (const r of finalResults) {
-            const meta = r.metadata as AnyRow | null;
+            const meta = (r.doc_metadata ?? r.metadata) as AnyRow | null;
             const docId = (r.document_id as string) ?? "unknown";
-            const title = (meta?.title as string) ?? docId;
+            const title =
+              (r.doc_title as string | null) ??
+              (meta?.title as string) ??
+              docId;
             if (!byDoc.has(docId)) {
               byDoc.set(docId, { title, chunks: [] });
             }
-            byDoc.get(docId)!.chunks.push(r.text as string);
+            byDoc.get(docId)!.chunks.push((r.chunk_text ?? r.text) as string);
           }
 
           const sources = Array.from(byDoc.entries()).map(([docId, doc]) => ({
@@ -258,7 +295,9 @@ export function createDocumentIntelligenceTools(
             excerpts: doc.chunks.slice(0, 3), // top 3 excerpts per doc
           }));
 
-          const allText = finalResults.map((r) => r.text as string).join("\n\n");
+          const allText = finalResults
+            .map((r) => (r.chunk_text ?? r.text) as string)
+            .join("\n\n");
 
           return {
             query,
@@ -287,7 +326,10 @@ export function createDocumentIntelligenceTools(
         "'is our submittal log complete?'",
       inputSchema: z.object({
         projectId: z.number().optional().describe("Project ID if known"),
-        projectName: z.string().optional().describe("Project name to search for"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Project name to search for"),
       }),
       execute: withTrace(
         "detectMissingSubmittals",
@@ -308,17 +350,22 @@ export function createDocumentIntelligenceTools(
             .eq("project_id", resolved.id)
             .is("deleted_at", null);
 
-          if (subError) return { error: `Failed to fetch submittals: ${subError.message}` };
+          if (subError)
+            return { error: `Failed to fetch submittals: ${subError.message}` };
 
           const rows = (submittals ?? []) as unknown as AnyRow[];
           const existingSections = new Set(
             rows
-              .map((r) => (r.specification_section as string | null)?.toLowerCase())
+              .map((r) =>
+                (r.specification_section as string | null)?.toLowerCase(),
+              )
               .filter(Boolean),
           );
 
           const totalSubmittals = rows.length;
-          const withSection = rows.filter((r) => r.specification_section).length;
+          const withSection = rows.filter(
+            (r) => r.specification_section,
+          ).length;
           const withoutSection = totalSubmittals - withSection;
 
           const statusBreakdown: Record<string, number> = {};
@@ -328,7 +375,8 @@ export function createDocumentIntelligenceTools(
           }
 
           const overdue = rows.filter((r) => {
-            if (r.status === "approved" || r.status === "distributed") return false;
+            if (r.status === "approved" || r.status === "distributed")
+              return false;
             // No due date data in this query — flag open/draft items as watch
             return r.status === "open" || r.status === "draft";
           });
@@ -342,10 +390,11 @@ export function createDocumentIntelligenceTools(
               statusBreakdown,
               overdueOrOpenCount: overdue.length,
             },
-            missingSpecSections: withoutSection > 0
-              ? "Some submittals have no spec section assigned — they cannot be " +
-                "cross-referenced against drawings or specs until sections are added."
-              : null,
+            missingSpecSections:
+              withoutSection > 0
+                ? "Some submittals have no spec section assigned — they cannot be " +
+                  "cross-referenced against drawings or specs until sections are added."
+                : null,
             existingSections: Array.from(existingSections).sort(),
             recommendations: [
               totalSubmittals < 5
@@ -403,7 +452,10 @@ export function createDocumentIntelligenceTools(
           .describe("How to categorize this feedback"),
         projectId: z.number().optional().describe("Project ID if known"),
         documentId: z.string().optional().describe("Document or submittal ID"),
-        specSection: z.string().optional().describe("Spec section this finding relates to"),
+        specSection: z
+          .string()
+          .optional()
+          .describe("Spec section this finding relates to"),
         requirementType: z
           .enum(REQUIREMENT_TYPES)
           .optional()
@@ -416,7 +468,9 @@ export function createDocumentIntelligenceTools(
         sourceOfTruthRef: z
           .string()
           .optional()
-          .describe("The document/section that settles this (e.g. 'Spec Section 15100, page 4')"),
+          .describe(
+            "The document/section that settles this (e.g. 'Spec Section 15100, page 4')",
+          ),
       }),
       execute: withTrace(
         "logFeedback",
@@ -453,7 +507,8 @@ export function createDocumentIntelligenceTools(
             .select("id")
             .single();
 
-          if (error) return { error: `Failed to log feedback: ${error.message}` };
+          if (error)
+            return { error: `Failed to log feedback: ${error.message}` };
 
           return {
             success: true,
@@ -486,16 +541,26 @@ export function createDocumentIntelligenceTools(
         specSections: z
           .array(z.string())
           .optional()
-          .describe("Specific spec sections to compare against, e.g. ['08-1113', '15100']"),
+          .describe(
+            "Specific spec sections to compare against, e.g. ['08-1113', '15100']",
+          ),
         focusArea: z
           .string()
           .optional()
-          .describe("What to focus the review on, e.g. 'pipe material requirements'"),
+          .describe(
+            "What to focus the review on, e.g. 'pipe material requirements'",
+          ),
       }),
       execute: withTrace(
         "reviewDocument",
         options,
-        async ({ projectId, projectName, submittalId, specSections, focusArea }) => {
+        async ({
+          projectId,
+          projectName,
+          submittalId,
+          specSections,
+          focusArea,
+        }) => {
           let resolvedId: number | undefined;
           if (projectId || projectName) {
             const resolved = await resolveProject(
@@ -522,16 +587,21 @@ export function createDocumentIntelligenceTools(
 
           // Phase 1 stub: explain what the full review will do and surface
           // what spec content is available to compare against.
-          const specQuery = focusArea ??
+          const specQuery =
+            focusArea ??
             (submittalInfo
               ? `${submittalInfo.title} ${submittalInfo.specification_section ?? ""}`
-              : specSections?.join(" ") ?? "submittal requirements");
+              : (specSections?.join(" ") ?? "submittal requirements"));
 
           const openai = getOpenAI();
-          const embedding = await generateEmbedding(openai, specQuery, EMBEDDING.LARGE);
+          const embedding = await generateEmbedding(
+            openai,
+            specQuery,
+            EMBEDDING.LARGE,
+          );
 
           const { data: specChunks } = await (
-            supabase as unknown as {
+            ragSupabase as unknown as {
               rpc: (
                 name: string,
                 args: Record<string, unknown>,
@@ -549,11 +619,19 @@ export function createDocumentIntelligenceTools(
           });
 
           const chunks = (specChunks ?? []) as AnyRow[];
-          const specKeywords = ["spec", "specification", "division", "section", "require"];
+          const specKeywords = [
+            "spec",
+            "specification",
+            "division",
+            "section",
+            "require",
+          ];
           const relevantChunks = chunks.filter((c) => {
-            const meta = c.metadata as AnyRow | null;
+            const meta = (c.doc_metadata ?? c.metadata) as AnyRow | null;
             const title = ((meta?.title as string) ?? "").toLowerCase();
-            const text = ((c.text as string) ?? "").toLowerCase();
+            const text = (
+              ((c.chunk_text ?? c.text) as string) ?? ""
+            ).toLowerCase();
             return (
               specKeywords.some((kw) => title.includes(kw)) ||
               specKeywords.some((kw) => text.includes(kw))
@@ -576,8 +654,12 @@ export function createDocumentIntelligenceTools(
             specContentAvailable: relevantChunks.length > 0,
             specChunksFound: relevantChunks.length,
             specExcerpts: relevantChunks.slice(0, 3).map((c) => ({
-              source: ((c.metadata as AnyRow)?.title as string) ?? "Unknown document",
-              text: (c.text as string).substring(0, 400),
+              source:
+                (c.doc_title as string | null) ??
+                (((c.doc_metadata ?? c.metadata) as AnyRow | null)
+                  ?.title as string) ??
+                "Unknown document",
+              text: ((c.chunk_text ?? c.text) as string).substring(0, 400),
             })),
             nextStep:
               relevantChunks.length > 0

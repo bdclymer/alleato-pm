@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/api";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  validateResponseContract,
+  withApiGuardrails,
+} from "@/lib/guardrails/api";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 
-import { fetchBackendCompiler, requireAdmin } from "../../intelligence-compiler/_shared";
+import {
+  fetchBackendCompiler,
+  requireAdmin,
+} from "../../intelligence-compiler/_shared";
 import { fetchBackendSourceSync } from "../../source-sync/_shared";
 
 const StatusMapSchema = z.record(z.string(), z.number());
@@ -126,7 +136,9 @@ function firstMeaningfulError(status: z.infer<typeof SourceSyncStatusSchema>) {
     }`;
   }
 
-  const alert = status.alerts.find((item) => item.severity === "critical") ?? status.alerts[0];
+  const alert =
+    status.alerts.find((item) => item.severity === "critical") ??
+    status.alerts[0];
   return alert?.message ?? null;
 }
 
@@ -134,7 +146,9 @@ function totalStatus(map: Record<string, number>, statuses: string[]) {
   return statuses.reduce((total, status) => total + (map[status] ?? 0), 0);
 }
 
-function countByStatus(rows: Array<{ status: string | null }>): Record<string, number> {
+function countByStatus(
+  rows: Array<{ status: string | null }>,
+): Record<string, number> {
   return rows.reduce<Record<string, number>>((counts, row) => {
     const status = row.status || "unknown";
     counts[status] = (counts[status] ?? 0) + 1;
@@ -148,13 +162,18 @@ function parseDate(value: string | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function ageMinutes(value: string | null | undefined, now: Date): number | null {
+function ageMinutes(
+  value: string | null | undefined,
+  now: Date,
+): number | null {
   const date = parseDate(value);
   if (!date) return null;
   return Math.max(0, Math.floor((now.getTime() - date.getTime()) / 60_000));
 }
 
-async function countTable(table: "tasks" | "insight_cards" | "intelligence_packets") {
+async function countTable(
+  table: "tasks" | "insight_cards" | "intelligence_packets",
+) {
   const supabase = createServiceClient();
   const { count, error } = await supabase
     .from(table)
@@ -171,7 +190,10 @@ async function countCurrentPackets() {
     .select("id", { count: "exact", head: true })
     .eq("packet_type", "current");
 
-  if (error) throw new Error(`Failed to count current intelligence packets: ${error.message}`);
+  if (error)
+    throw new Error(
+      `Failed to count current intelligence packets: ${error.message}`,
+    );
   return count ?? 0;
 }
 
@@ -185,12 +207,16 @@ async function countSignalCandidates(status: string, confidence?: string) {
   if (confidence) query = query.eq("confidence", confidence);
 
   const { count, error } = await query;
-  if (error) throw new Error(`Failed to count signal candidates: ${error.message}`);
+  if (error)
+    throw new Error(`Failed to count signal candidates: ${error.message}`);
   return count ?? 0;
 }
 
 async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
   const supabase = createServiceClient();
+  const ragSupabase = isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : supabase;
   const [
     documentsResult,
     chunksResult,
@@ -201,9 +227,11 @@ async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
   ] = await Promise.all([
     supabase
       .from("document_metadata")
-      .select("id,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at")
+      .select(
+        "id,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at",
+      )
       .limit(SOURCE_HEALTH_DOCUMENT_LIMIT),
-    supabase
+    ragSupabase
       .from("document_chunks")
       .select("document_id")
       .limit(SOURCE_HEALTH_CHUNK_LIMIT),
@@ -213,30 +241,44 @@ async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
       .limit(SOURCE_HEALTH_JOB_LIMIT),
     supabase
       .from("graph_sync_state")
-      .select("source,resource_id,resource_name,last_sync_at,sync_status,error_message,items_synced,updated_at")
+      .select(
+        "source,resource_id,resource_name,last_sync_at,sync_status,error_message,items_synced,updated_at",
+      )
       .order("last_sync_at", { ascending: true }),
     supabase
       .from("source_sync_runs")
-      .select("source,stage,status,resource_name,finished_at,error_code,error_message")
+      .select(
+        "source,stage,status,resource_name,finished_at,error_code,error_message",
+      )
       .order("started_at", { ascending: false })
       .limit(20),
     countTable("tasks"),
   ]);
 
   if (documentsResult.error) {
-    throw new Error(`Failed to load source documents: ${documentsResult.error.message}`);
+    throw new Error(
+      `Failed to load source documents: ${documentsResult.error.message}`,
+    );
   }
   if (chunksResult.error) {
-    throw new Error(`Failed to load source chunks: ${chunksResult.error.message}`);
+    throw new Error(
+      `Failed to load source chunks: ${chunksResult.error.message}`,
+    );
   }
   if (sourceJobsResult.error) {
-    throw new Error(`Failed to load source intelligence jobs: ${sourceJobsResult.error.message}`);
+    throw new Error(
+      `Failed to load source intelligence jobs: ${sourceJobsResult.error.message}`,
+    );
   }
   if (graphStatesResult.error) {
-    throw new Error(`Failed to load graph sync state: ${graphStatesResult.error.message}`);
+    throw new Error(
+      `Failed to load graph sync state: ${graphStatesResult.error.message}`,
+    );
   }
   if (recentRunsResult.error) {
-    throw new Error(`Failed to load source sync runs: ${recentRunsResult.error.message}`);
+    throw new Error(
+      `Failed to load source sync runs: ${recentRunsResult.error.message}`,
+    );
   }
 
   const chunkDocumentIds = new Set(
@@ -249,21 +291,32 @@ async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
       .filter(Boolean),
   );
   const documents = documentsResult.data ?? [];
-  const unembedded = documents.filter((row) => !chunkDocumentIds.has(row.id)).length;
-  const uncompiled = documents.filter((row) => !compiledDocumentIds.has(row.id)).length;
+  const unembedded = documents.filter(
+    (row) => !chunkDocumentIds.has(row.id),
+  ).length;
+  const uncompiled = documents.filter(
+    (row) => !compiledDocumentIds.has(row.id),
+  ).length;
   const staleGraphStates = (graphStatesResult.data ?? [])
     .map((row) => ({
       ...row,
       staleMinutes: ageMinutes(row.last_sync_at, now),
     }))
-    .filter((row) => row.error_message || row.staleMinutes === null || row.staleMinutes > STALE_SYNC_MINUTES);
+    .filter(
+      (row) =>
+        row.error_message ||
+        row.staleMinutes === null ||
+        row.staleMinutes > STALE_SYNC_MINUTES,
+    );
   const primaryGraphIssue = staleGraphStates[0];
   const alerts: SourceSyncStatus["alerts"] = [];
 
   if (primaryGraphIssue) {
     alerts.push({
       severity: primaryGraphIssue.error_message ? "critical" : "warning",
-      code: primaryGraphIssue.error_message ? "source_sync_error" : "source_sync_stale",
+      code: primaryGraphIssue.error_message
+        ? "source_sync_error"
+        : "source_sync_stale",
       source: primaryGraphIssue.source ?? "microsoft_graph",
       resourceId: primaryGraphIssue.resource_id ?? "default",
       message: `${primaryGraphIssue.resource_name ?? primaryGraphIssue.source ?? "Microsoft Graph"}: ${
@@ -347,10 +400,14 @@ async function loadCompilerFallbackStatus(now: Date): Promise<CompilerStatus> {
   ]);
 
   if (sourceJobsResult.error) {
-    throw new Error(`Failed to load source intelligence jobs: ${sourceJobsResult.error.message}`);
+    throw new Error(
+      `Failed to load source intelligence jobs: ${sourceJobsResult.error.message}`,
+    );
   }
   if (packetJobsResult.error) {
-    throw new Error(`Failed to load packet refresh jobs: ${packetJobsResult.error.message}`);
+    throw new Error(
+      `Failed to load packet refresh jobs: ${packetJobsResult.error.message}`,
+    );
   }
 
   const sourceJobsByStatus = countByStatus(sourceJobsResult.data ?? []);
@@ -414,19 +471,26 @@ async function fetchJson<TSchema extends z.ZodTypeAny>(
     ) as z.infer<TSchema>;
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Unknown readiness dependency failure.",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown readiness dependency failure.",
     };
   }
 }
 
-async function countTasksSince(iso: string, column: "created_at" | "updated_at") {
+async function countTasksSince(
+  iso: string,
+  column: "created_at" | "updated_at",
+) {
   const supabase = createServiceClient();
   const { count, error } = await supabase
     .from("tasks")
     .select("id", { count: "exact", head: true })
     .gte(column, iso);
 
-  if (error) throw new Error(`Failed to count ${column} tasks: ${error.message}`);
+  if (error)
+    throw new Error(`Failed to count ${column} tasks: ${error.message}`);
   return count ?? 0;
 }
 
@@ -443,7 +507,8 @@ async function loadLatestDailyBrief() {
     .limit(1)
     .maybeSingle();
 
-  if (error) throw new Error(`Failed to load daily brief status: ${error.message}`);
+  if (error)
+    throw new Error(`Failed to load daily brief status: ${error.message}`);
   return data;
 }
 
@@ -456,53 +521,64 @@ export const GET = withApiGuardrails(
     const generatedAt = now.toISOString();
     const since24h = new Date(now.getTime() - 86_400_000).toISOString();
 
-    const [rawSourceResult, rawCompilerResult, newTasks, updatedTasks, dailyBrief] =
-      await Promise.all([
-        fetchJson(
-          requestId,
-          "api.admin.operations-readiness.status.GET",
-          "source-sync",
-          () =>
-            fetchBackendSourceSync(
-              requestId,
-              "api.admin.operations-readiness.status.GET",
-              "status",
-              { method: "GET" },
-            ),
-          SourceSyncStatusSchema,
-        ),
-        fetchJson(
-          requestId,
-          "api.admin.operations-readiness.status.GET",
-          "compiler",
-          () =>
-            fetchBackendCompiler(
-              requestId,
-              "api.admin.operations-readiness.status.GET",
-              "status",
-              { method: "GET" },
-            ),
-          CompilerStatusSchema,
-        ),
-        countTasksSince(since24h, "created_at"),
-        countTasksSince(since24h, "updated_at"),
-        loadLatestDailyBrief(),
-      ]);
+    const [
+      rawSourceResult,
+      rawCompilerResult,
+      newTasks,
+      updatedTasks,
+      dailyBrief,
+    ] = await Promise.all([
+      fetchJson(
+        requestId,
+        "api.admin.operations-readiness.status.GET",
+        "source-sync",
+        () =>
+          fetchBackendSourceSync(
+            requestId,
+            "api.admin.operations-readiness.status.GET",
+            "status",
+            { method: "GET" },
+          ),
+        SourceSyncStatusSchema,
+      ),
+      fetchJson(
+        requestId,
+        "api.admin.operations-readiness.status.GET",
+        "compiler",
+        () =>
+          fetchBackendCompiler(
+            requestId,
+            "api.admin.operations-readiness.status.GET",
+            "status",
+            { method: "GET" },
+          ),
+        CompilerStatusSchema,
+      ),
+      countTasksSince(since24h, "created_at"),
+      countTasksSince(since24h, "updated_at"),
+      loadLatestDailyBrief(),
+    ]);
 
-    const sourceResult = "error" in rawSourceResult
-      ? await loadSourceFallbackStatus(now).catch((error) => ({
-          error: error instanceof Error ? error.message : rawSourceResult.error,
-        }))
-      : rawSourceResult;
-    const compilerResult = "error" in rawCompilerResult
-      ? await loadCompilerFallbackStatus(now).catch((error) => ({
-          error: error instanceof Error ? error.message : rawCompilerResult.error,
-        }))
-      : rawCompilerResult;
+    const sourceResult =
+      "error" in rawSourceResult
+        ? await loadSourceFallbackStatus(now).catch((error) => ({
+            error:
+              error instanceof Error ? error.message : rawSourceResult.error,
+          }))
+        : rawSourceResult;
+    const compilerResult =
+      "error" in rawCompilerResult
+        ? await loadCompilerFallbackStatus(now).catch((error) => ({
+            error:
+              error instanceof Error ? error.message : rawCompilerResult.error,
+          }))
+        : rawCompilerResult;
 
     const sourceUnavailable = "error" in sourceResult;
     const compilerUnavailable = "error" in compilerResult;
-    const sourceBlocker = sourceUnavailable ? sourceResult.error : firstMeaningfulError(sourceResult);
+    const sourceBlocker = sourceUnavailable
+      ? sourceResult.error
+      : firstMeaningfulError(sourceResult);
     const sourceLevel: ReadinessLevel = sourceUnavailable
       ? "blocked"
       : sourceResult.counts.unembedded > 0 || sourceResult.counts.uncompiled > 0
@@ -521,10 +597,16 @@ export const GET = withApiGuardrails(
 
     const packetQueued = compilerUnavailable
       ? 0
-      : totalStatus(compilerResult.counts.packetJobsByStatus, ["queued", "running"]);
+      : totalStatus(compilerResult.counts.packetJobsByStatus, [
+          "queued",
+          "running",
+        ]);
     const packetFailed = compilerUnavailable
       ? 0
-      : totalStatus(compilerResult.counts.packetJobsByStatus, ["failed", "error"]);
+      : totalStatus(compilerResult.counts.packetJobsByStatus, [
+          "failed",
+          "error",
+        ]);
     const compilerBlocker = compilerUnavailable
       ? compilerResult.error
       : Object.entries(compilerResult.unhealthyChecks)
@@ -537,7 +619,7 @@ export const GET = withApiGuardrails(
     const dailyGeneratedAt =
       typeof dailyPacket?.generatedAt === "string"
         ? dailyPacket.generatedAt
-        : dailyBrief?.created_at ?? null;
+        : (dailyBrief?.created_at ?? null);
     const dailySourceWarning = dailyPacket?.sourceCoverage?.find(
       (source) => source.status === "warning" && source.warning,
     )?.warning;
@@ -551,16 +633,28 @@ export const GET = withApiGuardrails(
             ? "Yes. Sources are synced, searchable, and compiled."
             : sourceUnavailable
               ? "No. The source health service did not answer, so sync and embedding cannot be trusted."
-              : sourceBacklogAnswer ?? "No. Source data is not fully ready.",
+              : (sourceBacklogAnswer ?? "No. Source data is not fully ready."),
         level: sourceLevel,
         checkedAt: sourceUnavailable ? generatedAt : sourceResult.generatedAt,
         metrics: sourceUnavailable
           ? [{ label: "Health service", value: "Unavailable" }]
           : [
-              { label: "Documents", value: formatCount(sourceResult.counts.documents) },
-              { label: "Chunks", value: formatCount(sourceResult.counts.chunks) },
-              { label: "Not searchable", value: formatCount(sourceResult.counts.unembedded) },
-              { label: "Not in packets", value: formatCount(sourceResult.counts.uncompiled) },
+              {
+                label: "Documents",
+                value: formatCount(sourceResult.counts.documents),
+              },
+              {
+                label: "Chunks",
+                value: formatCount(sourceResult.counts.chunks),
+              },
+              {
+                label: "Not searchable",
+                value: formatCount(sourceResult.counts.unembedded),
+              },
+              {
+                label: "Not in packets",
+                value: formatCount(sourceResult.counts.uncompiled),
+              },
             ],
         blocker: sourceBlocker,
         cause: sourceBlocker
@@ -591,23 +685,32 @@ export const GET = withApiGuardrails(
         id: "tasks",
         question: "Have all generated tasks been updated?",
         answer:
-          sourceUnavailable || (sourceResult.counts.tasks === 0 && newTasks === 0)
+          sourceUnavailable ||
+          (sourceResult.counts.tasks === 0 && newTasks === 0)
             ? "No. Task generation cannot be trusted until source health responds."
             : sourceHasBacklog
               ? `No. ${formatCount(newTasks)} tasks were created and ${formatCount(updatedTasks)} were updated in the last 24 hours, but source backlog can leave generated tasks incomplete.`
               : `Yes. ${formatCount(newTasks)} tasks were created and ${formatCount(updatedTasks)} were updated in the last 24 hours.`,
-        level: sourceUnavailable ? "blocked" : sourceHasBacklog ? "attention" : "ready",
+        level: sourceUnavailable
+          ? "blocked"
+          : sourceHasBacklog
+            ? "attention"
+            : "ready",
         checkedAt: generatedAt,
         metrics: [
-          { label: "Total extracted tasks", value: sourceUnavailable ? "Unknown" : formatCount(sourceResult.counts.tasks) },
+          {
+            label: "Total extracted tasks",
+            value: sourceUnavailable
+              ? "Unknown"
+              : formatCount(sourceResult.counts.tasks),
+          },
           { label: "Created in 24h", value: formatCount(newTasks) },
           { label: "Updated in 24h", value: formatCount(updatedTasks) },
         ],
-        blocker:
-          sourceUnavailable
-            ? "Task extraction depends on source health, and source health is unavailable."
-            : sourceHasBacklog
-              ? "Task extraction depends on the same source pipeline; source backlog can leave tasks stale."
+        blocker: sourceUnavailable
+          ? "Task extraction depends on source health, and source health is unavailable."
+          : sourceHasBacklog
+            ? "Task extraction depends on the same source pipeline; source backlog can leave tasks stale."
             : null,
         cause:
           "Generated tasks are derived from synced communication/document records, so task freshness follows source ingestion health.",
@@ -619,14 +722,13 @@ export const GET = withApiGuardrails(
       {
         id: "project-intelligence",
         question: "Have project intelligence and packets been updated?",
-        answer:
-          compilerUnavailable
-            ? "No. The compiler health service did not answer, so packet freshness cannot be trusted."
-            : packetFailed > 0
-              ? "No. Packet refresh jobs are failing."
-              : packetQueued > 0
-                ? "In progress. Packet work is queued or running."
-                : "Yes. Current packets are available.",
+        answer: compilerUnavailable
+          ? "No. The compiler health service did not answer, so packet freshness cannot be trusted."
+          : packetFailed > 0
+            ? "No. Packet refresh jobs are failing."
+            : packetQueued > 0
+              ? "In progress. Packet work is queued or running."
+              : "Yes. Current packets are available.",
         level: compilerUnavailable
           ? "blocked"
           : packetFailed > 0
@@ -634,12 +736,20 @@ export const GET = withApiGuardrails(
             : packetQueued > 0 || !compilerResult.healthy
               ? "attention"
               : "ready",
-        checkedAt: compilerUnavailable ? generatedAt : compilerResult.generatedAt,
+        checkedAt: compilerUnavailable
+          ? generatedAt
+          : compilerResult.generatedAt,
         metrics: compilerUnavailable
           ? [{ label: "Compiler service", value: "Unavailable" }]
           : [
-              { label: "Current packets", value: formatCount(compilerResult.counts.currentPackets) },
-              { label: "Insight cards", value: formatCount(compilerResult.counts.insightCards) },
+              {
+                label: "Current packets",
+                value: formatCount(compilerResult.counts.currentPackets),
+              },
+              {
+                label: "Insight cards",
+                value: formatCount(compilerResult.counts.insightCards),
+              },
               { label: "Packet jobs active", value: formatCount(packetQueued) },
               { label: "Packet jobs failed", value: formatCount(packetFailed) },
             ],
@@ -649,7 +759,10 @@ export const GET = withApiGuardrails(
           : "No compiler blocker is currently reported.",
         prevention:
           "Keep packet job failures and stale queued jobs as first-class readiness checks, not hidden in raw job tables.",
-        primaryAction: { label: "Open compiler health", href: "/intelligence-compiler" },
+        primaryAction: {
+          label: "Open compiler health",
+          href: "/intelligence-compiler",
+        },
         runActions: compilerUnavailable
           ? []
           : [
@@ -694,7 +807,7 @@ export const GET = withApiGuardrails(
         blocker: !dailyBrief
           ? "No executive briefing row was found."
           : dailyBrief.sent_teams
-            ? dailySourceWarning ?? null
+            ? (dailySourceWarning ?? null)
             : "The latest executive brief has not been sent to Teams.",
         cause: !dailyBrief
           ? "The daily briefing job has not persisted a recap packet."
@@ -705,7 +818,9 @@ export const GET = withApiGuardrails(
           "Show generated, approved, and sent states together so a brief cannot look complete when delivery is still pending.",
         primaryAction: { label: "Open executive brief", href: "/executive" },
         runActions:
-          dailyBrief && !dailyBrief.sent_teams && dailyBrief.workflow_status === "approved"
+          dailyBrief &&
+          !dailyBrief.sent_teams &&
+          dailyBrief.workflow_status === "approved"
             ? [
                 {
                   id: "send-daily-brief-teams",
@@ -726,14 +841,24 @@ export const GET = withApiGuardrails(
 
     return NextResponse.json({
       generatedAt,
-      status: blocked > 0 || unknown > 0 ? "blocked" : attention > 0 ? "attention" : "ready",
+      status:
+        blocked > 0 || unknown > 0
+          ? "blocked"
+          : attention > 0
+            ? "attention"
+            : "ready",
       summary:
         blocked > 0 || unknown > 0
           ? "One or more operating answers are blocked or cannot be trusted yet."
           : attention > 0
             ? "At least one operating answer is no and needs follow-up."
             : "All four operating answers are currently ready.",
-      counts: { ready: items.filter((item) => item.level === "ready").length, attention, blocked, unknown },
+      counts: {
+        ready: items.filter((item) => item.level === "ready").length,
+        attention,
+        blocked,
+        unknown,
+      },
       items,
     });
   },
