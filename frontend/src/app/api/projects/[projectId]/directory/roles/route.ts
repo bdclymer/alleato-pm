@@ -74,19 +74,24 @@ export const GET = withApiGuardrails(
         .in("id", personIds);
 
       if (peopleError) {
-        } else {
-        (people || []).forEach((p) => {
-          peopleMap.set(p.id, {
-            id: p.id,
-            first_name: p.first_name || "",
-            last_name: p.last_name || "",
-            email: p.email || "",
-            phone_mobile: p.phone_mobile || null,
-            phone_business: p.phone_business || null,
-            company_name: (p.company as { name?: string } | null)?.name || null,
-          });
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "projects/[projectId]/directory/roles#GET",
+          message: `Failed to load project role members: ${peopleError.message}`,
         });
       }
+
+      (people || []).forEach((p) => {
+        peopleMap.set(p.id, {
+          id: p.id,
+          first_name: p.first_name || "",
+          last_name: p.last_name || "",
+          email: p.email || "",
+          phone_mobile: p.phone_mobile || null,
+          phone_business: p.phone_business || null,
+          company_name: (p.company as { name?: string } | null)?.name || null,
+        });
+      });
     }
 
     // Transform the data for easier consumption

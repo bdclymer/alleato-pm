@@ -64,7 +64,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = useSearchParams()!;
-  const { selectedProject } = useProject();
+  const { selectedProject, isLoading: isProjectContextLoading } = useProject();
   const reportHeaderNavFailure = useCallback(
     (operation: string, error: unknown, metadata?: Record<string, unknown>) => {
       reportNonCriticalFailure({
@@ -1547,6 +1547,25 @@ export function useHeaderNav(): UseHeaderNavReturn {
   useEffect(() => {
     const fetchCurrentProject = async () => {
       if (projectId) {
+        if (isProjectContextLoading) {
+          return;
+        }
+
+        const normalizedSelectedProject = normalizeProject(
+          selectedProject
+            ? {
+                id: selectedProject.id,
+                name: selectedProject.name,
+                "job number": selectedProject.number ?? null,
+                phase: selectedProject.status ?? null,
+              }
+            : null,
+        );
+        if (normalizedSelectedProject?.id === projectId) {
+          setCurrentProject(normalizedSelectedProject);
+          return;
+        }
+
         try {
           const project = await apiFetch<Project>(`/api/projects/${projectId}`);
           const normalizedProject = normalizeProject(project);
@@ -1562,7 +1581,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchCurrentProject();
-  }, [projectId]);
+  }, [isProjectContextLoading, projectId, selectedProject]);
 
   // Fetch projects for the selector dropdown
   const fetchProjects = useCallback(async () => {

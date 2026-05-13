@@ -33,6 +33,9 @@ export const GET = withApiGuardrails(
       );
     }
 
-    return NextResponse.json({ data: permissions });
+    return NextResponse.json({
+      data: permissions,
+      userType: authResult.membership.userType,
+    });
     },
 );

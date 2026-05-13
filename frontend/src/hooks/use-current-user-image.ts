@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import { useEffect, useState } from "react";
+
+type UserMetadata = {
+  avatar_url?: string;
+};
 
 export const useCurrentUserImage = () => {
   const [image, setImage] = useState<string | null>(null);
@@ -8,17 +13,21 @@ export const useCurrentUserImage = () => {
     let cancelled = false;
 
     const fetchUserImage = async () => {
-      const { data, error } = await createClient().auth.getSession();
-      if (error || cancelled) {
+      const user = await getCurrentBrowserUser(createClient());
+      if (cancelled) {
         return;
       }
 
-      if (!cancelled) {
-        setImage(data.session?.user.user_metadata.avatar_url ?? null);
-      }
+      const metadata = (user?.user_metadata ?? {}) as UserMetadata;
+      setImage(metadata.avatar_url ?? null);
     };
 
-    fetchUserImage();
+    fetchUserImage().catch((fetchError) => {
+      console.warn("[useCurrentUserImage] Failed to resolve current user image.", fetchError);
+      if (!cancelled) {
+        setImage(null);
+      }
+    });
 
     return () => {
       cancelled = true;

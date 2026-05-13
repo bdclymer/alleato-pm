@@ -28,6 +28,7 @@ import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { featureFromPathname } from "@/lib/procore-route-map";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 import { cn } from "@/lib/utils";
 
@@ -191,20 +192,20 @@ export function ProcoreReferencePanel() {
 
   // ── Auth ────────────────────────────────────────────────────────────────
   React.useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserName(data.user.user_metadata?.full_name ?? data.user.email?.split("@")[0] ?? "You");
-        setUserEmail(data.user.email ?? undefined);
+    getCurrentBrowserUser(createClient()).then((user) => {
+      if (user) {
+        setUserName(user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "You");
+        setUserEmail(user.email ?? undefined);
       }
+    }).catch((error) => {
+      console.warn("[ProcoreReferencePanel] Failed to resolve current user.", error);
     });
   }, []);
 
   // ── DB connection status ─────────────────────────────────────────────────
   React.useEffect(() => {
-    const supabase = createClient();
-    void Promise.resolve(supabase.from("projects").select("id").limit(1))
-      .then(({ error }) => setDbOnline(!error))
+    void apiFetch("/api/health")
+      .then(() => setDbOnline(true))
       .catch(() => setDbOnline(false));
   }, []);
 

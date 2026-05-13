@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import { REALTIME_SUBSCRIBE_STATES, type User } from "@supabase/supabase-js";
 import { useEffect, useRef, useState } from "react";
 
@@ -68,8 +69,7 @@ export const useRealtimePresenceRoom = (roomName: string) => {
     let cancelled = false;
 
     const resolveCurrentUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      const authUser = data.session?.user ?? null;
+      const authUser = await getCurrentBrowserUser(supabase);
 
       if (cancelled) return;
 
@@ -84,7 +84,19 @@ export const useRealtimePresenceRoom = (roomName: string) => {
       });
     };
 
-    resolveCurrentUser();
+    resolveCurrentUser().catch(() => {
+      if (cancelled) return;
+
+      const presenceKey = anonymousPresenceKey.current;
+      if (!presenceKey) return;
+
+      setCurrentUser({
+        userId: null,
+        presenceKey,
+        name: getDisplayName(null),
+        image: getAvatarUrl(null),
+      });
+    });
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       const authUser = session?.user ?? null;

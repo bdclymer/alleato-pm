@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import { useParams } from "next/navigation";
 
 interface ClientStatus {
@@ -35,7 +36,7 @@ export function useIsClient(): ClientStatus {
         const supabase = createClient();
 
         // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getCurrentBrowserUser(supabase);
 
         if (!user) {
           setStatus({

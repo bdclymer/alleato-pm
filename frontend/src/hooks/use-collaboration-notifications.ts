@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import { apiFetch } from "@/lib/api-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -68,9 +69,7 @@ export function useCollaborationNotifications() {
       setIsLoading(true);
       try {
         const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const user = await getCurrentBrowserUser(supabase);
         if (!cancelled) {
           setUserId(user?.id ?? null);
         }

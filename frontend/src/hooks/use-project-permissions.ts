@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import type { PermissionModule } from "@/lib/navigation-config";
+import { apiFetch } from "@/lib/api-client";
+import { getPermissionLevel, type UserPermissions } from "@/lib/permissions-shared";
 
 interface ProjectPermissions {
   permissions: Record<string, string[]>;
@@ -12,11 +12,97 @@ interface ProjectPermissions {
   isLoading: boolean;
 }
 
-type PermissionTemplateRecord = {
-  rules_json?: Record<string, string[]> | null;
+type ProjectPermissionsResult = Omit<ProjectPermissions, "isLoading">;
+
+type ProjectPermissionsResponse = {
+  data: UserPermissions;
+  userType: string | null;
 };
 
-type PermissionTemplateJoin = PermissionTemplateRecord | PermissionTemplateRecord[] | null;
+const PROJECT_PERMISSIONS_CACHE_TTL_MS = 30_000;
+const projectPermissionsCache = new Map<
+  number,
+  {
+    result: ProjectPermissionsResult;
+    expiresAt: number;
+  }
+>();
+const projectPermissionsInFlight = new Map<number, Promise<ProjectPermissionsResult>>();
+
+const ADMIN_PERMISSIONS: Record<string, string[]> = {
+  directory: ["read", "write", "admin"],
+  budget: ["read", "write", "admin"],
+  contracts: ["read", "write", "admin"],
+  documents: ["read", "write", "admin"],
+  schedule: ["read", "write", "admin"],
+  submittals: ["read", "write", "admin"],
+  rfis: ["read", "write", "admin"],
+  change_orders: ["read", "write", "admin"],
+};
+
+async function loadProjectPermissions(
+  projectId: number,
+): Promise<ProjectPermissionsResult> {
+  const cached = projectPermissionsCache.get(projectId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.result;
+  }
+
+  const inFlight = projectPermissionsInFlight.get(projectId);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const promise = (async () => {
+    const response = await apiFetch<ProjectPermissionsResponse>(
+      `/api/projects/${projectId}/permissions`,
+    );
+    const userPermissions = response.data;
+
+    if (userPermissions.isAdmin) {
+      return {
+        permissions: ADMIN_PERMISSIONS,
+        userType: response.userType ?? "developer",
+        isAppAdmin: true,
+      };
+    }
+
+    return {
+      permissions: Object.fromEntries(
+        ([
+          "directory",
+          "budget",
+          "contracts",
+          "documents",
+          "schedule",
+          "submittals",
+          "rfis",
+          "change_orders",
+        ] as PermissionModule[]).map((module) => [
+          module,
+          getPermissionLevel(userPermissions, module) === "none"
+            ? []
+            : [getPermissionLevel(userPermissions, module)],
+        ]),
+      ),
+      userType: response.userType || "employee",
+      isAppAdmin: false,
+    };
+  })();
+
+  projectPermissionsInFlight.set(projectId, promise);
+
+  try {
+    const result = await promise;
+    projectPermissionsCache.set(projectId, {
+      result,
+      expiresAt: Date.now() + PROJECT_PERMISSIONS_CACHE_TTL_MS,
+    });
+    return result;
+  } finally {
+    projectPermissionsInFlight.delete(projectId);
+  }
+}
 
 /**
  * Fetches the current user's module permissions and user_type for a project.
@@ -32,88 +118,24 @@ export function useProjectPermissions(
 
   useEffect(() => {
     let cancelled = false;
-    const supabase = createClient();
     const currentProjectId = projectId;
 
     async function fetchPermissions() {
       setIsLoading(true);
       try {
-        const user = await getCurrentBrowserUser(supabase);
-        if (!user || cancelled) return;
-
-        // Run profile check and auth link lookup in parallel — saves one round trip
-        const [{ data: profile }, { data: authLink }] = await Promise.all([
-          supabase
-            .from("user_profiles")
-            .select("is_admin")
-            .eq("id", user.id)
-            .maybeSingle(),
-          currentProjectId
-            ? supabase
-                .from("users_auth")
-                .select("person_id")
-                .eq("auth_user_id", user.id)
-                .maybeSingle()
-            : Promise.resolve({ data: null, error: null }),
-        ]);
-
-        if (cancelled) return;
-        const admin = profile?.is_admin === true;
-        setIsAppAdmin(admin);
-
-        if (admin) {
-          // Admins have all permissions
-          setPermissions({
-            directory: ["read", "write", "admin"],
-            budget: ["read", "write", "admin"],
-            contracts: ["read", "write", "admin"],
-            documents: ["read", "write", "admin"],
-            schedule: ["read", "write", "admin"],
-            submittals: ["read", "write", "admin"],
-            rfis: ["read", "write", "admin"],
-            change_orders: ["read", "write", "admin"],
-          });
-          setUserType("developer");
-          setIsLoading(false);
+        if (!currentProjectId) {
+          setPermissions({});
+          setUserType(null);
+          setIsAppAdmin(false);
           return;
         }
 
-        if (!currentProjectId || !authLink) {
-          setPermissions({});
-          setUserType(null);
-          setIsLoading(false);
-          return;
-        }
-
-        // Get membership with template
-        const { data: membership } = await supabase
-          .from("project_directory_memberships")
-          .select(
-            `
-            user_type,
-            permission_template:permission_templates(rules_json)
-          `
-          )
-          .eq("person_id", authLink.person_id)
-          .eq("project_id", currentProjectId!)
-          .eq("status", "active")
-          .maybeSingle();
-
+        const result = await loadProjectPermissions(currentProjectId);
         if (cancelled) return;
 
-        if (!membership) {
-          setPermissions({});
-          setUserType(null);
-        } else {
-          setUserType(membership.user_type || "employee");
-           
-          const template = membership.permission_template as PermissionTemplateJoin;
-          const rulesJson = Array.isArray(template)
-            ? template[0]?.rules_json
-            : template?.rules_json;
-          const rules = (rulesJson as Record<string, string[]>) || {};
-          setPermissions(rules);
-        }
+        setPermissions(result.permissions);
+        setUserType(result.userType);
+        setIsAppAdmin(result.isAppAdmin);
       } catch (error) {
         console.error("Failed to load project permissions", error);
         setPermissions({});

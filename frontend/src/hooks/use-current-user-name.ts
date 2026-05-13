@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import { useEffect, useState } from "react";
 
 type UserMetadata = {
@@ -26,17 +27,20 @@ export const useCurrentUserName = () => {
     let cancelled = false;
 
     const fetchProfileName = async () => {
-      const { data, error } = await createClient().auth.getSession();
-      if (error || cancelled) {
+      const user = await getCurrentBrowserUser(createClient());
+      if (cancelled) {
         return;
       }
 
-      if (!cancelled) {
-        setName(data.session?.user ? getDisplayName(data.session.user) : null);
-      }
+      setName(user ? getDisplayName(user) : null);
     };
 
-    fetchProfileName();
+    fetchProfileName().catch((fetchError) => {
+      console.warn("[useCurrentUserName] Failed to resolve current user name.", fetchError);
+      if (!cancelled) {
+        setName(null);
+      }
+    });
 
     return () => {
       cancelled = true;

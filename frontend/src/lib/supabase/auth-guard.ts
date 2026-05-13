@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export interface ProjectMembership {
@@ -8,6 +8,7 @@ export interface ProjectMembership {
   authUserId: string;
   projectId: number;
   permissionTemplateId: string | null;
+  userType: string | null;
 }
 
 interface AuthGuardResult {
@@ -109,14 +110,11 @@ async function resolvePersonIdFromAuth(
 export async function verifyProjectAccess(
   projectId: number,
 ): Promise<AuthGuardResult | NextResponse> {
-  // Step 1: Verify authentication
-  const authSupabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await authSupabase.auth.getUser();
+  // Step 1: Verify authentication from the cookie JWT. API routes should not
+  // pay a Supabase Auth network round trip for every project-scoped request.
+  const user = await getApiRouteUser();
 
-  if (authError || !user) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -142,6 +140,7 @@ export async function verifyProjectAccess(
         authUserId: user.id,
         projectId,
         permissionTemplateId: null,
+        userType: "developer",
       },
       serviceClient,
     };
@@ -163,7 +162,7 @@ export async function verifyProjectAccess(
   // Step 4: Verify active membership in the project
   const { data: membership, error: membershipError } = await serviceClient
     .from("project_directory_memberships")
-    .select("id, person_id, project_id, permission_template_id")
+    .select("id, person_id, project_id, permission_template_id, user_type")
     .eq("person_id", personId)
     .eq("project_id", projectId)
     .eq("status", "active")
@@ -183,6 +182,7 @@ export async function verifyProjectAccess(
       authUserId: user.id,
       projectId: membership.project_id,
       permissionTemplateId: membership.permission_template_id,
+      userType: membership.user_type,
     },
     serviceClient,
   };
