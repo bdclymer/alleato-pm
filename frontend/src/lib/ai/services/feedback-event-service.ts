@@ -165,6 +165,44 @@ export interface RecordRetrievalFeedbackParams {
 
 export type PacketCardFeedbackSignal = "useful" | "wrong" | "stale";
 
+export type EmailDraftFeedbackSignal =
+  | "good"
+  | "bad"
+  | "accepted"
+  | "edited"
+  | "ignored";
+
+export type EmailDraftFeedbackReasonCategory =
+  | "too_formal"
+  | "too_long"
+  | "too_short"
+  | "too_soft"
+  | "too_direct"
+  | "wrong_tone"
+  | "wrong_assumption"
+  | "missing_context"
+  | "good_tone"
+  | "good_structure"
+  | "other";
+
+export interface RecordEmailDraftFeedbackParams {
+  userId: string;
+  mailboxUserId: string;
+  graphDraftMessageId: string;
+  graphSourceMessageId?: string | null;
+  conversationId?: string | null;
+  subject?: string | null;
+  sessionId?: string | null;
+  signal: EmailDraftFeedbackSignal;
+  reasonCategory?: EmailDraftFeedbackReasonCategory | null;
+  feedbackText?: string | null;
+  draftSnapshot?: Json;
+  finalSnapshot?: Json;
+  voiceProfilePath?: string | null;
+  voiceProfileVersion?: string | null;
+  metadata?: Json;
+}
+
 export interface RecordPacketCardFeedbackParams {
   userId: string;
   projectId?: number | null;
@@ -428,6 +466,79 @@ export async function recordAiFeedbackEvent(
   }
 
   return data;
+}
+
+function emailDraftSignalToFeedbackSignal(
+  signal: EmailDraftFeedbackSignal,
+): AiFeedbackSignal {
+  switch (signal) {
+    case "good":
+      return "positive";
+    case "bad":
+      return "negative";
+    case "accepted":
+      return "accepted";
+    case "edited":
+      return "corrected";
+    case "ignored":
+      return "ignored";
+  }
+}
+
+export async function recordEmailDraftFeedback(
+  params: RecordEmailDraftFeedbackParams,
+): Promise<AiFeedbackEventRow> {
+  const mailboxUserId = assertNonEmpty(
+    params.mailboxUserId,
+    "mailboxUserId",
+    "ai_feedback_events",
+  );
+  const graphDraftMessageId = assertNonEmpty(
+    params.graphDraftMessageId,
+    "graphDraftMessageId",
+    "ai_feedback_events",
+  );
+
+  return recordAiFeedbackEvent({
+    userId: params.userId,
+    sessionId: params.sessionId ?? null,
+    sourceTable: "microsoft_graph_messages",
+    sourceRecordId: graphDraftMessageId,
+    eventType: "outlook_email_draft_feedback_recorded",
+    eventFamily: "assistant_response",
+    surface: "outlook_assistant",
+    subjectType: "outlook_email_draft",
+    subjectId: graphDraftMessageId,
+    signal: emailDraftSignalToFeedbackSignal(params.signal),
+    reasonCategory: params.reasonCategory ?? null,
+    freeText: params.feedbackText?.trim() || null,
+    beforeSnapshot: params.draftSnapshot,
+    afterSnapshot: params.finalSnapshot,
+    sourceContext: {
+      mailboxUserId,
+      graphDraftMessageId,
+      graphSourceMessageId: params.graphSourceMessageId ?? null,
+      conversationId: params.conversationId ?? null,
+      subject: params.subject ?? null,
+      voiceProfilePath: params.voiceProfilePath ?? null,
+      voiceProfileVersion: params.voiceProfileVersion ?? null,
+    },
+    metadata: {
+      visibility: "private",
+      source: "outlook_email_draft_feedback",
+      mailboxUserId,
+      graphDraftMessageId,
+      graphSourceMessageId: params.graphSourceMessageId ?? null,
+      conversationId: params.conversationId ?? null,
+      subject: params.subject ?? null,
+      rawSignal: params.signal,
+      voiceProfilePath: params.voiceProfilePath ?? null,
+      voiceProfileVersion: params.voiceProfileVersion ?? null,
+      ...(typeof params.metadata === "object" && params.metadata !== null
+        ? params.metadata
+        : {}),
+    },
+  });
 }
 
 export async function createLearningPromotion(

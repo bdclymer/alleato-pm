@@ -65,6 +65,13 @@ const outlookMailRecipientSchema = z.object({
   name: z.string().optional(),
 });
 
+const BRANDON_EMAIL_VOICE_PROFILE = {
+  path: "docs/ai-plan/brandon-email-voice-profile.md",
+  version: "2026-05-13",
+  summary:
+    "For Brandon's Outlook drafts, write short, direct, action-oriented replies. Start with the ask or answer, skip formal re-addressing in active reply chains, use plain construction/business language, and avoid consultant phrasing.",
+} as const;
+
 export function normalizeGeneratedTaskPriority(
   priority?: z.infer<typeof generatedTaskPrioritySchema> | null,
 ): "low" | "medium" | "high" | "urgent" {
@@ -3309,7 +3316,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
 
     draftOutlookEmail: tool({
       description:
-        "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. Use readOutlookEmailThread before drafting a reply when a specific thread is involved.",
+        "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. Use readOutlookEmailThread before drafting a reply when a specific thread is involved. When drafting from Brandon's mailbox, apply the Brandon Email Voice Profile at docs/ai-plan/brandon-email-voice-profile.md: short, direct, action-oriented, minimal formal greeting in active reply chains, practical construction/business wording, and no consultant-style over-explanation.",
       inputSchema: z.object({
         mailboxUserId: z
           .string()
@@ -3396,6 +3403,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             ccRecipients: input.ccRecipients,
             bccRecipients: input.bccRecipients,
             replyToGraphMessageId: input.replyToGraphMessageId ?? null,
+            voiceProfile: BRANDON_EMAIL_VOICE_PROFILE,
             adaptiveCard,
             widget: {
               type: "outlook_email_draft",
@@ -3410,6 +3418,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
               ccRecipients: input.ccRecipients,
               bccRecipients: input.bccRecipients,
               replyToGraphMessageId: input.replyToGraphMessageId ?? null,
+              voiceProfile: BRANDON_EMAIL_VOICE_PROFILE,
               adaptiveCard,
               confirmPrompt: "Confirm this Outlook email draft and create it with draftOutlookEmail.",
             },
@@ -3452,6 +3461,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             ccRecipients: input.ccRecipients,
             bccRecipients: input.bccRecipients,
             replyToGraphMessageId: input.replyToGraphMessageId ?? null,
+            voiceProfile: BRANDON_EMAIL_VOICE_PROFILE,
             adaptiveCard: createdAdaptiveCard,
             widget: {
               type: "outlook_email_draft",
@@ -3466,6 +3476,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
               ccRecipients: input.ccRecipients,
               bccRecipients: input.bccRecipients,
               replyToGraphMessageId: input.replyToGraphMessageId ?? null,
+              voiceProfile: BRANDON_EMAIL_VOICE_PROFILE,
               outlookDraftId: draft.id,
               outlookWebLink: draft.webLink,
               adaptiveCard: createdAdaptiveCard,

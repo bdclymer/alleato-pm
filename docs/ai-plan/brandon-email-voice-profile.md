@@ -74,3 +74,27 @@ Prefer:
 ## Assistant Note Guidance
 
 When a draft includes an internal note for Brandon, keep it separate from the customer/vendor response. The note should explain that the assistant is learning his tone and that feedback is the fastest way to improve future drafts. It should be short, specific, and clear that nothing sends without Brandon.
+
+## Feedback Capture
+
+Draft feedback should be recorded through:
+
+`POST /api/ai-assistant/email-draft-feedback`
+
+Required fields:
+
+- `mailboxUserId`
+- `graphDraftMessageId`
+- `signal`: `good`, `bad`, `accepted`, `edited`, or `ignored`
+
+Useful optional fields:
+
+- `graphSourceMessageId`
+- `conversationId`
+- `subject`
+- `reasonCategory`: `too_formal`, `too_long`, `too_short`, `too_soft`, `too_direct`, `wrong_tone`, `wrong_assumption`, `missing_context`, `good_tone`, `good_structure`, or `other`
+- `feedbackText`
+- `draftSnapshot`
+- `finalSnapshot`
+
+The endpoint stores events in `ai_feedback_events` with `event_type = outlook_email_draft_feedback_recorded`, `surface = outlook_assistant`, and `metadata.visibility = private`.
