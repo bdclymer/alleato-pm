@@ -191,6 +191,11 @@ class GraphSubscriptionReconcileRequest(BaseModel):
     expiration_hours: int = 48
 
 
+class OutlookMailboxSyncRequest(BaseModel):
+    user_email: str
+    verify_persisted_count: bool = False
+
+
 def get_rag_store() -> SupabaseRagStore:
     return SupabaseRagStore()
 
@@ -616,6 +621,48 @@ async def graph_sync_endpoint(
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, _run)
     return result
+
+
+@app.post(
+    "/api/graph/outlook/sync-mailbox",
+    tags=["Ingestion"],
+    summary="Trigger Microsoft Graph Outlook sync for one mailbox",
+)
+async def graph_outlook_mailbox_sync_endpoint(
+    payload: OutlookMailboxSyncRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Manually sync one Outlook mailbox without touching other configured users."""
+    user_email = payload.user_email.strip().lower()
+    if not user_email or "@" not in user_email:
+        raise HTTPException(status_code=400, detail="user_email must be a valid mailbox address")
+
+    from src.services.integrations.microsoft_graph.client import get_graph_client
+    from src.services.integrations.microsoft_graph.sync import sync_outlook_mailbox_delta
+    from src.services.supabase_helpers import get_supabase_client
+
+    graph = get_graph_client()
+    if not graph.is_configured():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Microsoft Graph credentials not configured. "
+                "Set MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, and MICROSOFT_TENANT_ID."
+            ),
+        )
+
+    client = get_supabase_client()
+
+    def _run():
+        return sync_outlook_mailbox_delta(
+            client,
+            user_email,
+            reason="admin_targeted_mailbox_sync",
+            verify_persisted_count=payload.verify_persisted_count,
+        )
+
+    import asyncio
+    return await asyncio.get_event_loop().run_in_executor(None, _run)
 
 
 @app.post(
