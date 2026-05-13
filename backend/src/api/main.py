@@ -180,7 +180,7 @@ class GraphSyncRequest(BaseModel):
     run_onedrive: bool = True
     run_embedding: bool = True
     run_teams_compiler: bool = True
-    embed_limit: int = 1000
+    embed_limit: int = 25
     teams_compiler_batch_size: int = 25
     outlook_users: Optional[List[str]] = None
     verify_outlook_persisted_count: bool = True
@@ -600,7 +600,7 @@ async def graph_sync_endpoint(
 
     client = get_supabase_client()
     options = payload or GraphSyncRequest()
-    embed_limit = max(1, min(int(options.embed_limit or 1000), 1000))
+    embed_limit = max(1, min(int(options.embed_limit or 25), 25))
     teams_compiler_batch_size = max(1, min(int(options.teams_compiler_batch_size or 25), 100))
 
     def _run():

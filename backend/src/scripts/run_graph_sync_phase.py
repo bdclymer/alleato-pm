@@ -64,7 +64,7 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="Run one Microsoft Graph sync phase")
     parser.add_argument("phase", choices=sorted(PHASE_FLAGS))
-    parser.add_argument("--embed-limit", type=int, default=300)
+    parser.add_argument("--embed-limit", type=int, default=25)
     parser.add_argument("--teams-compiler-batch-size", type=int, default=25)
     parser.add_argument("--skip-embedding", action="store_true")
     parser.add_argument("--skip-teams-compiler", action="store_true")
@@ -80,7 +80,7 @@ def main() -> int:
         get_supabase_client(),
         run_embedding=not args.skip_embedding,
         run_teams_compiler=not args.skip_teams_compiler,
-        embed_limit=max(1, min(args.embed_limit, 1000)),
+        embed_limit=max(1, min(args.embed_limit, 25)),
         teams_compiler_batch_size=max(1, min(args.teams_compiler_batch_size, 100)),
     )
     result["phase"] = args.phase

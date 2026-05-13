@@ -6,7 +6,7 @@ const backendUrl = (
   process.env.RENDER_BACKEND_URL ||
   "https://alleato-backend-rbnj.onrender.com"
 ).replace(/\/$/, "");
-const minGatewayCredits = Number(process.env.AI_GATEWAY_MIN_CREDITS_USD || "10");
+const minGatewayCredits = Number(process.env.AI_GATEWAY_MIN_CREDITS_USD || "5");
 
 async function fetchGatewayCredits() {
   const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
