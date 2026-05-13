@@ -64,7 +64,13 @@ const PROJECT_COLUMNS: ColumnConfig[] = [
   { id: "access", label: "Access", defaultVisible: true },
 ];
 
-type PortfolioScope = "all" | "client" | "internal";
+type PortfolioScope = "all" | "client" | "estimating" | "internal";
+
+function getScopePhaseFilter(scope: PortfolioScope): string | null {
+  if (scope === "estimating") return "Estimating";
+  if (scope === "client" || scope === "internal") return "Current";
+  return null;
+}
 
 // Map frontend field keys to database column names
 const FIELD_TO_DB_COLUMN: Record<string, string> = {
@@ -423,7 +429,10 @@ export default function PortfolioPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const scopeParam = searchParams.get("scope");
   const activeScope: PortfolioScope =
-    scopeParam === "all" || scopeParam === "internal" ? scopeParam : "client";
+    scopeParam === "all" || scopeParam === "estimating" || scopeParam === "internal"
+      ? scopeParam
+      : "client";
+  const scopePhaseFilter = getScopePhaseFilter(activeScope);
 
   const parseProjectsResponse = React.useCallback(
     async (response: Response) => {
@@ -702,15 +711,38 @@ export default function PortfolioPage() {
 
   const activeFilters = tableState.activeFilters;
 
+  React.useEffect(() => {
+    if (!scopePhaseFilter) return;
+
+    tableState.setActiveFilters((previousFilters) => {
+      if (previousFilters.phase === scopePhaseFilter) {
+        return previousFilters;
+      }
+
+      return {
+        ...previousFilters,
+        phase: scopePhaseFilter,
+      };
+    });
+  }, [scopePhaseFilter, tableState.setActiveFilters]);
+
   const projectTabs = React.useMemo(() => {
     const buildScopeHref = (scope: PortfolioScope) => {
       const params = new URLSearchParams(searchParams.toString());
+      const phaseFilter = getScopePhaseFilter(scope);
+
       params.set("page", "1");
 
       if (scope === "client") {
         params.delete("scope");
       } else {
         params.set("scope", scope);
+      }
+
+      if (phaseFilter) {
+        params.set("phase", phaseFilter);
+      } else {
+        params.delete("phase");
       }
 
       const query = params.toString();
@@ -724,12 +756,17 @@ export default function PortfolioPage() {
         isActive: activeScope === "client",
       },
       {
+        label: "Estimating",
+        href: buildScopeHref("estimating"),
+        isActive: activeScope === "estimating",
+      },
+      {
         label: "Internal",
         href: buildScopeHref("internal"),
         isActive: activeScope === "internal",
       },
     ];
-  }, [activeScope, pathname, projects, searchParams]);
+  }, [activeScope, pathname, searchParams]);
 
   const filteredProjects = React.useMemo(() => {
     const normalizedSearch = tableState.debouncedSearch.trim().toLowerCase();
@@ -738,10 +775,12 @@ export default function PortfolioPage() {
       const normalizedPhase = (project.phase ?? "").toLowerCase();
       const normalizedType = (project.type ?? "").toLowerCase();
       const isCurrent = normalizedPhase === "current";
+      const isEstimating = normalizedPhase === "estimating";
       const isInternal = normalizedType === "internal";
       const scopeMatch =
         activeScope === "all" ||
         (activeScope === "client" && isCurrent && !isInternal) ||
+        (activeScope === "estimating" && isEstimating) ||
         (activeScope === "internal" && isCurrent && isInternal);
       const clientMatch =
         !activeFilters.client ||
@@ -1073,7 +1112,7 @@ export default function PortfolioPage() {
         onClearFilters: () =>
           handleFilterChange({
             client: undefined,
-            phase: "Current",
+            phase: scopePhaseFilter ?? undefined,
             category: undefined,
           }),
         columns: tableColumns,
