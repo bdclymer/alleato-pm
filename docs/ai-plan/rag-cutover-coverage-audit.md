@@ -172,3 +172,4 @@ Status on 2026-05-13: the RAG database split is complete enough to restart the R
 - [x] Blueprint tests assert the high-risk crons are not disabled echoes.
 - [x] Blueprint tests assert the combined Graph cron does not run Teams work and keeps embedding capped at 25.
 - [x] Task extraction unit tests assert default and oversized env limits stay bounded.
+- [x] Live Render scheduler guardrail now allows resumed RAG crons only on the safe throttled schedules; Acumatica must remain suspended.

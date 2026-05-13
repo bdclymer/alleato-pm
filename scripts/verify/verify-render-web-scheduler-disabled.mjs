@@ -23,6 +23,9 @@ const REQUIRED_WEB_FLAGS = new Map([
 
 const REQUIRED_SUSPENDED_CRONS = new Set([
   "alleato-acumatica-financial-sync",
+]);
+
+const SAFE_RESTART_CRON_SCHEDULES = new Map([
   "alleato-executive-daily-brief-evening",
   "alleato-executive-daily-brief-morning",
   "alleato-graph-sync",
@@ -32,7 +35,17 @@ const REQUIRED_SUSPENDED_CRONS = new Set([
   "alleato-task-extraction",
   "alleato-teams-channel-sync",
   "alleato-teams-dm-sync",
-]);
+].map((name) => [name, null]));
+
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-evening", "30 22,23 * * 1-5");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-morning", "0 11,12 * * 1-5");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-graph-sync", "20 */2 * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-rag-health", "15 12 * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-source-rag-health", "5 */4 * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-source-sync-health", "*/30 * * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-task-extraction", "0 7 * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-teams-channel-sync", "10 * * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-teams-dm-sync", "40 * * * *");
 
 const DISABLED_CRON_SCHEDULE = "0 0 1 1 *";
 
@@ -125,7 +138,10 @@ async function verifyRenderCronSuspensions() {
     const idsByName = new Map();
     for (const item of services) {
       const service = item.service ?? item;
-      if (service?.type === "cron_job" && REQUIRED_SUSPENDED_CRONS.has(service.name)) {
+      if (
+        service?.type === "cron_job" &&
+        (REQUIRED_SUSPENDED_CRONS.has(service.name) || SAFE_RESTART_CRON_SCHEDULES.has(service.name))
+      ) {
         idsByName.set(service.name, service.id);
       }
       if (
@@ -156,6 +172,27 @@ async function verifyRenderCronSuspensions() {
       if (service.suspended !== "suspended" && !isStructurallyDisabledCron(service)) {
         failures.push(
           `Render cron ${name} must stay suspended or structurally disabled while DB incident guard is active; found ${service.suspended || "<unknown>"}`,
+        );
+      }
+    }
+
+    for (const [name, expectedSchedule] of SAFE_RESTART_CRON_SCHEDULES.entries()) {
+      const id = idsByName.get(name);
+      if (!id) {
+        failures.push(`Render cron ${name} is missing from the Render service list`);
+        continue;
+      }
+      let service;
+      try {
+        service = await fetchRenderJsonWithRetry(`${RENDER_SERVICE_URL}/${id}`, token);
+      } catch (error) {
+        failures.push(`Render cron ${name} direct check failed: ${error.message}`);
+        continue;
+      }
+      const schedule = service?.serviceDetails?.schedule || service?.schedule;
+      if (service.suspended !== "suspended" && schedule !== expectedSchedule) {
+        failures.push(
+          `Render cron ${name} may only be resumed on schedule ${expectedSchedule}; found ${schedule || "<unknown>"}`,
         );
       }
     }
