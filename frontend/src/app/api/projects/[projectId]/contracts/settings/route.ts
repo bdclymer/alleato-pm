@@ -15,7 +15,7 @@ interface RouteParams {
 
 // Defaults used when no row exists yet (lazy-init pattern)
 const DEFAULT_SETTINGS = {
-  co_tier_count: 1 as const,
+  co_tier_count: 2 as const,
   allow_standard_users_create_pcco: false,
   allow_standard_users_create_pco: false,
   sov_always_editable: false,
@@ -76,11 +76,11 @@ type SettingsRow = {
 };
 
 function normalizeSettingsRow(projectId: number, data?: SettingsRow | null) {
-  const coTier = data?.co_tier_count === 2 ? 2 : 1;
+  const coTier: 1 | 2 = data?.co_tier_count === 1 ? 1 : data?.co_tier_count === 2 ? 2 : DEFAULT_SETTINGS.co_tier_count;
   return {
     ...DEFAULT_SETTINGS,
     ...(data ?? {}),
-    co_tier_count: coTier as 1 | 2,
+    co_tier_count: coTier,
     project_id: projectId,
   };
 }
