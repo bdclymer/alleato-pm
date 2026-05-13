@@ -38,7 +38,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "*/30 * * * *"
+    schedule: "*/15 * * * *"
     dockerCommand: >-
       python3 -c "
       import json, sys;
@@ -64,7 +64,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "0 * * * *"
+    schedule: "*/30 * * * *"
     dockerCommand: >-
       timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding --skip-teams-compiler
     envVars:
@@ -90,7 +90,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "30 * * * *"
+    schedule: "15,45 * * * *"
     dockerCommand: >-
       timeout 25m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
     envVars:
@@ -112,6 +112,52 @@ services:
         sync: false
       - key: MICROSOFT_SYNC_USERS
         sync: false
+
+  # Runs Microsoft Graph sync every 30 minutes, staggered away from
+  # teams-channel-sync at :00/:30. The service default caps embed_limit at 25.
+  - type: cron
+    name: alleato-graph-sync
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "5,35 * * * *"
+    dockerCommand: >-
+      python3 -c "
+      import json, os, sys;
+      sys.path.insert(0, '/app');
+      from src.services.supabase_helpers import get_supabase_client;
+      from src.services.integrations.microsoft_graph.sync import run_graph_sync;
+      client = get_supabase_client();
+      result = run_graph_sync(client);
+      print(json.dumps(result, indent=2));
+      errors = result.get('errors', []);
+      sys.exit(1 if errors and result.get('total_synced', 0) == 0 else 0)
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: MICROSOFT_SYNC_USERS
+        sync: false
+      - key: GRAPH_SYNC_ENABLED
+        value: "true"
+      - key: GRAPH_SYNC_OUTLOOK
+        value: "true"
+      - key: GRAPH_SYNC_TEAMS
+        value: "true"
+      - key: GRAPH_SYNC_ONEDRIVE
+        value: "true"
 
   - type: web
     name: alleato-backend
