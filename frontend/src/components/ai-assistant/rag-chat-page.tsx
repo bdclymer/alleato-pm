@@ -569,7 +569,7 @@ export function RagChatPage() {
         onRename={handleRename}
         onDelete={handleDelete}
       />
-      <div className="fixed right-10 top-20 z-30">
+      <div className="fixed right-4 top-14 z-30 sm:right-10 sm:top-20">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

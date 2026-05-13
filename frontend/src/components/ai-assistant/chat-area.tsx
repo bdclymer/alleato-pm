@@ -1479,6 +1479,7 @@ export function ChatArea({
   }, []);
 
   const hasMessages = messages.length > 0;
+  const showWelcome = !hasMessages && !isLoadingMessages;
 
   // Determine streaming indicator visibility
   const lastMessage = messages[messages.length - 1];
@@ -1792,9 +1793,18 @@ export function ChatArea({
 
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-      {!hasMessages && !isLoadingMessages ? (
+      {showWelcome ? (
         <div className="flex min-h-0 flex-1 pb-6 md:pb-8">
-          <WelcomeScreen>
+          <WelcomeScreen
+            composer={promptInputEl}
+            error={
+              chatError ? (
+                <InfoAlert variant="error" className="py-2">
+                  {chatError}
+                </InfoAlert>
+              ) : null
+            }
+          >
             <AssistantShortcutPanel
               disabled={isStreaming}
               onSelectPrompt={onSubmit}
@@ -2212,16 +2222,18 @@ export function ChatArea({
         </>
       )}
 
-      <div className="z-20 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 sm:px-6">
-        <div className="mx-auto w-full max-w-3xl">
-          {chatError && (
-            <InfoAlert variant="error" className="mb-2 py-2">
-              {chatError}
-            </InfoAlert>
-          )}
-          {promptInputEl}
+      {!showWelcome && (
+        <div className="z-20 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 sm:px-6">
+          <div className="mx-auto w-full max-w-3xl">
+            {chatError && (
+              <InfoAlert variant="error" className="mb-2 py-2">
+                {chatError}
+              </InfoAlert>
+            )}
+            {promptInputEl}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
