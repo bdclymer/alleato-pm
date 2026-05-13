@@ -89,7 +89,6 @@ import {
   type MeetingContextSection,
   type TeamsConversationMessage,
   cleanSourceContextText,
-  extractContextBody,
   parseEmailThread,
   parseMeetingContext,
   parseTeamsConversation,
@@ -344,12 +343,22 @@ function formatTeamsConversationDate(value: string): string {
 function splitContextParagraphs(value: string): string[] {
   if (!value.trim()) return [];
 
+  const cleanParagraph = (paragraph: string) =>
+    paragraph.replace(/[^\S\n]+/g, " ").replace(/\s([,.;:!?])/g, "$1").trim();
+
   const naturalParagraphs = value.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
 
   if (naturalParagraphs.length > 1) {
-    return naturalParagraphs.map((p) =>
-      p.replace(/[^\S\n]+/g, " ").replace(/\s([,.;:!?])/g, "$1")
-    );
+    return naturalParagraphs.flatMap((paragraph) => {
+      const lines = paragraph.split(/\n+/).map(cleanParagraph).filter(Boolean);
+      return lines.length > 1 ? lines : [cleanParagraph(paragraph)];
+    });
+  }
+
+  const explicitLines = value.split(/\n+/).map(cleanParagraph).filter(Boolean);
+
+  if (explicitLines.length > 1) {
+    return explicitLines;
   }
 
   const normalized = value
@@ -481,6 +490,10 @@ function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { valu
   );
 }
 
+function isEmailSourceContext(value: string): boolean {
+  return /\bSubject:\s/i.test(value) || /\bFrom:\s+[^<\n]{0,160}<[^>\n]+>/i.test(value);
+}
+
 function MessageCard({ message }: { message: EmailThreadMessage }) {
   const sentLabel = formatContextDate(message.date);
 
@@ -556,7 +569,7 @@ function SourceContextBlock({ value }: { value: string }) {
     );
   }
 
-  const messages = parseEmailThread(text);
+  const messages = isEmailSourceContext(text) ? parseEmailThread(text) : [];
 
   if (messages.length > 1) {
     return (
@@ -569,7 +582,7 @@ function SourceContextBlock({ value }: { value: string }) {
   }
 
   const message = messages[0];
-  const body = (message?.body ?? extractContextBody(text)) || text;
+  const body = (message?.body ?? text) || text;
 
   return (
     <div className="w-full rounded-md bg-muted/20 px-4 py-4">

@@ -103,6 +103,44 @@ function compactText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function normalizeSourceContextWhitespace(value: string): string {
+  return value
+    .replace(/\r\n?/g, "\n")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function compactTextWithOriginalIndices(value: string): { text: string; originalIndices: number[] } {
+  let text = "";
+  const originalIndices: number[] = [];
+  let pendingWhitespaceIndex: number | null = null;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+
+    if (/\s/.test(char)) {
+      if (text.length > 0 && pendingWhitespaceIndex === null) {
+        pendingWhitespaceIndex = index;
+      }
+      continue;
+    }
+
+    if (pendingWhitespaceIndex !== null) {
+      text += " ";
+      originalIndices.push(pendingWhitespaceIndex);
+      pendingWhitespaceIndex = null;
+    }
+
+    text += char;
+    originalIndices.push(index);
+  }
+
+  return { text, originalIndices };
+}
+
 function textFromJsonish(value: unknown): string | null {
   if (typeof value === "string") return nullableText(value);
   if (value == null) return null;
@@ -120,10 +158,11 @@ const SOURCE_CONTEXT_AFTER_MATCH_CHARS = 4200;
 
 function excerptAroundNeedle(sourceText: string | null, needles: Array<string | null | undefined>): string | null {
   if (!sourceText) return null;
-  const text = compactText(sourceText);
-  if (!text) return null;
+  const source = normalizeSourceContextWhitespace(sourceText);
+  if (!source) return null;
 
-  const normalized = text.toLowerCase();
+  const compactedSource = compactTextWithOriginalIndices(source);
+  const normalized = compactedSource.text.toLowerCase();
   const meaningfulNeedles = needles
     .map((needle) => compactText(needle ?? ""))
     .filter((needle) => needle.length >= 12)
@@ -142,16 +181,21 @@ function excerptAroundNeedle(sourceText: string | null, needles: Array<string | 
   }
 
   if (matchIndex < 0) {
-    return text.length > SOURCE_CONTEXT_FALLBACK_CHARS
-      ? `${text.slice(0, SOURCE_CONTEXT_FALLBACK_CHARS).trim()}...`
-      : text;
+    return source.length > SOURCE_CONTEXT_FALLBACK_CHARS
+      ? `${source.slice(0, SOURCE_CONTEXT_FALLBACK_CHARS).trim()}...`
+      : source;
   }
 
   const start = Math.max(0, matchIndex - SOURCE_CONTEXT_BEFORE_MATCH_CHARS);
-  const end = Math.min(text.length, matchIndex + SOURCE_CONTEXT_AFTER_MATCH_CHARS);
+  const end = Math.min(compactedSource.text.length, matchIndex + SOURCE_CONTEXT_AFTER_MATCH_CHARS);
+  const originalStart = compactedSource.originalIndices[start] ?? 0;
+  const originalEnd = end >= compactedSource.text.length
+    ? source.length
+    : compactedSource.originalIndices[end] ?? source.length;
   const prefix = start > 0 ? "... " : "";
-  const suffix = end < text.length ? " ..." : "";
-  return `${prefix}${text.slice(start, end).trim()}${suffix}`;
+  const suffix = end < compactedSource.text.length ? " ..." : "";
+
+  return normalizeSourceContextWhitespace(`${prefix}${source.slice(originalStart, originalEnd).trim()}${suffix}`);
 }
 
 function buildTaskSourceContext(task: JoinedTaskRow): string | null {
