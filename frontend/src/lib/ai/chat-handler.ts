@@ -490,7 +490,7 @@ function formatThreadForDraft(messages: Record<string, unknown>[]): string {
 
 type ParsedCalendarInviteRequest = {
   organizerEmail?: string;
-  attendeeEmail: string;
+  attendeeEmail?: string;
   attendeeName?: string;
   subject: string;
   body: string;
@@ -513,29 +513,86 @@ function normalizeHour(hour: string, minute: string | undefined, meridiem: strin
   return `${String(parsedHour).padStart(2, "0")}:${String(parsedMinute).padStart(2, "0")}:00`;
 }
 
+function getCalendarDateFromMessage(message: string): string | null {
+  const explicitDateMatch = message.match(/\bDate:\s*(20\d{2}-\d{2}-\d{2})\b/i) ?? message.match(/\b(20\d{2}-\d{2}-\d{2})\b/i);
+  if (explicitDateMatch) return explicitDateMatch[1];
+
+  const now = new Date();
+  if (/\btomorrow\b/i.test(message)) {
+    now.setDate(now.getDate() + 1);
+    return now.toISOString().slice(0, 10);
+  }
+
+  if (/\btoday\b/i.test(message)) {
+    return now.toISOString().slice(0, 10);
+  }
+
+  return null;
+}
+
+function getNaturalCalendarTimeRange(message: string): { startTime: string; endTime: string } | null {
+  const rangeMatch = message.match(
+    /\bTime:\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i,
+  ) ?? message.match(
+    /\bfrom\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i,
+  );
+  if (rangeMatch) {
+    const endMeridiem = rangeMatch[6] ?? rangeMatch[3];
+    return {
+      startTime: normalizeHour(rangeMatch[1], rangeMatch[2], rangeMatch[3] ?? endMeridiem),
+      endTime: normalizeHour(rangeMatch[4], rangeMatch[5], endMeridiem),
+    };
+  }
+
+  const startMatch = message.match(/\b(?:at|@)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
+  if (!startMatch) return null;
+
+  const durationMatch = message.match(/\b(\d{1,3})\s*(?:minute|minutes|min|mins)\b/i);
+  const durationMinutes = Number(durationMatch?.[1] ?? "30");
+  const [hour, minute] = normalizeHour(startMatch[1], startMatch[2], startMatch[3])
+    .split(":")
+    .map(Number);
+  const end = new Date(Date.UTC(2000, 0, 1, hour, minute + durationMinutes, 0));
+  return {
+    startTime: normalizeHour(startMatch[1], startMatch[2], startMatch[3]),
+    endTime: `${String(end.getUTCHours()).padStart(2, "0")}:${String(end.getUTCMinutes()).padStart(2, "0")}:00`,
+  };
+}
+
+function getCalendarSubjectFromMessage(message: string): string | null {
+  const subjectMatch = message.match(/\bSubject:\s*([^.\n]+)/i);
+  if (subjectMatch) return subjectMatch[1].trim();
+
+  const topicMatch = message.match(/\b(?:about|regarding|re:)\s+([^.\n]+?)(?:\s+with\s+agenda\b|\s+via\b|\s+on\s+teams\b|$)/i);
+  if (topicMatch) return topicMatch[1].trim();
+
+  return null;
+}
+
+function getNaturalCalendarAttendeeName(message: string): string | undefined {
+  const attendeeMatch = message.match(/\bAttendee:\s*([^.<\n]+?)\s*<([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})>/i);
+  if (attendeeMatch) return attendeeMatch[1]?.trim();
+
+  const naturalMatch = message.match(/\b(?:to|with|invite)\s+([A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){1,2})\b/);
+  return naturalMatch?.[1]?.trim();
+}
+
 function parseCalendarInviteRequest(message: string): ParsedCalendarInviteRequest | null {
   const emails = [...message.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)].map((match) => match[0]);
-  if (emails.length === 0) return null;
 
   const organizerMatch = message.match(/\bOrganizer:\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i);
   const attendeeMatch = message.match(/\bAttendee:\s*([^.<\n]+?)\s*<([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})>/i);
   const organizerEmail = organizerMatch?.[1]?.trim().toLowerCase();
   const attendeeEmail = (attendeeMatch?.[2] ?? emails.find((email) => email.toLowerCase() !== organizerEmail))?.trim().toLowerCase();
-  if (!attendeeEmail) return null;
+  const attendeeName = attendeeMatch?.[1]?.trim() ?? getNaturalCalendarAttendeeName(message);
 
-  const dateMatch = message.match(/\bDate:\s*(20\d{2}-\d{2}-\d{2})\b/i) ?? message.match(/\b(20\d{2}-\d{2}-\d{2})\b/i);
-  const timeMatch = message.match(
-    /\bTime:\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i,
-  ) ?? message.match(
-    /\bfrom\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i,
-  );
-  const subjectMatch = message.match(/\bSubject:\s*([^.\n]+)/i);
-  if (!dateMatch || !timeMatch || !subjectMatch) return null;
+  if (!attendeeEmail && !attendeeName) return null;
 
-  const endMeridiem = timeMatch[6] ?? timeMatch[3];
-  const startTime = normalizeHour(timeMatch[1], timeMatch[2], timeMatch[3] ?? endMeridiem);
-  const endTime = normalizeHour(timeMatch[4], timeMatch[5], endMeridiem);
-  const date = dateMatch[1];
+  const date = getCalendarDateFromMessage(message);
+  const timeRange = getNaturalCalendarTimeRange(message);
+  const subject = getCalendarSubjectFromMessage(message);
+  if (!date || !timeRange || !subject) return null;
+
   const bodyMatch = message.match(/\bBody:\s*([^]+?)(?:\s+This is authorized\.|\s+Use createOutlookCalendarInvite|\s+Do not just describe|$)/i);
   const confirmed =
     /\bconfirmed:\s*true\b/i.test(message) ||
@@ -544,16 +601,50 @@ function parseCalendarInviteRequest(message: string): ParsedCalendarInviteReques
   return {
     organizerEmail,
     attendeeEmail,
-    attendeeName: attendeeMatch?.[1]?.trim(),
-    subject: subjectMatch[1].trim(),
+    attendeeName,
+    subject,
     body: bodyMatch?.[1]?.trim() || "Created by the Alleato AI assistant.",
-    startDateTime: `${date}T${startTime}`,
-    endDateTime: `${date}T${endTime}`,
+    startDateTime: `${date}T${timeRange.startTime}`,
+    endDateTime: `${date}T${timeRange.endTime}`,
     timeZone: /eastern/i.test(message) ? "Eastern Standard Time" : "Eastern Standard Time",
     location: /teams/i.test(message) ? "Microsoft Teams" : "Microsoft Teams",
     isOnlineMeeting: /teams/i.test(message),
     confirmed,
   };
+}
+
+async function resolveCalendarAttendeeEmailByName(name: string | undefined): Promise<string | null> {
+  const parts = name?.trim().split(/\s+/).filter(Boolean) ?? [];
+  if (parts.length < 2) return null;
+
+  const firstName = parts[0];
+  const lastName = parts[parts.length - 1];
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("people")
+    .select("first_name,last_name,email,status,company")
+    .ilike("first_name", firstName)
+    .ilike("last_name", lastName)
+    .not("email", "is", null)
+    .limit(10);
+
+  if (error) return null;
+
+  const candidates = (data ?? [])
+    .filter((person) => typeof person.email === "string" && person.email.includes("@"))
+    .sort((a, b) => {
+      const aAlleato = /@alleatogroup\.com$/i.test(a.email ?? "") ? 1 : 0;
+      const bAlleato = /@alleatogroup\.com$/i.test(b.email ?? "") ? 1 : 0;
+      if (aAlleato !== bAlleato) return bAlleato - aAlleato;
+      const aActive = String(a.status ?? "").toLowerCase() === "active" ? 1 : 0;
+      const bActive = String(b.status ?? "").toLowerCase() === "active" ? 1 : 0;
+      if (aActive !== bActive) return bActive - aActive;
+      const aCompany = String(a.company ?? "").toLowerCase().includes("alleato") ? 1 : 0;
+      const bCompany = String(b.company ?? "").toLowerCase().includes("alleato") ? 1 : 0;
+      return bCompany - aCompany;
+    });
+
+  return candidates[0]?.email?.trim().toLowerCase() ?? null;
 }
 
 type SemanticSearchResult = {
@@ -6170,6 +6261,67 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           const parsedInvite = parseCalendarInviteRequest(lastUserContent);
           const calendarInviteTool = (tools as Record<string, ExecutableTool>).createOutlookCalendarInvite;
           if (parsedInvite && calendarInviteTool?.execute) {
+            const resolvedAttendeeEmail =
+              parsedInvite.attendeeEmail ??
+              await resolveCalendarAttendeeEmailByName(parsedInvite.attendeeName);
+
+            if (!resolvedAttendeeEmail) {
+              toolTrace.push({
+                tool: "calendarActionFastPath",
+                input: {
+                  organizerEmail: parsedInvite.organizerEmail ?? null,
+                  attendeeName: parsedInvite.attendeeName ?? null,
+                  subject: parsedInvite.subject,
+                  startDateTime: parsedInvite.startDateTime,
+                  endDateTime: parsedInvite.endDateTime,
+                  confirmed: parsedInvite.confirmed,
+                },
+                output: {
+                  success: false,
+                  preview: false,
+                  error: "Could not resolve attendee email from the people directory.",
+                },
+                timestamp: new Date().toISOString(),
+              });
+              const content = [
+                "I need the attendee email before I can create the Outlook calendar invite. Nothing was sent.",
+                "",
+                `Subject: ${parsedInvite.subject}`,
+                parsedInvite.attendeeName ? `Attendee name: ${parsedInvite.attendeeName}` : null,
+                `Start: ${parsedInvite.startDateTime} ${parsedInvite.timeZone}`,
+                `End: ${parsedInvite.endDateTime} ${parsedInvite.timeZone}`,
+              ].filter(Boolean).join("\n");
+              await writeTextResponse(writer, "calendar-action-fast-path", content);
+              const responseQuality = scoreResponseQuality({
+                toolTrace,
+                content,
+              });
+              await persistAssistantMessage({
+                supabase,
+                sessionId,
+                userId: user.id,
+                content,
+                toolTrace,
+                memoryUsage,
+                learningUsage,
+                totalUsage: undefined,
+                responseQuality,
+                councilMode,
+                modelId: activeModel,
+                loopDiagnostic: buildLoopDiagnostic({
+                  stepStarts: stepStartDiagnostics,
+                  steps: stepDiagnostics,
+                }),
+                projectBriefingSnapshot,
+                executiveBriefingRetrieval,
+                providerDecision,
+                selectedProjectId,
+                dataParts: assistantWidgetDataParts,
+                sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+              });
+              return;
+            }
+
             writeStrategistStatus(writer, {
               stage: "actions",
               message: parsedInvite.confirmed
@@ -6189,7 +6341,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 location: parsedInvite.location,
                 attendees: [
                   {
-                    email: parsedInvite.attendeeEmail,
+                    email: resolvedAttendeeEmail,
                     name: parsedInvite.attendeeName,
                     type: "required",
                   },
@@ -6213,7 +6365,8 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 tool: "calendarActionFastPath",
                 input: {
                   organizerEmail: parsedInvite.organizerEmail ?? null,
-                  attendeeEmail: parsedInvite.attendeeEmail,
+                  attendeeEmail: resolvedAttendeeEmail,
+                  attendeeName: parsedInvite.attendeeName ?? null,
                   subject: parsedInvite.subject,
                   startDateTime: parsedInvite.startDateTime,
                   endDateTime: parsedInvite.endDateTime,
@@ -6236,7 +6389,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                     "",
                     `Subject: ${parsedInvite.subject}`,
                     `Organizer: ${parsedInvite.organizerEmail ?? stringValue(outputRecord.organizerEmail) ?? "configured Outlook calendar user"}`,
-                    `Attendee: ${parsedInvite.attendeeName ? `${parsedInvite.attendeeName} <${parsedInvite.attendeeEmail}>` : parsedInvite.attendeeEmail}`,
+                    `Attendee: ${parsedInvite.attendeeName ? `${parsedInvite.attendeeName} <${resolvedAttendeeEmail}>` : resolvedAttendeeEmail}`,
                     `Start: ${parsedInvite.startDateTime} ${parsedInvite.timeZone}`,
                     `End: ${parsedInvite.endDateTime} ${parsedInvite.timeZone}`,
                     webLink ? `Outlook link: ${webLink}` : null,
@@ -6247,7 +6400,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                       "Outlook calendar invite preview is ready. Nothing has been sent yet.",
                       "",
                       `Subject: ${parsedInvite.subject}`,
-                      `Attendee: ${parsedInvite.attendeeName ? `${parsedInvite.attendeeName} <${parsedInvite.attendeeEmail}>` : parsedInvite.attendeeEmail}`,
+                      `Attendee: ${parsedInvite.attendeeName ? `${parsedInvite.attendeeName} <${resolvedAttendeeEmail}>` : resolvedAttendeeEmail}`,
                       `Start: ${parsedInvite.startDateTime} ${parsedInvite.timeZone}`,
                       `End: ${parsedInvite.endDateTime} ${parsedInvite.timeZone}`,
                       "",
