@@ -1,6 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
 import { createStructuredQueryTools } from "./structured-queries";
 import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace, getOpenAI, getOpenAIModelId, generateEmbedding, EMBEDDING, isBriefingQuery, rerankWithLLM, rankBriefingSourcePriority } from "./tool-utils";
@@ -227,6 +231,7 @@ export function createOperationalTools(
   options: CreateOperationalToolsOptions = {},
 ) {
   const supabase = createServiceClient();
+  const ragSupabase = isRagDatabaseReadsEnabled() ? createRagServiceClient() : supabase;
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
   });
@@ -1225,7 +1230,7 @@ export function createOperationalTools(
             // search_all_knowledge     → insights (decisions/risks/opportunities)
             const [chunksRes, knowledgeRes] = await Promise.all([
                
-              (supabase as unknown as {
+              (ragSupabase as unknown as {
                 rpc: (
                   name: string,
                   args: Record<string, unknown>,

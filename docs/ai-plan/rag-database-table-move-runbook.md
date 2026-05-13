@@ -291,6 +291,18 @@ until `RAG_SUPABASE_URL` and `RAG_SUPABASE_SERVICE_ROLE_KEY` are configured in
 Render; when the flag is `true`, missing RAG Supabase credentials are a hard
 configuration failure rather than a silent fallback to the app database.
 
+RAG retrieval reads use `RAG_DATABASE_READS_ENABLED`. Before enabling it, install
+the RAG-side chunk search RPC:
+
+```bash
+psql "$RAG_DB_URL" -v ON_ERROR_STOP=1 \
+  -f scripts/database/rag/install-search-document-chunks-rpc.sql
+```
+
+This RPC intentionally uses `document_chunks.metadata` for document fields
+because the isolated RAG database does not own the full app-facing
+`document_metadata` table.
+
 Recommended switch order:
 
 1. Enable dual writes.

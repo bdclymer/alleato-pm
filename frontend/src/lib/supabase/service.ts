@@ -35,3 +35,34 @@ export function createServiceClient() {
     },
   });
 }
+
+export function isRagDatabaseReadsEnabled() {
+  return (process.env.RAG_DATABASE_READS_ENABLED ?? "").trim().toLowerCase() === "true";
+}
+
+export function createRagServiceClient() {
+  const supabaseUrl = process.env.RAG_SUPABASE_URL;
+  const supabaseServiceKey =
+    process.env.RAG_SUPABASE_SERVICE_ROLE_KEY ?? process.env.RAG_SUPABASE_SERVICE_KEY;
+
+  if (!supabaseUrl) {
+    throw new Error(
+      "Missing RAG_SUPABASE_URL environment variable. " +
+        "This is required when RAG_DATABASE_READS_ENABLED=true.",
+    );
+  }
+
+  if (!supabaseServiceKey) {
+    throw new Error(
+      "Missing RAG_SUPABASE_SERVICE_ROLE_KEY environment variable. " +
+        "This is required when RAG_DATABASE_READS_ENABLED=true.",
+    );
+  }
+
+  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
