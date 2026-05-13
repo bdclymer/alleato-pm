@@ -79,18 +79,6 @@ type ProjectDocument = Pick<
   | "updated_at"
   | "reviewed_at"
 >;
-type PrimeContractPayment = Pick<
-  Database["public"]["Tables"]["prime_contract_payments"]["Row"],
-  "id" | "payment_number" | "reference_number" | "method" | "amount" | "payment_date" | "contract_id" | "created_at" | "updated_at"
->;
-type CommitmentPayment = Pick<
-  Database["public"]["Tables"]["commitment_payments"]["Row"],
-  "id" | "payment_number" | "payment_ref" | "payment_method" | "amount" | "payment_date" | "status" | "vendor_name" | "subcontract_id" | "purchase_order_id" | "created_at" | "updated_at"
->;
-type InvoicePayment = Pick<
-  Database["public"]["Tables"]["invoice_payments"]["Row"],
-  "id" | "payment_number" | "payment_method" | "amount" | "payment_date" | "owner_invoice_id" | "subcontractor_invoice_id" | "created_at" | "updated_at"
->;
 type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
 type Submittal = Database["public"]["Tables"]["submittals"]["Row"];
 type DailyLog = Database["public"]["Tables"]["daily_logs"]["Row"];
@@ -130,15 +118,6 @@ interface OwnerInvoice {
   prime_contract_id: string | null;
 }
 
-interface SubcontractorInvoice {
-  id: number;
-  invoice_number: string | null;
-  status: Database["public"]["Enums"]["invoice_status"];
-  billing_date: string | null;
-  subcontract_id: string | null;
-  purchase_order_id: string | null;
-}
-
 interface ProjectCommandCenterProps {
   project: Project;
   tasks: Task[];
@@ -168,11 +147,7 @@ interface ProjectCommandCenterProps {
   budgetGrandTotals?: BudgetGrandTotals;
   sov?: any[];
   ownerInvoices?: OwnerInvoice[];
-  subcontractorInvoices?: SubcontractorInvoice[];
   projectDocuments?: ProjectDocument[];
-  primeContractPayments?: PrimeContractPayment[];
-  commitmentPayments?: CommitmentPayment[];
-  invoicePayments?: InvoicePayment[];
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -892,11 +867,7 @@ export function ProjectCommandCenter({
   submittals = [],
   dailyLogs = [],
   ownerInvoices = [],
-  subcontractorInvoices = [],
   projectDocuments = [],
-  primeContractPayments = [],
-  commitmentPayments = [],
-  invoicePayments = [],
   budgetGrandTotals,
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
@@ -915,28 +886,50 @@ export function ProjectCommandCenter({
   const costToDate = grandTotals.jobToDateCostDetail;
   const ecac = grandTotals.estimatedCostAtCompletion;
   const variance = grandTotals.projectedOverUnder;
-  const primeContractValue = contractLineItems.reduce((sum, li) => sum + (li.total_cost ?? 0), 0);
+  const primeContractValue = React.useMemo(
+    () => contractLineItems.reduce((sum, li) => sum + (li.total_cost ?? 0), 0),
+    [contractLineItems],
+  );
 
   /* ── Work Completed ──────────────────────────────────── */
-  const totalBilled = ownerInvoices.reduce((sum, inv) => sum + (inv.gross_amount ?? 0), 0);
+  const totalBilled = React.useMemo(
+    () => ownerInvoices.reduce((sum, inv) => sum + (inv.gross_amount ?? 0), 0),
+    [ownerInvoices],
+  );
   const contractBase = primeContractValue || revisedBudget;
   const billedPct = contractBase > 0 ? pct(totalBilled, contractBase) : pct(costToDate, revisedBudget);
 
   /* ── Open items ──────────────────────────────────────── */
-  const rfisOpen = rfis.filter((r) => r.status.toLowerCase() !== "closed");
-  const rfisOverdue = rfisOpen.filter((r) => r.due_date && isPast(new Date(r.due_date)));
-  const openSubmittals = submittals.filter((s) => !isClosedStatus(s.status));
-  const openTasks = tasks.filter((t) => !isClosedStatus(t.status));
-  const openChangeEvents = changeEvents.filter(
-    (ce) => !["closed", "rejected", "approved"].includes((ce.status ?? "").toLowerCase()),
+  const rfisOpen = React.useMemo(
+    () => rfis.filter((r) => r.status.toLowerCase() !== "closed"),
+    [rfis],
   );
-  const pendingChangeOrders = changeOrders.filter(
-    (co: ChangeOrder) => !["approved", "rejected", "closed"].includes((co.status ?? "").toLowerCase()),
+  const rfisOverdue = React.useMemo(
+    () => rfisOpen.filter((r) => r.due_date && isPast(new Date(r.due_date))),
+    [rfisOpen],
   );
-  const pendingSubInvoices = subcontractorInvoices.filter(
-    (inv) => !["approved", "paid", "void"].includes((inv.status ?? "").toLowerCase()),
+  const openSubmittals = React.useMemo(
+    () => submittals.filter((s) => !isClosedStatus(s.status)),
+    [submittals],
   );
-
+  const openTasks = React.useMemo(
+    () => tasks.filter((t) => !isClosedStatus(t.status)),
+    [tasks],
+  );
+  const openChangeEvents = React.useMemo(
+    () =>
+      changeEvents.filter(
+        (ce) => !["closed", "rejected", "approved"].includes((ce.status ?? "").toLowerCase()),
+      ),
+    [changeEvents],
+  );
+  const pendingChangeOrders = React.useMemo(
+    () =>
+      changeOrders.filter(
+        (co: ChangeOrder) => !["approved", "rejected", "closed"].includes((co.status ?? "").toLowerCase()),
+      ),
+    [changeOrders],
+  );
   /* ── Setup ───────────────────────────────────────────── */
   const hasTeam = (team ?? []).length > 0;
   const hasBudget = (budget ?? []).length > 0 || revisedBudget > 0;

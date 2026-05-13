@@ -234,7 +234,6 @@ export default async function ProjectHomePage({
     submittalsResult,
     projectDocumentsResult,
     ownerInvoicesResult,
-    subInvoicesResult,
     pendingSsovRowsResult,
   ] = await Promise.all([
     // Fetch main project data
@@ -420,14 +419,6 @@ export default async function ProjectHomePage({
       .order("billing_date", { ascending: false })
       .limit(10),
 
-    // Fetch subcontractor invoices
-    supabase
-      .from("subcontractor_invoices")
-      .select("id, invoice_number, status, billing_date, subcontract_id, purchase_order_id")
-      .eq("project_id", numericProjectId)
-      .order("billing_date", { ascending: false })
-      .limit(10),
-
     // Fetch pending subcontractor SOV reviews
     supabase
       .from("subcontractor_sov_submissions")
@@ -534,7 +525,6 @@ export default async function ProjectHomePage({
 
   const contracts = contractsResult.data || [];
   const ownerInvoices = ownerInvoicesResult.data || [];
-  const subcontractorInvoices = subInvoicesResult.data || [];
   const verticalMarkupCount = verticalMarkupCountResult.count || 0;
   const homeAlerts: HomeAlerts = {
     hasPrimeContractWithoutFinancialMarkup:
@@ -591,7 +581,6 @@ export default async function ProjectHomePage({
         homeAlerts={homeAlerts}
         pendingSsovReviews={pendingSsovReviews}
         ownerInvoices={ownerInvoices}
-        subcontractorInvoices={subcontractorInvoices}
         projectDocuments={projectDocuments}
       />
     </PageShell>
