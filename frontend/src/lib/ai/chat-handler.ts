@@ -4116,7 +4116,9 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
     const sourceLookupRecentTeamsRequest = sourceSpecificRagRequest
       ? null
       : detectSourceLookupRecentTeamsRequest(lastUserContent);
-    const deterministicAssistantIntent = classifyAssistantIntent(lastUserContent);
+    const deterministicAssistantIntent = classifyAssistantIntent(lastUserContent, {
+      selectedProjectId,
+    });
     const intentPlannerDecision = await planAssistantIntent({
       message: lastUserContent,
       selectedProjectId,

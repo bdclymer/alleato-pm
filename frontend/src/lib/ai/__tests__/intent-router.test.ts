@@ -32,6 +32,28 @@ describe("intent router", () => {
     expect(shouldUsePacketFirstIntent(intent)).toBe(false);
   });
 
+  it("keeps project-selected status prompts on latest_status when they mention evidence or next actions", () => {
+    const prompts = [
+      "What is the latest status for this project? Give me the owner-facing risks and next actions.",
+      "Latest project status briefing for the selected project. Include source evidence, what changed, and current risks.",
+    ];
+
+    for (const prompt of prompts) {
+      const intent = classifyAssistantIntent(prompt, { selectedProjectId: 1033 });
+      expect(intent).toBe("latest_status");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(true);
+    }
+  });
+
+  it("does not convert exact source lookup prompts to status just because a project is selected", () => {
+    const intent = classifyAssistantIntent("What source evidence supports that?", {
+      selectedProjectId: 1033,
+    });
+
+    expect(intent).toBe("source_lookup");
+    expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+  });
+
   it("routes explicit web-search source prompts away from internal source lookup", () => {
     const prompts = [
       "Branding question: What are the PUD requirements for Carmel, Indiana planned unit developments? Use web search and cite the sources you use.",

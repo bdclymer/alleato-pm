@@ -70,7 +70,25 @@ const OWNER_RISK_REVIEW_PATTERNS = [
   /\b(worried|worry|nervous|bite us|could bite|blow up|burn us|go wrong|keep me up)\b/i,
 ];
 
-export function classifyAssistantIntent(message: string): AssistantIntent {
+type IntentClassificationOptions = {
+  selectedProjectId?: number | null;
+};
+
+function hasSelectedProjectContext(options?: IntentClassificationOptions): boolean {
+  return typeof options?.selectedProjectId === "number";
+}
+
+function isProjectStatusBriefingPrompt(text: string): boolean {
+  return (
+    /\b(latest|status|update|current|what changed|briefing)\b/i.test(text) ||
+    OWNER_PORTFOLIO_BRIEFING_PATTERNS.some((pattern) => pattern.test(text))
+  );
+}
+
+export function classifyAssistantIntent(
+  message: string,
+  options?: IntentClassificationOptions,
+): AssistantIntent {
   const text = message.trim();
   if (!text) return "general_conversation";
 
@@ -91,6 +109,14 @@ export function classifyAssistantIntent(message: string): AssistantIntent {
 
   if (EXTERNAL_RESEARCH_PATTERNS.some((pattern) => pattern.test(text))) {
     return "external_research";
+  }
+
+  // With a pinned project, broad owner/status phrasing should stay on the
+  // project-status path even when it asks for evidence, risks, or next actions.
+  // Otherwise the source/task keyword checks steal Deep Agents-eligible
+  // questions into narrower retrieval lanes.
+  if (hasSelectedProjectContext(options) && isProjectStatusBriefingPrompt(text)) {
+    return "latest_status";
   }
 
   if (SOURCE_LOOKUP_PATTERNS.some((pattern) => pattern.test(text))) {
@@ -126,10 +152,7 @@ export function classifyAssistantIntent(message: string): AssistantIntent {
     return "risk_review";
   }
 
-  if (
-    /\b(latest|status|update|current|what changed|briefing)\b/i.test(text) ||
-    OWNER_PORTFOLIO_BRIEFING_PATTERNS.some((pattern) => pattern.test(text))
-  ) {
+  if (isProjectStatusBriefingPrompt(text)) {
     return "latest_status";
   }
 

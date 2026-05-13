@@ -58,7 +58,7 @@ function isBrandonDaily(message: string): boolean {
 
 export function planRetrieval(input: PlanInput): RetrievalPlan {
   const { message, selectedProjectId, messages } = input;
-  const intent = classifyAssistantIntent(message);
+  const intent = classifyAssistantIntent(message, { selectedProjectId });
   const sourceSpecific = detectSourceSpecificRagRequest(message);
 
   if (isBrandonDaily(message)) {
