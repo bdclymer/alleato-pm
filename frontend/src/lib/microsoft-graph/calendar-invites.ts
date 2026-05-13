@@ -55,6 +55,22 @@ type GraphEventResponse = {
   onlineMeeting?: { joinUrl?: string | null } | null;
 };
 
+type GraphTokenClaims = {
+  roles?: unknown;
+  scp?: unknown;
+};
+
+type GraphCalendarPermissionStatus = {
+  ok: boolean;
+  roles: string[];
+  scopes: string[];
+};
+
+const GRAPH_CALENDAR_WRITE_PERMISSIONS = new Set([
+  "Calendars.ReadWrite",
+  "Calendars.ReadWrite.Shared",
+]);
+
 function graphEnv(): GraphEnvResult {
   const clientId = process.env.MICROSOFT_CLIENT_ID;
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
@@ -130,6 +146,50 @@ async function getGraphToken(): Promise<string> {
     throw new Error("Microsoft Graph token request returned no access_token.");
   }
   return data.access_token;
+}
+
+function decodeGraphTokenClaims(accessToken: string): GraphTokenClaims {
+  const [, payload] = accessToken.split(".");
+  if (!payload) return {};
+
+  try {
+    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as GraphTokenClaims;
+  } catch {
+    return {};
+  }
+}
+
+export function getGraphCalendarPermissionStatus(accessToken: string): GraphCalendarPermissionStatus {
+  const claims = decodeGraphTokenClaims(accessToken);
+  const roles = Array.isArray(claims.roles)
+    ? claims.roles.filter((role): role is string => typeof role === "string")
+    : [];
+  const scopes = typeof claims.scp === "string"
+    ? claims.scp.split(/\s+/).filter(Boolean)
+    : [];
+  const granted = new Set([...roles, ...scopes]);
+
+  return {
+    ok: [...GRAPH_CALENDAR_WRITE_PERMISSIONS].some((permission) => granted.has(permission)),
+    roles,
+    scopes,
+  };
+}
+
+export function assertGraphCalendarWritePermission(accessToken: string): void {
+  const status = getGraphCalendarPermissionStatus(accessToken);
+  if (status.ok) return;
+
+  const granted = [...status.roles, ...status.scopes].sort();
+  throw new Error(
+    [
+      "Microsoft Graph calendar write permission is not configured.",
+      "Cause: createOutlookCalendarInvite needs application permission Calendars.ReadWrite for the configured Microsoft app registration.",
+      `Detected Graph permissions: ${granted.length ? granted.join(", ") : "none"}.`,
+      "Detection gap: Graph token acquisition can succeed for Mail/Teams scopes while calendar writes still fail with 403 ErrorAccessDenied.",
+      "Prevention: validate calendar-write permission before attempting Outlook calendar event creation.",
+    ].join(" "),
+  );
 }
 
 function normalizeDateTime(value: string, fieldName: string): string {
@@ -238,6 +298,7 @@ export async function createOutlookCalendarInvite(
 ): Promise<OutlookCalendarInviteResult> {
   const organizerEmail = resolveOutlookOrganizerEmail(input.organizerEmail);
   const token = await getGraphToken();
+  assertGraphCalendarWritePermission(token);
   const payload = buildOutlookCalendarEventPayload(input);
   const response = await fetch(`${GRAPH_BASE}/users/${encodeURIComponent(organizerEmail)}/events`, {
     method: "POST",

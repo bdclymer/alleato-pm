@@ -1,9 +1,19 @@
 import {
+  assertGraphCalendarWritePermission,
   buildCalendarInviteAdaptiveCard,
   buildOutlookCalendarEventPayload,
+  getGraphCalendarPermissionStatus,
 } from "./calendar-invites";
 
 jest.mock("server-only", () => ({}));
+
+function fakeGraphToken(claims: Record<string, unknown>): string {
+  return [
+    Buffer.from(JSON.stringify({ alg: "none" })).toString("base64url"),
+    Buffer.from(JSON.stringify(claims)).toString("base64url"),
+    "signature",
+  ].join(".");
+}
 
 describe("Outlook calendar invite helpers", () => {
   it("builds a Microsoft Graph calendar event payload with Teams meeting settings", () => {
@@ -78,5 +88,33 @@ describe("Outlook calendar invite helpers", () => {
         url: "https://outlook.office.com/calendar/item/123",
       },
     ]);
+  });
+
+  it("detects missing Graph calendar write permission before event creation", () => {
+    const token = fakeGraphToken({
+      roles: ["Mail.Read", "ChannelMessage.Read.All", "Chat.Read.All"],
+    });
+
+    expect(getGraphCalendarPermissionStatus(token)).toMatchObject({
+      ok: false,
+      roles: ["Mail.Read", "ChannelMessage.Read.All", "Chat.Read.All"],
+      scopes: [],
+    });
+    expect(() => assertGraphCalendarWritePermission(token)).toThrow(
+      "Microsoft Graph calendar write permission is not configured.",
+    );
+  });
+
+  it("accepts Graph tokens with calendar write permission", () => {
+    const token = fakeGraphToken({
+      roles: ["Mail.Read", "Calendars.ReadWrite"],
+    });
+
+    expect(getGraphCalendarPermissionStatus(token)).toMatchObject({
+      ok: true,
+      roles: ["Mail.Read", "Calendars.ReadWrite"],
+      scopes: [],
+    });
+    expect(() => assertGraphCalendarWritePermission(token)).not.toThrow();
   });
 });
