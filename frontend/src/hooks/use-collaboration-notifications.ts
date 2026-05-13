@@ -25,7 +25,8 @@ interface NotificationsResponse {
 
 const PAGE_SIZE = 25;
 
-export function useCollaborationNotifications() {
+export function useCollaborationNotifications(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const [notifications, setNotifications] = useState<CollaborationNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,6 +67,11 @@ export function useCollaborationNotifications() {
     let cancelled = false;
 
     const init = async () => {
+      if (!enabled) {
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
         const supabase = createClient();
@@ -87,7 +93,7 @@ export function useCollaborationNotifications() {
     return () => {
       cancelled = true;
     };
-  }, [fetchPage]);
+  }, [enabled, fetchPage]);
 
   useEffect(() => {
     if (!userId) return;

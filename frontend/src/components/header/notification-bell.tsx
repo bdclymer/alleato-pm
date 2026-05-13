@@ -10,6 +10,7 @@ import {
   type CollaborationNotification,
   useCollaborationNotifications,
 } from "@/hooks/use-collaboration-notifications";
+import { useDeferredMount } from "@/hooks/use-deferred-mount";
 
 function formatRelativeDate(timestamp: string) {
   const value = new Date(timestamp);
@@ -81,6 +82,7 @@ function NotificationRow({
 
 export function NotificationBell() {
   const [open, setOpen] = React.useState(false);
+  const shouldLoadNotifications = useDeferredMount();
   const {
     notifications,
     unreadCount,
@@ -92,7 +94,7 @@ export function NotificationBell() {
     markAllAsRead,
     deleteNotification,
     deleteAll,
-  } = useCollaborationNotifications();
+  } = useCollaborationNotifications({ enabled: shouldLoadNotifications && open });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

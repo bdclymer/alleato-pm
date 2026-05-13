@@ -190,7 +190,6 @@ function getBestComposerTarget() {
 
 export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: boolean }) {
   const pathname = usePathname()!;
-  const { profile, isLoading } = useCurrentUserProfile();
   const isMobile = useIsMobile();
   const pagePath = pathname ?? "/";
   const [isSelecting, setIsSelecting] = useState(false);
@@ -208,6 +207,10 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
   );
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const shouldLoadProfile = dialogOpen || isSubmitting;
+  const { profile, isLoading } = useCurrentUserProfile({
+    enabled: shouldLoadProfile,
+  });
   const frameRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -383,7 +386,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     };
   }, [isSelecting]);
 
-  if (isLoading || isImmersiveChatRoute) {
+  if ((shouldLoadProfile && isLoading) || isImmersiveChatRoute) {
     return null;
   }
 

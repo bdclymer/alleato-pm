@@ -60,6 +60,8 @@ export class ApiError extends Error {
   }
 }
 
+const browserGetRequestsInFlight = new Map<string, Promise<unknown>>();
+
 function stringifyErrorDetails(details: ApiErrorBody["details"]): string | undefined {
   if (typeof details === "string" && details.trim()) {
     return details.trim();
@@ -142,6 +144,28 @@ export async function apiFetch<T = unknown>(
   url: string,
   init?: RequestInit,
 ): Promise<T> {
+  const method = init?.method?.toUpperCase() ?? "GET";
+  if (typeof window !== "undefined" && method === "GET" && !init?.body && !init?.signal) {
+    const headers = new Headers(init?.headers);
+    const cacheKey = JSON.stringify({
+      url,
+      credentials: init?.credentials ?? "same-origin",
+      headers: Array.from(headers.entries()).sort(),
+    });
+    const inFlight = browserGetRequestsInFlight.get(cacheKey);
+    if (inFlight) {
+      return inFlight as Promise<T>;
+    }
+
+    const requestPromise = performApiFetch<T>(url, init, (requestUrl, requestInit) =>
+      fetch(requestUrl, requestInit),
+    ).finally(() => {
+      browserGetRequestsInFlight.delete(cacheKey);
+    });
+    browserGetRequestsInFlight.set(cacheKey, requestPromise);
+    return requestPromise;
+  }
+
   return performApiFetch<T>(url, init, (requestUrl, requestInit) =>
     fetch(requestUrl, requestInit),
   );

@@ -8,7 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { apiFetch } from "@/lib/api-client";
+import { useProjectShell } from "@/hooks/use-project-shell";
 
 interface Project {
   id: number;
@@ -63,29 +63,30 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
   }, [projectIdFromUrl]);
 
-  // Fetch project details when URL changes
-  useEffect(() => {
-    async function fetchProject() {
-      if (!projectIdFromUrl) {
-        setSelectedProjectState(null);
-        setIsLoading(false);
-        return;
-      }
+  const projectShell = useProjectShell(projectIdFromUrl);
 
-      try {
-        setIsLoading(true);
-        const project = await apiFetch<Project>(`/api/projects/${projectIdFromUrl}`);
-        setSelectedProjectState(project);
-      } catch (error) {
-        console.error("Failed to fetch project details:", error);
-        setSelectedProjectState(null);
-      } finally {
-        setIsLoading(false);
-      }
+  // Hydrate project details from the shared shell payload when URL changes.
+  useEffect(() => {
+    if (!projectIdFromUrl) {
+      setSelectedProjectState(null);
+      setIsLoading(false);
+      return;
     }
 
-    fetchProject();
-  }, [projectIdFromUrl]);
+    setIsLoading(projectShell.isLoading);
+
+    if (projectShell.data?.project) {
+      setSelectedProjectState(projectShell.data.project);
+      setIsLoading(false);
+      return;
+    }
+
+    if (projectShell.error) {
+      console.error("Failed to fetch project shell:", projectShell.error);
+      setSelectedProjectState(null);
+      setIsLoading(false);
+    }
+  }, [projectIdFromUrl, projectShell.data?.project, projectShell.error, projectShell.isLoading]);
 
   // Manually set project (for programmatic updates)
   const setSelectedProject = useCallback((project: Project | null) => {

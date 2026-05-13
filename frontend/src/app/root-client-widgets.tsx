@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import { useDeferredMount } from "@/hooks/use-deferred-mount";
 
 const AskAlleatoRoot = dynamic(
   () => import("@/components/ask-alleato/AskAlleatoRoot").then((mod) => mod.AskAlleatoRoot),
@@ -39,12 +40,14 @@ const AppErrorTelemetryProvider = dynamic(
 const ENABLE_DEV_BRIDGE = process.env.NEXT_PUBLIC_ENABLE_DEV_BRIDGE === "true";
 
 export function RootClientWidgets() {
+  const shouldMountDeferredWidgets = useDeferredMount(6_000);
+
   return (
     <Suspense fallback={null}>
       <AppErrorTelemetryProvider />
-      <AskAlleatoRoot />
-      <AdminFeedbackWidget showLauncher={false} />
-      {process.env.NODE_ENV === "development" && (
+      {shouldMountDeferredWidgets && <AskAlleatoRoot />}
+      {shouldMountDeferredWidgets && <AdminFeedbackWidget showLauncher={false} />}
+      {shouldMountDeferredWidgets && process.env.NODE_ENV === "development" && (
         <>
           <AgentationThemeSync />
           {ENABLE_DEV_BRIDGE && <DevAnnotationOverlay />}

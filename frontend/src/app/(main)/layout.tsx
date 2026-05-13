@@ -1,30 +1,56 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { CreateProjectDevConfigProvider } from "@/components/project/create-project-dev-config";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
-import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
-import { AiChatSidebarPanel } from "@/components/ai-assistant/ai-chat-sidebar";
-import { GlobalAiWidget } from "@/components/ai-assistant/global-ai-widget";
-import { LiveCursors } from "@/components/live-cursors/LiveCursors";
-import { WelcomeOnboarding } from "@/components/onboarding/WelcomeOnboarding";
 import { useProject } from "@/contexts/project-context";
+import { useDeferredMount } from "@/hooks/use-deferred-mount";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
+
+const AiChatSidebarPanel = dynamic(
+  () => import("@/components/ai-assistant/ai-chat-sidebar").then((mod) => mod.AiChatSidebarPanel),
+  { ssr: false },
+);
+const CommentsSidebarPanel = dynamic(
+  () => import("@/components/header/comments-sidebar").then((mod) => mod.CommentsSidebarPanel),
+  { ssr: false },
+);
+const GlobalAiWidget = dynamic(
+  () => import("@/components/ai-assistant/global-ai-widget").then((mod) => mod.GlobalAiWidget),
+  { ssr: false },
+);
+const LiveCursors = dynamic(
+  () => import("@/components/live-cursors/LiveCursors").then((mod) => mod.LiveCursors),
+  { ssr: false },
+);
+const ProcoreReferencePanel = dynamic(
+  () => import("@/components/header/procore-reference-panel").then((mod) => mod.ProcoreReferencePanel),
+  { ssr: false },
+);
+const WelcomeOnboarding = dynamic(
+  () => import("@/components/onboarding/WelcomeOnboarding").then((mod) => mod.WelcomeOnboarding),
+  { ssr: false },
+);
 
 /** Floating overlays extracted to a single component to avoid mixed static/dynamic children key warnings. */
 function Overlays() {
   const { projectId } = useProject();
   const { userType, isLoading } = useProjectPermissions(projectId);
+  const shouldMountDeferredOverlays = useDeferredMount(6_000);
   const isSubcontractor = userType?.toLowerCase() === "subcontractor";
   const pathname = usePathname();
   const isAiAssistant = pathname?.startsWith("/ai-assistant");
+
+  if (!shouldMountDeferredOverlays) {
+    return null;
+  }
 
   return (
     <React.Suspense fallback={null}>
@@ -52,6 +78,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname()!;
+  const shouldMountDeferredPanels = useDeferredMount(6_000);
   const isTeamChatPage = pathname?.startsWith("/team-chat");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
   const isAiAssistant = pathname?.startsWith("/ai-assistant");
@@ -63,9 +90,11 @@ export default function MainLayout({
           <CreateProjectDevConfigProvider>
             {children}
           </CreateProjectDevConfigProvider>
-          <React.Suspense fallback={null}>
-            <GlobalAiWidget />
-          </React.Suspense>
+          {shouldMountDeferredPanels && (
+            <React.Suspense fallback={null}>
+              <GlobalAiWidget />
+            </React.Suspense>
+          )}
         </SidebarInset>
       </SidebarProvider>
     );
@@ -77,9 +106,11 @@ export default function MainLayout({
       <SidebarInset key="app-shell" className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <React.Suspense fallback={null}>
-              <AiChatSidebarPanel key="ai-chat-sidebar-panel" />
-            </React.Suspense>
+            {shouldMountDeferredPanels && (
+              <React.Suspense fallback={null}>
+                <AiChatSidebarPanel key="ai-chat-sidebar-panel" />
+              </React.Suspense>
+            )}
             <div className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide">
               {!isDrawingViewer && (
                 isAiAssistant ? (
@@ -98,11 +129,15 @@ export default function MainLayout({
                 <React.Fragment key="route-content">{children}</React.Fragment>
                 {!isDrawingViewer && <SiteFooter key="site-footer" />}
               </main>
-              <ProcoreReferencePanel key="procore-reference-panel" />
+              {shouldMountDeferredPanels && (
+                <ProcoreReferencePanel key="procore-reference-panel" />
+              )}
             </div>
-            <React.Suspense fallback={null}>
-              <CommentsSidebarPanel key="comments-sidebar-panel" />
-            </React.Suspense>
+            {shouldMountDeferredPanels && (
+              <React.Suspense fallback={null}>
+                <CommentsSidebarPanel key="comments-sidebar-panel" />
+              </React.Suspense>
+            )}
           </div>
         </CreateProjectDevConfigProvider>
         <Overlays key="floating-overlays" />
