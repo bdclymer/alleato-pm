@@ -164,7 +164,9 @@ def test_process_graph_notification_realtime_syncs_mailbox_delta(monkeypatch):
 
     monkeypatch.setattr(
         "src.services.integrations.microsoft_graph.sync.sync_outlook_mailbox_delta",
-        lambda client, mailbox, *, reason: calls.append((client, mailbox, reason))
+        lambda client, mailbox, *, reason, verify_persisted_count: calls.append(
+            (client, mailbox, reason, verify_persisted_count)
+        )
         or {"status": "succeeded", "items_synced": 1},
     )
 
@@ -179,7 +181,7 @@ def test_process_graph_notification_realtime_syncs_mailbox_delta(monkeypatch):
         },
     )
 
-    assert calls == [(supabase, "a@example.com", "graph_webhook")]
+    assert calls == [(supabase, "a@example.com", "graph_webhook", False)]
     assert result["message_id"] == "message-1"
     assert result["subscription_id"] == "sub-1"
 

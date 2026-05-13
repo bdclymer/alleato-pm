@@ -230,6 +230,7 @@ def process_graph_notification_realtime(supabase: Any, notification: Dict[str, A
         supabase,
         mailbox,
         reason="graph_webhook",
+        verify_persisted_count=False,
     )
     result["message_id"] = work_item.get("message_id")
     result["subscription_id"] = work_item.get("subscription_id")

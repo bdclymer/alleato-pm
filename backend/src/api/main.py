@@ -175,10 +175,15 @@ class FirefliesRecentSyncRequest(BaseModel):
 
 
 class GraphSyncRequest(BaseModel):
+    run_outlook: bool = True
+    run_teams: bool = True
+    run_onedrive: bool = True
     run_embedding: bool = True
     run_teams_compiler: bool = True
     embed_limit: int = 1000
     teams_compiler_batch_size: int = 25
+    outlook_users: Optional[List[str]] = None
+    verify_outlook_persisted_count: bool = True
 
 
 class GraphSubscriptionReconcileRequest(BaseModel):
@@ -596,10 +601,15 @@ async def graph_sync_endpoint(
     def _run():
         return run_graph_sync(
             client,
+            run_outlook=options.run_outlook,
+            run_teams=options.run_teams,
+            run_onedrive=options.run_onedrive,
             run_embedding=options.run_embedding,
             run_teams_compiler=options.run_teams_compiler,
             embed_limit=embed_limit,
             teams_compiler_batch_size=teams_compiler_batch_size,
+            outlook_users=options.outlook_users,
+            verify_outlook_persisted_count=options.verify_outlook_persisted_count,
         )
 
     import asyncio

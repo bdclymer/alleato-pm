@@ -145,10 +145,11 @@ def sync_outlook_mailbox_delta(
     user_email: str,
     *,
     reason: str = "scheduled",
+    verify_persisted_count: bool = True,
 ) -> dict[str, Any]:
     """Sync one Outlook mailbox through the durable delta-token path."""
     started_at = datetime.now(timezone.utc)
-    before_count = _count_outlook_docs_for_mailbox(supabase, user_email)
+    before_count = _count_outlook_docs_for_mailbox(supabase, user_email) if verify_persisted_count else 0
     project_keywords = _get_active_project_keywords(supabase)
     token = _get_delta_token(supabase, "outlook_email", user_email)
     since_date = os.environ.get("OUTLOOK_SYNC_SINCE") or None
@@ -161,11 +162,11 @@ def sync_outlook_mailbox_delta(
         token,
         effective_since,
     )
-    after_count = _count_outlook_docs_for_mailbox(supabase, user_email)
-    persisted_delta = max(0, after_count - before_count)
+    after_count = _count_outlook_docs_for_mailbox(supabase, user_email) if verify_persisted_count else 0
+    persisted_delta = max(0, after_count - before_count) if verify_persisted_count else None
     sync_status = "success"
     sync_error: Optional[str] = None
-    if persisted_delta != count:
+    if verify_persisted_count and persisted_delta != count:
         sync_status = "mismatch"
         sync_error = (
             f"Persisted Outlook doc delta mismatch for {user_email}: "
@@ -209,10 +210,15 @@ def sync_outlook_mailbox_delta(
 def run_graph_sync(
     supabase: Client,
     *,
+    run_outlook: bool = True,
+    run_teams: bool = True,
+    run_onedrive: bool = True,
     run_embedding: bool = True,
     run_teams_compiler: bool = True,
     embed_limit: int = 25,
     teams_compiler_batch_size: int = 25,
+    outlook_users: Optional[list[str]] = None,
+    verify_outlook_persisted_count: bool = True,
 ) -> dict:
     """
     Run a full Microsoft Graph sync for all configured sources.
@@ -239,17 +245,26 @@ def run_graph_sync(
     }
 
     # ── Outlook ──────────────────────────────────────────────────────────────
-    sync_emails = os.environ.get("GRAPH_SYNC_OUTLOOK", "true").lower() == "true"
+    sync_emails = run_outlook and os.environ.get("GRAPH_SYNC_OUTLOOK", "true").lower() == "true"
     if sync_emails:
-        user_emails = [
-            e.strip()
-            for e in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",")
-            if e.strip()
-        ]
+        if outlook_users is None:
+            user_emails = [
+                e.strip()
+                for e in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",")
+                if e.strip()
+            ]
+        else:
+            user_emails = [e.strip() for e in outlook_users if e and e.strip()]
 
         for user_email in user_emails:
+            started_at = datetime.now(timezone.utc)
             try:
-                result = sync_outlook_mailbox_delta(supabase, user_email, reason="scheduled")
+                result = sync_outlook_mailbox_delta(
+                    supabase,
+                    user_email,
+                    reason="scheduled",
+                    verify_persisted_count=verify_outlook_persisted_count,
+                )
                 if result.get("error"):
                     summary["errors"].append(result["error"])
                 summary["outlook"] += int(result.get("items_synced") or 0)
@@ -270,7 +285,7 @@ def run_graph_sync(
                 )
 
     # ── Teams ─────────────────────────────────────────────────────────────────
-    sync_teams = os.environ.get("GRAPH_SYNC_TEAMS", "true").lower() == "true"
+    sync_teams = run_teams and os.environ.get("GRAPH_SYNC_TEAMS", "true").lower() == "true"
     if sync_teams:
         try:
             channels = get_all_teams_and_channels(supabase)
@@ -321,7 +336,7 @@ def run_graph_sync(
     # NOTE: Graph API does NOT support delta queries on chat messages with app-only
     # (client credentials) auth. We use timestamp-based incremental sync instead:
     # store last_sync_at in graph_sync_state and fetch messages newer than that.
-    sync_teams_dm = os.environ.get("GRAPH_SYNC_TEAMS_DM", "true").lower() == "true"
+    sync_teams_dm = run_teams and os.environ.get("GRAPH_SYNC_TEAMS_DM", "true").lower() == "true"
     if sync_teams_dm:
         dm_users = [
             e.strip()
@@ -395,7 +410,7 @@ def run_graph_sync(
                 )
 
     # ── OneDrive ─────────────────────────────────────────────────────────────
-    sync_onedrive = os.environ.get("GRAPH_SYNC_ONEDRIVE", "true").lower() == "true"
+    sync_onedrive = run_onedrive and os.environ.get("GRAPH_SYNC_ONEDRIVE", "true").lower() == "true"
     if sync_onedrive:
         user_emails = [
             e.strip()
@@ -445,7 +460,7 @@ def run_graph_sync(
 
     # ── SharePoint Sites ──────────────────────────────────────────────────────
     # Format: "hostname/site_name:folder_path" e.g. "alleato.sharepoint.com/AlleatoGroup:/SOP"
-    sync_sharepoint = os.environ.get("GRAPH_SYNC_SHAREPOINT", "true").lower() == "true"
+    sync_sharepoint = run_onedrive and os.environ.get("GRAPH_SYNC_SHAREPOINT", "true").lower() == "true"
     sp_raw = os.environ.get("SHAREPOINT_SYNC_FOLDERS", "") if sync_sharepoint else ""
     sp_entries = [e.strip() for e in sp_raw.split(",") if e.strip()]
     for entry in sp_entries:
