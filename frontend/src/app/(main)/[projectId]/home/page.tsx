@@ -1,5 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { PageShell } from "@/components/layout";
 import { notFound, redirect } from "next/navigation";
 import { ProjectCommandCenter as ProjectHomeClient } from "./project-command-center";
@@ -188,8 +188,7 @@ export default async function ProjectHomePage({
   }
 
   // Redirect subcontractors to their focused My Work page
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const user = await getApiRouteUser();
   if (user) {
     const { data: authLink } = await supabase
       .from("users_auth")
@@ -234,9 +233,9 @@ export default async function ProjectHomePage({
     commitmentCosWithoutChangeRequestCountResult,
     submittalsResult,
     projectDocumentsResult,
-    primeContractPaymentsResult,
-    commitmentPaymentsResult,
-    invoicePaymentsResult,
+    ownerInvoicesResult,
+    subInvoicesResult,
+    pendingSsovRowsResult,
   ] = await Promise.all([
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
@@ -411,55 +410,31 @@ export default async function ProjectHomePage({
       .order("updated_at", { ascending: false, nullsFirst: false })
       .limit(10),
 
-    // Fetch owner payments received
+    // Fetch owner invoices via prime contract relation without waiting for contractsResult
     supabase
-      .from("prime_contract_payments")
+      .from("owner_invoices")
       .select(
-        "id,payment_number,reference_number,method,amount,payment_date,contract_id,created_at,updated_at",
+        "id, invoice_number, status, gross_amount, paid_amount, billing_date, prime_contract_id, prime_contracts!owner_invoices_prime_contract_id_fkey!inner(project_id)",
       )
-      .eq("project_id", numericProjectId)
-      .order("payment_date", { ascending: false, nullsFirst: false })
+      .eq("prime_contracts.project_id", numericProjectId)
+      .order("billing_date", { ascending: false })
       .limit(10),
 
-    // Fetch commitment payments issued
-    supabase
-      .from("commitment_payments")
-      .select(
-        "id,payment_number,payment_ref,payment_method,amount,payment_date,status,vendor_name,subcontract_id,purchase_order_id,created_at,updated_at",
-      )
-      .eq("project_id", numericProjectId)
-      .order("payment_date", { ascending: false, nullsFirst: false })
-      .limit(10),
-
-    // Fetch invoice-linked payments
-    supabase
-      .from("invoice_payments")
-      .select(
-        "id,payment_number,payment_method,amount,payment_date,owner_invoice_id,subcontractor_invoice_id,created_at,updated_at",
-      )
-      .eq("project_id", numericProjectId)
-      .order("payment_date", { ascending: false, nullsFirst: false })
-      .limit(10),
-  ]);
-
-  // Fetch invoices — owner invoices (via prime_contracts) + subcontractor invoices
-  const contractIds = (contractsResult.data || []).map((c) => c.id);
-  const [ownerInvoicesResult, subInvoicesResult] = await Promise.all([
-    contractIds.length > 0
-      ? supabase
-          .from("owner_invoices")
-          .select("id, invoice_number, status, gross_amount, paid_amount, billing_date, prime_contract_id")
-          .in("prime_contract_id", contractIds)
-          .order("billing_date", { ascending: false })
-          .limit(10)
-      : Promise.resolve({ data: [], error: null }),
-
+    // Fetch subcontractor invoices
     supabase
       .from("subcontractor_invoices")
       .select("id, invoice_number, status, billing_date, subcontract_id, purchase_order_id")
       .eq("project_id", numericProjectId)
       .order("billing_date", { ascending: false })
       .limit(10),
+
+    // Fetch pending subcontractor SOV reviews
+    supabase
+      .from("subcontractor_sov_submissions")
+      .select("commitment_id, submitted_at")
+      .eq("project_id", numericProjectId)
+      .eq("status", "under_review")
+      .order("submitted_at", { ascending: true }),
   ]);
 
   if (projectResult.error || !projectResult.data) {
@@ -535,14 +510,7 @@ export default async function ProjectHomePage({
     return true;
   });
 
-  const { data: pendingSsovRows } = await (supabase as any)
-    .from("subcontractor_sov_submissions")
-    .select("commitment_id, submitted_at")
-    .eq("project_id", numericProjectId)
-    .eq("status", "under_review")
-    .order("submitted_at", { ascending: true });
-
-  const pendingSsovReviews: PendingSsovReview[] = (pendingSsovRows || []).map(
+  const pendingSsovReviews: PendingSsovReview[] = (pendingSsovRowsResult.data || []).map(
     (row: { commitment_id: string; submitted_at: string | null }) => {
       const commitment = commitments.find((item) => item.id === row.commitment_id);
       return {
@@ -583,9 +551,6 @@ export default async function ProjectHomePage({
   });
   const submittals = submittalsResult.data || [];
   const projectDocuments = projectDocumentsResult.data || [];
-  const primeContractPayments = primeContractPaymentsResult.data || [];
-  const commitmentPayments = commitmentPaymentsResult.data || [];
-  const invoicePayments = invoicePaymentsResult.data || [];
   const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
   const teamFromRpc = teamResult.data || [];
@@ -628,9 +593,6 @@ export default async function ProjectHomePage({
         ownerInvoices={ownerInvoices}
         subcontractorInvoices={subcontractorInvoices}
         projectDocuments={projectDocuments}
-        primeContractPayments={primeContractPayments}
-        commitmentPayments={commitmentPayments}
-        invoicePayments={invoicePayments}
       />
     </PageShell>
   );
