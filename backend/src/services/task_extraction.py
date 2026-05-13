@@ -27,8 +27,11 @@ logger = logging.getLogger(__name__)
 
 TASK_EXTRACTION_MODEL = "gpt-5.5"
 TASK_EXTRACTION_PROMPT_VERSION = "task_extraction.v4.gpt-5.5"
-TASK_EXTRACTION_DEFAULT_LIMIT = 100
-TASK_EXTRACTION_CANDIDATE_MULTIPLIER = 25
+TASK_EXTRACTION_DEFAULT_LIMIT = 25
+TASK_EXTRACTION_MAX_RUN_DOCS = 50
+TASK_EXTRACTION_CANDIDATE_MULTIPLIER = 4
+TASK_EXTRACTION_DEFAULT_CANDIDATE_LIMIT = 100
+TASK_EXISTING_DESCRIPTION_LIMIT = 1000
 TASK_FEEDBACK_EXAMPLES_LIMIT = 8
 
 # Source types that can contain action items.
@@ -130,6 +133,27 @@ def _type_label(doc_type: str | None) -> str:
     if t in ("teams_dm", "teams_dm_conversation", "teams_message"):
         return "Teams message"
     return "document"
+
+
+def _resolve_extraction_limits(max_docs: int | None = None) -> tuple[int, int, int]:
+    requested_doc_limit = max_docs or int(
+        os.getenv("TASK_EXTRACTION_MAX_DOCS", str(TASK_EXTRACTION_DEFAULT_LIMIT))
+    )
+    max_run_docs = int(os.getenv("TASK_EXTRACTION_MAX_RUN_DOCS", str(TASK_EXTRACTION_MAX_RUN_DOCS)))
+    doc_limit = max(1, min(requested_doc_limit, max_run_docs))
+    candidate_cap = max(
+        doc_limit,
+        int(os.getenv("TASK_EXTRACTION_CANDIDATE_LIMIT", str(TASK_EXTRACTION_DEFAULT_CANDIDATE_LIMIT))),
+    )
+    candidate_limit = min(
+        candidate_cap,
+        max(doc_limit, doc_limit * TASK_EXTRACTION_CANDIDATE_MULTIPLIER),
+    )
+    description_limit = max(
+        1,
+        int(os.getenv("TASK_EXTRACTION_DESCRIPTION_LIMIT", str(TASK_EXISTING_DESCRIPTION_LIMIT))),
+    )
+    return doc_limit, candidate_limit, description_limit
 
 
 def _build_text(doc: dict[str, Any]) -> str:
@@ -336,8 +360,7 @@ def run_task_extraction(
 
     since_dt = datetime.now(timezone.utc) - timedelta(days=window_days)
     since = since_dt.isoformat()
-    doc_limit = max_docs or int(os.getenv("TASK_EXTRACTION_MAX_DOCS", str(TASK_EXTRACTION_DEFAULT_LIMIT)))
-    candidate_limit = max(500, doc_limit * TASK_EXTRACTION_CANDIDATE_MULTIPLIER)
+    doc_limit, candidate_limit, description_limit = _resolve_extraction_limits(max_docs)
 
     # Fetch recently ingested communication docs, then guard against old source
     # conversations that were backfilled or recompiled inside the ingestion window.
@@ -392,7 +415,7 @@ def run_task_extraction(
     desc_result = (
         client_db.table("tasks")
         .select("description")
-        .limit(5000)
+        .limit(description_limit)
         .execute()
     )
     existing_descriptions: set[str] = {

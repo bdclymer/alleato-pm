@@ -144,3 +144,31 @@ Before calling AI assistant chat fully cut over in production:
 1. Set Vercel env vars for `RAG_SUPABASE_URL`, `RAG_SUPABASE_SERVICE_ROLE_KEY`, and `RAG_DATABASE_READS_ENABLED=true`.
 2. Redeploy the frontend.
 3. Run assistant smoke prompts covering broad semantic search, Teams, email, OneDrive/spec document search, and project-filtered search.
+
+## Render Cron Restart Plan
+
+Status on 2026-05-13: the RAG database split is complete enough to restart the RAG-related Render crons in a staged, throttled mode. Do not resume the old all-at-once cadence.
+
+### Safe To Resume After Deploying This Blueprint
+
+- [x] `alleato-rag-health`: read-only, daily at `15 12 * * *`, split-safe against app metadata plus RAG chunk/job tables.
+- [x] `alleato-source-rag-health`: health check every 4 hours at `5 */4 * * *`, reads split RAG data and writes only capped health snapshots/alerts.
+- [x] `alleato-source-sync-health`: every 30 minutes, writes capped at 25 source snapshots and 25 alerts per run.
+- [x] `alleato-teams-channel-sync`: hourly at minute 10, source fetch only; embedding and Teams compiler are skipped.
+- [x] `alleato-teams-dm-sync`: hourly at minute 40, source fetch only; embedding and Teams compiler are skipped.
+- [x] `alleato-graph-sync`: every 2 hours at minute 20, Outlook/OneDrive/SharePoint only; Teams is disabled here to avoid overlapping the Teams-only crons; embedding is capped at 25 documents per run.
+- [x] `alleato-task-extraction`: daily at 07:00 UTC, capped at 25 source documents, 100 candidate rows, and 1,000 existing task-description rows per run.
+- [x] `alleato-executive-daily-brief-morning`: weekday 07:00 ET target; Teams send remains disabled until explicitly re-enabled.
+- [x] `alleato-executive-daily-brief-evening`: weekday 18:30 ET target; Teams send remains disabled until explicitly re-enabled.
+
+### Keep Disabled Separately
+
+- [ ] `alleato-acumatica-financial-sync`: not part of the RAG database split. Leave suspended until the separate Acumatica sync/financial data health decision is made.
+
+### Guardrails Added
+
+- [x] Render root and backend blueprints no longer use disabled echo commands for the high-risk RAG/Graph sync crons.
+- [x] Root and backend Render blueprints are kept in parity for source health, Teams channel, Teams DM, and Graph sync.
+- [x] Blueprint tests assert the high-risk crons are not disabled echoes.
+- [x] Blueprint tests assert the combined Graph cron does not run Teams work and keeps embedding capped at 25.
+- [x] Task extraction unit tests assert default and oversized env limits stay bounded.

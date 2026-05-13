@@ -31,9 +31,17 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "0 0 1 1 *"
+    schedule: "*/30 * * * *"
     dockerCommand: >-
-      echo "alleato-source-sync-health disabled while DB incident guard is active"
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.scheduler import _run_source_sync_health_recompute;
+      result = _run_source_sync_health_recompute();
+      print(json.dumps(result, indent=2));
+      health = result.get('health', {});
+      sys.exit(1 if health.get('status') == 'critical' else 0)
+      "
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -49,9 +57,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "0 0 1 1 *"
+    schedule: "10 * * * *"
     dockerCommand: >-
-      echo "alleato-teams-channel-sync disabled while DB incident guard is active"
+      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding --skip-teams-compiler
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -83,9 +91,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "0 0 1 1 *"
+    schedule: "40 * * * *"
     dockerCommand: >-
-      echo "alleato-teams-dm-sync disabled while DB incident guard is active"
+      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -114,16 +122,32 @@ services:
       - key: MICROSOFT_SYNC_USERS
         sync: false
 
-  # Runs Microsoft Graph sync every 30 minutes, staggered away from
-  # teams-channel-sync at :00/:30. The service default caps embed_limit at 25.
+  # Runs Outlook/OneDrive/SharePoint sync every 2 hours, staggered away from
+  # Teams-only crons. Embedding is capped at 25 documents per run.
   - type: cron
     name: alleato-graph-sync
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "0 0 1 1 *"
+    schedule: "20 */2 * * *"
     dockerCommand: >-
-      echo "alleato-graph-sync disabled while DB incident guard is active"
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.integrations.microsoft_graph.sync import run_graph_sync;
+      from src.services.supabase_helpers import get_supabase_client;
+      result = run_graph_sync(
+        get_supabase_client(),
+        run_teams=False,
+        run_embedding=True,
+        run_teams_compiler=False,
+        embed_limit=25,
+        teams_compiler_batch_size=25,
+      );
+      print(json.dumps(result, indent=2));
+      errors = result.get('errors', []);
+      sys.exit(1 if errors and result.get('total_synced', 0) == 0 else 0)
+      "
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -154,9 +178,15 @@ services:
       - key: GRAPH_SYNC_OUTLOOK
         value: "true"
       - key: GRAPH_SYNC_TEAMS
-        value: "true"
+        value: "false"
+      - key: GRAPH_SYNC_TEAMS_DM
+        value: "false"
       - key: GRAPH_SYNC_ONEDRIVE
         value: "true"
+      - key: GRAPH_EMBEDDING_LIMIT
+        value: "25"
+      - key: TEAMS_COMPILER_BATCH_SIZE
+        value: "25"
 
   - type: web
     name: alleato-backend

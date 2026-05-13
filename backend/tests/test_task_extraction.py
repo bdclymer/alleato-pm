@@ -5,6 +5,7 @@ from src.services.pipeline.models import TaskItem
 from src.services.task_extraction import (
     _extract_tasks,
     _format_negative_feedback_examples,
+    _resolve_extraction_limits,
     _source_occurred_at,
     _task_quality_rejection_reason,
 )
@@ -32,6 +33,27 @@ def test_source_occurred_at_falls_back_to_created_at_when_source_date_missing():
     )
 
     assert source_date == datetime(2026, 5, 5, 16, 30, 50, 680246, tzinfo=timezone.utc)
+
+
+def test_task_extraction_limits_are_bounded_by_default(monkeypatch):
+    for key in (
+        "TASK_EXTRACTION_MAX_DOCS",
+        "TASK_EXTRACTION_MAX_RUN_DOCS",
+        "TASK_EXTRACTION_CANDIDATE_LIMIT",
+        "TASK_EXTRACTION_DESCRIPTION_LIMIT",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    assert _resolve_extraction_limits() == (25, 100, 1000)
+
+
+def test_task_extraction_limits_clamp_oversized_env_values(monkeypatch):
+    monkeypatch.setenv("TASK_EXTRACTION_MAX_DOCS", "1000")
+    monkeypatch.setenv("TASK_EXTRACTION_MAX_RUN_DOCS", "50")
+    monkeypatch.setenv("TASK_EXTRACTION_CANDIDATE_LIMIT", "10000")
+    monkeypatch.setenv("TASK_EXTRACTION_DESCRIPTION_LIMIT", "500")
+
+    assert _resolve_extraction_limits() == (50, 200, 500)
 
 
 def test_enrich_fireflies_tasks_preserves_direct_text_and_adds_llm_context():

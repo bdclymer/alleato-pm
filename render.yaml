@@ -32,9 +32,17 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0 1 1 *"
+    schedule: "*/30 * * * *"
     dockerCommand: >-
-      echo "alleato-source-sync-health disabled while DB incident guard is active"
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.scheduler import _run_source_sync_health_recompute;
+      result = _run_source_sync_health_recompute();
+      print(json.dumps(result, indent=2));
+      health = result.get('health', {});
+      sys.exit(1 if health.get('status') == 'critical' else 0)
+      "
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -50,9 +58,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0 1 1 *"
+    schedule: "10 * * * *"
     dockerCommand: >-
-      echo "alleato-teams-channel-sync disabled while DB incident guard is active"
+      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding --skip-teams-compiler
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -84,9 +92,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0 1 1 *"
+    schedule: "40 * * * *"
     dockerCommand: >-
-      echo "alleato-teams-dm-sync disabled while DB incident guard is active"
+      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -115,17 +123,32 @@ services:
       - key: MICROSOFT_SYNC_USERS
         sync: false
 
-  # Runs Microsoft Graph sync (Outlook, Teams, OneDrive) every 30 minutes.
-  # Staggered to :05/:35 so it doesn't collide with teams-channel-sync at :00/:30.
-  # embed_limit is capped at 25 per run to avoid OOM-killing the DB with bulk vector writes.
+  # Runs Outlook/OneDrive/SharePoint sync every 2 hours, staggered away from
+  # Teams-only crons. Embedding is capped at 25 documents per run.
   - type: cron
     name: alleato-graph-sync
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0 1 1 *"
+    schedule: "20 */2 * * *"
     dockerCommand: >-
-      echo "alleato-graph-sync disabled while DB incident guard is active"
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.integrations.microsoft_graph.sync import run_graph_sync;
+      from src.services.supabase_helpers import get_supabase_client;
+      result = run_graph_sync(
+        get_supabase_client(),
+        run_teams=False,
+        run_embedding=True,
+        run_teams_compiler=False,
+        embed_limit=25,
+        teams_compiler_batch_size=25,
+      );
+      print(json.dumps(result, indent=2));
+      errors = result.get('errors', []);
+      sys.exit(1 if errors and result.get('total_synced', 0) == 0 else 0)
+      "
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -156,9 +179,15 @@ services:
       - key: GRAPH_SYNC_OUTLOOK
         value: "true"
       - key: GRAPH_SYNC_TEAMS
-        value: "true"
+        value: "false"
+      - key: GRAPH_SYNC_TEAMS_DM
+        value: "false"
       - key: GRAPH_SYNC_ONEDRIVE
         value: "true"
+      - key: GRAPH_EMBEDDING_LIMIT
+        value: "25"
+      - key: TEAMS_COMPILER_BATCH_SIZE
+        value: "25"
 
   # Extracts action items from meetings, emails, and Teams messages daily at 7 AM UTC.
   # Replaces the former Vercel cron route (/api/admin/cron/extract-brandon-tasks).
@@ -167,9 +196,16 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0 1 1 *"
+    schedule: "0 7 * * *"
     dockerCommand: >-
-      echo "alleato-task-extraction disabled while DB incident guard is active"
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.task_extraction import run_task_extraction;
+      result = run_task_extraction(window_days=2, max_docs=25);
+      print(json.dumps(result, indent=2));
+      sys.exit(1 if result.get('errors', 0) > 0 and result.get('inserted', 0) == 0 else 0)
+      "
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -185,6 +221,14 @@ services:
         sync: false
       - key: RAG_DATABASE_READS_ENABLED
         value: "true"
+      - key: TASK_EXTRACTION_MAX_DOCS
+        value: "25"
+      - key: TASK_EXTRACTION_MAX_RUN_DOCS
+        value: "25"
+      - key: TASK_EXTRACTION_CANDIDATE_LIMIT
+        value: "100"
+      - key: TASK_EXTRACTION_DESCRIPTION_LIMIT
+        value: "1000"
       - key: AI_GATEWAY_API_KEY
         sync: false
       - key: OPENAI_API_KEY
@@ -198,8 +242,8 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0 1 1 *"
-    dockerCommand: echo "alleato-rag-health disabled while DB incident guard is active"
+    schedule: "15 12 * * *"
+    dockerCommand: python3 -m src.services.health.rag_meeting_health
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -229,8 +273,8 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0 1 1 *"
-    dockerCommand: echo "alleato-source-rag-health disabled while DB incident guard is active"
+    schedule: "5 */4 * * *"
+    dockerCommand: python3 -m src.services.health.source_rag_health
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -260,8 +304,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile.executive-brief
     dockerContext: .
-    schedule: "0 0 1 1 *"
-    dockerCommand: echo "alleato-executive-daily-brief-morning disabled while DB incident guard is active"
+    schedule: "0 11,12 * * 1-5"
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1
@@ -303,8 +346,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile.executive-brief
     dockerContext: .
-    schedule: "0 0 1 1 *"
-    dockerCommand: echo "alleato-executive-daily-brief-evening disabled while DB incident guard is active"
+    schedule: "30 22,23 * * 1-5"
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1
