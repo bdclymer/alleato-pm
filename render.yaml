@@ -307,6 +307,14 @@ services:
         value: true
       - key: GRAPH_SYNC_ENABLED
         value: false
+      - key: GRAPH_SYNC_OUTLOOK
+        value: false
+      - key: GRAPH_SYNC_TEAMS
+        value: false
+      - key: GRAPH_SYNC_TEAMS_DM
+        value: false
+      - key: GRAPH_SYNC_ONEDRIVE
+        value: false
       - key: INTELLIGENCE_COMPILER_ENABLED
         value: false
       - key: SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED

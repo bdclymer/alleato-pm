@@ -186,13 +186,13 @@ services:
       - key: TASK_EXTRACTION_ENABLED
         value: false
       - key: GRAPH_SYNC_OUTLOOK
-        value: true
+        value: false
       - key: GRAPH_SYNC_TEAMS
-        value: true
+        value: false
       - key: GRAPH_SYNC_TEAMS_DM
-        value: true
+        value: false
       - key: GRAPH_SYNC_ONEDRIVE
-        value: true
+        value: false
       - key: GRAPH_SYNC_INTERVAL_MINUTES
         value: 60
       - key: PIPELINE_MAX_CONCURRENCY

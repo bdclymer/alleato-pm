@@ -11,6 +11,19 @@ const SUPABASE_HEALTH_URL = `https://api.supabase.com/v1/projects/${PROJECT_REF}
 const SUPABASE_LOGS_URL = `https://api.supabase.com/v1/projects/${PROJECT_REF}/analytics/endpoints/logs.all`;
 const DEFAULT_WINDOW_MINUTES = 30;
 
+const REQUIRED_WEB_FLAGS = new Map([
+  ["DISABLE_SCHEDULER", "true"],
+  ["GRAPH_SYNC_ENABLED", "false"],
+  ["GRAPH_SYNC_OUTLOOK", "false"],
+  ["GRAPH_SYNC_TEAMS", "false"],
+  ["GRAPH_SYNC_TEAMS_DM", "false"],
+  ["GRAPH_SYNC_ONEDRIVE", "false"],
+  ["INTELLIGENCE_COMPILER_ENABLED", "false"],
+  ["SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED", "false"],
+  ["FIREFLIES_PIPELINE_BACKLOG_ENABLED", "false"],
+  ["TASK_EXTRACTION_ENABLED", "false"],
+]);
+
 const REQUIRED_SUSPENDED_CRONS = new Set([
   "alleato-acumatica-financial-sync",
   "alleato-executive-daily-brief-evening",
@@ -124,6 +137,36 @@ async function checkRenderCrons(token) {
   return { cronRows: [...cronRowsByName.values()], failures };
 }
 
+async function checkRenderWebEnv(token) {
+  const rows = await fetchJson(RENDER_SERVICES_URL, token);
+  const backend = rows
+    .map((item) => item.service ?? item)
+    .find((service) => service?.type === "web_service" && service.name === "alleato-backend");
+  if (!backend?.id) {
+    return { rows: [], failures: ["alleato-backend=missing"] };
+  }
+
+  const envRows = await fetchJson(`${RENDER_SERVICE_URL}/${backend.id}/env-vars?limit=100`, token);
+  const env = new Map(
+    envRows
+      .map((row) => row.envVar)
+      .filter((row) => row?.key)
+      .map((row) => [row.key, String(row.value ?? "").trim().toLowerCase()]),
+  );
+
+  const rowsToPrint = [];
+  const failures = [];
+  for (const [key, expected] of REQUIRED_WEB_FLAGS.entries()) {
+    const actual = env.get(key) || "<missing>";
+    rowsToPrint.push(`${key}=${actual}`);
+    if (actual !== expected) {
+      failures.push(`${key}=${actual}`);
+    }
+  }
+
+  return { rows: rowsToPrint, failures };
+}
+
 async function checkSupabaseHealth(token) {
   const rows = await fetchJson(SUPABASE_HEALTH_URL, token);
   const failures = rows
@@ -211,6 +254,10 @@ printSection(
 );
 failures.push(...render.failures.map((failure) => `Render cron not suspended: ${failure}`));
 
+const renderWeb = await checkRenderWebEnv(renderToken);
+printSection("Render Web Scheduler Flags", renderWeb.rows);
+failures.push(...renderWeb.failures.map((failure) => `Render web scheduler flag unsafe: ${failure}`));
+
 const health = await checkSupabaseHealth(supabaseToken);
 printSection("Supabase Health", health.rows);
 failures.push(...health.failures.map((failure) => `Supabase unhealthy: ${failure}`));
@@ -219,11 +266,16 @@ const logs = await checkSupavisorFailures(supabaseToken, windowMinutes);
 printSection(`Supavisor Pool Failures Last ${windowMinutes}m`, logs.rows);
 failures.push(...logs.failures.map((failure) => `Supavisor failure: ${failure}`));
 
-const connections = await checkConnectionCount(databaseUrl);
-printSection("Connection Count", [
-  `sessions=${connections.sessions}`,
-  ...connections.byApp.map((row) => `${String(row.sessions).padStart(3)} ${row.application_name} ${row.state}`),
-]);
+try {
+  const connections = await checkConnectionCount(databaseUrl);
+  printSection("Connection Count", [
+    `sessions=${connections.sessions}`,
+    ...connections.byApp.map((row) => `${String(row.sessions).padStart(3)} ${row.application_name} ${row.state}`),
+  ]);
+} catch (error) {
+  printSection("Connection Count", [`unavailable: ${error.message}`]);
+  failures.push(`Connection count unavailable: ${error.message}`);
+}
 
 if (failures.length > 0) {
   console.error("\nLive DB incident verifier: FAIL");

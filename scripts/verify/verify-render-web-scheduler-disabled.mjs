@@ -11,6 +11,10 @@ const RENDER_SERVICE_URL = "https://api.render.com/v1/services";
 const REQUIRED_WEB_FLAGS = new Map([
   ["DISABLE_SCHEDULER", "true"],
   ["GRAPH_SYNC_ENABLED", "false"],
+  ["GRAPH_SYNC_OUTLOOK", "false"],
+  ["GRAPH_SYNC_TEAMS", "false"],
+  ["GRAPH_SYNC_TEAMS_DM", "false"],
+  ["GRAPH_SYNC_ONEDRIVE", "false"],
   ["INTELLIGENCE_COMPILER_ENABLED", "false"],
   ["SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED", "false"],
   ["FIREFLIES_PIPELINE_BACKLOG_ENABLED", "false"],
