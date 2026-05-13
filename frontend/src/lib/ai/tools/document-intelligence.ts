@@ -234,23 +234,16 @@ export function createDocumentIntelligenceTools(
 
           // Search document_chunks — OneDrive docs are where specs live.
           // Use search_document_chunks RPC which handles halfvec(3072).
-          const { data: chunks, error } = await (
-            ragSupabase as unknown as {
-              rpc: (
-                name: string,
-                args: Record<string, unknown>,
-              ) => Promise<{
-                data: Array<Record<string, unknown>> | null;
-                error: { message: string } | null;
-              }>;
-            }
-          ).rpc("search_document_chunks", {
-            query_embedding: embedding,
-            filter_source_types: ["onedrive_document"],
-            filter_project_id: resolvedProjectId ?? null,
-            match_count: topK ?? 12,
-            match_threshold: 0.3,
-          });
+          const { data: chunks, error } = await ragSupabase.rpc(
+            "search_document_chunks",
+            {
+              query_embedding: embedding,
+              filter_source_types: ["onedrive_document"],
+              filter_project_id: resolvedProjectId,
+              match_count: topK ?? 12,
+              match_threshold: 0.3,
+            },
+          );
 
           if (error) return { error: `Spec search failed: ${error.message}` };
 
@@ -600,23 +593,16 @@ export function createDocumentIntelligenceTools(
             EMBEDDING.LARGE,
           );
 
-          const { data: specChunks } = await (
-            ragSupabase as unknown as {
-              rpc: (
-                name: string,
-                args: Record<string, unknown>,
-              ) => Promise<{
-                data: Array<Record<string, unknown>> | null;
-                error: { message: string } | null;
-              }>;
-            }
-          ).rpc("search_document_chunks", {
-            query_embedding: embedding,
-            filter_source_types: ["onedrive_document"],
-            filter_project_id: resolvedId ?? null,
-            match_count: 8,
-            match_threshold: 0.3,
-          });
+          const { data: specChunks } = await ragSupabase.rpc(
+            "search_document_chunks",
+            {
+              query_embedding: embedding,
+              filter_source_types: ["onedrive_document"],
+              filter_project_id: resolvedId,
+              match_count: 8,
+              match_threshold: 0.3,
+            },
+          );
 
           const chunks = (specChunks ?? []) as AnyRow[];
           const specKeywords = [

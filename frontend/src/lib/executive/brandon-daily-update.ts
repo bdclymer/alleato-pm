@@ -315,19 +315,6 @@ const EXECUTIVE_PRIORITY_LANE_LABELS: Record<ExecutivePriorityLane, string> = {
   internalAccountability: "Internal Accountability",
 };
 
-type RagRpcClient = {
-  rpc: (
-    name: "search_document_chunks",
-    args: {
-      query_embedding: string;
-      filter_source_types: string[] | null;
-      filter_project_id: number | null;
-      match_count: number;
-      match_threshold: number;
-    },
-  ) => Promise<{ data: RagRow[] | null; error: { message: string } | null }>;
-};
-
 const SOURCE_GROUPS: SourceGroup[] = [
   {
     label: "Email",
@@ -1072,13 +1059,13 @@ async function runChunkSearch(
   queryEmbedding: string,
   sourceGroup: SourceGroup,
 ): Promise<RagRow[]> {
-  const supabase = (isRagDatabaseReadsEnabled()
+  const supabase = isRagDatabaseReadsEnabled()
     ? createRagServiceClient()
-    : createServiceClient()) as unknown as RagRpcClient;
+    : createServiceClient();
   const { data, error } = await supabase.rpc("search_document_chunks", {
     query_embedding: queryEmbedding,
     filter_source_types: sourceGroup.sourceTypes,
-    filter_project_id: null,
+    filter_project_id: undefined,
     match_count: 10,
     match_threshold: 0.08,
   });

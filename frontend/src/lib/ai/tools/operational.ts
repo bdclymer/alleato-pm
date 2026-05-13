@@ -1311,20 +1311,10 @@ export function createOperationalTools(
             // search_document_chunks   → unified: meetings, emails, Teams, OneDrive, transcripts
             // search_all_knowledge     → insights (decisions/risks/opportunities)
             const [chunksRes, knowledgeRes] = await Promise.all([
-              (
-                ragSupabase as unknown as {
-                  rpc: (
-                    name: string,
-                    args: Record<string, unknown>,
-                  ) => Promise<{
-                    data: Array<Record<string, unknown>> | null;
-                    error: { message: string } | null;
-                  }>;
-                }
-              ).rpc("search_document_chunks", {
+              ragSupabase.rpc("search_document_chunks", {
                 query_embedding: embeddingArg3072,
-                filter_source_types: null,
-                filter_project_id: resolvedProjectId ?? null,
+                filter_source_types: undefined,
+                filter_project_id: resolvedProjectId ?? undefined,
                 match_count: chunkCount,
                 match_threshold: chunkThreshold,
               }),
@@ -3160,23 +3150,13 @@ async function searchDocumentChunksByCategory({
     });
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
-    const { data, error } = await (
-      supabase as unknown as {
-        rpc: (
-          name: string,
-          args: Record<string, unknown>,
-        ) => Promise<{
-          data: Array<Record<string, unknown>> | null;
-          error: { message: string } | null;
-        }>;
-      }
-    ).rpc("search_document_chunks", {
+    const { data, error } = await supabase.rpc("search_document_chunks", {
       query_embedding: queryEmbedding,
-      filter_source_types: sourceTypesForCategory(category),
+      filter_source_types: sourceTypesForCategory(category) ?? undefined,
       filter_project_id:
         typeof filterProjectId === "number"
           ? filterProjectId
-          : (scope.pinnedProjectId ?? null),
+          : (scope.pinnedProjectId ?? undefined),
       match_count: matchCount,
       match_threshold: 0.45,
     });
