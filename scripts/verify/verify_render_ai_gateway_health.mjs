@@ -4,7 +4,7 @@ import "dotenv/config";
 const backendUrl = (
   process.env.PYTHON_BACKEND_URL ||
   process.env.RENDER_BACKEND_URL ||
-  "https://alleato-backend-3mmq.onrender.com"
+  "https://alleato-backend-rbnj.onrender.com"
 ).replace(/\/$/, "");
 const minGatewayCredits = Number(process.env.AI_GATEWAY_MIN_CREDITS_USD || "10");
 

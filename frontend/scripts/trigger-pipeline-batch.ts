@@ -10,7 +10,7 @@ config({ path: resolve(__dirname, "../../.env") });
 
 import { createClient } from "@supabase/supabase-js";
 
-const BACKEND_URL = "https://alleato-backend-3mmq.onrender.com";
+const BACKEND_URL = "https://alleato-backend-rbnj.onrender.com";
 const BATCH_SIZE = 5;
 const BATCH_DELAY_MS = 10_000;
 const PAGE_SIZE = 500; // Supabase allows up to 1000

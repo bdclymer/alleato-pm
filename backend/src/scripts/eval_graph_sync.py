@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-GRAPH_SYNC_API_URL = "https://alleato-backend-3mmq.onrender.com/api/graph/sync"
+GRAPH_SYNC_API_URL = "https://alleato-backend-rbnj.onrender.com/api/graph/sync"
 
 # Source types in graph_sync_state table (the `source` column)
 SYNC_STATE_SOURCE_TYPES = [
