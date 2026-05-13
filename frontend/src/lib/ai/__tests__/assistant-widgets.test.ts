@@ -1,6 +1,8 @@
 import {
   ASSISTANT_WIDGET_TYPES,
   isAssistantWidgetPayload,
+  type AssistantWidgetDataPart,
+  type MeetingInsightsWidgetPayload,
 } from "../assistant-widgets";
 import { ASSISTANT_WIDGET_RENDERER_TYPES } from "@/components/ai-assistant/assistant-widget-renderer";
 
@@ -21,5 +23,94 @@ describe("assistant widget registry", () => {
     expect([...ASSISTANT_WIDGET_RENDERER_TYPES].sort()).toEqual(
       [...ASSISTANT_WIDGET_TYPES].sort(),
     );
+  });
+
+  it("accepts the source-specific meeting insights widget data part", () => {
+    const widget: MeetingInsightsWidgetPayload = {
+      type: "meeting_insights",
+      id: "meeting-insights",
+      title: "Recent meeting insights",
+      subtitle: "Decisions, promises, risks, questions, and suggested follow-ups from meeting retrieval.",
+      dateLabel: "Last 60 days",
+      projectId: 983,
+      projectName: null,
+      metrics: {
+        meetingCount: 1,
+        decisionCount: 1,
+        actionItemCount: 1,
+        riskCount: 1,
+        unresolvedQuestionCount: 1,
+      },
+      decisions: [
+        {
+          id: "meeting-1-decision",
+          title: "Team confirmed the revised owner decision.",
+          sourceTitle: "Owner coordination meeting",
+          sourceHref: "/983/meetings/meeting-1",
+          confidence: "medium",
+        },
+      ],
+      promises: [
+        {
+          id: "meeting-1-promise",
+          title: "Project Manager needs to follow up by Friday.",
+          sourceTitle: "Owner coordination meeting",
+          sourceHref: "/983/meetings/meeting-1",
+          confidence: "medium",
+        },
+      ],
+      risks: [
+        {
+          id: "meeting-1-risk",
+          title: "Late response could delay procurement.",
+          sourceTitle: "Owner coordination meeting",
+          sourceHref: "/983/meetings/meeting-1",
+          confidence: "medium",
+        },
+      ],
+      unresolvedQuestions: [
+        {
+          id: "meeting-1-question",
+          title: "Confirm final approval path.",
+          sourceTitle: "Owner coordination meeting",
+          sourceHref: "/983/meetings/meeting-1",
+          confidence: "medium",
+        },
+      ],
+      suggestedTasks: [
+        {
+          id: "meeting-task-1",
+          title: "Project Manager needs to follow up by Friday.",
+          projectId: 983,
+          projectName: null,
+          ownerName: "Project Manager",
+          priority: "high",
+          sourceType: "meeting",
+          sourceTitle: "Owner coordination meeting",
+          href: "/983/meetings/meeting-1",
+          recommendedAction: "create_task",
+          confidence: "medium",
+        },
+      ],
+      sources: [
+        {
+          id: "meeting-source-1",
+          title: "Owner coordination meeting",
+          sourceType: "meeting",
+          date: "2026-05-13T12:00:00.000Z",
+          snippet: "Team confirmed the revised owner decision.",
+          href: "/983/meetings/meeting-1",
+          confidence: "medium",
+        },
+      ],
+    };
+    const dataPart: AssistantWidgetDataPart = {
+      type: "data-assistant-widget",
+      id: "assistant-widget-meeting-insights",
+      data: { widget },
+    };
+
+    expect(isAssistantWidgetPayload(dataPart.data.widget)).toBe(true);
+    expect(dataPart.data.widget.type).toBe("meeting_insights");
   });
 });
