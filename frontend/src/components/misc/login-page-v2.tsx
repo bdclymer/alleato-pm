@@ -187,11 +187,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-              className="rounded-2xl bg-muted/20 p-8 shadow-sm"
-              style={{
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-              }}
+              className="rounded-2xl bg-muted/50 p-8 shadow-xs"
             >
               {/* Heading */}
               <motion.div
@@ -231,7 +227,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="bg-card/10 border-border/60 text-foreground placeholder:text-muted-foreground/70 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                    className="bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary/70 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all"
                   />
                 </motion.div>
 
@@ -260,7 +256,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="bg-card/10 border-border/60 text-foreground placeholder:text-muted-foreground/70 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                    className="bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary/70 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all"
                   />
                 </motion.div>
 
@@ -311,7 +307,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
         </div>
 
         {/* ─── Right: Animated Building Scene ─── */}
-        <div className="hidden lg:flex relative overflow-hidden items-end justify-center">
+        <div className="hidden lg:flex relative overflow-hidden items-center justify-center">
           {/* Subtle ground gradient */}
           <div
             className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none bg-gradient-to-t from-primary/5 to-transparent"

@@ -75,12 +75,12 @@ export default function RootLayout({
                 </ProjectProvider>
               </Providers>
             </Suspense>
+            <Toaster />
+            <RootClientWidgets />
           </ThemeProvider>
         </QueryProvider>
         </NuqsAdapter>
         </ChunkLoadErrorRecovery>
-        <Toaster />
-        <RootClientWidgets />
       </body>
     </html>
   );
