@@ -41,6 +41,9 @@ node scripts/check-server-prerender-safety.mjs
 echo "2j) Build crash prevention: no module-level server client init"
 node scripts/check-no-module-level-server-init.mjs
 
+echo "2j.1) Render web scheduler guardrail"
+npm run verify:render-web-scheduler
+
 echo "2k) Retired Cloudflare ingestion path gate"
 if rg -n "backend/src/workers|CLOUDFLARE_WORKER_BASE_URL|WORKER_AUTH_TOKEN|fireflies-(parser|embedder|extractor)|workers\\.dev|src/workers/scripts/process_documents.py|railway\\.json|railway up|Railway CLI|Deploying to Railway|fly\\.toml|fly deploy|Fly\\.io|kubernetes/(deployment|secrets)\\.yaml" \
   backend frontend scripts docs .github package.json \

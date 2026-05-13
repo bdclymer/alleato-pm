@@ -331,6 +331,20 @@ services:
         value: /app:/app/src:/app/src/services:/app/src/workers
       - key: PYTHONUNBUFFERED
         value: 1
+      # The web service should only serve API traffic. Background sync jobs run
+      # as explicit Render cron services so they can be suspended/throttled.
+      - key: DISABLE_SCHEDULER
+        value: true
+      - key: GRAPH_SYNC_ENABLED
+        value: false
+      - key: INTELLIGENCE_COMPILER_ENABLED
+        value: false
+      - key: SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED
+        value: false
+      - key: FIREFLIES_PIPELINE_BACKLOG_ENABLED
+        value: false
+      - key: TASK_EXTRACTION_ENABLED
+        value: false
       - key: OPENAI_API_KEY
         sync: false
       - key: SUPABASE_URL
