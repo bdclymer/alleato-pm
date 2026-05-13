@@ -14,6 +14,12 @@ export interface ProjectMembership {
 interface AuthGuardResult {
   membership: ProjectMembership;
   serviceClient: ReturnType<typeof createServiceClient>;
+  userProfile: {
+    is_admin: boolean | null;
+    full_name: string | null;
+    role: string | null;
+    onboarding_completed_at: string | null;
+  } | null;
 }
 
 async function resolvePersonIdFromAuth(
@@ -119,40 +125,38 @@ export async function verifyProjectAccess(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Step 2: Check if user is app admin (bypass project membership checks)
   const serviceClient = createServiceClient();
-  const { data: profile } = await serviceClient
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [profileResult, personId] = await Promise.all([
+    serviceClient
+      .from("user_profiles")
+      .select("is_admin, full_name, role, onboarding_completed_at")
+      .eq("id", user.id)
+      .maybeSingle(),
+    resolvePersonIdFromAuth(serviceClient, {
+      id: user.id,
+      email: user.email,
+    }),
+  ]);
 
+  const profile = profileResult.data ?? null;
+
+  // Step 2: Check if user is app admin (bypass project membership checks)
   if (profile?.is_admin === true) {
-    const adminPersonId =
-      (await resolvePersonIdFromAuth(serviceClient, {
-        id: user.id,
-        email: user.email,
-      })) || user.id;
-
     return {
       membership: {
         membershipId: `super-admin:${user.id}:${projectId}`,
-        personId: adminPersonId,
+        personId: personId || user.id,
         authUserId: user.id,
         projectId,
         permissionTemplateId: null,
         userType: "developer",
       },
       serviceClient,
+      userProfile: profile,
     };
   }
 
   // Step 3: Look up person_id from auth user for non-admin users
-  const personId = await resolvePersonIdFromAuth(serviceClient, {
-    id: user.id,
-    email: user.email,
-  });
-
   if (!personId) {
     return NextResponse.json(
       { error: "User profile not found" },
@@ -186,6 +190,7 @@ export async function verifyProjectAccess(
       userType: membership.user_type,
     },
     serviceClient,
+    userProfile: profile,
   };
 }
 
@@ -206,13 +211,7 @@ export async function verifyProjectPermission(
   const { membership, serviceClient } = result;
 
   // Check if user is an app admin (bypass all permission checks)
-  const { data: profile } = await serviceClient
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", membership.authUserId)
-    .maybeSingle();
-
-  if (profile?.is_admin === true) {
+  if (result.userProfile?.is_admin === true) {
     return result;
   }
 

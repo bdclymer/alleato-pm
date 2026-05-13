@@ -246,6 +246,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           serviceClient: authResult.serviceClient,
           user,
           personId: authResult.membership.personId,
+          profileData: authResult.userProfile,
           where: "projects/[projectId]/shell#GET",
         }),
       ]);

@@ -15,6 +15,13 @@ export type CurrentUserProfilePayload = {
   onboardingCompletedAt: string | null;
 };
 
+type CurrentUserProfileRow = {
+  is_admin: boolean | null;
+  full_name: string | null;
+  role: string | null;
+  onboarding_completed_at: string | null;
+};
+
 const joinName = (firstName?: string | null, lastName?: string | null) =>
   [firstName, lastName].map((part) => part?.trim()).filter(Boolean).join(" ");
 
@@ -34,11 +41,13 @@ export async function loadCurrentUserProfilePayload({
   serviceClient,
   user,
   personId,
+  profileData,
   where,
 }: {
   serviceClient: ReturnType<typeof createServiceClient>;
   user: { id: string; email?: string | null };
   personId?: string | null;
+  profileData?: CurrentUserProfileRow | null;
   where: string;
 }): Promise<CurrentUserProfilePayload> {
   const personQuery = serviceClient
@@ -46,16 +55,20 @@ export async function loadCurrentUserProfilePayload({
     .select(
       "first_name, last_name, profile_photo_url, company, job_title, phone_mobile, phone_business",
     );
+  const profilePromise =
+    profileData === undefined
+      ? serviceClient
+          .from("user_profiles")
+          .select("is_admin, full_name, role, onboarding_completed_at")
+          .eq("id", user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: profileData, error: null });
 
   const [
-    { data: profileData, error: profileError },
+    { data: profileRow, error: profileError },
     { data: personData, error: personError },
   ] = await Promise.all([
-    serviceClient
-      .from("user_profiles")
-      .select("is_admin, full_name, role, onboarding_completed_at")
-      .eq("id", user.id)
-      .maybeSingle(),
+    profilePromise,
     (personId
       ? personQuery.eq("id", personId)
       : personQuery.eq("auth_user_id", user.id)
@@ -76,17 +89,17 @@ export async function loadCurrentUserProfilePayload({
     id: user.id,
     fullName:
       directoryFullName ||
-      profileData?.full_name ||
+      profileRow?.full_name ||
       user.email?.split("@")[0] ||
       "Your profile",
     email: user.email || "-",
     avatarUrl: personData?.profile_photo_url || undefined,
     company: personData?.company || undefined,
     title: personData?.job_title || undefined,
-    role: profileData?.role || undefined,
+    role: profileRow?.role || undefined,
     phone: personData?.phone_mobile || personData?.phone_business || undefined,
-    isAdmin: profileData?.is_admin === true,
-    onboardingCompletedAt: profileData?.onboarding_completed_at ?? null,
+    isAdmin: profileRow?.is_admin === true,
+    onboardingCompletedAt: profileRow?.onboarding_completed_at ?? null,
   };
 
   return {
