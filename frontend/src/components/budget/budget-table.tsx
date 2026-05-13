@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import {
   ColumnDef,
   ColumnSizingState,
@@ -304,6 +305,7 @@ interface BudgetTableProps {
     originalBudgetAmount: string | number;
   }) => Promise<void>;
   projectId?: string;
+  columnControlsPortalId?: string;
   showInlineCreate?: boolean;
   onShowInlineCreateChange?: (show: boolean) => void;
 }
@@ -517,6 +519,7 @@ export function BudgetTable({
   onForecastToCompleteClick,
   onCreateLineItem,
   projectId,
+  columnControlsPortalId,
   showInlineCreate: showInlineCreateProp = false,
   onShowInlineCreateChange,
 }: BudgetTableProps) {
@@ -1171,6 +1174,18 @@ export function BudgetTable({
   const bodyScrollRef = React.useRef<HTMLDivElement>(null);
   const footerScrollRef = React.useRef<HTMLDivElement>(null);
   const syncingScrollRef = React.useRef(false);
+  const [columnControlsPortal, setColumnControlsPortal] =
+    React.useState<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    if (!columnControlsPortalId) {
+      setColumnControlsPortal(null);
+      return;
+    }
+
+    setColumnControlsPortal(document.getElementById(columnControlsPortalId));
+  }, [columnControlsPortalId]);
+
   const mobileExpandedIds = React.useMemo(() => {
     if (expanded === true) {
       return new Set(data.map((item) => item.id));
@@ -1462,8 +1477,51 @@ export function BudgetTable({
     };
   }, [getBodyTableScrollElement]);
 
+  const columnVisibilityControl = (
+    <DropdownMenu>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                aria-label="Toggle columns"
+              >
+                <Columns3 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>Select which columns to display</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Columns</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {table
+          .getAllLeafColumns()
+          .filter((col) => col.id !== "select" && col.id !== "actions")
+          .map((col) => (
+            <DropdownMenuCheckboxItem
+              key={col.id}
+              checked={col.getIsVisible()}
+              onSelect={(e) => e.preventDefault()}
+              onCheckedChange={() => col.toggleVisibility()}
+            >
+              {columnLabels[col.id] ?? col.id}
+            </DropdownMenuCheckboxItem>
+          ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="flex h-full flex-col rounded-md bg-background">
+      {columnControlsPortal
+        ? createPortal(columnVisibilityControl, columnControlsPortal)
+        : null}
+
       <div className="space-y-3 sm:hidden" data-testid="budget-mobile-list">
         <section
           className="rounded-md border border-border bg-muted/30 px-3 py-3"
@@ -1507,49 +1565,16 @@ export function BudgetTable({
       </div>
 
       <div className="hidden min-h-0 flex-1 flex-col sm:flex">
-      {/* Column visibility toolbar */}
-      <div className="flex justify-end px-4 pb-2 sm:px-6 lg:px-8">
-        <DropdownMenu>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label="Toggle columns"
-                  >
-                    <Columns3 className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Select which columns to display</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Columns</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {table.getAllLeafColumns()
-              .filter((col) => col.id !== "select" && col.id !== "actions")
-              .map((col) => (
-                <DropdownMenuCheckboxItem
-                  key={col.id}
-                  checked={col.getIsVisible()}
-                  onSelect={(e) => e.preventDefault()}
-                  onCheckedChange={() => col.toggleVisibility()}
-                >
-                  {columnLabels[col.id] ?? col.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      {/* Horizontal scroll container — allows the wide budget table to scroll on mobile */}
-      <div
-        ref={bodyScrollRef}
-        className="flex-1 min-w-0 overflow-hidden"
-      >
+        {!columnControlsPortal ? (
+          <div className="flex justify-end px-4 pb-2 sm:px-6 lg:px-8">
+            {columnVisibilityControl}
+          </div>
+        ) : null}
+        {/* Horizontal scroll container — allows the wide budget table to scroll on mobile */}
+        <div
+          ref={bodyScrollRef}
+          className="flex-1 min-w-0 overflow-hidden"
+        >
         <Table
           className="table-fixed bg-background"
           style={{ width: `${tableWidth}px`, minWidth: "100%" }}

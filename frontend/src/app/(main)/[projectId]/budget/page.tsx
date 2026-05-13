@@ -86,6 +86,8 @@ const EMPTY_GRAND_TOTALS = {
   projectedOverUnder: 0,
 };
 
+const BUDGET_COLUMN_CONTROLS_SLOT_ID = "budget-column-controls-slot";
+
 function BudgetTableSkeleton() {
   return (
     <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
@@ -991,6 +993,7 @@ function BudgetPageContent() {
               groups={budgetGroups}
               selectedSnapshot={selectedSnapshot}
               selectedGroup={selectedGroup}
+              columnControlsSlotId={BUDGET_COLUMN_CONTROLS_SLOT_ID}
               onSnapshotChange={setSelectedSnapshot}
               onGroupChange={setSelectedGroup}
               onToggleFullscreen={handleToggleFullscreen}
@@ -1079,6 +1082,7 @@ function BudgetPageContent() {
                       onCommittedCostsClick={handleCommittedCostsClick}
                       onPendingCostChangesClick={handlePendingCostChangesClick}
                       onForecastToCompleteClick={handleForecastToCompleteClick}
+                      columnControlsPortalId={BUDGET_COLUMN_CONTROLS_SLOT_ID}
                     />
                   </BudgetTableCommentsWrapper>
                 )}

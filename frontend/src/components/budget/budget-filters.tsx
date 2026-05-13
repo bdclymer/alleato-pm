@@ -30,6 +30,7 @@ interface BudgetFiltersProps {
   groups: BudgetGroup[];
   selectedSnapshot: string;
   selectedGroup: string;
+  columnControlsSlotId?: string;
   onSnapshotChange: (snapshotId: string) => void;
   onGroupChange: (groupId: string) => void;
   onToggleFullscreen?: () => void;
@@ -43,6 +44,7 @@ export function BudgetFilters({
   groups,
   selectedSnapshot,
   selectedGroup,
+  columnControlsSlotId,
   onSnapshotChange,
   onGroupChange,
   onToggleFullscreen,
@@ -172,6 +174,14 @@ export function BudgetFilters({
         </DropdownMenu>
         <TooltipContent>View options</TooltipContent>
       </Tooltip>
+
+      {columnControlsSlotId ? (
+        <span
+          id={columnControlsSlotId}
+          className="flex items-center"
+          aria-label="Budget column controls"
+        />
+      ) : null}
 
       <Tooltip>
         <TooltipTrigger asChild>
