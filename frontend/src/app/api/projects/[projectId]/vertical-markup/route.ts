@@ -27,11 +27,16 @@ export interface VerticalMarkupItem {
   updated_at?: string;
 }
 
+const DEFAULT_MARKUPS = [
+  { markup_type: "insurance", percentage: 1.35, compound: false, calculation_order: 1 },
+  { markup_type: "fee", percentage: 10, compound: false, calculation_order: 2 },
+] as const;
+
 // GET /api/projects/[id]/vertical-markup - Fetch vertical markup settings
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/vertical-markup#GET",
   async ({ request, params }) => {
-  
+
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -59,6 +64,22 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         { error: "Failed to fetch vertical markup settings" },
         { status: 500 },
       );
+    }
+
+    // Seed standard defaults on first access so PMs don't start from a blank slate.
+    if (!data || data.length === 0) {
+      const { data: seeded, error: seedError } = await supabase
+        .from("vertical_markup")
+        .insert(
+          DEFAULT_MARKUPS.map((m) => ({ ...m, project_id: projectIdNum })),
+        )
+        .select();
+
+      if (seedError) {
+        logger.error({ msg: "Failed to seed default vertical markups", error: seedError.message });
+      }
+
+      return NextResponse.json({ markups: seeded || [] });
     }
 
     return NextResponse.json({
