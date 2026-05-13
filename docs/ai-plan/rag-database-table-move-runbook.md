@@ -66,6 +66,25 @@ psql "$RAG_DB_URL" -v ON_ERROR_STOP=1 -c "select 'extensions.halfvec'::regtype;"
 
 Use a custom-format dump so large vector data does not become a huge plain SQL file.
 
+The guarded helper for this first slice is:
+
+```bash
+APP_DB_URL="$APP_DB_URL" \
+RAG_DB_URL="$RAG_DB_URL" \
+scripts/database/move-rag-first-slice.sh
+```
+
+For a dump-only rehearsal:
+
+```bash
+APP_DB_URL="$APP_DB_URL" \
+RAG_DB_URL="$RAG_DB_URL" \
+SKIP_RESTORE=1 \
+scripts/database/move-rag-first-slice.sh
+```
+
+Manual commands are below for review or one-off recovery.
+
 ```bash
 mkdir -p /tmp/alleato-rag-db-move
 
