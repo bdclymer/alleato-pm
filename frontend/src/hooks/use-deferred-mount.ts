@@ -7,21 +7,31 @@ type WindowWithIdleCallback = Window & {
   cancelIdleCallback?: (handle: number) => void;
 };
 
-export function useDeferredMount(timeoutMs = 1_500) {
+export function useDeferredMount(delayMs = 1_500) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const browserWindow = window as WindowWithIdleCallback;
-    if (browserWindow.requestIdleCallback) {
-      const handle = browserWindow.requestIdleCallback(() => setMounted(true), {
-        timeout: timeoutMs,
-      });
-      return () => browserWindow.cancelIdleCallback?.(handle);
-    }
+    let idleHandle: number | undefined;
 
-    const handle = window.setTimeout(() => setMounted(true), 0);
-    return () => window.clearTimeout(handle);
-  }, [timeoutMs]);
+    const delayHandle = window.setTimeout(() => {
+      if (browserWindow.requestIdleCallback) {
+        idleHandle = browserWindow.requestIdleCallback(() => setMounted(true), {
+          timeout: 1_000,
+        });
+        return;
+      }
+
+      setMounted(true);
+    }, delayMs);
+
+    return () => {
+      window.clearTimeout(delayHandle);
+      if (idleHandle !== undefined) {
+        browserWindow.cancelIdleCallback?.(idleHandle);
+      }
+    };
+  }, [delayMs]);
 
   return mounted;
 }
