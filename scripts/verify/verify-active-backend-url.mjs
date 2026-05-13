@@ -3,7 +3,6 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const RETIRED_BACKEND_URL = ["alleato-backend", "3mmq"].join("-") + ".onrender.com";
 const ACTIVE_BACKEND_URL = "alleato-backend-rbnj.onrender.com";
 const SEARCH_ROOTS = [
   ".env",
@@ -12,6 +11,11 @@ const SEARCH_ROOTS = [
   "frontend",
   "scripts",
   "docs",
+  "claude-memory-compiler-main",
+  ".claude",
+  ".vercel",
+  "frontend/.vercel",
+  "frontend/.env.local",
   "supabase",
   "render.yaml",
 ];
@@ -23,6 +27,7 @@ const IGNORED_DIRS = new Set([
   "test-results",
   "coverage",
 ]);
+const IGNORED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".webm", ".pdf"]);
 
 function* walk(target) {
   if (!fs.existsSync(target)) return;
@@ -34,16 +39,20 @@ function* walk(target) {
     }
     return;
   }
-  if (stat.isFile()) yield target;
+  if (stat.isFile() && !IGNORED_EXTENSIONS.has(path.extname(target))) yield target;
 }
 
 const failures = [];
+const renderHostPattern = /https?:\/\/([a-z0-9-]+\.onrender\.com)(?=[/?#"`'\s)]|$)/gi;
 
 for (const root of SEARCH_ROOTS) {
   for (const filePath of walk(root)) {
     const content = fs.readFileSync(filePath, "utf8");
-    if (content.includes(RETIRED_BACKEND_URL)) {
-      failures.push(`${filePath}: contains retired backend ${RETIRED_BACKEND_URL}`);
+    for (const match of content.matchAll(renderHostPattern)) {
+      const host = match[1];
+      if (host !== ACTIVE_BACKEND_URL) {
+        failures.push(`${filePath}: contains non-active Render backend host ${host}`);
+      }
     }
   }
 }

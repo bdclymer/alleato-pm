@@ -312,7 +312,7 @@ Acceptance:
 - Done: local runtime smoke with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini`, and the frontend bridge enabled returned `mode=deep_agents`, `sourceCount=9`, `evidenceCount=11`, and a successful `deepagents_runtime` trace.
 - Done: Render manifests now carry explicit default-off Deep Agents env entries, and `npm run rag:verify:deep-agents-nonprod` verifies active backend health, AI Gateway visibility, default-off deployment contract, endpoint state, and Render service-mapping drift.
 - Current environment caveat: provider-matrix verification completed but still reports streaming tool-call provider debt, and assistant-routing Playwright verification is blocked by Supabase Auth setup timeout before route tests run.
-- Current deployment caveat: the available Render API key exposes the retired `alleato-backend-3mmq` service, while repo guardrails and health probes confirm the active backend is `alleato-backend-rbnj`; do not mutate Render env through that stale service mapping.
+- Current deployment caveat: the available Render API key does not expose the active `alleato-backend-rbnj` service; do not mutate Render env through any other backend service mapping.
 - Not yet done: deploy the feature flags/env to the active non-production Render/Vercel targets and run the full authenticated `/api/ai-assistant/chat` selected-project owner-status prompt in the app.
 
 ### Slice 4: Memory Governance

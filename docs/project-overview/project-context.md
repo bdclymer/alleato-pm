@@ -185,7 +185,7 @@ Without `force-dynamic`, Next.js statically prerenders the page at build time, r
   ```ts
   import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
 
-  const data = await fetchWithGuardrails("https://backend.onrender.com/api/...", {
+  const data = await fetchWithGuardrails("https://alleato-backend-rbnj.onrender.com/api/...", {
     method: "POST",
     body: JSON.stringify(payload),
     requestId,           // propagates x-request-id header

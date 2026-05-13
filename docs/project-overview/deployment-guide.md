@@ -257,7 +257,7 @@ The backend allows requests from these origins:
 | `http://localhost:8080` | Backend dev |
 | `https://alleato-procore.vercel.app` | Production |
 | `https://www.alleato-procore.vercel.app` | Production www |
-| `https://alleato-pm-1.onrender.com` | Backend self |
+| `https://alleato-backend-rbnj.onrender.com` | Backend self |
 
 ---
 

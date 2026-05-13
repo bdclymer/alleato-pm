@@ -2,7 +2,7 @@
 set -e
 
 echo "🔍 Checking backend health..."
-BACKEND_HEALTH=$(curl -s https://alleato-pm-1.onrender.com/health)
+BACKEND_HEALTH=$(curl -s https://alleato-backend-rbnj.onrender.com/health)
 echo "$BACKEND_HEALTH" | jq '.'
 
 if echo "$BACKEND_HEALTH" | jq -e '.status == "healthy"' > /dev/null; then

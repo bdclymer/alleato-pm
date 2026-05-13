@@ -50,7 +50,7 @@ Set env vars in **Vercel Dashboard → Project → Settings → Environment Vari
 
 | Variable | Required | Where Set | Purpose | Notes |
 |----------|----------|-----------|---------|-------|
-| `BACKEND_URL` | Yes | Vercel | URL of the Python FastAPI backend on Render | e.g. `https://alleato-backend.onrender.com`. Different for production vs preview |
+| `BACKEND_URL` | Yes | Vercel | URL of the Python FastAPI backend on Render | Must be `https://alleato-backend-rbnj.onrender.com` unless a new active backend is deliberately approved and the guardrail is updated |
 | `PYTHON_BACKEND_URL` | No | Vercel | Alias used in some routes | Set to same value as `BACKEND_URL` |
 
 ### Security / API Guards

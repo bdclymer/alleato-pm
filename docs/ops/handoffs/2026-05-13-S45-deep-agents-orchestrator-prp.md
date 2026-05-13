@@ -48,7 +48,11 @@
 - PASS: `node scripts/verify/verify_render_ai_gateway_health.mjs` confirmed active Render backend health, AI Gateway configured, Supabase service configured, and AI Gateway balance above floor.
 - PASS: active backend endpoint probe against `https://alleato-backend-rbnj.onrender.com/api/intelligence/deep-agent/project-status` returned expected 503 disabled state before non-production flags are enabled.
 - PASS: `npm run rag:verify:deep-agents-nonprod` verifies Render manifest default-off flags, active backend health, endpoint state, and Render API service-mapping drift.
-- WARN deployment mapping: `RENDER_API_KEY` currently exposes the retired `alleato-backend-3mmq` service, while active backend guardrails and health checks point to `alleato-backend-rbnj`; do not mutate backend env vars through that stale service record.
+- FAIL deployment mapping: `RENDER_API_KEY` currently does not expose the active `alleato-backend-rbnj` service; do not mutate backend env vars through any other backend service record.
+- PASS: `npm run verify:active-backend-url` now scans tracked docs/code plus local `.vercel`, `frontend/.vercel`, `frontend/.env.local`, `.claude`, and `claude-memory-compiler-main`; only `alleato-backend-rbnj.onrender.com` is allowed for Render backend URLs.
+- PASS: hidden/no-ignore scan found no remaining `3mmq` or `alleato-pm-1.onrender.com` references after cleanup.
+- PASS: Vercel env values for `NEXT_PUBLIC_AGENT_ENDPOINT`, `PYTHON_BACKEND_URL`, and `BACKEND_URL` were reset to `https://alleato-backend-rbnj.onrender.com` for production, development, preview, and preview `staging`; temp pulls for production/preview/staging found no stale backend host strings.
+- FAIL expected: `npm run rag:verify:deep-agents-nonprod` now refuses to pass while the local `RENDER_API_KEY` cannot see the active `alleato-backend-rbnj` service.
 - WARN existing provider debt: `node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs` exited 0 and refreshed `docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json`, but the artifact currently reports `supportsToolCalling=false`; gateway `generateText` passed, direct OpenAI quota failed, and streamText paths did not produce a passing tool-call result.
 - FAIL unrelated auth dependency: `npm run rag:verify:assistant-routing` failed in setup before route assertions because Supabase Auth timed out during `listUsers` after 30000ms in `frontend/tests/auth.setup.ts`.
 - WARN unrelated environment debt: backend `.venv` emits `RequestsDependencyWarning` for `urllib3`/`chardet` or `charset_normalizer` version mismatch.
@@ -78,6 +82,7 @@
 - Completion/blocker comment: Pending Review comment posted after validation, comment id `331fa6a6-ff7d-4047-9929-725a6f57a99c`.
 - AI Gateway runtime update: Posted after local Deep Agents runtime succeeded through AI Gateway, comment id `2a2c0fcc-29d3-424c-abb7-20d4939dcfbb`.
 - Non-production readiness update: Posted after adding the default-off Render flags and readiness guardrail, comment id `2f9072ee-e1be-4bc0-b74b-668ee2ed2819`.
+- Active Render backend cleanup: Posted after removing stale backend references and tightening the active-backend guardrail, comment id `a2f86d5b-5c97-42f2-8921-fb6a176d3e72`.
 
 ## Current Status
 

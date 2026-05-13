@@ -83,12 +83,8 @@ async function verifyRenderApiServiceMapping() {
     String(service?.serviceDetails?.url ?? "").includes(ACTIVE_BACKEND_HOST),
   );
   if (!activeService) {
-    const seen = backendServices
-      .map((service) => service?.serviceDetails?.url)
-      .filter(Boolean)
-      .join(", ");
-    warn(
-      `Render API key does not expose the active ${ACTIVE_BACKEND_HOST} service. Seen alleato-backend URL(s): ${seen || "none"}.`,
+    fail(
+      `Render API key does not expose the active ${ACTIVE_BACKEND_HOST} service. Refusing to use any other Render backend service.`,
     );
   }
 }

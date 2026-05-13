@@ -11,7 +11,7 @@
  * Usage:
  *   import { fetchWithGuardrails, AI_CALL_POLICY, WRITE_POLICY } from "@/lib/fetch-with-guardrails";
  *
- *   const res = await fetchWithGuardrails("https://backend.onrender.com/api/foo", {
+ *   const res = await fetchWithGuardrails("https://alleato-backend-rbnj.onrender.com/api/foo", {
  *     method: "POST",
  *     body: JSON.stringify(payload),
  *     requestId,

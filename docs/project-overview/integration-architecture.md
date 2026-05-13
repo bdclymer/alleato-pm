@@ -399,7 +399,7 @@ Backend allows requests from:
 - `http://localhost:3001` (frontend dev alt)
 - `https://alleato-procore.vercel.app` (production)
 - `https://www.alleato-procore.vercel.app` (production www)
-- `https://alleato-pm-1.onrender.com` (backend self-reference)
+- `https://alleato-backend-rbnj.onrender.com` (backend self-reference)
 
 ---
 
