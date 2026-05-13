@@ -140,6 +140,72 @@ def _get_active_project_keywords(supabase: Client) -> list[str]:
     return keywords
 
 
+def sync_outlook_mailbox_delta(
+    supabase: Client,
+    user_email: str,
+    *,
+    reason: str = "scheduled",
+) -> dict[str, Any]:
+    """Sync one Outlook mailbox through the durable delta-token path."""
+    started_at = datetime.now(timezone.utc)
+    before_count = _count_outlook_docs_for_mailbox(supabase, user_email)
+    project_keywords = _get_active_project_keywords(supabase)
+    token = _get_delta_token(supabase, "outlook_email", user_email)
+    since_date = os.environ.get("OUTLOOK_SYNC_SINCE") or None
+    effective_since = since_date if not token else None
+
+    count, new_token = sync_outlook_emails(
+        supabase,
+        user_email,
+        project_keywords,
+        token,
+        effective_since,
+    )
+    after_count = _count_outlook_docs_for_mailbox(supabase, user_email)
+    persisted_delta = max(0, after_count - before_count)
+    sync_status = "success"
+    sync_error: Optional[str] = None
+    if persisted_delta != count:
+        sync_status = "mismatch"
+        sync_error = (
+            f"Persisted Outlook doc delta mismatch for {user_email}: "
+            f"sync_outlook_emails returned {count}, but durable document_metadata rows increased by {persisted_delta}."
+        )
+        logger.error("[GraphSync] %s", sync_error)
+
+    _save_sync_state(
+        supabase,
+        "outlook_email",
+        user_email,
+        f"Outlook: {user_email}",
+        new_token,
+        count,
+        sync_status,
+        sync_error,
+    )
+    _record_sync_run_safe(
+        supabase,
+        source="outlook_email",
+        resource_id=user_email,
+        resource_name=f"Outlook: {user_email}",
+        started_at=started_at,
+        status="warning" if sync_error else "succeeded",
+        items_seen=count,
+        items_synced=count,
+        error_message=sync_error,
+        metadata={"persisted_delta": persisted_delta, "reason": reason},
+    )
+    return {
+        "status": "warning" if sync_error else "succeeded",
+        "user_email": user_email,
+        "items_synced": count,
+        "persisted_delta": persisted_delta,
+        "delta_token_saved": bool(new_token),
+        "error": sync_error,
+        "reason": reason,
+    }
+
+
 def run_graph_sync(
     supabase: Client,
     *,
@@ -180,53 +246,13 @@ def run_graph_sync(
             for e in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",")
             if e.strip()
         ]
-        project_keywords = _get_active_project_keywords(supabase)
-
-        since_date = os.environ.get("OUTLOOK_SYNC_SINCE") or None  # e.g. "2024-01-01"
 
         for user_email in user_emails:
-            started_at = datetime.now(timezone.utc)
             try:
-                before_count = _count_outlook_docs_for_mailbox(supabase, user_email)
-                token = _get_delta_token(supabase, "outlook_email", user_email)
-                # Only apply since_date on initial full sync (no existing token)
-                effective_since = since_date if not token else None
-                count, new_token = sync_outlook_emails(supabase, user_email, project_keywords, token, effective_since)
-                after_count = _count_outlook_docs_for_mailbox(supabase, user_email)
-                persisted_delta = max(0, after_count - before_count)
-                sync_status = "success"
-                sync_error: Optional[str] = None
-                if persisted_delta != count:
-                    sync_status = "mismatch"
-                    sync_error = (
-                        f"Persisted Outlook doc delta mismatch for {user_email}: "
-                        f"sync_outlook_emails returned {count}, but durable document_metadata rows increased by {persisted_delta}."
-                    )
-                    logger.error("[GraphSync] %s", sync_error)
-                    summary["errors"].append(sync_error)
-                _save_sync_state(
-                    supabase,
-                    "outlook_email",
-                    user_email,
-                    f"Outlook: {user_email}",
-                    new_token,
-                    count,
-                    sync_status,
-                    sync_error,
-                )
-                _record_sync_run_safe(
-                    supabase,
-                    source="outlook_email",
-                    resource_id=user_email,
-                    resource_name=f"Outlook: {user_email}",
-                    started_at=started_at,
-                    status="warning" if sync_error else "succeeded",
-                    items_seen=count,
-                    items_synced=count,
-                    error_message=sync_error,
-                    metadata={"persisted_delta": persisted_delta},
-                )
-                summary["outlook"] += count
+                result = sync_outlook_mailbox_delta(supabase, user_email, reason="scheduled")
+                if result.get("error"):
+                    summary["errors"].append(result["error"])
+                summary["outlook"] += int(result.get("items_synced") or 0)
             except Exception as e:
                 err = f"Outlook sync failed for {user_email}: {e}"
                 logger.error(f"[GraphSync] {err}")

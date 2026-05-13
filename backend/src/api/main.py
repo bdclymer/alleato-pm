@@ -88,6 +88,16 @@ def _run_pipeline_limited(metadata_id: str) -> None:
         logger.info("[Pipeline] released slot metadata_id=%s", metadata_id)
 
 
+def _process_graph_notification_realtime(notification: Dict[str, Any]) -> None:
+    """Drain Microsoft Graph webhook work after the endpoint has acknowledged it."""
+    from src.services.integrations.microsoft_graph.webhooks import process_graph_notification_realtime
+    from src.services.supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+    result = process_graph_notification_realtime(client, notification)
+    logger.info("[GraphWebhook] realtime processing result: %s", result)
+
+
 def _run_intelligence_compiler_limited(
     job_id: str,
     source_limit: int,
@@ -605,6 +615,7 @@ async def graph_sync_endpoint(
 )
 async def graph_webhook_notifications_endpoint(
     request: Request,
+    background_tasks: BackgroundTasks,
     validationToken: Optional[str] = Query(default=None),
 ) -> Any:
     """Accept Microsoft Graph webhook validation and change notifications.
@@ -632,7 +643,13 @@ async def graph_webhook_notifications_endpoint(
         from src.services.supabase_helpers import get_supabase_client
 
         client = get_supabase_client()
-        result = handle_graph_notifications(client, payload)
+        result = handle_graph_notifications(
+            client,
+            payload,
+            on_realtime_notification=lambda notification: (
+                background_tasks.add_task(_process_graph_notification_realtime, dict(notification)) or True
+            ),
+        )
         return result
     except GraphWebhookAuthError as exc:
         logger.warning("[GraphWebhook] rejected notification: %s", exc)

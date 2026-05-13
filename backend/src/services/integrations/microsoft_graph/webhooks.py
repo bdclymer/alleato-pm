@@ -5,8 +5,9 @@ from __future__ import annotations
 import hmac
 import logging
 import os
+import re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,80 @@ def _source_from_resource(resource: str) -> str:
     if "/drive" in lowered or "/sites/" in lowered:
         return "onedrive_file"
     return "microsoft_graph"
+
+
+def _parse_outlook_message_resource(resource: str) -> Dict[str, Optional[str]]:
+    normalized = str(resource or "").strip().lstrip("/")
+    match = re.search(
+        r"users/([^/]+)/(?:mailfolders/[^/]+/)?messages(?:/([^/?]+))?",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        match = re.search(
+            r"me/(?:mailfolders/[^/]+/)?messages(?:/([^/?]+))?",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+        return {
+            "mailbox": None,
+            "message_id": match.group(1) if match else None,
+        }
+    return {"mailbox": match.group(1), "message_id": match.group(2)}
+
+
+def _mailbox_from_subscription(supabase: Any, subscription_id: str) -> Optional[str]:
+    if not subscription_id:
+        return None
+    try:
+        response = (
+            supabase.table("graph_subscriptions")
+            .select("source, resource_id")
+            .eq("graph_subscription_id", subscription_id)
+            .limit(1)
+            .execute()
+        )
+        rows = response.data or []
+        if rows and rows[0].get("source") == "outlook_email":
+            return rows[0].get("resource_id")
+    except Exception as exc:
+        logger.warning(
+            "[GraphWebhook] Could not resolve mailbox for subscription=%s: %s",
+            subscription_id,
+            exc,
+        )
+    return None
+
+
+def outlook_notification_work_item(
+    notification: Dict[str, Any],
+    *,
+    supabase: Any = None,
+) -> Optional[Dict[str, Optional[str]]]:
+    """Return mailbox/message identifiers for an Outlook notification, if supported."""
+    resource = str(notification.get("resource") or "")
+    if _source_from_resource(resource) != "outlook_email":
+        return None
+
+    parsed = _parse_outlook_message_resource(resource)
+    resource_data = notification.get("resourceData") or {}
+    message_id = parsed.get("message_id") or resource_data.get("id")
+    mailbox = parsed.get("mailbox")
+    if supabase is not None and (not mailbox or "@" not in mailbox):
+        mailbox = _mailbox_from_subscription(
+            supabase,
+            str(notification.get("subscriptionId") or ""),
+        ) or mailbox
+
+    if not mailbox:
+        return None
+
+    return {
+        "mailbox": mailbox,
+        "message_id": message_id,
+        "subscription_id": notification.get("subscriptionId"),
+        "change_type": notification.get("changeType"),
+    }
 
 
 def _record_webhook_notification(
@@ -141,12 +216,38 @@ def handle_lifecycle_event(supabase: Any, notification: Dict[str, Any]) -> bool:
     return True
 
 
-def handle_graph_notifications(supabase: Any, payload: Dict[str, Any]) -> Dict[str, Any]:
+def process_graph_notification_realtime(supabase: Any, notification: Dict[str, Any]) -> Dict[str, Any]:
+    """Process one accepted Graph notification into current assistant-readable state."""
+    validate_client_state(notification.get("clientState"))
+    work_item = outlook_notification_work_item(notification, supabase=supabase)
+    if not work_item:
+        return {"status": "ignored", "reason": "unsupported_resource"}
+
+    from .sync import sync_outlook_mailbox_delta
+
+    mailbox = str(work_item["mailbox"])
+    result = sync_outlook_mailbox_delta(
+        supabase,
+        mailbox,
+        reason="graph_webhook",
+    )
+    result["message_id"] = work_item.get("message_id")
+    result["subscription_id"] = work_item.get("subscription_id")
+    return result
+
+
+def handle_graph_notifications(
+    supabase: Any,
+    payload: Dict[str, Any],
+    *,
+    on_realtime_notification: Optional[Callable[[Dict[str, Any]], bool]] = None,
+) -> Dict[str, Any]:
     values = notification_values(payload)
     if not values:
-        return {"status": "accepted", "notification_count": 0, "recorded": 0}
+        return {"status": "accepted", "notification_count": 0, "recorded": 0, "queued_realtime": 0}
 
     recorded = 0
+    queued_realtime = 0
     for notification in values:
         validate_client_state(notification.get("clientState"))
         try:
@@ -159,11 +260,23 @@ def handle_graph_notifications(supabase: Any, payload: Dict[str, Any]) -> Dict[s
                 notification.get("resource"),
                 exc,
             )
+        if on_realtime_notification and outlook_notification_work_item(notification, supabase=supabase):
+            try:
+                if on_realtime_notification(notification):
+                    queued_realtime += 1
+            except Exception as exc:
+                logger.warning(
+                    "[GraphWebhook] Could not enqueue realtime processing for subscription=%s resource=%s: %s",
+                    notification.get("subscriptionId"),
+                    notification.get("resource"),
+                    exc,
+                )
 
     return {
         "status": "accepted",
         "notification_count": len(values),
         "recorded": recorded,
+        "queued_realtime": queued_realtime,
     }
 
 

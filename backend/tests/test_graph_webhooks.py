@@ -28,6 +28,12 @@ class _TableQuery:
         self.rows = [row for row in self.rows if row.get(key) == value]
         return self
 
+    def limit(self, _value):
+        return self
+
+    def select(self, *_args, **_kwargs):
+        return self
+
     def execute(self):
         table = self.db.tables.setdefault(self.table_name, [])
         if self.action == "update":
@@ -113,12 +119,69 @@ def test_handle_graph_notifications_records_valid_notification(monkeypatch):
         },
     )
 
-    assert result == {"status": "accepted", "notification_count": 1, "recorded": 1}
+    assert result == {
+        "status": "accepted",
+        "notification_count": 1,
+        "recorded": 1,
+        "queued_realtime": 0,
+    }
     row = supabase.tables["source_sync_runs"][0]
     assert row["source"] == "outlook_email"
     assert row["stage"] == "webhook"
     assert row["status"] == "queued"
     assert row["metadata"]["subscription_id"] == "sub-1"
+
+
+def test_handle_graph_notifications_enqueues_outlook_realtime(monkeypatch):
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
+    supabase = _FakeSupabase()
+    queued = []
+
+    result = webhooks.handle_graph_notifications(
+        supabase,
+        {
+            "value": [
+                {
+                    "subscriptionId": "sub-1",
+                    "clientState": "expected-state",
+                    "changeType": "created",
+                    "resource": "users/a@example.com/messages/message-1",
+                    "resourceData": {"id": "message-1"},
+                }
+            ]
+        },
+        on_realtime_notification=lambda notification: queued.append(notification) or True,
+    )
+
+    assert result["queued_realtime"] == 1
+    assert queued[0]["resource"] == "users/a@example.com/messages/message-1"
+
+
+def test_process_graph_notification_realtime_syncs_mailbox_delta(monkeypatch):
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
+    supabase = _FakeSupabase()
+    calls = []
+
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.sync.sync_outlook_mailbox_delta",
+        lambda client, mailbox, *, reason: calls.append((client, mailbox, reason))
+        or {"status": "succeeded", "items_synced": 1},
+    )
+
+    result = webhooks.process_graph_notification_realtime(
+        supabase,
+        {
+            "subscriptionId": "sub-1",
+            "clientState": "expected-state",
+            "changeType": "created",
+            "resource": "users/a@example.com/messages/message-1",
+            "resourceData": {"id": "message-1"},
+        },
+    )
+
+    assert calls == [(supabase, "a@example.com", "graph_webhook")]
+    assert result["message_id"] == "message-1"
+    assert result["subscription_id"] == "sub-1"
 
 
 def test_handle_graph_lifecycle_marks_subscription_removed(monkeypatch):

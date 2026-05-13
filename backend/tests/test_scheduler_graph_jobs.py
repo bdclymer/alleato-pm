@@ -285,6 +285,7 @@ def test_init_scheduler_registers_acumatica_job_with_runtime_envs(monkeypatch):
     monkeypatch.delenv("ACUMATICA_SERVICE_URL", raising=False)
     monkeypatch.setenv("SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED", "false")
     monkeypatch.setenv("GRAPH_SYNC_ENABLED", "false")
+    monkeypatch.setenv("GRAPH_SUBSCRIPTIONS_ENABLED", "false")
     monkeypatch.setenv("INTELLIGENCE_COMPILER_ENABLED", "false")
     monkeypatch.setenv("TASK_EXTRACTION_ENABLED", "false")
 
@@ -294,6 +295,58 @@ def test_init_scheduler_registers_acumatica_job_with_runtime_envs(monkeypatch):
     assert "daily_digest" in job_ids
     assert "acumatica_financial_sync" in job_ids
     assert recording_scheduler.running is True
+
+
+def test_init_scheduler_registers_graph_subscription_reconcile_job(monkeypatch):
+    recording_scheduler = _RecordingScheduler()
+
+    monkeypatch.setattr(scheduler, "AsyncIOScheduler", lambda: recording_scheduler)
+    monkeypatch.delenv("DISABLE_SCHEDULER", raising=False)
+    monkeypatch.setenv("FIREFLIES_SYNC_ENABLED", "false")
+    monkeypatch.setenv("FIREFLIES_PIPELINE_BACKLOG_ENABLED", "false")
+    monkeypatch.setenv("ACUMATICA_FINANCIAL_SYNC_ENABLED", "false")
+    monkeypatch.setenv("SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED", "false")
+    monkeypatch.setenv("GRAPH_SYNC_ENABLED", "false")
+    monkeypatch.setenv("GRAPH_SUBSCRIPTIONS_ENABLED", "auto")
+    monkeypatch.setenv("MICROSOFT_CLIENT_ID", "client-id")
+    monkeypatch.setenv("MICROSOFT_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("MICROSOFT_TENANT_ID", "tenant-id")
+    monkeypatch.setenv("MICROSOFT_GRAPH_WEBHOOK_NOTIFICATION_URL", "https://example.com/api/graph/webhooks/notifications")
+    monkeypatch.setenv("MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE", "client-state")
+    monkeypatch.setenv("INTELLIGENCE_COMPILER_ENABLED", "false")
+    monkeypatch.setenv("TASK_EXTRACTION_ENABLED", "false")
+
+    scheduler.init_scheduler()
+
+    jobs_by_id = {job["id"]: job for job in recording_scheduler.jobs}
+    assert "graph_subscription_reconcile" in jobs_by_id
+    assert jobs_by_id["graph_subscription_reconcile"]["name"] == "Microsoft Graph Webhook Subscription Renewal"
+    assert recording_scheduler.running is True
+
+
+def test_run_graph_subscription_reconcile_uses_configured_bounds(monkeypatch):
+    client = object()
+    calls = {}
+
+    monkeypatch.setenv("GRAPH_SUBSCRIPTION_RENEW_WITHIN_HOURS", "9")
+    monkeypatch.setenv("GRAPH_SUBSCRIPTION_EXPIRATION_HOURS", "36")
+    monkeypatch.setattr(
+        "src.services.supabase_helpers.get_supabase_client",
+        lambda: client,
+    )
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.subscriptions.ensure_subscriptions",
+        lambda supabase_client, **kwargs: calls.setdefault(
+            "ensure",
+            {"client": supabase_client, **kwargs, "checked": 0},
+        ),
+    )
+
+    result = scheduler._run_graph_subscription_reconcile()
+
+    assert result["client"] is client
+    assert result["renew_within_hours"] == 9
+    assert result["expiration_hours"] == 36
 
 
 def test_run_source_sync_health_recompute_persists_snapshots_and_alerts(monkeypatch):
