@@ -10,6 +10,7 @@ const authFile = path.join(__dirname, ".auth/user.json");
 // Use env vars with fallback to hardcoded test creds
 const TEST_EMAIL = process.env.TEST_USER_1 ?? "test1@mail.com";
 const TEST_PASSWORD = process.env.TEST_PASSWORD_1 ?? "test12026!!!";
+const AUTH_SETUP_TIMEOUT_MS = 30_000;
 
 /**
  * Extract Supabase project ref from the URL.
@@ -52,6 +53,36 @@ function hasValidExistingSession(): boolean {
   }
 }
 
+async function withAuthSetupTimeout<T>(
+  label: string,
+  operation: Promise<T>,
+): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(
+          () =>
+            reject(
+              new Error(
+                [
+                  `Auth setup timed out during ${label} after ${AUTH_SETUP_TIMEOUT_MS}ms.`,
+                  "Cause: Supabase Auth did not answer the setup request in time.",
+                  "Detection gap: the Playwright auth setup previously awaited Supabase Auth without a local timeout, which could freeze verification runs.",
+                  "Prevention: auth setup now fails loudly with the blocked operation name so verification can report the real dependency issue.",
+                ].join(" "),
+              ),
+            ),
+          AUTH_SETUP_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 setup("authenticate", async ({ page, baseURL }) => {
   const url = baseURL ?? "http://localhost:3000";
 
@@ -63,10 +94,13 @@ setup("authenticate", async ({ page, baseURL }) => {
 
   // Ensure test user exists in Supabase Auth
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data: userList } = await supabaseAdmin.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
+  const { data: userList } = await withAuthSetupTimeout(
+    "Supabase admin listUsers",
+    supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    }),
+  );
   const existingUser = userList?.users?.find((u) => u.email === TEST_EMAIL);
 
   if (!existingUser) {
@@ -82,11 +116,13 @@ setup("authenticate", async ({ page, baseURL }) => {
 
   // Sign in via Supabase API (no UI login — avoids rate limiting)
   const supabaseClient = createSupabaseClient();
-  const { data: signInData, error: signInError } =
-    await supabaseClient.auth.signInWithPassword({
+  const { data: signInData, error: signInError } = await withAuthSetupTimeout(
+    "Supabase password sign-in",
+    supabaseClient.auth.signInWithPassword({
       email: TEST_EMAIL,
       password: TEST_PASSWORD,
-    });
+    }),
+  );
 
   if (signInError || !signInData.session) {
     // Last resort: try UI login if API fails
