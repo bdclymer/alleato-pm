@@ -24,7 +24,7 @@
    - `npm run rag:verify:meetings` — expected fail after proof run; raw backlog now 24341, done count 8572, recent summary embedding coverage still 14/84.
    - Direct push to `main` — pass; `54ed2a3e1` added scheduled backlog drain, `43d41c619` fixed failure-only warning logging.
    - Render deploy `dep-d7uid67avr4c73cn9c80` — pass; live on commit `43d41c619cf6559b312dd29c6c3af68b1390bcac`, finished `2026-05-07T23:58:19.175495Z`.
-   - `curl -fsS https://alleato-backend-3mmq.onrender.com/health` — pass; healthy at `2026-05-07T23:58:30Z`, AI Gateway/OpenAI/Supabase configured.
+   - Historical backend health check used a retired Render backend service, which is no longer active. Current tooling must use `https://alleato-backend-rbnj.onrender.com`.
    - Production scheduler first interval — pass with surfaced failures; Fireflies backlog matched 10, processed 8, failed 2; Graph embedding succeeded; intelligence compiler claimed 2 and succeeded 2.
    - `python -m pytest backend/tests/test_source_sync_health.py backend/tests/test_scheduler_graph_jobs.py` — pass, 9 passed.
    - `python -m py_compile backend/src/services/health/source_sync_health.py backend/src/services/scheduler.py` — pass.
