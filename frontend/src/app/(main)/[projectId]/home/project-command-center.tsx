@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { format, isPast } from "date-fns";
 import { toast } from "sonner";
@@ -20,20 +21,10 @@ import {
   Search,
   Users,
 } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
-import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
 import {
   Avatar,
   AvatarFallback,
@@ -50,7 +41,6 @@ import {
 } from "@/components/ds";
 import { Input } from "@/components/ui/input";
 import { RealtimeCursors } from "@/components/realtime/realtime-cursors";
-import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import { apiFetch } from "@/lib/api-client";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
@@ -65,7 +55,15 @@ type Meeting = Pick<
   Database["public"]["Tables"]["document_metadata"]["Row"],
   "id" | "title" | "file_name" | "date" | "created_at" | "duration_minutes" | "type"
 >;
-type ChangeOrder = any;
+interface ChangeOrder {
+  id: string | number;
+  title: string | null;
+  status: string | null;
+  amount?: number | null;
+  total_amount?: number | null;
+  created_at: string | null;
+  change_order_number?: string | null;
+}
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 type ContractLineItem = Database["public"]["Tables"]["contract_line_items"]["Row"];
@@ -84,6 +82,8 @@ type ProjectDocument = Pick<
   | "reviewed_at"
 >;
 type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
+type BudgetLineSummary = Pick<Database["public"]["Tables"]["budget_lines"]["Row"], "id" | "project_id" | "original_amount">;
+type ScheduleSummary = Pick<Database["public"]["Tables"]["schedule_tasks"]["Row"], "id">;
 type Submittal = Pick<
   Database["public"]["Tables"]["submittals"]["Row"],
   | "id"
@@ -109,6 +109,24 @@ type LazyHomeTabStatus = {
   loading: boolean;
   error: string | null;
 };
+
+const BudgetBarChart = dynamic(
+  () => import("./budget-bar-chart").then((mod) => mod.BudgetBarChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-32 w-full animate-pulse rounded-md bg-muted/40" />,
+  },
+);
+
+const AssignMemberDialog = dynamic(
+  () => import("@/components/domain/directory/AssignMemberDialog").then((mod) => mod.AssignMemberDialog),
+  { ssr: false },
+);
+
+const EditProjectSidebar = dynamic(
+  () => import("@/components/project/edit-project-sidebar").then((mod) => mod.EditProjectSidebar),
+  { ssr: false },
+);
 
 type ProjectWithNormalizedDates = Project & {
   start_date?: string | null;
@@ -156,7 +174,7 @@ interface ProjectCommandCenterProps {
   contracts: Contract[];
   contractLineItems?: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
   changeEvents?: ChangeEvent[];
-  schedule?: any[];
+  schedule?: ScheduleSummary[];
   team?: ProjectTeamMember[];
   submittals?: Submittal[];
   homeAlerts?: {
@@ -170,9 +188,8 @@ interface ProjectCommandCenterProps {
     submittedAt: string | null;
   }>;
   dailyLogs?: DailyLog[];
-  budget?: any[];
+  budget?: BudgetLineSummary[];
   budgetGrandTotals?: BudgetGrandTotals;
-  sov?: any[];
   ownerInvoices?: OwnerInvoice[];
   projectDocuments?: ProjectDocument[];
 }
@@ -279,75 +296,6 @@ function WorkCompletedGauge({ pctComplete, label, sub }: { pctComplete: number; 
       <p className="text-xs font-medium text-foreground">{label}</p>
       <p className="text-[11px] text-muted-foreground">{sub}</p>
     </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   BudgetBarChart — recharts horizontal bar
-───────────────────────────────────────────────────────────── */
-
-type BudgetTooltipPayload = Array<{
-  name?: string;
-  value?: number | null;
-}>;
-
-const CustomTooltip = ({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: BudgetTooltipPayload;
-}) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-md border border-border bg-popover px-3 py-2 text-sm shadow-sm">
-      <p className="font-medium text-foreground">{payload[0]?.name}</p>
-      <p className="text-muted-foreground">{fmtFull(payload[0]?.value)}</p>
-    </div>
-  );
-};
-
-function BudgetBarChart({
-  budget,
-  costToDate,
-  ecac,
-}: {
-  budget: number;
-  costToDate: number;
-  ecac: number;
-}) {
-  const data = [
-    { name: "Revised Budget", value: budget, color: "hsl(var(--muted-foreground) / 0.5)" },
-    { name: "Cost to Date", value: costToDate, color: "hsl(var(--primary))" },
-    { name: "ECAC", value: ecac, color: ecac > budget ? "hsl(var(--destructive))" : "hsl(var(--status-success))" },
-  ];
-
-  return (
-    <ResponsiveContainer width="100%" height={120}>
-      <BarChart data={data} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
-        <XAxis
-          type="number"
-          tickFormatter={(v) => fmtCompact(v)}
-          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          type="category"
-          dataKey="name"
-          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-          width={80}
-          axisLine={false}
-          tickLine={false}
-        />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.5)" }} />
-        <Bar dataKey="value" radius={[0, 3, 3, 0]} maxBarSize={18}>
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
   );
 }
 
@@ -582,34 +530,68 @@ function EmptyTabState({ label }: { label: string }) {
 
 const SIDEBAR_ROLES = ["VP", "Project Manager", "Superintendent", "Architect"];
 
-function SidebarTeamSection({ projectId }: { projectId: string }) {
-  const { roles, isLoading, updateRoleMembers, createRole } = useProjectRoles(projectId);
+function SidebarTeamSection({
+  projectId,
+  team = [],
+}: {
+  projectId: string;
+  team?: ProjectTeamMember[];
+}) {
+  const { roles, isLoading, updateRoleMembers, createRole, refetch } = useProjectRoles(projectId, {
+    enabled: false,
+  });
   const [assignDialog, setAssignDialog] = React.useState<{ open: boolean; role: ProjectRole | null }>({
     open: false,
     role: null,
   });
   const [creating, setCreating] = React.useState<string | null>(null);
+  const [loadingRoleName, setLoadingRoleName] = React.useState<string | null>(null);
+  const rolesByName = React.useMemo(
+    () => new Map(roles.map((role) => [role.role_name.toLowerCase(), role])),
+    [roles],
+  );
+  const teamByRoleName = React.useMemo(() => {
+    const roleMap = new Map<string, ProjectTeamMember>();
+    for (const member of team) {
+      const roleName = member.role?.trim().toLowerCase();
+      if (roleName && !roleMap.has(roleName)) {
+        roleMap.set(roleName, member);
+      }
+    }
+    return roleMap;
+  }, [team]);
 
   const slots = SIDEBAR_ROLES.map((roleName) => {
-    const dbRole = roles.find((r) => r.role_name.toLowerCase() === roleName.toLowerCase());
+    const dbRole = rolesByName.get(roleName.toLowerCase());
     const firstMember = dbRole?.members[0] ?? null;
-    const person = firstMember?.person ?? null;
+    const initialMember = teamByRoleName.get(roleName.toLowerCase()) ?? null;
+    const person = firstMember?.person ?? initialMember;
     return { roleName, dbRole: dbRole ?? null, person };
   });
 
   const openDialog = async (dbRole: ProjectRole | null, roleName: string) => {
-    if (dbRole) {
-      setAssignDialog({ open: true, role: dbRole });
-      return;
-    }
-    setCreating(roleName);
+    setLoadingRoleName(roleName);
     try {
+      if (dbRole) {
+        setAssignDialog({ open: true, role: dbRole });
+        return;
+      }
+
+      const hydratedRoles = await refetch();
+      const hydratedRole = hydratedRoles.find((role) => role.role_name.toLowerCase() === roleName.toLowerCase());
+      if (hydratedRole) {
+        setAssignDialog({ open: true, role: hydratedRole });
+        return;
+      }
+
+      setCreating(roleName);
       const newRole = await createRole(roleName);
       setAssignDialog({ open: true, role: newRole });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : `Failed to create ${roleName} role`);
     } finally {
       setCreating(null);
+      setLoadingRoleName(null);
     }
   };
 
@@ -632,7 +614,7 @@ function SidebarTeamSection({ projectId }: { projectId: string }) {
         <div className="space-y-0.5">
           {slots.map(({ roleName, dbRole, person }) => {
             const displayName = person ? `${person.first_name} ${person.last_name}`.trim() : null;
-            const isCreating = creating === roleName;
+            const isCreating = creating === roleName || loadingRoleName === roleName;
             return (
               <Button
                 key={roleName}
@@ -682,10 +664,12 @@ function SidebarTeamSection({ projectId }: { projectId: string }) {
 function ProjectDetailsSidebar({
   project,
   projectId,
+  team,
   onEditProject,
 }: {
   project: Project;
   projectId: string;
+  team?: ProjectTeamMember[];
   onEditProject: () => void;
 }) {
   const normalizedProject = project as ProjectWithNormalizedDates;
@@ -730,7 +714,7 @@ function ProjectDetailsSidebar({
       )}
 
       {/* Team */}
-      <SidebarTeamSection projectId={projectId} />
+      <SidebarTeamSection projectId={projectId} team={team} />
 
       {/* Schedule */}
       <div>
@@ -1546,6 +1530,7 @@ export function ProjectCommandCenter({
             <ProjectDetailsSidebar
               project={project}
               projectId={projectId}
+              team={team}
               onEditProject={() => setIsEditProjectSidebarOpen(true)}
             />
           </aside>

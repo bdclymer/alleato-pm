@@ -31,7 +31,7 @@ interface UseProjectRolesResult {
   roles: ProjectRole[];
   isLoading: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetch: () => Promise<ProjectRole[]>;
   updateRoleMembers: (
     roleId: string,
     memberPersonIds: string[],
@@ -40,13 +40,21 @@ interface UseProjectRolesResult {
   deleteRole: (roleId: string) => Promise<void>;
 }
 
-export function useProjectRoles(projectId: string): UseProjectRolesResult {
+interface UseProjectRolesOptions {
+  enabled?: boolean;
+}
+
+export function useProjectRoles(
+  projectId: string,
+  options: UseProjectRolesOptions = {},
+): UseProjectRolesResult {
+  const enabled = options.enabled ?? true;
   const [roles, setRoles] = useState<ProjectRole[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchRoles = useCallback(async () => {
-    if (!projectId) return;
+  const fetchRoles = useCallback(async (): Promise<ProjectRole[]> => {
+    if (!projectId) return [];
 
     setIsLoading(true);
     setError(null);
@@ -55,9 +63,12 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
       const { data } = await apiFetch<{ data: ProjectRole[] }>(
         `/api/projects/${projectId}/directory/roles`,
       );
-      setRoles(data || []);
+      const nextRoles = data || [];
+      setRoles(nextRoles);
+      return nextRoles;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +79,10 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
 
     const loadRoles = async () => {
       if (!projectId || cancelled) return;
+      if (!enabled) {
+        setIsLoading(false);
+        return;
+      }
 
       setIsLoading(true);
       setError(null);
@@ -96,7 +111,7 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [enabled, projectId]);
 
   const updateRoleMembers = useCallback(
     async (roleId: string, memberPersonIds: string[]) => {

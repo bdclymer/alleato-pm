@@ -5,6 +5,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import dotenv from "dotenv";
 import { chromium } from "playwright";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,6 +17,17 @@ const DEFAULT_RUNS = 5;
 const DEFAULT_WARMUPS = 1;
 const DEFAULT_WAIT_AFTER_LOAD_MS = 2500;
 const DEFAULT_SLOW_RESOURCE_MS = 500;
+
+for (const envPath of [
+  path.join(REPO_ROOT, ".env"),
+  path.join(REPO_ROOT, ".env.local"),
+  path.join(REPO_ROOT, "frontend/.env.local"),
+  path.join(REPO_ROOT, "frontend/.env"),
+]) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath, override: false, quiet: true });
+  }
+}
 
 function parseArgs(argv) {
   const args = {
