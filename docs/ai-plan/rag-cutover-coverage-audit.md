@@ -45,6 +45,7 @@ These remain on the app database because they are operational data, permissions,
 - AI session/message history
 - assistant guardrails and project permission checks
 - `search_all_knowledge`, insights, memory, and company knowledge tables
+- source-specific metadata summaries in `sourceSpecificRagRetrieval`, which read `document_metadata` from the app DB by design; chunk/vector retrieval paths use the RAG DB when `RAG_DATABASE_READS_ENABLED=true`.
 
 ## Known Remaining Gaps
 
@@ -122,6 +123,11 @@ Use this as the closeout list for the RAG database isolation work. Do not treat 
 - RAG terminal smoke passed for `Vermillion Rise status`: `search_document_chunks` returned RAG results and `search_all_knowledge` returned app-owned knowledge results.
 - RAG PM briefing quality eval passed `60/60` checks.
 - Verification worker passed script syntax, Python compile, frontend typecheck, and focused AI unit tests.
+- Production deployment smoke ran against `https://projects.alleatogroup.com/api/ai-assistant/chat`.
+- Production project-filtered smoke for Vermillion Rise returned project `67` with meeting and email source citations.
+- Production OneDrive/document smoke hit `semanticSearch` and returned RAG source signals including `onedrive_document`.
+- Production Teams and email retry smokes hit live assistant retrieval paths and returned successful responses, but the selected prompts produced "no matching indexed rows" responses rather than substantive source excerpts.
+- Production mixed broad semantic smoke still needs prompt-routing improvement: it chose the email-specific retrieval shortcut and did not combine meeting plus email context in one answer.
 
 ## Reactivation Checklist
 
