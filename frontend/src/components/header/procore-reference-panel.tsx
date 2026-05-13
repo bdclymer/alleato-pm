@@ -204,10 +204,12 @@ export function ProcoreReferencePanel() {
 
   // ── DB connection status ─────────────────────────────────────────────────
   React.useEffect(() => {
+    if (!open) return;
+
     void apiFetch("/api/health")
       .then(() => setDbOnline(true))
       .catch(() => setDbOnline(false));
-  }, []);
+  }, [open]);
 
   // ── Console interception ─────────────────────────────────────────────────
   React.useEffect(() => {
