@@ -35,5 +35,10 @@ jobs:
             }")
           DEPLOY_ID=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin).get('id','ERROR'))")
           DEPLOY_URL=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin).get('url',''))")
+          if [ "$DEPLOY_ID" = "ERROR" ] || [ -z "$DEPLOY_URL" ]; then
+            echo "Vercel deployment request failed:"
+            echo "$RESPONSE" | python3 -m json.tool
+            exit 1
+          fi
           echo "Deployment triggered: $DEPLOY_ID"
           echo "URL: https://$DEPLOY_URL"
