@@ -65,7 +65,7 @@ const DEFAULT_SETTINGS: CommitmentAdvancedSettings = {
   show_markup_criteria_on_pdf: false,
   send_invoice_approval_notifications: true,
   send_payment_notifications: true,
-  default_retainage_percent: 0,
+  default_retainage_percent: 10,
   billing_period: "monthly",
 };
 

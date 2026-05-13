@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS = {
   sov_always_editable: false,
   enable_completed_work_retainage: false,
   enable_stored_materials_retainage: false,
-  default_retainage_percent: 0,
+  default_retainage_percent: 10,
   show_markup_on_co_pdf: true,
   show_markup_on_invoice_pdf: true,
   default_distribution_prime_contract: null as string | null,
