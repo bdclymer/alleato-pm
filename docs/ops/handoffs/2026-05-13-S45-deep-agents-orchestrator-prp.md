@@ -26,6 +26,10 @@
 - PASS: `python -m pytest backend/tests/test_deep_project_intelligence.py -q`
 - PASS: `python -m pytest backend/tests/test_deep_project_intelligence.py -q` after Slice 2 read-only source probes (`6 passed`)
 - PASS: `python -m pytest backend/tests/test_deep_project_intelligence.py -q` after Slice 3A Deep Agents runtime hook (`8 passed`)
+- PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_deep_project_intelligence.py -q` after installed Deep Agents graph smoke guardrail (`9 passed`)
+- PASS: `PYTHONPATH=backend backend/.venv/bin/python -m py_compile backend/src/services/agents/deep_project_intelligence.py backend/src/services/agents/deep_project_intelligence_contracts.py backend/src/api/main.py backend/tests/test_deep_project_intelligence.py`
+- PASS: local runtime smoke with `deepagents.create_deep_agent` and a bindable fake chat model returned `mode=deep_agents` with successful `deepagents_runtime` trace.
+- WARN unrelated environment debt: backend `.venv` emits `RequestsDependencyWarning` for `urllib3`/`chardet` or `charset_normalizer` version mismatch.
 - FAIL unrelated: `python -m pytest backend/tests/test_deep_project_intelligence.py backend/tests/test_api_routes.py -q` failed in legacy Fireflies ingestion endpoint tests because the shared test harness still exposes the mocked admin dependency as required `args`/`kwargs` query params. New Deep Agents tests passed in the same run.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - `docs/PRPs/deep-agents-project-intelligence/prp-deep-agents-project-intelligence.md`
@@ -74,12 +78,13 @@ Implemented Slice 3A as a backend-only Deep Agents runtime hook:
 - Fed the runtime only pre-collected source coverage/evidence, not broad DB tools.
 - Added `deepagents_runtime` success/failure traces.
 - Runtime failure falls back to the contract response instead of returning a generic error.
+- Added an installed-graph regression test that clears the backend test harness's old `langchain` stub, imports real `deepagents`, and proves `create_deep_agent` can synthesize through the backend contract using a tool-bindable fake model.
 
 Known ledger issue: local `session-board.md` already has an older S44 row using `AAI-356` for Source Sync drill-in work. The live Linear issue created for this session is also `AAI-356`. This is recorded as a ledger collision risk rather than hidden.
 
 ## Exact Next Step
 
-Install backend dependencies in the deployment environment, set `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents` only in non-production first, and run one real project-status request through the backend endpoint.
+Install backend dependencies in the deployment environment, set `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents` only in non-production first, and run one real project-status request through the backend endpoint with a real provider model.
 
 ## Known Pitfalls
 

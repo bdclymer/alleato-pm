@@ -1,3 +1,7 @@
+import sys
+
+import pytest
+
 from src.services.agents.deep_project_intelligence import (
     REQUIRED_SOURCE_TYPES,
     build_project_status_contract_spike,
@@ -231,6 +235,59 @@ def test_deep_agents_runtime_can_synthesize_behind_contract():
 
     assert response.mode == "deep_agents"
     assert response.answer == "Runtime synthesis from Deep Agents."
+    assert response.tool_trace[-1].tool == "deepagents_runtime"
+    assert response.tool_trace[-1].status == "success"
+
+
+def test_deep_agents_runtime_invokes_installed_graph_with_bindable_model(monkeypatch):
+    for module_name in list(sys.modules):
+        if module_name == "langchain" or module_name.startswith("langchain."):
+            monkeypatch.delitem(sys.modules, module_name, raising=False)
+
+    deepagents = pytest.importorskip("deepagents")
+    fake_chat_models = pytest.importorskip("langchain_core.language_models.fake_chat_models")
+
+    class _BindableFakeChatModel(fake_chat_models.FakeListChatModel):
+        def bind_tools(self, tools, *, tool_choice=None, **kwargs):
+            assert tools
+            return self
+
+    response = build_project_status_contract_spike(
+        _request(),
+        _Store(
+            {"id": 43, "name": "Westfield Collective"},
+            client=_FakeSupabase(
+                {
+                    "intelligence_targets": [
+                        {
+                            "id": "target-1",
+                            "project_id": 43,
+                            "updated_at": "2026-05-10T00:00:00Z",
+                        }
+                    ],
+                    "intelligence_packets": [
+                        {
+                            "id": "packet-1",
+                            "target_id": "target-1",
+                            "packet_type": "project_status",
+                            "executive_summary": "Packet says owner decisions are pending.",
+                            "generated_at": "2026-05-11T00:00:00Z",
+                        }
+                    ],
+                }
+            ),
+        ),
+        runtime="deep_agents",
+        create_agent=deepagents.create_deep_agent,
+        model=_BindableFakeChatModel(
+            responses=[
+                "Installed Deep Agents graph synthesized checked packet coverage."
+            ]
+        ),
+    )
+
+    assert response.mode == "deep_agents"
+    assert response.answer == "Installed Deep Agents graph synthesized checked packet coverage."
     assert response.tool_trace[-1].tool == "deepagents_runtime"
     assert response.tool_trace[-1].status == "success"
 

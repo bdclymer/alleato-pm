@@ -287,7 +287,7 @@ Acceptance:
 - Done: normal endpoint behavior remains `contract_spike` unless runtime env is set.
 - Done: runtime success returns `mode=deep_agents`.
 - Done: runtime failure returns contract output with a failed `deepagents_runtime` trace.
-- Done: tests use a fake `create_deep_agent` and do not make real model calls.
+- Done: tests use a fake `create_deep_agent` for contract behavior and an installed `deepagents.create_deep_agent` graph smoke with a bindable fake model for dependency/API drift.
 
 ### Slice 3B: AI SDK Bridge
 
@@ -344,7 +344,8 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-05-13-S45-deep-agents-orche
 Future implementation checks:
 
 ```bash
-python -m pytest backend/tests/services/agents/test_deep_project_intelligence.py
+PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_deep_project_intelligence.py -q
+PYTHONPATH=backend backend/.venv/bin/python -m py_compile backend/src/services/agents/deep_project_intelligence.py backend/src/services/agents/deep_project_intelligence_contracts.py backend/src/api/main.py backend/tests/test_deep_project_intelligence.py
 npm run rag:verify:chat-architecture
 node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs
 npm run rag:verify:assistant-routing
