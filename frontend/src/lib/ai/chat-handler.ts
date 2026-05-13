@@ -122,7 +122,7 @@ import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-upd
 import {
   buildAssistantWidgetsFromPrompt,
   type AssistantWidgetPayload,
-  type MeetingIntelligenceWidgetPayload,
+  type MeetingInsightsWidgetPayload,
   type OwnerActionItem,
   type OwnerActionQueueWidgetPayload,
   type OwnerSnapshotWidgetPayload,
@@ -1343,84 +1343,113 @@ function buildMeetingHref(row: SourceSpecificRagRow): string {
   return row.project_id ? `/${row.project_id}/meetings/${row.id}` : `/meetings/${row.id}`;
 }
 
-function buildMeetingIntelligenceWidget(params: {
+function buildMeetingInsightsWidget(params: {
   request: SourceSpecificRagRequest;
   rows: SourceSpecificRagRow[];
-}): MeetingIntelligenceWidgetPayload | null {
+}): MeetingInsightsWidgetPayload | null {
   if (!isMeetingSourceSpecificRequest(params.request)) return null;
 
-  const meetings = params.rows.slice(0, params.request.limit).map((row) => {
-    const criticalRisks = extractMeetingSignals(
-      row.content,
-      /\b(risk|critical|blocked|delay|delayed|issue|concern|exposure|problem|missing|late|overdue)\b/i,
-      3,
-    );
-    const decisions = extractMeetingSignals(
+  type MeetingInsight = MeetingInsightsWidgetPayload["decisions"][number];
+  const rows = params.rows.slice(0, params.request.limit);
+
+  function insightFromSignal(
+    row: SourceSpecificRagRow,
+    signal: string,
+    index: number,
+  ): MeetingInsight {
+    return {
+      id: `${row.id}-${index}`,
+      title: signal.slice(0, 140),
+      detail: snippetFromContent(row.content, 180) ?? undefined,
+      sourceTitle: row.title?.trim() || "Untitled meeting",
+      sourceHref: buildMeetingHref(row),
+      confidence: "medium",
+    };
+  }
+
+  const decisions: MeetingInsight[] = [];
+  const promises: MeetingInsight[] = [];
+  const risks: MeetingInsight[] = [];
+  const unresolvedQuestions: MeetingInsight[] = [];
+
+  rows.forEach((row) => {
+    extractMeetingSignals(
       row.content,
       /\b(decided|decision|approved|rejected|agreed|confirmed|selected)\b/i,
       3,
-    );
-    const actionItems = extractMeetingSignals(
+    ).forEach((signal, index) => decisions.push(insightFromSignal(row, signal, index)));
+
+    extractMeetingSignals(
       row.content,
       /\b(action item|follow up|follow-up|needs to|must|assigned|owner|due|by friday|by monday)\b/i,
       3,
-    );
+    ).forEach((signal, index) => promises.push(insightFromSignal(row, signal, index)));
 
-    return {
-      id: row.id,
-      title: row.title?.trim() || "Untitled meeting",
-      projectId: row.project_id,
-      projectName: null,
-      date: row.date ?? row.created_at,
-      source: row.source ?? row.category ?? row.type,
-      summary: snippetFromContent(row.content),
-      criticalRisks,
-      decisions,
-      actionItems,
-      href: buildMeetingHref(row),
-    };
+    extractMeetingSignals(
+      row.content,
+      /\b(risk|critical|blocked|delay|delayed|issue|concern|exposure|problem|missing|late|overdue)\b/i,
+      3,
+    ).forEach((signal, index) => risks.push(insightFromSignal(row, signal, index)));
+
+    extractMeetingSignals(
+      row.content,
+      /\b(question|unclear|unknown|confirm|verify|waiting|need answer|need clarification)\b/i,
+      3,
+    ).forEach((signal, index) => unresolvedQuestions.push(insightFromSignal(row, signal, index)));
   });
 
-  const criticalRiskCount = meetings.reduce((count, meeting) => count + meeting.criticalRisks.length, 0);
-  const decisionCount = meetings.reduce((count, meeting) => count + meeting.decisions.length, 0);
-  const actionItemCount = meetings.reduce((count, meeting) => count + meeting.actionItems.length, 0);
+  const suggestedTasks: OwnerActionItem[] = promises.slice(0, 6).map((promise, index) => ({
+    id: `meeting-task-${index + 1}`,
+    title: promise.title,
+    description: promise.detail,
+    projectId: rows[index]?.project_id ?? null,
+    projectName: null,
+    ownerName: promise.ownerName ?? "Project Manager",
+    priority: risks.length > 0 ? "high" : "normal",
+    sourceType: "meeting",
+    sourceTitle: promise.sourceTitle,
+    href: promise.sourceHref ?? undefined,
+    recommendedAction: "create_task",
+    confidence: promise.confidence,
+  }));
+
+  const sources = rows.slice(0, 8).map((row, index) => ({
+    id: `meeting-source-${index + 1}`,
+    title: row.title?.trim() || "Untitled meeting",
+    sourceType: "meeting" as const,
+    date: row.date ?? row.created_at ?? undefined,
+    snippet: snippetFromContent(row.content, 180) ?? undefined,
+    href: buildMeetingHref(row),
+    confidence: "medium" as const,
+  }));
 
   return {
-    type: "meeting_intelligence",
-    id: "meeting-intelligence",
+    type: "meeting_insights",
+    id: "meeting-insights",
     title:
       params.request.kind === "meetings_on_date"
-        ? `Meetings on ${params.request.date}`
-        : "Recent meeting intelligence",
-    subtitle: "Structured readout from meeting source retrieval",
+        ? `Meeting insights: ${params.request.date}`
+        : "Recent meeting insights",
+    subtitle: "Decisions, promises, risks, questions, and suggested follow-ups from meeting retrieval.",
     dateLabel:
       params.request.kind === "meetings_on_date" && params.request.date
         ? params.request.date
         : "Last 60 days",
-    meetingCount: meetings.length,
-    criticalRiskCount,
-    decisionCount,
-    actionItemCount,
-    topInsights: [
-      meetings.length > 0
-        ? `Retrieved ${meetings.length} meeting record${meetings.length === 1 ? "" : "s"} from source-specific meeting retrieval.`
-        : "No matching meeting records were found for this request.",
-      criticalRiskCount > 0
-        ? `${criticalRiskCount} risk-oriented excerpt${criticalRiskCount === 1 ? "" : "s"} matched the meeting text.`
-        : "No risk-oriented excerpts matched the retrieved meeting text.",
-      decisionCount > 0
-        ? `${decisionCount} decision-oriented excerpt${decisionCount === 1 ? "" : "s"} matched the meeting text.`
-        : "No decision-oriented excerpts matched the retrieved meeting text.",
-    ],
-    recommendedNextActions:
-      meetings.length === 0
-        ? ["Check Fireflies/source-sync health before relying on this meeting window."]
-        : [
-            "Open the meeting records with risk or action badges first.",
-            "Convert verified action items into Tasks page records when ownership is clear.",
-          ],
-    emptyState: "No meeting rows matched this request.",
-    meetings,
+    projectId: rows.find((row) => row.project_id)?.project_id ?? null,
+    projectName: null,
+    metrics: {
+      meetingCount: rows.length,
+      decisionCount: decisions.length,
+      actionItemCount: promises.length,
+      riskCount: risks.length,
+      unresolvedQuestionCount: unresolvedQuestions.length,
+    },
+    decisions,
+    promises,
+    risks,
+    unresolvedQuestions,
+    suggestedTasks,
+    sources,
   };
 }
 
@@ -5344,16 +5373,16 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             sourceSpecificAnswer.content,
             directSourceHealth,
           );
-          const meetingIntelligenceWidget = buildMeetingIntelligenceWidget({
+          const meetingInsightsWidget = buildMeetingInsightsWidget({
             request: sourceSpecificRagRequest,
             rows: sourceSpecificAnswer.rows,
           });
           const sourceSpecificWidgetDataPart: PersistedDataPart | null =
-            meetingIntelligenceWidget
+            meetingInsightsWidget
               ? {
                   type: "data-assistant-widget",
-                  id: `assistant-widget-${meetingIntelligenceWidget.id}`,
-                  data: { widget: meetingIntelligenceWidget },
+                  id: `assistant-widget-${meetingInsightsWidget.id}`,
+                  data: { widget: meetingInsightsWidget },
                 }
               : null;
           if (sourceSpecificWidgetDataPart) {
@@ -5365,9 +5394,9 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 kind: sourceSpecificRagRequest.kind,
               },
               output: {
-                widgetType: meetingIntelligenceWidget?.type,
-                widgetId: meetingIntelligenceWidget?.id,
-                meetingCount: meetingIntelligenceWidget?.meetingCount,
+                widgetType: meetingInsightsWidget?.type,
+                widgetId: meetingInsightsWidget?.id,
+                meetingCount: meetingInsightsWidget?.metrics.meetingCount,
               },
               timestamp: new Date().toISOString(),
             });

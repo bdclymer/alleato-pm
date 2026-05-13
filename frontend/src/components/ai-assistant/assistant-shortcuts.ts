@@ -40,8 +40,8 @@ export const ASSISTANT_SHORTCUT_GROUPS: AssistantShortcutGroup[] = [
       },
       {
         id: "recent-meeting-intelligence",
-        label: "Recent meeting intelligence",
-        prompt: "Show recent meeting intelligence for this project.",
+        label: "Recent meeting insights",
+        prompt: "Review recent meetings and show meeting insights for this project.",
         icon: "meetings",
       },
     ],

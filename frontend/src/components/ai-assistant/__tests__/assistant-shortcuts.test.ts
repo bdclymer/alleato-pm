@@ -25,4 +25,12 @@ describe("assistant shortcuts", () => {
 
     expect(ownerActionQueue?.prompt.toLowerCase()).toContain("what needs my attention");
   });
+
+  it("keeps the meeting insights shortcut on the source-specific meeting path", () => {
+    const meetingInsights = ASSISTANT_SHORTCUT_GROUPS
+      .flatMap((group) => group.shortcuts)
+      .find((shortcut) => shortcut.id === "recent-meeting-intelligence");
+
+    expect(meetingInsights?.prompt.toLowerCase()).toContain("review recent meetings");
+  });
 });
