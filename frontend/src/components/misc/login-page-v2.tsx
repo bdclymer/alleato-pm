@@ -187,7 +187,11 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-              className="rounded-2xl bg-muted/50 p-8 shadow-xs"
+              className="rounded-2xl bg-muted/30 p-8 shadow-sm"
+              style={{
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+              }}
             >
               {/* Heading */}
               <motion.div
