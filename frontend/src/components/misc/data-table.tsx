@@ -387,6 +387,7 @@ export function DataTable({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+  const rows = table.getRowModel().rows;
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -510,12 +511,12 @@ export function DataTable({
                 ))}
               </TableHeader>
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                {table.getRowModel().rows?.length ? (
+                {rows.length ? (
                   <SortableContext
                     items={dataIds}
                     strategy={verticalListSortingStrategy}
                   >
-                    {table.getRowModel().rows.map((row) => (
+                    {rows.map((row) => (
                       <DraggableRow key={row.id} row={row} />
                     ))}
                   </SortableContext>

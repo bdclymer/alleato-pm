@@ -255,6 +255,7 @@ export function CompaniesDataTable({ companies }: CompaniesDataTableProps) {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+  const rows = table.getRowModel().rows;
 
   return (
     <div className="flex w-full flex-col justify-start gap-6">
@@ -323,8 +324,8 @@ export function CompaniesDataTable({ companies }: CompaniesDataTableProps) {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
+              {rows.length ? (
+                rows.map((row) => (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}

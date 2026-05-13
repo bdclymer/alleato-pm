@@ -957,10 +957,10 @@ export function AleatoDataTable<TData>({
 
       {currentView === "grid" && views?.grid && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {table.getRowModel().rows.map((row) => (
+          {rows.map((row) => (
             <div key={row.id}>{views.grid?.(row)}</div>
           ))}
-          {table.getRowModel().rows.length === 0 && (
+          {rows.length === 0 && (
             <div className="col-span-full">{resolvedEmptyState}</div>
           )}
         </div>
@@ -968,10 +968,10 @@ export function AleatoDataTable<TData>({
 
       {currentView === "list" && views?.list && (
         <div className="flex flex-col">
-          {table.getRowModel().rows.map((row) => (
+          {rows.map((row) => (
             <div key={row.id}>{views.list?.(row)}</div>
           ))}
-          {table.getRowModel().rows.length === 0 && resolvedEmptyState}
+          {rows.length === 0 && resolvedEmptyState}
         </div>
       )}
 

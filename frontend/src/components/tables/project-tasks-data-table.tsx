@@ -224,6 +224,7 @@ export function ProjectTasksDataTable({ tasks }: ProjectTasksDataTableProps) {
       rowSelection,
     },
   });
+  const rows = table.getRowModel().rows;
 
   return (
     <div className="w-full">
@@ -308,8 +309,8 @@ export function ProjectTasksDataTable({ tasks }: ProjectTasksDataTableProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+            {rows.length ? (
+              rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}

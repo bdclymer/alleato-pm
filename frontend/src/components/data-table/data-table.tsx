@@ -25,6 +25,8 @@ export function DataTable<TData>({
   className,
   ...props
 }: DataTableProps<TData>) {
+  const rows = table.getRowModel().rows;
+
   return (
     <div
       className={cn("flex w-full flex-col gap-2.5 overflow-auto", className)}
@@ -56,8 +58,8 @@ export function DataTable<TData>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+            {rows.length ? (
+              rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
