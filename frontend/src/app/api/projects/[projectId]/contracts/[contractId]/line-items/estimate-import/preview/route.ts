@@ -117,13 +117,70 @@ export const POST = withApiGuardrails<{
       .filter((id): id is string => Boolean(id)),
   );
 
+  const importableRows = preview.rows.filter((row) => row.includeInOwnerSov);
+  const rowCostCodes = [...new Set(importableRows.map((row) => row.costCode))];
+  const rowCostTypeCodes = [...new Set(importableRows.map((row) => row.costTypeCode).filter(Boolean))];
+
+  const { data: costTypes, error: costTypesError } = await supabase
+    .from("cost_code_types")
+    .select("id, code")
+    .in("code", rowCostTypeCodes);
+
+  if (costTypesError) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: WHERE,
+      message: "Failed to resolve estimate cost types.",
+      details: costTypesError.message,
+    });
+  }
+
+  const costTypeIdByCode = new Map(
+    (costTypes ?? []).map((costType) => [costType.code, costType.id]),
+  );
+
+  const { data: projectBudgetCodes, error: projectBudgetCodesError } = await supabase
+    .from("project_budget_codes")
+    .select("id, cost_code_id, cost_type_id, is_active")
+    .eq("project_id", numericProjectId)
+    .in("cost_code_id", rowCostCodes);
+
+  if (projectBudgetCodesError) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: WHERE,
+      message: "Failed to check project budget-code mappings.",
+      details: projectBudgetCodesError.message,
+    });
+  }
+
+  const activeBudgetCodeByCostCodeAndType = new Map<string, string>();
+  for (const projectBudgetCode of projectBudgetCodes ?? []) {
+    if (projectBudgetCode.is_active) {
+      activeBudgetCodeByCostCodeAndType.set(
+        `${projectBudgetCode.cost_code_id}|${projectBudgetCode.cost_type_id}`,
+        projectBudgetCode.id,
+      );
+    }
+  }
+
   const rows = preview.rows.map((row) => ({
     ...row,
+    costTypeId: costTypeIdByCode.get(row.costTypeCode) ?? null,
+    budgetCodeId: activeBudgetCodeByCostCodeAndType.get(
+      `${row.costCode}|${costTypeIdByCode.get(row.costTypeCode) ?? ""}`,
+    ) ?? null,
     alreadyInSov: existingCostCodeIds.has(row.costCode),
+    hasBudgetCodeMapping: activeBudgetCodeByCostCodeAndType.has(
+      `${row.costCode}|${costTypeIdByCode.get(row.costTypeCode) ?? ""}`,
+    ),
     selectedByDefault:
       row.includeInOwnerSov &&
       !existingCostCodeIds.has(row.costCode) &&
-      row.warnings.length === 0,
+      row.warnings.length === 0 &&
+      activeBudgetCodeByCostCodeAndType.has(
+        `${row.costCode}|${costTypeIdByCode.get(row.costTypeCode) ?? ""}`,
+      ),
   }));
 
   return NextResponse.json({
@@ -133,6 +190,9 @@ export const POST = withApiGuardrails<{
     ownerSovCount: rows.filter((row) => row.includeInOwnerSov).length,
     selectedByDefaultCount: rows.filter((row) => row.selectedByDefault).length,
     existingSovMatchCount: rows.filter((row) => row.alreadyInSov).length,
+    missingBudgetCodeMappingCount: rows.filter(
+      (row) => row.includeInOwnerSov && !row.hasBudgetCodeMapping,
+    ).length,
     totalRows: rows.length,
   });
 });

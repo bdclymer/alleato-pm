@@ -33,6 +33,9 @@ interface EstimateSovPreviewRow {
   unitCost: number | null;
   includeInPrimeContract: boolean;
   includeInOwnerSov: boolean;
+  costTypeId: string | null;
+  budgetCodeId: string | null;
+  hasBudgetCodeMapping: boolean;
   alreadyInSov: boolean;
   selectedByDefault: boolean;
   warnings: string[];
@@ -43,9 +46,22 @@ interface EstimateSovPreview {
   ownerSovCount: number;
   selectedByDefaultCount: number;
   existingSovMatchCount: number;
+  missingBudgetCodeMappingCount: number;
   totalBudgetAmount: number;
   warnings: string[];
   rows: EstimateSovPreviewRow[];
+}
+
+interface ActivateBudgetCodesResponse {
+  success: boolean;
+  createdCostCodes: number;
+  addedProjectBudgetCodes: number;
+  reactivatedProjectBudgetCodes: number;
+  budgetCodes: Array<{
+    id: string;
+    costCode: string;
+    costTypeId: string | null;
+  }>;
 }
 
 interface PrimeContractEstimateImportModalProps {
@@ -95,6 +111,7 @@ export function PrimeContractEstimateImportModal({
   const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set());
   const [isPreviewing, setIsPreviewing] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
+  const [isActivatingBudgetCodes, setIsActivatingBudgetCodes] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -105,6 +122,7 @@ export function PrimeContractEstimateImportModal({
       setSelectedRows(new Set());
       setIsPreviewing(false);
       setIsImporting(false);
+      setIsActivatingBudgetCodes(false);
       setError(null);
     }
   }, [open]);
@@ -112,6 +130,12 @@ export function PrimeContractEstimateImportModal({
   const previewRows = preview?.rows.filter((row) => row.includeInOwnerSov) ?? [];
   const selectedPreviewRows = previewRows.filter((row) =>
     selectedRows.has(`${row.sourceSheet}:${row.rowNumber}`),
+  );
+  const rowsMissingBudgetCodes = previewRows.filter(
+    (row) =>
+      !row.hasBudgetCodeMapping &&
+      !row.alreadyInSov &&
+      row.warnings.length === 0,
   );
 
   const handleFileSelect = (selectedFile: File) => {
@@ -186,7 +210,7 @@ export function PrimeContractEstimateImportModal({
               line_number: maxLineNumber + index + 1,
               description: formatDescription(row),
               cost_code_id: row.costCode,
-              budget_code_id: findBudgetCodeId(row, budgetCodes),
+              budget_code_id: row.budgetCodeId ?? findBudgetCodeId(row, budgetCodes),
               quantity: row.unitQty && row.unitQty > 0 ? row.unitQty : 1,
               unit_of_measure: row.unitOfMeasure || "LS",
               unit_cost: row.budgetAmount,
@@ -205,6 +229,82 @@ export function PrimeContractEstimateImportModal({
       toast.error(message);
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleActivateBudgetCodes = async () => {
+    if (rowsMissingBudgetCodes.length === 0) return;
+    setIsActivatingBudgetCodes(true);
+    setError(null);
+
+    try {
+      const result = await apiFetch<ActivateBudgetCodesResponse>(
+        `/api/projects/${projectId}/contracts/${contractId}/line-items/estimate-import/activate-budget-codes`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            rows: rowsMissingBudgetCodes.map((row) => ({
+              costCode: row.costCode,
+              costTypeCode: row.costTypeCode,
+              description: row.description,
+            })),
+          }),
+        },
+      );
+
+      const budgetCodeByCostCodeAndType = new Map(
+        result.budgetCodes
+          .filter((budgetCode) => budgetCode.costTypeId)
+          .map((budgetCode) => [
+            `${budgetCode.costCode}|${budgetCode.costTypeId}`,
+            budgetCode.id,
+          ]),
+      );
+
+      setPreview((current) => {
+        if (!current) return current;
+        const rows = current.rows.map((row) => {
+          const budgetCodeId = row.costTypeId
+            ? budgetCodeByCostCodeAndType.get(`${row.costCode}|${row.costTypeId}`)
+            : undefined;
+          if (!budgetCodeId) return row;
+          return {
+            ...row,
+            budgetCodeId,
+            hasBudgetCodeMapping: true,
+            selectedByDefault:
+              row.includeInOwnerSov &&
+              !row.alreadyInSov &&
+              row.warnings.length === 0,
+          };
+        });
+        return {
+          ...current,
+          rows,
+          missingBudgetCodeMappingCount: rows.filter(
+            (row) => row.includeInOwnerSov && !row.hasBudgetCodeMapping,
+          ).length,
+          selectedByDefaultCount: rows.filter((row) => row.selectedByDefault).length,
+        };
+      });
+
+      setSelectedRows((current) => {
+        const next = new Set(current);
+        for (const row of rowsMissingBudgetCodes) {
+          next.add(`${row.sourceSheet}:${row.rowNumber}`);
+        }
+        return next;
+      });
+
+      toast.success(
+        `Activated ${result.addedProjectBudgetCodes + result.reactivatedProjectBudgetCodes} budget code mapping${result.addedProjectBudgetCodes + result.reactivatedProjectBudgetCodes === 1 ? "" : "s"}.`,
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to activate budget codes.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsActivatingBudgetCodes(false);
     }
   };
 
@@ -295,12 +395,33 @@ export function PrimeContractEstimateImportModal({
                   <p className="text-sm font-semibold text-foreground">{preview.existingSovMatchCount}</p>
                 </div>
                 <div className="rounded-md bg-muted/40 px-3 py-2">
-                  <p className="text-xs text-muted-foreground">Workbook total</p>
+                  <p className="text-xs text-muted-foreground">Need mapping</p>
                   <p className="text-sm font-semibold text-foreground">
-                    {formatCurrency(preview.totalBudgetAmount)}
+                    {preview.missingBudgetCodeMappingCount}
                   </p>
                 </div>
               </div>
+
+              {rowsMissingBudgetCodes.length > 0 ? (
+                <InfoAlert variant="warning">
+                  <p className="font-medium">
+                    {rowsMissingBudgetCodes.length} SOV candidate{rowsMissingBudgetCodes.length === 1 ? "" : "s"} need budget-code activation.
+                  </p>
+                  <p className="text-muted-foreground">
+                    Activate them before adding those rows so the SOV remains tied to project budget codes.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={handleActivateBudgetCodes}
+                    disabled={isActivatingBudgetCodes || isImporting}
+                  >
+                    {isActivatingBudgetCodes ? "Activating..." : "Activate Budget Codes"}
+                  </Button>
+                </InfoAlert>
+              ) : null}
 
               {preview.warnings.length > 0 ? (
                 <InfoAlert variant="warning">
@@ -328,7 +449,7 @@ export function PrimeContractEstimateImportModal({
                   {previewRows.map((row) => {
                     const key = `${row.sourceSheet}:${row.rowNumber}`;
                     const hasWarnings = row.warnings.length > 0;
-                    const disabled = row.alreadyInSov || hasWarnings;
+                    const disabled = row.alreadyInSov || hasWarnings || !row.hasBudgetCodeMapping;
                     return (
                       <div
                         key={key}
@@ -347,6 +468,7 @@ export function PrimeContractEstimateImportModal({
                         <span className="min-w-0 truncate">
                           {formatDescription(row)}
                           {row.alreadyInSov ? " (already in SOV)" : ""}
+                          {!row.hasBudgetCodeMapping ? " (needs budget code)" : ""}
                           {hasWarnings ? " (review warning)" : ""}
                         </span>
                         <span>{row.costTypeCode}</span>
@@ -370,7 +492,10 @@ export function PrimeContractEstimateImportModal({
               {isPreviewing ? "Analyzing..." : "Preview Workbook"}
             </Button>
           ) : (
-            <Button onClick={handleAppendToSov} disabled={selectedRows.size === 0 || isImporting}>
+            <Button
+              onClick={handleAppendToSov}
+              disabled={selectedRows.size === 0 || isImporting || isActivatingBudgetCodes}
+            >
               {isImporting ? "Adding..." : `Add ${selectedRows.size} To SOV`}
             </Button>
           )}
