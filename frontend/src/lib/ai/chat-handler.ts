@@ -1498,6 +1498,7 @@ type StrategistStatus = {
     | "project"
     | "snapshot"
     | "knowledge"
+    | "actions"
     | "synthesis"
     | "complete"
     | "fallback";
@@ -5857,6 +5858,17 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           "risk_review",
           "target_briefing",
         ].includes(assistantIntent);
+        const mcpToolBundle = await createAiAssistantMcpTools();
+        Object.assign(tools, mcpToolBundle.tools);
+        toolTrace.push(...mcpToolBundle.trace);
+
+        let mcpToolsClosed = false;
+        const closeAiAssistantMcpTools = async () => {
+          if (mcpToolsClosed) return;
+          mcpToolsClosed = true;
+          await mcpToolBundle.close();
+        };
+
         const scopedTools = getScopedToolsForIntent(tools as ToolSet, assistantIntent);
         const scopedToolNames = Object.keys(scopedTools);
         const modelTools =
@@ -5920,7 +5932,9 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         let rawFinishUsage: { inputTokens?: number; outputTokens?: number; cachedInputTokens?: number } | undefined;
         let rawStepCount = 0;
 
-        const result = streamText({
+        let result: ReturnType<typeof streamText>;
+        try {
+          result = streamText({
             model: getLanguageModel(activeModel),
             ...promptPayload,
             maxOutputTokens: streamMaxOutputTokens,
@@ -5981,6 +5995,10 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               rawStepCount = steps?.length ?? 0;
             },
           });
+        } catch (streamStartError) {
+          await closeAiAssistantMcpTools();
+          throw streamStartError;
+        }
 
         writer.merge(
           result.toUIMessageStream({
@@ -6176,6 +6194,8 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             }
           }
         }
+
+        await closeAiAssistantMcpTools();
 
         const responseQuality = scoreResponseQuality({
           toolTrace,

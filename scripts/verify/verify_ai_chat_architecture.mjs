@@ -302,13 +302,19 @@ for (const agent of expected.agents) {
 
 const hasLiveAiSdkMcp =
   hasPackage(frontendPackage, "@ai-sdk/mcp") &&
-  routeImplementation.includes("createAiAssistantMcpTools") &&
+  routeImplementation.includes("await createAiAssistantMcpTools()") &&
+  routeImplementation.includes("Object.assign(tools, mcpToolBundle.tools)") &&
+  routeImplementation.includes("toolTrace.push(...mcpToolBundle.trace)") &&
+  routeImplementation.includes("mcpToolBundle.close()") &&
   mcpTools.includes("createMCPClient") &&
   mcpTools.includes("EXCALIDRAW_MCP_ALLOWED_TOOLS") &&
   mcpTools.includes("AI_ASSISTANT_DISABLE_EXCALIDRAW_MCP") &&
   mcpTools.includes("AI_ASSISTANT_DISABLE_SUPABASE_MCP") &&
   mcpTools.includes("isReadOnlyMcpTool");
-requireCondition(hasLiveAiSdkMcp, "live /ai-assistant has no AI SDK MCP integration");
+requireCondition(
+  hasLiveAiSdkMcp,
+  "live /ai-assistant does not discover, merge, trace, and close AI SDK MCP tools",
+);
 
 const usesToolLoopAgent =
   routeImplementation.includes("ToolLoopAgent") || orchestrator.includes("ToolLoopAgent");
