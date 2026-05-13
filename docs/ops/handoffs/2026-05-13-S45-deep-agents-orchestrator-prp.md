@@ -23,6 +23,7 @@
 - PASS: `git diff --check -- docs/PRPs/deep-agents-project-intelligence/prp-deep-agents-project-intelligence.md docs/ops/handoffs/2026-05-13-S45-deep-agents-orchestrator-prp.md docs/ops/orchestration/session-board.md docs/ops/orchestration/review-queue.md`
 - PASS: `npm run linear:codex:check -- docs/ops/handoffs/2026-05-13-S45-deep-agents-orchestrator-prp.md`
 - PASS: `python -m pytest backend/tests/test_deep_project_intelligence.py -q`
+- PASS: `python -m pytest backend/tests/test_deep_project_intelligence.py -q` after Slice 2 read-only source probes (`6 passed`)
 - FAIL unrelated: `python -m pytest backend/tests/test_deep_project_intelligence.py backend/tests/test_api_routes.py -q` failed in legacy Fireflies ingestion endpoint tests because the shared test harness still exposes the mocked admin dependency as required `args`/`kwargs` query params. New Deep Agents tests passed in the same run.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - `docs/PRPs/deep-agents-project-intelligence/prp-deep-agents-project-intelligence.md`
@@ -31,8 +32,8 @@
 9) Top 3 findings (frontend-visible issues first):
 - Deep Agents should not replace AI SDK UI/chat transport; it should be evaluated as a backend orchestration harness for complex project-intelligence workflows.
 - Current repo evidence already has packet-first intelligence and AI SDK tool loops, but the product contract is distributed across route branches, fallbacks, and quality checks.
-- Slice 1 is now implemented as a backend-only contract spike with explicit missing-source coverage and no production chat route integration.
-10) Recommended next action (one line): Implement Slice 2 read-only source tools.
+- Slice 2 is now implemented as backend-only read-only source coverage probes with no production chat route integration.
+10) Recommended next action (one line): Decide whether Slice 3 should install Deep Agents runtime or bridge this backend contract into the AI SDK route for internal-only testing.
 11) Handoff file path: `docs/ops/handoffs/2026-05-13-S45-deep-agents-orchestrator-prp.md`
 12) Migration ledger evidence: Not applicable; no migration created.
 
@@ -55,11 +56,20 @@ Implemented Slice 1 as a backend-only contract spike:
 - Added `POST /api/intelligence/deep-agent/project-status`, gated by `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`.
 - Added focused tests for explicit missing source coverage, project lookup failure, feature-gate behavior, successful contract response, and 404 on unresolved project.
 
+Implemented Slice 2 as read-only source coverage probes:
+
+- Added source probes for packet, Teams, meetings, emails, documents, financials, schedule, RFIs, and submittals.
+- Added bounded project-filtered table reads through the existing backend Supabase store.
+- Added per-source `checked`, `missing`, and `failed` statuses.
+- Added per-source `toolTrace` entries.
+- Added sample evidence extraction from source rows.
+- Kept the endpoint backend-only and environment-gated.
+
 Known ledger issue: local `session-board.md` already has an older S44 row using `AAI-356` for Source Sync drill-in work. The live Linear issue created for this session is also `AAI-356`. This is recorded as a ledger collision risk rather than hidden.
 
 ## Exact Next Step
 
-Implement Slice 2: wire read-only source tools for current packet, Teams, meetings, financials, and project controls while keeping the endpoint backend-only.
+Decide and implement Slice 3: either install the actual Deep Agents runtime behind the contract, or bridge the backend contract into the AI SDK route for internal-only dogfood testing.
 
 ## Known Pitfalls
 
@@ -67,6 +77,7 @@ Implement Slice 2: wire read-only source tools for current packet, Teams, meetin
 - Do not introduce LangChain/Deep Agents into frontend code.
 - Do not let the pilot bypass existing packet-first tables or source-health ledgers.
 - Do not call the pilot successful unless missing/stale/failed source categories are explicit in the response.
+- Do not treat read-only probes as final answer synthesis; they are coverage inputs for a future orchestrator.
 - Resolve or annotate the local AAI-356 session-board collision before broader orchestration cleanup.
 
 ## Resume Commands

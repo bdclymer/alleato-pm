@@ -6,13 +6,59 @@ from src.services.agents.deep_project_intelligence_contracts import (
     DeepProjectIntelligenceRequest,
 )
 class _Store:
-    def __init__(self, project=None):
+    def __init__(self, project=None, client=None):
         self.project = project
+        self._client = client
 
     def get_project(self, project_id):
         if self.project and self.project.get("id") == project_id:
             return self.project
         return None
+
+
+class _Result:
+    def __init__(self, data):
+        self.data = data
+
+
+class _TableQuery:
+    def __init__(self, db, table_name):
+        self.db = db
+        self.table_name = table_name
+        self.rows = list(db.tables.get(table_name, []))
+        self.limit_count = None
+
+    def select(self, *_args):
+        return self
+
+    def eq(self, key, value):
+        self.rows = [row for row in self.rows if row.get(key) == value]
+        return self
+
+    def in_(self, key, values):
+        allowed = set(values)
+        self.rows = [row for row in self.rows if row.get(key) in allowed]
+        return self
+
+    def order(self, key, desc=False):
+        self.rows = sorted(self.rows, key=lambda row: row.get(key) or "", reverse=desc)
+        return self
+
+    def limit(self, count):
+        self.limit_count = count
+        return self
+
+    def execute(self):
+        rows = self.rows[: self.limit_count] if self.limit_count is not None else self.rows
+        return _Result([dict(row) for row in rows])
+
+
+class _FakeSupabase:
+    def __init__(self, tables):
+        self.tables = tables
+
+    def table(self, table_name):
+        return _TableQuery(self, table_name)
 
 
 def _request():
@@ -57,7 +103,108 @@ def test_contract_spike_returns_explicit_missing_source_coverage():
     assert all(source.status == "missing" for source in response.sources_checked)
     assert all(source.record_count == 0 for source in response.sources_checked)
     assert response.tool_trace[0].status == "success"
+    assert response.tool_trace[1].tool == "source_client"
     assert response.tool_trace[1].status == "skipped"
+
+
+def test_contract_spike_reads_source_coverage_without_synthesis():
+    client = _FakeSupabase(
+        {
+            "intelligence_targets": [
+                {"id": "target-1", "project_id": 43, "updated_at": "2026-05-10T00:00:00Z"}
+            ],
+            "intelligence_packets": [
+                {
+                    "id": "packet-1",
+                    "target_id": "target-1",
+                    "packet_type": "project_status",
+                    "executive_summary": "Packet says owner decisions are pending.",
+                    "generated_at": "2026-05-11T00:00:00Z",
+                }
+            ],
+            "document_metadata": [
+                {
+                    "id": "teams-1",
+                    "project_id": 43,
+                    "source_system": "teams",
+                    "title": "Teams decision thread",
+                    "overview": "Teams discussion found a schedule concern.",
+                    "source_last_modified_at": "2026-05-12T00:00:00Z",
+                },
+                {
+                    "id": "meeting-1",
+                    "project_id": 43,
+                    "source": "fireflies",
+                    "title": "Owner meeting",
+                    "summary": "Meeting covered budget exposure.",
+                    "date": "2026-05-09T00:00:00Z",
+                },
+            ],
+            "project_emails": [
+                {
+                    "id": 1,
+                    "project_id": 43,
+                    "subject": "Submittal follow-up",
+                    "body_text": "Owner needs an answer.",
+                    "received_at": "2026-05-08T00:00:00Z",
+                }
+            ],
+            "project_documents": [
+                {
+                    "id": 2,
+                    "project_id": 43,
+                    "title": "Contract drawing",
+                    "source_last_modified_at": "2026-05-07T00:00:00Z",
+                }
+            ],
+            "acumatica_project_budgets": [
+                {
+                    "id": 3,
+                    "project_id": 43,
+                    "description": "Concrete budget",
+                    "updated_at": "2026-05-06T00:00:00Z",
+                }
+            ],
+            "schedule_tasks": [
+                {
+                    "id": "schedule-1",
+                    "project_id": 43,
+                    "name": "Milestone",
+                    "finish_date": "2026-05-20T00:00:00Z",
+                }
+            ],
+            "rfis": [
+                {
+                    "id": "rfi-1",
+                    "project_id": 43,
+                    "subject": "RFI 1",
+                    "updated_at": "2026-05-05T00:00:00Z",
+                }
+            ],
+            "submittals": [
+                {
+                    "id": "submittal-1",
+                    "project_id": 43,
+                    "title": "Submittal 1",
+                    "updated_at": "2026-05-04T00:00:00Z",
+                }
+            ],
+        }
+    )
+
+    response = build_project_status_contract_spike(
+        _request(),
+        _Store({"id": 43, "name": "Westfield Collective"}, client=client),
+    )
+
+    assert response.confidence == "medium"
+    assert all(source.status == "checked" for source in response.sources_checked)
+    assert [source.source_type for source in response.sources_checked] == list(REQUIRED_SOURCE_TYPES)
+    assert len(response.evidence) >= 8
+    assert response.evidence[0].source_type == "packet"
+    assert response.tool_trace[1].tool == "packet_reader"
+    assert response.tool_trace[-1].tool == "submittal_reader"
+    assert response.recommended_actions[0].label == "Add Deep Agents synthesis on top of checked sources"
 
 
 def test_contract_spike_fails_loudly_when_project_is_missing():
@@ -73,6 +220,7 @@ def test_contract_spike_fails_loudly_when_project_is_missing():
 
 def test_deep_agent_endpoint_is_feature_gated(client, mock_supabase_store, monkeypatch):
     monkeypatch.delenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", raising=False)
+    mock_supabase_store._client = None
     _override_deep_agent_auth(client.app)
 
     try:
@@ -96,6 +244,7 @@ def test_deep_agent_endpoint_is_feature_gated(client, mock_supabase_store, monke
 def test_deep_agent_endpoint_returns_contract_packet(client, mock_supabase_store, monkeypatch):
     monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", "true")
     mock_supabase_store.get_project.return_value = {"id": 43, "name": "Westfield Collective"}
+    mock_supabase_store._client = None
     _override_deep_agent_auth(client.app)
 
     try:
@@ -125,6 +274,7 @@ def test_deep_agent_endpoint_returns_contract_packet(client, mock_supabase_store
 def test_deep_agent_endpoint_returns_404_for_missing_project(client, mock_supabase_store, monkeypatch):
     monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", "true")
     mock_supabase_store.get_project.return_value = None
+    mock_supabase_store._client = None
     _override_deep_agent_auth(client.app)
 
     try:

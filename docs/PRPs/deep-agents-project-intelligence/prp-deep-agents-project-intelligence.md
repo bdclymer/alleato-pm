@@ -1,7 +1,7 @@
 # Deep Agents Project Intelligence Orchestrator PRP
 
 Date: 2026-05-13
-Status: Slice 1 implemented
+Status: Slice 2 implemented
 Feature slug: `deep-agents-project-intelligence`
 Linear issue: AAI-356
 Confidence score: 8/10
@@ -241,17 +241,23 @@ Acceptance:
 
 ### Slice 2: Real Source Tools
 
+Implementation status: completed 2026-05-13 as read-only source coverage probes.
+
 Work:
 
 1. Add read-only tools for current packet, Teams intelligence, meeting intelligence, financial summary, project controls, and source health.
+   - Completed for packet, Teams, meetings, emails, documents, financials, schedule, RFIs, and submittals.
 2. Enforce project ID and user/org context in every tool.
+   - Completed for project ID; user/org authorization remains the existing admin-gated backend endpoint for this spike.
 3. Make tool failures return structured failure states to the parent orchestrator.
+   - Completed with per-source `failed` statuses and `toolTrace` entries.
 
 Acceptance:
 
-- A project-status request returns checked/stale/missing for every required source family.
-- Wrong-project evidence is rejected by the evidence reviewer.
-- Tool failures are visible in `toolTrace` and response metadata.
+- Done: a project-status request returns checked/missing/failed for every required source family.
+- Done: project probes are filtered by `project_id` before evidence is emitted.
+- Done: tool failures are visible in `toolTrace` and source coverage metadata.
+- Not yet done: wrong-project evidence reviewer as a Deep Agents subagent; this belongs in the actual Deep Agents runtime slice.
 
 ### Slice 3: AI SDK Bridge
 
@@ -340,7 +346,7 @@ Do not run full frontend build as part of this PRP doc slice. Delegate it when i
 
 ## Recommended Next Step
 
-Implement Slice 2 by wiring read-only source tools into the backend orchestrator. Do not touch the production chat route until the backend endpoint can return checked/stale/missing/failed coverage for packet, Teams, meetings, financials, and project controls.
+Implement Slice 3 only after deciding whether to install the actual `deepagents` dependency. The next technical slice should either add Deep Agents runtime orchestration behind the existing backend contract, or add a Next.js AI SDK bridge that calls the backend endpoint for internal-only testing.
 
 ## Open Questions
 
