@@ -1,7 +1,7 @@
 # Deep Agents Project Intelligence Orchestrator PRP
 
 Date: 2026-05-13
-Status: Architecture PRP
+Status: Slice 1 implemented
 Feature slug: `deep-agents-project-intelligence`
 Linear issue: AAI-356
 Confidence score: 8/10
@@ -206,18 +206,22 @@ Each subagent should return concise structured results, not raw tool output. The
 
 ### Slice 1: Architecture Spike
 
+Implementation status: completed 2026-05-13 as a backend-only contract spike.
+
 Files:
 
 - `backend/src/services/agents/deep_project_intelligence.py`
 - `backend/src/services/agents/deep_project_intelligence_contracts.py`
 - `backend/src/api/main.py`
-- `backend/requirements.txt`
+- `backend/tests/test_deep_project_intelligence.py`
 - `docs/PRPs/deep-agents-project-intelligence/**`
 
 Work:
 
 1. Add `deepagents` and required LangGraph/LangChain packages only after confirming compatibility with the existing backend dependencies.
+   - Slice 1 did not add the dependency yet; the contract was proven first to avoid framework churn.
 2. Create a backend-only orchestrator module with a mocked model/tool path first.
+   - Completed with `build_project_status_contract_spike(...)`.
 3. Add one internal endpoint, gated behind an environment flag:
 
 ```text
@@ -225,13 +229,15 @@ POST /api/intelligence/deep-agent/project-status
 ```
 
 4. Return the pilot response contract even if the first implementation uses deterministic service calls around the agent harness.
+   - Completed with `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true` gate and Pydantic response models.
 
 Acceptance:
 
-- Endpoint can run locally without touching the Next.js chat route.
-- Response validates against a typed Pydantic schema.
-- Missing packet/source coverage is explicit in response, not hidden.
-- No production chat behavior changes.
+- Done: endpoint can run locally without touching the Next.js chat route.
+- Done: response validates against a typed Pydantic schema.
+- Done: missing packet/source coverage is explicit in response, not hidden.
+- Done: no production chat behavior changes.
+- Done: project lookup failure returns a loud 404 instead of generic synthesis.
 
 ### Slice 2: Real Source Tools
 
@@ -334,7 +340,7 @@ Do not run full frontend build as part of this PRP doc slice. Delegate it when i
 
 ## Recommended Next Step
 
-Implement Slice 1 as a backend-only spike. Do not touch the production chat route until the backend endpoint can return a valid structured packet for one project and one advisory question.
+Implement Slice 2 by wiring read-only source tools into the backend orchestrator. Do not touch the production chat route until the backend endpoint can return checked/stale/missing/failed coverage for packet, Teams, meetings, financials, and project controls.
 
 ## Open Questions
 

@@ -42,6 +42,10 @@ from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from src.services.pipeline import run_full_pipeline
 from src.api.admin_endpoints import require_admin_api_key
+from src.services.agents.deep_project_intelligence import build_project_status_contract_spike
+from src.services.agents.deep_project_intelligence_contracts import (
+    DeepProjectIntelligenceRequest,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -724,6 +728,10 @@ class OperatingSummaryRefreshRequest(BaseModel):
     model: Optional[str] = None
 
 
+def _env_flag_enabled(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).lower() in ("1", "true", "yes")
+
+
 @app.post("/api/pipeline/process", tags=["Ingestion"], summary="Run full RAG pipeline for a document")
 async def pipeline_process_endpoint(
     payload: PipelineProcessRequest,
@@ -904,6 +912,37 @@ async def refresh_project_operating_summary(
             status_code=500,
             detail=f"Operating summary refresh failed for project {request.project_id}: {exc}",
         ) from exc
+
+
+@app.post(
+    "/api/intelligence/deep-agent/project-status",
+    tags=["Intelligence"],
+    summary="Run Deep Agents project-status contract spike",
+)
+async def run_deep_agent_project_status(
+    request: DeepProjectIntelligenceRequest,
+    _: None = Depends(require_admin_api_key),
+    store: SupabaseRagStore = Depends(get_rag_store),
+) -> Dict[str, Any]:
+    """Return a typed Deep Agents-ready project intelligence packet.
+
+    This endpoint is gated while Slice 1 proves the backend contract. It does
+    not change production chat behavior or run long agent workflows.
+    """
+    if not _env_flag_enabled("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED"):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Deep Agents project intelligence is disabled. Set "
+                "DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true to run the "
+                "backend contract spike."
+            ),
+        )
+
+    response = build_project_status_contract_spike(request, store)
+    if response.tool_trace and response.tool_trace[0].status == "failed":
+        raise HTTPException(status_code=404, detail=response.answer)
+    return response.model_dump(by_alias=True)
 
 
 @app.get("/api/intelligence/compiler/status", tags=["Intelligence"], summary="AI intelligence compiler status")
