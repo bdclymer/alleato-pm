@@ -50,7 +50,7 @@
 - PASS: `npm run rag:verify:deep-agents-nonprod` verifies Render manifest default-off flags, active backend health, endpoint state, and Render API service-mapping drift.
 - FAIL deployment mapping: `RENDER_API_KEY` currently does not expose the active `alleato-backend-rbnj` service; do not mutate backend env vars through any other backend service record.
 - PASS: `npm run verify:active-backend-url` now scans tracked docs/code plus local `.vercel`, `frontend/.vercel`, `frontend/.env.local`, `.claude`, and `claude-memory-compiler-main`; only `alleato-backend-rbnj.onrender.com` is allowed for Render backend URLs.
-- PASS: hidden/no-ignore scan found no remaining `3mmq` or `alleato-pm-1.onrender.com` references after cleanup.
+- PASS: hidden/no-ignore scan found no remaining stale Render backend host references after cleanup.
 - PASS: Vercel env values for `NEXT_PUBLIC_AGENT_ENDPOINT`, `PYTHON_BACKEND_URL`, and `BACKEND_URL` were reset to `https://alleato-backend-rbnj.onrender.com` for production, development, preview, and preview `staging`; temp pulls for production/preview/staging found no stale backend host strings.
 - FAIL expected: `npm run rag:verify:deep-agents-nonprod` now refuses to pass while the local `RENDER_API_KEY` cannot see the active `alleato-backend-rbnj` service.
 - WARN existing provider debt: `node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs` exited 0 and refreshed `docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json`, but the artifact currently reports `supportsToolCalling=false`; gateway `generateText` passed, direct OpenAI quota failed, and streamText paths did not produce a passing tool-call result.
