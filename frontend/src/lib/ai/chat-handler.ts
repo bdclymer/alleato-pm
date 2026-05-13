@@ -3896,6 +3896,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
     }
     const personalDailyBriefRequest = isPersonalDailyBriefRequest(lastUserContent);
     const personalTaskRegisterRequest = isPersonalTaskRegisterRequest(lastUserContent);
+    const featureRequestPacketRequest = shouldCaptureFeatureRequest(lastUserContent);
     const signedInBriefIdentity = personalDailyBriefRequest
       ? await loadSignedInBriefIdentity({
           supabase,
@@ -3962,6 +3963,129 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           message: "Reading conversation memory and project context",
           status: "loading",
         });
+
+        if (featureRequestPacketRequest) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Capturing the request packet",
+            status: "loading",
+          });
+
+          const captureResult = await withTimeout(
+            (async () => {
+              const featureRequest = await captureFeatureRequestFromChat({
+                rawRequest: lastUserContent,
+                requesterName: (user.email ?? "").toLowerCase().includes("brandon")
+                  ? "Brandon"
+                  : user.email ?? "Stakeholder",
+                requesterUserId: user.id,
+                selectedProjectId: selectedProjectId ?? null,
+                sourceSessionId: sessionId,
+                sourceMessageId: lastUserMessage?.id ?? null,
+              });
+              const detail = await getFeatureRequestDetail(featureRequest.id);
+              return {
+                featureRequest,
+                dataParts: writeAssistantWidgetParts(
+                  writer,
+                  [
+                    buildFeatureRequestPacketWidget({
+                      request: featureRequest,
+                      latestPlan: detail?.latestPlan ?? null,
+                    }),
+                  ],
+                ),
+              };
+            })(),
+            18_000,
+            "Feature request packet capture timed out before a durable packet could be confirmed.",
+          );
+
+          let content: string;
+          let dataParts: PersistedDataPart[] = [];
+          if (isTimeoutResult(captureResult)) {
+            content = [
+              "I could not confirm that the request packet was captured before the timeout guard fired.",
+              "What happened: the packet write did not finish within the assistant route's fast-response budget.",
+              "Next step: retry the request. If it times out again, check Supabase writes for `feature_requests` and `feature_request_events`.",
+            ].join("\n\n");
+            toolTrace.push({
+              tool: "featureRequestPacketRouter",
+              input: {
+                selectedProjectId: selectedProjectId ?? null,
+                message: lastUserContent.slice(0, 240),
+              },
+              error: captureResult.error,
+              timestamp: new Date().toISOString(),
+            });
+          } else {
+            const { featureRequest } = captureResult;
+            dataParts = captureResult.dataParts;
+            content = [
+              `Captured the request packet: ${featureRequest.title}.`,
+              `Packet: /ai-assistant/feature-requests/${featureRequest.id}`,
+              "I stopped at packet capture so this turn does not time out while also generating plans, Linear drafts, or handoffs.",
+              "Next step: open the packet, then run the implementation-plan/Linear/handoff actions from the packet widget when the scope is ready.",
+            ].join("\n\n");
+            toolTrace.push({
+              tool: "featureRequestPacketRouter",
+              input: {
+                selectedProjectId: selectedProjectId ?? null,
+                message: lastUserContent.slice(0, 240),
+              },
+              output: {
+                requestId: featureRequest.id,
+                status: featureRequest.status,
+                readyForBuild: featureRequest.ready_for_build,
+                missingRequirements: featureRequest.readiness_missing_requirements,
+                deterministicFastPath: true,
+              },
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            dataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          await writeTextResponse(writer, "strategist-feature-request-packet", content);
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: isTimeoutResult(captureResult) ? "Packet capture timed out" : "Request packet captured",
+            status: isTimeoutResult(captureResult) ? "warning" : "success",
+          });
+          return;
+        }
 
         const isTaskWriteIntent = assistantIntent === "task_write";
         const isLeanAdvisorIntent = LEAN_ADVISOR_INTENTS.has(assistantIntent);
@@ -4502,57 +4626,6 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             selectedProjectId,
           }),
         ];
-
-        if (shouldCaptureFeatureRequest(lastUserContent)) {
-          try {
-            const featureRequest = await captureFeatureRequestFromChat({
-              rawRequest: lastUserContent,
-              requesterName: (user.email ?? "").toLowerCase().includes("brandon")
-                ? "Brandon"
-                : user.email ?? "Stakeholder",
-              requesterUserId: user.id,
-              selectedProjectId: selectedProjectId ?? null,
-              sourceSessionId: sessionId,
-              sourceMessageId: lastUserMessage?.id ?? null,
-            });
-            const detail = await getFeatureRequestDetail(featureRequest.id);
-            plannedWidgets.push(
-              buildFeatureRequestPacketWidget({
-                request: featureRequest,
-                latestPlan: detail?.latestPlan ?? null,
-              }),
-            );
-            toolTrace.push({
-              tool: "featureRequestPacketRouter",
-              input: {
-                selectedProjectId: selectedProjectId ?? null,
-                message: lastUserContent.slice(0, 240),
-              },
-              output: {
-                requestId: featureRequest.id,
-                status: featureRequest.status,
-                readyForBuild: featureRequest.ready_for_build,
-                missingRequirements: featureRequest.readiness_missing_requirements,
-              },
-              timestamp: new Date().toISOString(),
-            });
-          } catch (featureRequestError) {
-            const errorMessage =
-              featureRequestError instanceof Error
-                ? featureRequestError.message
-                : String(featureRequestError);
-            toolTrace.push({
-              tool: "featureRequestPacketRouter",
-              input: {
-                selectedProjectId: selectedProjectId ?? null,
-                message: lastUserContent.slice(0, 240),
-              },
-              error: errorMessage,
-              timestamp: new Date().toISOString(),
-            });
-            throw new Error(`Feature request packet capture failed: ${errorMessage}`);
-          }
-        }
 
         const assistantWidgetDataParts = writeAssistantWidgetParts(
           writer,
