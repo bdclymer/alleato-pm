@@ -1,11 +1,14 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
+import {
+  isAlleatoEstimateWorkbook,
+  parseAlleatoEstimateWorkbook,
+  toBudgetImportRows,
+} from "@/lib/budget/estimate-workbook-import";
 
 interface BudgetRow {
   "Cost Code": string;
@@ -17,6 +20,8 @@ interface BudgetRow {
   "Budget Amount": number;
   // Support alternative column names for flexibility
   "Original Budget"?: number;
+  "__sourceSheet"?: string;
+  "__sourceRow"?: number;
 }
 
 interface ImportResult {
@@ -111,6 +116,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     // Validate file type - support both Excel and CSV
     const isExcel = file.name.endsWith(".xlsx") ||
+      file.name.endsWith(".xlsm") ||
       file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     const isCsv = file.name.endsWith(".csv") ||
       file.type === "text/csv" ||
@@ -118,7 +124,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     if (!isExcel && !isCsv) {
       return NextResponse.json(
-        { error: "Invalid file type. Please upload an Excel (.xlsx) or CSV (.csv) file" },
+        { error: "Invalid file type. Please upload an Excel (.xlsx/.xlsm) or CSV (.csv) file" },
         { status: 400 },
       );
     }
@@ -142,7 +148,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       const workbook = XLSX.read(buffer, { type: "buffer" });
       const worksheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[worksheetName];
-      rows = XLSX.utils.sheet_to_json<BudgetRow>(worksheet, { defval: "" });
+      if (isAlleatoEstimateWorkbook(workbook)) {
+        rows = toBudgetImportRows(parseAlleatoEstimateWorkbook(workbook)) as BudgetRow[];
+      } else {
+        rows = XLSX.utils.sheet_to_json<BudgetRow>(worksheet, { defval: "" });
+      }
     }
 
     if (rows.length === 0) {
@@ -208,24 +218,27 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     // Process each row
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const rowNum = i + 2; // +2 because Excel is 1-indexed and has header row
+      const rowNum = row.__sourceRow ?? i + 2; // +2 because Excel is 1-indexed and has header row
+      const rowContext = row.__sourceSheet
+        ? `${row.__sourceSheet} row ${rowNum}`
+        : `Row ${rowNum}`;
 
       try {
         // Skip empty rows
         if (!row["Cost Code"] && !row["Cost Type"] && !getBudgetAmount(row)) {
           skippedRows++;
-          warnings.push(`Row ${rowNum}: Skipped empty row`);
+          warnings.push(`${rowContext}: Skipped empty row`);
           continue;
         }
 
         // Validate required fields
         if (!row["Cost Code"] || String(row["Cost Code"]).trim() === "") {
-          errors.push(`Row ${rowNum}: Cost Code is required`);
+          errors.push(`${rowContext}: Cost Code is required`);
           continue;
         }
 
         if (!row["Cost Type"] || String(row["Cost Type"]).trim() === "") {
-          errors.push(`Row ${rowNum}: Cost Type is required`);
+          errors.push(`${rowContext}: Cost Type is required`);
           continue;
         }
 
@@ -233,7 +246,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         const costTypeCode = String(row["Cost Type"]).trim().toUpperCase();
         if (!VALID_COST_TYPES.includes(costTypeCode as (typeof VALID_COST_TYPES)[number])) {
           errors.push(
-            `Row ${rowNum}: Invalid Cost Type "${row["Cost Type"]}". Must be one of: ${VALID_COST_TYPES.join(", ")}`,
+            `${rowContext}: Invalid Cost Type "${row["Cost Type"]}". Must be one of: ${VALID_COST_TYPES.join(", ")}`,
           );
           continue;
         }
@@ -247,7 +260,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
         if (costTypeError || !costType) {
           errors.push(
-            `Row ${rowNum}: Cost Type "${costTypeCode}" not found`,
+            `${rowContext}: Cost Type "${costTypeCode}" not found`,
           );
           continue;
         }
@@ -284,7 +297,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
             if (!divisionId) {
               errors.push(
-                `Row ${rowNum}: Could not determine division for cost code "${finalCostCodeId}"`,
+                `${rowContext}: Could not determine division for cost code "${finalCostCodeId}"`,
               );
               continue;
             }
@@ -302,13 +315,13 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
             if (createCostCodeError && createCostCodeError.code !== "23505") {
               errors.push(
-                `Row ${rowNum}: Failed to create cost code "${finalCostCodeId}": ${createCostCodeError.message}`,
+                `${rowContext}: Failed to create cost code "${finalCostCodeId}": ${createCostCodeError.message}`,
               );
               continue;
             }
 
             warnings.push(
-              `Row ${rowNum}: Created missing cost code "${finalCostCodeId}"`,
+              `${rowContext}: Created missing cost code "${finalCostCodeId}"`,
             );
           }
 
@@ -330,7 +343,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
               if (reactivateError) {
                 errors.push(
-                  `Row ${rowNum}: Failed to reactivate project budget code "${finalCostCodeId}.${costTypeCode}": ${reactivateError.message}`,
+                  `${rowContext}: Failed to reactivate project budget code "${finalCostCodeId}.${costTypeCode}": ${reactivateError.message}`,
                 );
                 continue;
               }
@@ -354,13 +367,13 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
             if (createProjectBudgetCodeError && createProjectBudgetCodeError.code !== "23505") {
               errors.push(
-                `Row ${rowNum}: Failed to create project budget code "${finalCostCodeId}.${costTypeCode}": ${createProjectBudgetCodeError.message}`,
+                `${rowContext}: Failed to create project budget code "${finalCostCodeId}.${costTypeCode}": ${createProjectBudgetCodeError.message}`,
               );
               continue;
             }
 
             warnings.push(
-              `Row ${rowNum}: Added project budget code "${finalCostCodeId}.${costTypeCode}"`,
+              `${rowContext}: Added project budget code "${finalCostCodeId}.${costTypeCode}"`,
             );
           }
         }
@@ -372,7 +385,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
         // Validate budget amount
         if (budgetAmount <= 0) {
-          warnings.push(`Row ${rowNum}: Budget amount is ${budgetAmount}. Line item will be created but may need review.`);
+          warnings.push(`${rowContext}: Budget amount is ${budgetAmount}. Line item will be created but may need review.`);
         }
 
         // Prepare budget line item data
@@ -395,14 +408,14 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           .single();
 
         if (insertError) {
-          errors.push(`Row ${rowNum}: ${insertError.message}`);
+          errors.push(`${rowContext}: ${insertError.message}`);
           continue;
         }
 
         importedItems.push(insertedItem);
       } catch (rowError) {
         errors.push(
-          `Row ${rowNum}: ${rowError instanceof Error ? rowError.message : "Unknown error"}`,
+          `${rowContext}: ${rowError instanceof Error ? rowError.message : "Unknown error"}`,
         );
       }
     }
