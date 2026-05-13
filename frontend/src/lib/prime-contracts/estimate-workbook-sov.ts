@@ -13,7 +13,7 @@ export interface EstimateWorkbookImportRow {
   unitQty: number | null;
   unitOfMeasure: string | null;
   unitCost: number | null;
-  includeInBudget: boolean;
+  includeInPrimeContract: boolean;
   includeInOwnerSov: boolean;
   warnings: string[];
 }
@@ -25,19 +25,6 @@ export interface EstimateWorkbookImportPreview {
   totalBudgetAmount: number;
   warnings: string[];
   sheets: string[];
-}
-
-export interface BudgetImportRow {
-  "Cost Code": string;
-  "Cost Type": string;
-  Description?: string;
-  "Unit Qty"?: number | string;
-  UOM?: string;
-  "Unit Cost"?: number | string;
-  "Budget Amount": number;
-  "Original Budget"?: number;
-  "__sourceSheet"?: string;
-  "__sourceRow"?: number;
 }
 
 const COST_TYPE_BY_LABEL: Record<string, string> = {
@@ -155,7 +142,7 @@ function parseGeneralConditions(workbook: WorkBook): {
       unitQty: getNumber(sheet, `F${rowNumber}`),
       unitOfMeasure: getString(sheet, `G${rowNumber}`) || null,
       unitCost: getNumber(sheet, `H${rowNumber}`),
-      includeInBudget: Boolean(costTypeCode),
+      includeInPrimeContract: Boolean(costTypeCode),
       includeInOwnerSov: Boolean(costTypeCode && budgetAmount > 0),
       warnings: rowWarnings,
     });
@@ -229,7 +216,7 @@ function parseDetails(workbook: WorkBook): {
       unitQty: null,
       unitOfMeasure: null,
       unitCost: null,
-      includeInBudget: Boolean(costTypeCode),
+      includeInPrimeContract: Boolean(costTypeCode),
       includeInOwnerSov: Boolean(costTypeCode && budgetAmount > 0),
       warnings: rowWarnings,
     });
@@ -246,7 +233,7 @@ export function parseAlleatoEstimateWorkbook(workbook: WorkBook): EstimateWorkbo
   const generalConditions = parseGeneralConditions(workbook);
   const details = parseDetails(workbook);
   const rows = [...generalConditions.rows, ...details.rows];
-  const importableRows = rows.filter((row) => row.includeInBudget);
+  const importableRows = rows.filter((row) => row.includeInPrimeContract);
 
   return {
     kind: "alleato_estimate_workbook",
@@ -256,23 +243,4 @@ export function parseAlleatoEstimateWorkbook(workbook: WorkBook): EstimateWorkbo
     warnings: [...generalConditions.warnings, ...details.warnings],
     sheets: workbook.SheetNames,
   };
-}
-
-export function toBudgetImportRows(preview: EstimateWorkbookImportPreview): BudgetImportRow[] {
-  return preview.rows
-    .filter((row) => row.includeInBudget)
-    .map((row) => ({
-      "Cost Code": row.costCode,
-      "Cost Type": row.costTypeCode,
-      Description: row.workDescription
-        ? `${row.description} - ${row.workDescription}`
-        : row.description,
-      "Unit Qty": row.unitQty ?? "",
-      UOM: row.unitOfMeasure ?? "",
-      "Unit Cost": row.unitCost ?? "",
-      "Budget Amount": row.budgetAmount,
-      "Original Budget": row.budgetAmount,
-      "__sourceSheet": row.sourceSheet,
-      "__sourceRow": row.rowNumber,
-    }));
 }

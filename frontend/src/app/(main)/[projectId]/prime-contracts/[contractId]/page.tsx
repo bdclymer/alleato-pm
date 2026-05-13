@@ -52,6 +52,7 @@ import {
 
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
+import { PrimeContractEstimateImportModal } from "./components/PrimeContractEstimateImportModal";
 import { ContractForm } from "@/components/domain/contracts";
 import { RelatedItemsTab } from "@/components/commitments/tabs/RelatedItemsTab";
 import {
@@ -192,6 +193,7 @@ export default function ProjectContractDetailPage() {
   const [isSubmittingLineItem, setIsSubmittingLineItem] = useState(false);
   const [lineItemToDelete, setLineItemToDelete] = useState<ContractLineItem | null>(null);
   const [isDeletingLineItem, setIsDeletingLineItem] = useState(false);
+  const [showEstimateImportModal, setShowEstimateImportModal] = useState(false);
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = useState(false);
   const [budgetCodeCreateTarget, setBudgetCodeCreateTarget] = useState<BudgetCodeCreateTarget | null>(null);
 
@@ -977,6 +979,7 @@ export default function ProjectContractDetailPage() {
             onAddSovLine={sov.handleAddSovLine} onAddSovGroup={sov.handleAddSovGroup} onUpdateSovLine={sov.handleUpdateSovLine}
             onUpdateSovLineBudgetCode={sov.handleUpdateSovLineBudgetCode} onRemoveSovLine={sov.handleRemoveSovLine} onReorderSovLines={sov.handleReorderSovLines}
             onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine} onDeleteSovLine={sov.handleDeleteSovLine}
+            onImportEstimateToSov={() => setShowEstimateImportModal(true)}
           />
         )}
 
@@ -1001,6 +1004,7 @@ export default function ProjectContractDetailPage() {
             onReorderSovLines={sov.handleReorderSovLines}
             onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine}
             onDeleteSovLine={sov.handleDeleteSovLine}
+            onImportEstimateToSov={() => setShowEstimateImportModal(true)}
             invoicedAmount={contract.invoiced_amount}
           />
         )}
@@ -1151,6 +1155,15 @@ export default function ProjectContractDetailPage() {
           recordType="prime-contract" recordId={contract.id} number={contract.contract_number || "Prime Contract"} title={contract.title}
         />
       ) : null}
+      <PrimeContractEstimateImportModal
+        open={showEstimateImportModal}
+        onOpenChange={setShowEstimateImportModal}
+        projectId={projectId}
+        contractId={contractId}
+        budgetCodes={budgetCodes}
+        existingLineItems={lineItems}
+        onImported={(items) => setLineItems((prev) => [...prev, ...items])}
+      />
       {ConfirmDialog}
     </PageShell>
   );

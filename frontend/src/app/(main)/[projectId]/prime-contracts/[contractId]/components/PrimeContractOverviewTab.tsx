@@ -7,6 +7,7 @@ import {
   Plus,
   Rows3,
   Trash2,
+  Upload,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, type ReactNode } from "react";
@@ -102,6 +103,7 @@ interface PrimeContractOverviewTabProps {
   onReorderSovLines: (oldIndex: number, newIndex: number) => void;
   onRequestCreateBudgetCode: (lineId: string) => void;
   onDeleteSovLine?: (lineId: string) => Promise<void>;
+  onImportEstimateToSov?: () => void;
 }
 
 export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
@@ -137,6 +139,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     onReorderSovLines,
     onRequestCreateBudgetCode,
     onDeleteSovLine,
+    onImportEstimateToSov,
   } = props;
   const ownerName = contract.contract_company?.name || contract.client?.name;
   const displayedSovItems = isSovEditing ? sovDraftItems : lineItems;
@@ -776,6 +779,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   <Rows3 className="mr-2 h-4 w-4" />
                   Group
                 </DropdownMenuItem>
+                {onImportEstimateToSov ? (
+                  <DropdownMenuItem onClick={onImportEstimateToSov}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Estimate Workbook
+                  </DropdownMenuItem>
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
