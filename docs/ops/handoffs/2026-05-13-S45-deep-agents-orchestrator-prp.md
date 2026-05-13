@@ -37,6 +37,10 @@
 - PASS: local backend contract smoke on `http://127.0.0.1:8051/api/intelligence/deep-agent/project-status` returned `200`, `mode=contract_spike`, project 43, five checked source categories, and 10 evidence rows.
 - PASS: local frontend bridge smoke with `BACKEND_URL=http://127.0.0.1:8051` and `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` returned `enabled=true`, `mode=contract_spike`, source evidence widget type `source_evidence_drawer`, and guardrail context present.
 - WARN provider quota: local backend runtime smoke with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents` reached `deepagents_runtime` but fell back to `contract_spike` because direct OpenAI returned 429 `insufficient_quota`.
+- PASS: `curl -s https://ai-gateway.vercel.sh/v1/models | jq -r '[.data[] | select(.id | startswith("openai/")) | .id] | reverse | .[]' | head -40` confirmed `openai/gpt-5.4-mini` is available through AI Gateway.
+- PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_deep_project_intelligence.py -q` after AI Gateway model resolution (`14 passed`)
+- PASS: `PYTHONPATH=backend backend/.venv/bin/python -m py_compile backend/src/services/agents/deep_project_intelligence.py backend/src/services/agents/deep_project_intelligence_contracts.py backend/src/api/main.py backend/tests/test_deep_project_intelligence.py`
+- PASS: local backend/frontend bridge smoke with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini`, `BACKEND_URL=http://127.0.0.1:8051`, and `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` returned `mode=deep_agents`, `sourceCount=9`, `evidenceCount=11`, and successful `deepagents_runtime` trace; backend logs confirmed AI Gateway `/v1/chat/completions` returned HTTP 200.
 - WARN existing provider debt: `node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs` exited 0 and refreshed `docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json`, but the artifact currently reports `supportsToolCalling=false`; gateway `generateText` passed, direct OpenAI quota failed, and streamText paths did not produce a passing tool-call result.
 - FAIL unrelated auth dependency: `npm run rag:verify:assistant-routing` failed in setup before route assertions because Supabase Auth timed out during `listUsers` after 30000ms in `frontend/tests/auth.setup.ts`.
 - WARN unrelated environment debt: backend `.venv` emits `RequestsDependencyWarning` for `urllib3`/`chardet` or `charset_normalizer` version mismatch.
@@ -53,8 +57,8 @@
 9) Top 3 findings (frontend-visible issues first):
 - Deep Agents should not replace AI SDK UI/chat transport; it should be evaluated as a backend orchestration harness for complex project-intelligence workflows.
 - Current repo evidence already has packet-first intelligence and AI SDK tool loops, but the product contract is distributed across route branches, fallbacks, and quality checks.
-- Slice 3B now adds a feature-gated AI SDK bridge that calls the backend Deep Agents packet for selected-project owner-status/risk intents without moving LangChain into frontend code.
-10) Recommended next action (one line): Route the backend Deep Agents runtime through a quota-backed provider path, then rerun the selected-project status prompt end to end.
+- Slice 3B now adds a feature-gated AI SDK bridge that calls the backend Deep Agents packet for selected-project owner-status/risk intents without moving LangChain into frontend code; local Deep Agents runtime now succeeds through AI Gateway.
+10) Recommended next action (one line): Deploy the runtime and bridge flags to non-production, then run one authenticated selected-project owner-status prompt through `/api/ai-assistant/chat`.
 11) Handoff file path: `docs/ops/handoffs/2026-05-13-S45-deep-agents-orchestrator-prp.md`
 12) Migration ledger evidence: Not applicable; no migration created.
 
@@ -63,6 +67,7 @@
 - Kickoff comment: Posted to AAI-356, comment id `4f16e521-7217-405d-8089-26cace8d2657`.
 - Milestone comments: Completion comment posted after PRP/checks, comment id `331fa6a6-ff7d-4047-9929-725a6f57a99c`.
 - Completion/blocker comment: Pending Review comment posted after validation, comment id `331fa6a6-ff7d-4047-9929-725a6f57a99c`.
+- AI Gateway runtime update: Posted after local Deep Agents runtime succeeded through AI Gateway, comment id `2a2c0fcc-29d3-424c-abb7-20d4939dcfbb`.
 
 ## Current Status
 
@@ -105,12 +110,14 @@ Implemented Slice 3B as a feature-gated AI SDK bridge:
 - Verified the bridge against a local backend: project 43 returned a typed packet with checked packet/Teams/email/financial/schedule sources and 10 evidence rows.
 - Hardened backend project lookup so Supabase/schema-cache failures return a structured low-confidence packet with failed `project_lookup` trace instead of a generic 500.
 - Verified installed Deep Agents runtime handoff behavior: when direct OpenAI quota fails, `deepagents_runtime` is recorded as failed and the endpoint still returns the contract packet.
+- Routed runtime model creation through AI Gateway when `AI_GATEWAY_API_KEY` is present, with direct OpenAI retained only as a fallback.
+- Verified local Deep Agents runtime against AI Gateway: project 43 returned `mode=deep_agents`, nine source categories, 11 evidence rows, and a successful `deepagents_runtime` trace.
 
 Known ledger issue: local `session-board.md` already has an older S44 row using `AAI-356` for Source Sync drill-in work. The live Linear issue created for this session is also `AAI-356`. This is recorded as a ledger collision risk rather than hidden.
 
 ## Exact Next Step
 
-Route `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL` through a quota-backed provider path, keep `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, and `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` only in non-production, then rerun one real selected-project owner-status prompt end to end.
+Deploy `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini`, `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, and the AI Gateway/backend auth env only in non-production, then rerun one real selected-project owner-status prompt end to end through the app.
 
 ## Known Pitfalls
 

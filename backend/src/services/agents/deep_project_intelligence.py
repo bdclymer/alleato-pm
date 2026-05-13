@@ -7,6 +7,7 @@ context and returns explicit source coverage gaps instead of generic synthesis.
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
@@ -35,6 +36,8 @@ REQUIRED_SOURCE_TYPES = (
 
 DEEP_AGENT_RUNTIME_MODE = "deep_agents"
 CONTRACT_SPIKE_MODE = "contract_spike"
+AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
+
 
 class _SourceProbe:
     def __init__(
@@ -519,6 +522,43 @@ def _extract_agent_text(result: Any) -> str:
     return str(result or "").strip()
 
 
+def _openai_model_name(model: str, *, gateway: bool) -> str:
+    normalized = model.strip()
+    if normalized.startswith("openai:"):
+        normalized = normalized.split(":", 1)[1]
+    if gateway:
+        return normalized if normalized.startswith("openai/") else f"openai/{normalized}"
+    return normalized.split("/", 1)[1] if normalized.startswith("openai/") else normalized
+
+
+def _resolve_deep_agents_model(model: Any) -> Any:
+    if not isinstance(model, str):
+        return model
+
+    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if gateway_key:
+        from langchain_openai import ChatOpenAI
+
+        return ChatOpenAI(
+            model=_openai_model_name(model, gateway=True),
+            api_key=gateway_key,
+            base_url=AI_GATEWAY_BASE_URL,
+            timeout=45,
+            max_retries=1,
+        )
+    if openai_key:
+        from langchain_openai import ChatOpenAI
+
+        return ChatOpenAI(
+            model=_openai_model_name(model, gateway=False),
+            api_key=openai_key,
+            timeout=45,
+            max_retries=1,
+        )
+    return model
+
+
 def _run_deep_agents_runtime(
     request: DeepProjectIntelligenceRequest,
     project: DeepProject,
@@ -532,6 +572,7 @@ def _run_deep_agents_runtime(
     try:
         if create_agent is None:
             from deepagents import create_deep_agent as create_agent
+            model = _resolve_deep_agents_model(model)
 
         def source_coverage() -> str:
             """Return source coverage already collected by Alleato read-only probes."""

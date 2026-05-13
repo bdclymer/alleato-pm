@@ -5,6 +5,8 @@ import pytest
 from src.services.agents.deep_project_intelligence import (
     REQUIRED_SOURCE_TYPES,
     build_project_status_contract_spike,
+    _openai_model_name,
+    _resolve_deep_agents_model,
 )
 from src.services.agents.deep_project_intelligence_contracts import (
     DeepProjectIntelligenceRequest,
@@ -290,6 +292,31 @@ def test_deep_agents_runtime_invokes_installed_graph_with_bindable_model(monkeyp
     assert response.answer == "Installed Deep Agents graph synthesized checked packet coverage."
     assert response.tool_trace[-1].tool == "deepagents_runtime"
     assert response.tool_trace[-1].status == "success"
+
+
+def test_deep_agents_runtime_prefers_ai_gateway_model(monkeypatch):
+    monkeypatch.setenv("AI_GATEWAY_API_KEY", "gateway-test-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "direct-test-key")
+
+    model = _resolve_deep_agents_model("openai:gpt-5.4-mini")
+
+    assert getattr(model, "model_name") == "openai/gpt-5.4-mini"
+    assert str(getattr(model, "openai_api_base")) == "https://ai-gateway.vercel.sh/v1"
+
+
+def test_deep_agents_runtime_direct_openai_model_normalization(monkeypatch):
+    monkeypatch.delenv("AI_GATEWAY_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "direct-test-key")
+
+    model = _resolve_deep_agents_model("openai/gpt-5.4-mini")
+
+    assert getattr(model, "model_name") == "gpt-5.4-mini"
+
+
+def test_openai_model_name_normalizes_langchain_and_gateway_formats():
+    assert _openai_model_name("openai:gpt-5.4-mini", gateway=True) == "openai/gpt-5.4-mini"
+    assert _openai_model_name("openai/gpt-5.4-mini", gateway=False) == "gpt-5.4-mini"
+    assert _openai_model_name("gpt-5.4-mini", gateway=True) == "openai/gpt-5.4-mini"
 
 
 def test_deep_agents_runtime_failure_falls_back_to_contract_answer():

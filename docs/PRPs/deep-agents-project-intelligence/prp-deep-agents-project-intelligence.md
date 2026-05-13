@@ -308,9 +308,10 @@ Acceptance:
 - Done: backend-call failures are recorded in `toolTrace` and surfaced as warning status before falling back to current packet/tools.
 - Done: local frontend bridge smoke against a local backend returned a typed packet for project 43 with five checked source categories, 10 evidence rows, and an existing `source_evidence_drawer` widget.
 - Done: backend project-lookup dependency failures now return a typed low-confidence packet with failed `project_lookup` trace instead of a generic FastAPI 500.
+- Done: backend Deep Agents runtime now prefers `AI_GATEWAY_API_KEY`, normalizes `gpt-5.4-mini` and `openai:gpt-5.4-mini` to the AI Gateway `openai/gpt-5.4-mini` model path, and falls back to direct OpenAI only when the gateway key is absent.
+- Done: local runtime smoke with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini`, and the frontend bridge enabled returned `mode=deep_agents`, `sourceCount=9`, `evidenceCount=11`, and a successful `deepagents_runtime` trace.
 - Current environment caveat: provider-matrix verification completed but still reports streaming tool-call provider debt, and assistant-routing Playwright verification is blocked by Supabase Auth setup timeout before route tests run.
-- Current provider caveat: local `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents` reached the installed runtime but fell back to `contract_spike` because direct OpenAI returned quota error 429.
-- Not yet done: real non-production provider request through Render/FastAPI with a provider path that has quota.
+- Not yet done: deploy the feature flags/env to non-production Render/Vercel and run the full authenticated `/api/ai-assistant/chat` selected-project owner-status prompt in the app.
 
 ### Slice 4: Memory Governance
 
@@ -387,7 +388,7 @@ Do not run full frontend build as part of this PRP doc slice. Delegate it when i
 
 ## Recommended Next Step
 
-Implement Slice 3 only after deciding whether to install the actual `deepagents` dependency. The next technical slice should either add Deep Agents runtime orchestration behind the existing backend contract, or add a Next.js AI SDK bridge that calls the backend endpoint for internal-only testing.
+Deploy the backend/runtime/frontend bridge flags to a non-production environment and run one authenticated selected-project owner-status prompt through `/api/ai-assistant/chat`. The local backend proof now shows Deep Agents can synthesize through AI Gateway; the remaining proof is production-shaped routing, auth, and UI behavior.
 
 ## Open Questions
 
