@@ -58,6 +58,9 @@ loadEnv();
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const RAG_SUPABASE_URL = process.env.RAG_SUPABASE_URL;
+const RAG_SERVICE_KEY = process.env.RAG_SUPABASE_SERVICE_ROLE_KEY || process.env.RAG_SUPABASE_SERVICE_KEY;
+const RAG_READS_ENABLED = String(process.env.RAG_DATABASE_READS_ENABLED ?? "").toLowerCase() === "true";
 const OPENAI_KEY = process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY;
 const AI_GATEWAY_BASE = process.env.AI_GATEWAY_API_KEY
   ? "https://ai-gateway.vercel.sh/v1"
@@ -81,7 +84,17 @@ if (!OPENAI_KEY) {
   process.exit(1);
 }
 
+if (RAG_READS_ENABLED && (!RAG_SUPABASE_URL || !RAG_SERVICE_KEY)) {
+  console.error(
+    "RAG_DATABASE_READS_ENABLED=true but RAG_SUPABASE_URL / RAG_SUPABASE_SERVICE_ROLE_KEY are missing.",
+  );
+  process.exit(1);
+}
+
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+const ragSupabase = RAG_READS_ENABLED
+  ? createClient(RAG_SUPABASE_URL, RAG_SERVICE_KEY)
+  : supabase;
 
 // ---------------------------------------------------------------------------
 // Briefing prompts to evaluate
@@ -167,10 +180,10 @@ async function evalRetrieval(query) {
   const embeddingStr = JSON.stringify(embedding);
 
   const [chunksRes, knowledgeRes] = await Promise.all([
-    supabase.rpc("search_document_chunks", {
-      query_embedding: embeddingStr,
-      filter_source_types: null,
-      filter_project_id: null,
+    ragSupabase.rpc("search_document_chunks", {
+      query_embedding: embedding,
+      filter_source_types: undefined,
+      filter_project_id: undefined,
       match_count: chunkCount,
       match_threshold: chunkThreshold,
     }),

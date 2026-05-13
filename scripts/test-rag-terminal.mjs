@@ -15,16 +15,18 @@
  *   node scripts/test-rag-terminal.mjs --layer 3   # only test chat completion
  */
 
-import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { readFileSync } from "fs";
 import { resolve, dirname } from "path";
+import { createRequire } from "module";
 import { fileURLToPath } from "url";
 
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const requireFromFrontend = createRequire(resolve(__dirname, "../frontend/package.json"));
+const { createClient } = requireFromFrontend("@supabase/supabase-js");
 
 function loadEnv() {
   const envPath = resolve(__dirname, "../.env");
@@ -54,6 +56,9 @@ const ENV = loadEnv();
 
 const SUPABASE_URL = ENV.SUPABASE_URL || ENV.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = ENV.SUPABASE_SERVICE_ROLE_KEY;
+const RAG_SUPABASE_URL = ENV.RAG_SUPABASE_URL;
+const RAG_SUPABASE_KEY = ENV.RAG_SUPABASE_SERVICE_ROLE_KEY || ENV.RAG_SUPABASE_SERVICE_KEY;
+const RAG_READS_ENABLED = String(ENV.RAG_DATABASE_READS_ENABLED ?? "").toLowerCase() === "true";
 const AI_GATEWAY_KEY = ENV.AI_GATEWAY_API_KEY;
 const OPENAI_KEY = ENV.OPENAI_API_KEY;
 
@@ -154,16 +159,23 @@ async function testVectorSearch(embeddingJson) {
     return;
   }
 
+  if (RAG_READS_ENABLED && (!RAG_SUPABASE_URL || !RAG_SUPABASE_KEY)) {
+    fail("RAG Supabase config", "RAG_DATABASE_READS_ENABLED=true but RAG_SUPABASE_URL / RAG_SUPABASE_SERVICE_ROLE_KEY are missing");
+    return;
+  }
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const ragSupabase = RAG_READS_ENABLED
+    ? createClient(RAG_SUPABASE_URL, RAG_SUPABASE_KEY)
+    : supabase;
 
   // --- search_document_chunks ---
   info("RPC: search_document_chunks");
   try {
     const t0 = Date.now();
-    const { data, error } = await supabase.rpc("search_document_chunks", {
+    const { data, error } = await ragSupabase.rpc("search_document_chunks", {
       query_embedding: embeddingJson,
-      filter_source_types: null,
-      filter_project_id: PROJECT_ID,
+      filter_source_types: undefined,
+      filter_project_id: PROJECT_ID ?? undefined,
       match_count: 10,
       match_threshold: 0.2,
     });
@@ -174,13 +186,13 @@ async function testVectorSearch(embeddingJson) {
     } else {
       ok(`search_document_chunks`, `${(data ?? []).length} results in ${elapsed}ms`);
       for (const row of (data ?? []).slice(0, 3)) {
-        console.log(`   → [${row.source_type ?? row.source_table ?? "?"}] ${truncate(row.content, 100)}`);
+        console.log(`   → [${row.source_type ?? row.source_table ?? "?"}] ${truncate(row.chunk_text ?? row.content, 100)}`);
         console.log(`     similarity=${Number(row.similarity ?? 0).toFixed(4)}  project_id=${row.doc_project_id ?? "?"}`);
       }
       if ((data ?? []).length === 0) {
         info("No chunks returned — check if document_chunks table has data and embeddings");
         // Check raw count
-        const { count } = await supabase.from("document_chunks").select("*", { count: "exact", head: true });
+        const { count } = await ragSupabase.from("document_chunks").select("*", { count: "exact", head: true });
         info(`document_chunks total rows: ${count ?? "error"}`);
       }
     }
@@ -231,21 +243,28 @@ async function testChatCompletion(embeddingJson) {
   let contextBlock = "(No RAG context — embedding failed in Layer 1)";
   if (embeddingJson && SUPABASE_URL && SUPABASE_KEY) {
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { data } = await supabase.rpc("search_document_chunks", {
-      query_embedding: embeddingJson,
-      filter_source_types: null,
-      filter_project_id: PROJECT_ID,
-      match_count: 5,
-      match_threshold: 0.2,
-    });
-    const rows = data ?? [];
-    if (rows.length > 0) {
-      contextBlock = rows
-        .slice(0, 5)
-        .map((r, i) => `[${i+1}] (${r.source_type ?? "?"}) ${String(r.content ?? "").slice(0, 400)}`)
-        .join("\n\n");
+    if (RAG_READS_ENABLED && (!RAG_SUPABASE_URL || !RAG_SUPABASE_KEY)) {
+      contextBlock = "(RAG context unavailable — RAG database env vars are missing)";
     } else {
-      contextBlock = "(Vector search returned 0 results — model will answer from general knowledge)";
+      const ragSupabase = RAG_READS_ENABLED
+        ? createClient(RAG_SUPABASE_URL, RAG_SUPABASE_KEY)
+        : supabase;
+      const { data } = await ragSupabase.rpc("search_document_chunks", {
+        query_embedding: embeddingJson,
+        filter_source_types: undefined,
+        filter_project_id: PROJECT_ID ?? undefined,
+        match_count: 5,
+        match_threshold: 0.2,
+      });
+      const rows = data ?? [];
+      if (rows.length > 0) {
+        contextBlock = rows
+          .slice(0, 5)
+          .map((r, i) => `[${i+1}] (${r.source_type ?? "?"}) ${String(r.chunk_text ?? r.content ?? "").slice(0, 400)}`)
+          .join("\n\n");
+      } else {
+        contextBlock = "(Vector search returned 0 results — model will answer from general knowledge)";
+      }
     }
   }
 
@@ -289,7 +308,7 @@ async function main() {
   const runAll = layerArg === null;
   let embeddingJson = null;
 
-  if (runAll || layerArg === 1) {
+  if (runAll || layerArg === 1 || layerArg === 2 || layerArg === 3) {
     embeddingJson = await testEmbeddings();
   }
   if (runAll || layerArg === 2) {

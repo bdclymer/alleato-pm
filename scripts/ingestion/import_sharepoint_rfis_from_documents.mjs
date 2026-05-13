@@ -27,6 +27,9 @@ const DRY_RUN = process.argv.includes("--dry-run");
 const AUTHOR_ID = argValue("--author-id", "1854b4b0-3e8e-4d69-86df-32cdb3c80ee0");
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const RAG_SUPABASE_URL = process.env.RAG_SUPABASE_URL;
+const RAG_SUPABASE_SERVICE_KEY = process.env.RAG_SUPABASE_SERVICE_ROLE_KEY || process.env.RAG_SUPABASE_SERVICE_KEY;
+const RAG_READS_ENABLED = String(process.env.RAG_DATABASE_READS_ENABLED ?? "").toLowerCase() === "true";
 
 if (!Number.isFinite(PROJECT_ID) || PROJECT_ID <= 0) {
   console.error("Missing or invalid --project-id.");
@@ -38,9 +41,19 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   process.exit(1);
 }
 
+if (RAG_READS_ENABLED && (!RAG_SUPABASE_URL || !RAG_SUPABASE_SERVICE_KEY)) {
+  console.error("RAG_DATABASE_READS_ENABLED=true but RAG_SUPABASE_URL / RAG_SUPABASE_SERVICE_ROLE_KEY are missing.");
+  process.exit(1);
+}
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
+const ragSupabase = RAG_READS_ENABLED
+  ? createClient(RAG_SUPABASE_URL, RAG_SUPABASE_SERVICE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  : supabase;
 
 function parseRfiTitle(title) {
   const match = title.match(/\bRFI[-\s]*(\d+)\b/i);
@@ -94,7 +107,7 @@ async function fetchChunks(documentMetadataIds) {
 
   const rows = await requireData(
     "document_chunks select",
-    supabase
+    ragSupabase
       .from("document_chunks")
       .select("document_id, chunk_index, text")
       .in("document_id", documentMetadataIds)

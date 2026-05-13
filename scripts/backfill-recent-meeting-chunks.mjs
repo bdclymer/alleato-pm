@@ -13,6 +13,8 @@ import { createHash } from "crypto";
 import postgres from "postgres";
 
 const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+const ragDatabaseUrl = process.env.RAG_DATABASE_URL;
+const ragWritesEnabled = String(process.env.RAG_DATABASE_WRITES_ENABLED ?? "").toLowerCase() === "true";
 const aiGatewayKey = process.env.AI_GATEWAY_API_KEY;
 const openAiKey = process.env.OPENAI_API_KEY;
 const days = Number(process.argv.find((arg) => arg.startsWith("--days="))?.split("=")[1] ?? 14);
@@ -24,12 +26,20 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
+if (ragWritesEnabled && !ragDatabaseUrl) {
+  console.error("[FATAL] RAG_DATABASE_WRITES_ENABLED=true but RAG_DATABASE_URL is not set.");
+  process.exit(1);
+}
+
 if (!aiGatewayKey && !openAiKey) {
   console.error("[FATAL] AI_GATEWAY_API_KEY or OPENAI_API_KEY is required.");
   process.exit(1);
 }
 
 const sql = postgres(databaseUrl, { max: 1, ssl: "require" });
+const ragSql = ragWritesEnabled
+  ? postgres(ragDatabaseUrl, { max: 1, ssl: "require" })
+  : sql;
 const EMBEDDING_MODEL = "text-embedding-3-large";
 const EMBEDDING_DIMS = 3072;
 const CHUNK_TARGET_CHARS = 3000;
@@ -110,7 +120,7 @@ async function embed(texts) {
 }
 
 try {
-  const rows = await sql`
+  const candidates = await sql`
     select dm.id, dm.title, dm.date, dm.project_id, dm.participants_array, dm.content, dm.summary, dm.overview
     from public.document_metadata dm
     where (dm.source = 'fireflies'
@@ -119,15 +129,19 @@ try {
        or dm.fireflies_id is not null)
       and coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) >= now() - (${days} || ' days')::interval
       and length(coalesce(dm.content, dm.summary, dm.overview, '')) >= 100
-      and not exists (
-        select 1
-        from public.document_chunks dc
-        where dc.document_id = dm.id
-          and dc.embedding is not null
-      )
     order by coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) desc nulls last
     limit ${limit}
   `;
+  const existingChunkRows = candidates.length
+    ? await ragSql`
+        select distinct document_id
+        from public.document_chunks
+        where embedding is not null
+          and document_id in ${ragSql(candidates.map((row) => row.id))}
+      `
+    : [];
+  const existingChunkDocumentIds = new Set(existingChunkRows.map((row) => String(row.document_id)));
+  const rows = candidates.filter((row) => !existingChunkDocumentIds.has(String(row.id)));
 
   console.log(`Recent meetings missing chunks: ${rows.length}`);
   if (dryRun || rows.length === 0) {
@@ -175,8 +189,8 @@ try {
       };
     });
 
-    await sql`
-      insert into public.document_chunks ${sql(records)}
+    await ragSql`
+      insert into public.document_chunks ${ragSql(records)}
       on conflict (chunk_id) do update set
         text = excluded.text,
         metadata = excluded.metadata,
@@ -193,4 +207,5 @@ try {
   if (failed > 0) process.exit(1);
 } finally {
   await sql.end();
+  if (ragSql !== sql) await ragSql.end();
 }

@@ -23,6 +23,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timezone
+from urllib.parse import quote
 from typing import Any
 
 import httpx
@@ -34,6 +35,7 @@ RECENT_WINDOW_DAYS = 14
 MEETING_SIGNAL_LIMIT = 2_000
 RECENT_MIN_EMBEDDED_RATIO = 0.5
 RECENT_MIN_CHUNK_RATIO = 0.5
+BATCH_SIZE = 500
 
 
 def _probe_embedding_provider() -> dict:
@@ -83,86 +85,198 @@ def _probe_embedding_provider() -> dict:
     return {"ok": len(successes) > 0, "providers": successes, "warnings": warnings}
 
 
-def run_health_check(supabase_url: str, supabase_service_key: str) -> dict:
+def _parse_timestamp(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def _row_timestamp(row: dict[str, Any], keys: list[str]) -> datetime | None:
+    for key in keys:
+        parsed = _parse_timestamp(row.get(key))
+        if parsed:
+            return parsed
+    return None
+
+
+def _batched(values: list[str], size: int = BATCH_SIZE) -> list[list[str]]:
+    return [values[index:index + size] for index in range(0, len(values), size)]
+
+
+def _postgrest_in(values: list[str]) -> str:
+    return "(" + ",".join(f'"{value.replace(chr(34), chr(34) + chr(34))}"' for value in values) + ")"
+
+
+def _rag_credentials(
+    supabase_url: str,
+    supabase_service_key: str,
+    rag_url: str | None = None,
+    rag_service_key: str | None = None,
+) -> tuple[str, str, bool]:
+    reads_enabled = (os.getenv("RAG_DATABASE_READS_ENABLED") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    resolved_url = rag_url or os.getenv("RAG_SUPABASE_URL")
+    resolved_key = (
+        rag_service_key
+        or os.getenv("RAG_SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("RAG_SUPABASE_SERVICE_KEY")
+    )
+
+    if reads_enabled:
+        if not resolved_url or not resolved_key:
+            raise RuntimeError(
+                "RAG_DATABASE_READS_ENABLED=true but RAG_SUPABASE_URL / RAG_SUPABASE_SERVICE_ROLE_KEY are not set"
+            )
+        return resolved_url, resolved_key, True
+
+    return supabase_url, supabase_service_key, False
+
+
+def run_health_check(
+    supabase_url: str,
+    supabase_service_key: str,
+    *,
+    rag_url: str | None = None,
+    rag_service_key: str | None = None,
+) -> dict:
     """Run all health checks and return results. Does not raise."""
     failures: list[str] = []
     warnings: list[str] = []
     stats: dict[str, Any] = {}
 
-    headers = {
+    try:
+        rag_url, rag_service_key, rag_reads_enabled = _rag_credentials(
+            supabase_url,
+            supabase_service_key,
+            rag_url=rag_url,
+            rag_service_key=rag_service_key,
+        )
+    except Exception as exc:
+        return {
+            "passed": False,
+            "failures": [str(exc)],
+            "warnings": warnings,
+            "stats": stats,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    stats["database_routing"] = {
+        "app_database": supabase_url,
+        "rag_database": rag_url,
+        "rag_reads_enabled": rag_reads_enabled,
+    }
+
+    app_headers = {
         "apikey": supabase_service_key,
         "Authorization": f"Bearer {supabase_service_key}",
         "Content-Type": "application/json",
     }
+    rag_headers = {
+        "apikey": rag_service_key,
+        "Authorization": f"Bearer {rag_service_key}",
+        "Content-Type": "application/json",
+    }
 
-    def rpc(fn: str, body: dict) -> Any:
-        resp = httpx.post(f"{supabase_url}/rest/v1/rpc/{fn}", headers=headers, json=body, timeout=30)
-        resp.raise_for_status()
-        return resp.json()
-
-    def query(sql: str) -> list[dict]:
-        resp = httpx.post(
-            f"{supabase_url}/rest/v1/rpc/execute_sql",
-            headers=headers,
-            json={"query": sql},
-            timeout=45,
-        )
-        if not resp.is_success:
-            # Fallback: use PostgREST direct table query won't work for complex SQL.
-            # Log and return empty so individual checks degrade gracefully.
-            logger.warning("execute_sql RPC unavailable (%s) — check skipped", resp.status_code)
-            return []
-        return resp.json() or []
+    def rest_rows(
+        base_url: str,
+        headers: dict[str, str],
+        table: str,
+        params: dict[str, str],
+        *,
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        page_size = min(limit or 1000, 1000)
+        offset = 0
+        while True:
+            query = "&".join(f"{quote(key)}={quote(value, safe='().,\":*')}" for key, value in params.items())
+            url = f"{base_url}/rest/v1/{table}?{query}"
+            request_headers = dict(headers)
+            request_headers["Range-Unit"] = "items"
+            request_headers["Range"] = f"{offset}-{offset + page_size - 1}"
+            resp = httpx.get(url, headers=request_headers, timeout=45)
+            if not resp.is_success:
+                raise RuntimeError(
+                    f"{table} REST query failed on {base_url}: {resp.status_code} {resp.text[:300]}"
+                )
+            data = resp.json() or []
+            rows.extend(dict(row) for row in data)
+            if len(data) < page_size or (limit and len(rows) >= limit):
+                break
+            offset += page_size
+        return rows[:limit] if limit else rows
 
     try:
         # ── 1. Overall meeting embedding coverage ────────────────────────────
-        meeting_cte = """
-            with meeting_ids as (
-              select id from public.document_metadata where source = 'fireflies'
-              union select id from public.document_metadata where type in ('meeting','meeting_transcript')
-              union select id from public.document_metadata where category = 'meeting'
-              union select id from public.document_metadata where fireflies_id is not null
-            )
-        """
-        rows = query(f"""
-            {meeting_cte}
-            select
-              count(*)::int as total_meetings,
-              count(*) filter (where summary_embedding is not null)::int as embedded_summaries,
-              max(coalesce(captured_at, date, created_at::timestamptz)) as latest_meeting_at,
-              max(coalesce(captured_at, created_at::timestamptz)) filter (where summary_embedding is not null) as latest_summary_embedding_at
-            from public.document_metadata where id in (select id from meeting_ids)
-        """)
-        metadata = rows[0] if rows else {}
+        meeting_rows = rest_rows(
+            supabase_url,
+            app_headers,
+            "document_metadata",
+            {
+                "select": "id,summary_embedding,captured_at,date,created_at",
+                "or": "(source.eq.fireflies,type.in.(meeting,meeting_transcript),category.eq.meeting,fireflies_id.not.is.null)",
+                "order": "created_at.desc",
+            },
+            limit=MEETING_SIGNAL_LIMIT,
+        )
+        embedded_summary_rows = [row for row in meeting_rows if row.get("summary_embedding") is not None]
+        meeting_timestamps = [
+            timestamp
+            for row in meeting_rows
+            if (timestamp := _row_timestamp(row, ["captured_at", "date", "created_at"]))
+        ]
+        embedded_timestamps = [
+            timestamp
+            for row in embedded_summary_rows
+            if (timestamp := _row_timestamp(row, ["captured_at", "created_at"]))
+        ]
+        metadata = {
+            "total_meetings": len(meeting_rows),
+            "embedded_summaries": len(embedded_summary_rows),
+            "latest_meeting_at": max(meeting_timestamps).isoformat() if meeting_timestamps else None,
+            "latest_summary_embedding_at": max(embedded_timestamps).isoformat() if embedded_timestamps else None,
+            "sample_limit": MEETING_SIGNAL_LIMIT,
+        }
         stats["metadata"] = metadata
 
-        if metadata:
-            if metadata.get("embedded_summaries", 0) == 0:
-                failures.append("No meeting summary embeddings exist at all. Strategist is keyword-only.")
+        if metadata.get("total_meetings", 0) == 0:
+            failures.append("No meeting document_metadata rows matched the Fireflies/meeting health filter.")
+        if metadata.get("embedded_summaries", 0) == 0:
+            failures.append("No meeting summary embeddings exist at all. Strategist is keyword-only.")
 
-            if metadata.get("latest_meeting_at") and metadata.get("latest_summary_embedding_at"):
-                latest_meeting = datetime.fromisoformat(metadata["latest_meeting_at"].replace("Z", "+00:00"))
-                latest_embed = datetime.fromisoformat(metadata["latest_summary_embedding_at"].replace("Z", "+00:00"))
-                lag_days = (latest_meeting - latest_embed).total_seconds() / 86400
-                if lag_days > STALENESS_DAYS:
-                    failures.append(
-                        f"Newest meeting is {lag_days:.1f} days ahead of newest summary embedding "
-                        f"(threshold: {STALENESS_DAYS}d). Embedding pipeline is stalled."
-                    )
-            elif metadata.get("latest_meeting_at") and not metadata.get("latest_summary_embedding_at"):
-                failures.append("Meetings exist but ZERO have summary embeddings. Pipeline never ran.")
+        if metadata.get("latest_meeting_at") and metadata.get("latest_summary_embedding_at"):
+            latest_meeting = datetime.fromisoformat(metadata["latest_meeting_at"].replace("Z", "+00:00"))
+            latest_embed = datetime.fromisoformat(metadata["latest_summary_embedding_at"].replace("Z", "+00:00"))
+            lag_days = (latest_meeting - latest_embed).total_seconds() / 86400
+            if lag_days > STALENESS_DAYS:
+                failures.append(
+                    f"Newest meeting is {lag_days:.1f} days ahead of newest summary embedding "
+                    f"(threshold: {STALENESS_DAYS}d). Embedding pipeline is stalled."
+                )
+        elif metadata.get("latest_meeting_at") and not metadata.get("latest_summary_embedding_at"):
+            failures.append("Meetings exist but ZERO have summary embeddings. Pipeline never ran.")
 
         # ── 2. Recent meeting coverage ───────────────────────────────────────
-        rows = query(f"""
-            {meeting_cte}
-            select
-              count(*)::int as recent_meetings,
-              count(*) filter (where summary_embedding is not null)::int as recent_embedded_summaries
-            from public.document_metadata
-            where id in (select id from meeting_ids)
-              and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '{RECENT_WINDOW_DAYS} days'
-        """)
-        recent = rows[0] if rows else {}
+        cutoff = datetime.now(timezone.utc).timestamp() - RECENT_WINDOW_DAYS * 86400
+        recent_rows = [
+            row
+            for row in meeting_rows
+            if (timestamp := _row_timestamp(row, ["captured_at", "date", "created_at"]))
+            and timestamp.timestamp() >= cutoff
+        ]
+        recent_embedded_summary_rows = [row for row in recent_rows if row.get("summary_embedding") is not None]
+        recent = {
+            "recent_meetings": len(recent_rows),
+            "recent_embedded_summaries": len(recent_embedded_summary_rows),
+        }
         stats["recent"] = recent
 
         if recent and recent.get("recent_meetings", 0) > 0:
@@ -176,27 +290,27 @@ def run_health_check(supabase_url: str, supabase_service_key: str) -> dict:
                 )
 
         # ── 3. Chunk coverage ────────────────────────────────────────────────
-        rows = query(f"""
-            {meeting_cte},
-            recent_meetings as (
-              select id from public.document_metadata
-              where id in (select id from meeting_ids)
-                and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '{RECENT_WINDOW_DAYS} days'
-            ),
-            per_meeting as (
-              select
-                rm.id,
-                count(dc.chunk_id) filter (where dc.embedding is not null)::int as embedded_chunk_count
-              from recent_meetings rm
-              left join public.document_chunks dc on dc.document_id = rm.id
-              group by rm.id
+        recent_meeting_ids = [str(row.get("id")) for row in recent_rows if row.get("id")]
+        with_embedded_chunk_ids: set[str] = set()
+        for batch in _batched(recent_meeting_ids):
+            chunk_rows = rest_rows(
+                rag_url,
+                rag_headers,
+                "document_chunks",
+                {
+                    "select": "document_id",
+                    "embedding": "not.is.null",
+                    "document_id": f"in.{_postgrest_in(batch)}",
+                },
             )
-            select
-              count(*)::int as recent_meetings,
-              count(*) filter (where embedded_chunk_count > 0)::int as with_embedded_chunks
-            from per_meeting
-        """)
-        chunk_coverage = rows[0] if rows else {}
+            with_embedded_chunk_ids.update(
+                str(row.get("document_id")) for row in chunk_rows if row.get("document_id")
+            )
+
+        chunk_coverage = {
+            "recent_meetings": len(recent_meeting_ids),
+            "with_embedded_chunks": len(with_embedded_chunk_ids),
+        }
         stats["chunk_coverage"] = chunk_coverage
 
         if chunk_coverage and chunk_coverage.get("recent_meetings", 0) > 0:
@@ -209,11 +323,20 @@ def run_health_check(supabase_url: str, supabase_service_key: str) -> dict:
                 )
 
         # ── 4. Fireflies pipeline job health ─────────────────────────────────
-        rows = query("""
-            select stage, count(*)::int as count
-            from public.fireflies_ingestion_jobs
-            group by stage order by count desc
-        """)
+        job_rows = rest_rows(
+            rag_url,
+            rag_headers,
+            "fireflies_ingestion_jobs",
+            {"select": "stage,error_message"},
+        )
+        counts_by_stage: dict[str, int] = {}
+        for row in job_rows:
+            stage = str(row.get("stage") or "unknown")
+            counts_by_stage[stage] = counts_by_stage.get(stage, 0) + 1
+        rows = [
+            {"stage": stage, "count": count}
+            for stage, count in sorted(counts_by_stage.items(), key=lambda item: item[1], reverse=True)
+        ]
         stats["pipeline_jobs"] = rows
         raw_ingested = next((r["count"] for r in rows if r["stage"] == "raw_ingested"), 0)
         error_count = next((r["count"] for r in rows if r["stage"] == "error"), 0)
@@ -223,11 +346,11 @@ def run_health_check(supabase_url: str, supabase_service_key: str) -> dict:
         if error_count > 100:
             warnings.append(f"{error_count} Fireflies jobs in error state.")
 
-        quota_rows = query("""
-            select count(*)::int as count from public.fireflies_ingestion_jobs
-            where stage = 'error' and error_message ilike '%quota%'
-        """)
-        quota_errors = quota_rows[0]["count"] if quota_rows else 0
+        quota_errors = sum(
+            1
+            for row in job_rows
+            if row.get("stage") == "error" and "quota" in str(row.get("error_message") or "").lower()
+        )
         if quota_errors > 0:
             failures.append(f"{quota_errors} Fireflies jobs failed with quota/provider errors.")
 
