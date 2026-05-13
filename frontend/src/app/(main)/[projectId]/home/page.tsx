@@ -215,11 +215,9 @@ export default async function ProjectHomePage({
     tasksResult,
     tasksByProjectIdResult,
     tasksViaDocsResult,
-    meetingsResult,
     primeChangeOrdersResult,
     contractChangeOrdersResult,
     rfisResult,
-    dailyLogsResult,
     commitmentsResult,
     contractsResult,
     contractLineItemsResult,
@@ -231,8 +229,6 @@ export default async function ProjectHomePage({
     verticalMarkupCountResult,
     primeCosWithoutChangeRequestCountResult,
     commitmentCosWithoutChangeRequestCountResult,
-    submittalsResult,
-    projectDocumentsResult,
     ownerInvoicesResult,
     pendingSsovRowsResult,
   ] = await Promise.all([
@@ -267,16 +263,6 @@ export default async function ProjectHomePage({
       .order("created_at", { ascending: false })
       .limit(20),
 
-    // Fetch meetings from document_metadata
-    supabase
-      .from("document_metadata")
-      .select("*")
-      .eq("project_id", numericProjectId)
-      .eq("type", "meeting")
-      .is("deleted_at", null)
-      .order("date", { ascending: false })
-      .limit(10),
-
     // Fetch prime contract change orders
     supabase
       .from("prime_contract_change_orders")
@@ -299,14 +285,6 @@ export default async function ProjectHomePage({
       .select("*")
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false })
-      .limit(5),
-
-    // Fetch daily logs/reports
-    supabase
-      .from("daily_logs")
-      .select("*")
-      .eq("project_id", numericProjectId)
-      .order("log_date", { ascending: false })
       .limit(5),
 
     // Fetch commitments from unified view (combines subcontracts + purchase_orders)
@@ -388,27 +366,6 @@ export default async function ProjectHomePage({
       .eq("prime_contracts.project_id", numericProjectId)
       .is("change_event_id", null),
 
-    // Fetch open submittals
-    supabase
-      .from("submittals")
-      .select("*")
-      .eq("project_id", numericProjectId)
-      .is("deleted_at", null)
-      .not("status", "eq", "Closed")
-      .order("updated_at", { ascending: false })
-      .limit(20),
-
-    // Fetch recent project documents
-    supabase
-      .from("project_documents")
-      .select(
-        "id,title,file_name,status,category,folder,source_system,created_at,updated_at,reviewed_at",
-      )
-      .eq("project_id", numericProjectId)
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false, nullsFirst: false })
-      .limit(10),
-
     // Fetch owner invoices via prime contract relation without waiting for contractsResult
     supabase
       .from("owner_invoices")
@@ -467,13 +424,11 @@ export default async function ProjectHomePage({
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
-  const meetings = meetingsResult.data || [];
   const changeOrders = [
     ...(primeChangeOrdersResult.data || []),
     ...(contractChangeOrdersResult.data || []),
   ];
   const rfis = rfisResult.data || [];
-  const dailyLogs = dailyLogsResult.data || [];
   // Cast to expected format since commitments_unified is a view — deduplicate by id
   const rawCommitments = ((commitmentsResult.data || []) as unknown) as Array<{
     id: string;
@@ -539,8 +494,6 @@ export default async function ProjectHomePage({
     budget,
     commitmentTotal,
   });
-  const submittals = submittalsResult.data || [];
-  const projectDocuments = projectDocumentsResult.data || [];
   const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
   const teamFromRpc = teamResult.data || [];
@@ -564,10 +517,8 @@ export default async function ProjectHomePage({
       <ProjectHomeClient
         project={project}
         tasks={tasks}
-        meetings={meetings}
         changeOrders={changeOrders}
         rfis={rfis}
-        dailyLogs={dailyLogs}
         commitments={commitments}
         commitmentTotal={commitmentTotal}
         contracts={contracts}
@@ -577,11 +528,9 @@ export default async function ProjectHomePage({
         changeEvents={changeEvents}
         schedule={schedule}
         team={team}
-        submittals={submittals}
         homeAlerts={homeAlerts}
         pendingSsovReviews={pendingSsovReviews}
         ownerInvoices={ownerInvoices}
-        projectDocuments={projectDocuments}
       />
     </PageShell>
   );

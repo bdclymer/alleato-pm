@@ -736,6 +736,7 @@ export function AleatoDataTable<TData>({
     ...(hasGridView ? (["card"] as ViewMode[]) : []),
     ...(hasListView ? (["list"] as ViewMode[]) : []),
   ];
+  const rows = table.getRowModel().rows;
 
   // ── Toolbar icons (shared components + density) ───────────────────────────
   const toolbarIcons = (
@@ -876,8 +877,8 @@ export function AleatoDataTable<TData>({
                   ))}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row, idx) => (
+            ) : rows.length > 0 ? (
+              rows.map((row, idx) => (
                 <React.Fragment key={row.id}>
                   <TableRow
                     data-state={row.getIsSelected() ? "selected" : undefined}

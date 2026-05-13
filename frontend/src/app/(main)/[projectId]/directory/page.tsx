@@ -1227,6 +1227,7 @@ function ExternalMembersSection({
   } = useProjectUsers(projectId, { type: "all" });
   const { confirm: confirmMember, ConfirmDialog: MemberConfirmDialog } = useConfirm();
   const [search, setSearch] = React.useState("");
+  const deferredSearch = React.useDeferredValue(search);
   const [activeFilters, setActiveFilters] = React.useState<Record<string, string | undefined>>({});
   const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(null);
 
@@ -1265,17 +1266,19 @@ function ExternalMembersSection({
 
   const companyFilter = activeFilters.company;
 
-  const filtered = allMembers.filter((p) => {
-    const q = search.toLowerCase();
-    const matchesSearch =
-      !q ||
-      `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||
-      (p.email ?? "").toLowerCase().includes(q) ||
-      (p.company?.name ?? "").toLowerCase().includes(q) ||
-      (p.job_title ?? "").toLowerCase().includes(q);
-    const matchesCompany = !companyFilter || p.company?.name === companyFilter;
-    return matchesSearch && matchesCompany;
-  });
+  const filtered = React.useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase();
+    return allMembers.filter((p) => {
+      const matchesSearch =
+        !q ||
+        `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||
+        (p.email ?? "").toLowerCase().includes(q) ||
+        (p.company?.name ?? "").toLowerCase().includes(q) ||
+        (p.job_title ?? "").toLowerCase().includes(q);
+      const matchesCompany = !companyFilter || p.company?.name === companyFilter;
+      return matchesSearch && matchesCompany;
+    });
+  }, [allMembers, companyFilter, deferredSearch]);
 
   const filterContent = companies.length > 0 ? (
     <div className="space-y-2">
@@ -1499,6 +1502,7 @@ function CompaniesSection({
 }) {
   const { confirm: confirmCompany, ConfirmDialog: CompanyConfirmDialog } = useConfirm();
   const [search, setSearch] = React.useState("");
+  const deferredSearch = React.useDeferredValue(search);
   const [removingCompanyId, setRemovingCompanyId] = React.useState<string | null>(null);
 
   const handleRemoveCompany = async (companyId: string, companyName: string) => {
@@ -1542,9 +1546,11 @@ function CompaniesSection({
     [companies],
   );
 
-  const filteredRows = search
-    ? companyRows.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-    : companyRows;
+  const filteredRows = React.useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase();
+    if (!q) return companyRows;
+    return companyRows.filter((c) => c.name.toLowerCase().includes(q));
+  }, [companyRows, deferredSearch]);
 
   const companiesColumns = React.useMemo<ColumnDef<{ id: string; name: string; memberCount: number }>[]>(
     () => [

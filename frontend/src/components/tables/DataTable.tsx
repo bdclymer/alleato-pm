@@ -97,6 +97,7 @@ export function DataTable<TData, TValue>({
       rowSelection,
     },
   });
+  const rows = table.getRowModel().rows;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -110,8 +111,8 @@ export function DataTable<TData, TValue>({
 
       {isMobile ? (
         <div className="space-y-3">
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => {
+          {rows.length ? (
+            rows.map((row) => {
               const visibleCells = row.getVisibleCells();
               const [primaryCell, ...restCells] = visibleCells;
 
@@ -119,7 +120,7 @@ export function DataTable<TData, TValue>({
                 <Card
                   key={row.id}
                   className={cn(
-                    "border px-4 py-3",
+                    "border px-4 py-3 [contain-intrinsic-size:auto_96px] [content-visibility:auto]",
                     onRowClick && "cursor-pointer active:bg-muted/50",
                   )}
                   onClick={() => onRowClick?.(row.original)}
@@ -197,8 +198,8 @@ export function DataTable<TData, TValue>({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
+              {rows.length ? (
+                rows.map((row) => (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}

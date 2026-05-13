@@ -51,6 +51,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { RealtimeCursors } from "@/components/realtime/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
+import { apiFetch } from "@/lib/api-client";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
 
@@ -60,7 +61,10 @@ import type { BudgetGrandTotals } from "@/types/budget";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
-type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
+type Meeting = Pick<
+  Database["public"]["Tables"]["document_metadata"]["Row"],
+  "id" | "title" | "file_name" | "date" | "created_at" | "duration_minutes" | "type"
+>;
 type ChangeOrder = any;
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
@@ -80,8 +84,31 @@ type ProjectDocument = Pick<
   | "reviewed_at"
 >;
 type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
-type Submittal = Database["public"]["Tables"]["submittals"]["Row"];
-type DailyLog = Database["public"]["Tables"]["daily_logs"]["Row"];
+type Submittal = Pick<
+  Database["public"]["Tables"]["submittals"]["Row"],
+  | "id"
+  | "title"
+  | "submittal_number"
+  | "ball_in_court"
+  | "final_due_date"
+  | "required_approval_date"
+  | "created_at"
+  | "status"
+>;
+type DailyLog = Pick<Database["public"]["Tables"]["daily_logs"]["Row"], "id" | "log_date">;
+type LazyHomeTabKind = "meetings" | "documents" | "daily-logs" | "submittals";
+
+type LazyHomeTabPayload =
+  | { kind: "meetings"; data: Meeting[] }
+  | { kind: "documents"; data: ProjectDocument[] }
+  | { kind: "daily-logs"; data: DailyLog[] }
+  | { kind: "submittals"; data: Submittal[] };
+
+type LazyHomeTabStatus = {
+  loaded: boolean;
+  loading: boolean;
+  error: string | null;
+};
 
 type ProjectWithNormalizedDates = Project & {
   start_date?: string | null;
@@ -121,7 +148,7 @@ interface OwnerInvoice {
 interface ProjectCommandCenterProps {
   project: Project;
   tasks: Task[];
-  meetings: Meeting[];
+  meetings?: Meeting[];
   changeOrders: ChangeOrder[];
   rfis: RFI[];
   commitments: Commitment[];
@@ -444,9 +471,14 @@ function InlineDataRow({
 interface TabConfig {
   id: string;
   label: string;
-  count: number;
+  count?: number;
   content: (search: string) => React.ReactNode;
   viewAllHref: string;
+  lazyKind?: LazyHomeTabKind;
+  isLoaded?: boolean;
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 function TabSection({
@@ -465,12 +497,24 @@ function TabSection({
   }, [activeTab]);
 
   const pageTabs = tabs.map((tab) => ({
-    label: tab.count > 0 ? `${tab.label} (${tab.count})` : tab.label,
+    label: typeof tab.count === "number" && tab.count > 0 ? `${tab.label} (${tab.count})` : tab.label,
     href: `#${tab.id}`,
     isActive: activeTab === tab.id,
   }));
 
   const activeTabConfig = tabs.find((t) => t.id === activeTab);
+
+  React.useEffect(() => {
+    if (
+      !activeTabConfig?.lazyKind ||
+      activeTabConfig.isLoaded ||
+      activeTabConfig.isLoading ||
+      activeTabConfig.error
+    ) {
+      return;
+    }
+    activeTabConfig.onRetry?.();
+  }, [activeTabConfig]);
 
   return (
     <div className="rounded-lg bg-card overflow-hidden">
@@ -494,7 +538,20 @@ function TabSection({
       {activeTabConfig && (
         <div className="px-4 pb-1">
           <div className="divide-y divide-border/50">
-            {activeTabConfig.content(search)}
+            {activeTabConfig.isLoading ? (
+              <div className="py-5 text-sm text-muted-foreground">Loading {activeTabConfig.label.toLowerCase()}…</div>
+            ) : activeTabConfig.error ? (
+              <div className="flex items-center justify-between gap-3 py-5 text-sm">
+                <span className="text-destructive">{activeTabConfig.error}</span>
+                {activeTabConfig.onRetry && (
+                  <Button type="button" variant="outline" size="sm" onClick={activeTabConfig.onRetry}>
+                    Retry
+                  </Button>
+                )}
+              </div>
+            ) : (
+              activeTabConfig.content(search)
+            )}
           </div>
           <div className="py-2.5">
             <Link
@@ -851,7 +908,7 @@ function ReadinessIndicator({ completedCount, totalCount, onOpen }: { completedC
 export function ProjectCommandCenter({
   project,
   tasks,
-  meetings,
+  meetings = [],
   changeOrders,
   rfis,
   commitments,
@@ -875,6 +932,59 @@ export function ProjectCommandCenter({
   const [isSetupOpen, setIsSetupOpen] = React.useState(false);
   const roomName = `project-home:${projectId}`;
   const currentUserName = useCurrentUserName();
+  const [lazyTabData, setLazyTabData] = React.useState({
+    meetings,
+    projectDocuments,
+    dailyLogs,
+    submittals,
+  });
+  const [lazyTabStatus, setLazyTabStatus] = React.useState<Record<LazyHomeTabKind, LazyHomeTabStatus>>({
+    meetings: { loaded: meetings.length > 0, loading: false, error: null },
+    documents: { loaded: projectDocuments.length > 0, loading: false, error: null },
+    "daily-logs": { loaded: dailyLogs.length > 0, loading: false, error: null },
+    submittals: { loaded: submittals.length > 0, loading: false, error: null },
+  });
+  const loadLazyTabData = React.useCallback(
+    async (kind: LazyHomeTabKind) => {
+      const currentStatus = lazyTabStatus[kind];
+      if (currentStatus.loaded || currentStatus.loading) return;
+
+      setLazyTabStatus((current) => ({
+        ...current,
+        [kind]: { ...current[kind], loading: true, error: null },
+      }));
+
+      try {
+        const payload = await apiFetch<LazyHomeTabPayload>(
+          `/api/projects/${projectId}/home/tab-data?kind=${encodeURIComponent(kind)}`,
+        );
+        setLazyTabData((current) => {
+          if (payload.kind === "meetings") {
+            return { ...current, meetings: payload.data };
+          }
+          if (payload.kind === "documents") {
+            return { ...current, projectDocuments: payload.data };
+          }
+          if (payload.kind === "daily-logs") {
+            return { ...current, dailyLogs: payload.data };
+          }
+          return { ...current, submittals: payload.data };
+        });
+        setLazyTabStatus((current) => ({
+          ...current,
+          [kind]: { loaded: true, loading: false, error: null },
+        }));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : `Failed to load ${kind}.`;
+        setLazyTabStatus((current) => ({
+          ...current,
+          [kind]: { loaded: false, loading: false, error: message },
+        }));
+        toast.error(message);
+      }
+    },
+    [lazyTabStatus, projectId],
+  );
   const { grandTotals, loading: budgetLoading } = useBudgetData(projectId, {
     enabled: !budgetGrandTotals,
     initialGrandTotals: budgetGrandTotals,
@@ -886,6 +996,10 @@ export function ProjectCommandCenter({
   const costToDate = grandTotals.jobToDateCostDetail;
   const ecac = grandTotals.estimatedCostAtCompletion;
   const variance = grandTotals.projectedOverUnder;
+  const homeMeetings = lazyTabData.meetings;
+  const homeDocuments = lazyTabData.projectDocuments;
+  const homeDailyLogs = lazyTabData.dailyLogs;
+  const homeSubmittals = lazyTabData.submittals;
   const primeContractValue = React.useMemo(
     () => contractLineItems.reduce((sum, li) => sum + (li.total_cost ?? 0), 0),
     [contractLineItems],
@@ -907,10 +1021,6 @@ export function ProjectCommandCenter({
   const rfisOverdue = React.useMemo(
     () => rfisOpen.filter((r) => r.due_date && isPast(new Date(r.due_date))),
     [rfisOpen],
-  );
-  const openSubmittals = React.useMemo(
-    () => submittals.filter((s) => !isClosedStatus(s.status)),
-    [submittals],
   );
   const openTasks = React.useMemo(
     () => tasks.filter((t) => !isClosedStatus(t.status)),
@@ -1010,7 +1120,7 @@ export function ProjectCommandCenter({
   };
 
   const meetingsContent = (search: string) => {
-    const filtered = [...meetings]
+    const filtered = [...homeMeetings]
       .sort((a, b) => getDateMs(b.date ?? b.created_at) - getDateMs(a.date ?? a.created_at))
       .filter((m) => (m.title || m.file_name || "").toLowerCase().includes(search.toLowerCase()))
       .slice(0, 10);
@@ -1057,7 +1167,7 @@ export function ProjectCommandCenter({
   };
 
   const documentsContent = (search: string) => {
-    const filtered = projectDocuments
+    const filtered = homeDocuments
       .filter((d) => (d.title || d.file_name || "").toLowerCase().includes(search.toLowerCase()))
       .slice(0, 8);
     if (filtered.length === 0) return <EmptyTabState label="documents" />;
@@ -1149,7 +1259,7 @@ export function ProjectCommandCenter({
   };
 
   const dailyLogsContent = (search: string) => {
-    const filtered = (dailyLogs ?? [])
+    const filtered = homeDailyLogs
       .filter((dl) => (dl.log_date ?? "").includes(search.toLowerCase()))
       .slice(0, 8);
     if (filtered.length === 0) return <EmptyTabState label="daily logs" />;
@@ -1166,7 +1276,7 @@ export function ProjectCommandCenter({
   };
 
   const submittalsContent = (search: string) => {
-    const filtered = submittals
+    const filtered = homeSubmittals
       .filter((s) => s.title?.toLowerCase().includes(search.toLowerCase()))
       .slice(0, 8);
     if (filtered.length === 0) return <EmptyTabState label="submittals" />;
@@ -1186,8 +1296,30 @@ export function ProjectCommandCenter({
 
   const commsTabs: TabConfig[] = [
     { id: "tasks", label: "Tasks", count: openTasks.length, content: tasksContent, viewAllHref: `/${projectId}/tasks` },
-    { id: "meetings", label: "Meetings", count: meetings.length, content: meetingsContent, viewAllHref: `/${projectId}/meetings` },
-    { id: "documents", label: "Documents", count: projectDocuments.length, content: documentsContent, viewAllHref: `/${projectId}/documents` },
+    {
+      id: "meetings",
+      label: "Meetings",
+      count: lazyTabStatus.meetings.loaded ? homeMeetings.length : undefined,
+      content: meetingsContent,
+      viewAllHref: `/${projectId}/meetings`,
+      lazyKind: "meetings",
+      isLoaded: lazyTabStatus.meetings.loaded,
+      isLoading: lazyTabStatus.meetings.loading,
+      error: lazyTabStatus.meetings.error,
+      onRetry: () => loadLazyTabData("meetings"),
+    },
+    {
+      id: "documents",
+      label: "Documents",
+      count: lazyTabStatus.documents.loaded ? homeDocuments.length : undefined,
+      content: documentsContent,
+      viewAllHref: `/${projectId}/documents`,
+      lazyKind: "documents",
+      isLoaded: lazyTabStatus.documents.loaded,
+      isLoading: lazyTabStatus.documents.loading,
+      error: lazyTabStatus.documents.error,
+      onRetry: () => loadLazyTabData("documents"),
+    },
   ];
 
   const changeTabs: TabConfig[] = [
@@ -1198,8 +1330,30 @@ export function ProjectCommandCenter({
 
   const fieldTabs: TabConfig[] = [
     { id: "rfis", label: "RFIs", count: rfis.length, content: rfisContent, viewAllHref: `/${projectId}/rfis` },
-    { id: "daily-logs", label: "Daily Logs", count: (dailyLogs ?? []).length, content: dailyLogsContent, viewAllHref: `/${projectId}/daily-log` },
-    { id: "submittals", label: "Submittals", count: submittals.length, content: submittalsContent, viewAllHref: `/${projectId}/submittals` },
+    {
+      id: "daily-logs",
+      label: "Daily Logs",
+      count: lazyTabStatus["daily-logs"].loaded ? homeDailyLogs.length : undefined,
+      content: dailyLogsContent,
+      viewAllHref: `/${projectId}/daily-log`,
+      lazyKind: "daily-logs",
+      isLoaded: lazyTabStatus["daily-logs"].loaded,
+      isLoading: lazyTabStatus["daily-logs"].loading,
+      error: lazyTabStatus["daily-logs"].error,
+      onRetry: () => loadLazyTabData("daily-logs"),
+    },
+    {
+      id: "submittals",
+      label: "Submittals",
+      count: lazyTabStatus.submittals.loaded ? homeSubmittals.length : undefined,
+      content: submittalsContent,
+      viewAllHref: `/${projectId}/submittals`,
+      lazyKind: "submittals",
+      isLoaded: lazyTabStatus.submittals.loaded,
+      isLoading: lazyTabStatus.submittals.loading,
+      error: lazyTabStatus.submittals.error,
+      onRetry: () => loadLazyTabData("submittals"),
+    },
   ];
 
   const jobNumber = project["job number"] ?? project.project_number;
