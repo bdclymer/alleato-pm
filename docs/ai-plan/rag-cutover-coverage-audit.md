@@ -173,3 +173,5 @@ Status on 2026-05-13: the RAG database split is complete enough to restart the R
 - [x] Blueprint tests assert the combined Graph cron does not run Teams work and keeps embedding capped at 25.
 - [x] Task extraction unit tests assert default and oversized env limits stay bounded.
 - [x] Live Render scheduler guardrail now allows resumed RAG crons only on the safe throttled schedules; Acumatica must remain suspended.
+- [x] Live Render resume completed on 2026-05-13: all RAG-related cron services are `not_suspended` on the safe throttled schedules; `alleato-acumatica-financial-sync` remains `suspended`.
+- [x] Render deploys for the resumed RAG-related crons reached `live` on commit `1aef7310f`.
