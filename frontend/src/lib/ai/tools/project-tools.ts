@@ -770,10 +770,12 @@ export function createProjectTools(
           const dataGaps = [
             budgetRows.length === 0 ? "No budget line rows were found for this project." : null,
             budgetRes.source === "budget_lines"
-              ? "Budget lines came from the budget_lines fallback because v_budget_lines is unavailable."
+              ? "Budget view v_budget_lines is unavailable, so this snapshot used budget_lines only. Revised budget, approved change order totals, and budget modification totals may be incomplete until the view is restored."
               : null,
             contracts.length === 0 ? "No prime contract financial summary rows were found." : null,
-            scheduleTasks.length === 0 ? "No schedule task rows were found." : null,
+            scheduleTasks.length === 0
+              ? "No schedule/Gantt rows were found in schedule_tasks. Treat overdue task counts as unavailable, not zero-risk."
+              : null,
             recentDocs.length === 0 ? "No recent meeting/document context found in the last 90 days." : null,
             budgetRes.error ? `Budget query failed: ${budgetRes.error.message}` : null,
             contractSummaryRes.error ? `Contract summary query failed: ${contractSummaryRes.error.message}` : null,

@@ -2601,6 +2601,7 @@ function buildOwnerSnapshotWidget(snapshot: ProjectBriefingSnapshot): OwnerSnaps
   const openCes = readNestedNumber(hardFacts, ["changeEvents", "openCount"]);
   const overdueRfis = readNestedNumber(hardFacts, ["rfis", "overdueCount"]);
   const overdueTasks = readNestedNumber(schedule, ["overdueCount"]);
+  const scheduleUnavailable = dataGaps.some((gap) => gap.includes("No schedule/Gantt rows"));
   const status = statusFromSnapshot(snapshot);
 
   return {
@@ -2638,8 +2639,8 @@ function buildOwnerSnapshotWidget(snapshot: ProjectBriefingSnapshot): OwnerSnaps
       },
       {
         label: "Overdue Tasks",
-        value: String(overdueTasks),
-        status: overdueTasks > 0 ? "critical" : "neutral",
+        value: scheduleUnavailable ? "unavailable" : String(overdueTasks),
+        status: scheduleUnavailable ? "watch" : overdueTasks > 0 ? "critical" : "neutral",
       },
     ],
     money: {
@@ -2650,8 +2651,12 @@ function buildOwnerSnapshotWidget(snapshot: ProjectBriefingSnapshot): OwnerSnaps
       marginSignal: String(budget?.status ?? "unknown"),
     },
     schedule: {
-      status: overdueTasks > 0 ? "critical" : "unknown",
-      blockers: overdueTasks > 0 ? [`${overdueTasks} overdue schedule task(s)`] : [],
+      status: scheduleUnavailable ? "unknown" : overdueTasks > 0 ? "critical" : "unknown",
+      blockers: scheduleUnavailable
+        ? ["Schedule/Gantt rows are unavailable for this project."]
+        : overdueTasks > 0
+          ? [`${overdueTasks} overdue schedule task(s)`]
+          : [],
       upcomingMilestones: readSnapshotArray(schedule, "upcomingMilestones")
         .map((item) => String(asRecord(item).name ?? "Upcoming milestone"))
         .slice(0, 5),

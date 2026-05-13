@@ -4852,6 +4852,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "budget_forecast_line_items_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "budget_forecast_line_items_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -4963,6 +4970,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "budget_line_forecasts_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "budget_line_forecasts_curve_id_fkey"
             columns: ["curve_id"]
             isOneToOne: false
@@ -5014,6 +5028,13 @@ export type Database = {
             columns: ["budget_line_id"]
             isOneToOne: false
             referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_line_history_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
@@ -5457,6 +5478,13 @@ export type Database = {
             columns: ["budget_line_id"]
             isOneToOne: false
             referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_modification_lines_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
@@ -6047,10 +6075,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "change_event_line_items_budget_code_id_fkey"
+            columns: ["budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "v_budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "change_event_line_items_budget_line_id_fkey"
             columns: ["budget_line_id"]
             isOneToOne: false
             referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_line_items_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
@@ -7586,6 +7628,13 @@ export type Database = {
             columns: ["budget_line_id"]
             isOneToOne: false
             referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_change_order_lines_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
@@ -34339,6 +34388,102 @@ export type Database = {
           under_review: number | null
         }
         Relationships: []
+      }
+      v_budget_lines: {
+        Row: {
+          approved_co_total: number | null
+          budget_mod_total: number | null
+          cost_code_id: string | null
+          cost_type_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string | null
+          original_amount: number | null
+          project_id: number | null
+          revised_budget: number | null
+          sub_job_id: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_lines_cost_code_id_fkey"
+            columns: ["cost_code_id"]
+            isOneToOne: false
+            referencedRelation: "cost_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_cost_code_id_fkey"
+            columns: ["cost_code_id"]
+            isOneToOne: false
+            referencedRelation: "cost_codes_with_division_title"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_cost_type_id_fkey"
+            columns: ["cost_type_id"]
+            isOneToOne: false
+            referencedRelation: "cost_code_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "budget_lines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "budget_lines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_sub_job_id_fkey"
+            columns: ["sub_job_id"]
+            isOneToOne: false
+            referencedRelation: "sub_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_estimate_division_totals: {
         Row: {
