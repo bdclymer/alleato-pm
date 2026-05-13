@@ -17,4 +17,12 @@ describe("assistant shortcuts", () => {
 
     expect(ownerSnapshot?.prompt.toLowerCase()).toContain("owner snapshot");
   });
+
+  it("keeps the owner action queue shortcut on the widget-emitting prompt path", () => {
+    const ownerActionQueue = ASSISTANT_SHORTCUT_GROUPS
+      .flatMap((group) => group.shortcuts)
+      .find((shortcut) => shortcut.id === "owner-action-queue");
+
+    expect(ownerActionQueue?.prompt.toLowerCase()).toContain("what needs my attention");
+  });
 });

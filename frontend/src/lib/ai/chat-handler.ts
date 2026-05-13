@@ -124,6 +124,7 @@ import {
   type AssistantWidgetPayload,
   type MeetingIntelligenceWidgetPayload,
   type OwnerActionItem,
+  type OwnerActionQueueWidgetPayload,
   type OwnerSnapshotWidgetPayload,
   type ProjectPickerWidgetPayload,
   type SourceEvidenceItem,
@@ -2182,7 +2183,17 @@ function extractProjectIdFromMessage(message: string): number | undefined {
   return Number.isFinite(projectId) ? projectId : undefined;
 }
 
-function buildProjectPickerWidget(output: unknown): ProjectPickerWidgetPayload | null {
+function buildProjectPickerWidget(
+  output: unknown,
+  options: {
+    id: string;
+    title: string;
+    subtitle: string;
+    intent: ProjectPickerWidgetPayload["intent"];
+    emptyState: string;
+    promptForProject: (project: { projectId: number; name: string }) => string;
+  },
+): ProjectPickerWidgetPayload | null {
   const record = asRecord(output);
   const rawProjects = Array.isArray(record.projects) ? record.projects : [];
   const projects = rawProjects
@@ -2205,7 +2216,7 @@ function buildProjectPickerWidget(output: unknown): ProjectPickerWidgetPayload |
         meetingCount: meetingCount > 0 ? meetingCount : null,
         openCriticalItems: openCriticalItems > 0 ? openCriticalItems : null,
         healthStatus: typeof project.healthStatus === "string" ? project.healthStatus : null,
-        prompt: `Give me the owner snapshot for project ${projectId}: ${name}.`,
+        prompt: options.promptForProject({ projectId, name }),
       };
     })
     .filter((project): project is NonNullable<typeof project> => Boolean(project))
@@ -2213,12 +2224,12 @@ function buildProjectPickerWidget(output: unknown): ProjectPickerWidgetPayload |
 
   return {
     type: "project_picker",
-    id: "owner-snapshot-project-picker",
-    title: "Choose a project",
-    subtitle: "Pick the project to generate a source-backed owner snapshot.",
-    intent: "owner_snapshot",
+    id: options.id,
+    title: options.title,
+    subtitle: options.subtitle,
+    intent: options.intent,
     projects,
-    emptyState: "No accessible current projects were available for this account.",
+    emptyState: options.emptyState,
   };
 }
 
@@ -2271,7 +2282,17 @@ async function loadOwnerSnapshotProjectPicker(params: {
     };
   }
 
-  const widget = buildProjectPickerWidget({ projects: projects ?? [] });
+  const widget = buildProjectPickerWidget(
+    { projects: projects ?? [] },
+    {
+      id: "owner-snapshot-project-picker",
+      title: "Choose a project",
+      subtitle: "Pick the project to generate a source-backed owner snapshot.",
+      intent: "owner_snapshot",
+      emptyState: "No accessible current projects were available for this account.",
+      promptForProject: ({ projectId, name }) => `Give me the owner snapshot for project ${projectId}: ${name}.`,
+    },
+  );
   return {
     widget,
     content: widget?.projects.length
@@ -2282,6 +2303,56 @@ async function loadOwnerSnapshotProjectPicker(params: {
       source: "projects",
     },
   };
+}
+
+async function loadOwnerActionQueueProjectPicker(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  userId: string;
+  selectedProjectId?: number | null;
+}): Promise<{
+  widget: ProjectPickerWidgetPayload | null;
+  content: string;
+  traceOutput: Record<string, unknown>;
+}> {
+  const picker = await loadOwnerSnapshotProjectPicker(params);
+  const widget = picker.widget
+    ? {
+        ...picker.widget,
+        id: "owner-action-queue-project-picker",
+        subtitle: "Pick the project to generate a source-backed owner action queue.",
+        intent: "owner_action_queue" as const,
+        projects: picker.widget.projects.map((project) => ({
+          ...project,
+          prompt: `What needs my attention for project ${project.projectId}: ${project.name}?`,
+        })),
+      }
+    : null;
+
+  return {
+    widget,
+    content: widget?.projects.length
+      ? "Choose a project below and I will generate the owner action queue."
+      : picker.content,
+    traceOutput: {
+      ...picker.traceOutput,
+      intent: "owner_action_queue",
+      projectCount: widget?.projects.length ?? 0,
+    },
+  };
+}
+
+function isOwnerActionQueueWidgetRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return [
+    "what needs my attention",
+    "owner action queue",
+    "owner-blocked",
+    "owner blocked",
+    "show owner tasks",
+    "show owner-blocked items",
+    "what should brandon do today",
+    "show meeting follow-ups",
+  ].some((phrase) => normalized.includes(phrase));
 }
 
 function statusFromSnapshot(snapshot: ProjectBriefingSnapshot): OwnerSnapshotWidgetPayload["status"] {
@@ -2408,6 +2479,53 @@ function buildOwnerActionsFromSnapshot(snapshot: ProjectBriefingSnapshot): Owner
   }
 
   return actions;
+}
+
+function groupOwnerActions(
+  actions: OwnerActionItem[],
+): OwnerActionQueueWidgetPayload["groups"] {
+  const groups: OwnerActionQueueWidgetPayload["groups"] = [
+    {
+      id: "now",
+      title: "Now",
+      priority: "now",
+      items: actions.filter((action) => action.priority === "critical" || action.priority === "high"),
+    },
+    {
+      id: "next",
+      title: "Next",
+      priority: "next",
+      items: actions.filter((action) => action.priority === "normal"),
+    },
+    {
+      id: "watch",
+      title: "Watch",
+      priority: "watch",
+      items: actions.filter((action) => action.priority === "low"),
+    },
+  ];
+
+  return groups.filter((group) => group.items.length > 0);
+}
+
+function buildOwnerActionQueueWidget(
+  snapshot: ProjectBriefingSnapshot,
+): OwnerActionQueueWidgetPayload | null {
+  const project = readSnapshotObject(snapshot, "project");
+  const projectId = typeof project?.id === "number" ? project.id : null;
+  const projectName = typeof project?.name === "string" ? project.name : null;
+  if (!projectId || !projectName) return null;
+
+  const actions = buildOwnerActionsFromSnapshot(snapshot);
+  return {
+    type: "owner_action_queue",
+    id: `owner-action-queue-${projectId}`,
+    title: `Owner action queue: ${projectName}`,
+    subtitle: "Source-backed owner actions from project controls and briefing snapshot signals.",
+    totalCount: actions.length,
+    groups: groupOwnerActions(actions),
+    emptyState: "No owner actions matched this project snapshot.",
+  };
 }
 
 function buildOwnerSnapshotWidget(snapshot: ProjectBriefingSnapshot): OwnerSnapshotWidgetPayload | null {
@@ -2571,6 +2689,64 @@ async function loadOwnerSnapshotWidget(params: {
       riskCount: widget?.risks.length ?? 0,
       actionCount: widget?.ownerActions.length ?? 0,
       dataGapCount: widget?.dataGaps.length ?? 0,
+    },
+  };
+}
+
+async function loadOwnerActionQueueWidget(params: {
+  tools: ToolSet;
+  selectedProjectId?: number;
+}): Promise<{
+  snapshot: ProjectBriefingSnapshot | null;
+  widget: OwnerActionQueueWidgetPayload | null;
+  content: string;
+  traceOutput: Record<string, unknown>;
+}> {
+  const executable = params.tools.getProjectBriefingSnapshot as ExecutableTool | undefined;
+  if (!executable?.execute) {
+    return {
+      snapshot: null,
+      widget: null,
+      content: "I could not load the project snapshot tool, so I cannot render an owner action queue yet.",
+      traceOutput: { error: "getProjectBriefingSnapshot execute function missing" },
+    };
+  }
+
+  const output = await executable.execute(
+    params.selectedProjectId ? { projectId: params.selectedProjectId } : {},
+  );
+  const record = asRecord(output);
+  if (typeof record.error === "string") {
+    return {
+      snapshot: null,
+      widget: null,
+      content: record.error,
+      traceOutput: { error: record.error },
+    };
+  }
+
+  const widget = buildOwnerActionQueueWidget(record);
+  const project = readSnapshotObject(record, "project");
+  const projectName = typeof project?.name === "string" ? project.name : "the selected project";
+  const topAction = widget?.groups[0]?.items[0]?.title;
+  const content = widget
+    ? [
+        `I built an owner action queue for ${projectName}.`,
+        "",
+        topAction ? `Start with: ${topAction}` : "No immediate owner action was found.",
+      ].join("\n")
+    : "I found project snapshot data, but it was missing the project identity needed to render the owner action queue.";
+
+  return {
+    snapshot: record,
+    widget,
+    content,
+    traceOutput: {
+      projectId: project?.id ?? null,
+      projectName,
+      widgetBuilt: Boolean(widget),
+      actionCount: widget?.totalCount ?? 0,
+      groupCount: widget?.groups.length ?? 0,
     },
   };
 }
@@ -4527,6 +4703,142 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             stage: "complete",
             message: "Tasks table checked",
             status: "success",
+          });
+          return;
+        }
+
+        if (isOwnerActionQueueWidgetRequest(lastUserContent)) {
+          writeStrategistStatus(writer, {
+            stage: "actions",
+            message: selectedProjectId
+              ? "Building owner action queue"
+              : "Loading projects for owner action queue",
+            status: "loading",
+          });
+
+          const requestedProjectId = selectedProjectId ?? extractProjectIdFromMessage(lastUserContent);
+          if (!requestedProjectId) {
+            const picker = await loadOwnerActionQueueProjectPicker({
+              supabase,
+              userId: user.id,
+              selectedProjectId,
+            });
+            const dataParts = picker.widget
+              ? writeAssistantWidgetParts(writer, [picker.widget])
+              : [];
+
+            toolTrace.push({
+              tool: "ownerActionQueueProjectPicker",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId: selectedProjectId ?? null,
+              },
+              output: picker.traceOutput,
+              timestamp: new Date().toISOString(),
+            });
+
+            const responseQuality = scoreResponseQuality({
+              toolTrace,
+              content: picker.content,
+            });
+            await persistAssistantMessage({
+              supabase,
+              sessionId,
+              userId: user.id,
+              content: picker.content,
+              toolTrace,
+              memoryUsage,
+              learningUsage,
+              totalUsage: undefined,
+              responseQuality,
+              councilMode,
+              modelId: activeModel,
+              loopDiagnostic: buildLoopDiagnostic({
+                stepStarts: stepStartDiagnostics,
+                steps: stepDiagnostics,
+              }),
+              projectBriefingSnapshot,
+              executiveBriefingRetrieval,
+              providerDecision,
+              selectedProjectId,
+              dataParts,
+              sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+            });
+
+            await supabase
+              .from("conversations")
+              .update({ last_message_at: new Date().toISOString() })
+              .eq("session_id", sessionId)
+              .eq("user_id", user.id);
+
+            await writeTextResponse(writer, "strategist-owner-action-queue-picker", picker.content);
+            writeStrategistStatus(writer, {
+              stage: "complete",
+              message: picker.widget ? "Project picker ready" : "Project picker unavailable",
+              status: picker.widget ? "success" : "warning",
+            });
+            return;
+          }
+
+          const answer = await loadOwnerActionQueueWidget({
+            tools,
+            selectedProjectId: requestedProjectId,
+          });
+          projectBriefingSnapshot = answer.snapshot;
+
+          const dataParts = answer.widget
+            ? writeAssistantWidgetParts(writer, [answer.widget])
+            : [];
+
+          toolTrace.push({
+            tool: "ownerActionQueueWidget",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: requestedProjectId,
+            },
+            output: answer.traceOutput,
+            timestamp: new Date().toISOString(),
+          });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content: answer.content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content: answer.content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId: requestedProjectId,
+            dataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          await writeTextResponse(writer, "strategist-owner-action-queue", answer.content);
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: answer.widget ? "Owner action queue ready" : "Owner action queue unavailable",
+            status: answer.widget ? "success" : "warning",
           });
           return;
         }

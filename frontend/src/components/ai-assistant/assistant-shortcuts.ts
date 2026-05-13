@@ -51,9 +51,9 @@ export const ASSISTANT_SHORTCUT_GROUPS: AssistantShortcutGroup[] = [
     label: "Take Action",
     shortcuts: [
       {
-        id: "decision-packet",
-        label: "Decision packet",
-        prompt: "Build a decision packet for the top risk on this project.",
+        id: "owner-action-queue",
+        label: "Owner action queue",
+        prompt: "What needs my attention on this project?",
         icon: "action",
       },
       {
