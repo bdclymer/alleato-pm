@@ -306,8 +306,11 @@ Acceptance:
 - Done: the backend packet is injected as additive AI SDK system context and source evidence is rendered through the existing `source_evidence_drawer` assistant widget type.
 - Done: the response context includes answer, evidence, source coverage, confidence, and recommended actions.
 - Done: backend-call failures are recorded in `toolTrace` and surfaced as warning status before falling back to current packet/tools.
+- Done: local frontend bridge smoke against a local backend returned a typed packet for project 43 with five checked source categories, 10 evidence rows, and an existing `source_evidence_drawer` widget.
+- Done: backend project-lookup dependency failures now return a typed low-confidence packet with failed `project_lookup` trace instead of a generic FastAPI 500.
 - Current environment caveat: provider-matrix verification completed but still reports streaming tool-call provider debt, and assistant-routing Playwright verification is blocked by Supabase Auth setup timeout before route tests run.
-- Not yet done: real non-production provider request through Render/FastAPI with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`.
+- Current provider caveat: local `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents` reached the installed runtime but fell back to `contract_spike` because direct OpenAI returned quota error 429.
+- Not yet done: real non-production provider request through Render/FastAPI with a provider path that has quota.
 
 ### Slice 4: Memory Governance
 

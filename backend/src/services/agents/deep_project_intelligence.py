@@ -162,6 +162,45 @@ def _get_project(store: Any, project_id: int) -> Optional[Dict[str, Any]]:
     return project if isinstance(project, dict) else None
 
 
+def _project_lookup_failure_response(
+    request: DeepProjectIntelligenceRequest,
+    *,
+    duration_ms: int,
+    answer: str,
+    notes: str,
+    detail: str,
+) -> DeepProjectIntelligenceResponse:
+    return DeepProjectIntelligenceResponse(
+        answer=answer,
+        confidence="low",
+        intent="project_status_risk",
+        project=DeepProject(id=request.project_id, name=f"Project {request.project_id}"),
+        sourcesChecked=[
+            SourceCoverage(
+                sourceType="project",
+                status="failed",
+                recordCount=0,
+                latestSourceAt=None,
+                notes=notes,
+            )
+        ],
+        evidence=[],
+        recommendedActions=[],
+        toolTrace=[
+            ToolTraceItem(
+                agent="project-intelligence-orchestrator",
+                tool="project_lookup",
+                status="failed",
+                durationMs=duration_ms,
+                detail=detail,
+            )
+        ],
+        memoryCandidates=[],
+        orchestrator="deep-agents-project-intelligence",
+        mode=CONTRACT_SPIKE_MODE,
+    )
+
+
 def _missing_sources() -> List[SourceCoverage]:
     return [
         SourceCoverage(
@@ -544,41 +583,34 @@ def build_project_status_contract_spike(
     """Return a typed project-status packet with explicit source gaps."""
 
     started = time.perf_counter()
-    project_row = _get_project(store, request.project_id)
+    try:
+        project_row = _get_project(store, request.project_id)
+    except Exception as exc:
+        duration_ms = max(0, int((time.perf_counter() - started) * 1000))
+        detail = f"Project lookup failed: {exc}"
+        return _project_lookup_failure_response(
+            request,
+            duration_ms=duration_ms,
+            answer=(
+                f"I could not verify project {request.project_id} because the "
+                f"project lookup failed: {exc}"
+            ),
+            notes=detail,
+            detail=detail,
+        )
+
     duration_ms = max(0, int((time.perf_counter() - started) * 1000))
 
     if project_row is None:
-        return DeepProjectIntelligenceResponse(
+        return _project_lookup_failure_response(
+            request,
+            duration_ms=duration_ms,
             answer=(
                 f"I could not resolve project {request.project_id}, so I did not run "
                 "project intelligence synthesis."
             ),
-            confidence="low",
-            intent="project_status_risk",
-            project=DeepProject(id=request.project_id, name=f"Project {request.project_id}"),
-            sourcesChecked=[
-                SourceCoverage(
-                    sourceType="project",
-                    status="failed",
-                    recordCount=0,
-                    latestSourceAt=None,
-                    notes="Project lookup returned no row; synthesis is blocked.",
-                )
-            ],
-            evidence=[],
-            recommendedActions=[],
-            toolTrace=[
-                ToolTraceItem(
-                    agent="project-intelligence-orchestrator",
-                    tool="project_lookup",
-                    status="failed",
-                    durationMs=duration_ms,
-                    detail="Project lookup returned no row.",
-                )
-            ],
-            memoryCandidates=[],
-            orchestrator="deep-agents-project-intelligence",
-            mode=CONTRACT_SPIKE_MODE,
+            notes="Project lookup returned no row; synthesis is blocked.",
+            detail="Project lookup returned no row.",
         )
 
     project = DeepProject(

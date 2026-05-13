@@ -324,6 +324,20 @@ def test_contract_spike_fails_loudly_when_project_is_missing():
     assert response.tool_trace[0].status == "failed"
 
 
+def test_contract_spike_fails_loudly_when_project_lookup_raises():
+    class _FailingStore:
+        def get_project(self, _project_id):
+            raise RuntimeError("Supabase schema cache unavailable")
+
+    response = build_project_status_contract_spike(_request(), _FailingStore())
+
+    assert response.confidence == "low"
+    assert response.sources_checked[0].source_type == "project"
+    assert response.sources_checked[0].status == "failed"
+    assert "project lookup failed" in response.answer
+    assert "Supabase schema cache unavailable" in response.tool_trace[0].detail
+
+
 def test_deep_agent_endpoint_is_feature_gated(client, mock_supabase_store, monkeypatch):
     monkeypatch.delenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", raising=False)
     mock_supabase_store._client = None
@@ -397,3 +411,35 @@ def test_deep_agent_endpoint_returns_404_for_missing_project(client, mock_supaba
 
     assert response.status_code == 404
     assert "could not resolve project 43" in response.json()["detail"]
+
+
+def test_deep_agent_endpoint_returns_typed_packet_for_lookup_dependency_failure(
+    client,
+    mock_supabase_store,
+    monkeypatch,
+):
+    monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", "true")
+    mock_supabase_store.get_project.side_effect = RuntimeError("Supabase schema cache unavailable")
+    mock_supabase_store._client = None
+    _override_deep_agent_auth(client.app)
+
+    try:
+        response = client.post(
+            "/api/intelligence/deep-agent/project-status",
+            json={
+                "userId": "user-1",
+                "projectId": 43,
+                "question": "What is the current risk/status on this project?",
+            },
+        )
+    finally:
+        _clear_overrides(client.app)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["confidence"] == "low"
+    assert data["sourcesChecked"][0]["sourceType"] == "project"
+    assert data["sourcesChecked"][0]["status"] == "failed"
+    assert "project lookup failed" in data["answer"]
+    assert data["toolTrace"][0]["tool"] == "project_lookup"
+    assert "Supabase schema cache unavailable" in data["toolTrace"][0]["detail"]

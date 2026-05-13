@@ -1019,7 +1019,11 @@ async def run_deep_agent_project_status(
         runtime=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "contract_spike"),
         model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.4-mini"),
     )
-    if response.tool_trace and response.tool_trace[0].status == "failed":
+    if (
+        response.tool_trace
+        and response.tool_trace[0].status == "failed"
+        and response.tool_trace[0].detail == "Project lookup returned no row."
+    ):
         raise HTTPException(status_code=404, detail=response.answer)
     return response.model_dump(by_alias=True)
 

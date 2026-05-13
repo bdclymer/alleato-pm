@@ -33,6 +33,10 @@
 - PASS: `npm run typecheck -- --pretty false`
 - PASS: `npx eslint src/lib/ai/deep-agent-project-status.ts src/lib/ai/__tests__/deep-agent-project-status.test.ts src/lib/ai/chat-handler.ts --cache --cache-strategy content`
 - PASS: `git diff --check -- frontend/src/lib/ai/deep-agent-project-status.ts frontend/src/lib/ai/__tests__/deep-agent-project-status.test.ts frontend/src/lib/ai/chat-handler.ts`
+- PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_deep_project_intelligence.py -q` after project-lookup failure hardening (`11 passed`)
+- PASS: local backend contract smoke on `http://127.0.0.1:8051/api/intelligence/deep-agent/project-status` returned `200`, `mode=contract_spike`, project 43, five checked source categories, and 10 evidence rows.
+- PASS: local frontend bridge smoke with `BACKEND_URL=http://127.0.0.1:8051` and `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` returned `enabled=true`, `mode=contract_spike`, source evidence widget type `source_evidence_drawer`, and guardrail context present.
+- WARN provider quota: local backend runtime smoke with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents` reached `deepagents_runtime` but fell back to `contract_spike` because direct OpenAI returned 429 `insufficient_quota`.
 - WARN existing provider debt: `node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs` exited 0 and refreshed `docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json`, but the artifact currently reports `supportsToolCalling=false`; gateway `generateText` passed, direct OpenAI quota failed, and streamText paths did not produce a passing tool-call result.
 - FAIL unrelated auth dependency: `npm run rag:verify:assistant-routing` failed in setup before route assertions because Supabase Auth timed out during `listUsers` after 30000ms in `frontend/tests/auth.setup.ts`.
 - WARN unrelated environment debt: backend `.venv` emits `RequestsDependencyWarning` for `urllib3`/`chardet` or `charset_normalizer` version mismatch.
@@ -40,6 +44,8 @@
 8) Evidence artifacts (screenshot/video/report/log paths):
 - `docs/PRPs/deep-agents-project-intelligence/prp-deep-agents-project-intelligence.md`
 - `backend/tests/test_deep_project_intelligence.py`
+- `backend/src/services/agents/deep_project_intelligence.py`
+- `backend/src/api/main.py`
 - `frontend/src/lib/ai/deep-agent-project-status.ts`
 - `frontend/src/lib/ai/__tests__/deep-agent-project-status.test.ts`
 - `docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json`
@@ -48,7 +54,7 @@
 - Deep Agents should not replace AI SDK UI/chat transport; it should be evaluated as a backend orchestration harness for complex project-intelligence workflows.
 - Current repo evidence already has packet-first intelligence and AI SDK tool loops, but the product contract is distributed across route branches, fallbacks, and quality checks.
 - Slice 3B now adds a feature-gated AI SDK bridge that calls the backend Deep Agents packet for selected-project owner-status/risk intents without moving LangChain into frontend code.
-10) Recommended next action (one line): Enable the backend runtime and frontend bridge flags in non-production, then test one real selected-project status prompt end to end.
+10) Recommended next action (one line): Route the backend Deep Agents runtime through a quota-backed provider path, then rerun the selected-project status prompt end to end.
 11) Handoff file path: `docs/ops/handoffs/2026-05-13-S45-deep-agents-orchestrator-prp.md`
 12) Migration ledger evidence: Not applicable; no migration created.
 
@@ -96,12 +102,15 @@ Implemented Slice 3B as a feature-gated AI SDK bridge:
 - Injected the backend packet as additive AI SDK system context instead of replacing the chat stream.
 - Rendered backend evidence through the existing `source_evidence_drawer` assistant widget type.
 - Recorded success/failure in `toolTrace`; failures are visible warning statuses and then fall back to current packet/tools.
+- Verified the bridge against a local backend: project 43 returned a typed packet with checked packet/Teams/email/financial/schedule sources and 10 evidence rows.
+- Hardened backend project lookup so Supabase/schema-cache failures return a structured low-confidence packet with failed `project_lookup` trace instead of a generic 500.
+- Verified installed Deep Agents runtime handoff behavior: when direct OpenAI quota fails, `deepagents_runtime` is recorded as failed and the endpoint still returns the contract packet.
 
 Known ledger issue: local `session-board.md` already has an older S44 row using `AAI-356` for Source Sync drill-in work. The live Linear issue created for this session is also `AAI-356`. This is recorded as a ledger collision risk rather than hidden.
 
 ## Exact Next Step
 
-Enable `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, and `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` only in non-production, then run one real selected-project owner-status prompt end to end.
+Route `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL` through a quota-backed provider path, keep `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, and `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` only in non-production, then rerun one real selected-project owner-status prompt end to end.
 
 ## Known Pitfalls
 
