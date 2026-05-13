@@ -40,7 +40,6 @@ import {
   StatusBadge,
 } from "@/components/ds";
 import { Input } from "@/components/ui/input";
-import { RealtimeCursors } from "@/components/realtime/realtime-cursors";
 import { apiFetch } from "@/lib/api-client";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
@@ -125,6 +124,11 @@ const AssignMemberDialog = dynamic(
 
 const EditProjectSidebar = dynamic(
   () => import("@/components/project/edit-project-sidebar").then((mod) => mod.EditProjectSidebar),
+  { ssr: false },
+);
+
+const RealtimeCursors = dynamic(
+  () => import("@/components/realtime/realtime-cursors").then((mod) => mod.RealtimeCursors),
   { ssr: false },
 );
 
@@ -916,6 +920,7 @@ export function ProjectCommandCenter({
   const projectId = String(project.id);
   const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
   const [isSetupOpen, setIsSetupOpen] = React.useState(false);
+  const [showRealtimeCursors, setShowRealtimeCursors] = React.useState(false);
   const roomName = `project-home:${projectId}`;
   const currentUserName = useCurrentUserName();
   const [lazyTabData, setLazyTabData] = React.useState({
@@ -930,6 +935,10 @@ export function ProjectCommandCenter({
     "daily-logs": { loaded: dailyLogs.length > 0, loading: false, error: null },
     submittals: { loaded: submittals.length > 0, loading: false, error: null },
   });
+  React.useEffect(() => {
+    const timeout = window.setTimeout(() => setShowRealtimeCursors(true), 1200);
+    return () => window.clearTimeout(timeout);
+  }, []);
   const loadLazyTabData = React.useCallback(
     async (kind: LazyHomeTabKind) => {
       const currentStatus = lazyTabStatus[kind];
@@ -1346,7 +1355,7 @@ export function ProjectCommandCenter({
 
   return (
     <div className="min-h-0">
-      <RealtimeCursors roomName={roomName} username={currentUserName} />
+      {showRealtimeCursors ? <RealtimeCursors roomName={roomName} username={currentUserName} /> : null}
 
       <div className="px-4 py-6 sm:px-5 lg:px-6">
         {/* ── Header ────────────────────────────────────── */}
@@ -1539,20 +1548,24 @@ export function ProjectCommandCenter({
         </div>
       </div>
 
-      <EditProjectSidebar
-        project={project}
-        open={isEditProjectSidebarOpen}
-        onOpenChange={setIsEditProjectSidebarOpen}
-      />
-      <ProjectSetupSheet
-        open={isSetupOpen}
-        onOpenChange={setIsSetupOpen}
-        projectId={projectId}
-        hasTeam={hasTeam}
-        hasBudget={hasBudget}
-        hasContracts={hasContracts}
-        hasSchedule={hasSchedule}
-      />
+      {isEditProjectSidebarOpen ? (
+        <EditProjectSidebar
+          project={project}
+          open={isEditProjectSidebarOpen}
+          onOpenChange={setIsEditProjectSidebarOpen}
+        />
+      ) : null}
+      {isSetupOpen ? (
+        <ProjectSetupSheet
+          open={isSetupOpen}
+          onOpenChange={setIsSetupOpen}
+          projectId={projectId}
+          hasTeam={hasTeam}
+          hasBudget={hasBudget}
+          hasContracts={hasContracts}
+          hasSchedule={hasSchedule}
+        />
+      ) : null}
     </div>
   );
 }
