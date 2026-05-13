@@ -48,11 +48,15 @@
 - PASS: `node scripts/verify/verify_render_ai_gateway_health.mjs` confirmed active Render backend health, AI Gateway configured, Supabase service configured, and AI Gateway balance above floor.
 - PASS: active backend endpoint probe against `https://alleato-backend-rbnj.onrender.com/api/intelligence/deep-agent/project-status` returned expected 503 disabled state before non-production flags are enabled.
 - PASS: `npm run rag:verify:deep-agents-nonprod` verifies Render manifest default-off flags, active backend health, endpoint state, and Render API service-mapping drift.
-- FAIL deployment mapping: `RENDER_API_KEY` currently does not expose the active `alleato-backend-rbnj` service; do not mutate backend env vars through any other backend service record.
+- PASS deployment mapping: the `.env`/`frontend/.env.local` `RENDER_API_KEY` resolves to the active `alleato-backend-rbnj` service (`srv-d8271ohj2pic739klb7g`); no other Render backend service should be used.
 - PASS: `npm run verify:active-backend-url` now scans tracked docs/code plus local `.vercel`, `frontend/.vercel`, `frontend/.env.local`, `.claude`, and `claude-memory-compiler-main`; only `alleato-backend-rbnj.onrender.com` is allowed for Render backend URLs.
 - PASS: hidden/no-ignore scan found no remaining stale Render backend host references after cleanup.
 - PASS: Vercel env values for `NEXT_PUBLIC_AGENT_ENDPOINT`, `PYTHON_BACKEND_URL`, and `BACKEND_URL` were reset to `https://alleato-backend-rbnj.onrender.com` for production, development, preview, and preview `staging`; temp pulls for production/preview/staging found no stale backend host strings.
-- FAIL expected: `npm run rag:verify:deep-agents-nonprod` now refuses to pass while the local `RENDER_API_KEY` cannot see the active `alleato-backend-rbnj` service.
+- PASS: `npm run rag:verify:deep-agents-nonprod` passes in default-off mode with the active `alleato-backend-rbnj` service, healthy AI Gateway, and healthy Supabase service visibility.
+- PASS: Render env update via API on active service `srv-d8271ohj2pic739klb7g` set `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, and `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini`.
+- PASS: Render deploy `dep-d82dh883kofs73cn8i80` completed live on the active `alleato-backend-rbnj` service.
+- PASS: `DEEP_AGENTS_EXPECT_ENABLED=true npm run rag:verify:deep-agents-nonprod` returned `endpointState=deep_agents` and `endpointMode=deep_agents`.
+- PASS: Vercel preview `staging` now has `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`; production bridge remains off.
 - WARN existing provider debt: `node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs` exited 0 and refreshed `docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json`, but the artifact currently reports `supportsToolCalling=false`; gateway `generateText` passed, direct OpenAI quota failed, and streamText paths did not produce a passing tool-call result.
 - FAIL unrelated auth dependency: `npm run rag:verify:assistant-routing` failed in setup before route assertions because Supabase Auth timed out during `listUsers` after 30000ms in `frontend/tests/auth.setup.ts`.
 - WARN unrelated environment debt: backend `.venv` emits `RequestsDependencyWarning` for `urllib3`/`chardet` or `charset_normalizer` version mismatch.
@@ -83,6 +87,7 @@
 - AI Gateway runtime update: Posted after local Deep Agents runtime succeeded through AI Gateway, comment id `2a2c0fcc-29d3-424c-abb7-20d4939dcfbb`.
 - Non-production readiness update: Posted after adding the default-off Render flags and readiness guardrail, comment id `2f9072ee-e1be-4bc0-b74b-668ee2ed2819`.
 - Active Render backend cleanup: Posted after removing stale backend references and tightening the active-backend guardrail, comment id `a2f86d5b-5c97-42f2-8921-fb6a176d3e72`.
+- Active Render Deep Agents enablement: Posted after enabling the backend flags on `alleato-backend-rbnj` and verifying `endpointMode=deep_agents`, comment id `51c49c45-5e0e-4397-b372-737f62029d47`.
 
 ## Current Status
 
@@ -134,7 +139,7 @@ Known ledger issue: local `session-board.md` already has an older S44 row using 
 
 ## Exact Next Step
 
-Resolve the active Render service API mapping or enable `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, and `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini` through the active `alleato-backend-rbnj` Render dashboard. Then set `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` on Vercel preview and run `DEEP_AGENTS_EXPECT_ENABLED=true npm run rag:verify:deep-agents-nonprod` plus one real selected-project owner-status prompt end to end through the app.
+Redeploy or verify the Vercel preview app with `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, then run one real selected-project owner-status prompt end to end through `/api/ai-assistant/chat`.
 
 ## Known Pitfalls
 

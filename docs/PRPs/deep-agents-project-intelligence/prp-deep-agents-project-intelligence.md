@@ -312,8 +312,10 @@ Acceptance:
 - Done: local runtime smoke with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini`, and the frontend bridge enabled returned `mode=deep_agents`, `sourceCount=9`, `evidenceCount=11`, and a successful `deepagents_runtime` trace.
 - Done: Render manifests now carry explicit default-off Deep Agents env entries, and `npm run rag:verify:deep-agents-nonprod` verifies active backend health, AI Gateway visibility, default-off deployment contract, endpoint state, and Render service-mapping drift.
 - Current environment caveat: provider-matrix verification completed but still reports streaming tool-call provider debt, and assistant-routing Playwright verification is blocked by Supabase Auth setup timeout before route tests run.
-- Current deployment caveat: the available Render API key does not expose the active `alleato-backend-rbnj` service; do not mutate Render env through any other backend service mapping.
-- Not yet done: deploy the feature flags/env to the active non-production Render/Vercel targets and run the full authenticated `/api/ai-assistant/chat` selected-project owner-status prompt in the app.
+- Done: the `.env`/`frontend/.env.local` Render API key resolves to the active `alleato-backend-rbnj` service (`srv-d8271ohj2pic739klb7g`), and `npm run rag:verify:deep-agents-nonprod` passes in default-off mode.
+- Done: active Render `alleato-backend-rbnj` now has `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, and `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini`; deploy `dep-d82dh883kofs73cn8i80` went live and `DEEP_AGENTS_EXPECT_ENABLED=true npm run rag:verify:deep-agents-nonprod` returned `endpointMode=deep_agents`.
+- Done: Vercel preview `staging` has `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`.
+- Not yet done: redeploy/verify the Vercel preview app route and run the full authenticated `/api/ai-assistant/chat` selected-project owner-status prompt in the app.
 
 ### Slice 4: Memory Governance
 
@@ -391,7 +393,7 @@ Do not run full frontend build as part of this PRP doc slice. Delegate it when i
 
 ## Recommended Next Step
 
-Resolve the active Render service API mapping or enable the Deep Agents env vars through the active `alleato-backend-rbnj` Render dashboard, then run `DEEP_AGENTS_EXPECT_ENABLED=true npm run rag:verify:deep-agents-nonprod` and one authenticated selected-project owner-status prompt through `/api/ai-assistant/chat`.
+Redeploy or verify the Vercel preview app with `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, then run one authenticated selected-project owner-status prompt through `/api/ai-assistant/chat`.
 
 ## Open Questions
 
