@@ -5,16 +5,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "15 0 * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      python3 -c "
-      import json, os, sys;
-      sys.path.insert(0, '/app');
-      from src.services.acumatica_sync import run_acumatica_financial_sync;
-      result = run_acumatica_financial_sync();
-      print(json.dumps(result, indent=2));
-      sys.exit(1 if result.get('errors') else 0)
-      "
+      echo "alleato-acumatica-financial-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -38,17 +31,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "*/15 * * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.scheduler import _run_source_sync_health_recompute;
-      result = _run_source_sync_health_recompute();
-      print(json.dumps(result, indent=2));
-      health = result.get('health', {});
-      sys.exit(1 if health.get('status') != 'healthy' else 0)
-      "
+      echo "alleato-source-sync-health disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -64,9 +49,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "*/30 * * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding --skip-teams-compiler
+      echo "alleato-teams-channel-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -90,9 +75,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "15,45 * * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
+      echo "alleato-teams-dm-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -120,19 +105,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "5,35 * * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      python3 -c "
-      import json, os, sys;
-      sys.path.insert(0, '/app');
-      from src.services.supabase_helpers import get_supabase_client;
-      from src.services.integrations.microsoft_graph.sync import run_graph_sync;
-      client = get_supabase_client();
-      result = run_graph_sync(client);
-      print(json.dumps(result, indent=2));
-      errors = result.get('errors', []);
-      sys.exit(1 if errors and result.get('total_synced', 0) == 0 else 0)
-      "
+      echo "alleato-graph-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services

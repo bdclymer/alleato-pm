@@ -601,7 +601,23 @@ def _find_fireflies_pipeline_backlog_jobs_sql(*, limit: int, cutoff: datetime) -
     import psycopg2
     from psycopg2.extras import RealDictCursor
 
+    candidate_limit = max(limit * 20, limit)
     query = """
+        with candidate_jobs as (
+          select
+            fireflies_id,
+            metadata_id,
+            stage,
+            error_message,
+            created_at,
+            updated_at
+          from public.fireflies_ingestion_jobs
+          where stage in ('raw_ingested', 'error')
+            and metadata_id <> ''
+            and updated_at <= %s
+          order by updated_at desc
+          limit %s
+        )
         select
           fij.fireflies_id,
           fij.metadata_id,
@@ -610,14 +626,13 @@ def _find_fireflies_pipeline_backlog_jobs_sql(*, limit: int, cutoff: datetime) -
           fij.created_at,
           fij.updated_at,
           coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) as source_at
-        from public.fireflies_ingestion_jobs fij
+        from candidate_jobs fij
         join public.document_metadata dm on dm.id = fij.metadata_id
-        where fij.stage in ('raw_ingested', 'error')
-          and fij.metadata_id <> ''
-          and fij.updated_at <= %s
-          and coalesce(dm.source, '') <> 'microsoft_graph'
+        where coalesce(dm.source, '') <> 'microsoft_graph'
           and coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) >= now() - interval '365 days'
-        order by coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) desc nulls last,
+        order by dm.captured_at desc nulls last,
+          dm.date desc nulls last,
+          dm.created_at desc nulls last,
           fij.updated_at desc
         limit %s
     """
@@ -625,7 +640,8 @@ def _find_fireflies_pipeline_backlog_jobs_sql(*, limit: int, cutoff: datetime) -
     try:
         conn = psycopg2.connect(database_url, sslmode="require")
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, (cutoff, max(limit * 20, limit)))
+            cur.execute("set local statement_timeout = '15s'")
+            cur.execute(query, (cutoff, candidate_limit, limit))
             return [dict(row) for row in cur.fetchall()]
     finally:
         if conn is not None:

@@ -6,6 +6,7 @@ import yaml from "js-yaml";
 
 const BLUEPRINTS = ["render.yaml", "backend/render.yaml"];
 const RENDER_SERVICES_URL = "https://api.render.com/v1/services?limit=100";
+const RENDER_SERVICE_URL = "https://api.render.com/v1/services";
 
 const REQUIRED_WEB_FLAGS = new Map([
   ["DISABLE_SCHEDULER", "true"],
@@ -17,6 +18,7 @@ const REQUIRED_WEB_FLAGS = new Map([
 ]);
 
 const REQUIRED_SUSPENDED_CRONS = new Set([
+  "alleato-acumatica-financial-sync",
   "alleato-executive-daily-brief-evening",
   "alleato-executive-daily-brief-morning",
   "alleato-graph-sync",
@@ -27,6 +29,14 @@ const REQUIRED_SUSPENDED_CRONS = new Set([
   "alleato-teams-channel-sync",
   "alleato-teams-dm-sync",
 ]);
+
+const DISABLED_CRON_SCHEDULE = "0 0 1 1 *";
+
+function isStructurallyDisabledCron(service) {
+  const schedule = service?.serviceDetails?.schedule || service?.schedule;
+  const command = service?.serviceDetails?.envSpecificDetails?.dockerCommand || "";
+  return schedule === DISABLED_CRON_SCHEDULE && command.includes("disabled while DB incident guard is active");
+}
 
 function normalizeValue(value) {
   return String(value ?? "").trim().toLowerCase();
@@ -66,36 +76,84 @@ for (const blueprintPath of BLUEPRINTS) {
   }
 }
 
+async function fetchRenderJson(url, token) {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`${response.status} ${response.statusText}: ${text.slice(0, 300)}`);
+  }
+  return JSON.parse(text);
+}
+
+async function fetchRenderJsonWithRetry(url, token, attempts = 3) {
+  let lastError;
+  for (let index = 0; index < attempts; index += 1) {
+    try {
+      return await fetchRenderJson(url, token);
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 500 * (index + 1)));
+    }
+  }
+  throw lastError;
+}
+
 async function verifyRenderCronSuspensions() {
   const token = process.env.RENDER_API_KEY;
   if (!token) {
     return;
   }
 
-  const response = await fetch(RENDER_SERVICES_URL, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
+  let services;
+  try {
+    services = await fetchRenderJson(RENDER_SERVICES_URL, token);
+  } catch (error) {
     failures.push(
-      `Render API cron guard failed: ${response.status} ${response.statusText}`,
+      `Render API cron guard failed: ${error.message}`,
     );
-    return;
   }
 
-  const services = await response.json();
-  for (const item of services) {
-    const service = item.service ?? item;
-    if (
-      service?.type === "cron_job" &&
-      REQUIRED_SUSPENDED_CRONS.has(service.name) &&
-      service.suspended !== "suspended"
-    ) {
-      failures.push(
-        `Render cron ${service.name} must stay suspended while AI/RAG ingestion is paused; found ${service.suspended || "<unknown>"}`,
-      );
+  if (services) {
+    const idsByName = new Map();
+    for (const item of services) {
+      const service = item.service ?? item;
+      if (service?.type === "cron_job" && REQUIRED_SUSPENDED_CRONS.has(service.name)) {
+        idsByName.set(service.name, service.id);
+      }
+      if (
+        service?.type === "cron_job" &&
+        REQUIRED_SUSPENDED_CRONS.has(service.name) &&
+        service.suspended !== "suspended" &&
+        !isStructurallyDisabledCron(service)
+      ) {
+        console.warn(
+          `Render cron ${service.name} list endpoint is stale or unsafe; direct service checks remain the source of truth`,
+        );
+      }
+    }
+
+    for (const name of REQUIRED_SUSPENDED_CRONS) {
+      const id = idsByName.get(name);
+      if (!id) {
+        failures.push(`Render cron ${name} is missing from the Render service list`);
+        continue;
+      }
+      let service;
+      try {
+        service = await fetchRenderJsonWithRetry(`${RENDER_SERVICE_URL}/${id}`, token);
+      } catch (error) {
+        failures.push(`Render cron ${name} direct check failed: ${error.message}`);
+        continue;
+      }
+      if (service.suspended !== "suspended" && !isStructurallyDisabledCron(service)) {
+        failures.push(
+          `Render cron ${name} must stay suspended or structurally disabled while DB incident guard is active; found ${service.suspended || "<unknown>"}`,
+        );
+      }
     }
   }
 }

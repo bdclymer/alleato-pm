@@ -7,16 +7,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "15 0 * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      python3 -c "
-      import json, os, sys;
-      sys.path.insert(0, '/app');
-      from src.services.acumatica_sync import run_acumatica_financial_sync;
-      result = run_acumatica_financial_sync();
-      print(json.dumps(result, indent=2));
-      sys.exit(1 if result.get('errors') else 0)
-      "
+      echo "alleato-acumatica-financial-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -40,17 +33,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "*/15 * * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.scheduler import _run_source_sync_health_recompute;
-      result = _run_source_sync_health_recompute();
-      print(json.dumps(result, indent=2));
-      health = result.get('health', {});
-      sys.exit(1 if health.get('status') != 'healthy' else 0)
-      "
+      echo "alleato-source-sync-health disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -66,9 +51,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "*/30 * * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding --skip-teams-compiler
+      echo "alleato-teams-channel-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -92,9 +77,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "15,45 * * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
+      echo "alleato-teams-dm-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -123,19 +108,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "5,35 * * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      python3 -c "
-      import json, os, sys;
-      sys.path.insert(0, '/app');
-      from src.services.supabase_helpers import get_supabase_client;
-      from src.services.integrations.microsoft_graph.sync import run_graph_sync;
-      client = get_supabase_client();
-      result = run_graph_sync(client);
-      print(json.dumps(result, indent=2));
-      errors = result.get('errors', []);
-      sys.exit(1 if errors and result.get('total_synced', 0) == 0 else 0)
-      "
+      echo "alleato-graph-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -169,16 +144,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 7 * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.task_extraction import run_task_extraction;
-      result = run_task_extraction(window_days=2);
-      print(json.dumps(result, indent=2));
-      sys.exit(1 if result.get('errors', 0) > 0 and result.get('inserted', 0) == 0 else 0)
-      "
+      echo "alleato-task-extraction disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -201,8 +169,8 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "15 12 * * *"
-    dockerCommand: python3 -m src.services.health.rag_meeting_health
+    schedule: "0 0 1 1 *"
+    dockerCommand: echo "alleato-rag-health disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -226,8 +194,8 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "5 */4 * * *"
-    dockerCommand: python3 -m src.services.health.source_rag_health
+    schedule: "0 0 1 1 *"
+    dockerCommand: echo "alleato-source-rag-health disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -251,7 +219,8 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile.executive-brief
     dockerContext: .
-    schedule: "0 11,12 * * 1-5"
+    schedule: "0 0 1 1 *"
+    dockerCommand: echo "alleato-executive-daily-brief-morning disabled while DB incident guard is active"
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1
@@ -287,7 +256,8 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile.executive-brief
     dockerContext: .
-    schedule: "30 22,23 * * 1-5"
+    schedule: "0 0 1 1 *"
+    dockerCommand: echo "alleato-executive-daily-brief-evening disabled while DB incident guard is active"
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1

@@ -448,6 +448,7 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
         logger.warning("[GraphEmbed] psycopg2 unavailable; falling back to Supabase scan: %s", exc)
         return None
 
+    candidate_limit = max(limit * 4, limit)
     query = """
         with pending as (
           select
@@ -455,12 +456,18 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
             category,
             status,
             created_at,
-            coalesce(captured_at, date, created_at::timestamptz) as source_at
+            coalesce(captured_at, date, created_at::timestamptz) as source_at,
+            captured_at,
+            date
           from public.document_metadata
           where source = 'microsoft_graph'
             and status in ('raw_ingested', 'segmented', 'compiled', 'error')
             and length(coalesce(content, '')) > 0
             and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '365 days'
+          order by captured_at desc nulls last,
+            date desc nulls last,
+            created_at desc nulls last
+          limit %s
         ),
         completed_without_embeddings as (
           select
@@ -468,7 +475,9 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
             dm.category,
             dm.status,
             dm.created_at,
-            coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) as source_at
+            coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) as source_at,
+            dm.captured_at,
+            dm.date
           from public.document_metadata dm
           where dm.source = 'microsoft_graph'
             and dm.status in ('embedded', 'complete')
@@ -480,6 +489,10 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
               where dc.document_id = dm.id
                 and dc.embedding is not null
             )
+          order by dm.captured_at desc nulls last,
+            dm.date desc nulls last,
+            dm.created_at desc nulls last
+          limit %s
         )
         select id, category, status, created_at
         from (
@@ -494,7 +507,8 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
     try:
         conn = psycopg2.connect(database_url, sslmode="require")
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, (limit,))
+            cur.execute("set local statement_timeout = '15s'")
+            cur.execute(query, (candidate_limit, candidate_limit, limit))
             return [dict(row) for row in cur.fetchall()]
     finally:
         if conn is not None:
