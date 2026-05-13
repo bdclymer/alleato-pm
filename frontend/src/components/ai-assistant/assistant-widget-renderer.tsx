@@ -14,11 +14,14 @@ import {
   FolderIcon,
   GitBranchIcon,
   ListChecksIcon,
+  Loader2Icon,
   MailIcon,
   SendIcon,
   ShieldCheckIcon,
   SparklesIcon,
   SquarePenIcon,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
   TrendingUpIcon,
   UsersRoundIcon,
 } from "lucide-react";
@@ -27,7 +30,13 @@ import { toast } from "sonner";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type {
   AssistantWidgetField,
@@ -233,6 +242,173 @@ function recipientTextToRows(value: string): OutlookEmailDraftWidgetPayload["toR
     });
 }
 
+type EmailDraftFeedbackSignal = "good" | "bad" | "accepted" | "edited" | "ignored";
+type EmailDraftFeedbackReasonCategory =
+  | "too_formal"
+  | "too_long"
+  | "too_short"
+  | "too_soft"
+  | "too_direct"
+  | "wrong_tone"
+  | "wrong_assumption"
+  | "missing_context"
+  | "good_tone"
+  | "good_structure"
+  | "other";
+
+function EmailDraftFeedbackControls({
+  widget,
+  subject,
+  body,
+  toRecipients,
+  ccRecipients,
+}: {
+  widget: OutlookEmailDraftWidgetPayload;
+  subject: string;
+  body: string;
+  toRecipients: OutlookEmailDraftWidgetPayload["toRecipients"];
+  ccRecipients: OutlookEmailDraftWidgetPayload["toRecipients"];
+}) {
+  const graphDraftMessageId = widget.outlookDraftId ?? widget.id;
+  const [submittedLabel, setSubmittedLabel] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+
+  if (widget.status !== "created" || !graphDraftMessageId || graphDraftMessageId === "outlook-email-draft-preview") {
+    return null;
+  }
+
+  const draftSnapshot = {
+    subject,
+    body,
+    toRecipients,
+    ccRecipients,
+    mailboxUserId: widget.mailboxUserId ?? null,
+    mode: widget.mode,
+  };
+
+  const submitFeedback = async (
+    signal: EmailDraftFeedbackSignal,
+    reasonCategory: EmailDraftFeedbackReasonCategory,
+    label: string,
+    text?: string,
+  ) => {
+    if (!widget.mailboxUserId) {
+      toast.error("Mailbox is missing, so draft feedback could not be recorded.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiFetch("/api/ai-assistant/email-draft-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mailboxUserId: widget.mailboxUserId,
+          graphDraftMessageId,
+          graphSourceMessageId: widget.replyToGraphMessageId ?? null,
+          subject,
+          signal,
+          reasonCategory,
+          feedbackText: text?.trim() || undefined,
+          draftSnapshot,
+          voiceProfilePath: widget.voiceProfile?.path,
+          voiceProfileVersion: widget.voiceProfile?.version,
+          metadata: {
+            widgetId: widget.id,
+            outlookWebLink: widget.outlookWebLink ?? null,
+          },
+        }),
+      });
+      setSubmittedLabel(label);
+      setFeedbackOpen(false);
+      setFeedbackText("");
+      toast.success("Draft feedback recorded");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Draft feedback could not be recorded");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (submittedLabel) {
+    return (
+      <div className="flex items-center justify-between gap-3 border-t border-border/70 pt-3 text-xs text-muted-foreground">
+        <span>Draft feedback recorded</span>
+        <span className="font-medium text-foreground">{submittedLabel}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-border/70 pt-3">
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={isSubmitting}
+        onClick={() => submitFeedback("good", "good_tone", "Good tone")}
+      >
+        {isSubmitting ? <Loader2Icon className="h-4 w-4 animate-spin" /> : <ThumbsUpIcon className="h-4 w-4" />}
+        Good tone
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={isSubmitting}
+        onClick={() => submitFeedback("edited", "too_formal", "Too formal")}
+      >
+        <ThumbsDownIcon className="h-4 w-4" />
+        Too formal
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={isSubmitting}
+        onClick={() => submitFeedback("edited", "too_long", "Too long")}
+      >
+        <ThumbsDownIcon className="h-4 w-4" />
+        Too long
+      </Button>
+      <Popover open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="outline" disabled={isSubmitting}>
+            <SquarePenIcon className="h-4 w-4" />
+            More feedback
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" collisionPadding={16} className="w-80 p-3">
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">What should change?</p>
+              <p className="text-xs text-muted-foreground">This updates future Brandon draft guidance.</p>
+            </div>
+            <Textarea
+              value={feedbackText}
+              onChange={(event) => setFeedbackText(event.target.value)}
+              placeholder="Too soft, missed context, wrong assumption..."
+              className="min-h-24 resize-y"
+            />
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setFeedbackOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={isSubmitting}
+                onClick={() => submitFeedback("edited", "other", "Custom feedback", feedbackText)}
+              >
+                {isSubmitting ? <Loader2Icon className="h-4 w-4 animate-spin" /> : null}
+                Save
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 function OutlookEmailDraftWidget({
   widget,
   onSubmit,
@@ -348,6 +524,13 @@ function OutlookEmailDraftWidget({
           </Button>
         </div>
       )}
+      <EmailDraftFeedbackControls
+        widget={widget}
+        subject={subject}
+        body={body}
+        toRecipients={toRows}
+        ccRecipients={ccRows}
+      />
     </WidgetShell>
   );
 }
@@ -743,6 +926,7 @@ function normalizeOutlookEmailDraftToolOutput(output: unknown): OutlookEmailDraf
         return typeof recipient.email === "string";
       })
     : [];
+  const voiceProfile = asRecord(record.voiceProfile);
 
   return {
     type: "outlook_email_draft",
@@ -759,6 +943,14 @@ function normalizeOutlookEmailDraftToolOutput(output: unknown): OutlookEmailDraf
     replyToGraphMessageId: typeof record.replyToGraphMessageId === "string" ? record.replyToGraphMessageId : null,
     outlookDraftId: typeof record.outlookDraftId === "string" ? record.outlookDraftId : null,
     outlookWebLink: typeof record.outlookWebLink === "string" ? record.outlookWebLink : null,
+    voiceProfile:
+      typeof voiceProfile.path === "string" && typeof voiceProfile.version === "string"
+        ? {
+            path: voiceProfile.path,
+            version: voiceProfile.version,
+            summary: typeof voiceProfile.summary === "string" ? voiceProfile.summary : undefined,
+          }
+        : null,
     adaptiveCard: asRecord(record.adaptiveCard),
     confirmPrompt:
       typeof record.confirmPrompt === "string"

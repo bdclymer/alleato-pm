@@ -60,6 +60,11 @@ export type OutlookEmailDraftWidgetPayload = {
   replyToGraphMessageId?: string | null;
   outlookDraftId?: string | null;
   outlookWebLink?: string | null;
+  voiceProfile?: {
+    path: string;
+    version: string;
+    summary?: string;
+  } | null;
   adaptiveCard?: Record<string, unknown>;
   confirmPrompt: string;
 };
