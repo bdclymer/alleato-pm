@@ -49,7 +49,7 @@ These remain on the app database because they are operational data, permissions,
 ## Known Remaining Gaps
 
 - `backend/render.yaml` is not a full mirror of the root Render blueprint. The root `render.yaml` includes executive brief cron definitions; `backend/render.yaml` does not.
-- Vercel production has the RAG read env vars, but the frontend redeploy is blocked by the Vercel daily deployment quota (`api-deployments-free-per-day`). Production AI assistant smoke prompts remain blocked until the quota resets or the plan limit is raised.
+- Vercel production has the RAG read env vars and the post-env frontend deployment is live. Production AI assistant smoke prompts remain the final proof step.
 - RAG-side `search_document_chunks` derives permissions from chunk metadata. Rows without `metadata.project_id` can be returned for admins but are filtered out for non-admin project-scoped users.
 
 ## Completion Checklist
@@ -81,9 +81,9 @@ Use this as the closeout list for the RAG database isolation work. Do not treat 
 - [x] Rotate the RAG database password that was pasted into chat, then update local direct DB env vars.
 - [x] Run a one-meeting RAG write backfill after parity verification to prove RAG direct writes work with the rotated password.
 
-### Blocked / Must Finish After Vercel Quota Resets
+### Must Finish
 
-- [ ] Redeploy the Vercel frontend after those env vars are set. Blocked on 2026-05-13 by Vercel `api-deployments-free-per-day` quota.
+- [x] Redeploy the Vercel frontend after those env vars are set.
 - [ ] Run production assistant smoke prompts that prove RAG reads are coming from the new database:
   - [ ] broad semantic search
   - [ ] Teams search
@@ -113,7 +113,7 @@ Use this as the closeout list for the RAG database isolation work. Do not treat 
 - Render backend deploy `dep-d82f4k5ckfvc73blf1rg` is `live` for commit `aa9b0fc72`.
 - Render live env verification passed for `alleato-backend`, graph sync, Teams syncs, source sync health, task extraction, RAG health, source RAG health, and executive daily brief crons.
 - Vercel production env verification shows encrypted `RAG_SUPABASE_URL`, `RAG_SUPABASE_SERVICE_ROLE_KEY`, and `RAG_DATABASE_READS_ENABLED`.
-- Vercel redeploy attempt on 2026-05-13 failed with `api-deployments-free-per-day`; production assistant smoke is blocked until redeploy succeeds.
+- The manual Vercel redeploy attempt on 2026-05-13 failed with `api-deployments-free-per-day`, but a later production deployment from `main` completed successfully and is aliased to `projects.alleatogroup.com`.
 - RAG password rotation completed through the Supabase management API; local direct RAG DB connections were updated and verified.
 - Final closeout parity after catch-up: app chunks `103908`, RAG chunks `103975`, app chunks missing in RAG `0`, RAG-only chunks `67`; app jobs `27148`, RAG jobs `27148`, app jobs missing in RAG `0`, RAG-only jobs `0`.
 - One-meeting RAG backfill inserted `28` chunks into the RAG database with `RAG_DATABASE_WRITES_ENABLED=true`.
