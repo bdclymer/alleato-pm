@@ -6,7 +6,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, ExternalLinkIcon } from "lucide-react";
 
 export interface ToolTraceItem {
   tool?: string;
@@ -50,6 +50,18 @@ function getRecordValue(
   return value ? value[key] : undefined;
 }
 
+function toRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function toStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
 function inferIntent(traces: ToolTraceItem[]): string | null {
   for (const trace of traces) {
     const intent = toStringValue(trace.input?.intent);
@@ -61,6 +73,43 @@ function inferIntent(traces: ToolTraceItem[]): string | null {
       if (outputIntent) return outputIntent;
     }
   }
+  return null;
+}
+
+function getExcalidrawMcpSummary(traces: ToolTraceItem[]): {
+  status: "available" | "error";
+  enabledTools: string[];
+  error?: string;
+} | null {
+  const discoveryTrace = traces.find((trace) => {
+    if (trace.tool !== "mcpToolDiscovery") return false;
+    return toStringValue(trace.input?.server) === "excalidraw";
+  });
+  const discoveryOutput = toRecord(discoveryTrace?.output);
+  const discoveryEnabledTools = toStringArray(
+    getRecordValue(discoveryOutput, "enabledTools"),
+  );
+  const discoveryError = toStringValue(getRecordValue(discoveryOutput, "error"));
+
+  const policyTrace = traces.find((trace) => trace.tool === "streamingToolPolicy");
+  const policyOutput = toRecord(policyTrace?.output);
+  const modelToolNames = toStringArray(getRecordValue(policyOutput, "modelToolNames"));
+  const policyEnabledTools = modelToolNames.filter((name) =>
+    name.startsWith("mcp_excalidraw_"),
+  );
+
+  const enabledTools = Array.from(
+    new Set([...discoveryEnabledTools, ...policyEnabledTools]),
+  ).sort();
+
+  if (enabledTools.length > 0) {
+    return { status: "available", enabledTools };
+  }
+
+  if (discoveryError) {
+    return { status: "error", enabledTools: [], error: discoveryError };
+  }
+
   return null;
 }
 
@@ -89,13 +138,15 @@ export function TracePanel({ traces, diagnostics }: TracePanelProps) {
     toStringValue(getRecordValue(policyOutput, "reason")) ??
     toStringValue(getRecordValue(providerDecision, "reason"));
   const intent = inferIntent(traces);
+  const excalidrawMcpSummary = getExcalidrawMcpSummary(traces);
   const hasDiagnostics = Boolean(
     providerPath ||
       model ||
       streamingTools ||
       policyReason ||
       intent ||
-      loopDiagnostic,
+      loopDiagnostic ||
+      excalidrawMcpSummary,
   );
 
   if (!traces.length && !hasDiagnostics) return null;
@@ -135,6 +186,41 @@ export function TracePanel({ traces, diagnostics }: TracePanelProps) {
               <p className="text-[11px] leading-4 text-muted-foreground">
                 {policyReason}
               </p>
+            )}
+            {excalidrawMcpSummary && (
+              <div className="rounded-md border border-border/50 bg-muted/20 p-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge
+                    variant={
+                      excalidrawMcpSummary.status === "available"
+                        ? "secondary"
+                        : "destructive"
+                    }
+                    className="text-[10px]"
+                  >
+                    Excalidraw MCP
+                  </Badge>
+                  <span className="text-[11px] text-muted-foreground">
+                    {excalidrawMcpSummary.status === "available"
+                      ? `${excalidrawMcpSummary.enabledTools.length} diagram tools available`
+                      : "diagram tools unavailable"}
+                  </span>
+                  <a
+                    href="https://excalidraw.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                  >
+                    Open Excalidraw
+                    <ExternalLinkIcon className="h-3 w-3" />
+                  </a>
+                </div>
+                {excalidrawMcpSummary.error && (
+                  <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+                    {excalidrawMcpSummary.error}
+                  </p>
+                )}
+              </div>
             )}
             {loopDiagnostic && (
               <div>
