@@ -49,6 +49,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-05-11-S42-source-sync-ai-brief-snapshots.md` | S42 | AAI-354 | 2026-05-11 | Partial | Pending Review | Implemented append-only Source Sync AI brief snapshots with focused Jest/lint evidence. Live browser verification is blocked by Supabase 522/auth timeout, so rerun after Supabase availability recovers. |
 | `docs/ops/handoffs/2026-05-11-S43-source-sync-ai-brief-history.md` | S43 | AAI-355 | 2026-05-11 | Partial | Pending Review | Added recent Source Sync AI brief history API/UI and focused Jest/lint/typecheck evidence. Live API probe is blocked by expired saved auth/Supabase HTML response. |
 | `docs/ops/handoffs/2026-05-11-S44-source-sync-ai-brief-drill-in.md` | S44 | AAI-356 | 2026-05-11 | Partial | Pending Review | Added inline drill-in details for saved Source Sync AI brief history rows with focused Jest/lint/typecheck evidence. Auth refresh remains blocked by Supabase HTML response. |
+| `docs/ops/handoffs/2026-05-13-S45-deep-agents-orchestrator-prp.md` | S45 | AAI-356 | 2026-05-13 | Yes | Pending Review | Added Deep Agents architecture PRP with AI SDK boundary, backend pilot contract, source/subagent design, guardrails, risks, and implementation slices. Local ledger has an AAI-356 collision with S44 that should be resolved in orchestration cleanup. |
 
 ## Disposition Rules
 
