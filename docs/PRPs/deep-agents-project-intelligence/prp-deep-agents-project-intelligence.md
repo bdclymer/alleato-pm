@@ -291,6 +291,8 @@ Acceptance:
 
 ### Slice 3B: AI SDK Bridge
 
+Implementation status: completed 2026-05-13 behind `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`.
+
 Work:
 
 1. Add a Next.js server-side client that calls the backend endpoint for `project_status_risk` and similar complex advisory intents.
@@ -300,9 +302,12 @@ Work:
 Acceptance:
 
 - Existing chat UI still uses AI SDK.
-- Complex project-intelligence prompts can call the backend orchestrator.
-- The response includes answer, evidence, source coverage, confidence, and recommended actions.
-- Existing assistant-routing and provider-matrix verifiers still pass.
+- Done: complex selected-project `target_briefing`, `latest_status`, and `risk_review` prompts can call the backend orchestrator when the bridge flag is enabled.
+- Done: the backend packet is injected as additive AI SDK system context and source evidence is rendered through the existing `source_evidence_drawer` assistant widget type.
+- Done: the response context includes answer, evidence, source coverage, confidence, and recommended actions.
+- Done: backend-call failures are recorded in `toolTrace` and surfaced as warning status before falling back to current packet/tools.
+- Current environment caveat: provider-matrix verification completed but still reports streaming tool-call provider debt, and assistant-routing Playwright verification is blocked by Supabase Auth setup timeout before route tests run.
+- Not yet done: real non-production provider request through Render/FastAPI with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`.
 
 ### Slice 4: Memory Governance
 
@@ -346,6 +351,8 @@ Future implementation checks:
 ```bash
 PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_deep_project_intelligence.py -q
 PYTHONPATH=backend backend/.venv/bin/python -m py_compile backend/src/services/agents/deep_project_intelligence.py backend/src/services/agents/deep_project_intelligence_contracts.py backend/src/api/main.py backend/tests/test_deep_project_intelligence.py
+npm run test:unit -- --runInBand --runTestsByPath src/lib/ai/__tests__/deep-agent-project-status.test.ts
+npm run typecheck -- --pretty false
 npm run rag:verify:chat-architecture
 node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs
 npm run rag:verify:assistant-routing

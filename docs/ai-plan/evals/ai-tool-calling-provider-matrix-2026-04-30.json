@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-12T21:50:31.534Z",
+  "generatedAt": "2026-05-13T16:09:02.480Z",
   "prompt": "Use the getProjectSignal tool to identify the project id for Westfield Collective, then tell me the current risk in one sentence.",
   "environment": {
     "hasAiGatewayApiKey": true,
@@ -9,8 +9,8 @@
   },
   "decision": {
     "providerPath": "ai_sdk_gateway_openai",
-    "supportsToolCalling": true,
-    "reason": "Gateway and direct OpenAI AI SDK tool-calling paths both passed; the active assistant route workaround is likely local route/workflow behavior, not provider capability."
+    "supportsToolCalling": false,
+    "reason": "Provider matrix did not find a passing tool-calling path; keep the current no-tool route workaround until the recorded errors are fixed."
   },
   "results": [
     {
@@ -18,9 +18,9 @@
       "method": "generateText",
       "modelId": "openai/gpt-5.4",
       "status": "pass",
-      "startedAt": "2026-05-12T21:50:22.486Z",
-      "finishedAt": "2026-05-12T21:50:25.292Z",
-      "durationMs": 2806,
+      "startedAt": "2026-05-13T16:08:39.956Z",
+      "finishedAt": "2026-05-13T16:08:46.936Z",
+      "durationMs": 6980,
       "toolCallCount": 1,
       "toolCallNames": [
         "getProjectSignal"
@@ -40,8 +40,8 @@
           }
         }
       ],
-      "finalTextLength": 157,
-      "finalText": "Westfield Collective is project id 43, and the current risk is that the TCO timeline and pending cost exposure need review before the next approval decision.",
+      "finalTextLength": 143,
+      "finalText": "Westfield Collective is project **43**; current risk: **TCO timeline and pending cost exposure need review before the next approval decision.**",
       "finishReason": "stop",
       "rawFinishReason": "stop",
       "warnings": [],
@@ -53,7 +53,7 @@
         },
         {
           "event": "tool_call_finish",
-          "durationMs": 0.049458000000186075,
+          "durationMs": 0.10320799999954033,
           "error": null
         },
         {
@@ -87,7 +87,7 @@
           "toolCallCount": 0,
           "toolResultCount": 0,
           "toolCallNames": [],
-          "textLength": 157,
+          "textLength": 143,
           "warnings": []
         }
       ],
@@ -97,157 +97,69 @@
       "providerPath": "ai_sdk_direct_openai",
       "method": "generateText",
       "modelId": "gpt-5.4",
-      "status": "pass",
-      "startedAt": "2026-05-12T21:50:25.292Z",
-      "finishedAt": "2026-05-12T21:50:27.349Z",
-      "durationMs": 2057,
-      "toolCallCount": 1,
-      "toolCallNames": [
-        "getProjectSignal"
-      ],
-      "toolResultCount": 1,
-      "toolExecutions": [
-        {
-          "toolName": "getProjectSignal",
-          "input": {
-            "projectName": "Westfield Collective"
-          },
-          "output": {
-            "projectName": "Westfield Collective",
-            "projectId": 43,
-            "risk": "TCO timeline and pending cost exposure need review before the next approval decision.",
-            "requestedProjectName": "Westfield Collective"
-          }
-        }
-      ],
-      "finalTextLength": 154,
-      "finalText": "Westfield Collective is project 43, and the current risk is that the TCO timeline and pending cost exposure need review before the next approval decision.",
-      "finishReason": "stop",
-      "rawFinishReason": "stop",
+      "status": "fail",
+      "startedAt": "2026-05-13T16:08:46.936Z",
+      "finishedAt": "2026-05-13T16:08:54.371Z",
+      "durationMs": 7435,
+      "toolCallCount": 0,
+      "toolCallNames": [],
+      "toolResultCount": 0,
+      "toolExecutions": [],
+      "finalTextLength": 0,
+      "finalText": "",
+      "finishReason": null,
+      "rawFinishReason": null,
       "warnings": [],
       "validationFailures": [],
-      "stepCount": 2,
-      "stepEvents": [
-        {
-          "event": "tool_call_start"
-        },
-        {
-          "event": "tool_call_finish",
-          "durationMs": 0.012124999999741704,
-          "error": null
-        },
-        {
-          "event": "step_finish",
-          "stepNumber": 0,
-          "finishReason": "tool-calls"
-        },
-        {
-          "event": "step_finish",
-          "stepNumber": 1,
-          "finishReason": "stop"
-        }
-      ],
-      "steps": [
-        {
-          "index": 0,
-          "finishReason": "tool-calls",
-          "rawFinishReason": "tool_calls",
-          "toolCallCount": 1,
-          "toolResultCount": 1,
-          "toolCallNames": [
-            "getProjectSignal"
-          ],
-          "textLength": 0,
-          "warnings": []
-        },
-        {
-          "index": 1,
-          "finishReason": "stop",
-          "rawFinishReason": "stop",
-          "toolCallCount": 0,
-          "toolResultCount": 0,
-          "toolCallNames": [],
-          "textLength": 154,
-          "warnings": []
-        }
-      ],
-      "error": null
+      "stepCount": 0,
+      "stepEvents": [],
+      "steps": [],
+      "error": {
+        "name": "AI_RetryError",
+        "message": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+        "stack": "AI_RetryError: Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\n    at _retryWithExponentialBackoff (/Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:2725:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async fn (/Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:4407:36)\n    at async /Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:2392:24\n    at async generateText (/Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:4246:12)"
+      }
     },
     {
       "providerPath": "ai_sdk_gateway_openai",
       "method": "streamText",
       "modelId": "openai/gpt-5.4",
-      "status": "pass",
-      "startedAt": "2026-05-12T21:50:27.349Z",
-      "finishedAt": "2026-05-12T21:50:29.724Z",
-      "durationMs": 2375,
-      "toolCallCount": 1,
-      "toolCallNames": [
-        "getProjectSignal"
-      ],
-      "toolResultCount": 1,
-      "toolExecutions": [
-        {
-          "toolName": "getProjectSignal",
-          "input": {
-            "projectName": "Westfield Collective"
-          },
-          "output": {
-            "projectName": "Westfield Collective",
-            "projectId": 43,
-            "risk": "TCO timeline and pending cost exposure need review before the next approval decision.",
-            "requestedProjectName": "Westfield Collective"
-          }
-        }
-      ],
-      "finalTextLength": 154,
-      "finalText": "Westfield Collective is project 43, and the current risk is that the TCO timeline and pending cost exposure need review before the next approval decision.",
-      "finishReason": "stop",
-      "rawFinishReason": "stop",
+      "status": "fail",
+      "startedAt": "2026-05-13T16:08:54.371Z",
+      "finishedAt": "2026-05-13T16:08:55.612Z",
+      "durationMs": 1241,
+      "toolCallCount": 0,
+      "toolCallNames": [],
+      "toolResultCount": 0,
+      "toolExecutions": [],
+      "finalTextLength": 0,
+      "finalText": "",
+      "finishReason": "other",
+      "rawFinishReason": "error",
       "warnings": [],
-      "validationFailures": [],
-      "stepCount": 2,
+      "validationFailures": [
+        "Expected at least one getProjectSignal tool call.",
+        "Expected at least one getProjectSignal tool result.",
+        "Expected non-empty final text.",
+        "Finish reason was other."
+      ],
+      "stepCount": 1,
       "stepEvents": [
-        {
-          "event": "tool_call_start"
-        },
-        {
-          "event": "tool_call_finish",
-          "durationMs": 0.01620900000034453,
-          "error": null
-        },
         {
           "event": "step_finish",
           "stepNumber": 0,
-          "finishReason": "tool-calls"
-        },
-        {
-          "event": "step_finish",
-          "stepNumber": 1,
-          "finishReason": "stop"
+          "finishReason": "other"
         }
       ],
       "steps": [
         {
           "index": 0,
-          "finishReason": "tool-calls",
-          "rawFinishReason": "tool_calls",
-          "toolCallCount": 1,
-          "toolResultCount": 1,
-          "toolCallNames": [
-            "getProjectSignal"
-          ],
-          "textLength": 0,
-          "warnings": []
-        },
-        {
-          "index": 1,
-          "finishReason": "stop",
-          "rawFinishReason": "stop",
+          "finishReason": "other",
+          "rawFinishReason": "error",
           "toolCallCount": 0,
           "toolResultCount": 0,
           "toolCallNames": [],
-          "textLength": 154,
+          "textLength": 0,
           "warnings": []
         }
       ],
@@ -257,81 +169,28 @@
       "providerPath": "ai_sdk_direct_openai",
       "method": "streamText",
       "modelId": "gpt-5.4",
-      "status": "pass",
-      "startedAt": "2026-05-12T21:50:29.724Z",
-      "finishedAt": "2026-05-12T21:50:31.534Z",
-      "durationMs": 1810,
-      "toolCallCount": 1,
-      "toolCallNames": [
-        "getProjectSignal"
-      ],
-      "toolResultCount": 1,
-      "toolExecutions": [
-        {
-          "toolName": "getProjectSignal",
-          "input": {
-            "projectName": "Westfield Collective"
-          },
-          "output": {
-            "projectName": "Westfield Collective",
-            "projectId": 43,
-            "risk": "TCO timeline and pending cost exposure need review before the next approval decision.",
-            "requestedProjectName": "Westfield Collective"
-          }
-        }
-      ],
-      "finalTextLength": 115,
-      "finalText": "Project 43’s current risk is: TCO timeline and pending cost exposure need review before the next approval decision.",
-      "finishReason": "stop",
-      "rawFinishReason": "stop",
+      "status": "fail",
+      "startedAt": "2026-05-13T16:08:55.612Z",
+      "finishedAt": "2026-05-13T16:09:02.480Z",
+      "durationMs": 6868,
+      "toolCallCount": 0,
+      "toolCallNames": [],
+      "toolResultCount": 0,
+      "toolExecutions": [],
+      "finalTextLength": 0,
+      "finalText": "",
+      "finishReason": null,
+      "rawFinishReason": null,
       "warnings": [],
       "validationFailures": [],
-      "stepCount": 2,
-      "stepEvents": [
-        {
-          "event": "tool_call_start"
-        },
-        {
-          "event": "tool_call_finish",
-          "durationMs": 0.017959000000701053,
-          "error": null
-        },
-        {
-          "event": "step_finish",
-          "stepNumber": 0,
-          "finishReason": "tool-calls"
-        },
-        {
-          "event": "step_finish",
-          "stepNumber": 1,
-          "finishReason": "stop"
-        }
-      ],
-      "steps": [
-        {
-          "index": 0,
-          "finishReason": "tool-calls",
-          "rawFinishReason": "tool_calls",
-          "toolCallCount": 1,
-          "toolResultCount": 1,
-          "toolCallNames": [
-            "getProjectSignal"
-          ],
-          "textLength": 0,
-          "warnings": []
-        },
-        {
-          "index": 1,
-          "finishReason": "stop",
-          "rawFinishReason": "stop",
-          "toolCallCount": 0,
-          "toolResultCount": 0,
-          "toolCallNames": [],
-          "textLength": 115,
-          "warnings": []
-        }
-      ],
-      "error": null
+      "stepCount": 0,
+      "stepEvents": [],
+      "steps": [],
+      "error": {
+        "name": "AI_NoOutputGeneratedError",
+        "message": "No output generated. Check the stream for errors.",
+        "stack": "AI_NoOutputGeneratedError: No output generated. Check the stream for errors.\n    at Object.flush (/Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:6864:103)\n    at invokePromiseCallback (node:internal/webstreams/util:172:10)\n    at Object.<anonymous> (node:internal/webstreams/util:177:23)\n    at transformStreamDefaultSinkCloseAlgorithm (node:internal/webstreams/transformstream:621:43)\n    at node:internal/webstreams/transformstream:379:11"
+      }
     }
   ]
 }

@@ -29,17 +29,26 @@
 - PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_deep_project_intelligence.py -q` after installed Deep Agents graph smoke guardrail (`9 passed`)
 - PASS: `PYTHONPATH=backend backend/.venv/bin/python -m py_compile backend/src/services/agents/deep_project_intelligence.py backend/src/services/agents/deep_project_intelligence_contracts.py backend/src/api/main.py backend/tests/test_deep_project_intelligence.py`
 - PASS: local runtime smoke with `deepagents.create_deep_agent` and a bindable fake chat model returned `mode=deep_agents` with successful `deepagents_runtime` trace.
+- PASS: `npm run test:unit -- --runInBand --runTestsByPath src/lib/ai/__tests__/deep-agent-project-status.test.ts` (`4 passed`)
+- PASS: `npm run typecheck -- --pretty false`
+- PASS: `npx eslint src/lib/ai/deep-agent-project-status.ts src/lib/ai/__tests__/deep-agent-project-status.test.ts src/lib/ai/chat-handler.ts --cache --cache-strategy content`
+- PASS: `git diff --check -- frontend/src/lib/ai/deep-agent-project-status.ts frontend/src/lib/ai/__tests__/deep-agent-project-status.test.ts frontend/src/lib/ai/chat-handler.ts`
+- WARN existing provider debt: `node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs` exited 0 and refreshed `docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json`, but the artifact currently reports `supportsToolCalling=false`; gateway `generateText` passed, direct OpenAI quota failed, and streamText paths did not produce a passing tool-call result.
+- FAIL unrelated auth dependency: `npm run rag:verify:assistant-routing` failed in setup before route assertions because Supabase Auth timed out during `listUsers` after 30000ms in `frontend/tests/auth.setup.ts`.
 - WARN unrelated environment debt: backend `.venv` emits `RequestsDependencyWarning` for `urllib3`/`chardet` or `charset_normalizer` version mismatch.
 - FAIL unrelated: `python -m pytest backend/tests/test_deep_project_intelligence.py backend/tests/test_api_routes.py -q` failed in legacy Fireflies ingestion endpoint tests because the shared test harness still exposes the mocked admin dependency as required `args`/`kwargs` query params. New Deep Agents tests passed in the same run.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - `docs/PRPs/deep-agents-project-intelligence/prp-deep-agents-project-intelligence.md`
 - `backend/tests/test_deep_project_intelligence.py`
+- `frontend/src/lib/ai/deep-agent-project-status.ts`
+- `frontend/src/lib/ai/__tests__/deep-agent-project-status.test.ts`
+- `docs/ai-plan/evals/ai-tool-calling-provider-matrix-2026-04-30.json`
 - Linear kickoff comment: `4f16e521-7217-405d-8089-26cace8d2657`
 9) Top 3 findings (frontend-visible issues first):
 - Deep Agents should not replace AI SDK UI/chat transport; it should be evaluated as a backend orchestration harness for complex project-intelligence workflows.
 - Current repo evidence already has packet-first intelligence and AI SDK tool loops, but the product contract is distributed across route branches, fallbacks, and quality checks.
-- Slice 3A is now implemented as a backend-only Deep Agents runtime hook with no production chat route integration.
-10) Recommended next action (one line): Deploy backend dependencies, enable runtime in a non-production environment, then test one real project request.
+- Slice 3B now adds a feature-gated AI SDK bridge that calls the backend Deep Agents packet for selected-project owner-status/risk intents without moving LangChain into frontend code.
+10) Recommended next action (one line): Enable the backend runtime and frontend bridge flags in non-production, then test one real selected-project status prompt end to end.
 11) Handoff file path: `docs/ops/handoffs/2026-05-13-S45-deep-agents-orchestrator-prp.md`
 12) Migration ledger evidence: Not applicable; no migration created.
 
@@ -80,11 +89,19 @@ Implemented Slice 3A as a backend-only Deep Agents runtime hook:
 - Runtime failure falls back to the contract response instead of returning a generic error.
 - Added an installed-graph regression test that clears the backend test harness's old `langchain` stub, imports real `deepagents`, and proves `create_deep_agent` can synthesize through the backend contract using a tool-bindable fake model.
 
+Implemented Slice 3B as a feature-gated AI SDK bridge:
+
+- Added `frontend/src/lib/ai/deep-agent-project-status.ts` as the server-side typed client for `POST /api/intelligence/deep-agent/project-status`.
+- Kept the bridge behind `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` and limited it to selected-project `target_briefing`, `latest_status`, and `risk_review` intents.
+- Injected the backend packet as additive AI SDK system context instead of replacing the chat stream.
+- Rendered backend evidence through the existing `source_evidence_drawer` assistant widget type.
+- Recorded success/failure in `toolTrace`; failures are visible warning statuses and then fall back to current packet/tools.
+
 Known ledger issue: local `session-board.md` already has an older S44 row using `AAI-356` for Source Sync drill-in work. The live Linear issue created for this session is also `AAI-356`. This is recorded as a ledger collision risk rather than hidden.
 
 ## Exact Next Step
 
-Install backend dependencies in the deployment environment, set `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents` only in non-production first, and run one real project-status request through the backend endpoint with a real provider model.
+Enable `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, and `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true` only in non-production, then run one real selected-project owner-status prompt end to end.
 
 ## Known Pitfalls
 
@@ -94,6 +111,7 @@ Install backend dependencies in the deployment environment, set `DEEP_AGENTS_PRO
 - Do not call the pilot successful unless missing/stale/failed source categories are explicit in the response.
 - Do not treat read-only probes as final answer synthesis; they are coverage inputs for a future orchestrator.
 - Do not enable runtime in production until non-production proves model/provider compatibility.
+- Do not enable the frontend bridge without a backend URL and `ADMIN_API_KEY`; the bridge intentionally fails loudly into `toolTrace` when backend configuration is missing.
 - Resolve or annotate the local AAI-356 session-board collision before broader orchestration cleanup.
 
 ## Resume Commands
