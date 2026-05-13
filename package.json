@@ -44,6 +44,7 @@
     "dashboard:playwright:open": "npm run dashboard:playwright && open output/playwright/dashboard/index.html",
     "verify:browser": "node scripts/agent-browser/agent-browser-verify.mjs",
     "verify:browser:cleanup": "node scripts/agent-browser/agent-browser-cleanup.mjs --hours 48",
+    "perf:project-home": "node scripts/perf/project-home-speed.mjs",
     "verify:budget:guardrails": "cd frontend && npm run verify:budget:guardrails",
     "verify:api:contracts": "node scripts/api-smoke-contracts.mjs",
     "verify:changed-route-guardrails": "GUARDRAIL_ENFORCE_RAW_ERRORS=true node scripts/check-changed-route-guardrails.mjs",
