@@ -154,6 +154,20 @@ describe("detectSourceSpecificRagRequest — existing patterns not regressed", (
     const result = detectSourceSpecificRagRequest("show me the last five emails");
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_emails");
+    expect(result?.limit).toBe(5);
+  });
+
+  it('returns recent_emails for natural last-five-email wording', () => {
+    const result = detectSourceSpecificRagRequest("Can you tell me my last five emails?");
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("recent_emails");
+    expect(result?.limit).toBe(5);
+  });
+
+  it('returns recent_emails for urgent inbox triage wording', () => {
+    const result = detectSourceSpecificRagRequest("Is there anything urgent in my inbox?");
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("recent_emails");
   });
 
   it('returns recent_teams_discussions for Teams queries', () => {

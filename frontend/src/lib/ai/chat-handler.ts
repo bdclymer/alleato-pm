@@ -204,6 +204,12 @@ function withWebSearchTools(names: readonly string[]): readonly string[] {
 
 const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
   task_write: TASK_WRITE_TOOL_NAMES,
+  email_action: [
+    "draftOutlookEmail",
+    "getRecentOutlookEmails",
+    "readOutlookEmailThread",
+    "searchEmails",
+  ],
   calendar_action: withWebSearchTools([
     "createOutlookCalendarInvite",
     "findProject",
@@ -286,6 +292,18 @@ const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
     "semanticSearch",
     "findProject",
   ]),
+  implementation_planning: withWebSearchTools([
+    "getPortfolioOverview",
+    "getActionItemsAndInsights",
+    "getProjectsWithRisks",
+    "getFinancialAnalysis",
+    "getCompanyKnowledge",
+    "semanticSearch",
+    "getPeopleAndRoles",
+    "searchMeetingsByTopic",
+    "searchEmails",
+    "searchTeamsMessages",
+  ]),
   external_research: [
     "searchWeb",
     "researchCompany",
@@ -358,6 +376,29 @@ function getScopedToolsForIntent(tools: ToolSet, intent: AssistantIntent): ToolS
   };
 }
 
+function shouldForceCalendarInviteTool(
+  message: string,
+  intent: AssistantIntent,
+): boolean {
+  if (intent !== "calendar_action") return false;
+  const hasCalendarRequest =
+    /\b(calendar invite|meeting invite|teams invite|calendar event|meeting)\b/i.test(message);
+  const hasConfirmation =
+    /\b(confirm|confirmed|create and send|send it|send now|confirmed:\s*true)\b/i.test(message);
+  const hasAttendeeEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(message);
+  const hasDate = /\b20\d{2}-\d{2}-\d{2}\b|\btomorrow\b|\btoday\b|\bnext\s+\w+\b/i.test(message);
+  const hasTime = /\b\d{1,2}(:\d{2})?\s*(am|pm)\b|\b\d{1,2}:\d{2}\b/i.test(message);
+  const hasDuration = /\b\d+\s*(minute|minutes|min|hour|hours)\b|from\b.+\bto\b/i.test(message);
+
+  return (
+    hasCalendarRequest &&
+    hasAttendeeEmail &&
+    hasDate &&
+    hasTime &&
+    (hasConfirmation || hasDuration)
+  );
+}
+
 function assertTaskWritePromptBudget(params: {
   promptApproxTokens: number;
   modelToolCount: number;
@@ -400,6 +441,120 @@ function assertLeanAdvisorBasePromptBudget(params: {
 type ExecutableTool = {
   execute?: (input: Record<string, unknown>) => Promise<unknown>;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function recordArray(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? value.filter(isRecord) : [];
+}
+
+function firstEmailFromOutput(output: unknown): Record<string, unknown> | null {
+  if (!isRecord(output)) return null;
+  return recordArray(output.emails)[0] ?? null;
+}
+
+function emailThreadMessagesFromOutput(output: unknown): Record<string, unknown>[] {
+  return isRecord(output) ? recordArray(output.messages) : [];
+}
+
+function inferEmailActionQuery(message: string): string | undefined {
+  if (/\bupdate\b/i.test(message)) return "update";
+  if (/\burgent\b/i.test(message)) return "urgent";
+  if (/\bproposal\b/i.test(message)) return "proposal";
+  return undefined;
+}
+
+function replySubject(subject: string | null): string {
+  const fallback = "Re: Update";
+  if (!subject) return fallback;
+  return /^re:/i.test(subject) ? subject : `Re: ${subject}`;
+}
+
+function formatThreadForDraft(messages: Record<string, unknown>[]): string {
+  return messages
+    .slice(-6)
+    .map((message) => {
+      const fromName = stringValue(message.fromName) ?? stringValue(message.fromEmail) ?? "Unknown sender";
+      const receivedAt = stringValue(message.receivedAt) ?? "unknown date";
+      const preview = stringValue(message.preview) ?? "";
+      return `From: ${fromName}\nReceived: ${receivedAt}\n${preview}`;
+    })
+    .join("\n\n---\n\n");
+}
+
+type ParsedCalendarInviteRequest = {
+  organizerEmail?: string;
+  attendeeEmail: string;
+  attendeeName?: string;
+  subject: string;
+  body: string;
+  startDateTime: string;
+  endDateTime: string;
+  timeZone: string;
+  location: string;
+  isOnlineMeeting: boolean;
+  confirmed: boolean;
+};
+
+function normalizeHour(hour: string, minute: string | undefined, meridiem: string | undefined): string {
+  let parsedHour = Number(hour);
+  const parsedMinute = Number(minute ?? "0");
+  if (meridiem) {
+    const lower = meridiem.toLowerCase();
+    if (lower === "pm" && parsedHour < 12) parsedHour += 12;
+    if (lower === "am" && parsedHour === 12) parsedHour = 0;
+  }
+  return `${String(parsedHour).padStart(2, "0")}:${String(parsedMinute).padStart(2, "0")}:00`;
+}
+
+function parseCalendarInviteRequest(message: string): ParsedCalendarInviteRequest | null {
+  const emails = [...message.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)].map((match) => match[0]);
+  if (emails.length === 0) return null;
+
+  const organizerMatch = message.match(/\bOrganizer:\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i);
+  const attendeeMatch = message.match(/\bAttendee:\s*([^.<\n]+?)\s*<([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})>/i);
+  const organizerEmail = organizerMatch?.[1]?.trim().toLowerCase();
+  const attendeeEmail = (attendeeMatch?.[2] ?? emails.find((email) => email.toLowerCase() !== organizerEmail))?.trim().toLowerCase();
+  if (!attendeeEmail) return null;
+
+  const dateMatch = message.match(/\bDate:\s*(20\d{2}-\d{2}-\d{2})\b/i) ?? message.match(/\b(20\d{2}-\d{2}-\d{2})\b/i);
+  const timeMatch = message.match(
+    /\bTime:\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i,
+  ) ?? message.match(
+    /\bfrom\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i,
+  );
+  const subjectMatch = message.match(/\bSubject:\s*([^.\n]+)/i);
+  if (!dateMatch || !timeMatch || !subjectMatch) return null;
+
+  const endMeridiem = timeMatch[6] ?? timeMatch[3];
+  const startTime = normalizeHour(timeMatch[1], timeMatch[2], timeMatch[3] ?? endMeridiem);
+  const endTime = normalizeHour(timeMatch[4], timeMatch[5], endMeridiem);
+  const date = dateMatch[1];
+  const bodyMatch = message.match(/\bBody:\s*([^]+?)(?:\s+This is authorized\.|\s+Use createOutlookCalendarInvite|\s+Do not just describe|$)/i);
+  const confirmed =
+    /\bconfirmed:\s*true\b/i.test(message) ||
+    /\b(create and send|send .*now|authorized|confirm(ed)?)\b/i.test(message);
+
+  return {
+    organizerEmail,
+    attendeeEmail,
+    attendeeName: attendeeMatch?.[1]?.trim(),
+    subject: subjectMatch[1].trim(),
+    body: bodyMatch?.[1]?.trim() || "Created by the Alleato AI assistant.",
+    startDateTime: `${date}T${startTime}`,
+    endDateTime: `${date}T${endTime}`,
+    timeZone: /eastern/i.test(message) ? "Eastern Standard Time" : "Eastern Standard Time",
+    location: /teams/i.test(message) ? "Microsoft Teams" : "Microsoft Teams",
+    isOnlineMeeting: /teams/i.test(message),
+    confirmed,
+  };
+}
 
 type SemanticSearchResult = {
   content?: unknown;
@@ -4128,7 +4283,9 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
     });
     const assistantIntent = intentPlannerDecision.intent;
     const shouldEnableActionTools =
-      assistantIntent === "task_write" || assistantIntent === "calendar_action";
+      assistantIntent === "task_write" ||
+      assistantIntent === "email_action" ||
+      assistantIntent === "calendar_action";
     const tools = createStrategistTools(user.id, {
       onTrace: (trace) => {
         toolTrace.push(trace);
@@ -4202,7 +4359,10 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
     let projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
     const executiveBriefingRetrieval: ExecutiveBriefingRetrievalPacket | null = null;
     let assistantSourceHealthContext: AssistantSourceHealthContext | null = null;
-    const sourceHealthRequested = shouldAttachAssistantSourceHealth(lastUserContent);
+    const sourceHealthRequested =
+      assistantIntent === "implementation_planning" ||
+      (assistantIntent !== "email_action" &&
+        shouldAttachAssistantSourceHealth(lastUserContent));
     const getAssistantSourceHealthContext = async (
       reason: AssistantSourceHealthReason,
     ): Promise<AssistantSourceHealthContext | null> => {
@@ -5025,12 +5185,15 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           return;
         }
 
-        const plannedWidgets: AssistantWidgetPayload[] = [
-          ...buildAssistantWidgetsFromPrompt({
-            prompt: lastUserContent,
-            selectedProjectId,
-          }),
-        ];
+        const plannedWidgets: AssistantWidgetPayload[] =
+          assistantIntent === "email_action"
+            ? []
+            : [
+                ...buildAssistantWidgetsFromPrompt({
+                  prompt: lastUserContent,
+                  selectedProjectId,
+                }),
+              ];
 
         const assistantWidgetDataParts = writeAssistantWidgetParts(
           writer,
@@ -5358,7 +5521,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           return;
         }
 
-        if (sourceSpecificRagRequest) {
+        if (sourceSpecificRagRequest && assistantIntent !== "email_action") {
           writeStrategistStatus(writer, {
             stage: "knowledge",
             message: `Searching ${sourceSpecificRagRequest.label} in Supabase RAG`,
@@ -5795,6 +5958,355 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           // in the system prompt ensures the model calls createGeneratedTask.
         }
 
+        if (assistantIntent === "email_action") {
+          systemPrompt =
+            systemPrompt +
+            "\n\n---\n\n## ACTIVE EMAIL ACTION INTENT\n\n" +
+            "The intent planner classified this request as **email_action**. " +
+            "You MUST treat this as an Outlook draft workflow, not a read-only email summary. " +
+            "If the user asks to draft a reply to the latest or a specific message, first call `getRecentOutlookEmails` with the best inferred query and `limit: 3`, then call `draftOutlookEmail` with `confirmed: false`. " +
+            "If a specific thread is clear from the recent email result, call `readOutlookEmailThread` before drafting. " +
+            "Never say the email was sent. Never create or send a confirmed draft without user confirmation. " +
+            "If the target message or recipient is ambiguous, still call the read tool first, then present the safest draft preview or the exact missing detail.";
+
+          toolTrace.push({
+            tool: "emailActionIntentRouter",
+            input: {
+              intent: assistantIntent,
+              message: lastUserContent.slice(0, 240),
+            },
+            output: {
+              skippedSourceSpecificShortCircuit: Boolean(sourceSpecificRagRequest),
+              injectedEmailActionOverride: true,
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Preparing Outlook draft workflow",
+            status: "loading",
+          });
+
+          const toolMap = tools as Record<string, ExecutableTool>;
+          const recentOutlookEmailsTool = toolMap.getRecentOutlookEmails;
+          const readOutlookEmailThreadTool = toolMap.readOutlookEmailThread;
+          const draftOutlookEmailTool = toolMap.draftOutlookEmail;
+          const isObviousDraftReply =
+            /\b(draft|write|prepare|compose)\b/i.test(lastUserContent) &&
+            /\b(reply|response|respond|email|outlook)\b/i.test(lastUserContent);
+
+          if (
+            isObviousDraftReply &&
+            recentOutlookEmailsTool?.execute &&
+            draftOutlookEmailTool?.execute
+          ) {
+            const recentOutput = await withTimeout(
+              recentOutlookEmailsTool.execute({
+                query: inferEmailActionQuery(lastUserContent),
+                limit: 3,
+              }),
+              12_000,
+              "getRecentOutlookEmails timed out during email draft fast path",
+            );
+
+            if (!isTimeoutResult(recentOutput)) {
+              const seedEmail = firstEmailFromOutput(recentOutput);
+              const conversationId = stringValue(seedEmail?.conversationId);
+              const graphMessageId = stringValue(seedEmail?.graphMessageId);
+              const subject = stringValue(seedEmail?.subject);
+              const threadOutput =
+                readOutlookEmailThreadTool?.execute && (conversationId || graphMessageId)
+                  ? await withTimeout(
+                      readOutlookEmailThreadTool.execute({
+                        conversationId: conversationId ?? undefined,
+                        graphMessageId: graphMessageId ?? undefined,
+                        limit: 8,
+                      }),
+                      12_000,
+                      "readOutlookEmailThread timed out during email draft fast path",
+                    )
+                  : null;
+
+              if (!isTimeoutResult(threadOutput)) {
+                const threadMessages = emailThreadMessagesFromOutput(threadOutput);
+                const draftContext = threadMessages.length > 0
+                  ? formatThreadForDraft(threadMessages)
+                  : stringValue(seedEmail?.preview) ?? "";
+                const generatedDraft = await withTimeout(
+                  generateText({
+                    model: getLanguageModel("openai/gpt-4.1"),
+                    system:
+                      "Draft concise, professional Outlook reply text. Return only the email body. Do not include a subject, greeting labels, markdown, or commentary.",
+                    prompt: [
+                      `User request: ${lastUserContent}`,
+                      "",
+                      "Email thread context:",
+                      draftContext.slice(0, 4000),
+                    ].join("\n"),
+                    maxOutputTokens: 350,
+                  }),
+                  15_000,
+                  "email draft generation timed out during fast path",
+                );
+
+                if (!isTimeoutResult(generatedDraft)) {
+                  const body = generatedDraft.text.trim();
+                  const draftOutput = await withTimeout(
+                    draftOutlookEmailTool.execute({
+                      replyToGraphMessageId: graphMessageId ?? undefined,
+                      subject: replySubject(subject),
+                      body,
+                      toRecipients: [],
+                      ccRecipients: [],
+                      bccRecipients: [],
+                      importance: "normal",
+                      confirmed: false,
+                    }),
+                    12_000,
+                    "draftOutlookEmail timed out during fast path",
+                  );
+
+                  if (!isTimeoutResult(draftOutput)) {
+                    toolTrace.push({
+                      tool: "emailActionFastPath",
+                      input: {
+                        query: inferEmailActionQuery(lastUserContent) ?? null,
+                        seedSubject: subject,
+                        graphMessageId,
+                        conversationId,
+                      },
+                      output: {
+                        usedRecentOutlookEmails: true,
+                        usedThreadRead: threadMessages.length > 0,
+                        draftPreviewCreated: true,
+                        bodyLength: body.length,
+                      },
+                      timestamp: new Date().toISOString(),
+                    });
+
+                    const content = [
+                      "I found the latest matching email thread and prepared a short Outlook reply draft.",
+                      "",
+                      `Subject: ${replySubject(subject)}`,
+                      "",
+                      "Draft:",
+                      body,
+                      "",
+                      "Reply **confirm** and I will save this reply draft to Outlook. If this is the wrong thread, tell me which email to use and I will redraft it.",
+                    ].join("\n");
+
+                    await writeTextResponse(writer, "email-action-fast-path", content);
+                    const responseQuality = scoreResponseQuality({
+                      toolTrace,
+                      content,
+                    });
+                    await persistAssistantMessage({
+                      supabase,
+                      sessionId,
+                      userId: user.id,
+                      content,
+                      toolTrace,
+                      memoryUsage,
+                      learningUsage,
+                      totalUsage: undefined,
+                      responseQuality,
+                      councilMode,
+                      modelId: activeModel,
+                      loopDiagnostic: buildLoopDiagnostic({
+                        stepStarts: stepStartDiagnostics,
+                        steps: stepDiagnostics,
+                      }),
+                      projectBriefingSnapshot,
+                      executiveBriefingRetrieval,
+                      providerDecision,
+                      selectedProjectId,
+                      dataParts: assistantWidgetDataParts,
+                      sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+                    });
+
+                    await supabase
+                      .from("conversations")
+                      .update({ last_message_at: new Date().toISOString() })
+                      .eq("session_id", sessionId)
+                      .eq("user_id", user.id);
+
+                    writeStrategistStatus(writer, {
+                      stage: "complete",
+                      message: "Outlook reply draft preview ready",
+                      status: "success",
+                    });
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (assistantIntent === "calendar_action") {
+          systemPrompt =
+            systemPrompt +
+            "\n\n---\n\n## ACTIVE CALENDAR ACTION INTENT\n\n" +
+            "The intent planner classified this request as **calendar_action**. " +
+            "If the prompt includes attendee, date, time, duration, and subject, call `createOutlookCalendarInvite`. " +
+            "Use `confirmed: false` for an initial preview. Use `confirmed: true` only when the user has already confirmed the exact invite details in the current turn or previous conversation context. " +
+            "If required details are missing, ask for the exact missing fields and do not claim the invite was sent. " +
+            "Never say an invite was created, sent, or will be sent unless `createOutlookCalendarInvite` actually returns success. " +
+            "Use `getPeopleAndRoles` only when project context is available or the user asks for a project team contact.";
+
+          toolTrace.push({
+            tool: "calendarActionIntentRouter",
+            input: {
+              intent: assistantIntent,
+              message: lastUserContent.slice(0, 240),
+            },
+            output: {
+              injectedCalendarActionOverride: true,
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          const parsedInvite = parseCalendarInviteRequest(lastUserContent);
+          const calendarInviteTool = (tools as Record<string, ExecutableTool>).createOutlookCalendarInvite;
+          if (parsedInvite && calendarInviteTool?.execute) {
+            writeStrategistStatus(writer, {
+              stage: "actions",
+              message: parsedInvite.confirmed
+                ? "Creating confirmed Outlook calendar invite"
+                : "Preparing Outlook calendar invite preview",
+              status: "loading",
+            });
+
+            const inviteOutput = await withTimeout(
+              calendarInviteTool.execute({
+                organizerEmail: parsedInvite.organizerEmail,
+                subject: parsedInvite.subject,
+                body: parsedInvite.body,
+                startDateTime: parsedInvite.startDateTime,
+                endDateTime: parsedInvite.endDateTime,
+                timeZone: parsedInvite.timeZone,
+                location: parsedInvite.location,
+                attendees: [
+                  {
+                    email: parsedInvite.attendeeEmail,
+                    name: parsedInvite.attendeeName,
+                    type: "required",
+                  },
+                ],
+                isOnlineMeeting: parsedInvite.isOnlineMeeting,
+                confirmed: parsedInvite.confirmed,
+              }),
+              20_000,
+              "createOutlookCalendarInvite timed out during calendar fast path",
+            );
+
+            if (!isTimeoutResult(inviteOutput)) {
+              const outputRecord = isRecord(inviteOutput) ? inviteOutput : {};
+              const success = outputRecord.success === true;
+              const preview = outputRecord.action === "preview";
+              const error = stringValue(outputRecord.error);
+              const eventId = stringValue(outputRecord.outlookEventId);
+              const webLink = stringValue(outputRecord.outlookWebLink);
+              const teamsJoinUrl = stringValue(outputRecord.teamsJoinUrl);
+              toolTrace.push({
+                tool: "calendarActionFastPath",
+                input: {
+                  organizerEmail: parsedInvite.organizerEmail ?? null,
+                  attendeeEmail: parsedInvite.attendeeEmail,
+                  subject: parsedInvite.subject,
+                  startDateTime: parsedInvite.startDateTime,
+                  endDateTime: parsedInvite.endDateTime,
+                  confirmed: parsedInvite.confirmed,
+                },
+                output: {
+                  success,
+                  preview,
+                  eventId,
+                  hasWebLink: Boolean(webLink),
+                  hasTeamsJoinUrl: Boolean(teamsJoinUrl),
+                  error,
+                },
+                timestamp: new Date().toISOString(),
+              });
+
+              const content = success
+                ? [
+                    "Outlook calendar invite created and sent.",
+                    "",
+                    `Subject: ${parsedInvite.subject}`,
+                    `Organizer: ${parsedInvite.organizerEmail ?? stringValue(outputRecord.organizerEmail) ?? "configured Outlook calendar user"}`,
+                    `Attendee: ${parsedInvite.attendeeName ? `${parsedInvite.attendeeName} <${parsedInvite.attendeeEmail}>` : parsedInvite.attendeeEmail}`,
+                    `Start: ${parsedInvite.startDateTime} ${parsedInvite.timeZone}`,
+                    `End: ${parsedInvite.endDateTime} ${parsedInvite.timeZone}`,
+                    webLink ? `Outlook link: ${webLink}` : null,
+                    teamsJoinUrl ? `Teams link: ${teamsJoinUrl}` : null,
+                  ].filter(Boolean).join("\n")
+                : preview
+                  ? [
+                      "Outlook calendar invite preview is ready. Nothing has been sent yet.",
+                      "",
+                      `Subject: ${parsedInvite.subject}`,
+                      `Attendee: ${parsedInvite.attendeeName ? `${parsedInvite.attendeeName} <${parsedInvite.attendeeEmail}>` : parsedInvite.attendeeEmail}`,
+                      `Start: ${parsedInvite.startDateTime} ${parsedInvite.timeZone}`,
+                      `End: ${parsedInvite.endDateTime} ${parsedInvite.timeZone}`,
+                      "",
+                      "Reply **confirm** to create and send it.",
+                    ].join("\n")
+                  : [
+                      "I could not create the Outlook calendar invite. Nothing was sent.",
+                      error ? `Error: ${error}` : "The calendar tool returned no success response.",
+                    ].join("\n");
+
+              await writeTextResponse(writer, "calendar-action-fast-path", content);
+              const responseQuality = scoreResponseQuality({
+                toolTrace,
+                content,
+              });
+              await persistAssistantMessage({
+                supabase,
+                sessionId,
+                userId: user.id,
+                content,
+                toolTrace,
+                memoryUsage,
+                learningUsage,
+                totalUsage: undefined,
+                responseQuality,
+                councilMode,
+                modelId: activeModel,
+                loopDiagnostic: buildLoopDiagnostic({
+                  stepStarts: stepStartDiagnostics,
+                  steps: stepDiagnostics,
+                }),
+                projectBriefingSnapshot,
+                executiveBriefingRetrieval,
+                providerDecision,
+                selectedProjectId,
+                dataParts: assistantWidgetDataParts,
+                sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+              });
+
+              await supabase
+                .from("conversations")
+                .update({ last_message_at: new Date().toISOString() })
+                .eq("session_id", sessionId)
+                .eq("user_id", user.id);
+
+              writeStrategistStatus(writer, {
+                stage: "complete",
+                message: success
+                  ? "Outlook calendar invite sent"
+                  : preview
+                    ? "Outlook calendar invite preview ready"
+                    : "Outlook calendar invite blocked",
+                status: success || preview ? "success" : "warning",
+              });
+              return;
+            }
+          }
+        }
+
         if (shouldUsePacketFirstIntent(assistantIntent)) {
           writeStrategistStatus(writer, {
             stage: "knowledge",
@@ -5973,9 +6485,25 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           "risk_review",
           "target_briefing",
         ].includes(assistantIntent);
-        const mcpToolBundle = await createAiAssistantMcpTools();
+        const shouldLoadMcpTools = assistantIntent !== "email_action";
+        const mcpToolBundle = shouldLoadMcpTools
+          ? await createAiAssistantMcpTools()
+          : { tools: {}, trace: [], close: async () => {} };
         Object.assign(tools, mcpToolBundle.tools);
         toolTrace.push(...mcpToolBundle.trace);
+        if (!shouldLoadMcpTools) {
+          toolTrace.push({
+            tool: "mcpToolDiscoverySkipped",
+            input: {
+              intent: assistantIntent,
+              message: lastUserContent.slice(0, 240),
+            },
+            output: {
+              reason: "Known Outlook/email action tools are local; skipping generic MCP discovery for latency.",
+            },
+            timestamp: new Date().toISOString(),
+          });
+        }
 
         let mcpToolsClosed = false;
         const closeAiAssistantMcpTools = async () => {
@@ -5990,8 +6518,23 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           streamingModelToolsEnabled && !sourceLookupContextInjected
             ? scopedTools
             : undefined;
-        const streamMaxOutputTokens = conciseOwnerBriefingIntent ? 2400 : 4000;
-        const streamMaxSteps = conciseOwnerBriefingIntent ? 6 : 10;
+        const forcedCalendarInviteTool =
+          modelTools?.createOutlookCalendarInvite &&
+          shouldForceCalendarInviteTool(lastUserContent, assistantIntent)
+            ? { type: "tool" as const, toolName: "createOutlookCalendarInvite" as const }
+            : undefined;
+        const streamMaxOutputTokens =
+          assistantIntent === "email_action"
+            ? 1200
+            : conciseOwnerBriefingIntent
+              ? 2400
+              : 4000;
+        const streamMaxSteps =
+          assistantIntent === "email_action"
+            ? 5
+            : conciseOwnerBriefingIntent
+              ? 6
+              : 10;
         if (conciseOwnerBriefingIntent) {
           systemPrompt +=
             "\n\n# Owner Briefing Shape\nAnswer like a construction owner asked between calls: concise, specific, and decision-oriented. Lead with the answer, then group evidence under short sections for what changed, risks, and first actions. Do not end with generic optional offers.";
@@ -6027,6 +6570,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             scopedToolCount: promptTelemetry.scopedToolCount,
             modelToolCount: promptTelemetry.modelToolCount,
             modelToolNames: promptTelemetry.modelToolNames,
+            toolChoice: forcedCalendarInviteTool ?? "auto",
             streamMaxOutputTokens,
             streamMaxSteps,
             reason: sourceLookupContextInjected
@@ -6052,6 +6596,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           result = streamText({
             model: getLanguageModel(activeModel),
             ...promptPayload,
+            toolChoice: forcedCalendarInviteTool,
             maxOutputTokens: streamMaxOutputTokens,
             timeout: {
               totalMs: 90_000,
@@ -6165,6 +6710,15 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         const taskWriteMutationToolCallNames = stepDiagnostics
           .flatMap((s) => s.toolCallNames ?? [])
           .filter((name) => TASK_WRITE_MUTATION_TOOL_NAMES.has(name));
+        const actionToolCallNames = stepDiagnostics
+          .flatMap((s) => s.toolCallNames ?? [])
+          .filter((name) =>
+            assistantIntent === "email_action"
+              ? name === "draftOutlookEmail"
+              : assistantIntent === "calendar_action"
+                ? name === "createOutlookCalendarInvite"
+                : false,
+          );
         if (
           !content &&
           assistantIntent === "task_write" &&
@@ -6187,6 +6741,36 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             timestamp: new Date().toISOString(),
           });
           await writeTextResponse(writer, "task-write-tool-only-completion", content);
+        }
+
+        if (
+          !content &&
+          (assistantIntent === "email_action" || assistantIntent === "calendar_action") &&
+          actionToolCallNames.length === 0 &&
+          !streamErrorMessage
+        ) {
+          content =
+            assistantIntent === "calendar_action"
+              ? "I could not create the Outlook calendar invite because the required calendar tool did not run. Nothing was sent. Please try again or provide the exact attendee, date, time, duration, and subject."
+              : "I could not prepare the Outlook email draft because the required email draft tool did not run. Nothing was saved or sent. Please try again or specify the email thread to use.";
+          finalContentSource = "action_tool_missing";
+          toolTrace.push({
+            tool: "actionToolMissingGuard",
+            input: {
+              intent: assistantIntent,
+              primaryModel: activeModel,
+            },
+            output: {
+              suppressedNoToolRetry: true,
+              expectedTool:
+                assistantIntent === "calendar_action"
+                  ? "createOutlookCalendarInvite"
+                  : "draftOutlookEmail",
+              contentLength: content.length,
+            },
+            timestamp: new Date().toISOString(),
+          });
+          await writeTextResponse(writer, "action-tool-missing-guard", content);
         }
 
         if (!content) {

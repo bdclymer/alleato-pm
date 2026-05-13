@@ -49,6 +49,7 @@ const INTENT_VALUES = [
   "decision_lookup",
   "task_followup",
   "task_write",
+  "email_action",
   "calendar_action",
   "external_research",
   "source_lookup",
@@ -92,7 +93,9 @@ function shouldPreferDeterministicIntent(
   return (
     modelIntent === "general_conversation" ||
     (modelIntent === "task_followup" && deterministicIntent !== "task_followup") ||
+    (modelIntent === "strategy_brainstorm" && deterministicIntent === "implementation_planning") ||
     deterministicIntent === "task_write" ||
+    deterministicIntent === "email_action" ||
     deterministicIntent === "calendar_action"
   );
 }
@@ -111,6 +114,8 @@ export async function planAssistantIntent(params: {
     confidence: "low",
     responseMode:
       params.deterministicIntent === "task_write"
+        ? "draft_safe_action"
+        : params.deterministicIntent === "email_action"
         ? "draft_safe_action"
         : params.deterministicIntent === "calendar_action"
         ? "draft_safe_action"
@@ -137,6 +142,7 @@ export async function planAssistantIntent(params: {
         "Classify the user's real goal before any response is drafted.",
         "Choose the route that will make the assistant feel like a thoughtful advisor, not a tool dispatcher.",
         "CRITICAL: If the user says anything like 'remind me to', 'add a task', 'create a task', 'note for myself', 'flag for follow-up', 'throw this on my list', 'put this on my list', 'log that I need to', 'action item:', 'get someone on [X]', 'assign this to', or any phrasing that implies WRITING a task or action item — choose task_write with responseMode draft_safe_action. Do NOT choose task_followup for these — task_followup is for READING existing tasks, task_write is for CREATING new ones.",
+        "If the user asks to draft, write, prepare, compose, or respond to an email or Outlook message, choose email_action with responseMode draft_safe_action. The assistant must preview first and never send email directly.",
         "If the user explicitly asks for web search, live web, internet/online sources, current external requirements, regulations, zoning, ordinances, PUD/planned unit development requirements, market conditions, competitors, or company research, choose external_research. Do NOT choose source_lookup just because they also ask to cite sources.",
         "If the user asks for exact evidence, messages, Teams, email, transcript, or document context from Alleato/internal records, choose source_lookup.",
         "If the user asks for current project state, risks, money, changes, decisions, or follow-ups (reading), choose the matching project-intelligence intent.",

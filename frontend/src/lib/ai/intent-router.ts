@@ -7,6 +7,7 @@ export type AssistantIntent =
   | "decision_lookup"
   | "task_followup"
   | "task_write"
+  | "email_action"
   | "calendar_action"
   | "external_research"
   | "source_lookup"
@@ -41,9 +42,14 @@ const CALENDAR_ACTION_PATTERNS = [
   /\b(create|send)\b.{0,40}\b(invite|invitation)\b/i,
 ];
 
+const EMAIL_ACTION_PATTERNS = [
+  /\b(draft|write|prepare|compose)\b.{0,50}\b(email|e-mail|reply|response|outlook message|message)\b/i,
+  /\b(email|e-mail|reply|respond)\b.{0,50}\b(draft|write|prepare|compose|back)\b/i,
+];
+
 const SOURCE_LOOKUP_PATTERNS = [
-  /\b(source|evidence|citation|transcript|email|teams|message|messages|meeting|document)\b/i,
-  /\bshow me\b.*\b(where|source|message|email|meeting)\b/i,
+  /\b(source|evidence|citation|transcript|emails?|e-mails?|inbox|mails?|outlook|teams|messages?|meetings?|documents?)\b/i,
+  /\bshow me\b.*\b(where|source|messages?|emails?|e-mails?|inbox|meetings?)\b/i,
 ];
 
 const EXTERNAL_RESEARCH_PATTERNS = [
@@ -68,6 +74,11 @@ const OWNER_PORTFOLIO_BRIEFING_PATTERNS = [
 const OWNER_RISK_REVIEW_PATTERNS = [
   /\b(risks?|risk review|red flags?|watchlist|blockers?|issues?|concerns?)\b/i,
   /\b(worried|worry|nervous|bite us|could bite|blow up|burn us|go wrong|keep me up)\b/i,
+];
+
+const IMPLEMENTATION_PLANNING_PATTERNS = [
+  /\b(systems?|processes?|workflows?|cadence|operating rhythm|guardrails?)\b.{0,80}\b(need|should|put in place|implement|build|create|recommend)\b/i,
+  /\b(what|which)\b.{0,40}\b(systems?|processes?|workflows?|cadence|operating rhythm|guardrails?)\b.{0,80}\b(need|should|put in place)\b/i,
 ];
 
 type IntentClassificationOptions = {
@@ -107,6 +118,10 @@ export function classifyAssistantIntent(
     return "calendar_action";
   }
 
+  if (EMAIL_ACTION_PATTERNS.some((pattern) => pattern.test(text))) {
+    return "email_action";
+  }
+
   if (EXTERNAL_RESEARCH_PATTERNS.some((pattern) => pattern.test(text))) {
     return "external_research";
   }
@@ -143,6 +158,7 @@ export function classifyAssistantIntent(
   // task_write (checked above) handles CREATING new task records.
   if (
     /\b(follow[- ]?up|missed|task|tasks|todo|to-do|next action|owner|action item|open item|on my plate|what do i need|what should i|what's open|what is open)\b/i.test(text) ||
+    /\b(waiting on|waiting for|blocked by|held up by)\b/i.test(text) ||
     /\b(what are my|show me my|give me my)\b.{0,30}\b(tasks?|items?|actions?|todos?)\b/i.test(text)
   ) {
     return "task_followup";
@@ -156,12 +172,15 @@ export function classifyAssistantIntent(
     return "latest_status";
   }
 
-  if (/\b(strategy|brainstorm|options|recommend)\b/i.test(text)) {
-    return "strategy_brainstorm";
+  if (
+    IMPLEMENTATION_PLANNING_PATTERNS.some((pattern) => pattern.test(text)) ||
+    /\b(implement|build|plan|roadmap|steps)\b/i.test(text)
+  ) {
+    return "implementation_planning";
   }
 
-  if (/\b(implement|build|plan|roadmap|steps)\b/i.test(text)) {
-    return "implementation_planning";
+  if (/\b(strategy|brainstorm|options|recommend)\b/i.test(text)) {
+    return "strategy_brainstorm";
   }
 
   return "general_conversation";

@@ -253,13 +253,20 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
   }
 
   const asksForRecentEmails =
-    normalized.includes("email") &&
+    (normalized.includes("email") ||
+      normalized.includes("e-mail") ||
+      normalized.includes("inbox") ||
+      normalized.includes("outlook") ||
+      normalized.includes("mail")) &&
     !normalized.includes("do not use email") &&
     (normalized.includes("last five") ||
       normalized.includes("last 5") ||
       normalized.includes("five most recent") ||
       normalized.includes("most recent") ||
-      normalized.includes("latest"));
+      normalized.includes("latest") ||
+      normalized.includes("urgent in my inbox") ||
+      normalized.includes("urgent in the inbox") ||
+      normalized.includes("anything urgent"));
   if (asksForRecentEmails) {
     return {
       kind: "recent_emails",

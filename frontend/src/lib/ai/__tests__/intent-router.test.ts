@@ -98,6 +98,47 @@ describe("intent router", () => {
     }
   });
 
+  it("routes Outlook email draft prompts to the email action path before source lookup", () => {
+    const prompts = [
+      "Draft a response in my email",
+      "Write an email back to Megan Harrison about the meeting",
+      "Prepare an Outlook message to the owner",
+    ];
+
+    for (const prompt of prompts) {
+      const intent = classifyAssistantIntent(prompt);
+      expect(intent).toBe("email_action");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    }
+  });
+
+  it("routes inbox read prompts to source lookup", () => {
+    const prompts = [
+      "Can you tell me my last five emails?",
+      "Is there anything urgent in my inbox?",
+    ];
+
+    for (const prompt of prompts) {
+      const intent = classifyAssistantIntent(prompt);
+      expect(intent).toBe("source_lookup");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    }
+  });
+
+  it("routes waiting-on-team prompts to task follow-up", () => {
+    const intent = classifyAssistantIntent("What am I waiting on from my team?");
+
+    expect(intent).toBe("task_followup");
+    expect(shouldUsePacketFirstIntent(intent)).toBe(true);
+  });
+
+  it("routes systems and processes prompts to implementation planning", () => {
+    const intent = classifyAssistantIntent("What systems and processes do you think we need to put in place?");
+
+    expect(intent).toBe("implementation_planning");
+    expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+  });
+
   describe("task_write intent routing", () => {
     const WRITE_CASES = [
       "Remind me to call the owner about the permit by Friday",
