@@ -326,6 +326,7 @@ function MetricCard({
         </span>
         <Link
           href={href}
+          prefetch={false}
           className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80 transition-colors"
         >
           View <ChevronRight className="h-3 w-3" />
@@ -357,6 +358,7 @@ function AlertsBand({ alerts }: { alerts: Alert[] }) {
         <Link
           key={alert.id}
           href={alert.href}
+          prefetch={false}
           className={cn(
             "flex items-center gap-3 rounded-md px-3.5 py-2.5 text-sm transition-colors",
             alert.tone === "danger"
@@ -398,6 +400,7 @@ function InlineDataRow({
   return (
     <Link
       href={href}
+      prefetch={false}
       className="group flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/40 -mx-2"
     >
       <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
@@ -508,6 +511,7 @@ function TabSection({
           <div className="py-2.5">
             <Link
               href={activeTabConfig.viewAllHref}
+              prefetch={false}
               className="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
             >
               View all {activeTabConfig.label.toLowerCase()} <ChevronRight className="h-3 w-3" />
@@ -753,6 +757,7 @@ function ProjectDetailsSidebar({
             <Link
               key={label}
               href={href}
+              prefetch={false}
               className="flex items-center justify-between rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground -mx-2"
             >
               {label}
@@ -849,6 +854,7 @@ function ProjectSetupSheet({
                 <Link
                   key={item.id}
                   href={item.href(projectId)}
+                  prefetch={false}
                   onClick={() => onOpenChange(false)}
                   className="group flex items-center gap-3 rounded-md px-3 py-3 transition-colors hover:bg-muted/60"
                 >
@@ -1090,6 +1096,7 @@ export function ProjectCommandCenter({
                 <InlineTableCell className="max-w-xs">
                   <Link
                     href={`/${projectId}/tasks`}
+                    prefetch={false}
                     className="line-clamp-2 text-foreground hover:text-primary transition-colors"
                   >
                     {task.description}
@@ -1136,6 +1143,7 @@ export function ProjectCommandCenter({
               <InlineTableCell className="max-w-xs">
                 <Link
                   href={`/${projectId}/meetings/${m.id}`}
+                  prefetch={false}
                   className="line-clamp-1 text-foreground hover:text-primary transition-colors"
                 >
                   {m.title || m.file_name || "Untitled Meeting"}
@@ -1421,7 +1429,7 @@ export function ProjectCommandCenter({
                 ) : (
                   <div className="flex h-36 flex-col items-center justify-center gap-2 text-center">
                     <p className="text-sm text-muted-foreground">Budget not created yet</p>
-                    <Link href={`/${projectId}/budget`} className="text-xs text-primary hover:underline">
+                    <Link href={`/${projectId}/budget`} prefetch={false} className="text-xs text-primary hover:underline">
                       Create budget →
                     </Link>
                   </div>
