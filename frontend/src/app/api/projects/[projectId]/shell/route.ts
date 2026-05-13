@@ -2,9 +2,16 @@ import { NextResponse } from "next/server";
 
 import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { loadUserPermissions } from "@/lib/permissions";
-import type { UserPermissions } from "@/lib/permissions-shared";
+import {
+  ALL_GRANULAR_FLAGS,
+  ALL_MODULES,
+  type GranularFlag,
+  type PermissionLevel,
+  type PermissionModule,
+  type UserPermissions,
+} from "@/lib/permissions-shared";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+import type { createServiceClient } from "@/lib/supabase/service";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { loadCurrentUserProfilePayload } from "@/lib/users/current-user-profile-server";
 import { z } from "zod";
@@ -64,9 +71,124 @@ function buildAdminPermissions({
   };
 }
 
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+type ShellPermissionTemplate = {
+  id: string;
+  name: string;
+  rules_json: unknown;
+  granular_flags: string[] | null;
+};
+
+function normalizeTemplate(rawTemplate?: ShellPermissionTemplate | null) {
+  if (!rawTemplate) return undefined;
+
+  return {
+    id: rawTemplate.id,
+    name: rawTemplate.name,
+    rules: rawTemplate.rules_json as Record<PermissionModule, PermissionLevel[]>,
+    granularFlags: (rawTemplate.granular_flags ?? []) as GranularFlag[],
+  };
+}
+
+async function loadShellUserPermissions({
+  serviceClient,
+  authUserId,
+  personId,
+  projectId,
+  projectTemplateId,
+}: {
+  serviceClient: ServiceClient;
+  authUserId: string;
+  personId: string;
+  projectId: number;
+  projectTemplateId: string | null;
+}): Promise<UserPermissions> {
+  const [
+    projectTemplateResult,
+    companyTemplateResult,
+    overridesResult,
+    granularOverridesResult,
+  ] = await Promise.all([
+    projectTemplateId
+      ? serviceClient
+          .from("permission_templates")
+          .select("id, name, rules_json, granular_flags")
+          .eq("id", projectTemplateId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    serviceClient
+      .from("person_company_templates")
+      .select("template:permission_templates (id, name, rules_json, granular_flags)")
+      .eq("person_id", personId)
+      .maybeSingle(),
+    serviceClient
+      .from("user_module_permissions")
+      .select("module, level")
+      .eq("project_id", projectId)
+      .eq("person_id", personId),
+    serviceClient
+      .from("user_granular_permission_overrides")
+      .select("project_id, flag, effect")
+      .eq("person_id", personId)
+      .or(`project_id.is.null,project_id.eq.${projectId}`),
+  ]);
+
+  const loadError =
+    projectTemplateResult.error ??
+    companyTemplateResult.error ??
+    overridesResult.error ??
+    granularOverridesResult.error;
+
+  if (loadError) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "projects/[projectId]/shell#loadShellUserPermissions",
+      message: `Failed to load shell permissions: ${loadError.message}`,
+    });
+  }
+
+  const companyTemplateData = Array.isArray(companyTemplateResult.data?.template)
+    ? companyTemplateResult.data.template[0]
+    : companyTemplateResult.data?.template;
+  const rawTemplate = projectTemplateResult.data ?? companyTemplateData ?? null;
+  const emptyOverrides = Object.fromEntries(
+    ALL_MODULES.map((module) => [module, "none" as PermissionLevel]),
+  ) as Record<PermissionModule, PermissionLevel>;
+  const overrides = (overridesResult.data ?? []).reduce((acc, row) => {
+    if (ALL_MODULES.includes(row.module as PermissionModule)) {
+      acc[row.module as PermissionModule] = row.level as PermissionLevel;
+    }
+    return acc;
+  }, emptyOverrides);
+  const granularOverrides = (granularOverridesResult.data ?? []).reduce(
+    (acc, row) => {
+      if (
+        ALL_GRANULAR_FLAGS.includes(row.flag as GranularFlag) &&
+        (row.effect === "allow" || row.effect === "deny")
+      ) {
+        acc[row.flag as GranularFlag] = row.effect;
+      }
+      return acc;
+    },
+    {} as Partial<Record<GranularFlag, "allow" | "deny">>,
+  );
+
+  return {
+    userId: authUserId,
+    personId,
+    projectId,
+    template: normalizeTemplate(rawTemplate),
+    overrides,
+    granularOverrides,
+    isAdmin: false,
+  };
+}
+
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/shell#GET",
   async ({ params }) => {
+    const routeStartedAt = performance.now();
     const { projectId } = await params;
     const projectIdNum = Number(projectId);
 
@@ -89,10 +211,13 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       });
     }
 
-    const authResult = await verifyProjectAccess(projectIdNum);
+    const authStartedAt = performance.now();
+    const authResult = await verifyProjectAccess(projectIdNum, user);
     if (isAuthError(authResult)) return authResult;
+    const authDurationMs = Math.round(performance.now() - authStartedAt);
 
     const isAppAdmin = authResult.membership.membershipId.startsWith("super-admin:");
+    const permissionsStartedAt = performance.now();
     const permissionsPromise = isAppAdmin
       ? Promise.resolve(
           buildAdminPermissions({
@@ -101,22 +226,32 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             projectId: projectIdNum,
           }),
         )
-      : loadUserPermissions(projectIdNum, authResult.membership.authUserId);
+      : loadShellUserPermissions({
+          serviceClient: authResult.serviceClient,
+          authUserId: authResult.membership.authUserId,
+          personId: authResult.membership.personId,
+          projectId: projectIdNum,
+          projectTemplateId: authResult.membership.permissionTemplateId,
+        });
 
     const [{ data: projectRow, error: projectError }, permissions, profile] =
       await Promise.all([
         authResult.serviceClient
           .from("projects")
-          .select("*")
+          .select('id, name, "job number", phase, client, "start date", "est completion"')
           .eq("id", projectIdNum)
           .single(),
         permissionsPromise,
         loadCurrentUserProfilePayload({
           serviceClient: authResult.serviceClient,
           user,
+          personId: authResult.membership.personId,
           where: "projects/[projectId]/shell#GET",
         }),
       ]);
+    const permissionsAndPayloadDurationMs = Math.round(
+      performance.now() - permissionsStartedAt,
+    );
 
     if (projectError || !projectRow) {
       throw new GuardrailError({
@@ -173,6 +308,26 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       "projects/[projectId]/shell#GET",
     );
 
-    return NextResponse.json(payload);
+    const response = NextResponse.json(payload);
+    const durationMs = Math.round(performance.now() - routeStartedAt);
+    response.headers.set(
+      "Server-Timing",
+      [
+        `project_access;dur=${authDurationMs}`,
+        `shell_payload;dur=${permissionsAndPayloadDurationMs}`,
+        `total;dur=${durationMs}`,
+      ].join(", "),
+    );
+
+    if (durationMs > 1_000) {
+      console.warn("Slow project shell response", {
+        projectId: projectIdNum,
+        durationMs,
+        projectAccessMs: authDurationMs,
+        shellPayloadMs: permissionsAndPayloadDurationMs,
+      });
+    }
+
+    return response;
   },
 );

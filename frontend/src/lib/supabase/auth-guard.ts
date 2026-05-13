@@ -109,10 +109,11 @@ async function resolvePersonIdFromAuth(
  */
 export async function verifyProjectAccess(
   projectId: number,
+  resolvedUser?: { id: string; email?: string | null },
 ): Promise<AuthGuardResult | NextResponse> {
   // Step 1: Verify authentication from the cookie JWT. API routes should not
   // pay a Supabase Auth network round trip for every project-scoped request.
-  const user = await getApiRouteUser();
+  const user = resolvedUser ?? await getApiRouteUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

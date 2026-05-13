@@ -33,12 +33,20 @@ function calculateProfileCompleteness(profile: {
 export async function loadCurrentUserProfilePayload({
   serviceClient,
   user,
+  personId,
   where,
 }: {
   serviceClient: ReturnType<typeof createServiceClient>;
   user: { id: string; email?: string | null };
+  personId?: string | null;
   where: string;
 }): Promise<CurrentUserProfilePayload> {
+  const personQuery = serviceClient
+    .from("people")
+    .select(
+      "first_name, last_name, profile_photo_url, company, job_title, phone_mobile, phone_business",
+    );
+
   const [
     { data: profileData, error: profileError },
     { data: personData, error: personError },
@@ -48,13 +56,10 @@ export async function loadCurrentUserProfilePayload({
       .select("is_admin, full_name, role, onboarding_completed_at")
       .eq("id", user.id)
       .maybeSingle(),
-    serviceClient
-      .from("people")
-      .select(
-        "first_name, last_name, profile_photo_url, company, job_title, phone_mobile, phone_business",
-      )
-      .eq("auth_user_id", user.id)
-      .maybeSingle(),
+    (personId
+      ? personQuery.eq("id", personId)
+      : personQuery.eq("auth_user_id", user.id)
+    ).maybeSingle(),
   ]);
 
   const loadError = profileError ?? personError;
