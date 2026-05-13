@@ -4,6 +4,7 @@ import { useChat, type UIMessage } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
   lastAssistantMessageIsCompleteWithApprovalResponses,
+  type FileUIPart,
 } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -224,7 +225,7 @@ function ChatWithSession({
   traceDiagnosticsByMessageId: Record<string, AssistantTraceDiagnostics>;
   isLoadingMessages: boolean;
   pendingFirstMessage: string | null;
-  pendingFirstFiles?: FileList;
+  pendingFirstFiles?: FileUIPart[];
   councilMode: boolean;
   onCouncilModeChange: (val: boolean) => void;
   selectedProjectId: number | null;
@@ -334,7 +335,7 @@ function ChatWithSession({
   }, [pendingFirstMessage, messages]);
 
   const handleSubmit = useCallback(
-    (message: string, files?: FileList) => {
+    (message: string, files?: FileUIPart[]) => {
       if (!message.trim() || isStreaming) return;
       sendMessage({ text: message, files });
       setInput("");
@@ -380,7 +381,7 @@ export function RagChatPage() {
   const [pendingFirstMessage, setPendingFirstMessage] = useState<string | null>(
     null,
   );
-  const [pendingFirstFiles, setPendingFirstFiles] = useState<FileList | undefined>();
+  const [pendingFirstFiles, setPendingFirstFiles] = useState<FileUIPart[] | undefined>();
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [toolTracesByMessageId, setToolTracesByMessageId] = useState<
     Record<string, ToolTraceItem[]>
@@ -537,7 +538,7 @@ export function RagChatPage() {
 
   // Handle first message in a new conversation
   const handleFirstMessage = useCallback(
-    async (message: string, files?: FileList) => {
+    async (message: string, files?: FileUIPart[]) => {
       // Show the user message immediately — don't wait for the API call
       setOptimisticUserMessage(message);
       const title = message.substring(0, 50);
@@ -635,7 +636,7 @@ export function RagChatPage() {
             selectedModel={selectedModel}
             onModelChange={setSelectedModel}
             onInputChange={setNoSessionInput}
-            onSubmit={(msg: string, files?: FileList) => {
+            onSubmit={(msg: string, files?: FileUIPart[]) => {
               setNoSessionInput("");
               handleFirstMessage(msg, files);
             }}

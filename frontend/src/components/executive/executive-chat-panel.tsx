@@ -3,6 +3,7 @@
 import {
   DefaultChatTransport,
   lastAssistantMessageIsCompleteWithApprovalResponses,
+  type FileUIPart,
 } from "ai";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -327,7 +328,7 @@ function ExecutiveChatSession({
   });
 
   const sendExecutiveMessage = useCallback(
-    (message: { text: string; files?: FileList }) => {
+    (message: { text: string; files?: FileUIPart[] }) => {
       skipNextMessagesSync.current = true;
       void sendMessage(message);
     },

@@ -79,14 +79,25 @@ import {
   PromptInputTextarea,
   PromptInputActions,
   PromptInputAction,
+  PromptInputActionMenu,
+  PromptInputActionMenuTrigger,
+  PromptInputActionMenuContent,
+  PromptInputActionAddAttachments,
+  PromptInputActionAddScreenshot,
+  PromptInputSubmit,
+  PromptInputSelect,
+  PromptInputSelectTrigger,
+  PromptInputSelectContent,
+  PromptInputSelectItem,
+  PromptInputSelectValue,
+  usePromptInputAttachments,
+  type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   CopyIcon,
-  SendIcon,
-  SquareIcon,
   ThumbsUpIcon,
   ThumbsDownIcon,
   DatabaseIcon,
@@ -100,12 +111,11 @@ import {
   MicIcon,
   MicOffIcon,
   PaperclipIcon,
-  BrainIcon,
   UsersRoundIcon,
   Volume2Icon,
   VolumeXIcon,
 } from "lucide-react";
-import type { DynamicToolUIPart } from "ai";
+import type { DynamicToolUIPart, FileUIPart } from "ai";
 import { toast } from "sonner";
 import { WelcomeScreen } from "./welcome-screen";
 import { AssistantShortcutPanel } from "./assistant-shortcut-panel";
@@ -504,12 +514,13 @@ function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string
   return links;
 }
 
-function isTextReadableAttachment(file: File): boolean {
-  const name = file.name.toLowerCase();
+function isTextReadableFileUIPart(file: FileUIPart): boolean {
+  const mediaType = file.mediaType ?? "";
+  const name = (file.filename ?? "").toLowerCase();
   return (
-    file.type.startsWith("text/") ||
-    file.type === "application/json" ||
-    file.type === "application/xml" ||
+    mediaType.startsWith("text/") ||
+    mediaType === "application/json" ||
+    mediaType === "application/xml" ||
     name.endsWith(".md") ||
     name.endsWith(".markdown") ||
     name.endsWith(".csv") ||
@@ -519,36 +530,93 @@ function isTextReadableAttachment(file: File): boolean {
   );
 }
 
-async function prepareMessageWithReadableAttachments(
-  message: string,
-  files: FileList | undefined,
-): Promise<{ message: string; files?: FileList }> {
-  if (!files?.length) return { message, files };
+async function readTextFromFileUIPart(file: FileUIPart): Promise<string> {
+  const url = file.url;
+  if (url.startsWith("data:")) {
+    const base64Match = url.match(/^data:[^;]+;base64,(.+)$/);
+    if (base64Match) {
+      const binary = atob(base64Match[1]);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index++) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+    const commaIndex = url.indexOf(",");
+    return decodeURIComponent(url.slice(commaIndex + 1));
+  }
+  const response = await fetch(url);
+  return response.text();
+}
 
-  const readableFiles = Array.from(files).filter(isTextReadableAttachment);
-  if (readableFiles.length === 0) return { message, files };
+async function prepareMessageWithFileUIParts(
+  message: string,
+  files: FileUIPart[],
+): Promise<{ message: string; files: FileUIPart[] }> {
+  if (!files.length) return { message, files };
+
+  const textFiles = files.filter(isTextReadableFileUIPart);
+  const nonTextFiles = files.filter((f) => !isTextReadableFileUIPart(f));
+
+  if (textFiles.length === 0) return { message, files };
 
   const attachmentText = await Promise.all(
-    readableFiles.map(async (file) => {
-      const text = await file.text();
+    textFiles.map(async (file) => {
+      const text = await readTextFromFileUIPart(file);
+      const name = file.filename ?? "attachment";
       return [
-        `--- ${file.name} (${file.type || "text/plain"}) ---`,
+        `--- ${name} (${file.mediaType ?? "text/plain"}) ---`,
         text,
-        `--- end ${file.name} ---`,
+        `--- end ${name} ---`,
       ].join("\n");
     }),
   );
-  const transfer = new DataTransfer();
-  Array.from(files)
-    .filter((file) => !isTextReadableAttachment(file))
-    .forEach((file) => transfer.items.add(file));
 
   return {
     message: [message, "Attached readable files:", ...attachmentText]
       .filter(Boolean)
       .join("\n\n"),
-    files: transfer.files.length > 0 ? transfer.files : undefined,
+    files: nonTextFiles,
   };
+}
+
+/** Renders thumbnails for files attached via PromptInput's internal attachment state. */
+function AttachmentPreviews() {
+  const attachments = usePromptInputAttachments();
+  if (attachments.files.length === 0) return null;
+  return (
+    <div className="flex gap-2 overflow-x-auto px-1 pb-2">
+      {attachments.files.map((file) => (
+        <div
+          key={file.id}
+          className="image-bounce relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted"
+        >
+          {file.mediaType?.startsWith("image/") && file.url ? (
+            <Image
+              src={file.url}
+              alt={file.filename ?? "attachment"}
+              fill
+              className="object-cover"
+              sizes="48px"
+              unoptimized
+            />
+          ) : (
+            <FileTextIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="absolute right-0 top-0 h-4 w-4 rounded-bl-md rounded-tr-lg bg-destructive/80 p-0 text-destructive-foreground hover:bg-destructive"
+            onClick={() => attachments.remove(file.id)}
+            aria-label={`Remove ${file.filename ?? "file"}`}
+          >
+            <XIcon className="h-2.5 w-2.5" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function AssistantActionList() {
@@ -1023,7 +1091,7 @@ interface ChatAreaProps {
   selectedModel?: AiAssistantModelId;
   onModelChange?: (model: AiAssistantModelId) => void;
   onInputChange: (value: string) => void;
-  onSubmit: (message: string, files?: FileList) => void;
+  onSubmit: (message: string, files?: FileUIPart[]) => void;
   onToolApprovalResponse?: ToolApprovalResponseHandler;
   onStop: () => void;
 }
@@ -1057,15 +1125,9 @@ export function ChatArea({
 
   // Project selector
   const [projectOpen, setProjectOpen] = useState(false);
-  const [modelOpen, setModelOpen] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<FileList | undefined>();
-  const [uploadedPreviews, setUploadedPreviews] = useState<
-    Array<{ url?: string; name: string; type: string; isImage: boolean }>
-  >([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isMicrophoneBlocked, setIsMicrophoneBlocked] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
@@ -1153,14 +1215,6 @@ export function ChatArea({
 
   useEffect(() => {
     return () => {
-      uploadedPreviews.forEach((preview) => {
-        if (preview.url) URL.revokeObjectURL(preview.url);
-      });
-    };
-  }, [uploadedPreviews]);
-
-  useEffect(() => {
-    return () => {
       mediaStream?.getTracks().forEach((track) => track.stop());
     };
   }, [mediaStream]);
@@ -1183,13 +1237,13 @@ export function ChatArea({
     setCouncilModeInternal(next);
     onCouncilModeChange?.(next);
   }, [councilMode, onCouncilModeChange]);
-  const handleSubmit = useCallback(async () => {
-    const trimmed = input.trim();
-    if ((!trimmed && !uploadedFiles?.length) || isStreaming) return;
+  const handleSubmit = useCallback(async (message: PromptInputMessage) => {
+    const trimmed = message.text.trim();
+    if ((!trimmed && !message.files.length) || isStreaming) return;
     try {
-      const prepared = await prepareMessageWithReadableAttachments(
+      const prepared = await prepareMessageWithFileUIParts(
         trimmed || "Review these attachments",
-        uploadedFiles,
+        message.files,
       );
       onSubmit(prepared.message, prepared.files);
     } catch (error) {
@@ -1201,40 +1255,7 @@ export function ChatArea({
       return;
     }
     onInputChange("");
-    setUploadedFiles(undefined);
-    setUploadedPreviews([]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }, [input, isStreaming, onInputChange, onSubmit, uploadedFiles]);
-
-  const handleFileSelect = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files;
-      if (!files?.length) return;
-
-      const transfer = new DataTransfer();
-      Array.from(files).forEach((file) => transfer.items.add(file));
-      setUploadedFiles(transfer.files);
-      setUploadedPreviews(
-        Array.from(files).map((file) => ({
-          url: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-          name: file.name,
-          type: file.type || "Unknown file type",
-          isImage: file.type.startsWith("image/"),
-        })),
-      );
-    },
-    [],
-  );
-
-  const clearUploads = useCallback(() => {
-    setUploadedFiles(undefined);
-    setUploadedPreviews([]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }, []);
+  }, [isStreaming, onInputChange, onSubmit]);
 
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) {
@@ -1500,57 +1521,13 @@ export function ChatArea({
   // Shared prompt input element
   const promptInputEl = (
     <PromptInput
-      value={input}
-      onValueChange={onInputChange}
-      isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
         "overflow-hidden rounded-2xl border-0 bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-border",
         hasMessages ? "px-3 py-2 sm:px-4" : "px-4 py-4 sm:px-5",
       )}
     >
-      <Input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden="true"
-        onChange={handleFileSelect}
-      />
-      {uploadedPreviews.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto px-1 pb-2">
-          {uploadedPreviews.map((preview) => (
-            <div
-              key={`${preview.name}-${preview.type}`}
-              className="image-bounce relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted"
-            >
-              {preview.isImage && preview.url ? (
-                <Image
-                  src={preview.url}
-                  alt={preview.name}
-                  fill
-                  className="object-cover"
-                  sizes="48px"
-                />
-              ) : (
-                <FileTextIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-              )}
-              <span className="sr-only">{preview.name}</span>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            className="mt-1 rounded-full"
-            onClick={clearUploads}
-            aria-label="Remove attachments"
-          >
-            <XIcon className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
+      <AttachmentPreviews />
       <PromptInputTextarea
         value={input}
         onChange={(event) => onInputChange(event.currentTarget.value)}
@@ -1568,18 +1545,18 @@ export function ChatArea({
       />
       <PromptInputActions className="flex items-center justify-between gap-2 px-0 pb-0">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <PromptInputAction tooltip="Attach files">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
+          <PromptInputActionMenu>
+            <PromptInputActionMenuTrigger
+              tooltip="Attach files or take screenshot"
               className={composerIconButtonClass}
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Attach files"
             >
               <PaperclipIcon className="h-3.5 w-3.5" />
-            </Button>
-          </PromptInputAction>
+            </PromptInputActionMenuTrigger>
+            <PromptInputActionMenuContent side="top">
+              <PromptInputActionAddAttachments label="Attach files" />
+              <PromptInputActionAddScreenshot label="Take screenshot" />
+            </PromptInputActionMenuContent>
+          </PromptInputActionMenu>
           <PromptInputAction tooltip="Paste from clipboard">
             <Button
               type="button"
@@ -1713,79 +1690,42 @@ export function ChatArea({
               <UsersRoundIcon className="h-3.5 w-3.5" />
             </Button>
           </PromptInputAction>
-          <TooltipProvider delayDuration={150}>
-            <Tooltip>
-              <Popover open={modelOpen} onOpenChange={setModelOpen}>
-                <TooltipTrigger asChild>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className={composerIconButtonClass}
-                      aria-label="Select AI model"
-                    >
-                      <BrainIcon className="h-3.5 w-3.5" />
-                    </Button>
-                  </PopoverTrigger>
-                </TooltipTrigger>
-                <PopoverContent className="w-64 p-0" align="start" side="top">
-                  <Command>
-                    <CommandInput placeholder="Search models..." className="h-9" />
-                    <CommandList>
-                      <CommandEmpty>No models found</CommandEmpty>
-                      <CommandGroup>
-                        {AI_ASSISTANT_MODELS.map((model) => (
-                          <CommandItem
-                            key={model.id}
-                            value={`${model.label} ${model.description} ${model.id}`}
-                            onSelect={() => {
-                              onModelChange?.(model.id);
-                              setModelOpen(false);
-                            }}
-                          >
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate">{model.label}</span>
-                              <span className="block truncate text-xs text-muted-foreground">
-                                {model.description}
-                              </span>
-                            </span>
-                            {model.id === selectedModel && (
-                              <CheckIcon className="ml-2 h-3.5 w-3.5 shrink-0 text-primary" />
-                            )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <TooltipContent side="top">
-                Model: {selectedModelOption.label}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <PromptInputSelect
+            value={selectedModel}
+            onValueChange={(v) => onModelChange?.(v as AiAssistantModelId)}
+          >
+            <PromptInputSelectTrigger
+              className={cn(composerIconButtonClass, "w-auto px-2 text-xs")}
+            >
+              <PromptInputSelectValue />
+            </PromptInputSelectTrigger>
+            <PromptInputSelectContent side="top">
+              {AI_ASSISTANT_MODELS.map((model) => (
+                <PromptInputSelectItem key={model.id} value={model.id}>
+                  <span>
+                    <span className="block">{model.label}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {model.description}
+                    </span>
+                  </span>
+                </PromptInputSelectItem>
+              ))}
+            </PromptInputSelectContent>
+          </PromptInputSelect>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
-          <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
-            <Button
-              size="icon"
-              variant="ghost"
-              className={cn(
-                "relative h-7 w-7 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8",
-                input.trim() && "text-foreground",
-                isStreaming && "text-foreground/60 hover:text-foreground/60",
-              )}
-              disabled={!input.trim() && !uploadedFiles?.length && !isStreaming}
-              onClick={isStreaming ? onStop : handleSubmit}
-            >
-              {isStreaming ? (
-                <SquareIcon className="h-3 w-3 fill-current text-foreground/60" />
-              ) : (
-                <SendIcon className="h-3.5 w-3.5" />
-              )}
-            </Button>
-          </PromptInputAction>
+          <PromptInputSubmit
+            status={isStreaming ? "streaming" : "ready"}
+            onStop={onStop}
+            variant="ghost"
+            size="icon-sm"
+            disabled={!input.trim() && !isStreaming}
+            className={cn(
+              "relative h-7 w-7 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8",
+              input.trim() && "text-foreground",
+              isStreaming && "text-foreground/60 hover:text-foreground/60",
+            )}
+          />
         </div>
       </PromptInputActions>
     </PromptInput>
