@@ -585,6 +585,18 @@
     caret-color: hsl(var(--foreground)) !important;
     transition: background-color 5000s ease-in-out 0s;
   }
+
+  /* Auth inputs sit on a dark surface (bg-surface-inverse). Override autofill
+     with a matching dark background so white text stays readable. */
+  input[data-auth-input="true"]:-webkit-autofill,
+  input[data-auth-input="true"]:-webkit-autofill:hover,
+  input[data-auth-input="true"]:-webkit-autofill:focus,
+  input[data-auth-input="true"]:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 40px hsl(var(--neutral-900)) inset !important;
+    -webkit-text-fill-color: hsl(var(--primary-foreground)) !important;
+    caret-color: hsl(var(--primary-foreground)) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
 }
 
 /* ============================================================================
