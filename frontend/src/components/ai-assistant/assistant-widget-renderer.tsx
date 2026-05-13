@@ -41,6 +41,7 @@ import type {
   FinancialPulseWidgetPayload,
   MeetingIntelligenceWidgetPayload,
   MeetingInsightsWidgetPayload,
+  OutlookEmailDraftWidgetPayload,
   OwnerActionQueueWidgetPayload,
   OwnerSnapshotWidgetPayload,
   ProjectActionPreviewWidgetPayload,
@@ -207,6 +208,146 @@ function DraftEmailWidget({
           Copy
         </Button>
       </div>
+    </WidgetShell>
+  );
+}
+
+function recipientsToText(
+  recipients: OutlookEmailDraftWidgetPayload["toRecipients"] = [],
+) {
+  return recipients
+    .map((recipient) => recipient.name ? `${recipient.name} <${recipient.email}>` : recipient.email)
+    .join("\n");
+}
+
+function recipientTextToRows(value: string): OutlookEmailDraftWidgetPayload["toRecipients"] {
+  return value
+    .split(/[\n,;]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const match = item.match(/^(.*?)\s*<([^>]+)>$/);
+      const email = (match?.[2] ?? item).trim().toLowerCase();
+      const name = match?.[1]?.trim() || undefined;
+      return { email, name };
+    });
+}
+
+function OutlookEmailDraftWidget({
+  widget,
+  onSubmit,
+  onEditDraft,
+}: {
+  widget: OutlookEmailDraftWidgetPayload;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  const [toRecipients, setToRecipients] = useState(recipientsToText(widget.toRecipients));
+  const [ccRecipients, setCcRecipients] = useState(recipientsToText(widget.ccRecipients));
+  const [subject, setSubject] = useState(widget.subject);
+  const [body, setBody] = useState(widget.body);
+  const toRows = useMemo(() => recipientTextToRows(toRecipients), [toRecipients]);
+  const ccRows = useMemo(() => recipientTextToRows(ccRecipients), [ccRecipients]);
+  const recipientCount = toRows.length + ccRows.length + (widget.bccRecipients?.length ?? 0);
+  const recipientLabel = widget.mode === "reply" && recipientCount === 0
+    ? "inferred from original message"
+    : `${recipientCount} recipient${recipientCount === 1 ? "" : "s"}`;
+  const draft = useMemo(
+    () =>
+      [
+        "Outlook email draft",
+        `Mailbox: ${widget.mailboxUserId || "[use configured Outlook mailbox]"}`,
+        `Mode: ${widget.mode === "reply" ? "Reply draft" : "New message draft"}`,
+        widget.replyToGraphMessageId ? `Reply to Graph message: ${widget.replyToGraphMessageId}` : null,
+        `To: ${toRows.map((recipient) => recipient.email).join(", ") || (widget.mode === "reply" ? "[inferred from original message]" : "[recipient needed]")}`,
+        ccRows.length ? `Cc: ${ccRows.map((recipient) => recipient.email).join(", ")}` : null,
+        `Subject: ${subject || "[subject needed]"}`,
+        "",
+        body || "[body needed]",
+      ]
+        .filter((line): line is string => typeof line === "string")
+        .join("\n"),
+    [body, ccRows, subject, toRows, widget.mailboxUserId, widget.mode, widget.replyToGraphMessageId],
+  );
+  const previewPrompt = [
+    "Create this Outlook email draft with draftOutlookEmail.",
+    "First show the final preview/adaptive-card widget and wait for my confirmation.",
+    "",
+    draft,
+  ].join("\n");
+
+  return (
+    <WidgetShell
+      eyebrow={widget.status === "created" ? "Outlook draft created" : "Outlook draft"}
+      title={widget.title}
+      icon={<MailIcon className="h-4 w-4" />}
+      actions={<WidgetMeta>{widget.status}</WidgetMeta>}
+    >
+      <div className="grid gap-2">
+        <label className="flex items-center gap-2">
+          <span className="w-16 shrink-0 text-xs font-medium uppercase text-muted-foreground">Mailbox</span>
+          <Input value={widget.mailboxUserId ?? ""} readOnly placeholder="Configured Outlook mailbox" />
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="w-16 shrink-0 text-xs font-medium uppercase text-muted-foreground">Subject</span>
+          <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Email subject" />
+        </label>
+        <Textarea
+          value={toRecipients}
+          onChange={(event) => setToRecipients(event.target.value)}
+          placeholder={widget.mode === "reply" ? "Reply recipients are inferred" : "recipient@example.com"}
+          className="min-h-16 resize-y"
+        />
+        <Textarea
+          value={ccRecipients}
+          onChange={(event) => setCcRecipients(event.target.value)}
+          placeholder="cc@example.com"
+          className="min-h-16 resize-y"
+        />
+        <Textarea
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          placeholder="Write your message"
+          className="min-h-40 resize-y"
+        />
+      </div>
+
+      <div className="divide-y divide-border/70">
+        {[
+          ["Mode", widget.mode === "reply" ? "Reply draft" : "New message"],
+          ["Recipients", recipientLabel],
+          ["Status", widget.status],
+        ].map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between gap-4 py-2 text-sm">
+            <span className="text-xs font-medium uppercase text-muted-foreground">{label}</span>
+            <span className="truncate text-right text-foreground">{value}</span>
+          </div>
+        ))}
+      </div>
+
+      {widget.outlookWebLink ? (
+        <Button size="sm" asChild>
+          <Link href={widget.outlookWebLink}>
+            <MailIcon className="h-4 w-4" />
+            Open Outlook
+          </Link>
+        </Button>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => onSubmit(previewPrompt)}>
+            <SendIcon className="h-4 w-4" />
+            Create preview
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onEditDraft(draft)}>
+            <SquarePenIcon className="h-4 w-4" />
+            Edit in chat
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => void copyToClipboard(draft)}>
+            <ClipboardIcon className="h-4 w-4" />
+            Copy
+          </Button>
+        </div>
+      )}
     </WidgetShell>
   );
 }
@@ -572,6 +713,57 @@ function normalizeCalendarInviteToolOutput(output: unknown): CalendarInviteWidge
       typeof record.confirmPrompt === "string"
         ? record.confirmPrompt
         : "Create this Outlook calendar invite with createOutlookCalendarInvite after confirmation.",
+  };
+}
+
+function normalizeOutlookEmailDraftToolOutput(output: unknown): OutlookEmailDraftWidgetPayload | null {
+  const record = asRecord(output);
+  const widget = asRecord(record.widget);
+  if (widget.type === "outlook_email_draft") {
+    return widget as OutlookEmailDraftWidgetPayload;
+  }
+
+  if (typeof record.subject !== "string" && typeof record.message !== "string") return null;
+
+  const toRecipients = Array.isArray(record.toRecipients)
+    ? record.toRecipients.filter((item): item is OutlookEmailDraftWidgetPayload["toRecipients"][number] => {
+        const recipient = asRecord(item);
+        return typeof recipient.email === "string";
+      })
+    : [];
+  const ccRecipients = Array.isArray(record.ccRecipients)
+    ? record.ccRecipients.filter((item): item is OutlookEmailDraftWidgetPayload["toRecipients"][number] => {
+        const recipient = asRecord(item);
+        return typeof recipient.email === "string";
+      })
+    : [];
+  const bccRecipients = Array.isArray(record.bccRecipients)
+    ? record.bccRecipients.filter((item): item is OutlookEmailDraftWidgetPayload["toRecipients"][number] => {
+        const recipient = asRecord(item);
+        return typeof recipient.email === "string";
+      })
+    : [];
+
+  return {
+    type: "outlook_email_draft",
+    id: typeof record.id === "string" ? record.id : "outlook-email-draft",
+    title: typeof record.title === "string" ? record.title : "Outlook email draft",
+    status: record.success === true ? "created" : record.action === "preview" ? "draft" : "blocked",
+    mailboxUserId: typeof record.mailboxUserId === "string" ? record.mailboxUserId : null,
+    mode: record.mode === "reply" ? "reply" : "new_message",
+    subject: typeof record.subject === "string" ? record.subject : "Outlook email draft",
+    body: typeof record.body === "string" ? record.body : "",
+    toRecipients,
+    ccRecipients,
+    bccRecipients,
+    replyToGraphMessageId: typeof record.replyToGraphMessageId === "string" ? record.replyToGraphMessageId : null,
+    outlookDraftId: typeof record.outlookDraftId === "string" ? record.outlookDraftId : null,
+    outlookWebLink: typeof record.outlookWebLink === "string" ? record.outlookWebLink : null,
+    adaptiveCard: asRecord(record.adaptiveCard),
+    confirmPrompt:
+      typeof record.confirmPrompt === "string"
+        ? record.confirmPrompt
+        : "Create this Outlook email draft with draftOutlookEmail after confirmation.",
   };
 }
 
@@ -1549,6 +1741,14 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
     props.widget.type === "draft_email" ? (
       <DraftEmailWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />
     ) : null,
+  outlook_email_draft: (props) =>
+    props.widget.type === "outlook_email_draft" ? (
+      <OutlookEmailDraftWidget
+        widget={props.widget}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
   calendar_invite: (props) =>
     props.widget.type === "calendar_invite" ? (
       <CalendarInviteWidget
@@ -1650,6 +1850,7 @@ type AssistantToolPartForRegistry = {
 const assistantToolComponentRegistry: Record<string, (output: unknown) => AssistantWidgetPayload | null> = {
   getMeetingIntelligence: normalizeMeetingToolOutput,
   createOutlookCalendarInvite: normalizeCalendarInviteToolOutput,
+  draftOutlookEmail: normalizeOutlookEmailDraftToolOutput,
 };
 
 export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegistry): boolean {

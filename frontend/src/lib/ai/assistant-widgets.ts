@@ -1,5 +1,6 @@
 export type AssistantWidgetKind =
   | "draft_email"
+  | "outlook_email_draft"
   | "calendar_invite"
   | "create_task"
   | "task_summary"
@@ -33,6 +34,34 @@ export type DraftEmailWidgetPayload = {
   defaultTo: string;
   defaultSubject: string;
   defaultBody: string;
+};
+
+export type OutlookEmailDraftWidgetPayload = {
+  type: "outlook_email_draft";
+  id: string;
+  title: string;
+  status: "draft" | "created" | "blocked";
+  mailboxUserId?: string | null;
+  mode: "new_message" | "reply";
+  subject: string;
+  body: string;
+  toRecipients: Array<{
+    email: string;
+    name?: string;
+  }>;
+  ccRecipients?: Array<{
+    email: string;
+    name?: string;
+  }>;
+  bccRecipients?: Array<{
+    email: string;
+    name?: string;
+  }>;
+  replyToGraphMessageId?: string | null;
+  outlookDraftId?: string | null;
+  outlookWebLink?: string | null;
+  adaptiveCard?: Record<string, unknown>;
+  confirmPrompt: string;
 };
 
 export type CalendarInviteWidgetPayload = {
@@ -430,6 +459,7 @@ export type RecordWritePreviewWidgetPayload = {
 
 export type AssistantWidgetPayload =
   | DraftEmailWidgetPayload
+  | OutlookEmailDraftWidgetPayload
   | CalendarInviteWidgetPayload
   | CreateTaskWidgetPayload
   | TaskSummaryWidgetPayload
@@ -458,6 +488,7 @@ export type AssistantWidgetDataPart = {
 
 export const ASSISTANT_WIDGET_TYPES = [
   "draft_email",
+  "outlook_email_draft",
   "calendar_invite",
   "create_task",
   "task_summary",
