@@ -6126,7 +6126,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
         let content = "";
         let totalUsage: Awaited<typeof result.totalUsage> | undefined;
-        let finalContentSource: "primary" | "retry" | "tool_only" = "primary";
+        let finalContentSource:
+          | "primary"
+          | "retry"
+          | "tool_only"
+          | "action_tool_missing" = "primary";
         try {
           content = (await result.text).trim();
           totalUsage = await result.totalUsage;
