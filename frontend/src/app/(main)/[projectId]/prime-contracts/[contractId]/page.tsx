@@ -51,6 +51,7 @@ import {
   paymentApplicationKeys,
 } from "@/hooks/use-payment-applications";
 
+import { EmailsClient } from "../../emails/emails-client";
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
 import { PrimeContractEstimateImportModal } from "./components/PrimeContractEstimateImportModal";
@@ -1092,25 +1093,7 @@ export default function ProjectContractDetailPage() {
         )}
 
         {activeTab === "emails" && (
-          <div>
-            <SectionRuleHeading label="Emails" />
-            <EmptyState
-              icon={<Mail />}
-              title="No emails yet"
-              description="Emails sent or received related to this contract will appear here."
-              action={
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setDocumentDialogTab("email");
-                    setIsDocumentDialogOpen(true);
-                  }}
-                >
-                  Send Email
-                </Button>
-              }
-            />
-          </div>
+          <EmailsClient projectId={Number(projectId)} embedded />
         )}
 
         {activeTab === "history" && (
