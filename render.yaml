@@ -333,5 +333,11 @@ services:
         sync: false
       - key: USE_UNIFIED_AGENT
         value: true
+      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED
+        value: false
+      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME
+        value: contract_spike
+      - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL
+        value: gpt-5.4-mini
       - key: CORS_ORIGINS
         value: https://alleato-procore.vercel.app,https://www.alleato-procore.vercel.app,https://alleato-pm-1.onrender.com

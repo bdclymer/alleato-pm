@@ -310,8 +310,10 @@ Acceptance:
 - Done: backend project-lookup dependency failures now return a typed low-confidence packet with failed `project_lookup` trace instead of a generic FastAPI 500.
 - Done: backend Deep Agents runtime now prefers `AI_GATEWAY_API_KEY`, normalizes `gpt-5.4-mini` and `openai:gpt-5.4-mini` to the AI Gateway `openai/gpt-5.4-mini` model path, and falls back to direct OpenAI only when the gateway key is absent.
 - Done: local runtime smoke with `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents`, `DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL=gpt-5.4-mini`, and the frontend bridge enabled returned `mode=deep_agents`, `sourceCount=9`, `evidenceCount=11`, and a successful `deepagents_runtime` trace.
+- Done: Render manifests now carry explicit default-off Deep Agents env entries, and `npm run rag:verify:deep-agents-nonprod` verifies active backend health, AI Gateway visibility, default-off deployment contract, endpoint state, and Render service-mapping drift.
 - Current environment caveat: provider-matrix verification completed but still reports streaming tool-call provider debt, and assistant-routing Playwright verification is blocked by Supabase Auth setup timeout before route tests run.
-- Not yet done: deploy the feature flags/env to non-production Render/Vercel and run the full authenticated `/api/ai-assistant/chat` selected-project owner-status prompt in the app.
+- Current deployment caveat: the available Render API key exposes the retired `alleato-backend-3mmq` service, while repo guardrails and health probes confirm the active backend is `alleato-backend-rbnj`; do not mutate Render env through that stale service mapping.
+- Not yet done: deploy the feature flags/env to the active non-production Render/Vercel targets and run the full authenticated `/api/ai-assistant/chat` selected-project owner-status prompt in the app.
 
 ### Slice 4: Memory Governance
 
@@ -358,6 +360,7 @@ PYTHONPATH=backend backend/.venv/bin/python -m py_compile backend/src/services/a
 npm run test:unit -- --runInBand --runTestsByPath src/lib/ai/__tests__/deep-agent-project-status.test.ts
 npm run typecheck -- --pretty false
 npm run rag:verify:chat-architecture
+npm run rag:verify:deep-agents-nonprod
 node scripts/verify/verify_ai_tool_calling_provider_matrix.mjs
 npm run rag:verify:assistant-routing
 node scripts/verify/verify_ai_intelligence_packet_contract.mjs
@@ -388,7 +391,7 @@ Do not run full frontend build as part of this PRP doc slice. Delegate it when i
 
 ## Recommended Next Step
 
-Deploy the backend/runtime/frontend bridge flags to a non-production environment and run one authenticated selected-project owner-status prompt through `/api/ai-assistant/chat`. The local backend proof now shows Deep Agents can synthesize through AI Gateway; the remaining proof is production-shaped routing, auth, and UI behavior.
+Resolve the active Render service API mapping or enable the Deep Agents env vars through the active `alleato-backend-rbnj` Render dashboard, then run `DEEP_AGENTS_EXPECT_ENABLED=true npm run rag:verify:deep-agents-nonprod` and one authenticated selected-project owner-status prompt through `/api/ai-assistant/chat`.
 
 ## Open Questions
 
