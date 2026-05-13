@@ -23,6 +23,11 @@ import {
   createOutlookCalendarInvite,
   resolveOutlookOrganizerEmail,
 } from "@/lib/microsoft-graph/calendar-invites";
+import {
+  buildOutlookMailDraftAdaptiveCard,
+  createOutlookMailDraft,
+  resolveOutlookMailboxUserId,
+} from "@/lib/microsoft-graph/mail";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -53,6 +58,11 @@ const outlookInviteAttendeeSchema = z.object({
   email: z.string().email(),
   name: z.string().optional(),
   type: z.enum(["required", "optional"]).default("required"),
+});
+
+const outlookMailRecipientSchema = z.object({
+  email: z.string().email(),
+  name: z.string().optional(),
 });
 
 export function normalizeGeneratedTaskPriority(
@@ -3284,6 +3294,204 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             toolName: "createOutlookCalendarInvite",
             idempotencyKey,
             projectId: input.projectId ?? null,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+      }),
+    }),
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Create Outlook email draft
+    // -------------------------------------------------------------------------
+
+    draftOutlookEmail: tool({
+      description:
+        "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. Use readOutlookEmailThread before drafting a reply when a specific thread is involved.",
+      inputSchema: z.object({
+        mailboxUserId: z
+          .string()
+          .optional()
+          .describe("Mailbox user ID/email to create the draft in. If omitted, the configured Outlook mail user is used."),
+        replyToGraphMessageId: z
+          .string()
+          .optional()
+          .describe("Graph message ID when this should be a reply draft instead of a new message draft."),
+        subject: z.string().describe("Draft subject. For replies, use the source email subject or RE: subject."),
+        body: z.string().describe("Draft body written as the email content Brandon should review."),
+        toRecipients: z
+          .array(outlookMailRecipientSchema)
+          .default([])
+          .describe("Primary recipients for a new draft. Reply drafts may infer recipients from the original Graph message."),
+        ccRecipients: z.array(outlookMailRecipientSchema).optional().default([]),
+        bccRecipients: z.array(outlookMailRecipientSchema).optional().default([]),
+        importance: z.enum(["low", "normal", "high"]).optional().default("normal"),
+        projectId: z.number().optional().describe("Project ID if the draft is tied to a project"),
+        confirmed: z.boolean().default(false).describe("Set to true only after the user confirms the preview"),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("draftOutlookEmail", options, async (input) => {
+        const access = await enforceProjectWriteAccess(input.projectId);
+        if (!access.ok) return { success: false, error: access.error };
+
+        let mailboxUserId: string;
+        try {
+          mailboxUserId = resolveOutlookMailboxUserId(input.mailboxUserId);
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+            widget: {
+              type: "outlook_email_draft",
+              id: "outlook-email-draft-blocked",
+              title: "Outlook email draft blocked",
+              status: "blocked",
+              mailboxUserId: input.mailboxUserId ?? null,
+              mode: input.replyToGraphMessageId ? "reply" : "new_message",
+              subject: input.subject,
+              body: input.body,
+              toRecipients: input.toRecipients,
+              ccRecipients: input.ccRecipients,
+              bccRecipients: input.bccRecipients,
+              adaptiveCard: buildOutlookMailDraftAdaptiveCard({
+                title: input.subject,
+                mailboxUserId: input.mailboxUserId ?? "not configured",
+                recipientLabel: `${input.toRecipients.length} recipient${input.toRecipients.length === 1 ? "" : "s"}`,
+                status: "blocked",
+                mode: input.replyToGraphMessageId ? "reply" : "new_message",
+              }),
+              confirmPrompt: "Fix the Outlook mail configuration before creating this draft.",
+            },
+          };
+        }
+
+        const mode = input.replyToGraphMessageId ? "reply" : "new_message";
+        const recipientCount =
+          input.toRecipients.length +
+          input.ccRecipients.length +
+          input.bccRecipients.length;
+        const recipientLabel = mode === "reply" && recipientCount === 0
+          ? "inferred from original message"
+          : `${recipientCount} recipient${recipientCount === 1 ? "" : "s"}`;
+        const adaptiveCard = buildOutlookMailDraftAdaptiveCard({
+          title: input.subject,
+          mailboxUserId,
+          recipientLabel,
+          status: input.confirmed ? "created" : "draft",
+          mode,
+        });
+
+        if (!input.confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the Outlook email draft I'll create. Reply **confirm** to save it to Outlook drafts.",
+            mailboxUserId,
+            mode,
+            subject: input.subject,
+            body: input.body,
+            toRecipients: input.toRecipients,
+            ccRecipients: input.ccRecipients,
+            bccRecipients: input.bccRecipients,
+            replyToGraphMessageId: input.replyToGraphMessageId ?? null,
+            adaptiveCard,
+            widget: {
+              type: "outlook_email_draft",
+              id: "outlook-email-draft-preview",
+              title: "Outlook email draft",
+              status: "draft",
+              mailboxUserId,
+              mode,
+              subject: input.subject,
+              body: input.body,
+              toRecipients: input.toRecipients,
+              ccRecipients: input.ccRecipients,
+              bccRecipients: input.bccRecipients,
+              replyToGraphMessageId: input.replyToGraphMessageId ?? null,
+              adaptiveCard,
+              confirmPrompt: "Confirm this Outlook email draft and create it with draftOutlookEmail.",
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("draftOutlookEmail", input);
+        const replay = await getReplayResponse("draftOutlookEmail", idempotencyKey);
+        if (replay) return replay;
+
+        try {
+          const draft = await createOutlookMailDraft({
+            mailboxUserId,
+            replyToGraphMessageId: input.replyToGraphMessageId,
+            subject: input.subject,
+            body: input.body,
+            toRecipients: input.toRecipients,
+            ccRecipients: input.ccRecipients,
+            bccRecipients: input.bccRecipients,
+            importance: input.importance,
+          });
+          const createdAdaptiveCard = buildOutlookMailDraftAdaptiveCard({
+            title: draft.subject,
+            mailboxUserId: draft.mailboxUserId,
+            recipientLabel,
+            status: "created",
+            mode: draft.mode,
+            openUrl: draft.webLink,
+          });
+          const response = {
+            success: true,
+            message: `Outlook draft **${draft.subject}** created in ${draft.mailboxUserId}.`,
+            outlookDraftId: draft.id,
+            outlookWebLink: draft.webLink,
+            mailboxUserId: draft.mailboxUserId,
+            mode: draft.mode,
+            subject: draft.subject,
+            body: input.body,
+            toRecipients: input.toRecipients,
+            ccRecipients: input.ccRecipients,
+            bccRecipients: input.bccRecipients,
+            replyToGraphMessageId: input.replyToGraphMessageId ?? null,
+            adaptiveCard: createdAdaptiveCard,
+            widget: {
+              type: "outlook_email_draft",
+              id: draft.id,
+              title: "Outlook email draft",
+              status: "created",
+              mailboxUserId: draft.mailboxUserId,
+              mode: draft.mode,
+              subject: draft.subject,
+              body: input.body,
+              toRecipients: input.toRecipients,
+              ccRecipients: input.ccRecipients,
+              bccRecipients: input.bccRecipients,
+              replyToGraphMessageId: input.replyToGraphMessageId ?? null,
+              outlookDraftId: draft.id,
+              outlookWebLink: draft.webLink,
+              adaptiveCard: createdAdaptiveCard,
+              confirmPrompt: "Outlook email draft created. Open it in Outlook to review and send.",
+            },
+          };
+          await recordWriteAudit({
+            toolName: "draftOutlookEmail",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "success",
+            response,
+          });
+          return response;
+        } catch (error) {
+          const failure = {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+            subject: input.subject,
+            mailboxUserId,
+          };
+          await recordWriteAudit({
+            toolName: "draftOutlookEmail",
+            idempotencyKey,
+            projectId: access.projectId,
             input,
             status: "error",
             response: failure,

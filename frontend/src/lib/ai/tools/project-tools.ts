@@ -7,6 +7,7 @@ import { createOperationalTools } from "./operational";
 import { createScheduleTools } from "./schedule-tools";
 import { createAppHelpTools } from "./app-help-tools";
 import { createForecastTools } from "./forecast-tools";
+import { createOutlookOperationsTools } from "./outlook-operations";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 import type { MeetingIntelligenceWidgetPayload } from "@/lib/ai/assistant-widgets";
@@ -385,6 +386,7 @@ export function createProjectTools(
   const scheduleTools = createScheduleTools(_userId, options);
   const appHelpTools = createAppHelpTools(options);
   const forecastTools = createForecastTools(_userId, options);
+  const outlookOperationsTools = createOutlookOperationsTools(_userId, options);
 
   return {
     ...financialTools,
@@ -393,6 +395,7 @@ export function createProjectTools(
     ...scheduleTools,
     ...appHelpTools,
     ...forecastTools,
+    ...outlookOperationsTools,
 
     getMeetingIntelligence: tool({
       description:

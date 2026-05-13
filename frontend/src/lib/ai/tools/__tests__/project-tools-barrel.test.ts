@@ -53,6 +53,14 @@ jest.mock("../operational", () => ({
   }),
 }));
 
+jest.mock("../outlook-operations", () => ({
+  createOutlookOperationsTools: () => ({
+    getRecentOutlookEmails: { description: "mock", inputSchema: {}, execute: jest.fn() },
+    readOutlookEmailThread: { description: "mock", inputSchema: {}, execute: jest.fn() },
+    getOutlookOperationsStatus: { description: "mock", inputSchema: {}, execute: jest.fn() },
+  }),
+}));
+
 import { createProjectTools } from "../project-tools";
 
 // Tools that were extracted into new modules in this PR — these are the most
@@ -75,6 +83,9 @@ const CORE_TOOLS = [
   "getActionItemsAndInsights",
   "getMeetingsByDate",
   "getMeetingIntelligence",
+  "getRecentOutlookEmails",
+  "readOutlookEmailThread",
+  "getOutlookOperationsStatus",
   "searchDocuments",
   "getProjectDetails",
   // financial module
