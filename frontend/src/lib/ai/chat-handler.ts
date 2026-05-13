@@ -4066,13 +4066,6 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
 
     // Build tools and system prompt using shared bot-core logic
     const modelMessages = await convertToModelMessages(messages);
-    const tools = createStrategistTools(user.id, {
-      onTrace: (trace) => {
-        toolTrace.push(trace);
-      },
-      pinnedProjectId: selectedProjectId,
-      sessionId,
-    });
     const lastUserContent = lastUserMessage
       ? extractTextFromParts(lastUserMessage.parts)
       : "";
@@ -4092,6 +4085,16 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
       sourceSpecificRagKind: sourceSpecificRagRequest?.kind,
     });
     const assistantIntent = intentPlannerDecision.intent;
+    const shouldEnableActionTools =
+      assistantIntent === "task_write" || assistantIntent === "calendar_action";
+    const tools = createStrategistTools(user.id, {
+      onTrace: (trace) => {
+        toolTrace.push(trace);
+      },
+      pinnedProjectId: selectedProjectId,
+      sessionId,
+      includeActionTools: shouldEnableActionTools,
+    });
     toolTrace.push({
       tool: "intentPlanner",
       input: {

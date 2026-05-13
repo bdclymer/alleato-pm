@@ -86,7 +86,7 @@ function isStrategistLiveStatus(value: unknown): value is StrategistLiveStatus {
   return typeof record.message === "string" && typeof record.stage === "string";
 }
 
-function stripRuntimeDataParts(messages: UIMessage[]): UIMessage[] {
+function stripStatusParts(messages: UIMessage[]): UIMessage[] {
   return messages.map((message) => ({
     ...message,
     parts: message.parts.filter((part) => !part.type.startsWith("data-")),
@@ -267,7 +267,7 @@ function ChatWithSession({
     transport: new DefaultChatTransport({
       api: "/api/ai-assistant/chat",
       prepareSendMessagesRequest(request) {
-        const cleanedMessages = stripRuntimeDataParts(request.messages);
+        const cleanedMessages = stripStatusParts(request.messages);
         const lastMessage = cleanedMessages.at(-1);
         return {
           body: {

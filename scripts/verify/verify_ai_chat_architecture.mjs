@@ -15,10 +15,14 @@ const files = {
   providers: "frontend/src/lib/ai/providers.ts",
   projectTools: "frontend/src/lib/ai/tools/project-tools.ts",
   operationalTools: "frontend/src/lib/ai/tools/operational.ts",
+  scheduleTools: "frontend/src/lib/ai/tools/schedule-tools.ts",
+  forecastTools: "frontend/src/lib/ai/tools/forecast-tools.ts",
+  structuredQueryTools: "frontend/src/lib/ai/tools/structured-queries.ts",
   financialTools: "frontend/src/lib/ai/tools/financial.ts",
   acumaticaTools: "frontend/src/lib/ai/tools/acumatica.ts",
   actionTools: "frontend/src/lib/ai/tools/action-tools.ts",
   mcpTools: "frontend/src/lib/ai/tools/mcp-tools.ts",
+  providerConfig: "frontend/src/lib/ai/provider-config.ts",
   webTools: "frontend/src/lib/ai/tools/web-search.ts",
   auditDoc: "docs/ai-plan/AI-CHAT-IMPLEMENTATION-AUDIT-2026-04-26.md",
   backendApiDoc: "backend/API.md",
@@ -208,6 +212,7 @@ const routeImplementation = `${route}\n${chatHandler}`;
 const client = read(files.client);
 const orchestrator = read(files.orchestrator);
 const providers = read(files.providers);
+const providerConfig = read(files.providerConfig);
 const actionTools = read(files.actionTools);
 const mcpTools = readIfExists(files.mcpTools);
 const operationalTools = read(files.operationalTools);
@@ -223,7 +228,14 @@ const inventory = {
   tools: {
     consult: extractStrategistConsultToolNames(),
     project: extractToolNames(files.projectTools),
-    operational: extractToolNames(files.operationalTools),
+    operational: [
+      ...new Set([
+        ...extractToolNames(files.operationalTools),
+        ...extractToolNames(files.scheduleTools),
+        ...extractToolNames(files.forecastTools),
+        ...extractToolNames(files.structuredQueryTools),
+      ]),
+    ].sort(),
     financial: extractToolNames(files.financialTools),
     acumatica: extractToolNames(files.acumaticaTools),
     action: extractToolNames(files.actionTools),
@@ -280,7 +292,10 @@ requireCondition(client.includes("stripStatusParts"), "client must strip non-his
 requireCondition(client.includes("onData"), "client must consume streamed data-status parts");
 
 requireCondition(providers.includes("createOpenAI"), "providers must use @ai-sdk/openai createOpenAI");
-requireCondition(providers.includes("https://ai-gateway.vercel.sh/v1"), "providers must route through AI Gateway when configured");
+requireCondition(
+  providerConfig.includes("https://ai-gateway.vercel.sh/v1"),
+  "providers must route through AI Gateway when configured",
+);
 requireCondition(providers.includes("openai.chat"), "providers must use chat-completions path for tool calling");
 
 for (const [bucket, expectedNames] of Object.entries({
@@ -321,7 +336,7 @@ const usesToolLoopAgent =
 requireCondition(usesToolLoopAgent, "live agents are not implemented with AI SDK ToolLoopAgent");
 
 const writeToolsMergedIntoStrategist =
-  orchestrator.includes("const actionTools = createActionTools") &&
+  orchestrator.includes("const actionTools = createActionTools") ||
   orchestrator.includes("...actionTools");
 requireCondition(!writeToolsMergedIntoStrategist, "write/action tools are exposed in the default Strategist tool set");
 

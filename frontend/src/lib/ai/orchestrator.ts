@@ -76,6 +76,7 @@ type StrategistToolOptions = CreateProjectToolsOptions &
   ProgressReportToolsOptions &
   CreateStructuredOutputToolsOptions & {
     sessionId?: string;
+    includeActionTools?: boolean;
   };
 
 // ---------------------------------------------------------------------------
@@ -889,12 +890,15 @@ export function createStrategistTools(
     onTrace?: (trace: Record<string, unknown>) => void;
     pinnedProjectId?: number;
     sessionId?: string;
+    includeActionTools?: boolean;
   } = {},
 ) {
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
   const baseTools = createProjectTools(userId, options);
-  const actionTools = createActionTools(userId, options);
+  const strategistActionTools = options.includeActionTools
+    ? createActionTools(userId, options)
+    : {};
   const featureRequestTools = createFeatureRequestTools(userId, options);
   const progressReportTools = createProgressReportTools(userId, options);
   const workspaceTools = createWorkspaceTools(userId, { onTrace: options.onTrace });
@@ -906,7 +910,7 @@ export function createStrategistTools(
   const toolsWithoutSelfInspection = {
     ...webSearchTools,
     ...structuredOutputTools,
-    ...actionTools,
+    ...strategistActionTools,
     ...featureRequestTools,
     ...progressReportTools,
     ...workspaceTools,
