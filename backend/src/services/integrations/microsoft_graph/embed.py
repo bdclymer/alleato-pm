@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from ...ai_transport import retry_ai_call
+from ...supabase_helpers import get_rag_write_client, rag_database_writes_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -225,9 +226,11 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     Updates document_metadata.status to 'embedded' on success.
     Returns the number of chunks written.
     """
+    rag_client = get_rag_write_client()
+
     def _clear_ingestion_error(stage: str) -> None:
         try:
-            supabase_client.from_("fireflies_ingestion_jobs").update(
+            rag_client.from_("fireflies_ingestion_jobs").update(
                 {"stage": stage, "error_message": None}
             ).eq("metadata_id", metadata_id).execute()
         except Exception as exc:
@@ -268,7 +271,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             substantive_chars,
             min_chars,
         )
-        supabase_client.from_("document_chunks").delete().eq("document_id", metadata_id).execute()
+        rag_client.from_("document_chunks").delete().eq("document_id", metadata_id).execute()
         supabase_client.from_("document_metadata").update(
             {"status": "skipped_low_content"}
         ).eq("id", metadata_id).execute()
@@ -319,11 +322,11 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
 
     # Delete old chunks for this document (re-embed case), then insert fresh
     try:
-        supabase_client.from_("document_chunks").delete().eq("document_id", metadata_id).execute()
+        rag_client.from_("document_chunks").delete().eq("document_id", metadata_id).execute()
         # Upsert in batches of 50 to avoid payload limits
         batch_size = 50
         for start in range(0, len(rows), batch_size):
-            supabase_client.from_("document_chunks").upsert(rows[start:start + batch_size]).execute()
+            rag_client.from_("document_chunks").upsert(rows[start:start + batch_size]).execute()
     except Exception as e:
         logger.error("[GraphEmbed] Failed to write chunks for %s: %s", metadata_id, e)
         supabase_client.from_("document_metadata").update(
@@ -449,7 +452,37 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
         return None
 
     candidate_limit = max(limit * 4, limit)
-    query = """
+    if rag_database_writes_enabled():
+        # Once chunks are isolated, app-DB anti-joins against document_chunks are
+        # stale and can reintroduce the heavy scans that made the app DB unhealthy.
+        query = """
+            with pending as (
+              select
+                id,
+                category,
+                status,
+                created_at,
+                coalesce(captured_at, date, created_at::timestamptz) as source_at,
+                captured_at,
+                date
+              from public.document_metadata
+              where source = 'microsoft_graph'
+                and status in ('raw_ingested', 'segmented', 'compiled', 'error')
+                and length(coalesce(content, '')) > 0
+                and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '365 days'
+              order by captured_at desc nulls last,
+                date desc nulls last,
+                created_at desc nulls last
+              limit %s
+            )
+            select id, category, status, created_at
+            from pending
+            order by source_at desc nulls last, created_at desc nulls last
+            limit %s
+        """
+        query_params = (candidate_limit, limit)
+    else:
+        query = """
         with pending as (
           select
             id,
@@ -503,12 +536,13 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
         order by source_at desc nulls last, created_at desc nulls last
         limit %s
     """
+        query_params = (candidate_limit, candidate_limit, limit)
     conn = None
     try:
         conn = psycopg2.connect(database_url, sslmode="require")
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("set local statement_timeout = '15s'")
-            cur.execute(query, (candidate_limit, candidate_limit, limit))
+            cur.execute(query, query_params)
             return [dict(row) for row in cur.fetchall()]
     finally:
         if conn is not None:
@@ -578,7 +612,7 @@ def _has_embedded_graph_chunks(supabase_client, metadata_id: str) -> bool:
     """Return whether a Graph document already has searchable embedded chunks."""
     try:
         resp = (
-            supabase_client.from_("document_chunks")
+            get_rag_write_client().from_("document_chunks")
             .select("chunk_id")
             .eq("document_id", metadata_id)
             .not_.is_("embedding", "null")

@@ -15,7 +15,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from ..supabase_helpers import get_supabase_client
+from ..supabase_helpers import get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import DocumentChunk, MeetingSegment, TranscriptLine
 from . import llm
@@ -225,6 +225,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         dict with metadataId, chunkCount, segmentCount
     """
     client = get_supabase_client()
+    rag_client = get_rag_write_client()
 
     # 1. Fetch metadata
     resp = (
@@ -335,7 +336,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     logger.info("[Embedder] Created %d chunks (transcript + sections)", len(all_chunks))
 
     # 6. Mark job as chunked before expensive embedding calls
-    client.table("fireflies_ingestion_jobs").update(
+    rag_client.table("fireflies_ingestion_jobs").update(
         {"stage": "chunked"}
     ).eq("metadata_id", metadata_id).execute()
 
@@ -370,11 +371,11 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
 
     # 11. Store chunks in document_chunks table (unified RAG table)
     # Build existing content-hash map once to avoid per-chunk SELECT load.
-    existing_chunks_by_hash = _get_existing_chunks_by_hash(client, metadata_id)
+    existing_chunks_by_hash = _get_existing_chunks_by_hash(rag_client, metadata_id)
     for chunk in all_chunks:
         seg_id = segment_id_map.get(chunk.segment_index) if chunk.segment_index >= 0 else None
         _upsert_chunk(
-            client,
+            rag_client,
             chunk=chunk,
             metadata_id=metadata_id,
             segment_id=seg_id,
@@ -394,7 +395,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     ).eq("id", metadata_id).execute()
 
     # 13. Advance job stage
-    client.table("fireflies_ingestion_jobs").update(
+    rag_client.table("fireflies_ingestion_jobs").update(
         {"stage": "embedded"}
     ).eq("metadata_id", metadata_id).execute()
 

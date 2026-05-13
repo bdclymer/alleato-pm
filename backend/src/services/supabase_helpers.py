@@ -9,6 +9,8 @@ environment variables before importing this module:
 * ``SUPABASE_SERVICE_ROLE_KEY`` – preferred for server-side use.
 * ``SUPABASE_SERVICE_KEY`` – legacy alias used by some deployment configs.
   Falls back to ``SUPABASE_ANON_KEY`` only when neither service key exists.
+* ``RAG_SUPABASE_URL`` and ``RAG_SUPABASE_SERVICE_ROLE_KEY`` – optional AI/RAG
+  project credentials used when ``RAG_DATABASE_WRITES_ENABLED=true``.
 
 The official ``supabase`` Python package must be installed (add it to
 ``python-backend/requirements.txt``).
@@ -84,6 +86,40 @@ def get_supabase_client() -> Client:
     return create_client(url, key)
 
 
+def _env_flag_enabled(name: str) -> bool:
+    return (os.getenv(name) or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def rag_database_writes_enabled() -> bool:
+    return _env_flag_enabled("RAG_DATABASE_WRITES_ENABLED")
+
+
+@lru_cache(maxsize=1)
+def get_rag_supabase_client() -> Client:
+    """Return a cached Supabase client for the isolated AI/RAG project."""
+
+    url = _require_env("RAG_SUPABASE_URL")
+    key = (
+        os.getenv("RAG_SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("RAG_SUPABASE_SERVICE_KEY")
+        or _require_env("RAG_SUPABASE_ANON_KEY")
+    )
+    return create_client(url, key)
+
+
+def get_rag_write_client() -> Client:
+    """Return the client that owns high-churn RAG write tables.
+
+    RAG writes stay on the app database until the explicit cutover flag is set.
+    Once enabled, missing RAG Supabase credentials are treated as a hard config
+    error so ingestion cannot silently fall back to the operational database.
+    """
+
+    if rag_database_writes_enabled():
+        return get_rag_supabase_client()
+    return get_supabase_client()
+
+
 @dataclass
 class DocumentChunk:
     document_id: str
@@ -99,8 +135,9 @@ class DocumentChunk:
 class SupabaseRagStore:
     """High-level helper for RAG-related Supabase tables."""
 
-    def __init__(self, client: Optional[Client] = None) -> None:
+    def __init__(self, client: Optional[Client] = None, rag_client: Optional[Client] = None) -> None:
         self._client = client or get_supabase_client()
+        self._rag_client = rag_client or get_rag_write_client()
 
     # document_metadata -------------------------------------------------
     def upsert_document_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
@@ -213,7 +250,7 @@ class SupabaseRagStore:
 
     # document chunks ---------------------------------------------------
     def delete_chunks_for_document(self, document_id: str) -> None:
-        self._client.table("document_chunks").delete().eq("document_id", document_id).execute()
+        self._rag_client.table("document_chunks").delete().eq("document_id", document_id).execute()
 
     def upsert_chunks(self, chunks: List[DocumentChunk]) -> None:
         if not chunks:
@@ -232,10 +269,10 @@ class SupabaseRagStore:
                     **({"embedding": chunk.embedding} if chunk.embedding is not None else {}),
                 }
             )
-        self._client.table("document_chunks").upsert(rows).execute()
+        self._rag_client.table("document_chunks").upsert(rows).execute()
 
     def query_chunks(self, filters: Dict[str, Any], limit: int = 20) -> List[Dict[str, Any]]:
-        query = self._client.table("document_chunks").select("*").limit(limit)
+        query = self._rag_client.table("document_chunks").select("*").limit(limit)
         for column, value in filters.items():
             if column == "project_id":
                 query = query.eq("metadata->>project_id", str(value))
@@ -309,7 +346,7 @@ class SupabaseRagStore:
     def vector_search(self, query_embedding: List[float], limit: int = 5) -> List[Dict[str, Any]]:
         try:
             response = (
-                self._client.rpc(
+                self._rag_client.rpc(
                     "match_document_chunks",
                     {
                         "query_embedding": query_embedding,
@@ -488,5 +525,8 @@ class SupabaseRagStore:
 __all__ = [
     "DocumentChunk",
     "SupabaseRagStore",
+    "get_rag_supabase_client",
+    "get_rag_write_client",
     "get_supabase_client",
+    "rag_database_writes_enabled",
 ]

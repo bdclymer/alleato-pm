@@ -14,7 +14,7 @@ import logging
 import re
 from typing import Any, Dict, List
 
-from ..supabase_helpers import get_supabase_client
+from ..supabase_helpers import get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from ..task_assignees import TaskAssigneeResolver
 from .models import DecisionItem, OpportunityItem, RiskItem, TaskItem
@@ -183,6 +183,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         dict with metadataId, decisions, risks, tasks, opportunities counts
     """
     client = get_supabase_client()
+    rag_client = get_rag_write_client()
 
     # 1. Fetch metadata
     resp = (
@@ -198,10 +199,10 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
 
     if _is_interview_meeting(metadata):
         fireflies_id = str(metadata.get("fireflies_id") or metadata_id)
-        client.table("fireflies_ingestion_jobs").update(
+        rag_client.table("fireflies_ingestion_jobs").update(
             {"stage": "done", "error_message": None}
         ).eq("fireflies_id", fireflies_id).execute()
-        client.table("fireflies_ingestion_jobs").update(
+        rag_client.table("fireflies_ingestion_jobs").update(
             {"stage": "done", "error_message": None}
         ).eq("metadata_id", metadata_id).execute()
         client.table("document_metadata").update(
@@ -407,7 +408,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
                                  "next_step": getattr(opportunity, "next_step", None)})
 
     # 6. Mark job done and metadata complete
-    client.table("fireflies_ingestion_jobs").update(
+    rag_client.table("fireflies_ingestion_jobs").update(
         {"stage": "done", "error_message": None}
     ).eq("metadata_id", metadata_id).execute()
 

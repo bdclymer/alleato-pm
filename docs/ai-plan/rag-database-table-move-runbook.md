@@ -267,6 +267,8 @@ Add explicit database configuration:
 ```text
 APP_DATABASE_URL=current production app database
 RAG_DATABASE_URL=new AI/RAG database
+RAG_SUPABASE_URL=new AI/RAG Supabase API URL
+RAG_SUPABASE_SERVICE_ROLE_KEY=new AI/RAG Supabase service-role key
 ```
 
 Then update code ownership:
@@ -283,6 +285,11 @@ RAG_DATABASE_READS_ENABLED=false
 RAG_DATABASE_WRITES_ENABLED=false
 RAG_DATABASE_DUAL_WRITE_ENABLED=true
 ```
+
+Backend ingestion writes use `RAG_DATABASE_WRITES_ENABLED`. Keep it `false`
+until `RAG_SUPABASE_URL` and `RAG_SUPABASE_SERVICE_ROLE_KEY` are configured in
+Render; when the flag is `true`, missing RAG Supabase credentials are a hard
+configuration failure rather than a silent fallback to the app database.
 
 Recommended switch order:
 

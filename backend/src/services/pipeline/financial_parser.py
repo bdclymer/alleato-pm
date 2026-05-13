@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
-from ..supabase_helpers import get_supabase_client
+from ..supabase_helpers import get_rag_write_client, get_supabase_client
 from .models import MeetingSegment
 
 logger = logging.getLogger(__name__)
@@ -363,7 +363,7 @@ def run_financial_parser(metadata_id: str) -> Dict[str, Any]:
         }
     ).eq("id", metadata_id).execute()
 
-    client.table("fireflies_ingestion_jobs").update(
+    get_rag_write_client().table("fireflies_ingestion_jobs").update(
         {"stage": "segmented", "error_message": None}
     ).eq("metadata_id", metadata_id).execute()
 

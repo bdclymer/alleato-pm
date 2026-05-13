@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
-from ..supabase_helpers import get_supabase_client
+from ..supabase_helpers import get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import MeetingSegment, TranscriptLine
 from . import llm
@@ -283,7 +283,7 @@ def run_parser(metadata_id: str) -> Dict[str, Any]:
     ).eq("id", metadata_id).execute()
 
     # 9. Advance job stage to 'segmented'
-    client.table("fireflies_ingestion_jobs").update(
+    get_rag_write_client().table("fireflies_ingestion_jobs").update(
         {"stage": "segmented"}
     ).eq("metadata_id", metadata_id).execute()
 

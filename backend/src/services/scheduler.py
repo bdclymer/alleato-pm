@@ -553,24 +553,36 @@ def _parse_scheduler_datetime(value: Optional[str]) -> Optional[datetime]:
 
 def _find_fireflies_pipeline_backlog_jobs(
     supabase,
+    rag_supabase,
     *,
     limit: int,
     stale_minutes: int,
 ) -> list[dict]:
     """Find stale non-Graph pipeline jobs, newest source records first."""
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=stale_minutes)
-    try:
-        rows = _find_fireflies_pipeline_backlog_jobs_sql(limit=limit, cutoff=cutoff)
-    except Exception:
-        logger.warning(
-            "[Scheduler] SQL backlog candidate query failed; falling back to Supabase scan",
-            exc_info=True,
-        )
+    from .supabase_helpers import rag_database_writes_enabled
+
+    if rag_database_writes_enabled():
         rows = _find_fireflies_pipeline_backlog_jobs_supabase(
             supabase,
+            rag_supabase,
             limit=limit,
             cutoff=cutoff,
         )
+    else:
+        try:
+            rows = _find_fireflies_pipeline_backlog_jobs_sql(limit=limit, cutoff=cutoff)
+        except Exception:
+            logger.warning(
+                "[Scheduler] SQL backlog candidate query failed; falling back to Supabase scan",
+                exc_info=True,
+            )
+            rows = _find_fireflies_pipeline_backlog_jobs_supabase(
+                supabase,
+                rag_supabase,
+                limit=limit,
+                cutoff=cutoff,
+            )
 
     jobs: list[dict] = []
     for row in rows:
@@ -650,12 +662,13 @@ def _find_fireflies_pipeline_backlog_jobs_sql(*, limit: int, cutoff: datetime) -
 
 def _find_fireflies_pipeline_backlog_jobs_supabase(
     supabase,
+    rag_supabase,
     *,
     limit: int,
     cutoff: datetime,
 ) -> list[dict]:
     raw_response = (
-        supabase.table("fireflies_ingestion_jobs")
+        rag_supabase.table("fireflies_ingestion_jobs")
         .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
         .eq("stage", "raw_ingested")
         .neq("metadata_id", "")
@@ -665,7 +678,7 @@ def _find_fireflies_pipeline_backlog_jobs_supabase(
         .execute()
     )
     error_response = (
-        supabase.table("fireflies_ingestion_jobs")
+        rag_supabase.table("fireflies_ingestion_jobs")
         .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
         .eq("stage", "error")
         .neq("metadata_id", "")
@@ -674,7 +687,41 @@ def _find_fireflies_pipeline_backlog_jobs_supabase(
         .limit(limit * 10)
         .execute()
     )
-    return [*(raw_response.data or []), *(error_response.data or [])]
+    rows = [*(raw_response.data or []), *(error_response.data or [])]
+    metadata_ids = [row.get("metadata_id") for row in rows if row.get("metadata_id")]
+    if not metadata_ids:
+        return []
+
+    metadata_response = (
+        supabase.table("document_metadata")
+        .select("id, source, captured_at, date, created_at")
+        .in_("id", metadata_ids)
+        .execute()
+    )
+    metadata_by_id = {
+        row.get("id"): row
+        for row in (metadata_response.data or [])
+        if row.get("id")
+    }
+
+    filtered_rows: list[dict] = []
+    min_source_at = datetime.now(timezone.utc) - timedelta(days=365)
+    for row in rows:
+        metadata = metadata_by_id.get(row.get("metadata_id"))
+        if not metadata:
+            continue
+        if str(metadata.get("source") or "") == "microsoft_graph":
+            continue
+        source_at = (
+            _parse_scheduler_datetime(metadata.get("captured_at"))
+            or _parse_scheduler_datetime(metadata.get("date"))
+            or _parse_scheduler_datetime(metadata.get("created_at"))
+        )
+        if source_at and source_at < min_source_at:
+            continue
+        filtered_rows.append({**row, "source_at": source_at.isoformat() if source_at else None})
+
+    return filtered_rows
 
 
 def _run_fireflies_full_pipeline(metadata_id: str) -> dict:
@@ -781,8 +828,10 @@ def _mark_fireflies_item_non_vectorizable(
     metadata_id: str,
     reason: dict,
 ) -> None:
+    from .supabase_helpers import get_rag_write_client
+
     error_message = str(reason.get("message") or NON_VECTORIZABLE_ERROR_PREFIX)[:500]
-    client.table("fireflies_ingestion_jobs").update(
+    get_rag_write_client().table("fireflies_ingestion_jobs").update(
         {"stage": "error", "error_message": error_message}
     ).eq("metadata_id", metadata_id).execute()
     try:
@@ -936,12 +985,14 @@ def _start_fireflies_backlog_run(client, result: dict) -> Optional[str]:
 
 def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -> dict:
     """Drain stale shared document-pipeline rows through the normal full pipeline."""
-    from .supabase_helpers import get_supabase_client
+    from .supabase_helpers import get_rag_write_client, get_supabase_client
 
     client = get_supabase_client()
+    rag_client = get_rag_write_client()
     auto_closed_runs = _close_abandoned_fireflies_backlog_runs(stale_minutes=stale_minutes)
     jobs = _find_fireflies_pipeline_backlog_jobs(
         client,
+        rag_client,
         limit=limit,
         stale_minutes=stale_minutes,
     )

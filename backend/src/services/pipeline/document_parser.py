@@ -18,7 +18,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from ..supabase_helpers import get_supabase_client
+from ..supabase_helpers import get_rag_write_client, get_supabase_client
 from .models import MeetingSegment
 from . import llm
 
@@ -441,7 +441,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     client.table("document_metadata").update(update_data).eq("id", metadata_id).execute()
 
     # 10. Advance job stage
-    client.table("fireflies_ingestion_jobs").update(
+    get_rag_write_client().table("fireflies_ingestion_jobs").update(
         {"stage": "segmented", "error_message": None}
     ).eq("metadata_id", metadata_id).execute()
 

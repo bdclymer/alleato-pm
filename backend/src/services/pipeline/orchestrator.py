@@ -18,7 +18,7 @@ from .financial_parser import run_financial_parser
 from .embedder import run_embedder
 from .extractor import run_extractor
 from ..intelligence.compiler import process_source_document_to_packet
-from ..supabase_helpers import get_supabase_client
+from ..supabase_helpers import get_rag_write_client, get_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +187,7 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
                 "[Pipeline] Failed at metadata_id=%s: %s", metadata_id, exc, exc_info=True
             )
             try:
-                client.table("fireflies_ingestion_jobs").update(
+                get_rag_write_client().table("fireflies_ingestion_jobs").update(
                     {"stage": "error", "error_message": str(exc)[:500]}
                 ).eq("metadata_id", metadata_id).execute()
             except Exception:
