@@ -18,6 +18,13 @@ interface UseBudgetDataReturn {
   refetchBudgetData: () => Promise<void>;
 }
 
+interface UseBudgetDataOptions {
+  enabled?: boolean;
+  initialBudgetData?: BudgetLineItem[];
+  initialGrandTotals?: BudgetGrandTotals;
+  showErrorToast?: boolean;
+}
+
 const EMPTY_GRAND_TOTALS: BudgetGrandTotals = {
   originalBudgetAmount: 0,
   budgetModifications: 0,
@@ -39,14 +46,22 @@ const EMPTY_GRAND_TOTALS: BudgetGrandTotals = {
  * Custom hook for fetching and managing budget data from SQL views
  * Uses pre-calculated values from mv_budget_rollup and v_budget_grand_totals
  */
-export function useBudgetData(projectId: string, options?: { silent?: boolean }): UseBudgetDataReturn {
-  const [budgetData, setBudgetData] = useState<BudgetLineItem[]>([]);
-  const [grandTotals, setGrandTotals] = useState<BudgetGrandTotals>(EMPTY_GRAND_TOTALS);
-  const [loading, setLoading] = useState(true);
+export function useBudgetData(
+  projectId: string,
+  options?: UseBudgetDataOptions,
+): UseBudgetDataReturn {
+  const enabled = options?.enabled ?? true;
+  const [budgetData, setBudgetData] = useState<BudgetLineItem[]>(
+    options?.initialBudgetData ?? [],
+  );
+  const [grandTotals, setGrandTotals] = useState<BudgetGrandTotals>(
+    options?.initialGrandTotals ?? EMPTY_GRAND_TOTALS,
+  );
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const refetchBudgetData = useCallback(async () => {
-    if (!projectId) return;
+    if (!projectId || !enabled) return;
 
     try {
       setLoading(true);
@@ -61,7 +76,7 @@ export function useBudgetData(projectId: string, options?: { silent?: boolean })
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch budget data";
       setError(errorMessage);
       console.error("Budget data fetch error:", err);
-      if (!options?.silent) {
+      if (options?.showErrorToast !== false) {
         toast.error("Failed to load budget", {
           description: errorMessage,
         });
@@ -69,11 +84,17 @@ export function useBudgetData(projectId: string, options?: { silent?: boolean })
     } finally {
       setLoading(false);
     }
-  }, [projectId, options?.silent]);
+  }, [enabled, projectId, options?.showErrorToast]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     refetchBudgetData();
-  }, [refetchBudgetData]);
+  }, [enabled, refetchBudgetData]);
 
   return {
     budgetData,

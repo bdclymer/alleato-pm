@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageShell } from "@/components/layout";
 import { notFound, redirect } from "next/navigation";
 import { ProjectCommandCenter as ProjectHomeClient } from "./project-command-center";
+import type { BudgetGrandTotals } from "@/types/budget";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,6 +32,23 @@ interface PendingSsovReview {
   commitmentTitle: string;
   submittedAt: string | null;
 }
+
+const EMPTY_HOME_BUDGET_TOTALS: BudgetGrandTotals = {
+  originalBudgetAmount: 0,
+  budgetModifications: 0,
+  approvedCOs: 0,
+  revisedBudget: 0,
+  jobToDateCostDetail: 0,
+  directCosts: 0,
+  pendingChanges: 0,
+  projectedBudget: 0,
+  committedCosts: 0,
+  pendingCostChanges: 0,
+  projectedCosts: 0,
+  forecastToComplete: 0,
+  estimatedCostAtCompletion: 0,
+  projectedOverUnder: 0,
+};
 
 interface DirectoryTeamMemberRow {
   person_id: string;
@@ -123,6 +141,36 @@ function mapDirectoryTeamMembers(rawMembers: unknown): TeamMember[] {
       phone_mobile: person?.phone_mobile || "",
     };
   });
+}
+
+function buildHomeBudgetTotals({
+  budget,
+  commitmentTotal,
+}: {
+  budget: Array<{ original_amount?: number | null }>;
+  commitmentTotal: number;
+}): BudgetGrandTotals {
+  const originalBudgetAmount = budget.reduce(
+    (sum, line) => sum + (Number(line.original_amount) || 0),
+    0,
+  );
+  const revisedBudget = originalBudgetAmount;
+  const committedCosts = commitmentTotal;
+  const projectedCosts = committedCosts;
+  const forecastToComplete = Math.max(0, revisedBudget - projectedCosts);
+  const estimatedCostAtCompletion = projectedCosts + forecastToComplete;
+
+  return {
+    ...EMPTY_HOME_BUDGET_TOTALS,
+    originalBudgetAmount,
+    revisedBudget,
+    projectedBudget: revisedBudget,
+    committedCosts,
+    projectedCosts,
+    forecastToComplete,
+    estimatedCostAtCompletion,
+    projectedOverUnder: revisedBudget - estimatedCostAtCompletion,
+  };
 }
 
 export default async function ProjectHomePage({
@@ -525,6 +573,10 @@ export default async function ProjectHomePage({
   };
   const contractLineItems = contractLineItemsResult.data || [];
   const budget = budgetResult.data || [];
+  const budgetGrandTotals = buildHomeBudgetTotals({
+    budget,
+    commitmentTotal,
+  });
   const submittals = submittalsResult.data || [];
   const projectDocuments = projectDocumentsResult.data || [];
   const primeContractPayments = primeContractPaymentsResult.data || [];
@@ -562,6 +614,7 @@ export default async function ProjectHomePage({
         contracts={contracts}
         contractLineItems={contractLineItems}
         budget={budget}
+        budgetGrandTotals={budgetGrandTotals}
         changeEvents={changeEvents}
         schedule={schedule}
         team={team}

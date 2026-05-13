@@ -52,6 +52,7 @@ import { Input } from "@/components/ui/input";
 import { RealtimeCursors } from "@/components/realtime/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import type { Database } from "@/types/database.types";
+import type { BudgetGrandTotals } from "@/types/budget";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -164,6 +165,7 @@ interface ProjectCommandCenterProps {
   }>;
   dailyLogs?: DailyLog[];
   budget?: any[];
+  budgetGrandTotals?: BudgetGrandTotals;
   sov?: any[];
   ownerInvoices?: OwnerInvoice[];
   subcontractorInvoices?: SubcontractorInvoice[];
@@ -895,13 +897,18 @@ export function ProjectCommandCenter({
   primeContractPayments = [],
   commitmentPayments = [],
   invoicePayments = [],
+  budgetGrandTotals,
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
   const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
   const [isSetupOpen, setIsSetupOpen] = React.useState(false);
   const roomName = `project-home:${projectId}`;
   const currentUserName = useCurrentUserName();
-  const { grandTotals, loading: budgetLoading } = useBudgetData(projectId);
+  const { grandTotals, loading: budgetLoading } = useBudgetData(projectId, {
+    enabled: !budgetGrandTotals,
+    initialGrandTotals: budgetGrandTotals,
+    showErrorToast: false,
+  });
 
   /* ── Budget ─────────────────────────────────────────── */
   const revisedBudget = grandTotals.revisedBudget || grandTotals.originalBudgetAmount;
