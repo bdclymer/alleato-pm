@@ -196,6 +196,12 @@ class OutlookMailboxSyncRequest(BaseModel):
     verify_persisted_count: bool = False
 
 
+class OutlookMailboxSubscriptionRequest(BaseModel):
+    user_email: str
+    renew_within_hours: int = 6
+    expiration_hours: int = 48
+
+
 def get_rag_store() -> SupabaseRagStore:
     return SupabaseRagStore()
 
@@ -659,6 +665,61 @@ async def graph_outlook_mailbox_sync_endpoint(
             user_email,
             reason="admin_targeted_mailbox_sync",
             verify_persisted_count=payload.verify_persisted_count,
+        )
+
+    import asyncio
+    return await asyncio.get_event_loop().run_in_executor(None, _run)
+
+
+@app.post(
+    "/api/graph/outlook/subscribe-mailbox",
+    tags=["Ingestion"],
+    summary="Create or renew Microsoft Graph Outlook subscription for one mailbox",
+)
+async def graph_outlook_mailbox_subscribe_endpoint(
+    payload: OutlookMailboxSubscriptionRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Create or renew one Outlook mailbox webhook subscription without touching other users."""
+    user_email = payload.user_email.strip().lower()
+    if not user_email or "@" not in user_email:
+        raise HTTPException(status_code=400, detail="user_email must be a valid mailbox address")
+
+    from src.services.integrations.microsoft_graph.client import get_graph_client
+    from src.services.integrations.microsoft_graph.subscriptions import (
+        GraphSubscriptionTarget,
+        ensure_subscriptions,
+    )
+    from src.services.supabase_helpers import get_supabase_client
+
+    graph = get_graph_client()
+    if not graph.is_configured():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Microsoft Graph credentials not configured. "
+                "Set MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, and MICROSOFT_TENANT_ID."
+            ),
+        )
+
+    target = GraphSubscriptionTarget(
+        source="outlook_email",
+        resource_id=user_email,
+        resource_name=f"Outlook: {user_email}",
+        resource=f"users/{user_email}/messages",
+        change_type="created,updated",
+        max_expiration_hours=48,
+    )
+    client = get_supabase_client()
+    renew_within_hours = max(1, min(int(payload.renew_within_hours or 6), 24))
+    expiration_hours = max(1, min(int(payload.expiration_hours or 48), 48))
+
+    def _run():
+        return ensure_subscriptions(
+            client,
+            targets=[target],
+            renew_within_hours=renew_within_hours,
+            expiration_hours=expiration_hours,
         )
 
     import asyncio
