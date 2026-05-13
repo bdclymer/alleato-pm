@@ -130,6 +130,13 @@ const sections: AdminMenuSection[] = [
         icon: AlertTriangle,
       },
       {
+        label: "Platform Analytics",
+        href: "/analytics",
+        route: "/analytics",
+        description: "User logins, activity, app error trends, AI engagement, and sync health.",
+        icon: BarChart3,
+      },
+      {
         label: "Admin Check",
         href: "/admin-check",
         route: "/admin-check",
