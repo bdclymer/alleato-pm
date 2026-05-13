@@ -207,6 +207,55 @@ def test_contract_spike_reads_source_coverage_without_synthesis():
     assert response.recommended_actions[0].label == "Add Deep Agents synthesis on top of checked sources"
 
 
+def test_deep_agents_runtime_can_synthesize_behind_contract():
+    class _Agent:
+        def invoke(self, payload):
+            assert "messages" in payload
+            return {"messages": [{"role": "assistant", "content": "Runtime synthesis from Deep Agents."}]}
+
+    def create_agent(**kwargs):
+        assert kwargs["model"] == "openai:gpt-5.4-mini"
+        assert kwargs["tools"]
+        assert "system_prompt" in kwargs
+        return _Agent()
+
+    response = build_project_status_contract_spike(
+        _request(),
+        _Store(
+            {"id": 43, "name": "Westfield Collective"},
+            client=_FakeSupabase({"intelligence_targets": []}),
+        ),
+        runtime="deep_agents",
+        create_agent=create_agent,
+    )
+
+    assert response.mode == "deep_agents"
+    assert response.answer == "Runtime synthesis from Deep Agents."
+    assert response.tool_trace[-1].tool == "deepagents_runtime"
+    assert response.tool_trace[-1].status == "success"
+
+
+def test_deep_agents_runtime_failure_falls_back_to_contract_answer():
+    def create_agent(**_kwargs):
+        raise RuntimeError("deepagents unavailable")
+
+    response = build_project_status_contract_spike(
+        _request(),
+        _Store(
+            {"id": 43, "name": "Westfield Collective"},
+            client=_FakeSupabase({"intelligence_targets": []}),
+        ),
+        runtime="deep_agents",
+        create_agent=create_agent,
+    )
+
+    assert response.mode == "contract_spike"
+    assert "checked 0 source categories" in response.answer
+    assert response.tool_trace[-1].tool == "deepagents_runtime"
+    assert response.tool_trace[-1].status == "failed"
+    assert "deepagents unavailable" in response.tool_trace[-1].detail
+
+
 def test_contract_spike_fails_loudly_when_project_is_missing():
     response = build_project_status_contract_spike(_request(), _Store())
 

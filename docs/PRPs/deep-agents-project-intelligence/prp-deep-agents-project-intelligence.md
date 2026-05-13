@@ -1,7 +1,7 @@
 # Deep Agents Project Intelligence Orchestrator PRP
 
 Date: 2026-05-13
-Status: Slice 2 implemented
+Status: Slice 3 implemented
 Feature slug: `deep-agents-project-intelligence`
 Linear issue: AAI-356
 Confidence score: 8/10
@@ -260,6 +260,36 @@ Acceptance:
 - Not yet done: wrong-project evidence reviewer as a Deep Agents subagent; this belongs in the actual Deep Agents runtime slice.
 
 ### Slice 3: AI SDK Bridge
+
+Implementation status: not started. Slice 3 was split so the Deep Agents runtime can be proven in the backend before any AI SDK route integration.
+
+### Slice 3A: Deep Agents Runtime Hook
+
+Implementation status: completed 2026-05-13 as a backend-only runtime hook.
+
+Files:
+
+- `backend/requirements.txt`
+- `backend/src/api/main.py`
+- `backend/src/services/agents/deep_project_intelligence.py`
+- `backend/tests/test_deep_project_intelligence.py`
+
+Work:
+
+1. Add `deepagents` and `langchain-openai` to backend dependencies.
+2. Keep imports lazy so the backend contract can still import cleanly before deployment dependencies are installed.
+3. Add `DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME=deep_agents` to opt into runtime synthesis.
+4. Feed Deep Agents the already-collected source coverage and evidence snippets instead of giving it broad database access.
+5. Fail loudly in `toolTrace` and fall back to contract output if runtime invocation fails.
+
+Acceptance:
+
+- Done: normal endpoint behavior remains `contract_spike` unless runtime env is set.
+- Done: runtime success returns `mode=deep_agents`.
+- Done: runtime failure returns contract output with a failed `deepagents_runtime` trace.
+- Done: tests use a fake `create_deep_agent` and do not make real model calls.
+
+### Slice 3B: AI SDK Bridge
 
 Work:
 

@@ -33,6 +33,9 @@ REQUIRED_SOURCE_TYPES = (
     "submittal",
 )
 
+DEEP_AGENT_RUNTIME_MODE = "deep_agents"
+CONTRACT_SPIKE_MODE = "contract_spike"
+
 class _SourceProbe:
     def __init__(
         self,
@@ -419,9 +422,124 @@ def _recommended_actions(sources: Sequence[SourceCoverage]) -> List[RecommendedA
     ]
 
 
+def _deep_agent_prompt(
+    request: DeepProjectIntelligenceRequest,
+    project: DeepProject,
+    sources: Sequence[SourceCoverage],
+    evidence: Sequence[EvidenceItem],
+) -> str:
+    source_lines = [
+        (
+            f"- {source.source_type}: status={source.status}, "
+            f"records={source.record_count}, latest={source.latest_source_at or 'unknown'}"
+        )
+        for source in sources
+    ]
+    evidence_lines = [
+        (
+            f"- [{item.source_type}] {item.title} "
+            f"(id={item.source_id}, occurred={item.occurred_at or 'unknown'}): {item.excerpt}"
+        )
+        for item in evidence[:8]
+    ]
+    return "\n".join(
+        [
+            f"Question: {request.question}",
+            f"Project: {project.name} (id={project.id})",
+            "",
+            "Source coverage:",
+            *source_lines,
+            "",
+            "Evidence snippets:",
+            *(evidence_lines or ["- No source evidence rows were available."]),
+            "",
+            "Write a concise project-status/risk synthesis for an internal construction operator.",
+            "Do not claim checked sources are available when source coverage says missing or failed.",
+            "Do not mention RAG, embeddings, or implementation internals.",
+        ]
+    )
+
+
+def _extract_agent_text(result: Any) -> str:
+    if isinstance(result, dict):
+        messages = result.get("messages")
+        if isinstance(messages, list) and messages:
+            last = messages[-1]
+            content = getattr(last, "content", None)
+            if content is None and isinstance(last, dict):
+                content = last.get("content")
+            if isinstance(content, str):
+                return content.strip()
+        for key in ("output", "content", "text"):
+            value = result.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    content = getattr(result, "content", None)
+    if isinstance(content, str):
+        return content.strip()
+    return str(result or "").strip()
+
+
+def _run_deep_agents_runtime(
+    request: DeepProjectIntelligenceRequest,
+    project: DeepProject,
+    sources: Sequence[SourceCoverage],
+    evidence: Sequence[EvidenceItem],
+    *,
+    create_agent: Optional[Callable[..., Any]] = None,
+    model: str = "openai:gpt-5.4-mini",
+) -> tuple[Optional[str], ToolTraceItem]:
+    started = time.perf_counter()
+    try:
+        if create_agent is None:
+            from deepagents import create_deep_agent as create_agent
+
+        def source_coverage() -> str:
+            """Return source coverage already collected by Alleato read-only probes."""
+            return "\n".join(
+                f"{source.source_type}: {source.status}, records={source.record_count}, latest={source.latest_source_at}"
+                for source in sources
+            )
+
+        agent = create_agent(
+            model=model,
+            tools=[source_coverage],
+            system_prompt=(
+                "You are an Alleato project intelligence orchestrator. Use the "
+                "provided coverage and evidence as the only factual basis. "
+                "If sources are missing, say so plainly."
+            ),
+        )
+        result = agent.invoke(
+            {"messages": [{"role": "user", "content": _deep_agent_prompt(request, project, sources, evidence)}]}
+        )
+        text = _extract_agent_text(result)
+        if not text:
+            raise RuntimeError("Deep Agents runtime returned an empty response.")
+        return text, ToolTraceItem(
+            agent="project-intelligence-orchestrator",
+            tool="deepagents_runtime",
+            status="success",
+            durationMs=max(0, int((time.perf_counter() - started) * 1000)),
+            detail="Deep Agents runtime produced a synthesis from checked source coverage.",
+        )
+    except Exception as exc:
+        return None, ToolTraceItem(
+            agent="project-intelligence-orchestrator",
+            tool="deepagents_runtime",
+            status="failed",
+            durationMs=max(0, int((time.perf_counter() - started) * 1000)),
+            detail=str(exc),
+        )
+
+
 def build_project_status_contract_spike(
     request: DeepProjectIntelligenceRequest,
     store: Any,
+    *,
+    runtime: str = CONTRACT_SPIKE_MODE,
+    create_agent: Optional[Callable[..., Any]] = None,
+    model: str = "openai:gpt-5.4-mini",
 ) -> DeepProjectIntelligenceResponse:
     """Return a typed project-status packet with explicit source gaps."""
 
@@ -460,7 +578,7 @@ def build_project_status_contract_spike(
             ],
             memoryCandidates=[],
             orchestrator="deep-agents-project-intelligence",
-            mode="contract_spike",
+            mode=CONTRACT_SPIKE_MODE,
         )
 
     project = DeepProject(
@@ -483,32 +601,56 @@ def build_project_status_contract_spike(
     failed_count = sum(1 for source in sources if source.status == "failed")
     missing_count = sum(1 for source in sources if source.status == "missing")
     confidence = "medium" if checked_count and failed_count == 0 else "low"
+    runtime_answer: Optional[str] = None
+    runtime_trace: Optional[ToolTraceItem] = None
+    mode = CONTRACT_SPIKE_MODE
 
-    return DeepProjectIntelligenceResponse(
-        answer=(
+    if runtime == DEEP_AGENT_RUNTIME_MODE:
+        runtime_answer, runtime_trace = _run_deep_agents_runtime(
+            request,
+            project,
+            sources,
+            evidence,
+            create_agent=create_agent,
+            model=model,
+        )
+        if runtime_answer:
+            mode = DEEP_AGENT_RUNTIME_MODE
+            confidence = "high" if checked_count == len(REQUIRED_SOURCE_TYPES) and failed_count == 0 else confidence
+
+    answer = (
+        runtime_answer
+        or (
             f"Deep Agents project intelligence checked {checked_count} source "
             f"categor{'y' if checked_count == 1 else 'ies'} for {project.name}. "
             f"{missing_count} source categories are missing and {failed_count} failed. "
             "This endpoint is still backend-only; it returns coverage and evidence "
             "for the future orchestrator instead of loose chat synthesis."
+        )
+    )
+    trace = [
+        ToolTraceItem(
+            agent="project-intelligence-orchestrator",
+            tool="project_lookup",
+            status="success",
+            durationMs=duration_ms,
+            detail="Resolved project row before contract-spike response.",
         ),
+        *source_traces,
+    ]
+    if runtime_trace:
+        trace.append(runtime_trace)
+
+    return DeepProjectIntelligenceResponse(
+        answer=answer,
         confidence=confidence,
         intent="project_status_risk",
         project=project,
         sourcesChecked=sources,
         evidence=evidence,
         recommendedActions=_recommended_actions(sources),
-        toolTrace=[
-            ToolTraceItem(
-                agent="project-intelligence-orchestrator",
-                tool="project_lookup",
-                status="success",
-                durationMs=duration_ms,
-                detail="Resolved project row before contract-spike response.",
-            ),
-            *source_traces,
-        ],
+        toolTrace=trace,
         memoryCandidates=[],
         orchestrator="deep-agents-project-intelligence",
-        mode="contract_spike",
+        mode=mode,
     )
