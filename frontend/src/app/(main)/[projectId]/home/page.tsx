@@ -276,7 +276,8 @@ export default async function ProjectHomePage({
       .eq("project_id", numericProjectId)
       .eq("type", "meeting")
       .is("deleted_at", null)
-      .order("date", { ascending: false }),
+      .order("date", { ascending: false })
+      .limit(10),
 
     // Fetch prime contract change orders
     supabase
@@ -313,7 +314,9 @@ export default async function ProjectHomePage({
     // Fetch commitments from unified view (combines subcontracts + purchase_orders)
     supabase
       .from("commitments_unified")
-      .select("*")
+      .select(
+        "id, project_id, number, contract_company_id, title, status, executed, type, contract_amount, retention_percentage, start_date, executed_date, description, created_at, updated_at, original_amount, revised_contract_amount",
+      )
       .eq("project_id", numericProjectId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
@@ -334,7 +337,7 @@ export default async function ProjectHomePage({
     // Fetch budget lines
     supabase
       .from("budget_lines")
-      .select("*")
+      .select("id, project_id, original_amount")
       .eq("project_id", numericProjectId)
       .order("cost_code_id", { ascending: true }),
 
@@ -344,14 +347,15 @@ export default async function ProjectHomePage({
       .select("*")
       .eq("project_id", numericProjectId)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(25),
 
     // Fetch schedule tasks
     supabase
       .from("schedule_tasks")
-      .select("*")
+      .select("id")
       .eq("project_id", numericProjectId)
-      .order("start_date", { ascending: true }),
+      .limit(1),
 
     // Fetch project team roster
     supabase.rpc("get_project_team", { p_project_id: numericProjectId }),
