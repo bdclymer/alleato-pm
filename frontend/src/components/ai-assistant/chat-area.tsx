@@ -108,6 +108,7 @@ import {
 import type { DynamicToolUIPart } from "ai";
 import { toast } from "sonner";
 import { WelcomeScreen } from "./welcome-screen";
+import { AssistantShortcutPanel } from "./assistant-shortcut-panel";
 import {
   TracePanel,
   type AssistantTraceDiagnostics,
@@ -1793,7 +1794,12 @@ export function ChatArea({
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
         <div className="flex min-h-0 flex-1 pb-6 md:pb-8">
-          <WelcomeScreen />
+          <WelcomeScreen>
+            <AssistantShortcutPanel
+              disabled={isStreaming}
+              onSelectPrompt={onSubmit}
+            />
+          </WelcomeScreen>
         </div>
       ) : (
         <>

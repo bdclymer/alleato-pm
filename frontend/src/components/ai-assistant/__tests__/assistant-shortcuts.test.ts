@@ -1,0 +1,20 @@
+import { ASSISTANT_SHORTCUT_GROUPS } from "../assistant-shortcuts";
+
+describe("assistant shortcuts", () => {
+  it("keeps shortcut labels and prompts unique", () => {
+    const shortcuts = ASSISTANT_SHORTCUT_GROUPS.flatMap((group) => group.shortcuts);
+    const labels = shortcuts.map((shortcut) => shortcut.label);
+    const prompts = shortcuts.map((shortcut) => shortcut.prompt);
+
+    expect(new Set(labels).size).toBe(labels.length);
+    expect(new Set(prompts).size).toBe(prompts.length);
+  });
+
+  it("keeps the owner snapshot shortcut on the widget-emitting prompt path", () => {
+    const ownerSnapshot = ASSISTANT_SHORTCUT_GROUPS
+      .flatMap((group) => group.shortcuts)
+      .find((shortcut) => shortcut.id === "owner-snapshot");
+
+    expect(ownerSnapshot?.prompt.toLowerCase()).toContain("owner snapshot");
+  });
+});
