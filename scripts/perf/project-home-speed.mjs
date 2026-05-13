@@ -49,6 +49,7 @@ function parseArgs(argv) {
     loginIfNeeded: process.env.PERF_LOGIN_IF_NEEDED !== "0",
     username: process.env.TEST_USER_1 ?? process.env.APP_USERNAME ?? "test1@mail.com",
     password: process.env.TEST_PASSWORD_1 ?? process.env.APP_PASSWORD ?? "test12026!!!",
+    tracePattern: process.env.PERF_TRACE_PATTERN ?? "",
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -85,6 +86,9 @@ function parseArgs(argv) {
       args.headed = true;
     } else if (arg === "--browser-channel" && next) {
       args.browserChannel = next;
+      index += 1;
+    } else if (arg === "--trace-pattern" && next) {
+      args.tracePattern = next;
       index += 1;
     } else if (arg === "--no-login") {
       args.loginIfNeeded = false;
@@ -124,13 +128,14 @@ Options:
   --wait-after-load-ms <ms>     Wait after load before reading LCP/resources. Default: ${DEFAULT_WAIT_AFTER_LOAD_MS}
   --slow-resource-ms <ms>       Slow resource threshold. Default: ${DEFAULT_SLOW_RESOURCE_MS}
   --browser-channel <channel>   Optional installed browser channel, e.g. chrome.
+  --trace-pattern <text>        Include CDP request initiators for matching resource URLs.
   --no-login                    Do not refresh auth if redirected to login.
   --headed                     Run headed for debugging.
 
 Environment variable equivalents:
   PERF_BASE_URL, PERF_PROJECT_ID, PERF_RUNS, PERF_WARMUPS, PERF_AUTH_STATE,
   PERF_OUTPUT_JSON, PERF_COMPARE_JSON, PERF_WAIT_AFTER_LOAD_MS, PERF_SLOW_RESOURCE_MS, PERF_HEADED=1
-  PERF_BROWSER_CHANNEL, PERF_LOGIN_IF_NEEDED=0, TEST_USER_1, TEST_PASSWORD_1
+  PERF_BROWSER_CHANNEL, PERF_TRACE_PATTERN, PERF_LOGIN_IF_NEEDED=0, TEST_USER_1, TEST_PASSWORD_1
 `);
 }
 
@@ -318,6 +323,18 @@ function printSummary(summary, compareSummary) {
       }
     }
   }
+
+  const tracedRuns = summary.runs.filter((run) => run.traces?.length > 0);
+  if (tracedRuns.length > 0) {
+    console.log("\nTraced request initiators:");
+    for (const run of tracedRuns) {
+      for (const trace of run.traces) {
+        console.log(`  run ${run.run}: ${trace.method} ${trace.url}`);
+        console.log(`    type: ${trace.type}`);
+        console.log(`    initiator: ${JSON.stringify(trace.initiator)}`);
+      }
+    }
+  }
 }
 
 async function collectRun({ browser, args, targetUrl, storageState, runNumber, measured }) {
@@ -328,6 +345,21 @@ async function collectRun({ browser, args, targetUrl, storageState, runNumber, m
   });
   const page = await context.newPage();
   const failedRequests = [];
+  const traces = [];
+
+  if (args.tracePattern) {
+    const cdpSession = await context.newCDPSession(page);
+    await cdpSession.send("Network.enable");
+    cdpSession.on("Network.requestWillBeSent", (event) => {
+      if (!event.request.url.includes(args.tracePattern)) return;
+      traces.push({
+        url: event.request.url,
+        type: event.type,
+        method: event.request.method,
+        initiator: event.initiator,
+      });
+    });
+  }
 
   page.on("requestfailed", (request) => {
     const failure = request.failure()?.errorText ?? "request failed";
@@ -437,6 +469,7 @@ async function collectRun({ browser, args, targetUrl, storageState, runNumber, m
     },
     resources,
     failedRequests,
+    traces,
   };
 }
 

@@ -650,13 +650,15 @@ function SidebarTeamSection({
           })}
         </div>
       )}
-      <AssignMemberDialog
-        open={assignDialog.open}
-        onOpenChange={(open) => setAssignDialog((prev) => ({ ...prev, open }))}
-        role={assignDialog.role}
-        onSave={updateRoleMembers}
-        projectId={projectId}
-      />
+      {assignDialog.open && assignDialog.role ? (
+        <AssignMemberDialog
+          open={assignDialog.open}
+          onOpenChange={(open) => setAssignDialog((prev) => ({ ...prev, open }))}
+          role={assignDialog.role}
+          onSave={updateRoleMembers}
+          projectId={projectId}
+        />
+      ) : null}
     </div>
   );
 }
