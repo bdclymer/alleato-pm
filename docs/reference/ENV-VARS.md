@@ -38,8 +38,9 @@ Set env vars in **Vercel Dashboard → Project → Settings → Environment Vari
 | `PHOENIX_ENDPOINT` | No | Vercel | Phoenix/Arize tracing endpoint | LLM observability; disabled if absent |
 | `PHOENIX_TRACING` | No | Vercel | Enable/disable Phoenix tracing (`true`/`false`) | |
 | `AI_ASSISTANT_DISABLE_STREAMING_MODEL_TOOLS` | No | Vercel | Disables streaming model tool calls in AI assistant | Feature flag |
+| `AI_ASSISTANT_DISABLE_EXCALIDRAW_MCP` | No | Vercel | Disables the default Excalidraw MCP App server in AI assistant | Feature flag; default server is `https://mcp.excalidraw.com/mcp` |
 | `AI_ASSISTANT_DISABLE_SUPABASE_MCP` | No | Vercel | Disables Supabase MCP integration in AI assistant | Feature flag |
-| `AI_ASSISTANT_MCP_SERVERS` | No | Vercel | JSON config for AI assistant MCP server list | |
+| `AI_ASSISTANT_MCP_SERVERS` | No | Vercel | JSON config for additional AI assistant MCP server list | Supports `name`, `url`, optional `authorization`, `headers`, and `allowedTools`; generic servers are read-only unless `allowedTools` is set |
 | `AI_ASSISTANT_TOOL_PROVIDER_PATH` | No | Vercel | Path override for tool provider module | |
 | `EXECUTIVE_BRIEFING_SYNTHESIS_MODEL` | No | Vercel | Override model used for executive briefing synthesis | Defaults to configured OpenAI model |
 | `SUB_AGENT_TIMEOUT_MS` | No | Vercel | Timeout in ms for sub-agent calls | |

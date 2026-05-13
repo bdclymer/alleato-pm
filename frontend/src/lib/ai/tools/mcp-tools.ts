@@ -6,6 +6,7 @@ type McpServerConfig = {
   url: string;
   authorization?: string;
   headers?: Record<string, string>;
+  allowedTools?: string[];
 };
 
 type McpToolBundle = {
@@ -15,6 +16,15 @@ type McpToolBundle = {
 };
 
 const MCP_CONNECT_TIMEOUT_MS = 8_000;
+const EXCALIDRAW_MCP_SERVER_NAME = "excalidraw";
+const EXCALIDRAW_MCP_SERVER_URL = "https://mcp.excalidraw.com/mcp";
+const EXCALIDRAW_MCP_ALLOWED_TOOLS = [
+  "read_me",
+  "create_view",
+  "export_to_excalidraw",
+  "save_checkpoint",
+  "read_checkpoint",
+];
 
 const READONLY_TOOL_PATTERNS = [
   /^get/i,
@@ -79,12 +89,28 @@ function parseJsonServerConfig(): McpServerConfig[] {
       authorization:
         typeof value.authorization === "string" ? value.authorization : undefined,
       headers,
+      allowedTools: Array.isArray(value.allowedTools)
+        ? value.allowedTools.filter((toolName): toolName is string => typeof toolName === "string")
+        : undefined,
     };
   });
 }
 
 function getConfiguredMcpServers(): McpServerConfig[] {
   const servers = parseJsonServerConfig();
+  const configuredServerNames = new Set(servers.map((server) => server.name));
+
+  if (
+    process.env.AI_ASSISTANT_DISABLE_EXCALIDRAW_MCP !== "true" &&
+    !configuredServerNames.has(EXCALIDRAW_MCP_SERVER_NAME)
+  ) {
+    servers.push({
+      name: EXCALIDRAW_MCP_SERVER_NAME,
+      url: EXCALIDRAW_MCP_SERVER_URL,
+      allowedTools: EXCALIDRAW_MCP_ALLOWED_TOOLS,
+    });
+  }
+
   const supabaseToken =
     process.env.SUPABASE_ACCESS_TOKEN ?? process.env.SUPABASE_MANAGEMENT_API_TOKEN;
 
@@ -116,11 +142,19 @@ function isReadOnlyMcpTool(toolName: string): boolean {
   return READONLY_TOOL_PATTERNS.some((pattern) => pattern.test(toolName));
 }
 
-function prefixMcpTools(serverName: string, tools: ToolSet): ToolSet {
+function shouldEnableMcpTool(server: McpServerConfig, toolName: string): boolean {
+  if (server.allowedTools) {
+    return server.allowedTools.includes(toolName);
+  }
+
+  return isReadOnlyMcpTool(toolName);
+}
+
+function prefixMcpTools(server: McpServerConfig, tools: ToolSet): ToolSet {
   return Object.fromEntries(
     Object.entries(tools)
-      .filter(([toolName]) => isReadOnlyMcpTool(toolName))
-      .map(([toolName, tool]) => [`mcp_${serverName}_${toolName}`, tool]),
+      .filter(([toolName]) => shouldEnableMcpTool(server, toolName))
+      .map(([toolName, tool]) => [`mcp_${server.name}_${toolName}`, tool]),
   ) as ToolSet;
 }
 
@@ -164,6 +198,7 @@ export async function createAiAssistantMcpTools(): Promise<McpToolBundle> {
             type: "http",
             url: server.url,
             headers,
+            redirect: "error",
           },
         }),
         MCP_CONNECT_TIMEOUT_MS,
@@ -176,7 +211,7 @@ export async function createAiAssistantMcpTools(): Promise<McpToolBundle> {
         MCP_CONNECT_TIMEOUT_MS,
         `${server.name} MCP tool discovery`,
       );
-      const safeTools = prefixMcpTools(server.name, discoveredTools as ToolSet);
+      const safeTools = prefixMcpTools(server, discoveredTools as ToolSet);
       Object.assign(tools, safeTools);
 
       trace.push({
@@ -189,6 +224,7 @@ export async function createAiAssistantMcpTools(): Promise<McpToolBundle> {
           discoveredToolCount: Object.keys(discoveredTools).length,
           enabledToolCount: Object.keys(safeTools).length,
           enabledTools: Object.keys(safeTools),
+          allowedTools: server.allowedTools,
         },
         timestamp: new Date().toISOString(),
       });
@@ -215,3 +251,10 @@ export async function createAiAssistantMcpTools(): Promise<McpToolBundle> {
     },
   };
 }
+
+export const mcpToolPolicyForTests = {
+  EXCALIDRAW_MCP_ALLOWED_TOOLS,
+  getConfiguredMcpServers,
+  prefixMcpTools,
+  shouldEnableMcpTool,
+};

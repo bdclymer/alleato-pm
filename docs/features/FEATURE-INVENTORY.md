@@ -924,7 +924,7 @@
 
 ## 52. AI MCP Tool Bridge
 
-**What it is:** Dynamically loads tool sets from external MCP servers configured via `AI_ASSISTANT_MCP_SERVERS` env variable. Filters out dangerous mutation tools by pattern matching — read-only tools are allowed; write/delete tools are blocked.
+**What it is:** Dynamically loads tool sets from external MCP servers. The official Excalidraw MCP App server at `https://mcp.excalidraw.com/mcp` is enabled by default with a precise diagram-tool allowlist; additional servers can be configured via `AI_ASSISTANT_MCP_SERVERS`. Generic MCP servers filter out dangerous mutation tools by pattern matching — read-only tools are allowed; write/delete tools are blocked unless an explicit per-server `allowedTools` list is configured.
 
 **File:** `frontend/src/lib/ai/tools/mcp-tools.ts`
 
@@ -1169,5 +1169,3 @@
 47. [AI Intent Router](#47-ai-intent-router)
 42. [Project Intelligence Packet Viewer](#42-project-intelligence-packet-viewer)
 40. [My Work & Subcontractor Portal](#40-my-work--subcontractor-portal)
-
-

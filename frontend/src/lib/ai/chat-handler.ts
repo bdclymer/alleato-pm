@@ -313,6 +313,7 @@ const LEAN_ADVISOR_INTENTS = new Set<AssistantIntent>([
   "task_followup",
 ]);
 const LEAN_ADVISOR_MAX_BASE_PROMPT_APPROX_TOKENS = 2500;
+const ALWAYS_AVAILABLE_MCP_TOOL_PREFIXES = ["mcp_excalidraw_"];
 
 function pickTools(tools: ToolSet, names: readonly string[]): ToolSet {
   const selected: ToolSet = {};
@@ -323,6 +324,14 @@ function pickTools(tools: ToolSet, names: readonly string[]): ToolSet {
   return selected;
 }
 
+function pickMcpToolsByPrefix(tools: ToolSet, prefixes: readonly string[]): ToolSet {
+  return Object.fromEntries(
+    Object.entries(tools).filter(([name]) =>
+      prefixes.some((prefix) => name.startsWith(prefix)),
+    ),
+  ) as ToolSet;
+}
+
 function getApproxTokenCount(value: string): number {
   return Math.ceil(value.length / 4);
 }
@@ -330,7 +339,16 @@ function getApproxTokenCount(value: string): number {
 function getScopedToolsForIntent(tools: ToolSet, intent: AssistantIntent): ToolSet {
   const names = INTENT_TOOL_NAMES[intent];
   if (!names) return tools;
-  return pickTools(tools, names);
+
+  const scopedTools = pickTools(tools, names);
+  if (intent === "task_write" || intent === "source_lookup") {
+    return scopedTools;
+  }
+
+  return {
+    ...scopedTools,
+    ...pickMcpToolsByPrefix(tools, ALWAYS_AVAILABLE_MCP_TOOL_PREFIXES),
+  };
 }
 
 function assertTaskWritePromptBudget(params: {

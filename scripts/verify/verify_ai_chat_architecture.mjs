@@ -9,6 +9,7 @@ const requireFromFrontend = createRequire(resolve(repoRoot, "frontend/package.js
 
 const files = {
   route: "frontend/src/app/api/ai-assistant/chat/route.ts",
+  chatHandler: "frontend/src/lib/ai/chat-handler.ts",
   client: "frontend/src/components/ai-assistant/rag-chat-page.tsx",
   orchestrator: "frontend/src/lib/ai/orchestrator.ts",
   providers: "frontend/src/lib/ai/providers.ts",
@@ -202,6 +203,8 @@ function assertNoForbiddenTokens(relativePath, content) {
 
 const frontendPackage = packageJson("frontend/package.json");
 const route = read(files.route);
+const chatHandler = read(files.chatHandler);
+const routeImplementation = `${route}\n${chatHandler}`;
 const client = read(files.client);
 const orchestrator = read(files.orchestrator);
 const providers = read(files.providers);
@@ -253,22 +256,22 @@ for (const [label, relativePath] of Object.entries(files)) {
   assertNoForbiddenTokens(relativePath, readIfExists(relativePath));
 }
 
-requireCondition(route.includes("createUIMessageStream"), "chat route must use createUIMessageStream");
-requireCondition(route.includes("createUIMessageStreamResponse"), "chat route must use createUIMessageStreamResponse");
-requireCondition(route.includes("streamText"), "chat route must use streamText");
-requireCondition(route.includes("generateText"), "chat route must use generateText");
-requireCondition(route.includes("data-status"), "chat route must stream data-status progress parts");
-requireCondition(route.includes("loop_diagnostic"), "chat route must persist loop diagnostics");
-requireCondition(route.includes("tool_trace"), "chat route must persist tool trace");
-requireCondition(route.includes("response_quality"), "chat route must persist response quality metadata");
-requireCondition(route.includes("getProjectBriefingSnapshot"), "chat route must preflight broad project snapshots");
-requireCondition(route.includes("semanticSearch"), "chat route must preflight semantic search");
-requireCondition(route.includes("ExecutiveBriefingRetrievalPacket"), "chat route must build a deterministic executive briefing retrieval packet");
-requireCondition(route.includes("searchMeetingsByTopic"), "chat route must preflight recent meetings for broad project briefings");
-requireCondition(route.includes("searchTeamsMessages"), "chat route must preflight Teams messages for broad project briefings");
-requireCondition(route.includes("searchEmails"), "chat route must preflight Outlook emails for broad project briefings");
-requireCondition(route.includes("searchExternalDocuments"), "chat route must preflight OneDrive/documents for broad project briefings");
-requireCondition(route.includes("Sources Checked"), "chat route must force source coverage disclosure in broad project briefings");
+requireCondition(routeImplementation.includes("createUIMessageStream"), "chat route must use createUIMessageStream");
+requireCondition(routeImplementation.includes("createUIMessageStreamResponse"), "chat route must use createUIMessageStreamResponse");
+requireCondition(routeImplementation.includes("streamText"), "chat route must use streamText");
+requireCondition(routeImplementation.includes("generateText"), "chat route must use generateText");
+requireCondition(routeImplementation.includes("data-status"), "chat route must stream data-status progress parts");
+requireCondition(routeImplementation.includes("loop_diagnostic"), "chat route must persist loop diagnostics");
+requireCondition(routeImplementation.includes("tool_trace"), "chat route must persist tool trace");
+requireCondition(routeImplementation.includes("response_quality"), "chat route must persist response quality metadata");
+requireCondition(routeImplementation.includes("getProjectBriefingSnapshot"), "chat route must preflight broad project snapshots");
+requireCondition(routeImplementation.includes("semanticSearch"), "chat route must preflight semantic search");
+requireCondition(routeImplementation.includes("ExecutiveBriefingRetrievalPacket"), "chat route must build a deterministic executive briefing retrieval packet");
+requireCondition(routeImplementation.includes("searchMeetingsByTopic"), "chat route must preflight recent meetings for broad project briefings");
+requireCondition(routeImplementation.includes("searchTeamsMessages"), "chat route must preflight Teams messages for broad project briefings");
+requireCondition(routeImplementation.includes("searchEmails"), "chat route must preflight Outlook emails for broad project briefings");
+requireCondition(routeImplementation.includes("searchExternalDocuments"), "chat route must preflight OneDrive/documents for broad project briefings");
+requireCondition(routeImplementation.includes("Sources Checked"), "chat route must force source coverage disclosure in broad project briefings");
 
 requireCondition(client.includes("useChat"), "client must use useChat");
 requireCondition(client.includes("DefaultChatTransport"), "client must use DefaultChatTransport");
@@ -299,14 +302,16 @@ for (const agent of expected.agents) {
 
 const hasLiveAiSdkMcp =
   hasPackage(frontendPackage, "@ai-sdk/mcp") &&
-  route.includes("createAiAssistantMcpTools") &&
+  routeImplementation.includes("createAiAssistantMcpTools") &&
   mcpTools.includes("createMCPClient") &&
+  mcpTools.includes("EXCALIDRAW_MCP_ALLOWED_TOOLS") &&
+  mcpTools.includes("AI_ASSISTANT_DISABLE_EXCALIDRAW_MCP") &&
   mcpTools.includes("AI_ASSISTANT_DISABLE_SUPABASE_MCP") &&
   mcpTools.includes("isReadOnlyMcpTool");
 requireCondition(hasLiveAiSdkMcp, "live /ai-assistant has no AI SDK MCP integration");
 
 const usesToolLoopAgent =
-  route.includes("ToolLoopAgent") || orchestrator.includes("ToolLoopAgent");
+  routeImplementation.includes("ToolLoopAgent") || orchestrator.includes("ToolLoopAgent");
 requireCondition(usesToolLoopAgent, "live agents are not implemented with AI SDK ToolLoopAgent");
 
 const writeToolsMergedIntoStrategist =
@@ -315,17 +320,17 @@ const writeToolsMergedIntoStrategist =
 requireCondition(!writeToolsMergedIntoStrategist, "write/action tools are exposed in the default Strategist tool set");
 
 const hasFirstClassApproval =
-  route.includes("addToolOutput") ||
+  routeImplementation.includes("addToolOutput") ||
   client.includes("addToolOutput") ||
-  route.includes("approval") ||
+  routeImplementation.includes("approval") ||
   client.includes("approval");
 requireCondition(hasFirstClassApproval, "write tools do not use a first-class client approval flow");
 
 const hasSourceHealth =
-  route.includes("sourceHealth") ||
-  route.includes("buildSourceHealth") ||
-  route.includes("verifyMicrosoft") ||
-  route.includes("graph_sync_state");
+  routeImplementation.includes("sourceHealth") ||
+  routeImplementation.includes("buildSourceHealth") ||
+  routeImplementation.includes("verifyMicrosoft") ||
+  routeImplementation.includes("graph_sync_state");
 requireCondition(hasSourceHealth, "chat route does not inject source-health status for Microsoft/Acumatica/meeting systems");
 
 warnCondition(
