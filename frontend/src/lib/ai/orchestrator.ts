@@ -123,6 +123,11 @@ export interface AgentConfig {
  *   1. Add its config to this object.
  *   2. Add a `consultXxx` tool in `createStrategistTools`.
  *   3. Add the agent name to `AGENT_NAMES` in `agents/types.ts`.
+ *
+ * Every specialist must retain web-search access through
+ * createDefaultSpecialistTools. Regulatory, market, client, and jurisdictional
+ * questions often require current outside sources even when the primary domain
+ * is finance, operations, risk, people, BD, or marketing.
  */
 export const agentRegistry: Record<string, AgentConfig> = {
   cfo: {
@@ -579,6 +584,38 @@ export const agentRegistry: Record<string, AgentConfig> = {
   },
 };
 
+function createDefaultSpecialistTools(
+  userId: string,
+  options?: StrategistToolOptions,
+): ToolSet {
+  return {
+    ...createProjectTools(userId, options),
+    ...createWebSearchTools(options),
+  } as ToolSet;
+}
+
+export function createSpecialistAgentTools(
+  agentId: string,
+  userId: string,
+  options?: StrategistToolOptions,
+): ToolSet {
+  const config = agentRegistry[agentId];
+  const domainTools = config?.createTools
+    ? config.createTools(userId, options)
+    : createDefaultSpecialistTools(userId, options);
+
+  return {
+    ...domainTools,
+    ...createWebSearchTools(options),
+  } as ToolSet;
+}
+
+const SPECIALIST_WEB_SEARCH_INSTRUCTIONS = `
+
+## External Web Research
+
+You have access to live web-search tools: searchWeb, researchCompany, and searchConstructionMarket. Use them whenever the user asks about current outside knowledge, local or jurisdictional requirements, regulations, market conditions, competitors, companies, PUD/zoning requirements, or anything that may not live in Alleato's first-party project data. Cite web source URLs or source titles returned by the tool. If web search is unavailable or fails, say that directly and continue only with clearly labeled internal-data limits.`;
+
 // ---------------------------------------------------------------------------
 // Conversation history forwarding
 // ---------------------------------------------------------------------------
@@ -691,9 +728,7 @@ export async function consultAgent(
     onTrace: options?.onTrace,
     pinnedProjectId: options?.pinnedProjectId,
   };
-  const agentTools = config.createTools
-    ? config.createTools(userId, toolOptions)
-    : createProjectTools(userId, toolOptions);
+  const agentTools = createSpecialistAgentTools(agentId, userId, toolOptions);
 
   const userMessage = context
     ? `Context from the Chief Strategist:\n${context}\n\nQuestion:\n${question}`
@@ -702,7 +737,7 @@ export async function consultAgent(
   try {
     const agent = new ToolLoopAgent({
       model: getLanguageModel(config.modelId),
-      instructions: config.systemPrompt,
+      instructions: `${config.systemPrompt}${SPECIALIST_WEB_SEARCH_INSTRUCTIONS}`,
       tools: agentTools,
       stopWhen: stepCountIs(5),
     });

@@ -32,6 +32,20 @@ describe("intent router", () => {
     expect(shouldUsePacketFirstIntent(intent)).toBe(false);
   });
 
+  it("routes explicit web-search source prompts away from internal source lookup", () => {
+    const prompts = [
+      "Branding question: What are the PUD requirements for Carmel, Indiana planned unit developments? Use web search and cite the sources you use.",
+      "Search the web for current zoning requirements and cite sources.",
+      "Use online sources to find the latest municipal ordinance requirements.",
+    ];
+
+    for (const prompt of prompts) {
+      const intent = classifyAssistantIntent(prompt);
+      expect(intent).toBe("external_research");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    }
+  });
+
   it("routes employee message diagnosis prompts to source lookup even without the Teams keyword", () => {
     const intent = classifyAssistantIntent(
       "Based on all the employees' messages, where is the biggest source of confusion?",
@@ -46,6 +60,20 @@ describe("intent router", () => {
 
     expect(intent).toBe("app_help");
     expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+  });
+
+  it("routes calendar invite prompts to the calendar action path before source lookup", () => {
+    const prompts = [
+      "Schedule a meeting with Brandon tomorrow at 2 and send an Outlook invite",
+      "Create a Teams invite for the owner review",
+      "Put the OAC meeting on my Outlook calendar",
+    ];
+
+    for (const prompt of prompts) {
+      const intent = classifyAssistantIntent(prompt);
+      expect(intent).toBe("calendar_action");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    }
   });
 
   describe("task_write intent routing", () => {

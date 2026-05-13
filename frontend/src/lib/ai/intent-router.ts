@@ -7,6 +7,8 @@ export type AssistantIntent =
   | "decision_lookup"
   | "task_followup"
   | "task_write"
+  | "calendar_action"
+  | "external_research"
   | "source_lookup"
   | "strategy_brainstorm"
   | "implementation_planning"
@@ -33,9 +35,21 @@ const TASK_WRITE_PATTERNS = [
   /\badd a task for\b/i,
 ];
 
+const CALENDAR_ACTION_PATTERNS = [
+  /\b(schedule|create|send|draft|set up|book)\b.{0,50}\b(calendar invite|outlook invite|meeting invite|teams invite|calendar event|meeting)\b/i,
+  /\b(add|put)\b.{0,40}\b(on|to)\b.{0,20}\b(calendar|outlook)\b/i,
+  /\b(create|send)\b.{0,40}\b(invite|invitation)\b/i,
+];
+
 const SOURCE_LOOKUP_PATTERNS = [
   /\b(source|evidence|citation|transcript|email|teams|message|messages|meeting|document)\b/i,
   /\bshow me\b.*\b(where|source|message|email|meeting)\b/i,
+];
+
+const EXTERNAL_RESEARCH_PATTERNS = [
+  /\b(web search|search the web|live web|internet|online sources?|external sources?)\b/i,
+  /\b(current|latest|up[- ]?to[- ]?date)\b.{0,80}\b(requirements?|regulations?|rules?|ordinance|zoning|code|market|competitors?)\b/i,
+  /\b(PUD|planned unit development|zoning|ordinance|permit requirements?|municipal requirements?)\b/i,
 ];
 
 const APP_HELP_PATTERNS = [
@@ -69,6 +83,14 @@ export function classifyAssistantIntent(message: string): AssistantIntent {
   // of calling createGeneratedTask.
   if (TASK_WRITE_PATTERNS.some((pattern) => pattern.test(text))) {
     return "task_write";
+  }
+
+  if (CALENDAR_ACTION_PATTERNS.some((pattern) => pattern.test(text))) {
+    return "calendar_action";
+  }
+
+  if (EXTERNAL_RESEARCH_PATTERNS.some((pattern) => pattern.test(text))) {
+    return "external_research";
   }
 
   if (SOURCE_LOOKUP_PATTERNS.some((pattern) => pattern.test(text))) {

@@ -6,6 +6,7 @@ import {
   ActivityIcon,
   AlertTriangleIcon,
   ArrowRightIcon,
+  CalendarClockIcon,
   CalendarIcon,
   CheckCircle2Icon,
   ClipboardIcon,
@@ -31,6 +32,7 @@ import { cn } from "@/lib/utils";
 import type {
   AssistantWidgetField,
   AssistantWidgetPayload,
+  CalendarInviteWidgetPayload,
   CreateEventWidgetPayload,
   CreateTaskWidgetPayload,
   CreativeDraftWidgetPayload,
@@ -205,6 +207,158 @@ function DraftEmailWidget({
           Copy
         </Button>
       </div>
+    </WidgetShell>
+  );
+}
+
+function toDatetimeLocalValue(value: string) {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return `${value}T09:00`;
+  return value.slice(0, 16);
+}
+
+function attendeeTextToRows(value: string): CalendarInviteWidgetPayload["attendees"] {
+  return value
+    .split(/[\n,;]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const match = item.match(/^(.*?)\s*<([^>]+)>$/);
+      const email = (match?.[2] ?? item).trim().toLowerCase();
+      const name = match?.[1]?.trim() || undefined;
+      return { email, name, type: "required" as const };
+    });
+}
+
+function CalendarInviteWidget({
+  widget,
+  onSubmit,
+  onEditDraft,
+}: {
+  widget: CalendarInviteWidgetPayload;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  const [subject, setSubject] = useState(widget.subject);
+  const [body, setBody] = useState(widget.body);
+  const [startDateTime, setStartDateTime] = useState(toDatetimeLocalValue(widget.startDateTime));
+  const [endDateTime, setEndDateTime] = useState(toDatetimeLocalValue(widget.endDateTime));
+  const [location, setLocation] = useState(widget.location);
+  const [attendees, setAttendees] = useState(
+    widget.attendees
+      .map((attendee) => attendee.name ? `${attendee.name} <${attendee.email}>` : attendee.email)
+      .join("\n"),
+  );
+
+  const attendeeRows = useMemo(() => attendeeTextToRows(attendees), [attendees]);
+  const draft = useMemo(
+    () =>
+      [
+        "Outlook calendar invite",
+        `Organizer: ${widget.organizerEmail || "[use configured Outlook calendar organizer]"}`,
+        `Subject: ${subject || "[subject needed]"}`,
+        `Start: ${startDateTime || "[start date/time needed]"}`,
+        `End: ${endDateTime || "[end date/time needed]"}`,
+        `Time zone: ${widget.timeZone}`,
+        `Location: ${location || "Microsoft Teams"}`,
+        `Attendees: ${attendeeRows.map((attendee) => attendee.email).join(", ") || "[attendees needed]"}`,
+        "",
+        body || "[agenda/body needed]",
+      ].join("\n"),
+    [attendeeRows, body, endDateTime, location, startDateTime, subject, widget.organizerEmail, widget.timeZone],
+  );
+  const previewPrompt = [
+    "Create this Outlook calendar invite with createOutlookCalendarInvite.",
+    "First show the final preview/adaptive-card widget and wait for my confirmation.",
+    "",
+    draft,
+  ].join("\n");
+
+  return (
+    <WidgetShell
+      eyebrow={widget.status === "created" ? "Outlook invite created" : "Adaptive card draft"}
+      title={widget.title}
+      icon={<CalendarClockIcon className="h-4 w-4" />}
+      actions={<WidgetMeta>{widget.status}</WidgetMeta>}
+    >
+      <div className="grid gap-2">
+        <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Meeting subject" />
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Input
+            type="datetime-local"
+            value={startDateTime}
+            onChange={(event) => setStartDateTime(event.target.value)}
+          />
+          <Input
+            type="datetime-local"
+            value={endDateTime}
+            onChange={(event) => setEndDateTime(event.target.value)}
+          />
+        </div>
+        <Input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Microsoft Teams" />
+        <Textarea
+          value={attendees}
+          onChange={(event) => setAttendees(event.target.value)}
+          placeholder="attendee@example.com"
+          className="min-h-20 resize-y"
+        />
+        <Textarea
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          placeholder="Agenda or invite body"
+          className="min-h-28 resize-y"
+        />
+      </div>
+
+      <div className="divide-y divide-border/70">
+        {[
+          ["Start", startDateTime || "Needs date/time"],
+          ["End", endDateTime || "Needs date/time"],
+          ["Location", location || "Microsoft Teams"],
+          ["Attendees", attendeeRows.length ? `${attendeeRows.length} recipient${attendeeRows.length === 1 ? "" : "s"}` : "Needs attendees"],
+        ].map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between gap-4 py-2 text-sm">
+            <span className="text-xs font-medium uppercase text-muted-foreground">{label}</span>
+            <span className="truncate text-right text-foreground">{value}</span>
+          </div>
+        ))}
+      </div>
+
+      {widget.outlookWebLink || widget.teamsJoinUrl ? (
+        <div className="flex flex-wrap gap-2">
+          {widget.outlookWebLink ? (
+            <Button size="sm" asChild>
+              <Link href={widget.outlookWebLink}>
+                <CalendarIcon className="h-4 w-4" />
+                Open Outlook
+              </Link>
+            </Button>
+          ) : null}
+          {widget.teamsJoinUrl ? (
+            <Button size="sm" variant="outline" asChild>
+              <Link href={widget.teamsJoinUrl}>
+                <UsersRoundIcon className="h-4 w-4" />
+                Join Teams
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => onSubmit(previewPrompt)}>
+            <CalendarClockIcon className="h-4 w-4" />
+            Create preview
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onEditDraft(draft)}>
+            <SquarePenIcon className="h-4 w-4" />
+            Edit in chat
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => void copyToClipboard(draft)}>
+            <ClipboardIcon className="h-4 w-4" />
+            Copy
+          </Button>
+        </div>
+      )}
     </WidgetShell>
   );
 }
@@ -385,6 +539,39 @@ function normalizeMeetingToolOutput(output: unknown): MeetingIntelligenceWidgetP
         href: typeof meeting.href === "string" ? meeting.href : projectId ? `/${projectId}/meetings/${id}` : `/meetings/${id}`,
       };
     }),
+  };
+}
+
+function normalizeCalendarInviteToolOutput(output: unknown): CalendarInviteWidgetPayload | null {
+  const record = asRecord(output);
+  const widget = asRecord(record.widget);
+  if (widget.type === "calendar_invite") {
+    return widget as CalendarInviteWidgetPayload;
+  }
+
+  if (typeof record.subject !== "string" && typeof record.message !== "string") return null;
+
+  return {
+    type: "calendar_invite",
+    id: typeof record.id === "string" ? record.id : "outlook-calendar-invite",
+    title: typeof record.title === "string" ? record.title : "Calendar invite",
+    status: record.success === true ? "created" : record.action === "preview" ? "draft" : "blocked",
+    organizerEmail: typeof record.organizerEmail === "string" ? record.organizerEmail : null,
+    subject: typeof record.subject === "string" ? record.subject : "Project meeting",
+    body: typeof record.body === "string" ? record.body : "",
+    startDateTime: typeof record.startDateTime === "string" ? record.startDateTime : "",
+    endDateTime: typeof record.endDateTime === "string" ? record.endDateTime : "",
+    timeZone: typeof record.timeZone === "string" ? record.timeZone : "Eastern Standard Time",
+    location: typeof record.location === "string" ? record.location : "Microsoft Teams",
+    attendees: [],
+    outlookEventId: typeof record.outlookEventId === "string" ? record.outlookEventId : null,
+    outlookWebLink: typeof record.outlookWebLink === "string" ? record.outlookWebLink : null,
+    teamsJoinUrl: typeof record.teamsJoinUrl === "string" ? record.teamsJoinUrl : null,
+    adaptiveCard: asRecord(record.adaptiveCard),
+    confirmPrompt:
+      typeof record.confirmPrompt === "string"
+        ? record.confirmPrompt
+        : "Create this Outlook calendar invite with createOutlookCalendarInvite after confirmation.",
   };
 }
 
@@ -1362,6 +1549,14 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
     props.widget.type === "draft_email" ? (
       <DraftEmailWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />
     ) : null,
+  calendar_invite: (props) =>
+    props.widget.type === "calendar_invite" ? (
+      <CalendarInviteWidget
+        widget={props.widget}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
   create_task: (props) =>
     props.widget.type === "create_task" ? (
       <CreateTaskWidget
@@ -1450,6 +1645,7 @@ type AssistantToolPartForRegistry = {
 
 const assistantToolComponentRegistry: Record<string, (output: unknown) => AssistantWidgetPayload | null> = {
   getMeetingIntelligence: normalizeMeetingToolOutput,
+  createOutlookCalendarInvite: normalizeCalendarInviteToolOutput,
 };
 
 export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegistry): boolean {

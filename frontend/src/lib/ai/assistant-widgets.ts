@@ -1,5 +1,6 @@
 export type AssistantWidgetKind =
   | "draft_email"
+  | "calendar_invite"
   | "create_task"
   | "task_summary"
   | "meeting_intelligence"
@@ -32,6 +33,31 @@ export type DraftEmailWidgetPayload = {
   defaultTo: string;
   defaultSubject: string;
   defaultBody: string;
+};
+
+export type CalendarInviteWidgetPayload = {
+  type: "calendar_invite";
+  id: string;
+  title: string;
+  status: "draft" | "created" | "blocked";
+  organizerEmail?: string | null;
+  subject: string;
+  body: string;
+  startDateTime: string;
+  endDateTime: string;
+  timeZone: string;
+  location: string;
+  projectId?: number | null;
+  attendees: Array<{
+    email: string;
+    name?: string;
+    type: "required" | "optional";
+  }>;
+  outlookEventId?: string | null;
+  outlookWebLink?: string | null;
+  teamsJoinUrl?: string | null;
+  adaptiveCard: Record<string, unknown>;
+  confirmPrompt: string;
 };
 
 export type CreateTaskWidgetPayload = {
@@ -404,6 +430,7 @@ export type RecordWritePreviewWidgetPayload = {
 
 export type AssistantWidgetPayload =
   | DraftEmailWidgetPayload
+  | CalendarInviteWidgetPayload
   | CreateTaskWidgetPayload
   | TaskSummaryWidgetPayload
   | MeetingIntelligenceWidgetPayload
@@ -509,21 +536,52 @@ export function buildAssistantWidgetsFromPrompt(params: {
       "create meeting",
       "schedule meeting",
       "add to calendar",
+      "calendar invite",
+      "outlook invite",
+      "send invite",
       "calendar",
     ])
   ) {
-    const date = new Date();
     widgets.push({
-      type: "create_event",
-      id: "create-event",
-      title: "Create event",
-      dateLabel: date.toLocaleDateString("en-US", { weekday: "short" }),
-      dateNumber: date.toLocaleDateString("en-US", { day: "2-digit" }),
-      defaultTitle: compactTitle(prompt, "Project meeting"),
-      defaultTime: "TBD",
-      defaultLocation: "TBD",
-      defaultAgenda: prompt,
+      type: "calendar_invite",
+      id: "calendar-invite",
+      title: "Calendar invite",
+      status: "draft",
+      subject: compactTitle(prompt, "Project meeting"),
+      body: prompt,
+      startDateTime: `${nextDate(1)}T09:00`,
+      endDateTime: `${nextDate(1)}T09:30`,
+      timeZone: "Eastern Standard Time",
+      location: "Microsoft Teams",
+      attendees: [],
       projectId: params.selectedProjectId ?? null,
+      adaptiveCard: {
+        type: "AdaptiveCard",
+        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+        version: "1.5",
+        body: [
+          {
+            type: "TextBlock",
+            text: compactTitle(prompt, "Project meeting"),
+            weight: "Bolder",
+            size: "Medium",
+            wrap: true,
+          },
+          {
+            type: "FactSet",
+            facts: [
+              { title: "Start", value: "Needs date/time" },
+              { title: "End", value: "Needs date/time" },
+              { title: "Location", value: "Microsoft Teams" },
+              { title: "Attendees", value: "Needs attendees" },
+              { title: "Status", value: "draft" },
+            ],
+          },
+        ],
+        actions: [],
+      },
+      confirmPrompt:
+        "Create this Outlook calendar invite with createOutlookCalendarInvite. Show the final preview first and wait for my confirmation.",
     });
   }
 
@@ -617,6 +675,7 @@ export function isAssistantWidgetPayload(
     typeof record.type === "string" &&
     [
       "draft_email",
+      "calendar_invite",
       "create_task",
       "task_summary",
       "meeting_intelligence",

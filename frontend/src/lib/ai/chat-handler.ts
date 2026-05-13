@@ -185,9 +185,27 @@ const TASK_WRITE_TOOL_NAMES = [
   "deleteGeneratedTask",
 ] as const;
 
+const WEB_SEARCH_TOOL_NAMES = [
+  "searchWeb",
+  "researchCompany",
+  "searchConstructionMarket",
+] as const;
+
+function withWebSearchTools(names: readonly string[]): readonly string[] {
+  return [...names, ...WEB_SEARCH_TOOL_NAMES];
+}
+
 const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
   task_write: TASK_WRITE_TOOL_NAMES,
-  financial_analysis: [
+  calendar_action: withWebSearchTools([
+    "createOutlookCalendarInvite",
+    "findProject",
+    "getPeopleAndRoles",
+    "searchMeetingsByTopic",
+    "searchEmails",
+    "searchTeamsMessages",
+  ]),
+  financial_analysis: withWebSearchTools([
     "getFinancialAnalysis",
     "getProjectBudgetSummary",
     "getMarginAnalysis",
@@ -208,16 +226,16 @@ const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
     "getAcumaticaProjectBudget",
     "getAcumaticaProjectList",
     "findProject",
-  ],
-  latest_status: [
+  ]),
+  latest_status: withWebSearchTools([
     "getPortfolioOverview",
     "getProjectsWithRisks",
     "getProjectBriefingSnapshot",
     "getActionItemsAndInsights",
     "getProjectDetails",
     "findProject",
-  ],
-  risk_review: [
+  ]),
+  risk_review: withWebSearchTools([
     "getProjectRiskAnalysis",
     "getProjectsWithRisks",
     "getPortfolioOverview",
@@ -229,8 +247,8 @@ const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
     "getChangeOrderDetails",
     "getFinancialAnalysis",
     "findProject",
-  ],
-  change_management_review: [
+  ]),
+  change_management_review: withWebSearchTools([
     "getChangeOrderDetails",
     "queryChangeOrders",
     "getProjectBudgetSummary",
@@ -241,8 +259,8 @@ const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
     "searchMeetingsByTopic",
     "semanticSearch",
     "findProject",
-  ],
-  decision_lookup: [
+  ]),
+  decision_lookup: withWebSearchTools([
     "getProjectBriefingSnapshot",
     "getMeetingIntelligence",
     "searchEmails",
@@ -251,8 +269,8 @@ const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
     "getMeetingDetails",
     "semanticSearch",
     "findProject",
-  ],
-  task_followup: [
+  ]),
+  task_followup: withWebSearchTools([
     "getActionItemsAndInsights",
     "getProjectBriefingSnapshot",
     "searchMeetingsByTopic",
@@ -260,15 +278,26 @@ const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
     "searchTeamsMessages",
     "semanticSearch",
     "findProject",
+  ]),
+  external_research: [
+    "searchWeb",
+    "researchCompany",
+    "searchConstructionMarket",
+    "consultCFO",
+    "consultCOO",
+    "consultCHRO",
+    "consultCRO",
+    "consultVPBD",
+    "consultCMO",
   ],
-  source_lookup: [],
-  app_help: ["searchAppHelp"],
-  target_briefing: [
+  source_lookup: WEB_SEARCH_TOOL_NAMES,
+  app_help: withWebSearchTools(["searchAppHelp"]),
+  target_briefing: withWebSearchTools([
     "getProjectBriefingSnapshot",
     "getProjectDetails",
     "getProjectRiskAnalysis",
     "findProject",
-  ],
+  ]),
 };
 
 const TASK_WRITE_MAX_PROMPT_APPROX_TOKENS = 4000;

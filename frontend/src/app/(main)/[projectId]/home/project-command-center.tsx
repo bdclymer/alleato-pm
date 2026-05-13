@@ -12,15 +12,12 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
-  Clock,
   DollarSign,
   ExternalLink,
   FileText,
   Image,
   MapPin,
-  MessageSquare,
   Search,
-  TrendingDown,
   Users,
 } from "lucide-react";
 import {
@@ -41,9 +38,16 @@ import {
   Avatar,
   AvatarFallback,
   Button,
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+  PageTabs,
   StatusBadge,
 } from "@/components/ds";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { RealtimeCursors } from "@/components/realtime/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
@@ -469,7 +473,6 @@ interface TabConfig {
 }
 
 function TabSection({
-  title,
   tabs,
   defaultTab,
 }: {
@@ -484,53 +487,48 @@ function TabSection({
     setSearch("");
   }, [activeTab]);
 
+  const pageTabs = tabs.map((tab) => ({
+    label: tab.count > 0 ? `${tab.label} (${tab.count})` : tab.label,
+    href: `#${tab.id}`,
+    isActive: activeTab === tab.id,
+  }));
+
+  const activeTabConfig = tabs.find((t) => t.id === activeTab);
+
   return (
     <div className="rounded-lg bg-card overflow-hidden">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 pt-3 pb-0">
-          <TabsList className="h-auto rounded-none bg-transparent p-0 gap-0">
-            {tabs.map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className="rounded-none border-b-2 border-transparent px-3 pb-3 pt-1 text-sm font-medium text-muted-foreground transition-all data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-              >
-                {tab.label}
-                {tab.count > 0 && (
-                  <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    {tab.count}
-                  </span>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <div className="relative mb-2">
-            <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search…"
-              className="h-7 w-44 pl-7 text-xs"
-            />
+      <div className="flex items-center justify-between gap-2 border-b border-border px-3">
+        <PageTabs
+          tabs={pageTabs}
+          variant="inline"
+          onTabClick={(href) => setActiveTab(href.replace("#", ""))}
+          className="mb-0 md:mb-0 flex-1 min-w-0"
+        />
+        <div className="relative shrink-0 mb-1">
+          <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search…"
+            className="h-7 w-40 pl-7 text-xs"
+          />
+        </div>
+      </div>
+      {activeTabConfig && (
+        <div className="px-4 pb-1">
+          <div className="divide-y divide-border/50">
+            {activeTabConfig.content(search)}
+          </div>
+          <div className="py-2.5">
+            <Link
+              href={activeTabConfig.viewAllHref}
+              className="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
+            >
+              View all {activeTabConfig.label.toLowerCase()} <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
         </div>
-
-        {tabs.map((tab) => (
-          <TabsContent key={tab.id} value={tab.id} className="m-0 px-4 pb-1">
-            <div className="divide-y divide-border/50">
-              {tab.content(search)}
-            </div>
-            <div className="py-2.5">
-              <Link
-                href={tab.viewAllHref}
-                className="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
-              >
-                View all {tab.label.toLowerCase()} <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+      )}
     </div>
   );
 }
@@ -967,39 +965,95 @@ export function ProjectCommandCenter({
   const tasksContent = (search: string) => {
     const filtered = openTasks
       .filter((t) => t.description?.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 8);
+      .slice(0, 10);
     if (filtered.length === 0) return <EmptyTabState label="open tasks" />;
-    return filtered.map((task) => {
-      const overdue = task.due_date ? isPast(new Date(task.due_date)) : false;
-      return (
-        <InlineDataRow
-          key={task.id}
-          href={`/${projectId}/tasks`}
-          primary={task.description}
-          secondary={task.assignee_name || "Unassigned"}
-          tertiary={task.due_date ? `Due ${formatMonthDay(task.due_date)}` : null}
-          status={overdue ? "Overdue" : (task.priority || task.status || "Open")}
-        />
-      );
-    });
+    return (
+      <InlineTable variant="read">
+        <InlineTableHeader>
+          <InlineTableHeaderRow>
+            <InlineTableHeaderCell>Task</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Assignee</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Due</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+          </InlineTableHeaderRow>
+        </InlineTableHeader>
+        <InlineTableBody>
+          {filtered.map((task) => {
+            const overdue = task.due_date ? isPast(new Date(task.due_date)) : false;
+            return (
+              <InlineTableRow key={task.id}>
+                <InlineTableCell className="max-w-xs">
+                  <Link
+                    href={`/${projectId}/tasks`}
+                    className="line-clamp-2 text-foreground hover:text-primary transition-colors"
+                  >
+                    {task.description}
+                  </Link>
+                </InlineTableCell>
+                <InlineTableCell>
+                  <span className="text-muted-foreground">{task.assignee_name || "—"}</span>
+                </InlineTableCell>
+                <InlineTableCell>
+                  <span className={cn("whitespace-nowrap", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+                    {task.due_date ? formatMonthDay(task.due_date) : "—"}
+                  </span>
+                </InlineTableCell>
+                <InlineTableCell>
+                  <StatusBadge status={overdue ? "Overdue" : (task.priority || task.status || "Open")} />
+                </InlineTableCell>
+              </InlineTableRow>
+            );
+          })}
+        </InlineTableBody>
+      </InlineTable>
+    );
   };
 
   const meetingsContent = (search: string) => {
     const filtered = [...meetings]
       .sort((a, b) => getDateMs(b.date ?? b.created_at) - getDateMs(a.date ?? a.created_at))
       .filter((m) => (m.title || m.file_name || "").toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 8);
+      .slice(0, 10);
     if (filtered.length === 0) return <EmptyTabState label="meetings" />;
-    return filtered.map((m) => (
-      <InlineDataRow
-        key={m.id}
-        href={`/${projectId}/meetings/${m.id}`}
-        primary={m.title || m.file_name || "Untitled Meeting"}
-        secondary={formatMonthDay(m.date ?? m.created_at)}
-        tertiary={m.duration_minutes ? `${m.duration_minutes} min` : null}
-        status={m.type || "Meeting"}
-      />
-    ));
+    return (
+      <InlineTable variant="read">
+        <InlineTableHeader>
+          <InlineTableHeaderRow>
+            <InlineTableHeaderCell>Meeting</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Date</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Duration</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Type</InlineTableHeaderCell>
+          </InlineTableHeaderRow>
+        </InlineTableHeader>
+        <InlineTableBody>
+          {filtered.map((m) => (
+            <InlineTableRow key={m.id}>
+              <InlineTableCell className="max-w-xs">
+                <Link
+                  href={`/${projectId}/meetings/${m.id}`}
+                  className="line-clamp-1 text-foreground hover:text-primary transition-colors"
+                >
+                  {m.title || m.file_name || "Untitled Meeting"}
+                </Link>
+              </InlineTableCell>
+              <InlineTableCell>
+                <span className="whitespace-nowrap text-muted-foreground">
+                  {formatMonthDay(m.date ?? m.created_at) || "—"}
+                </span>
+              </InlineTableCell>
+              <InlineTableCell>
+                <span className="text-muted-foreground">
+                  {m.duration_minutes ? `${m.duration_minutes} min` : "—"}
+                </span>
+              </InlineTableCell>
+              <InlineTableCell>
+                <StatusBadge status={m.type || "Meeting"} />
+              </InlineTableCell>
+            </InlineTableRow>
+          ))}
+        </InlineTableBody>
+      </InlineTable>
+    );
   };
 
   const documentsContent = (search: string) => {

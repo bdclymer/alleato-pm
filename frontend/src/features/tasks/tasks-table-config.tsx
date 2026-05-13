@@ -1,5 +1,14 @@
 import { ArrowUpRight, Eye, Trash2 } from "lucide-react";
+import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   TableDateValue,
   TableAvatarUsers,
@@ -15,6 +24,42 @@ import {
   getTaskSourceTarget,
   getTaskSourceTitle,
 } from "@/features/tasks/task-utils";
+import type { TaskSnapshot } from "@/lib/ai/task-feedback-types";
+
+// ---------------------------------------------------------------------------
+// Inline-edit types (exported so tasks-inbox can pass them in)
+// ---------------------------------------------------------------------------
+
+export type TaskPatch = {
+  description?: string;
+  status?: string;
+  due_date?: string | null;
+  project_id?: number | null;
+  category?: string | null;
+  priority?: string | null;
+  assignee_user_id?: string | null;
+};
+
+export type TaskProjectOption = { id: number; name: string | null };
+export type TaskUserOption = {
+  id: string;
+  email?: string | null;
+  full_name?: string | null;
+  person_id?: string | null;
+};
+
+export interface TaskInlineEditOptions {
+  onOpenPanel?: (item: TasksRow) => void;
+  onUpdate?: (id: string, patch: TaskPatch) => void;
+  onDelete?: (id: string) => void;
+  projects?: TaskProjectOption[];
+  users?: TaskUserOption[];
+}
+
+const GHOST_SELECT_CLS =
+  "h-7 w-auto min-w-[5.5rem] gap-1 border-0 bg-transparent -ml-2 px-2 text-xs shadow-none font-normal text-foreground hover:bg-muted/50 focus:ring-0 data-[state=open]:bg-muted/50 [&>svg]:text-muted-foreground/60";
+const GHOST_DATE_CLS =
+  "h-7 max-w-[9rem] border-0 bg-transparent -ml-2 px-2 text-xs shadow-none text-foreground hover:bg-muted/50 focus:ring-0 focus-visible:ring-0";
 
 // ---------------------------------------------------------------------------
 // Column / Filter / Defaults
@@ -22,6 +67,7 @@ import {
 
 export const tasksColumns: ColumnConfig[] = [
   { id: "description", label: "Task Name", alwaysVisible: true },
+  { id: "feedback", label: "Feedback", defaultVisible: true },
   { id: "assignee_name", label: "Assigned User", defaultVisible: true },
   { id: "project_name", label: "Project Name", defaultVisible: true },
   { id: "source_system", label: "Source", defaultVisible: true },
@@ -76,60 +122,141 @@ export const tasksDefaultVisibleColumns: string[] = tasksColumns
 // Table columns (render / sort)
 // ---------------------------------------------------------------------------
 
-export function buildTasksTableColumns(projectId?: string | null): TableColumn<TasksRow>[] {
+export function buildTasksTableColumns(
+  projectId?: string | null,
+  editOptions?: TaskInlineEditOptions,
+): TableColumn<TasksRow>[] {
+  const { onOpenPanel, onUpdate, onDelete, projects = [], users = [] } = editOptions ?? {};
+
   return tasksColumns.map((column) => {
     switch (column.id) {
       case "description":
         return {
           ...column,
           render: (item) => (
-            <div className="flex max-w-xl min-w-0 items-center gap-2" title={item.description ?? ""}>
-              <span className="text-sm font-medium text-foreground truncate">
-                {item.title || item.description || "Untitled Task"}
-              </span>
-            </div>
+            <Button
+              type="button"
+              variant="link"
+              className="h-auto min-w-0 justify-start whitespace-normal p-0 text-left text-xs font-medium text-foreground/90 underline-offset-2 hover:text-primary"
+              title={item.description ?? ""}
+              onClick={() => onOpenPanel?.(item)}
+            >
+              {item.title || item.description || "Untitled Task"}
+            </Button>
           ),
           sortValue: (item) => item.description ?? "",
           sortable: true,
         };
+      case "feedback":
+        return {
+          ...column,
+          render: (item) => {
+            const taskId = item.id;
+            if (!taskId) {
+              return <span className="text-xs text-muted-foreground">—</span>;
+            }
+
+            return (
+              <div
+                className="flex min-w-16 items-center"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <TaskFeedbackButtons
+                  projectId={getTaskProjectId(item)}
+                  taskId={taskId}
+                  taskSnapshot={buildTaskFeedbackSnapshot(item)}
+                  onTrivial={onDelete ? () => onDelete(taskId) : undefined}
+                />
+              </div>
+            );
+          },
+          sortValue: () => "",
+          sortable: false,
+        };
       case "assignee_name":
         return {
           ...column,
-          render: (item) => (
-            item.assignee_name ? (
+          render: (item) => {
+            if (onUpdate && users.length > 0) {
+              const matchedUser =
+                users.find((u) => u.person_id && item.assignee_person_id && u.person_id === item.assignee_person_id) ??
+                users.find((u) => u.email && item.assignee_email && u.email.toLowerCase() === item.assignee_email?.toLowerCase());
+              const selectValue = matchedUser?.id ?? "__unassigned__";
+              return (
+                <Select
+                  value={selectValue}
+                  onValueChange={(value) =>
+                    onUpdate(item.id!, { assignee_user_id: value === "__unassigned__" ? null : value })
+                  }
+                >
+                  <SelectTrigger className={GHOST_SELECT_CLS}>
+                    <SelectValue placeholder="Unassigned" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__unassigned__">Unassigned</SelectItem>
+                    {users.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.full_name || u.email || u.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            }
+            return item.assignee_name ? (
               <span className="flex min-w-0 max-w-56 items-center gap-2">
                 <TableAvatarUsers users={[item.assignee_name]} maxVisible={1} />
-                <span className="truncate text-sm text-foreground">{item.assignee_name}</span>
+                <span className="truncate text-xs text-foreground">{item.assignee_name}</span>
               </span>
             ) : (
-              <span className="text-sm text-muted-foreground">Unassigned</span>
-            )
-          ),
+              <span className="text-xs text-muted-foreground">Unassigned</span>
+            );
+          },
           sortValue: (item) => item.assignee_name ?? "",
           sortable: true,
         };
       case "project_name":
         return {
           ...column,
-          render: (item) => (
-            <span className="block max-w-56 text-sm text-foreground truncate">
-              {item.project_name || "Unlinked"}
-            </span>
-          ),
+          render: (item) => {
+            if (onUpdate && projects.length > 0) {
+              const selectValue = item.project_id ? String(item.project_id) : "__none__";
+              return (
+                <Select
+                  value={selectValue}
+                  onValueChange={(value) =>
+                    onUpdate(item.id!, { project_id: value === "__none__" ? null : Number(value) })
+                  }
+                >
+                  <SelectTrigger className={GHOST_SELECT_CLS}>
+                    <SelectValue placeholder="Unlinked" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Unlinked</SelectItem>
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.name ?? `Project ${p.id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            }
+            return (
+              <span className="block max-w-56 text-xs text-foreground truncate">
+                {item.project_name || "Unlinked"}
+              </span>
+            );
+          },
           sortValue: (item) => item.project_name ?? "",
           sortable: true,
         };
       case "source_system":
         return {
           ...column,
-          render: (item) => {
-            return (
-              <TableTagBadge
-                label={getTaskSourceLabel(item)}
-                variant="outline"
-              />
-            );
-          },
+          render: (item) => (
+            <TableTagBadge label={getTaskSourceLabel(item)} variant="outline" />
+          ),
           sortValue: (item) => getTaskSourceLabel(item),
           sortable: true,
         };
@@ -139,19 +266,17 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
           render: (item) => {
             const target = getTaskSourceTarget(item, projectId);
             const label = getTaskSourceTitle(item);
-
             if (!target) {
               return (
-                <span className="block max-w-72 truncate text-sm text-muted-foreground">
+                <span className="block max-w-72 truncate text-xs text-muted-foreground">
                   {label}
                 </span>
               );
             }
-
             return (
               <a
                 href={target.href}
-                className="block max-w-72 truncate text-sm text-foreground underline-offset-2 hover:text-primary hover:underline"
+                className="block max-w-72 truncate text-xs text-foreground underline-offset-2 hover:text-primary hover:underline"
                 onClick={(event) => event.stopPropagation()}
                 rel={target.external ? "noreferrer" : undefined}
                 target={target.external ? "_blank" : undefined}
@@ -168,7 +293,7 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
         return {
           ...column,
           render: (item) => (
-            <span className="block max-w-44 text-sm text-muted-foreground truncate">
+            <span className="block max-w-44 text-xs text-muted-foreground truncate">
               {item.assignee_email || "—"}
             </span>
           ),
@@ -185,7 +310,21 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
       case "due_date":
         return {
           ...column,
-          render: (item) => <TableDateValue value={item.due_date} />,
+          render: (item) => {
+            if (onUpdate) {
+              return (
+                <Input
+                  type="date"
+                  className={GHOST_DATE_CLS}
+                  value={item.due_date?.split("T")[0] ?? ""}
+                  onChange={(e) =>
+                    onUpdate(item.id!, { due_date: e.target.value || null })
+                  }
+                />
+              );
+            }
+            return <TableDateValue value={item.due_date} />;
+          },
           sortValue: (item) => item.due_date ?? "",
           sortable: true,
         };
@@ -199,24 +338,68 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
       case "priority":
         return {
           ...column,
-          render: (item) => (
-            <TableTagBadge
-              label={item.priority}
-              variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"}
-            />
-          ),
+          render: (item) => {
+            if (onUpdate) {
+              return (
+                <Select
+                  value={item.priority?.toLowerCase() ?? "__none__"}
+                  onValueChange={(value) =>
+                    onUpdate(item.id!, { priority: value === "__none__" ? null : value })
+                  }
+                >
+                  <SelectTrigger className={GHOST_SELECT_CLS}>
+                    <SelectValue placeholder="Not set" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Not set</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              );
+            }
+            return (
+              <TableTagBadge
+                label={item.priority}
+                variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"}
+              />
+            );
+          },
           sortValue: (item) => item.priority ?? "",
           sortable: true,
         };
       case "status":
         return {
           ...column,
-          render: (item) => (
-            <TableTagBadge
-              label={item.status}
-              variant={item.status?.toLowerCase().includes("complete") ? "default" : "outline"}
-            />
-          ),
+          render: (item) => {
+            if (onUpdate) {
+              return (
+                <Select
+                  value={item.status ?? "__none__"}
+                  onValueChange={(value) =>
+                    onUpdate(item.id!, { status: value === "__none__" ? undefined : value })
+                  }
+                >
+                  <SelectTrigger className={GHOST_SELECT_CLS}>
+                    <SelectValue placeholder="No status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="To-Do">To Do</SelectItem>
+                    <SelectItem value="In-Progress">In Progress</SelectItem>
+                    <SelectItem value="Blocked">Blocked</SelectItem>
+                    <SelectItem value="Complete">Complete</SelectItem>
+                  </SelectContent>
+                </Select>
+              );
+            }
+            return (
+              <TableTagBadge
+                label={item.status}
+                variant={item.status?.toLowerCase().includes("complete") ? "default" : "outline"}
+              />
+            );
+          },
           sortValue: (item) => item.status ?? "",
           sortable: true,
         };
@@ -226,13 +409,30 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
           render: (item) => {
             const record = toTasksRecord(item);
             const value = record[column.id] ?? "—";
-            return <span className="text-sm text-muted-foreground">{value}</span>;
+            return <span className="text-xs text-muted-foreground">{value}</span>;
           },
           sortValue: (item) => toTasksRecord(item)[column.id] ?? "",
           sortable: true,
         };
     }
   });
+}
+
+function getTaskProjectId(item: TasksRow): number | null {
+  return item.project_id ?? item.project_ids?.[0] ?? null;
+}
+
+function buildTaskFeedbackSnapshot(item: TasksRow): TaskSnapshot {
+  return {
+    name: item.description || item.title || "Untitled task",
+    assignee: item.assignee_name || item.assignee_email,
+    dueDate: item.due_date,
+    priority: item.priority ?? "medium",
+    notes: item.assigned_by ? `Assigned by ${item.assigned_by}` : null,
+    projectId: getTaskProjectId(item),
+    source: getTaskSourceLabel(item),
+    generatedBy: item.extraction_model,
+  };
 }
 
 function toTasksRecord(item: TasksRow): Record<string, string | null> {

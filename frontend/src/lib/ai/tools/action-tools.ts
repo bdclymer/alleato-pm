@@ -18,6 +18,11 @@ import { matchFeedbackToTool } from "@/lib/admin-feedback/tool-matcher";
 import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
 import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
 import { buildTaskFewShotBlock } from "@/lib/ai/services/task-training-service";
+import {
+  buildCalendarInviteAdaptiveCard,
+  createOutlookCalendarInvite,
+  resolveOutlookOrganizerEmail,
+} from "@/lib/microsoft-graph/calendar-invites";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -43,6 +48,12 @@ const projectCompanyTypeSchema = z.enum([
   "SUPPLIER",
   "CONNECTED_COMPANY",
 ]);
+
+const outlookInviteAttendeeSchema = z.object({
+  email: z.string().email(),
+  name: z.string().optional(),
+  type: z.enum(["required", "optional"]).default("required"),
+});
 
 export function normalizeGeneratedTaskPriority(
   priority?: z.infer<typeof generatedTaskPrioritySchema> | null,
@@ -3080,6 +3091,205 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           response,
         });
         return response;
+      }),
+    }),
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Create Outlook calendar invite
+    // -------------------------------------------------------------------------
+
+    createOutlookCalendarInvite: tool({
+      description:
+        "Create an Outlook calendar invite through Microsoft Graph. Use when the user asks to schedule a meeting, " +
+        "send a calendar invite, add something to Outlook, or create a Teams meeting invite. Always return a preview " +
+        "first with the adaptive-card calendar widget, then write only after confirmation.",
+      inputSchema: z.object({
+        organizerEmail: z
+          .string()
+          .email()
+          .optional()
+          .describe("Organizer mailbox. If omitted, the configured Outlook calendar user is used."),
+        subject: z.string().describe("Invite subject"),
+        body: z.string().describe("Invite body or agenda"),
+        startDateTime: z.string().describe("ISO-compatible local start date/time, e.g. 2026-05-13T14:00:00"),
+        endDateTime: z.string().describe("ISO-compatible local end date/time"),
+        timeZone: z.string().default("Eastern Standard Time"),
+        location: z.string().default("Microsoft Teams"),
+        attendees: z.array(outlookInviteAttendeeSchema).min(1),
+        isOnlineMeeting: z.boolean().default(true),
+        projectId: z.number().optional().describe("Project ID if this invite is tied to a project"),
+        confirmed: z.boolean().default(false).describe("Set to true only after the user confirms the preview"),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("createOutlookCalendarInvite", options, async (input) => {
+        if (typeof input.projectId === "number") {
+          const access = await enforceProjectWriteAccess(input.projectId);
+          if (!access.ok) return { success: false, error: access.error };
+        }
+
+        let organizerEmail: string;
+        try {
+          organizerEmail = resolveOutlookOrganizerEmail(input.organizerEmail);
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+            widget: {
+              type: "calendar_invite",
+              id: "outlook-calendar-invite-blocked",
+              title: "Calendar invite blocked",
+              status: "blocked",
+              organizerEmail: input.organizerEmail ?? null,
+              subject: input.subject,
+              body: input.body,
+              startDateTime: input.startDateTime,
+              endDateTime: input.endDateTime,
+              timeZone: input.timeZone,
+              location: input.location,
+              attendees: input.attendees,
+              adaptiveCard: buildCalendarInviteAdaptiveCard({
+                title: input.subject,
+                startLabel: input.startDateTime,
+                endLabel: input.endDateTime,
+                location: input.location,
+                attendeeLabel: `${input.attendees.length} attendee${input.attendees.length === 1 ? "" : "s"}`,
+                status: "blocked",
+              }),
+              confirmPrompt: "Fix the Outlook calendar configuration before creating this invite.",
+            },
+          };
+        }
+
+        const attendeeLabel = `${input.attendees.length} attendee${input.attendees.length === 1 ? "" : "s"}`;
+        const adaptiveCard = buildCalendarInviteAdaptiveCard({
+          title: input.subject,
+          startLabel: input.startDateTime,
+          endLabel: input.endDateTime,
+          location: input.location,
+          attendeeLabel,
+          status: input.confirmed ? "created" : "draft",
+        });
+
+        if (!input.confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the Outlook calendar invite I'll create. Reply **confirm** to send it.",
+            subject: input.subject,
+            body: input.body,
+            organizerEmail,
+            startDateTime: input.startDateTime,
+            endDateTime: input.endDateTime,
+            timeZone: input.timeZone,
+            location: input.location,
+            attendees: input.attendees,
+            adaptiveCard,
+            widget: {
+              type: "calendar_invite",
+              id: "outlook-calendar-invite-preview",
+              title: "Outlook calendar invite",
+              status: "draft",
+              organizerEmail,
+              subject: input.subject,
+              body: input.body,
+              startDateTime: input.startDateTime,
+              endDateTime: input.endDateTime,
+              timeZone: input.timeZone,
+              location: input.location,
+              attendees: input.attendees,
+              adaptiveCard,
+              confirmPrompt: "Confirm this Outlook calendar invite and create it with createOutlookCalendarInvite.",
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createOutlookCalendarInvite", input);
+        const replay = await getReplayResponse("createOutlookCalendarInvite", idempotencyKey);
+        if (replay) return replay;
+
+        try {
+          const event = await createOutlookCalendarInvite({
+            organizerEmail,
+            subject: input.subject,
+            body: input.body,
+            startDateTime: input.startDateTime,
+            endDateTime: input.endDateTime,
+            timeZone: input.timeZone,
+            location: input.location,
+            attendees: input.attendees,
+            isOnlineMeeting: input.isOnlineMeeting,
+            transactionId: idempotencyKey,
+          });
+          const createdAdaptiveCard = buildCalendarInviteAdaptiveCard({
+            title: event.subject,
+            startLabel: event.startDateTime,
+            endLabel: event.endDateTime,
+            location: input.location,
+            attendeeLabel,
+            status: "created",
+            openUrl: event.webLink,
+          });
+          const response = {
+            success: true,
+            message: `Outlook invite **${event.subject}** created for ${attendeeLabel}.`,
+            outlookEventId: event.id,
+            outlookWebLink: event.webLink,
+            teamsJoinUrl: event.joinUrl,
+            organizerEmail: event.organizerEmail,
+            subject: event.subject,
+            body: input.body,
+            startDateTime: event.startDateTime,
+            endDateTime: event.endDateTime,
+            timeZone: event.timeZone,
+            location: input.location,
+            attendees: input.attendees,
+            adaptiveCard: createdAdaptiveCard,
+            widget: {
+              type: "calendar_invite",
+              id: event.id,
+              title: "Outlook calendar invite",
+              status: "created",
+              organizerEmail: event.organizerEmail,
+              subject: event.subject,
+              body: input.body,
+              startDateTime: event.startDateTime,
+              endDateTime: event.endDateTime,
+              timeZone: event.timeZone,
+              location: input.location,
+              attendees: input.attendees,
+              outlookEventId: event.id,
+              outlookWebLink: event.webLink,
+              teamsJoinUrl: event.joinUrl,
+              adaptiveCard: createdAdaptiveCard,
+              confirmPrompt: "Outlook calendar invite created.",
+            },
+          };
+          await recordWriteAudit({
+            toolName: "createOutlookCalendarInvite",
+            idempotencyKey,
+            projectId: input.projectId ?? null,
+            input,
+            status: "success",
+            response,
+          });
+          return response;
+        } catch (error) {
+          const failure = {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+            subject: input.subject,
+            organizerEmail,
+          };
+          await recordWriteAudit({
+            toolName: "createOutlookCalendarInvite",
+            idempotencyKey,
+            projectId: input.projectId ?? null,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
       }),
     }),
 

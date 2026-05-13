@@ -1960,7 +1960,31 @@ export function TasksInbox({
     ];
   }, [items]);
 
-  const tableColumns = useMemo(() => buildTasksTableColumns(), []);
+  const selectItemRef = useRef(selectItem);
+  selectItemRef.current = selectItem;
+  const updateTaskRef = useRef(updateTask);
+  updateTaskRef.current = updateTask;
+  const deleteItemRef = useRef(deleteItem);
+  deleteItemRef.current = deleteItem;
+
+  const openPanelForItem = useCallback((item: TasksRow) => {
+    if (item.id) {
+      selectItemRef.current(item.id);
+      setSheetOpen(true);
+    }
+  }, []);
+
+  const tableColumns = useMemo(
+    () =>
+      buildTasksTableColumns(null, {
+        onOpenPanel: openPanelForItem,
+        onUpdate: (id, patch) => { void updateTaskRef.current(id, patch); },
+        onDelete: (id) => { void deleteItemRef.current(id); },
+        projects,
+        users,
+      }),
+    [openPanelForItem, projects, users],
+  );
   const allowedColumnIds = useMemo(() => tasksColumns.map((column) => column.id), []);
   const sanitizedVisibleColumns = useMemo(() => {
     const visible = tableState.visibleColumns.filter((id) => allowedColumnIds.includes(id));
@@ -2074,11 +2098,8 @@ export function TasksInbox({
           table={{
             columns: tableColumns,
             getRowId: (item) => item.id ?? "",
-            onRowClick: (item) => {
-              if (item.id) {
-                selectItem(item.id);
-                if (tableState.currentView === "table") setSheetOpen(true);
-              }
+            onRowClick: tableState.currentView === "table" ? undefined : (item) => {
+              if (item.id) selectItem(item.id);
             },
             activeRowId: selectedId,
             rowActions: (item) =>

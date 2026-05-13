@@ -33,7 +33,11 @@ jest.mock("@/lib/ai/tools/marketing", () => ({
 }));
 
 import { AGENT_DESCRIPTIONS, AGENT_LABELS, AGENT_NAMES } from "../agents/types";
-import { agentRegistry, createStrategistTools } from "../orchestrator";
+import {
+  agentRegistry,
+  createSpecialistAgentTools,
+  createStrategistTools,
+} from "../orchestrator";
 
 describe("CMO agent registration", () => {
   it("registers CMO labels, description, routing keywords, and consult tool", () => {
@@ -53,5 +57,13 @@ describe("CMO agent registration", () => {
     const strategistTools = createStrategistTools("user-1");
     expect(strategistTools).toHaveProperty("consultCMO");
     expect(strategistTools).not.toHaveProperty("createContentCalendarDraft");
+  });
+
+  it("keeps web search available to every specialist agent", () => {
+    for (const agentId of Object.keys(agentRegistry)) {
+      const tools = createSpecialistAgentTools(agentId, "user-1");
+
+      expect(tools).toHaveProperty("searchWeb");
+    }
   });
 });

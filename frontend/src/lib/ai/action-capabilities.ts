@@ -18,6 +18,7 @@ export const ASSISTANT_ACTION_CAPABILITIES: AssistantActionCapability[] = [
       "Meeting notes",
       "Daily reports",
       "Weekly progress report drafts",
+      "Outlook calendar invites",
     ],
   },
   {

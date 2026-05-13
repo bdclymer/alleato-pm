@@ -638,7 +638,7 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
         model: getLanguageModel(args.activeModel),
         system: systemPrompt,
         messages: modelMessages,
-        // tools, // TEMP: testing if 102-tool registry causes finishReason:other
+        tools,
         maxOutputTokens: 4000,
         stopWhen: stepCountIs(10),
         experimental_telemetry: {
