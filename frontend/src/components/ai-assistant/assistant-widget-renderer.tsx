@@ -1637,6 +1637,10 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
     ) : null,
 };
 
+export const ASSISTANT_WIDGET_RENDERER_TYPES = Object.keys(
+  assistantWidgetComponentRegistry,
+) as AssistantWidgetPayload["type"][];
+
 type AssistantToolPartForRegistry = {
   type: string;
   state: string;
