@@ -125,6 +125,83 @@ describe("/api/projects", () => {
       expect(mockServiceClient.from).toHaveBeenCalledWith("projects");
     });
 
+    it("prefers project-level client relationships over prime contract test owners", async () => {
+      const project = {
+        ...mockProject,
+        id: 67,
+        name: "Vermillion Rise Warehouse",
+        client: null,
+        client_id: null,
+        company_id: "company-real-client",
+      };
+
+      mockServiceClient = {
+        from: jest.fn((table: string) => {
+          if (table === "users_auth") {
+            return createMockQuery({
+              data: { person_id: "person-123" },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "user_profiles") {
+            return createMockQuery({
+              data: { is_admin: true },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "projects") {
+            return createMockQuery({
+              data: [project],
+              error: null,
+              count: 1,
+            });
+          }
+          if (table === "prime_contracts") {
+            return createMockQuery({
+              data: [
+                {
+                  project_id: 67,
+                  client_id: "company-e2e-owner",
+                  contract_company_id: "company-e2e-owner",
+                  created_at: "2026-04-24T23:48:16.359Z",
+                },
+              ],
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "companies") {
+            return createMockQuery({
+              data: [
+                { id: "company-real-client", name: "Hillsdale Holdings" },
+                {
+                  id: "company-e2e-owner",
+                  name: "E2E-7a24e5c7-99bd-4c00-95e4-bef2cd40cf22 Owner",
+                },
+              ],
+              error: null,
+              count: null,
+            });
+          }
+          return createMockQuery({ data: null, error: null, count: null });
+        }),
+      };
+
+      const request = new NextRequest("http://localhost:3000/api/projects");
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.data[0]).toEqual(
+        expect.objectContaining({
+          id: 67,
+          client: "Hillsdale Holdings",
+        }),
+      );
+    });
+
     it("handles pagination parameters", async () => {
       mockServiceClient = {
         from: jest.fn((table: string) => {

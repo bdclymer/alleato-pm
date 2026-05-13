@@ -28,6 +28,8 @@ const CreateProjectSchema = z
 type ProjectApiRow = Record<string, unknown> & {
   id: number;
   client?: string | null;
+  client_id?: string | null;
+  company_id?: string | null;
 };
 
 type PrimeContractClientRow = {
@@ -41,7 +43,15 @@ type CompanyNameRow = {
   name: string | null;
 };
 
-async function applyPrimeContractClientNames(
+function cleanClientName(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^E2E-/i.test(trimmed)) return null;
+  return trimmed;
+}
+
+async function applyResolvedClientNames(
   supabase: ReturnType<typeof createServiceClient>,
   projects: ProjectApiRow[],
 ): Promise<ProjectApiRow[]> {
@@ -76,9 +86,22 @@ async function applyPrimeContractClientNames(
     }
   }
 
-  const companyIds = Array.from(new Set(primeClientByProjectId.values()));
+  const projectCompanyIds = projects.flatMap((project) => [
+    project.client_id,
+    project.company_id,
+  ]);
+  const companyIds = Array.from(
+    new Set(
+      [...projectCompanyIds, ...primeClientByProjectId.values()].filter(
+        (id): id is string => typeof id === "string" && id.trim().length > 0,
+      ),
+    ),
+  );
   if (companyIds.length === 0) {
-    return projects;
+    return projects.map((project) => ({
+      ...project,
+      client: cleanClientName(project.client),
+    }));
   }
 
   const { data: companies, error: companiesError } = await supabase
@@ -98,14 +121,19 @@ async function applyPrimeContractClientNames(
 
   const companyNameById = new Map(
     ((companies ?? []) as CompanyNameRow[])
-      .filter((company) => company.name)
-      .map((company) => [company.id, company.name as string]),
+      .map((company) => [company.id, cleanClientName(company.name)]),
   );
 
   return projects.map((project) => {
-    const companyId = primeClientByProjectId.get(project.id);
-    const clientName = companyId ? companyNameById.get(companyId) : null;
-    return clientName ? { ...project, client: clientName } : project;
+    const clientName =
+      (project.client_id ? companyNameById.get(project.client_id) : null) ??
+      cleanClientName(project.client) ??
+      (project.company_id ? companyNameById.get(project.company_id) : null) ??
+      (primeClientByProjectId.get(project.id)
+        ? companyNameById.get(primeClientByProjectId.get(project.id) as string)
+        : null);
+
+    return clientName ? { ...project, client: clientName } : { ...project, client: null };
   });
 }
 
@@ -225,13 +253,13 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
     });
   }
 
-  const projectsWithPrimeContractClients = await applyPrimeContractClientNames(
+  const projectsWithResolvedClients = await applyResolvedClientNames(
     supabase,
     (data ?? []) as ProjectApiRow[],
   );
 
   return NextResponse.json({
-    data: projectsWithPrimeContractClients,
+    data: projectsWithResolvedClients,
     meta: {
       page,
       limit,
