@@ -145,7 +145,7 @@ def run_graph_sync(
     *,
     run_embedding: bool = True,
     run_teams_compiler: bool = True,
-    embed_limit: int = 200,
+    embed_limit: int = 25,
     teams_compiler_batch_size: int = 25,
 ) -> dict:
     """

@@ -492,14 +492,23 @@ export interface RawPurchaseOrderDetail {
   LineNbr?: AcuField<number>;
   InventoryID?: AcuField<string>;
   Description?: AcuField<string>;
+  TransactionDescription?: AcuField<string>;
   Quantity?: AcuField<number>;
+  Qty?: AcuField<number>;
+  OrderQty?: AcuField<number>;
   UOM?: AcuField<string>;
   UnitCost?: AcuField<number>;
+  Amount?: AcuField<number>;
   ExtendedCost?: AcuField<number>;
+  ExtCost?: AcuField<number>;
   ReceivedQty?: AcuField<number>;
   BilledQty?: AcuField<number>;
   ProjectID?: AcuField<string>;
+  Project?: AcuField<string>;
+  ProjectCD?: AcuField<string>;
   ProjectTaskID?: AcuField<string>;
+  CostCode?: AcuField<string>;
+  CostCodeID?: AcuField<string>;
   LineStatus?: AcuField<string>;
 }
 
@@ -508,6 +517,9 @@ export interface RawPurchaseOrder {
   OrderType?: AcuField<string>;
   Vendor: AcuField<string>;
   VendorRef?: AcuField<string>;
+  ProjectID?: AcuField<string>;
+  Project?: AcuField<string>;
+  ProjectCD?: AcuField<string>;
   Date: AcuField<string>;
   PromisedOn?: AcuField<string>;
   Status: AcuField<string>;
@@ -524,14 +536,23 @@ export interface FlatPurchaseOrderDetail {
   LineNbr?: number;
   InventoryID?: string;
   Description?: string;
+  TransactionDescription?: string;
   Quantity?: number;
+  Qty?: number;
+  OrderQty?: number;
   UOM?: string;
   UnitCost?: number;
+  Amount?: number;
   ExtendedCost?: number;
+  ExtCost?: number;
   ReceivedQty?: number;
   BilledQty?: number;
   ProjectID?: string;
+  Project?: string;
+  ProjectCD?: string;
   ProjectTaskID?: string;
+  CostCode?: string;
+  CostCodeID?: string;
   LineStatus?: string;
 }
 
@@ -540,6 +561,9 @@ export interface FlatPurchaseOrder {
   OrderType?: string;
   Vendor: string;
   VendorRef?: string;
+  ProjectID?: string;
+  Project?: string;
+  ProjectCD?: string;
   Date: string;
   PromisedOn?: string;
   Status: string;
@@ -558,15 +582,23 @@ export interface FlatPurchaseOrder {
 
 export interface RawSubcontractDetail {
   LineNbr?: AcuField<number>;
+  LineNumber?: AcuField<number>;
   InventoryID?: AcuField<string>;
   Description?: AcuField<string>;
+  TransactionDescription?: AcuField<string>;
   Quantity?: AcuField<number>;
+  Qty?: AcuField<number>;
   UOM?: AcuField<string>;
   UnitCost?: AcuField<number>;
   Amount?: AcuField<number>;
+  ExtCost?: AcuField<number>;
+  ExtendedCost?: AcuField<number>;
   BilledAmount?: AcuField<number>;
   ProjectID?: AcuField<string>;
+  Project?: AcuField<string>;
+  ProjectCD?: AcuField<string>;
   ProjectTaskID?: AcuField<string>;
+  CostCode?: AcuField<string>;
   CostCodeID?: AcuField<string>;
   LineStatus?: AcuField<string>;
 }
@@ -588,15 +620,23 @@ export interface RawSubcontract {
 
 export interface FlatSubcontractDetail {
   LineNbr?: number;
+  LineNumber?: number;
   InventoryID?: string;
   Description?: string;
+  TransactionDescription?: string;
   Quantity?: number;
+  Qty?: number;
   UOM?: string;
   UnitCost?: number;
   Amount?: number;
+  ExtCost?: number;
+  ExtendedCost?: number;
   BilledAmount?: number;
   ProjectID?: string;
+  Project?: string;
+  ProjectCD?: string;
   ProjectTaskID?: string;
+  CostCode?: string;
   CostCodeID?: string;
   LineStatus?: string;
 }

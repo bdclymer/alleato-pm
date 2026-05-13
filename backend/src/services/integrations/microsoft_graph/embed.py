@@ -523,7 +523,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
         for doc in (pending_resp.data or []):
             by_id[doc["id"]] = doc
 
-        repair_scan_limit = max(limit * 50, 1_000)
+        repair_scan_limit = max(limit * 3, 100)
         page_size = 500
         scanned = 0
         while len(by_id) < limit and scanned < repair_scan_limit:

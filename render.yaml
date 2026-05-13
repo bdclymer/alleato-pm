@@ -116,14 +116,14 @@ services:
         sync: false
 
   # Runs Microsoft Graph sync (Outlook, Teams, OneDrive) every 30 minutes.
-  # Uses the same Docker image as the web service — runs the sync directly
-  # without any HTTP call, so it works even when the web service is spun down.
+  # Staggered to :05/:35 so it doesn't collide with teams-channel-sync at :00/:30.
+  # embed_limit is capped at 25 per run to avoid OOM-killing the DB with bulk vector writes.
   - type: cron
     name: alleato-graph-sync
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "*/30 * * * *"
+    schedule: "5,35 * * * *"
     dockerCommand: >-
       python3 -c "
       import json, os, sys;

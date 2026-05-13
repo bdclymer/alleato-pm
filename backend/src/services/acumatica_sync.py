@@ -164,6 +164,23 @@ def _subcontract_project_code(record: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def _purchase_order_project_code(record: Dict[str, Any]) -> Optional[str]:
+    # Purchase orders can carry project only on detail lines, just like subcontracts.
+    header_project = _first_text(record, ("Project", "ProjectID", "ProjectCD"))
+    if header_project:
+        return header_project
+
+    details = record.get("Details") or []
+    if isinstance(details, list):
+        for detail in details:
+            if not isinstance(detail, dict):
+                continue
+            project = _first_text(detail, ("Project", "ProjectID", "ProjectCD"))
+            if project:
+                return project
+    return None
+
+
 class AcumaticaSession:
     def __init__(self) -> None:
         self.base_url = DEFAULT_BASE_URL
@@ -1386,7 +1403,7 @@ class AcumaticaFinancialSyncService:
 
     def _sync_purchase_orders(self, last_cursor: Optional[str]) -> EntitySyncResult:
         result = EntitySyncResult(entity="purchase_orders")
-        records = self.session.fetch_entity("PurchaseOrder", top=100, modified_after=last_cursor)
+        records = self.session.fetch_entity("PurchaseOrder", top=100, expand="Details", modified_after=last_cursor)
         result.fetched = len(records)
         result.cursor = self._max_cursor(records) or _now_iso()
 
@@ -1402,7 +1419,7 @@ class AcumaticaFinancialSyncService:
                 result.skipped += 1
                 continue
 
-            project_code = _first_text(purchase_order, ("Project", "ProjectID", "ProjectCD"))
+            project_code = _purchase_order_project_code(purchase_order)
             project_row = self._resolve_project_row(project_code)
             vendor_acumatica_id = purchase_order.get("VendorID")
             vendor_row = self.vendor_map.get(vendor_acumatica_id) if vendor_acumatica_id else None

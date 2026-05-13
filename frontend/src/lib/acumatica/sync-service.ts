@@ -18,13 +18,17 @@ import type {
   FlatPayment,
   FlatProjectTransaction,
   FlatProjectTransactionDetail,
+  FlatPurchaseOrderDetail,
   FlatPurchaseOrder,
+  FlatSubcontractDetail,
   FlatSubcontract,
   FlatVendor,
 } from "./types";
 
 type DbClient = SupabaseClient<Database>;
 type PublicTables = Database["public"]["Tables"];
+type SubcontractSovInsert = PublicTables["subcontract_sov_items"]["Insert"];
+type PurchaseOrderSovInsert = PublicTables["purchase_order_sov_items"]["Insert"];
 type AcumaticaApBillProjection = Pick<
   PublicTables["acumatica_ap_bills"]["Row"],
   | "id"
@@ -958,21 +962,148 @@ export async function syncARPayments(
 // Subcontracts Sync (Acumatica Subcontract → subcontracts)
 // ---------------------------------------------------------------------------
 
-function mapSubcontractStatus(acuStatus: string): string {
-  switch (acuStatus) {
-    case "Open":
-      return "approved";
-    case "Closed":
-      return "closed";
-    case "Hold":
-      return "draft";
-    case "Pending Print":
-      return "out_for_signature";
-    case "Pending Email":
-      return "out_for_signature";
+export function mapCommitmentStatusFromAcumatica(acuStatus?: string | null): string {
+  switch (acuStatus?.toLowerCase()) {
+    case "open":
+    case "pending receipt":
+      return "Approved";
+    case "closed":
+    case "completed":
+      return "Complete";
+    case "pending approval":
+    case "pending print":
+    case "pending email":
+      return "Out for Signature";
+    case "canceled":
+    case "cancelled":
+      return "Terminated";
+    case "hold":
+    case "on hold":
     default:
-      return "draft";
+      return "Draft";
   }
+}
+
+function firstText(...values: Array<string | null | undefined>): string | null {
+  for (const value of values) {
+    const normalized = value?.trim();
+    if (normalized) return normalized;
+  }
+  return null;
+}
+
+function projectCodeAliases(value: string | null | undefined): Set<string> {
+  const aliases = new Set<string>();
+  const raw = value?.trim();
+  if (!raw) return aliases;
+
+  aliases.add(raw);
+  const compact = raw.replace(/[^a-zA-Z0-9]/g, "");
+  if (compact) {
+    aliases.add(compact);
+    if (/^\d{4,}$/.test(compact)) aliases.add(`${compact.slice(0, 2)}-${compact.slice(2)}`);
+  }
+
+  return aliases;
+}
+
+function detailProjectCode(detail: FlatSubcontractDetail | FlatPurchaseOrderDetail): string | null {
+  return firstText(detail.ProjectID, detail.Project, detail.ProjectCD);
+}
+
+export function subcontractMatchesProject(subcontract: FlatSubcontract, acuProjectId: string): boolean {
+  const projectAliases = projectCodeAliases(acuProjectId);
+  const headerProject = firstText(subcontract.ProjectID);
+  if (headerProject && projectAliases.has(headerProject)) return true;
+  return Boolean(subcontract.Details?.some((detail) => {
+    const detailProject = detailProjectCode(detail);
+    return detailProject ? projectAliases.has(detailProject) : false;
+  }));
+}
+
+export function purchaseOrderMatchesProject(purchaseOrder: FlatPurchaseOrder, acuProjectId: string): boolean {
+  const projectAliases = projectCodeAliases(acuProjectId);
+  const headerProject = firstText(purchaseOrder.ProjectID, purchaseOrder.Project, purchaseOrder.ProjectCD);
+  if (headerProject && projectAliases.has(headerProject)) return true;
+  return Boolean(purchaseOrder.Details?.some((detail) => {
+    const detailProject = detailProjectCode(detail);
+    return detailProject ? projectAliases.has(detailProject) : false;
+  }));
+}
+
+export function buildSubcontractExternalKey(subcontractNbr: string): string {
+  return `Subcontract|${subcontractNbr}`;
+}
+
+export function buildPurchaseOrderExternalKey(orderNbr: string, orderType?: string | null): string {
+  return `${orderType || "PurchaseOrder"}|${orderNbr}`;
+}
+
+function lineNumber(detail: FlatSubcontractDetail | FlatPurchaseOrderDetail): number | null {
+  const value = detail.LineNbr ?? ("LineNumber" in detail ? detail.LineNumber : undefined);
+  return value == null ? null : Number(value);
+}
+
+function lineAmount(detail: FlatSubcontractDetail | FlatPurchaseOrderDetail): number {
+  return detail.Amount ?? detail.ExtCost ?? detail.ExtendedCost ?? 0;
+}
+
+function lineDescription(detail: FlatSubcontractDetail | FlatPurchaseOrderDetail): string | null {
+  return detail.Description ?? detail.TransactionDescription ?? null;
+}
+
+function lineQuantity(detail: FlatSubcontractDetail | FlatPurchaseOrderDetail): number | null {
+  return detail.Quantity ?? detail.Qty ?? ("OrderQty" in detail ? detail.OrderQty : undefined) ?? null;
+}
+
+function lineCostCode(detail: FlatSubcontractDetail | FlatPurchaseOrderDetail): string | null {
+  return ("CostCode" in detail ? detail.CostCode : undefined) ?? detail.CostCodeID ?? null;
+}
+
+function mapSubcontractSovItems(
+  subcontractId: string,
+  details: FlatSubcontractDetail[] | undefined,
+  now: string,
+): SubcontractSovInsert[] {
+  return (details ?? []).flatMap((detail) => {
+    const number = lineNumber(detail);
+    if (number == null) return [];
+    return [{
+      subcontract_id: subcontractId,
+      line_number: number,
+      acumatica_line_nbr: number,
+      description: lineDescription(detail),
+      budget_code: lineCostCode(detail),
+      quantity: lineQuantity(detail),
+      unit_cost: detail.UnitCost ?? null,
+      unit_of_measure: detail.UOM ?? null,
+      amount: Math.max(0, lineAmount(detail)),
+      updated_at: now,
+    }];
+  });
+}
+
+function mapPurchaseOrderSovItems(
+  purchaseOrderId: string,
+  details: FlatPurchaseOrderDetail[] | undefined,
+  now: string,
+): PurchaseOrderSovInsert[] {
+  return (details ?? []).flatMap((detail) => {
+    const number = lineNumber(detail);
+    if (number == null) return [];
+    return [{
+      purchase_order_id: purchaseOrderId,
+      line_number: number,
+      acumatica_line_nbr: number,
+      description: lineDescription(detail),
+      budget_code: lineCostCode(detail),
+      quantity: lineQuantity(detail),
+      uom: detail.UOM ?? null,
+      unit_cost: detail.UnitCost ?? null,
+      amount: lineAmount(detail),
+      updated_at: now,
+    }];
+  });
 }
 
 /**
@@ -983,15 +1114,29 @@ function mapSubcontractStatus(acuStatus: string): string {
 export async function syncSubcontracts(
   projectId: number,
   userId: string | null,
+  supabaseClient?: DbClient,
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
 
   const acuClient = createAcumaticaClient();
   await acuClient.login();
 
-  const acuSubcontracts = await acuClient.getSubcontracts({ $top: 500 });
+  const acuSubcontracts: FlatSubcontract[] = [];
+  let subcontractSkip = 0;
+  const subcontractPageSize = 100;
+  while (true) {
+    const page = await acuClient.getSubcontracts({
+      $top: subcontractPageSize,
+      $skip: subcontractSkip,
+      $expand: "Details",
+    });
+    if (page.length === 0) break;
+    acuSubcontracts.push(...page);
+    if (page.length < subcontractPageSize) break;
+    subcontractSkip += subcontractPageSize;
+  }
 
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   // Get project's Acumatica ID for filtering
   const { data: project } = await supabase
@@ -1004,7 +1149,7 @@ export async function syncSubcontracts(
 
   // Filter to this project's subcontracts
   const projectSubs = acuProjectId
-    ? acuSubcontracts.filter((s) => s.ProjectID === acuProjectId)
+    ? acuSubcontracts.filter((s) => subcontractMatchesProject(s, acuProjectId))
     : acuSubcontracts;
 
   // Load existing subcontracts
@@ -1040,37 +1185,66 @@ export async function syncSubcontracts(
 
   for (const sub of projectSubs) {
     const subNbr = sub.SubcontractNbr;
+    const externalKey = buildSubcontractExternalKey(subNbr);
     const contractDate = sub.Date ? sub.Date.split("T")[0] : now.split("T")[0];
 
     const fields = {
       title: sub.Description ?? `Subcontract ${subNbr}`,
-      status: mapSubcontractStatus(sub.Status),
+      status: mapCommitmentStatusFromAcumatica(sub.Status),
       description: sub.Description ?? null,
       contract_date: contractDate,
       contract_company_id: vendorByAcuId.get(sub.Vendor) ?? null,
       executed: sub.Status === "Open" || sub.Status === "Closed",
-      acumatica_external_key: subNbr,
+      acumatica_external_key: externalKey,
     };
 
     try {
-      const existingId = byExternalKey.get(subNbr) ?? byContractNumber.get(subNbr);
+      const existingId = byExternalKey.get(externalKey) ?? byExternalKey.get(subNbr) ?? byContractNumber.get(subNbr);
+      let subcontractId = existingId;
 
       if (existingId) {
         const { error } = await supabase
           .from("subcontracts")
           .update(fields)
           .eq("id", existingId);
-        if (error) result.errors.push(`Sub ${subNbr}: ${error.message}`);
-        else result.updated++;
+        if (error) {
+          result.errors.push(`Sub ${subNbr}: ${error.message}`);
+          continue;
+        }
+        result.updated++;
       } else {
-        const { error } = await supabase.from("subcontracts").insert({
+        const { data: inserted, error } = await supabase.from("subcontracts").insert({
           ...fields,
           contract_number: subNbr,
           project_id: projectId,
           created_by: userId,
-        });
-        if (error) result.errors.push(`Sub ${subNbr}: ${error.message}`);
-        else result.created++;
+        }).select("id").single();
+        if (error || !inserted) {
+          result.errors.push(`Sub ${subNbr}: ${error?.message ?? "Insert failed"}`);
+          continue;
+        }
+        subcontractId = inserted.id;
+        result.created++;
+      }
+
+      if (subcontractId) {
+        const { error: deleteLinesError } = await supabase
+          .from("subcontract_sov_items")
+          .delete()
+          .eq("subcontract_id", subcontractId)
+          .not("acumatica_line_nbr", "is", null);
+        if (deleteLinesError) {
+          result.errors.push(`Sub ${subNbr}: failed to clear Acumatica SOV lines (${deleteLinesError.message})`);
+          continue;
+        }
+
+        const lineItems = mapSubcontractSovItems(subcontractId, sub.Details, now);
+        if (lineItems.length > 0) {
+          const { error: insertLinesError } = await supabase.from("subcontract_sov_items").insert(lineItems);
+          if (insertLinesError) {
+            result.errors.push(`Sub ${subNbr}: failed to insert SOV lines (${insertLinesError.message})`);
+          }
+        }
       }
     } catch (err) {
       result.errors.push(`Sub ${subNbr}: ${err instanceof Error ? err.message : String(err)}`);
@@ -1084,23 +1258,6 @@ export async function syncSubcontracts(
 // Purchase Orders Sync (Acumatica PO → purchase_orders)
 // ---------------------------------------------------------------------------
 
-function mapPOStatus(acuStatus: string): string {
-  switch (acuStatus) {
-    case "Open":
-      return "approved";
-    case "Closed":
-      return "closed";
-    case "Hold":
-      return "draft";
-    case "Pending Print":
-      return "out_for_signature";
-    case "Pending Email":
-      return "out_for_signature";
-    default:
-      return "draft";
-  }
-}
-
 /**
  * Pull Purchase Orders from Acumatica and upsert into the purchase_orders table.
  *
@@ -1109,6 +1266,7 @@ function mapPOStatus(acuStatus: string): string {
 export async function syncPurchaseOrders(
   projectId: number,
   userId: string | null,
+  supabaseClient?: DbClient,
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
 
@@ -1131,7 +1289,7 @@ export async function syncPurchaseOrders(
     poSkip += poPageSize;
   }
 
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   // Get project's Acumatica ID for filtering
   const { data: project } = await supabase
@@ -1144,9 +1302,7 @@ export async function syncPurchaseOrders(
 
   // Filter POs: check if any line item references this project
   const projectPOs = acuProjectId
-    ? acuPOs.filter((po) =>
-        po.Details?.some((d) => d.ProjectID === acuProjectId),
-      )
+    ? acuPOs.filter((po) => purchaseOrderMatchesProject(po, acuProjectId))
     : acuPOs;
 
   // Load existing purchase_orders
@@ -1182,39 +1338,68 @@ export async function syncPurchaseOrders(
 
   for (const po of projectPOs) {
     const orderNbr = po.OrderNbr;
+    const externalKey = buildPurchaseOrderExternalKey(orderNbr, po.OrderType);
     const orderDate = po.Date ? po.Date.split("T")[0] : now.split("T")[0];
 
     const fields = {
       title: po.Description ?? `PO ${orderNbr}`,
-      status: mapPOStatus(po.Status),
+      status: mapCommitmentStatusFromAcumatica(po.Status),
       description: po.Description ?? null,
       contract_date: orderDate,
       delivery_date: po.PromisedOn ? po.PromisedOn.split("T")[0] : null,
       contract_company_id: vendorByAcuId.get(po.Vendor) ?? null,
       executed: po.Status === "Open" || po.Status === "Closed",
       payment_terms: null as string | null,
-      acumatica_external_key: orderNbr,
+      acumatica_external_key: externalKey,
     };
 
     try {
-      const existingId = byExternalKey.get(orderNbr) ?? byContractNumber.get(orderNbr);
+      const existingId = byExternalKey.get(externalKey) ?? byExternalKey.get(orderNbr) ?? byContractNumber.get(orderNbr);
+      let purchaseOrderId = existingId;
 
       if (existingId) {
         const { error } = await supabase
           .from("purchase_orders")
           .update(fields)
           .eq("id", existingId);
-        if (error) result.errors.push(`PO ${orderNbr}: ${error.message}`);
-        else result.updated++;
+        if (error) {
+          result.errors.push(`PO ${orderNbr}: ${error.message}`);
+          continue;
+        }
+        result.updated++;
       } else {
-        const { error } = await supabase.from("purchase_orders").insert({
+        const { data: inserted, error } = await supabase.from("purchase_orders").insert({
           ...fields,
           contract_number: orderNbr,
           project_id: projectId,
           created_by: userId,
-        });
-        if (error) result.errors.push(`PO ${orderNbr}: ${error.message}`);
-        else result.created++;
+        }).select("id").single();
+        if (error || !inserted) {
+          result.errors.push(`PO ${orderNbr}: ${error?.message ?? "Insert failed"}`);
+          continue;
+        }
+        purchaseOrderId = inserted.id;
+        result.created++;
+      }
+
+      if (purchaseOrderId) {
+        const { error: deleteLinesError } = await supabase
+          .from("purchase_order_sov_items")
+          .delete()
+          .eq("purchase_order_id", purchaseOrderId)
+          .not("acumatica_line_nbr", "is", null);
+        if (deleteLinesError) {
+          result.errors.push(`PO ${orderNbr}: failed to clear Acumatica SOV lines (${deleteLinesError.message})`);
+          continue;
+        }
+
+        const lineItems = mapPurchaseOrderSovItems(purchaseOrderId, po.Details, now);
+        if (lineItems.length > 0) {
+          const { error: insertLinesError } = await supabase.from("purchase_order_sov_items").insert(lineItems);
+          if (insertLinesError) {
+            result.errors.push(`PO ${orderNbr}: failed to insert SOV lines (${insertLinesError.message})`);
+          }
+        }
       }
     } catch (err) {
       result.errors.push(`PO ${orderNbr}: ${err instanceof Error ? err.message : String(err)}`);
@@ -1234,10 +1419,11 @@ export async function syncPurchaseOrders(
 export async function syncCommitments(
   projectId: number,
   userId: string | null,
+  supabaseClient?: DbClient,
 ): Promise<SyncResult> {
   const [subResult, poResult] = await Promise.all([
-    syncSubcontracts(projectId, userId),
-    syncPurchaseOrders(projectId, userId),
+    syncSubcontracts(projectId, userId, supabaseClient),
+    syncPurchaseOrders(projectId, userId, supabaseClient),
   ]);
 
   return {

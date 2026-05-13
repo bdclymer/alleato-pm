@@ -1,4 +1,9 @@
 import type { FlatPurchaseOrder } from "../types";
+import {
+  buildPurchaseOrderExternalKey,
+  mapCommitmentStatusFromAcumatica,
+  purchaseOrderMatchesProject,
+} from "../sync-service";
 
 /**
  * Regression test for the $expand=Details bug in syncPurchaseOrders.
@@ -16,7 +21,7 @@ function filterPOsByProject(
   pos: FlatPurchaseOrder[],
   acuProjectId: string,
 ): FlatPurchaseOrder[] {
-  return pos.filter((po) => po.Details?.some((d) => d.ProjectID === acuProjectId));
+  return pos.filter((po) => purchaseOrderMatchesProject(po, acuProjectId));
 }
 
 describe("syncPurchaseOrders — project filter", () => {
@@ -33,17 +38,22 @@ describe("syncPurchaseOrders — project filter", () => {
     expect(result.map((p) => p.OrderNbr)).toEqual(["PO-1", "PO-3"]);
   });
 
-  it("drops ALL POs when Details is undefined — this was the pre-fix behavior", () => {
-    // Simulates the response shape returned WITHOUT $expand=Details:
-    // Details is absent, so po.Details?.some(...) is undefined (falsy).
+  it("keeps a PO with a header project even when Details is absent", () => {
     const posWithoutDetails: FlatPurchaseOrder[] = [
-      { OrderNbr: "PO-1", Vendor: "V1", Date: "2025-01-01", Status: "Open" },
+      { OrderNbr: "PO-1", Vendor: "V1", ProjectID: PROJECT, Date: "2025-01-01", Status: "Open" },
       { OrderNbr: "PO-2", Vendor: "V2", Date: "2025-01-02", Status: "Open" },
     ];
 
     const result = filterPOsByProject(posWithoutDetails, PROJECT);
-    // Before fix: all POs were silently dropped when acuProjectId was set.
-    expect(result).toHaveLength(0);
+    expect(result.map((p) => p.OrderNbr)).toEqual(["PO-1"]);
+  });
+
+  it("matches normalized project aliases from detail lines", () => {
+    const pos: FlatPurchaseOrder[] = [
+      { OrderNbr: "PO-1", Vendor: "V1", Date: "2025-01-01", Status: "Open", Details: [{ ProjectID: "25127" }] },
+    ];
+
+    expect(filterPOsByProject(pos, "25-127").map((p) => p.OrderNbr)).toEqual(["PO-1"]);
   });
 
   it("excludes POs whose details only reference other projects", () => {
@@ -52,5 +62,13 @@ describe("syncPurchaseOrders — project filter", () => {
     ];
 
     expect(filterPOsByProject(pos, PROJECT)).toHaveLength(0);
+  });
+
+  it("uses the canonical Acumatica external key and valid app statuses", () => {
+    expect(buildPurchaseOrderExternalKey("PO-001", "Regular Order")).toBe("Regular Order|PO-001");
+    expect(buildPurchaseOrderExternalKey("PO-002")).toBe("PurchaseOrder|PO-002");
+    expect(mapCommitmentStatusFromAcumatica("Open")).toBe("Approved");
+    expect(mapCommitmentStatusFromAcumatica("Pending Email")).toBe("Out for Signature");
+    expect(mapCommitmentStatusFromAcumatica("Closed")).toBe("Complete");
   });
 });
