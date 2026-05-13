@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { useProject } from "@/contexts/project-context";
 import { useDeferredMount } from "@/hooks/use-deferred-mount";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
+import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
@@ -82,6 +83,7 @@ export default function MainLayout({
   const isTeamChatPage = pathname?.startsWith("/team-chat");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
   const isAiAssistant = pathname?.startsWith("/ai-assistant");
+  const isProcoreReferenceOpen = useProcorePanelStore((state) => state.open);
   if (isTeamChatPage) {
     return (
       <SidebarProvider defaultOpen={false}>
@@ -129,7 +131,7 @@ export default function MainLayout({
                 <React.Fragment key="route-content">{children}</React.Fragment>
                 {!isDrawingViewer && <SiteFooter key="site-footer" />}
               </main>
-              {shouldMountDeferredPanels && (
+              {shouldMountDeferredPanels && isProcoreReferenceOpen && (
                 <ProcoreReferencePanel key="procore-reference-panel" />
               )}
             </div>
