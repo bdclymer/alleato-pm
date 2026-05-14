@@ -54,6 +54,11 @@ const SOURCE_LOOKUP_PATTERNS = [
   /\bshow me\b.*\b(where|source|messages?|emails?|e-mails?|inbox|meetings?)\b/i,
 ];
 
+const EXPLICIT_SOURCE_LOOKUP_PATTERNS = [
+  /\b(look through|search|find|check|pull up|scan|show me)\b.{0,60}\b(teams|messages?|chats?|emails?|e-mails?|inbox|outlook|meetings?|transcripts?|documents?)\b/i,
+  /\b(teams|messages?|chats?|emails?|e-mails?|inbox|outlook|meetings?|transcripts?|documents?)\b.{0,60}\b(source|evidence|signal|chatter|discussion|thread|conversation|records?)\b/i,
+];
+
 const EXTERNAL_RESEARCH_PATTERNS = [
   /\b(web search|search the web|live web|internet|online sources?|external sources?)\b/i,
   /\b(current|latest|up[- ]?to[- ]?date)\b.{0,80}\b(requirements?|regulations?|rules?|ordinance|zoning|code|market|competitors?)\b/i,
@@ -98,6 +103,10 @@ function isProjectStatusBriefingPrompt(text: string): boolean {
   );
 }
 
+function isExplicitSourceLookupPrompt(text: string): boolean {
+  return EXPLICIT_SOURCE_LOOKUP_PATTERNS.some((pattern) => pattern.test(text));
+}
+
 export function classifyAssistantIntent(
   message: string,
   options?: IntentClassificationOptions,
@@ -126,6 +135,10 @@ export function classifyAssistantIntent(
 
   if (EXTERNAL_RESEARCH_PATTERNS.some((pattern) => pattern.test(text))) {
     return "external_research";
+  }
+
+  if (isExplicitSourceLookupPrompt(text)) {
+    return "source_lookup";
   }
 
   // With a pinned project, broad owner/status phrasing should stay on the

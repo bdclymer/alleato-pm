@@ -54,6 +54,20 @@ describe("intent router", () => {
     expect(shouldUsePacketFirstIntent(intent)).toBe(false);
   });
 
+  it("routes explicit Teams lookup prompts to source lookup even when a project is selected", () => {
+    const prompts = [
+      "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
+      "Search Teams messages for the latest closeout discussion.",
+      "Check Outlook email for the most recent owner thread.",
+    ];
+
+    for (const prompt of prompts) {
+      const intent = classifyAssistantIntent(prompt, { selectedProjectId: 43 });
+      expect(intent).toBe("source_lookup");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    }
+  });
+
   it("routes explicit web-search source prompts away from internal source lookup", () => {
     const prompts = [
       "Branding question: What are the PUD requirements for Carmel, Indiana planned unit developments? Use web search and cite the sources you use.",
