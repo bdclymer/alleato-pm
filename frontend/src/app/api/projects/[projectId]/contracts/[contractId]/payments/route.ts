@@ -55,7 +55,7 @@ export const GET = withApiGuardrails(
 
     const { data: contract, error: contractError } = await supabase
       .from("prime_contracts")
-      .select("contract_number, projects!inner(acumatica_project_id)")
+      .select("contract_number")
       .eq("id", contractId)
       .eq("project_id", projectIdNum)
       .single();
@@ -66,6 +66,12 @@ export const GET = withApiGuardrails(
         { status: 400 },
       );
     }
+
+    const { data: projectRow } = await supabase
+      .from("projects")
+      .select("acumatica_project_id")
+      .eq("id", projectIdNum)
+      .maybeSingle();
 
     const { data, error } = await supabase
       .from("prime_contract_payments")
@@ -91,12 +97,9 @@ export const GET = withApiGuardrails(
       );
     }
 
-    const projectJoin = Array.isArray(contract.projects)
-      ? contract.projects[0]
-      : contract.projects;
     const matchTokens = getContractMatchTokens(
       contract.contract_number,
-      projectJoin?.acumatica_project_id ?? null,
+      projectRow?.acumatica_project_id ?? null,
     );
     const filteredPayments = (data ?? []).filter((payment) =>
       isLikelyContractPayment(payment, matchTokens),
