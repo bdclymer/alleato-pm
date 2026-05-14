@@ -177,7 +177,11 @@ function parseDetails(workbook: WorkBook): {
       continue;
     }
 
-    if (!costCode || costCode.toLowerCase() === "total" || costCode.endsWith("-0000")) {
+    if (
+      !costCode ||
+      costCode.toLowerCase() === "total" ||
+      costCode.endsWith("-0000")
+    ) {
       skippedRows += 1;
       continue;
     }
@@ -226,10 +230,15 @@ function parseDetails(workbook: WorkBook): {
 }
 
 export function isAlleatoEstimateWorkbook(workbook: WorkBook): boolean {
-  return workbook.SheetNames.includes("General Conditions") && workbook.SheetNames.includes("Details");
+  return (
+    workbook.SheetNames.includes("General Conditions") &&
+    workbook.SheetNames.includes("Details")
+  );
 }
 
-export function parseAlleatoEstimateWorkbook(workbook: WorkBook): EstimateWorkbookImportPreview {
+export function parseAlleatoEstimateWorkbook(
+  workbook: WorkBook,
+): EstimateWorkbookImportPreview {
   const generalConditions = parseGeneralConditions(workbook);
   const details = parseDetails(workbook);
   const rows = [...generalConditions.rows, ...details.rows];
@@ -239,8 +248,91 @@ export function parseAlleatoEstimateWorkbook(workbook: WorkBook): EstimateWorkbo
     kind: "alleato_estimate_workbook",
     rows,
     skippedRows: generalConditions.skippedRows + details.skippedRows,
-    totalBudgetAmount: importableRows.reduce((sum, row) => sum + row.budgetAmount, 0),
+    totalBudgetAmount: importableRows.reduce(
+      (sum, row) => sum + row.budgetAmount,
+      0,
+    ),
     warnings: [...generalConditions.warnings, ...details.warnings],
     sheets: workbook.SheetNames,
   };
+}
+
+export function createAlleatoEstimateWorkbookTemplate(): ArrayBuffer {
+  const workbook = XLSX.utils.book_new();
+
+  const generalConditions = XLSX.utils.aoa_to_sheet([
+    ["Alleato Prime Contract SOV Import Template"],
+    ["Fill rows below. Keep sheet names and column order unchanged."],
+    [
+      "Cost Code",
+      "Description",
+      "Cost Type",
+      "Budget Amount",
+      "Notes",
+      "Unit Qty",
+      "UOM",
+      "Unit Cost",
+    ],
+    [
+      "01-1000",
+      "General Requirements",
+      "Contract Revenue",
+      12500,
+      "",
+      1,
+      "LS",
+      12500,
+    ],
+  ]);
+
+  const details = XLSX.utils.aoa_to_sheet([
+    [
+      "Cost Code",
+      "Cost Type",
+      "Description",
+      "Work Description",
+      "Budget Amount",
+      "Notes",
+    ],
+    ["03-3000", "Contract Revenue", "Concrete", "Slab and footings", 45000, ""],
+    [
+      "09-9000",
+      "Contract Revenue",
+      "Finishes",
+      "Paint and wall finishes",
+      18000,
+      "",
+    ],
+  ]);
+
+  generalConditions["!cols"] = [
+    { wch: 14 },
+    { wch: 32 },
+    { wch: 20 },
+    { wch: 16 },
+    { wch: 24 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 14 },
+  ];
+  details["!cols"] = [
+    { wch: 14 },
+    { wch: 20 },
+    { wch: 28 },
+    { wch: 36 },
+    { wch: 16 },
+    { wch: 24 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    generalConditions,
+    "General Conditions",
+  );
+  XLSX.utils.book_append_sheet(workbook, details, "Details");
+
+  return XLSX.write(workbook, {
+    type: "array",
+    bookType: "xlsx",
+  }) as ArrayBuffer;
 }

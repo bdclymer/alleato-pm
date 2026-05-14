@@ -3,7 +3,9 @@
 export interface BudgetCode {
   id: string;
   code: string;
+  legacyCostCodeId?: string | null;
   costType: string | null;
+  costTypeId?: string | null;
   description: string;
   fullLabel: string;
 }

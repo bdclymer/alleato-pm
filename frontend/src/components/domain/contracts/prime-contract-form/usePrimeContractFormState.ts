@@ -7,19 +7,23 @@ import { useCompanies } from "@/hooks/use-companies";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { getAutoFillData, isDevelopment } from "@/lib/dev-autofill";
 import { apiFetch, apiFetchWithTransientRouteRetry } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { createClient } from "@/lib/supabase/client";
+import type { EstimateWorkbookImportRow } from "@/lib/prime-contracts/estimate-workbook-sov";
 
 import type { BudgetCode, ContractFormData, SOVLineItem } from "./types";
 
 interface PrimeContractFormStateArgs {
   initialData?: Partial<ContractFormData>;
   projectId: string;
+  mode?: "create" | "edit";
   onSubmit: (data: ContractFormData, attachmentFiles?: File[]) => Promise<void>;
 }
 
 export function usePrimeContractFormState({
   initialData,
   projectId,
+  mode = "edit",
   onSubmit,
 }: PrimeContractFormStateArgs) {
   const [formData, setFormData] = React.useState<Partial<ContractFormData>>({
@@ -30,12 +34,19 @@ export function usePrimeContractFormState({
   const [validationErrors, setValidationErrors] = React.useState<
     Partial<Record<"number" | "title", string>>
   >({});
-  const [pendingAttachmentFiles, setPendingAttachmentFiles] = React.useState<File[]>([]);
+  const [pendingAttachmentFiles, setPendingAttachmentFiles] = React.useState<
+    File[]
+  >([]);
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
   const [loadingBudgetCodes, setLoadingBudgetCodes] = React.useState(true);
-  const [openBudgetCodePopover, setOpenBudgetCodePopover] = React.useState<string | null>(null);
+  const [openBudgetCodePopover, setOpenBudgetCodePopover] = React.useState<
+    string | null
+  >(null);
   const [budgetCodeSearchQuery, setBudgetCodeSearchQuery] = React.useState("");
-  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = React.useState(false);
+  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
+    React.useState(false);
+  const [showImportEstimateWorkbook, setShowImportEstimateWorkbook] =
+    React.useState(false);
   const [newBudgetCodeData, setNewBudgetCodeData] = React.useState({
     costCodeId: "",
     costType: "",
@@ -49,14 +60,19 @@ export function usePrimeContractFormState({
     }>
   >([]);
   const [loadingCostCodes, setLoadingCostCodes] = React.useState(false);
-  const [expandedDivisions, setExpandedDivisions] = React.useState<Set<string>>(new Set());
+  const [expandedDivisions, setExpandedDivisions] = React.useState<Set<string>>(
+    new Set(),
+  );
   const [groupedCostCodes, setGroupedCostCodes] = React.useState<
-    Record<string, Array<{
-      id: string;
-      title: string | null;
-      status: string | null;
-      division_title: string | null;
-    }>>
+    Record<
+      string,
+      Array<{
+        id: string;
+        title: string | null;
+        status: string | null;
+        division_title: string | null;
+      }>
+    >
   >({});
   const [showImportFromBudget, setShowImportFromBudget] = React.useState(false);
   const [sovActionMenuKey, setSovActionMenuKey] = React.useState(0);
@@ -74,23 +90,34 @@ export function usePrimeContractFormState({
   const { users: projectUsers } = useProjectUsers(projectId);
   const userOptions = projectUsers.map((u) => ({
     value: u.id,
-    label: [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email || "Unnamed",
+    label:
+      [u.first_name, u.last_name].filter(Boolean).join(" ") ||
+      u.email ||
+      "Unnamed",
   }));
 
   React.useEffect(() => {
     if (companiesError) {
       console.error("[ContractForm] Failed to load companies:", companiesError);
-      toast.error("Could not load company options", { description: companiesError.message });
+      toast.error("Could not load company options", {
+        description: companiesError.message,
+      });
     }
   }, [companiesError]);
 
   React.useEffect(() => {
-    if (!formData.ownerCompanyId || formData.contractCompanyId === formData.ownerCompanyId) {
+    if (
+      !formData.ownerCompanyId ||
+      formData.contractCompanyId === formData.ownerCompanyId
+    ) {
       return;
     }
 
     setFormData((prev) => {
-      if (!prev.ownerCompanyId || prev.contractCompanyId === prev.ownerCompanyId) {
+      if (
+        !prev.ownerCompanyId ||
+        prev.contractCompanyId === prev.ownerCompanyId
+      ) {
         return prev;
       }
 
@@ -100,6 +127,40 @@ export function usePrimeContractFormState({
       };
     });
   }, [formData.contractCompanyId, formData.ownerCompanyId]);
+
+  React.useEffect(() => {
+    if (mode !== "create" || initialData?.number) return;
+
+    const fetchNextContractNumber = async () => {
+      try {
+        const contracts = await apiFetch<Array<{ contract_number: string }>>(
+          `/api/projects/${projectId}/contracts`,
+        );
+        const nums = (contracts ?? [])
+          .map((c) => {
+            const match = /^PC-(\d+)$/.exec(c.contract_number ?? "");
+            return match ? parseInt(match[1], 10) : 0;
+          })
+          .filter((n) => n > 0);
+        const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+        setFormData((prev) => ({
+          ...prev,
+          number: `PC-${String(next).padStart(3, "0")}`,
+        }));
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "prime-contract-create",
+          operation: "prefill-next-contract-number",
+          error,
+          userVisibleFallback:
+            "Contract number auto-fill failed; the field remains editable.",
+          metadata: { projectId },
+        });
+      }
+    };
+
+    void fetchNextContractNumber();
+  }, [mode, projectId, initialData?.number]);
 
   React.useEffect(() => {
     const fetchBudgetCodes = async () => {
@@ -114,7 +175,11 @@ export function usePrimeContractFormState({
         setBudgetCodes(budgetCodes || []);
       } catch (error) {
         console.error("[ContractForm] Failed to load budget codes:", error);
-        toast.error(error instanceof Error ? error.message : "Failed to load budget codes");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to load budget codes",
+        );
         setBudgetCodes([]);
       } finally {
         setLoadingBudgetCodes(false);
@@ -191,20 +256,26 @@ export function usePrimeContractFormState({
     [formData, onSubmit, pendingAttachmentFiles],
   );
 
-  const updateFormData = React.useCallback((updates: Partial<ContractFormData>) => {
-    setFormData((prev) => ({ ...prev, ...updates }));
-  }, []);
+  const updateFormData = React.useCallback(
+    (updates: Partial<ContractFormData>) => {
+      setFormData((prev) => ({ ...prev, ...updates }));
+    },
+    [],
+  );
 
-  const clearValidationError = React.useCallback((field: "number" | "title") => {
-    setValidationErrors((prev) => {
-      if (!prev[field]) {
-        return prev;
-      }
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
-  }, []);
+  const clearValidationError = React.useCallback(
+    (field: "number" | "title") => {
+      setValidationErrors((prev) => {
+        if (!prev[field]) {
+          return prev;
+        }
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    },
+    [],
+  );
 
   const handleCreateCompany = React.useCallback(async () => {
     if (!newCompanyName.trim()) return;
@@ -309,7 +380,8 @@ export function usePrimeContractFormState({
           amount: 0,
           quantity: prev.accountingMethod === "unit_quantity" ? 1 : undefined,
           unitCost: prev.accountingMethod === "unit_quantity" ? 0 : undefined,
-          unitOfMeasure: prev.accountingMethod === "unit_quantity" ? "" : undefined,
+          unitOfMeasure:
+            prev.accountingMethod === "unit_quantity" ? "" : undefined,
           billedToDate: 0,
           amountRemaining: 0,
         };
@@ -331,17 +403,20 @@ export function usePrimeContractFormState({
     }
   }, [availableCostCodes, newBudgetCodeData, projectId]);
 
-  const handleBudgetCodeSelect = React.useCallback((rowId: string, code: BudgetCode) => {
-    setFormData((prev) => ({
-      ...prev,
-      sovItems: (prev.sovItems || []).map((row) =>
-        row.id === rowId
-          ? { ...row, budgetCodeId: code.id, budgetCodeLabel: code.fullLabel }
-          : row,
-      ),
-    }));
-    setOpenBudgetCodePopover(null);
-  }, []);
+  const handleBudgetCodeSelect = React.useCallback(
+    (rowId: string, code: BudgetCode) => {
+      setFormData((prev) => ({
+        ...prev,
+        sovItems: (prev.sovItems || []).map((row) =>
+          row.id === rowId
+            ? { ...row, budgetCodeId: code.id, budgetCodeLabel: code.fullLabel }
+            : row,
+        ),
+      }));
+      setOpenBudgetCodePopover(null);
+    },
+    [],
+  );
 
   const addSOVLine = React.useCallback(() => {
     setFormData((prev) => {
@@ -376,28 +451,31 @@ export function usePrimeContractFormState({
     });
   }, []);
 
-  const updateSOVLine = React.useCallback((id: string, updates: Partial<SOVLineItem>) => {
-    setFormData((prev) => {
-      const items = prev.sovItems || [];
-      const isUnitQuantity = prev.accountingMethod === "unit_quantity";
-      return {
-        ...prev,
-        sovItems: items.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                ...updates,
-                amount:
-                  isUnitQuantity && (updates.quantity || updates.unitCost)
-                    ? (updates.quantity ?? item.quantity ?? 0) *
-                      (updates.unitCost ?? item.unitCost ?? 0)
-                    : updates.amount ?? item.amount,
-              }
-            : item,
-        ),
-      };
-    });
-  }, []);
+  const updateSOVLine = React.useCallback(
+    (id: string, updates: Partial<SOVLineItem>) => {
+      setFormData((prev) => {
+        const items = prev.sovItems || [];
+        const isUnitQuantity = prev.accountingMethod === "unit_quantity";
+        return {
+          ...prev,
+          sovItems: items.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  ...updates,
+                  amount:
+                    isUnitQuantity && (updates.quantity || updates.unitCost)
+                      ? (updates.quantity ?? item.quantity ?? 0) *
+                        (updates.unitCost ?? item.unitCost ?? 0)
+                      : (updates.amount ?? item.amount),
+                }
+              : item,
+          ),
+        };
+      });
+    },
+    [],
+  );
 
   const removeSOVLine = React.useCallback((id: string) => {
     setFormData((prev) => ({
@@ -408,9 +486,8 @@ export function usePrimeContractFormState({
 
   const toggleSovAccountingMethod = React.useCallback(() => {
     setFormData((prev) => {
-      const nextMethod = prev.accountingMethod === "unit_quantity"
-        ? "amount"
-        : "unit_quantity";
+      const nextMethod =
+        prev.accountingMethod === "unit_quantity" ? "amount" : "unit_quantity";
 
       const nextItems = (prev.sovItems || []).map((item) => {
         if (item.isGroup) return item;
@@ -427,7 +504,8 @@ export function usePrimeContractFormState({
           };
         }
 
-        const amount = item.amount ?? ((item.quantity ?? 0) * (item.unitCost ?? 0));
+        const amount =
+          item.amount ?? (item.quantity ?? 0) * (item.unitCost ?? 0);
         return { ...item, amount };
       });
 
@@ -439,59 +517,126 @@ export function usePrimeContractFormState({
     });
   }, []);
 
-  const handleImportFromBudgetSuccess = React.useCallback((items: unknown[]) => {
-    const importedItems = Array.isArray(items) ? items : [];
-    if (importedItems.length === 0) return;
+  const handleImportFromBudgetSuccess = React.useCallback(
+    (items: unknown[]) => {
+      const importedItems = Array.isArray(items) ? items : [];
+      if (importedItems.length === 0) return;
 
-    let unmappedCount = 0;
-    const mapped: SOVLineItem[] = importedItems.map((raw, index) => {
-      const item = raw as {
-        costCode?: string;
-        costCodeDescription?: string;
-        description?: string;
-        originalBudgetAmount?: number;
-        costType?: string;
-      };
+      let unmappedCount = 0;
+      const mapped: SOVLineItem[] = importedItems.map((raw, index) => {
+        const item = raw as {
+          costCode?: string;
+          costCodeDescription?: string;
+          description?: string;
+          originalBudgetAmount?: number;
+          costType?: string;
+        };
 
-      const fallbackLabel = item.costCode
-        ? item.costCodeDescription
-          ? `${item.costCode} - ${item.costCodeDescription}`
-          : item.costCode
-        : "";
+        const fallbackLabel = item.costCode
+          ? item.costCodeDescription
+            ? `${item.costCode} - ${item.costCodeDescription}`
+            : item.costCode
+          : "";
 
-      const matchingCode =
-        budgetCodes.find(
-          (bc) =>
-            bc.code === item.costCode &&
-            (item.costType ? bc.costType === item.costType : true),
-        ) ?? budgetCodes.find((bc) => bc.code === item.costCode);
+        const matchingCode =
+          budgetCodes.find(
+            (bc) =>
+              bc.code === item.costCode &&
+              (item.costType ? bc.costType === item.costType : true),
+          ) ?? budgetCodes.find((bc) => bc.code === item.costCode);
 
-      if (!matchingCode) unmappedCount++;
+        if (!matchingCode) unmappedCount++;
 
-      return {
-        id: `sov-import-${Date.now()}-${index}`,
-        budgetCodeId: matchingCode?.id ?? "",
-        budgetCodeLabel: matchingCode?.fullLabel ?? fallbackLabel,
-        description: item.costCodeDescription || item.description || item.costCode || "",
-        amount: item.originalBudgetAmount || 0,
-        billedToDate: 0,
-        amountRemaining: item.originalBudgetAmount || 0,
-      };
-    });
+        return {
+          id: `sov-import-${Date.now()}-${index}`,
+          budgetCodeId: matchingCode?.id ?? "",
+          budgetCodeLabel: matchingCode?.fullLabel ?? fallbackLabel,
+          description:
+            item.costCodeDescription || item.description || item.costCode || "",
+          amount: item.originalBudgetAmount || 0,
+          billedToDate: 0,
+          amountRemaining: item.originalBudgetAmount || 0,
+        };
+      });
 
-    setFormData((prev) => ({
-      ...prev,
-      sovItems: [...(prev.sovItems || []), ...mapped],
-    }));
+      setFormData((prev) => ({
+        ...prev,
+        sovItems: [...(prev.sovItems || []), ...mapped],
+      }));
 
-    if (unmappedCount > 0) {
-      toast.warning(
-        `${unmappedCount} item${unmappedCount !== 1 ? "s" : ""} could not be matched to a budget code — please select manually before saving.`,
-      );
-    } else {
-      toast.success(`Imported ${mapped.length} SOV line item${mapped.length === 1 ? "" : "s"}`);
-    }
-  }, [budgetCodes]);
+      if (unmappedCount > 0) {
+        toast.warning(
+          `${unmappedCount} item${unmappedCount !== 1 ? "s" : ""} could not be matched to a budget code — please select manually before saving.`,
+        );
+      } else {
+        toast.success(
+          `Imported ${mapped.length} SOV line item${mapped.length === 1 ? "" : "s"}`,
+        );
+      }
+    },
+    [budgetCodes],
+  );
+
+  const handleImportEstimateWorkbookSuccess = React.useCallback(
+    (rows: EstimateWorkbookImportRow[]) => {
+      if (rows.length === 0) return;
+
+      let unmappedCount = 0;
+      const mapped: SOVLineItem[] = rows.map((row, index) => {
+        const matchingCode =
+          budgetCodes.find(
+            (code) =>
+              (code.legacyCostCodeId === row.costCode ||
+                code.code === row.costCode) &&
+              (row.costTypeCode ? code.costType === row.costTypeCode : true),
+          ) ??
+          budgetCodes.find(
+            (code) =>
+              code.legacyCostCodeId === row.costCode ||
+              code.code === row.costCode,
+          );
+
+        if (!matchingCode) unmappedCount++;
+
+        const quantity =
+          row.unitQty && row.unitQty > 0 ? row.unitQty : undefined;
+        const unitCost = quantity ? row.budgetAmount / quantity : undefined;
+
+        return {
+          id: `sov-estimate-import-${Date.now()}-${index}`,
+          budgetCodeId: matchingCode?.id ?? "",
+          budgetCodeLabel:
+            matchingCode?.fullLabel ??
+            `${row.costCode}${row.costTypeCode ? `.${row.costTypeCode}` : ""}`,
+          description: row.workDescription
+            ? `${row.description} - ${row.workDescription}`
+            : row.description,
+          amount: row.budgetAmount,
+          quantity,
+          unitCost,
+          unitOfMeasure: row.unitOfMeasure ?? undefined,
+          billedToDate: 0,
+          amountRemaining: row.budgetAmount,
+        };
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        sovItems: [...(prev.sovItems || []), ...mapped],
+      }));
+
+      if (unmappedCount > 0) {
+        toast.warning(
+          `${unmappedCount} estimate row${unmappedCount === 1 ? "" : "s"} could not be matched to active project budget codes. Select the missing budget codes before saving.`,
+        );
+      } else {
+        toast.success(
+          `Imported ${mapped.length} estimate row${mapped.length === 1 ? "" : "s"} to SOV`,
+        );
+      }
+    },
+    [budgetCodes],
+  );
 
   const handleAttachmentListChange = React.useCallback(
     (nextFiles: NonNullable<ContractFormData["attachments"]>) => {
@@ -535,7 +680,9 @@ export function usePrimeContractFormState({
   const filteredBudgetCodes = React.useMemo(
     () =>
       budgetCodes.filter((code) =>
-        code.fullLabel.toLowerCase().includes(budgetCodeSearchQuery.toLowerCase()),
+        code.fullLabel
+          .toLowerCase()
+          .includes(budgetCodeSearchQuery.toLowerCase()),
       ),
     [budgetCodeSearchQuery, budgetCodes],
   );
@@ -547,7 +694,10 @@ export function usePrimeContractFormState({
     const items = (formData.sovItems || []).filter((item) => !item.isGroup);
     return {
       amount: items.reduce((sum, item) => sum + (item.amount || 0), 0),
-      billedToDate: items.reduce((sum, item) => sum + (item.billedToDate || 0), 0),
+      billedToDate: items.reduce(
+        (sum, item) => sum + (item.billedToDate || 0),
+        0,
+      ),
       amountRemaining: items.reduce(
         (sum, item) => sum + ((item.amount || 0) - (item.billedToDate || 0)),
         0,
@@ -569,6 +719,7 @@ export function usePrimeContractFormState({
     expandedDivisions,
     groupedCostCodes,
     showImportFromBudget,
+    showImportEstimateWorkbook,
     sovActionMenuKey,
     companyOptions,
     companiesLoading,
@@ -594,6 +745,7 @@ export function usePrimeContractFormState({
     removeSOVLine,
     toggleSovAccountingMethod,
     handleImportFromBudgetSuccess,
+    handleImportEstimateWorkbookSuccess,
     handleAttachmentListChange,
     handleFilesSelected,
     handleAutoFill,
@@ -602,6 +754,7 @@ export function usePrimeContractFormState({
     setShowCreateBudgetCodeModal,
     setNewBudgetCodeData,
     setShowImportFromBudget,
+    setShowImportEstimateWorkbook,
     setSovActionMenuKey,
     setShowAddCompany,
     setNewCompanyName,

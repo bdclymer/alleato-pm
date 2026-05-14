@@ -16,7 +16,11 @@ import {
   PrimeContractPrivacySection,
   PrimeContractScopeSection,
 } from "@/components/domain/contracts/prime-contract-form/sections";
-import type { BudgetCode, ContractFormData, SOVLineItem } from "@/components/domain/contracts/prime-contract-form/types";
+import type {
+  BudgetCode,
+  ContractFormData,
+  SOVLineItem,
+} from "@/components/domain/contracts/prime-contract-form/types";
 import {
   PrimeContractCreateBudgetCodeModal,
   PrimeContractSovSection,
@@ -27,7 +31,10 @@ import { usePrimeContractFormState } from "@/components/domain/contracts/prime-c
 // Types
 // ============================================================================
 
-export type { ContractFormData, SOVLineItem } from "@/components/domain/contracts/prime-contract-form/types";
+export type {
+  ContractFormData,
+  SOVLineItem,
+} from "@/components/domain/contracts/prime-contract-form/types";
 
 interface ContractFormProps {
   initialData?: Partial<ContractFormData>;
@@ -49,7 +56,6 @@ const CONTRACT_STATUSES = [
   { value: "complete", label: "Complete" },
   { value: "terminated", label: "Terminated" },
 ];
-
 
 // ============================================================================
 // Main Component
@@ -77,6 +83,7 @@ export function ContractForm({
     expandedDivisions,
     groupedCostCodes,
     showImportFromBudget,
+    showImportEstimateWorkbook,
     sovActionMenuKey,
     companyOptions,
     companiesLoading,
@@ -102,6 +109,7 @@ export function ContractForm({
     removeSOVLine,
     toggleSovAccountingMethod,
     handleImportFromBudgetSuccess,
+    handleImportEstimateWorkbookSuccess,
     handleAttachmentListChange,
     handleFilesSelected,
     handleAutoFill,
@@ -110,12 +118,14 @@ export function ContractForm({
     setShowCreateBudgetCodeModal,
     setNewBudgetCodeData,
     setShowImportFromBudget,
+    setShowImportEstimateWorkbook,
     setSovActionMenuKey,
     setShowAddCompany,
     setNewCompanyName,
   } = usePrimeContractFormState({
     initialData,
     projectId,
+    mode,
     onSubmit,
   });
 
@@ -167,6 +177,7 @@ export function ContractForm({
             budgetCodeSearchQuery={budgetCodeSearchQuery}
             sovActionMenuKey={sovActionMenuKey}
             showImportFromBudget={showImportFromBudget}
+            showImportEstimateWorkbook={showImportEstimateWorkbook}
             sovColumnCount={sovColumnCount}
             isUnitQuantityMode={isUnitQuantityMode}
             sovTotals={sovTotals}
@@ -174,7 +185,10 @@ export function ContractForm({
             onSovActionMenuKeyChange={setSovActionMenuKey}
             onOpenBudgetCodePopoverChange={setOpenBudgetCodePopover}
             onShowImportFromBudgetChange={setShowImportFromBudget}
-            onShowCreateBudgetCodeModal={() => setShowCreateBudgetCodeModal(true)}
+            onShowImportEstimateWorkbookChange={setShowImportEstimateWorkbook}
+            onShowCreateBudgetCodeModal={() =>
+              setShowCreateBudgetCodeModal(true)
+            }
             onToggleSovAccountingMethod={toggleSovAccountingMethod}
             onAddSovGroup={addSOVGroup}
             onAddSovLine={addSOVLine}
@@ -182,6 +196,9 @@ export function ContractForm({
             onRemoveSovLine={removeSOVLine}
             onHandleBudgetCodeSelect={handleBudgetCodeSelect}
             onHandleImportFromBudgetSuccess={handleImportFromBudgetSuccess}
+            onHandleImportEstimateWorkbookSuccess={
+              handleImportEstimateWorkbookSuccess
+            }
           />
 
           <PrimeContractScopeSection
@@ -209,7 +226,9 @@ export function ContractForm({
       <FormActions
         onCancel={onCancel}
         isSubmitting={isSubmitting}
-        submitLabel={mode === "create" ? "Create Prime Contract" : "Save Changes"}
+        submitLabel={
+          mode === "create" ? "Create Prime Contract" : "Save Changes"
+        }
       >
         {isDevelopment ? (
           <Button

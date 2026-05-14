@@ -1,10 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { toast } from "sonner";
 
 import { FormSection } from "@/components/forms/FormSection";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import {
   Command,
   CommandEmpty,
@@ -48,9 +51,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, ChevronRight, Plus, Search } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  FileSpreadsheet,
+  Plus,
+  Search,
+  Upload,
+  X,
+} from "lucide-react";
 
 import { ImportFromBudgetModal } from "@/components/domain/contracts/ImportFromBudgetModal";
+import { apiFetch } from "@/lib/api-client";
+import type { EstimateWorkbookImportRow } from "@/lib/prime-contracts/estimate-workbook-sov";
 import type { BudgetCode, ContractFormData, SOVLineItem } from "./types";
 
 interface AvailableCostCode {
@@ -70,6 +85,7 @@ export function PrimeContractSovSection({
   budgetCodeSearchQuery,
   sovActionMenuKey,
   showImportFromBudget,
+  showImportEstimateWorkbook,
   sovColumnCount,
   isUnitQuantityMode,
   sovTotals,
@@ -77,6 +93,7 @@ export function PrimeContractSovSection({
   onSovActionMenuKeyChange,
   onOpenBudgetCodePopoverChange,
   onShowImportFromBudgetChange,
+  onShowImportEstimateWorkbookChange,
   onShowCreateBudgetCodeModal,
   onToggleSovAccountingMethod,
   onAddSovGroup,
@@ -85,6 +102,7 @@ export function PrimeContractSovSection({
   onRemoveSovLine,
   onHandleBudgetCodeSelect,
   onHandleImportFromBudgetSuccess,
+  onHandleImportEstimateWorkbookSuccess,
 }: {
   projectId: string;
   formData: Partial<ContractFormData>;
@@ -95,6 +113,7 @@ export function PrimeContractSovSection({
   budgetCodeSearchQuery: string;
   sovActionMenuKey: number;
   showImportFromBudget: boolean;
+  showImportEstimateWorkbook: boolean;
   sovColumnCount: number;
   isUnitQuantityMode: boolean;
   sovTotals: {
@@ -106,6 +125,7 @@ export function PrimeContractSovSection({
   onSovActionMenuKeyChange: (updater: (prev: number) => number) => void;
   onOpenBudgetCodePopoverChange: (value: string | null) => void;
   onShowImportFromBudgetChange: (open: boolean) => void;
+  onShowImportEstimateWorkbookChange: (open: boolean) => void;
   onShowCreateBudgetCodeModal: () => void;
   onToggleSovAccountingMethod: () => void;
   onAddSovGroup: () => void;
@@ -114,6 +134,9 @@ export function PrimeContractSovSection({
   onRemoveSovLine: (id: string) => void;
   onHandleBudgetCodeSelect: (rowId: string, code: BudgetCode) => void;
   onHandleImportFromBudgetSuccess: (items: unknown[]) => void;
+  onHandleImportEstimateWorkbookSuccess: (
+    rows: EstimateWorkbookImportRow[],
+  ) => void;
 }) {
   return (
     <>
@@ -135,7 +158,10 @@ export function PrimeContractSovSection({
               key={sovActionMenuKey}
               onValueChange={(value) => {
                 if (value === "add_group") onAddSovGroup();
-                if (value === "import_budget") onShowImportFromBudgetChange(true);
+                if (value === "import_budget")
+                  onShowImportFromBudgetChange(true);
+                if (value === "import_estimate")
+                  onShowImportEstimateWorkbookChange(true);
                 onSovActionMenuKeyChange((prev) => prev + 1);
               }}
             >
@@ -144,7 +170,12 @@ export function PrimeContractSovSection({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="add_group">Add Group</SelectItem>
-                <SelectItem value="import_budget">Import from Budget</SelectItem>
+                <SelectItem value="import_budget">
+                  Import from Budget
+                </SelectItem>
+                <SelectItem value="import_estimate">
+                  Import Excel SOV
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -156,38 +187,67 @@ export function PrimeContractSovSection({
         >
           <InlineTableHeader>
             <InlineTableHeaderRow>
-              <InlineTableHeaderCell className="min-w-80">Budget Code</InlineTableHeaderCell>
-              <InlineTableHeaderCell className="min-w-56">Description</InlineTableHeaderCell>
+              <InlineTableHeaderCell className="min-w-80">
+                Budget Code
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell className="min-w-56">
+                Description
+              </InlineTableHeaderCell>
               {isUnitQuantityMode ? (
                 <>
-                  <InlineTableHeaderCell className="w-28">Quantity</InlineTableHeaderCell>
-                  <InlineTableHeaderCell className="w-32">Unit Cost</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-28">
+                    Quantity
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-32">
+                    Unit Cost
+                  </InlineTableHeaderCell>
                 </>
               ) : null}
-              <InlineTableHeaderCell className="w-36">Amount</InlineTableHeaderCell>
-              <InlineTableHeaderCell className="w-36">Billed to Date</InlineTableHeaderCell>
-              <InlineTableHeaderCell className="w-36">Amount Remaining</InlineTableHeaderCell>
+              <InlineTableHeaderCell className="w-36">
+                Amount
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell className="w-36">
+                Billed to Date
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell className="w-36">
+                Amount Remaining
+              </InlineTableHeaderCell>
               <InlineTableHeaderCell className="w-10" />
             </InlineTableHeaderRow>
           </InlineTableHeader>
           <InlineTableBody>
             {(formData.sovItems || []).length === 0 ? (
               <InlineTableRow>
-                <InlineTableCell colSpan={sovColumnCount} className="py-8 text-center text-muted-foreground">
+                <InlineTableCell
+                  colSpan={sovColumnCount}
+                  className="py-8 text-center text-muted-foreground"
+                >
                   <div className="flex flex-col items-center space-y-2">
-                    <p className="text-sm text-muted-foreground">No line items yet.</p>
-                    <p className="text-sm text-muted-foreground">Click &quot;Add Line Item&quot; to get started.</p>
+                    <p className="text-sm text-muted-foreground">
+                      No line items yet.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Click &quot;Add Line Item&quot; to get started.
+                    </p>
                   </div>
                 </InlineTableCell>
               </InlineTableRow>
             ) : (
               formData.sovItems?.map((item, index) =>
                 item.isGroup ? (
-                  <InlineTableRow key={item.id} type="group" data-testid={`sov-group-${index}`}>
+                  <InlineTableRow
+                    key={item.id}
+                    type="group"
+                    data-testid={`sov-group-${index}`}
+                  >
                     <InlineTableCell colSpan={sovColumnCount - 1}>
                       <Input
                         value={item.description}
-                        onChange={(e) => onUpdateSovLine(item.id, { description: e.target.value })}
+                        onChange={(e) =>
+                          onUpdateSovLine(item.id, {
+                            description: e.target.value,
+                          })
+                        }
                         placeholder="Group name"
                         className="h-10 font-semibold"
                         data-testid="sov-group-name"
@@ -208,11 +268,16 @@ export function PrimeContractSovSection({
                     </InlineTableCell>
                   </InlineTableRow>
                 ) : (
-                  <InlineTableRow key={item.id} data-testid={`sov-line-${index}`}>
+                  <InlineTableRow
+                    key={item.id}
+                    data-testid={`sov-line-${index}`}
+                  >
                     <InlineTableCell>
                       <Popover
                         open={openBudgetCodePopover === item.id}
-                        onOpenChange={(open) => onOpenBudgetCodePopoverChange(open ? item.id : null)}
+                        onOpenChange={(open) =>
+                          onOpenBudgetCodePopoverChange(open ? item.id : null)
+                        }
                       >
                         <PopoverTrigger asChild>
                           <Button
@@ -224,7 +289,9 @@ export function PrimeContractSovSection({
                           >
                             <span className="truncate">
                               {item.budgetCodeLabel ||
-                                budgetCodes.find((c) => c.id === item.budgetCodeId)?.fullLabel ||
+                                budgetCodes.find(
+                                  (c) => c.id === item.budgetCodeId,
+                                )?.fullLabel ||
                                 "Select budget code..."}
                             </span>
                             <Search className="shrink-0 opacity-50" />
@@ -239,14 +306,18 @@ export function PrimeContractSovSection({
                             />
                             <CommandList>
                               <CommandEmpty>
-                                {loadingBudgetCodes ? "Loading..." : "No budget codes found."}
+                                {loadingBudgetCodes
+                                  ? "Loading..."
+                                  : "No budget codes found."}
                               </CommandEmpty>
                               <CommandGroup>
                                 {filteredBudgetCodes.map((code) => (
                                   <CommandItem
                                     key={code.id}
                                     value={code.fullLabel}
-                                    onSelect={() => onHandleBudgetCodeSelect(item.id, code)}
+                                    onSelect={() =>
+                                      onHandleBudgetCodeSelect(item.id, code)
+                                    }
                                   >
                                     {code.fullLabel}
                                   </CommandItem>
@@ -273,7 +344,11 @@ export function PrimeContractSovSection({
                     <InlineTableCell>
                       <Input
                         value={item.description}
-                        onChange={(e) => onUpdateSovLine(item.id, { description: e.target.value })}
+                        onChange={(e) =>
+                          onUpdateSovLine(item.id, {
+                            description: e.target.value,
+                          })
+                        }
                         placeholder="Description"
                         className="h-10"
                         data-testid="sov-line-description"
@@ -287,7 +362,11 @@ export function PrimeContractSovSection({
                             min="0"
                             step="0.01"
                             value={String(item.quantity ?? 0)}
-                            onChange={(e) => onUpdateSovLine(item.id, { quantity: Number(e.target.value || 0) })}
+                            onChange={(e) =>
+                              onUpdateSovLine(item.id, {
+                                quantity: Number(e.target.value || 0),
+                              })
+                            }
                             className="h-10"
                             data-testid="sov-line-quantity"
                           />
@@ -298,7 +377,11 @@ export function PrimeContractSovSection({
                             min="0"
                             step="0.01"
                             value={String(item.unitCost ?? 0)}
-                            onChange={(e) => onUpdateSovLine(item.id, { unitCost: Number(e.target.value || 0) })}
+                            onChange={(e) =>
+                              onUpdateSovLine(item.id, {
+                                unitCost: Number(e.target.value || 0),
+                              })
+                            }
                             className="h-10"
                             data-testid="sov-line-unit-cost"
                           />
@@ -310,7 +393,9 @@ export function PrimeContractSovSection({
                         inline
                         label="Amount"
                         value={item.amount || undefined}
-                        onChange={(val) => onUpdateSovLine(item.id, { amount: val ?? 0 })}
+                        onChange={(val) =>
+                          onUpdateSovLine(item.id, { amount: val ?? 0 })
+                        }
                         showCurrency={false}
                         className="h-10"
                         data-testid="sov-line-amount"
@@ -318,10 +403,24 @@ export function PrimeContractSovSection({
                       />
                     </InlineTableCell>
                     <InlineTableCell align="right" numeric>
-                      ${(item.billedToDate || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      $
+                      {(item.billedToDate || 0).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </InlineTableCell>
-                    <InlineTableCell align="right" numeric data-testid="sov-line-amount-remaining">
-                      ${((item.amount || 0) - (item.billedToDate || 0)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <InlineTableCell
+                      align="right"
+                      numeric
+                      data-testid="sov-line-amount-remaining"
+                    >
+                      $
+                      {(
+                        (item.amount || 0) - (item.billedToDate || 0)
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </InlineTableCell>
                     <InlineTableCell>
                       <Button
@@ -343,13 +442,20 @@ export function PrimeContractSovSection({
           </InlineTableBody>
           <InlineTableFooter>
             <InlineTableFooterRow type="action">
-              <InlineTableFooterCell colSpan={sovColumnCount - 1} className="font-normal">
+              <InlineTableFooterCell
+                colSpan={sovColumnCount - 1}
+                className="font-normal"
+              >
                 <Button
                   type="button"
                   variant="link"
                   className="h-auto p-0 text-sm font-medium"
                   onClick={onAddSovLine}
-                  data-testid={(formData.sovItems || []).length === 0 ? "sov-add-line-empty" : "sov-add-line-footer"}
+                  data-testid={
+                    (formData.sovItems || []).length === 0
+                      ? "sov-add-line-empty"
+                      : "sov-add-line-footer"
+                  }
                 >
                   Add Line Item
                 </Button>
@@ -363,15 +469,41 @@ export function PrimeContractSovSection({
             </InlineTableFooterRow>
             {(formData.sovItems || []).length > 0 ? (
               <InlineTableFooterRow type="totals">
-                <InlineTableFooterCell colSpan={2}>Totals</InlineTableFooterCell>
-                <InlineTableFooterCell align="right" numeric data-testid="sov-total-amount">
-                  ${sovTotals.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <InlineTableFooterCell colSpan={2}>
+                  Totals
                 </InlineTableFooterCell>
-                <InlineTableFooterCell align="right" numeric data-testid="sov-total-billed">
-                  ${sovTotals.billedToDate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <InlineTableFooterCell
+                  align="right"
+                  numeric
+                  data-testid="sov-total-amount"
+                >
+                  $
+                  {sovTotals.amount.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </InlineTableFooterCell>
-                <InlineTableFooterCell align="right" numeric data-testid="sov-total-remaining">
-                  ${sovTotals.amountRemaining.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <InlineTableFooterCell
+                  align="right"
+                  numeric
+                  data-testid="sov-total-billed"
+                >
+                  $
+                  {sovTotals.billedToDate.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </InlineTableFooterCell>
+                <InlineTableFooterCell
+                  align="right"
+                  numeric
+                  data-testid="sov-total-remaining"
+                >
+                  $
+                  {sovTotals.amountRemaining.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </InlineTableFooterCell>
                 <InlineTableFooterCell />
               </InlineTableFooterRow>
@@ -384,12 +516,439 @@ export function PrimeContractSovSection({
         open={showImportFromBudget}
         onOpenChange={onShowImportFromBudgetChange}
         projectId={projectId}
-        existingCostCodeIds={new Set(
-          (formData.sovItems || []).map((item) => item.budgetCodeId).filter((id): id is string => !!id),
-        )}
-        onImportSuccess={(items) => onHandleImportFromBudgetSuccess(items as unknown[])}
+        existingCostCodeIds={
+          new Set(
+            (formData.sovItems || [])
+              .map((item) => item.budgetCodeId)
+              .filter((id): id is string => !!id),
+          )
+        }
+        onImportSuccess={(items) =>
+          onHandleImportFromBudgetSuccess(items as unknown[])
+        }
+      />
+
+      <EstimateWorkbookImportModal
+        open={showImportEstimateWorkbook}
+        onOpenChange={onShowImportEstimateWorkbookChange}
+        projectId={projectId}
+        budgetCodes={budgetCodes}
+        existingSovItems={formData.sovItems || []}
+        onImportRows={onHandleImportEstimateWorkbookSuccess}
       />
     </>
+  );
+}
+
+function resolveEstimateBudgetCode(
+  row: EstimateWorkbookImportRow,
+  budgetCodes: BudgetCode[],
+): BudgetCode | undefined {
+  return (
+    budgetCodes.find(
+      (code) =>
+        (code.legacyCostCodeId === row.costCode ||
+          code.code === row.costCode) &&
+        (row.costTypeCode ? code.costType === row.costTypeCode : true),
+    ) ??
+    budgetCodes.find(
+      (code) =>
+        code.legacyCostCodeId === row.costCode || code.code === row.costCode,
+    )
+  );
+}
+
+function getEstimateRowKey(row: EstimateWorkbookImportRow): string {
+  return `${row.sourceSheet}:${row.rowNumber}`;
+}
+
+function formatEstimateDescription(row: EstimateWorkbookImportRow): string {
+  return row.workDescription
+    ? `${row.description} - ${row.workDescription}`
+    : row.description;
+}
+
+function EstimateWorkbookImportModal({
+  open,
+  onOpenChange,
+  projectId,
+  budgetCodes,
+  existingSovItems,
+  onImportRows,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectId: string;
+  budgetCodes: BudgetCode[];
+  existingSovItems: SOVLineItem[];
+  onImportRows: (rows: EstimateWorkbookImportRow[]) => void;
+}) {
+  const [file, setFile] = React.useState<File | null>(null);
+  const [rows, setRows] = React.useState<EstimateWorkbookImportRow[]>([]);
+  const [selectedRows, setSelectedRows] = React.useState<Set<string>>(
+    new Set(),
+  );
+  const [warnings, setWarnings] = React.useState<string[]>([]);
+  const [error, setError] = React.useState<string | null>(null);
+  const [isParsing, setIsParsing] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (!open) {
+      setFile(null);
+      setRows([]);
+      setSelectedRows(new Set());
+      setWarnings([]);
+      setError(null);
+      setIsParsing(false);
+    }
+  }, [open]);
+
+  const existingBudgetCodeIds = React.useMemo(
+    () =>
+      new Set(
+        existingSovItems
+          .map((item) => item.budgetCodeId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    [existingSovItems],
+  );
+
+  const selectableRows = React.useMemo(
+    () =>
+      rows.filter((row) => {
+        const budgetCode = resolveEstimateBudgetCode(row, budgetCodes);
+        return (
+          row.includeInOwnerSov &&
+          row.warnings.length === 0 &&
+          !existingBudgetCodeIds.has(budgetCode?.id ?? "")
+        );
+      }),
+    [budgetCodes, existingBudgetCodeIds, rows],
+  );
+
+  const selectedImportRows = React.useMemo(
+    () => rows.filter((row) => selectedRows.has(getEstimateRowKey(row))),
+    [rows, selectedRows],
+  );
+
+  const totalSelected = selectedImportRows.reduce(
+    (sum, row) => sum + row.budgetAmount,
+    0,
+  );
+
+  const handleFileSelect = async (selectedFile: File) => {
+    const isExcel =
+      selectedFile.name.endsWith(".xlsx") ||
+      selectedFile.name.endsWith(".xlsm");
+    if (!isExcel) {
+      setError("Upload an Alleato estimate workbook as .xlsx or .xlsm.");
+      setFile(null);
+      return;
+    }
+
+    setFile(selectedFile);
+    setRows([]);
+    setSelectedRows(new Set());
+    setWarnings([]);
+    setError(null);
+    setIsParsing(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const preview = await apiFetch<{
+        rows: EstimateWorkbookImportRow[];
+        warnings: string[];
+      }>(`/api/projects/${projectId}/contracts/estimate-import/preview`, {
+        method: "POST",
+        body: formData,
+      });
+      const ownerRows = preview.rows.filter((row) => row.includeInOwnerSov);
+      setRows(ownerRows);
+      setWarnings(preview.warnings);
+      setSelectedRows(
+        new Set(
+          ownerRows
+            .filter((row) => {
+              const budgetCode = resolveEstimateBudgetCode(row, budgetCodes);
+              return (
+                row.warnings.length === 0 &&
+                !existingBudgetCodeIds.has(budgetCode?.id ?? "")
+              );
+            })
+            .map((row) => getEstimateRowKey(row)),
+        ),
+      );
+    } catch (parseError) {
+      const message =
+        parseError instanceof Error
+          ? parseError.message
+          : "Failed to parse estimate workbook.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const toggleRow = (row: EstimateWorkbookImportRow, checked: boolean) => {
+    const key = getEstimateRowKey(row);
+    setSelectedRows((current) => {
+      const next = new Set(current);
+      if (checked) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  };
+
+  const toggleAll = (checked: boolean) => {
+    setSelectedRows(
+      checked
+        ? new Set(selectableRows.map((row) => getEstimateRowKey(row)))
+        : new Set(),
+    );
+  };
+
+  const handleImport = () => {
+    if (selectedImportRows.length === 0) {
+      toast.error("Select at least one estimate row to import.");
+      return;
+    }
+    onImportRows(selectedImportRows);
+    onOpenChange(false);
+  };
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(value);
+
+  return (
+    <Dialog open={open} onOpenChange={isParsing ? undefined : onOpenChange}>
+      <DialogContent className="flex max-h-screen flex-col sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Import Excel SOV</DialogTitle>
+          <DialogDescription>
+            Download the template, fill in the estimate rows, then import
+            selected rows into this new prime contract.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 space-y-4 overflow-hidden">
+          <InfoAlert variant="info">
+            <p className="font-semibold">
+              Nothing is saved until the prime contract is created.
+            </p>
+            <p className="text-muted-foreground">
+              Imported rows stay in this form so you can review budget-code
+              mappings before submitting.
+            </p>
+          </InfoAlert>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" size="sm" asChild>
+              <a
+                href={`/api/projects/${projectId}/contracts/estimate-sov-template`}
+              >
+                <Download className="h-4 w-4" />
+                Download template
+              </a>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Choose workbook
+            </Button>
+            {file ? (
+              <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <span className="truncate">{file.name}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    setFile(null);
+                    setRows([]);
+                    setSelectedRows(new Set());
+                    setWarnings([]);
+                    setError(null);
+                  }}
+                  aria-label="Remove workbook"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : null}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+              className="hidden"
+              onChange={(event) => {
+                const selectedFile = event.target.files?.[0];
+                if (selectedFile) void handleFileSelect(selectedFile);
+                event.currentTarget.value = "";
+              }}
+            />
+          </div>
+
+          {error ? <InfoAlert variant="error">{error}</InfoAlert> : null}
+
+          {warnings.length > 0 ? (
+            <InfoAlert variant="warning">
+              <p className="font-medium">
+                {warnings.length} workbook warning
+                {warnings.length === 1 ? "" : "s"}
+              </p>
+              <ul className="mt-1 max-h-20 space-y-0.5 overflow-y-auto text-xs">
+                {warnings.slice(0, 5).map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+                {warnings.length > 5 ? (
+                  <li className="italic">+{warnings.length - 5} more</li>
+                ) : null}
+              </ul>
+            </InfoAlert>
+          ) : null}
+
+          <div className="min-h-64 overflow-hidden rounded-md border">
+            {rows.length === 0 ? (
+              <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
+                {isParsing
+                  ? "Reading workbook..."
+                  : "Choose a completed template to preview SOV rows."}
+              </div>
+            ) : (
+              <div className="max-h-96 overflow-auto">
+                <table className="w-full">
+                  <thead className="sticky top-0 border-b bg-muted/40">
+                    <tr>
+                      <th className="w-10 px-3 py-2 text-left">
+                        <Checkbox
+                          checked={
+                            selectableRows.length > 0 &&
+                            selectableRows.every((row) =>
+                              selectedRows.has(getEstimateRowKey(row)),
+                            )
+                          }
+                          disabled={selectableRows.length === 0}
+                          onCheckedChange={(checked) =>
+                            toggleAll(checked === true)
+                          }
+                        />
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
+                        Code
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
+                        Description
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
+                        Type
+                      </th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">
+                        Amount
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {rows.map((row) => {
+                      const key = getEstimateRowKey(row);
+                      const budgetCode = resolveEstimateBudgetCode(
+                        row,
+                        budgetCodes,
+                      );
+                      const alreadyInForm = existingBudgetCodeIds.has(
+                        budgetCode?.id ?? "",
+                      );
+                      const hasWarnings = row.warnings.length > 0;
+                      const isSelectable =
+                        row.includeInOwnerSov && !alreadyInForm && !hasWarnings;
+                      return (
+                        <tr
+                          key={key}
+                          className={
+                            isSelectable
+                              ? "hover:bg-muted/40"
+                              : "bg-muted/20 text-muted-foreground"
+                          }
+                        >
+                          <td className="px-3 py-2">
+                            <Checkbox
+                              checked={selectedRows.has(key)}
+                              disabled={!isSelectable}
+                              onCheckedChange={(checked) =>
+                                toggleRow(row, checked === true)
+                              }
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-sm font-medium">
+                            {row.costCode}
+                          </td>
+                          <td className="px-3 py-2 text-sm">
+                            {formatEstimateDescription(row)}
+                          </td>
+                          <td className="px-3 py-2 text-sm">
+                            {row.costTypeCode || row.costType}
+                          </td>
+                          <td className="px-3 py-2 text-right text-sm tabular-nums">
+                            {formatCurrency(row.budgetAmount)}
+                          </td>
+                          <td className="px-3 py-2 text-xs text-muted-foreground">
+                            {alreadyInForm
+                              ? "Already in form"
+                              : hasWarnings
+                                ? "Review warning"
+                                : budgetCode
+                                  ? "Mapped"
+                                  : "Needs budget code"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <div className="mr-auto text-sm text-muted-foreground">
+            {selectedRows.size > 0
+              ? `${selectedRows.size} selected, ${formatCurrency(totalSelected)}`
+              : null}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isParsing}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleImport}
+            disabled={selectedRows.size === 0 || isParsing}
+          >
+            <Upload className="h-4 w-4" />
+            Import {selectedRows.size > 0 ? selectedRows.size : ""}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -420,7 +979,10 @@ export function PrimeContractCreateBudgetCodeModal({
   getCostTypeLabel: (type: string) => string;
   onOpenChange: (open: boolean) => void;
   onToggleDivision: (division: string) => void;
-  onNewBudgetCodeDataChange: (next: { costCodeId: string; costType: string }) => void;
+  onNewBudgetCodeDataChange: (next: {
+    costCodeId: string;
+    costType: string;
+  }) => void;
   onCreate: () => void;
 }) {
   const selectedCostCode = availableCostCodes.find(
@@ -433,7 +995,8 @@ export function PrimeContractCreateBudgetCodeModal({
         <DialogHeader>
           <DialogTitle>Create New Budget Code</DialogTitle>
           <DialogDescription>
-            Add a new budget code that can be used for line items in this project.
+            Add a new budget code that can be used for line items in this
+            project.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -455,7 +1018,9 @@ export function PrimeContractCreateBudgetCodeModal({
                         onClick={() => onToggleDivision(division)}
                         className="h-auto w-full justify-between px-4 py-2 text-left font-normal"
                       >
-                        <span className="text-sm font-semibold text-foreground">{division}</span>
+                        <span className="text-sm font-semibold text-foreground">
+                          {division}
+                        </span>
                         {expandedDivisions.has(division) ? (
                           <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         ) : (
@@ -500,7 +1065,10 @@ export function PrimeContractCreateBudgetCodeModal({
             <Select
               value={newBudgetCodeData.costType || undefined}
               onValueChange={(value) =>
-                onNewBudgetCodeDataChange({ ...newBudgetCodeData, costType: value })
+                onNewBudgetCodeDataChange({
+                  ...newBudgetCodeData,
+                  costType: value,
+                })
               }
             >
               <SelectTrigger>
@@ -522,7 +1090,8 @@ export function PrimeContractCreateBudgetCodeModal({
               {selectedCostCode ? (
                 <>
                   {selectedCostCode.id}.{newBudgetCodeData.costType} -{" "}
-                  {selectedCostCode.title} - {getCostTypeLabel(newBudgetCodeData.costType)}
+                  {selectedCostCode.title} -{" "}
+                  {getCostTypeLabel(newBudgetCodeData.costType)}
                 </>
               ) : (
                 "Select cost code and cost type to see preview"
@@ -531,13 +1100,21 @@ export function PrimeContractCreateBudgetCodeModal({
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
           <Button
             type="button"
             onClick={onCreate}
-            disabled={isCreating || !newBudgetCodeData.costCodeId || !newBudgetCodeData.costType}
+            disabled={
+              isCreating ||
+              !newBudgetCodeData.costCodeId ||
+              !newBudgetCodeData.costType
+            }
           >
             {isCreating ? "Creating..." : "Create Budget Code"}
           </Button>

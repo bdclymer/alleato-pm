@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, FileSpreadsheet, Upload, X } from "lucide-react";
+import {
+  CheckCircle2,
+  Download,
+  FileSpreadsheet,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -170,13 +176,20 @@ export function PrimeContractEstimateImportModal({
 }: PrimeContractEstimateImportModalProps) {
   const [file, setFile] = React.useState<File | null>(null);
   const [preview, setPreview] = React.useState<EstimateSovPreview | null>(null);
-  const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set());
-  const [rowEdits, setRowEdits] = React.useState<Record<string, EstimateSovRowEdit>>({});
-  const [activatedBudgetCodes, setActivatedBudgetCodes] = React.useState<ActiveBudgetCodeMapping[]>([]);
+  const [selectedRows, setSelectedRows] = React.useState<Set<string>>(
+    new Set(),
+  );
+  const [rowEdits, setRowEdits] = React.useState<
+    Record<string, EstimateSovRowEdit>
+  >({});
+  const [activatedBudgetCodes, setActivatedBudgetCodes] = React.useState<
+    ActiveBudgetCodeMapping[]
+  >([]);
   const [isConfirmingAppend, setIsConfirmingAppend] = React.useState(false);
   const [isPreviewing, setIsPreviewing] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
-  const [isActivatingBudgetCodes, setIsActivatingBudgetCodes] = React.useState(false);
+  const [isActivatingBudgetCodes, setIsActivatingBudgetCodes] =
+    React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -195,17 +208,24 @@ export function PrimeContractEstimateImportModal({
     }
   }, [open]);
 
-  const previewRows = preview?.rows.filter((row) => row.includeInOwnerSov) ?? [];
+  const previewRows =
+    preview?.rows.filter((row) => row.includeInOwnerSov) ?? [];
   const costTypeOptions = React.useMemo<CostTypeOption[]>(() => {
     const options = new Map<string, CostTypeOption>();
     for (const code of budgetCodes) {
       if (code.costType) {
-        options.set(code.costType, { code: code.costType, id: code.costTypeId ?? null });
+        options.set(code.costType, {
+          code: code.costType,
+          id: code.costTypeId ?? null,
+        });
       }
     }
     for (const row of previewRows) {
       if (row.costTypeCode) {
-        options.set(row.costTypeCode, { code: row.costTypeCode, id: row.costTypeId });
+        options.set(row.costTypeCode, {
+          code: row.costTypeCode,
+          id: row.costTypeId,
+        });
       }
     }
     return [...options.values()].sort((a, b) => a.code.localeCompare(b.code));
@@ -221,23 +241,30 @@ export function PrimeContractEstimateImportModal({
     const edit = rowEdits[getRowKey(row)] ?? createRowEdit(row);
     return total + parsePositiveNumber(edit.scheduledValue, row.budgetAmount);
   }, 0);
-  const nextLineNumber = existingLineItems.reduce(
-    (max, item) => Math.max(max, item.line_number),
-    0,
-  ) + 1;
-  const rowsMissingBudgetCodes = previewRows.filter(
-    (row) => {
-      const edit = rowEdits[getRowKey(row)] ?? createRowEdit(row);
-      return (
-        !resolveBudgetCodeId(row, edit.costTypeCode, budgetCodes, activatedBudgetCodes, costTypeIdByCode) &&
-        !row.alreadyInSov &&
-        row.warnings.length === 0
-      );
-    },
-  );
+  const nextLineNumber =
+    existingLineItems.reduce(
+      (max, item) => Math.max(max, item.line_number),
+      0,
+    ) + 1;
+  const rowsMissingBudgetCodes = previewRows.filter((row) => {
+    const edit = rowEdits[getRowKey(row)] ?? createRowEdit(row);
+    return (
+      !resolveBudgetCodeId(
+        row,
+        edit.costTypeCode,
+        budgetCodes,
+        activatedBudgetCodes,
+        costTypeIdByCode,
+      ) &&
+      !row.alreadyInSov &&
+      row.warnings.length === 0
+    );
+  });
 
   const handleFileSelect = (selectedFile: File) => {
-    const isExcel = selectedFile.name.endsWith(".xlsx") || selectedFile.name.endsWith(".xlsm");
+    const isExcel =
+      selectedFile.name.endsWith(".xlsx") ||
+      selectedFile.name.endsWith(".xlsm");
     if (!isExcel) {
       setError("Upload an Alleato estimate workbook as .xlsx or .xlsm.");
       setFile(null);
@@ -281,7 +308,10 @@ export function PrimeContractEstimateImportModal({
       setActivatedBudgetCodes([]);
       setIsConfirmingAppend(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to preview estimate workbook.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to preview estimate workbook.";
       setError(message);
       toast.error(message);
     } finally {
@@ -300,7 +330,10 @@ export function PrimeContractEstimateImportModal({
     setIsConfirmingAppend(false);
   };
 
-  const updateRowEdit = (row: EstimateSovPreviewRow, patch: Partial<EstimateSovRowEdit>) => {
+  const updateRowEdit = (
+    row: EstimateSovPreviewRow,
+    patch: Partial<EstimateSovRowEdit>,
+  ) => {
     const key = getRowKey(row);
     setRowEdits((current) => ({
       ...current,
@@ -334,7 +367,10 @@ export function PrimeContractEstimateImportModal({
       for (const [index, row] of selectedPreviewRows.entries()) {
         const edit = rowEdits[getRowKey(row)] ?? createRowEdit(row);
         const quantity = parsePositiveNumber(edit.quantity, 1);
-        const scheduledValue = parsePositiveNumber(edit.scheduledValue, row.budgetAmount);
+        const scheduledValue = parsePositiveNumber(
+          edit.scheduledValue,
+          row.budgetAmount,
+        );
         const unitCost = scheduledValue / quantity;
         const created = await apiFetch<ContractLineItem>(
           `/api/projects/${projectId}/contracts/${contractId}/line-items`,
@@ -360,11 +396,16 @@ export function PrimeContractEstimateImportModal({
         createdItems.push(created);
       }
 
-      toast.success(`Added ${createdItems.length} SOV line${createdItems.length === 1 ? "" : "s"}.`);
+      toast.success(
+        `Added ${createdItems.length} SOV line${createdItems.length === 1 ? "" : "s"}.`,
+      );
       onImported(createdItems);
       onOpenChange(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to add estimate rows to SOV.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to add estimate rows to SOV.";
       setError(message);
       toast.error(message);
     } finally {
@@ -385,8 +426,11 @@ export function PrimeContractEstimateImportModal({
           body: JSON.stringify({
             rows: rowsMissingBudgetCodes.map((row) => ({
               costCode: row.costCode,
-              costTypeCode: rowEdits[getRowKey(row)]?.costTypeCode ?? row.costTypeCode,
-              description: (rowEdits[getRowKey(row)]?.description ?? row.description).trim(),
+              costTypeCode:
+                rowEdits[getRowKey(row)]?.costTypeCode ?? row.costTypeCode,
+              description: (
+                rowEdits[getRowKey(row)]?.description ?? row.description
+              ).trim(),
             })),
           }),
         },
@@ -407,7 +451,9 @@ export function PrimeContractEstimateImportModal({
         if (!current) return current;
         const rows = current.rows.map((row) => {
           const budgetCodeId = row.costTypeId
-            ? budgetCodeByCostCodeAndType.get(`${row.costCode}|${row.costTypeId}`)
+            ? budgetCodeByCostCodeAndType.get(
+                `${row.costCode}|${row.costTypeId}`,
+              )
             : undefined;
           if (!budgetCodeId) return row;
           return {
@@ -426,7 +472,8 @@ export function PrimeContractEstimateImportModal({
           missingBudgetCodeMappingCount: rows.filter(
             (row) => row.includeInOwnerSov && !row.hasBudgetCodeMapping,
           ).length,
-          selectedByDefaultCount: rows.filter((row) => row.selectedByDefault).length,
+          selectedByDefaultCount: rows.filter((row) => row.selectedByDefault)
+            .length,
         };
       });
 
@@ -443,7 +490,8 @@ export function PrimeContractEstimateImportModal({
         `Activated ${result.addedProjectBudgetCodes + result.reactivatedProjectBudgetCodes} budget code mapping${result.addedProjectBudgetCodes + result.reactivatedProjectBudgetCodes === 1 ? "" : "s"}.`,
       );
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to activate budget codes.";
+      const message =
+        err instanceof Error ? err.message : "Failed to activate budget codes.";
       setError(message);
       toast.error(message);
     } finally {
@@ -452,12 +500,16 @@ export function PrimeContractEstimateImportModal({
   };
 
   return (
-    <Modal open={open} onOpenChange={(nextOpen) => !isImporting && onOpenChange(nextOpen)}>
+    <Modal
+      open={open}
+      onOpenChange={(nextOpen) => !isImporting && onOpenChange(nextOpen)}
+    >
       <ModalContent className="sm:max-w-4xl">
         <ModalHeader>
           <ModalTitle>Import Estimate To SOV</ModalTitle>
           <ModalDescription>
-            Preview the estimate workbook and append selected rows to this prime contract.
+            Preview the estimate workbook and append selected rows to this prime
+            contract.
           </ModalDescription>
         </ModalHeader>
 
@@ -465,11 +517,21 @@ export function PrimeContractEstimateImportModal({
           <InfoAlert variant="info">
             <p className="font-semibold">Nothing is overwritten.</p>
             <p className="text-muted-foreground">
-              Existing SOV cost codes are detected and left unselected until you choose otherwise.
+              Existing SOV cost codes are detected and left unselected until you
+              choose otherwise.
             </p>
           </InfoAlert>
 
           <div className="space-y-2">
+            <Button type="button" variant="outline" size="sm" asChild>
+              <a
+                href={`/api/projects/${projectId}/contracts/estimate-sov-template`}
+              >
+                <Download className="h-4 w-4" />
+                Download template
+              </a>
+            </Button>
+
             {!file ? (
               <Button
                 type="button"
@@ -479,15 +541,21 @@ export function PrimeContractEstimateImportModal({
               >
                 <FileSpreadsheet className="h-5 w-5" />
                 <span className="text-left">
-                  <span className="block text-sm font-medium">Choose estimate workbook</span>
-                  <span className="block text-xs text-muted-foreground">.xlsx or .xlsm</span>
+                  <span className="block text-sm font-medium">
+                    Choose estimate workbook
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    .xlsx or .xlsm
+                  </span>
                 </span>
               </Button>
             ) : (
               <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-                  <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {file.name}
+                  </p>
                 </div>
                 <Button
                   type="button"
@@ -519,25 +587,33 @@ export function PrimeContractEstimateImportModal({
               }}
             />
 
-            {error ? (
-              <InfoAlert variant="error">{error}</InfoAlert>
-            ) : null}
+            {error ? <InfoAlert variant="error">{error}</InfoAlert> : null}
           </div>
 
           {preview ? (
             <div className="space-y-3">
               <div className="grid grid-cols-4 gap-2">
                 <div className="rounded-md bg-muted/40 px-3 py-2">
-                  <p className="text-xs text-muted-foreground">SOV candidates</p>
-                  <p className="text-sm font-semibold text-foreground">{preview.ownerSovCount}</p>
+                  <p className="text-xs text-muted-foreground">
+                    SOV candidates
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {preview.ownerSovCount}
+                  </p>
                 </div>
                 <div className="rounded-md bg-muted/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Selected</p>
-                  <p className="text-sm font-semibold text-foreground">{selectedRows.size}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {selectedRows.size}
+                  </p>
                 </div>
                 <div className="rounded-md bg-muted/40 px-3 py-2">
-                  <p className="text-xs text-muted-foreground">Already in SOV</p>
-                  <p className="text-sm font-semibold text-foreground">{preview.existingSovMatchCount}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Already in SOV
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {preview.existingSovMatchCount}
+                  </p>
                 </div>
                 <div className="rounded-md bg-muted/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Need mapping</p>
@@ -550,10 +626,13 @@ export function PrimeContractEstimateImportModal({
               {rowsMissingBudgetCodes.length > 0 ? (
                 <InfoAlert variant="warning">
                   <p className="font-medium">
-                    {rowsMissingBudgetCodes.length} SOV candidate{rowsMissingBudgetCodes.length === 1 ? "" : "s"} need budget-code activation.
+                    {rowsMissingBudgetCodes.length} SOV candidate
+                    {rowsMissingBudgetCodes.length === 1 ? "" : "s"} need
+                    budget-code activation.
                   </p>
                   <p className="text-muted-foreground">
-                    Activate them before adding those rows so the SOV remains tied to project budget codes.
+                    Activate them before adding those rows so the SOV remains
+                    tied to project budget codes.
                   </p>
                   <Button
                     type="button"
@@ -563,20 +642,27 @@ export function PrimeContractEstimateImportModal({
                     onClick={handleActivateBudgetCodes}
                     disabled={isActivatingBudgetCodes || isImporting}
                   >
-                    {isActivatingBudgetCodes ? "Activating..." : "Activate Budget Codes"}
+                    {isActivatingBudgetCodes
+                      ? "Activating..."
+                      : "Activate Budget Codes"}
                   </Button>
                 </InfoAlert>
               ) : null}
 
               {preview.warnings.length > 0 ? (
                 <InfoAlert variant="warning">
-                  <p className="font-medium">{preview.warnings.length} workbook warning{preview.warnings.length === 1 ? "" : "s"}</p>
+                  <p className="font-medium">
+                    {preview.warnings.length} workbook warning
+                    {preview.warnings.length === 1 ? "" : "s"}
+                  </p>
                   <ul className="mt-1 max-h-20 space-y-0.5 overflow-y-auto text-xs">
                     {preview.warnings.slice(0, 5).map((warning) => (
                       <li key={warning}>{warning}</li>
                     ))}
                     {preview.warnings.length > 5 ? (
-                      <li className="italic">+{preview.warnings.length - 5} more</li>
+                      <li className="italic">
+                        +{preview.warnings.length - 5} more
+                      </li>
                     ) : null}
                   </ul>
                 </InfoAlert>
@@ -606,8 +692,10 @@ export function PrimeContractEstimateImportModal({
                         costTypeIdByCode,
                       ),
                     );
-                    const cannotSelect = row.alreadyInSov || hasWarnings || !hasBudgetCodeMapping;
-                    const cannotEdit = row.alreadyInSov || hasWarnings || isImporting;
+                    const cannotSelect =
+                      row.alreadyInSov || hasWarnings || !hasBudgetCodeMapping;
+                    const cannotEdit =
+                      row.alreadyInSov || hasWarnings || isImporting;
                     return (
                       <div
                         key={key}
@@ -619,12 +707,18 @@ export function PrimeContractEstimateImportModal({
                         <Checkbox
                           checked={selectedRows.has(key)}
                           disabled={cannotSelect || isImporting}
-                          onCheckedChange={(checked) => toggleRow(row, checked === true)}
+                          onCheckedChange={(checked) =>
+                            toggleRow(row, checked === true)
+                          }
                           aria-label={`Select ${row.costCode}`}
                         />
                         <span className="min-w-0">
-                          <span className="block font-medium text-foreground">{row.costCode}</span>
-                          <span className="block text-muted-foreground">Row {row.rowNumber}</span>
+                          <span className="block font-medium text-foreground">
+                            {row.costCode}
+                          </span>
+                          <span className="block text-muted-foreground">
+                            Row {row.rowNumber}
+                          </span>
                         </span>
                         <span className="min-w-0 space-y-1">
                           <Input
@@ -632,13 +726,21 @@ export function PrimeContractEstimateImportModal({
                             variant="inline"
                             className="h-7 px-1 text-xs"
                             disabled={cannotEdit}
-                            onChange={(event) => updateRowEdit(row, { description: event.target.value })}
+                            onChange={(event) =>
+                              updateRowEdit(row, {
+                                description: event.target.value,
+                              })
+                            }
                             aria-label={`Description for ${row.costCode}`}
                           />
-                          {row.alreadyInSov || !hasBudgetCodeMapping || hasWarnings ? (
+                          {row.alreadyInSov ||
+                          !hasBudgetCodeMapping ||
+                          hasWarnings ? (
                             <span className="block text-[11px] text-muted-foreground">
                               {row.alreadyInSov ? "Already in SOV" : null}
-                              {!hasBudgetCodeMapping ? "Needs budget code activation" : null}
+                              {!hasBudgetCodeMapping
+                                ? "Needs budget code activation"
+                                : null}
                               {hasWarnings ? "Review warning" : null}
                             </span>
                           ) : null}
@@ -646,7 +748,9 @@ export function PrimeContractEstimateImportModal({
                         <Select
                           value={edit.costTypeCode}
                           disabled={cannotEdit}
-                          onValueChange={(value) => updateRowEdit(row, { costTypeCode: value })}
+                          onValueChange={(value) =>
+                            updateRowEdit(row, { costTypeCode: value })
+                          }
                         >
                           <SelectTrigger
                             size="sm"
@@ -672,7 +776,9 @@ export function PrimeContractEstimateImportModal({
                           variant="inline"
                           className="h-7 px-1 text-right text-xs tabular-nums"
                           disabled={cannotEdit}
-                          onChange={(event) => updateRowEdit(row, { quantity: event.target.value })}
+                          onChange={(event) =>
+                            updateRowEdit(row, { quantity: event.target.value })
+                          }
                           aria-label={`Quantity for ${row.costCode}`}
                         />
                         <Input
@@ -680,7 +786,11 @@ export function PrimeContractEstimateImportModal({
                           variant="inline"
                           className="h-7 px-1 text-xs uppercase"
                           disabled={cannotEdit}
-                          onChange={(event) => updateRowEdit(row, { unitOfMeasure: event.target.value })}
+                          onChange={(event) =>
+                            updateRowEdit(row, {
+                              unitOfMeasure: event.target.value,
+                            })
+                          }
                           aria-label={`Unit of measure for ${row.costCode}`}
                         />
                         <Input
@@ -691,7 +801,11 @@ export function PrimeContractEstimateImportModal({
                           variant="inline"
                           className="h-7 px-1 text-right text-xs tabular-nums"
                           disabled={cannotEdit}
-                          onChange={(event) => updateRowEdit(row, { scheduledValue: event.target.value })}
+                          onChange={(event) =>
+                            updateRowEdit(row, {
+                              scheduledValue: event.target.value,
+                            })
+                          }
                           aria-label={`Scheduled value for ${row.costCode}`}
                         />
                       </div>
@@ -703,12 +817,16 @@ export function PrimeContractEstimateImportModal({
               {isConfirmingAppend ? (
                 <InfoAlert variant="success">
                   <p className="font-medium">
-                    Confirm append of {selectedPreviewRows.length} SOV line{selectedPreviewRows.length === 1 ? "" : "s"} totaling {formatCurrency(selectedScheduledValue)}.
+                    Confirm append of {selectedPreviewRows.length} SOV line
+                    {selectedPreviewRows.length === 1 ? "" : "s"} totaling{" "}
+                    {formatCurrency(selectedScheduledValue)}.
                   </p>
                   <p className="text-muted-foreground">
                     These rows will be added as lines {nextLineNumber}
-                    {selectedPreviewRows.length > 1 ? `-${nextLineNumber + selectedPreviewRows.length - 1}` : ""}.
-                    Existing SOV lines and budget rows are not overwritten.
+                    {selectedPreviewRows.length > 1
+                      ? `-${nextLineNumber + selectedPreviewRows.length - 1}`
+                      : ""}
+                    . Existing SOV lines and budget rows are not overwritten.
                   </p>
                 </InfoAlert>
               ) : null}
@@ -717,11 +835,18 @@ export function PrimeContractEstimateImportModal({
         </div>
 
         <ModalFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isImporting}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isImporting}
+          >
             Cancel
           </Button>
           {!preview ? (
-            <Button onClick={handlePreview} disabled={!file || isPreviewing || isImporting}>
+            <Button
+              onClick={handlePreview}
+              disabled={!file || isPreviewing || isImporting}
+            >
               <Upload className="h-4 w-4" />
               {isPreviewing ? "Analyzing..." : "Preview Workbook"}
             </Button>
@@ -745,7 +870,11 @@ export function PrimeContractEstimateImportModal({
                   }
                   void handleAppendToSov();
                 }}
-                disabled={selectedRows.size === 0 || isImporting || isActivatingBudgetCodes}
+                disabled={
+                  selectedRows.size === 0 ||
+                  isImporting ||
+                  isActivatingBudgetCodes
+                }
               >
                 {isImporting
                   ? "Adding..."

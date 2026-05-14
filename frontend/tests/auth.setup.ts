@@ -33,6 +33,13 @@ function hasValidExistingSession(): boolean {
       /^sb-.*-auth-token/.test(c.name),
     );
     if (!authCookie) return false;
+    if (
+      typeof authCookie.expires === "number" &&
+      authCookie.expires > 0 &&
+      authCookie.expires * 1000 <= Date.now() + 5 * 60 * 1000
+    ) {
+      return false;
+    }
 
     let sessionJson = authCookie.value as string;
     if (sessionJson.startsWith("base64-")) {
