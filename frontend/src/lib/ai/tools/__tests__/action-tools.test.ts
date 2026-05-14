@@ -6,6 +6,18 @@ jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
 }));
 
+jest.mock("@/lib/microsoft-graph/calendar-invites", () => ({
+  buildCalendarInviteAdaptiveCard: jest.fn(),
+  createOutlookCalendarInvite: jest.fn(),
+  resolveOutlookOrganizerEmail: jest.fn(),
+}));
+
+jest.mock("@/lib/microsoft-graph/mail", () => ({
+  buildOutlookMailDraftAdaptiveCard: jest.fn(),
+  createOutlookMailDraft: jest.fn(),
+  resolveOutlookMailboxUserId: jest.fn(),
+}));
+
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "../guardrails";
 import {

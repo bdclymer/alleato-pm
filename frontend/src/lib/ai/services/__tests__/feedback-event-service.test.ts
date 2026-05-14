@@ -14,6 +14,8 @@ import { writeMemory } from "@/lib/ai/services/ai-memory-service";
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
+  createRagServiceClient: jest.fn(),
+  isRagDatabaseReadsEnabled: jest.fn(() => false),
 }));
 
 jest.mock("@/lib/ai/services/agent-learning-service", () => ({

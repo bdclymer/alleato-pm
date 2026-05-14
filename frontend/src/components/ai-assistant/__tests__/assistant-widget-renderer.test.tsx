@@ -181,12 +181,12 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
 
     expect(screen.getByLabelText("Important Outlook emails")).toBeInTheDocument();
     expect(screen.getByText("RE: Closeout MTV 2 Project")).toBeInTheDocument();
-    expect(screen.getByText(/Suggested next step:/)).toBeInTheDocument();
+    expect(screen.getByText(/Next step:/)).toBeInTheDocument();
     expect(screen.getByText("Ok yes please get me final bill today.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /draft reply/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^reply$/i }));
     expect(onSubmit).toHaveBeenCalledWith(expect.stringContaining("OUTLOOK_INBOX_CARD_ACTION"));
     expect(onSubmit).toHaveBeenCalledWith(expect.stringContaining("Graph message ID: message-1"));
-    expect(screen.getByRole("link", { name: /open in outlook/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /outlook/i })).toHaveAttribute(
       "href",
       "https://outlook.office.com/mail/inbox/id/thread-1",
     );

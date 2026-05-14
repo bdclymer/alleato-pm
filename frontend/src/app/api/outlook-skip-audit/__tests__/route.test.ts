@@ -37,6 +37,7 @@ function createQueryBuilder(result: QueryResult): QueryBuilderMock {
     eq: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
+    returns: jest.fn().mockResolvedValue(result),
     single: jest.fn().mockResolvedValue(result),
     then: jest.fn((resolve: (value: QueryResult) => void) => resolve(result)),
   };

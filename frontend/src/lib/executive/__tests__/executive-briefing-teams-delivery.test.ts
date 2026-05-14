@@ -215,11 +215,11 @@ describe("executive briefing Teams delivery", () => {
     });
     expect(mockSendProactiveMessage).toHaveBeenCalledWith(
       "user-1",
-      expect.stringContaining("**CEO Operating Brief -"),
+      expect.stringContaining("**Daily Brief —"),
     );
     expect(mockSendProactiveMessage).toHaveBeenCalledWith(
       "user-1",
-      expect.stringContaining("**Decisions Needed From You** (1)"),
+      expect.stringContaining("**Decisions Needed (1)"),
     );
   });
 
@@ -228,19 +228,14 @@ describe("executive briefing Teams delivery", () => {
       now: new Date("2026-05-08T13:00:00.000Z"),
     });
 
-    expect(message).toContain("Good morning. **CEO Operating Brief - Friday, May 8**");
-    expect(message).toContain("Snapshot: 1 decision for you");
-    expect(message).toContain("**Start Here - CEO Scan**");
-    expect(message).toContain("**Top Executive Focus** (1)");
-    expect(message).toContain("**Test Project: GC schedule recovery needs executive commitment**");
+    expect(message).toContain("**Daily Brief — Friday, May 8**");
+    expect(message).toContain("Good morning.");
+    expect(message).toContain("**Decisions Needed (1)**");
+    expect(message).toContain("**1. Test Project**");
     expect(message).not.toContain("**983 Test Project:");
-    expect(message).toContain("Best next move: Ask the PM for the weekend-work cost");
-    expect(message).toContain("**Decisions Needed From You** (1)");
-    expect(message).toContain("Decision needed: Confirm the approver and deadline.");
-    expect(message).toContain("Why it matters: The project cannot move cleanly");
-    expect(message).toContain("[Email - Owner approval email - May 6, 2026]");
-    expect(message).toContain("**Risk Radar** (1)");
-    expect(message).toContain("Impact: Install date and field productivity are exposed.");
+    expect(message).toContain("Owner approval is ready but still needs signature.");
+    expect(message).toContain("Deadline pressure is now visible in the source thread.");
+    expect(message).toContain("_Reply with a project name to get source detail or draft a follow-up._");
     expect(message).not.toContain("there");
   });
 
@@ -249,7 +244,8 @@ describe("executive briefing Teams delivery", () => {
       now: new Date("2026-05-08T22:00:00.000Z"),
     });
 
-    expect(message).toContain("Good evening, Brandon. **CEO Operating Brief - Friday, May 8**");
+    expect(message).toContain("**Daily Brief — Friday, May 8**");
+    expect(message).toContain("Good evening, Brandon.");
     expect(message).not.toContain("Good morning");
   });
 });
