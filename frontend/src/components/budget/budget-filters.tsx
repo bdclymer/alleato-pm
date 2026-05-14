@@ -18,11 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BudgetSnapshot, BudgetGroup } from "@/types/budget";
+import type { BudgetViewDefinition } from "@/types/budget-views";
 
 export type QuickFilterType =
   | "over-budget"
   | "under-budget"
   | "no-activity"
+  | "with-direct-costs"
   | "all";
 
 interface BudgetFiltersProps {
@@ -37,6 +39,11 @@ interface BudgetFiltersProps {
   onQuickFilterChange?: (filter: QuickFilterType) => void;
   activeQuickFilter?: QuickFilterType;
   isFullscreen?: boolean;
+  /** Named budget views available for this project */
+  budgetViews?: BudgetViewDefinition[];
+  /** Currently active view ID (undefined = default) */
+  activeViewId?: string;
+  onViewChange?: (viewId: string) => void;
 }
 
 export function BudgetFilters({
@@ -51,6 +58,9 @@ export function BudgetFilters({
   onQuickFilterChange,
   activeQuickFilter = "all",
   isFullscreen = false,
+  budgetViews,
+  activeViewId,
+  onViewChange,
 }: BudgetFiltersProps) {
   const selectedSnapshotName =
     snapshots.find((s) => s.id === selectedSnapshot)?.name || "Select Snapshot";
@@ -62,12 +72,35 @@ export function BudgetFilters({
     "over-budget": "Over Budget",
     "under-budget": "Under Budget",
     "no-activity": "No Activity",
+    "with-direct-costs": "With Direct Costs",
   };
 
   const filterSummary = `${selectedSnapshotName} · ${selectedGroupName} · ${quickFilterLabels[activeQuickFilter]}`;
 
+  const activeViewName = budgetViews?.find((v) => v.id === activeViewId)?.name;
+
   return (
     <div className="flex items-center gap-1">
+      {budgetViews && budgetViews.length > 0 && onViewChange && (
+        <Select value={activeViewId ?? "__default__"} onValueChange={(val) => onViewChange(val === "__default__" ? "" : val)}>
+          <SelectTrigger
+            className="h-8 w-auto min-w-32 max-w-48 border-0 bg-muted/50 text-xs font-medium text-muted-foreground hover:bg-muted focus:ring-0"
+            aria-label="Switch budget view"
+          >
+            <SelectValue placeholder="Default View">
+              {activeViewName ?? "Default View"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectItem value="__default__">Default View</SelectItem>
+            {budgetViews.map((view) => (
+              <SelectItem key={view.id} value={view.id}>
+                {view.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       <Tooltip>
         <DropdownMenu>
           <TooltipTrigger asChild>
@@ -157,6 +190,7 @@ export function BudgetFilters({
                         { id: "over-budget", label: "Over Budget", dotClassName: "bg-destructive" },
                         { id: "under-budget", label: "Under Budget", dotClassName: "bg-success" },
                         { id: "no-activity", label: "No Activity", dotClassName: "bg-muted-foreground/60" },
+                        { id: "with-direct-costs", label: "With Direct Costs", dotClassName: "bg-primary" },
                       ] as const
                     ).map((filter) => (
                       <SelectItem key={filter.id} value={filter.id}>

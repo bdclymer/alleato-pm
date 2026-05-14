@@ -30,6 +30,10 @@ export function applyQuickFilter(
           item.pendingCostChanges === 0
         );
 
+      case "with-direct-costs":
+        // With Direct Costs: directCosts > 0
+        return item.directCosts > 0;
+
       default:
         return true;
     }
@@ -108,7 +112,7 @@ export function loadQuickFilterPreference(projectId: string): QuickFilterType {
     const saved = localStorage.getItem(`budget-quick-filter-${projectId}`);
     if (
       saved &&
-      ["all", "over-budget", "under-budget", "no-activity"].includes(saved)
+      ["all", "over-budget", "under-budget", "no-activity", "with-direct-costs"].includes(saved)
     ) {
       return saved as QuickFilterType;
     }
