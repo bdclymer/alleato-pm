@@ -33,6 +33,7 @@ import { CommittedCostsModal } from "@/components/budget/modals/CommittedCostsMo
 import { PendingCostChangesModal } from "@/components/budget/modals/PendingCostChangesModal";
 import { ForecastToCompleteModal } from "@/components/budget/modals/ForecastToCompleteModal";
 import { ImportBudgetModal } from "@/components/budget/ImportBudgetModal";
+import { ImportFromContractModal } from "@/components/budget/ImportFromContractModal";
 import type { BudgetDetailLineItem } from "@/components/budget/budget-details-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BudgetLineItem } from "@/types/budget";
@@ -153,6 +154,7 @@ function BudgetPageContent() {
   const [showModificationModal, setShowModificationModal] =
     React.useState(false);
   const [showImportModal, setShowImportModal] = React.useState(false);
+  const [showImportFromContractModal, setShowImportFromContractModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [showUnlockDialog, setShowUnlockDialog] = React.useState(false);
@@ -395,6 +397,14 @@ function BudgetPageContent() {
       return;
     }
     setShowImportModal(true);
+  };
+
+  const handleImportFromContract = () => {
+    if (isLocked) {
+      toast.error("Budget is locked. Unlock to import budget data.");
+      return;
+    }
+    setShowImportFromContractModal(true);
   };
 
   const handleCreateSnapshot = React.useCallback(async () => {
@@ -1014,6 +1024,7 @@ function BudgetPageContent() {
           onLockBudget={handleLockBudget}
           onUnlockBudget={handleUnlockBudget}
           onImport={handleImport}
+          onImportFromContract={handleImportFromContract}
           onExport={handleExport}
           onOpenBuyoutSummaryReport={handleOpenBuyoutSummaryReport}
           onOpenLegacyBudgetDetailReport={handleOpenLegacyBudgetDetailReport}
@@ -1152,6 +1163,12 @@ function BudgetPageContent() {
       <ImportBudgetModal
         open={showImportModal}
         onOpenChange={setShowImportModal}
+        projectId={projectId}
+        onSuccess={handleLineItemSuccess}
+      />
+      <ImportFromContractModal
+        open={showImportFromContractModal}
+        onOpenChange={setShowImportFromContractModal}
         projectId={projectId}
         onSuccess={handleLineItemSuccess}
       />
