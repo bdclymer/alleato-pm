@@ -6516,7 +6516,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                   skipRerank: false,
                 },
                 output: {
-                  resultCount: sourceLookupOutput.results.length,
+                  resultCount: sourceLookupOutput?.results?.length ?? 0,
                 },
                 timestamp: new Date().toISOString(),
               });
