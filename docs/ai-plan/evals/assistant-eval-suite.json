@@ -77,7 +77,11 @@
         "project"
       ],
       "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
         "getProjectRiskAnalysis"
+      ],
+      "expectedAllToolNames": [
+        "backendDeepAgentProjectStatus"
       ],
       "mustInclude": [
         "risk"
@@ -2789,6 +2793,7 @@
   ],
   "toolFamilyMap": {
     "project": [
+      "backendDeepAgentProjectStatus",
       "getProjectBriefingSnapshot",
       "getPortfolioOverview",
       "getProjectDetails",
@@ -2825,6 +2830,7 @@
       "getSubmittalStatus"
     ],
     "risk": [
+      "backendDeepAgentProjectStatus",
       "getProjectRiskAnalysis",
       "getProjectsWithRisks"
     ],
