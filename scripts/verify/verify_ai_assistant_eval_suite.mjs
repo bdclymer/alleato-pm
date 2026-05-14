@@ -101,6 +101,8 @@ const SUPABASE_ANON_KEY =
 const SUPABASE_EMAIL = process.env.AI_EVAL_SUPABASE_EMAIL || "test1@mail.com";
 const SUPABASE_PASSWORD = process.env.AI_EVAL_SUPABASE_PASSWORD || "test12026!!!";
 const SUPABASE_COOKIE_NAME = "sb-lgveqfnpkxvzbnnwuled-auth-token";
+const SUPABASE_PROJECT_REF = "lgveqfnpkxvzbnnwuled";
+const SUPABASE_POOLER_HOST = "aws-1-us-east-2.pooler.supabase.com";
 const REFRESH_BUFFER_SEC = 5 * 60; // refresh if expiring within 5 minutes
 const AUTH_REFRESH_RETRIES = 3;
 
@@ -225,6 +227,14 @@ mkdirSync(runDir, { recursive: true });
 async function buildDatabaseConnectionString() {
   const url = new URL(process.env.DATABASE_URL);
   url.searchParams.delete("sslmode");
+
+  if (url.hostname === `db.${SUPABASE_PROJECT_REF}.supabase.co`) {
+    url.hostname = SUPABASE_POOLER_HOST;
+    url.port = url.port || "5432";
+    if (url.username === "postgres") {
+      url.username = `postgres.${SUPABASE_PROJECT_REF}`;
+    }
+  }
 
   if (!/^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) {
     try {
