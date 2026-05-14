@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 
 Confidence = Literal["high", "medium", "low"]
 ProjectStatusIntent = Literal["project_status_risk"]
+ExecutiveBriefingIntent = Literal["business_briefing"]
 SourceStatus = Literal["checked", "missing", "stale", "failed"]
 ToolStatus = Literal["success", "failed", "skipped"]
 MemoryScope = Literal["user", "project", "organization"]
@@ -32,8 +33,29 @@ class DeepProjectIntelligenceRequest(BaseModel):
         return stripped
 
 
+class DeepExecutiveIntelligenceRequest(BaseModel):
+    user_id: str = Field(..., min_length=1, alias="userId")
+    session_id: Optional[str] = Field(default=None, alias="sessionId")
+    question: str = Field(..., min_length=1)
+    mode: ExecutiveBriefingIntent = "business_briefing"
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator("question")
+    @classmethod
+    def question_must_not_be_blank(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("question must not be blank")
+        return stripped
+
+
 class DeepProject(BaseModel):
     id: int
+    name: str
+
+
+class DeepOrganization(BaseModel):
     name: str
 
 
@@ -90,6 +112,22 @@ class DeepProjectIntelligenceResponse(BaseModel):
     confidence: Confidence
     intent: ProjectStatusIntent
     project: DeepProject
+    sources_checked: List[SourceCoverage] = Field(..., alias="sourcesChecked")
+    evidence: List[EvidenceItem]
+    recommended_actions: List[RecommendedAction] = Field(..., alias="recommendedActions")
+    tool_trace: List[ToolTraceItem] = Field(..., alias="toolTrace")
+    memory_candidates: List[MemoryCandidate] = Field(..., alias="memoryCandidates")
+    orchestrator: str
+    mode: Literal["contract_spike", "deep_agents"]
+
+    model_config = {"populate_by_name": True}
+
+
+class DeepExecutiveIntelligenceResponse(BaseModel):
+    answer: str
+    confidence: Confidence
+    intent: ExecutiveBriefingIntent
+    organization: DeepOrganization
     sources_checked: List[SourceCoverage] = Field(..., alias="sourcesChecked")
     evidence: List[EvidenceItem]
     recommended_actions: List[RecommendedAction] = Field(..., alias="recommendedActions")

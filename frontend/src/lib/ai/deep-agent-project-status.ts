@@ -6,6 +6,7 @@ import type { AssistantWidgetPayload, SourceEvidenceItem } from "@/lib/ai/assist
 import type { AssistantIntent } from "@/lib/ai/intent-router";
 
 const WHERE = "ai-assistant.deep-agent-project-status";
+const EXECUTIVE_WHERE = "ai-assistant.deep-agent-executive-briefing";
 
 const confidenceSchema = z.enum(["high", "medium", "low"]);
 
@@ -68,9 +69,41 @@ export type DeepProjectIntelligenceResponse = z.infer<
   typeof deepProjectIntelligenceResponseSchema
 >;
 
+export const deepExecutiveIntelligenceResponseSchema = z.object({
+  answer: z.string(),
+  confidence: confidenceSchema,
+  intent: z.literal("business_briefing"),
+  organization: z.object({
+    name: z.string(),
+  }),
+  sourcesChecked: z.array(sourceCoverageSchema),
+  evidence: z.array(evidenceSchema),
+  recommendedActions: z.array(recommendedActionSchema),
+  toolTrace: z.array(toolTraceSchema),
+  memoryCandidates: z.array(
+    z.object({
+      scope: z.enum(["user", "project", "organization"]),
+      fact: z.string(),
+      requiresApproval: z.boolean(),
+    }),
+  ),
+  orchestrator: z.string(),
+  mode: z.enum(["contract_spike", "deep_agents"]),
+});
+
+export type DeepExecutiveIntelligenceResponse = z.infer<
+  typeof deepExecutiveIntelligenceResponseSchema
+>;
+
 export type DeepAgentProjectStatusRequest = {
   userId: string;
   projectId: number;
+  sessionId?: string | null;
+  question: string;
+};
+
+export type DeepAgentExecutiveBriefingRequest = {
+  userId: string;
   sessionId?: string | null;
   question: string;
 };
@@ -81,6 +114,15 @@ const DEEP_AGENT_PROJECT_CONTEXT_INTENTS = new Set<AssistantIntent>([
   "risk_review",
   "financial_analysis",
   "change_management_review",
+  "decision_lookup",
+  "task_followup",
+  "implementation_planning",
+]);
+
+const DEEP_AGENT_EXECUTIVE_CONTEXT_INTENTS = new Set<AssistantIntent>([
+  "latest_status",
+  "risk_review",
+  "financial_analysis",
   "decision_lookup",
   "task_followup",
   "implementation_planning",
@@ -100,6 +142,19 @@ export function shouldUseDeepAgentProjectStatusBridge(params: {
     isDeepAgentProjectStatusBridgeEnabled() &&
     typeof projectId === "number" &&
     DEEP_AGENT_PROJECT_CONTEXT_INTENTS.has(params.intent)
+  );
+}
+
+export function shouldUseDeepAgentExecutiveBridge(params: {
+  intent: AssistantIntent;
+  projectId?: number | null;
+  selectedProjectId?: number | null;
+}): boolean {
+  const projectId = params.projectId ?? params.selectedProjectId;
+  return (
+    isDeepAgentProjectStatusBridgeEnabled() &&
+    typeof projectId !== "number" &&
+    DEEP_AGENT_EXECUTIVE_CONTEXT_INTENTS.has(params.intent)
   );
 }
 
@@ -179,6 +234,39 @@ export async function fetchDeepAgentProjectStatus(
   return deepProjectIntelligenceResponseSchema.parse(json);
 }
 
+export async function fetchDeepAgentExecutiveBriefing(
+  params: DeepAgentExecutiveBriefingRequest,
+): Promise<DeepExecutiveIntelligenceResponse> {
+  const headers = new Headers({
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Admin-Api-Key": getBackendAdminApiKey(),
+  });
+
+  const response = await fetchWithGuardrails(
+    `${getBackendUrl()}/api/intelligence/deep-agent/executive-briefing`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        userId: params.userId,
+        sessionId: params.sessionId ?? undefined,
+        question: params.question,
+        mode: "business_briefing",
+      }),
+      requestId: params.sessionId ?? "deep-agent-executive-briefing",
+      where: EXECUTIVE_WHERE,
+      dependency: "backend.deep-agent-executive-briefing",
+      timeoutMs: AI_CALL_POLICY.timeoutMs,
+      retries: 0,
+      backoffMs: AI_CALL_POLICY.backoffMs,
+    },
+  );
+
+  const json = await response.json();
+  return deepExecutiveIntelligenceResponseSchema.parse(json);
+}
+
 export function formatDeepAgentProjectStatusContext(
   packet: DeepProjectIntelligenceResponse,
 ): string {
@@ -217,6 +305,46 @@ export function formatDeepAgentProjectStatusContext(
   ].join("\n");
 }
 
+export function formatDeepAgentExecutiveBriefingContext(
+  packet: DeepExecutiveIntelligenceResponse,
+): string {
+  const sourceLines = packet.sourcesChecked.map((source) => {
+    const latest = source.latestSourceAt ? ` latest=${source.latestSourceAt}` : "";
+    return `- ${source.sourceType}: ${source.status}, records=${source.recordCount}.${latest} ${source.notes}`;
+  });
+  const evidenceLines = packet.evidence.slice(0, 10).map((item) => {
+    const occurred = item.occurredAt ? ` (${item.occurredAt})` : "";
+    return `- [${item.sourceType}] ${item.title}${occurred}: ${item.excerpt}`;
+  });
+  const actionLines = packet.recommendedActions.slice(0, 6).map((action) => {
+    return `- ${action.label} (${action.ownerRole}): ${action.reason}`;
+  });
+
+  return [
+    "# Backend Deep Agents Executive Briefing Packet",
+    "",
+    `Mode: ${packet.mode}`,
+    `Organization: ${packet.organization.name}`,
+    `Confidence: ${packet.confidence}`,
+    "",
+    "Backend synthesis:",
+    packet.answer,
+    "",
+    "Source coverage:",
+    ...sourceLines,
+    "",
+    "Evidence:",
+    ...(evidenceLines.length > 0 ? evidenceLines : ["- No evidence rows were returned."]),
+    "",
+    "Recommended actions:",
+    ...(actionLines.length > 0 ? actionLines : ["- No recommended actions were returned."]),
+    "",
+    "Use this packet as checked business-wide backend context.",
+    "Do not claim missing or failed source categories were available.",
+    "Do not claim email, calendar, task, or project writes were completed unless a deterministic action tool did that work.",
+  ].join("\n");
+}
+
 function mapSourceType(sourceType: string): SourceEvidenceItem["sourceType"] {
   switch (sourceType) {
     case "meetings":
@@ -232,6 +360,10 @@ function mapSourceType(sourceType: string): SourceEvidenceItem["sourceType"] {
       return "document";
     case "financials":
       return "accounting";
+    case "tasks":
+    case "executive_briefing":
+    case "projects":
+      return "project_record";
     case "packet":
     case "schedule":
     case "rfis":
@@ -252,6 +384,26 @@ export function buildDeepAgentSourceEvidenceWidget(
     id: "deep-agent-project-status-evidence",
     title: `${packet.project.name} source coverage`,
     sources: packet.evidence.slice(0, 8).map((item): SourceEvidenceItem => ({
+      id: item.sourceId,
+      title: item.title,
+      sourceType: mapSourceType(item.sourceType),
+      date: item.occurredAt ?? undefined,
+      snippet: item.excerpt,
+      confidence: item.confidence,
+    })),
+  };
+}
+
+export function buildDeepAgentExecutiveEvidenceWidget(
+  packet: DeepExecutiveIntelligenceResponse,
+): AssistantWidgetPayload | null {
+  if (packet.evidence.length === 0) return null;
+
+  return {
+    type: "source_evidence_drawer",
+    id: "deep-agent-executive-briefing-evidence",
+    title: `${packet.organization.name} source coverage`,
+    sources: packet.evidence.slice(0, 10).map((item): SourceEvidenceItem => ({
       id: item.sourceId,
       title: item.title,
       sourceType: mapSourceType(item.sourceType),

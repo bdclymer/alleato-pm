@@ -1,8 +1,13 @@
 import {
+  buildDeepAgentExecutiveEvidenceWidget,
   buildDeepAgentSourceEvidenceWidget,
+  fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
+  formatDeepAgentExecutiveBriefingContext,
   formatDeepAgentProjectStatusContext,
+  shouldUseDeepAgentExecutiveBridge,
   shouldUseDeepAgentProjectStatusBridge,
+  type DeepExecutiveIntelligenceResponse,
   type DeepProjectIntelligenceResponse,
 } from "../deep-agent-project-status";
 
@@ -61,6 +66,61 @@ const packet: DeepProjectIntelligenceResponse = {
   ],
   memoryCandidates: [],
   orchestrator: "deep_project_intelligence_v1",
+  mode: "deep_agents",
+};
+
+const executivePacket: DeepExecutiveIntelligenceResponse = {
+  answer: "The business has two urgent follow-ups and one process risk.",
+  confidence: "medium",
+  intent: "business_briefing",
+  organization: {
+    name: "Alleato",
+  },
+  sourcesChecked: [
+    {
+      sourceType: "executive_briefing",
+      status: "checked",
+      recordCount: 1,
+      latestSourceAt: "2026-05-14T12:00:00Z",
+      notes: "Executive briefing packet found.",
+    },
+    {
+      sourceType: "emails",
+      status: "missing",
+      recordCount: 0,
+      latestSourceAt: null,
+      notes: "No recent email rows found.",
+    },
+  ],
+  evidence: [
+    {
+      sourceType: "tasks",
+      sourceId: "task-1",
+      title: "Follow up with Megan",
+      excerpt: "Megan is waiting on an update.",
+      occurredAt: "2026-05-14T12:00:00Z",
+      confidence: "medium",
+    },
+  ],
+  recommendedActions: [
+    {
+      label: "Clarify ownership for urgent follow-ups",
+      ownerRole: "Operations",
+      reason: "The executive packet found open items without a clear owner.",
+      sourceId: "task-1",
+    },
+  ],
+  toolTrace: [
+    {
+      agent: "executive-intelligence-orchestrator",
+      tool: "deepagents_runtime",
+      status: "success",
+      durationMs: 42,
+      detail: "Deep Agents runtime produced an executive synthesis from checked source coverage.",
+    },
+  ],
+  memoryCandidates: [],
+  orchestrator: "deep-agents-executive-intelligence",
   mode: "deep_agents",
 };
 
@@ -126,6 +186,33 @@ describe("Deep Agents project-status bridge", () => {
     ).toBe(false);
   });
 
+  it("enables the executive bridge for broad read-heavy intents without project context", () => {
+    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "true";
+
+    expect(
+      shouldUseDeepAgentExecutiveBridge({
+        intent: "task_followup",
+        selectedProjectId: null,
+      }),
+    ).toBe(true);
+    expect(
+      shouldUseDeepAgentExecutiveBridge({
+        intent: "implementation_planning",
+      }),
+    ).toBe(true);
+    expect(
+      shouldUseDeepAgentExecutiveBridge({
+        intent: "task_followup",
+        projectId: 43,
+      }),
+    ).toBe(false);
+    expect(
+      shouldUseDeepAgentExecutiveBridge({
+        intent: "calendar_action",
+      }),
+    ).toBe(false);
+  });
+
   it("formats backend packet coverage as additive AI SDK context", () => {
     const context = formatDeepAgentProjectStatusContext(packet);
 
@@ -148,6 +235,34 @@ describe("Deep Agents project-status bridge", () => {
           title: "Project status packet",
           sourceType: "project_record",
           snippet: "Packet says owner decisions are pending.",
+          confidence: "medium",
+        },
+      ],
+    });
+  });
+
+  it("formats executive backend packet coverage as additive AI SDK context", () => {
+    const context = formatDeepAgentExecutiveBriefingContext(executivePacket);
+
+    expect(context).toContain("Backend Deep Agents Executive Briefing Packet");
+    expect(context).toContain("Mode: deep_agents");
+    expect(context).toContain("- emails: missing, records=0.");
+    expect(context).toContain("Do not claim email, calendar, task, or project writes were completed");
+  });
+
+  it("turns executive backend packet evidence into an existing source evidence widget", () => {
+    const widget = buildDeepAgentExecutiveEvidenceWidget(executivePacket);
+
+    expect(widget).toMatchObject({
+      type: "source_evidence_drawer",
+      id: "deep-agent-executive-briefing-evidence",
+      title: "Alleato source coverage",
+      sources: [
+        {
+          id: "task-1",
+          title: "Follow up with Megan",
+          sourceType: "project_record",
+          snippet: "Megan is waiting on an update.",
           confidence: "medium",
         },
       ],
@@ -183,6 +298,41 @@ describe("Deep Agents project-status bridge", () => {
           sessionId: "session-1",
           question: "What is the current project status?",
           mode: "project_status_risk",
+        }),
+      }),
+    );
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get("X-Admin-Api-Key")).toBe("admin-test-key");
+    expect(headers.get("x-request-id")).toBe("session-1");
+  });
+
+  it("posts the typed request to the backend executive Deep Agents endpoint", async () => {
+    process.env.BACKEND_URL = "http://127.0.0.1:8000";
+    process.env.ADMIN_API_KEY = "admin-test-key";
+    const fetchMock = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify(executivePacket), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    global.fetch = fetchMock;
+
+    const response = await fetchDeepAgentExecutiveBriefing({
+      userId: "user-1",
+      sessionId: "session-1",
+      question: "What business risks need attention?",
+    });
+
+    expect(response.mode).toBe("deep_agents");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/intelligence/deep-agent/executive-briefing",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          userId: "user-1",
+          sessionId: "session-1",
+          question: "What business risks need attention?",
+          mode: "business_briefing",
         }),
       }),
     );

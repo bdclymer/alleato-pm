@@ -109,9 +109,13 @@ import {
   resolveIntelligenceTarget,
 } from "@/lib/ai/intelligence/packet-service";
 import {
+  buildDeepAgentExecutiveEvidenceWidget,
   buildDeepAgentSourceEvidenceWidget,
+  fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
+  formatDeepAgentExecutiveBriefingContext,
   formatDeepAgentProjectStatusContext,
+  shouldUseDeepAgentExecutiveBridge,
   shouldUseDeepAgentProjectStatusBridge,
 } from "@/lib/ai/deep-agent-project-status";
 import {
@@ -7275,6 +7279,75 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               writeStrategistStatus(writer, {
                 stage: "knowledge",
                 message: "Backend Deep Agents packet unavailable; falling back to current packet/tools",
+                status: "warning",
+              });
+            }
+          } else if (
+            shouldUseDeepAgentExecutiveBridge({
+              intent: assistantIntent,
+              projectId: deepAgentProjectId,
+            })
+          ) {
+            writeStrategistStatus(writer, {
+              stage: "knowledge",
+              message: "Checking backend Deep Agents executive packet",
+              status: "loading",
+            });
+
+            try {
+              const deepAgentPacket = await fetchDeepAgentExecutiveBriefing({
+                userId: user.id,
+                sessionId,
+                question: lastUserContent,
+              });
+              const deepAgentContext = formatDeepAgentExecutiveBriefingContext(deepAgentPacket);
+              const deepAgentWidget = buildDeepAgentExecutiveEvidenceWidget(deepAgentPacket);
+              const deepAgentDataParts = deepAgentWidget
+                ? writeAssistantWidgetParts(writer, [deepAgentWidget])
+                : [];
+
+              systemPrompt = `${systemPrompt}\n\n---\n\n${deepAgentContext}`;
+              toolTrace.push({
+                tool: "backendDeepAgentExecutiveBriefing",
+                input: {
+                  intent: assistantIntent,
+                  query: lastUserContent.slice(0, 240),
+                  selectedProjectId,
+                  resolvedProjectId: resolvedTarget?.projectId ?? null,
+                },
+                output: {
+                  mode: deepAgentPacket.mode,
+                  confidence: deepAgentPacket.confidence,
+                  sourceCount: deepAgentPacket.sourcesChecked.length,
+                  evidenceCount: deepAgentPacket.evidence.length,
+                  dataPartCount: deepAgentDataParts.length,
+                  runtimeTrace: deepAgentPacket.toolTrace.find(
+                    (item) => item.tool === "deepagents_runtime",
+                  ) ?? null,
+                },
+                timestamp: new Date().toISOString(),
+              });
+              writeStrategistStatus(writer, {
+                stage: "knowledge",
+                message: "Loaded backend Deep Agents executive packet",
+                status: deepAgentPacket.mode === "deep_agents" ? "success" : "warning",
+              });
+            } catch (error) {
+              const detail = error instanceof Error ? error.message : String(error);
+              toolTrace.push({
+                tool: "backendDeepAgentExecutiveBriefing",
+                input: {
+                  intent: assistantIntent,
+                  query: lastUserContent.slice(0, 240),
+                  selectedProjectId,
+                  resolvedProjectId: resolvedTarget?.projectId ?? null,
+                },
+                error: detail,
+                timestamp: new Date().toISOString(),
+              });
+              writeStrategistStatus(writer, {
+                stage: "knowledge",
+                message: "Backend Deep Agents executive packet unavailable; falling back to current tools",
                 status: "warning",
               });
             }

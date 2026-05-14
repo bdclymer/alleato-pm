@@ -42,8 +42,12 @@ from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from src.services.pipeline import run_full_pipeline
 from src.api.admin_endpoints import require_admin_api_key
-from src.services.agents.deep_project_intelligence import build_project_status_contract_spike
+from src.services.agents.deep_project_intelligence import (
+    build_executive_briefing_contract_spike,
+    build_project_status_contract_spike,
+)
 from src.services.agents.deep_project_intelligence_contracts import (
+    DeepExecutiveIntelligenceRequest,
     DeepProjectIntelligenceRequest,
 )
 
@@ -1140,6 +1144,36 @@ async def run_deep_agent_project_status(
         and response.tool_trace[0].detail == "Project lookup returned no row."
     ):
         raise HTTPException(status_code=404, detail=response.answer)
+    return response.model_dump(by_alias=True)
+
+
+@app.post(
+    "/api/intelligence/deep-agent/executive-briefing",
+    tags=["Intelligence"],
+    summary="Run Deep Agents business-wide executive briefing",
+)
+async def run_deep_agent_executive_briefing(
+    request: DeepExecutiveIntelligenceRequest,
+    _: None = Depends(require_admin_api_key),
+    store: SupabaseRagStore = Depends(get_rag_store),
+) -> Dict[str, Any]:
+    """Return a typed Deep Agents packet for business-wide assistant prompts."""
+    if not _env_flag_enabled("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED"):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Deep Agents executive intelligence is disabled. Set "
+                "DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true to run the "
+                "business-wide backend packet."
+            ),
+        )
+
+    response = build_executive_briefing_contract_spike(
+        request,
+        store,
+        runtime=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "contract_spike"),
+        model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.4-mini"),
+    )
     return response.model_dump(by_alias=True)
 
 

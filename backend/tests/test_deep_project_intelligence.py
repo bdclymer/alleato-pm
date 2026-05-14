@@ -3,12 +3,15 @@ import sys
 import pytest
 
 from src.services.agents.deep_project_intelligence import (
+    REQUIRED_EXECUTIVE_SOURCE_TYPES,
     REQUIRED_SOURCE_TYPES,
+    build_executive_briefing_contract_spike,
     build_project_status_contract_spike,
     _openai_model_name,
     _resolve_deep_agents_model,
 )
 from src.services.agents.deep_project_intelligence_contracts import (
+    DeepExecutiveIntelligenceRequest,
     DeepProjectIntelligenceRequest,
 )
 class _Store:
@@ -76,20 +79,28 @@ def _request():
     )
 
 
-def _override_deep_agent_auth(app):
+def _executive_request():
+    return DeepExecutiveIntelligenceRequest(
+        userId="user-1",
+        sessionId="session-1",
+        question="What risks exist in the business and what am I waiting on?",
+    )
+
+
+def _override_deep_agent_auth(app, path="/api/intelligence/deep-agent/project-status"):
     """Override the admin dependency even when test conftest imports it as a mock."""
     for route in app.routes:
-        if getattr(route, "path", None) == "/api/intelligence/deep-agent/project-status":
+        if getattr(route, "path", None) == path:
             for dependency in getattr(route, "dependant", None).dependencies:
                 if dependency.name == "_":
                     app.dependency_overrides[dependency.call] = lambda: None
             return
-    raise AssertionError("Deep Agents project-status route was not registered")
+    raise AssertionError(f"Deep Agents route was not registered: {path}")
 
 
-def _clear_overrides(app):
+def _clear_overrides(app, path="/api/intelligence/deep-agent/project-status"):
     for route in app.routes:
-        if getattr(route, "path", None) == "/api/intelligence/deep-agent/project-status":
+        if getattr(route, "path", None) == path:
             for dependency in getattr(route, "dependant", None).dependencies:
                 if dependency.name == "_":
                     app.dependency_overrides.pop(dependency.call, None)
@@ -295,6 +306,7 @@ def test_deep_agents_runtime_invokes_installed_graph_with_bindable_model(monkeyp
 
 
 def test_deep_agents_runtime_prefers_ai_gateway_model(monkeypatch):
+    pytest.importorskip("langchain_openai")
     monkeypatch.setenv("AI_GATEWAY_API_KEY", "gateway-test-key")
     monkeypatch.setenv("OPENAI_API_KEY", "direct-test-key")
 
@@ -305,6 +317,7 @@ def test_deep_agents_runtime_prefers_ai_gateway_model(monkeypatch):
 
 
 def test_deep_agents_runtime_direct_openai_model_normalization(monkeypatch):
+    pytest.importorskip("langchain_openai")
     monkeypatch.delenv("AI_GATEWAY_API_KEY", raising=False)
     monkeypatch.setenv("OPENAI_API_KEY", "direct-test-key")
 
@@ -338,6 +351,121 @@ def test_deep_agents_runtime_failure_falls_back_to_contract_answer():
     assert response.tool_trace[-1].tool == "deepagents_runtime"
     assert response.tool_trace[-1].status == "failed"
     assert "deepagents unavailable" in response.tool_trace[-1].detail
+
+
+def test_executive_contract_spike_reads_business_wide_source_coverage():
+    client = _FakeSupabase(
+        {
+            "daily_recaps": [
+                {
+                    "id": "brief-1",
+                    "recap_kind": "executive_briefing",
+                    "workflow_status": "approved",
+                    "recap_date": "2026-05-14",
+                    "briefing_packet": {"summary": "Today has two urgent follow-ups."},
+                }
+            ],
+            "executive_briefing_follow_ups": [
+                {
+                    "id": "task-1",
+                    "title": "Get Megan an update",
+                    "section": "urgent",
+                    "created_at": "2026-05-14T10:00:00Z",
+                }
+            ],
+            "project_emails": [
+                {
+                    "id": 1,
+                    "subject": "Need update",
+                    "body_text": "Can someone send the latest?",
+                    "received_at": "2026-05-14T09:00:00Z",
+                }
+            ],
+            "document_metadata": [
+                {
+                    "id": "teams-1",
+                    "source_system": "teams",
+                    "title": "Teams risk thread",
+                    "overview": "Team is blocked on ownership.",
+                    "source_last_modified_at": "2026-05-14T08:00:00Z",
+                },
+                {
+                    "id": "meeting-1",
+                    "source": "fireflies",
+                    "title": "Daily huddle",
+                    "summary": "Meeting covered business risk.",
+                    "date": "2026-05-14T07:00:00Z",
+                },
+            ],
+            "project_documents": [
+                {
+                    "id": 2,
+                    "title": "Operating process",
+                    "source_last_modified_at": "2026-05-13T00:00:00Z",
+                }
+            ],
+            "projects": [
+                {
+                    "id": 43,
+                    "name": "Westfield Collective",
+                    "updated_at": "2026-05-12T00:00:00Z",
+                }
+            ],
+            "acumatica_project_budgets": [
+                {
+                    "id": 3,
+                    "description": "Budget exposure",
+                    "updated_at": "2026-05-11T00:00:00Z",
+                }
+            ],
+            "schedule_tasks": [
+                {
+                    "id": "schedule-1",
+                    "name": "Critical milestone",
+                    "finish_date": "2026-05-20T00:00:00Z",
+                }
+            ],
+        }
+    )
+
+    response = build_executive_briefing_contract_spike(
+        _executive_request(),
+        _Store(client=client),
+    )
+
+    assert response.intent == "business_briefing"
+    assert response.organization.name == "Alleato"
+    assert response.confidence == "medium"
+    assert [source.source_type for source in response.sources_checked] == list(REQUIRED_EXECUTIVE_SOURCE_TYPES)
+    assert all(source.status == "checked" for source in response.sources_checked)
+    assert response.evidence[0].source_type == "executive_briefing"
+    assert response.tool_trace[0].tool == "executive_briefing_reader"
+    assert response.recommended_actions[0].label == "Use executive Deep Agents packet for business-wide chat answers"
+
+
+def test_executive_deep_agents_runtime_can_synthesize_business_packet():
+    class _Agent:
+        def invoke(self, payload):
+            assert "messages" in payload
+            return {"messages": [{"role": "assistant", "content": "Executive synthesis from Deep Agents."}]}
+
+    def create_agent(**kwargs):
+        assert kwargs["model"] == "openai:gpt-5.4-mini"
+        assert kwargs["tools"]
+        assert "system_prompt" in kwargs
+        return _Agent()
+
+    response = build_executive_briefing_contract_spike(
+        _executive_request(),
+        _Store(client=_FakeSupabase({"daily_recaps": []})),
+        runtime="deep_agents",
+        create_agent=create_agent,
+    )
+
+    assert response.mode == "deep_agents"
+    assert response.answer == "Executive synthesis from Deep Agents."
+    assert response.tool_trace[-1].tool == "deepagents_runtime"
+    assert response.tool_trace[-1].status == "success"
 
 
 def test_contract_spike_fails_loudly_when_project_is_missing():
@@ -388,6 +516,28 @@ def test_deep_agent_endpoint_is_feature_gated(client, mock_supabase_store, monke
     mock_supabase_store.get_project.assert_not_called()
 
 
+def test_deep_agent_executive_endpoint_is_feature_gated(client, mock_supabase_store, monkeypatch):
+    monkeypatch.delenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", raising=False)
+    mock_supabase_store._client = None
+    path = "/api/intelligence/deep-agent/executive-briefing"
+    _override_deep_agent_auth(client.app, path)
+
+    try:
+        response = client.post(
+            path,
+            json={
+                "userId": "user-1",
+                "sessionId": "session-1",
+                "question": "What business risks need attention?",
+            },
+        )
+    finally:
+        _clear_overrides(client.app, path)
+
+    assert response.status_code == 503
+    assert "DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=true" in response.json()["detail"]
+
+
 def test_deep_agent_endpoint_returns_contract_packet(client, mock_supabase_store, monkeypatch):
     monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", "true")
     mock_supabase_store.get_project.return_value = {"id": 43, "name": "Westfield Collective"}
@@ -416,6 +566,37 @@ def test_deep_agent_endpoint_returns_contract_packet(client, mock_supabase_store
     assert data["sourcesChecked"][0]["status"] == "missing"
     assert data["toolTrace"][0]["tool"] == "project_lookup"
     assert data["recommendedActions"][0]["ownerRole"] == "AI/backend"
+
+
+def test_deep_agent_executive_endpoint_returns_contract_packet(client, mock_supabase_store, monkeypatch):
+    monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", "true")
+    mock_supabase_store._client = None
+    mock_supabase_store.client = None
+    path = "/api/intelligence/deep-agent/executive-briefing"
+    _override_deep_agent_auth(client.app, path)
+
+    try:
+        response = client.post(
+            path,
+            json={
+                "userId": "user-1",
+                "sessionId": "session-1",
+                "question": "What business risks need attention?",
+            },
+        )
+    finally:
+        _clear_overrides(client.app, path)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mode"] == "contract_spike"
+    assert data["intent"] == "business_briefing"
+    assert data["organization"] == {"name": "Alleato"}
+    assert data["confidence"] == "low"
+    assert data["sourcesChecked"][0]["sourceType"] == "executive_briefing"
+    assert data["sourcesChecked"][0]["status"] == "missing"
+    assert data["toolTrace"][0]["tool"] == "source_client"
+    assert data["recommendedActions"][0]["ownerRole"] == "Operations"
 
 
 def test_deep_agent_endpoint_returns_404_for_missing_project(client, mock_supabase_store, monkeypatch):
