@@ -7,83 +7,112 @@
 
 ## Current focus
 
-**Status:** Communications data pipeline stable. Render cron infrastructure complete. All working changes committed and pushed to main.
-**Last updated:** 2026-05-06
-**Last worked on by:** Claude Code (session ending ~18:30 ET)
+**Status:** All changes committed and pushed to main. Session ended cleanly.
+**Last updated:** 2026-05-14
+**Last worked on by:** Claude Code (session ending ~4:30pm ET)
 
 ---
 
-## What was done this session (2026-05-06)
+## What was done this session (2026-05-14)
 
-### 1. GitHub Actions — billing lock identified, two workflows deleted
+A very heavy day — 30+ commits across backend and frontend. Summary by area:
 
-The CI startup_failure was NOT a code bug — GitHub billing was locked, preventing all workflow runs. The `actions/checkout@v6` fix in `ci-handler.yml` was applied but didn't resolve it (billing lock is the real blocker).
+### 1. Deep Agents backend pipeline (morning)
 
-**Two costly workflows deleted:**
-- `.github/workflows/rag-meeting-vectorization-health.yml` — was a scheduled daily Node.js health check consuming Actions minutes. Replaced by Render cron.
-- `.github/workflows/chromatic.yml` — visual regression running on every PR. Deleted (no replacement needed yet).
+Built the backend contracts and agent service for the Deep Project Intelligence pipeline:
 
-**Action required:** Update payment at github.com/settings/billing to restore CI.
+- **`backend/src/services/agents/deep_project_intelligence_contracts.py`** — Pydantic request/response "contracts" (typed schemas) for the Deep Agents. Defines `DeepProjectIntelligenceRequest`, `DeepExecutiveIntelligenceRequest`, and all the response/evidence/source models. This is the "contracts spike" — a clean type-safe API boundary for the agentic pipeline.
+- **`backend/src/services/agents/deep_project_intelligence.py`** — The actual deep agent: 9 parallel source probes (document_chunks, email, meetings, budget, tasks, RFIs, submittals, project_insights), LLM synthesis, and streaming response.
+- **`backend/src/api/main.py`** — Wired the two new endpoints: `POST /api/v1/deep-agents/project-status` and `POST /api/v1/deep-agents/executive-briefing`.
+- **`backend/src/tests/test_deep_project_intelligence.py`** — Unit tests for contracts validation.
 
-### 2. RAG health check → Render cron
+### 2. Deep Agents frontend bridge (mid-morning → afternoon)
 
-Ported the Node.js health check script to Python:
-- **New file:** `backend/src/services/health/rag_meeting_health.py`
-- **New file:** `backend/src/services/health/__init__.py`
-- **Render cron added:** `alleato-rag-health` — daily at 12:15 UTC — `python3 -m src.services.health.rag_meeting_health`
-- Posts Slack alert via `SLACK_WEBHOOK_URL` on failure.
-- Checks: embedding coverage, staleness (>7 days lag), chunk coverage, Fireflies job health, embedding provider probe.
+Wired the backend deep agents into the AI assistant:
 
-### 3. Task extraction → Render cron
+- **`frontend/src/lib/ai/deep-agent-project-status.ts`** — Client-side bridge: detects Deep Agent intents (`target_briefing`, `latest_status`, `risk_review`), calls the backend endpoint, and streams results back into the chat.
+- **`frontend/src/lib/ai/chat-handler.ts`** — Routing logic updated to gate deep-agent calls behind `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED` feature flag.
+- **`frontend/src/lib/ai/__tests__/deep-agent-project-status.test.ts`** — Tests for the bridge.
+- Several commits to routing, tool prioritization, and executive briefing verification.
 
-- **New file:** `backend/src/services/task_extraction.py` — extracts action items from meetings/emails/Teams messages
-- **Render cron added:** `alleato-task-extraction` — daily at 7 AM UTC
-- Replaces the old Vercel cron route `/api/admin/cron/extract-brandon-tasks`
-- Backend scheduler also updated (`scheduler.py`)
+### 3. Outlook inbox email widget redesign (afternoon)
 
-### 4. Teams DM sync status
+Fully redesigned the `OutlookInboxSummaryWidget` in `assistant-widget-renderer.tsx`:
 
-After Azure AD admin consent was granted in a prior session:
-- **273/283 chats syncing successfully** ✅
-- **10 permanent 403s** on cross-tenant (`@unq.gbl.spaces`) and meeting chat (`@thread.v2`) IDs — hard Graph API limitation with app-only auth. Cannot be fixed.
+**Collapsed state (before → after):**
+- Before: subject + redundant metadata + "Suggested next step" block + preview (cluttered)
+- After: avatar initials circle + sender + thread count + paperclip indicator + time + thumbs feedback + chevron + subject bold + single-line preview
 
-### 5. Teams compiler → automatic (wired into sync pipeline)
+**Expanded state:**
+- "Next step" pill (primary-colored label + recommended action text)
+- Email body indented under avatar in `bg-muted/30` block
+- Action toolbar: **Reply** (→ replyPrompt), **AI Draft** (→ draftPrompt), **Project** (→ AI prompt for assignment), **Task** (→ AI prompt for creation), **Tag** (→ popover with text input), **Open in Outlook** (external link)
 
-The Teams DM compiler previously only ran via API endpoint. Now wired into `run_graph_sync()` in `backend/src/services/integrations/microsoft_graph/sync.py`:
+**`EmailCardFeedback` component:**
+- Thumbs up/down on every collapsed card header
+- Optimistic UI with green/red highlight
+- Fires to `/api/ai-assistant/feedback` silently on vote
 
-Pipeline order: sync → embed → **compile** (batch of 25 per run)
+Key commits: `4e7573ffe` "Make Outlook inbox cards actionable", `5dff66822` "Flatten Outlook inbox assistant summaries"
 
-The compiler (`backend/src/services/intelligence/teams_compiler.py`):
-- Processes `teams_dm_conversation` docs with `status IN ('raw_ingested', 'embedded')` and no overview
-- Has 170s internal time limit
-- Writes to `project_insights`, `tasks`, `insights`, `source_signal_candidates`
+### 4. AI widget gallery expanded (afternoon)
 
-### 6. Large uncommitted working-tree batch committed and pushed
+Added two new sections to `/auth/ai-widget-gallery`:
 
-All previously uncommitted changes (product board, emails pipeline, executive briefing, nav, tasks API) were committed in 8 logical commits and pushed to main.
+- **Generative UI components grid** — all 20 registered widget types with category badge (action / data / intelligence / communication), trigger phrase, description, and type key
+- **AI SDK features table** — 17 features with badge (Core / Tools / Agents / Streaming / React / HITL / Generative UI / Providers / Embeddings), usage description, and exact file locations
 
-Notable: `email-sync-client.tsx` — a tabbed email view (All / Assigned / Needs Review / Attachments) was committed and wired into the emails table page.
+Also fixed pre-existing fixture data bugs: `projectId` → `projectIds`, added missing required widget fields.
+
+Key commit: `df9f28b24` "Expand AI widget gallery with component and SDK reference tables"
+
+### 5. Other notable fixes (throughout day)
+
+- `ad70430a9` — Fixed `contracts/{id}/payments` PostgREST `.single()` coercion error
+- `df9c4831d` — Fixed 5 invoicing bugs: status badge, PDF export, not-found hang, maxLength, contract dropdown
+- `ca1bd5e72` — Fixed change-orders inline line item edit fails on generated column
+- `a25321f0f` — Added budget view switcher to toolbar
+- `f2ee7b095` — Added edit page for estimates tool
+- `e43d29724` — Fixed realtime cursors chunk load failure (moved `createClient()` inside hook via `useRef`)
+- Outlook intake reclassification controls + script
+- RAG chunk integrity guardrail
+- Fireflies transcript chunk rebuild fix
 
 ---
 
 ## Active task
 
-Nothing actively blocked. Render cron infrastructure is complete. All changes pushed.
-
-**Pending action (requires user):** GitHub billing lock — update payment at github.com/settings/billing to restore CI workflows.
+Nothing actively blocked. All changes pushed to main.
 
 ---
 
-## Architecture — Communications Data Pipeline
+## What's next / follow-ups
 
-Full reference: `docs/architecture/COMMUNICATIONS-DATA-PIPELINE.md`
+1. **Deep Agents production validation** — the bridge is gated behind `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED`. Needs end-to-end test with a real project question before toggling on in production.
+2. **Outlook email widget actions** — Project assignment and Task creation currently delegate to `onSubmit` (AI handles them). Could wire to direct API calls if the assistant round-trip feels slow in practice.
+3. **Radix Select + browser automation gap** — ~30 cascading E2E failures trace to this. The dropdown test pattern needs a dedicated fix before Playwright suite can cover full CRUD flows.
+4. **Estimates tool** — has no seed data; E2E tests can't run until seed data is created.
+5. **`/prp-validate` runs needed** — Change Events, Change Management, Commitments, Direct Costs, Invoicing, Prime Contracts, Estimates still need PRP validation.
+6. **Low-confidence review queue** — `document_attribution_candidates` table still has no UI.
+7. **GitHub billing** — CI workflows are still disabled (billing lock at github.com/settings/billing).
 
-Key facts:
-- **Render cron** `alleato-graph-sync` — every 30 min — `backend/src/services/integrations/microsoft_graph/sync.py`
-- Sync → embed (`embed_pending_graph_documents`) → compile (`run_compiler_batch`)
-- **Four tables:** `outlook_email_intake` ⊇ `document_metadata` ⊇ `project_emails`. `document_chunks` = vector store.
-- **Embedding:** `embed_pending_graph_documents()` runs synchronously at end of each sync run
-- **Teams DM compiler:** 30 min cadence, batch 25, 170s limit
+---
+
+## Architecture — key file map
+
+| Thing | Location |
+|-------|----------|
+| Deep Agents contracts (Pydantic schemas) | `backend/src/services/agents/deep_project_intelligence_contracts.py` |
+| Deep Agents service (9-probe pipeline) | `backend/src/services/agents/deep_project_intelligence.py` |
+| Deep Agents frontend bridge | `frontend/src/lib/ai/deep-agent-project-status.ts` |
+| Feature flag | `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED` in `.env` |
+| Outlook inbox email widget | `frontend/src/components/ai-assistant/assistant-widget-renderer.tsx` → `OutlookInboxSummaryWidget` |
+| Widget gallery | `frontend/src/app/auth/ai-widget-gallery/ai-widget-gallery-client.tsx` |
+| Graph sync orchestrator | `backend/src/services/integrations/microsoft_graph/sync.py` |
+| Teams compiler | `backend/src/services/intelligence/teams_compiler.py` |
+| Render cron config | `render.yaml` |
+
+---
 
 ## Render cron jobs (all in render.yaml)
 
@@ -92,42 +121,6 @@ Key facts:
 | `alleato-graph-sync` | every 30 min | Outlook + Teams + OneDrive sync, embed, compile |
 | `alleato-task-extraction` | daily 7 AM UTC | Extract action items from comms |
 | `alleato-rag-health` | daily 12:15 UTC | RAG embedding health check + Slack alert |
-
-All three use the Docker image from `./backend/Dockerfile`.
-
----
-
-## File map — things confirmed this session
-
-| Thing | Location |
-|-------|----------|
-| Graph sync orchestrator | `backend/src/services/integrations/microsoft_graph/sync.py` |
-| Teams compiler | `backend/src/services/intelligence/teams_compiler.py` |
-| Task extraction | `backend/src/services/task_extraction.py` |
-| RAG health check | `backend/src/services/health/rag_meeting_health.py` |
-| Render cron config | `render.yaml` |
-| Email sync client (tabbed) | `frontend/src/app/(tables)/emails/email-sync-client.tsx` |
-| Emails table page | `frontend/src/app/(tables)/emails/page.tsx` |
-
----
-
-## Known pre-existing TypeScript errors (not from our work)
-
-These exist in HEAD and are NOT caused by recent changes:
-- `dev-panel.tsx` / `enhanced-dev-panel.tsx` — `params possibly null`
-- `ChangeManagementDashboard.tsx` — `projectId` type error
-- `knowledge-document-edit-dialog.tsx` — missing `useUpdateKnowledgeDocument` export
-- `sheet-editor` components — `RenderCellProps` type incompatibility
-- `instrumentation.ts` — `enrich` not in type
-
----
-
-## What's next
-
-1. **GitHub billing** — restore CI by updating payment (github.com/settings/billing)
-2. **Verify Render crons live** — once render.yaml deploys, confirm `alleato-rag-health` has `SLACK_WEBHOOK_URL` set in Render env
-3. **Low-confidence review queue** — `document_attribution_candidates` table has no UI yet
-4. **Teams DM 403s** — the 10 permanent failures are documented; no further action needed
 
 ---
 
