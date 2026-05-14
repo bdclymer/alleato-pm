@@ -536,7 +536,7 @@ function formatRecentEmailInboxAnswer(params: {
     return [
       `I checked Outlook email intake for your inbox for ${rangeLabel}, but the structured inbox lookup failed.`,
       `Error: ${error}`,
-      "I did not answer from semantic search because that would risk missing live inbox items.",
+      "This inbox/date/triage wording is routed through getRecentEmails so failures surface directly.",
     ].join("\n");
   }
 
@@ -560,7 +560,7 @@ function formatRecentEmailInboxAnswer(params: {
       `I checked Outlook email intake for your inbox for ${rangeLabel}.`,
       summary ?? `No emails were returned for ${rangeLabel}.`,
       cutoff ? `Data freshness: ${cutoff}` : null,
-      "I did not use semantic search or the document retrieval bundle for this answer.",
+      "This answer came from structured Outlook intake via getRecentEmails.",
     ].filter(Boolean).join("\n");
   }
 
@@ -594,8 +594,13 @@ function formatRecentEmailInboxAnswer(params: {
     heading,
     ...lines,
     "",
-    "This answer came from structured Outlook intake via getRecentEmails, not semantic search.",
+    "This answer came from structured Outlook intake via getRecentEmails.",
   ].filter(Boolean).join("\n");
+}
+
+function isEmailDraftWorkflowRequest(message: string): boolean {
+  return /\b(draft|write|prepare|compose)\b/i.test(message) &&
+    /\b(reply|response|respond|email|outlook)\b/i.test(message);
 }
 
 function inferEmailActionQuery(message: string): string | undefined {
@@ -5624,7 +5629,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           return;
         }
 
-        if (recentEmailInboxRequest && assistantIntent !== "email_action") {
+        if (recentEmailInboxRequest && !isEmailDraftWorkflowRequest(lastUserContent)) {
           writeStrategistStatus(writer, {
             stage: "knowledge",
             message: "Checking Outlook inbox via structured email intake",
@@ -5651,7 +5656,6 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           const content = isTimeoutResult(recentEmailsOutput)
             ? [
                 "I checked Outlook email intake for your inbox, but the structured inbox lookup timed out.",
-                "I did not answer from semantic search because that would risk missing live inbox items.",
                 "Cause: getRecentEmails did not return before the server-side timeout.",
                 "Prevention: inbox/date/triage wording now routes through getRecentEmails before any source-search fallback, so this fails loudly instead of returning stale RAG evidence.",
               ].join("\n")
@@ -6183,8 +6187,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           const readOutlookEmailThreadTool = toolMap.readOutlookEmailThread;
           const draftOutlookEmailTool = toolMap.draftOutlookEmail;
           const isObviousDraftReply =
-            /\b(draft|write|prepare|compose)\b/i.test(lastUserContent) &&
-            /\b(reply|response|respond|email|outlook)\b/i.test(lastUserContent);
+            isEmailDraftWorkflowRequest(lastUserContent);
 
           if (
             isObviousDraftReply &&
