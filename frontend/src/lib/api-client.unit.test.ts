@@ -1,4 +1,4 @@
-import { apiFetchWithTimeout } from "./api-client";
+import { apiFetch, apiFetchWithTimeout } from "./api-client";
 
 // Node 18+ has native fetch; mock it per-test to control behavior.
 const mockFetch = jest.fn<Promise<Response>, [string, RequestInit?]>();
@@ -83,5 +83,38 @@ describe("apiFetchWithTimeout", () => {
 
     // Verify the timeout was ~80 ms, not the 20 s default
     expect(Date.now() - requestStarted).toBeLessThan(500);
+  });
+});
+
+describe("apiFetch browser GET request dedupe", () => {
+  const originalWindow = global.window;
+
+  beforeEach(() => {
+    mockFetch.mockReset();
+    Object.defineProperty(global, "window", {
+      configurable: true,
+      value: {},
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(global, "window", {
+      configurable: true,
+      value: originalWindow,
+    });
+  });
+
+  it("does not dedupe no-store GETs behind an unresolved request", async () => {
+    mockFetch
+      .mockImplementationOnce(() => new Promise<Response>(() => {}))
+      .mockResolvedValueOnce(makeJsonResponse({ status: "healthy" }));
+
+    void apiFetch("/api/health", { cache: "no-store" });
+    const secondResult = await apiFetch<{ status: string }>("/api/health", {
+      cache: "no-store",
+    });
+
+    expect(secondResult).toEqual({ status: "healthy" });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 });

@@ -145,11 +145,21 @@ export async function apiFetch<T = unknown>(
   init?: RequestInit,
 ): Promise<T> {
   const method = init?.method?.toUpperCase() ?? "GET";
-  if (typeof window !== "undefined" && method === "GET" && !init?.body && !init?.signal) {
+  const cacheMode = init?.cache;
+  const canDedupeBrowserGet =
+    typeof window !== "undefined" &&
+    method === "GET" &&
+    !init?.body &&
+    !init?.signal &&
+    cacheMode !== "no-store" &&
+    cacheMode !== "reload";
+
+  if (canDedupeBrowserGet) {
     const headers = new Headers(init?.headers);
     const cacheKey = JSON.stringify({
       url,
       credentials: init?.credentials ?? "same-origin",
+      cache: cacheMode ?? "default",
       headers: Array.from(headers.entries()).sort(),
     });
     const inFlight = browserGetRequestsInFlight.get(cacheKey);

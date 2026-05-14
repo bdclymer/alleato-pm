@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { BackendStatusIndicator } from "../misc/backend-status-indicator";
 
@@ -128,10 +128,15 @@ describe("BackendStatusIndicator", () => {
     render(<BackendStatusIndicator />);
 
     // Initial call
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+    await screen.findByText("Backend online");
 
     // Fast forward 30 seconds (poll interval)
-    jest.advanceTimersByTime(30000);
+    await act(async () => {
+      jest.advanceTimersByTime(30000);
+    });
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledTimes(2);
