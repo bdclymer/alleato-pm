@@ -1,0 +1,22 @@
+{
+  "id": "03-email-search",
+  "prompt": "Retrieval question only: search synced Outlook email context for Timeco System Launch or project dropdown list. Cite the email-derived context you found.",
+  "selectedProjectId": null,
+  "sessionId": "ee9b04c3-ffec-4e54-abdd-a5c81d8edede",
+  "httpStatus": 0,
+  "ok": false,
+  "durationMs": 0,
+  "status": "FAIL",
+  "failures": [
+    "HTTP 0",
+    "short/no answer (0 chars)",
+    "no persisted tool trace",
+    "missing required source signal: email"
+  ],
+  "tools": [],
+  "sourceTypes": [],
+  "projectIds": [],
+  "answerPreview": "",
+  "rawPreview": "",
+  "error": "This operation was aborted"
+}

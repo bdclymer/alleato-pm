@@ -1,0 +1,21 @@
+{
+  "id": "02-teams-search",
+  "prompt": "Retrieval question only, do not create a feature packet: in existing synced Teams messages, what context is available about JobPlanner or Brandon? Quote or name the Teams-derived source evidence.",
+  "selectedProjectId": null,
+  "sessionId": "59dda1ab-3765-41f1-9e7d-1106bf1058c5",
+  "httpStatus": 200,
+  "ok": true,
+  "durationMs": 9230,
+  "status": "FAIL",
+  "failures": [
+    "short/no answer (0 chars)",
+    "no persisted tool trace",
+    "missing required source signal: teams"
+  ],
+  "tools": [],
+  "sourceTypes": [],
+  "projectIds": [],
+  "answerPreview": "",
+  "rawPreview": "data: {\"type\":\"data-status\",\"id\":\"strategist-status\",\"data\":{\"stage\":\"memory\",\"message\":\"Reading conversation memory and project context\",\"status\":\"loading\",\"timestamp\":\"2026-05-13T23:02:28.461Z\"}}\n\ndata: {\"type\":\"data-status\",\"id\":\"strategist-status\",\"data\":{\"stage\":\"knowledge\",\"message\":\"Capturing the request packet\",\"status\":\"loading\",\"timestamp\":\"2026-05-13T23:02:28.461Z\"}}\n\ndata: {\"type\":\"error\",\"errorText\":\"I hit a retrieval/generation failure before I could give you a trustworthy strategist answer.\\n\\nWhat happened: Failed to search related feature requests: \\\"failed to parse logic tree ((title.ilike.%Retrieval question only, do not create a feature packet: in existing synced Teams...%,raw_request.ilike.%Retrieval question only, do not create a feature packet: in existing synced Teams...%))\\\" (line 1, column 72)\\nWhat I could confirm: I checked 1 source successfully.\\nWhat that means: No project was pinned, so a narrower project or topic would reduce retrieval ambiguity on the r",
+  "error": null
+}

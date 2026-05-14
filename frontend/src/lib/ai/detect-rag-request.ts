@@ -252,28 +252,10 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
     };
   }
 
-  const asksForRecentEmails =
-    (normalized.includes("email") ||
-      normalized.includes("e-mail") ||
-      normalized.includes("inbox") ||
-      normalized.includes("outlook") ||
-      normalized.includes("mail")) &&
-    !normalized.includes("do not use email") &&
-    (normalized.includes("last five") ||
-      normalized.includes("last 5") ||
-      normalized.includes("five most recent") ||
-      normalized.includes("most recent") ||
-      normalized.includes("latest") ||
-      normalized.includes("urgent in my inbox") ||
-      normalized.includes("urgent in the inbox") ||
-      normalized.includes("anything urgent"));
-  if (asksForRecentEmails) {
-    return {
-      kind: "recent_emails",
-      label: "Outlook emails",
-      limit: 5,
-    };
-  }
+  // Outlook inbox/date/triage questions must be answered from structured
+  // Outlook intake tools, not the RAG/document index. Returning
+  // source-specific RAG here lets the chat route short-circuit before
+  // getRecentEmails/getRecentOutlookEmails can check the live inbox tables.
 
   const asksForRecentTeams =
     normalized.includes("teams") &&

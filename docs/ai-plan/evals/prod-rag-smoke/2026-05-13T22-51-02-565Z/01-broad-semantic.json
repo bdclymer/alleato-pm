@@ -1,0 +1,57 @@
+{
+  "id": "01-broad-semantic",
+  "prompt": "Give me the latest cross-source update on Vermillion Rise Warehouse. Include meeting, Teams, email, and document signals if available.",
+  "selectedProjectId": null,
+  "sessionId": "47586000-f8b7-4746-a192-9a97e3275c3a",
+  "httpStatus": 200,
+  "ok": true,
+  "durationMs": 8353,
+  "status": "FAIL",
+  "failures": [
+    "missing required source signal: meeting"
+  ],
+  "tools": [
+    "intentPlanner",
+    "promptContextReducer",
+    "assistantSourceHealth",
+    "sourceSpecificRagRetrieval"
+  ],
+  "sourceTypes": [
+    "teams_chat_export",
+    "user:njepson@alleatogroup.com",
+    "user:mparsons@alleatogroup.com",
+    "user:jdawson@alleatogroup.com",
+    "outlook_email",
+    "njepson@alleatogroup.com",
+    "mparsons@alleatogroup.com",
+    "jdawson@alleatogroup.com",
+    "ctragesser@alleatogroup.com",
+    "crusin@alleatogroup.com",
+    "Teams DM export: njepson@alleatogroup.com",
+    "Teams DM export: mparsons@alleatogroup.com",
+    "Teams DM export: jdawson@alleatogroup.com",
+    "Outlook: njepson@alleatogroup.com",
+    "Outlook: mparsons@alleatogroup.com",
+    "Outlook: jdawson@alleatogroup.com",
+    "Outlook: ctragesser@alleatogroup.com",
+    "Outlook: crusin@alleatogroup.com",
+    "awehner@alleatogroup.com",
+    "Outlook: awehner@alleatogroup.com",
+    "accounting@alleatogroup.com",
+    "Outlook: accounting@alleatogroup.com",
+    "document_metadata",
+    "Outlook email",
+    "onedrive_file",
+    "sharepoint:AlleatoGroup:/SOP",
+    "SharePoint: AlleatoGroup/SOP",
+    "microsoft_graph"
+  ],
+  "projectIds": [
+    "754",
+    "814",
+    "178"
+  ],
+  "answerPreview": "**Last Five Emails in Supabase**\n\n1. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXIAAA=]\n2. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXKAAA=]\n3. **Email: Re: B-roll Alleato/Goodwill event confirmation (June 19th)** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQmLTXOAAA=]\n4. **Email: Re: Fire Supression Deckers** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQmLY4sAAA=]\n5. **Email: Re: Superior Beverage Product on Tray** — 2026-05-13 [Source: outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD",
+  "rawPreview": "data: {\"type\":\"data-status\",\"id\":\"strategist-status\",\"data\":{\"stage\":\"memory\",\"message\":\"Reading conversation memory and project context\",\"status\":\"loading\",\"timestamp\":\"2026-05-13T22:51:10.294Z\"}}\n\ndata: {\"type\":\"data-status\",\"id\":\"strategist-status\",\"data\":{\"stage\":\"knowledge\",\"message\":\"Searching Outlook emails in Supabase RAG\",\"status\":\"loading\",\"timestamp\":\"2026-05-13T22:51:10.720Z\"}}\n\ndata: {\"type\":\"data-status\",\"id\":\"strategist-status\",\"data\":{\"stage\":\"synthesis\",\"message\":\"Writing sourced Outlook emails answer\",\"status\":\"loading\",\"timestamp\":\"2026-05-13T22:51:11.694Z\"}}\n\ndata: {\"type\":\"text-start\",\"id\":\"strategist-source-specific-rag\"}\n\ndata: {\"type\":\"text-delta\",\"id\":\"strategist-source-specific-rag\",\"delta\":\"**Last Five Emails in Supabase**\\n\\n1. **Email: Re: B-roll Alleato/Goodwill event \"}\n\ndata: {\"type\":\"text-delta\",\"id\":\"strategist-source-specific-rag\",\"delta\":\"confirmation (June 19th)** — 2026-05-13 [Source: \"}\n\ndata: {\"type\":\"text-delta\",\"id\":\"strategist-source-specific-",
+  "error": null
+}

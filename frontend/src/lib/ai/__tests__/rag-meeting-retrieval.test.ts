@@ -150,24 +150,26 @@ describe("detectSourceSpecificRagRequest — existing patterns not regressed", (
     expect(result?.kind).toBe("recent_onedrive_documents");
   });
 
-  it('returns recent_emails for email queries', () => {
+  it('does not route recent email queries to source-specific RAG', () => {
     const result = detectSourceSpecificRagRequest("show me the last five emails");
-    expect(result).not.toBeNull();
-    expect(result?.kind).toBe("recent_emails");
-    expect(result?.limit).toBe(5);
+    expect(result).toBeNull();
   });
 
-  it('returns recent_emails for natural last-five-email wording', () => {
+  it('does not route natural last-five-email wording to source-specific RAG', () => {
     const result = detectSourceSpecificRagRequest("Can you tell me my last five emails?");
-    expect(result).not.toBeNull();
-    expect(result?.kind).toBe("recent_emails");
-    expect(result?.limit).toBe(5);
+    expect(result).toBeNull();
   });
 
-  it('returns recent_emails for urgent inbox triage wording', () => {
+  it('does not route urgent inbox triage wording to source-specific RAG', () => {
     const result = detectSourceSpecificRagRequest("Is there anything urgent in my inbox?");
-    expect(result).not.toBeNull();
-    expect(result?.kind).toBe("recent_emails");
+    expect(result).toBeNull();
+  });
+
+  it('does not route important same-day email triage to source-specific RAG', () => {
+    const result = detectSourceSpecificRagRequest(
+      "what important emails have I received this morning?",
+    );
+    expect(result).toBeNull();
   });
 
   it('returns recent_teams_discussions for Teams queries', () => {
