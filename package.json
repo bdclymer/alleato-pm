@@ -77,6 +77,7 @@
     "cache:reset": "npx tsx scripts/cache-monitor.ts reset",
     "rag:ingest:local": "python3 scripts/ingestion/ingest_local_documents.py",
     "rag:ingest:local:watch": "python3 scripts/ingestion/ingest_local_documents.py --watch",
+    "rag:stats": "node scripts/cli/rag-stats.mjs",
     "rag:sharepoint:dry-run": "python3 scripts/ingestion/sharepoint_project_folder_dry_run.py",
     "rag:sharepoint:import-rfis": "node scripts/ingestion/import_sharepoint_rfis_from_documents.mjs",
     "rag:backfill:meeting-chunks": "node scripts/backfill-recent-meeting-chunks.mjs",
