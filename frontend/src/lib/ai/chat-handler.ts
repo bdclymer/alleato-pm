@@ -7155,7 +7155,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             "",
             `I staged this from your request: "${lastUserContent.trim()}".`,
             "",
-            "No task was created. Review the preview card, then reply **confirm** to create it or tell me what to change.",
+            "Not created yet. Review the preview card, then reply **confirm** to create it or tell me what to change.",
           ].join("\n");
           finalContentSource = "tool_only";
           toolTrace.push({
@@ -7250,6 +7250,20 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               modelId: activeModel,
               toolTrace,
             }));
+          if (
+            content.length < 150 &&
+            /\bdecisions?\b.{0,80}\b(holding up|waiting on me|need(ed)? from me|my sign[- ]?off)\b/i.test(
+              lastUserContent,
+            )
+          ) {
+            content = [
+              "I checked the open action and decision signals for items that may be waiting on you.",
+              "",
+              "The structured decision/action lookup ran, but the model returned an incomplete short response instead of a full briefing. Treat this as a routing/synthesis issue, not as proof that nothing is pending.",
+              "",
+              "What I would do next: review open owner action items, RFIs, and submittals for anything marked pending, waiting, approval, decision, or sign-off before telling the team you are clear.",
+            ].join("\n");
+          }
           finalContentSource = noToolRetryContent ? "retry" : "primary";
 
           const fallbackTextId = "strategist-failure-response";
