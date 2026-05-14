@@ -141,6 +141,8 @@ async function main() {
 
   let endpointState = "not_checked";
   let endpointMode = null;
+  let executiveEndpointState = "not_checked";
+  let executiveEndpointMode = null;
   if (!adminApiKey) {
     fail("ADMIN_API_KEY is required for the Deep Agents endpoint readiness probe.");
   } else {
@@ -170,10 +172,44 @@ async function main() {
     } else {
       fail(`Deep Agents endpoint probe failed with HTTP ${response.status}.`);
     }
+
+    const executiveResponse = await fetch(`${backendUrl}/api/intelligence/deep-agent/executive-briefing`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "x-admin-api-key": adminApiKey,
+      },
+      body: JSON.stringify({
+        userId: "deep-agents-nonprod-readiness",
+        sessionId: "deep-agents-nonprod-readiness",
+        question: "What business risks need attention and what am I waiting on from the team?",
+        mode: "business_briefing",
+      }),
+    });
+    const executivePayload = await executiveResponse.json().catch(() => ({}));
+    executiveEndpointMode = executivePayload.mode ?? null;
+    if (
+      executiveResponse.status === 503 &&
+      String(executivePayload.detail ?? "").includes("Deep Agents executive intelligence is disabled")
+    ) {
+      executiveEndpointState = "disabled";
+    } else if (executiveResponse.ok && executiveEndpointMode === "deep_agents") {
+      executiveEndpointState = "deep_agents";
+    } else if (executiveResponse.ok) {
+      executiveEndpointState = executiveEndpointMode ?? "enabled_unknown_mode";
+    } else {
+      fail(`Deep Agents executive endpoint probe failed with HTTP ${executiveResponse.status}.`);
+    }
   }
 
   if (expectEnabled && endpointState !== "deep_agents") {
     fail(`DEEP_AGENTS_EXPECT_ENABLED=true requires endpoint mode deep_agents; found ${endpointState}.`);
+  }
+  if (expectEnabled && executiveEndpointState !== "deep_agents") {
+    fail(
+      `DEEP_AGENTS_EXPECT_ENABLED=true requires executive endpoint mode deep_agents; found ${executiveEndpointState}.`,
+    );
   }
 
   await verifyRenderApiServiceMapping();
@@ -188,6 +224,8 @@ async function main() {
     },
     endpointState,
     endpointMode,
+    executiveEndpointState,
+    executiveEndpointMode,
     expectEnabled,
     expectFrontendBridge,
     warnings,
