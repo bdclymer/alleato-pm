@@ -185,6 +185,18 @@ function BudgetPageContent() {
   const [budgetViews, setBudgetViews] = React.useState<BudgetViewDefinition[]>([]);
   const [activeViewId, setActiveViewId] = React.useState<string>("");
 
+  // Derive column visibility from the active view's columns
+  const activeViewColumnVisibility = React.useMemo(() => {
+    if (!activeViewId) return undefined;
+    const view = budgetViews.find((v) => v.id === activeViewId);
+    if (!view?.columns?.length) return undefined;
+    const visibility: Record<string, boolean> = {};
+    for (const col of view.columns) {
+      visibility[col.column_key] = col.is_visible;
+    }
+    return visibility;
+  }, [activeViewId, budgetViews]);
+
   // Budget lock state
   const [isLocked, setIsLocked] = React.useState(false);
   const [lockedAt, setLockedAt] = React.useState<string | null>(null);
@@ -1115,6 +1127,7 @@ function BudgetPageContent() {
                       onPendingCostChangesClick={handlePendingCostChangesClick}
                       onForecastToCompleteClick={handleForecastToCompleteClick}
                       columnControlsPortalId={BUDGET_COLUMN_CONTROLS_SLOT_ID}
+                      columnVisibilityOverride={activeViewColumnVisibility}
                     />
                   </BudgetTableCommentsWrapper>
                 )}

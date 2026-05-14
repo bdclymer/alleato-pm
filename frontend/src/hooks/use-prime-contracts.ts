@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiFetch, apiFetchWithTransientRouteRetry } from "@/lib/api-client";
 import type { CreateContractInput, UpdateContractInput } from "@/app/api/projects/[projectId]/contracts/validation";
@@ -75,6 +76,7 @@ export function usePrimeContract(projectId: number, contractId: string) {
 
 export function useCreatePrimeContract(projectId: number) {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation<PrimeContract, Error, CreateContractInput>({
     mutationFn: (data) =>
@@ -87,9 +89,11 @@ export function useCreatePrimeContract(projectId: number) {
         queryKey: primeContractKeys.all(projectId),
       });
       toast.success(`Contract "${contract.title}" created`);
+      router.push(`/${projectId}/prime-contracts/${contract.id}`);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create contract");
+      const message = error instanceof Error ? error.message : "Failed to create contract";
+      toast.error(message);
     },
   });
 }

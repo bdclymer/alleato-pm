@@ -185,7 +185,9 @@ const editSchema = z.object({
   pcco_number: z.string().min(1, "Number is required"),
   title: z.string().min(1, "Title is required"),
   description: z.string().nullable().optional(),
-  status: z.string().min(1, "Status is required"),
+  // Status is disabled in the edit form (changed via Approve/Reject actions only).
+  // It is stripped from the PUT payload in handleSave, so we do not require it here.
+  status: z.string().optional(),
   total_amount: z.number(),
   prime_contract_id: z.string().nullable().optional(),
   revision: z.number().nullable().optional(),
@@ -1804,6 +1806,7 @@ export default function PrimeContractCODetailPage() {
                                     description: e.target.value,
                                   }))
                                 }
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                                 placeholder="Description"
                                 className="h-8"
                               />
@@ -1817,6 +1820,7 @@ export default function PrimeContractCODetailPage() {
                                     cost_code: e.target.value,
                                   }))
                                 }
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                                 placeholder="Cost code"
                                 className="h-8 w-28"
                               />
@@ -1831,6 +1835,7 @@ export default function PrimeContractCODetailPage() {
                                     quantity: e.target.value,
                                   }))
                                 }
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                                 placeholder=""
                                 className="h-8 w-20 text-right"
                               />
@@ -1844,6 +1849,7 @@ export default function PrimeContractCODetailPage() {
                                     uom: e.target.value,
                                   }))
                                 }
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                                 placeholder="UOM"
                                 className="h-8 w-20"
                               />
@@ -1859,6 +1865,7 @@ export default function PrimeContractCODetailPage() {
                                     unit_cost: e.target.value,
                                   }))
                                 }
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                                 placeholder=""
                                 className="h-8 w-28 text-right"
                               />
@@ -1869,15 +1876,17 @@ export default function PrimeContractCODetailPage() {
                             <InlineTableCell align="right">
                               <div className="flex items-center justify-end gap-1">
                                 <Button
+                                  type="button"
                                   variant="ghost"
                                   size="icon"
                                   className="h-7 w-7"
-                                  onClick={handleSaveLineItem}
+                                  onClick={() => void handleSaveLineItem()}
                                   disabled={lineItemSaving}
                                 >
                                   <Check className="h-4 w-4 text-primary" />
                                 </Button>
                                 <Button
+                                  type="button"
                                   variant="ghost"
                                   size="icon"
                                   className="h-7 w-7"
@@ -1952,6 +1961,7 @@ export default function PrimeContractCODetailPage() {
                                   description: e.target.value,
                                 }))
                               }
+                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                               placeholder="Description"
                               className="h-8"
                               autoFocus
@@ -1966,6 +1976,7 @@ export default function PrimeContractCODetailPage() {
                                   cost_code: e.target.value,
                                 }))
                               }
+                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                               placeholder="Cost code"
                               className="h-8 w-28"
                             />
@@ -1980,6 +1991,7 @@ export default function PrimeContractCODetailPage() {
                                   quantity: e.target.value,
                                 }))
                               }
+                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                               placeholder=""
                               className="h-8 w-20 text-right"
                             />
@@ -1993,6 +2005,7 @@ export default function PrimeContractCODetailPage() {
                                   uom: e.target.value,
                                 }))
                               }
+                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                               placeholder="UOM"
                               className="h-8 w-20"
                             />
@@ -2008,6 +2021,7 @@ export default function PrimeContractCODetailPage() {
                                   unit_cost: e.target.value,
                                 }))
                               }
+                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
                               placeholder=""
                               className="h-8 w-28 text-right"
                             />
@@ -2018,15 +2032,17 @@ export default function PrimeContractCODetailPage() {
                           <InlineTableCell align="right">
                             <div className="flex items-center justify-end gap-1">
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7"
-                                onClick={handleSaveLineItem}
+                                onClick={() => void handleSaveLineItem()}
                                 disabled={lineItemSaving}
                               >
                                 <Check className="h-4 w-4 text-primary" />
                               </Button>
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7"

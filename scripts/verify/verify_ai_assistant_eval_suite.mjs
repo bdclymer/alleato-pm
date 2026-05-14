@@ -359,17 +359,27 @@ async function postPromptAndDrain(testCase, sessionId, messageId) {
 
 async function fetchPersistedAssistantMessage(sessionId) {
   const deadline = Date.now() + POLL_MAX_MS;
+  let lastLookupError = null;
   while (Date.now() < deadline) {
-    const result = await pool.query(
-      `select id, role, content, metadata, created_at
-       from public.chat_history
-       where session_id = $1 and role = 'assistant'
-       order by created_at desc
-       limit 1`,
-      [sessionId],
-    );
-    if (result.rows.length > 0) return result.rows[0];
+    try {
+      const result = await pool.query(
+        `select id, role, content, metadata, created_at
+         from public.chat_history
+         where session_id = $1 and role = 'assistant'
+         order by created_at desc
+         limit 1`,
+        [sessionId],
+      );
+      if (result.rows.length > 0) return result.rows[0];
+    } catch (error) {
+      lastLookupError = error;
+    }
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+  }
+  if (lastLookupError) {
+    console.warn(
+      `\n[warn] persisted assistant lookup failed for session ${sessionId}: ${lastLookupError.message}`,
+    );
   }
   return null;
 }

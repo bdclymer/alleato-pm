@@ -308,6 +308,8 @@ interface BudgetTableProps {
   columnControlsPortalId?: string;
   showInlineCreate?: boolean;
   onShowInlineCreateChange?: (show: boolean) => void;
+  /** When provided, applies this visibility state to the table (e.g. from a saved view) */
+  columnVisibilityOverride?: VisibilityState;
 }
 
 function formatCurrency(value: number): string {
@@ -522,11 +524,18 @@ export function BudgetTable({
   columnControlsPortalId,
   showInlineCreate: showInlineCreateProp = false,
   onShowInlineCreateChange,
+  columnVisibilityOverride,
 }: BudgetTableProps) {
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+
+  React.useEffect(() => {
+    if (columnVisibilityOverride) {
+      setColumnVisibility(columnVisibilityOverride);
+    }
+  }, [columnVisibilityOverride]);
   // Use prop if provided, otherwise use internal state
   const [showInlineCreateInternal, setShowInlineCreateInternal] = React.useState(false);
   const showInlineCreate = onShowInlineCreateChange ? showInlineCreateProp : showInlineCreateInternal;

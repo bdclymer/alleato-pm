@@ -335,6 +335,15 @@ const MESSAGE_DRIVEN_TOOL_RULES: Array<{
   tools: readonly string[];
 }> = [
   {
+    pattern:
+      /\b(current read|what changed|what is stuck|what's stuck|should i be worried|worried about|what should i worry)\b|(?=.*\blatest\b)(?=.*\b(westfield|vermillion|project|job)\b)/i,
+    tools: ["getProjectBriefingSnapshot", "semanticSearch"],
+  },
+  {
+    pattern: /\b(active jobs?|jobs? need(?:s)? my attention|need(?:s)? attention this week|before calls start)\b/i,
+    tools: ["getPortfolioOverview", "getProjectsWithRisks"],
+  },
+  {
     pattern: /\b(owner call|owner calls|owner prep|overpromis(e|ing)|what should i say)\b/i,
     tools: ["getProjectBriefingSnapshot", "semanticSearch"],
   },
@@ -357,7 +366,7 @@ const MESSAGE_DRIVEN_TOOL_RULES: Array<{
   },
   {
     pattern: /\b(across|portfolio|compare|comparison|cross[- ]project|active jobs?|burning budget|burn rate|budget fastest)\b/i,
-    tools: ["getCrossProjectComparison", "getPortfolioOverview"],
+    tools: ["getPortfolioOverview", "getProjectsWithRisks", "getCrossProjectComparison"],
   },
   {
     pattern: /\b(schedule|slipping|slip|delay|delayed|behind|milestone|critical path|gantt|mobilization)\b/i,
