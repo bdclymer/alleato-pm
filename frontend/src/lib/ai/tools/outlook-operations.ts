@@ -36,6 +36,25 @@ function stringArray(value: unknown): string[] {
     : [];
 }
 
+function isDisplayableOutlookEmail(row: AnyRow): boolean {
+  if (row.match_status === "ignored") {
+    return false;
+  }
+
+  const sourceMetadata = row.source_metadata;
+  if (!sourceMetadata || typeof sourceMetadata !== "object") {
+    return true;
+  }
+
+  const classification = (sourceMetadata as { intake_classification?: unknown }).intake_classification;
+  if (!classification || typeof classification !== "object") {
+    return true;
+  }
+
+  const action = (classification as { action?: unknown }).action;
+  return action !== "skip" && action !== "quarantine";
+}
+
 function emailSummary(row: AnyRow) {
   const project = row.projects && typeof row.projects === "object"
     ? row.projects as { id?: number; name?: string | null; project_number?: string | null }
@@ -158,11 +177,12 @@ export function createOutlookOperationsTools(
           let dbQuery = supabase
             .from("outlook_email_intake")
             .select(
-              "id,graph_message_id,mailbox_user_id,project_id,conversation_id,subject,body,body_text,body_html,from_name,from_email,to_list,cc_list,match_status,status,received_at,has_attachments,web_link,projects!outlook_email_intake_project_id_fkey(id,name,project_number)",
+              "id,graph_message_id,mailbox_user_id,project_id,conversation_id,subject,body,body_text,body_html,from_name,from_email,to_list,cc_list,match_status,status,received_at,has_attachments,web_link,source_metadata,projects!outlook_email_intake_project_id_fkey(id,name,project_number)",
             )
             .is("deleted_at", null)
+            .neq("match_status", "ignored")
             .order("received_at", { ascending: false, nullsFirst: false })
-            .limit(targetLimit);
+            .limit(Math.min(targetLimit * 4, 200));
 
           if (Array.isArray(projectScope)) {
             dbQuery = dbQuery.in("project_id", projectScope);
@@ -188,7 +208,10 @@ export function createOutlookOperationsTools(
             throw new Error(`Recent Outlook email lookup failed: ${error.message}`);
           }
 
-          const emails = ((data ?? []) as AnyRow[]).map(emailSummary);
+          const emails = ((data ?? []) as AnyRow[])
+            .filter(isDisplayableOutlookEmail)
+            .slice(0, targetLimit)
+            .map(emailSummary);
           return {
             source: "outlook_email_intake",
             count: emails.length,
@@ -252,10 +275,11 @@ export function createOutlookOperationsTools(
           const { data, error } = await supabase
             .from("outlook_email_intake")
             .select(
-              "id,graph_message_id,mailbox_user_id,project_id,conversation_id,subject,body,body_text,body_html,from_name,from_email,to_list,cc_list,match_status,status,received_at,has_attachments,web_link,projects!outlook_email_intake_project_id_fkey(id,name,project_number)",
+              "id,graph_message_id,mailbox_user_id,project_id,conversation_id,subject,body,body_text,body_html,from_name,from_email,to_list,cc_list,match_status,status,received_at,has_attachments,web_link,source_metadata,projects!outlook_email_intake_project_id_fkey(id,name,project_number)",
             )
             .eq("conversation_id", resolvedConversationId)
             .is("deleted_at", null)
+            .neq("match_status", "ignored")
             .order("received_at", { ascending: true, nullsFirst: true })
             .limit(targetLimit);
 
@@ -263,7 +287,9 @@ export function createOutlookOperationsTools(
             throw new Error(`Outlook thread lookup failed: ${error.message}`);
           }
 
-          const messages = ((data ?? []) as AnyRow[]).map(emailSummary);
+          const messages = ((data ?? []) as AnyRow[])
+            .filter(isDisplayableOutlookEmail)
+            .map(emailSummary);
           return {
             source: "outlook_email_intake",
             conversationId: resolvedConversationId,

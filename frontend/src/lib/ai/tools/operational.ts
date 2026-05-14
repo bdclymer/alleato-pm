@@ -56,6 +56,8 @@ type RecentEmailRow = {
   web_link: string | null;
   graph_message_id: string;
   conversation_id: string | null;
+  match_status: string | null;
+  source_metadata: Record<string, unknown> | null;
 };
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -196,6 +198,20 @@ function emailMatchesDirection(
     sentToParticipant ||
     normalizeEmail(row.mailbox_user_id) === participantEmail
   );
+}
+
+function isDisplayableRecentEmail(row: RecentEmailRow): boolean {
+  if (row.match_status === "ignored") {
+    return false;
+  }
+
+  const classification = row.source_metadata?.intake_classification;
+  if (!classification || typeof classification !== "object") {
+    return true;
+  }
+
+  const action = (classification as { action?: unknown }).action;
+  return action !== "skip" && action !== "quarantine";
 }
 
 function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
@@ -2884,9 +2900,10 @@ export function createOperationalTools(
           let query = supabase
             .from("outlook_email_intake")
             .select(
-              "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link, graph_message_id, conversation_id",
+              "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link, graph_message_id, conversation_id, match_status, source_metadata",
             )
             .is("deleted_at", null)
+            .neq("match_status", "ignored")
             .gte("received_at", since.toISOString())
             .order("received_at", { ascending: false })
             .limit(fetchLimit);
@@ -2915,6 +2932,7 @@ export function createOperationalTools(
 
           const data = ((emailResult.data ?? []) as RecentEmailRow[]).filter(
             (row) =>
+              isDisplayableRecentEmail(row) &&
               emailMatchesDirection(
                 row,
                 effectiveParticipantEmail,

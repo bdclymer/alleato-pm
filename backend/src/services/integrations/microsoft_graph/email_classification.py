@@ -106,6 +106,79 @@ _SUBSTANTIVE_KEYWORDS = (
     "scope",
     "price",
 )
+_RETAIL_SENDER_PATTERNS = (
+    "amazon.",
+    "bestbuy.",
+    "ebay.",
+    "etsy.",
+    "homedepot.",
+    "lowes.",
+    "marketplace.",
+    "paypal.",
+    "reviews.",
+    "shopify.",
+    "store.",
+    "target.",
+    "walmart.",
+)
+_LOW_VALUE_SENDER_PATTERNS = (
+    "feedback@",
+    "mailer@",
+    "marketing@",
+    "newsletter@",
+    "no-reply",
+    "noreply",
+    "offers@",
+    "promo@",
+    "promotions@",
+)
+_REVIEW_REQUEST_PATTERNS = (
+    "review your recent purchase",
+    "rate your purchase",
+    "rate your recent purchase",
+    "tell us about your purchase",
+    "write a review",
+    "earn points for your review",
+)
+_PROMOTIONAL_PATTERNS = (
+    "free shipping",
+    "limited time",
+    "sale ends",
+    "shop now",
+    "special offer",
+    "unsubscribe",
+    "view in browser",
+)
+_RETAIL_ORDER_PATTERNS = (
+    "order confirmation",
+    "order confirmed",
+    "purchase confirmation",
+    "purchase order",
+    "receipt for your",
+    "thanks for your order",
+    "your order",
+    "your purchase",
+)
+_BUSINESS_CONTEXT_KEYWORDS = (
+    "alleato",
+    "billing",
+    "budget",
+    "change order",
+    "closeout",
+    "contract",
+    "cost code",
+    "draw",
+    "invoice",
+    "job",
+    "pay app",
+    "permit",
+    "project",
+    "rfi",
+    "schedule",
+    "site",
+    "subcontract",
+    "submittal",
+)
 
 
 def classify_graph_email_for_intake(msg: dict[str, Any], body_text: str) -> EmailIntakeClassification:
@@ -119,6 +192,49 @@ def classify_graph_email_for_intake(msg: dict[str, Any], body_text: str) -> Emai
 
     subject = str(msg.get("subject") or "")
     text = _message_text_for_classification(msg, body_text)
+    commercial_signals = _commercial_noise_signals(msg, subject, text)
+    if commercial_signals:
+        sender_addr = _sender_address(msg)
+        combined = _normalize_text(f"{subject} {text}")
+        has_business_context = _has_business_context(combined)
+
+        if "review_request" in commercial_signals:
+            return EmailIntakeClassification(
+                action=EmailIntakeAction.SKIP,
+                category="retail_review_request",
+                confidence=0.98,
+                reason="Retail review request is not operationally relevant.",
+                signals=commercial_signals,
+            )
+
+        if "promotional_marketing" in commercial_signals and not has_business_context:
+            return EmailIntakeClassification(
+                action=EmailIntakeAction.SKIP,
+                category="marketing_low_value",
+                confidence=0.95,
+                reason="Marketing or promotional email has no project/business context.",
+                signals=commercial_signals,
+            )
+
+        if "retail_order" in commercial_signals and not has_business_context:
+            action = EmailIntakeAction.QUARANTINE if bool(msg.get("hasAttachments")) else EmailIntakeAction.SKIP
+            return EmailIntakeClassification(
+                action=action,
+                category="retail_order_low_value",
+                confidence=0.9,
+                reason="Retail order or purchase message has no project/business context.",
+                signals=commercial_signals,
+            )
+
+        if _is_low_value_sender(sender_addr) and not has_business_context:
+            return EmailIntakeClassification(
+                action=EmailIntakeAction.QUARANTINE,
+                category="automated_low_value",
+                confidence=0.82,
+                reason="Automated sender has no project/business context.",
+                signals=commercial_signals,
+            )
+
     header_signals = _calendar_header_signals(msg)
     subject_signals = _calendar_subject_signals(subject)
     body_signals = _calendar_body_signals(text)
@@ -177,6 +293,43 @@ def _calendar_subject_signals(subject: str) -> tuple[str, ...]:
     if _CALENDAR_SUBJECT_RE.search(subject):
         signals.append("calendar_subject")
     return tuple(signals)
+
+
+def _commercial_noise_signals(msg: dict[str, Any], subject: str, text: str) -> tuple[str, ...]:
+    sender_addr = _sender_address(msg)
+    combined = _normalize_text(f"{subject} {text}")
+    signals: list[str] = []
+
+    if any(pattern in combined for pattern in _REVIEW_REQUEST_PATTERNS):
+        signals.append("review_request")
+    if any(pattern in combined for pattern in _PROMOTIONAL_PATTERNS):
+        signals.append("promotional_marketing")
+    if any(pattern in combined for pattern in _RETAIL_ORDER_PATTERNS) and _is_retail_sender(sender_addr):
+        signals.append("retail_order")
+    if _is_retail_sender(sender_addr):
+        signals.append("retail_sender")
+    if _is_low_value_sender(sender_addr):
+        signals.append("automated_sender")
+
+    return tuple(dict.fromkeys(signals))
+
+
+def _sender_address(msg: dict[str, Any]) -> str:
+    sender = msg.get("from") if isinstance(msg.get("from"), dict) else {}
+    email_address = sender.get("emailAddress") if isinstance(sender.get("emailAddress"), dict) else {}
+    return str(email_address.get("address") or "").lower()
+
+
+def _is_retail_sender(sender_addr: str) -> bool:
+    return any(pattern in sender_addr for pattern in _RETAIL_SENDER_PATTERNS)
+
+
+def _is_low_value_sender(sender_addr: str) -> bool:
+    return any(pattern in sender_addr for pattern in _LOW_VALUE_SENDER_PATTERNS)
+
+
+def _has_business_context(text: str) -> bool:
+    return any(keyword in text for keyword in _BUSINESS_CONTEXT_KEYWORDS)
 
 
 def _calendar_header_signals(msg: dict[str, Any]) -> tuple[str, ...]:

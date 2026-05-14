@@ -4,12 +4,19 @@ from services.integrations.microsoft_graph.email_classification import (
 )
 
 
-def _message(subject, body_preview="", headers=None, has_attachments=False):
+def _message(
+    subject,
+    body_preview="",
+    headers=None,
+    has_attachments=False,
+    from_email="sender@example.com",
+):
     return {
         "subject": subject,
         "bodyPreview": body_preview,
         "hasAttachments": has_attachments,
         "internetMessageHeaders": headers or [],
+        "from": {"emailAddress": {"address": from_email}},
     }
 
 
@@ -94,6 +101,45 @@ def test_imports_normal_human_email():
     msg = _message(
         "Need pricing clarification",
         "Can you send the revised subcontractor price before Friday?",
+    )
+
+    classification = classify_graph_email_for_intake(msg, msg["bodyPreview"])
+
+    assert classification.action == EmailIntakeAction.IMPORT
+    assert classification.category == "human_email"
+
+
+def test_skips_retail_review_request():
+    msg = _message(
+        "Review your recent purchase to earn rewards",
+        "Get money off your next purchase when you write a review.",
+        from_email="feedback@reviews.walmart.com",
+    )
+
+    classification = classify_graph_email_for_intake(msg, msg["bodyPreview"])
+
+    assert classification.action == EmailIntakeAction.SKIP
+    assert classification.category == "retail_review_request"
+
+
+def test_skips_retail_purchase_order_without_business_context():
+    msg = _message(
+        "Your purchase order from Best Buy Marketplace",
+        "Thanks for your order from PC Heaven via Best Buy Marketplace.",
+        from_email="reply+abc@marketplace.bestbuy.com",
+    )
+
+    classification = classify_graph_email_for_intake(msg, msg["bodyPreview"])
+
+    assert classification.action == EmailIntakeAction.SKIP
+    assert classification.category == "retail_order_low_value"
+
+
+def test_keeps_business_purchase_order_with_project_context():
+    msg = _message(
+        "Purchase Order for Union Collective project",
+        "Please review the subcontract purchase order for the project site and cost code.",
+        from_email="pm@trustedvendor.com",
     )
 
     classification = classify_graph_email_for_intake(msg, msg["bodyPreview"])
