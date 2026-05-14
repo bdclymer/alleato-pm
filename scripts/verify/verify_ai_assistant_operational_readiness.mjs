@@ -64,6 +64,7 @@ const requiredScripts = [
   "rag:verify:task-action-evals",
   "rag:verify:intelligence-compiler",
   "rag:verify:chunk-integrity",
+  "rag:verify:repaired-meeting-retrieval",
   "rag:verify:meetings",
   "rag:verify:task-integrity",
   "rag:verify:assistant-operational-readiness",
@@ -201,6 +202,7 @@ const summary = {
     "python3 scripts/verify/verify_integration_health.py --skip-env",
     "npm run rag:verify:intelligence-compiler",
     "npm run rag:verify:chunk-integrity -- --days=1",
+    "npm run rag:verify:repaired-meeting-retrieval",
   ],
 };
 

@@ -99,6 +99,7 @@
     "rag:verify:intelligence-compiler": "node scripts/verify/verify_ai_intelligence_compiler_health.mjs",
     "rag:verify:graph-embedding": "node scripts/verify/verify_graph_embedding_contract.mjs",
     "rag:verify:chunk-integrity": "node scripts/verify/verify_rag_chunk_integrity.mjs",
+    "rag:verify:repaired-meeting-retrieval": "node scripts/verify/verify_repaired_meeting_transcript_retrieval.mjs",
     "rag:verify:teams-ingestion": "node scripts/verify/verify_teams_conversation_ingestion_contract.mjs",
     "rag:verify:meeting-pipeline": "node scripts/verify/verify_meeting_pipeline_contract.mjs",
     "rag:verify:render-ai": "node scripts/verify/verify_render_ai_gateway_health.mjs",
