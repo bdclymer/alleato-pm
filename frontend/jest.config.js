@@ -15,8 +15,14 @@ const config = {
     '/.next/'
   ],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^chat$': '<rootDir>/node_modules/chat/dist/index.js',
+    '^chat/(.*)$': '<rootDir>/node_modules/chat/dist/$1',
   },
+  // Allow Jest to transform ESM packages that are imported by our code
+  transformIgnorePatterns: [
+    'node_modules/(?!(chat|@chat-adapter)/)',
+  ],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
       useESM: true,

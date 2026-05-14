@@ -1,13 +1,33 @@
 const mockCreateServiceClient = jest.fn();
-const mockSendProactiveMessage = jest.fn();
+const mockSendProactiveCard = jest.fn();
+
+jest.mock("chat", () => ({
+  Card: (opts: { title?: string; subtitle?: string; children?: unknown[] }) => ({
+    type: "card",
+    title: opts?.title,
+    subtitle: opts?.subtitle,
+    children: opts?.children ?? [],
+  }),
+  CardText: (content: string, opts?: { style?: string }) => ({
+    type: "text",
+    content,
+    style: opts?.style,
+  }),
+  Divider: () => ({ type: "divider" }),
+  Actions: (children: unknown[]) => ({ type: "actions", children }),
+  LinkButton: (opts: { label: string; url: string }) => ({
+    type: "link-button",
+    label: opts.label,
+    url: opts.url,
+  }),
+}));
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: () => mockCreateServiceClient(),
 }));
 
 jest.mock("@/lib/bot/teams-chat", () => ({
-  sendProactiveMessage: (...args: unknown[]) =>
-    mockSendProactiveMessage(...args),
+  sendProactiveCard: (...args: unknown[]) => mockSendProactiveCard(...args),
 }));
 
 jest.mock("@/lib/executive/executive-briefing-workflow", () => ({
@@ -20,6 +40,7 @@ jest.mock("../brandon-daily-update", () => ({
 
 import {
   formatExecutiveBriefingTeamsMessage,
+  buildExecutiveBriefingCard,
   sendApprovedExecutiveBriefingToTeams,
 } from "../executive-briefing-teams-delivery";
 import type { BrandonDailyUpdatePacket } from "../brandon-daily-update";
@@ -188,7 +209,7 @@ describe("executive briefing Teams delivery", () => {
     });
   });
 
-  it("sends the latest approved stored brief to Teams", async () => {
+  it("sends the latest approved stored brief to Teams as an adaptive card", async () => {
     const result = await sendApprovedExecutiveBriefingToTeams({
       userId: "user-1",
     });
@@ -199,53 +220,47 @@ describe("executive briefing Teams delivery", () => {
       draftId: "draft-1",
       itemCount: 1,
     });
-    expect(mockSendProactiveMessage).toHaveBeenCalledTimes(1);
+    expect(mockSendProactiveCard).toHaveBeenCalledTimes(1);
   });
 
-  it("records the sent flag after Teams delivery", async () => {
+  it("sends a card with the correct title and decisions content", async () => {
     const result = await sendApprovedExecutiveBriefingToTeams({
       userId: "user-1",
     });
 
-    expect(result).toMatchObject({
-      ok: true,
-      status: "sent",
-      draftId: "draft-1",
-      itemCount: 1,
-    });
-    expect(mockSendProactiveMessage).toHaveBeenCalledWith(
-      "user-1",
-      expect.stringContaining("**Daily Brief —"),
-    );
-    expect(mockSendProactiveMessage).toHaveBeenCalledWith(
-      "user-1",
-      expect.stringContaining("**Decisions Needed (1)"),
-    );
+    expect(result).toMatchObject({ ok: true });
+    const [userId, cardPayload] = mockSendProactiveCard.mock.calls[0] as [string, { card: { title: string; children: Array<{ type: string; content?: string }> } }];
+    expect(userId).toBe("user-1");
+    expect(cardPayload.card.title).toMatch(/Daily Brief —/);
+    const contentStrings = cardPayload.card.children
+      .filter((c) => c.type === "text" && c.content)
+      .map((c) => c.content as string);
+    expect(contentStrings.some((s) => s.includes("Decisions Needed (1)"))).toBe(true);
   });
 
-  it("uses a morning greeting before noon Eastern", () => {
-    const message = formatExecutiveBriefingTeamsMessage(packet, null, {
+  it("buildExecutiveBriefingCard: uses a morning greeting before noon Eastern", () => {
+    const { card } = buildExecutiveBriefingCard(packet, null, {
       now: new Date("2026-05-08T13:00:00.000Z"),
     });
 
-    expect(message).toContain("**Daily Brief — Friday, May 8**");
-    expect(message).toContain("Good morning.");
-    expect(message).toContain("**Decisions Needed (1)**");
-    expect(message).toContain("**1. Test Project**");
-    expect(message).not.toContain("**983 Test Project:");
-    expect(message).toContain("Owner approval is ready but still needs signature.");
-    expect(message).toContain("Deadline pressure is now visible in the source thread.");
-    expect(message).toContain("_Reply with a project name to get source detail or draft a follow-up._");
-    expect(message).not.toContain("there");
+    expect(card.title).toContain("Daily Brief — Friday, May 8");
+    expect(card.subtitle).toBe("Good morning.");
+    const texts = card.children
+      .filter((c) => c.type === "text" && (c as { content?: string }).content)
+      .map((c) => (c as { content: string }).content);
+    expect(texts.some((t) => t.includes("Decisions Needed (1)"))).toBe(true);
+    expect(texts.some((t) => t.includes("1. Test Project"))).toBe(true);
+    expect(texts.some((t) => t.includes("Owner approval is ready but still needs signature."))).toBe(true);
   });
 
-  it("uses an evening greeting for the 6pm Eastern send", () => {
-    const message = formatExecutiveBriefingTeamsMessage(packet, "Brandon", {
+  it("buildExecutiveBriefingCard: uses an evening greeting for the 6pm Eastern send", () => {
+    const { card } = buildExecutiveBriefingCard(packet, "Brandon", {
       now: new Date("2026-05-08T22:00:00.000Z"),
     });
 
-    expect(message).toContain("**Daily Brief — Friday, May 8**");
-    expect(message).toContain("Good evening, Brandon.");
-    expect(message).not.toContain("Good morning");
+    expect(card.title).toContain("Daily Brief — Friday, May 8");
+    expect(card.subtitle).toBe("Good evening, Brandon.");
   });
+
 });
+

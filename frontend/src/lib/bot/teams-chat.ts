@@ -1,4 +1,4 @@
-import { Chat, ThreadImpl, type SerializedThread } from "chat";
+import { Chat, ThreadImpl, type SerializedThread, type PostableCard } from "chat";
 import type { Json } from "@/types/database.types";
 import { createTeamsAdapter } from "@chat-adapter/teams";
 import { createPostgresState } from "@chat-adapter/state-pg";
@@ -78,14 +78,8 @@ export function getTeamsChat(): Chat {
 // Proactive messaging — post to a user's DM or last channel thread
 // ---------------------------------------------------------------------------
 
-export async function sendProactiveMessage(
-  supabaseUserId: string,
-  text: string,
-  preferDm = true,
-): Promise<void> {
-  // Ensure singleton is registered for lazy ThreadImpl resolution
+async function resolveTeamsThread(supabaseUserId: string, preferDm = true) {
   getTeamsChat();
-
   const supabase = createServiceClient();
 
   const { data: ref } = await supabase
@@ -96,7 +90,6 @@ export async function sendProactiveMessage(
     .maybeSingle();
 
   const threadJson = ref?.thread_json ?? (
-    // Fall back to whichever ref exists (DM vs channel)
     (await supabase
       .from("teams_conversation_refs")
       .select("thread_json")
@@ -109,9 +102,25 @@ export async function sendProactiveMessage(
     throw new Error(`No Teams conversation ref found for user ${supabaseUserId}`);
   }
 
-  // Lazy resolution: uses Chat.getSingleton() to find the adapter
-  const thread = ThreadImpl.fromJSON(threadJson as unknown as SerializedThread);
+  return ThreadImpl.fromJSON(threadJson as unknown as SerializedThread);
+}
+
+export async function sendProactiveMessage(
+  supabaseUserId: string,
+  text: string,
+  preferDm = true,
+): Promise<void> {
+  const thread = await resolveTeamsThread(supabaseUserId, preferDm);
   await thread.post(text);
+}
+
+export async function sendProactiveCard(
+  supabaseUserId: string,
+  card: PostableCard,
+  preferDm = true,
+): Promise<void> {
+  const thread = await resolveTeamsThread(supabaseUserId, preferDm);
+  await thread.post(card);
 }
 
 // ---------------------------------------------------------------------------

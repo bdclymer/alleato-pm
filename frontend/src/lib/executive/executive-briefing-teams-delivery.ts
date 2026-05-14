@@ -1,3 +1,5 @@
+import { Card, CardText as ChatText, Divider, Actions, LinkButton } from "chat";
+import type { PostableCard, CardChild } from "chat";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   type BrandonBriefItem,
@@ -23,9 +25,142 @@ export type ExecutiveBriefingTeamsSendResult =
       userId?: string | null;
     };
 
-async function sendTeamsMessage(userId: string, message: string) {
-  const { sendProactiveMessage } = await import("@/lib/bot/teams-chat");
-  await sendProactiveMessage(userId, message);
+async function sendTeamsMessage(userId: string, card: PostableCard) {
+  const { sendProactiveCard } = await import("@/lib/bot/teams-chat");
+  await sendProactiveCard(userId, card);
+}
+
+// Return 2–3 bullet strings for an item (cleaned, clipped).
+function getBullets(item: BrandonBriefItem, max = 3): string[] {
+  const bullets = (item.bullets ?? [])
+    .map(cleanBullet)
+    .filter((b) => b.length > 8)
+    .slice(0, max);
+  if (bullets.length > 0) return bullets.map((b) => clip(b, 110));
+  const fallback = clip(item.recommendedAction ?? item.summary, 160);
+  return [fallback];
+}
+
+export function buildExecutiveBriefingCard(
+  packet: BrandonDailyUpdatePacket,
+  firstName: string | null,
+  options: { now?: Date } = {},
+): PostableCard {
+  const now = options.now ?? new Date();
+  const today = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: "America/New_York",
+  }).format(now);
+  const easternHour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: "America/New_York",
+    }).format(now),
+  );
+  const daypart =
+    easternHour < 12 ? "morning" : easternHour < 17 ? "afternoon" : "evening";
+  const greeting = firstName
+    ? `Good ${daypart}, ${firstName}.`
+    : `Good ${daypart}.`;
+
+  const { needsBrandon, waitingOnOthers, importantUpdates } = packet.sections;
+
+  type SectionKey = keyof typeof packet.sections;
+  const sectionRank: Record<SectionKey, number> = {
+    needsBrandon: 0,
+    waitingOnOthers: 1,
+    importantUpdates: 2,
+  };
+
+  const meetingMap = new Map<string, { item: BrandonBriefItem; section: SectionKey }>();
+  for (const [section, items] of [
+    ["needsBrandon", needsBrandon],
+    ["waitingOnOthers", waitingOnOthers],
+    ["importantUpdates", importantUpdates],
+  ] as [SectionKey, BrandonBriefItem[]][]) {
+    for (const item of items) {
+      if (item.source !== "Meeting") continue;
+      const key = String(item.sourceDetail ?? "").trim() || "Untitled meeting";
+      const existing = meetingMap.get(key);
+      if (!existing || sectionRank[section] < sectionRank[existing.section]) {
+        meetingMap.set(key, { item, section });
+      }
+    }
+  }
+
+  const meetings = Array.from(meetingMap.entries()).sort(
+    (a, b) => sectionRank[a[1].section] - sectionRank[b[1].section],
+  );
+
+  const children: CardChild[] = [];
+
+  // ── Today's Meetings ───────────────────────────────────────────────────────
+  if (meetings.length > 0) {
+    children.push(Divider());
+    children.push(ChatText(`Today's Meetings (${meetings.length})`, { style: "bold" }));
+    for (const [title, { item }] of meetings) {
+      children.push(Divider());
+      children.push(ChatText(clip(title, 70), { style: "bold" }));
+      for (const bullet of getBullets(item, 3)) {
+        children.push(ChatText(`• ${bullet}`));
+      }
+    }
+  }
+
+  // ── Decisions Needed ───────────────────────────────────────────────────────
+  if (needsBrandon.length > 0) {
+    children.push(Divider());
+    children.push(ChatText(`Decisions Needed (${needsBrandon.length})`, { style: "bold" }));
+    needsBrandon.forEach((item, i) => {
+      children.push(ChatText(`${i + 1}. ${projectName(item.project)}`, { style: "bold" }));
+      for (const bullet of getBullets(item, 3)) {
+        children.push(ChatText(`• ${bullet}`));
+      }
+    });
+  }
+
+  // ── Pending ────────────────────────────────────────────────────────────────
+  if (waitingOnOthers.length > 0) {
+    children.push(Divider());
+    children.push(ChatText(`Pending (${waitingOnOthers.length})`, { style: "bold" }));
+    for (const item of waitingOnOthers) {
+      children.push(ChatText(projectName(item.project), { style: "bold" }));
+      for (const bullet of getBullets(item, 2)) {
+        children.push(ChatText(`• ${bullet}`));
+      }
+    }
+  }
+
+  const totalItems = needsBrandon.length + waitingOnOthers.length + meetings.length;
+  children.push(Divider());
+  children.push(
+    ChatText(
+      totalItems > 0
+        ? "Reply with a project name to get source detail or draft a follow-up."
+        : "No action items today. Ask about a specific project if you need a drill-down.",
+      { style: "muted" },
+    ),
+  );
+
+  children.push(
+    Actions([
+      LinkButton({ label: "Open Alleato", url: "https://projects.alleatogroup.com" }),
+    ]),
+  );
+
+  const card = Card({
+    title: `Daily Brief — ${today}`,
+    subtitle: greeting,
+    children,
+  });
+
+  return {
+    card,
+    fallbackText: `Daily Brief — ${today}. ${greeting} ${totalItems} item${totalItems !== 1 ? "s" : ""} require attention.`,
+  };
 }
 
 // Strip leading project number "31 Uniqlo..." → "Uniqlo..."
@@ -272,11 +407,8 @@ export async function sendApprovedExecutiveBriefingToTeams(
   await Promise.all(
     targetUserIds.map(async (userId) => {
       const firstName = await getTeamsRecipientFirstName(userId);
-      const message = formatExecutiveBriefingTeamsMessage(
-        draft.packet,
-        firstName,
-      );
-      await sendTeamsMessage(userId, message);
+      const card = buildExecutiveBriefingCard(draft.packet, firstName);
+      await sendTeamsMessage(userId, card);
       recipients.push({ userId, recipientName: firstName });
     }),
   );
