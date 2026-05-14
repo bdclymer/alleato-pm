@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
+import { lookup } from "node:dns/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dirname, "..", "..");
+const SUPABASE_POOLER_HOST = "aws-1-us-east-2.pooler.supabase.com";
 
 const files = {
   aiMemoryService: "frontend/src/lib/ai/services/ai-memory-service.ts",
@@ -48,6 +50,32 @@ function runPsql(databaseUrl, sql) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }).trim();
+}
+
+async function buildDatabaseConnectionString(rawDatabaseUrl) {
+  const url = new URL(rawDatabaseUrl);
+  url.searchParams.set("sslmode", "require");
+
+  const directHostMatch = url.hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
+  if (directHostMatch) {
+    const [, projectRef] = directHostMatch;
+    url.hostname = SUPABASE_POOLER_HOST;
+    url.port = url.port || "5432";
+    if (url.username === "postgres") {
+      url.username = `postgres.${projectRef}`;
+    }
+  }
+
+  if (!/^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) {
+    try {
+      const { address, family } = await lookup(url.hostname, { family: 4 });
+      if (family === 4) url.hostname = address;
+    } catch (error) {
+      warnings.push(`IPv4 hostname lookup failed for ${url.hostname}: ${error.message}`);
+    }
+  }
+
+  return url.toString();
 }
 
 const failures = [];
@@ -126,8 +154,9 @@ if (!databaseUrl) {
   failures.push("DATABASE_URL or SUPABASE_DB_URL is required for live AI memory contract verification");
 } else {
   try {
+    const psqlDatabaseUrl = await buildDatabaseConnectionString(databaseUrl);
     const embeddingTypes = runPsql(
-      databaseUrl,
+      psqlDatabaseUrl,
       `
         select table_name || '.' || column_name || '=' || udt_name
         from information_schema.columns
@@ -147,7 +176,7 @@ if (!databaseUrl) {
     }
 
     const functions = runPsql(
-      databaseUrl,
+      psqlDatabaseUrl,
       `
         select p.proname
         from pg_proc p
@@ -183,7 +212,7 @@ if (!databaseUrl) {
     }
 
     const signatureRows = runPsql(
-      databaseUrl,
+      psqlDatabaseUrl,
       `
         select p.proname || '(' || pg_get_function_arguments(p.oid) || ')'
         from pg_proc p
@@ -203,7 +232,7 @@ if (!databaseUrl) {
     }
 
     const smoke = runPsql(
-      databaseUrl,
+      psqlDatabaseUrl,
       `
         with sample as (
           select embedding::text as emb, user_id
