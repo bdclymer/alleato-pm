@@ -12599,6 +12599,118 @@ export type Database = {
           },
         ]
       }
+      estimate_detail_items: {
+        Row: {
+          cost_code: string | null
+          cost_code_name: string | null
+          cost_type: string | null
+          created_at: string | null
+          division_code: string
+          division_name: string
+          estimate_id: number
+          estimated_amount: number | null
+          id: number
+          sort_order: number | null
+          sub_name: string | null
+          updated_at: string | null
+          work_description: string | null
+        }
+        Insert: {
+          cost_code?: string | null
+          cost_code_name?: string | null
+          cost_type?: string | null
+          created_at?: string | null
+          division_code?: string
+          division_name?: string
+          estimate_id: number
+          estimated_amount?: number | null
+          id?: number
+          sort_order?: number | null
+          sub_name?: string | null
+          updated_at?: string | null
+          work_description?: string | null
+        }
+        Update: {
+          cost_code?: string | null
+          cost_code_name?: string | null
+          cost_type?: string | null
+          created_at?: string | null
+          division_code?: string
+          division_name?: string
+          estimate_id?: number
+          estimated_amount?: number | null
+          id?: number
+          sort_order?: number | null
+          sub_name?: string | null
+          updated_at?: string | null
+          work_description?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_detail_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
+      estimate_gc_items: {
+        Row: {
+          allocation: number | null
+          cost_code: string
+          cost_type: string
+          created_at: string | null
+          description: string
+          estimate_id: number
+          id: number
+          qty: number | null
+          qty_basis: string | null
+          rate: number | null
+          sort_order: number | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          allocation?: number | null
+          cost_code?: string
+          cost_type?: string
+          created_at?: string | null
+          description?: string
+          estimate_id: number
+          id?: number
+          qty?: number | null
+          qty_basis?: string | null
+          rate?: number | null
+          sort_order?: number | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          allocation?: number | null
+          cost_code?: string
+          cost_type?: string
+          created_at?: string | null
+          description?: string
+          estimate_id?: number
+          id?: number
+          qty?: number | null
+          qty_basis?: string | null
+          rate?: number | null
+          sort_order?: number | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_gc_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
       estimate_line_items: {
         Row: {
           comment_type: string | null
@@ -12712,6 +12824,104 @@ export type Database = {
           },
         ]
       }
+      estimate_sublist_subs: {
+        Row: {
+          bid_received: string | null
+          cell: string | null
+          comments: string | null
+          company: string | null
+          contact_name: string | null
+          created_at: string | null
+          division_code: string
+          division_name: string
+          email: string | null
+          email_sent: string | null
+          estimate_id: number
+          id: number
+          intend_to_submit: string | null
+          phone_follow_up: string | null
+          position: number | null
+          price: number | null
+          scope_1: string | null
+          scope_10: string | null
+          scope_2: string | null
+          scope_3: string | null
+          scope_4: string | null
+          scope_5: string | null
+          scope_6: string | null
+          scope_7: string | null
+          scope_8: string | null
+          scope_9: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bid_received?: string | null
+          cell?: string | null
+          comments?: string | null
+          company?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          division_code?: string
+          division_name?: string
+          email?: string | null
+          email_sent?: string | null
+          estimate_id: number
+          id?: number
+          intend_to_submit?: string | null
+          phone_follow_up?: string | null
+          position?: number | null
+          price?: number | null
+          scope_1?: string | null
+          scope_10?: string | null
+          scope_2?: string | null
+          scope_3?: string | null
+          scope_4?: string | null
+          scope_5?: string | null
+          scope_6?: string | null
+          scope_7?: string | null
+          scope_8?: string | null
+          scope_9?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bid_received?: string | null
+          cell?: string | null
+          comments?: string | null
+          company?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          division_code?: string
+          division_name?: string
+          email?: string | null
+          email_sent?: string | null
+          estimate_id?: number
+          id?: number
+          intend_to_submit?: string | null
+          phone_follow_up?: string | null
+          position?: number | null
+          price?: number | null
+          scope_1?: string | null
+          scope_10?: string | null
+          scope_2?: string | null
+          scope_3?: string | null
+          scope_4?: string | null
+          scope_5?: string | null
+          scope_6?: string | null
+          scope_7?: string | null
+          scope_8?: string | null
+          scope_9?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_sublist_subs_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
       estimates: {
         Row: {
           contingency_amount: number
@@ -12727,6 +12937,7 @@ export type Database = {
           is_deleted: boolean
           location: string | null
           notes: string | null
+          project_duration_months: number | null
           project_duration_weeks: number | null
           project_id: number
           revision: number
@@ -12748,6 +12959,7 @@ export type Database = {
           is_deleted?: boolean
           location?: string | null
           notes?: string | null
+          project_duration_months?: number | null
           project_duration_weeks?: number | null
           project_id: number
           revision?: number
@@ -12769,6 +12981,7 @@ export type Database = {
           is_deleted?: boolean
           location?: string | null
           notes?: string | null
+          project_duration_months?: number | null
           project_duration_weeks?: number | null
           project_id?: number
           revision?: number
