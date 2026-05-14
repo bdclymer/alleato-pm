@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
+import assistantEvalRunsManifest from "@/data/assistant-eval-runs.json";
 
 type AssistantEvalCase = {
   id: string;
@@ -60,11 +61,23 @@ export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async ()
     throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/rag-eval/results#GET", message: "Admin access required.", status: 403 });
   }
 
+  const publishedAssistantEvalRuns =
+    (assistantEvalRunsManifest as { runs?: AssistantEvalRun[] }).runs ?? [];
+
   if (process.env.VERCEL) {
-    return NextResponse.json(
-      { error: "RAG eval results are only available in local development" },
-      { status: 503 },
-    );
+    return NextResponse.json({
+      l1: {
+        data: null,
+        file: null,
+      },
+      l2: {
+        data: null,
+        file: null,
+      },
+      assistant: {
+        runs: publishedAssistantEvalRuns,
+      },
+    });
   }
 
   const fs = await import("fs");
@@ -217,6 +230,7 @@ export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async ()
 
   const l1 = l1Path ? readJsonFile(l1Path) : null;
   const l2 = l2Path ? readJsonFile(l2Path) : null;
+  const assistantRuns = loadAssistantRuns();
 
   return NextResponse.json({
     l1: {
@@ -228,7 +242,7 @@ export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async ()
       file: l2Path ? path.relative(REPO_ROOT, l2Path) : null,
     },
     assistant: {
-      runs: loadAssistantRuns(),
+      runs: assistantRuns.length > 0 ? assistantRuns : publishedAssistantEvalRuns,
     },
   });
 });

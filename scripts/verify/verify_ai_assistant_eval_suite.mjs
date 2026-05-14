@@ -42,6 +42,10 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const SUITE_PATH = path.join(repoRoot, "docs/ai-plan/evals/assistant-eval-suite.json");
 const AUTH_PATH = path.join(repoRoot, "frontend/tests/.auth/user.json");
+const PUBLISHED_ASSISTANT_EVAL_RUNS_PATH = path.join(
+  repoRoot,
+  "frontend/src/data/assistant-eval-runs.json",
+);
 const BASE_URL = process.env.AI_EVAL_BASE_URL || "http://localhost:3000";
 const CHAT_ENDPOINT = `${BASE_URL}/api/ai-assistant/chat`;
 const CASE_TIMEOUT_MS = Number(process.env.AI_EVAL_CASE_TIMEOUT_MS ?? 90_000);
@@ -663,6 +667,132 @@ function scoreCase(testCase, runOutput, persisted) {
   };
 }
 
+function toPublishedRun(result, runId) {
+  const cases = Array.isArray(result.results)
+    ? result.results.map((testCase) => {
+        const score = testCase.score ?? {};
+        return {
+          id: String(testCase.id ?? ""),
+          prompt: String(testCase.prompt ?? ""),
+          intent: typeof testCase.intent === "string" ? testCase.intent : null,
+          status: typeof score.status === "string" ? score.status : "unknown",
+          durationMs: typeof testCase.durationMs === "number" ? testCase.durationMs : null,
+          streamEventCount:
+            typeof testCase.streamEventCount === "number" ? testCase.streamEventCount : null,
+          toolNames: Array.isArray(score.toolNames)
+            ? score.toolNames.filter((tool) => typeof tool === "string")
+            : [],
+          failures: Array.isArray(score.failures)
+            ? score.failures.filter((failure) => typeof failure === "string")
+            : [],
+          warnings: Array.isArray(score.warnings)
+            ? score.warnings.filter((warning) => typeof warning === "string")
+            : [],
+          observations: Array.isArray(score.observations)
+            ? score.observations.filter((observation) => typeof observation === "string")
+            : [],
+          finalText: typeof score.finalText === "string" ? score.finalText : "",
+          latencyBudget:
+            score.latencyBudget && typeof score.latencyBudget === "object"
+              ? {
+                  warnDurationMs:
+                    typeof score.latencyBudget.warnDurationMs === "number"
+                      ? score.latencyBudget.warnDurationMs
+                      : null,
+                  maxDurationMs:
+                    typeof score.latencyBudget.maxDurationMs === "number"
+                      ? score.latencyBudget.maxDurationMs
+                      : null,
+                  durationMs:
+                    typeof score.latencyBudget.durationMs === "number"
+                      ? score.latencyBudget.durationMs
+                      : null,
+                }
+              : null,
+        };
+      })
+    : [];
+
+  return {
+    runId,
+    generatedAt: typeof result.generatedAt === "string" ? result.generatedAt : null,
+    baseUrl: typeof result.baseUrl === "string" ? result.baseUrl : null,
+    bundle: result.bundle && typeof result.bundle === "object"
+      ? result.bundle.name ?? null
+      : typeof result.bundle === "string"
+        ? result.bundle
+        : null,
+    filter: typeof result.filter === "string" ? result.filter : null,
+    totalCases: typeof result.totalCases === "number" ? result.totalCases : cases.length,
+    passed:
+      typeof result.passed === "number"
+        ? result.passed
+        : cases.filter((testCase) => testCase.status === "pass").length,
+    failed:
+      typeof result.failed === "number"
+        ? result.failed
+        : cases.filter((testCase) => testCase.status === "fail").length,
+    warningCount:
+      typeof result.warningCount === "number"
+        ? result.warningCount
+        : cases.reduce((count, testCase) => count + testCase.warnings.length, 0),
+    slowestCases: Array.isArray(result.slowestCases)
+      ? result.slowestCases
+      : [...cases]
+          .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
+          .slice(0, 10)
+          .map((testCase) => ({
+            id: testCase.id,
+            intent: testCase.intent,
+            durationMs: testCase.durationMs,
+            status: testCase.status,
+            warnings: testCase.warnings,
+          })),
+    file: `docs/ai-plan/evals/runs/${runId}/results.json`,
+    summaryFile: `docs/ai-plan/evals/runs/${runId}/summary.md`,
+    cases,
+  };
+}
+
+async function refreshPublishedAssistantEvalRuns() {
+  const runsDir = path.join(repoRoot, "docs/ai-plan/evals/runs");
+  let runIds = [];
+  try {
+    runIds = (await fs.readdir(runsDir, { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort()
+      .reverse()
+      .slice(0, 20);
+  } catch {
+    runIds = [];
+  }
+
+  const runs = [];
+  for (const runId of runIds) {
+    try {
+      const resultRaw = await fs.readFile(path.join(runsDir, runId, "results.json"), "utf8");
+      runs.push(toPublishedRun(JSON.parse(resultRaw), runId));
+    } catch {
+      // Ignore incomplete run directories.
+    }
+  }
+
+  await fs.mkdir(path.dirname(PUBLISHED_ASSISTANT_EVAL_RUNS_PATH), { recursive: true });
+  await fs.writeFile(
+    PUBLISHED_ASSISTANT_EVAL_RUNS_PATH,
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        source: "scripts/verify/verify_ai_assistant_eval_suite.mjs",
+        runs,
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+}
+
 // ─────────────────────────────────────────────────────────── Run loop
 // Always start with a fresh token so we don't begin the run with a stale one.
 await refreshAuthIfNeeded();
@@ -846,6 +976,7 @@ if (missed.length === 0) {
 }
 
 await fs.writeFile(path.join(runDir, "summary.md"), md.join("\n") + "\n");
+await refreshPublishedAssistantEvalRuns();
 
 await pool.end();
 
