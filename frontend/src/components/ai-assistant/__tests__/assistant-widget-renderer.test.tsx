@@ -126,7 +126,7 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
       mailbox: "bclymer@alleatogroup.com",
       totalCount: 46,
       threadCount: 26,
-      actionSummary: "1 thread looks actionable. Start with RE: Closeout MTV 2 Project.",
+      actionSummary: "1 thread looks actionable.",
       items: [
         {
           id: "thread-1",
@@ -151,8 +151,19 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
           webLink: "https://outlook.office.com/mail/inbox/id/thread-1",
           projectIds: [1009],
           recommendedAction: "Reply with the billing/payment next step.",
-          replyPrompt: "Draft a short Outlook reply to this email thread.",
-          draftPrompt: "Draft a short Outlook email about this inbox item.",
+          replyPrompt: [
+            "OUTLOOK_INBOX_CARD_ACTION",
+            "Mode: reply",
+            "Draft a short Outlook reply to this email thread.",
+            "Subject: RE: Closeout MTV 2 Project",
+            "Graph message ID: message-1",
+          ].join("\n"),
+          draftPrompt: [
+            "OUTLOOK_INBOX_CARD_ACTION",
+            "Mode: new",
+            "Draft a short Outlook email about this inbox item.",
+            "Subject: RE: Closeout MTV 2 Project",
+          ].join("\n"),
         },
       ],
     };
@@ -173,7 +184,8 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
     expect(screen.getByText(/Suggested next step:/)).toBeInTheDocument();
     expect(screen.getByText("Ok yes please get me final bill today.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /draft reply/i }));
-    expect(onSubmit).toHaveBeenCalledWith("Draft a short Outlook reply to this email thread.");
+    expect(onSubmit).toHaveBeenCalledWith(expect.stringContaining("OUTLOOK_INBOX_CARD_ACTION"));
+    expect(onSubmit).toHaveBeenCalledWith(expect.stringContaining("Graph message ID: message-1"));
     expect(screen.getByRole("link", { name: /open in outlook/i })).toHaveAttribute(
       "href",
       "https://outlook.office.com/mail/inbox/id/thread-1",

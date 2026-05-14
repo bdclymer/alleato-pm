@@ -130,6 +130,7 @@ import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefin
 import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-update-widget";
 import {
   buildAssistantWidgetsFromPrompt,
+  isAssistantWidgetPayload,
   type AssistantWidgetPayload,
   type MeetingInsightsWidgetPayload,
   type OutlookInboxSummaryWidgetItem,
@@ -711,6 +712,8 @@ function buildRecentEmailActionPrompt(params: {
   recommendedAction: string;
 }): string {
   const lines = [
+    "OUTLOOK_INBOX_CARD_ACTION",
+    `Mode: ${params.mode}`,
     params.mode === "reply"
       ? "Draft a short Outlook reply to this email thread."
       : "Draft a short Outlook email about this inbox item.",
@@ -724,6 +727,39 @@ function buildRecentEmailActionPrompt(params: {
     "Use Brandon's short, direct voice. Preview the draft first and do not send it.",
   ];
   return lines.filter(Boolean).join("\n");
+}
+
+type OutlookInboxCardAction = {
+  mode: "reply" | "new";
+  subject: string | null;
+  sender: string | null;
+  receivedAt: string | null;
+  graphMessageId: string | null;
+  conversationId: string | null;
+  recommendedAction: string | null;
+  emailContext: string | null;
+};
+
+function extractLineValue(message: string, label: string): string | null {
+  const match = message.match(new RegExp(`^${label}:\\s*(.+)$`, "im"));
+  return match?.[1]?.trim() || null;
+}
+
+function parseOutlookInboxCardAction(message: string): OutlookInboxCardAction | null {
+  if (!message.includes("OUTLOOK_INBOX_CARD_ACTION")) return null;
+  const modeValue = extractLineValue(message, "Mode");
+  const mode = modeValue === "new" ? "new" : "reply";
+  const contextMatch = message.match(/^Email context:\n([\s\S]*?)(?:\nUse Brandon's short, direct voice\.|$)/im);
+  return {
+    mode,
+    subject: extractLineValue(message, "Subject"),
+    sender: extractLineValue(message, "Latest sender"),
+    receivedAt: extractLineValue(message, "Received"),
+    graphMessageId: extractLineValue(message, "Graph message ID"),
+    conversationId: extractLineValue(message, "Conversation ID"),
+    recommendedAction: extractLineValue(message, "Recommended action"),
+    emailContext: contextMatch?.[1]?.trim() || null,
+  };
 }
 
 function recentEmailWidgetItem(
@@ -960,7 +996,8 @@ function formatRecentEmailInboxAnswer(params: {
 }
 
 function isEmailDraftWorkflowRequest(message: string): boolean {
-  return /\b(draft|write|prepare|compose)\b/i.test(message) &&
+  return message.includes("OUTLOOK_INBOX_CARD_ACTION") ||
+    /\b(draft|write|prepare|compose)\b/i.test(message) &&
     /\b(reply|response|respond|email|outlook)\b/i.test(message);
 }
 
@@ -5987,6 +6024,184 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           writeStrategistStatus(writer, {
             stage: "complete",
             message: "CMO content calendar saved",
+            status: "success",
+          });
+          return;
+        }
+
+        const outlookInboxCardAction = parseOutlookInboxCardAction(lastUserContent);
+        if (outlookInboxCardAction) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Preparing Outlook reply draft from selected email",
+            status: "loading",
+          });
+
+          const toolMap = tools as Record<string, ExecutableTool>;
+          const readOutlookEmailThreadTool = toolMap.readOutlookEmailThread;
+          const draftOutlookEmailTool = toolMap.draftOutlookEmail;
+
+          if (!draftOutlookEmailTool?.execute) {
+            const content = [
+              "I could not prepare the Outlook draft.",
+              "Cause: the Outlook draft tool is not available in the assistant tool map.",
+              "Prevention: inbox card actions now fail loudly instead of falling through to project or RAG lookup.",
+            ].join("\n");
+            await writeTextResponse(writer, "outlook-card-action-missing-tool", content);
+            return;
+          }
+
+          const threadOutput =
+            readOutlookEmailThreadTool?.execute &&
+            (outlookInboxCardAction.conversationId || outlookInboxCardAction.graphMessageId)
+              ? await withTimeout(
+                  readOutlookEmailThreadTool.execute({
+                    conversationId: outlookInboxCardAction.conversationId ?? undefined,
+                    graphMessageId: outlookInboxCardAction.graphMessageId ?? undefined,
+                    limit: 8,
+                  }),
+                  12_000,
+                  "readOutlookEmailThread timed out during selected email draft action",
+                )
+              : null;
+          const threadMessages = !isTimeoutResult(threadOutput)
+            ? emailThreadMessagesFromOutput(threadOutput)
+            : [];
+          const draftContext = threadMessages.length > 0
+            ? formatThreadForDraft(threadMessages)
+            : outlookInboxCardAction.emailContext ?? "";
+
+          const generatedDraft = await withTimeout(
+            generateText({
+              model: getLanguageModel("openai/gpt-4.1"),
+              system:
+                "Draft concise, professional Outlook email text. Return only the email body. Do not include a subject, greeting labels, markdown, or commentary.",
+              prompt: [
+                `Action: ${outlookInboxCardAction.recommendedAction ?? "Draft a practical response."}`,
+                `Subject: ${outlookInboxCardAction.subject ?? "Outlook email"}`,
+                outlookInboxCardAction.sender ? `Latest sender: ${outlookInboxCardAction.sender}` : null,
+                outlookInboxCardAction.receivedAt ? `Received: ${outlookInboxCardAction.receivedAt}` : null,
+                "",
+                "Email context:",
+                draftContext.slice(0, 4000),
+              ].filter(Boolean).join("\n"),
+              maxOutputTokens: 350,
+            }),
+            15_000,
+            "selected email draft generation timed out",
+          );
+
+          if (isTimeoutResult(generatedDraft)) {
+            const content = [
+              "I found the selected Outlook email, but draft generation timed out.",
+              "Cause: the model did not return a draft before the server-side timeout.",
+              "Prevention: this selected-email action now stays on the Outlook path and fails loudly instead of falling through to unrelated retrieval.",
+            ].join("\n");
+            await writeTextResponse(writer, "outlook-card-action-timeout", content);
+            return;
+          }
+
+          const subject = outlookInboxCardAction.subject ?? "Outlook email";
+          const body = generatedDraft.text.trim();
+          const draftOutput = await withTimeout(
+            draftOutlookEmailTool.execute({
+              replyToGraphMessageId:
+                outlookInboxCardAction.mode === "reply"
+                  ? outlookInboxCardAction.graphMessageId ?? undefined
+                  : undefined,
+              subject: outlookInboxCardAction.mode === "reply" ? replySubject(subject) : subject,
+              body,
+              toRecipients: [],
+              ccRecipients: [],
+              bccRecipients: [],
+              importance: "normal",
+              confirmed: false,
+            }),
+            12_000,
+            "draftOutlookEmail timed out during selected email draft action",
+          );
+
+          if (isTimeoutResult(draftOutput)) {
+            const content = [
+              "I wrote the reply text, but Outlook draft preview creation timed out.",
+              "Cause: draftOutlookEmail did not return before the server-side timeout.",
+              "Prevention: this selected-email action now stays on the Outlook draft path and fails loudly.",
+            ].join("\n");
+            await writeTextResponse(writer, "outlook-card-action-draft-timeout", content);
+            return;
+          }
+
+          const draftWidget = isRecord(draftOutput) && isAssistantWidgetPayload(draftOutput.widget)
+            ? draftOutput.widget
+            : null;
+          const dataPart: PersistedDataPart | null = draftWidget
+            ? {
+                type: "data-assistant-widget",
+                id: `assistant-widget-${draftWidget.id}`,
+                data: { widget: draftWidget },
+              }
+            : null;
+          if (dataPart) writer.write(dataPart);
+
+          toolTrace.push({
+            tool: "outlookInboxCardAction",
+            input: {
+              mode: outlookInboxCardAction.mode,
+              subject,
+              graphMessageId: outlookInboxCardAction.graphMessageId,
+              conversationId: outlookInboxCardAction.conversationId,
+            },
+            output: {
+              usedThreadRead: threadMessages.length > 0,
+              draftPreviewCreated: Boolean(draftWidget),
+              bodyLength: body.length,
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          const content = [
+            `I prepared a draft ${outlookInboxCardAction.mode === "reply" ? "reply" : "email"} for **${subject}**.`,
+            "Review the draft below. I have not saved or sent anything.",
+          ].join("\n\n");
+          await writeTextResponse(writer, "outlook-card-action-draft", content);
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: generatedDraft.usage,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            dataParts: dataPart ? [...assistantWidgetDataParts, dataPart] : assistantWidgetDataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Outlook reply draft preview ready",
             status: "success",
           });
           return;
