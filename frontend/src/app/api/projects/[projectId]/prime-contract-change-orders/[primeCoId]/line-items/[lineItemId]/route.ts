@@ -58,7 +58,8 @@ export const PUT = withApiGuardrails(
 
     const qty = quantity ?? 0;
     const uc = unit_cost ?? 0;
-    const lineAmount = qty * uc;
+    // NOTE: line_amount is a GENERATED ALWAYS AS column (quantity * unit_cost).
+    // It must NOT be included in the UPDATE — the database recomputes it automatically.
 
     const { data: lineItem, error } = await supabase
       .from("pcco_line_items")
@@ -68,7 +69,6 @@ export const PUT = withApiGuardrails(
         quantity: qty,
         uom: uom ?? null,
         unit_cost: uc,
-        line_amount: lineAmount,
       })
       .eq("id", Number(lineItemId))
       .eq("pcco_id", Number(primeCoId))
