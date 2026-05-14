@@ -145,8 +145,8 @@ export function isPersonalTaskRegisterRequest(message: string): boolean {
   ];
   if (directPhrases.some((phrase) => normalized.includes(phrase))) return true;
 
-  // "pull up my <task synonym>" / "show my <task synonym>"
-  if (/\b(pull up|show|bring up|open up|list|give me)\s+(my|the)\s+(task list|todo list|to-do list|tasks|todos|to-dos|action items)\b/.test(normalized)) {
+  // "pull up my <task synonym>" / "show me my real <task synonym>"
+  if (/\b(pull up|show(?:\s+me)?|bring up|open up|list|give me)\s+(my|the)\s+(?:real\s+|actual\s+)?(task list|todo list|to-do list|tasks|todos|to-dos|action items)\b/.test(normalized)) {
     return true;
   }
 

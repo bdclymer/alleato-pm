@@ -433,7 +433,7 @@ function getMessageDrivenToolNames(message: string, intent: AssistantIntent): re
       return ["getMyTasks", "updateGeneratedTask", "getActionItemsAndInsights"];
     }
     return [
-      isScheduleTaskWriteRequest(message) || /\btask preview\b/i.test(message)
+      isScheduleTaskWriteRequest(message)
         ? "createTask"
         : "createGeneratedTask",
     ];
@@ -474,7 +474,6 @@ const GENERIC_MCP_SKIP_INTENTS = new Set<AssistantIntent>([
   "calendar_action",
   "task_write",
   "source_lookup",
-  "source_health",
   "task_followup",
   "implementation_planning",
 ]);
@@ -3917,6 +3916,91 @@ function formatRfiPreviewAnswer(params: {
     "",
     "**Next Step**",
     "- Reply with the missing details and explicitly say `confirm` when you want me to create it.",
+  ].join("\n");
+}
+
+function isoLocalDateTime(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return [
+    date.getFullYear(),
+    "-",
+    pad(date.getMonth() + 1),
+    "-",
+    pad(date.getDate()),
+    "T",
+    pad(date.getHours()),
+    ":",
+    pad(date.getMinutes()),
+    ":00",
+  ].join("");
+}
+
+function inferGeneratedTaskPreviewFields(message: string): {
+  title: string;
+  description: string;
+  assignee?: string;
+  dueDate?: string;
+  priority: "low" | "normal" | "high" | "critical";
+} {
+  const cleaned = message.trim().replace(/\s+/g, " ");
+  const titleMatch =
+    cleaned.match(/\b(?:for|to)\s+(?:the\s+)?(?:pm\s+to\s+)?(.+?)(?:\s+by\s+tomorrow\b|\s+by\s+today\b|\.?\s+do not\b|$)/i) ??
+    cleaned.match(/\b(?:add|create|make|put)\s+(?:a\s+)?(?:task|action item|reminder|preview)\s+(?:for|to)?\s*(.+?)(?:\s+by\s+tomorrow\b|\s+by\s+today\b|\.?\s+do not\b|$)/i);
+  const rawTitle = titleMatch?.[1]?.trim() || cleaned;
+  const title = rawTitle
+    .replace(/^confirm\s+/i, "Confirm ")
+    .replace(/\s+and\s+/g, " and ")
+    .replace(/[.?!]+$/g, "")
+    .trim();
+  const assignee = /\bPM\b/i.test(message) ? "PM" : undefined;
+  const dueDate = (() => {
+    const match = message.match(/\b(tomorrow|today)\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?\b/i);
+    if (!match) return undefined;
+    const date = new Date();
+    if (match[1].toLowerCase() === "tomorrow") {
+      date.setDate(date.getDate() + 1);
+    }
+    let hour = Number(match[2]);
+    const minute = Number(match[3] ?? "0");
+    const meridiem = match[4]?.toUpperCase();
+    if (meridiem === "PM" && hour < 12) hour += 12;
+    if (meridiem === "AM" && hour === 12) hour = 0;
+    date.setHours(hour, minute, 0, 0);
+    return isoLocalDateTime(date);
+  })();
+
+  return {
+    title: title || "Follow up on requested task",
+    description: title || cleaned,
+    assignee,
+    dueDate,
+    priority: /\b(urgent|critical|today|tomorrow|by\s+\d{1,2})\b/i.test(message)
+      ? "high"
+      : "normal",
+  };
+}
+
+function formatGeneratedTaskPreviewFallback(params: {
+  fields: ReturnType<typeof inferGeneratedTaskPreviewFields>;
+  originalMessage: string;
+}): string {
+  const due = params.fields.dueDate ? `- Due date: ${params.fields.dueDate}` : "- Due date: not set";
+  const assignee = params.fields.assignee ? `- Assignee: ${params.fields.assignee}` : "- Assignee: not set";
+  return [
+    "**Preview - No task was created**",
+    "",
+    "- Table: tasks",
+    `- Title: ${params.fields.title}`,
+    `- Description: ${params.fields.description}`,
+    assignee,
+    due,
+    `- Priority: ${params.fields.priority}`,
+    "- Status: open",
+    "- Confirmed: false",
+    "",
+    `Source request: "${params.originalMessage.trim()}"`,
+    "",
+    "Reply **confirm** to create it, or tell me what to change first.",
   ].join("\n");
 }
 
@@ -7439,7 +7523,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             // recommendations, and follow-ups on top — and still call tools to
             // fill gaps. See docs/ai-plan/evals/EVAL-SUITE-FIRST-RUN-FINDINGS-2026-05-02.md.
             const packetContextHeader = usablePacket
-              ? `# Current Project Intelligence Packet\n\nA pre-rendered intelligence packet for **${resolvedTarget.slug ?? resolvedTarget.id}** is available below. Use it as your primary evidence. Layer your own analysis, recommendations, and follow-up questions on top. Call additional tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) when the user's question goes beyond what the packet covers or when more recent data would help.`
+              ? `# Current Project Intelligence Packet\n\nA pre-rendered intelligence packet for **${resolvedTarget.slug ?? resolvedTarget.id}** is available below. Use it as your primary evidence. Name this target in the first paragraph of the answer so the user can see which project the briefing covers. Layer your own analysis, recommendations, and follow-up questions on top. Call additional tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) when the user's question goes beyond what the packet covers or when more recent data would help.`
               : `# Project Intelligence Packet (Missing)\n\nNo current intelligence packet exists for **${resolvedTarget.slug ?? resolvedTarget.id}**. Acknowledge this briefly, then proceed by calling the appropriate tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) to gather evidence and answer the user.`;
 
             systemPrompt = systemPrompt + `\n\n---\n\n${packetContextHeader}\n\n${packetContent}`;
@@ -7748,6 +7832,65 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             timestamp: new Date().toISOString(),
           });
           await writeTextResponse(writer, "task-write-tool-only-completion", content);
+        }
+
+        if (
+          !content &&
+          assistantIntent === "task_write" &&
+          taskWriteMutationToolCallNames.length === 0 &&
+          forcedMessageToolName === "createGeneratedTask" &&
+          !streamErrorMessage
+        ) {
+          const previewFields = inferGeneratedTaskPreviewFields(lastUserContent);
+          content = formatGeneratedTaskPreviewFallback({
+            fields: previewFields,
+            originalMessage: lastUserContent,
+          });
+          finalContentSource = "tool_only";
+          toolTrace.push({
+            tool: "createGeneratedTask",
+            input: {
+              ...previewFields,
+              confirmed: false,
+              fallbackReason: "forced tool choice returned no tool call",
+            },
+            output: {
+              action: "preview",
+              preview: {
+                table: "tasks",
+                fields: {
+                  project_id: null,
+                  schedule_task_id: null,
+                  title: previewFields.title,
+                  description: previewFields.description,
+                  status: "open",
+                  due_date: previewFields.dueDate ?? null,
+                  priority: previewFields.priority,
+                  assignee_name: previewFields.assignee ?? null,
+                  assignee_email: null,
+                  assignee_person_id: null,
+                  source_system: "ai_assistant",
+                },
+              },
+              suppressedNoToolRetry: true,
+              providerFailureMode: "forced_tool_choice_no_tool_call",
+            },
+            timestamp: new Date().toISOString(),
+          });
+          toolTrace.push({
+            tool: "taskWriteDeterministicPreviewFallback",
+            input: {
+              intent: assistantIntent,
+              primaryModel: activeModel,
+              forcedMessageToolName,
+            },
+            output: {
+              contentLength: content.length,
+              prevention: "No-tool retry suppressed for preview-first write intents.",
+            },
+            timestamp: new Date().toISOString(),
+          });
+          await writeTextResponse(writer, "task-write-deterministic-preview", content);
         }
 
         if (

@@ -27,6 +27,7 @@ describe("personal daily brief routing", () => {
   it("recognizes CEO verbiage variants as personal task register requests", () => {
     expect(isPersonalTaskRegisterRequest("What's on my plate this week?")).toBe(true);
     expect(isPersonalTaskRegisterRequest("Pull up my todo list.")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("Show me my real task list from actual records.")).toBe(true);
     expect(isPersonalTaskRegisterRequest("What am I behind on?")).toBe(true);
     expect(isPersonalTaskRegisterRequest("What do I owe people right now?")).toBe(true);
     expect(isPersonalTaskRegisterRequest("Show me everything that's still pending against my name.")).toBe(true);

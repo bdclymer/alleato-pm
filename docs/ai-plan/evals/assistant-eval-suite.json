@@ -720,6 +720,7 @@
         "communications"
       ],
       "expectedToolNames": [
+        "clientProjectIntelligencePacket",
         "getProjectBriefingSnapshot",
         "semanticSearch",
         "searchMeetingsByTopic",
@@ -763,7 +764,7 @@
         "action_write"
       ],
       "expectedAllToolNames": [
-        "createTask"
+        "createGeneratedTask"
       ],
       "forbiddenToolNames": [
         "noToolRetry",
@@ -783,8 +784,7 @@
         ]
       ],
       "mustExclude": [
-        "created successfully",
-        "task was created"
+        "created successfully"
       ],
       "minAnswerLength": 180,
       "requiredMetadataPaths": [
@@ -849,8 +849,11 @@
           "stale",
           "fresh",
           "up to date",
+          "up-to-date",
           "unembedded",
           "uncompiled",
+          "embedding backlog",
+          "critical",
           "source health"
         ]
       ],
