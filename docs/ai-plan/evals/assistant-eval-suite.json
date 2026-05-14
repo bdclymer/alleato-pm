@@ -367,6 +367,7 @@
         "communications"
       ],
       "expectedToolNames": [
+        "clientProjectIntelligencePacket",
         "sourceSpecificRagRetrieval",
         "searchTeamsMessages",
         "semanticSearch"
