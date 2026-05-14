@@ -189,7 +189,7 @@ export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async ()
                       ? slowCase.warnings.filter((warning): warning is string => typeof warning === "string")
                       : [],
                   }))
-                  .filter((slowCase) => slowCase.id)
+                  .filter((slowCase: { id: string; intent: string | null; durationMs: number | null; status: string; warnings: string[] }): boolean => Boolean(slowCase.id))
               : [...cases]
                   .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
                   .slice(0, 10)
