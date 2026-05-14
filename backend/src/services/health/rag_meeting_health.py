@@ -7,10 +7,11 @@ Fails loudly if:
   2. Recent meetings (last 14 days) have <50% summary embeddings
   3. Newest meeting is >7 days ahead of newest embedding
   4. Recent meetings have <50% chunk coverage
-  5. The embedding endpoint cannot embed a probe string
-  6. Supabase RPCs return zero results for known-good probe vectors
-  7. >100 Fireflies ingestion jobs stuck at raw_ingested
-  8. Any quota-error ingestion jobs exist
+  5. Recent meetings have <90% full transcript chunk coverage
+  6. The embedding endpoint cannot embed a probe string
+  7. Supabase RPCs return zero results for known-good probe vectors
+  8. >100 Fireflies ingestion jobs stuck at raw_ingested
+  9. Any quota-error ingestion jobs exist
 
 Returns a dict with keys: passed (bool), failures (list), warnings (list), stats (dict).
 Exits non-zero when called as __main__, posts Slack alert on failure if
@@ -22,7 +23,7 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 from typing import Any
 
@@ -35,6 +36,7 @@ RECENT_WINDOW_DAYS = 14
 MEETING_SIGNAL_LIMIT = 2_000
 RECENT_MIN_EMBEDDED_RATIO = 0.5
 RECENT_MIN_CHUNK_RATIO = 0.5
+RECENT_MIN_TRANSCRIPT_CHUNK_RATIO = 0.9
 BATCH_SIZE = 500
 
 
@@ -206,7 +208,10 @@ def run_health_check(
             request_headers = dict(headers)
             request_headers["Range-Unit"] = "items"
             request_headers["Range"] = f"{offset}-{offset + page_size - 1}"
-            resp = httpx.get(url, headers=request_headers, timeout=45)
+            try:
+                resp = httpx.get(url, headers=request_headers, timeout=60)
+            except Exception as exc:
+                raise RuntimeError(f"{table} REST query timed out/failed on {base_url}: {exc}") from exc
             if not resp.is_success:
                 raise RuntimeError(
                     f"{table} REST query failed on {base_url}: {resp.status_code} {resp.text[:300]}"
@@ -220,6 +225,7 @@ def run_health_check(
 
     try:
         # ── 1. Overall meeting embedding coverage ────────────────────────────
+        signal_cutoff = datetime.now(timezone.utc) - timedelta(days=max(RECENT_WINDOW_DAYS * 2, 60))
         meeting_rows = rest_rows(
             supabase_url,
             app_headers,
@@ -227,6 +233,7 @@ def run_health_check(
             {
                 "select": "id,summary_embedding,captured_at,date,created_at",
                 "or": "(source.eq.fireflies,type.in.(meeting,meeting_transcript),category.eq.meeting,fireflies_id.not.is.null)",
+                "created_at": f"gte.{signal_cutoff.isoformat()}",
                 "order": "created_at.desc",
             },
             limit=MEETING_SIGNAL_LIMIT,
@@ -296,6 +303,7 @@ def run_health_check(
         # ── 3. Chunk coverage ────────────────────────────────────────────────
         recent_meeting_ids = [str(row.get("id")) for row in recent_rows if row.get("id")]
         with_embedded_chunk_ids: set[str] = set()
+        with_embedded_transcript_chunk_ids: set[str] = set()
         for batch in _batched(recent_meeting_ids):
             chunk_rows = rest_rows(
                 rag_url,
@@ -310,10 +318,25 @@ def run_health_check(
             with_embedded_chunk_ids.update(
                 str(row.get("document_id")) for row in chunk_rows if row.get("document_id")
             )
+            transcript_chunk_rows = rest_rows(
+                rag_url,
+                rag_headers,
+                "document_chunks",
+                {
+                    "select": "document_id",
+                    "embedding": "not.is.null",
+                    "source_type": "eq.meeting_transcript",
+                    "document_id": f"in.{_postgrest_in(batch)}",
+                },
+            )
+            with_embedded_transcript_chunk_ids.update(
+                str(row.get("document_id")) for row in transcript_chunk_rows if row.get("document_id")
+            )
 
         chunk_coverage = {
             "recent_meetings": len(recent_meeting_ids),
             "with_embedded_chunks": len(with_embedded_chunk_ids),
+            "with_embedded_transcript_chunks": len(with_embedded_transcript_chunk_ids),
         }
         stats["chunk_coverage"] = chunk_coverage
 
@@ -325,13 +348,28 @@ def run_health_check(
                     f"recent meetings have embedded chunks ({ratio*100:.1f}%, need ≥{RECENT_MIN_CHUNK_RATIO*100:.0f}%). "
                     f"SemanticSearch is missing recent meeting context."
                 )
+            transcript_ratio = (
+                chunk_coverage["with_embedded_transcript_chunks"] / chunk_coverage["recent_meetings"]
+            )
+            if transcript_ratio < RECENT_MIN_TRANSCRIPT_CHUNK_RATIO:
+                failures.append(
+                    f"Only {chunk_coverage['with_embedded_transcript_chunks']}/{chunk_coverage['recent_meetings']} "
+                    f"recent meetings have embedded full transcript chunks "
+                    f"({transcript_ratio*100:.1f}%, need ≥{RECENT_MIN_TRANSCRIPT_CHUNK_RATIO*100:.0f}%). "
+                    f"Meeting summaries may exist, but full-transcript RAG coverage is incomplete."
+                )
 
         # ── 4. Fireflies pipeline job health ─────────────────────────────────
         job_rows = rest_rows(
             rag_url,
             rag_headers,
             "fireflies_ingestion_jobs",
-            {"select": "stage,error_message"},
+            {
+                "select": "stage,error_message",
+                "updated_at": f"gte.{signal_cutoff.isoformat()}",
+                "order": "updated_at.desc",
+            },
+            limit=5_000,
         )
         counts_by_stage: dict[str, int] = {}
         for row in job_rows:

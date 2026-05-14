@@ -4,9 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import pg from "pg";
-
-const { Client } = pg;
+import postgres from "postgres";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,20 +78,17 @@ async function connect(connectionString, label) {
   if (!connectionString) {
     throw new Error(`Missing ${label}. Expected it in .env or frontend/.env.local.`);
   }
-  const url = new URL(connectionString);
-  url.searchParams.delete("sslmode");
-  url.searchParams.delete("sslcert");
-  url.searchParams.delete("sslkey");
-  url.searchParams.delete("sslrootcert");
-  const client = new Client({
-    connectionString: url.toString(),
-    ssl: { rejectUnauthorized: false },
-    statement_timeout: 20000,
+  const sql = postgres(connectionString, {
+    max: 1,
+    ssl: "require",
+    idle_timeout: 5,
     application_name: "alleato-rag-stats",
-    allowExitOnIdle: true,
   });
-  await client.connect();
-  return client;
+  await sql`set statement_timeout = '30s'`;
+  return {
+    query: async (queryText, params = []) => ({ rows: await sql.unsafe(queryText, params) }),
+    end: () => sql.end({ timeout: 2 }),
+  };
 }
 
 const families = [
@@ -156,28 +151,101 @@ async function metadataRows(appDb, whereClause, days) {
   return result.rows[0] || { synced: 0, needs_embedding: 0 };
 }
 
-async function chunkCoverage(ragDb, sourceTypes, days) {
-  const empty = { chunkedDocs: 0, embeddedDocs: 0, chunks: 0, embeddedChunks: 0 };
-  if (!sourceTypes.length) return empty;
+async function chunkCoverageByFamily(ragDb, days) {
+  const sourceRows = families.flatMap((family, familyIndex) =>
+    family.sourceTypes.map((sourceType) => [familyIndex, sourceType]),
+  );
+  if (!sourceRows.length) return new Map();
+
+  const familyIndexes = sourceRows.map(([familyIndex]) => familyIndex);
+  const sourceTypes = sourceRows.map(([, sourceType]) => sourceType);
   const result = await ragDb.query(
     `
+      with family_sources as (
+        select *
+        from unnest($1::int[], $2::text[]) as source(family_index, source_type)
+      )
       select
+        family_index,
         count(*)::int as chunks,
         count(*) filter (where embedding is not null)::int as embedded_chunks,
         count(distinct document_id)::int as chunked_docs,
         count(distinct document_id) filter (where embedding is not null)::int as embedded_docs
       from public.document_chunks
-      where source_type = any($1::text[])
-        and created_at >= now() - ($2::int * interval '1 day')
+      join family_sources using (source_type)
+      where created_at >= now() - ($3::int * interval '1 day')
+      group by family_index
     `,
-    [sourceTypes, days],
+    [familyIndexes, sourceTypes, days],
   );
-  const row = result.rows[0] || {};
+  return new Map(
+    result.rows.map((row) => [
+      Number(row.family_index),
+      {
+        chunks: Number(row.chunks || 0),
+        embeddedChunks: Number(row.embedded_chunks || 0),
+        chunkedDocs: Number(row.chunked_docs || 0),
+        embeddedDocs: Number(row.embedded_docs || 0),
+      },
+    ]),
+  );
+}
+
+async function meetingTranscriptCoverage(appDb, ragDb, days) {
+  const metadata = await appDb.query(
+    `
+      select
+        id::text as id,
+        coalesce(source_metadata->'transcript_chunk_backfill'->>'status', 'unclassified') as backfill_status
+      from public.document_metadata
+      where (source = 'fireflies' OR fireflies_id IS NOT NULL OR type IN ('meeting', 'meeting_transcript', 'Interview'))
+        and coalesce(captured_at, date, source_last_modified_at, created_at::timestamptz) >= now() - ($1::int * interval '1 day')
+        and deleted_at is null
+    `,
+    [days],
+  );
+  const ids = metadata.rows.map((row) => row.id);
+  if (!ids.length) {
+    return {
+      sourceDocs: 0,
+      withEmbeddedTranscriptChunks: 0,
+      missingEmbeddedTranscriptChunks: 0,
+      transcriptChunks: 0,
+      embeddedTranscriptChunks: 0,
+      statuses: [],
+    };
+  }
+
+  const chunks = await ragDb.query(
+    `
+      select
+        count(*)::int as transcript_chunks,
+        count(*) filter (where embedding is not null)::int as embedded_transcript_chunks,
+        count(distinct document_id) filter (where embedding is not null)::int as docs_with_embedded_transcript_chunks
+      from public.document_chunks
+      where document_id = any($1::text[])
+        and source_type = 'meeting_transcript'
+    `,
+    [ids],
+  );
+
+  const statusCounts = new Map();
+  for (const row of metadata.rows) {
+    const status = row.backfill_status || "unclassified";
+    statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+  }
+
+  const chunkRow = chunks.rows[0] || {};
+  const withEmbeddedTranscriptChunks = Number(chunkRow.docs_with_embedded_transcript_chunks || 0);
   return {
-    chunks: Number(row.chunks || 0),
-    embeddedChunks: Number(row.embedded_chunks || 0),
-    chunkedDocs: Number(row.chunked_docs || 0),
-    embeddedDocs: Number(row.embedded_docs || 0),
+    sourceDocs: ids.length,
+    withEmbeddedTranscriptChunks,
+    missingEmbeddedTranscriptChunks: ids.length - withEmbeddedTranscriptChunks,
+    transcriptChunks: Number(chunkRow.transcript_chunks || 0),
+    embeddedTranscriptChunks: Number(chunkRow.embedded_transcript_chunks || 0),
+    statuses: Array.from(statusCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([status, count]) => `${status}: ${fmt(count)}`),
   };
 }
 
@@ -203,9 +271,15 @@ async function syncSummary(appDb, syncSources, days) {
 
 async function simpleRows(appDb, ragDb, days) {
   const rows = [];
-  for (const family of families) {
+  const chunkCoverage = await chunkCoverageByFamily(ragDb, days);
+  for (const [index, family] of families.entries()) {
     const metadata = await metadataRows(appDb, family.metadataWhere, days);
-    const coverage = await chunkCoverage(ragDb, family.sourceTypes, days);
+    const coverage = chunkCoverage.get(index) || {
+      chunkedDocs: 0,
+      embeddedDocs: 0,
+      chunks: 0,
+      embeddedChunks: 0,
+    };
     const sync = await syncSummary(appDb, family.syncSources, days);
     rows.push([
       family.label,
@@ -301,8 +375,9 @@ async function main() {
   const ragDb = await connect(process.env.RAG_DATABASE_URL, "RAG_DATABASE_URL");
 
   try {
-    const [rows, compiler, intelligence, backlog] = await Promise.all([
+    const [rows, transcriptCoverage, compiler, intelligence, backlog] = await Promise.all([
       simpleRows(appDb, ragDb, days),
+      meetingTranscriptCoverage(appDb, ragDb, days),
       compilerStats(appDb, days),
       projectIntelligenceStats(appDb, days),
       backlogStats(appDb, ragDb, days),
@@ -328,6 +403,33 @@ async function main() {
           "Runs",
         ],
         rows,
+      ),
+    );
+
+    console.log("\n## Full Meeting Transcript Coverage");
+    console.log(
+      mdTable(
+        [
+          "Fireflies Docs",
+          "With Embedded Transcript Chunks",
+          "Missing Transcript Chunks",
+          "Coverage",
+          "Transcript Chunks",
+          "Backfill Statuses",
+        ],
+        [
+          [
+            fmt(transcriptCoverage.sourceDocs),
+            fmt(transcriptCoverage.withEmbeddedTranscriptChunks),
+            fmt(transcriptCoverage.missingEmbeddedTranscriptChunks),
+            pct(
+              transcriptCoverage.withEmbeddedTranscriptChunks,
+              transcriptCoverage.sourceDocs,
+            ),
+            `${fmt(transcriptCoverage.embeddedTranscriptChunks)} embedded / ${fmt(transcriptCoverage.transcriptChunks)} total`,
+            transcriptCoverage.statuses.join(", ") || "none",
+          ],
+        ],
       ),
     );
 
