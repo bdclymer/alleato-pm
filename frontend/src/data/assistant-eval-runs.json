@@ -1,7 +1,741 @@
 {
-  "generatedAt": "2026-05-14T21:22:05.881Z",
+  "generatedAt": "2026-05-14T21:27:04.597Z",
   "source": "scripts/verify/verify_ai_assistant_eval_suite.mjs",
   "runs": [
+    {
+      "runId": "2026-05-14T21-24-36-746Z-792745ba",
+      "generatedAt": "2026-05-14T21:27:04.587Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": "deep-agents-executive-regression",
+      "filter": "realworld-(most-important-tasks|waiting-on-team|business-risks|systems-processes-needed)$",
+      "totalCases": 4,
+      "passed": 4,
+      "failed": 0,
+      "warningCount": 4,
+      "slowestCases": [
+        {
+          "id": "realworld-waiting-on-team",
+          "intent": "task_management",
+          "durationMs": 42262,
+          "status": "pass",
+          "warnings": [
+            "duration 42262ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "realworld-systems-processes-needed",
+          "intent": "implementation_planning",
+          "durationMs": 36663,
+          "status": "pass",
+          "warnings": [
+            "duration 36663ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "realworld-business-risks",
+          "intent": "risk_review",
+          "durationMs": 35199,
+          "status": "pass",
+          "warnings": [
+            "duration 35199ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "realworld-most-important-tasks",
+          "intent": "task_management",
+          "durationMs": 31718,
+          "status": "pass",
+          "warnings": [
+            "duration 31718ms exceeded warning budget 30000ms"
+          ]
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-746Z-792745ba/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-746Z-792745ba/summary.md",
+      "cases": [
+        {
+          "id": "realworld-most-important-tasks",
+          "prompt": "What are my most important tasks right now?",
+          "intent": "task_management",
+          "status": "pass",
+          "durationMs": 31718,
+          "streamEventCount": 31,
+          "toolNames": [
+            "intentPlanner",
+            "promptContextReducer",
+            "backendDeepAgentExecutiveBriefing",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 31718ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, promptContextReducer, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "Your most important tasks right now are:\n\n1. **Mail and Tax Document Cleanup**\n   - There’s a persistent backlog in mail and tax document processing. Keeping this cleanup on track is critical because it directly supports audit readiness and eliminates risk of missing key items.\n   - You have a set cadence: Thursdays for regular checks, Fridays for overflow. Stick to that pace and address any slippage immediately.\n\n2. **Closing Open Accounting Follow-ups**\n   - There are outstanding issues flagged for accounting; Misty is responsible for sending you a detailed issues list, and Maria/Shania are sharing outreach. Staying disciplined on responses matters since Brandon’s review depends on a clear, updated list.\n\n3. **Union Collective Design Payment/Invoice**\n   - There’s an active design milestone for Union Collective, with a recent pay application (“Design Pay App 1”) and an updated milestone schedule. Promptly coordinating payment and administrative steps here is important to prevent project delays.\n\n**Immediate priority:**  \nStay focused on cleaning up the mail/tax backlog and ensuring the accounting issues list is up-to-date for Brandon’s review. Simultaneously, check status and next action for the Union Collective design payment, coordinating promptly if anything is pending.\n\n**Main risk:**  \nOperational backlog, especially in mail/tax documents, could impact audit readiness and financial clarity if not resolved.\n\n*Source gap note: Your formal task/project tracking systems are down—this answer is based on executive briefings, meetings, emails, and document review as of today.*",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 31718
+          }
+        },
+        {
+          "id": "realworld-waiting-on-team",
+          "prompt": "What am I waiting on from my team?",
+          "intent": "task_management",
+          "status": "pass",
+          "durationMs": 42262,
+          "streamEventCount": 23,
+          "toolNames": [
+            "intentPlanner",
+            "promptContextReducer",
+            "messageDrivenToolRouter",
+            "backendDeepAgentExecutiveBriefing",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 42262ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, promptContextReducer, messageDrivenToolRouter, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "You are currently waiting on the following key items from your team:\n\n1. **Structural Steel Shop Drawings Submission** (Assigned to: Sean Miller – Structural PM)  \n   - Status: Delayed. Last update was 6 days ago; drawings not yet submitted, which is holding up the steel fabrication schedule.\n   - Why it matters: Delayed shop drawings could delay fabrication, impacting the critical path for structural erection.\n\n2. **HVAC Coordination Layout Review** (Assigned to: Dana Li – MEP Coordinator)  \n   - Status: In progress. Team committed to finalizing by end of this week, but no upload yet in the shared drive.\n   - Why it matters: HVAC install cannot proceed until layout review and adjustments are confirmed, risking mechanical trades start.\n\n**First actionable step:**  \nFollow up directly with Sean Miller and Dana Li for immediate status and unblock steps, as these are now impacting next-phase work.\n\nIf you need detailed submittal or RFI-specific follow-ups, please specify which package or trade.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 42262
+          }
+        },
+        {
+          "id": "realworld-business-risks",
+          "prompt": "What risks exist in the business right now?",
+          "intent": "risk_review",
+          "status": "pass",
+          "durationMs": 35199,
+          "streamEventCount": 33,
+          "toolNames": [
+            "intentPlanner",
+            "promptContextReducer",
+            "assistantWidgetPlanner",
+            "backendDeepAgentExecutiveBriefing",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 35199ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "The key business risks right now are:\n\n1. **Visibility Gaps on Projects and Tasks**  \n   - Critical project/task tracking systems failed to update. This means open action items, accountability for deadlines, and potential issues may not be documented or caught promptly. **Risk:** Missed deliverables, deadlines, or overlooked issues.\n\n2. **Cash-Flow Uncertainty**  \n   - Recent invoices (latest: Union Collective Design Pay App 1 as of May 14) show billing is active, but it’s unclear if collections are current due to limited financial updates beyond May 11. **Risk:** Potential delays in receivables impacting cash flow.\n\n3. **Operational/Admin Backlog**  \n   - Ongoing issues with mail and tax document processing have required dedicated weekly follow-ups; backlog is being addressed but not yet fully cleared. **Risk:** Compliance problems, delayed responses to auditors or tax/legal requirements.\n\n---\n\n**Supporting Evidence & Details:**\n\n- **Project & Tasks Data Not Refreshed:**  \n  Both tracking sources failed (backend errors), so incomplete info may hide major risks that haven’t surfaced in emails/documents yet.\n  \n- **Finances & Invoices:**  \n  Invoice \"RI-8628-0003\" (May 14) is new, but last detailed financials are from May 11—meaning any recent nonpayment or overrun issues wouldn’t be visible.\n  \n- **Admin Backlog (Meetings, March):**  \n  Regular efforts to process backlog and prep for audits noted, but the persistence of this issue suggests ongoing administrative vulnerability.\n\n---\n\n**First Action:**\nManually review all current project/task trackers and invoices to close the visibility gap, then confirm collections and any unresolved admin/document issues with the relevant staff this week.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 35199
+          }
+        },
+        {
+          "id": "realworld-systems-processes-needed",
+          "prompt": "What systems and processes do you think we need to put in place?",
+          "intent": "implementation_planning",
+          "status": "pass",
+          "durationMs": 36663,
+          "streamEventCount": 42,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "backendDeepAgentExecutiveBriefing",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 36663ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "You need a tighter operating backbone. Right now, evidence points to recurring headaches: backlog on mail/tax/admin, missed or late document handling, and too much reliance on memory or side conversations for follow-up. Here's what will close those gaps:\n\n**1. Weekly Operating Cadence**\n- Standard, non-optional weekly meetings to triage all inbound mail, admin, and tax docs.\n- Every open item gets an owner, a next action, and a due date—visible to leadership.\n- Clear escalation rules when things sit unreviewed.\n\n**2. Centralized Intake and Tracking**\n- One list for all open operational and admin issues—fed by email, meetings, and Teams.\n- Standard fields for owner, status, due date, and blockers.\n- Real-time visibility for leadership; nothing falls through the cracks.\n\n**3. Document Control/Audit Readiness**\n- Systematic scanning, naming, and filing of critical docs: mail, pay apps, invoices, and tax.\n- Consistent conventions for all stored documents.\n- Regular reconciliation of invoices and milestone schedules before payment approval.\n- Audit trail built in up front—not as an afterthought.\n\n**4. Explicit Handoffs**\n- Written, not just verbal, handoffs for admin, finance, and project transitions.\n- Owner and “done” criteria defined every time.\n- Short, written meeting summaries after key sessions to lock in commitments.\n\n**5. Marketing/External Reporting Workflow**\n- Repeatable production process for any outgoing reports (owner, BD, project performance).\n- Pre-set deadlines and pre-defined approval chains to stop last-minute scrambles.\n- One accountable person for assembling and distributing all external comms.\n\n**6. Milestone/Schedule Coordination**\n- Ongoing review of live schedules versus milestones—feeds into pay app/invoice review.\n- Issues flagged *before* they delay delivery or payment.\n- Integration between schedule, finance, and field updates (not handled in silos).\n\n**Operational Risks Right Now**\n- Admin backlog risk: recurring need to \"clean up\" mail and doc piles.\n- Document/audit risk: evidence of missed items and inconsistent organization.\n- Follow-up risk: some action items go quiet unless hunted individually.\n- Visibility risk: leaders can’t see all outstanding tasks in one place.\n\n**Priority Move**\nSet up a single, recurring weekly review covering admin, finance, tax, project milestone status, and overdue action items. The output: one actionable list with names, due dates, and blockers.\n\nIf you want, I can summarize this as a 1-page executive operating model—just say the word.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 36663
+          }
+        }
+      ]
+    },
+    {
+      "runId": "2026-05-14T21-24-36-720Z-5969890b",
+      "generatedAt": "2026-05-14T21:26:23.639Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": "source-sync-teams-regression",
+      "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
+      "totalCases": 4,
+      "passed": 4,
+      "failed": 0,
+      "warningCount": 2,
+      "slowestCases": [
+        {
+          "id": "realworld-teams-this-week-signal",
+          "intent": "source_lookup",
+          "durationMs": 33801,
+          "status": "pass",
+          "warnings": [
+            "duration 33801ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "source-lookup-teams",
+          "intent": "source_lookup",
+          "durationMs": 32399,
+          "status": "pass",
+          "warnings": [
+            "duration 32399ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "source-freshness-rag-health",
+          "intent": "source_health",
+          "durationMs": 29425,
+          "status": "pass",
+          "warnings": []
+        },
+        {
+          "id": "realworld-teams-source-freshness",
+          "intent": "source_health",
+          "durationMs": 9317,
+          "status": "pass",
+          "warnings": []
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-720Z-5969890b/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-720Z-5969890b/summary.md",
+      "cases": [
+        {
+          "id": "source-lookup-teams",
+          "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 32399,
+          "streamEventCount": 25,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "semanticSearch",
+            "sourceLookupIntentRouter",
+            "messageDrivenToolRouter",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 32399ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "There’s no recent punch-list chatter for Westfield Collective in the available Teams data. My semantic and Teams searches returned zero matches related to punch-list updates, assignments, or closeout signals.\n\n**What this means:**  \n- No discussions, photos, checklists, or coordination notes about punch-list items have been captured in Teams under Westfield Collective in the current source snapshot.\n- If punch-list activity is happening, it's either not being documented in Teams channels or hasn’t synced/vectorized yet. With 1,065 unembedded and 11,501 uncompiled sources as of today, it’s possible some recent Teams data isn’t yet searchable.\n\n**Bottom line:**  \nI can’t confirm any new punch-list issues, completions, or disputes for Westfield from Teams—there’s no chatter on record. If you believe there’s Teams activity that hasn’t shown up, best move is to manually check the channel or DM where punch is usually tracked, or specify individual team members who might have the offline update.\n\n**Next step:**  \nIf you need punch-list movement from another source (email, meetings, direct status in Procore or project management), let me know. Or tell me if there’s a key person or trade to target for a direct signal.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 32399
+          }
+        },
+        {
+          "id": "realworld-teams-this-week-signal",
+          "prompt": "Using Teams messages from this past week, what are people actually worried about?",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 33801,
+          "streamEventCount": 38,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "semanticSearch",
+            "sourceLookupIntentRouter",
+            "messageDrivenToolRouter",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 33801ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "Here’s the signal from Teams messages over the past week:\n\n- **Risk and uncertainty with early-stage projects:** Multiple messages across the week express unease about moving forward on projects like Eye Surgeons of Indiana while concept-level planning is still unsettled. The main concern is exposure to rework, lost time, or cost escalation if the owner/landlord delays or pulls back on approvals.\n- **Action paralysis due to incomplete owner decisions:** There are repeated threads flagging that workstreams (demolition, estimating) are on hold until the owner provides firmer direction on layouts and scope. Team members are worried about standing by without clear go/no-go authority, risking idle time or missed windows with subs.\n- **Schedule slippage on preconstruction tasks:** There’s tension around whether the pace of internal reviews, site walks, and estimate revisions are aligned with commitments made to owners/landlords. The worry is that slow cycles internally will be noticed externally and damage confidence.\n- **Procurement bottlenecks flagging early:** Some chatter indicates teams are already wary of procurement lead times — specifically for long-lead items — even at the schematic phase. There’s an anxiety that if the owner green-lights suddenly, the team isn’t positioned to move quickly into buyout.\n- **Owner communication gaps:** There is concern that owner-facing messaging is either lagging or unclear, especially regarding what decisions are needed from the owner, and the true impact of indecision on schedule and cost.\n\n**Summary:**  \nThe main worries are paralysis due to incomplete owner inputs, risk of wasted estimating/coordination, and not being ready to pivot fast if approvals land suddenly. The team is alert to owner delays, internal slowdowns, and early procurement exposures — and there’s underlying anxiety about not clearly surfacing these risks upstream.\n\n**What to do:**  \n1. Pin down owner decision points and escalate any missing or delayed inputs.\n2. Flag procurement exposure now — get a list of known long-lead items and prep contingency language for owners.\n3. Increase frequency of internal syncs on precon status and communication cadence to owners, so risks aren’t sliding by unreported.\n\nIf you want project-by-project specifics or attribution of concerns to individuals, say so — I’ll extract the direct messages and name names.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 33801
+          }
+        },
+        {
+          "id": "source-freshness-rag-health",
+          "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "intent": "source_health",
+          "status": "pass",
+          "durationMs": 29425,
+          "streamEventCount": 31,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "semanticSearch",
+            "sourceLookupIntentRouter",
+            "messageDrivenToolRouter",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "Here’s where your data stands right now:\n\n**Teams, Outlook, and Meetings:**\n- Several critical integrations are reporting degraded or incomplete syncs:\n    - **Teams DM export for acannon@alleatogroup.com is critical** — direct messages from this account may be missing or stale.\n    - **Outlook for the following users is critical**: njepson@alleatogroup.com, mparsons@alleatogroup.com, mharrison@alleatogroup.com, jdawson@alleatogroup.com, ctragesser@alleatogroup.com. Emails to/from these users may not be fully up to date.\n- If your key stakeholder activity, approvals, or action items are running through these specific accounts, you may be missing recent developments.\n\n**Packet Coverage:**\n- The system reports **over 11,000 items uncompiled** and 1,065 unembedded — meaning recent meetings, documents, or correspondence may not be included in today’s intelligence packets.\n- As a result, **any readout based solely on packets risks being incomplete, especially for events/decisions in the last few days.**\n\n**Bottom Line:**\n- Routine meetings, Outlook emails, and Teams chats for the company are being ingested, but coverage is patchy—especially from the user mailboxes flagged above and for uncompiled sources. \n- Anything highly time-sensitive, or involving those flagged users, needs manual confirmation or a deeper dive before using for critical decisions.\n\n**What to do:**\n- Treat current project status and activity reports as potentially lagging for the past few days.\n- For anything you need to be 100% current—especially about owner direction, payments, key RFIs/submittals, or commitments—ask for explicit verification or direct communication, not just the AI summary.\n\nDecisions are solid when the pipeline is healthy. Today, it isn’t. Don’t rely blindly on AI readouts until these sync issues are resolved.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 29425
+          }
+        },
+        {
+          "id": "realworld-teams-source-freshness",
+          "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+          "intent": "source_health",
+          "status": "pass",
+          "durationMs": 9317,
+          "streamEventCount": 21,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "messageDrivenToolRouter",
+            "mcpToolDiscovery",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "Teams message sync is partially stale today. Here’s what’s going on:\n\n- There is a critical sync issue on the Teams DM export for acannon@alleatogroup.com. Messages from that user may be missing or delayed.\n- For all other Teams chat sources, there isn’t an explicit outage flagged—but with 1,065 unembedded and 11,501 uncompiled sources in the pipeline, anything pulled today risks being incomplete, especially for recent activity.\n- If you’re looking for the most recent Teams conversations and it involves critical users (like acannon), treat the results with caution. Older or less active threads are more likely to be available; the latest updates may lag behind real time.\n\nBottom line: Teams message search will surface most historic context, but anything from the last few days—especially private or group DMs—might miss newer or unsynced content. For high-stakes or time-sensitive threads, confirm with the sender directly or flag that the system may be missing recent context.\n\nIf you need to know whether a specific message or thread is reliably present, name it—I can check for its timestamp or call out the likely sync gap.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 9317
+          }
+        }
+      ]
+    },
+    {
+      "runId": "2026-05-14T21-24-36-706Z-6673896e",
+      "generatedAt": "2026-05-14T21:24:44.306Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": null,
+      "filter": null,
+      "totalCases": 1,
+      "passed": 1,
+      "failed": 0,
+      "warningCount": 0,
+      "slowestCases": [
+        {
+          "id": "realworld-draft-email-response",
+          "intent": "email_action",
+          "durationMs": 6979,
+          "status": "pass",
+          "warnings": []
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-706Z-6673896e/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-706Z-6673896e/summary.md",
+      "cases": [
+        {
+          "id": "realworld-draft-email-response",
+          "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
+          "intent": "email_action",
+          "status": "pass",
+          "durationMs": 6979,
+          "streamEventCount": 11,
+          "toolNames": [
+            "intentPlanner",
+            "messageDrivenToolRouter",
+            "emailActionIntentRouter",
+            "getRecentOutlookEmails",
+            "readOutlookEmailThread",
+            "draftOutlookEmail",
+            "emailActionFastPath"
+          ],
+          "failures": [],
+          "warnings": [],
+          "observations": [
+            "tools fired: intentPlanner, messageDrivenToolRouter, emailActionIntentRouter, getRecentOutlookEmails, readOutlookEmailThread, draftOutlookEmail, emailActionFastPath"
+          ],
+          "finalText": "I found the latest matching email thread and prepared a short Outlook reply draft.\n\nSubject: Re: BSG Investor Update\n\nDraft:\nThank you for your message. We have received the update letter and are reviewing its contents. Please let us know if there is any additional information you need from our end.\n\nReply **confirm** and I will save this reply draft to Outlook. If this is the wrong thread, tell me which email to use and I will redraft it.",
+          "latencyBudget": {
+            "warnDurationMs": 15000,
+            "maxDurationMs": 30000,
+            "durationMs": 6979
+          }
+        }
+      ]
+    },
+    {
+      "runId": "2026-05-14T21-21-51-961Z-312b8b48",
+      "generatedAt": "2026-05-14T21:23:38.763Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": "source-sync-teams-regression",
+      "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
+      "totalCases": 4,
+      "passed": 4,
+      "failed": 0,
+      "warningCount": 4,
+      "slowestCases": [
+        {
+          "id": "source-freshness-rag-health",
+          "intent": "source_health",
+          "durationMs": 33239,
+          "status": "pass",
+          "warnings": [
+            "duration 33239ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "source-lookup-teams",
+          "intent": "source_lookup",
+          "durationMs": 32206,
+          "status": "pass",
+          "warnings": [
+            "global forbidden phrase: \"retrieval\"",
+            "duration 32206ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "realworld-teams-this-week-signal",
+          "intent": "source_lookup",
+          "durationMs": 31107,
+          "status": "pass",
+          "warnings": [
+            "duration 31107ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "realworld-teams-source-freshness",
+          "intent": "source_health",
+          "durationMs": 8608,
+          "status": "pass",
+          "warnings": []
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-14T21-21-51-961Z-312b8b48/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T21-21-51-961Z-312b8b48/summary.md",
+      "cases": [
+        {
+          "id": "source-lookup-teams",
+          "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 32206,
+          "streamEventCount": 21,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "semanticSearch",
+            "sourceLookupIntentRouter",
+            "messageDrivenToolRouter",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "global forbidden phrase: \"retrieval\"",
+            "duration 32206ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "No punch-list chatter for Westfield Collective has surfaced in the most recent Teams message retrieval. That means there is no current, actionable discussion about punch list work, coordination, or closeout floating in the available Teams channels or DMs related to this project.\n\nIf you’re hearing about punch-list items elsewhere, it’s not making it into Teams, at least not in a vectorized, retrievable form as of now. With source sync currently degraded and 1065 unembedded Teams/emails, some recent messages could still be in pipeline limbo.\n\n**Bottom line:** No new punch-list issues, signoffs, or owner objections showing up on Westfield in Teams. If this was a real-time concern, it’s either happening over email, calls, or hasn’t made it into the searchable record yet. If you want a sweep of punch-list mentions in emails or meetings instead, I can run that next—just say the word.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 32206
+          }
+        },
+        {
+          "id": "realworld-teams-this-week-signal",
+          "prompt": "Using Teams messages from this past week, what are people actually worried about?",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 31107,
+          "streamEventCount": 24,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "semanticSearch",
+            "sourceLookupIntentRouter",
+            "messageDrivenToolRouter",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 31107ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "I couldn’t retrieve any Teams messages from this past week that mention specific worries or concerns. The evidence surface is empty—no vectorized Teams content matching “worries,” “concerns,” or related discussion topics was found for this timeframe.\n\nWith the Teams DM export for acannon@alleatogroup.com in critical sync status, and a significant embedding backlog (over 1,000 unembedded items on the system), this gap may be due to message backlog or system sync lag rather than an actual lack of communication.\n\n**Bottom line:**  \n- No direct reporting of active concerns or worries from Teams messages in the past week.\n- This is likely a systems issue—supporting messages may not yet be indexed or available, especially if chat content is recent or from critical users.\n- If you need immediate pulse-checks, consider redirecting to project email, meetings, or requesting people-specific status directly.\n\n**Next step:**  \nIf there’s a specific team member, project, or risk vector you want surfaced, name it and I’ll check other sources or focus the Teams window accordingly. System-wise, I recommend following up on Teams sync health if this is critical for ongoing project intelligence.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 31107
+          }
+        },
+        {
+          "id": "source-freshness-rag-health",
+          "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
+          "intent": "source_health",
+          "status": "pass",
+          "durationMs": 33239,
+          "streamEventCount": 35,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "semanticSearch",
+            "sourceLookupIntentRouter",
+            "messageDrivenToolRouter",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 33239ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "Here’s where things stand on data freshness and reliability, right now:\n\n**Source Pipeline Status**\n\n- **Source sync is degraded.** Multiple critical Outlook inboxes are not current: njepson@alleatogroup.com, mparsons@alleatogroup.com, mharrison@alleatogroup.com, jdawson@alleatogroup.com, ctragesser@alleatogroup.com. If you rely on their emails for updates or decisions, you’re missing their latest activity.\n- **Teams DM export is critical:** acannon@alleatogroup.com isn’t syncing, so any chat-based intel or task assignments that go through this user are likely missing.\n- **Embedding backlog:** 1,065 source items are unembedded. That creates search blind spots—some recent emails, Teams messages, or meeting records may exist in raw data but are not yet discoverable in AI-powered search or readouts.\n- **Packet coverage risk:** 11,501 items are uncompiled, so project intelligence packets may be stale or lack recent financials, tasks, or owner comments. Treat readouts as partial unless you see explicit confirmation of source dates.\n\n**What’s reliable right now:**\n- Meeting and communication search is live for most users, but you have gaps where named inboxes or DMs are critical paths.\n- Tasks, structured financials, and recent Teams/email threads from fully-synced users remain sound.\n\n**What’s not:**\n- Anything routed through out-of-sync inboxes or unsynced Teams DMs (full list above) will be missing or stale.\n- Intelligence packets should be treated as potentially outdated if they lack new insight references from the past few days.\n\n**Next step:**  \nIf you need to verify a specific thread, recent update, or decision, ask for the exact communication line. For high-stakes actions—double-check with the owner or look for a timestamped source record.\n\nBottom line:  \nMost data surfaces are healthy, but you have real blind spots wherever sync is critical and not current. Don’t treat portfolio or project rollups as 100% reliable unless you confirm the underlying source timestamps. If you need me to chase specific updates—name the project, person, or channel, and I’ll tell you what’s solid and what’s questionable.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 33239
+          }
+        },
+        {
+          "id": "realworld-teams-source-freshness",
+          "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+          "intent": "source_health",
+          "status": "pass",
+          "durationMs": 8608,
+          "streamEventCount": 16,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "messageDrivenToolRouter",
+            "mcpToolDiscovery",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "Teams message data is not fully current today. Source sync health shows a critical sync issue with at least one Teams DM export (acannon@alleatogroup.com) and an embedding backlog affecting coverage—specifically, 1,065 unembedded and 11,501 uncompiled items. That means tool output may be missing some recent or direct messages, especially if evidence appears thin.\n\nBottom line: For critical decisions, supplement Teams findings with direct email, meeting, or document review. If you need a specific conversation that isn't in the records, flag it as a probable sync lag and ask for a manual check if necessary.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 8608
+          }
+        }
+      ]
+    },
+    {
+      "runId": "2026-05-14T21-21-51-954Z-54058cc1",
+      "generatedAt": "2026-05-14T21:24:25.565Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": "deep-agents-executive-regression",
+      "filter": "realworld-(most-important-tasks|waiting-on-team|business-risks|systems-processes-needed)$",
+      "totalCases": 4,
+      "passed": 4,
+      "failed": 0,
+      "warningCount": 4,
+      "slowestCases": [
+        {
+          "id": "realworld-most-important-tasks",
+          "intent": "task_management",
+          "durationMs": 40922,
+          "status": "pass",
+          "warnings": [
+            "duration 40922ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "realworld-business-risks",
+          "intent": "risk_review",
+          "durationMs": 38469,
+          "status": "pass",
+          "warnings": [
+            "duration 38469ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "realworld-systems-processes-needed",
+          "intent": "implementation_planning",
+          "durationMs": 38190,
+          "status": "pass",
+          "warnings": [
+            "duration 38190ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "realworld-waiting-on-team",
+          "intent": "task_management",
+          "durationMs": 34258,
+          "status": "pass",
+          "warnings": [
+            "duration 34258ms exceeded warning budget 30000ms"
+          ]
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-14T21-21-51-954Z-54058cc1/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T21-21-51-954Z-54058cc1/summary.md",
+      "cases": [
+        {
+          "id": "realworld-most-important-tasks",
+          "prompt": "What are my most important tasks right now?",
+          "intent": "task_management",
+          "status": "pass",
+          "durationMs": 40922,
+          "streamEventCount": 27,
+          "toolNames": [
+            "intentPlanner",
+            "promptContextReducer",
+            "backendDeepAgentExecutiveBriefing",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 40922ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, promptContextReducer, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "Your most important tasks right now are:\n\n1. **Finalize and Submit the Updated Cost Forecast**  \n   *Why it matters:* The latest project review flagged several cost discrepancies and highlighted an approaching budget submission deadline (due in 3 days). This is critical for maintaining client trust and preventing funding delays.\n   *Action:* Review the project team's pending cost inputs and consolidate them for submission.\n\n2. **Resolve the Change Order Log Backlog**  \n   *Why it matters:* There are three high-impact change orders awaiting your approval, each affecting the mechanical and façade packages. Delays in processing these could disrupt the procurement schedule and affect critical path milestones.\n   *Action:* Prioritize your review/approval with supporting documentation from the contracts team.\n\n3. **Prepare for Tomorrow’s Coordination Meeting with C&W Engineering**  \n   *Why it matters:* Outstanding RFI responses (RFI-062 and RFI-063) are still open, and these are tied to site logistics and safety. Finalizing these before the meeting will facilitate decision-making and keep the current phase on track.\n   *Action:* Coordinate with your site PM to ensure inputs are ready for tomorrow.\n\nThese tasks are high-impact and time-sensitive, directly affecting budget alignment, schedule integrity, and team coordination.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 40922
+          }
+        },
+        {
+          "id": "realworld-waiting-on-team",
+          "prompt": "What am I waiting on from my team?",
+          "intent": "task_management",
+          "status": "pass",
+          "durationMs": 34258,
+          "streamEventCount": 28,
+          "toolNames": [
+            "intentPlanner",
+            "promptContextReducer",
+            "messageDrivenToolRouter",
+            "backendDeepAgentExecutiveBriefing",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 34258ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, promptContextReducer, messageDrivenToolRouter, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "You are currently waiting on your team for the following key items:\n\n1. **February Marketing Performance Report**: The marketing team is preparing a report summarizing February’s metrics, with focus on increased reach and engagement. This appears to be an outstanding deliverable mentioned in recent Teams messages.\n\n2. **Accounting and Admin Backlog Cleanup**: The accounting/admin team was still processing mail, organizing tax documents, and cleaning up outstanding issues. A commitment was made to send a detailed list of unresolved items for your review. Await this compilation for next step follow-ups and audit readiness.\n\n3. **Design Milestone Review and Payment Coordination**: There is a pending review relating to a recent invoice (Design Pay App 1) and associated milestone documentation for the Union Collective project. Internal review/approval or confirmation is likely needed before payment or sign-off.\n\n**First action:**  \nRequest a same-day status update from each functional lead (Marketing, Accounting/Admin, Project Coordination) specifically on outstanding reports, unresolved admin issues, and any approvals or sign-offs blocking progress.\n\n**Note:**  \nNo comprehensive project task board or unified tracker is currently available due to system limitations, so some team deliverables not listed here may also be pending.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 34258
+          }
+        },
+        {
+          "id": "realworld-business-risks",
+          "prompt": "What risks exist in the business right now?",
+          "intent": "risk_review",
+          "status": "pass",
+          "durationMs": 38469,
+          "streamEventCount": 35,
+          "toolNames": [
+            "intentPlanner",
+            "promptContextReducer",
+            "assistantWidgetPlanner",
+            "backendDeepAgentExecutiveBriefing",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 38469ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "**The key business risks right now are:**\n\n### 1. **Active Issues Incoming via Email**\n- **Why it matters:** With current email flows covered and task/project systems down, unresolved client/vendor requests, blockers, and deadline-driven follow-ups in the inbox are the highest probability for missed commitments or fires.\n- **First action:** Triage the latest emails for urgent or escalated issues. Assign clear ownership and due dates for any requiring action.\n\n### 2. **Coordination and Execution Blind Spots**\n- **Why it matters:** Team and meeting records are outdated, and the task/project systems are down. This means:\n  - Cross-group handoffs may be slipping.\n  - Decisions or action items from older meetings may not be current or acted upon.\n  - There’s no reliable list of open or overdue deliverables, so duplicate work or dropped balls are likely.\n- **First action:** Directly confirm open action items and due dates with responsible teams or project leads—do not assume meeting notes or earlier plans are up to date.\n\n### 3. **Project Oversight and Operational Control Risks**\n- **Why it matters:** Financial and schedule data exist but aren’t linked to project or task status, so:\n  - Budget or schedule overruns may be brewing without visibility at the executive level.\n  - Any existing operational problems are unlikely to be flagged automatically.\n- **First action:** Treat project and task status as unknown. For any current major project, request a direct status check from leads.\n\n---\n\n**Summary Statement:**  \nThe single biggest risk is a lack of visibility and confirmation for critical deliverables due to missing and stale source systems. Actively seek out urgent items in email, verify cross-team handoffs, and do not rely on old meeting or system data until the information flow is restored. This will prevent missed deadlines, duplicate efforts, and unrecognized project issues.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 38469
+          }
+        },
+        {
+          "id": "realworld-systems-processes-needed",
+          "prompt": "What systems and processes do you think we need to put in place?",
+          "intent": "implementation_planning",
+          "status": "pass",
+          "durationMs": 38190,
+          "streamEventCount": 45,
+          "toolNames": [
+            "intentPlanner",
+            "assistantSourceHealth",
+            "backendDeepAgentExecutiveBriefing",
+            "mcpToolDiscoverySkipped",
+            "streamingToolPolicy",
+            "noToolRetry"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 38190ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: intentPlanner, assistantSourceHealth, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
+          ],
+          "finalText": "Start with what’s breaking down:\n\n**1. Weekly Work-Intake and Follow-Up**\nYou’re losing track of open items, owner assignments, and due dates. Fragmented follow-through is the biggest risk. You need a single, disciplined work intake and follow-up process. Every item—admin or client—goes into a common list, with today’s actions at the top and next week’s planned right below. Assign owners and deadlines for each. Separate urgent items (cash flow, compliance, client reversals) from general work.\n\n**2. Mail, Document, and Audit Workflow**\nProcessing is too ad hoc—mail, invoices, and tax documents stack up and get missed. Establish intake > scan > sort > escalate as a daily routine. There must be a regular check and overflow mechanism (i.e., Thursdays for regular processing, Fridays catch overflow), and everything time-sensitive gets flagged. Audit exposure and overlooked required docs are the cost of not owning this now.\n\n**3. Document Control for Projects**\nToo many versions, approvals, and milestones are floating without a single source of truth. Institute a project document control system—every milestone schedule, pay app, and major approval lives in a central spot, clearly named and version-controlled. Rework and confusion drop; project status is transparent at a glance.\n\n**4. Cross-Team Reporting Cadence**\nEvery function (ops, finance, BD, marketing) is reporting to someone—rarely at the same pace or with the same rigor. Set a recurring, organization-wide reporting rhythm. Use a unified template that shows progress, blockers, decisions needed, and next steps. Assign owners for collecting and distributing these updates.\n\n**5. Inbox Triage and Escalation**\nCritical emails/documents (finance, deadlines, customer-sensitive) must be triaged same-day. If something impacts cash flow, compliance, or a client deadline, escalate it inside 24 hours. Everything else hits the intake queue and gets worked according to standard schedule.\n\n**6. Operational Risk Register**\nTrack operational bottlenecks—backlog, audit issues, incomplete follow-ups, schedule drift—on a central risk register. Review it in weekly leadership meetings, not only in audits or fire drills.\n\n**Bottom line:**  \nActivity isn’t your problem—fragmentation and lack of follow-through are. These are process control issues, not effort issues. Systems fix this: centralize task tracking, enforce document flow, and run a real cadence on reporting and escalation.\n\n**First moves:**  \n- Today: Name a central place for intake/follow-up.  \n- This week: Assign owners for mail/document workflow and cross-team report collection.  \n- Next leadership meeting: Establish standing review of risk register and overdue actions.\n\nYou get more leverage fixing these touchpoints than chasing one-off problems. This is how you grow without spinning up more chaos.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 60000,
+            "durationMs": 38190
+          }
+        }
+      ]
+    },
     {
       "runId": "2026-05-14T21-21-51-850Z-8e31bb1e",
       "generatedAt": "2026-05-14T21:22:05.864Z",
@@ -1161,295 +1895,6 @@
             "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
           ],
           "finalText": "Teams message data is not fully current today. Sync health on the pipeline is flagged as critical for at least one user (acannon@alleatogroup.com), and overall source status is “degraded,” which means some recent messages may be missing or delayed in surfacing.\n\nYou should treat Teams message results as potentially incomplete—especially for anything that’s supposed to have come in within the last 24-48 hours. Full evidence coverage is at risk right now due to an embedding backlog (over 1,000 items unembedded, 11,500+ uncompiled).\n\nBottom line: If a decision hinges on the most recent Teams traffic, double-check outside the system until sync returns to normal. For historical reference or anything older than a couple days, results are more reliable.",
-          "latencyBudget": null
-        }
-      ]
-    },
-    {
-      "runId": "2026-05-14T20-41-07-647Z-756c269b",
-      "generatedAt": "2026-05-14T20:41:57.991Z",
-      "baseUrl": "http://localhost:3000",
-      "bundle": null,
-      "filter": null,
-      "totalCases": 1,
-      "passed": 1,
-      "failed": 0,
-      "warningCount": 0,
-      "slowestCases": [
-        {
-          "id": "source-freshness-rag-health",
-          "intent": "source_health",
-          "durationMs": 49815,
-          "status": "pass",
-          "warnings": []
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-05-14T20-41-07-647Z-756c269b/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T20-41-07-647Z-756c269b/summary.md",
-      "cases": [
-        {
-          "id": "source-freshness-rag-health",
-          "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
-          "intent": "source_health",
-          "status": "pass",
-          "durationMs": 49815,
-          "streamEventCount": 29,
-          "toolNames": [
-            "intentPlanner",
-            "assistantSourceHealth",
-            "semanticSearch",
-            "sourceLookupIntentRouter",
-            "messageDrivenToolRouter",
-            "mcpToolDiscovery",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
-          ],
-          "finalText": "The system is not fully current. Here’s the breakdown:\n\n**Teams**: There are critical sync issues, especially on acannon@alleatogroup.com — recent DM exports are failing, which means anything sent or received by this user may be missing or out of date.\n\n**Outlook**: Multiple Outlook mailboxes are in a critical sync state, including njepson, mparsons, mharrison, jdawson, and ctragesser. Recent inbound/outbound emails for these people may not appear in results, and some thread context may be stale.\n\n**Meetings**: No explicit meeting sync errors are listed, but packet freshness depends on the overall compiled source coverage, which is currently behind.\n\n**Packets/Data**: There are 1,065 unembedded and 11,501 uncompiled items in the pipeline. That means new meeting entries, emails, and Teams messages may not be reflected yet in intelligence packets or search results. Any summary or \"AI readout\" pulled from packets may lack the latest context.\n\n**Bottom Line:**  \n- If you’re relying on \"most recent\" communications or decisions — especially from the mailboxes or Teams DMs flagged above — treat evidence as potentially incomplete.\n- For financials, budget, or formally logged data, reliability is higher, but cross-check if something doesn’t line up with what you just heard in the field.\n\n**If you need a readout that is current and trustworthy, ask for a specific date window (e.g., \"everything after May 10\"). I’ll flag which records are up-to-date and which are missing.** For now, you are operating with partial visibility, not full situational awareness. If something feels off or absent, ask for a source check or update request before making a critical call.",
-          "latencyBudget": null
-        }
-      ]
-    },
-    {
-      "runId": "2026-05-14T20-38-12-542Z-458aef0c",
-      "generatedAt": "2026-05-14T20:40:38.221Z",
-      "baseUrl": "http://localhost:3000",
-      "bundle": null,
-      "filter": "owner-strategy|action-task|task-register|source-freshness",
-      "totalCases": 5,
-      "passed": 3,
-      "failed": 2,
-      "warningCount": 4,
-      "slowestCases": [
-        {
-          "id": "source-freshness-rag-health",
-          "intent": "source_health",
-          "durationMs": 43332,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "owner-strategy-ulta-action-plan",
-          "intent": "project_briefing",
-          "durationMs": 32858,
-          "status": "pass",
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'semantic' not represented",
-            "expected family 'communications' not represented"
-          ]
-        },
-        {
-          "id": "realworld-teams-source-freshness",
-          "intent": "source_health",
-          "durationMs": 23395,
-          "status": "pass",
-          "warnings": []
-        },
-        {
-          "id": "task-register-source-grounded",
-          "intent": "task_management",
-          "durationMs": 19502,
-          "status": "pass",
-          "warnings": []
-        },
-        {
-          "id": "action-task-preview-no-write",
-          "intent": "action_preview",
-          "durationMs": 9130,
-          "status": "fail",
-          "warnings": [
-            "expected family 'action_write' not represented"
-          ]
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-05-14T20-38-12-542Z-458aef0c/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T20-38-12-542Z-458aef0c/summary.md",
-      "cases": [
-        {
-          "id": "owner-strategy-ulta-action-plan",
-          "prompt": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
-          "intent": "project_briefing",
-          "status": "pass",
-          "durationMs": 32858,
-          "streamEventCount": 33,
-          "toolNames": [
-            "intentPlanner",
-            "promptContextReducer",
-            "clientProjectIntelligencePacket",
-            "mcpToolDiscovery",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'semantic' not represented",
-            "expected family 'communications' not represented"
-          ],
-          "observations": [
-            "tools fired: intentPlanner, promptContextReducer, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
-          ],
-          "finalText": "**Brandon, for 25-127 Ulta Beauty Fresno:**\n\n---\n\n### What is most likely to cost money this week\n\n**Fire sprinkler compliance and ductwork rework** are your biggest, immediate cost risks. The insurance inspector flagged ductwork blocking fire sprinklers. If this isn't fixed quickly, you'll incur extra labor, material, and possibly higher insurance premiums or fines for non-compliance. There is also ongoing risk until the AC1 relocation, which is waiting on the solar company's approval (see below), is fully resolved.\n\n---\n\n### What is blocked\n\n- **AC1 relocation**: Cannot proceed until the solar company issues approval. This blocks completion of HVAC and related close-out.\n- **Final roof scope**: Cleanup and duct sock fix are pending successful insurance inspection and issue resolution.\n- **Payments to Citadel**: There was a prior accounting systems issue delaying payment; check if this has cleared, as lack of payment could threaten subcontractor progress.\n\n---\n\n### What you personally need to do today\n\n1. **Call the solar company contact** and press for approval for AC1 relocation. Escalate if needed—this is the critical path blocker.\n2. **Check status with Candon Rusin** to confirm who's handling the ductwork rework for sprinkler compliance and what’s needed to complete it immediately.\n3. **Confirm payment status with Accounts** for Citadel. Ensure payment is in process so you don’t risk a work stoppage or supplier hold.\n\n---\n\n#### Evidence Basis\n\n- [Ulta Beauty Fresno Weekly Meeting 2026-05-14](https://app.fireflies.ai/view/01KR12W6EYZJ34QTK4P6MQN9J7): Flagged AC1/solar dependency, duct-sprinkler insurance issues, recent payments delay discussed.\n- Recent inspector feedback and outstanding compliance matters are your highest active cost and delay risks.\n- No documented closure on payment issue as of last meeting; risk remains.\n\nIf any of these items are not resolved by the end of today, risk to this week’s budget and schedule will increase.",
-          "latencyBudget": null
-        },
-        {
-          "id": "action-task-preview-no-write",
-          "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
-          "intent": "action_preview",
-          "status": "fail",
-          "durationMs": 9130,
-          "streamEventCount": 0,
-          "toolNames": [],
-          "failures": [
-            "stream error: fetch failed",
-            "assistant message was not persisted to chat_history",
-            "expected required tool 'createGeneratedTask' to fire",
-            "mustInclude missing: \"Preview\"",
-            "mustInclude missing: \"confirm\"",
-            "mustInclude missing: \"AC1\"",
-            "mustIncludeAny missing one of: \"not created\", \"No task was created\", \"Reply confirm\", \"confirmed: false\"",
-            "answer length 0 < min 180",
-            "required metadata missing: tool_trace",
-            "required metadata missing: provider_decision",
-            "required metadata missing: response_quality"
-          ],
-          "warnings": [
-            "expected family 'action_write' not represented"
-          ],
-          "observations": [
-            "tools fired: (none)"
-          ],
-          "finalText": "",
-          "latencyBudget": null
-        },
-        {
-          "id": "task-register-source-grounded",
-          "prompt": "Show me my real task list from actual records. Split it into overdue, due soon, blocked, and unclear if you can.",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 19502,
-          "streamEventCount": 9,
-          "toolNames": [
-            "intentPlanner",
-            "promptContextReducer",
-            "getMyTasks"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: intentPlanner, promptContextReducer, getMyTasks"
-          ],
-          "finalText": "I checked the task register for Test User.\n\nI did not find any open task rows directly assigned to you in the checked task sources.\n\n**Sources Checked**\n- tasks.assignee_person_id / assignee_email / assignee_name\n- schedule_tasks.assignee text\n- executive_briefing_follow_ups.owner",
-          "latencyBudget": null
-        },
-        {
-          "id": "source-freshness-rag-health",
-          "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
-          "intent": "source_health",
-          "status": "fail",
-          "durationMs": 43332,
-          "streamEventCount": 30,
-          "toolNames": [
-            "intentPlanner",
-            "assistantSourceHealth",
-            "semanticSearch",
-            "sourceLookupIntentRouter",
-            "messageDrivenToolRouter",
-            "mcpToolDiscovery",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [
-            "mustIncludeAny missing one of: \"stale\", \"fresh\", \"up to date\", \"unembedded\", \"uncompiled\", \"source health\""
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
-          ],
-          "finalText": "Here’s where your data stands right now:\n\n**Source Sync Status** (as of 2026-05-14):\n\n- Teams Chat: **Critical issues.** DM export for acannon@alleatogroup.com is in a red state — messages from this user could be missing or lagging.\n- Outlook Email: **Critical delays** in inbox sync for several users (njepson@, mparsons@, mharrison@, jdawson@, ctragesser@). Recent emails to/from these mailboxes may be incomplete.\n- Packets (knowledge extracts): **Not fully up-to-date.** There are 1,065 items waiting for vectorization (“embedding backlog”) and 11,501 not yet compiled into final readout packets. This means readouts, full-project summaries, and intelligence packets could be missing recent events, especially from high-volume projects or new documents.\n- Meetings: No explicit read errors, but if meeting records rely on Outlook for capture, see the Outlook risks above.\n\n**Bottom line:**  \nYour system is partially up-to-date. Standard project searches (Meetings, Teams, Emails, Packets) will find most older/major activity, but recent messages, owner requests, or newly-uploaded docs may be missing for the specific users with sync alerts. Readouts and intelligence packets may be incomplete for anything added in the last 24–72 hours, or for any content not covered due to the embedding backlog. Treat any “nothing found” result as possibly incomplete until the backlog clears.\n\n**Action:**  \nIf a decision hinges on the absolute latest status — especially for projects involving messages or docs from the affected users — consider direct verification until the pipeline is green. Otherwise, expect broad project health to be 80–90% reliable right now. \n\nLet me know if you need to check a specific user or project for recency.",
-          "latencyBudget": null
-        },
-        {
-          "id": "realworld-teams-source-freshness",
-          "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
-          "intent": "source_health",
-          "status": "pass",
-          "durationMs": 23395,
-          "streamEventCount": 20,
-          "toolNames": [
-            "intentPlanner",
-            "assistantSourceHealth",
-            "messageDrivenToolRouter",
-            "mcpToolDiscovery",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
-          ],
-          "finalText": "Teams message sync is degraded today. Here’s what’s happening:\n\n- The source sync health check reports **critical issues** on the Teams DM export for acannon@alleatogroup.com. \n- Sync coverage is incomplete: **1065 items are unembedded** and **11,501 items are uncompiled** across all sources. That means a significant backlog waiting to be processed – evidence from recent messages (especially private/DMs) could be missing.\n- When Teams messages return empty or thin, it’s likely a **pipeline delay** (embedding backlog), not a guarantee that there’s nothing happening.\n\n**Bottom line:**  \nTeams message searches today may be **missing recent or critical content**, especially from direct messages or private chats. If you need a definitive, up-to-the-moment read, don’t trust Teams results as complete—check with the people directly or use alternative sources until sync backlog clears.\n\nNext step: If you need a search anyway, tell me which project or topic — I’ll run it, but I’ll also flag any thin spots.",
-          "latencyBudget": null
-        }
-      ]
-    },
-    {
-      "runId": "2026-05-14T20-37-25-776Z-96546f80",
-      "generatedAt": "2026-05-14T20:38:07.427Z",
-      "baseUrl": "http://localhost:3000",
-      "bundle": null,
-      "filter": null,
-      "totalCases": 1,
-      "passed": 1,
-      "failed": 0,
-      "warningCount": 3,
-      "slowestCases": [
-        {
-          "id": "owner-strategy-ulta-action-plan",
-          "intent": "project_briefing",
-          "durationMs": 41031,
-          "status": "pass",
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'semantic' not represented",
-            "expected family 'communications' not represented"
-          ]
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-05-14T20-37-25-776Z-96546f80/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T20-37-25-776Z-96546f80/summary.md",
-      "cases": [
-        {
-          "id": "owner-strategy-ulta-action-plan",
-          "prompt": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
-          "intent": "project_briefing",
-          "status": "pass",
-          "durationMs": 41031,
-          "streamEventCount": 40,
-          "toolNames": [
-            "intentPlanner",
-            "promptContextReducer",
-            "clientProjectIntelligencePacket",
-            "mcpToolDiscovery",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'semantic' not represented",
-            "expected family 'communications' not represented"
-          ],
-          "observations": [
-            "tools fired: intentPlanner, promptContextReducer, clientProjectIntelligencePacket, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
-          ],
-          "finalText": "For **25-127 Ulta Beauty Fresno**, here’s what matters most for cost, risk, and your action as of today:\n\n---\n\n### What is Most Likely to Cost Money This Week\n\n**Insurance Compliance and Sprinkler Issue:**  \nThe inspector flagged that ductwork is blocking fire sprinklers. If this isn’t corrected quickly, you risk increased insurance premiums and/or being out of compliance with code—both have direct and potentially significant cost impacts. Further, any rework required by insurance or local authorities would drive costs this week.\n\n**AC1 Relocation Delay:**  \nThe relocation of AC1 is still waiting on signoff from the solar company. Prolonged delays could lead to extra labor mobilizations or schedule-related expenses (e.g., idle resources, lost productivity).\n\n---\n\n### What is Blocked\n\n- **AC1 Relocation** is blocked pending **solar company approval**. All other AC units are operational, but this approval is the gating factor for finalizing the mechanical work.\n- **Roof Duct Sock Reinstallation** is on hold because insurance-related issues with the fire sprinklers haven’t been resolved. The temporary removal is causing both insurance exposure and operational delay.\n\n---\n\n### What You (Brandon) Personally Need to Do Today\n\n1. **Push the Solar Company for Immediate Approval:**  \n   Reach out directly to the solar provider contact and demand a definitive timeline and action for AC1 relocation approval. Without this, critical path mechanical/roof work is stalled.\n\n2. **Coordinate With the Superintendent (Candon)** to:\n   - Make sure teams are mobilized and ready for duct adjustments as soon as the solar approval clears.\n   - Confirm that the ductwork correction (to address the sprinkler clearance) is scheduled and someone owns it.\n\n3. **Check With Accounting** to verify status of any payments (esp. to Citadel or key vendors), as previous payment issues with syncing Job Planner were flagged. Any further payment delays could risk liens, loss of service, or further schedule/cost issues.\n\n---\n\n#### Recent Changes / Supporting Evidence\n\n- **Meeting (2026-05-14):** Insurance flagged ductwork conflict with sprinklers; AC1 cannot be relocated until solar approval. Four AC units otherwise operational.\n- **Project finances and payments:** Recent email traffic shows previous payment delays (Citadel, April 29); this could escalate if not resolved.\n\n---\n\n**First Action:**  \nEmail and call the solar contact for AC1 relocation approval. Then follow up with Candon for duct/sprinkler offset scheduling and catch up with accounts on Citadel/vendor payment status.",
           "latencyBudget": null
         }
       ]
