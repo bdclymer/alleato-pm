@@ -160,18 +160,18 @@ export default function NewEstimatePage() {
 
             <SelectField
               label="Estimate Type"
-              value={values.estimate_type ?? ""}
+              value={values.estimate_type ?? "none"}
               onValueChange={(value) =>
                 form.setValue(
                   "estimate_type",
-                  (value || null) as EstimateFormValues["estimate_type"],
+                  (value === "none" ? null : value) as EstimateFormValues["estimate_type"],
                   { shouldValidate: true }
                 )
               }
               error={errors.estimate_type?.message}
               placeholder="Select type (optional)"
               options={[
-                { value: "", label: "None" },
+                { value: "none", label: "None" },
                 ...EstimateTypes.map((t) => ({
                   value: t,
                   label: EstimateTypeLabels[t],
