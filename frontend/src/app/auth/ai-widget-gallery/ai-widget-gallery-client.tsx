@@ -1,6 +1,7 @@
 "use client";
 
 import { AssistantWidgetRenderer } from "@/components/ai-assistant/assistant-widget-renderer";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import type { AssistantWidgetPayload } from "@/lib/ai/assistant-widgets";
 
 const sourceEvidence = [
@@ -465,6 +466,81 @@ const widgets: AssistantWidgetPayload[] = [
     ],
   },
   {
+    type: "outlook_inbox_summary",
+    id: "outlook-inbox-summary",
+    title: "Outlook Inbox Summary",
+    subtitle: "Recent emails relevant to Union Collective",
+    dateLabel: "Today",
+    summary: "3 emails need attention. One requires a pricing decision, one has owner walkthrough action items, and one is an invoice ready for routing.",
+    totalCount: 3,
+    actionSummary: "1 reply needed, 1 task creation, 1 invoice to route",
+    items: [
+      {
+        id: "email-1",
+        subject: "RE: Ceiling revision pricing — need decision",
+        fromName: "Sarah Chen",
+        fromEmail: "schen@architectstudio.com",
+        senders: ["schen@architectstudio.com"],
+        receivedAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+        preview: "Attached is the updated spec sheet. We need a decision by EOD Friday to hold the lead time.",
+        bodyText: "Hi Team,\n\nAttached is the updated ceiling revision spec sheet with revised pricing from the subcontractor.\n\nWe need a decision by EOD Friday to hold the lead time. If procurement is released without pricing approval we risk a $42K exposure.\n\nPlease advise.\n\nSarah",
+        recommendedAction: "Reply confirming pricing review timeline and owner decision path.",
+        projectIds: [983],
+        messageCount: 3,
+        hasAttachments: true,
+        replyPrompt: "Draft a reply to Sarah Chen confirming the pricing review timeline and owner decision path for the ceiling revision.",
+        draftPrompt: "Draft a new email to the team about the ceiling revision pricing decision timeline.",
+        attentionScore: 9,
+        recipients: [],
+        conversationId: null,
+        graphMessageId: null,
+        webLink: null,
+      },
+      {
+        id: "email-2",
+        subject: "Union Collective — Owner walkthrough notes",
+        fromName: "Brandon Clymer",
+        fromEmail: "bclymer@alleatogroup.com",
+        senders: ["bclymer@alleatogroup.com"],
+        receivedAt: new Date(Date.now() - 2.5 * 60 * 60 * 1000).toISOString(),
+        preview: "Notes from yesterday's walkthrough. Three open items from the owner on finish selections.",
+        bodyText: "Team,\n\nHere are my notes from yesterday's owner walkthrough:\n\n1. Owner wants to revisit corridor finish selections — decision needed before procurement\n2. MEP coordination gap flagged in Level 2 — contractor to address by next week\n3. Owner requested updated schedule showing ceiling revision impact\n\nI'll follow up with a formal meeting recap.\n\nBrandon",
+        recommendedAction: "Create tasks for the three open owner items and draft a recap email.",
+        projectIds: [983],
+        messageCount: 1,
+        hasAttachments: false,
+        replyPrompt: "Draft a reply to Brandon's walkthrough notes creating tasks for the three open owner items.",
+        draftPrompt: "Draft a meeting recap email summarizing the owner walkthrough items.",
+        attentionScore: 7,
+        recipients: [],
+        conversationId: null,
+        graphMessageId: null,
+        webLink: null,
+      },
+      {
+        id: "email-3",
+        subject: "Invoice #1047 — Ready for review",
+        fromName: "Miller Mechanical",
+        fromEmail: "invoices@millermechanical.com",
+        senders: ["invoices@millermechanical.com"],
+        receivedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+        preview: "Please find attached Invoice #1047 for $18,400 for work completed through May 10.",
+        bodyText: "Hello,\n\nPlease find attached Invoice #1047 in the amount of $18,400.00 for mechanical work completed through May 10, 2026 on the Union Collective project.\n\nPlease process at your earliest convenience.\n\nThank you,\nMiller Mechanical",
+        recommendedAction: "Route to accounting and verify against contract schedule of values.",
+        projectIds: [983],
+        messageCount: 1,
+        hasAttachments: true,
+        replyPrompt: "Draft a reply to Miller Mechanical acknowledging receipt of Invoice #1047 and routing it to accounting.",
+        draftPrompt: "Draft a forwarding email to accounting with Invoice #1047 details.",
+        attentionScore: 6,
+        recipients: [],
+        conversationId: null,
+        graphMessageId: null,
+        webLink: null,
+      },
+    ],
+  },
+  {
     type: "feature_request_packet",
     id: "feature-request-packet",
     title: "AI widget gallery request",
@@ -481,10 +557,83 @@ const widgets: AssistantWidgetPayload[] = [
   },
 ];
 
+const GENERATIVE_UI_COMPONENTS: Array<{
+  type: string;
+  label: string;
+  trigger: string;
+  description: string;
+  category: "action" | "data" | "intelligence" | "communication";
+}> = [
+  { type: "outlook_inbox_summary", label: "Outlook Inbox Summary", trigger: "Email triage questions", description: "Email cards with sender avatar, body preview, relevance feedback, and Reply / AI Draft / Project / Task / Tag actions.", category: "communication" },
+  { type: "outlook_email_draft", label: "Outlook Email Draft", trigger: "Draft / send email commands", description: "Full Outlook-connected draft with to/cc/bcc, status badge (draft → created), voice profile attribution, and Adaptive Card preview.", category: "communication" },
+  { type: "draft_email", label: "Draft Email (simple)", trigger: "Write an email to…", description: "Lightweight compose card with editable to / subject / body fields. No Outlook connection required.", category: "communication" },
+  { type: "calendar_invite", label: "Calendar Invite", trigger: "Schedule a meeting / send invite", description: "Outlook calendar event with attendees, start/end time, Teams join link, and Adaptive Card preview.", category: "communication" },
+  { type: "create_task", label: "Create Task", trigger: "Create a task / add to do", description: "Task creation form with title, body, due date, assignee, priority, and project linkage.", category: "action" },
+  { type: "project_action_preview", label: "Project Action Preview", trigger: "Create an RFI / log a change event", description: "Editable field-by-field preview before writing an RFI or change event to the database. Includes a confirm prompt.", category: "action" },
+  { type: "record_write_preview", label: "Record Write Preview", trigger: "AI proposes a database write", description: "Safety-gated write preview with field list, source evidence, validation pass/fail rows, and a confirm prompt.", category: "action" },
+  { type: "create_event", label: "Create Event", trigger: "Add to calendar / create meeting", description: "Quick-create calendar event card with title, time, location, and agenda fields.", category: "action" },
+  { type: "decision_packet", label: "Decision Packet", trigger: "Should we / recommend / approve", description: "Recommendation card with confidence level, financial/schedule/owner impacts, risk bullets, and next action steps.", category: "intelligence" },
+  { type: "owner_snapshot", label: "Owner Snapshot", trigger: "Project health / status overview", description: "Full project dashboard: health signals, money summary (contract value, committed, exposure), schedule blockers, risk register, owner action queue, and recent movement.", category: "intelligence" },
+  { type: "owner_action_queue", label: "Owner Action Queue", trigger: "What do I need to do / action items", description: "Priority-grouped action queue (Now / Next / Watch) with source-backed items and recommended actions.", category: "intelligence" },
+  { type: "risk_exposure_packet", label: "Risk Exposure Packet", trigger: "Risk / exposure / what could go wrong", description: "Risk assessment with severity, estimated impact, evidence, affected records, resolution options, and owner actions.", category: "intelligence" },
+  { type: "financial_pulse", label: "Financial Pulse", trigger: "Financial summary / budget / cost status", description: "KPI grid, variance table, active risk alerts, and recommended financial actions.", category: "intelligence" },
+  { type: "meeting_intelligence", label: "Meeting Intelligence", trigger: "Meeting summary / what happened in meetings", description: "Meeting rollup with counts, top insights, recommended next actions, and per-meeting drill-down (risks / decisions / action items).", category: "intelligence" },
+  { type: "meeting_insights", label: "Meeting Insights", trigger: "Insights from meetings / what was decided", description: "Per-project meeting analysis: decisions, promises, risks, unresolved questions, suggested tasks, and source citations.", category: "intelligence" },
+  { type: "task_summary", label: "Task Summary", trigger: "List my tasks / open action items", description: "Structured task register with status, priority, assignee, due date, source, and deep-link to each task.", category: "data" },
+  { type: "project_picker", label: "Project Picker", trigger: "Which project (when context is ambiguous)", description: "Project selection launcher that routes follow-up intents (owner snapshot, action queue, meeting insights, etc.) to the right project.", category: "data" },
+  { type: "source_evidence_drawer", label: "Source Evidence Drawer", trigger: "Show me your sources / where did that come from", description: "Collapsible evidence panel with source type icons, dates, snippets, and confidence levels for each cited document.", category: "data" },
+  { type: "creative_draft", label: "Creative Draft", trigger: "Write a LinkedIn post / proposal / case study", description: "Source-backed creative writing with audience/tone/format metadata, banned-claims guard, and a source-check status (source_backed / needs_review / unsupported).", category: "communication" },
+  { type: "feature_request_packet", label: "Feature Request Packet", trigger: "I want / I wish the app could…", description: "Structured feature request capture with priority signal, user context, and direct-to-Linear filing.", category: "action" },
+];
+
+const AISDK_FEATURES: Array<{
+  feature: string;
+  usage: string;
+  where: string;
+  badge: string;
+}> = [
+  { feature: "streamText", usage: "Main chat handler and agentic bot core. Streams token-by-token text and tool calls to the client.", where: "handler-v2.ts, bot-core.ts, artifacts/text", badge: "Core" },
+  { feature: "generateText", usage: "Meeting prep generation (multi-step), fallback chain, Procore RAG Q&A, structured output via Output.object().", where: "meeting prep, procore-docs/ask, fallback-chain, bot-core", badge: "Core" },
+  { feature: "streamObject", usage: "Streaming structured JSON for artifact creation and updates (code editor, spreadsheet).", where: "artifacts/code/server, artifacts/sheet/server", badge: "Core" },
+  { feature: "generateObject", usage: "Intent classification — maps free-text prompts to typed intent categories (financial, operational, creative, etc.).", where: "intent-classifier.ts", badge: "Core" },
+  { feature: "tool()", usage: "28+ registered tools across 6 tool files: financial, operational, project, Acumatica, schedule, forecast, Outlook operations.", where: "lib/ai/tools/", badge: "Tools" },
+  { feature: "Output.object() / Output.array()", usage: "Structured output from generateText without switching to generateObject — used for action briefs, suggestion arrays, and memory extraction.", where: "structured-output.ts, request-suggestions.ts, memory-extraction.ts", badge: "Tools" },
+  { feature: "stopWhen: stepCountIs(N)", usage: "Agentic loop cap: 10 steps for the main chat assistant, 7 steps for meeting prep generation.", where: "handler-v2.ts, meeting prep route", badge: "Agents" },
+  { feature: "smoothStream({ chunking: 'word' })", usage: "Word-level token smoothing on text artifact streaming to prevent jittery rendering.", where: "artifacts/text/server.ts", badge: "Streaming" },
+  { feature: "useChat (@ai-sdk/react)", usage: "Client-side chat state, message list, input handling, and status tracking across 5 chat surfaces.", where: "compact-ai-chat, executive-chat-panel, rag-chat-page, ask-alleato, procore-docs", badge: "React" },
+  { feature: "DefaultChatTransport", usage: "Custom transport configuration for useChat — sets base URL, credentials, and retry behavior.", where: "compact-ai-chat, chat.tsx, ask-alleato", badge: "React" },
+  { feature: "lastAssistantMessageIsCompleteWithApprovalResponses", usage: "Human-in-the-loop pattern — detects when the assistant has proposed an action and is waiting for user confirmation before executing a write.", where: "useAskAlleatoChat.ts", badge: "HITL" },
+  { feature: "DataUIPart / data-assistant-widget", usage: "Custom data parts streamed from handler-v2 to the client. The widget registry maps each type to its React component. This is the generative UI backbone.", where: "handler-v2.ts → chat-area.tsx → AssistantWidgetRenderer", badge: "Generative UI" },
+  { feature: "DynamicToolUIPart / ToolUIPart", usage: "Tool call and tool result rendering in the chat UI — shows expandable accordion cards for each tool invocation.", where: "chat-area.tsx, ai-elements/tool.tsx", badge: "Generative UI" },
+  { feature: "dataStream.write()", usage: "Artifact servers write delta / code-delta / sheet-delta parts into the AI SDK data stream for real-time artifact updates.", where: "artifacts/code, text, sheet servers", badge: "Streaming" },
+  { feature: "providerOptions", usage: "Provider-specific generation options (e.g. Anthropic extended thinking budget) passed through the artifact generation pipeline.", where: "artifacts/text/server.ts", badge: "Providers" },
+  { feature: "Vercel AI Gateway (BYOK)", usage: "All LLM calls route through ai-gateway.vercel.sh. Zero-data-retention mode. Provider keys stay with OpenAI — Vercel bills nothing for token usage.", where: "lib/ai/providers.ts", badge: "Providers" },
+  { feature: "text-embedding-3-large (halfvec 3072)", usage: "Document embedding for all 24K+ chunks in document_chunks. Used for vector search, RAG retrieval, and meeting compilation.", where: "ai-memory-service, backend sync pipeline", badge: "Embeddings" },
+];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  action: "bg-primary/10 text-primary",
+  data: "bg-muted text-muted-foreground",
+  intelligence: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  communication: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+};
+
+const BADGE_COLORS: Record<string, string> = {
+  "Core": "bg-primary/10 text-primary",
+  "Tools": "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  "Agents": "bg-orange-500/10 text-orange-700 dark:text-orange-400",
+  "Streaming": "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+  "React": "bg-blue-500/10 text-blue-700 dark:text-blue-400",
+  "HITL": "bg-purple-500/10 text-purple-700 dark:text-purple-400",
+  "Generative UI": "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  "Providers": "bg-muted text-muted-foreground",
+  "Embeddings": "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
+};
+
 export function AiWidgetGalleryClient() {
   return (
     <main className="min-h-screen bg-muted/20 px-6 py-8 text-foreground">
-      <div className="mx-auto max-w-5xl space-y-8">
+      <div className="mx-auto max-w-5xl space-y-12">
         <header className="space-y-2">
           <p className="text-xs font-medium uppercase text-muted-foreground">
             AI chat generated UI
@@ -492,11 +641,12 @@ export function AiWidgetGalleryClient() {
           <h1 className="text-2xl font-semibold">Assistant widget gallery</h1>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
             Static samples rendered through the live AssistantWidgetRenderer
-            registry. These are the custom data-assistant-widget cards, not the
+            registry. These are the custom <code className="rounded bg-muted px-1 py-0.5 text-xs">data-assistant-widget</code> cards, not the
             generic tool-call accordions.
           </p>
         </header>
 
+        {/* Live widget samples */}
         <section className="grid gap-5 lg:grid-cols-2">
           {widgets.map((widget) => (
             <div key={widget.id} className="min-w-0">
@@ -508,6 +658,69 @@ export function AiWidgetGalleryClient() {
               />
             </div>
           ))}
+        </section>
+
+        {/* Generative UI component reference */}
+        <section className="space-y-4">
+          <div className="space-y-1.5">
+            <SectionRuleHeading label="Generative UI components" />
+            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+              All {GENERATIVE_UI_COMPONENTS.length} registered widget types. Each is emitted by the AI as a{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">data-assistant-widget</code> data part and rendered client-side by the AssistantWidgetRenderer registry.
+            </p>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {GENERATIVE_UI_COMPONENTS.map((c) => (
+              <div key={c.type} className="rounded-lg bg-card px-4 py-3 space-y-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-sm font-semibold text-foreground">{c.label}</span>
+                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${CATEGORY_COLORS[c.category]}`}>
+                    {c.category}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-5">{c.description}</p>
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] text-muted-foreground/60">Trigger:</span>
+                  <span className="text-[10px] italic text-muted-foreground">{c.trigger}</span>
+                </div>
+                <code className="block text-[10px] text-muted-foreground/50">{c.type}</code>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* AI SDK features */}
+        <section className="space-y-4">
+          <div className="space-y-1.5">
+            <SectionRuleHeading label="AI SDK features in use" />
+            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+              Every Vercel AI SDK feature actively used in this codebase, with the exact file locations and purpose.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-lg bg-muted/40">
+            <div className="grid grid-cols-[auto_1fr_auto] gap-0 divide-y divide-border/50">
+              {/* Header */}
+              <div className="col-span-3 grid grid-cols-[220px_1fr_140px] gap-0 bg-muted/50 px-4 py-2">
+                <span className="text-[11px] font-medium uppercase text-muted-foreground">Feature</span>
+                <span className="text-[11px] font-medium uppercase text-muted-foreground">Usage</span>
+                <span className="text-[11px] font-medium uppercase text-muted-foreground">Where</span>
+              </div>
+              {AISDK_FEATURES.map((f) => (
+                <div key={f.feature} className="col-span-3 grid grid-cols-[220px_1fr_140px] items-start gap-0 px-4 py-3">
+                  <div className="space-y-1 pr-3">
+                    <code className="block text-xs font-semibold text-foreground">{f.feature}</code>
+                    <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${BADGE_COLORS[f.badge] ?? "bg-muted text-muted-foreground"}`}>
+                      {f.badge}
+                    </span>
+                  </div>
+                  <p className="pr-3 text-xs leading-5 text-muted-foreground">{f.usage}</p>
+                  <p className="text-[10px] leading-4 text-muted-foreground/60 [overflow-wrap:anywhere]">{f.where}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
       </div>
     </main>

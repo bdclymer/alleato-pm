@@ -29,7 +29,6 @@ import {
   ThumbsUpIcon,
   TrendingUpIcon,
   UsersRoundIcon,
-  XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
