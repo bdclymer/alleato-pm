@@ -287,12 +287,12 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
             {/* Outer walls - left and right edges */}
             <line
-              x1="200" y1="830" x2="200" y2="130"
+              x1="200" y1="850" x2="200" y2="130"
               stroke="hsl(var(--muted-foreground) / 0.55)" strokeWidth="3"
               className="bld-draw-slow" style={{ animationDelay: "0.5s" }}
             />
             <line
-              x1="500" y1="830" x2="500" y2="130"
+              x1="500" y1="850" x2="500" y2="130"
               stroke="hsl(var(--muted-foreground) / 0.55)" strokeWidth="3"
               className="bld-draw-slow" style={{ animationDelay: "0.6s" }}
             />
@@ -301,7 +301,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
             {[250, 310, 370, 440].map((x, i) => (
               <line
                 key={`col-${x}`}
-                x1={x} y1="830" x2={x} y2="130"
+                x1={x} y1="850" x2={x} y2="130"
                 stroke="hsl(var(--muted-foreground) / 0.55)" strokeWidth="1.5"
                 className="bld-draw-slow"
                 style={{ animationDelay: `${0.7 + i * 0.08}s` }}
@@ -411,17 +411,17 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
             {/* ── SMALLER BUILDING (left, 8 floors) ── */}
             <rect
-              x="70" y="830" width="110" height="15"
+              x="70" y="830" width="110" height="20"
               fill="hsl(var(--secondary))"
               className="bld-fade" style={{ animationDelay: "0.4s" }}
             />
             <line
-              x1="70" y1="830" x2="70" y2="490"
+              x1="70" y1="850" x2="70" y2="490"
               stroke="hsl(var(--muted-foreground) / 0.35)" strokeWidth="2"
               className="bld-draw-slow" style={{ animationDelay: "0.8s" }}
             />
             <line
-              x1="180" y1="830" x2="180" y2="490"
+              x1="180" y1="850" x2="180" y2="490"
               stroke="hsl(var(--muted-foreground) / 0.35)" strokeWidth="2"
               className="bld-draw-slow" style={{ animationDelay: "0.9s" }}
             />
