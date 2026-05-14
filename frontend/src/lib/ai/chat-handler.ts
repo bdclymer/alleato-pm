@@ -113,8 +113,10 @@ import {
   buildDeepAgentSourceEvidenceWidget,
   fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
+  formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentExecutiveBriefingContext,
   formatDeepAgentProjectStatusContext,
+  shouldUseDeepAgentExecutiveDirectResponse,
   shouldUseDeepAgentExecutiveBridge,
   shouldUseDeepAgentProjectStatusBridge,
 } from "@/lib/ai/deep-agent-project-status";
@@ -7345,6 +7347,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               const deepAgentDataParts = deepAgentWidget
                 ? writeAssistantWidgetParts(writer, [deepAgentWidget])
                 : [];
+              assistantWidgetDataParts.push(...deepAgentDataParts);
 
               systemPrompt = `${systemPrompt}\n\n---\n\n${deepAgentContext}`;
               toolTrace.push({
@@ -7414,6 +7417,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               const deepAgentDataParts = deepAgentWidget
                 ? writeAssistantWidgetParts(writer, [deepAgentWidget])
                 : [];
+              assistantWidgetDataParts.push(...deepAgentDataParts);
 
               systemPrompt = `${systemPrompt}\n\n---\n\n${deepAgentContext}`;
               toolTrace.push({
@@ -7441,6 +7445,70 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 message: "Loaded backend Deep Agents executive packet",
                 status: deepAgentPacket.mode === "deep_agents" ? "success" : "warning",
               });
+
+              if (shouldUseDeepAgentExecutiveDirectResponse(deepAgentPacket)) {
+                const content = formatDeepAgentExecutiveDirectResponse(deepAgentPacket);
+                toolTrace.push({
+                  tool: "deepAgentExecutiveDirectResponse",
+                  input: {
+                    intent: assistantIntent,
+                    sourceTool: "backendDeepAgentExecutiveBriefing",
+                  },
+                  output: {
+                    reason:
+                      "Backend Deep Agents returned a completed source-backed executive synthesis; skipped second chat-model pass for latency.",
+                    contentLength: content.length,
+                  },
+                  timestamp: new Date().toISOString(),
+                });
+
+                writeStrategistStatus(writer, {
+                  stage: "synthesis",
+                  message: "Writing backend Deep Agents executive answer",
+                  status: "loading",
+                });
+                await writeTextResponse(writer, "deep-agent-executive-direct-response", content);
+                const responseQuality = scoreResponseQuality({
+                  toolTrace,
+                  content,
+                });
+                await persistAssistantMessage({
+                  supabase,
+                  sessionId,
+                  userId: user.id,
+                  content,
+                  toolTrace,
+                  memoryUsage,
+                  learningUsage,
+                  totalUsage: undefined,
+                  responseQuality,
+                  councilMode,
+                  modelId: activeModel,
+                  loopDiagnostic: buildLoopDiagnostic({
+                    stepStarts: stepStartDiagnostics,
+                    steps: stepDiagnostics,
+                  }),
+                  projectBriefingSnapshot,
+                  executiveBriefingRetrieval,
+                  providerDecision,
+                  selectedProjectId,
+                  dataParts: assistantWidgetDataParts,
+                  sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+                });
+
+                await supabase
+                  .from("conversations")
+                  .update({ last_message_at: new Date().toISOString() })
+                  .eq("session_id", sessionId)
+                  .eq("user_id", user.id);
+
+                writeStrategistStatus(writer, {
+                  stage: "complete",
+                  message: "Backend Deep Agents executive answer complete",
+                  status: "success",
+                });
+                return;
+              }
             } catch (error) {
               const detail = error instanceof Error ? error.message : String(error);
               toolTrace.push({

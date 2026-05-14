@@ -345,6 +345,42 @@ export function formatDeepAgentExecutiveBriefingContext(
   ].join("\n");
 }
 
+export function shouldUseDeepAgentExecutiveDirectResponse(
+  packet: DeepExecutiveIntelligenceResponse,
+): boolean {
+  return (
+    packet.mode === "deep_agents" &&
+    packet.answer.trim().length >= 80 &&
+    packet.toolTrace.some(
+      (item) => item.tool === "deepagents_runtime" && item.status === "success",
+    )
+  );
+}
+
+export function formatDeepAgentExecutiveDirectResponse(
+  packet: DeepExecutiveIntelligenceResponse,
+): string {
+  const answer = packet.answer.trim();
+  const sourceGaps = packet.sourcesChecked.filter(
+    (source) => source.status === "missing" || source.status === "failed" || source.status === "stale",
+  );
+
+  if (sourceGaps.length === 0) {
+    return answer;
+  }
+
+  const gapSummary = sourceGaps
+    .slice(0, 4)
+    .map((source) => `${source.sourceType}: ${source.status}`)
+    .join("; ");
+
+  return [
+    answer,
+    "",
+    `Source coverage note: ${gapSummary}. I did not use unavailable or stale source categories as factual support.`,
+  ].join("\n");
+}
+
 function mapSourceType(sourceType: string): SourceEvidenceItem["sourceType"] {
   switch (sourceType) {
     case "meetings":

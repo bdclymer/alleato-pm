@@ -3,8 +3,10 @@ import {
   buildDeepAgentSourceEvidenceWidget,
   fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
+  formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentExecutiveBriefingContext,
   formatDeepAgentProjectStatusContext,
+  shouldUseDeepAgentExecutiveDirectResponse,
   shouldUseDeepAgentExecutiveBridge,
   shouldUseDeepAgentProjectStatusBridge,
   type DeepExecutiveIntelligenceResponse,
@@ -70,7 +72,8 @@ const packet: DeepProjectIntelligenceResponse = {
 };
 
 const executivePacket: DeepExecutiveIntelligenceResponse = {
-  answer: "The business has two urgent follow-ups and one process risk.",
+  answer:
+    "The business has two urgent follow-ups and one process risk. Prioritize the owner follow-up first, then close the process gap with a named accountable owner.",
   confidence: "medium",
   intent: "business_briefing",
   organization: {
@@ -267,6 +270,40 @@ describe("Deep Agents project-status bridge", () => {
         },
       ],
     });
+  });
+
+  it("allows direct executive responses only for successful Deep Agents runtime packets", () => {
+    expect(shouldUseDeepAgentExecutiveDirectResponse(executivePacket)).toBe(true);
+
+    expect(
+      shouldUseDeepAgentExecutiveDirectResponse({
+        ...executivePacket,
+        mode: "contract_spike",
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldUseDeepAgentExecutiveDirectResponse({
+        ...executivePacket,
+        toolTrace: [
+          {
+            agent: "executive-intelligence-orchestrator",
+            tool: "deepagents_runtime",
+            status: "failed",
+            durationMs: 42,
+            detail: "Runtime failed.",
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps direct executive responses source-gap aware", () => {
+    const content = formatDeepAgentExecutiveDirectResponse(executivePacket);
+
+    expect(content).toContain("The business has two urgent follow-ups");
+    expect(content).toContain("Source coverage note: emails: missing");
+    expect(content).toContain("I did not use unavailable or stale source categories");
   });
 
   it("posts the typed request to the backend Deep Agents endpoint", async () => {
