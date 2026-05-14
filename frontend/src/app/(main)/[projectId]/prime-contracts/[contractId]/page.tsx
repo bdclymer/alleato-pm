@@ -61,7 +61,6 @@ import {
   PrimeContractChangeEventsTab,
   PrimeContractChangeOrdersTab,
   PrimeContractPcosSection,
-  PrimeContractCommitmentsTab,
   PrimeContractInvoicesTab,
   PrimeContractPaymentsTab,
   PrimeContractFinancialMarkupTab,
@@ -984,7 +983,6 @@ export default function ProjectContractDetailPage() {
           { label: "General", href: "overview", isActive: activeTab === "overview" },
           { label: "SOV", href: "schedule-of-values", isActive: activeTab === "schedule-of-values", count: lineItems.length || undefined },
           { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrders.length || undefined },
-          { label: "Commitments", href: "commitments", isActive: activeTab === "commitments" },
           { label: "Invoices", href: "invoices", isActive: activeTab === "invoices", count: paymentApplications.length || undefined },
           { label: "Payments Received", href: "payments", isActive: activeTab === "payments", count: payments.length || undefined },
           { label: "Related Items", href: "related-items", isActive: activeTab === "related-items" },
@@ -1058,14 +1056,6 @@ export default function ProjectContractDetailPage() {
             />
           </ContentSectionStack>
         )}
-
-        {activeTab === "commitments" && (
-          <PrimeContractCommitmentsTab
-            projectId={projectId}
-            contractId={contractId}
-          />
-        )}
-
 
         {activeTab === "invoices" && (
           <PrimeContractInvoicesTab

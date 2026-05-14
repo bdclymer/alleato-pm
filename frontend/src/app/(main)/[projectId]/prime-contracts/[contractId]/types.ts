@@ -267,7 +267,6 @@ export type ContractTab =
   | "overview"
   | "schedule-of-values"
   | "change-orders"
-  | "commitments"
   | "change-events"
   | "invoices"
   | "payments"
