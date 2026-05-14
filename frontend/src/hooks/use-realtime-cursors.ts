@@ -41,8 +41,6 @@ const useThrottleCallback = <Params extends unknown[], Return>(
   );
 };
 
-const supabase = createClient();
-
 const generateRandomColor = () =>
   `hsl(${Math.floor(Math.random() * 360)}, 100%, 70%)`;
 
@@ -80,6 +78,7 @@ export const useRealtimeCursors = ({
     {},
   );
   const cursorPayload = useRef<CursorEventPayload | null>(null);
+  const supabase = useRef(createClient()).current;
 
   const channelRef = useRef<RealtimeChannel | null>(null);
 
