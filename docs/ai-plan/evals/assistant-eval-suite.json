@@ -12,6 +12,18 @@
     "as an AI",
     "I cannot help"
   ],
+  "evalBundles": {
+    "inbox-outlook-regression": {
+      "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The assistant must use structured Outlook intake, avoid source-specific RAG, and avoid stale fallback language.",
+      "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+      "criteria": [
+        "Every case must fire getRecentEmails.",
+        "No case may fire sourceSpecificRagRetrieval.",
+        "Answers must not tell the user to wait for live Outlook tools.",
+        "Answers must be long enough to explain the inbox result or failure clearly."
+      ]
+    }
+  },
   "cases": [
     {
       "id": "project-briefing-westfield",

@@ -11,6 +11,7 @@
  * Usage:
  *   node scripts/verify/verify_ai_assistant_eval_suite.mjs              # full suite
  *   node scripts/verify/verify_ai_assistant_eval_suite.mjs --case <id>  # single case
+ *   node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle <name>
  *   node scripts/verify/verify_ai_assistant_eval_suite.mjs --filter <regex>
  *   AI_EVAL_BASE_URL=https://alleato.example.com node ... # remote target
  *
@@ -54,15 +55,24 @@ function flagValue(flag) {
   return idx >= 0 ? args[idx + 1] : undefined;
 }
 const onlyCase = flagValue("--case");
+const bundleName = flagValue("--bundle");
 const filterPattern = flagValue("--filter");
 
 // ───────────────────────────────────────────────────────────── Suite load
 const suiteRaw = await fs.readFile(SUITE_PATH, "utf8");
 const suite = JSON.parse(suiteRaw);
+const bundle = bundleName ? suite.evalBundles?.[bundleName] : null;
+if (bundleName && !bundle) {
+  console.error(`Unknown eval bundle: ${bundleName}`);
+  console.error("Available bundles:");
+  for (const name of Object.keys(suite.evalBundles ?? {})) console.error(`  - ${name}`);
+  process.exit(1);
+}
+const effectiveFilterPattern = filterPattern ?? bundle?.filter;
 const allCases = suite.cases ?? [];
 const cases = allCases.filter((c) => {
   if (onlyCase && c.id !== onlyCase) return false;
-  if (filterPattern && !new RegExp(filterPattern).test(c.id)) return false;
+  if (effectiveFilterPattern && !new RegExp(effectiveFilterPattern).test(c.id)) return false;
   return true;
 });
 if (cases.length === 0) {
@@ -584,6 +594,7 @@ await refreshAuthIfNeeded();
 console.log(`AI Assistant eval suite — ${cases.length} cases`);
 console.log(`Endpoint: ${CHAT_ENDPOINT}`);
 console.log(`User id: ${userId ?? "(unknown)"}`);
+if (bundleName) console.log(`Bundle: ${bundleName}`);
 console.log(`Run dir: ${path.relative(repoRoot, runDir)}`);
 console.log("");
 
@@ -655,6 +666,14 @@ for (const [index, testCase] of cases.entries()) {
 const summary = {
   generatedAt: new Date().toISOString(),
   baseUrl: BASE_URL,
+  bundle: bundleName
+    ? {
+        name: bundleName,
+        description: bundle.description ?? "",
+        criteria: bundle.criteria ?? [],
+      }
+    : null,
+  filter: effectiveFilterPattern ?? null,
   totalCases: results.length,
   passed: results.filter((r) => r.score.status === "pass").length,
   failed: results.filter((r) => r.score.status === "fail").length,
@@ -677,10 +696,25 @@ const md = [
   `# AI Assistant Eval Suite — ${runStamp}`,
   "",
   `- Endpoint: \`${CHAT_ENDPOINT}\``,
+  ...(summary.bundle
+    ? [
+        `- Bundle: \`${summary.bundle.name}\``,
+        `- Bundle description: ${summary.bundle.description}`,
+      ]
+    : []),
+  ...(summary.filter ? [`- Filter: \`${summary.filter}\``] : []),
   `- Total: ${summary.totalCases}`,
   `- Passed: ${summary.passed}`,
   `- Failed: ${summary.failed}`,
   "",
+  ...(summary.bundle?.criteria?.length
+    ? [
+        "## Bundle Criteria",
+        "",
+        ...summary.bundle.criteria.map((criterion) => `- ${criterion}`),
+        "",
+      ]
+    : []),
   "## Per-case results",
   "",
   "| Case | Intent | Status | Duration | Tools fired | Failures |",
