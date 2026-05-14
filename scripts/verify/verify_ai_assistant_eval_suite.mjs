@@ -47,6 +47,9 @@ const CHAT_ENDPOINT = `${BASE_URL}/api/ai-assistant/chat`;
 const CASE_TIMEOUT_MS = Number(process.env.AI_EVAL_CASE_TIMEOUT_MS ?? 90_000);
 const POLL_INTERVAL_MS = 750;
 const POLL_MAX_MS = 15_000;
+const DEFAULT_WARN_DURATION_MS = Number(
+  suiteSafeNumber(process.env.AI_EVAL_WARN_DURATION_MS) ?? 30_000,
+);
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is required.");
@@ -61,6 +64,12 @@ function flagValue(flag) {
 const onlyCase = flagValue("--case");
 const bundleName = flagValue("--bundle");
 const filterPattern = flagValue("--filter");
+
+function suiteSafeNumber(value) {
+  if (value == null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 // ───────────────────────────────────────────────────────────── Suite load
 const suiteRaw = await fs.readFile(SUITE_PATH, "utf8");
@@ -580,6 +589,22 @@ function scoreCase(testCase, runOutput, persisted) {
     );
   }
 
+  const warnDurationMs =
+    suiteSafeNumber(testCase.warnDurationMs) ??
+    suiteSafeNumber(bundle?.warnDurationMs) ??
+    suiteSafeNumber(suite.defaultWarnDurationMs) ??
+    DEFAULT_WARN_DURATION_MS;
+  const maxDurationMs =
+    suiteSafeNumber(testCase.maxDurationMs) ??
+    suiteSafeNumber(bundle?.maxDurationMs) ??
+    suiteSafeNumber(suite.defaultMaxDurationMs);
+  if (warnDurationMs && runOutput.durationMs > warnDurationMs) {
+    warnings.push(`duration ${runOutput.durationMs}ms exceeded warning budget ${warnDurationMs}ms`);
+  }
+  if (maxDurationMs && runOutput.durationMs > maxDurationMs) {
+    failures.push(`duration ${runOutput.durationMs}ms exceeded max budget ${maxDurationMs}ms`);
+  }
+
   const metadata = persisted?.metadata ?? {};
   for (const pathExpression of testCase.requiredMetadataPaths ?? []) {
     if (metadataPath(metadata, pathExpression) == null) {
@@ -630,6 +655,11 @@ function scoreCase(testCase, runOutput, persisted) {
     familiesHit: [...familiesHit],
     finalTextLength: finalText.length,
     finalText,
+    latencyBudget: {
+      warnDurationMs,
+      maxDurationMs: maxDurationMs ?? null,
+      durationMs: runOutput.durationMs,
+    },
   };
 }
 
@@ -707,6 +737,9 @@ for (const [index, testCase] of cases.entries()) {
   if (score.failures.length > 0) {
     for (const f of score.failures) console.log(`    ! ${f}`);
   }
+  if (score.warnings.length > 0) {
+    for (const w of score.warnings) console.log(`    ⚠ ${w}`);
+  }
 }
 
 // ─────────────────────────────────────────────────────────── Reporting
@@ -724,6 +757,17 @@ const summary = {
   totalCases: results.length,
   passed: results.filter((r) => r.score.status === "pass").length,
   failed: results.filter((r) => r.score.status === "fail").length,
+  warningCount: results.reduce((count, r) => count + r.score.warnings.length, 0),
+  slowestCases: [...results]
+    .sort((a, b) => b.durationMs - a.durationMs)
+    .slice(0, 10)
+    .map((r) => ({
+      id: r.id,
+      intent: r.intent,
+      durationMs: r.durationMs,
+      status: r.score.status,
+      warnings: r.score.warnings,
+    })),
   toolCoverage: Object.fromEntries(
     [...toolCoverage.entries()].sort((a, b) => b[1] - a[1]),
   ),
@@ -753,6 +797,16 @@ const md = [
   `- Total: ${summary.totalCases}`,
   `- Passed: ${summary.passed}`,
   `- Failed: ${summary.failed}`,
+  `- Warnings: ${summary.warningCount}`,
+  "",
+  "## Slowest Cases",
+  "",
+  "| Case | Intent | Status | Duration | Warnings |",
+  "|---|---|---|---|---|",
+  ...summary.slowestCases.map(
+    (r) =>
+      `| ${r.id} | ${r.intent} | ${r.status === "pass" ? "✅" : "❌"} | ${r.durationMs}ms | ${r.warnings.join("; ") || "—"} |`,
+  ),
   "",
   ...(summary.bundle?.criteria?.length
     ? [

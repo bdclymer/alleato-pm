@@ -5,12 +5,21 @@ import { createClient } from "@/lib/supabase/server";
 
 type AssistantEvalCase = {
   id: string;
+  prompt: string;
   intent: string | null;
   status: string;
   durationMs: number | null;
+  streamEventCount: number | null;
   toolNames: string[];
   failures: string[];
+  warnings: string[];
+  observations: string[];
   finalText: string;
+  latencyBudget: {
+    warnDurationMs: number | null;
+    maxDurationMs: number | null;
+    durationMs: number | null;
+  } | null;
 };
 
 type AssistantEvalRun = {
@@ -22,6 +31,14 @@ type AssistantEvalRun = {
   totalCases: number;
   passed: number;
   failed: number;
+  warningCount: number;
+  slowestCases: Array<{
+    id: string;
+    intent: string | null;
+    durationMs: number | null;
+    status: string;
+    warnings: string[];
+  }>;
   file: string;
   summaryFile: string | null;
   cases: AssistantEvalCase[];
@@ -95,19 +112,48 @@ export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async ()
           const cases: AssistantEvalCase[] = Array.isArray(result.results)
             ? result.results.map((testCase: Record<string, unknown>) => {
                 const score = (testCase.score ?? {}) as Record<string, unknown>;
+                const latencyBudget = (score.latencyBudget ?? {}) as Record<string, unknown>;
                 return {
                   id: String(testCase.id ?? ""),
+                  prompt: String(testCase.prompt ?? ""),
                   intent: typeof testCase.intent === "string" ? testCase.intent : null,
                   status: typeof score.status === "string" ? score.status : "unknown",
                   durationMs:
                     typeof testCase.durationMs === "number" ? testCase.durationMs : null,
+                  streamEventCount:
+                    typeof testCase.streamEventCount === "number"
+                      ? testCase.streamEventCount
+                      : null,
                   toolNames: Array.isArray(score.toolNames)
                     ? score.toolNames.filter((tool): tool is string => typeof tool === "string")
                     : [],
                   failures: Array.isArray(score.failures)
                     ? score.failures.filter((failure): failure is string => typeof failure === "string")
                     : [],
+                  warnings: Array.isArray(score.warnings)
+                    ? score.warnings.filter((warning): warning is string => typeof warning === "string")
+                    : [],
+                  observations: Array.isArray(score.observations)
+                    ? score.observations.filter((observation): observation is string => typeof observation === "string")
+                    : [],
                   finalText: typeof score.finalText === "string" ? score.finalText : "",
+                  latencyBudget:
+                    Object.keys(latencyBudget).length > 0
+                      ? {
+                          warnDurationMs:
+                            typeof latencyBudget.warnDurationMs === "number"
+                              ? latencyBudget.warnDurationMs
+                              : null,
+                          maxDurationMs:
+                            typeof latencyBudget.maxDurationMs === "number"
+                              ? latencyBudget.maxDurationMs
+                              : null,
+                          durationMs:
+                            typeof latencyBudget.durationMs === "number"
+                              ? latencyBudget.durationMs
+                              : null,
+                        }
+                      : null,
                 };
               })
             : [];
@@ -127,6 +173,33 @@ export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async ()
               typeof result.failed === "number"
                 ? result.failed
                 : cases.filter((testCase) => testCase.status === "fail").length,
+            warningCount:
+              typeof result.warningCount === "number"
+                ? result.warningCount
+                : cases.reduce((count, testCase) => count + testCase.warnings.length, 0),
+            slowestCases: Array.isArray(result.slowestCases)
+              ? result.slowestCases
+                  .map((slowCase: Record<string, unknown>) => ({
+                    id: String(slowCase.id ?? ""),
+                    intent: typeof slowCase.intent === "string" ? slowCase.intent : null,
+                    durationMs:
+                      typeof slowCase.durationMs === "number" ? slowCase.durationMs : null,
+                    status: typeof slowCase.status === "string" ? slowCase.status : "unknown",
+                    warnings: Array.isArray(slowCase.warnings)
+                      ? slowCase.warnings.filter((warning): warning is string => typeof warning === "string")
+                      : [],
+                  }))
+                  .filter((slowCase) => slowCase.id)
+              : [...cases]
+                  .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
+                  .slice(0, 10)
+                  .map((testCase) => ({
+                    id: testCase.id,
+                    intent: testCase.intent,
+                    durationMs: testCase.durationMs,
+                    status: testCase.status,
+                    warnings: testCase.warnings,
+                  })),
             file: path.relative(REPO_ROOT, resultPath),
             summaryFile: fs.existsSync(summaryPath) ? path.relative(REPO_ROOT, summaryPath) : null,
             cases,

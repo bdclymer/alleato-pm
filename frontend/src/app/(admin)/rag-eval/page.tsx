@@ -113,12 +113,21 @@ interface EvalResults {
 
 interface AssistantEvalCase {
   id: string;
+  prompt: string;
   intent: string | null;
   status: string;
   durationMs: number | null;
+  streamEventCount: number | null;
   toolNames: string[];
   failures: string[];
+  warnings: string[];
+  observations: string[];
   finalText: string;
+  latencyBudget: {
+    warnDurationMs: number | null;
+    maxDurationMs: number | null;
+    durationMs: number | null;
+  } | null;
 }
 
 interface AssistantEvalRun {
@@ -130,6 +139,14 @@ interface AssistantEvalRun {
   totalCases: number;
   passed: number;
   failed: number;
+  warningCount: number;
+  slowestCases: Array<{
+    id: string;
+    intent: string | null;
+    durationMs: number | null;
+    status: string;
+    warnings: string[];
+  }>;
   file: string;
   summaryFile: string | null;
   cases: AssistantEvalCase[];
@@ -147,6 +164,20 @@ function fmt(n: number, decimals = 3) {
 
 function pct(n: number) {
   return `${(n * 100).toFixed(0)}%`;
+}
+
+function durationLabel(durationMs: number | null) {
+  return durationMs == null ? "—" : `${(durationMs / 1000).toFixed(1)}s`;
+}
+
+function durationTone(testCase: AssistantEvalCase) {
+  const durationMs = testCase.durationMs;
+  if (durationMs == null) return "text-muted-foreground";
+  const warnDurationMs = testCase.latencyBudget?.warnDurationMs;
+  const maxDurationMs = testCase.latencyBudget?.maxDurationMs;
+  if (maxDurationMs && durationMs > maxDurationMs) return "text-red-600";
+  if (warnDurationMs && durationMs > warnDurationMs) return "text-yellow-700";
+  return "text-muted-foreground";
 }
 
 function Delta({ value, invert = false }: { value: number; invert?: boolean }) {
@@ -592,6 +623,12 @@ function AssistantRunsPanel({ runs }: { runs: AssistantEvalRun[] }) {
                   <Badge variant={run.failed === 0 ? "default" : "destructive"} className="text-xs">
                     {run.passed}/{run.totalCases}
                   </Badge>
+                  {run.warningCount > 0 && (
+                    <Badge variant="secondary" className="gap-1 text-xs text-yellow-700">
+                      <AlertTriangle className="h-3 w-3" />
+                      {run.warningCount}
+                    </Badge>
+                  )}
                   <span className="text-xs text-muted-foreground">{pct(passRate)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">
@@ -605,6 +642,27 @@ function AssistantRunsPanel({ runs }: { runs: AssistantEvalRun[] }) {
 
             {isOpen && (
               <div className="space-y-3 pl-6">
+                {run.slowestCases.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-foreground">Slowest cases</p>
+                    <div className="flex flex-wrap gap-2">
+                      {run.slowestCases.slice(0, 5).map((slowCase) => (
+                        <Badge
+                          key={`${run.runId}:slow:${slowCase.id}`}
+                          variant={slowCase.warnings.length > 0 ? "secondary" : "outline"}
+                          className={cn(
+                            "max-w-full gap-1 text-xs",
+                            slowCase.warnings.length > 0 && "text-yellow-700",
+                          )}
+                        >
+                          {slowCase.warnings.length > 0 && <AlertTriangle className="h-3 w-3" />}
+                          <span className="truncate">{slowCase.id}</span>
+                          <span className="tabular-nums">{durationLabel(slowCase.durationMs)}</span>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="rounded-md border border-border overflow-hidden">
                   <Table>
                     <TableHeader>
@@ -619,6 +677,7 @@ function AssistantRunsPanel({ runs }: { runs: AssistantEvalRun[] }) {
                       {run.cases.map((testCase) => {
                         const caseKey = `${run.runId}:${testCase.id}`;
                         const caseOpen = expandedCase === caseKey;
+                        const hasWarnings = testCase.warnings.length > 0;
                         return (
                           <Fragment key={caseKey}>
                             <TableRow
@@ -629,11 +688,13 @@ function AssistantRunsPanel({ runs }: { runs: AssistantEvalRun[] }) {
                               <TableCell>
                                 {testCase.intent && <Badge variant="outline" className="text-xs">{testCase.intent}</Badge>}
                               </TableCell>
-                              <TableCell className="text-right text-xs tabular-nums">
-                                {testCase.durationMs == null ? "—" : `${(testCase.durationMs / 1000).toFixed(1)}s`}
+                              <TableCell className={cn("text-right text-xs tabular-nums", durationTone(testCase))}>
+                                {durationLabel(testCase.durationMs)}
                               </TableCell>
                               <TableCell className="text-center">
-                                {testCase.status === "pass" ? (
+                                {testCase.status === "pass" && hasWarnings ? (
+                                  <AlertTriangle className="mx-auto h-4 w-4 text-yellow-500" />
+                                ) : testCase.status === "pass" ? (
                                   <CheckCircle2 className="mx-auto h-4 w-4 text-green-500" />
                                 ) : (
                                   <XCircle className="mx-auto h-4 w-4 text-red-400" />
@@ -644,6 +705,32 @@ function AssistantRunsPanel({ runs }: { runs: AssistantEvalRun[] }) {
                               <TableRow key={`${caseKey}:detail`}>
                                 <TableCell colSpan={4} className="bg-muted/30 text-xs">
                                   <div className="space-y-3 py-2">
+                                    <div>
+                                      <p className="font-medium text-foreground mb-1">Prompt tested</p>
+                                      <p className="whitespace-pre-wrap text-muted-foreground">
+                                        {testCase.prompt || "No prompt captured."}
+                                      </p>
+                                    </div>
+                                    <div className="grid gap-2 sm:grid-cols-3">
+                                      <div>
+                                        <p className="font-medium text-foreground mb-0.5">Duration</p>
+                                        <p className={cn("tabular-nums", durationTone(testCase))}>
+                                          {durationLabel(testCase.durationMs)}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-foreground mb-0.5">Warning budget</p>
+                                        <p className="text-muted-foreground tabular-nums">
+                                          {durationLabel(testCase.latencyBudget?.warnDurationMs ?? null)}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-foreground mb-0.5">Stream events</p>
+                                        <p className="text-muted-foreground tabular-nums">
+                                          {testCase.streamEventCount ?? "—"}
+                                        </p>
+                                      </div>
+                                    </div>
                                     <div>
                                       <p className="font-medium text-foreground mb-1">Tools fired</p>
                                       <div className="flex flex-wrap gap-1">
@@ -662,6 +749,26 @@ function AssistantRunsPanel({ runs }: { runs: AssistantEvalRun[] }) {
                                         <ul className="space-y-1 text-red-600">
                                           {testCase.failures.map((failure) => (
                                             <li key={failure}>{failure}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {testCase.warnings.length > 0 && (
+                                      <div>
+                                        <p className="font-medium text-yellow-700 mb-1">Warnings</p>
+                                        <ul className="space-y-1 text-yellow-700">
+                                          {testCase.warnings.map((warning) => (
+                                            <li key={warning}>{warning}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {testCase.observations.length > 0 && (
+                                      <div>
+                                        <p className="font-medium text-foreground mb-1">Observations</p>
+                                        <ul className="space-y-1 text-muted-foreground">
+                                          {testCase.observations.map((observation) => (
+                                            <li key={observation}>{observation}</li>
                                           ))}
                                         </ul>
                                       </div>
