@@ -309,6 +309,30 @@ def init_scheduler() -> None:
                 graph_embedding_interval_minutes,
                 graph_embedding_limit,
             )
+
+        if os.getenv("OUTLOOK_ATTACHMENT_PROMOTION_ENABLED", "true").lower() not in ("0", "false", "no"):
+            attachment_promotion_interval_minutes = max(
+                5,
+                int(os.getenv("OUTLOOK_ATTACHMENT_PROMOTION_INTERVAL_MINUTES", "30")),
+            )
+            attachment_promotion_limit = min(
+                100,
+                max(1, int(os.getenv("OUTLOOK_ATTACHMENT_PROMOTION_LIMIT", "25"))),
+            )
+            scheduler.add_job(
+                run_outlook_attachment_promotion_job,
+                IntervalTrigger(minutes=attachment_promotion_interval_minutes),
+                id="outlook_attachment_promotion",
+                name="Outlook Attachment Document Promotion",
+                replace_existing=True,
+                max_instances=1,
+                kwargs={"limit": attachment_promotion_limit},
+            )
+            logger.info(
+                "[Scheduler] Outlook attachment promotion every %d min (limit=%d)",
+                attachment_promotion_interval_minutes,
+                attachment_promotion_limit,
+            )
     else:
         if graph_has_creds:
             logger.warning(
@@ -1205,6 +1229,21 @@ async def run_graph_embedding_job(limit: int = 100) -> None:
         logger.warning("[Scheduler] Graph embedding failed (will retry): %s", e, exc_info=True)
 
 
+async def run_outlook_attachment_promotion_job(limit: int = 25) -> None:
+    """Scheduled job: promote important Outlook attachments into project documents."""
+    import asyncio
+
+    logger.info("[Scheduler] Running Outlook attachment promotion job (limit=%d)", limit)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_outlook_attachment_promotion, limit)
+        logger.info("[Scheduler] Outlook attachment promotion complete: %s", result)
+        if result.get("failed"):
+            logger.warning("[Scheduler] Outlook attachment promotion had failures: %s", result.get("failures"))
+    except Exception as e:
+        logger.warning("[Scheduler] Outlook attachment promotion failed (will retry): %s", e, exc_info=True)
+
+
 def _run_graph_sync():
     """Synchronous wrapper for Microsoft Graph fetch-only sync."""
     from .supabase_helpers import get_supabase_client
@@ -1228,6 +1267,14 @@ def _run_graph_sync():
     )
     result["project_backfill"] = _maybe_run_comm_project_backfill(client)
     return result
+
+
+def _run_outlook_attachment_promotion(limit: int = 25) -> dict:
+    """Synchronous wrapper for Outlook attachment document promotion."""
+    from .supabase_helpers import get_supabase_client
+    from .integrations.microsoft_graph.attachment_promotion import promote_outlook_intake_attachments
+
+    return promote_outlook_intake_attachments(get_supabase_client(), limit=limit)
 
 
 def _run_graph_subscription_reconcile() -> dict:

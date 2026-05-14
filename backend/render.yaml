@@ -216,6 +216,34 @@ services:
       - key: TEAMS_COMPILER_BATCH_SIZE
         value: "25"
 
+  - type: cron
+    name: alleato-outlook-attachment-promotion
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "*/30 * * * *"
+    dockerCommand: >-
+      timeout 10m python3 src/scripts/promote_outlook_attachments.py --limit 25
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: OUTLOOK_ATTACHMENT_PROMOTION_LIMIT
+        value: "25"
+
   - type: web
     name: alleato-backend
     runtime: docker

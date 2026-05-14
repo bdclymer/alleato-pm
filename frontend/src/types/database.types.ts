@@ -17885,6 +17885,7 @@ export type Database = {
           content: string | null
           content_type: string | null
           created_at: string | null
+          document_metadata_id: string | null
           email_attachment_id: number | null
           extracted_text: string | null
           file_name: string
@@ -17894,6 +17895,12 @@ export type Database = {
           id: number
           intake_email_id: number
           is_inline: boolean | null
+          project_document_id: number | null
+          project_id: number | null
+          promoted_at: string | null
+          promotion_attempt_count: number
+          promotion_reason: string | null
+          promotion_status: string
           source_metadata: Json
           updated_at: string | null
         }
@@ -17902,6 +17909,7 @@ export type Database = {
           content?: string | null
           content_type?: string | null
           created_at?: string | null
+          document_metadata_id?: string | null
           email_attachment_id?: number | null
           extracted_text?: string | null
           file_name: string
@@ -17911,6 +17919,12 @@ export type Database = {
           id?: never
           intake_email_id: number
           is_inline?: boolean | null
+          project_document_id?: number | null
+          project_id?: number | null
+          promoted_at?: string | null
+          promotion_attempt_count?: number
+          promotion_reason?: string | null
+          promotion_status?: string
           source_metadata?: Json
           updated_at?: string | null
         }
@@ -17919,6 +17933,7 @@ export type Database = {
           content?: string | null
           content_type?: string | null
           created_at?: string | null
+          document_metadata_id?: string | null
           email_attachment_id?: number | null
           extracted_text?: string | null
           file_name?: string
@@ -17928,10 +17943,72 @@ export type Database = {
           id?: never
           intake_email_id?: number
           is_inline?: boolean | null
+          project_document_id?: number | null
+          project_id?: number | null
+          promoted_at?: string | null
+          promotion_attempt_count?: number
+          promotion_reason?: string | null
+          promotion_status?: string
           source_metadata?: Json
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "outlook_email_intake_attachments_email_attachment_id_fkey"
             columns: ["email_attachment_id"]
@@ -17944,6 +18021,62 @@ export type Database = {
             columns: ["intake_email_id"]
             isOneToOne: false
             referencedRelation: "outlook_email_intake"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_project_document_id_fkey"
+            columns: ["project_document_id"]
+            isOneToOne: false
+            referencedRelation: "project_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
