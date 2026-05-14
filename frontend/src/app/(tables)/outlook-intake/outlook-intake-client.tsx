@@ -17,6 +17,7 @@ import {
   Mail,
   MessageSquare,
   MoreVertical,
+  RefreshCw,
   X,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -753,6 +754,57 @@ export function OutlookIntakeClient({
     }
   }
 
+  async function handleBulkReclassify() {
+    if (selectedIds.length === 0) return;
+    setIsBulkActing(true);
+    try {
+      const result = await apiFetch<{
+        scanned?: number;
+        updated?: number;
+      }>("/api/outlook-intake/reclassify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intakeIds: selectedIds.map((id) => Number.parseInt(id, 10)),
+          apply: true,
+        }),
+      });
+      toast.success(
+        `Reclassified ${result.scanned ?? selectedIds.length} email${(result.scanned ?? selectedIds.length) === 1 ? "" : "s"}; ${result.updated ?? 0} updated`,
+      );
+      setSelectedIds([]);
+      void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to reclassify selected emails",
+      );
+    } finally {
+      setIsBulkActing(false);
+    }
+  }
+
+  async function handleReclassifyEmail(emailId: number) {
+    try {
+      const result = await apiFetch<{
+        scanned?: number;
+        updated?: number;
+      }>("/api/outlook-intake/reclassify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intakeIds: [emailId],
+          apply: true,
+        }),
+      });
+      toast.success(
+        `Email reclassified; ${result.updated ?? 0} update${(result.updated ?? 0) === 1 ? "" : "s"} applied`,
+      );
+      void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to reclassify email");
+    }
+  }
+
   const threadToggle = isThreadOnly ? null : (
     <Button
       size="sm"
@@ -954,16 +1006,28 @@ export function OutlookIntakeClient({
           customActions: embedded ? null : (
             <>
               {selectedIds.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-muted-foreground"
-                  disabled={isBulkActing}
-                  onClick={handleBulkMarkFiltered}
-                >
-                  <Ban className="mr-1.5 size-3.5" />
-                  Filter {selectedIds.length} selected
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-muted-foreground"
+                    disabled={isBulkActing}
+                    onClick={handleBulkReclassify}
+                  >
+                    <RefreshCw className="mr-1.5 size-3.5" />
+                    Reclassify {selectedIds.length}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-muted-foreground"
+                    disabled={isBulkActing}
+                    onClick={handleBulkMarkFiltered}
+                  >
+                    <Ban className="mr-1.5 size-3.5" />
+                    Filter {selectedIds.length} selected
+                  </Button>
+                </>
               )}
               <Button
                 size="sm"
@@ -1056,31 +1120,40 @@ export function OutlookIntakeClient({
                   </DropdownMenuItem>
                 ) : null}
                 {email.matchStatus !== "ignored" ? (
-                  <DropdownMenuItem
-                    className="text-muted-foreground"
-                    onClick={async () => {
-                      try {
-                        await apiFetch(`/api/outlook-intake/${email.id}`, {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ match_status: "ignored" }),
-                        });
-                        toast.success("Email marked as filtered");
-                        void queryClient.invalidateQueries({
-                          queryKey: ["outlook-intake"],
-                        });
-                      } catch (err) {
-                        toast.error(
-                          err instanceof Error
-                            ? err.message
-                            : "Failed to update",
-                        );
-                      }
-                    }}
-                  >
-                    <Ban className="mr-2 size-4" />
-                    Mark as filtered
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      className="text-muted-foreground"
+                      onClick={() => void handleReclassifyEmail(email.id)}
+                    >
+                      <RefreshCw className="mr-2 size-4" />
+                      Reclassify
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-muted-foreground"
+                      onClick={async () => {
+                        try {
+                          await apiFetch(`/api/outlook-intake/${email.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ match_status: "ignored" }),
+                          });
+                          toast.success("Email marked as filtered");
+                          void queryClient.invalidateQueries({
+                            queryKey: ["outlook-intake"],
+                          });
+                        } catch (err) {
+                          toast.error(
+                            err instanceof Error
+                              ? err.message
+                              : "Failed to update",
+                          );
+                        }
+                      }}
+                    >
+                      <Ban className="mr-2 size-4" />
+                      Mark as filtered
+                    </DropdownMenuItem>
+                  </>
                 ) : (
                   <DropdownMenuItem
                     className="text-muted-foreground"

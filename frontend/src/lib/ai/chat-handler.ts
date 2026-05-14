@@ -957,7 +957,7 @@ function formatRecentEmailInboxAnswer(params: {
       `I checked Outlook email intake for your inbox for ${rangeLabel}.`,
       summary ?? `No emails were returned for ${rangeLabel}.`,
       cutoff ? `Data freshness: ${cutoff}` : null,
-      "This answer came from structured Outlook intake via getRecentEmails.",
+      "This answer came from synced structured Outlook intake via getRecentEmails.",
     ].filter(Boolean).join("\n");
   }
 
@@ -991,7 +991,7 @@ function formatRecentEmailInboxAnswer(params: {
     heading,
     ...lines,
     "",
-    "This answer came from structured Outlook intake via getRecentEmails.",
+    "This answer came from synced structured Outlook intake via getRecentEmails.",
   ].filter(Boolean).join("\n");
 }
 

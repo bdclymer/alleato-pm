@@ -202,6 +202,16 @@ class OutlookMailboxSubscriptionRequest(BaseModel):
     expiration_hours: int = 48
 
 
+class OutlookIntakeReclassificationRequest(BaseModel):
+    mailbox: Optional[str] = None
+    intake_ids: Optional[List[int]] = None
+    days_back: int = 0
+    time_zone: str = "America/New_York"
+    limit: int = 500
+    page_size: int = 100
+    apply: bool = False
+
+
 def get_rag_store() -> SupabaseRagStore:
     return SupabaseRagStore()
 
@@ -665,6 +675,50 @@ async def graph_outlook_mailbox_sync_endpoint(
             user_email,
             reason="admin_targeted_mailbox_sync",
             verify_persisted_count=payload.verify_persisted_count,
+        )
+
+    import asyncio
+    return await asyncio.get_event_loop().run_in_executor(None, _run)
+
+
+@app.post(
+    "/api/graph/outlook/reclassify-intake",
+    tags=["Ingestion"],
+    summary="Reclassify stored Outlook intake rows with the current intake classifier",
+)
+async def graph_outlook_intake_reclassify_endpoint(
+    payload: OutlookIntakeReclassificationRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Apply current Outlook intake classification rules to already stored rows."""
+    if payload.days_back < 0:
+        raise HTTPException(status_code=422, detail="days_back must be zero or greater")
+    if payload.limit < 1 or payload.limit > 5000:
+        raise HTTPException(status_code=422, detail="limit must be between 1 and 5000")
+    if payload.page_size < 1 or payload.page_size > 500:
+        raise HTTPException(status_code=422, detail="page_size must be between 1 and 500")
+    intake_ids = payload.intake_ids or None
+    if intake_ids and any(value <= 0 for value in intake_ids):
+        raise HTTPException(status_code=422, detail="intake_ids must contain positive IDs")
+
+    from src.services.integrations.microsoft_graph.intake_reclassification import (
+        run_outlook_intake_reclassification,
+    )
+    from src.services.supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+
+    def _run():
+        return run_outlook_intake_reclassification(
+            client,
+            mailbox=payload.mailbox.strip().lower() if payload.mailbox else None,
+            intake_ids=intake_ids,
+            days_back=payload.days_back,
+            time_zone=payload.time_zone,
+            limit=payload.limit,
+            page_size=payload.page_size,
+            apply=payload.apply,
+            applied_by="/api/graph/outlook/reclassify-intake",
         )
 
     import asyncio

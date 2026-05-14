@@ -2787,7 +2787,7 @@ export function createOperationalTools(
         "Use this when the user asks a time-based question about emails: " +
         "'what emails did I receive today?', 'show me emails from this week', " +
         "'any emails received yesterday?', 'how many emails came in today?'. " +
-        "This is a structured date query — NOT a semantic/topic search. " +
+        "This is a structured date query over synced Outlook intake rows — NOT a semantic/topic search or direct Microsoft Graph live read. " +
         "By default, queries the signed-in user's synced mailbox so 'my emails today' does not spill into other mailboxes. " +
         "Returns consolidated conversation/thread groups first, with message counts, senders, recipients, dates, and previews. " +
         "Use participantEmail plus direction='to' or direction='from' only when the user explicitly asks for emails to/from a person. " +

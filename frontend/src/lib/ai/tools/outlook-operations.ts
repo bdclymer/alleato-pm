@@ -152,7 +152,7 @@ export function createOutlookOperationsTools(
   return {
     getRecentOutlookEmails: tool({
       description:
-        "Read recent synced Outlook email rows from Microsoft 365. Use for inbox-style questions such as 'what emails came in today', 'show recent Outlook mail', 'what needs a reply', or 'what has Brandon received about this project'. This is live operational email metadata/content from the synced Outlook intake tables, not semantic RAG.",
+        "Read recent synced Outlook email rows from Microsoft 365. Use for inbox-style questions such as 'what emails came in today', 'show recent Outlook mail', 'what needs a reply', or 'what has Brandon received about this project'. This reads synced Outlook intake table rows, not semantic RAG and not a direct Microsoft Graph live read.",
       inputSchema: z.object({
         projectId: z.number().optional().describe("Optional project ID to scope recent emails"),
         mailboxUserId: z.string().optional().describe("Optional Outlook mailbox user ID/email"),
