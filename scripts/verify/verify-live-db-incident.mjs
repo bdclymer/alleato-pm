@@ -28,6 +28,60 @@ const REQUIRED_SUSPENDED_CRONS = new Set([
   "alleato-acumatica-financial-sync",
   "alleato-executive-daily-brief-evening",
   "alleato-executive-daily-brief-morning",
+]);
+
+const SAFE_RESUMED_CRON_ENV = new Map([
+  [
+    "alleato-graph-sync",
+    new Map([
+      ["RAG_DATABASE_WRITES_ENABLED", "true"],
+      ["RAG_DATABASE_READS_ENABLED", "true"],
+      ["GRAPH_DELTA_MAX_PAGES", "3"],
+      ["GRAPH_DELTA_MAX_ITEMS", "250"],
+      ["OUTLOOK_SYNC_MAX_USERS", "1"],
+      ["ONEDRIVE_SYNC_MAX_USERS", "1"],
+      ["ONEDRIVE_SYNC_MAX_FOLDERS", "2"],
+      ["SHAREPOINT_SYNC_MAX_FOLDERS", "2"],
+      ["GRAPH_EMBEDDING_LIMIT", "25"],
+      ["TEAMS_COMPILER_BATCH_SIZE", "25"],
+    ]),
+  ],
+  [
+    "alleato-teams-channel-sync",
+    new Map([
+      ["RAG_DATABASE_WRITES_ENABLED", "true"],
+      ["RAG_DATABASE_READS_ENABLED", "true"],
+      ["GRAPH_DELTA_MAX_PAGES", "3"],
+      ["GRAPH_DELTA_MAX_ITEMS", "250"],
+      ["TEAMS_CHANNEL_SYNC_MAX_CHANNELS", "3"],
+    ]),
+  ],
+  [
+    "alleato-teams-dm-sync",
+    new Map([
+      ["RAG_DATABASE_WRITES_ENABLED", "true"],
+      ["RAG_DATABASE_READS_ENABLED", "true"],
+      ["GRAPH_DELTA_MAX_PAGES", "3"],
+      ["GRAPH_DELTA_MAX_ITEMS", "250"],
+      ["TEAMS_DM_SYNC_MAX_USERS", "1"],
+      ["TEAMS_DM_EXPORT_PAGE_SIZE", "25"],
+      ["TEAMS_DM_EXPORT_MAX_PAGES", "2"],
+    ]),
+  ],
+  [
+    "alleato-task-extraction",
+    new Map([
+      ["RAG_DATABASE_WRITES_ENABLED", "true"],
+      ["RAG_DATABASE_READS_ENABLED", "true"],
+      ["TASK_EXTRACTION_MAX_DOCS", "25"],
+      ["TASK_EXTRACTION_MAX_RUN_DOCS", "25"],
+      ["TASK_EXTRACTION_CANDIDATE_LIMIT", "100"],
+      ["TASK_EXTRACTION_DESCRIPTION_LIMIT", "1000"],
+    ]),
+  ],
+]);
+
+const SAFE_RESUMED_CRONS = new Set([
   "alleato-graph-sync",
   "alleato-rag-health",
   "alleato-source-rag-health",
@@ -100,6 +154,16 @@ function renderCronSnapshot(name, service) {
   };
 }
 
+async function fetchRenderEnvMap(serviceId, token) {
+  const rows = await fetchJson(`${RENDER_SERVICE_URL}/${serviceId}/env-vars?limit=100`, token);
+  return new Map(
+    rows
+      .map((row) => row.envVar ?? row)
+      .filter((row) => row?.key)
+      .map((row) => [row.key, String(row.value ?? "").trim().toLowerCase()]),
+  );
+}
+
 async function checkRenderCrons(token) {
   const rows = await fetchJson(RENDER_SERVICES_URL, token);
   const cronRowsByName = new Map();
@@ -131,6 +195,38 @@ async function checkRenderCrons(token) {
     cronRowsByName.set(name, snapshot);
     if (snapshot.suspended !== "suspended" && !snapshot.structurallyDisabled) {
       failures.push(`${name}=${snapshot.suspended || "unknown"}`);
+    }
+  }
+
+  for (const name of SAFE_RESUMED_CRONS) {
+    const id = cronIdsByName.get(name);
+    if (!id) {
+      failures.push(`${name}=missing`);
+      continue;
+    }
+    let service;
+    try {
+      service = await fetchJsonWithRetry(`${RENDER_SERVICE_URL}/${id}`, token);
+    } catch (error) {
+      failures.push(`${name}=direct_check_failed (${error.message})`);
+      continue;
+    }
+    const snapshot = renderCronSnapshot(name, service);
+    cronRowsByName.set(name, snapshot);
+    if (snapshot.suspended !== "not_suspended") {
+      failures.push(`${name}=not_resumed (${snapshot.suspended || "unknown"})`);
+      continue;
+    }
+    const expectedEnv = SAFE_RESUMED_CRON_ENV.get(name);
+    if (!expectedEnv) {
+      continue;
+    }
+    const env = await fetchRenderEnvMap(id, token);
+    for (const [key, expected] of expectedEnv.entries()) {
+      const actual = env.get(key) || "<missing>";
+      if (actual !== expected) {
+        failures.push(`${name}.${key}=${actual}`);
+      }
     }
   }
 
@@ -252,7 +348,7 @@ printSection(
     return `${mode.padEnd(14)} ${row.name} ${row.schedule || ""}`;
   }),
 );
-failures.push(...render.failures.map((failure) => `Render cron not suspended: ${failure}`));
+failures.push(...render.failures.map((failure) => `Render cron unsafe: ${failure}`));
 
 const renderWeb = await checkRenderWebEnv(renderToken);
 printSection("Render Web Scheduler Flags", renderWeb.rows);
