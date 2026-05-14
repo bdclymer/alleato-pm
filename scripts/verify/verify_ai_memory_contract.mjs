@@ -148,10 +148,15 @@ for (const check of staticChecks) {
 }
 
 const env = { ...loadEnv(), ...process.env };
+// AI memory is still an application-database contract. Do not point this check
+// at RAG_DATABASE_URL; RAG owns heavy retrieval/chunk tables, while
+// ai_memories/memories and their RPCs remain in the original app DB.
 const databaseUrl = env.DATABASE_URL || env.SUPABASE_DB_URL;
 
 if (!databaseUrl) {
-  failures.push("DATABASE_URL or SUPABASE_DB_URL is required for live AI memory contract verification");
+  failures.push(
+    "DATABASE_URL or SUPABASE_DB_URL is required for live AI memory contract verification against the original app DB",
+  );
 } else {
   try {
     const psqlDatabaseUrl = await buildDatabaseConnectionString(databaseUrl);
