@@ -367,6 +367,7 @@
         "communications"
       ],
       "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
         "searchTeamsMessages",
         "semanticSearch"
       ],
