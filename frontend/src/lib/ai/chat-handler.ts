@@ -189,6 +189,7 @@ type LoopDiagnostic = {
 };
 
 const TASK_WRITE_TOOL_NAMES = [
+  "createTask",
   "getActionItemsAndInsights",
   "createGeneratedTask",
   "updateGeneratedTask",
@@ -328,9 +329,102 @@ const INTENT_TOOL_NAMES: Partial<Record<AssistantIntent, readonly string[]>> = {
   ]),
 };
 
+const MESSAGE_DRIVEN_TOOL_RULES: Array<{
+  pattern: RegExp;
+  tools: readonly string[];
+}> = [
+  {
+    pattern: /\b(commitments?|bought out|buyout|subcontracts?|open buyout)\b/i,
+    tools: ["getCommitmentsOverview", "queryCommitments"],
+  },
+  {
+    pattern: /\b(forecast|projection|trend|cost trend|cost trends)\b/i,
+    tools: ["getForecastComparison", "getCostTrends"],
+  },
+  {
+    pattern: /\b(schedule|slipping|slip|delay|delayed|behind|milestone|critical path|gantt|mobilization)\b/i,
+    tools: ["getScheduleAnalysis", "queryScheduleTasks"],
+  },
+  {
+    pattern: /\bRFIs?\b/i,
+    tools: ["getRFIStatus"],
+  },
+  {
+    pattern: /\b(submittals?|shop drawings?|submittal package)\b/i,
+    tools: ["getSubmittalStatus"],
+  },
+  {
+    pattern: /\b(who|roles?|on the hook|team|people|staff|staffing|assignee|assigned)\b/i,
+    tools: ["getPeopleAndRoles"],
+  },
+  {
+    pattern: /\b(meetings?|promised|prep next|what happened|last month|last couple days)\b/i,
+    tools: ["getMeetingsByDate", "searchMeetingsByTopic", "getActionItemsAndInsights"],
+  },
+  {
+    pattern: /\b(documents?|contract document|change[- ]?order document|exhibit|attachment|file)\b/i,
+    tools: ["searchDocuments", "searchExternalDocuments", "queryDocumentRows"],
+  },
+  {
+    pattern: /\b(Teams|chat|chatter|messages?)\b/i,
+    tools: ["searchTeamsMessages", "semanticSearch"],
+  },
+  {
+    pattern: /\b(emails?|e-mails?|inbox|outlook)\b/i,
+    tools: ["searchEmails", "getRecentEmails", "semanticSearch"],
+  },
+  {
+    pattern: /\b(action items?|open items?|next actions?|owners?|waiting on|sign[- ]?off|approval|decision|decisions)\b/i,
+    tools: ["getActionItemsAndInsights", "getRFIStatus", "getSubmittalStatus"],
+  },
+  {
+    pattern: /\b(across|portfolio|compare|comparison|cross[- ]project)\b/i,
+    tools: ["getCrossProjectComparison", "getPortfolioOverview"],
+  },
+  {
+    pattern: /\b(vendors?|subs?|subcontractors?|supplier)\b/i,
+    tools: ["getVendorPerformance", "getScheduleAnalysis"],
+  },
+  {
+    pattern: /\b(remember|memory|past conversations?|what changed)\b/i,
+    tools: ["recallPastConversations", "searchMemories", "semanticSearch"],
+  },
+  {
+    pattern: /\b(i was out|what did i miss|yesterday|last couple days)\b/i,
+    tools: ["getMeetingsByDate", "searchEmails", "searchTeamsMessages"],
+  },
+];
+
+function isScheduleTaskWriteRequest(message: string): boolean {
+  return /\b(gantt|schedule activity|schedule task|milestone|mobilization|critical path)\b/i.test(
+    message,
+  );
+}
+
+function getMessageDrivenToolNames(message: string, intent: AssistantIntent): readonly string[] {
+  const names = new Set<string>();
+
+  for (const rule of MESSAGE_DRIVEN_TOOL_RULES) {
+    if (rule.pattern.test(message)) {
+      for (const toolName of rule.tools) names.add(toolName);
+    }
+  }
+
+  if (intent === "task_write") {
+    names.add(isScheduleTaskWriteRequest(message) ? "createTask" : "createGeneratedTask");
+  }
+
+  if (intent === "source_lookup") {
+    names.add("semanticSearch");
+  }
+
+  return [...names];
+}
+
 const TASK_WRITE_MAX_PROMPT_APPROX_TOKENS = 4000;
 const TASK_WRITE_MAX_MODEL_TOOLS = TASK_WRITE_TOOL_NAMES.length;
 const TASK_WRITE_MUTATION_TOOL_NAMES = new Set<string>([
+  "createTask",
   "createGeneratedTask",
   "updateGeneratedTask",
   "deleteGeneratedTask",
@@ -364,11 +458,15 @@ function getApproxTokenCount(value: string): number {
   return Math.ceil(value.length / 4);
 }
 
-function getScopedToolsForIntent(tools: ToolSet, intent: AssistantIntent): ToolSet {
+function getScopedToolsForIntent(
+  tools: ToolSet,
+  intent: AssistantIntent,
+  messageDrivenToolNames: readonly string[] = [],
+): ToolSet {
   const names = INTENT_TOOL_NAMES[intent];
   if (!names) return tools;
 
-  const scopedTools = pickTools(tools, names);
+  const scopedTools = pickTools(tools, [...names, ...messageDrivenToolNames]);
   if (intent === "task_write" || intent === "source_lookup") {
     return scopedTools;
   }
@@ -377,6 +475,18 @@ function getScopedToolsForIntent(tools: ToolSet, intent: AssistantIntent): ToolS
     ...scopedTools,
     ...pickMcpToolsByPrefix(tools, ALWAYS_AVAILABLE_MCP_TOOL_PREFIXES),
   };
+}
+
+function shouldKeepModelToolsForSourceLookup(messageDrivenToolNames: readonly string[]): boolean {
+  return messageDrivenToolNames.some((toolName) => toolName !== "semanticSearch");
+}
+
+function pickForcedMessageToolName(
+  tools: ToolSet | undefined,
+  messageDrivenToolNames: readonly string[],
+): string | undefined {
+  if (!tools) return undefined;
+  return messageDrivenToolNames.find((toolName) => Boolean(tools[toolName]));
 }
 
 function shouldForceCalendarInviteTool(
@@ -4389,6 +4499,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
       sourceSpecificRagKind: sourceSpecificRagRequest?.kind,
     });
     const assistantIntent = intentPlannerDecision.intent;
+    const messageDrivenToolNames = getMessageDrivenToolNames(lastUserContent, assistantIntent);
     const shouldEnableActionTools =
       assistantIntent === "task_write" ||
       assistantIntent === "email_action" ||
@@ -4411,6 +4522,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         recentEmailInboxRequest,
         sourceSpecificRagKind: sourceSpecificRagRequest?.kind ?? null,
         sourceLookupRecentTeamsKind: sourceLookupRecentTeamsRequest?.kind ?? null,
+        messageDrivenToolNames,
       },
       output: intentPlannerDecision,
       timestamp: new Date().toISOString(),
@@ -6125,7 +6237,9 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             systemPrompt +
             "\n\n---\n\n## ACTIVE TASK WRITE INTENT\n\n" +
             "The intent planner classified this request as **task_write**. " +
-            "You MUST call `createGeneratedTask` (or `updateGeneratedTask` / `deleteGeneratedTask` for modifications/deletions) RIGHT NOW. " +
+            "You MUST call `createGeneratedTask` for Tasks page action items, reminders, notes to self, and follow-ups. " +
+            "Use `createTask` only for schedule/Gantt activities, milestones, or project schedule tasks. " +
+            "Use `updateGeneratedTask` / `deleteGeneratedTask` for modifications/deletions. Call the right tool RIGHT NOW. " +
             "Do NOT write a text description of what the task would look like. " +
             "Do NOT ask clarifying questions before calling the tool — call it with `confirmed: false` to show the preview card, using your best inference for any missing fields. " +
             "The UI will render the preview card and ask the user to confirm or edit. Your only job is to call the tool.";
@@ -6150,6 +6264,27 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           });
           // Fall through to streamText — tools are enabled and the override
           // in the system prompt ensures the model calls createGeneratedTask.
+        }
+
+        if (messageDrivenToolNames.length > 0 && assistantIntent !== "task_write") {
+          systemPrompt =
+            systemPrompt +
+            "\n\n---\n\n## MESSAGE-SPECIFIC REQUIRED TOOLS\n\n" +
+            "The user's wording names a concrete data surface. Before the final answer, use the first applicable available tool from this ordered list: " +
+            messageDrivenToolNames.join(", ") +
+            ". If one tool returns no useful records, try the next relevant tool before answering. Do not answer from the project packet alone when one of these structured/source tools is available.";
+
+          toolTrace.push({
+            tool: "messageDrivenToolRouter",
+            input: {
+              intent: assistantIntent,
+              message: lastUserContent.slice(0, 240),
+            },
+            output: {
+              requiredToolNames: messageDrivenToolNames,
+            },
+            timestamp: new Date().toISOString(),
+          });
         }
 
         if (assistantIntent === "email_action") {
@@ -6734,7 +6869,9 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         const streamingModelToolsEnabled = shouldEnableStreamingModelTools(providerDecision);
         // Disable tools when source_lookup context is already injected — the
         // model should synthesize from the loaded sources, not call more tools.
-        const sourceLookupContextInjected = assistantIntent === "source_lookup";
+        const sourceLookupContextInjected =
+          assistantIntent === "source_lookup" &&
+          !shouldKeepModelToolsForSourceLookup(messageDrivenToolNames);
         const conciseOwnerBriefingIntent = [
           "latest_status",
           "risk_review",
@@ -6767,7 +6904,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           await mcpToolBundle.close();
         };
 
-        const scopedTools = getScopedToolsForIntent(tools as ToolSet, assistantIntent);
+        const scopedTools = getScopedToolsForIntent(
+          tools as ToolSet,
+          assistantIntent,
+          messageDrivenToolNames,
+        );
         const scopedToolNames = Object.keys(scopedTools);
         const modelTools =
           streamingModelToolsEnabled && !sourceLookupContextInjected
@@ -6778,6 +6919,14 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           shouldForceCalendarInviteTool(lastUserContent, assistantIntent)
             ? { type: "tool" as const, toolName: "createOutlookCalendarInvite" as const }
             : undefined;
+        const forcedMessageToolName =
+          forcedCalendarInviteTool || assistantIntent === "email_action"
+            ? undefined
+            : pickForcedMessageToolName(modelTools, messageDrivenToolNames);
+        const forcedMessageTool = forcedMessageToolName
+          ? { type: "tool" as const, toolName: forcedMessageToolName }
+          : undefined;
+        const toolChoice = forcedCalendarInviteTool ?? forcedMessageTool;
         const streamMaxOutputTokens =
           assistantIntent === "email_action"
             ? 1200
@@ -6825,7 +6974,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             scopedToolCount: promptTelemetry.scopedToolCount,
             modelToolCount: promptTelemetry.modelToolCount,
             modelToolNames: promptTelemetry.modelToolNames,
-            toolChoice: forcedCalendarInviteTool ?? "auto",
+            toolChoice: toolChoice ?? "auto",
             streamMaxOutputTokens,
             streamMaxSteps,
             reason: sourceLookupContextInjected
@@ -6851,7 +7000,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           result = streamText({
             model: getLanguageModel(activeModel),
             ...promptPayload,
-            toolChoice: forcedCalendarInviteTool,
+            toolChoice,
             maxOutputTokens: streamMaxOutputTokens,
             timeout: {
               totalMs: 90_000,
@@ -6980,7 +7129,13 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           taskWriteMutationToolCallNames.length > 0 &&
           !streamErrorMessage
         ) {
-          content = "Task preview created. Review the preview card and confirm when ready.";
+          content = [
+            "Task preview ready.",
+            "",
+            `I staged this from your request: "${lastUserContent.trim()}".`,
+            "",
+            "Nothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change.",
+          ].join("\n");
           finalContentSource = "tool_only";
           toolTrace.push({
             tool: "taskWriteToolOnlyCompletion",
