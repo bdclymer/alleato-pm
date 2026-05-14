@@ -251,6 +251,7 @@ export async function loadAssistantSourceHealthContext(params: {
     `Overall status: ${metadata.overallStatus}`,
     `Likely missing stage when evidence is thin: ${metadata.missingStage ?? "none detected"}`,
     `Counts: ${metadata.counts.sources} source(s), ${metadata.counts.unembedded} unembedded, ${metadata.counts.uncompiled} uncompiled, ${metadata.counts.failedSubscriptions} failed subscription(s), ${metadata.counts.expiringSubscriptions} expiring subscription(s).`,
+    `Packet freshness: intelligence packets depend on compiled source coverage. Treat ${metadata.counts.uncompiled} uncompiled item(s) as a packet coverage risk, and explicitly mention packet status when the user asks whether packets or readouts are current enough to trust.`,
     ...metadata.alerts
       .slice(0, 6)
       .map((alert) => `- ${alert.severity} ${alert.code} on ${alert.source}/${alert.resourceId}: ${alert.message}`),

@@ -59,6 +59,8 @@ const integrationHealth = read("scripts/verify/verify_integration_health.py");
 const requiredScripts = [
   "rag:verify:assistant-routing",
   "rag:verify:eval-suite",
+  "rag:verify:inbox-evals",
+  "rag:verify:source-sync-evals",
   "rag:verify:intelligence-compiler",
   "rag:verify:meetings",
   "rag:verify:task-integrity",
@@ -74,7 +76,19 @@ const requiredEvalCases = [
   "action-task-preview-no-write",
   "task-register-source-grounded",
   "source-freshness-rag-health",
+  "realworld-teams-source-freshness",
+  "realworld-teams-this-week-signal",
 ];
+
+for (const bundleName of ["inbox-outlook-regression", "source-sync-teams-regression"]) {
+  const bundle = evalSuite.evalBundles?.[bundleName];
+  requireCondition(Boolean(bundle), `eval bundle exists: ${bundleName}`);
+  requireCondition(Boolean(bundle?.filter), `${bundleName} has a runnable filter`);
+  requireCondition(
+    Array.isArray(bundle?.criteria) && bundle.criteria.length > 0,
+    `${bundleName} has explicit agentic-eval criteria`,
+  );
+}
 
 const casesById = new Map((evalSuite.cases ?? []).map((testCase) => [testCase.id, testCase]));
 for (const caseId of requiredEvalCases) {
@@ -171,6 +185,8 @@ const summary = {
   evidence,
   nextLiveChecks: [
     "npm run rag:verify:assistant-routing",
+    "npm run rag:verify:inbox-evals:prod",
+    "npm run rag:verify:source-sync-evals:prod",
     "npm run rag:verify:eval-suite -- --filter \"owner-strategy|action-task|task-register|source-freshness\"",
     "python3 scripts/verify/verify_integration_health.py --skip-env",
     "npm run rag:verify:intelligence-compiler",

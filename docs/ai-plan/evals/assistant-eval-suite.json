@@ -22,6 +22,16 @@
         "Answers must not tell the user to wait for live Outlook tools.",
         "Answers must be long enough to explain the inbox result or failure clearly."
       ]
+    },
+    "source-sync-teams-regression": {
+      "description": "Agentic-eval guardrail for Teams/source-sync prompts. The assistant must distinguish live source-health questions from Teams content lookup and must expose stale source state instead of pretending coverage is complete.",
+      "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
+      "criteria": [
+        "Source-health trust questions must fire assistantSourceHealth.",
+        "Teams content questions must fire a Teams-capable retrieval path.",
+        "Answers must not claim complete evidence coverage when source freshness is uncertain.",
+        "Answers must give a direct operational read instead of generic AI/RAG caveats."
+      ]
     }
   },
   "cases": [
@@ -342,6 +352,39 @@
       ],
       "mustInclude": [],
       "minAnswerLength": 80
+    },
+    {
+      "id": "realworld-teams-this-week-signal",
+      "intent": "source_lookup",
+      "prompt": "Using Teams messages from this past week, what are people actually worried about?",
+      "expectedToolFamilies": [
+        "communications"
+      ],
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval",
+        "searchTeamsMessages",
+        "semanticSearch"
+      ],
+      "mustIncludeAny": [
+        [
+          "Teams",
+          "messages",
+          "worried",
+          "concern",
+          "no Teams"
+        ]
+      ],
+      "mustExclude": [
+        "I cannot access Teams",
+        "live Teams tools are available",
+        "retrieval bundle"
+      ],
+      "minAnswerLength": 120,
+      "requiredMetadataPaths": [
+        "tool_trace",
+        "response_quality"
+      ],
+      "notes": "Teams content lookup should use a Teams-capable retrieval path and synthesize the operational signal, not fall back to generic source caveats."
     },
     {
       "id": "meetings-by-date",
@@ -801,6 +844,42 @@
         "response_quality"
       ],
       "notes": "RAG trust gate: every strategic answer needs a way to expose stale sync, embedding, compilation, or packet issues instead of pretending evidence is complete."
+    },
+    {
+      "id": "realworld-teams-source-freshness",
+      "intent": "source_health",
+      "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
+      "expectedToolFamilies": [
+        "source_health"
+      ],
+      "expectedAllToolNames": [
+        "assistantSourceHealth"
+      ],
+      "mustInclude": [
+        "Teams"
+      ],
+      "mustIncludeAny": [
+        [
+          "stale",
+          "fresh",
+          "current",
+          "sync",
+          "source health",
+          "unembedded"
+        ]
+      ],
+      "mustExclude": [
+        "everything is current",
+        "complete evidence coverage",
+        "I cannot access Teams"
+      ],
+      "minAnswerLength": 160,
+      "requiredMetadataPaths": [
+        "source_health",
+        "tool_trace",
+        "response_quality"
+      ],
+      "notes": "Real-world Teams trust question. Must route to assistantSourceHealth and explain source freshness directly."
     },
     {
       "id": "ceo-task-list-plain",
