@@ -260,6 +260,21 @@ order by count(*) desc;
 SQL
 ```
 
+Run the repo guardrails that catch silent RAG corruption:
+
+```bash
+npm run rag:verify:chunk-integrity -- --days=1
+npm run rag:verify:repaired-meeting-retrieval
+```
+
+Expected result:
+
+- `rag:verify:chunk-integrity` returns `RAG chunk integrity: PASS`.
+- `rag:verify:repaired-meeting-retrieval` returns `Repaired meeting transcript retrieval: PASS`.
+- Any `showing 50 of N sentences` marker in `document_chunks` is a hard failure.
+- Missing embeddings are a hard failure.
+- Legacy non-sequential chunk indexes are reported as warnings unless running with `--strict-indexes=true`.
+
 ## Phase 7: Application Cutover
 
 Add explicit database configuration:
@@ -339,6 +354,8 @@ The app DB tables remain intact until the final retirement phase, so rollback re
 - `fireflies_ingestion_jobs` count matches source.
 - Embedding coverage matches source.
 - Source/job stage distribution matches source.
+- `npm run rag:verify:chunk-integrity -- --days=1` passes.
+- `npm run rag:verify:repaired-meeting-retrieval` passes.
 - Vector search RPCs exist and return expected results.
 - App DB health page reads compact summaries, not raw chunk/job queues.
 - AI assistant can retrieve from RAG DB and hydrate app DB records.

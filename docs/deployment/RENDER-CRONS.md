@@ -186,6 +186,24 @@ print(json.dumps(result, indent=2))
 python3 -m src.services.health.rag_meeting_health
 ```
 
+For AI/RAG data quality follow-up after `alleato-rag-health` or
+`alleato-source-rag-health` fails, run these repo-side checks from a configured
+developer or ops shell:
+
+```bash
+npm run rag:verify:chunk-integrity -- --days=1
+npm run rag:verify:repaired-meeting-retrieval
+```
+
+Expected result:
+
+- `RAG chunk integrity: PASS`
+- `Repaired meeting transcript retrieval: PASS`
+
+These are not Render cron start commands today. They are operator verification
+checks that prove the split RAG database has embedded chunks and that repaired
+Fireflies meeting transcripts are retrievable through `search_document_chunks`.
+
 ---
 
 ## How to Add a New Cron
