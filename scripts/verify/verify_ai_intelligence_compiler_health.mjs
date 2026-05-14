@@ -6,6 +6,12 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import pg from "pg";
 
+import {
+  buildAppDatabaseConnectionString,
+  getAppDatabaseUrl,
+  getRagDatabaseUrl,
+} from "./app-db-connection.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
 
@@ -19,9 +25,14 @@ for (let index = 2; index < process.argv.length; index += 1) {
   args.set(arg.slice(2), next && !next.startsWith("--") ? next : "true");
 }
 
-const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
-if (!databaseUrl) {
-  console.error("DATABASE_URL or SUPABASE_DB_URL is required.");
+const appDatabaseUrl = getAppDatabaseUrl();
+const ragDatabaseUrl = getRagDatabaseUrl();
+if (!appDatabaseUrl) {
+  console.error("DATABASE_URL or SUPABASE_DB_URL is required for the original app DB.");
+  process.exit(1);
+}
+if (!ragDatabaseUrl) {
+  console.error("RAG_DATABASE_URL is required for moved intelligence compiler queue tables.");
   process.exit(1);
 }
 
@@ -31,14 +42,17 @@ const recentFailureHours = Number(args.get("recent-failure-hours") ?? process.en
 const maxRecentFailures = Number(args.get("max-recent-failures") ?? process.env.INTELLIGENCE_COMPILER_VERIFY_MAX_RECENT_FAILURES ?? 0);
 const maxUnpromotedMinutes = Number(args.get("max-unpromoted-minutes") ?? process.env.INTELLIGENCE_COMPILER_VERIFY_MAX_UNPROMOTED_MINUTES ?? 30);
 
-function connectionString() {
-  const url = new URL(databaseUrl);
-  url.searchParams.delete("sslmode");
-  return url.toString();
-}
+const appPool = new pg.Pool({
+  connectionString: await buildAppDatabaseConnectionString(appDatabaseUrl, { includeSslMode: false }),
+  ssl: { rejectUnauthorized: false },
+  max: 1,
+});
 
-const pool = new pg.Pool({
-  connectionString: connectionString(),
+const ragPool = new pg.Pool({
+  connectionString: await buildAppDatabaseConnectionString(ragDatabaseUrl, {
+    includeSslMode: false,
+    rewriteSupabaseDirectHost: false,
+  }),
   ssl: { rejectUnauthorized: false },
   max: 1,
 });
@@ -54,10 +68,57 @@ async function scalar(client, sql, params = []) {
   return Number(result.rows[0]?.count ?? 0);
 }
 
-const client = await pool.connect();
+async function promotedCandidateRows(client) {
+  const result = await client.query(
+    `select promoted_insight_card_id::text as insight_card_id, source_document_id::text as source_document_id
+     from public.source_signal_candidates
+     where status = 'promoted'`,
+  );
+  return result.rows;
+}
+
+async function countPromotedWithoutAppRecords(appClient, rows, mode) {
+  if (rows.length === 0) return 0;
+  await appClient.query("create temp table verify_promoted_candidates (insight_card_id uuid, source_document_id text)");
+  for (let start = 0; start < rows.length; start += 500) {
+    const chunk = rows.slice(start, start + 500);
+    const values = [];
+    const params = [];
+    chunk.forEach((row, index) => {
+      params.push(row.insight_card_id, row.source_document_id);
+      values.push(`($${index * 2 + 1}::uuid, $${index * 2 + 2}::text)`);
+    });
+    await appClient.query(
+      `insert into verify_promoted_candidates (insight_card_id, source_document_id) values ${values.join(",")}`,
+      params,
+    );
+  }
+
+  const sql =
+    mode === "card"
+      ? `select count(*)::int as count
+         from verify_promoted_candidates v
+         left join public.insight_cards c on c.id = v.insight_card_id
+         where v.insight_card_id is null or c.id is null`
+      : `select count(*)::int as count
+         from verify_promoted_candidates v
+         where v.insight_card_id is not null
+           and not exists (
+             select 1
+             from public.insight_card_evidence e
+             where e.insight_card_id = v.insight_card_id
+               and e.source_document_id = v.source_document_id
+           )`;
+  const result = await appClient.query(sql);
+  await appClient.query("drop table if exists verify_promoted_candidates");
+  return Number(result.rows[0]?.count ?? 0);
+}
+
+const appClient = await appPool.connect();
+const ragClient = await ragPool.connect();
 try {
   const sourceStaleQueued = await scalar(
-    client,
+    ragClient,
     `select count(*)::int as count
      from public.source_intelligence_jobs
      where status = 'queued'
@@ -69,7 +130,7 @@ try {
   }
 
   const packetStaleQueued = await scalar(
-    client,
+    ragClient,
     `select count(*)::int as count
      from public.packet_refresh_jobs
      where status = 'queued'
@@ -81,7 +142,7 @@ try {
   }
 
   const sourceStaleRunning = await scalar(
-    client,
+    ragClient,
     `select count(*)::int as count
      from public.source_intelligence_jobs
      where status = 'running'
@@ -93,7 +154,7 @@ try {
   }
 
   const packetStaleRunning = await scalar(
-    client,
+    ragClient,
     `select count(*)::int as count
      from public.packet_refresh_jobs
      where status = 'running'
@@ -105,7 +166,7 @@ try {
   }
 
   const sourceRecentFailed = await scalar(
-    client,
+    ragClient,
     `select count(*)::int as count
      from public.source_intelligence_jobs
      where status = 'failed'
@@ -117,7 +178,7 @@ try {
   }
 
   const packetRecentFailed = await scalar(
-    client,
+    ragClient,
     `select count(*)::int as count
      from public.packet_refresh_jobs
      where status = 'failed'
@@ -129,7 +190,7 @@ try {
   }
 
   const highConfidenceUnpromoted = await scalar(
-    client,
+    ragClient,
     `select count(*)::int as count
      from public.source_signal_candidates
      where confidence = 'high'
@@ -141,37 +202,19 @@ try {
     fail("high-confidence source_signal_candidates are stuck before promotion", { count: highConfidenceUnpromoted, maxUnpromotedMinutes });
   }
 
-  const promotedWithoutCard = await scalar(
-    client,
-    `select count(*)::int as count
-     from public.source_signal_candidates s
-     left join public.insight_cards c on c.id = s.promoted_insight_card_id
-     where s.status = 'promoted'
-       and (s.promoted_insight_card_id is null or c.id is null)`,
-  );
+  const promotedRows = await promotedCandidateRows(ragClient);
+  const promotedWithoutCard = await countPromotedWithoutAppRecords(appClient, promotedRows, "card");
   if (promotedWithoutCard > 0) {
     fail("promoted source_signal_candidates are missing promoted insight cards", { count: promotedWithoutCard });
   }
 
-  const promotedWithoutEvidence = await scalar(
-    client,
-    `select count(*)::int as count
-     from public.source_signal_candidates s
-     where s.status = 'promoted'
-       and s.promoted_insight_card_id is not null
-       and not exists (
-         select 1
-         from public.insight_card_evidence e
-         where e.insight_card_id = s.promoted_insight_card_id
-           and e.source_document_id = s.source_document_id
-       )`,
-  );
+  const promotedWithoutEvidence = await countPromotedWithoutAppRecords(appClient, promotedRows, "evidence");
   if (promotedWithoutEvidence > 0) {
     fail("promoted source_signal_candidates are missing source-linked evidence", { count: promotedWithoutEvidence });
   }
 
   const activeCardsMissingCurrentPacket = await scalar(
-    client,
+    appClient,
     `select count(*)::int as count
      from public.insight_cards c
      where c.current_status in ('open','blocked','needs_review','stale')
@@ -190,7 +233,7 @@ try {
   }
 
   const succeededPacketJobsWithoutOutput = await scalar(
-    client,
+    ragClient,
     `select count(*)::int as count
      from public.packet_refresh_jobs
      where status = 'succeeded'
@@ -235,6 +278,8 @@ try {
     console.log(JSON.stringify(summary, null, 2));
   }
 } finally {
-  client.release();
-  await pool.end();
+  appClient.release();
+  ragClient.release();
+  await appPool.end();
+  await ragPool.end();
 }

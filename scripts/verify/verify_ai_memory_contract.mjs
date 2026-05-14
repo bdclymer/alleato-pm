@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { lookup } from "node:dns/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { buildAppDatabaseConnectionString, getAppDatabaseUrl } from "./app-db-connection.mjs";
+
 const repoRoot = resolve(import.meta.dirname, "..", "..");
-const SUPABASE_POOLER_HOST = "aws-1-us-east-2.pooler.supabase.com";
 
 const files = {
   aiMemoryService: "frontend/src/lib/ai/services/ai-memory-service.ts",
@@ -50,32 +50,6 @@ function runPsql(databaseUrl, sql) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }).trim();
-}
-
-async function buildDatabaseConnectionString(rawDatabaseUrl) {
-  const url = new URL(rawDatabaseUrl);
-  url.searchParams.set("sslmode", "require");
-
-  const directHostMatch = url.hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
-  if (directHostMatch) {
-    const [, projectRef] = directHostMatch;
-    url.hostname = SUPABASE_POOLER_HOST;
-    url.port = url.port || "5432";
-    if (url.username === "postgres") {
-      url.username = `postgres.${projectRef}`;
-    }
-  }
-
-  if (!/^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) {
-    try {
-      const { address, family } = await lookup(url.hostname, { family: 4 });
-      if (family === 4) url.hostname = address;
-    } catch (error) {
-      warnings.push(`IPv4 hostname lookup failed for ${url.hostname}: ${error.message}`);
-    }
-  }
-
-  return url.toString();
 }
 
 const failures = [];
@@ -151,7 +125,7 @@ const env = { ...loadEnv(), ...process.env };
 // AI memory is still an application-database contract. Do not point this check
 // at RAG_DATABASE_URL; RAG owns heavy retrieval/chunk tables, while
 // ai_memories/memories and their RPCs remain in the original app DB.
-const databaseUrl = env.DATABASE_URL || env.SUPABASE_DB_URL;
+const databaseUrl = getAppDatabaseUrl(env);
 
 if (!databaseUrl) {
   failures.push(
@@ -159,7 +133,7 @@ if (!databaseUrl) {
   );
 } else {
   try {
-    const psqlDatabaseUrl = await buildDatabaseConnectionString(databaseUrl);
+    const psqlDatabaseUrl = await buildAppDatabaseConnectionString(databaseUrl, { warnings });
     const embeddingTypes = runPsql(
       psqlDatabaseUrl,
       `

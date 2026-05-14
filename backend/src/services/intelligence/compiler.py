@@ -196,7 +196,7 @@ def _participants(document: Dict[str, Any]) -> List[str]:
 def _fetch_source_document(supabase: Any, source_document_id: str) -> Dict[str, Any]:
     row = _single_row(
         supabase.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,project,date,captured_at,created_at,updated_at,summary,overview,status,participants,participants_array,source_metadata")
+        .select("id,title,type,category,source,source_system,project_id,project,date,captured_at,created_at,summary,overview,status,participants,participants_array,source_metadata")
         .eq("id", source_document_id)
         .limit(1)
         .execute()

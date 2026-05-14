@@ -6,27 +6,23 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import pg from "pg";
 
+import { buildAppDatabaseConnectionString, getAppDatabaseUrl } from "./app-db-connection.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
 
 dotenv.config({ path: path.join(repoRoot, ".env"), quiet: true });
 
 const dryRun = process.argv.includes("--dry-run");
-const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+const databaseUrl = getAppDatabaseUrl();
 
 if (!databaseUrl) {
-  console.error("DATABASE_URL or SUPABASE_DB_URL is required.");
+  console.error("DATABASE_URL or SUPABASE_DB_URL is required for the original app DB.");
   process.exit(1);
 }
 
-function connectionString() {
-  const url = new URL(databaseUrl);
-  url.searchParams.delete("sslmode");
-  return url.toString();
-}
-
 const pool = new pg.Pool({
-  connectionString: connectionString(),
+  connectionString: await buildAppDatabaseConnectionString(databaseUrl, { includeSslMode: false }),
   ssl: { rejectUnauthorized: false },
   max: 1,
 });
