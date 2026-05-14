@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { Fragment, useState, useEffect, useRef, useCallback } from "react";
 import {
   Play,
   RefreshCw,
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { PageContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 
@@ -107,6 +108,31 @@ interface L2Data {
 interface EvalResults {
   l1: { data: L1Data | null; file: string | null };
   l2: { data: L2Data | null; file: string | null };
+  assistant?: { runs: AssistantEvalRun[] };
+}
+
+interface AssistantEvalCase {
+  id: string;
+  intent: string | null;
+  status: string;
+  durationMs: number | null;
+  toolNames: string[];
+  failures: string[];
+  finalText: string;
+}
+
+interface AssistantEvalRun {
+  runId: string;
+  generatedAt: string | null;
+  baseUrl: string | null;
+  bundle: string | null;
+  filter: string | null;
+  totalCases: number;
+  passed: number;
+  failed: number;
+  file: string;
+  summaryFile: string | null;
+  cases: AssistantEvalCase[];
 }
 
 type EvalType = "l1" | "l2" | "reranker" | "coverage" | "e2e";
@@ -529,20 +555,163 @@ function L2Panel({ data, file }: { data: L2Data; file: string | null }) {
   );
 }
 
+// ── Assistant eval-suite panel ───────────────────────────────────────────────
+
+function AssistantRunsPanel({ runs }: { runs: AssistantEvalRun[] }) {
+  const [expandedRun, setExpandedRun] = useState<string | null>(runs[0]?.runId ?? null);
+  const [expandedCase, setExpandedCase] = useState<string | null>(null);
+
+  if (runs.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-border p-8 text-center">
+        <p className="text-muted-foreground text-sm">No AI assistant eval-suite runs found.</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Run <code className="bg-muted px-1 py-0.5 rounded">scripts/verify/verify_ai_assistant_eval_suite.mjs</code> to create results.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {runs.map((run) => {
+        const isOpen = expandedRun === run.runId;
+        const passRate = run.totalCases > 0 ? run.passed / run.totalCases : 0;
+        return (
+          <section key={run.runId} className="space-y-3 border-b border-border pb-4 last:border-0">
+            <Button
+              type="button"
+              onClick={() => setExpandedRun(isOpen ? null : run.runId)}
+              variant="ghost"
+              className="h-auto w-full items-start justify-between gap-4 px-0 py-1 text-left hover:bg-transparent"
+            >
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2">
+                  {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <span className="font-medium text-sm">{run.runId}</span>
+                  <Badge variant={run.failed === 0 ? "default" : "destructive"} className="text-xs">
+                    {run.passed}/{run.totalCases}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">{pct(passRate)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground truncate">
+                  {run.baseUrl ?? "unknown endpoint"} · {run.bundle ?? run.filter ?? "full suite"}
+                </p>
+              </div>
+              <p className="shrink-0 text-xs text-muted-foreground">
+                {run.generatedAt ? new Date(run.generatedAt).toLocaleString() : "No generatedAt"}
+              </p>
+            </Button>
+
+            {isOpen && (
+              <div className="space-y-3 pl-6">
+                <div className="rounded-md border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Case</TableHead>
+                        <TableHead className="w-36">Intent</TableHead>
+                        <TableHead className="w-24 text-right">Duration</TableHead>
+                        <TableHead className="w-20 text-center">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {run.cases.map((testCase) => {
+                        const caseKey = `${run.runId}:${testCase.id}`;
+                        const caseOpen = expandedCase === caseKey;
+                        return (
+                          <Fragment key={caseKey}>
+                            <TableRow
+                              className="cursor-pointer hover:bg-muted/50"
+                              onClick={() => setExpandedCase(caseOpen ? null : caseKey)}
+                            >
+                              <TableCell className="max-w-sm truncate text-sm">{testCase.id}</TableCell>
+                              <TableCell>
+                                {testCase.intent && <Badge variant="outline" className="text-xs">{testCase.intent}</Badge>}
+                              </TableCell>
+                              <TableCell className="text-right text-xs tabular-nums">
+                                {testCase.durationMs == null ? "—" : `${(testCase.durationMs / 1000).toFixed(1)}s`}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {testCase.status === "pass" ? (
+                                  <CheckCircle2 className="mx-auto h-4 w-4 text-green-500" />
+                                ) : (
+                                  <XCircle className="mx-auto h-4 w-4 text-red-400" />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                            {caseOpen && (
+                              <TableRow key={`${caseKey}:detail`}>
+                                <TableCell colSpan={4} className="bg-muted/30 text-xs">
+                                  <div className="space-y-3 py-2">
+                                    <div>
+                                      <p className="font-medium text-foreground mb-1">Tools fired</p>
+                                      <div className="flex flex-wrap gap-1">
+                                        {testCase.toolNames.length > 0 ? (
+                                          testCase.toolNames.map((tool) => (
+                                            <Badge key={tool} variant="secondary" className="text-xs">{tool}</Badge>
+                                          ))
+                                        ) : (
+                                          <span className="text-muted-foreground">None recorded</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {testCase.failures.length > 0 && (
+                                      <div>
+                                        <p className="font-medium text-red-600 mb-1">Failures</p>
+                                        <ul className="space-y-1 text-red-600">
+                                          {testCase.failures.map((failure) => (
+                                            <li key={failure}>{failure}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    <div>
+                                      <p className="font-medium text-foreground mb-1">Response tested</p>
+                                      <p className="max-h-48 overflow-auto whitespace-pre-wrap rounded bg-background p-3 text-muted-foreground">
+                                        {testCase.finalText || "No final text captured."}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </Fragment>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Source: {run.file}{run.summaryFile ? ` · ${run.summaryFile}` : ""}
+                </p>
+              </div>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function RagEvalPage() {
   const [results, setResults] = useState<EvalResults | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"l1" | "l2" | "run">("l1");
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"assistant" | "l1" | "l2" | "run">("assistant");
 
   const fetchResults = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await apiFetch<EvalResults>("/api/admin/rag-eval/results");
       setResults(data);
-    } catch {
-      // Keep previous state on error
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load eval results.";
+      setLoadError(message);
+      console.warn("[rag-eval] Failed to load eval results.", error);
     } finally {
       setLoading(false);
     }
@@ -551,6 +720,7 @@ export default function RagEvalPage() {
   useEffect(() => { fetchResults(); }, [fetchResults]);
 
   const tabs = [
+    { id: "assistant" as const, label: "AI Assistant", badge: results?.assistant?.runs[0] ? `${results.assistant.runs[0].passed}/${results.assistant.runs[0].totalCases}` : null },
     { id: "l1" as const,  label: "L1 Retrieval",      badge: results?.l1.data ? pct(results.l1.data.summary.pass_rate) : null },
     { id: "l2" as const,  label: "L2 Answer Quality",  badge: results?.l2.data ? String(results.l2.data.summary.overall) : null },
     { id: "run" as const, label: "Run Evals",           badge: null },
@@ -592,6 +762,19 @@ export default function RagEvalPage() {
             </Button>
           ))}
         </div>
+
+        {loadError && (
+          <InfoAlert variant="error" className="mb-4">{loadError}</InfoAlert>
+        )}
+
+        {/* Assistant tab */}
+        {activeTab === "assistant" && (
+          loading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : (
+            <AssistantRunsPanel runs={results?.assistant?.runs ?? []} />
+          )
+        )}
 
         {/* L1 tab */}
         {activeTab === "l1" && (

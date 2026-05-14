@@ -11,6 +11,7 @@ import {
   ChevronDownIcon,
   CheckCircle2Icon,
   ClipboardIcon,
+  CornerUpLeftIcon,
   ExternalLinkIcon,
   FileTextIcon,
   FolderIcon,
@@ -23,10 +24,12 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   SquarePenIcon,
+  TagIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
   TrendingUpIcon,
   UsersRoundIcon,
+  XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -840,6 +843,197 @@ function cleanEmailBodyPreview(value?: string | null): string[] {
     .slice(0, 5);
 }
 
+function getInitials(name?: string | null, email?: string | null): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  if (email) return email[0].toUpperCase();
+  return "?";
+}
+
+function formatTimeLabel(value?: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const now = new Date();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+  if (isToday) {
+    return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
+  }
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(date);
+}
+
+function EmailCardFeedback({
+  itemId,
+  subject,
+}: {
+  itemId: string;
+  subject: string;
+}) {
+  const [vote, setVote] = useState<"up" | "down" | null>(null);
+
+  async function handleVote(signal: "up" | "down") {
+    if (vote === signal) return;
+    setVote(signal);
+    const label = signal === "up" ? "Marked as relevant" : "Marked as not relevant — we'll filter these better";
+    toast.success(label, { duration: 2500 });
+    try {
+      await apiFetch("/api/ai-assistant/feedback", {
+        method: "POST",
+        body: JSON.stringify({
+          sessionId: `email-relevance-${itemId}`,
+          messageId: itemId,
+          feedback: signal,
+          messageContent: subject,
+        }),
+      });
+    } catch (error) {
+      console.warn("[ai-assistant] Email relevance feedback failed.", error);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="This email is relevant"
+        onClick={() => void handleVote("up")}
+        className={cn(
+          "h-6 w-6 transition-colors",
+          vote === "up"
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        <ThumbsUpIcon className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="This email is not relevant"
+        onClick={() => void handleVote("down")}
+        className={cn(
+          "h-6 w-6 transition-colors",
+          vote === "down"
+            ? "text-destructive"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        <ThumbsDownIcon className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+function EmailCardActions({
+  item,
+  onSubmit,
+}: {
+  item: OutlookInboxSummaryWidgetPayload["items"][number];
+  onSubmit: (message: string) => void;
+}) {
+  const [tagOpen, setTagOpen] = useState(false);
+  const [tagValue, setTagValue] = useState("");
+
+  function handleTagSubmit() {
+    if (!tagValue.trim()) return;
+    toast.success(`Tag "${tagValue.trim()}" noted — ask the assistant to apply it`);
+    onSubmit(`Apply the tag "${tagValue.trim()}" to the email: "${item.subject}"`);
+    setTagValue("");
+    setTagOpen(false);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2.5">
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1.5 px-2 text-xs"
+        onClick={() => onSubmit(item.replyPrompt)}
+      >
+        <CornerUpLeftIcon className="h-3.5 w-3.5" />
+        Reply
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1.5 px-2 text-xs"
+        onClick={() => onSubmit(item.draftPrompt)}
+      >
+        <SparklesIcon className="h-3.5 w-3.5 text-primary" />
+        AI Draft
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1.5 px-2 text-xs"
+        onClick={() =>
+          onSubmit(
+            `Assign this email to the correct project. Email subject: "${item.subject}". ${item.projectIds.length > 0 ? `It may already be linked to project IDs: ${item.projectIds.join(", ")}.` : "It has no project assignment yet."}`,
+          )
+        }
+      >
+        <FolderIcon className="h-3.5 w-3.5" />
+        Project
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1.5 px-2 text-xs"
+        onClick={() =>
+          onSubmit(`Create a task based on this email: "${item.subject}". Recommended action: ${item.recommendedAction}`)
+        }
+      >
+        <ListChecksIcon className="h-3.5 w-3.5" />
+        Task
+      </Button>
+
+      <Popover open={tagOpen} onOpenChange={setTagOpen}>
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="outline" className="h-7 gap-1.5 px-2 text-xs">
+            <TagIcon className="h-3.5 w-3.5" />
+            Tag
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-52 p-2" align="start">
+          <p className="mb-1.5 text-xs font-medium text-muted-foreground">Apply a tag</p>
+          <div className="flex gap-1.5">
+            <Input
+              value={tagValue}
+              onChange={(e) => setTagValue(e.target.value)}
+              placeholder="e.g. urgent, legal..."
+              className="h-7 text-xs"
+              onKeyDown={(e) => { if (e.key === "Enter") handleTagSubmit(); }}
+            />
+            <Button size="sm" className="h-7 px-2 text-xs" onClick={handleTagSubmit}>
+              Add
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <div className="ml-auto">
+        {item.webLink ? (
+          <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs text-muted-foreground" asChild>
+            <Link href={item.webLink} target="_blank" rel="noreferrer">
+              <ExternalLinkIcon className="h-3.5 w-3.5" />
+              Outlook
+            </Link>
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function OutlookInboxSummaryWidget({
   widget,
   onSubmit,
@@ -848,6 +1042,7 @@ function OutlookInboxSummaryWidget({
   onSubmit: (message: string) => void;
 }) {
   const [openId, setOpenId] = useState<string | null>(widget.items[0]?.id ?? null);
+
   if (widget.items.length === 0) {
     return (
       <div className="mt-3">
@@ -859,98 +1054,102 @@ function OutlookInboxSummaryWidget({
   }
 
   return (
-    <section className="mt-3 grid gap-3" aria-label={widget.title}>
+    <section className="mt-3 grid gap-2" aria-label={widget.title}>
       {widget.items.map((item) => {
         const isOpen = openId === item.id;
-        const sender = item.fromName || item.fromEmail || item.senders[0] || "Unknown sender";
+        const initials = getInitials(item.fromName, item.fromEmail);
+        const senderName = item.fromName || item.fromEmail || item.senders[0] || "Unknown";
+        const timeLabel = formatTimeLabel(item.receivedAt);
         const bodyParagraphs = cleanEmailBodyPreview(item.bodyText ?? item.preview);
-        return (
-          <div key={item.id} className="rounded-md border border-border/70 bg-background px-3 py-3">
-            <Button
-              type="button"
-              variant="ghost"
-              className="group grid h-auto w-full justify-start gap-2 rounded-none p-0 text-left hover:bg-transparent"
-              onClick={() => setOpenId(isOpen ? null : item.id)}
-            >
-              <div className="flex min-w-0 items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="break-words text-sm font-semibold leading-5 text-foreground">
-                    {item.subject}
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span className="break-all">{sender}</span>
-                    {item.receivedAt ? <span>{formatDateLabel(item.receivedAt) ?? item.receivedAt}</span> : null}
-                    {item.messageCount > 1 ? <span>{item.messageCount} messages</span> : null}
-                    {item.hasAttachments ? (
-                      <span className="inline-flex items-center gap-1">
-                        <PaperclipIcon className="h-3 w-3" />
-                        Attachments
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-                <ChevronDownIcon
-                  className={cn(
-                    "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:text-foreground",
-                    isOpen && "rotate-180",
-                  )}
-                />
-              </div>
-              <div className="rounded-md bg-muted/40 px-2.5 py-2 text-xs leading-5 text-foreground">
-                <span className="font-medium">Suggested next step: </span>
-                {item.recommendedAction}
-              </div>
-              {!isOpen && item.preview ? (
-                <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
-                  {item.preview}
-                </p>
-              ) : null}
-            </Button>
 
-            {isOpen ? (
-              <div className="mt-3 space-y-3 pl-0 sm:pl-6">
-                <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-                  <div>
-                    <span className="font-medium uppercase">To</span>
-                    <div className="mt-1 break-words text-foreground/80">
-                      {item.recipients.length > 0 ? item.recipients.join(", ") : "Not stored"}
-                    </div>
+        return (
+          <div
+            key={item.id}
+            className={cn(
+              "rounded-lg bg-card transition-shadow",
+              isOpen ? "shadow-xs" : "hover:shadow-xs",
+            )}
+          >
+            {/* Header row — always visible */}
+            <div
+              className="flex cursor-pointer items-start gap-3 px-3 py-3"
+              onClick={() => setOpenId(isOpen ? null : item.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpenId(isOpen ? null : item.id); }}
+              aria-expanded={isOpen}
+            >
+              {/* Avatar */}
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                {initials}
+              </div>
+
+              {/* Main content */}
+              <div className="min-w-0 flex-1">
+                {/* Sender + time row */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-xs font-medium text-muted-foreground">
+                    {senderName}
+                    {item.messageCount > 1 ? (
+                      <span className="ml-1.5 text-muted-foreground/60">·&nbsp;{item.messageCount}</span>
+                    ) : null}
+                    {item.hasAttachments ? (
+                      <PaperclipIcon className="ml-1.5 inline h-3 w-3 text-muted-foreground/60" />
+                    ) : null}
+                  </span>
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    {timeLabel ? (
+                      <span className="text-xs text-muted-foreground">{timeLabel}</span>
+                    ) : null}
+                    <EmailCardFeedback itemId={item.id} subject={item.subject} />
+                    <ChevronDownIcon
+                      className={cn(
+                        "ml-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                        isOpen && "rotate-180",
+                      )}
+                    />
                   </div>
-                  {item.projectIds.length > 0 ? (
-                    <div>
-                      <span className="font-medium uppercase">Project IDs</span>
-                      <div className="mt-1 text-foreground/80">{item.projectIds.join(", ")}</div>
-                    </div>
-                  ) : null}
                 </div>
-                <div className="space-y-3 rounded-md bg-muted/30 px-3 py-3 text-sm leading-6 text-foreground [overflow-wrap:anywhere]">
+
+                {/* Subject */}
+                <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
+                  {item.subject}
+                </p>
+
+                {/* Preview — collapsed only */}
+                {!isOpen ? (
+                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                    {item.preview ?? item.recommendedAction}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Expanded body */}
+            {isOpen ? (
+              <div className="px-3 pb-3">
+                {/* Recommended action pill */}
+                <div className="mb-2.5 ml-11 rounded bg-muted/60 px-2.5 py-1.5 text-xs text-foreground">
+                  <span className="font-medium text-primary">Next step: </span>
+                  {item.recommendedAction}
+                </div>
+
+                {/* Email body */}
+                <div className="ml-11 space-y-2 rounded-md bg-muted/30 px-3 py-2.5 text-sm leading-relaxed text-foreground [overflow-wrap:anywhere]">
                   {bodyParagraphs.length > 0 ? (
-                    bodyParagraphs.map((paragraph) => (
-                      <p key={paragraph} className="whitespace-pre-wrap break-words">
-                        {paragraph}
+                    bodyParagraphs.map((p, i) => (
+                      <p key={i} className="whitespace-pre-wrap break-words">
+                        {p}
                       </p>
                     ))
                   ) : (
-                    <p className="text-muted-foreground">No readable body text is stored for this email.</p>
+                    <p className="text-muted-foreground">No preview available.</p>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => onSubmit(item.replyPrompt)}>
-                    <SendIcon className="h-4 w-4" />
-                    Draft reply
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => onSubmit(item.draftPrompt)}>
-                    <SquarePenIcon className="h-4 w-4" />
-                    Draft email
-                  </Button>
-                  {item.webLink ? (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={item.webLink} target="_blank" rel="noreferrer">
-                        <ExternalLinkIcon className="h-4 w-4" />
-                        Open in Outlook
-                      </Link>
-                    </Button>
-                  ) : null}
+
+                {/* Action toolbar */}
+                <div className="ml-11 mt-2.5">
+                  <EmailCardActions item={item} onSubmit={onSubmit} />
                 </div>
               </div>
             ) : null}
