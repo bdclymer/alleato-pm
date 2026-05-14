@@ -61,6 +61,7 @@ const requiredScripts = [
   "rag:verify:eval-suite",
   "rag:verify:inbox-evals",
   "rag:verify:source-sync-evals",
+  "rag:verify:task-action-evals",
   "rag:verify:intelligence-compiler",
   "rag:verify:meetings",
   "rag:verify:task-integrity",
@@ -75,12 +76,19 @@ const requiredEvalCases = [
   "owner-strategy-ulta-action-plan",
   "action-task-preview-no-write",
   "task-register-source-grounded",
+  "tasks-list-of-action-items-canonical",
+  "tasks-whats-on-my-list",
+  "realworld-most-important-tasks",
   "source-freshness-rag-health",
   "realworld-teams-source-freshness",
   "realworld-teams-this-week-signal",
 ];
 
-for (const bundleName of ["inbox-outlook-regression", "source-sync-teams-regression"]) {
+for (const bundleName of [
+  "inbox-outlook-regression",
+  "source-sync-teams-regression",
+  "task-action-items-regression",
+]) {
   const bundle = evalSuite.evalBundles?.[bundleName];
   requireCondition(Boolean(bundle), `eval bundle exists: ${bundleName}`);
   requireCondition(Boolean(bundle?.filter), `${bundleName} has a runnable filter`);
@@ -187,6 +195,7 @@ const summary = {
     "npm run rag:verify:assistant-routing",
     "npm run rag:verify:inbox-evals:prod",
     "npm run rag:verify:source-sync-evals:prod",
+    "npm run rag:verify:task-action-evals:prod",
     "npm run rag:verify:eval-suite -- --filter \"owner-strategy|action-task|task-register|source-freshness\"",
     "python3 scripts/verify/verify_integration_health.py --skip-env",
     "npm run rag:verify:intelligence-compiler",

@@ -167,11 +167,12 @@ API_SMOKE_BASE_URL=https://projects.alleatogroup.com node scripts/api-smoke-cont
 | `npm run db:audit` | Full DB audit (inserts, mappers, FK types, ambiguous embeds) |
 | `npm run rag:verify:inbox-evals:prod` | Production AI inbox regression bundle; proves live Outlook/date/triage prompts use `getRecentEmails` |
 | `npm run rag:verify:source-sync-evals:prod` | Production AI source-sync bundle; proves Teams/source-health prompts expose live sync and packet freshness |
+| `npm run rag:verify:task-action-evals:prod` | Production AI task/action-item regression bundle; proves common owner wording routes to task and action-item records |
 | `cd frontend && npm run audit:forms` | Form field standards audit |
 | `cd frontend && npm run design:ratchet` | Design system ratchet check |
 | `cd frontend && npm run design:no-new-disables` | Detect new ESLint disable comments |
 
-The AI inbox and source-sync evals also run daily through `.github/workflows/ai-assistant-prod-evals.yml`; use the manual commands above when validating a live fix before the next scheduled run.
+The AI inbox, source-sync, and task/action-item evals also run daily through `.github/workflows/ai-assistant-prod-evals.yml`; use the manual commands above when validating a live fix before the next scheduled run.
 
 ---
 

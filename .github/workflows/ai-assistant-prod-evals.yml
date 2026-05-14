@@ -43,6 +43,11 @@ jobs:
           AI_EVAL_CASE_TIMEOUT_MS: "240000"
         run: npm run rag:verify:source-sync-evals
 
+      - name: Run task and action-item eval bundle
+        env:
+          AI_EVAL_CASE_TIMEOUT_MS: "120000"
+        run: npm run rag:verify:task-action-evals
+
       - name: Upload eval artifacts
         if: always()
         uses: actions/upload-artifact@v4
