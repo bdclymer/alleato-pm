@@ -197,7 +197,11 @@ def run_health_check(
         page_size = min(limit or 1000, 1000)
         offset = 0
         while True:
-            query = "&".join(f"{quote(key)}={quote(value, safe='().,\":*')}" for key, value in params.items())
+            query_value_safe_chars = "().,\":*"
+            query = "&".join(
+                f"{quote(key)}={quote(value, safe=query_value_safe_chars)}"
+                for key, value in params.items()
+            )
             url = f"{base_url}/rest/v1/{table}?{query}"
             request_headers = dict(headers)
             request_headers["Range-Unit"] = "items"
