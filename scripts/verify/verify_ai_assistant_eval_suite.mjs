@@ -25,10 +25,13 @@ import fs from "node:fs/promises";
 import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { setDefaultResultOrder } from "node:dns";
 import { fileURLToPath } from "node:url";
 
 import dotenv from "dotenv";
 import pg from "pg";
+
+setDefaultResultOrder("ipv4first");
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
