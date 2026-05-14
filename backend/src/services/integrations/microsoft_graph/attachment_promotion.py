@@ -13,14 +13,19 @@ from pathlib import PurePosixPath
 from typing import Any, Optional
 
 from ...supabase_helpers import SupabaseRagStore
-from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
 from .outlook import DOCUMENT_BUCKET
 from .project_documents import upsert_project_document_by_source
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_LIMIT = 25
+MAX_BATCH_LIMIT = int(os.environ.get("OUTLOOK_ATTACHMENT_PROMOTION_MAX_BATCH", "25"))
 MAX_ATTACHMENT_BYTES = int(os.environ.get("OUTLOOK_ATTACHMENT_PROMOTION_MAX_BYTES", str(50 * 1024 * 1024)))
+COPY_ATTACHMENTS_TO_STORAGE = os.environ.get("OUTLOOK_ATTACHMENT_PROMOTION_COPY_STORAGE", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+}
 
 PROMOTABLE_EXTENSIONS = {
     ".csv",
@@ -133,6 +138,8 @@ def classify_attachment_for_promotion(
         return AttachmentDecision("skipped", None, "missing_file_name")
     if is_inline and (content_type or "").startswith("image/"):
         return AttachmentDecision("skipped", None, "inline_image")
+    if (content_type or "").startswith("image/"):
+        return AttachmentDecision("review_needed", None, "image_attachment_requires_photo_pipeline")
     if any(pattern.search(normalized_name) for pattern in LOW_VALUE_NAME_PATTERNS):
         return AttachmentDecision("skipped", None, "low_value_attachment_name")
 
@@ -162,8 +169,6 @@ def _select_pending_attachments(supabase_client, limit: int) -> list[dict[str, A
             file_url,
             file_size,
             content_type,
-            checksum_sha256,
-            content,
             extracted_text,
             is_inline,
             source_metadata,
@@ -189,6 +194,23 @@ def _select_pending_attachments(supabase_client, limit: int) -> list[dict[str, A
         .execute()
     )
     return response.data or []
+
+
+def _fetch_attachment_payload(supabase_client, attachment_id: int, *, include_content: bool) -> dict[str, Any]:
+    columns = "checksum_sha256, extracted_text"
+    if include_content:
+        columns = f"content, {columns}"
+    response = (
+        supabase_client.from_("outlook_email_intake_attachments")
+        .select(columns)
+        .eq("id", attachment_id)
+        .limit(1)
+        .execute()
+    )
+    rows = response.data or []
+    if not rows:
+        raise ValueError(f"attachment_payload_missing:{attachment_id}")
+    return rows[0]
 
 
 def _update_attachment_status(
@@ -263,18 +285,15 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
         )
         return {"status": decision.status, "reason": decision.reason}
 
+    payload_row = _fetch_attachment_payload(
+        supabase_client,
+        row["id"],
+        include_content=COPY_ATTACHMENTS_TO_STORAGE,
+    )
     file_name = row.get("file_name") or "attachment"
     graph_attachment_id = row.get("graph_attachment_id") or str(row["id"])
     graph_message_id = intake.get("graph_message_id") or str(row.get("intake_email_id"))
     doc_id = _attachment_doc_id(graph_message_id, graph_attachment_id)
-    raw_bytes = _decode_bytea(row.get("content"))
-    if not raw_bytes:
-        raise ValueError("attachment_content_missing")
-    if len(raw_bytes) > MAX_ATTACHMENT_BYTES:
-        raise ValueError(f"attachment_exceeds_max_bytes:{len(raw_bytes)}")
-
-    _, ext = os.path.splitext(file_name)
-    ext = ext.lower()
     storage_path = str(
         PurePosixPath("outlook-attachments")
         / _storage_safe_name(intake.get("mailbox_user_id") or "mailbox")
@@ -282,20 +301,30 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
         / f"{_stable_graph_id(graph_attachment_id, 12)}-{_storage_safe_name(file_name)}"
     )
     content_type = row.get("content_type") or mimetypes.guess_type(file_name)[0] or "application/octet-stream"
-    supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
-        storage_path,
-        raw_bytes,
-        {"content-type": content_type, "upsert": "true"},
-    )
-    public_url = _storage_public_url(supabase_client, DOCUMENT_BUCKET, storage_path)
+    raw_bytes = _decode_bytea(payload_row.get("content")) if COPY_ATTACHMENTS_TO_STORAGE else None
+    content_hash = payload_row.get("checksum_sha256")
+    public_url = intake.get("web_link") or row.get("file_url") or ""
+    storage_bucket: Optional[str] = None
+    stored_path: Optional[str] = None
+    storage_copy_status = "deferred"
 
-    extracted_text = row.get("extracted_text") or ""
-    if not extracted_text and ext in SUPPORTED_EXTENSIONS:
-        extracted_text = _extract_text(raw_bytes, ext).replace("\x00", "").strip()
-        if extracted_text:
-            supabase_client.from_("outlook_email_intake_attachments").update(
-                {"extracted_text": extracted_text[:50000], "updated_at": _now_iso()}
-            ).eq("id", row["id"]).execute()
+    if COPY_ATTACHMENTS_TO_STORAGE:
+        if not raw_bytes:
+            raise ValueError("attachment_content_missing")
+        if len(raw_bytes) > MAX_ATTACHMENT_BYTES:
+            raise ValueError(f"attachment_exceeds_max_bytes:{len(raw_bytes)}")
+        supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+            storage_path,
+            raw_bytes,
+            {"content-type": content_type, "upsert": "true"},
+        )
+        public_url = _storage_public_url(supabase_client, DOCUMENT_BUCKET, storage_path)
+        storage_bucket = DOCUMENT_BUCKET
+        stored_path = storage_path
+        storage_copy_status = "copied"
+        content_hash = content_hash or hashlib.sha256(raw_bytes).hexdigest()
+
+    extracted_text = payload_row.get("extracted_text") or ""
 
     source_metadata = {
         **(row.get("source_metadata") or {}),
@@ -307,6 +336,7 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
         "assignment_method": intake.get("assignment_method"),
         "assignment_confidence": intake.get("assignment_confidence"),
         "source_file_url": row.get("file_url"),
+        "storage_copy_status": storage_copy_status,
     }
     content = (
         extracted_text
@@ -341,9 +371,9 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
             "source_path": f"outlook/{intake.get('mailbox_user_id')}/{graph_message_id}/{file_name}",
             "source_web_url": intake.get("web_link"),
             "source_size": row.get("file_size"),
-            "storage_bucket": DOCUMENT_BUCKET,
-            "file_path": storage_path,
-            "content_hash": row.get("checksum_sha256") or hashlib.sha256(raw_bytes).hexdigest(),
+            "storage_bucket": storage_bucket,
+            "file_path": stored_path,
+            "content_hash": content_hash,
             "source_metadata": source_metadata,
             "workflow_target": "document",
         }
@@ -371,9 +401,9 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
             "source_size": row.get("file_size"),
             "sync_status": "synced",
             "last_synced_at": _now_iso(),
-            "storage_bucket": DOCUMENT_BUCKET,
-            "storage_path": storage_path,
-            "content_hash": row.get("checksum_sha256") or hashlib.sha256(raw_bytes).hexdigest(),
+            "storage_bucket": storage_bucket,
+            "storage_path": stored_path,
+            "content_hash": content_hash,
             "workflow_target": "document",
             "source_metadata": source_metadata,
         },
@@ -401,16 +431,24 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
 
 def promote_outlook_intake_attachments(supabase_client, *, limit: int = DEFAULT_LIMIT) -> dict[str, Any]:
     """Promote queued Outlook attachments into document surfaces."""
-    limit = max(1, min(int(limit or DEFAULT_LIMIT), 100))
-    rows = _select_pending_attachments(supabase_client, limit)
+    limit = max(1, min(int(limit or DEFAULT_LIMIT), MAX_BATCH_LIMIT))
     result: dict[str, Any] = {
-        "seen": len(rows),
+        "seen": 0,
         "promoted": 0,
         "skipped": 0,
         "review_needed": 0,
         "failed": 0,
         "failures": [],
     }
+    try:
+        rows = _select_pending_attachments(supabase_client, limit)
+        result["seen"] = len(rows)
+    except Exception as exc:
+        logger.warning("[OutlookAttachmentPromotion] Failed to load pending attachments: %s", exc, exc_info=True)
+        result["failed"] = 1
+        result["failures"].append({"stage": "select_pending_attachments", "error": str(exc)[:300]})
+        return result
+
     for row in rows:
         try:
             _increment_attempt_count(supabase_client, row)

@@ -316,7 +316,7 @@ def init_scheduler() -> None:
                 int(os.getenv("OUTLOOK_ATTACHMENT_PROMOTION_INTERVAL_MINUTES", "30")),
             )
             attachment_promotion_limit = min(
-                100,
+                25,
                 max(1, int(os.getenv("OUTLOOK_ATTACHMENT_PROMOTION_LIMIT", "25"))),
             )
             scheduler.add_job(
