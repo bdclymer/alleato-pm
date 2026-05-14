@@ -234,8 +234,13 @@ function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
       return {
         threadKey,
         messageCount: sorted.length,
+        latestId: latest.id,
+        latestGraphMessageId: latest.graph_message_id,
+        conversationId: latest.conversation_id,
         latestSubject: latest.subject,
         latestReceivedAt: latest.received_at,
+        latestFromName: latest.from_name,
+        latestFromEmail: latest.from_email,
         mailbox: latest.mailbox_user_id,
         senders,
         recipients,
@@ -254,6 +259,21 @@ function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
           .map((row) => row.web_link)
           .filter((link): link is string => Boolean(link)),
         messageIds: sorted.map((row) => row.id),
+        messages: sorted.slice(0, 4).map((row) => ({
+          id: row.id,
+          graphMessageId: row.graph_message_id,
+          conversationId: row.conversation_id,
+          subject: row.subject,
+          fromName: row.from_name,
+          fromEmail: row.from_email,
+          toList: row.to_list,
+          ccList: row.cc_list,
+          receivedAt: row.received_at,
+          bodyText: row.body_text,
+          hasAttachments: row.has_attachments,
+          projectId: row.project_id,
+          webLink: row.web_link,
+        })),
       };
     })
     .sort((a, b) => {
@@ -2924,13 +2944,21 @@ export function createOperationalTools(
           }
 
           const emails = data.slice(0, safeLimit).map((e) => ({
+            id: e.id,
+            graphMessageId: e.graph_message_id,
+            conversationId: e.conversation_id,
             subject: e.subject,
+            fromName: e.from_name,
+            fromEmail: e.from_email,
             from: e.from_name
               ? `${e.from_name} <${e.from_email}>`
               : (e.from_email ?? "Unknown"),
+            toList: e.to_list,
+            ccList: e.cc_list,
             to: Array.isArray(e.to_list) ? e.to_list.join(", ") : e.to_list,
             receivedAt: e.received_at,
             mailbox: e.mailbox_user_id,
+            bodyText: e.body_text,
             preview: e.body_text
               ? e.body_text.slice(0, 200).replace(/\s+/g, " ").trim()
               : null,

@@ -132,6 +132,8 @@ import {
   buildAssistantWidgetsFromPrompt,
   type AssistantWidgetPayload,
   type MeetingInsightsWidgetPayload,
+  type OutlookInboxSummaryWidgetItem,
+  type OutlookInboxSummaryWidgetPayload,
   type OwnerActionItem,
   type OwnerActionQueueWidgetPayload,
   type OwnerSnapshotWidgetPayload,
@@ -644,6 +646,132 @@ function rowSenderLabel(row: Record<string, unknown>): string {
     ? row.senders.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
     : [];
   return stringValue(row.from) ?? (senders.slice(0, 3).join(", ") || "Unknown sender");
+}
+
+function rowRecipients(row: Record<string, unknown>): string[] {
+  const recipients = Array.isArray(row.recipients)
+    ? row.recipients.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    : [];
+  if (recipients.length > 0) return recipients;
+  const toList = Array.isArray(row.toList)
+    ? row.toList.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    : [];
+  return toList;
+}
+
+function rowProjectIds(row: Record<string, unknown>): number[] {
+  if (Array.isArray(row.projectIds)) {
+    return row.projectIds.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  }
+  const projectId = numberValue(row.projectId);
+  return projectId ? [projectId] : [];
+}
+
+function bestRecentEmailMessage(row: Record<string, unknown>): Record<string, unknown> | null {
+  const messages = recordArray(row.messages);
+  return messages[0] ?? null;
+}
+
+function truncateRecentEmailBody(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const normalized = value.replace(/\s+\n/g, "\n").replace(/\n{4,}/g, "\n\n\n").trim();
+  if (normalized.length <= 4000) return normalized;
+  return `${normalized.slice(0, 4000).trimEnd()}\n\n[Email body truncated for chat display. Open in Outlook for the full message.]`;
+}
+
+function recentEmailWidgetItem(
+  row: Record<string, unknown>,
+  prompt: string,
+): OutlookInboxSummaryWidgetItem {
+  const message = bestRecentEmailMessage(row);
+  const id =
+    stringValue(row.threadKey) ??
+    stringValue(row.latestGraphMessageId) ??
+    stringValue(row.graphMessageId) ??
+    String(numberValue(row.latestId) ?? numberValue(row.id) ?? "email");
+  const subject = stringValue(row.latestSubject) ?? stringValue(row.subject) ?? "(no subject)";
+  const senders = Array.isArray(row.senders)
+    ? row.senders.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    : [];
+  const bodyText = truncateRecentEmailBody(stringValue(message?.bodyText) ?? stringValue(row.bodyText));
+  const preview = stringValue(row.latestPreview) ?? stringValue(row.preview) ?? bodyText?.slice(0, 280);
+  return {
+    id,
+    subject,
+    fromName: stringValue(message?.fromName) ?? stringValue(row.latestFromName) ?? null,
+    fromEmail: stringValue(message?.fromEmail) ?? stringValue(row.latestFromEmail) ?? stringValue(row.from) ?? null,
+    senders,
+    recipients: rowRecipients(row),
+    receivedAt: stringValue(message?.receivedAt) ?? stringValue(row.latestReceivedAt) ?? stringValue(row.receivedAt) ?? null,
+    messageCount: numberValue(row.messageCount) ?? 1,
+    hasAttachments: booleanValue(row.hasAttachments),
+    attentionScore: scoreRecentEmailAttention(row, prompt),
+    preview: preview ?? null,
+    bodyText: bodyText ?? null,
+    webLink: stringValue(message?.webLink) ?? stringValue(row.webLink) ?? null,
+    projectIds: rowProjectIds(row),
+  };
+}
+
+function buildRecentEmailInboxWidget(params: {
+  request: RecentEmailInboxRequest;
+  prompt: string;
+  output: Record<string, unknown>;
+}): OutlookInboxSummaryWidgetPayload {
+  const { request, prompt, output } = params;
+  const threads = recordArray(output.threads);
+  const emails = recordArray(output.emails);
+  const rows = (threads.length > 0 ? threads : emails)
+    .slice()
+    .sort((a, b) => {
+      const scoreDiff = scoreRecentEmailAttention(b, prompt) - scoreRecentEmailAttention(a, prompt);
+      if (scoreDiff !== 0) return scoreDiff;
+      const aTime = Date.parse(stringValue(a.latestReceivedAt) ?? stringValue(a.receivedAt) ?? "");
+      const bTime = Date.parse(stringValue(b.latestReceivedAt) ?? stringValue(b.receivedAt) ?? "");
+      return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0);
+    });
+  const count = numberValue(output.count) ?? emails.length;
+  const threadCount = numberValue(output.threadCount) ?? (threads.length > 0 ? threads.length : null);
+  const wantsTriage = /\b(important|urgent|priority|attention|reply|respond|follow[- ]?up)\b/i.test(prompt);
+  const limit = /\b(last five|last 5)\b/i.test(prompt) ? 5 : Math.min(rows.length, 8);
+  const rangeLabel = request.daysBack === 0
+    ? "Today"
+    : request.daysBack === 1
+      ? "Last day"
+      : `Last ${request.daysBack} days`;
+
+  return {
+    type: "outlook_inbox_summary",
+    id: "recent-email-inbox",
+    title: wantsTriage ? "Important Outlook emails" : "Recent Outlook emails",
+    subtitle: wantsTriage
+      ? "Ranked by likely action needed, with the actual message text shown in readable cards."
+      : "Structured Outlook intake results with readable message previews.",
+    dateLabel: rangeLabel,
+    summary: stringValue(output.summary) ?? `Found ${count} received email${count === 1 ? "" : "s"}.`,
+    dataCutoffNote: stringValue(output.dataCutoffNote) ?? null,
+    mailbox: isRecord(output.appliedFilter) ? stringValue(output.appliedFilter.email) ?? null : null,
+    totalCount: count,
+    threadCount,
+    items: rows.slice(0, limit).map((row) => recentEmailWidgetItem(row, prompt)),
+    emptyState: rows.length === 0 ? "No Outlook emails matched this request." : undefined,
+  };
+}
+
+function formatRecentEmailInboxText(params: {
+  request: RecentEmailInboxRequest;
+  output: Record<string, unknown>;
+  widget: OutlookInboxSummaryWidgetPayload;
+}): string {
+  const { output, widget } = params;
+  const cutoff = stringValue(output.dataCutoffNote);
+  return [
+    `I checked Outlook email intake and found ${widget.totalCount} email${widget.totalCount === 1 ? "" : "s"}${widget.threadCount ? ` in ${widget.threadCount} thread${widget.threadCount === 1 ? "" : "s"}` : ""}.`,
+    cutoff ? `Data freshness: ${cutoff}` : null,
+    widget.items.length > 0
+      ? "I rendered the actual emails below so they are readable instead of dumping raw snippets."
+      : widget.emptyState,
+  ].filter(Boolean).join("\n");
 }
 
 function formatRecentEmailInboxAnswer(params: {
@@ -5791,12 +5919,37 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                 error: "getRecentEmails is not available in the AI assistant tool map.",
               };
 
+          const recentEmailWidget =
+            !isTimeoutResult(recentEmailsOutput) &&
+            isRecord(recentEmailsOutput) &&
+            !stringValue(recentEmailsOutput.error)
+              ? buildRecentEmailInboxWidget({
+                  request: recentEmailInboxRequest,
+                  prompt: lastUserContent,
+                  output: recentEmailsOutput,
+                })
+              : null;
+          const dataPart: PersistedDataPart | null = recentEmailWidget
+            ? {
+                type: "data-assistant-widget",
+                id: "assistant-widget-recent-email-inbox",
+                data: { widget: recentEmailWidget },
+              }
+            : null;
+          if (dataPart) writer.write(dataPart);
+
           const content = isTimeoutResult(recentEmailsOutput)
             ? [
                 "I checked Outlook email intake for your inbox, but the structured inbox lookup timed out.",
                 "Cause: getRecentEmails did not return before the server-side timeout.",
                 "Prevention: inbox/date/triage wording now routes through getRecentEmails before any source-search fallback, so this fails loudly instead of returning stale RAG evidence.",
               ].join("\n")
+            : recentEmailWidget && isRecord(recentEmailsOutput)
+              ? formatRecentEmailInboxText({
+                  request: recentEmailInboxRequest,
+                  output: recentEmailsOutput,
+                  widget: recentEmailWidget,
+                })
             : formatRecentEmailInboxAnswer({
                 request: recentEmailInboxRequest,
                 prompt: lastUserContent,
@@ -5835,7 +5988,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             executiveBriefingRetrieval,
             providerDecision,
             selectedProjectId,
-            dataParts: assistantWidgetDataParts,
+            dataParts: dataPart ? [...assistantWidgetDataParts, dataPart] : assistantWidgetDataParts,
             sourceHealth: assistantSourceHealthContext?.metadata ?? null,
           });
 

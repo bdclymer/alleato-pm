@@ -3,6 +3,7 @@ import {
   isAssistantWidgetPayload,
   type AssistantWidgetDataPart,
   type MeetingInsightsWidgetPayload,
+  type OutlookInboxSummaryWidgetPayload,
 } from "../assistant-widgets";
 import { ASSISTANT_WIDGET_RENDERER_TYPES } from "@/components/ai-assistant/assistant-widget-renderer";
 
@@ -112,5 +113,46 @@ describe("assistant widget registry", () => {
 
     expect(isAssistantWidgetPayload(dataPart.data.widget)).toBe(true);
     expect(dataPart.data.widget.type).toBe("meeting_insights");
+  });
+
+  it("accepts the Outlook inbox summary generative UI widget data part", () => {
+    const widget: OutlookInboxSummaryWidgetPayload = {
+      type: "outlook_inbox_summary",
+      id: "recent-email-inbox",
+      title: "Important Outlook emails",
+      subtitle: "Ranked by likely action needed, with the actual message text shown in readable cards.",
+      dateLabel: "Today",
+      summary: "Found 46 emails in 26 threads received today.",
+      dataCutoffNote: "Data is current as of May 14, 12:12 PM CT.",
+      mailbox: "bclymer@alleatogroup.com",
+      totalCount: 46,
+      threadCount: 26,
+      items: [
+        {
+          id: "thread-1",
+          subject: "RE: Closeout MTV 2 Project",
+          fromName: "Kennedy, JP",
+          fromEmail: "jpkennedy@radial.com",
+          senders: ["jpkennedy@radial.com", "kmass@alleatogroup.com"],
+          recipients: ["kmass@alleatogroup.com", "jdawson@alleatogroup.com"],
+          receivedAt: "2026-05-14T16:00:42Z",
+          messageCount: 3,
+          hasAttachments: true,
+          attentionScore: 6,
+          preview: "Ok yes please get me final bill today.",
+          bodyText: "Ok yes please get me final bill today.",
+          webLink: "https://outlook.office.com/mail/inbox/id/thread-1",
+          projectIds: [],
+        },
+      ],
+    };
+    const dataPart: AssistantWidgetDataPart = {
+      type: "data-assistant-widget",
+      id: "assistant-widget-recent-email-inbox",
+      data: { widget },
+    };
+
+    expect(isAssistantWidgetPayload(dataPart.data.widget)).toBe(true);
+    expect(dataPart.data.widget.type).toBe("outlook_inbox_summary");
   });
 });

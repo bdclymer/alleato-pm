@@ -6,7 +6,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { AssistantWidgetRenderer } from "../assistant-widget-renderer";
 import { apiFetch } from "@/lib/api-client";
-import type { OutlookEmailDraftWidgetPayload } from "@/lib/ai/assistant-widgets";
+import type {
+  OutlookEmailDraftWidgetPayload,
+  OutlookInboxSummaryWidgetPayload,
+} from "@/lib/ai/assistant-widgets";
 
 jest.mock("@/lib/api-client", () => ({
   apiFetch: jest.fn(),
@@ -107,5 +110,63 @@ describe("AssistantWidgetRenderer Outlook draft feedback", () => {
     );
 
     expect(screen.queryByRole("button", { name: /good tone/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("AssistantWidgetRenderer Outlook inbox summary", () => {
+  function inboxWidget(): OutlookInboxSummaryWidgetPayload {
+    return {
+      type: "outlook_inbox_summary",
+      id: "recent-email-inbox",
+      title: "Important Outlook emails",
+      subtitle: "Ranked by likely action needed, with the actual message text shown in readable cards.",
+      dateLabel: "Today",
+      summary: "Found 46 emails in 26 threads received today.",
+      dataCutoffNote: "Data is current as of May 14, 12:12 PM CT.",
+      mailbox: "bclymer@alleatogroup.com",
+      totalCount: 46,
+      threadCount: 26,
+      items: [
+        {
+          id: "thread-1",
+          subject: "RE: Closeout MTV 2 Project",
+          fromName: "Kennedy, JP",
+          fromEmail: "jpkennedy@radial.com",
+          senders: ["jpkennedy@radial.com", "kmass@alleatogroup.com"],
+          recipients: ["kmass@alleatogroup.com", "jdawson@alleatogroup.com"],
+          receivedAt: "2026-05-14T16:00:42Z",
+          messageCount: 3,
+          hasAttachments: true,
+          attentionScore: 6,
+          preview: "Ok yes please get me final bill today.",
+          bodyText: [
+            "Ok yes please get me final bill today.",
+            "",
+            "From: Kebba Mass <kmass@alleatogroup.com>",
+            "Subject: RE: Closeout MTV 2 Project",
+          ].join("\n"),
+          webLink: "https://outlook.office.com/mail/inbox/id/thread-1",
+          projectIds: [1009],
+        },
+      ],
+    };
+  }
+
+  it("renders Outlook inbox results as readable expandable email cards", () => {
+    render(
+      <AssistantWidgetRenderer
+        widget={inboxWidget()}
+        onSubmit={jest.fn()}
+        onEditDraft={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Important Outlook emails")).toBeInTheDocument();
+    expect(screen.getByText("RE: Closeout MTV 2 Project")).toBeInTheDocument();
+    expect(screen.getByText("Ok yes please get me final bill today.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open in outlook/i })).toHaveAttribute(
+      "href",
+      "https://outlook.office.com/mail/inbox/id/thread-1",
+    );
   });
 });

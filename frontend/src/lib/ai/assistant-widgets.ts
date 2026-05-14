@@ -5,6 +5,7 @@ export type AssistantWidgetKind =
   | "create_task"
   | "task_summary"
   | "meeting_intelligence"
+  | "outlook_inbox_summary"
   | "project_picker"
   | "owner_snapshot"
   | "owner_action_queue"
@@ -162,6 +163,38 @@ export type MeetingIntelligenceWidgetPayload = {
   recommendedNextActions: string[];
   emptyState?: string;
   meetings: MeetingIntelligenceWidgetItem[];
+};
+
+export type OutlookInboxSummaryWidgetItem = {
+  id: string;
+  subject: string;
+  fromName?: string | null;
+  fromEmail?: string | null;
+  senders: string[];
+  recipients: string[];
+  receivedAt?: string | null;
+  messageCount: number;
+  hasAttachments: boolean;
+  attentionScore: number;
+  preview?: string | null;
+  bodyText?: string | null;
+  webLink?: string | null;
+  projectIds: number[];
+};
+
+export type OutlookInboxSummaryWidgetPayload = {
+  type: "outlook_inbox_summary";
+  id: string;
+  title: string;
+  subtitle: string;
+  dateLabel: string;
+  summary: string;
+  dataCutoffNote?: string | null;
+  mailbox?: string | null;
+  totalCount: number;
+  threadCount?: number | null;
+  items: OutlookInboxSummaryWidgetItem[];
+  emptyState?: string;
 };
 
 export type ProjectPickerWidgetPayload = {
@@ -469,6 +502,7 @@ export type AssistantWidgetPayload =
   | CreateTaskWidgetPayload
   | TaskSummaryWidgetPayload
   | MeetingIntelligenceWidgetPayload
+  | OutlookInboxSummaryWidgetPayload
   | ProjectPickerWidgetPayload
   | OwnerSnapshotWidgetPayload
   | OwnerActionQueueWidgetPayload
@@ -498,6 +532,7 @@ export const ASSISTANT_WIDGET_TYPES = [
   "create_task",
   "task_summary",
   "meeting_intelligence",
+  "outlook_inbox_summary",
   "project_picker",
   "owner_snapshot",
   "owner_action_queue",
