@@ -5,17 +5,13 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
-interface RouteParams {
-  params: Promise<{ projectId: string; changeEventId: string }>;
-}
-
 /**
  * POST /api/projects/[projectId]/change-events/[changeEventId]/restore
  * Restores a soft-deleted change event by clearing deleted_at.
  */
-export const POST = withApiGuardrails(
+export const POST = withApiGuardrails<{ projectId: string; changeEventId: string }>(
   "projects/[projectId]/change-events/[changeEventId]/restore#POST",
-  async ({ request, params }: RouteParams) => {
+  async ({ params }) => {
     const { projectId, changeEventId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "admin");
