@@ -175,3 +175,8 @@ Status on 2026-05-13: the RAG database split is complete enough to restart the R
 - [x] Live Render scheduler guardrail now allows resumed RAG crons only on the safe throttled schedules; Acumatica must remain suspended.
 - [x] Live Render resume completed on 2026-05-13: all RAG-related cron services are `not_suspended` on the safe throttled schedules; `alleato-acumatica-financial-sync` remains `suspended`.
 - [x] Render deploys for the resumed RAG-related crons reached `live` on commit `1aef7310f`.
+- [x] First post-resume source-sync-health runs completed successfully at `2026-05-13T23:30:29Z` and `2026-05-14T00:00:42Z`.
+- [x] First post-resume Teams channel sync completed successfully at `2026-05-14T00:10:58Z`.
+- [x] Source RAG health failed loudly at `2026-05-14T00:06:05Z` because suspended sources are stale and there is backlog (`199` unembedded docs, `2096` uncompiled docs), not because the split RAG DB is unreachable.
+- [x] Teams DM was re-suspended after its first post-resume run started at `2026-05-13T23:40:00Z` without an end event by the 25-minute timeout window.
+- [x] Teams DM restart guardrail tightened after that finding: max 1 user per run, max 2 pages, 25 messages per page, stalest-first user selection, and a 10-minute hard timeout.

@@ -648,8 +648,8 @@ def sync_user_chat_messages(
 
     since_filter = _export_since_iso(since_iso)
     until_filter = _now_graph_iso()
-    page_size = max(1, min(int(os.environ.get("TEAMS_DM_EXPORT_PAGE_SIZE", "50")), 50))
-    max_pages = max(1, int(os.environ.get("TEAMS_DM_EXPORT_MAX_PAGES", "20")))
+    page_size = max(1, min(int(os.environ.get("TEAMS_DM_EXPORT_PAGE_SIZE", "25")), 50))
+    max_pages = max(1, min(int(os.environ.get("TEAMS_DM_EXPORT_MAX_PAGES", "2")), 5))
     filter_expr = f"lastModifiedDateTime gt {since_filter} and lastModifiedDateTime lt {until_filter}"
     url: Optional[str] = f"{graph.GRAPH_BASE}/users/{user_email}/chats/getAllMessages"
     params: Optional[dict] = {"$top": str(page_size), "$filter": filter_expr}

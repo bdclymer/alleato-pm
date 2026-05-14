@@ -51,3 +51,14 @@ def test_high_risk_sync_crons_are_not_disabled_echoes():
             "alleato-graph-sync",
         ):
             assert "disabled while DB incident guard is active" not in services[name]["dockerCommand"]
+
+
+def test_teams_dm_cron_is_tightly_bounded():
+    for path in (REPO_ROOT / "render.yaml", BACKEND_ROOT / "render.yaml"):
+        teams_dm = _services_by_name(path)["alleato-teams-dm-sync"]
+        env = {item["key"]: item.get("value") for item in teams_dm["envVars"]}
+
+        assert "timeout 10m" in teams_dm["dockerCommand"]
+        assert env["TEAMS_DM_SYNC_MAX_USERS"] == "1"
+        assert env["TEAMS_DM_EXPORT_PAGE_SIZE"] == "25"
+        assert env["TEAMS_DM_EXPORT_MAX_PAGES"] == "2"

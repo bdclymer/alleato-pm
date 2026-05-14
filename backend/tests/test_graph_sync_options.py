@@ -34,3 +34,49 @@ def test_run_graph_sync_can_skip_heavy_embedding_and_compiler(monkeypatch):
     assert result["phases"]["teams_compiler"] == "skipped"
     assert result["embed"]["status"] == "skipped"
     assert result["teams_compiler"]["status"] == "skipped"
+
+
+class _FakeQuery:
+    def __init__(self, rows):
+        self.rows = rows
+
+    def select(self, *_args, **_kwargs):
+        return self
+
+    def eq(self, *_args, **_kwargs):
+        return self
+
+    def in_(self, *_args, **_kwargs):
+        return self
+
+    def execute(self):
+        return type("Result", (), {"data": self.rows})()
+
+
+class _FakeStateSupabase:
+    def __init__(self, rows):
+        self.rows = rows
+
+    def from_(self, table):
+        assert table == "graph_sync_state"
+        return _FakeQuery(self.rows)
+
+
+def test_limit_sync_users_selects_stalest_slice(monkeypatch):
+    monkeypatch.setenv("TEAMS_DM_SYNC_MAX_USERS", "2")
+    supabase = _FakeStateSupabase(
+        [
+            {"resource_id": "user:newer@example.com", "last_sync_at": "2026-05-13T23:00:00Z"},
+            {"resource_id": "user:older@example.com", "last_sync_at": "2026-05-13T20:00:00Z"},
+        ]
+    )
+
+    selected = sync._limit_sync_users(
+        supabase,
+        source="teams_chat_export",
+        users=["newer@example.com", "never@example.com", "older@example.com"],
+        env_key="TEAMS_DM_SYNC_MAX_USERS",
+        default_limit=1,
+    )
+
+    assert selected == ["never@example.com", "older@example.com"]

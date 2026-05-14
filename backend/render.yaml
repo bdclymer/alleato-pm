@@ -93,7 +93,7 @@ services:
     dockerContext: .
     schedule: "40 * * * *"
     dockerCommand: >-
-      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
+      timeout 10m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -121,6 +121,12 @@ services:
         sync: false
       - key: MICROSOFT_SYNC_USERS
         sync: false
+      - key: TEAMS_DM_SYNC_MAX_USERS
+        value: "1"
+      - key: TEAMS_DM_EXPORT_PAGE_SIZE
+        value: "25"
+      - key: TEAMS_DM_EXPORT_MAX_PAGES
+        value: "2"
 
   # Runs Outlook/OneDrive/SharePoint sync every 2 hours, staggered away from
   # Teams-only crons. Embedding is capped at 25 documents per run.

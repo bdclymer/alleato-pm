@@ -91,6 +91,48 @@ def _get_delta_token(supabase: Client, source: str, resource_id: str) -> Optiona
         return None
 
 
+def _limit_sync_users(
+    supabase: Client,
+    *,
+    source: str,
+    users: list[str],
+    env_key: str,
+    default_limit: int,
+) -> list[str]:
+    """Pick a bounded, stalest-first slice of users for expensive per-user syncs."""
+    if not users:
+        return []
+    limit = max(1, min(int(os.environ.get(env_key, str(default_limit))), len(users)))
+    if len(users) <= limit:
+        return users
+
+    resource_ids = [f"user:{email}" for email in users]
+    last_sync_by_resource: dict[str, str] = {}
+    try:
+        result = (
+            supabase.from_("graph_sync_state")
+            .select("resource_id,last_sync_at")
+            .eq("source", source)
+            .in_("resource_id", resource_ids)
+            .execute()
+        )
+        last_sync_by_resource = {
+            str(row.get("resource_id")): str(row.get("last_sync_at") or "")
+            for row in (result.data or [])
+            if row.get("resource_id")
+        }
+    except Exception as exc:
+        logger.warning("[GraphSync] Could not load %s sync state for user limiting: %s", source, exc)
+
+    return sorted(
+        users,
+        key=lambda email: (
+            last_sync_by_resource.get(f"user:{email}") or "",
+            email,
+        ),
+    )[:limit]
+
+
 def _save_sync_state(
     supabase: Client,
     source: str,
@@ -343,6 +385,14 @@ def run_graph_sync(
             for e in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",")
             if e.strip()
         ]
+        dm_users = _limit_sync_users(
+            supabase,
+            source="teams_chat_export",
+            users=dm_users,
+            env_key="TEAMS_DM_SYNC_MAX_USERS",
+            default_limit=1,
+        )
+        summary["teams_dm_users_selected"] = dm_users
         for user_email in dm_users:
             started_at = datetime.now(timezone.utc)
             try:
