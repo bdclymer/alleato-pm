@@ -194,7 +194,7 @@ export class DirectCostService {
         *,
         line_items:direct_cost_line_items(
           *,
-          budget_code:budget_codes(code, description)
+          budget_code:project_budget_codes(cost_code_id, description)
         ),
         vendor:companies(*)
       `
@@ -613,7 +613,7 @@ export class DirectCostService {
         line_items:direct_cost_line_items(
           budget_code_id,
           line_total,
-          budget_code:budget_codes(code, description)
+          budget_code:project_budget_codes(cost_code_id, description)
         )
       `
       )
@@ -635,7 +635,7 @@ export class DirectCostService {
 
         const existing: CostCodeSummary = summaryMap.get(lineItem.budget_code_id) ?? {
           budget_code_id: lineItem.budget_code_id,
-          budget_code: budgetCode?.code || lineItem.budget_code_id,
+          budget_code: budgetCode?.cost_code_id || lineItem.budget_code_id,
           budget_description: budgetCode?.description || "",
           total_amount: 0,
           item_count: 0,

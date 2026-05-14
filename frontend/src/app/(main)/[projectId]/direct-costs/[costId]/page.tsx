@@ -37,6 +37,25 @@ interface LineItem {
   budget_code: { code: string; description: string } | null;
 }
 
+/** Normalize an invoice_number that may have been stored as a serialized object
+ *  (e.g. "{}" or "[object Object]") due to an Acumatica sync bug where an empty
+ *  AcuField envelope was written directly to the varchar column. */
+function extractInvoiceNumber(raw: unknown): string | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    // Reject empty-object artefacts left by the old sync bug
+    if (trimmed === "" || trimmed === "{}" || trimmed === "[object Object]") return null;
+    return trimmed;
+  }
+  if (typeof raw === "object") {
+    // Handle { value: "..." } shape that slipped through unwrap
+    const obj = raw as Record<string, unknown>;
+    if (typeof obj.value === "string" && obj.value.trim() !== "") return obj.value.trim();
+  }
+  return null;
+}
+
 interface DirectCostDetail {
   id: string;
   project_id: number;
@@ -45,7 +64,7 @@ interface DirectCostDetail {
   status: string;
   description: string | null;
   total_amount: number;
-  invoice_number: string | null;
+  invoice_number: unknown;
   received_date: string | null;
   paid_date: string | null;
   acumatica_ref_nbr: string | null;
@@ -169,6 +188,8 @@ export default function DirectCostDetailPage({
     );
   }
 
+  const invoiceNumber = extractInvoiceNumber(directCost.invoice_number);
+
   const lineItemsTotal = directCost.line_items?.reduce(
     (sum, li) => sum + (li.line_total ?? li.quantity * li.unit_cost),
     0,
@@ -179,7 +200,7 @@ export default function DirectCostDetailPage({
       <PageShell
         variant="detail"
         title="Direct Cost Details"
-        description={directCost.invoice_number ? `Invoice #${directCost.invoice_number}` : `#${directCost.id.slice(0, 8)}`}
+        description={invoiceNumber ? `Invoice #${invoiceNumber}` : `#${directCost.id.slice(0, 8)}`}
         onBack={() => router.back()}
       >
         <ContentSectionStack>
@@ -216,8 +237,8 @@ export default function DirectCostDetailPage({
                       {directCost.employee.last_name}
                     </LabelValueRow>
                   ) : null}
-                  <LabelValueRow label="Invoice Number" missing={!directCost.invoice_number}>
-                    {directCost.invoice_number}
+                  <LabelValueRow label="Invoice Number" missing={!invoiceNumber}>
+                    {invoiceNumber}
                   </LabelValueRow>
                   {directCost.received_date && (
                     <LabelValueRow label="Received Date">

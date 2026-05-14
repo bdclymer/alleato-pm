@@ -522,7 +522,7 @@ export async function syncDirectCosts(
     const fields = {
       date,
       description,
-      invoice_number: header.OriginalDocNbr ?? null,
+      invoice_number: typeof header.OriginalDocNbr === "string" && header.OriginalDocNbr.trim() !== "" ? header.OriginalDocNbr : null,
       total_amount: totalAmount,
       cost_type: toTransactionCostType(header.Module, header.OriginalDocType),
       status: mapTransactionStatus(header.Status),
