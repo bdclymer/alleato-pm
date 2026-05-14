@@ -93,7 +93,7 @@ export function useContracts(
         .select(
           `
           *,
-          client:companies!prime_contracts_client_id_fkey(id, name),
+          client:companies!prime_contracts_client_company_id_fkey(id, name),
           project:projects(id, name, project_number)
         `,
         )
@@ -161,7 +161,7 @@ export function useContracts(
           .select(
             `
           *,
-          client:companies!prime_contracts_client_id_fkey(id, name),
+          client:companies!prime_contracts_client_company_id_fkey(id, name),
           project:projects(id, name, project_number)
         `,
           )

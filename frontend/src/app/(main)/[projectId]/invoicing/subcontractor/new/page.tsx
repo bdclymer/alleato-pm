@@ -549,6 +549,7 @@ export default function NewSubcontractorInvoicePage() {
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 placeholder="Auto-assigned if blank"
+                maxLength={255}
               />
             </div>
           </div>

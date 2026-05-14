@@ -19,6 +19,7 @@ interface RHFTextFieldProps<TFieldValues extends FieldValues> {
   type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
   autoComplete?: string;
   disabled?: boolean;
+  maxLength?: number;
 }
 
 export function RHFTextField<TFieldValues extends FieldValues>({
@@ -30,6 +31,7 @@ export function RHFTextField<TFieldValues extends FieldValues>({
   type = "text",
   autoComplete,
   disabled,
+  maxLength,
 }: RHFTextFieldProps<TFieldValues>) {
   return (
     <FormField
@@ -47,6 +49,7 @@ export function RHFTextField<TFieldValues extends FieldValues>({
               placeholder={placeholder}
               autoComplete={autoComplete}
               disabled={disabled}
+              maxLength={maxLength}
             />
           </FormControl>
           <FormMessage />

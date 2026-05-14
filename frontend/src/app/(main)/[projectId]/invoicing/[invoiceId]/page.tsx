@@ -67,7 +67,7 @@ import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, apiFetchWithTimeout } from "@/lib/api-client";
 import { formatPercent } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
@@ -665,6 +665,7 @@ function InvoiceEditForm({
                 name="invoice_number"
                 label="Invoice Number"
                 placeholder="e.g. INV-001"
+                maxLength={255}
               />
             </div>
             <RHFDateField
@@ -762,12 +763,18 @@ export default function InvoiceDetailPage() {
     setError(null);
 
     try {
-      const data = await apiFetch<{ data: OwnerInvoice }>(
+      const data = await apiFetchWithTimeout<{ data: OwnerInvoice }>(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}`,
+        undefined,
+        15_000,
       );
-      setInvoice(data.data);
-      // Reset draft on fresh load
-      setSovDraft({});
+      if (!data?.data) {
+        setError("Invoice not found");
+      } else {
+        setInvoice(data.data);
+        // Reset draft on fresh load
+        setSovDraft({});
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch invoice");
     } finally {
@@ -861,7 +868,7 @@ export default function InvoiceDetailPage() {
       );
 
       toast.success("Invoice submitted successfully");
-      fetchInvoice();
+      await fetchInvoice();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to submit invoice");
     }
@@ -877,7 +884,7 @@ export default function InvoiceDetailPage() {
       );
 
       toast.success("Invoice returned for revision");
-      fetchInvoice();
+      await fetchInvoice();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to request revision");
     }
@@ -895,7 +902,7 @@ export default function InvoiceDetailPage() {
       );
 
       toast.success("Invoice approved successfully");
-      fetchInvoice();
+      await fetchInvoice();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve invoice");
     }
@@ -911,7 +918,7 @@ export default function InvoiceDetailPage() {
       );
       toast.success("Invoice approved as noted");
       setApproveAsNotedDialogOpen(false);
-      fetchInvoice();
+      await fetchInvoice();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve invoice as noted");
     } finally {
@@ -933,7 +940,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice voided");
       setVoidDialogOpen(false);
       setVoidReason("");
-      fetchInvoice();
+      await fetchInvoice();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to void invoice");
     } finally {
@@ -964,10 +971,13 @@ export default function InvoiceDetailPage() {
   };
 
   const handleExportPDF = () => {
-    window.open(
-      `/api/projects/${projectId}/invoicing/owner/${invoiceId}/pdf`,
-      "_blank",
-    );
+    const url = `/api/projects/${projectId}/invoicing/owner/${invoiceId}/pdf`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const openEmailDialog = () => {

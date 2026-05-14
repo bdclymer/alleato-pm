@@ -323,6 +323,7 @@ export function SummaryTab({
                   value={fields.invoice_number}
                   onChange={(e) => updateField("invoice_number", e.target.value)}
                   placeholder="Invoice number"
+                  maxLength={255}
                 />
               ) : (
                 invoice.invoice_number ?? "—"

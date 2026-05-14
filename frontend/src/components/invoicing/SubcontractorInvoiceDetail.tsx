@@ -162,16 +162,29 @@ export function SubcontractorInvoiceDetail({
 
   async function handleSubmitForReview() {
     setBusy(true);
+    let submitted = false;
     try {
       await apiFetch(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/submit`,
         { method: "POST" },
       );
+      submitted = true;
       toast.success("Submitted for review");
-      await refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Submit failed");
+      // HTTP 502 means the invoice was submitted but the PM email notification
+      // failed — the status update already succeeded in the DB. Treat it as a
+      // partial success so the UI reflects the new status.
+      const status = (err as { status?: number })?.status;
+      if (status === 502) {
+        submitted = true;
+        toast.success("Submitted for review");
+      } else {
+        toast.error(err instanceof Error ? err.message : "Submit failed");
+      }
     } finally {
+      if (submitted) {
+        await refetch();
+      }
       setBusy(false);
     }
   }
@@ -208,10 +221,13 @@ export function SubcontractorInvoiceDetail({
   }
 
   async function handleExportPdf() {
-    window.open(
-      `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/pdf`,
-      "_blank",
-    );
+    const url = `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/pdf`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   // Opens and pre-fills the email dialog for invoice delivery.
