@@ -7,7 +7,7 @@ export type ChangeEventStatus =
   | "Void"
   | "Converted"
   | string;
-export type ChangeEventOrigin = "emails" | "meetings" | "rfis";
+export type ChangeEventOrigin = "emails" | "meetings" | "rfis" | "Internal" | "Field";
 export type ChangeEventType =
   | "Owner Change"
   | "Design Change"
@@ -154,6 +154,8 @@ export const ORIGIN_OPTIONS = [
   { value: "emails", label: "Emails" },
   { value: "meetings", label: "Meetings" },
   { value: "rfis", label: "RFI's" },
+  { value: "Internal", label: "Internal" },
+  { value: "Field", label: "Field" },
 ];
 
 export const TYPE_OPTIONS = [
