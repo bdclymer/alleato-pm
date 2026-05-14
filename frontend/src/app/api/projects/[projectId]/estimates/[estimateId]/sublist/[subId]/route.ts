@@ -17,7 +17,12 @@ export const PATCH = withApiGuardrails<{ projectId: string; estimateId: string; 
     const estimateIdNum = parseInt(estimateId, 10);
     const subIdNum = parseInt(subId, 10);
     if (isNaN(estimateIdNum) || isNaN(subIdNum)) {
-      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "sublist/[subId]#PATCH",
+        message: "Invalid estimate sublist ID.",
+        details: { estimateId, subId },
+      });
     }
 
     const body = await request.json();
@@ -31,7 +36,12 @@ export const PATCH = withApiGuardrails<{ projectId: string; estimateId: string; 
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: "sublist/[subId]#PATCH",
+        message: error.message,
+        cause: error,
+      });
     }
 
     return NextResponse.json(data);
@@ -52,7 +62,12 @@ export const DELETE = withApiGuardrails<{ projectId: string; estimateId: string;
     const estimateIdNum = parseInt(estimateId, 10);
     const subIdNum = parseInt(subId, 10);
     if (isNaN(estimateIdNum) || isNaN(subIdNum)) {
-      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "sublist/[subId]#DELETE",
+        message: "Invalid estimate sublist ID.",
+        details: { estimateId, subId },
+      });
     }
 
     const { error } = await supabase
@@ -62,7 +77,12 @@ export const DELETE = withApiGuardrails<{ projectId: string; estimateId: string;
       .eq("estimate_id", estimateIdNum);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: "sublist/[subId]#DELETE",
+        message: error.message,
+        cause: error,
+      });
     }
 
     return new Response(null, { status: 204 });

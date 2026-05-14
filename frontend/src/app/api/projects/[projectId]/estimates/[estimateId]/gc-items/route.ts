@@ -16,7 +16,12 @@ export const GET = withApiGuardrails<{ projectId: string; estimateId: string }>(
 
     const estimateIdNum = parseInt(estimateId, 10);
     if (isNaN(estimateIdNum)) {
-      return NextResponse.json({ error: "Invalid estimate ID" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "gc-items#GET",
+        message: "Invalid estimate ID.",
+        details: { estimateId },
+      });
     }
 
     const { data, error } = await supabase
@@ -26,7 +31,12 @@ export const GET = withApiGuardrails<{ projectId: string; estimateId: string }>(
       .order("sort_order", { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: "gc-items#GET",
+        message: error.message,
+        cause: error,
+      });
     }
 
     return NextResponse.json(data ?? []);
@@ -46,7 +56,12 @@ export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>
 
     const estimateIdNum = parseInt(estimateId, 10);
     if (isNaN(estimateIdNum)) {
-      return NextResponse.json({ error: "Invalid estimate ID" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "gc-items#POST",
+        message: "Invalid estimate ID.",
+        details: { estimateId },
+      });
     }
 
     const body = await request.json();
@@ -80,7 +95,12 @@ export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: "gc-items#POST",
+        message: error.message,
+        cause: error,
+      });
     }
 
     return NextResponse.json(data, { status: 201 });

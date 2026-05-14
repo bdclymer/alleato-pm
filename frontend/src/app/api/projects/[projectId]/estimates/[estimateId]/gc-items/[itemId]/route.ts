@@ -17,7 +17,12 @@ export const PATCH = withApiGuardrails<{ projectId: string; estimateId: string; 
     const estimateIdNum = parseInt(estimateId, 10);
     const itemIdNum = parseInt(itemId, 10);
     if (isNaN(estimateIdNum) || isNaN(itemIdNum)) {
-      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "gc-items/[itemId]#PATCH",
+        message: "Invalid estimate GC item ID.",
+        details: { estimateId, itemId },
+      });
     }
 
     const body = await request.json();
@@ -31,7 +36,12 @@ export const PATCH = withApiGuardrails<{ projectId: string; estimateId: string; 
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: "gc-items/[itemId]#PATCH",
+        message: error.message,
+        cause: error,
+      });
     }
 
     return NextResponse.json(data);
@@ -52,7 +62,12 @@ export const DELETE = withApiGuardrails<{ projectId: string; estimateId: string;
     const estimateIdNum = parseInt(estimateId, 10);
     const itemIdNum = parseInt(itemId, 10);
     if (isNaN(estimateIdNum) || isNaN(itemIdNum)) {
-      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "gc-items/[itemId]#DELETE",
+        message: "Invalid estimate GC item ID.",
+        details: { estimateId, itemId },
+      });
     }
 
     const { error } = await supabase
@@ -62,7 +77,12 @@ export const DELETE = withApiGuardrails<{ projectId: string; estimateId: string;
       .eq("estimate_id", estimateIdNum);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: "gc-items/[itemId]#DELETE",
+        message: error.message,
+        cause: error,
+      });
     }
 
     return new Response(null, { status: 204 });
