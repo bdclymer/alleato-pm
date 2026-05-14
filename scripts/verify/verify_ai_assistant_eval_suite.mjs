@@ -374,9 +374,26 @@ function extractToolNames(metadata) {
 
 function extractStreamToolNames(streamEvents) {
   if (!Array.isArray(streamEvents)) return [];
-  return streamEvents
+  const toolNames = streamEvents
     .map((event) => event?.toolName)
     .filter((name) => typeof name === "string");
+  const retrievalToolMap = {
+    recent_emails: "getRecentEmails",
+    source_specific_rag: "sourceSpecificRagRetrieval",
+    semantic_search: "semanticSearch",
+    project_snapshot: "getProjectBriefingSnapshot",
+    intelligence_packet: "loadIntelligencePacket",
+    brandon_daily: "generateDailyBrief",
+  };
+  for (const event of streamEvents) {
+    const durations = event?.data?.durations;
+    if (!durations || typeof durations !== "object") continue;
+    for (const source of Object.keys(durations)) {
+      const mapped = retrievalToolMap[source];
+      if (mapped) toolNames.push(mapped);
+    }
+  }
+  return toolNames;
 }
 
 function uniqueStrings(values) {

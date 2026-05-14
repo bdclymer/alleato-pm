@@ -2533,9 +2533,14 @@
         "communications"
       ],
       "expectedToolNames": [
-        "sourceSpecificRagRetrieval",
         "getRecentEmails",
         "getRecentOutlookEmails"
+      ],
+      "expectedAllToolNames": [
+        "getRecentEmails"
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval"
       ],
       "mustIncludeAny": [
         [
@@ -2561,10 +2566,15 @@
         "communications"
       ],
       "expectedToolNames": [
-        "sourceSpecificRagRetrieval",
         "getRecentEmails",
         "getRecentOutlookEmails",
         "searchEmails"
+      ],
+      "expectedAllToolNames": [
+        "getRecentEmails"
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval"
       ],
       "mustIncludeAny": [
         [
@@ -2581,6 +2591,113 @@
       ],
       "minAnswerLength": 120,
       "notes": "Inbox triage ask. Must retrieve email context and explicitly separate urgent items from normal mail."
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "expectedToolFamilies": [
+        "communications"
+      ],
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedAllToolNames": [
+        "getRecentEmails"
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval"
+      ],
+      "mustIncludeAny": [
+        [
+          "email",
+          "inbox",
+          "Outlook",
+          "received",
+          "morning",
+          "no emails"
+        ]
+      ],
+      "mustExclude": [
+        "I can’t answer that reliably from the loaded evidence",
+        "I can't answer that reliably from the loaded evidence",
+        "retrieval bundle",
+        "live Outlook tools are available",
+        "I cannot access your email",
+        "I don't have access to your inbox"
+      ],
+      "minAnswerLength": 120,
+      "notes": "Regression for inbox phrasing that previously fell through to stale source-specific RAG. Must use structured Outlook intake."
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "prompt": "What came in through Outlook today that needs my attention?",
+      "expectedToolFamilies": [
+        "communications"
+      ],
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedAllToolNames": [
+        "getRecentEmails"
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval"
+      ],
+      "mustIncludeAny": [
+        [
+          "email",
+          "Outlook",
+          "received",
+          "attention",
+          "no emails"
+        ]
+      ],
+      "mustExclude": [
+        "retrieval bundle",
+        "semantic search",
+        "live Outlook tools are available",
+        "I cannot access your email"
+      ],
+      "minAnswerLength": 120,
+      "notes": "Same category as important-inbox wording, different user phrasing."
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "prompt": "Show me any emails from today that need a reply.",
+      "expectedToolFamilies": [
+        "communications"
+      ],
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedAllToolNames": [
+        "getRecentEmails"
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval"
+      ],
+      "mustIncludeAny": [
+        [
+          "email",
+          "reply",
+          "received",
+          "today",
+          "no emails"
+        ]
+      ],
+      "mustExclude": [
+        "retrieval bundle",
+        "live Outlook tools are available",
+        "I cannot access your email"
+      ],
+      "minAnswerLength": 120,
+      "notes": "Reply triage must use structured recent email retrieval, not historical semantic search."
     },
     {
       "id": "realworld-draft-email-response",
