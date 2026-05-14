@@ -156,6 +156,40 @@ class SupabaseRagStore:
         response = self._client.table("document_metadata").upsert(metadata).execute()
         return response.data[0] if response.data else metadata
 
+    def upsert_app_document_catalog(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """Upsert the app-facing catalog row without large RAG payload fields."""
+        catalog = dict(metadata)
+        for field in ("content", "raw_text", "summary_embedding"):
+            catalog.pop(field, None)
+        response = self._client.table("document_metadata").upsert(catalog).execute()
+        return response.data[0] if response.data else catalog
+
+    def upsert_rag_document_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """Upsert the RAG-side full payload and processing metadata row."""
+        response = self._rag_client.table("rag_document_metadata").upsert(metadata).execute()
+        return response.data[0] if response.data else metadata
+
+    def fetch_rag_document_metadata(self, document_id: str) -> Optional[Dict[str, Any]]:
+        response = (
+            self._rag_client.table("rag_document_metadata")
+            .select("*")
+            .eq("id", document_id)
+            .single()
+            .execute()
+        )
+        return response.data
+
+    def fetch_rag_document_content(self, document_id: str) -> Optional[str]:
+        response = (
+            self._rag_client.table("rag_document_metadata")
+            .select("content,raw_text")
+            .eq("id", document_id)
+            .single()
+            .execute()
+        )
+        data = response.data or {}
+        return data.get("content") or data.get("raw_text")
+
     def upload_public_text(
         self,
         bucket: str,
@@ -537,8 +571,10 @@ class SupabaseRagStore:
 __all__ = [
     "DocumentChunk",
     "SupabaseRagStore",
+    "get_rag_read_client",
     "get_rag_supabase_client",
     "get_rag_write_client",
     "get_supabase_client",
+    "rag_database_reads_enabled",
     "rag_database_writes_enabled",
 ]
