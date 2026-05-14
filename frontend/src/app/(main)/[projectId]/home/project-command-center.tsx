@@ -1367,19 +1367,27 @@ export function ProjectCommandCenter({
 
       <div className="px-4 py-6 sm:px-5 lg:px-6">
         {/* ── Header ────────────────────────────────────── */}
-        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             {jobNumber && (
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Job #{jobNumber}
               </p>
             )}
             <h1 className="text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
               {project.name ?? "Untitled Project"}
             </h1>
-            {project.current_phase && (
-              <p className="mt-1.5 text-sm text-muted-foreground">{project.current_phase}</p>
-            )}
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              {project.current_phase && (
+                <span className="text-sm text-muted-foreground">{project.current_phase}</span>
+              )}
+              {project.current_phase && project.client && (
+                <span className="text-sm text-muted-foreground/40">·</span>
+              )}
+              {project.client && (
+                <span className="text-sm text-muted-foreground">{project.client}</span>
+              )}
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <ReadinessIndicator
@@ -1396,152 +1404,152 @@ export function ProjectCommandCenter({
         {/* ── Two-column layout ─────────────────────────── */}
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_268px]">
           {/* ── Main column ─────────────────────────────── */}
-          <div className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-8">
 
-            {/* ── KPI Cards ─────────────────────────────── */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {/* Budget Performance chart */}
-              <MetricCard
-                label="Budget vs Costs"
-                href={`/${projectId}/budget`}
-                className="sm:col-span-2"
-              >
-                {budgetLoading ? (
-                  <div className="flex h-28 items-center justify-center">
-                    <p className="text-sm text-muted-foreground">Loading…</p>
-                  </div>
-                ) : revisedBudget > 0 ? (
-                  <div>
-                    <div className="mb-3 flex items-baseline gap-4">
+            {/* ── Financial Snapshot ────────────────────── */}
+            <div className="space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Financial Snapshot
+              </p>
+
+              {/* 4-column equal KPI grid */}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {/* Budget */}
+                <MetricCard label="Budget" href={`/${projectId}/budget`}>
+                  {budgetLoading ? (
+                    <div className="h-10 animate-pulse rounded bg-muted/40" />
+                  ) : revisedBudget > 0 ? (
+                    <div className="space-y-1.5">
                       <span className="text-2xl font-semibold tabular-nums text-foreground">
                         {fmtCompact(revisedBudget)}
                       </span>
-                      <span className={cn(
+                      <p className={cn(
                         "text-xs font-medium",
                         variance > 0 ? "text-status-success" : variance < 0 ? "text-destructive" : "text-muted-foreground",
                       )}>
-                        {variance > 0 ? "▲" : variance < 0 ? "▼" : ""}{" "}
-                        {variance !== 0 ? `${fmtCompact(Math.abs(variance))} ${variance > 0 ? "under" : "over"}` : "On budget"}
-                      </span>
+                        {variance > 0
+                          ? `▲ ${fmtCompact(Math.abs(variance))} under`
+                          : variance < 0
+                          ? `▼ ${fmtCompact(Math.abs(variance))} over`
+                          : "On budget"}
+                      </p>
                     </div>
-                    <BudgetBarChart budget={revisedBudget} costToDate={costToDate} ecac={ecac} />
-                  </div>
-                ) : (
-                  <div className="flex h-36 flex-col items-center justify-center gap-2 text-center">
-                    <p className="text-sm text-muted-foreground">Budget not created yet</p>
-                    <Link href={`/${projectId}/budget`} prefetch={false} className="text-xs text-primary hover:underline">
-                      Create budget →
-                    </Link>
-                  </div>
-                )}
-              </MetricCard>
-
-              {/* Work Completed gauge */}
-              <MetricCard label="Work Completed" href={`/${projectId}/prime-contracts`}>
-                <div className="flex flex-col items-center justify-center flex-1 py-2">
-                  <WorkCompletedGauge
-                    pctComplete={billedPct}
-                    label="Billed to Date"
-                    sub={totalBilled > 0 ? fmtCompact(totalBilled) : ownerInvoices.length === 0 ? "No invoices yet" : "—"}
-                  />
-                </div>
-              </MetricCard>
-
-              {/* Commitments card */}
-              <MetricCard label="Commitments" href={`/${projectId}/commitments`} className="sm:col-span-1">
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-2xl font-semibold tabular-nums text-foreground">
-                      {fmtCompact(commitmentTotal || null)}
-                    </span>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {commitments.length > 0
-                        ? `${commitments.length} commitment${commitments.length !== 1 ? "s" : ""}`
-                        : "No buyout yet"}
-                    </p>
-                  </div>
-                  {commitments.length > 0 && (
-                    <div className="space-y-1.5">
-                      {[
-                        {
-                          label: "Subcontracts",
-                          count: commitments.filter((c) => c.type === "subcontract").length,
-                          value: commitments
-                            .filter((c) => c.type === "subcontract")
-                            .reduce((s, c) => s + (c.revised_contract_amount ?? c.contract_amount ?? c.original_amount ?? 0), 0),
-                        },
-                        {
-                          label: "Purchase Orders",
-                          count: commitments.filter((c) => c.type === "purchase_order").length,
-                          value: commitments
-                            .filter((c) => c.type === "purchase_order")
-                            .reduce((s, c) => s + (c.revised_contract_amount ?? c.contract_amount ?? c.original_amount ?? 0), 0),
-                        },
-                      ].map(({ label, count, value }) => (
-                        <div key={label} className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">{label} ({count})</span>
-                          <span className="text-xs font-medium tabular-nums text-foreground">{fmtCompact(value)}</span>
-                        </div>
-                      ))}
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Not set up</p>
+                      <Link href={`/${projectId}/budget`} prefetch={false} className="text-xs text-primary hover:underline">
+                        Create budget →
+                      </Link>
                     </div>
                   )}
-                </div>
-              </MetricCard>
+                </MetricCard>
 
-              {/* Prime Contract card */}
-              <MetricCard label="Prime Contract" href={`/${projectId}/prime-contracts`} className="sm:col-span-2">
-                <div className="flex items-start gap-6">
-                  <div>
-                    <span className="text-2xl font-semibold tabular-nums text-foreground">
-                      {fmtCompact(primeContractValue || null)}
-                    </span>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {contracts.length > 0
-                        ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
-                        : "No contract yet"}
-                    </p>
-                  </div>
-                  {contracts.length > 0 && primeContractValue > 0 && (
-                    <div className="flex-1 space-y-1.5 pt-0.5">
-                      {[
-                        { label: "Billed", value: totalBilled },
-                        { label: "Remaining", value: Math.max(0, primeContractValue - totalBilled) },
-                      ].map(({ label, value }) => (
-                        <div key={label} className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">{label}</span>
-                          <span className="text-xs font-medium tabular-nums text-foreground">{fmtCompact(value)}</span>
-                        </div>
-                      ))}
-                      <div className="mt-2 overflow-hidden rounded-full bg-muted h-1.5">
+                {/* Prime Contract */}
+                <MetricCard label="Prime Contract" href={`/${projectId}/prime-contracts`}>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-2xl font-semibold tabular-nums text-foreground">
+                        {fmtCompact(primeContractValue || null)}
+                      </span>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {contracts.length > 0
+                          ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
+                          : "No contract yet"}
+                      </p>
+                    </div>
+                    {primeContractValue > 0 && (
+                      <div className="overflow-hidden rounded-full bg-muted h-1.5">
                         <div
                           className="h-full rounded-full bg-primary transition-all"
                           style={{ width: `${pct(totalBilled, primeContractValue)}%` }}
                         />
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                </MetricCard>
+
+                {/* Commitments */}
+                <MetricCard label="Commitments" href={`/${projectId}/commitments`}>
+                  <div className="space-y-1.5">
+                    <span className="text-2xl font-semibold tabular-nums text-foreground">
+                      {fmtCompact(commitmentTotal || null)}
+                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      {commitments.length > 0
+                        ? `${commitments.length} total`
+                        : "No buyout yet"}
+                    </p>
+                    {commitments.length > 0 && (
+                      <div className="flex gap-2 pt-0.5">
+                        {commitments.filter((c) => c.type === "subcontract").length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {commitments.filter((c) => c.type === "subcontract").length} sub
+                          </span>
+                        )}
+                        {commitments.filter((c) => c.type === "purchase_order").length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {commitments.filter((c) => c.type === "purchase_order").length} PO
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </MetricCard>
+
+                {/* Work Completed */}
+                <MetricCard label="Work Completed" href={`/${projectId}/prime-contracts`}>
+                  <div className="flex items-center justify-center py-1">
+                    <WorkCompletedGauge
+                      pctComplete={billedPct}
+                      label="Billed to Date"
+                      sub={totalBilled > 0 ? fmtCompact(totalBilled) : ownerInvoices.length === 0 ? "No invoices yet" : "—"}
+                    />
+                  </div>
+                </MetricCard>
+              </div>
+
+              {/* Full-width budget chart */}
+              {!budgetLoading && revisedBudget > 0 && (
+                <div className="rounded-lg bg-card p-5">
+                  <p className="mb-3 text-xs font-medium text-muted-foreground">Budget vs. Cost Breakdown</p>
+                  <BudgetBarChart budget={revisedBudget} costToDate={costToDate} ecac={ecac} />
                 </div>
-              </MetricCard>
+              )}
             </div>
 
-            {/* ── Alerts ──────────────────────────────────── */}
+            {/* ── Needs Attention ──────────────────────── */}
             {alerts.length > 0 && (
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Notifications
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Needs Attention
                 </p>
                 <AlertsBand alerts={alerts} />
               </div>
             )}
 
-            {/* ── Tab section 1: Communications ────────── */}
-            <TabSection tabs={commsTabs} defaultTab="tasks" />
+            {/* ── Work & Communications ─────────────────── */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Work & Communications
+              </p>
+              <TabSection tabs={commsTabs} defaultTab="tasks" />
+            </div>
 
-            {/* ── Tab section 2: Change Management ─────── */}
-            <TabSection tabs={changeTabs} defaultTab="change-events" />
+            {/* ── Change Management ─────────────────────── */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Change Management
+              </p>
+              <TabSection tabs={changeTabs} defaultTab="change-events" />
+            </div>
 
-            {/* ── Tab section 3: Field ─────────────────── */}
-            <TabSection tabs={fieldTabs} defaultTab="rfis" />
+            {/* ── Field Operations ──────────────────────── */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Field Operations
+              </p>
+              <TabSection tabs={fieldTabs} defaultTab="rfis" />
+            </div>
           </div>
 
           {/* ── Right sidebar ─────────────────────────────── */}
