@@ -190,14 +190,16 @@ These are AI/RAG surfaces and should read chunks or RAG metadata, not full
 
 ### Phase 1: Schema And Repository Boundary
 
-- [ ] Add RAG DB migration for `public.rag_document_metadata`.
-- [ ] Add RAG-side indexes for source/project/date, embedding status, storage path, and summary embedding.
+- [x] Add RAG DB migration for `public.rag_document_metadata`.
+  - Script: `scripts/database/rag/20260514183000_create_rag_document_metadata.sql`
+  - Applied to the RAG DB on 2026-05-14.
+- [x] Add RAG-side indexes for source/project/date, embedding status, storage path, content hash, and summary embedding.
 - [ ] Add backend repository helpers:
-  - [ ] `get_rag_metadata_read_client()`
-  - [ ] `get_rag_metadata_write_client()`
-  - [ ] `upsert_app_document_catalog(row)`
-  - [ ] `upsert_rag_document_metadata(row)`
-  - [ ] `fetch_rag_document_content(document_id)`
+  - [x] `get_rag_read_client()`
+  - [x] `get_rag_write_client()`
+  - [x] `upsert_app_document_catalog(row)`
+  - [x] `upsert_rag_document_metadata(row)`
+  - [x] `fetch_rag_document_content(document_id)`
   - [ ] `fetch_source_catalog(document_ids)`
 - [ ] Make the helpers fail loudly when RAG env vars are missing while RAG split flags are enabled.
 
@@ -206,6 +208,7 @@ These are AI/RAG surfaces and should read chunks or RAG metadata, not full
 - [ ] Modify Fireflies ingestion so full transcript markdown goes to RAG DB metadata.
 - [ ] Keep app DB `document_metadata.content` as a compact preview or null after parity passes.
 - [ ] Backfill 2026 Fireflies RAG metadata from Supabase Storage without calling Fireflies.
+  - Script now supports `--skip-app-content-update=true` so RAG metadata can be populated without rewriting large app DB `content`.
 - [ ] Verify every repairable Fireflies row has:
   - [ ] app DB skinny catalog row
   - [ ] RAG DB full `content` with `## Transcript`
