@@ -180,3 +180,6 @@ Status on 2026-05-13: the RAG database split is complete enough to restart the R
 - [x] Source RAG health failed loudly at `2026-05-14T00:06:05Z` because suspended sources are stale and there is backlog (`199` unembedded docs, `2096` uncompiled docs), not because the split RAG DB is unreachable.
 - [x] Teams DM was re-suspended after its first post-resume run started at `2026-05-13T23:40:00Z` without an end event by the 25-minute timeout window.
 - [x] Teams DM restart guardrail tightened after that finding: max 1 user per run, max 2 pages, 25 messages per page, stalest-first user selection, and a 10-minute hard timeout.
+- [x] First bounded Teams DM run completed successfully: started `2026-05-14T00:40:00Z`, ended `2026-05-14T00:41:55Z`, status `successful`.
+- [x] First post-resume Graph sync completed successfully: started `2026-05-14T00:20:00Z`, ended `2026-05-14T00:20:33Z`, status `successful`.
+- [x] Post-run DB pressure stayed low: app DB `29` total connections, RAG DB `12` total connections, RAG DB waiting queries `0`.

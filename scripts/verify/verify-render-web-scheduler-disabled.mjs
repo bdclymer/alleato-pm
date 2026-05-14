@@ -47,6 +47,35 @@ SAFE_RESTART_CRON_SCHEDULES.set("alleato-task-extraction", "0 7 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-teams-channel-sync", "10 * * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-teams-dm-sync", "40 * * * *");
 
+const SAFE_RESTART_REQUIRED_ENV = new Map([
+  [
+    "alleato-graph-sync",
+    new Map([
+      ["GRAPH_SYNC_TEAMS", "false"],
+      ["GRAPH_SYNC_TEAMS_DM", "false"],
+      ["GRAPH_EMBEDDING_LIMIT", "25"],
+      ["TEAMS_COMPILER_BATCH_SIZE", "25"],
+    ]),
+  ],
+  [
+    "alleato-task-extraction",
+    new Map([
+      ["TASK_EXTRACTION_MAX_DOCS", "25"],
+      ["TASK_EXTRACTION_MAX_RUN_DOCS", "25"],
+      ["TASK_EXTRACTION_CANDIDATE_LIMIT", "100"],
+      ["TASK_EXTRACTION_DESCRIPTION_LIMIT", "1000"],
+    ]),
+  ],
+  [
+    "alleato-teams-dm-sync",
+    new Map([
+      ["TEAMS_DM_SYNC_MAX_USERS", "1"],
+      ["TEAMS_DM_EXPORT_PAGE_SIZE", "25"],
+      ["TEAMS_DM_EXPORT_MAX_PAGES", "2"],
+    ]),
+  ],
+]);
+
 const DISABLED_CRON_SCHEDULE = "0 0 1 1 *";
 
 function isStructurallyDisabledCron(service) {
@@ -117,6 +146,33 @@ async function fetchRenderJsonWithRetry(url, token, attempts = 3) {
     }
   }
   throw lastError;
+}
+
+async function verifyRenderEnv(serviceId, serviceName, token) {
+  const expectedEnv = SAFE_RESTART_REQUIRED_ENV.get(serviceName);
+  if (!expectedEnv) {
+    return;
+  }
+
+  const envRows = await fetchRenderJsonWithRetry(
+    `${RENDER_SERVICE_URL}/${serviceId}/env-vars?limit=100`,
+    token,
+  );
+  const liveEnv = new Map(
+    envRows.map((row) => {
+      const envVar = row.envVar ?? row;
+      return [envVar.key, normalizeValue(envVar.value)];
+    }),
+  );
+
+  for (const [key, expected] of expectedEnv.entries()) {
+    const actual = liveEnv.get(key);
+    if (actual !== expected) {
+      failures.push(
+        `Render cron ${serviceName} must set ${key}=${expected} before resume; found ${actual || "<missing>"}`,
+      );
+    }
+  }
 }
 
 async function verifyRenderCronSuspensions() {
@@ -194,6 +250,9 @@ async function verifyRenderCronSuspensions() {
         failures.push(
           `Render cron ${name} may only be resumed on schedule ${expectedSchedule}; found ${schedule || "<unknown>"}`,
         );
+      }
+      if (service.suspended !== "suspended") {
+        await verifyRenderEnv(id, name, token);
       }
     }
   }
