@@ -36,6 +36,7 @@ import { ImportBudgetModal } from "@/components/budget/ImportBudgetModal";
 import type { BudgetDetailLineItem } from "@/components/budget/budget-details-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BudgetLineItem } from "@/types/budget";
+import type { BudgetViewDefinition } from "@/types/budget-views";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -180,10 +181,34 @@ function BudgetPageContent() {
   const [snapshotsRefreshToken, setSnapshotsRefreshToken] = React.useState(0);
   const [showViewsModal, setShowViewsModal] = React.useState(false);
 
+  // Budget views (named column configurations)
+  const [budgetViews, setBudgetViews] = React.useState<BudgetViewDefinition[]>([]);
+  const [activeViewId, setActiveViewId] = React.useState<string>("");
+
   // Budget lock state
   const [isLocked, setIsLocked] = React.useState(false);
   const [lockedAt, setLockedAt] = React.useState<string | null>(null);
   const [lockedBy, setLockedBy] = React.useState<string | null>(null);
+
+  // Fetch available budget views for the view switcher
+  const fetchBudgetViews = React.useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const data = await apiFetch<{ views?: BudgetViewDefinition[] }>(
+        `/api/projects/${projectId}/budget/views`,
+      );
+      const views = data.views ?? [];
+      setBudgetViews(views);
+      // Auto-select default view if none is active yet
+      if (!activeViewId) {
+        const defaultView = views.find((v) => v.is_default);
+        if (defaultView) setActiveViewId(defaultView.id);
+      }
+    } catch (error) {
+      // Non-critical: silently ignore — the table still works without named views
+      console.error("Failed to fetch budget views:", error);
+    }
+  }, [projectId, activeViewId]);
 
   // Fetch budget lock status
   const fetchLockStatus = React.useCallback(async () => {
@@ -232,10 +257,14 @@ function BudgetPageContent() {
   React.useEffect(() => {
     if (projectId) {
       fetchBudgetData();
+      fetchBudgetViews();
       // Load saved quick filter preference
       const savedFilter = loadQuickFilterPreference(projectId);
       setQuickFilter(savedFilter);
     }
+    // fetchBudgetViews intentionally omitted from deps to avoid re-fetching on
+    // every activeViewId change — only re-fetch when projectId changes.
+     
   }, [projectId, fetchBudgetData]);
 
   // Apply quick filter to budget data
@@ -1000,6 +1029,9 @@ function BudgetPageContent() {
               onQuickFilterChange={handleQuickFilterChange}
               activeQuickFilter={quickFilter}
               isFullscreen={isFullscreen}
+              budgetViews={budgetViews}
+              activeViewId={activeViewId}
+              onViewChange={setActiveViewId}
             />
           ) : null
         }
@@ -1281,7 +1313,7 @@ function BudgetPageContent() {
         onOpenChange={setShowViewsModal}
         projectId={projectId}
         mode="create"
-        onSuccess={() => setShowViewsModal(false)}
+        onSuccess={() => { setShowViewsModal(false); fetchBudgetViews(); }}
       />
       {ConfirmDialog}
     </>
