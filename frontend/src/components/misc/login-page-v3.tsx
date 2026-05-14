@@ -77,29 +77,29 @@ function cranePaths() {
     { d: `M${pt(mx+0.15,my,mBase+3)}L${pt(mx-0.15,my,mBase+6)}`, sw: 0.5, accent: true, delay: 2.1 },
     { d: `M${pt(mx-0.15,my,mBase+6)}L${pt(mx+0.15,my,mBase+9)}`, sw: 0.5, accent: true, delay: 2.15 },
     { d: `M${pt(mx+0.15,my,mBase+6)}L${pt(mx-0.15,my,mBase+9)}`, sw: 0.5, accent: true, delay: 2.15 },
-    // Pivot block
-    { d: `M${pt(mx-0.3,my,pivZ)}L${pt(mx+0.3,my,pivZ)}L${pt(mx+0.3,my,pivZ+0.8)}L${pt(mx-0.3,my,pivZ+0.8)}Z`, sw: 0.9, accent: true, delay: 2.2 },
+    // Pivot block — starts after mast finishes drawing (mast: delay 2.0 + duration 1.2 = 3.2s)
+    { d: `M${pt(mx-0.3,my,pivZ)}L${pt(mx+0.3,my,pivZ)}L${pt(mx+0.3,my,pivZ+0.8)}L${pt(mx-0.3,my,pivZ+0.8)}Z`, sw: 0.9, accent: true, delay: 3.2 },
     // Main jib
-    { d: `M${pt(mx,my,pivZ)}L${pt(jibX,my,pivZ)}`,   sw: 1.0, accent: true,  delay: 2.3 },
+    { d: `M${pt(mx,my,pivZ)}L${pt(jibX,my,pivZ)}`,   sw: 1.0, accent: true,  delay: 3.3 },
     // Counter-jib
-    { d: `M${pt(mx,my,pivZ)}L${pt(cjX,my,pivZ)}`,    sw: 0.8, accent: true,  delay: 2.4 },
+    { d: `M${pt(mx,my,pivZ)}L${pt(cjX,my,pivZ)}`,    sw: 0.8, accent: true,  delay: 3.4 },
     // Counterweight block at end of counter-jib
-    { d: `M${pt(cjX-0.4,my,pivZ-0.6)}L${pt(cjX+0.4,my,pivZ-0.6)}L${pt(cjX+0.4,my,pivZ+0.6)}L${pt(cjX-0.4,my,pivZ+0.6)}Z`, sw: 0.9, accent: true, delay: 2.5 },
+    { d: `M${pt(cjX-0.4,my,pivZ-0.6)}L${pt(cjX+0.4,my,pivZ-0.6)}L${pt(cjX+0.4,my,pivZ+0.6)}L${pt(cjX-0.4,my,pivZ+0.6)}Z`, sw: 0.9, accent: true, delay: 3.5 },
     // Peak / cat-head
-    { d: `M${pt(mx,my,pivZ)}L${pt(mx,my,peakZ)}`,    sw: 0.8, accent: true,  delay: 2.5 },
+    { d: `M${pt(mx,my,pivZ)}L${pt(mx,my,peakZ)}`,    sw: 0.8, accent: true,  delay: 3.5 },
     // Tie rod — peak to jib tip
-    { d: `M${pt(mx,my,peakZ)}L${pt(jibX,my,pivZ)}`,  sw: 0.5, accent: false, delay: 2.6 },
+    { d: `M${pt(mx,my,peakZ)}L${pt(jibX,my,pivZ)}`,  sw: 0.5, accent: false, delay: 3.6 },
     // Tie rod — peak to counter-jib tip
-    { d: `M${pt(mx,my,peakZ)}L${pt(cjX,my,pivZ)}`,   sw: 0.5, accent: false, delay: 2.65 },
+    { d: `M${pt(mx,my,peakZ)}L${pt(cjX,my,pivZ)}`,   sw: 0.5, accent: false, delay: 3.65 },
     // Trolley (small block riding the jib)
-    { d: `M${pt(trolX-0.2,my,pivZ)}L${pt(trolX+0.2,my,pivZ)}L${pt(trolX+0.2,my,pivZ-0.5)}L${pt(trolX-0.2,my,pivZ-0.5)}Z`, sw: 0.6, accent: false, delay: 2.7 },
+    { d: `M${pt(trolX-0.2,my,pivZ)}L${pt(trolX+0.2,my,pivZ)}L${pt(trolX+0.2,my,pivZ-0.5)}L${pt(trolX-0.2,my,pivZ-0.5)}Z`, sw: 0.6, accent: false, delay: 3.75 },
     // Hook cable (dashed)
-    { d: `M${pt(trolX,my,pivZ)}L${pt(trolX,my,hookZ)}`, sw: 0.45, accent: false, delay: 2.75, dashed: true },
+    { d: `M${pt(trolX,my,pivZ)}L${pt(trolX,my,hookZ)}`, sw: 0.45, accent: false, delay: 3.85, dashed: true },
     // Hook shape
-    { d: `M${pt(trolX-0.25,my,hookZ)}L${pt(trolX+0.25,my,hookZ)}L${pt(trolX+0.2,my,hookZ+0.8)}L${pt(trolX-0.2,my,hookZ+0.8)}`, sw: 0.6, accent: false, delay: 2.8 },
+    { d: `M${pt(trolX-0.25,my,hookZ)}L${pt(trolX+0.25,my,hookZ)}L${pt(trolX+0.2,my,hookZ+0.8)}L${pt(trolX-0.2,my,hookZ+0.8)}`, sw: 0.6, accent: false, delay: 3.95 },
     // Flag at peak
-    { d: `M${pt(mx,my,peakZ)}L${pt(mx,my,peakZ+1.2)}`, sw: 0.5, accent: false, delay: 2.9 },
-    { d: `M${sx(mx,my).toFixed(1)},${(sy(mx,my,peakZ+1.2)).toFixed(1)} L${(sx(mx,my)+16).toFixed(1)},${(sy(mx,my,peakZ+1.2)+5).toFixed(1)} L${(sx(mx,my)+16).toFixed(1)},${(sy(mx,my,peakZ+1.2)+13).toFixed(1)} Z`, sw: 0, accent: true, fill: true, delay: 3.0 },
+    { d: `M${pt(mx,my,peakZ)}L${pt(mx,my,peakZ+1.2)}`, sw: 0.5, accent: false, delay: 4.05 },
+    { d: `M${sx(mx,my).toFixed(1)},${(sy(mx,my,peakZ+1.2)).toFixed(1)} L${(sx(mx,my)+16).toFixed(1)},${(sy(mx,my,peakZ+1.2)+5).toFixed(1)} L${(sx(mx,my)+16).toFixed(1)},${(sy(mx,my,peakZ+1.2)+13).toFixed(1)} Z`, sw: 0, accent: true, fill: true, delay: 4.15 },
   ];
 }
 
@@ -211,7 +211,7 @@ export function LoginPageV3({ redirectTo }: LoginPageV3Props) {
             transition={{ duration: 0.5 }}
           >
             <Image
-              src="/Alleato-Group-Logo_Light.png"
+              src="/Alleato-Group-Logo_Dark.png"
               alt="Alleato"
               width={152}
               height={38}

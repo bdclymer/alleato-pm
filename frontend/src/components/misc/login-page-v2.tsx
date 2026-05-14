@@ -92,15 +92,6 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
           0% { transform: rotate(-3deg); }
           100% { transform: rotate(0deg); }
         }
-        @keyframes particleDrift {
-          0% { transform: translateY(0) translateX(0); opacity: 0; }
-          20% { opacity: 0.15; }
-          100% { transform: translateY(-80vh) translateX(15px); opacity: 0; }
-        }
-        @keyframes pulseGlow {
-          0%, 100% { opacity: 0.03; }
-          50% { opacity: 0.08; }
-        }
 
         /* Building structure draw-in */
         .bld-draw {
@@ -130,184 +121,129 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
           animation: craneSwing 1s cubic-bezier(0.4, 0, 0.2, 1) 2.4s forwards;
           transform: rotate(-3deg);
         }
-        .bld-particle {
-          animation: particleDrift linear infinite;
-          opacity: 0;
-        }
-        .bld-ambient {
-          animation: pulseGlow 4s ease-in-out infinite;
-        }
       `}</style>
 
-      <div className="min-h-screen bg-background grid lg:grid-cols-[1fr_1.3fr] relative overflow-hidden">
-        {/* Ambient background glow */}
-        <div
-          className="bld-ambient absolute top-1/4 right-1/4 rounded-full pointer-events-none bg-primary/10 blur-3xl"
-          style={{
-            width: "37.5rem",
-            height: "37.5rem",
-          }}
-        />
+      <div className="min-h-screen bg-background grid lg:grid-cols-[420px_1fr] relative overflow-hidden">
 
-        {/* Floating particles (full page) */}
-        {[...Array(10)].map((_, i) => (
-          <div
-            key={i}
-            className="bld-particle absolute bg-card/10 rounded-full"
-            style={{
-              left: `${10 + Math.random() * 80}%`,
-              bottom: "0%",
-              animationDelay: `${i * 2}s`,
-              animationDuration: `${18 + i * 2}s`,
-            }}
-          />
-        ))}
+        {/* ─── Left: Editorial Login Form ─── */}
+        <div className="flex flex-col justify-between pl-14 pr-10 py-12 md:pl-16 md:pr-12 relative z-10">
 
-        {/* ─── Left: Glass Login Form ─── */}
-        <div className="flex items-center justify-center p-6 md:p-12 relative z-10">
-          <div className="w-full max-w-sm space-y-8">
-            {/* Logo */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-              className="flex justify-center"
+          {/* Logo — top left */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Image
+              src="/Alleato-Group-Logo_Dark.png"
+              alt="Alleato"
+              width={152}
+              height={38}
+              priority
+            />
+          </motion.div>
+
+          {/* Form — vertically centered */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <div className="mb-9">
+              <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">
+                Project Management
+              </p>
+              <p className="text-3xl font-light tracking-tight text-foreground leading-snug">
+                Welcome back.<br />
+                <span className="text-muted-foreground">Sign in to continue.</span>
+              </p>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+              data-dev-autofill-disabled="true"
             >
-              <Image
-                src="/Alleato-Group-Logo_Light.png"
-                alt="Alleato"
-                width={180}
-                height={45}
-                priority
-              />
-            </motion.div>
-
-            {/* Glass card */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-              className="rounded-2xl bg-muted/30 p-8 shadow-sm"
-              style={{
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-              }}
-            >
-              {/* Heading */}
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.55, duration: 0.4 }}
-                className="text-center mb-8"
-              >
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                  Welcome back
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1.5">
-                  Sign in to your account
-                </p>
-              </motion.div>
-
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-4"
-                data-dev-autofill-disabled="true"
-              >
-                {/* Email */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7, duration: 0.4 }}
-                  className="space-y-2"
+              {/* Email */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="email"
+                  className="text-xs tracking-widest uppercase text-muted-foreground"
                 >
-                  <Label htmlFor="email" className="text-muted-foreground text-sm">
-                    Email
+                  Email address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="h-11 bg-background text-foreground placeholder:text-muted-foreground/40 focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="password"
+                    className="text-xs tracking-widest uppercase text-muted-foreground"
+                  >
+                    Password
                   </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary/70 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all"
-                  />
-                </motion.div>
-
-                {/* Password */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.85, duration: 0.4 }}
-                  className="space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-muted-foreground text-sm">
-                      Password
-                    </Label>
-                    <Link
-                      href="/auth/forgot-password"
-                      className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <PasswordInput
-                    id="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary/70 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all"
-                  />
-                </motion.div>
-
-                {/* Submit */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.0, duration: 0.4 }}
-                  className="pt-1"
-                >
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-11 font-medium shadow-sm transition-all"
-                  >
-                    {isLoading ? "Signing in..." : "Sign in"}
-                  </Button>
-                </motion.div>
-
-                {/* Sign up */}
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.1, duration: 0.4 }}
-                  className="text-center text-sm text-muted-foreground pt-2"
-                >
-                  Don&apos;t have an account?{" "}
                   <Link
-                    href="/auth/sign-up"
-                    className="text-primary hover:text-primary/90 font-medium transition-colors"
+                    href="/auth/forgot-password"
+                    className="text-xs text-muted-foreground/50 hover:text-primary transition-colors"
                   >
-                    Sign up
+                    Forgot?
                   </Link>
-                </motion.p>
-              </form>
-            </motion.div>
+                </div>
+                <PasswordInput
+                  id="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="h-11 bg-background text-foreground placeholder:text-muted-foreground/40 focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50"
+                />
+              </div>
 
-            {/* Tagline below glass card */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.3, duration: 0.6 }}
-              className="text-center text-xs text-muted-foreground tracking-wider uppercase"
-            >
-              Built for builders
-            </motion.p>
-          </div>
+              {/* Submit */}
+              <div className="pt-1">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-11 font-normal tracking-wider"
+                >
+                  {isLoading ? "Signing in..." : "Sign in"}
+                </Button>
+              </div>
+
+              {/* Sign up */}
+              <p className="text-sm text-center text-muted-foreground pt-1">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/auth/sign-up"
+                  className="text-primary hover:text-primary/80 font-medium transition-colors"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </form>
+          </motion.div>
+
+          {/* Tagline — bottom */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="text-xs tracking-widest uppercase text-muted-foreground/30"
+          >
+            Built for builders
+          </motion.p>
         </div>
 
         {/* ─── Right: Animated Building Scene ─── */}
