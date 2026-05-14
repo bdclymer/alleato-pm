@@ -127,9 +127,12 @@ describe("assistant widget registry", () => {
       mailbox: "bclymer@alleatogroup.com",
       totalCount: 46,
       threadCount: 26,
+      actionSummary: "1 thread looks actionable. Start with RE: Closeout MTV 2 Project.",
       items: [
         {
           id: "thread-1",
+          graphMessageId: "message-1",
+          conversationId: "conversation-1",
           subject: "RE: Closeout MTV 2 Project",
           fromName: "Kennedy, JP",
           fromEmail: "jpkennedy@radial.com",
@@ -143,6 +146,9 @@ describe("assistant widget registry", () => {
           bodyText: "Ok yes please get me final bill today.",
           webLink: "https://outlook.office.com/mail/inbox/id/thread-1",
           projectIds: [],
+          recommendedAction: "Reply with the billing/payment next step.",
+          replyPrompt: "Draft a short Outlook reply to this email thread.",
+          draftPrompt: "Draft a short Outlook email about this inbox item.",
         },
       ],
     };

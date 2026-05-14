@@ -840,7 +840,13 @@ function cleanEmailBodyPreview(value?: string | null): string[] {
     .slice(0, 5);
 }
 
-function OutlookInboxSummaryWidget({ widget }: { widget: OutlookInboxSummaryWidgetPayload }) {
+function OutlookInboxSummaryWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: OutlookInboxSummaryWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
   const [openId, setOpenId] = useState<string | null>(widget.items[0]?.id ?? null);
   return (
     <WidgetShell
@@ -854,6 +860,7 @@ function OutlookInboxSummaryWidget({ widget }: { widget: OutlookInboxSummaryWidg
           <span className="text-muted-foreground">{widget.summary}</span>
           <span className="font-medium text-foreground">{widget.dateLabel}</span>
         </div>
+        <p className="leading-6 text-foreground">{widget.actionSummary}</p>
         {widget.dataCutoffNote ? (
           <p className="text-xs leading-5 text-muted-foreground">{widget.dataCutoffNote}</p>
         ) : null}
@@ -864,13 +871,13 @@ function OutlookInboxSummaryWidget({ widget }: { widget: OutlookInboxSummaryWidg
           <span>{widget.emptyState ?? "No Outlook emails matched this request."}</span>
         </InfoAlert>
       ) : (
-        <div className="divide-y divide-border/70">
+        <div className="grid gap-3">
           {widget.items.map((item) => {
             const isOpen = openId === item.id;
             const sender = item.fromName || item.fromEmail || item.senders[0] || "Unknown sender";
             const bodyParagraphs = cleanEmailBodyPreview(item.bodyText ?? item.preview);
             return (
-              <div key={item.id} className="py-3 first:pt-0 last:pb-0">
+              <div key={item.id} className="rounded-md border border-border/70 bg-background px-3 py-3">
                 <Button
                   type="button"
                   variant="ghost"
@@ -900,6 +907,10 @@ function OutlookInboxSummaryWidget({ widget }: { widget: OutlookInboxSummaryWidg
                         isOpen && "rotate-180",
                       )}
                     />
+                  </div>
+                  <div className="rounded-md bg-muted/40 px-2.5 py-2 text-xs leading-5 text-foreground">
+                    <span className="font-medium">Suggested next step: </span>
+                    {item.recommendedAction}
                   </div>
                   {!isOpen && item.preview ? (
                     <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
@@ -935,14 +946,24 @@ function OutlookInboxSummaryWidget({ widget }: { widget: OutlookInboxSummaryWidg
                         <p className="text-muted-foreground">No readable body text is stored for this email.</p>
                       )}
                     </div>
-                    {item.webLink ? (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={item.webLink} target="_blank" rel="noreferrer">
-                          <ExternalLinkIcon className="h-4 w-4" />
-                          Open in Outlook
-                        </Link>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" onClick={() => onSubmit(item.replyPrompt)}>
+                        <SendIcon className="h-4 w-4" />
+                        Draft reply
                       </Button>
-                    ) : null}
+                      <Button size="sm" variant="outline" onClick={() => onSubmit(item.draftPrompt)}>
+                        <SquarePenIcon className="h-4 w-4" />
+                        Draft email
+                      </Button>
+                      {item.webLink ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={item.webLink} target="_blank" rel="noreferrer">
+                            <ExternalLinkIcon className="h-4 w-4" />
+                            Open in Outlook
+                          </Link>
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -2099,7 +2120,9 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
   meeting_intelligence: (props) =>
     props.widget.type === "meeting_intelligence" ? <MeetingIntelligenceWidget widget={props.widget} /> : null,
   outlook_inbox_summary: (props) =>
-    props.widget.type === "outlook_inbox_summary" ? <OutlookInboxSummaryWidget widget={props.widget} /> : null,
+    props.widget.type === "outlook_inbox_summary" ? (
+      <OutlookInboxSummaryWidget widget={props.widget} onSubmit={props.onSubmit} />
+    ) : null,
   project_picker: (props) =>
     props.widget.type === "project_picker" ? (
       <ProjectPickerWidget widget={props.widget} onSubmit={props.onSubmit} />

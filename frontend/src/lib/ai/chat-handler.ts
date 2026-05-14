@@ -679,6 +679,53 @@ function truncateRecentEmailBody(value: string | null | undefined): string | nul
   return `${normalized.slice(0, 4000).trimEnd()}\n\n[Email body truncated for chat display. Open in Outlook for the full message.]`;
 }
 
+function inferRecentEmailAction(item: {
+  subject: string;
+  preview?: string | null;
+  sender: string;
+}): string {
+  const text = `${item.subject} ${item.preview ?? ""}`.toLowerCase();
+  if (/\b(final bill|invoice|payment|cash flow|check|expense)\b/.test(text)) {
+    return "Reply with the billing/payment next step.";
+  }
+  if (/\b(availability|meeting|schedule|follow-up|follow up)\b/.test(text)) {
+    return "Reply with availability or confirm the meeting path.";
+  }
+  if (/\b(closeout|approval|review|needed|question|waiting|urgent|asap)\b/.test(text)) {
+    return "Reply with a clear owner, deadline, and next action.";
+  }
+  if (/\b(review your recent purchase|walmart reviews|marketplace|best buy)\b/.test(text)) {
+    return "Likely low priority unless this purchase needs follow-up.";
+  }
+  return `Review the thread and decide whether ${item.sender} needs a reply.`;
+}
+
+function buildRecentEmailActionPrompt(params: {
+  mode: "reply" | "new";
+  subject: string;
+  sender: string;
+  receivedAt: string | null;
+  graphMessageId?: string | null;
+  conversationId?: string | null;
+  bodyText?: string | null;
+  recommendedAction: string;
+}): string {
+  const lines = [
+    params.mode === "reply"
+      ? "Draft a short Outlook reply to this email thread."
+      : "Draft a short Outlook email about this inbox item.",
+    `Subject: ${params.subject}`,
+    `Latest sender: ${params.sender}`,
+    params.receivedAt ? `Received: ${params.receivedAt}` : null,
+    params.conversationId ? `Conversation ID: ${params.conversationId}` : null,
+    params.graphMessageId ? `Graph message ID: ${params.graphMessageId}` : null,
+    `Recommended action: ${params.recommendedAction}`,
+    params.bodyText ? `Email context:\n${params.bodyText.slice(0, 1600)}` : null,
+    "Use Brandon's short, direct voice. Preview the draft first and do not send it.",
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+
 function recentEmailWidgetItem(
   row: Record<string, unknown>,
   prompt: string,
@@ -695,14 +742,31 @@ function recentEmailWidgetItem(
     : [];
   const bodyText = truncateRecentEmailBody(stringValue(message?.bodyText) ?? stringValue(row.bodyText));
   const preview = stringValue(row.latestPreview) ?? stringValue(row.preview) ?? bodyText?.slice(0, 280);
+  const sender = stringValue(message?.fromName) ??
+    stringValue(row.latestFromName) ??
+    stringValue(message?.fromEmail) ??
+    stringValue(row.latestFromEmail) ??
+    stringValue(row.from) ??
+    senders[0] ??
+    "Unknown sender";
+  const graphMessageId = stringValue(message?.graphMessageId) ?? stringValue(row.latestGraphMessageId) ?? stringValue(row.graphMessageId) ?? null;
+  const conversationId = stringValue(message?.conversationId) ?? stringValue(row.conversationId) ?? null;
+  const receivedAt = stringValue(message?.receivedAt) ?? stringValue(row.latestReceivedAt) ?? stringValue(row.receivedAt) ?? null;
+  const recommendedAction = inferRecentEmailAction({
+    subject,
+    preview,
+    sender,
+  });
   return {
     id,
+    graphMessageId,
+    conversationId,
     subject,
     fromName: stringValue(message?.fromName) ?? stringValue(row.latestFromName) ?? null,
     fromEmail: stringValue(message?.fromEmail) ?? stringValue(row.latestFromEmail) ?? stringValue(row.from) ?? null,
     senders,
     recipients: rowRecipients(row),
-    receivedAt: stringValue(message?.receivedAt) ?? stringValue(row.latestReceivedAt) ?? stringValue(row.receivedAt) ?? null,
+    receivedAt,
     messageCount: numberValue(row.messageCount) ?? 1,
     hasAttachments: booleanValue(row.hasAttachments),
     attentionScore: scoreRecentEmailAttention(row, prompt),
@@ -710,7 +774,40 @@ function recentEmailWidgetItem(
     bodyText: bodyText ?? null,
     webLink: stringValue(message?.webLink) ?? stringValue(row.webLink) ?? null,
     projectIds: rowProjectIds(row),
+    recommendedAction,
+    replyPrompt: buildRecentEmailActionPrompt({
+      mode: "reply",
+      subject,
+      sender,
+      receivedAt,
+      graphMessageId,
+      conversationId,
+      bodyText,
+      recommendedAction,
+    }),
+    draftPrompt: buildRecentEmailActionPrompt({
+      mode: "new",
+      subject,
+      sender,
+      receivedAt,
+      graphMessageId,
+      conversationId,
+      bodyText,
+      recommendedAction,
+    }),
   };
+}
+
+function buildRecentEmailActionSummary(items: OutlookInboxSummaryWidgetItem[]): string {
+  const actionable = items.filter((item) => item.attentionScore >= 4);
+  if (items.length === 0) return "No email action items were found for this range.";
+  if (actionable.length === 0) {
+    return "Nothing looks urgent from the synced inbox, but review the top cards before ignoring them.";
+  }
+  return `${actionable.length} thread${actionable.length === 1 ? "" : "s"} look actionable. Start with ${actionable
+    .slice(0, 3)
+    .map((item) => item.subject)
+    .join("; ")}.`;
 }
 
 function buildRecentEmailInboxWidget(params: {
@@ -740,6 +837,8 @@ function buildRecentEmailInboxWidget(params: {
       ? "Last day"
       : `Last ${request.daysBack} days`;
 
+  const items = rows.slice(0, limit).map((row) => recentEmailWidgetItem(row, prompt));
+
   return {
     type: "outlook_inbox_summary",
     id: "recent-email-inbox",
@@ -753,7 +852,8 @@ function buildRecentEmailInboxWidget(params: {
     mailbox: isRecord(output.appliedFilter) ? stringValue(output.appliedFilter.email) ?? null : null,
     totalCount: count,
     threadCount,
-    items: rows.slice(0, limit).map((row) => recentEmailWidgetItem(row, prompt)),
+    actionSummary: buildRecentEmailActionSummary(items),
+    items,
     emptyState: rows.length === 0 ? "No Outlook emails matched this request." : undefined,
   };
 }
@@ -765,11 +865,14 @@ function formatRecentEmailInboxText(params: {
 }): string {
   const { output, widget } = params;
   const cutoff = stringValue(output.dataCutoffNote);
+  const topSubjects = widget.items.slice(0, 3).map((item) => item.subject);
   return [
-    `I checked Outlook email intake and found ${widget.totalCount} email${widget.totalCount === 1 ? "" : "s"}${widget.threadCount ? ` in ${widget.threadCount} thread${widget.threadCount === 1 ? "" : "s"}` : ""}.`,
+    topSubjects.length > 0
+      ? `I checked Outlook and found ${widget.totalCount} email${widget.totalCount === 1 ? "" : "s"}${widget.threadCount ? ` across ${widget.threadCount} thread${widget.threadCount === 1 ? "" : "s"}` : ""}. The threads most worth your attention are ${topSubjects.join("; ")}. ${widget.actionSummary}`
+      : `I checked Outlook and found ${widget.totalCount} email${widget.totalCount === 1 ? "" : "s"}${widget.threadCount ? ` across ${widget.threadCount} thread${widget.threadCount === 1 ? "" : "s"}` : ""}. ${widget.actionSummary}`,
     cutoff ? `Data freshness: ${cutoff}` : null,
     widget.items.length > 0
-      ? "I rendered the actual emails below so they are readable instead of dumping raw snippets."
+      ? "The cards below show the readable email context and include reply/draft actions."
       : widget.emptyState,
   ].filter(Boolean).join("\n");
 }

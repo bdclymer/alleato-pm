@@ -167,6 +167,8 @@ export type MeetingIntelligenceWidgetPayload = {
 
 export type OutlookInboxSummaryWidgetItem = {
   id: string;
+  graphMessageId?: string | null;
+  conversationId?: string | null;
   subject: string;
   fromName?: string | null;
   fromEmail?: string | null;
@@ -180,6 +182,9 @@ export type OutlookInboxSummaryWidgetItem = {
   bodyText?: string | null;
   webLink?: string | null;
   projectIds: number[];
+  recommendedAction: string;
+  replyPrompt: string;
+  draftPrompt: string;
 };
 
 export type OutlookInboxSummaryWidgetPayload = {
@@ -193,6 +198,7 @@ export type OutlookInboxSummaryWidgetPayload = {
   mailbox?: string | null;
   totalCount: number;
   threadCount?: number | null;
+  actionSummary: string;
   items: OutlookInboxSummaryWidgetItem[];
   emptyState?: string;
 };

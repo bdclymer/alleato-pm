@@ -126,9 +126,12 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
       mailbox: "bclymer@alleatogroup.com",
       totalCount: 46,
       threadCount: 26,
+      actionSummary: "1 thread looks actionable. Start with RE: Closeout MTV 2 Project.",
       items: [
         {
           id: "thread-1",
+          graphMessageId: "message-1",
+          conversationId: "conversation-1",
           subject: "RE: Closeout MTV 2 Project",
           fromName: "Kennedy, JP",
           fromEmail: "jpkennedy@radial.com",
@@ -147,23 +150,30 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
           ].join("\n"),
           webLink: "https://outlook.office.com/mail/inbox/id/thread-1",
           projectIds: [1009],
+          recommendedAction: "Reply with the billing/payment next step.",
+          replyPrompt: "Draft a short Outlook reply to this email thread.",
+          draftPrompt: "Draft a short Outlook email about this inbox item.",
         },
       ],
     };
   }
 
   it("renders Outlook inbox results as readable expandable email cards", () => {
+    const onSubmit = jest.fn();
     render(
       <AssistantWidgetRenderer
         widget={inboxWidget()}
-        onSubmit={jest.fn()}
+        onSubmit={onSubmit}
         onEditDraft={jest.fn()}
       />,
     );
 
     expect(screen.getByText("Important Outlook emails")).toBeInTheDocument();
     expect(screen.getByText("RE: Closeout MTV 2 Project")).toBeInTheDocument();
+    expect(screen.getByText(/Suggested next step:/)).toBeInTheDocument();
     expect(screen.getByText("Ok yes please get me final bill today.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /draft reply/i }));
+    expect(onSubmit).toHaveBeenCalledWith("Draft a short Outlook reply to this email thread.");
     expect(screen.getByRole("link", { name: /open in outlook/i })).toHaveAttribute(
       "href",
       "https://outlook.office.com/mail/inbox/id/thread-1",
