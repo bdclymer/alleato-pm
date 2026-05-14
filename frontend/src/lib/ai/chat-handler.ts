@@ -469,6 +469,15 @@ const LEAN_ADVISOR_INTENTS = new Set<AssistantIntent>([
 ]);
 const LEAN_ADVISOR_MAX_BASE_PROMPT_APPROX_TOKENS = 2500;
 const ALWAYS_AVAILABLE_MCP_TOOL_PREFIXES = ["mcp_excalidraw_"];
+const GENERIC_MCP_SKIP_INTENTS = new Set<AssistantIntent>([
+  "email_action",
+  "calendar_action",
+  "task_write",
+  "source_lookup",
+  "source_health",
+  "task_followup",
+  "implementation_planning",
+]);
 
 function pickTools(tools: ToolSet, names: readonly string[]): ToolSet {
   const selected: ToolSet = {};
@@ -7464,11 +7473,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           "risk_review",
           "target_briefing",
         ].includes(assistantIntent);
-        const shouldLoadMcpTools = ![
-          "email_action",
-          "calendar_action",
-          "task_write",
-        ].includes(assistantIntent);
+        const shouldLoadMcpTools = !GENERIC_MCP_SKIP_INTENTS.has(assistantIntent);
         const mcpToolBundle = shouldLoadMcpTools
           ? await createAiAssistantMcpTools()
           : { tools: {}, trace: [], close: async () => {} };
@@ -7482,7 +7487,8 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               message: lastUserContent.slice(0, 240),
             },
             output: {
-              reason: "Known action tools are local; skipping generic MCP discovery for latency.",
+              reason:
+                "Known local tools or injected source context cover this route; skipping generic MCP discovery for latency.",
             },
             timestamp: new Date().toISOString(),
           });
