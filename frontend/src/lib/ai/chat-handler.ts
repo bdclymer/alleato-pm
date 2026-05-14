@@ -4967,7 +4967,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           return;
         }
 
-        if (taskSourceReviewRequest) {
+        if (taskSourceReviewRequest && assistantIntent !== "task_write") {
           writeStrategistStatus(writer, {
             stage: "knowledge",
             message: "Opening the task row and source meeting evidence",
