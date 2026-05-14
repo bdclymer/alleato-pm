@@ -376,6 +376,8 @@ export function RagChatPage() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams()!;
   const activeSessionId = searchParams?.get("session") ?? null;
+  const projectIdParam = searchParams?.get("projectId") ?? null;
+  const initialProjectId = projectIdParam ? Number(projectIdParam) : null;
 
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
   const [pendingFirstMessage, setPendingFirstMessage] = useState<string | null>(
@@ -406,7 +408,9 @@ export function RagChatPage() {
   const prevEffectiveSessionIdRef = useRef<string | null>(null);
   const [councilMode, setCouncilMode] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    Number.isFinite(initialProjectId) ? initialProjectId : null,
+  );
   const [selectedModel, setSelectedModel] = useState<AiAssistantModelId>(
     DEFAULT_AI_ASSISTANT_MODEL,
   );

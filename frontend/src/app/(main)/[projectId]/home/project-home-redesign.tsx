@@ -269,7 +269,7 @@ function AiPanel({ projectId, onClose }: { projectId: number; onClose: () => voi
         </div>
         <p className="text-[10px] text-muted-foreground/50 mt-2 text-center">
           Full chat at{" "}
-          <Link href={`/${projectId}/assistant`} className="underline hover:text-muted-foreground">
+          <Link href={`/ai-assistant?projectId=${projectId}`} className="underline hover:text-muted-foreground">
             project assistant
           </Link>
         </p>

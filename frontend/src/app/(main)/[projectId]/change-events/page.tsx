@@ -243,6 +243,22 @@ export default function ProjectChangeEventsPage(): ReactElement {
     [projectId, refetchChangeEvents, deleteDialog],
   );
 
+  const handleRestore = React.useCallback(
+    (item: ChangeEvent) => {
+      apiFetch(`/api/projects/${projectId}/change-events/${item.id}/restore`, {
+        method: "POST",
+      })
+        .then(() => {
+          toast.success("Change event restored");
+          refetchChangeEvents();
+        })
+        .catch((err: unknown) => {
+          toast.error(err instanceof Error ? err.message : "Failed to restore change event");
+        });
+    },
+    [projectId, refetchChangeEvents],
+  );
+
   const handleSendRfqsForItem = React.useCallback(
     (item: ChangeEvent) => {
       tableState.setSelectedIds([String(item.id)]);
@@ -705,7 +721,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         getRowId: (item) => String(item.id),
         onRowClick: handleView,
         rowActions: (item) =>
-          renderChangeEventRowActions(item, handleView, handleEdit, handleDelete, handleSendRfqsForItem),
+          renderChangeEventRowActions(item, handleView, handleEdit, handleDelete, handleSendRfqsForItem, activeTab === "recycle_bin" ? handleRestore : undefined),
         renderExpandedRow,
       }}
       sorting={{

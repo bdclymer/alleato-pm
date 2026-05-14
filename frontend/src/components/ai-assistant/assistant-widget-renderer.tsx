@@ -8,6 +8,7 @@ import {
   ArrowRightIcon,
   CalendarClockIcon,
   CalendarIcon,
+  CheckIcon,
   ChevronDownIcon,
   CheckCircle2Icon,
   ClipboardIcon,
@@ -34,6 +35,14 @@ import { toast } from "sonner";
 
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -2211,6 +2220,13 @@ function ProjectPickerWidget({
   widget: ProjectPickerWidgetPayload;
   onSubmit: (message: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const selectedProject = useMemo(
+    () => widget.projects.find((project) => project.projectId === selectedProjectId) ?? null,
+    [selectedProjectId, widget.projects],
+  );
+
   return (
     <WidgetShell
       title={widget.title}
@@ -2219,48 +2235,104 @@ function ProjectPickerWidget({
       actions={<WidgetMeta>{widget.projects.length} projects</WidgetMeta>}
     >
       <p className="text-sm leading-6 text-muted-foreground">{widget.subtitle}</p>
-      <div className="-mx-1 divide-y divide-border/60">
-        {widget.projects.map((project) => (
-          <Button
-            key={project.projectId}
-            type="button"
-            variant="ghost"
-            className="group h-auto w-full min-w-0 justify-start rounded-md px-1 py-3 text-left whitespace-normal hover:bg-muted/40"
-            onClick={() => onSubmit(project.prompt)}
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex min-w-0 items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-foreground">
-                    {project.name}
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    {project.client ? <span>{project.client}</span> : null}
-                    {project.phase ? <span>{project.phase}</span> : null}
-                    {project.state ? <span>{project.state}</span> : null}
-                  </div>
-                </div>
-                <ArrowRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
-              </div>
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                {project.contractValue ? <span>{project.contractValue}</span> : null}
-                {typeof project.meetingCount === "number" ? (
-                  <span>{project.meetingCount} meetings</span>
-                ) : null}
-                {typeof project.openCriticalItems === "number" && project.openCriticalItems > 0 ? (
-                  <span className="text-destructive">{project.openCriticalItems} critical</span>
-                ) : null}
-              </div>
-              {project.summary ? (
-                <div className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                  {project.summary}
-                </div>
-              ) : null}
+
+      {widget.projects.length > 0 ? (
+        <div className="space-y-3">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="h-10 w-full justify-between gap-2 px-3 text-left font-normal"
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  {selectedProject ? selectedProject.name : "Select project"}
+                </span>
+                <ChevronDownIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] p-0"
+            >
+              <Command
+                filter={(value, search) => {
+                  if (!search) return 1;
+                  return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                }}
+              >
+                <CommandInput placeholder="Search projects..." />
+                <CommandList className="max-h-72">
+                  <CommandEmpty>No projects found.</CommandEmpty>
+                  <CommandGroup>
+                    {widget.projects.map((project) => {
+                      const isSelected = project.projectId === selectedProjectId;
+                      return (
+                        <CommandItem
+                          key={project.projectId}
+                          value={[
+                            project.name,
+                            project.client,
+                            project.phase,
+                            project.state,
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          onSelect={() => {
+                            setSelectedProjectId(project.projectId);
+                            setOpen(false);
+                          }}
+                          className="cursor-pointer items-start gap-3 px-3 py-2.5"
+                        >
+                          <CheckIcon
+                            className={cn(
+                              "mt-0.5 h-4 w-4 shrink-0 text-primary",
+                              isSelected ? "opacity-100" : "opacity-0",
+                            )}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium text-foreground">
+                              {project.name}
+                            </div>
+                            <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                              {project.client ? <span>{project.client}</span> : null}
+                              {project.phase ? <span>{project.phase}</span> : null}
+                              {project.state ? <span>{project.state}</span> : null}
+                              {project.contractValue ? <span>{project.contractValue}</span> : null}
+                            </div>
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
+          {selectedProject ? (
+            <div className="text-xs leading-5 text-muted-foreground">
+              {[selectedProject.client, selectedProject.phase, selectedProject.state]
+                .filter(Boolean)
+                .join(" - ")}
             </div>
+          ) : null}
+
+          <Button
+            type="button"
+            size="sm"
+            disabled={!selectedProject}
+            onClick={() => {
+              if (selectedProject) onSubmit(selectedProject.prompt);
+            }}
+          >
+            <ArrowRightIcon className="h-4 w-4" />
+            Generate queue
           </Button>
-        ))}
-      </div>
-      {widget.emptyState && widget.projects.length === 0 ? (
+        </div>
+      ) : widget.emptyState ? (
         <InfoAlert variant="info">{widget.emptyState}</InfoAlert>
       ) : null}
     </WidgetShell>

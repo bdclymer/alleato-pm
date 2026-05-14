@@ -754,7 +754,7 @@ function AiWidget({ projectId }: { projectId: number }) {
               </div>
               <p className="text-[10px] text-muted-foreground/50 mt-2 text-center">
                 Full AI chat at{" "}
-                <Link href={`/${projectId}/assistant`} className="underline hover:text-muted-foreground">project assistant</Link>
+                <Link href={`/ai-assistant?projectId=${projectId}`} className="underline hover:text-muted-foreground">project assistant</Link>
               </p>
             </div>
           </div>

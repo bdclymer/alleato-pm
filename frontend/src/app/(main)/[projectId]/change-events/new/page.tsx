@@ -24,11 +24,25 @@ export default function NewChangeEventPage() {
     setIsSaving(true);
     setSaveError(null);
     try {
+      // The form emits display strings (e.g. "Open", "Pending Approval", "Design Change").
+      // The server-side validation.ts uses createNormalizedEnum which accepts these directly.
+      // STATUS_MAP: keys are display strings (what STATUS_OPTIONS emits) → pass through unchanged.
       const STATUS_MAP: Record<string, string> = {
+        // Slug fallbacks for any legacy callers
         open: "Open",
         pending: "Pending Approval",
+        "pending approval": "Pending Approval",
         close: "Closed",
+        closed: "Closed",
         void: "Void",
+        // Display string pass-through
+        Open: "Open",
+        "Pending Approval": "Pending Approval",
+        Approved: "Approved",
+        Rejected: "Rejected",
+        Closed: "Closed",
+        Void: "Void",
+        Converted: "Converted",
       };
       const ORIGIN_MAP: Record<string, string> = {
         emails: "Emails",
@@ -37,16 +51,38 @@ export default function NewChangeEventPage() {
         Internal: "Internal",
         Field: "Field",
       };
+      // TYPE_MAP: keys are display strings (what TYPE_OPTIONS emits). All types must be present.
       const TYPE_MAP: Record<string, string> = {
+        // Display string pass-through
+        "Owner Change": "Owner Change",
+        "Design Change": "Design Change",
+        Allowance: "Allowance",
+        Contingency: "Contingency",
+        "Scope Gap": "Scope Gap",
+        TBD: "TBD",
+        Transfer: "Transfer",
+        "Unforeseen Condition": "Unforeseen Condition",
+        "Value Engineering": "Value Engineering",
+        "Owner Requested": "Owner Requested",
+        "Constructability Issue": "Constructability Issue",
+        // Slug fallbacks
         allowance: "Allowance",
         contingency: "Contingency",
         owner_change: "Owner Change",
+        design_change: "Design Change",
         tbd: "TBD",
         transfer: "Transfer",
       };
       const REASON_MAP: Record<string, string> = {
+        Allowance: "Allowance",
+        "Back Charge": "Back Charge",
+        "Client Request": "Client Request",
+        "Design Development": "Design Development",
+        "Existing Condition": "Existing Condition",
+        // Slug fallbacks
         allowance: "Allowance",
-        backcharge: "Backcharge",
+        backcharge: "Back Charge",
+        back_charge: "Back Charge",
         client_request: "Client Request",
         design_development: "Design Development",
         existing_condition: "Existing Condition",
@@ -68,10 +104,10 @@ export default function NewChangeEventPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: data.title,
-          type: TYPE_MAP[data.type || ""] || "Owner Change",
-          status: STATUS_MAP[data.status || "open"] || "Open",
+          type: (data.type ? (TYPE_MAP[data.type] ?? data.type) : undefined),
+          status: STATUS_MAP[data.status || "Open"] || data.status || "Open",
           scope: normalizedScope,
-          reason: REASON_MAP[data.changeReason || ""] || data.changeReason || undefined,
+          reason: data.changeReason ? (REASON_MAP[data.changeReason] ?? data.changeReason) : undefined,
           origin: ORIGIN_MAP[data.origin || ""] || "Internal",
           originId: data.originId || undefined,
           expectingRevenue: data.expectingRevenue ?? true,

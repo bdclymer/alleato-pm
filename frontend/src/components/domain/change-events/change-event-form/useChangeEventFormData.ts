@@ -394,6 +394,8 @@ export function useChangeEventFormData({
     const nextErrors: Partial<Record<keyof ChangeEventFormData, string>> = {};
     if (!formData.title.trim()) {
       nextErrors.title = "Title is required";
+    } else if (formData.title.length > 255) {
+      nextErrors.title = "Title must be 255 characters or fewer";
     }
     if (!formData.status) {
       nextErrors.status = "Status is required";

@@ -1,4 +1,4 @@
-import { ChevronRight, Eye, MoreHorizontal, Pencil, Send, Trash2 } from "lucide-react";
+import { ChevronRight, Eye, MoreHorizontal, Pencil, RotateCcw, Send, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 
 import { formatDate } from "@/lib/format";
@@ -364,7 +364,9 @@ export function renderChangeEventRowActions(
   onEdit: (item: ChangeEvent) => void,
   onDelete: (item: ChangeEvent) => void,
   onSendRfqs?: (item: ChangeEvent) => void,
+  onRestore?: (item: ChangeEvent) => void,
 ): ReactElement {
+  const isDeleted = Boolean(item.deleted_at);
   return (
     <div className="flex items-center gap-1">
       <DropdownMenu>
@@ -383,14 +385,22 @@ export function renderChangeEventRowActions(
             <Eye className="mr-2 h-4 w-4" />
             View
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(item); }}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          {onSendRfqs && (
+          {!isDeleted && (
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(item); }}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+          )}
+          {!isDeleted && onSendRfqs && (
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendRfqs(item); }}>
               <Send className="mr-2 h-4 w-4" />
               Send RFQs
+            </DropdownMenuItem>
+          )}
+          {isDeleted && onRestore && (
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onRestore(item); }}>
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Restore
             </DropdownMenuItem>
           )}
           <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>

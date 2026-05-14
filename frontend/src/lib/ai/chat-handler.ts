@@ -62,6 +62,10 @@ import {
   type SourceSpecificRagRow,
 } from "@/lib/ai/preflights";
 import {
+  buildMeetingSignalBuckets,
+  meetingSnippet,
+} from "@/lib/ai/meeting-insight-signals";
+import {
   isTimeoutResult,
   planAssistantIntent,
   withTimeout,
@@ -2002,24 +2006,6 @@ function isMeetingSourceSpecificRequest(request: SourceSpecificRagRequest): bool
   return request.kind === "meetings_on_date" || request.kind === "recent_meetings";
 }
 
-function snippetFromContent(content?: string | null, maxLength = 220): string | null {
-  const normalized = content?.replace(/\s+/g, " ").trim();
-  if (!normalized) return null;
-  const firstSentence = normalized.match(/^(.+?[.!?])\s/)?.[1] ?? normalized;
-  return firstSentence.length > maxLength ? `${firstSentence.slice(0, maxLength).trim()}...` : firstSentence;
-}
-
-function extractMeetingSignals(content: string | null, terms: RegExp, limit: number): string[] {
-  if (!content) return [];
-  const sentences = content
-    .replace(/\s+/g, " ")
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-  const matches = sentences.filter((sentence) => terms.test(sentence));
-  return [...new Set(matches)].slice(0, limit);
-}
-
 function buildMeetingHref(row: SourceSpecificRagRow): string {
   return row.project_id ? `/${row.project_id}/meetings/${row.id}` : `/meetings/${row.id}`;
 }
@@ -2041,7 +2027,7 @@ function buildMeetingInsightsWidget(params: {
     return {
       id: `${row.id}-${index}`,
       title: signal.slice(0, 140),
-      detail: snippetFromContent(row.content, 180) ?? undefined,
+      detail: meetingSnippet(row, 180) ?? undefined,
       sourceTitle: row.title?.trim() || "Untitled meeting",
       sourceHref: buildMeetingHref(row),
       confidence: "medium",
@@ -2052,31 +2038,16 @@ function buildMeetingInsightsWidget(params: {
   const promises: MeetingInsight[] = [];
   const risks: MeetingInsight[] = [];
   const unresolvedQuestions: MeetingInsight[] = [];
+  const rowSignals = rows.map((row) => buildMeetingSignalBuckets([row], 4));
 
-  rows.forEach((row) => {
-    extractMeetingSignals(
-      row.content,
-      /\b(decided|decision|approved|rejected|agreed|confirmed|selected)\b/i,
-      3,
-    ).forEach((signal, index) => decisions.push(insightFromSignal(row, signal, index)));
-
-    extractMeetingSignals(
-      row.content,
-      /\b(action item|follow up|follow-up|needs to|must|assigned|owner|due|by friday|by monday)\b/i,
-      3,
-    ).forEach((signal, index) => promises.push(insightFromSignal(row, signal, index)));
-
-    extractMeetingSignals(
-      row.content,
-      /\b(risk|critical|blocked|delay|delayed|issue|concern|exposure|problem|missing|late|overdue)\b/i,
-      3,
-    ).forEach((signal, index) => risks.push(insightFromSignal(row, signal, index)));
-
-    extractMeetingSignals(
-      row.content,
-      /\b(question|unclear|unknown|confirm|verify|waiting|need answer|need clarification)\b/i,
-      3,
-    ).forEach((signal, index) => unresolvedQuestions.push(insightFromSignal(row, signal, index)));
+  rows.forEach((row, rowIndex) => {
+    const signals = rowSignals[rowIndex];
+    signals.decisions.forEach((signal, index) => decisions.push(insightFromSignal(row, signal, index)));
+    signals.promises.forEach((signal, index) => promises.push(insightFromSignal(row, signal, index)));
+    signals.risks.forEach((signal, index) => risks.push(insightFromSignal(row, signal, index)));
+    signals.unresolvedQuestions.forEach((signal, index) =>
+      unresolvedQuestions.push(insightFromSignal(row, signal, index)),
+    );
   });
 
   const suggestedTasks: OwnerActionItem[] = promises.slice(0, 6).map((promise, index) => ({
@@ -2099,7 +2070,7 @@ function buildMeetingInsightsWidget(params: {
     title: row.title?.trim() || "Untitled meeting",
     sourceType: "meeting" as const,
     date: row.date ?? row.created_at ?? undefined,
-    snippet: snippetFromContent(row.content, 180) ?? undefined,
+    snippet: meetingSnippet(row, 180) ?? undefined,
     href: buildMeetingHref(row),
     confidence: "medium" as const,
   }));
@@ -2930,8 +2901,7 @@ function buildProjectPickerWidget(
         prompt: options.promptForProject({ projectId, name }),
       };
     })
-    .filter((project): project is NonNullable<typeof project> => Boolean(project))
-    .slice(0, 8);
+    .filter((project): project is NonNullable<typeof project> => Boolean(project));
 
   return {
     type: "project_picker",
@@ -2972,8 +2942,7 @@ async function loadOwnerSnapshotProjectPicker(params: {
       .select("id, name, client, phase, state, summary, health_status")
       .eq("archived", false)
       .in("id", scopedProjectIds)
-      .order("name", { ascending: true })
-      .limit(8);
+      .order("name", { ascending: true });
     if (phase) query = query.eq("phase", phase);
     return query;
   }

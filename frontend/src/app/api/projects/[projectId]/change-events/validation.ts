@@ -99,7 +99,20 @@ export const LineItemRevenueSource = createNormalizedEnum([
   "Match Revenue to Latest Cost",
   "Enter manually",
   "Quantity x Unit Cost",
-]); // Create Change Event Schema
+],
+{
+  // Legacy / alternate stored values that may already be in the DB
+  match_cost: "Match Revenue to Latest Cost",
+  match_revenue_to_cost: "Match Revenue to Latest Cost",
+  manual: "Enter manually",
+  qty_x_unit_cost: "Quantity x Unit Cost",
+  quantity_x_unit_cost: "Quantity x Unit Cost",
+});
+// For update operations, accept any stored string value (avoids 422 on legacy data)
+export const LineItemRevenueSourceUpdate = z.preprocess(
+  (input) => (input === "" ? null : input),
+  z.string().nullable().optional(),
+); // Create Change Event Schema
 export const createChangeEventSchema = z.object({
   title: z.string().min(1).max(255, "Title must be less than 255 characters"),
   type: ChangeEventType,
@@ -125,7 +138,7 @@ export const updateChangeEventSchema = z.object({
   scope: ChangeEventScope.nullable().optional(),
   origin: ChangeEventOrigin.nullable().optional(),
   expectingRevenue: z.boolean().optional(),
-  lineItemRevenueSource: LineItemRevenueSource.nullable().optional(),
+  lineItemRevenueSource: LineItemRevenueSourceUpdate,
   // Prime contract FK references prime_contracts.id (UUID).
   primeContractId: z.preprocess(
     (value) => (value === "" ? null : value),
