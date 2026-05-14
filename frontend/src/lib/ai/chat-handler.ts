@@ -7192,6 +7192,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           }
         }
 
+        let resolvedTarget: Awaited<ReturnType<typeof resolveIntelligenceTarget>> | null = null;
         if (shouldUsePacketFirstIntent(assistantIntent)) {
           writeStrategistStatus(writer, {
             stage: "knowledge",
@@ -7199,10 +7200,18 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             status: "loading",
           });
 
+          resolvedTarget = await resolveIntelligenceTarget({
+            query: lastUserContent,
+            selectedProjectId,
+            supabase,
+          });
+          const deepAgentProjectId =
+            selectedProjectId ?? resolvedTarget?.projectId ?? null;
+
           if (
             shouldUseDeepAgentProjectStatusBridge({
               intent: assistantIntent,
-              selectedProjectId,
+              projectId: deepAgentProjectId,
             })
           ) {
             writeStrategistStatus(writer, {
@@ -7214,7 +7223,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             try {
               const deepAgentPacket = await fetchDeepAgentProjectStatus({
                 userId: user.id,
-                projectId: selectedProjectId!,
+                projectId: deepAgentProjectId!,
                 sessionId,
                 question: lastUserContent,
               });
@@ -7231,6 +7240,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                   intent: assistantIntent,
                   query: lastUserContent.slice(0, 240),
                   selectedProjectId,
+                  resolvedProjectId: resolvedTarget?.projectId ?? null,
                 },
                 output: {
                   mode: deepAgentPacket.mode,
@@ -7257,6 +7267,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
                   intent: assistantIntent,
                   query: lastUserContent.slice(0, 240),
                   selectedProjectId,
+                  resolvedProjectId: resolvedTarget?.projectId ?? null,
                 },
                 error: detail,
                 timestamp: new Date().toISOString(),
@@ -7268,12 +7279,6 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               });
             }
           }
-
-          const resolvedTarget = await resolveIntelligenceTarget({
-            query: lastUserContent,
-            selectedProjectId,
-            supabase,
-          });
 
           if (resolvedTarget) {
             const intelligencePacket = await loadCurrentIntelligencePacket({
@@ -7372,7 +7377,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           "risk_review",
           "target_briefing",
         ].includes(assistantIntent);
-        const shouldLoadMcpTools = assistantIntent !== "email_action";
+        const shouldLoadMcpTools = ![
+          "email_action",
+          "calendar_action",
+          "task_write",
+        ].includes(assistantIntent);
         const mcpToolBundle = shouldLoadMcpTools
           ? await createAiAssistantMcpTools()
           : { tools: {}, trace: [], close: async () => {} };
@@ -7386,7 +7395,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               message: lastUserContent.slice(0, 240),
             },
             output: {
-              reason: "Known Outlook/email action tools are local; skipping generic MCP discovery for latency.",
+              reason: "Known action tools are local; skipping generic MCP discovery for latency.",
             },
             timestamp: new Date().toISOString(),
           });

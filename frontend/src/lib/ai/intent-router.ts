@@ -201,6 +201,7 @@ export function shouldUsePacketFirstIntent(intent: AssistantIntent): boolean {
     intent === "financial_analysis" ||
     intent === "change_management_review" ||
     intent === "decision_lookup" ||
-    intent === "task_followup"
+    intent === "task_followup" ||
+    intent === "implementation_planning"
   );
 }

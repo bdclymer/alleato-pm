@@ -74,33 +74,48 @@ describe("Deep Agents project-status bridge", () => {
     process.env = originalEnv;
   });
 
-  it("only enables the backend bridge for selected project owner-status intents", () => {
+  it("enables the backend bridge for project-scoped read-heavy intents", () => {
     process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "true";
 
-    expect(
-      shouldUseDeepAgentProjectStatusBridge({
-        intent: "latest_status",
-        selectedProjectId: 43,
-      }),
-    ).toBe(true);
-    expect(
-      shouldUseDeepAgentProjectStatusBridge({
-        intent: "risk_review",
-        selectedProjectId: 43,
-      }),
-    ).toBe(true);
-    expect(
-      shouldUseDeepAgentProjectStatusBridge({
-        intent: "financial_analysis",
-        selectedProjectId: 43,
-      }),
-    ).toBe(false);
+    const deepAgentIntents = [
+      "latest_status",
+      "risk_review",
+      "financial_analysis",
+      "change_management_review",
+      "decision_lookup",
+      "task_followup",
+      "implementation_planning",
+    ] as const;
+
+    for (const intent of deepAgentIntents) {
+      expect(
+        shouldUseDeepAgentProjectStatusBridge({
+          intent,
+          selectedProjectId: 43,
+        }),
+      ).toBe(true);
+    }
+
     expect(
       shouldUseDeepAgentProjectStatusBridge({
         intent: "latest_status",
         selectedProjectId: null,
       }),
     ).toBe(false);
+
+    expect(
+      shouldUseDeepAgentProjectStatusBridge({
+        intent: "email_action",
+        selectedProjectId: 43,
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldUseDeepAgentProjectStatusBridge({
+        intent: "latest_status",
+        projectId: 43,
+      }),
+    ).toBe(true);
 
     process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "false";
     expect(

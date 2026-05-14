@@ -136,7 +136,7 @@ describe("intent router", () => {
     const intent = classifyAssistantIntent("What systems and processes do you think we need to put in place?");
 
     expect(intent).toBe("implementation_planning");
-    expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    expect(shouldUsePacketFirstIntent(intent)).toBe(true);
   });
 
   describe("task_write intent routing", () => {

@@ -75,10 +75,15 @@ export type DeepAgentProjectStatusRequest = {
   question: string;
 };
 
-const DEEP_AGENT_BRIDGE_INTENTS = new Set<AssistantIntent>([
+const DEEP_AGENT_PROJECT_CONTEXT_INTENTS = new Set<AssistantIntent>([
   "target_briefing",
   "latest_status",
   "risk_review",
+  "financial_analysis",
+  "change_management_review",
+  "decision_lookup",
+  "task_followup",
+  "implementation_planning",
 ]);
 
 export function isDeepAgentProjectStatusBridgeEnabled(): boolean {
@@ -87,12 +92,14 @@ export function isDeepAgentProjectStatusBridgeEnabled(): boolean {
 
 export function shouldUseDeepAgentProjectStatusBridge(params: {
   intent: AssistantIntent;
+  projectId?: number | null;
   selectedProjectId?: number | null;
 }): boolean {
+  const projectId = params.projectId ?? params.selectedProjectId;
   return (
     isDeepAgentProjectStatusBridgeEnabled() &&
-    typeof params.selectedProjectId === "number" &&
-    DEEP_AGENT_BRIDGE_INTENTS.has(params.intent)
+    typeof projectId === "number" &&
+    DEEP_AGENT_PROJECT_CONTEXT_INTENTS.has(params.intent)
   );
 }
 
