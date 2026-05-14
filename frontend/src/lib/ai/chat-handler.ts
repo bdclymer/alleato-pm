@@ -190,6 +190,7 @@ type LoopDiagnostic = {
 
 const TASK_WRITE_TOOL_NAMES = [
   "createTask",
+  "getMyTasks",
   "getActionItemsAndInsights",
   "createGeneratedTask",
   "updateGeneratedTask",
@@ -334,12 +335,25 @@ const MESSAGE_DRIVEN_TOOL_RULES: Array<{
   tools: readonly string[];
 }> = [
   {
+    pattern: /\b(owner call|owner calls|owner prep|overpromis(e|ing)|what should i say)\b/i,
+    tools: ["getProjectBriefingSnapshot", "semanticSearch"],
+  },
+  {
+    pattern: /\b(action items?|open items?|next actions?|waiting on|sign[- ]?off|approval|decision|decisions)\b/i,
+    tools: ["getActionItemsAndInsights", "getRFIStatus", "getSubmittalStatus"],
+  },
+  {
     pattern: /\b(commitments?|bought out|buyout|subcontracts?|open buyout)\b/i,
     tools: ["getCommitmentsOverview", "queryCommitments"],
   },
   {
-    pattern: /\b(forecast|projection|trend|cost trend|cost trends)\b/i,
+    pattern:
+      /\b(forecast|projection|trend|cost trend|cost trends|tracking this way|where do we land|land against|original budget)\b/i,
     tools: ["getForecastComparison", "getCostTrends"],
+  },
+  {
+    pattern: /\b(across|portfolio|compare|comparison|cross[- ]project|active jobs?|burning budget|burn rate|budget fastest)\b/i,
+    tools: ["getCrossProjectComparison", "getPortfolioOverview"],
   },
   {
     pattern: /\b(schedule|slipping|slip|delay|delayed|behind|milestone|critical path|gantt|mobilization)\b/i,
@@ -359,11 +373,11 @@ const MESSAGE_DRIVEN_TOOL_RULES: Array<{
   },
   {
     pattern: /\b(meetings?|promised|prep next|what happened|last month|last couple days)\b/i,
-    tools: ["getMeetingsByDate", "searchMeetingsByTopic", "getActionItemsAndInsights"],
+    tools: ["searchMeetingsByTopic", "getMeetingsByDate", "getActionItemsAndInsights"],
   },
   {
     pattern: /\b(documents?|contract document|change[- ]?order document|exhibit|attachment|file)\b/i,
-    tools: ["searchDocuments", "searchExternalDocuments", "queryDocumentRows"],
+    tools: ["queryDocumentRows", "searchExternalDocuments", "searchDocuments"],
   },
   {
     pattern: /\b(Teams|chat|chatter|messages?)\b/i,
@@ -372,14 +386,6 @@ const MESSAGE_DRIVEN_TOOL_RULES: Array<{
   {
     pattern: /\b(emails?|e-mails?|inbox|outlook)\b/i,
     tools: ["searchEmails", "getRecentEmails", "semanticSearch"],
-  },
-  {
-    pattern: /\b(action items?|open items?|next actions?|owners?|waiting on|sign[- ]?off|approval|decision|decisions)\b/i,
-    tools: ["getActionItemsAndInsights", "getRFIStatus", "getSubmittalStatus"],
-  },
-  {
-    pattern: /\b(across|portfolio|compare|comparison|cross[- ]project)\b/i,
-    tools: ["getCrossProjectComparison", "getPortfolioOverview"],
   },
   {
     pattern: /\b(vendors?|subs?|subcontractors?|supplier)\b/i,
@@ -402,16 +408,19 @@ function isScheduleTaskWriteRequest(message: string): boolean {
 }
 
 function getMessageDrivenToolNames(message: string, intent: AssistantIntent): readonly string[] {
+  if (intent === "task_write") {
+    if (/\b(mark|close|complete|done|reschedule|reassign|assign|bump|priority|snooze|cancel|delete)\b/i.test(message)) {
+      return ["getMyTasks", "updateGeneratedTask", "getActionItemsAndInsights"];
+    }
+    return [isScheduleTaskWriteRequest(message) ? "createTask" : "createGeneratedTask"];
+  }
+
   const names = new Set<string>();
 
   for (const rule of MESSAGE_DRIVEN_TOOL_RULES) {
     if (rule.pattern.test(message)) {
       for (const toolName of rule.tools) names.add(toolName);
     }
-  }
-
-  if (intent === "task_write") {
-    names.add(isScheduleTaskWriteRequest(message) ? "createTask" : "createGeneratedTask");
   }
 
   if (intent === "source_lookup") {
@@ -5827,7 +5836,11 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           return;
         }
 
-        if (sourceSpecificRagRequest && assistantIntent !== "email_action") {
+        if (
+          sourceSpecificRagRequest &&
+          assistantIntent !== "email_action" &&
+          !shouldKeepModelToolsForSourceLookup(messageDrivenToolNames)
+        ) {
           writeStrategistStatus(writer, {
             stage: "knowledge",
             message: `Searching ${sourceSpecificRagRequest.label} in Supabase RAG`,
