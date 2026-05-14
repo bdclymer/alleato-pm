@@ -2587,8 +2587,7 @@
       "prompt": "What am I waiting on from my team?",
       "expectedToolFamilies": [
         "task_management",
-        "actions",
-        "people"
+        "actions"
       ],
       "expectedToolNames": [
         "backendDeepAgentExecutiveBriefing",
@@ -2985,6 +2984,7 @@
       "getCrossProjectComparison"
     ],
     "financial": [
+      "backendDeepAgentExecutiveBriefing",
       "getCommitmentsOverview",
       "getChangeOrderDetails",
       "getDirectCostsSummary",
@@ -3035,7 +3035,9 @@
       "readOutlookEmailThread",
       "searchEmails",
       "searchTeamsMessages",
-      "searchExternalDocuments"
+      "searchExternalDocuments",
+      "semanticSearch",
+      "sourceLookupIntentRouter"
     ],
     "documents": [
       "searchDocuments",
@@ -3058,6 +3060,7 @@
     ],
     "actions": [
       "backendDeepAgentExecutiveBriefing",
+      "getMyTasks",
       "getActionItemsAndInsights"
     ],
     "action_write": [
@@ -3093,6 +3096,7 @@
       "getGeneratedTasksToday"
     ],
     "source_health": [
+      "backendDeepAgentExecutiveBriefing",
       "assistantSourceHealth"
     ],
     "app_help": [
