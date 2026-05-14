@@ -474,6 +474,8 @@ const GENERIC_MCP_SKIP_INTENTS = new Set<AssistantIntent>([
   "calendar_action",
   "task_write",
   "source_lookup",
+  "source_health",
+  "risk_review",
   "task_followup",
   "implementation_planning",
 ]);
