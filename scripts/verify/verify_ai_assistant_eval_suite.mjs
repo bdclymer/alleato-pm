@@ -26,6 +26,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { setDefaultResultOrder } from "node:dns";
+import { lookup } from "node:dns/promises";
 import { fileURLToPath } from "node:url";
 
 import dotenv from "dotenv";
@@ -221,12 +222,24 @@ const runDir = path.join(repoRoot, "docs/ai-plan/evals/runs", runStamp);
 mkdirSync(runDir, { recursive: true });
 
 // ─────────────────────────────────────────────────────────────── DB pool
+async function buildDatabaseConnectionString() {
+  const url = new URL(process.env.DATABASE_URL);
+  url.searchParams.delete("sslmode");
+
+  if (!/^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) {
+    try {
+      const { address, family } = await lookup(url.hostname, { family: 4 });
+      if (family === 4) url.hostname = address;
+    } catch (error) {
+      console.warn(`[db] IPv4 hostname lookup failed for ${url.hostname}: ${error.message}`);
+    }
+  }
+
+  return url.toString();
+}
+
 const pool = new pg.Pool({
-  connectionString: (() => {
-    const url = new URL(process.env.DATABASE_URL);
-    url.searchParams.delete("sslmode");
-    return url.toString();
-  })(),
+  connectionString: await buildDatabaseConnectionString(),
   ssl: { rejectUnauthorized: false },
   max: 2,
 });
