@@ -58,18 +58,22 @@ const dryRun = args.get("dry-run") === "true";
 const onlyId = args.get("id");
 const rebuildExisting = args.get("rebuild-existing") === "true";
 const contentOnly = args.get("content-only") === "true";
+const skipAppContentUpdate = args.get("skip-app-content-update") === "true";
 const chunkTargetChars = Number(args.get("chunk-chars") || "3000");
 const chunkOverlapChars = Number(args.get("chunk-overlap") || "500");
 const embedBatchSize = Number(args.get("embed-batch-size") || "32");
 const insertBatchSize = Number(args.get("insert-batch-size") || "250");
 
-const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+const databaseUrl =
+  process.env.APP_METADATA_DATABASE_URL ||
+  process.env.DATABASE_URL ||
+  process.env.SUPABASE_DB_URL;
 const ragDatabaseUrl = process.env.RAG_DATABASE_URL;
 const ragWritesEnabled = String(process.env.RAG_DATABASE_WRITES_ENABLED || "").toLowerCase() === "true";
 const aiGatewayKey = process.env.AI_GATEWAY_API_KEY;
 const openAiKey = process.env.OPENAI_API_KEY;
 
-if (!databaseUrl) throw new Error("DATABASE_URL or SUPABASE_DB_URL is required.");
+if (!databaseUrl) throw new Error("APP_METADATA_DATABASE_URL, DATABASE_URL, or SUPABASE_DB_URL is required.");
 if (!ragDatabaseUrl) throw new Error("RAG_DATABASE_URL is required.");
 if (!aiGatewayKey && !openAiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required.");
 if (!dryRun && !ragWritesEnabled) {
@@ -197,6 +201,16 @@ async function candidateRows() {
       dm.captured_at,
       dm.created_at,
       dm.project_id,
+      dm.source,
+      dm.source_system,
+      dm.type,
+      dm.category,
+      dm.summary,
+      dm.overview,
+      dm.fireflies_id,
+      dm.fireflies_link,
+      dm.meeting_link,
+      dm.file_name,
       dm.participants_array,
       dm.content,
       dm.storage_bucket,
@@ -229,18 +243,28 @@ async function candidateRows() {
       and document_id in ${ragSql(rows.map((row) => row.id))}
   `;
   const withTranscriptChunks = new Set(existing.map((row) => String(row.document_id)));
+  const existingRagMetadata = await ragSql`
+    select id, content
+    from public.rag_document_metadata
+    where id in ${ragSql(rows.map((row) => row.id))}
+  `;
+  const ragContentById = new Map(
+    existingRagMetadata.map((row) => [String(row.id), String(row.content || "")]),
+  );
   return rows
     .map((row) => ({
       ...row,
       has_embedded_transcript_chunks: withTranscriptChunks.has(String(row.id)),
       content_has_transcript: hasTranscriptMarker(row.content),
+      rag_content_has_transcript: hasTranscriptMarker(ragContentById.get(String(row.id))),
     }))
     .filter(
       (row) =>
         rebuildExisting ||
         contentOnly ||
         !row.has_embedded_transcript_chunks ||
-        !row.content_has_transcript,
+        !row.content_has_transcript ||
+        !row.rag_content_has_transcript,
     )
     .slice(0, limit);
 }
@@ -278,6 +302,92 @@ async function markBackfillStatus(row, status, message = null) {
   `;
 }
 
+async function upsertRagDocumentMetadata(row, markdown, transcript, records) {
+  const contentHash = hashContent(markdown);
+  const indexed = records.length > 0 || row.has_embedded_transcript_chunks;
+  const sourceMetadata = {
+    ...(row.source_metadata || {}),
+    fireflies_id: row.fireflies_id || row.source_metadata?.fireflies_id || null,
+    fireflies_link: row.fireflies_link || null,
+    meeting_link: row.meeting_link || null,
+  };
+  const processingMetadata = {
+    transcript_chunk_backfill: {
+      checked_at: new Date().toISOString(),
+      script: "backfill-fireflies-transcript-chunks-from-storage",
+      content_source: "supabase_storage_markdown",
+      transcript_chars: transcript.length,
+      transcript_chunks_written: records.length,
+      had_existing_embedded_transcript_chunks: row.has_embedded_transcript_chunks,
+      app_content_had_transcript: row.content_has_transcript,
+    },
+  };
+
+  const payload = {
+    id: row.id,
+    app_document_id: row.id,
+    project_id: row.project_id == null ? null : Number(row.project_id),
+    source: row.source || "fireflies",
+    source_system: row.source_system || "fireflies",
+    source_item_id: row.fireflies_id || row.source_metadata?.fireflies_id || row.id,
+    fireflies_id: row.fireflies_id || row.source_metadata?.fireflies_id || null,
+    title: row.title,
+    type: row.type || "meeting_transcript",
+    category: row.category || "meeting",
+    source_web_url: row.source_web_url || row.url || row.fireflies_link || row.meeting_link || null,
+    url: row.url || row.source_web_url || null,
+    storage_bucket: row.storage_bucket || process.env.SUPABASE_MEETINGS_BUCKET || "meetings",
+    storage_path: row.file_path || null,
+    file_name: row.file_name || null,
+    content: markdown,
+    raw_text: transcript,
+    content_hash: contentHash,
+    content_length: markdown.length,
+    summary: row.summary || null,
+    overview: row.overview || null,
+    parsing_status: "parsed",
+    embedding_status: indexed ? "embedded" : "content_loaded",
+    processing_metadata: processingMetadata,
+    source_metadata: sourceMetadata,
+    last_synced_at: row.date || row.captured_at || row.created_at || null,
+    last_content_loaded_at: new Date().toISOString(),
+    last_indexed_at: indexed ? new Date().toISOString() : null,
+    created_at: row.created_at || new Date().toISOString(),
+  };
+
+  await ragSql`
+    insert into public.rag_document_metadata ${ragSql([payload])}
+    on conflict (id) do update set
+      app_document_id = excluded.app_document_id,
+      project_id = excluded.project_id,
+      source = excluded.source,
+      source_system = excluded.source_system,
+      source_item_id = excluded.source_item_id,
+      fireflies_id = excluded.fireflies_id,
+      title = excluded.title,
+      type = excluded.type,
+      category = excluded.category,
+      source_web_url = excluded.source_web_url,
+      url = excluded.url,
+      storage_bucket = excluded.storage_bucket,
+      storage_path = excluded.storage_path,
+      file_name = excluded.file_name,
+      content = excluded.content,
+      raw_text = excluded.raw_text,
+      content_hash = excluded.content_hash,
+      content_length = excluded.content_length,
+      summary = excluded.summary,
+      overview = excluded.overview,
+      parsing_status = excluded.parsing_status,
+      embedding_status = excluded.embedding_status,
+      processing_metadata = excluded.processing_metadata,
+      source_metadata = excluded.source_metadata,
+      last_synced_at = excluded.last_synced_at,
+      last_content_loaded_at = excluded.last_content_loaded_at,
+      last_indexed_at = excluded.last_indexed_at
+  `;
+}
+
 async function main() {
   const rows = await candidateRows();
   console.log(`Fireflies ${year} meetings selected for storage transcript repair: ${rows.length}`);
@@ -285,9 +395,11 @@ async function main() {
     let storageWithTranscript = 0;
     let storageMissingTranscript = 0;
     let contentMissingTranscript = 0;
+    let ragContentMissingTranscript = 0;
     let missingEmbeddedTranscriptChunks = 0;
     for (const row of rows) {
       if (!row.content_has_transcript) contentMissingTranscript += 1;
+      if (!row.rag_content_has_transcript) ragContentMissingTranscript += 1;
       if (!row.has_embedded_transcript_chunks) missingEmbeddedTranscriptChunks += 1;
       try {
         const markdown = await fetchMarkdown(row);
@@ -301,6 +413,7 @@ async function main() {
       `Dry run: storage with transcript marker=${storageWithTranscript}, ` +
         `missing/unreadable=${storageMissingTranscript}, ` +
         `content missing transcript marker=${contentMissingTranscript}, ` +
+        `rag metadata missing transcript marker=${ragContentMissingTranscript}, ` +
         `missing embedded transcript chunks=${missingEmbeddedTranscriptChunks}`,
     );
     return;
@@ -328,7 +441,7 @@ async function main() {
         continue;
       }
 
-      if (row.content !== markdown) {
+      if (!skipAppContentUpdate && row.content !== markdown) {
         await sql`
           update public.document_metadata
           set content = ${markdown}
@@ -374,6 +487,7 @@ async function main() {
         });
         await upsertChunks(records);
       }
+      await upsertRagDocumentMetadata(row, markdown, transcript, records);
 
       processed += 1;
       insertedChunks += records.length;
