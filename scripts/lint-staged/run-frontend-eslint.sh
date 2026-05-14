@@ -49,6 +49,13 @@ for file in "${existing_files[@]}"; do
     src/lib/executive/*|\
     src/app/\(main\)/actions/executive-briefing-actions.ts)
       ;;
+    # Design template files: intentional use of hardcoded colors/arbitrary values
+    src/components/ds/futuristic-id-card.tsx|\
+    src/components/ds/liquid-metal-id-card.tsx)
+      ;;
+    # Redirect-only pages: no JSX rendered, page-shell rule does not apply
+    src/app/\(main\)/\[projectId\]/estimates/new/page.tsx)
+      ;;
     *)
       strict_files+=("$file")
       ;;

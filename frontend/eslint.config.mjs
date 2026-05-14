@@ -103,6 +103,31 @@ const config = [
       'design-system/no-raw-heading': 'off',
     },
   },
+  // Design template files: used as starting points / exploratory UI, not production components.
+  // Intentional use of hardcoded colors, arbitrary values, and non-semantic tokens.
+  {
+    files: [
+      'src/components/ds/futuristic-id-card.tsx',
+      'src/components/ds/liquid-metal-id-card.tsx',
+    ],
+    rules: {
+      'design-system/no-hardcoded-colors': 'off',
+      'design-system/no-arbitrary-spacing': 'off',
+      'design-system/require-semantic-colors': 'off',
+      'design-system/no-design-violations': 'off',
+      'design-system/no-raw-button': 'off',
+      'design-system/no-raw-form-controls': 'off',
+    },
+  },
+  // Redirect-only pages have no JSX output — PageShell rule does not apply.
+  {
+    files: [
+      'src/app/**/estimates/new/page.tsx',
+    ],
+    rules: {
+      'design-system/require-page-shell': 'off',
+    },
+  },
 ]
 
 export default config

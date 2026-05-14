@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, Printer, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { PageShell } from "@/components/layout";
+import { PageShell, PageTabs } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api-client";
 import type { Database } from "@/types/database.types";
 import type {
@@ -160,6 +159,261 @@ const ALL_DIVISIONS: Array<{ code: string; name: string }> = [
   { code: "50", name: "Design" },
 ];
 
+const DETAIL_DIVISIONS: Array<{
+  division_code: string;
+  division_header: string;
+  rows: Array<{ cost_code: string; cost_type: string; name: string }>;
+}> = [
+  { division_code: "02", division_header: "02-0000 Existing Conditions", rows: [
+    { cost_code: "02-0150", cost_type: "Expense",     name: "Maint. & Site Remediation" },
+    { cost_code: "02-2113", cost_type: "Expense",     name: "Site Surveys" },
+    { cost_code: "02-2219", cost_type: "Expense",     name: "Traffic Assessment" },
+    { cost_code: "02-2400", cost_type: "Expense",     name: "Environmental Assessments" },
+    { cost_code: "02-2600", cost_type: "Expense",     name: "Hazard Material Assessments" },
+    { cost_code: "02-4113", cost_type: "Subcontract", name: "Selective Site Demolition" },
+    { cost_code: "02-4116", cost_type: "Subcontract", name: "Structure Demolition" },
+    { cost_code: "02-4119", cost_type: "Subcontract", name: "Selective Interior Demolition" },
+    { cost_code: "02-6500", cost_type: "Subcontract", name: "UG Storage Tank Removal" },
+    { cost_code: "02-8213", cost_type: "Subcontract", name: "Asbestos Abatement" },
+  ]},
+  { division_code: "03", division_header: "03-0000 Concrete", rows: [
+    { cost_code: "03-3500", cost_type: "", name: "Concrete Finishing" },
+  ]},
+  { division_code: "04", division_header: "04-0000 Masonry", rows: [
+    { cost_code: "04-2000", cost_type: "", name: "Unit Masonry-Brick" },
+    { cost_code: "04-2200", cost_type: "", name: "Concrete Unit Masonry-Block" },
+    { cost_code: "04-4300", cost_type: "", name: "Stone Masonry" },
+    { cost_code: "04-7200", cost_type: "", name: "Cast Stone Masonry" },
+    { cost_code: "04-7300", cost_type: "", name: "Manufactured Stone Masonry" },
+  ]},
+  { division_code: "05", division_header: "05-0000 Metals", rows: [
+    { cost_code: "05-1100", cost_type: "", name: "Miscellaneous Metals" },
+    { cost_code: "05-1200", cost_type: "", name: "Structural Steel Framing" },
+    { cost_code: "05-2000", cost_type: "", name: "Metal Joists" },
+    { cost_code: "05-3000", cost_type: "", name: "Metal Decking" },
+    { cost_code: "05-4100", cost_type: "", name: "Structural Metal Stud Framing" },
+    { cost_code: "05-5100", cost_type: "", name: "Metal Stairs" },
+    { cost_code: "05-5133", cost_type: "", name: "Metal Ladders" },
+    { cost_code: "05-5813", cost_type: "", name: "Column Covers" },
+    { cost_code: "05-5823", cost_type: "", name: "Formed Metal Guards" },
+    { cost_code: "05-5900", cost_type: "", name: "Metal Specialties" },
+    { cost_code: "05-7000", cost_type: "", name: "Decorative Metal" },
+  ]},
+  { division_code: "06", division_header: "06-0000 Woods Plastics and Composites", rows: [
+    { cost_code: "06-1000", cost_type: "", name: "Rough Carpentry" },
+    { cost_code: "06-1100", cost_type: "", name: "Wood Framing" },
+  ]},
+  { division_code: "07", division_header: "07-0000 Thermal & Moisture Protection", rows: [
+    { cost_code: "07-2100", cost_type: "", name: "Thermal Insulation" },
+    { cost_code: "07-2500", cost_type: "", name: "Weather Barriers" },
+  ]},
+  { division_code: "08", division_header: "08-0000 Openings", rows: [
+    { cost_code: "08-1113", cost_type: "", name: "Hollow Metal Door and Frames" },
+    { cost_code: "08-3600", cost_type: "", name: "Overhead Doors" },
+    { cost_code: "08-7100", cost_type: "", name: "Door Hardware" },
+    { cost_code: "08-7900", cost_type: "", name: "Hardware Accessories" },
+  ]},
+  { division_code: "09", division_header: "09-0000 Finishes", rows: [
+    { cost_code: "09-2116", cost_type: "", name: "Gypsum Board Assemblies" },
+    { cost_code: "09-5100", cost_type: "", name: "Acoustical Ceilings" },
+    { cost_code: "09-6013", cost_type: "", name: "Floor Prep" },
+    { cost_code: "09-6200", cost_type: "", name: "Specialty Flooring" },
+    { cost_code: "09-6513", cost_type: "", name: "Resilient Base" },
+    { cost_code: "09-9123", cost_type: "", name: "Interior Painting" },
+  ]},
+  { division_code: "10", division_header: "10-0000 Specialties", rows: [
+    { cost_code: "10-1116", cost_type: "", name: "Markerboards" },
+    { cost_code: "10-1139", cost_type: "", name: "Visual Display Rails" },
+    { cost_code: "10-1300", cost_type: "", name: "Directories" },
+    { cost_code: "10-1400", cost_type: "", name: "Signage" },
+    { cost_code: "10-2113", cost_type: "", name: "Toilet Compartments" },
+    { cost_code: "10-2123", cost_type: "", name: "Cubicle Curtains and Track" },
+    { cost_code: "10-2233", cost_type: "", name: "Accordion Folding Partitions" },
+    { cost_code: "10-2613", cost_type: "", name: "Corner Guards" },
+    { cost_code: "10-2616", cost_type: "", name: "Bumper Guards" },
+    { cost_code: "10-2623", cost_type: "", name: "Fiberglass Reinf Prot Covering" },
+    { cost_code: "10-2813", cost_type: "", name: "Toilet Accessories" },
+    { cost_code: "10-4000", cost_type: "", name: "Safety Specialties" },
+    { cost_code: "10-4116", cost_type: "", name: "Knox Box" },
+    { cost_code: "10-4416", cost_type: "", name: "Fire Extinguishers" },
+    { cost_code: "10-5100", cost_type: "", name: "Lockers" },
+    { cost_code: "10-5523", cost_type: "", name: "Mail Boxes" },
+    { cost_code: "10-7313", cost_type: "", name: "Awnings" },
+    { cost_code: "10-7316", cost_type: "", name: "Canopies" },
+    { cost_code: "10-7500", cost_type: "", name: "Flagpoles" },
+    { cost_code: "10-8200", cost_type: "", name: "Grilles and Screens" },
+  ]},
+  { division_code: "11", division_header: "11-0000 Equipment", rows: [
+    { cost_code: "11-1200", cost_type: "", name: "Parking Control Equipment" },
+    { cost_code: "11-1300", cost_type: "", name: "Loading Dock Equipment" },
+    { cost_code: "11-4000", cost_type: "", name: "Foodservice Equipment" },
+    { cost_code: "11-6000", cost_type: "", name: "Entertainment and Recreation Equipment" },
+    { cost_code: "11-7000", cost_type: "", name: "Healthcare Equipment" },
+  ]},
+  { division_code: "12", division_header: "12-0000 Furnishings", rows: [
+    { cost_code: "12-2100", cost_type: "", name: "Window Blinds" },
+    { cost_code: "12-3000", cost_type: "", name: "Casework" },
+    { cost_code: "12-3500", cost_type: "", name: "Specialty Casework" },
+    { cost_code: "12-4813", cost_type: "", name: "Entrance Floor Mats and Frames" },
+    { cost_code: "12-5100", cost_type: "", name: "Office Furniture" },
+    { cost_code: "12-9000", cost_type: "", name: "Other Furnishings" },
+  ]},
+  { division_code: "13", division_header: "13-0000 Special Construction", rows: [
+    { cost_code: "13-2100", cost_type: "", name: "Controlled Environment Rooms" },
+    { cost_code: "13-2213", cost_type: "", name: "Paint Booths" },
+    { cost_code: "13-2400", cost_type: "", name: "Special Activity Rooms" },
+    { cost_code: "13-3400", cost_type: "", name: "Fabricated Engr Structures" },
+    { cost_code: "13-4900", cost_type: "", name: "Radiation Protection" },
+  ]},
+  { division_code: "14", division_header: "14-0000 Conveying Equipment", rows: [
+    { cost_code: "14-2000", cost_type: "", name: "Elevators" },
+    { cost_code: "14-4200", cost_type: "", name: "Wheelchair Lifts" },
+  ]},
+  { division_code: "21", division_header: "21-0000 Fire Suppression", rows: [
+    { cost_code: "21-1100", cost_type: "", name: "Facility Fire-Suppression Water" },
+    { cost_code: "21-1200", cost_type: "", name: "Fire-Suppression Standpipes" },
+    { cost_code: "21-1223", cost_type: "", name: "Hose Valve Stations" },
+    { cost_code: "21-1313", cost_type: "", name: "Wet-Pipe Sprinkler System" },
+    { cost_code: "21-1316", cost_type: "", name: "Dry-Pipe Sprinkler Systems" },
+    { cost_code: "21-1319", cost_type: "", name: "Preaction Sprinkler Systems" },
+    { cost_code: "21-2000", cost_type: "", name: "Fire-Extinguishing System" },
+    { cost_code: "21-3000", cost_type: "", name: "Fire Pumps" },
+    { cost_code: "21-4000", cost_type: "", name: "Fire-Suppression Water Storage" },
+  ]},
+  { division_code: "22", division_header: "22-0000 Plumbing", rows: [
+    { cost_code: "22-1000", cost_type: "", name: "Plumbing Piping" },
+    { cost_code: "22-1116", cost_type: "", name: "Domestic Water Piping" },
+    { cost_code: "22-1123", cost_type: "", name: "Domestic Water Pumps" },
+    { cost_code: "22-1316", cost_type: "", name: "Sanitary Waste and Vent Piping" },
+    { cost_code: "22-1319", cost_type: "", name: "Grease Removal Devices" },
+    { cost_code: "22-1326", cost_type: "", name: "Sanitary Waste Separators" },
+    { cost_code: "22-1416", cost_type: "", name: "Roof Drains and Leaders" },
+    { cost_code: "22-1500", cost_type: "", name: "Gen Serv Compress-Air Systems" },
+    { cost_code: "22-4513", cost_type: "", name: "Emergency Showers" },
+    { cost_code: "22-4516", cost_type: "", name: "Eyewash Equipment" },
+    { cost_code: "22-4713", cost_type: "", name: "Drinking Fountains" },
+    { cost_code: "22-6000", cost_type: "", name: "Medical Gas System" },
+  ]},
+  { division_code: "23", division_header: "23-0000 HVAC", rows: [
+    { cost_code: "23-0700", cost_type: "", name: "HVAC Insulation" },
+    { cost_code: "23-1123", cost_type: "", name: "Facility Natural-Gas Piping" },
+    { cost_code: "23-3000", cost_type: "", name: "HVAC Air Distribution" },
+    { cost_code: "23-3439", cost_type: "", name: "HVLS Fans" },
+    { cost_code: "23-3800", cost_type: "", name: "Summer Ventilation" },
+    { cost_code: "23-5600", cost_type: "", name: "Solar Energy Heating Equipment" },
+    { cost_code: "23-7000", cost_type: "", name: "Central HVAC Equipment" },
+    { cost_code: "23-8000", cost_type: "", name: "Decentralized HVAC Equipment" },
+  ]},
+  { division_code: "25", division_header: "25-0000 Integrated Automation", rows: [
+    { cost_code: "25-5000", cost_type: "", name: "Energy Management System" },
+  ]},
+  { division_code: "26", division_header: "26-0000 Electrical", rows: [
+    { cost_code: "26-1000", cost_type: "", name: "Med-Volt Elect Distribution" },
+    { cost_code: "26-2000", cost_type: "", name: "Low-Volt Elect Distribution" },
+    { cost_code: "26-3100", cost_type: "", name: "Photovoltaic Collectors" },
+    { cost_code: "26-3200", cost_type: "", name: "Packaged Generators" },
+    { cost_code: "26-3343", cost_type: "", name: "Charging Equipment" },
+    { cost_code: "26-5100", cost_type: "", name: "Interior Lighting" },
+    { cost_code: "26-5213", cost_type: "", name: "Emergency and Exit Lighting" },
+    { cost_code: "26-5500", cost_type: "", name: "Special Purpose Lighting" },
+    { cost_code: "26-5600", cost_type: "", name: "Exterior Lighting" },
+  ]},
+  { division_code: "27", division_header: "27-0000 Communications", rows: [
+    { cost_code: "27-1000", cost_type: "", name: "Structured Cabling" },
+    { cost_code: "27-3000", cost_type: "", name: "Voice Communications" },
+    { cost_code: "27-4000", cost_type: "", name: "Audio-Video Communications" },
+  ]},
+  { division_code: "28", division_header: "28-0000 Electronic Safety and Security", rows: [
+    { cost_code: "28-1000", cost_type: "", name: "Access Control" },
+    { cost_code: "28-2000", cost_type: "", name: "Electronic Surveillance" },
+    { cost_code: "28-4000", cost_type: "", name: "Electronic Monitoring and Control" },
+    { cost_code: "28-4600", cost_type: "", name: "Fire Detection and Alarm" },
+  ]},
+  { division_code: "31", division_header: "31-0000 Earthwork", rows: [
+    { cost_code: "31-1100", cost_type: "", name: "Clearing and Grubbing" },
+    { cost_code: "31-2213", cost_type: "", name: "Rough Grading" },
+    { cost_code: "31-2219", cost_type: "", name: "Finish Grading" },
+    { cost_code: "31-2316", cost_type: "", name: "Excavation" },
+    { cost_code: "31-2319", cost_type: "", name: "Dewatering" },
+    { cost_code: "31-2500", cost_type: "", name: "Erosion Control (Permanent)" },
+    { cost_code: "31-3200", cost_type: "", name: "Soil Stabilization" },
+    { cost_code: "31-3219", cost_type: "", name: "Geogrid Soil Stabilization" },
+    { cost_code: "31-3700", cost_type: "", name: "Riprap" },
+    { cost_code: "31-4800", cost_type: "", name: "Underpinning" },
+    { cost_code: "31-5000", cost_type: "", name: "Excav Support and Protection" },
+    { cost_code: "31-6000", cost_type: "", name: "Special Foundations & Load Bearing" },
+    { cost_code: "31-6200", cost_type: "", name: "Driven Piles" },
+    { cost_code: "31-6613", cost_type: "", name: "Aggregate Piles/Geopiers" },
+    { cost_code: "31-6615", cost_type: "", name: "Helical Foundation Piles" },
+  ]},
+  { division_code: "32", division_header: "32-0000 Exterior Improvements", rows: [
+    { cost_code: "32-0523", cost_type: "", name: "Cement and Concrete Exterior" },
+    { cost_code: "32-1123", cost_type: "", name: "Aggregate Base Courses" },
+    { cost_code: "32-1216", cost_type: "", name: "Asphalt Paving" },
+    { cost_code: "32-1236", cost_type: "", name: "Seal Coating" },
+    { cost_code: "32-1313", cost_type: "", name: "Concrete Paving" },
+    { cost_code: "32-1373", cost_type: "", name: "Concrete Paving Joint Sealants" },
+    { cost_code: "32-1500", cost_type: "", name: "Aggregate Surfacing" },
+    { cost_code: "32-1613", cost_type: "", name: "Curbs and Gutters" },
+    { cost_code: "32-1623", cost_type: "", name: "Sidewalks" },
+    { cost_code: "32-1633", cost_type: "", name: "Driveways" },
+    { cost_code: "32-1713", cost_type: "", name: "Parking Bumpers" },
+    { cost_code: "32-1723", cost_type: "", name: "Pavement Markings" },
+    { cost_code: "32-3113", cost_type: "", name: "Chain Link Fences and Gates" },
+    { cost_code: "32-3213", cost_type: "", name: "CIP Concrete Retaining Walls" },
+    { cost_code: "32-3300", cost_type: "", name: "Site Furnishings" },
+    { cost_code: "32-3500", cost_type: "", name: "Screening Devices" },
+    { cost_code: "32-3900", cost_type: "", name: "Manufactured Site Specialties" },
+    { cost_code: "32-7000", cost_type: "", name: "Wetlands" },
+    { cost_code: "32-8000", cost_type: "", name: "Irrigation" },
+    { cost_code: "32-9000", cost_type: "", name: "Planting" },
+  ]},
+  { division_code: "33", division_header: "33-0000 Utilities", rows: [
+    { cost_code: "33-0504", cost_type: "", name: "Utility Relocations" },
+    { cost_code: "33-1000", cost_type: "", name: "Water Utilities" },
+    { cost_code: "33-1413", cost_type: "", name: "Public Water Utility Distribution" },
+    { cost_code: "33-3111", cost_type: "", name: "Public Sanitary Sewerage" },
+    { cost_code: "33-3113", cost_type: "", name: "Site Sanitary Sewerage" },
+    { cost_code: "33-3123", cost_type: "", name: "Sanitary Sewerage Force Main" },
+    { cost_code: "33-3200", cost_type: "", name: "Sanitary Sewerage Equipment" },
+    { cost_code: "33-4000", cost_type: "", name: "Stormwater Utilities" },
+    { cost_code: "33-4116", cost_type: "", name: "Subsurface Drainage" },
+    { cost_code: "33-4200", cost_type: "", name: "Stormwater Conveyance" },
+    { cost_code: "33-4231", cost_type: "", name: "Stormwater Area Drains" },
+    { cost_code: "33-7119", cost_type: "", name: "Elect Underground Ducts & MHs" },
+  ]},
+  { division_code: "34", division_header: "34-0000 Transportation", rows: [
+    { cost_code: "34-1100", cost_type: "", name: "Rail Tracks" },
+    { cost_code: "34-4100", cost_type: "", name: "Road Signaling & Control Equipment" },
+    { cost_code: "34-7200", cost_type: "", name: "Railway Construction" },
+  ]},
+  { division_code: "35", division_header: "35-0000 Waterway and Marine Construction", rows: [
+    { cost_code: "35-3000", cost_type: "", name: "Coastal Construction" },
+  ]},
+  { division_code: "50", division_header: "50-0000 Design Services", rows: [
+    { cost_code: "50-1000", cost_type: "", name: "Site Investigation Report / Phase 1" },
+    { cost_code: "50-1250", cost_type: "", name: "Geotechnical Report" },
+    { cost_code: "50-2000", cost_type: "", name: "Architectural Design" },
+    { cost_code: "50-2500", cost_type: "", name: "Wetlands Studies" },
+    { cost_code: "50-3000", cost_type: "", name: "Environmental Phase 2 Studies" },
+    { cost_code: "50-3500", cost_type: "", name: "Arch, Endangered & Threat Species" },
+    { cost_code: "50-4100", cost_type: "", name: "Traffic Engineering Study" },
+    { cost_code: "50-4200", cost_type: "", name: "Traffic Engineering Design" },
+    { cost_code: "50-4500", cost_type: "", name: "Facility Engineering" },
+    { cost_code: "50-5000", cost_type: "", name: "Structural Engineering" },
+    { cost_code: "50-5500", cost_type: "", name: "HVAC Engineering" },
+    { cost_code: "50-6000", cost_type: "", name: "Plumbing Engineering" },
+    { cost_code: "50-6500", cost_type: "", name: "Electrical Engineering" },
+    { cost_code: "50-7000", cost_type: "", name: "Fire Protection Engineering" },
+    { cost_code: "50-7500", cost_type: "", name: "FA/Security System Engineering" },
+    { cost_code: "50-8000", cost_type: "", name: "Specialty Engineering" },
+    { cost_code: "50-8500", cost_type: "", name: "Miscellaneous Engineering" },
+    { cost_code: "50-9100", cost_type: "", name: "ALTA Survey" },
+    { cost_code: "50-9200", cost_type: "", name: "Topographic Survey" },
+    { cost_code: "51-1000", cost_type: "", name: "Space Planning" },
+  ]},
+];
+
 const COST_TYPE_OPTIONS = ["Labor", "Expense", "Subcontract", "Revenue"] as const;
 
 // ---------------------------------------------------------------------------
@@ -184,18 +438,21 @@ function formatCurrencyFull(value: number): string {
   }).format(value);
 }
 
-function getEffectiveQty(item: GcItem, durationMonths: number): number {
-  if (item.qty_basis === "weeks") return Math.round(durationMonths * 4.334 * 10) / 10;
+function getEffectiveQty(item: GcItem, durationMonths: number, durationWeeks: number): number {
+  if (item.qty_basis === "weeks") return durationWeeks;
   if (item.qty_basis === "months") return durationMonths;
   return item.qty ?? 0;
 }
 
-function computeGcTotal(items: GcItem[], durationMonths: number): number {
+function computeGcTotal(items: GcItem[], durationMonths: number, durationWeeks: number): number {
   return items.reduce((sum, item) => {
-    const qty = getEffectiveQty(item, durationMonths);
+    const qty = getEffectiveQty(item, durationMonths, durationWeeks);
     return sum + qty * (item.rate ?? 0) * (item.allocation ?? 0);
   }, 0);
 }
+
+/** Variance threshold in weeks before a warning appears */
+const WEEKS_VARIANCE_THRESHOLD = 2;
 
 function computeDetailDivisionTotal(items: DetailItem[], divCode: string): number {
   return items
@@ -262,8 +519,42 @@ function InlineNumber({
       onChange={(e) => setLocal(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => e.key === "Enter" && commit()}
-      className={`h-7 border-transparent bg-transparent text-xs transition-colors focus:border-border focus:bg-background ${className ?? ""}`}
+      className={`h-7 border-transparent bg-transparent text-xs transition-colors focus:border-border focus:bg-background [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none hover:[&::-webkit-inner-spin-button]:appearance-auto hover:[&::-webkit-outer-spin-button]:appearance-auto ${className ?? ""}`}
     />
+  );
+}
+
+/** Standalone duration field: a clean pill-style editable number with a trailing unit label */
+function DurationField({
+  value,
+  onChange,
+  unit,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  unit: string;
+}) {
+  const [local, setLocal] = React.useState(String(value));
+  React.useEffect(() => { setLocal(String(value)); }, [value]);
+  const commit = () => {
+    const parsed = parseFloat(local);
+    if (!Number.isNaN(parsed)) onChange(parsed);
+    else setLocal(String(value));
+  };
+  return (
+    <div className="flex h-8 items-center rounded-md border border-border bg-background text-xs transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/30">
+      <Input
+        type="number"
+        step="0.5"
+        min="0"
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => e.key === "Enter" && commit()}
+        className="h-auto w-14 border-0 bg-transparent pl-3 pr-1 text-right text-xs tabular-nums shadow-none outline-none ring-0 focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      />
+      <span className="pr-2.5 text-muted-foreground">{unit}</span>
+    </div>
   );
 }
 
@@ -302,6 +593,7 @@ function InlineSelect({
 
 export function EstimateDetailClientV2({
   projectId,
+  projectName,
   estimate,
   gcItems: initialGcItems,
   detailItems: initialDetailItems,
@@ -309,12 +601,16 @@ export function EstimateDetailClientV2({
 }: EstimateDetailClientV2Props) {
   const [activeTab, setActiveTab] = React.useState("gc");
   const [gcItems, setGcItems] = React.useState<GcItem[]>(initialGcItems);
+  const templateLoaded = React.useRef(false);
   const [detailItems, setDetailItems] = React.useState<DetailItem[]>(initialDetailItems);
   const [sublistSubs, setSublistSubs] = React.useState<SublistSub[]>(initialSublistSubs);
 
   // Estimate-level editable fields
   const [durationMonths, setDurationMonths] = React.useState<number>(
     estimate.project_duration_months ?? 0
+  );
+  const [durationWeeks, setDurationWeeks] = React.useState<number>(
+    (estimate as unknown as { project_duration_weeks?: number }).project_duration_weeks ?? 0
   );
   const [contingencyAmount, setContingencyAmount] = React.useState<number>(
     estimate.contingency_amount ?? 0
@@ -323,8 +619,6 @@ export function EstimateDetailClientV2({
     estimate.insurance_rate ?? 0.0125
   );
   const [feeRate, setFeeRate] = React.useState<number>(estimate.fee_rate ?? 0.1);
-
-  const durationWeeks = Math.round(durationMonths * 4.334 * 10) / 10;
 
   // Patch estimate helper
   const patchEstimate = React.useCallback(
@@ -343,10 +637,12 @@ export function EstimateDetailClientV2({
 
   const handleDurationMonthsBlur = (val: number) => {
     setDurationMonths(val);
-    void patchEstimate({
-      project_duration_months: val,
-      project_duration_weeks: Math.round(val * 4.334 * 10) / 10,
-    });
+    void patchEstimate({ project_duration_months: val });
+  };
+
+  const handleDurationWeeksBlur = (val: number) => {
+    setDurationWeeks(val);
+    void patchEstimate({ project_duration_weeks: val });
   };
 
   // ---------------------------------------------------------------------------
@@ -403,7 +699,7 @@ export function EstimateDetailClientV2({
     }
   };
 
-  const loadGcTemplate = async () => {
+  const loadGcTemplate = React.useCallback(async () => {
     try {
       const items = await Promise.all(
         GC_TEMPLATE.map((t, idx) =>
@@ -417,11 +713,59 @@ export function EstimateDetailClientV2({
         )
       );
       setGcItems(items);
-      toast.success("Template loaded");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load template");
     }
-  };
+  }, [projectId, estimate.estimate_id]);
+
+  // Auto-load GC template on first render if no GC items exist yet
+  React.useEffect(() => {
+    if (initialGcItems.length === 0 && !templateLoaded.current) {
+      templateLoaded.current = true;
+      void loadGcTemplate();
+    }
+  }, [initialGcItems.length, loadGcTemplate]);
+
+  const detailTemplateLoaded = React.useRef(false);
+
+  const loadDetailTemplate = React.useCallback(async () => {
+    try {
+      let sortOrder = 0;
+      const created = await Promise.all(
+        DETAIL_DIVISIONS.flatMap((div) =>
+          div.rows.map((row) => {
+            sortOrder += 1;
+            return apiFetch<DetailItem>(
+              `/api/projects/${projectId}/estimates/${estimate.estimate_id}/detail-items`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  division_code: div.division_code,
+                  division_name: div.division_header.replace(/^\d+-\d+\s+/, ""),
+                  cost_code: row.cost_code,
+                  cost_type: row.cost_type || null,
+                  cost_code_name: row.name,
+                  estimated_amount: 0,
+                  sort_order: sortOrder,
+                }),
+              }
+            );
+          })
+        )
+      );
+      setDetailItems(created);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load detail template");
+    }
+  }, [projectId, estimate.estimate_id]);
+
+  // Auto-load detail template if no detail items exist yet
+  React.useEffect(() => {
+    if (initialDetailItems.length === 0 && !detailTemplateLoaded.current) {
+      detailTemplateLoaded.current = true;
+      void loadDetailTemplate();
+    }
+  }, [initialDetailItems.length, loadDetailTemplate]);
 
   // ---------------------------------------------------------------------------
   // Detail items handlers
@@ -528,7 +872,7 @@ export function EstimateDetailClientV2({
   // Summary calculations
   // ---------------------------------------------------------------------------
 
-  const gcTotal = React.useMemo(() => computeGcTotal(gcItems, durationMonths), [gcItems, durationMonths]);
+  const gcTotal = React.useMemo(() => computeGcTotal(gcItems, durationMonths, durationWeeks), [gcItems, durationMonths, durationWeeks]);
   const detailTotalsByDiv = React.useMemo(() => {
     const map: Record<string, number> = {};
     for (const div of ALL_DIVISIONS) {
@@ -547,65 +891,79 @@ export function EstimateDetailClientV2({
   // Render
   // ---------------------------------------------------------------------------
 
+  const expectedWeeks = Math.round(durationMonths * 4.334 * 10) / 10;
+  const weeksVariance = durationMonths > 0 && durationWeeks > 0
+    ? Math.abs(durationWeeks - expectedWeeks)
+    : 0;
+  const showVarianceWarning = weeksVariance > WEEKS_VARIANCE_THRESHOLD;
+
   return (
     <PageShell
       variant="detail"
       title={estimate.title}
       description={`${estimate.status} · R${estimate.revision}`}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList variant="line">
-          <TabsTrigger value="gc">General Conditions</TabsTrigger>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="sublist">SubList</TabsTrigger>
-          <TabsTrigger value="summary">Summary</TabsTrigger>
-        </TabsList>
+      {/* Tabs row — duration fields share the same line on the GC tab */}
+      <div className="flex items-center gap-4">
+        <div className="flex-1 overflow-hidden">
+          <PageTabs
+            variant="inline"
+            tabs={[
+              { label: "General Conditions", href: "gc",      isActive: activeTab === "gc" },
+              { label: "Details",            href: "details", isActive: activeTab === "details" },
+              { label: "SubList",            href: "sublist", isActive: activeTab === "sublist" },
+              { label: "Summary",            href: "summary", isActive: activeTab === "summary" },
+            ]}
+            onTabClick={(href) => setActiveTab(href)}
+          />
+        </div>
+        {activeTab === "gc" && (
+          <div className="mb-2 flex shrink-0 items-center gap-2 md:mb-3">
+            <DurationField value={durationMonths} onChange={handleDurationMonthsBlur} unit="mo" />
+            <DurationField value={durationWeeks}  onChange={handleDurationWeeksBlur}  unit="wk" />
+            {showVarianceWarning && (
+              <div className="flex items-center gap-1 rounded-md bg-status-warning/10 px-2 py-1 text-[11px] font-medium text-status-warning">
+                <AlertTriangle className="h-3 w-3 shrink-0" />
+                <span>{Math.round(weeksVariance * 10) / 10} wk variance</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-        {/* ================================================================ */}
-        {/* TAB 1: General Conditions */}
-        {/* ================================================================ */}
-        <TabsContent value="gc" className="mt-4">
+      {/* Tab content */}
+      <div className="mt-2">
+        {activeTab === "gc" && (
           <GcTab
             gcItems={gcItems}
             durationMonths={durationMonths}
             durationWeeks={durationWeeks}
-            onDurationMonthsBlur={handleDurationMonthsBlur}
             onPatchItem={patchGcItem}
             onAddRow={addGcRow}
             onDeleteRow={deleteGcRow}
-            onLoadTemplate={loadGcTemplate}
           />
-        </TabsContent>
-
-        {/* ================================================================ */}
-        {/* TAB 2: Details */}
-        {/* ================================================================ */}
-        <TabsContent value="details" className="mt-4">
+        )}
+        {activeTab === "details" && (
           <DetailsTab
             detailItems={detailItems}
             onPatchItem={patchDetailItem}
             onAddRow={addDetailRow}
             onDeleteRow={deleteDetailRow}
           />
-        </TabsContent>
-
-        {/* ================================================================ */}
-        {/* TAB 3: SubList */}
-        {/* ================================================================ */}
-        <TabsContent value="sublist" className="mt-4">
+        )}
+        {activeTab === "sublist" && (
           <SubListTab
             sublistSubs={sublistSubs}
             onPatchSub={patchSublistSub}
             onEnsureRows={ensureSublistRows}
           />
-        </TabsContent>
-
-        {/* ================================================================ */}
-        {/* TAB 4: Summary */}
-        {/* ================================================================ */}
-        <TabsContent value="summary" className="mt-4">
+        )}
+        {activeTab === "summary" && (
           <SummaryTab
-            durationMonths={durationMonths}
+            estimate={estimate}
+            projectName={projectName}
+            gcItems={gcItems}
+            detailItems={detailItems}
             gcTotal={gcTotal}
             detailTotalsByDiv={detailTotalsByDiv}
             subtotal={subtotal}
@@ -615,7 +973,6 @@ export function EstimateDetailClientV2({
             insurance={insurance}
             fee={fee}
             grandTotal={grandTotal}
-            onDurationMonthsBlur={handleDurationMonthsBlur}
             onContingencyBlur={(v) => {
               setContingencyAmount(v);
               void patchEstimate({ contingency_amount: v });
@@ -629,8 +986,8 @@ export function EstimateDetailClientV2({
               void patchEstimate({ fee_rate: v / 100 });
             }}
           />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </PageShell>
   );
 }
@@ -643,50 +1000,21 @@ function GcTab({
   gcItems,
   durationMonths,
   durationWeeks,
-  onDurationMonthsBlur,
   onPatchItem,
   onAddRow,
   onDeleteRow,
-  onLoadTemplate,
 }: {
   gcItems: GcItem[];
   durationMonths: number;
   durationWeeks: number;
-  onDurationMonthsBlur: (v: number) => void;
   onPatchItem: (id: number, fields: Partial<GcItem>) => Promise<void>;
   onAddRow: () => Promise<void>;
   onDeleteRow: (id: number) => Promise<void>;
-  onLoadTemplate: () => Promise<void>;
 }) {
-  const gcTotal = computeGcTotal(gcItems, durationMonths);
+  const gcTotal = computeGcTotal(gcItems, durationMonths, durationWeeks);
 
   return (
     <div className="space-y-3">
-      {/* Duration header */}
-      <div className="flex items-center gap-4 rounded-md bg-card px-4 py-2">
-        <span className="text-xs font-medium text-muted-foreground">Project Duration</span>
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground">Months</label>
-          <InlineNumber
-            value={durationMonths}
-            onChange={onDurationMonthsBlur}
-            className="w-20 border border-border bg-background"
-            step="0.5"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Weeks (derived)</span>
-          <span className="inline-flex h-7 w-20 items-center rounded-md bg-muted px-2 text-xs text-muted-foreground tabular-nums">
-            {durationWeeks}
-          </span>
-        </div>
-        {gcItems.length === 0 && (
-          <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" onClick={onLoadTemplate}>
-            Load Template
-          </Button>
-        )}
-      </div>
-
       {/* Table */}
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full text-xs">
@@ -697,8 +1025,8 @@ function GcTab({
               <th className="w-28 px-2 py-2 font-medium">Cost Type</th>
               <th className="w-20 px-2 py-2 text-right font-medium">Qty</th>
               <th className="w-16 px-2 py-2 font-medium">Unit</th>
-              <th className="w-24 px-2 py-2 text-right font-medium">Rate</th>
-              <th className="w-20 px-2 py-2 text-right font-medium">Alloc %</th>
+              <th className="w-32 px-2 py-2 text-right font-medium">Rate</th>
+              <th className="w-24 px-2 py-2 text-right font-medium">Alloc %</th>
               <th className="w-28 px-2 py-2 text-right font-medium">Total</th>
               <th className="w-8 px-2 py-2" />
             </tr>
@@ -708,7 +1036,7 @@ function GcTab({
               const isWeeksBasis = item.qty_basis === "weeks";
               const isMonthsBasis = item.qty_basis === "months";
               const isDerived = isWeeksBasis || isMonthsBasis;
-              const qtyEffective = getEffectiveQty(item, durationMonths);
+              const qtyEffective = getEffectiveQty(item, durationMonths, durationWeeks);
               const rowTotal = qtyEffective * (item.rate ?? 0) * (item.allocation ?? 0);
 
               return (
@@ -748,8 +1076,20 @@ function GcTab({
                       />
                     )}
                   </td>
-                  <td className="px-2 py-1 text-muted-foreground">
-                    {item.qty_basis ?? item.unit ?? "—"}
+                  <td className="px-2 py-1">
+                    <InlineSelect
+                      value={item.qty_basis ?? item.unit ?? "ls"}
+                      options={[
+                        { value: "weeks", label: "weeks" },
+                        { value: "months", label: "months" },
+                        { value: "ls", label: "ls" },
+                        { value: "sf", label: "sf" },
+                        { value: "ea", label: "ea" },
+                        { value: "lf", label: "lf" },
+                      ]}
+                      onValueChange={(v) => void onPatchItem(item.id, { qty_basis: v })}
+                      className="w-24"
+                    />
                   </td>
                   <td className="px-2 py-1">
                     <InlineNumber
@@ -823,116 +1163,118 @@ function DetailsTab({
   onDeleteRow: (id: number) => Promise<void>;
 }) {
   return (
-    <div className="space-y-3">
-      {ALL_DIVISIONS.map((div) => {
-        const rows = detailItems.filter((i) => i.division_code === div.code);
-        const divTotal = rows.reduce((s, i) => s + (i.estimated_amount ?? 0), 0);
-        return (
-          <div key={div.code} className="overflow-hidden rounded-md border border-border">
-            {/* Division header */}
-            <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2">
-              <span className="text-xs font-semibold text-foreground">
-                {div.code} {div.name}
-              </span>
-              <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                {divTotal > 0 ? formatCurrency(divTotal) : "—"}
-              </span>
-            </div>
+    <div className="overflow-x-auto rounded-md border border-border">
+      <table className="w-full text-xs">
+        {/* Single header row for all divisions */}
+        <thead>
+          <tr className="border-b border-border bg-muted/40 text-left text-muted-foreground">
+            <th className="py-2 pl-4 pr-2 font-medium">Cost Code</th>
+            <th className="w-28 px-2 py-2 font-medium">Cost Type</th>
+            <th className="px-2 py-2 font-medium">Cost Code Name</th>
+            <th className="px-2 py-2 font-medium">Work Description</th>
+            <th className="w-36 px-2 py-2 text-right font-medium">Est. Amount / Bid</th>
+            <th className="px-2 py-2 font-medium">Sub Name / Plug</th>
+            <th className="w-8 px-2 py-2" />
+          </tr>
+        </thead>
+        <tbody>
+          {DETAIL_DIVISIONS.map((div) => {
+            const rows = detailItems.filter((i) => i.division_code === div.division_code);
+            const divTotal = rows.reduce((s, i) => s + (i.estimated_amount ?? 0), 0);
+            return (
+              <React.Fragment key={div.division_code}>
+                {/* Division separator row — styled like a merged cell */}
+                <tr className="border-b border-t border-border bg-muted/60">
+                  <td colSpan={5} className="py-2 pl-4 pr-2">
+                    <span className="font-semibold text-foreground">{div.division_header}</span>
+                  </td>
+                  <td colSpan={2} className="py-2 pr-4 text-right font-medium tabular-nums text-muted-foreground">
+                    {divTotal > 0 ? formatCurrency(divTotal) : ""}
+                  </td>
+                </tr>
 
-            {/* Rows */}
-            {rows.length > 0 && (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border/50 text-left text-muted-foreground">
-                    <th className="py-1.5 pl-4 pr-2 font-medium">Cost Code</th>
-                    <th className="px-2 py-1.5 font-medium">Cost Type</th>
-                    <th className="px-2 py-1.5 font-medium">Cost Code Name</th>
-                    <th className="px-2 py-1.5 font-medium">Work Description</th>
-                    <th className="w-32 px-2 py-1.5 text-right font-medium">Est. Amount / Bid</th>
-                    <th className="px-2 py-1.5 font-medium">Sub Name / Plug</th>
-                    <th className="w-8 px-2 py-1.5" />
+                {/* Line item rows */}
+                {rows.map((item) => (
+                  <tr key={item.id} className="group border-b border-border/20 hover:bg-muted/20">
+                    <td className="py-1 pl-4 pr-2">
+                      <InlineText
+                        value={item.cost_code ?? ""}
+                        onChange={(v) => void onPatchItem(item.id, { cost_code: v || null })}
+                        placeholder="Code"
+                        className="w-22"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <InlineSelect
+                        value={item.cost_type ?? ""}
+                        options={COST_TYPE_OPTIONS.map((o) => ({ value: o, label: o }))}
+                        onValueChange={(v) => void onPatchItem(item.id, { cost_type: v || null })}
+                        placeholder="—"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <InlineText
+                        value={item.cost_code_name ?? ""}
+                        onChange={(v) => void onPatchItem(item.id, { cost_code_name: v || null })}
+                        placeholder="Name"
+                        className="min-w-40"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <InlineText
+                        value={item.work_description ?? ""}
+                        onChange={(v) => void onPatchItem(item.id, { work_description: v || null })}
+                        placeholder="Description"
+                        className="min-w-40"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <InlineNumber
+                        value={item.estimated_amount ?? 0}
+                        onChange={(v) => void onPatchItem(item.id, { estimated_amount: v })}
+                        className="w-full text-right"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <InlineText
+                        value={item.sub_name ?? ""}
+                        onChange={(v) => void onPatchItem(item.id, { sub_name: v || null })}
+                        placeholder="Sub name"
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Delete row"
+                        onClick={() => void onDeleteRow(item.id)}
+                        className="h-6 p-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {rows.map((item) => (
-                    <tr key={item.id} className="group border-b border-border/20 hover:bg-muted/20">
-                      <td className="py-1 pl-4 pr-2">
-                        <InlineText
-                          value={item.cost_code ?? ""}
-                          onChange={(v) => void onPatchItem(item.id, { cost_code: v || null })}
-                          placeholder="Code"
-                          className="w-20"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <InlineSelect
-                          value={item.cost_type ?? ""}
-                          options={COST_TYPE_OPTIONS.map((o) => ({ value: o, label: o }))}
-                          onValueChange={(v) => void onPatchItem(item.id, { cost_type: v || null })}
-                          placeholder="Type"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <InlineText
-                          value={item.cost_code_name ?? ""}
-                          onChange={(v) => void onPatchItem(item.id, { cost_code_name: v || null })}
-                          placeholder="Name"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <InlineText
-                          value={item.work_description ?? ""}
-                          onChange={(v) => void onPatchItem(item.id, { work_description: v || null })}
-                          placeholder="Description"
-                          className="min-w-40"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <InlineNumber
-                          value={item.estimated_amount ?? 0}
-                          onChange={(v) => void onPatchItem(item.id, { estimated_amount: v })}
-                          className="w-full text-right"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <InlineText
-                          value={item.sub_name ?? ""}
-                          onChange={(v) => void onPatchItem(item.id, { sub_name: v || null })}
-                          placeholder="Sub name"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Delete row"
-                          onClick={() => void onDeleteRow(item.id)}
-                          className="h-6 p-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                ))}
 
-            {/* Add row */}
-            <div className="px-4 py-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto gap-1 p-0 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => void onAddRow(div.code, div.name)}
-              >
-                <Plus className="h-3 w-3" />
-                Add row
-              </Button>
-            </div>
-          </div>
-        );
-      })}
+                {/* Add row for this division */}
+                <tr className="border-b border-border/10">
+                  <td colSpan={7} className="py-1 pl-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto gap-1 p-0 text-[11px] text-muted-foreground/60 hover:text-muted-foreground"
+                      onClick={() => void onAddRow(div.division_code, div.division_header.replace(/^\d+-\d+\s+/, ""))}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add row
+                    </Button>
+                  </td>
+                </tr>
+              </React.Fragment>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -1130,8 +1472,87 @@ function SubListTab({
 // Summary Tab
 // ---------------------------------------------------------------------------
 
+const ALLEATO_CONTACTS = [
+  { name: "Brandon Clymer", title: "VP of Construction", email: "bclymer@alleatogroup.com", phone: "" },
+  { name: "Jesse Orosco", title: "Senior Project Manager", email: "jorosco@alleatogroup.com", phone: "" },
+] as const;
+
+function buildPrintHTML(opts: {
+  estimate: EstimateRow;
+  projectName: string;
+  gcItems: GcItem[];
+  detailItems: DetailItem[];
+  gcTotal: number;
+  detailTotalsByDiv: Record<string, number>;
+  subtotal: number;
+  contingencyAmount: number;
+  insurance: number;
+  insuranceRate: number;
+  fee: number;
+  feeRate: number;
+  grandTotal: number;
+}): string {
+  const fmt = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(v);
+  const divRows = [
+    { code: "01", name: "General Conditions", total: opts.gcTotal },
+    ...ALL_DIVISIONS.filter((d) => (opts.detailTotalsByDiv[d.code] ?? 0) > 0).map((d) => ({
+      code: d.code,
+      name: d.name,
+      total: opts.detailTotalsByDiv[d.code] ?? 0,
+    })),
+  ];
+  const divisionRows = divRows.map((d) => `<tr><td style="padding:5px 12px;border-bottom:1px solid #e5e7eb;">${d.code} – ${d.name}</td><td style="padding:5px 12px;text-align:right;border-bottom:1px solid #e5e7eb;font-variant-numeric:tabular-nums;">${fmt(d.total)}</td></tr>`).join("");
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Estimate – ${opts.estimate.title}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:11px;color:#111;margin:0;padding:24px;}
+  table{width:100%;border-collapse:collapse;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #d97706;}
+  .logo{font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#d97706;}
+  .contacts{display:flex;gap:32px;font-size:10px;line-height:1.6;}
+  .contact-block{min-width:160px;}
+  .contact-name{font-weight:700;}
+  .project-bar{background:#f3f4f6;padding:10px 12px;border-radius:4px;margin-bottom:16px;display:flex;gap:32px;font-size:10px;}
+  .project-bar span{color:#6b7280;}
+  .project-bar strong{color:#111;}
+  th{background:#1f2937;color:#fff;padding:8px 12px;text-align:left;font-size:10px;letter-spacing:.05em;text-transform:uppercase;}
+  th:last-child{text-align:right;}
+  .subtotal td{font-weight:600;background:#f9fafb;}
+  .total td{font-weight:800;font-size:13px;background:#1f2937;color:#fff;}
+  .total td:last-child{color:#fbbf24;}
+  @media print{body{padding:12px;}button{display:none;}}
+</style></head><body>
+<div class="header">
+  <div><div class="logo">ALLEATO</div><div style="font-size:10px;color:#6b7280;margin-top:4px;">Alleato Group LLC</div></div>
+  <div class="contacts">${ALLEATO_CONTACTS.map((c) => `<div class="contact-block"><div class="contact-name">${c.name}</div><div>${c.title}</div><div>${c.email}</div></div>`).join("")}</div>
+</div>
+<div class="project-bar">
+  <div><span>Project: </span><strong>${opts.projectName}</strong></div>
+  <div><span>Estimate: </span><strong>${opts.estimate.title}</strong></div>
+  ${opts.estimate.location ? `<div><span>Location: </span><strong>${opts.estimate.location}</strong></div>` : ""}
+  ${opts.estimate.estimate_date ? `<div><span>Date: </span><strong>${opts.estimate.estimate_date}</strong></div>` : ""}
+  ${opts.estimate.estimator ? `<div><span>Estimator: </span><strong>${opts.estimate.estimator}</strong></div>` : ""}
+  <div><span>Revision: </span><strong>R${opts.estimate.revision}</strong></div>
+</div>
+<table>
+  <thead><tr><th>Division</th><th style="text-align:right;">Total</th></tr></thead>
+  <tbody>${divisionRows}</tbody>
+  <tfoot>
+    <tr class="subtotal"><td style="padding:7px 12px;border-top:2px solid #e5e7eb;">Subtotal</td><td style="padding:7px 12px;text-align:right;border-top:2px solid #e5e7eb;">${fmt(opts.subtotal)}</td></tr>
+    ${opts.contingencyAmount > 0 ? `<tr><td style="padding:5px 12px;">Contingency</td><td style="padding:5px 12px;text-align:right;">${fmt(opts.contingencyAmount)}</td></tr>` : ""}
+    <tr><td style="padding:5px 12px;">Insurance (${(opts.insuranceRate * 100).toFixed(2)}%)</td><td style="padding:5px 12px;text-align:right;">${fmt(opts.insurance)}</td></tr>
+    <tr><td style="padding:5px 12px;border-bottom:2px solid #e5e7eb;">Fee (${(opts.feeRate * 100).toFixed(1)}%)</td><td style="padding:5px 12px;text-align:right;border-bottom:2px solid #e5e7eb;">${fmt(opts.fee)}</td></tr>
+    <tr class="total"><td style="padding:10px 12px;">TOTAL ESTIMATE</td><td style="padding:10px 12px;text-align:right;">${fmt(opts.grandTotal)}</td></tr>
+  </tfoot>
+</table>
+</body></html>`;
+}
+
 function SummaryTab({
-  durationMonths,
+  estimate,
+  projectName,
+  gcItems,
+  detailItems,
   gcTotal,
   detailTotalsByDiv,
   subtotal,
@@ -1141,12 +1562,14 @@ function SummaryTab({
   insurance,
   fee,
   grandTotal,
-  onDurationMonthsBlur,
   onContingencyBlur,
   onInsuranceRateBlur,
   onFeeRateBlur,
 }: {
-  durationMonths: number;
+  estimate: EstimateRow;
+  projectName: string;
+  gcItems: GcItem[];
+  detailItems: DetailItem[];
   gcTotal: number;
   detailTotalsByDiv: Record<string, number>;
   subtotal: number;
@@ -1156,94 +1579,210 @@ function SummaryTab({
   insurance: number;
   fee: number;
   grandTotal: number;
-  onDurationMonthsBlur: (v: number) => void;
   onContingencyBlur: (v: number) => void;
   onInsuranceRateBlur: (v: number) => void;
   onFeeRateBlur: (v: number) => void;
 }) {
-  const detailTotal = Object.values(detailTotalsByDiv).reduce((s, v) => s + v, 0);
+  const [expanded, setExpanded] = React.useState<Set<string>>(new Set());
+
+  const toggle = (code: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+
+  const handleExportPDF = () => {
+    const html = buildPrintHTML({
+      estimate, projectName, gcItems, detailItems,
+      gcTotal, detailTotalsByDiv, subtotal,
+      contingencyAmount, insurance, insuranceRate, fee, feeRate, grandTotal,
+    });
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 400);
+  };
 
   return (
-    <div className="max-w-2xl space-y-6">
-      {/* Duration */}
-      <div className="flex items-center gap-3 rounded-md bg-card px-4 py-2">
-        <span className="text-xs font-medium text-muted-foreground">Project Duration (Months)</span>
-        <InlineNumber
-          value={durationMonths}
-          onChange={onDurationMonthsBlur}
-          className="w-20 border border-border bg-background"
-          step="0.5"
-        />
-        <span className="text-xs text-muted-foreground">
-          = {Math.round(durationMonths * 4.334 * 10) / 10} weeks
-        </span>
+    <div className="space-y-5">
+      {/* ── Letterhead ─────────────────────────────────────────────── */}
+      <div className="rounded-lg bg-muted p-5">
+        <div className="flex items-start justify-between gap-6">
+          {/* Logo + address */}
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10">
+              <span className="text-lg font-black tracking-tight text-primary">A</span>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Alleato Group LLC</p>
+              <p className="text-xs text-muted-foreground">Construction Management</p>
+            </div>
+          </div>
+
+          {/* Contacts */}
+          <div className="flex shrink-0 gap-8">
+            {ALLEATO_CONTACTS.map((c) => (
+              <div key={c.email} className="text-right text-xs">
+                <p className="font-semibold text-foreground">{c.name}</p>
+                <p className="text-muted-foreground">{c.title}</p>
+                <p className="text-muted-foreground">{c.email}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Project info bar */}
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 border-t border-border pt-4 text-xs">
+          <span><span className="text-muted-foreground">Project: </span><span className="font-medium text-foreground">{projectName}</span></span>
+          {estimate.location && (
+            <span><span className="text-muted-foreground">Location: </span><span className="font-medium text-foreground">{estimate.location}</span></span>
+          )}
+          {estimate.estimate_date && (
+            <span><span className="text-muted-foreground">Date: </span><span className="font-medium text-foreground">{estimate.estimate_date}</span></span>
+          )}
+          {estimate.estimator && (
+            <span><span className="text-muted-foreground">Estimator: </span><span className="font-medium text-foreground">{estimate.estimator}</span></span>
+          )}
+          <span><span className="text-muted-foreground">Revision: </span><span className="font-medium text-foreground">R{estimate.revision}</span></span>
+        </div>
       </div>
 
-      {/* Division totals */}
-      <div className="overflow-hidden rounded-md border border-border">
-        <div className="border-b border-border bg-muted/30 px-4 py-2">
+      {/* ── Export button ───────────────────────────────────────────── */}
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExportPDF}>
+          <Printer className="h-3.5 w-3.5" />
+          Export PDF
+        </Button>
+      </div>
+
+      {/* ── Division breakdown (expandable) ─────────────────────────── */}
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="border-b border-border bg-muted/30 px-4 py-2.5">
           <span className="text-xs font-semibold text-foreground">Division Breakdown</span>
         </div>
         <table className="w-full text-xs">
-          <tbody>
-            {/* GC row */}
-            <tr className="border-b border-border/30 hover:bg-muted/10">
-              <td className="py-2 pl-4 pr-2 font-medium text-foreground">01 General Conditions</td>
-              <td className="py-2 pr-4 text-right font-medium tabular-nums text-foreground">
-                {formatCurrencyFull(gcTotal)}
-              </td>
+          <thead>
+            <tr className="border-b border-border text-left text-muted-foreground">
+              <th className="py-2 pl-4 pr-2 font-medium">Division</th>
+              <th className="py-2 pr-4 text-right font-medium">Total</th>
             </tr>
-            {ALL_DIVISIONS.map((div) => {
-              const tot = detailTotalsByDiv[div.code] ?? 0;
-              return (
-                <tr key={div.code} className="border-b border-border/20 hover:bg-muted/10">
-                  <td className="py-1.5 pl-4 pr-2 text-muted-foreground">
-                    <span className="font-medium text-foreground">{div.code}</span> {div.name}
+          </thead>
+          <tbody>
+            {/* ── GC – Division 01 ── */}
+            {gcTotal > 0 && (
+              <>
+                <tr
+                  className="cursor-pointer border-b border-border/40 hover:bg-muted/20"
+                  onClick={() => toggle("01")}
+                >
+                  <td className="flex items-center gap-1.5 py-2.5 pl-4 pr-2 font-medium text-foreground">
+                    {expanded.has("01") ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+                    <span>01 – General Conditions</span>
                   </td>
-                  <td className="py-1.5 pr-4 text-right tabular-nums text-muted-foreground">
-                    {tot > 0 ? formatCurrencyFull(tot) : "—"}
+                  <td className="py-2.5 pr-4 text-right font-medium tabular-nums text-foreground">
+                    {formatCurrencyFull(gcTotal)}
                   </td>
                 </tr>
+                {expanded.has("01") && gcItems.map((item) => {
+                  const qty = item.qty ?? 0;
+                  const rowTotal = qty * (item.rate ?? 0) * (item.allocation ?? 0);
+                  return (
+                    <tr key={item.id} className="border-b border-border/20 bg-muted/10">
+                      <td className="py-1.5 pl-10 pr-2 text-muted-foreground">
+                        <span className="font-mono text-[10px] text-muted-foreground/70">{item.cost_code}</span>
+                        <span className="ml-2">{item.description}</span>
+                      </td>
+                      <td className="py-1.5 pr-4 text-right tabular-nums text-muted-foreground">
+                        {rowTotal > 0 ? formatCurrencyFull(rowTotal) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </>
+            )}
+
+            {/* ── Other divisions ── */}
+            {ALL_DIVISIONS.map((div) => {
+              const total = detailTotalsByDiv[div.code] ?? 0;
+              const rows = detailItems.filter((i) => i.division_code === div.code);
+              const isOpen = expanded.has(div.code);
+              return (
+                <React.Fragment key={div.code}>
+                  <tr
+                    className={`border-b border-border/20 ${total > 0 ? "cursor-pointer hover:bg-muted/20" : ""}`}
+                    onClick={() => total > 0 && toggle(div.code)}
+                  >
+                    <td className="flex items-center gap-1.5 py-2 pl-4 pr-2 text-foreground">
+                      {total > 0
+                        ? (isOpen ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />)
+                        : <span className="h-3.5 w-3.5" />
+                      }
+                      <span className={total === 0 ? "text-muted-foreground" : ""}>
+                        {div.code} – {div.name}
+                      </span>
+                    </td>
+                    <td className={`py-2 pr-4 text-right tabular-nums ${total > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                      {total > 0 ? formatCurrencyFull(total) : "—"}
+                    </td>
+                  </tr>
+                  {isOpen && rows.map((item) => (
+                    <tr key={item.id} className="border-b border-border/20 bg-muted/10">
+                      <td className="py-1.5 pl-10 pr-2 text-muted-foreground">
+                        {item.cost_code && <span className="font-mono text-[10px] text-muted-foreground/70 mr-2">{item.cost_code}</span>}
+                        <span>{item.cost_code_name ?? item.work_description ?? "—"}</span>
+                        {item.sub_name && <span className="ml-2 text-[10px] text-muted-foreground/60">· {item.sub_name}</span>}
+                      </td>
+                      <td className="py-1.5 pr-4 text-right tabular-nums text-muted-foreground">
+                        {(item.estimated_amount ?? 0) > 0 ? formatCurrencyFull(item.estimated_amount ?? 0) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </React.Fragment>
               );
             })}
           </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-border bg-muted/20">
+              <td className="py-2.5 pl-4 text-xs font-semibold text-foreground">Subtotal</td>
+              <td className="py-2.5 pr-4 text-right text-sm font-bold tabular-nums text-foreground">
+                {formatCurrencyFull(subtotal)}
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
-      {/* Financial rollup */}
-      <div className="overflow-hidden rounded-md border border-border">
-        <div className="border-b border-border bg-muted/30 px-4 py-2">
-          <span className="text-xs font-semibold text-foreground">Financial Summary</span>
+      {/* ── Financial rollup ────────────────────────────────────────── */}
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="border-b border-border bg-muted/30 px-4 py-2.5">
+          <span className="text-xs font-semibold text-foreground">Markups &amp; Fees</span>
         </div>
         <div className="divide-y divide-border/30">
-          <SummaryLineReadOnly label="GC Subtotal" value={gcTotal} />
-          <SummaryLineReadOnly label="Other Divisions Subtotal" value={detailTotal} />
-          <SummaryLineReadOnly label="Subtotal" value={subtotal} bold />
-
-          <SummaryLineEditable
-            label="Contingency ($)"
-            value={contingencyAmount}
-            displayValue={formatCurrencyFull(contingencyAmount)}
-            onBlur={onContingencyBlur}
+          <SummaryMarkupLine
+            label="Contingency"
+            rateValue={null}
+            dollarValue={contingencyAmount}
+            onDollarChange={onContingencyBlur}
           />
-
-          <SummaryLineEditable
-            label={`Insurance (${(insuranceRate * 100).toFixed(2)}%)`}
-            value={insuranceRate * 100}
-            displayValue={formatCurrencyFull(insurance)}
-            suffix="%"
-            onBlur={onInsuranceRateBlur}
+          <SummaryMarkupLine
+            label="Insurance"
+            rateValue={insuranceRate * 100}
+            dollarValue={insurance}
+            onRateChange={onInsuranceRateBlur}
+            rateSuffix="%"
           />
-
-          <SummaryLineEditable
-            label={`Fee (${(feeRate * 100).toFixed(1)}%)`}
-            value={feeRate * 100}
-            displayValue={formatCurrencyFull(fee)}
-            suffix="%"
-            onBlur={onFeeRateBlur}
+          <SummaryMarkupLine
+            label="Fee"
+            rateValue={feeRate * 100}
+            dollarValue={fee}
+            onRateChange={onFeeRateBlur}
+            rateSuffix="%"
           />
-
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between bg-foreground/5 px-4 py-3">
             <span className="text-sm font-bold text-foreground">Grand Total</span>
             <span className="text-base font-bold tabular-nums text-primary">
               {formatCurrencyFull(grandTotal)}
@@ -1255,82 +1794,76 @@ function SummaryTab({
   );
 }
 
-function SummaryLineReadOnly({
+function SummaryMarkupLine({
   label,
-  value,
-  bold,
+  rateValue,
+  dollarValue,
+  onRateChange,
+  onDollarChange,
+  rateSuffix,
 }: {
   label: string;
-  value: number;
-  bold?: boolean;
+  rateValue: number | null;
+  dollarValue: number;
+  onRateChange?: (v: number) => void;
+  onDollarChange?: (v: number) => void;
+  rateSuffix?: string;
 }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-2">
-      <span className={`text-xs ${bold ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
-        {label}
-      </span>
-      <span className={`text-xs tabular-nums ${bold ? "font-semibold text-foreground" : "text-foreground"}`}>
-        {formatCurrencyFull(value)}
-      </span>
-    </div>
-  );
-}
+  const [localRate, setLocalRate] = React.useState(rateValue !== null ? String(rateValue) : "");
+  const [localDollar, setLocalDollar] = React.useState(String(dollarValue));
 
-function SummaryLineEditable({
-  label,
-  value,
-  displayValue,
-  suffix,
-  onBlur,
-}: {
-  label: string;
-  value: number;
-  displayValue: string;
-  suffix?: string;
-  onBlur: (v: number) => void;
-}) {
-  const [editMode, setEditMode] = React.useState(false);
-  const [local, setLocal] = React.useState(String(value));
+  React.useEffect(() => { if (rateValue !== null) setLocalRate(String(rateValue)); }, [rateValue]);
+  React.useEffect(() => { setLocalDollar(String(dollarValue)); }, [dollarValue]);
 
-  React.useEffect(() => {
-    setLocal(String(value));
-  }, [value]);
-
-  const commit = () => {
-    const parsed = parseFloat(local);
-    if (!Number.isNaN(parsed)) onBlur(parsed);
-    else setLocal(String(value));
-    setEditMode(false);
+  const commitRate = () => {
+    const parsed = parseFloat(localRate);
+    if (!Number.isNaN(parsed) && onRateChange) onRateChange(parsed);
+    else setLocalRate(rateValue !== null ? String(rateValue) : "");
+  };
+  const commitDollar = () => {
+    const parsed = parseFloat(localDollar);
+    if (!Number.isNaN(parsed) && onDollarChange) onDollarChange(parsed);
+    else setLocalDollar(String(dollarValue));
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-xs tabular-nums text-foreground">{displayValue}</span>
-        {editMode ? (
+    <div className="flex items-center justify-between px-4 py-2.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-3">
+        {/* rate input */}
+        {rateValue !== null && onRateChange && (
           <div className="flex items-center gap-1">
             <Input
-              autoFocus
               type="number"
               step="0.01"
-              value={local}
-              onChange={(e) => setLocal(e.target.value)}
-              onBlur={commit}
-              onKeyDown={(e) => e.key === "Enter" && commit()}
-              className="h-6 w-20 text-xs"
+              min="0"
+              value={localRate}
+              onChange={(e) => setLocalRate(e.target.value)}
+              onBlur={commitRate}
+              onKeyDown={(e) => e.key === "Enter" && commitRate()}
+              className="h-6 w-16 text-right text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
-            {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
+            {rateSuffix && <span className="text-xs text-muted-foreground">{rateSuffix}</span>}
+          </div>
+        )}
+        {/* dollar amount */}
+        {onDollarChange ? (
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={localDollar}
+              onChange={(e) => setLocalDollar(e.target.value)}
+              onBlur={commitDollar}
+              onKeyDown={(e) => e.key === "Enter" && commitDollar()}
+              className="h-6 w-28 text-right text-xs tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
           </div>
         ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 px-1.5 text-[10px] text-muted-foreground"
-            onClick={() => setEditMode(true)}
-          >
-            edit
-          </Button>
+          <span className="w-28 text-right text-xs tabular-nums text-foreground">
+            {formatCurrencyFull(dollarValue)}
+          </span>
         )}
       </div>
     </div>

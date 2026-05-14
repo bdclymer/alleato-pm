@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -99,14 +100,44 @@ export function EstimatesClient({
     Math.ceil(filteredItems.length / tableState.perPage)
   );
 
+  const [isCreating, setIsCreating] = React.useState(false);
+
+  const handleCreateEstimate = async () => {
+    setIsCreating(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const result = await apiFetch<{ estimate_id: number }>(
+        `/api/projects/${projectId}/estimates`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "New Estimate",
+            revision: 1,
+            status: "draft",
+            estimate_date: today,
+            insurance_rate: 0.0125,
+            fee_rate: 0.1,
+            contingency_amount: 0,
+            project_duration_months: 0,
+            project_duration_weeks: 0,
+          }),
+        }
+      );
+      router.push(`/${projectId}/estimates/${result.estimate_id}`);
+    } catch {
+      toast.error("Failed to create estimate");
+      setIsCreating(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!estimateToDelete) return;
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/estimates/${estimateToDelete.estimate_id}`,
         { method: "DELETE" }
       );
-      if (!response.ok) throw new Error("Failed to delete estimate");
       toast.success("Estimate deleted");
       router.refresh();
     } catch {
@@ -219,10 +250,11 @@ export function EstimatesClient({
           actions: (
             <Button
               size="sm"
-              onClick={() => router.push(`/${projectId}/estimates/new`)}
+              onClick={() => void handleCreateEstimate()}
+              disabled={isCreating}
             >
               <Plus />
-              New Estimate
+              {isCreating ? "Creating..." : "New Estimate"}
             </Button>
           ),
         }}
@@ -351,10 +383,11 @@ export function EstimatesClient({
           action: (
             <Button
               size="sm"
-              onClick={() => router.push(`/${projectId}/estimates/new`)}
+              onClick={() => void handleCreateEstimate()}
+              disabled={isCreating}
             >
               <Plus />
-              New Estimate
+              {isCreating ? "Creating..." : "New Estimate"}
             </Button>
           ),
         }}
