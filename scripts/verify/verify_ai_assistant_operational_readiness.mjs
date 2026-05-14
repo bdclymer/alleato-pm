@@ -63,6 +63,7 @@ const requiredScripts = [
   "rag:verify:source-sync-evals",
   "rag:verify:task-action-evals",
   "rag:verify:intelligence-compiler",
+  "rag:verify:chunk-integrity",
   "rag:verify:meetings",
   "rag:verify:task-integrity",
   "rag:verify:assistant-operational-readiness",
@@ -199,6 +200,7 @@ const summary = {
     "npm run rag:verify:eval-suite -- --filter \"owner-strategy|action-task|task-register|source-freshness\"",
     "python3 scripts/verify/verify_integration_health.py --skip-env",
     "npm run rag:verify:intelligence-compiler",
+    "npm run rag:verify:chunk-integrity -- --days=1",
   ],
 };
 
