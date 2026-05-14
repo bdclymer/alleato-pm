@@ -24,11 +24,7 @@ const REQUIRED_WEB_FLAGS = new Map([
   ["TASK_EXTRACTION_ENABLED", "false"],
 ]);
 
-const REQUIRED_SUSPENDED_CRONS = new Set([
-  "alleato-acumatica-financial-sync",
-  "alleato-executive-daily-brief-evening",
-  "alleato-executive-daily-brief-morning",
-]);
+const REQUIRED_SUSPENDED_CRONS = new Set([]);
 
 const SAFE_RESUMED_CRON_ENV = new Map([
   [
@@ -82,6 +78,9 @@ const SAFE_RESUMED_CRON_ENV = new Map([
 ]);
 
 const SAFE_RESUMED_CRONS = new Set([
+  "alleato-acumatica-financial-sync",
+  "alleato-executive-daily-brief-evening",
+  "alleato-executive-daily-brief-morning",
   "alleato-graph-sync",
   "alleato-rag-health",
   "alleato-source-rag-health",
