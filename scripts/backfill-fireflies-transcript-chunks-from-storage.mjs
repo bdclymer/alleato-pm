@@ -59,6 +59,7 @@ const onlyId = args.get("id");
 const rebuildExisting = args.get("rebuild-existing") === "true";
 const contentOnly = args.get("content-only") === "true";
 const skipAppContentUpdate = args.get("skip-app-content-update") === "true";
+const allowFirefliesApiFallback = args.get("allow-fireflies-api-fallback") === "true";
 const chunkTargetChars = Number(args.get("chunk-chars") || "3000");
 const chunkOverlapChars = Number(args.get("chunk-overlap") || "500");
 const embedBatchSize = Number(args.get("embed-batch-size") || "32");
@@ -72,10 +73,14 @@ const ragDatabaseUrl = process.env.RAG_DATABASE_URL;
 const ragWritesEnabled = String(process.env.RAG_DATABASE_WRITES_ENABLED || "").toLowerCase() === "true";
 const aiGatewayKey = process.env.AI_GATEWAY_API_KEY;
 const openAiKey = process.env.OPENAI_API_KEY;
+const firefliesApiKey = process.env.FIREFLIES_API_KEY;
 
 if (!databaseUrl) throw new Error("APP_METADATA_DATABASE_URL, DATABASE_URL, or SUPABASE_DB_URL is required.");
 if (!ragDatabaseUrl) throw new Error("RAG_DATABASE_URL is required.");
 if (!aiGatewayKey && !openAiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required.");
+if (allowFirefliesApiFallback && !firefliesApiKey) {
+  throw new Error("FIREFLIES_API_KEY is required when --allow-fireflies-api-fallback=true.");
+}
 if (!dryRun && !ragWritesEnabled) {
   throw new Error("RAG_DATABASE_WRITES_ENABLED=true is required for writes.");
 }
@@ -116,8 +121,21 @@ function transcriptText(markdown) {
   return markdown.slice(marker.index).trim();
 }
 
+function isTruncatedTranscriptExport(value) {
+  return /showing\s+50\s+of\s+\d+\s+sentences/i.test(String(value || ""));
+}
+
 function hasTranscriptMarker(value) {
   return /^##\s+Transcript\s*$/im.test(String(value || ""));
+}
+
+function preferRawText(row, markdown) {
+  const rawText = String(row.raw_text || "").trim();
+  if (!rawText || !hasTranscriptMarker(rawText)) return null;
+  if (!isTruncatedTranscriptExport(rawText) && (isTruncatedTranscriptExport(markdown) || rawText.length > String(markdown || "").length * 2)) {
+    return rawText;
+  }
+  return null;
 }
 
 async function embed(texts) {
@@ -169,24 +187,163 @@ async function embed(texts) {
 }
 
 async function fetchMarkdown(row) {
+  let markdown = "";
   const url = row.url || row.source_web_url;
   if (url && /\/storage\/v1\/object\//.test(url)) {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`storage URL ${response.status}`);
-    return response.text();
+    markdown = await response.text();
+  } else if (row.file_path) {
+    const bucket = row.storage_bucket || process.env.SUPABASE_MEETINGS_BUCKET || "meetings";
+    const base = String(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, "");
+    const objectUrl = `${base}/storage/v1/object/${bucket}/${encodeURI(row.file_path)}`;
+    const response = await fetch(objectUrl, {
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ""}`,
+      },
+    });
+    if (!response.ok) throw new Error(`storage object ${response.status}`);
+    markdown = await response.text();
   }
-  if (!row.file_path) throw new Error("missing storage URL/file_path");
-  const bucket = row.storage_bucket || process.env.SUPABASE_MEETINGS_BUCKET || "meetings";
-  const base = String(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, "");
-  const objectUrl = `${base}/storage/v1/object/${bucket}/${encodeURI(row.file_path)}`;
-  const response = await fetch(objectUrl, {
+
+  const rawText = preferRawText(row, markdown);
+  if (rawText) return { markdown: rawText, source: "document_metadata.raw_text" };
+
+  if (markdown && (!isTruncatedTranscriptExport(markdown) || !allowFirefliesApiFallback)) {
+    return { markdown, source: "supabase_storage_markdown" };
+  }
+
+  if (allowFirefliesApiFallback && (row.fireflies_id || row.id)) {
+    const transcript = await fetchFirefliesTranscript(row.fireflies_id || row.id);
+    return {
+      markdown: formatFirefliesTranscriptMarkdown(transcript),
+      source: "fireflies_api_fallback",
+    };
+  }
+
+  if (markdown) return { markdown, source: "supabase_storage_markdown" };
+  throw new Error("missing storage URL/file_path");
+}
+
+async function fetchFirefliesTranscript(transcriptId) {
+  const query = `
+    query Transcript($transcriptId: String!) {
+      transcript(id: $transcriptId) {
+        id
+        title
+        date
+        dateString
+        duration
+        host_email
+        organizer_email
+        transcript_url
+        participants
+        fireflies_users
+        workspace_users
+        audio_url
+        video_url
+        meeting_link
+        calendar_type
+        summary {
+          overview
+          short_summary
+          bullet_gist
+          action_items
+          keywords
+          topics_discussed
+          transcript_chapters
+        }
+        sentences {
+          index
+          speaker_name
+          text
+          start_time
+        }
+      }
+    }
+  `;
+  const response = await fetch("https://api.fireflies.ai/graphql", {
+    method: "POST",
     headers: {
-      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ""}`,
+      Authorization: `Bearer ${firefliesApiKey}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({ query, variables: { transcriptId } }),
   });
-  if (!response.ok) throw new Error(`storage object ${response.status}`);
-  return response.text();
+  if (!response.ok) throw new Error(`Fireflies API ${response.status}: ${(await response.text()).slice(0, 200)}`);
+  const payload = await response.json();
+  if (payload.errors) throw new Error(`Fireflies GraphQL error: ${JSON.stringify(payload.errors).slice(0, 300)}`);
+  const transcript = payload.data?.transcript;
+  if (!transcript) throw new Error(`Fireflies transcript not found: ${transcriptId}`);
+  return transcript;
+}
+
+function appendTextSection(lines, title, value) {
+  if (!value) return;
+  lines.push(`## ${title}`, "", String(value).trim(), "");
+}
+
+function appendListSection(lines, title, value) {
+  const items = Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
+  if (!items.length) return;
+  lines.push(`## ${title}`, "");
+  for (const item of items) lines.push(`- ${String(item).trim()}`);
+  lines.push("");
+}
+
+function secondsToMmss(value) {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function formatFirefliesTranscriptMarkdown(transcript) {
+  const lines = [`# ${transcript.title || "Untitled Meeting"}`, ""];
+  const date = transcript.dateString || transcript.date;
+  if (date) lines.push(`**Date:** ${date}`);
+  if (transcript.duration != null) lines.push(`**Duration:** ${Math.round(Number(transcript.duration))} minutes`);
+  if (transcript.organizer_email) lines.push(`**Organizer Email:** ${transcript.organizer_email}`);
+  if (transcript.host_email) lines.push(`**Host Email:** ${transcript.host_email}`);
+  if (Array.isArray(transcript.participants) && transcript.participants.length) {
+    lines.push(`**Participants:** ${transcript.participants.join(", ")}`);
+  }
+  if (Array.isArray(transcript.fireflies_users) && transcript.fireflies_users.length) {
+    lines.push(`**Fireflies Users:** ${transcript.fireflies_users.join(", ")}`);
+  }
+  if (Array.isArray(transcript.workspace_users) && transcript.workspace_users.length) {
+    lines.push(`**Workspace Users:** ${transcript.workspace_users.join(", ")}`);
+  }
+  if (transcript.transcript_url) lines.push(`**Fireflies Link:** ${transcript.transcript_url}`);
+  if (transcript.audio_url) lines.push(`**Audio:** ${transcript.audio_url}`);
+  if (transcript.video_url) lines.push(`**Video:** ${transcript.video_url}`);
+  if (transcript.meeting_link) lines.push(`**Meeting Link:** ${transcript.meeting_link}`);
+  if (transcript.calendar_type) lines.push(`**Calendar Type:** ${transcript.calendar_type}`);
+  lines.push(`**Fireflies ID:** ${transcript.id}`, "");
+
+  const summary = transcript.summary || {};
+  appendTextSection(lines, "Summary", summary.overview);
+  appendTextSection(lines, "Short Summary", summary.short_summary);
+  appendTextSection(lines, "Bullet Gist", summary.bullet_gist);
+  appendListSection(lines, "Keywords", summary.keywords);
+  appendListSection(lines, "Topics Discussed", summary.topics_discussed);
+  appendListSection(lines, "Transcript Chapters", summary.transcript_chapters);
+  appendListSection(lines, "Action Items", summary.action_items);
+
+  const sentences = Array.isArray(transcript.sentences) ? transcript.sentences : [];
+  if (sentences.length) {
+    lines.push("## Transcript", "");
+    for (const sentence of sentences) {
+      const text = String(sentence?.text || "").trim();
+      if (!text) continue;
+      lines.push(`[${secondsToMmss(sentence.start_time)}] **${sentence.speaker_name || "Unknown"}**: ${text}`);
+    }
+    lines.push("");
+  }
+
+  return lines.join("\n").trim() + "\n";
 }
 
 async function candidateRows() {
@@ -213,6 +370,7 @@ async function candidateRows() {
       dm.file_name,
       dm.participants_array,
       dm.content,
+      dm.raw_text,
       dm.storage_bucket,
       dm.file_path,
       dm.url,
@@ -285,6 +443,14 @@ async function upsertChunks(records) {
   }
 }
 
+async function deleteExistingTranscriptChunks(documentId) {
+  await ragSql`
+    delete from public.document_chunks
+    where document_id = ${documentId}
+      and source_type = 'meeting_transcript'
+  `;
+}
+
 async function markBackfillStatus(row, status, message = null) {
   const metadata = {
     ...(row.source_metadata || {}),
@@ -302,7 +468,7 @@ async function markBackfillStatus(row, status, message = null) {
   `;
 }
 
-async function upsertRagDocumentMetadata(row, markdown, transcript, records) {
+async function upsertRagDocumentMetadata(row, markdown, transcript, records, contentSource) {
   const contentHash = hashContent(markdown);
   const indexed = records.length > 0 || row.has_embedded_transcript_chunks;
   const sourceMetadata = {
@@ -315,7 +481,7 @@ async function upsertRagDocumentMetadata(row, markdown, transcript, records) {
     transcript_chunk_backfill: {
       checked_at: new Date().toISOString(),
       script: "backfill-fireflies-transcript-chunks-from-storage",
-      content_source: "supabase_storage_markdown",
+      content_source: contentSource,
       transcript_chars: transcript.length,
       transcript_chunks_written: records.length,
       had_existing_embedded_transcript_chunks: row.has_embedded_transcript_chunks,
@@ -402,7 +568,8 @@ async function main() {
       if (!row.rag_content_has_transcript) ragContentMissingTranscript += 1;
       if (!row.has_embedded_transcript_chunks) missingEmbeddedTranscriptChunks += 1;
       try {
-        const markdown = await fetchMarkdown(row);
+        const fetched = await fetchMarkdown(row);
+        const markdown = fetched.markdown;
         if (transcriptText(markdown)) storageWithTranscript += 1;
         else storageMissingTranscript += 1;
       } catch {
@@ -425,7 +592,9 @@ async function main() {
   let insertedChunks = 0;
   for (const row of rows) {
     try {
-      const markdown = await fetchMarkdown(row);
+      const fetched = await fetchMarkdown(row);
+      const markdown = fetched.markdown;
+      const contentSource = fetched.source;
       const transcript = transcriptText(markdown);
       if (!transcript) {
         skipped += 1;
@@ -485,9 +654,10 @@ async function main() {
             source_type: "meeting_transcript",
           };
         });
+        if (rebuildExisting) await deleteExistingTranscriptChunks(row.id);
         await upsertChunks(records);
       }
-      await upsertRagDocumentMetadata(row, markdown, transcript, records);
+      await upsertRagDocumentMetadata(row, markdown, transcript, records, contentSource);
 
       processed += 1;
       insertedChunks += records.length;
