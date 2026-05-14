@@ -42,6 +42,16 @@
         "Owner phrasing like open loops, my list, and waiting on my team must route as task/action-item retrieval.",
         "Answers must be direct and useful enough for morning triage, not generic planning advice."
       ]
+    },
+    "deep-agents-executive-regression": {
+      "description": "Agentic-eval guardrail for broad business prompts. The assistant must use the backend executive Deep Agents packet for no-project executive questions while keeping deterministic write tools out of read-only synthesis.",
+      "filter": "realworld-(most-important-tasks|waiting-on-team|business-risks|systems-processes-needed)$",
+      "criteria": [
+        "Every broad no-project executive prompt must fire backendDeepAgentExecutiveBriefing.",
+        "The assistant must still use source-backed task/action/source-health tools where appropriate.",
+        "No read-only executive prompt may fire email, calendar, or task write tools.",
+        "Answers must be specific and operational, not generic best-practice advice."
+      ]
     }
   },
   "cases": [
@@ -2535,8 +2545,20 @@
         "actions"
       ],
       "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
         "getMyTasks",
         "getActionItemsAndInsights"
+      ],
+      "expectedAllToolNames": [
+        "backendDeepAgentExecutiveBriefing"
+      ],
+      "forbiddenToolNames": [
+        "draftOutlookEmail",
+        "createOutlookCalendarInvite",
+        "createTask",
+        "createGeneratedTask",
+        "updateGeneratedTask",
+        "deleteGeneratedTask"
       ],
       "mustIncludeAny": [
         [
@@ -2568,9 +2590,21 @@
         "people"
       ],
       "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
         "getMyTasks",
         "getActionItemsAndInsights",
         "getPeopleAndRoles"
+      ],
+      "expectedAllToolNames": [
+        "backendDeepAgentExecutiveBriefing"
+      ],
+      "forbiddenToolNames": [
+        "draftOutlookEmail",
+        "createOutlookCalendarInvite",
+        "createTask",
+        "createGeneratedTask",
+        "updateGeneratedTask",
+        "deleteGeneratedTask"
       ],
       "mustIncludeAny": [
         [
@@ -2603,10 +2637,22 @@
         "source_health"
       ],
       "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
         "getProjectsWithRisks",
         "getPortfolioOverview",
         "getFinancialAnalysis",
         "assistantSourceHealth"
+      ],
+      "expectedAllToolNames": [
+        "backendDeepAgentExecutiveBriefing"
+      ],
+      "forbiddenToolNames": [
+        "draftOutlookEmail",
+        "createOutlookCalendarInvite",
+        "createTask",
+        "createGeneratedTask",
+        "updateGeneratedTask",
+        "deleteGeneratedTask"
       ],
       "mustIncludeAny": [
         [
@@ -2634,9 +2680,21 @@
         "source_health"
       ],
       "expectedToolNames": [
+        "backendDeepAgentExecutiveBriefing",
         "getPortfolioOverview",
         "getActionItemsAndInsights",
         "assistantSourceHealth"
+      ],
+      "expectedAllToolNames": [
+        "backendDeepAgentExecutiveBriefing"
+      ],
+      "forbiddenToolNames": [
+        "draftOutlookEmail",
+        "createOutlookCalendarInvite",
+        "createTask",
+        "createGeneratedTask",
+        "updateGeneratedTask",
+        "deleteGeneratedTask"
       ],
       "mustIncludeAny": [
         [
@@ -2919,6 +2977,7 @@
   "toolFamilyMap": {
     "project": [
       "backendDeepAgentProjectStatus",
+      "backendDeepAgentExecutiveBriefing",
       "getProjectBriefingSnapshot",
       "getPortfolioOverview",
       "getProjectDetails",
@@ -2956,6 +3015,7 @@
     ],
     "risk": [
       "backendDeepAgentProjectStatus",
+      "backendDeepAgentExecutiveBriefing",
       "getProjectRiskAnalysis",
       "getProjectsWithRisks"
     ],
@@ -2996,6 +3056,7 @@
       "writeMemory"
     ],
     "actions": [
+      "backendDeepAgentExecutiveBriefing",
       "getActionItemsAndInsights"
     ],
     "action_write": [
@@ -3020,6 +3081,7 @@
       "createOutlookCalendarInvite"
     ],
     "task_management": [
+      "backendDeepAgentExecutiveBriefing",
       "getMyTasks",
       "getActionItemsAndInsights",
       "queryScheduleTasks",

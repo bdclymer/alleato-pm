@@ -62,6 +62,7 @@ const requiredScripts = [
   "rag:verify:inbox-evals",
   "rag:verify:source-sync-evals",
   "rag:verify:task-action-evals",
+  "rag:verify:deep-agents-executive-evals",
   "rag:verify:intelligence-compiler",
   "rag:verify:chunk-integrity",
   "rag:verify:repaired-meeting-retrieval",
@@ -90,6 +91,7 @@ for (const bundleName of [
   "inbox-outlook-regression",
   "source-sync-teams-regression",
   "task-action-items-regression",
+  "deep-agents-executive-regression",
 ]) {
   const bundle = evalSuite.evalBundles?.[bundleName];
   requireCondition(Boolean(bundle), `eval bundle exists: ${bundleName}`);
@@ -198,6 +200,7 @@ const summary = {
     "npm run rag:verify:inbox-evals:prod",
     "npm run rag:verify:source-sync-evals:prod",
     "npm run rag:verify:task-action-evals:prod",
+    "npm run rag:verify:deep-agents-executive-evals:prod",
     "npm run rag:verify:eval-suite -- --filter \"owner-strategy|action-task|task-register|source-freshness\"",
     "python3 scripts/verify/verify_integration_health.py --skip-env",
     "npm run rag:verify:intelligence-compiler",
