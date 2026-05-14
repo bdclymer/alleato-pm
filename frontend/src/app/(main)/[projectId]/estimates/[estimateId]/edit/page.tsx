@@ -33,6 +33,7 @@ interface EstimateFormValues {
   location?: string | null;
   estimator?: string | null;
   project_duration_weeks?: number | null;
+  project_duration_months?: number | null;
   contingency_amount?: number;
   insurance_rate?: number;
   fee_rate?: number;

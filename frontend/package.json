@@ -180,6 +180,7 @@
     "@types/sanitize-html": "^2.16.1",
     "@use-gesture/react": "^10.3.1",
     "@vercel/functions": "^3.4.3",
+    "@vercel/speed-insights": "^2.0.0",
     "@xyflow/react": "^12.10.0",
     "adaptivecards": "^3.0.6",
     "agentation": "^3.0.2",

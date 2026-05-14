@@ -130,7 +130,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
           {/* Logo — top left */}
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={false}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
@@ -145,7 +145,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
           {/* Form — vertically centered */}
           <motion.div
-            initial={{ opacity: 0, y: 14 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
           >
@@ -237,7 +237,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
           {/* Tagline — bottom */}
           <motion.p
-            initial={{ opacity: 0 }}
+            initial={false}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.5 }}
             className="text-xs tracking-widest uppercase text-muted-foreground/30"

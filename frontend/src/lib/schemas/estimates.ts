@@ -181,6 +181,10 @@ export const EstimateCreateSchema = z.object({
     (val) => (val === "" || (typeof val === "number" && Number.isNaN(val)) ? null : val),
     z.coerce.number().int().positive().nullable().optional()
   ),
+  project_duration_months: z.preprocess(
+    (val) => (val === "" || (typeof val === "number" && Number.isNaN(val)) ? null : val),
+    z.coerce.number().positive().nullable().optional()
+  ),
   contingency_amount: nonNegativeNumber,
   insurance_rate: z.coerce.number().min(0).max(1).default(0.0125),
   fee_rate: z.coerce.number().min(0).max(1).default(0.1),

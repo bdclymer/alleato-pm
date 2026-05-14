@@ -53,6 +53,7 @@ const INTENT_VALUES = [
   "calendar_action",
   "external_research",
   "source_lookup",
+  "source_health",
   "strategy_brainstorm",
   "implementation_planning",
   "app_help",

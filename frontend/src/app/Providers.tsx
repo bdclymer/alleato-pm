@@ -1,56 +1,26 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { LiveblocksProvider } from "@liveblocks/react/suspense";
+import { lazy, Suspense } from "react";
+import { usePathname } from "next/navigation";
 
-type ResolverFallback = [] | Record<string, unknown>[];
+const LiveblocksAppProvider = lazy(() =>
+  import("@/components/providers/liveblocks-app-provider").then((mod) => ({
+    default: mod.LiveblocksAppProvider,
+  }))
+);
 
-/** Fetches JSON for Liveblocks resolvers and returns a safe fallback on failure. */
-async function safeResolverFetch<T extends ResolverFallback>(
-  endpoint: string,
-  fallback: T
-): Promise<T> {
-  try {
-    const response = await fetch(endpoint);
-    if (!response.ok) {
-      console.error(`[LiveblocksProvider] Resolver failed: ${endpoint}`, {
-        status: response.status,
-      });
-      return fallback;
-    }
-    return (await response.json()) as T;
-  } catch (error) {
-    console.error(`[LiveblocksProvider] Resolver error: ${endpoint}`, error);
-    return fallback;
-  }
-}
-
-/** Provides Liveblocks context for all app routes that use comments, mentions, and notifications. */
+/** Provides route-aware client contexts without loading app-only providers on public auth routes. */
 export function Providers({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  if (pathname?.startsWith("/auth")) {
+    return <>{children}</>;
+  }
+
   return (
-    <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
-      badgeLocation="bottom-left"
-      resolveUsers={({ userIds }) =>
-        safeResolverFetch(
-          `/api/liveblocks/users?userIds=${userIds.join(",")}`,
-          []
-        )
-      }
-      resolveMentionSuggestions={({ text }) =>
-        safeResolverFetch(
-          `/api/liveblocks/users/search?text=${encodeURIComponent(text)}`,
-          []
-        )
-      }
-      resolveRoomsInfo={({ roomIds }) =>
-        safeResolverFetch(
-          `/api/liveblocks/rooms?roomIds=${roomIds.join(",")}`,
-          []
-        )
-      }
-    >
-      {children}
-    </LiveblocksProvider>
+    <Suspense fallback={children}>
+      <LiveblocksAppProvider>{children}</LiveblocksAppProvider>
+    </Suspense>
   );
 }

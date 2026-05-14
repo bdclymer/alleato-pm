@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "./Providers";
 import { RootClientWidgets } from "./root-client-widgets";
 import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
@@ -77,6 +78,7 @@ export default function RootLayout({
             </Suspense>
             <Toaster />
             <RootClientWidgets />
+            <SpeedInsights />
           </ThemeProvider>
         </QueryProvider>
         </NuqsAdapter>

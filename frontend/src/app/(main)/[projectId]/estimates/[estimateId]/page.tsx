@@ -1,5 +1,12 @@
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
-import { EstimateDetailClient } from "./estimate-detail-client";
+import { EstimateDetailClientV2 } from "./estimate-detail-client-v2";
+import type { Database } from "@/types/database.types";
+
+export const dynamic = "force-dynamic";
+
+type GcItem = Database["public"]["Tables"]["estimate_gc_items"]["Row"];
+type DetailItem = Database["public"]["Tables"]["estimate_detail_items"]["Row"];
+type SublistSub = Database["public"]["Tables"]["estimate_sublist_subs"]["Row"];
 
 export default async function EstimateDetailPage({
   params,
@@ -26,7 +33,7 @@ export default async function EstimateDetailPage({
     );
   }
 
-  // Fetch line items
+  // Fetch line items (kept for legacy compatibility / future use)
   const { data: lineItems } = await supabase
     .from("estimate_line_items")
     .select("*")
@@ -53,11 +60,35 @@ export default async function EstimateDetailPage({
     .eq("estimate_id", estimateIdNum)
     .order("sort_order", { ascending: true });
 
+  // Fetch V2 data
+  const { data: gcItems } = await supabase
+    .from("estimate_gc_items")
+    .select("*")
+    .eq("estimate_id", estimateIdNum)
+    .order("sort_order", { ascending: true });
+
+  const { data: detailItems } = await supabase
+    .from("estimate_detail_items")
+    .select("*")
+    .eq("estimate_id", estimateIdNum)
+    .order("division_code", { ascending: true })
+    .order("sort_order", { ascending: true });
+
+  const { data: sublistSubs } = await supabase
+    .from("estimate_sublist_subs")
+    .select("*")
+    .eq("estimate_id", estimateIdNum)
+    .order("division_code", { ascending: true })
+    .order("position", { ascending: true });
+
   return (
-    <EstimateDetailClient
+    <EstimateDetailClientV2
       projectId={projectId}
       projectName={project.name ?? `Project ${projectId}`}
       estimate={estimate}
+      gcItems={(gcItems ?? []) as GcItem[]}
+      detailItems={(detailItems ?? []) as DetailItem[]}
+      sublistSubs={(sublistSubs ?? []) as SublistSub[]}
       lineItems={lineItems || []}
       divisionTotals={
         (divisionTotals || []).map((d) => ({

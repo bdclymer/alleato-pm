@@ -2,12 +2,11 @@
 /* eslint-disable design-system/no-raw-heading */
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { EmptyState } from "@/components/ds";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -144,7 +143,6 @@ export function EstimateDetailClient({
   alternates,
   allowances,
 }: EstimateDetailClientProps) {
-  const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("gc");
   const [isSavingSettings, setIsSavingSettings] = React.useState(false);
   const [localLineItems, setLocalLineItems] = React.useState<EstimateLineItemRow[]>(lineItems);
@@ -318,22 +316,13 @@ export function EstimateDetailClient({
   );
 
   return (
-    <>
-      <ProjectPageHeader
-        title={estimate.title}
-        description={`${getStatusLabel(estimate.status)} · R${estimate.revision} · ${formatDate(estimate.estimate_date)}`}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.push(`/${projectId}/estimates`)}>
-              <ArrowLeft />
-              Back
-            </Button>
-          </div>
-        }
-      />
-
-      <PageContainer>
-        <div className="flex items-start gap-6">
+    <PageShell
+      variant="detail"
+      title={estimate.title}
+      description={`${getStatusLabel(estimate.status)} · R${estimate.revision} · ${formatDate(estimate.estimate_date)}`}
+      actions={undefined}
+    >
+      <div className="flex items-start gap-6">
           <div className="sticky top-4 w-96 shrink-0 space-y-0">
             <div className="rounded-t-md border border-border bg-muted/30 px-4 py-3 space-y-3">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -504,8 +493,7 @@ export function EstimateDetailClient({
             </Tabs>
           </div>
         </div>
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }
 
