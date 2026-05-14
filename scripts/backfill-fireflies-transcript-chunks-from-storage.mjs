@@ -4,7 +4,9 @@
  * Backfill full Fireflies transcript chunks from Supabase Storage markdown.
  *
  * This repairs rows where document_metadata has summary/segment chunks but no
- * source_type='meeting_transcript' chunks. It does not call Fireflies.
+ * source_type='meeting_transcript' chunks. It can also rebuild transcript
+ * chunks from storage and force document_metadata.content to the full stored
+ * markdown. It does not call Fireflies.
  */
 
 import fs from "node:fs";
@@ -54,6 +56,8 @@ const limit = Number(args.get("limit") || "10000");
 const scanLimit = Number(args.get("scan-limit") || "10000");
 const dryRun = args.get("dry-run") === "true";
 const onlyId = args.get("id");
+const rebuildExisting = args.get("rebuild-existing") === "true";
+const contentOnly = args.get("content-only") === "true";
 const chunkTargetChars = Number(args.get("chunk-chars") || "3000");
 const chunkOverlapChars = Number(args.get("chunk-overlap") || "500");
 const embedBatchSize = Number(args.get("embed-batch-size") || "32");
@@ -106,6 +110,10 @@ function transcriptText(markdown) {
   const marker = markdown.match(/^##\s+Transcript\s*$/im);
   if (!marker) return "";
   return markdown.slice(marker.index).trim();
+}
+
+function hasTranscriptMarker(value) {
+  return /^##\s+Transcript\s*$/im.test(String(value || ""));
 }
 
 async function embed(texts) {
@@ -222,7 +230,18 @@ async function candidateRows() {
   `;
   const withTranscriptChunks = new Set(existing.map((row) => String(row.document_id)));
   return rows
-    .filter((row) => !withTranscriptChunks.has(String(row.id)))
+    .map((row) => ({
+      ...row,
+      has_embedded_transcript_chunks: withTranscriptChunks.has(String(row.id)),
+      content_has_transcript: hasTranscriptMarker(row.content),
+    }))
+    .filter(
+      (row) =>
+        rebuildExisting ||
+        contentOnly ||
+        !row.has_embedded_transcript_chunks ||
+        !row.content_has_transcript,
+    )
     .slice(0, limit);
 }
 
@@ -261,11 +280,15 @@ async function markBackfillStatus(row, status, message = null) {
 
 async function main() {
   const rows = await candidateRows();
-  console.log(`Fireflies ${year} meetings missing embedded transcript chunks: ${rows.length}`);
+  console.log(`Fireflies ${year} meetings selected for storage transcript repair: ${rows.length}`);
   if (dryRun) {
     let storageWithTranscript = 0;
     let storageMissingTranscript = 0;
+    let contentMissingTranscript = 0;
+    let missingEmbeddedTranscriptChunks = 0;
     for (const row of rows) {
+      if (!row.content_has_transcript) contentMissingTranscript += 1;
+      if (!row.has_embedded_transcript_chunks) missingEmbeddedTranscriptChunks += 1;
       try {
         const markdown = await fetchMarkdown(row);
         if (transcriptText(markdown)) storageWithTranscript += 1;
@@ -274,7 +297,12 @@ async function main() {
         storageMissingTranscript += 1;
       }
     }
-    console.log(`Dry run: storage with transcript marker=${storageWithTranscript}, missing/unreadable=${storageMissingTranscript}`);
+    console.log(
+      `Dry run: storage with transcript marker=${storageWithTranscript}, ` +
+        `missing/unreadable=${storageMissingTranscript}, ` +
+        `content missing transcript marker=${contentMissingTranscript}, ` +
+        `missing embedded transcript chunks=${missingEmbeddedTranscriptChunks}`,
+    );
     return;
   }
 
@@ -300,42 +328,7 @@ async function main() {
         continue;
       }
 
-      const embeddings = [];
-      for (let index = 0; index < chunks.length; index += embedBatchSize) {
-        const batch = chunks.slice(index, index + embedBatchSize);
-        const embeddingTexts = batch.map((chunk, offset) => {
-          const chunkNumber = index + offset;
-          const date = row.date || row.captured_at || row.created_at || "unknown date";
-          return `[Meeting transcript: "${row.title || "Untitled"}" | ${date} | chunk ${chunkNumber}]\n\n${chunk}`;
-        });
-        embeddings.push(...(await embed(embeddingTexts)));
-      }
-
-      const records = chunks.map((chunk, index) => {
-        const contentHash = hashContent(chunk);
-        return {
-          chunk_id: `${row.id}__storage_transcript_${index}_${contentHash}`,
-          document_id: row.id,
-          chunk_index: index,
-          text: chunk,
-          metadata: {
-            doc_type: "meeting_transcript",
-            chunk_index: index,
-            title: row.title,
-            file_date: row.date || row.captured_at || row.created_at,
-            project_id: row.project_id,
-            participants: row.participants_array || [],
-            content_hash: contentHash,
-            backfill_source: "backfill-fireflies-transcript-chunks-from-storage",
-          },
-          content_hash: contentHash,
-          embedding: JSON.stringify(embeddings[index]),
-          source_type: "meeting_transcript",
-        };
-      });
-      await upsertChunks(records);
-
-      if (!String(row.content || "").includes("## Transcript")) {
+      if (row.content !== markdown) {
         await sql`
           update public.document_metadata
           set content = ${markdown}
@@ -343,10 +336,53 @@ async function main() {
         `;
       }
 
+      let records = [];
+      if (!contentOnly && (rebuildExisting || !row.has_embedded_transcript_chunks)) {
+        const embeddings = [];
+        for (let index = 0; index < chunks.length; index += embedBatchSize) {
+          const batch = chunks.slice(index, index + embedBatchSize);
+          const embeddingTexts = batch.map((chunk, offset) => {
+            const chunkNumber = index + offset;
+            const date = row.date || row.captured_at || row.created_at || "unknown date";
+            return `[Meeting transcript: "${row.title || "Untitled"}" | ${date} | chunk ${chunkNumber}]\n\n${chunk}`;
+          });
+          embeddings.push(...(await embed(embeddingTexts)));
+        }
+
+        records = chunks.map((chunk, index) => {
+          const contentHash = hashContent(chunk);
+          return {
+            chunk_id: `${row.id}__storage_transcript_${index}_${contentHash}`,
+            document_id: row.id,
+            chunk_index: index,
+            text: chunk,
+            metadata: {
+              doc_type: "meeting_transcript",
+              chunk_index: index,
+              title: row.title,
+              file_date: row.date || row.captured_at || row.created_at,
+              project_id: row.project_id,
+              participants: row.participants_array || [],
+              content_hash: contentHash,
+              backfill_source: "backfill-fireflies-transcript-chunks-from-storage",
+              transcript_source: "document_metadata.storage_markdown",
+            },
+            content_hash: contentHash,
+            embedding: JSON.stringify(embeddings[index]),
+            source_type: "meeting_transcript",
+          };
+        });
+        await upsertChunks(records);
+      }
+
       processed += 1;
       insertedChunks += records.length;
-      await markBackfillStatus(row, "embedded", `${records.length} transcript chunks written.`);
-      console.log(`[OK] ${row.id}: ${records.length} transcript chunks`);
+      const status = contentOnly ? "content_synced" : "embedded";
+      const message = contentOnly
+        ? `content synced from storage markdown; transcript chars=${transcript.length}.`
+        : `${records.length} transcript chunks written; transcript chars=${transcript.length}.`;
+      await markBackfillStatus(row, status, message);
+      console.log(`[OK] ${row.id}: ${records.length} transcript chunks, transcript chars=${transcript.length}`);
     } catch (error) {
       if (error.message === "missing storage URL/file_path") {
         skipped += 1;
