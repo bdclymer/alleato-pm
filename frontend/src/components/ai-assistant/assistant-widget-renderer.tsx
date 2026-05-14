@@ -848,130 +848,116 @@ function OutlookInboxSummaryWidget({
   onSubmit: (message: string) => void;
 }) {
   const [openId, setOpenId] = useState<string | null>(widget.items[0]?.id ?? null);
-  return (
-    <WidgetShell
-      eyebrow="Outlook intake"
-      title={widget.title}
-      icon={<MailIcon className="h-4 w-4" />}
-      actions={<WidgetMeta>{widget.threadCount ?? widget.totalCount} threads</WidgetMeta>}
-    >
-      <div className="space-y-1 text-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-muted-foreground">{widget.summary}</span>
-          <span className="font-medium text-foreground">{widget.dateLabel}</span>
-        </div>
-        <p className="leading-6 text-foreground">{widget.actionSummary}</p>
-        {widget.dataCutoffNote ? (
-          <p className="text-xs leading-5 text-muted-foreground">{widget.dataCutoffNote}</p>
-        ) : null}
-      </div>
-
-      {widget.items.length === 0 ? (
+  if (widget.items.length === 0) {
+    return (
+      <div className="mt-3">
         <InfoAlert>
           <span>{widget.emptyState ?? "No Outlook emails matched this request."}</span>
         </InfoAlert>
-      ) : (
-        <div className="grid gap-3">
-          {widget.items.map((item) => {
-            const isOpen = openId === item.id;
-            const sender = item.fromName || item.fromEmail || item.senders[0] || "Unknown sender";
-            const bodyParagraphs = cleanEmailBodyPreview(item.bodyText ?? item.preview);
-            return (
-              <div key={item.id} className="rounded-md border border-border/70 bg-background px-3 py-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="group grid h-auto w-full justify-start gap-2 rounded-none p-0 text-left hover:bg-transparent"
-                  onClick={() => setOpenId(isOpen ? null : item.id)}
-                >
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="break-words text-sm font-semibold leading-5 text-foreground">
-                        {item.subject}
-                      </div>
-                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        <span className="break-all">{sender}</span>
-                        {item.receivedAt ? <span>{formatDateLabel(item.receivedAt) ?? item.receivedAt}</span> : null}
-                        {item.messageCount > 1 ? <span>{item.messageCount} messages</span> : null}
-                        {item.hasAttachments ? (
-                          <span className="inline-flex items-center gap-1">
-                            <PaperclipIcon className="h-3 w-3" />
-                            Attachments
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <ChevronDownIcon
-                      className={cn(
-                        "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:text-foreground",
-                        isOpen && "rotate-180",
-                      )}
-                    />
-                  </div>
-                  <div className="rounded-md bg-muted/40 px-2.5 py-2 text-xs leading-5 text-foreground">
-                    <span className="font-medium">Suggested next step: </span>
-                    {item.recommendedAction}
-                  </div>
-                  {!isOpen && item.preview ? (
-                    <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
-                      {item.preview}
-                    </p>
-                  ) : null}
-                </Button>
+      </div>
+    );
+  }
 
-                {isOpen ? (
-                  <div className="mt-3 space-y-3 pl-0 sm:pl-6">
-                    <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-                      <div>
-                        <span className="font-medium uppercase">To</span>
-                        <div className="mt-1 break-words text-foreground/80">
-                          {item.recipients.length > 0 ? item.recipients.join(", ") : "Not stored"}
-                        </div>
-                      </div>
-                      {item.projectIds.length > 0 ? (
-                        <div>
-                          <span className="font-medium uppercase">Project IDs</span>
-                          <div className="mt-1 text-foreground/80">{item.projectIds.join(", ")}</div>
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="space-y-3 rounded-md bg-muted/30 px-3 py-3 text-sm leading-6 text-foreground [overflow-wrap:anywhere]">
-                      {bodyParagraphs.length > 0 ? (
-                        bodyParagraphs.map((paragraph) => (
-                          <p key={paragraph} className="whitespace-pre-wrap break-words">
-                            {paragraph}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="text-muted-foreground">No readable body text is stored for this email.</p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" onClick={() => onSubmit(item.replyPrompt)}>
-                        <SendIcon className="h-4 w-4" />
-                        Draft reply
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => onSubmit(item.draftPrompt)}>
-                        <SquarePenIcon className="h-4 w-4" />
-                        Draft email
-                      </Button>
-                      {item.webLink ? (
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={item.webLink} target="_blank" rel="noreferrer">
-                            <ExternalLinkIcon className="h-4 w-4" />
-                            Open in Outlook
-                          </Link>
-                        </Button>
-                      ) : null}
+  return (
+    <section className="mt-3 grid gap-3" aria-label={widget.title}>
+      {widget.items.map((item) => {
+        const isOpen = openId === item.id;
+        const sender = item.fromName || item.fromEmail || item.senders[0] || "Unknown sender";
+        const bodyParagraphs = cleanEmailBodyPreview(item.bodyText ?? item.preview);
+        return (
+          <div key={item.id} className="rounded-md border border-border/70 bg-background px-3 py-3">
+            <Button
+              type="button"
+              variant="ghost"
+              className="group grid h-auto w-full justify-start gap-2 rounded-none p-0 text-left hover:bg-transparent"
+              onClick={() => setOpenId(isOpen ? null : item.id)}
+            >
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="break-words text-sm font-semibold leading-5 text-foreground">
+                    {item.subject}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span className="break-all">{sender}</span>
+                    {item.receivedAt ? <span>{formatDateLabel(item.receivedAt) ?? item.receivedAt}</span> : null}
+                    {item.messageCount > 1 ? <span>{item.messageCount} messages</span> : null}
+                    {item.hasAttachments ? (
+                      <span className="inline-flex items-center gap-1">
+                        <PaperclipIcon className="h-3 w-3" />
+                        Attachments
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <ChevronDownIcon
+                  className={cn(
+                    "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:text-foreground",
+                    isOpen && "rotate-180",
+                  )}
+                />
+              </div>
+              <div className="rounded-md bg-muted/40 px-2.5 py-2 text-xs leading-5 text-foreground">
+                <span className="font-medium">Suggested next step: </span>
+                {item.recommendedAction}
+              </div>
+              {!isOpen && item.preview ? (
+                <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
+                  {item.preview}
+                </p>
+              ) : null}
+            </Button>
+
+            {isOpen ? (
+              <div className="mt-3 space-y-3 pl-0 sm:pl-6">
+                <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                  <div>
+                    <span className="font-medium uppercase">To</span>
+                    <div className="mt-1 break-words text-foreground/80">
+                      {item.recipients.length > 0 ? item.recipients.join(", ") : "Not stored"}
                     </div>
                   </div>
-                ) : null}
+                  {item.projectIds.length > 0 ? (
+                    <div>
+                      <span className="font-medium uppercase">Project IDs</span>
+                      <div className="mt-1 text-foreground/80">{item.projectIds.join(", ")}</div>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="space-y-3 rounded-md bg-muted/30 px-3 py-3 text-sm leading-6 text-foreground [overflow-wrap:anywhere]">
+                  {bodyParagraphs.length > 0 ? (
+                    bodyParagraphs.map((paragraph) => (
+                      <p key={paragraph} className="whitespace-pre-wrap break-words">
+                        {paragraph}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">No readable body text is stored for this email.</p>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => onSubmit(item.replyPrompt)}>
+                    <SendIcon className="h-4 w-4" />
+                    Draft reply
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => onSubmit(item.draftPrompt)}>
+                    <SquarePenIcon className="h-4 w-4" />
+                    Draft email
+                  </Button>
+                  {item.webLink ? (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={item.webLink} target="_blank" rel="noreferrer">
+                        <ExternalLinkIcon className="h-4 w-4" />
+                        Open in Outlook
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
               </div>
-            );
-          })}
-        </div>
-      )}
-    </WidgetShell>
+            ) : null}
+          </div>
+        );
+      })}
+    </section>
   );
 }
 

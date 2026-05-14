@@ -804,10 +804,7 @@ function buildRecentEmailActionSummary(items: OutlookInboxSummaryWidgetItem[]): 
   if (actionable.length === 0) {
     return "Nothing looks urgent from the synced inbox, but review the top cards before ignoring them.";
   }
-  return `${actionable.length} thread${actionable.length === 1 ? "" : "s"} look actionable. Start with ${actionable
-    .slice(0, 3)
-    .map((item) => item.subject)
-    .join("; ")}.`;
+  return `${actionable.length} thread${actionable.length === 1 ? "" : "s"} look actionable.`;
 }
 
 function buildRecentEmailInboxWidget(params: {
@@ -865,16 +862,13 @@ function formatRecentEmailInboxText(params: {
 }): string {
   const { output, widget } = params;
   const cutoff = stringValue(output.dataCutoffNote);
-  const topSubjects = widget.items.slice(0, 3).map((item) => item.subject);
+  const mailbox = widget.mailbox ? ` for ${widget.mailbox}` : "";
+  const rangeLabel = widget.dateLabel.toLowerCase();
   return [
-    topSubjects.length > 0
-      ? `I checked Outlook and found ${widget.totalCount} email${widget.totalCount === 1 ? "" : "s"}${widget.threadCount ? ` across ${widget.threadCount} thread${widget.threadCount === 1 ? "" : "s"}` : ""}. The threads most worth your attention are ${topSubjects.join("; ")}. ${widget.actionSummary}`
-      : `I checked Outlook and found ${widget.totalCount} email${widget.totalCount === 1 ? "" : "s"}${widget.threadCount ? ` across ${widget.threadCount} thread${widget.threadCount === 1 ? "" : "s"}` : ""}. ${widget.actionSummary}`,
-    cutoff ? `Data freshness: ${cutoff}` : null,
-    widget.items.length > 0
-      ? "The cards below show the readable email context and include reply/draft actions."
-      : widget.emptyState,
-  ].filter(Boolean).join("\n");
+    `I found ${widget.totalCount} email${widget.totalCount === 1 ? "" : "s"}${widget.threadCount ? ` across ${widget.threadCount} thread${widget.threadCount === 1 ? "" : "s"}` : ""} received ${rangeLabel}${mailbox}. ${widget.actionSummary}`,
+    cutoff,
+    widget.items.length === 0 ? widget.emptyState : null,
+  ].filter(Boolean).join("\n\n");
 }
 
 function formatRecentEmailInboxAnswer(params: {

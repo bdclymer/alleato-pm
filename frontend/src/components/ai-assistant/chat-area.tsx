@@ -299,6 +299,10 @@ function getAssistantWidgetParts(msg: UIMessage): AssistantWidgetPayload[] {
   }, []);
 }
 
+function isOutlookInboxSummaryWidget(widget: AssistantWidgetPayload): boolean {
+  return widget.type === "outlook_inbox_summary";
+}
+
 function getLatestStatusPart(msg: UIMessage): StrategistLiveStatus | null {
   for (const part of [...msg.parts].reverse()) {
     if (part.type !== "data-status") continue;
@@ -1775,6 +1779,12 @@ export function ChatArea({
                 const assistantWidgetParts = isAssistant
                   ? getAssistantWidgetParts(msg)
                   : [];
+                const leadingAssistantWidgetParts = assistantWidgetParts.filter(
+                  (widget) => !isOutlookInboxSummaryWidget(widget),
+                );
+                const trailingAssistantWidgetParts = assistantWidgetParts.filter(
+                  isOutlookInboxSummaryWidget,
+                );
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
                 const memoryUsage = memoryUsageByMessageId[msg.id];
@@ -1994,7 +2004,7 @@ export function ChatArea({
                             </div>
                           ) : null}
 
-                          {assistantWidgetParts.map((widget) => (
+                          {leadingAssistantWidgetParts.map((widget) => (
                             <AssistantWidgetRenderer
                               key={`${msg.id}-${widget.id}`}
                               widget={widget}
@@ -2032,6 +2042,16 @@ export function ChatArea({
                           >
                             {formattedAssistantText}
                           </MessageResponse>
+
+                          {trailingAssistantWidgetParts.map((widget) => (
+                            <AssistantWidgetRenderer
+                              key={`${msg.id}-${widget.id}`}
+                              widget={widget}
+                              selectedProjectId={selectedProjectIdProp}
+                              onSubmit={onSubmit}
+                              onEditDraft={onInputChange}
+                            />
+                          ))}
 
                           {responseQuality && (
                             <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">

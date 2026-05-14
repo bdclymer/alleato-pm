@@ -2900,6 +2900,8 @@ export function createOperationalTools(
             supabase
               .from("graph_sync_state")
               .select("last_sync_at")
+              .eq("source", "outlook_email")
+              .eq("resource_id", effectiveParticipantEmail)
               .order("last_sync_at", { ascending: false })
               .limit(1)
               .maybeSingle(),
@@ -2921,8 +2923,8 @@ export function createOperationalTools(
           );
           const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
           const dataCutoffNote = lastSyncedAt
-            ? `Data is current as of ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} CT (syncs run hourly). Emails received after that time won't appear here yet.`
-            : "Sync time unknown — emails received since the last sync may not appear.";
+            ? `Outlook email sync last completed ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET. Syncs run hourly, so emails received after that sync may not appear yet.`
+            : "Outlook email sync time is unknown, so emails received since the last completed sync may not appear.";
 
           if (data.length === 0) {
             const rangeLabel =

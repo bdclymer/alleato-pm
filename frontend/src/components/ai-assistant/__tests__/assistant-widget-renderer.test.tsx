@@ -122,7 +122,7 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
       subtitle: "Ranked by likely action needed, with the actual message text shown in readable cards.",
       dateLabel: "Today",
       summary: "Found 46 emails in 26 threads received today.",
-      dataCutoffNote: "Data is current as of May 14, 12:12 PM CT.",
+      dataCutoffNote: "Outlook email sync last completed May 14, 1:12 PM ET.",
       mailbox: "bclymer@alleatogroup.com",
       totalCount: 46,
       threadCount: 26,
@@ -168,7 +168,7 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
       />,
     );
 
-    expect(screen.getByText("Important Outlook emails")).toBeInTheDocument();
+    expect(screen.getByLabelText("Important Outlook emails")).toBeInTheDocument();
     expect(screen.getByText("RE: Closeout MTV 2 Project")).toBeInTheDocument();
     expect(screen.getByText(/Suggested next step:/)).toBeInTheDocument();
     expect(screen.getByText("Ok yes please get me final bill today.")).toBeInTheDocument();

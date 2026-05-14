@@ -123,7 +123,7 @@ describe("assistant widget registry", () => {
       subtitle: "Ranked by likely action needed, with the actual message text shown in readable cards.",
       dateLabel: "Today",
       summary: "Found 46 emails in 26 threads received today.",
-      dataCutoffNote: "Data is current as of May 14, 12:12 PM CT.",
+      dataCutoffNote: "Outlook email sync last completed May 14, 1:12 PM ET.",
       mailbox: "bclymer@alleatogroup.com",
       totalCount: 46,
       threadCount: 26,
