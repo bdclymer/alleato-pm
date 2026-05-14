@@ -64,6 +64,23 @@ Auth pre-configured. Playwright session at `tests/.auth/user.json`. If expired, 
 
 ---
 
+## Verification Delegation (Mandatory)
+
+Always delegate routine expensive verification to a lower-cost sub-agent when sub-agents are available. This includes full typechecks, lint/quality runs, production builds, full test suites, long crawls, and deployment log monitoring.
+
+Main thread responsibilities:
+- Implement code changes.
+- Run only short targeted checks needed to make immediate decisions.
+- Fix concrete blockers reported by verification.
+
+Lower-cost sub-agent responsibilities:
+- Run `npm run typecheck`, `npm run quality`, `npm run build`, full Playwright/Jest suites, predeploy gates, and other long-running checks.
+- Return only a compact report: pass/fail, exact failing command, concise error lines, likely owner file(s), and whether the failure is related to the current task or unrelated repo debt.
+
+Do not burn a frontier/main conversation model on routine verification unless the user explicitly requests it or sub-agents are unavailable.
+
+---
+
 ## What the Toolchain Enforces
 
 **You do not need to remember these — violating them blocks your commit or build.**
