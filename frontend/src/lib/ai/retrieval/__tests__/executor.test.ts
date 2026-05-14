@@ -23,6 +23,7 @@ function makeStubDeps(opts: {
       await delay(opts.externalSourceHangsMs ?? 0);
       return { source: "x", status: "ok", results: [] } as never;
     }),
+    runRecentEmails: jest.fn(async () => ({ count: 1, threads: [{ latestSubject: "Bid invite" }] } as never)),
     loadReusableBriefing: jest.fn(async () => null as never),
     runSourceSpecificRag: jest.fn(async () => null as never),
     buildBrandonDaily: jest.fn(async () => ({ packet: {} } as never)),
@@ -125,5 +126,31 @@ describe("executeRetrievalPlan", () => {
     expect(typeof ctx.durationsMs.intelligence_packet).toBe("number");
     expect(typeof ctx.durationsMs.semantic_search).toBe("number");
     expect(ctx.durationsMs.intelligence_packet).toBeGreaterThanOrEqual(40);
+  });
+
+  it("runs structured recent email retrieval when requested", async () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "recent_email_inbox",
+      sources: {
+        recentEmails: {
+          daysBack: 0,
+          limit: 50,
+          reason: "structured_outlook_inbox_query",
+        },
+      },
+      reason: "structured_outlook_inbox_query",
+    };
+    const deps = makeStubDeps();
+    const ctx = await executeRetrievalPlan(plan, deps, {
+      message: "what important emails have I received this morning?",
+    });
+
+    expect(deps.runRecentEmails).toHaveBeenCalledWith({
+      daysBack: 0,
+      limit: 50,
+      message: "what important emails have I received this morning?",
+    });
+    expect(ctx.recentEmailInbox).toEqual({ count: 1, threads: [{ latestSubject: "Bid invite" }] });
   });
 });

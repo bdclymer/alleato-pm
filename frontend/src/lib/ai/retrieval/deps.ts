@@ -157,7 +157,30 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
     return loadReusableBriefingContext({ supabase, sessionId });
   };
 
-  // 6. runSourceSpecificRag
+  // 6. runRecentEmails
+  //    Uses the structured Outlook intake table path. This is deliberately
+  //    separate from source-specific RAG so inbox/date questions cannot be
+  //    answered from stale embeddings or document_metadata rows.
+  const runRecentEmails = async (input: {
+    daysBack: number;
+    limit: number;
+    message: string;
+  }): Promise<unknown> => {
+    const tool = operationalTools.getRecentEmails;
+    if (!tool?.execute) return null;
+    return tool.execute(
+      {
+        daysBack: input.daysBack,
+        direction: "mailbox",
+        limit: input.limit,
+        groupByThread: true,
+        timeZone: "America/New_York",
+      },
+      DIRECT_EXEC_OPTIONS,
+    );
+  };
+
+  // 7. runSourceSpecificRag
   //    Runs the source-specific retrieval path (meetings, emails, Teams, OneDrive)
   //    for the given kind string. Builds a synthetic request from the kind and
   //    resolves the user's scope via guardrails.
@@ -172,13 +195,13 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
     });
   };
 
-  // 7. buildBrandonDaily
+  // 8. buildBrandonDaily
   //    Compatibility executor name for the Brandon preset of the canonical Daily Brief.
   const buildBrandonDaily = async (): Promise<unknown> => {
     return generateDailyBrief({ windowDays: 2, preset: "brandon" });
   };
 
-  // 8. resolveProjectFromQuery
+  // 9. resolveProjectFromQuery
   //    When the planner emits project-scoped retrieval but no selectedProjectId
   //    was provided (e.g. user typed "What's the status of Vermillion Rise?"
   //    without selecting it from the dropdown), resolve the project from the
@@ -197,6 +220,7 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
     loadProjectSnapshot,
     runSemanticSearch,
     runExternalSourceSearch,
+    runRecentEmails,
     loadReusableBriefing,
     runSourceSpecificRag,
     buildBrandonDaily,

@@ -10,6 +10,7 @@ export type ExecutorDeps = {
     query: string,
     projectId?: number,
   ) => Promise<unknown>;
+  runRecentEmails: (input: { daysBack: number; limit: number; message: string }) => Promise<unknown>;
   loadReusableBriefing: (sessionId: string) => Promise<unknown>;
   runSourceSpecificRag: (kind: string, message: string) => Promise<unknown>;
   buildBrandonDaily: () => Promise<unknown>;
@@ -146,6 +147,20 @@ export async function executeRetrievalPlan(
         result.executiveBriefingRetrieval = {
           sources: sourceResults.filter(Boolean),
         } as never;
+      }),
+    );
+  }
+
+  if (plan.sources.recentEmails) {
+    const recentEmails = plan.sources.recentEmails;
+    const message = ctx?.message ?? "";
+    tasks.push(
+      time("recent_emails", async () => {
+        result.recentEmailInbox = (await deps.runRecentEmails({
+          daysBack: recentEmails.daysBack,
+          limit: recentEmails.limit,
+          message,
+        })) as never;
       }),
     );
   }

@@ -58,6 +58,36 @@ describe("planRetrieval", () => {
     expect(plan.sources.brandonDailyUpdate).toBe(true);
   });
 
+  it.each([
+    "what important emails have I received this morning?",
+    "anything urgent in my inbox today?",
+    "show me emails that need a reply",
+    "what came in through Outlook this morning",
+    "what mail arrived today",
+    "any important messages I got today?",
+    "what are the priority emails from today",
+  ])("routes inbox triage wording to structured Outlook intake: %s", (message) => {
+    const plan = planRetrieval({ message, messages: [userMsg(message)] });
+    expect(plan.responseFormat).toBe("recent_email_inbox");
+    expect(plan.sources.recentEmails).toEqual(
+      expect.objectContaining({
+        reason: "structured_outlook_inbox_query",
+        limit: 50,
+      }),
+    );
+    expect(plan.sources.sourceSpecificRag).toBeUndefined();
+    expect(plan.sources.semanticVectorSearch).toBeUndefined();
+  });
+
+  it.each([
+    "what important emails have I received this morning?",
+    "show me today's inbox",
+    "what came in through Outlook today",
+  ])("uses today's business window for same-day email wording: %s", (message) => {
+    const plan = planRetrieval({ message, messages: [userMsg(message)] });
+    expect(plan.sources.recentEmails?.daysBack).toBe(0);
+  });
+
   it("financial question → preconsult includes CFO", () => {
     const message = "What's our exposure on pending change orders across all projects?";
     const plan = planRetrieval({ message, messages: [userMsg(message)] });

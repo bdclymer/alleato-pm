@@ -11,6 +11,7 @@ export type ResponseFormat =
   | "rfi_preview"
   | "brandon_daily"
   | "source_lookup"
+  | "recent_email_inbox"
   | "source_specific_rag"
   | "app_help";
 
@@ -22,6 +23,7 @@ export type RetrievalPlan = {
     projectSnapshot?: { reason: "intent" | "fallback" };
     semanticVectorSearch?: { query: string };
     externalSources?: ExternalSource[];
+    recentEmails?: { daysBack: number; limit: number; reason: string };
     sourceSpecificRag?: { kind: SourceSpecificRagKind };
     reusePriorBriefing?: boolean;
     brandonDailyUpdate?: boolean;
@@ -37,6 +39,7 @@ export type RetrievalContext = {
   projectSnapshot?: unknown;
   semanticVectorResults?: unknown;
   executiveBriefingRetrieval?: unknown;
+  recentEmailInbox?: unknown;
   sourceSpecificRagAnswer?: { content: string; rows: unknown[] } | null;
   brandonDailyUpdatePacket?: unknown;
   reusedFromPriorBriefing?: boolean;

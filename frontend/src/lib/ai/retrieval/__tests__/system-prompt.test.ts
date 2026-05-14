@@ -55,6 +55,34 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).toContain("BASE");
   });
 
+  it("includes structured Outlook inbox results separately from source-specific RAG", () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "recent_email_inbox",
+      sources: {
+        recentEmails: {
+          daysBack: 0,
+          limit: 50,
+          reason: "structured_outlook_inbox_query",
+        },
+      },
+      reason: "structured_outlook_inbox_query",
+    };
+    const ctx: RetrievalContext = {
+      recentEmailInbox: {
+        count: 1,
+        threads: [{ latestSubject: "Owner approval needed", latestPreview: "Please respond today." }],
+      },
+      warnings: [],
+      durationsMs: {},
+    };
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE");
+    expect(prompt).toContain("Structured Outlook Inbox Result");
+    expect(prompt).toContain("outlook_email_intake");
+    expect(prompt).toContain("Owner approval needed");
+    expect(prompt).not.toContain("Source-Specific RAG Result");
+  });
+
   it("orders sections deterministically: packet → snapshot → vector → briefing → rag → warnings → BASE", () => {
     const plan: RetrievalPlan = {
       intent: "latest_status",

@@ -105,6 +105,45 @@ function renderCompactRecord(raw: unknown): string {
   return entries.join("\n");
 }
 
+function renderRecentEmailInbox(raw: unknown): string {
+  if (!raw || typeof raw !== "object") return "";
+  const record = raw as Record<string, unknown>;
+  const lines: string[] = [];
+
+  for (const key of ["summary", "dataCutoffNote", "count", "threadCount"]) {
+    const value = compactText(record[key], 700);
+    if (value) lines.push(`- ${key}: ${value}`);
+  }
+
+  const threads = Array.isArray(record.threads) ? record.threads.slice(0, 12) : [];
+  if (threads.length > 0) {
+    lines.push("## Threads");
+    threads.forEach((thread, index) => {
+      if (!thread || typeof thread !== "object") return;
+      const threadRecord = thread as Record<string, unknown>;
+      const subject = compactText(threadRecord.latestSubject, 180) ?? `Thread ${index + 1}`;
+      const receivedAt = compactText(threadRecord.latestReceivedAt, 80) ?? "unknown time";
+      const senders = Array.isArray(threadRecord.senders)
+        ? threadRecord.senders.join(", ")
+        : compactText(threadRecord.senders, 240);
+      const preview = compactText(threadRecord.latestPreview, 500);
+      const messageCount = compactText(threadRecord.messageCount, 40);
+      const attachmentNote = threadRecord.hasAttachments === true ? "; has attachments" : "";
+      lines.push(
+        [
+          `${index + 1}. ${subject}`,
+          `   received: ${receivedAt}${messageCount ? `; messages: ${messageCount}` : ""}${attachmentNote}`,
+          senders ? `   senders: ${senders}` : null,
+          preview ? `   preview: ${preview}` : null,
+        ].filter((line): line is string => Boolean(line)).join("\n"),
+      );
+    });
+  }
+
+  if (lines.length > 0) return lines.join("\n");
+  return renderCompactRecord(raw);
+}
+
 export function assembleSystemPromptFromContext(
   plan: RetrievalPlan,
   ctx: RetrievalContext,
@@ -144,6 +183,21 @@ export function assembleSystemPromptFromContext(
     if (briefing) {
       parts.push(
         `# Recent Communication Signals\n\n${briefing}`,
+      );
+    }
+  }
+
+  if (ctx.recentEmailInbox) {
+    const recentEmailInbox = renderRecentEmailInbox(ctx.recentEmailInbox);
+    if (recentEmailInbox) {
+      parts.push(
+        [
+          "# Structured Outlook Inbox Result",
+          "",
+          "This came from the structured outlook_email_intake path, not semantic RAG. Use it to answer inbox/date/importance questions. If it contains an error, say which Outlook lookup failed and do not pretend the inbox was checked.",
+          "",
+          recentEmailInbox,
+        ].join("\n"),
       );
     }
   }
