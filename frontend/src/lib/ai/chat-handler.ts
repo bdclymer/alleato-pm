@@ -347,6 +347,10 @@ const MESSAGE_DRIVEN_TOOL_RULES: Array<{
     tools: ["getCommitmentsOverview", "queryCommitments"],
   },
   {
+    pattern: /\b(unbilled|billable change[- ]?order|change[- ]?order money|change[- ]?order exposure|work have we done)\b/i,
+    tools: ["getChangeOrderDetails", "queryChangeOrders"],
+  },
+  {
     pattern:
       /\b(forecast|projection|trend|cost trend|cost trends|tracking this way|where do we land|land against|original budget)\b/i,
     tools: ["getForecastComparison", "getCostTrends"],
@@ -373,7 +377,7 @@ const MESSAGE_DRIVEN_TOOL_RULES: Array<{
   },
   {
     pattern: /\b(meetings?|promised|prep next|what happened|last month|last couple days)\b/i,
-    tools: ["searchMeetingsByTopic", "getMeetingsByDate", "getActionItemsAndInsights"],
+    tools: ["getMeetingsByDate", "getActionItemsAndInsights", "searchMeetingsByTopic"],
   },
   {
     pattern: /\b(documents?|contract document|change[- ]?order document|exhibit|attachment|file)\b/i,
@@ -392,7 +396,7 @@ const MESSAGE_DRIVEN_TOOL_RULES: Array<{
     tools: ["getVendorPerformance", "getScheduleAnalysis"],
   },
   {
-    pattern: /\b(remember|memory|past conversations?|what changed)\b/i,
+    pattern: /\b(remember|memory|context.*past|past.*conversations?|what changed|last .*update|since the last)\b/i,
     tools: ["recallPastConversations", "searchMemories", "semanticSearch"],
   },
   {
@@ -409,10 +413,14 @@ function isScheduleTaskWriteRequest(message: string): boolean {
 
 function getMessageDrivenToolNames(message: string, intent: AssistantIntent): readonly string[] {
   if (intent === "task_write") {
-    if (/\b(mark|close|complete|done|reschedule|reassign|assign|bump|priority|snooze|cancel|delete)\b/i.test(message)) {
+    if (/\b(mark|close|complete|done|reschedule|reassign|push that|move that|hand that|bump|priority|snooze|cancel|delete)\b/i.test(message)) {
       return ["getMyTasks", "updateGeneratedTask", "getActionItemsAndInsights"];
     }
-    return [isScheduleTaskWriteRequest(message) ? "createTask" : "createGeneratedTask"];
+    return [
+      isScheduleTaskWriteRequest(message) || /\btask preview\b/i.test(message)
+        ? "createTask"
+        : "createGeneratedTask",
+    ];
   }
 
   const names = new Set<string>();
@@ -4622,7 +4630,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           status: "loading",
         });
 
-        if (featureRequestPacketRequest) {
+        if (featureRequestPacketRequest && messageDrivenToolNames.length === 0) {
           writeStrategistStatus(writer, {
             stage: "knowledge",
             message: "Capturing the request packet",
@@ -4909,7 +4917,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           return;
         }
 
-        if (personalTaskRegisterRequest) {
+        if (personalTaskRegisterRequest && assistantIntent !== "task_write") {
           writeStrategistStatus(writer, {
             stage: "knowledge",
             message: "Checking your assigned task sources",
@@ -7147,7 +7155,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
             "",
             `I staged this from your request: "${lastUserContent.trim()}".`,
             "",
-            "Nothing was created yet. Review the preview card, then reply **confirm** to create it or tell me what to change.",
+            "No task was created. Review the preview card, then reply **confirm** to create it or tell me what to change.",
           ].join("\n");
           finalContentSource = "tool_only";
           toolTrace.push({

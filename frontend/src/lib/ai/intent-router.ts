@@ -29,6 +29,8 @@ const TASK_WRITE_PATTERNS = [
   /\bget someone on\b/i,
   /\bput (this |it )?on (my |the )?list\b/i,
   /\bassign (this |that |it )?to\b/i,
+  /\b(push|move|bump)\b.{0,40}\b(task|due date|deadline)\b/i,
+  /\bhand\b.{0,40}\boff to\b/i,
   /\bschedule a task\b/i,
   /\bgenerate (a )?task\b/i,
   /\bmake (a )?task\b/i,
