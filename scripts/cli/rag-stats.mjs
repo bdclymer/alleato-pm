@@ -89,8 +89,8 @@ async function connect(connectionString, label) {
     connectionString: url.toString(),
     ssl: { rejectUnauthorized: false },
     statement_timeout: 20000,
-    query_timeout: 25000,
     application_name: "alleato-rag-stats",
+    allowExitOnIdle: true,
   });
   await client.connect();
   return client;
@@ -380,12 +380,22 @@ async function main() {
       ),
     );
   } finally {
-    await appDb.end();
-    await ragDb.end();
+    await Promise.allSettled([endClient(appDb), endClient(ragDb)]);
   }
 }
 
-main().catch((error) => {
-  console.error(`rag-stats failed: ${error.message}`);
-  process.exit(1);
-});
+function endClient(client) {
+  return Promise.race([
+    client.end(),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]);
+}
+
+main()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(`rag-stats failed: ${error.message}`);
+    process.exit(1);
+  });
