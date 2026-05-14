@@ -617,10 +617,11 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
       updatePayload.title = parsed.data.title;
     }
     if (parsed.data.status !== undefined) {
-      updatePayload.status =
-        unifiedData.commitment_type === "subcontract"
-          ? normalizeSubcontractStatus(parsed.data.status)
-          : parsed.data.status;
+      // Both subcontracts and purchase_orders share the same DB check constraint:
+      // CHECK (status IN ('Draft','Out for Bid','Out for Signature','Approved','Complete','Terminated'))
+      // The inline dropdown sends lowercase snake_case values (e.g. "approved", "out_for_bid").
+      // Always normalize via normalizeSubcontractStatus so the stored value satisfies the constraint.
+      updatePayload.status = normalizeSubcontractStatus(parsed.data.status);
     }
 
     const { data, error } = await supabase

@@ -664,7 +664,11 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
   const handleSelectRow = (id: string, checked: boolean) => {
     if (checked) {
-      tableState.setSelectedIds((prev) => [...prev, id]);
+      // Guard against duplicate IDs (e.g. from event bubbling firing onCheckedChange twice).
+      // A duplicate in selectedIds causes bulk-delete to attempt the same commitment twice:
+      // the first DELETE succeeds and sets deleted_at; the second hits the ALREADY_DELETED guard
+      // and returns 400, creating a false "failed" toast even though both rows are gone.
+      tableState.setSelectedIds((prev) => prev.includes(id) ? prev : [...prev, id]);
     } else {
       tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
     }
@@ -874,7 +878,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
             draft_change_orders: <span className="font-semibold">{formatCurrency(financialTotals.draft_change_orders)}</span>,
             revised_contract_amount: <span className="font-semibold">{formatCurrency(financialTotals.revised_contract_amount)}</span>,
             invoiced_amount: <span className="font-semibold">{formatCurrency(financialTotals.invoiced_amount)}</span>,
-            billed_to_date: <span className="font-semibold">{formatCurrency(financialTotals.billed_to_date)}</span>,
+            // Note: billed_to_date is intentionally omitted — there is no column with that ID
+            // in commitmentColumns, so the value would be silently dropped by UnifiedTablePage.
+            // The invoiced_amount column above covers the "Invoiced" total shown in the table.
             payments_issued: <span className="font-semibold">{formatCurrency(financialTotals.payments_issued)}</span>,
             remaining_balance: <span className="font-semibold">{formatCurrency(financialTotals.remaining_balance)}</span>,
             balance_to_finish: <span className="font-semibold">{formatCurrency(financialTotals.balance_to_finish)}</span>,
