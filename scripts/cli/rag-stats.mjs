@@ -4,7 +4,9 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import postgres from "postgres";
+import pg from "pg";
+
+const { Client } = pg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,17 +80,20 @@ async function connect(connectionString, label) {
   if (!connectionString) {
     throw new Error(`Missing ${label}. Expected it in .env or frontend/.env.local.`);
   }
-  const sql = postgres(connectionString, {
-    max: 1,
-    ssl: "require",
-    idle_timeout: 5,
+  const url = new URL(connectionString);
+  url.searchParams.delete("sslmode");
+  url.searchParams.delete("sslcert");
+  url.searchParams.delete("sslkey");
+  url.searchParams.delete("sslrootcert");
+  const client = new Client({
+    connectionString: url.toString(),
+    ssl: { rejectUnauthorized: false },
+    statement_timeout: 30000,
     application_name: "alleato-rag-stats",
+    allowExitOnIdle: true,
   });
-  await sql`set statement_timeout = '30s'`;
-  return {
-    query: async (queryText, params = []) => ({ rows: await sql.unsafe(queryText, params) }),
-    end: () => sql.end({ timeout: 2 }),
-  };
+  await client.connect();
+  return client;
 }
 
 const families = [
