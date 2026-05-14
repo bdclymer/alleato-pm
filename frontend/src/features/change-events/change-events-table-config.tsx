@@ -67,11 +67,11 @@ export const changeEventColumns: ColumnConfig[] = [
 ];
 
 const ORIGIN_FILTER_OPTIONS = [
+  { value: "Emails", label: "Emails" },
+  { value: "Meetings", label: "Meetings" },
+  { value: "RFI's", label: "RFI's" },
   { value: "Internal", label: "Internal" },
-  { value: "Owner", label: "Owner" },
-  { value: "Subcontractor", label: "Subcontractor" },
-  { value: "Architect", label: "Architect" },
-  { value: "Engineer", label: "Engineer" },
+  { value: "Field", label: "Field" },
 ];
 
 const EXPECTING_REVENUE_FILTER_OPTIONS = [

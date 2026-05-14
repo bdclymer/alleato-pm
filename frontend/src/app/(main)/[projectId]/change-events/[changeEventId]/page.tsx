@@ -84,8 +84,10 @@ function mapApiOriginToFormOrigin(origin?: string | null): string | undefined {
     rfis: "rfis",
     rfi_s: "rfis",
     rfi: "rfis",
+    internal: "Internal",
+    field: "Field",
   };
-  return map[key] ?? key;
+  return map[key] ?? origin.trim();
 }
 
 function mapApiTypeToFormType(type?: string | null): string | undefined {

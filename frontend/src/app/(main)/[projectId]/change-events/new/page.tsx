@@ -34,6 +34,8 @@ export default function NewChangeEventPage() {
         emails: "Emails",
         meetings: "Meetings",
         rfis: "RFI's",
+        Internal: "Internal",
+        Field: "Field",
       };
       const TYPE_MAP: Record<string, string> = {
         allowance: "Allowance",
