@@ -165,6 +165,8 @@ API_SMOKE_BASE_URL=https://projects.alleatogroup.com node scripts/api-smoke-cont
 | `npm run verify:nonprod-routes` | Detect dev-only routes accidentally shipping |
 | `npm run guardrails:db-type-overrides` | Detect manual type overrides in DB code |
 | `npm run db:audit` | Full DB audit (inserts, mappers, FK types, ambiguous embeds) |
+| `npm run rag:verify:inbox-evals:prod` | Production AI inbox regression bundle; proves live Outlook/date/triage prompts use `getRecentEmails` |
+| `npm run rag:verify:source-sync-evals:prod` | Production AI source-sync bundle; proves Teams/source-health prompts expose live sync and packet freshness |
 | `cd frontend && npm run audit:forms` | Form field standards audit |
 | `cd frontend && npm run design:ratchet` | Design system ratchet check |
 | `cd frontend && npm run design:no-new-disables` | Detect new ESLint disable comments |

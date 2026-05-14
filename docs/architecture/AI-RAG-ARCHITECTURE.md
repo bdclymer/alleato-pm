@@ -639,6 +639,8 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `frontend/src/components/ai-assistant/__tests__/chat-area-formatting.test.ts` | Message formatting (markdown, citations). | chat-formatting.ts |
 | `frontend/src/components/ai-assistant/__tests__/voice-input-error.test.ts` | Voice-input error handling. | audio-waveform.tsx |
 | `scripts/verify/verify_ai_assistant_eval_suite.mjs` | Master eval suite runner — exercises chat against curated prompts and scores responses. | dogfood_ai_assistant.mjs |
+| `npm run rag:verify:inbox-evals:prod` | Production eval bundle for live Outlook inbox/date/triage regressions. Requires `getRecentEmails` and blocks stale semantic/source fallback answers. | assistant-eval-suite.json, chat-handler.ts |
+| `npm run rag:verify:source-sync-evals:prod` | Production eval bundle for Teams/source-health regressions. Requires Teams-capable retrieval and explicit source/packet freshness. | assistant-eval-suite.json, source-health.ts |
 | `scripts/verify/dogfood_ai_assistant.mjs` | Dogfood loop — sends realistic prompts to live chat route and captures traces for regression. | verify_ai_assistant_eval_suite.mjs |
 | `scripts/verify/verify_ai_advisor_quality.mjs` | Scores advisor synthesis quality across intents. | advisor-synthesis.ts |
 | `scripts/verify/verify_ai_chat_architecture.mjs` | Architecture invariants (chat route uses orchestrator, no legacy paths). | chat/route.ts |

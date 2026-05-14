@@ -110,6 +110,7 @@ Defined in `~/.claude/scheduled-tasks/`. These use judgment — they're not pure
 | Post-deploy prod sanity | GH cron — `postdeploy-verify.sh` | Deterministic page loads. |
 | PR gates | GH Actions (quality, guardrails, chromatic) | Block merge on red. |
 | Preview smoke (per tool) | **Planned**: GH Action on preview deploy → `scripts/test-scenario-run.mjs` (headless Node) | Reuses Supabase smoke suites; no Claude. |
+| AI inbox/source-sync prod guardrails | Manual deterministic checks: `npm run rag:verify:inbox-evals:prod`, `npm run rag:verify:source-sync-evals:prod` | Runs named eval bundles against `projects.alleatogroup.com`; catches Outlook inbox routing, Teams retrieval, and source/packet freshness regressions. |
 | Weekly drift / violations / deps | Claude scheduled tasks | Needs judgment + Linear triage. |
 | Interactive smoke/feature run | `/test-scenario-run <tool> …` | On-demand debugging, visual judgment. |
 | Authoring / consolidating cases | `/test-scenario-audit <tool>` | When tool changes. |
