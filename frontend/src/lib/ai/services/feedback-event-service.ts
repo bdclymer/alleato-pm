@@ -1,4 +1,8 @@
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 import { toSessionUuid } from "@/lib/ai/session-id";
 import {
   upsertAgentLearning,
@@ -2404,6 +2408,9 @@ export async function applyAttributionRulePromotion(
   params: ApplyAttributionRulePromotionParams,
 ): Promise<ApplyAttributionRulePromotionResult> {
   const supabase = createServiceClient();
+  const ragSupabase = isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : supabase;
   const promotionId = optionalUuid(
     params.promotionId,
     "promotionId",
@@ -2458,7 +2465,7 @@ export async function applyAttributionRulePromotion(
 
   let attributionCandidate: DocumentAttributionCandidateRow;
   if (candidateId) {
-    const { data: candidate, error: candidateError } = await supabase
+    const { data: candidate, error: candidateError } = await ragSupabase
       .from("document_attribution_candidates")
       .update({
         status: "approved",
@@ -2507,7 +2514,7 @@ export async function applyAttributionRulePromotion(
       compiler_version: optionalLearningString(learning, "compilerVersion"),
     };
 
-    const { data: candidate, error: candidateError } = await supabase
+    const { data: candidate, error: candidateError } = await ragSupabase
       .from("document_attribution_candidates")
       .insert(payload)
       .select("*")

@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
-from .supabase_helpers import get_supabase_client
+from .supabase_helpers import get_rag_read_client, get_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -94,13 +94,34 @@ def get_meetings_for_date_range(
     client = get_supabase_client()
     result = (
         client.table("document_metadata")
-        .select("id, title, date, summary, content, overview, project_id")
+        .select("id, title, date, summary, overview, project_id")
         .gte("date", start_date)
         .lte("date", end_date)
         .order("date", desc=True)
         .execute()
     )
     meetings = result.data or []
+    if meetings:
+        rag_rows = (
+            get_rag_read_client()
+            .table("rag_document_metadata")
+            .select("id,content,raw_text,summary,overview")
+            .in_("id", [meeting["id"] for meeting in meetings if meeting.get("id")])
+            .execute()
+            .data
+            or []
+        )
+        rag_by_id = {row.get("id"): row for row in rag_rows}
+        meetings = [
+            {
+                **meeting,
+                "content": (rag_by_id.get(meeting.get("id")) or {}).get("content")
+                or (rag_by_id.get(meeting.get("id")) or {}).get("raw_text"),
+                "summary": (rag_by_id.get(meeting.get("id")) or {}).get("summary") or meeting.get("summary"),
+                "overview": (rag_by_id.get(meeting.get("id")) or {}).get("overview") or meeting.get("overview"),
+            }
+            for meeting in meetings
+        ]
 
     project_ids = list(set(
         m.get("project_id") for m in meetings if m.get("project_id")

@@ -199,7 +199,10 @@ async function countCurrentPackets() {
 
 async function countSignalCandidates(status: string, confidence?: string) {
   const supabase = createServiceClient();
-  let query = supabase
+  const ragSupabase = isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : supabase;
+  let query = ragSupabase
     .from("source_signal_candidates")
     .select("id", { count: "exact", head: true })
     .eq("status", status);
@@ -235,7 +238,7 @@ async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
       .from("document_chunks")
       .select("document_id")
       .limit(SOURCE_HEALTH_CHUNK_LIMIT),
-    supabase
+    ragSupabase
       .from("source_intelligence_jobs")
       .select("status,source_document_id")
       .limit(SOURCE_HEALTH_JOB_LIMIT),
@@ -245,7 +248,7 @@ async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
         "source,resource_id,resource_name,last_sync_at,sync_status,error_message,items_synced,updated_at",
       )
       .order("last_sync_at", { ascending: true }),
-    supabase
+    ragSupabase
       .from("source_sync_runs")
       .select(
         "source,stage,status,resource_name,finished_at,error_code,error_message",
@@ -379,6 +382,9 @@ async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
 
 async function loadCompilerFallbackStatus(now: Date): Promise<CompilerStatus> {
   const supabase = createServiceClient();
+  const ragSupabase = isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : supabase;
   const [
     sourceJobsResult,
     packetJobsResult,
@@ -386,11 +392,11 @@ async function loadCompilerFallbackStatus(now: Date): Promise<CompilerStatus> {
     currentPackets,
     highConfidenceUnpromoted,
   ] = await Promise.all([
-    supabase
+    ragSupabase
       .from("source_intelligence_jobs")
       .select("status")
       .limit(SOURCE_HEALTH_JOB_LIMIT),
-    supabase
+    ragSupabase
       .from("packet_refresh_jobs")
       .select("status")
       .limit(SOURCE_HEALTH_JOB_LIMIT),

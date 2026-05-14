@@ -24,8 +24,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from src.services.integrations.microsoft_graph.project_inference import infer_project_id
+    from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 except ModuleNotFoundError:
     from services.integrations.microsoft_graph.project_inference import infer_project_id
+    from services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
 from .client import COMPILER_MODEL_DEFAULT, COMPILER_MODEL_LARGE, extract_with_retry
 from .compiler import (
@@ -39,6 +41,34 @@ from .prompts import build_email_extraction_messages
 from ..task_assignees import TaskAssigneeResolver
 
 logger = logging.getLogger(__name__)
+
+
+def _hydrate_rag_thread_content(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    ids = [str(row.get("id")) for row in rows if row.get("id")]
+    if not ids:
+        return rows
+    try:
+        rag_rows = (
+            get_rag_read_client()
+            .table("rag_document_metadata")
+            .select("id,content,raw_text")
+            .in_("id", ids)
+            .execute()
+            .data
+            or []
+        )
+    except Exception:
+        logger.warning("[EmailCompiler] Could not hydrate RAG email content", exc_info=True)
+        return rows
+    by_id = {str(row.get("id")): row for row in rag_rows if row.get("id")}
+    return [
+        {
+            **row,
+            "content": (by_id.get(str(row.get("id"))) or {}).get("content")
+            or (by_id.get(str(row.get("id"))) or {}).get("raw_text"),
+        }
+        for row in rows
+    ]
 
 TASK_EXTRACTION_PROMPT_VERSION = "email_compiler.tasks.v3.gpt-5.5"
 
@@ -503,8 +533,9 @@ def write_attribution_candidates(supabase, head_doc_id: str, candidates: List[Di
         )
     if not rows:
         return 0
-    supabase.table("document_attribution_candidates").delete().eq("source_document_id", head_doc_id).execute()
-    supabase.table("document_attribution_candidates").insert(rows).execute()
+    rag_client = get_rag_write_client()
+    rag_client.table("document_attribution_candidates").delete().eq("source_document_id", head_doc_id).execute()
+    rag_client.table("document_attribution_candidates").insert(rows).execute()
     return len(rows)
 
 
@@ -855,7 +886,7 @@ def write_packet_first_signals(
         result["skipped_reason"] = "missing intelligence target"
         return result
 
-    supabase.table("source_signal_candidates").delete().eq(
+    get_rag_write_client().table("source_signal_candidates").delete().eq(
         "source_document_id", head_doc_id
     ).eq("compiler_version", PACKET_COMPILER_VERSION).execute()
 
@@ -943,7 +974,7 @@ def _fetch_thread_rows(supabase, conversation_id: str) -> List[Dict[str, Any]]:
     response = (
         supabase.table("document_metadata")
         .select(
-            "id, title, content, project_id, project, tags, type, category, source_system, "
+            "id, title, project_id, project, tags, type, category, source_system, "
             "date, created_at, captured_at, source_metadata, status"
         )
         .eq("category", "email")
@@ -952,7 +983,7 @@ def _fetch_thread_rows(supabase, conversation_id: str) -> List[Dict[str, Any]]:
         .order("created_at", desc=False)
         .execute()
     )
-    return response.data or []
+    return _hydrate_rag_thread_content(response.data or [])
 
 
 def compile_thread(

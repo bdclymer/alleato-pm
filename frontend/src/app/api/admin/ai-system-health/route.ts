@@ -1,6 +1,10 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 import { estimateCostWithFallback } from "@/lib/ai/model-pricing";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +34,9 @@ function msAgo(hours: number) {
 export const GET = withApiGuardrails(WHERE, async () => {
   await requireAdmin(WHERE);
   const supabase = createServiceClient();
+  const ragSupabase = isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : supabase;
   const generatedAt = new Date().toISOString();
   const since30d = msAgo(24 * DAYS_BACK);
 
@@ -192,7 +199,7 @@ export const GET = withApiGuardrails(WHERE, async () => {
 
   // Pipeline health: last 24h sync runs
   const since24h = msAgo(24);
-  const { data: syncRuns, error: syncError } = await supabase
+  const { data: syncRuns, error: syncError } = await ragSupabase
     .from("source_sync_runs")
     .select("source, stage, status, finished_at, error_message")
     .gte("finished_at", since24h)

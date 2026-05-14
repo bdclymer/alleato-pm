@@ -18,12 +18,30 @@ from .project_documents import (
     upsert_project_document_by_source,
 )
 from .project_inference import infer_project_id
+from ...supabase_helpers import SupabaseRagStore, get_rag_read_client
 
 logger = logging.getLogger(__name__)
 
 # File types we can extract text from
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".md", ".csv"}
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
+
+
+def _fetch_rag_document_text(doc_id: str) -> str:
+    try:
+        row = (
+            get_rag_read_client()
+            .from_("rag_document_metadata")
+            .select("content,raw_text")
+            .eq("id", doc_id)
+            .single()
+            .execute()
+            .data
+            or {}
+        )
+        return str(row.get("content") or row.get("raw_text") or "")
+    except Exception:
+        return ""
 
 
 def _extract_text_from_pdf(content: bytes) -> str:
@@ -165,7 +183,7 @@ def sync_onedrive_folder(
         # Check if already ingested
         existing = (
             supabase_client.from_("document_metadata")
-            .select("id, project_id, content")
+            .select("id, project_id")
             .eq("id", doc_id)
             .limit(1)
             .execute()
@@ -174,7 +192,7 @@ def sync_onedrive_folder(
             existing_doc = existing.data[0]
             project_id = existing_doc.get("project_id")
             if not project_id:
-                clean_content = str(existing_doc.get("content") or "")
+                clean_content = _fetch_rag_document_text(doc_id)
                 project_id, assignment_method, _ = infer_project_id(
                     supabase_client,
                     title=name,
@@ -249,13 +267,13 @@ def sync_onedrive_folder(
                 content=clean_content,
                 participants=[created_by, user_email],
             )
-            supabase_client.from_("document_metadata").insert({
+            SupabaseRagStore(supabase_client).upsert_document_metadata({
                 "id": doc_id,
                 "title": name,
                 "source": "microsoft_graph",
                 "category": "document",
                 "type": "document",
-                "content": clean_content,  # Cap stored content
+                "content": clean_content,
                 "date": modified[:10] if modified else None,
                 "url": web_url,
                 "participants": ", ".join([created_by, user_email]),
@@ -277,7 +295,7 @@ def sync_onedrive_folder(
                     "graph_owner": user_email,
                     "source_folder": folder_path,
                 },
-            }).execute()
+            })
             _promote_to_project_documents(
                 supabase_client=supabase_client,
                 project_id=project_id,
@@ -361,7 +379,7 @@ def sync_sharepoint_folder(
 
         existing = (
             supabase_client.from_("document_metadata")
-            .select("id, project_id, content")
+            .select("id, project_id")
             .eq("id", doc_id)
             .limit(1)
             .execute()
@@ -370,7 +388,7 @@ def sync_sharepoint_folder(
             existing_doc = existing.data[0]
             project_id = existing_doc.get("project_id")
             if not project_id:
-                clean_content = str(existing_doc.get("content") or "")
+                clean_content = _fetch_rag_document_text(doc_id)
                 project_id, assignment_method, _ = infer_project_id(
                     supabase_client,
                     title=name,
@@ -439,7 +457,7 @@ def sync_sharepoint_folder(
                 content=clean_content,
                 participants=[created_by, site_name],
             )
-            supabase_client.from_("document_metadata").insert({
+            SupabaseRagStore(supabase_client).upsert_document_metadata({
                 "id": doc_id,
                 "title": name,
                 "source": "microsoft_graph",
@@ -468,7 +486,7 @@ def sync_sharepoint_folder(
                     "graph_owner": site_name,
                     "source_folder": folder_path,
                 },
-            }).execute()
+            })
             _promote_to_project_documents(
                 supabase_client=supabase_client,
                 project_id=project_id,

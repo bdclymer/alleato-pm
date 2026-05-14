@@ -38,7 +38,8 @@ const TASK_COLUMNS = `
   extraction_metadata
 `;
 
-// Full select including heavy content fields — only used for single-task fetches.
+// Full select for single-task fetches. Full RAG content is intentionally not
+// selected from the app DB.
 const TASK_SELECT_FULL = `
   ${TASK_COLUMNS},
   projects (id, name),
@@ -56,8 +57,6 @@ const TASK_SELECT_FULL = `
     date,
     captured_at,
     created_at,
-    content,
-    raw_text,
     summary,
     action_items,
     bullet_points,

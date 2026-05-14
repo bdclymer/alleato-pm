@@ -150,7 +150,7 @@ async def trigger_generate_embeddings(
         task_id = f"embed_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         # Check if there are documents to process
-        supabase = store._client
+        supabase = store._rag_client
         result = (
             supabase
             .table('fireflies_ingestion_jobs')
@@ -302,7 +302,7 @@ async def get_pipeline_statistics(
 ):
     """Get statistics about documents in different pipeline stages."""
     try:
-        supabase = store._client
+        supabase = store._rag_client
         
         # Get counts for each stage
         stages = ['raw_ingested', 'segmented', 'embedded', 'done', 'error']
@@ -349,9 +349,10 @@ async def replay_stale_raw_ingested_jobs(
 
     try:
         supabase = store._client
+        rag_supabase = store._rag_client
         pipeline_url = _resolve_pipeline_process_url(supabase)
         jobs = _find_stale_raw_ingested_jobs(
-            supabase=supabase,
+            supabase=rag_supabase,
             stale_minutes=request.stale_minutes,
             limit=request.limit,
             include_error_jobs=request.include_error_jobs,

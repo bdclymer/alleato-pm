@@ -15,6 +15,8 @@ export type SourceSpecificRagRow = {
   date: string | null;
   created_at: string | null;
   content: string | null;
+  summary?: string | null;
+  overview?: string | null;
   project_id: number | null;
 };
 
@@ -31,7 +33,7 @@ function formatSourceSpecificDate(row: SourceSpecificRagRow): string {
 }
 
 function sourceSpecificSnippet(row: SourceSpecificRagRow, maxLength = 260): string {
-  const content = (row.content ?? "").replace(/\s+/g, " ").trim();
+  const content = (row.content ?? row.summary ?? row.overview ?? "").replace(/\s+/g, " ").trim();
   if (!content) return "No text excerpt stored.";
   return content.length > maxLength ? `${content.slice(0, maxLength).trim()}...` : content;
 }
@@ -251,7 +253,7 @@ export async function buildSourceSpecificRagAnswer(params: {
     const { data, error } = await applyProjectScope(
       supabase
         .from("document_metadata")
-        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .select("id,title,source,category,type,date,created_at,summary,overview,project_id")
         .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
         .gte("date", `${request.date}T00:00:00.000Z`)
         .lte("date", `${request.date}T23:59:59.999Z`)
@@ -265,7 +267,7 @@ export async function buildSourceSpecificRagAnswer(params: {
       const { data: createdRows, error: createdError } = await applyMeetingProjectScope(
         supabase
           .from("document_metadata")
-          .select("id,title,source,category,type,date,created_at,content,project_id")
+          .select("id,title,source,category,type,date,created_at,summary,overview,project_id")
           .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
           .gte("created_at", `${request.date}T00:00:00.000Z`)
           .lte("created_at", `${request.date}T23:59:59.999Z`)
@@ -285,7 +287,7 @@ export async function buildSourceSpecificRagAnswer(params: {
     let query = applyMeetingProjectScope(
       supabase
         .from("document_metadata")
-        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .select("id,title,source,category,type,date,created_at,summary,overview,project_id")
         .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
         .gte("date", startIso)
         .order("date", { ascending: false })
@@ -300,7 +302,7 @@ export async function buildSourceSpecificRagAnswer(params: {
       let createdQuery = applyMeetingProjectScope(
         supabase
           .from("document_metadata")
-          .select("id,title,source,category,type,date,created_at,content,project_id")
+          .select("id,title,source,category,type,date,created_at,summary,overview,project_id")
           .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
           .gte("created_at", startIso)
           .order("created_at", { ascending: false })
@@ -317,7 +319,7 @@ export async function buildSourceSpecificRagAnswer(params: {
     const { data, error } = await applyProjectScope(
       supabase
         .from("document_metadata")
-        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .select("id,title,source,category,type,date,created_at,summary,overview,project_id")
         .eq("source", "microsoft_graph")
         .eq("category", "email")
         .order("date", { ascending: false, nullsFirst: false })
@@ -332,7 +334,7 @@ export async function buildSourceSpecificRagAnswer(params: {
     const { data, error } = await applyProjectScope(
       supabase
         .from("document_metadata")
-        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .select("id,title,source,category,type,date,created_at,summary,overview,project_id")
         .eq("source", "microsoft_graph")
         .eq("category", "document")
         .order("date", { ascending: false, nullsFirst: false })
@@ -347,7 +349,7 @@ export async function buildSourceSpecificRagAnswer(params: {
     const { data, error } = await applyProjectScope(
       supabase
         .from("document_metadata")
-        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .select("id,title,source,category,type,date,created_at,summary,overview,project_id")
         .eq("source", "microsoft_graph")
         .eq("category", "teams_message")
         .gte("date", `${request.startDate}T00:00:00.000Z`)

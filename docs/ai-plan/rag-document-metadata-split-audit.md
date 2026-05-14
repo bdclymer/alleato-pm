@@ -29,6 +29,38 @@ and some compiler inputs can still overload the operational database.
 | `source_metadata` operational source pointers | App DB | App DB mirror plus RAG processing metadata | Must split |
 | `source_sync_runs` detailed logs | App DB | RAG DB or compact health table | Follow-up |
 
+## 2026-05-14 Routing And Copy Update
+
+The urgent moved tables have now been rerouted and re-copied:
+
+- `rag_document_metadata`: `36,657 / 36,657` app rows copied and independently count-verified.
+- `document_attribution_candidates`: `13,204 / 13,204`, count-verified.
+- `fireflies_ingestion_jobs`: `27,241 / 27,241`, count-verified.
+- `ingestion_dead_letter`: `17 / 17`, count-verified.
+- `ingestion_jobs`: `436 / 436`, count-verified.
+- `packet_refresh_jobs`: `1,540 / 1,540`, count-verified.
+- `rag_pipeline_state`: `1 / 1`, count-verified.
+- `source_intelligence_jobs`: `11,087 / 11,087`, count-verified.
+- `source_signal_candidates`: `7,538 / 7,538`, count-verified.
+- `source_sync_health_snapshots`: `330 / 330`, count-verified.
+- `source_sync_runs`: `3,670 / 3,670`, count-verified.
+- `document_chunks`: RAG DB has `106,827`; app DB has `103,955`. RAG is canonical for chunks.
+
+Routing patched in this pass:
+
+- Backend source sync health writes and reads moved to RAG clients.
+- Backend intelligence compiler job/candidate/packet queues moved to RAG clients.
+- Email and Teams compiler candidate cleanup/writes moved to RAG clients.
+- `SupabaseRagStore` ingestion job writes moved to the RAG client.
+- Fireflies scheduler/admin job status paths moved to RAG clients where they touch `fireflies_ingestion_jobs` or `source_sync_runs`.
+- Frontend operations readiness, AI system health, project attribution review, source sync summary, and attribution promotion paths moved to RAG clients for moved tables.
+
+Verification:
+
+- Python compile passed for touched backend files.
+- `cd frontend && npm run typecheck -- --pretty false` passed.
+- Grep review found no confirmed app-client routing miss for the moved job/candidate/health tables in the checked production paths.
+
 ## App DB Skinny Catalog
 
 Keep only fields needed for app pages, permissions, source linking, and human
@@ -205,38 +237,94 @@ These are AI/RAG surfaces and should read chunks or RAG metadata, not full
 
 ### Phase 2: Fireflies First
 
-- [ ] Modify Fireflies ingestion so full transcript markdown goes to RAG DB metadata.
+- [x] Modify Fireflies ingestion so full transcript markdown goes to RAG DB metadata.
+  - `SupabaseRagStore.upsert_document_metadata()` now splits large payload fields into `rag_document_metadata` and keeps app `document_metadata` as catalog/status.
 - [ ] Keep app DB `document_metadata.content` as a compact preview or null after parity passes.
-- [ ] Backfill 2026 Fireflies RAG metadata from Supabase Storage without calling Fireflies.
+- [x] Backfill 2026 Fireflies RAG metadata from Supabase Storage without calling Fireflies.
   - Script now supports `--skip-app-content-update=true` so RAG metadata can be populated without rewriting large app DB `content`.
+  - Executed on 2026-05-14 with:
+    `npm run rag:backfill:fireflies-transcript-chunks -- --year=2026 --content-only=true --skip-app-content-update=true --limit=10000 --scan-limit=10000`
+  - Result: processed `450`, skipped `150`, failed `0`; skipped rows were missing storage URL/file path during the selected repair pass.
 - [ ] Verify every repairable Fireflies row has:
   - [ ] app DB skinny catalog row
-  - [ ] RAG DB full `content` with `## Transcript`
-  - [ ] RAG DB embedded `meeting_transcript` chunks
+  - [x] RAG DB full `content` / `raw_text` loaded for repaired rows.
+    - Verification: `rag_document_metadata` rows = `450`; `raw_text` rows = `450`; transcript raw text length range = `35` to `236984`, average = `19467`.
+  - [x] RAG DB embedded `meeting_transcript` chunks exist for indexed meetings.
+    - Verification: `1250` Fireflies-like documents have embedded `meeting_transcript` chunks, `18987` embedded transcript chunks total.
   - [ ] app DB compact `rag_status` / `last_indexed_at`
 - [ ] Add `rag-stats` row for app catalog vs RAG metadata vs chunks.
 
+### 2026-05-14 Incident Verification
+
+- [x] Suspended high-risk Render cron jobs during the app DB incident:
+  `alleato-source-rag-health`, `alleato-graph-sync`,
+  `alleato-teams-dm-sync`, `alleato-teams-channel-sync`,
+  `alleato-source-sync-health`, `alleato-executive-daily-brief-evening`,
+  `alleato-executive-daily-brief-morning`, `alleato-rag-health`, and
+  `alleato-task-extraction`.
+- [x] Verified `npm run verify:live-db-incident` passes after suspension:
+  app DB, pooler, and REST are `ACTIVE_HEALTHY`; all listed Render crons are
+  `suspended`; backend scheduler flags remain disabled.
+- [x] Stopped local AI eval processes that were hitting the app DB during the incident.
+- [x] Do not resume Render crons until Fireflies consumers no longer require
+  app DB full-text `document_metadata.content` and Graph/email/Teams content
+  writers use RAG metadata for full payloads.
+  - Fireflies/parser/embedder/extractor/financial parser now hydrate/write full text through RAG metadata.
+  - Graph Outlook/Teams/OneDrive ingestion writes new full body/content payloads through the split helper.
+  - Remaining cron resume gate is runtime smoke plus batch-limit verification, not known app-DB full-text routing.
+
+### 2026-05-14 AI / Source Table Migration
+
+- [x] Created missing AI/source tables in the RAG DB.
+  - Script: `scripts/database/rag/20260514193000_create_missing_ai_source_tables.sql`
+- [x] Copied current app DB rows into the RAG DB with a repeatable bounded copy script.
+  - Script: `scripts/database/rag/copy-ai-source-tables-to-rag.mjs`
+- [x] Verified row parity after copy:
+
+| Table | App DB Rows | RAG DB Rows |
+|---|---:|---:|
+| `document_attribution_candidates` | 13204 | 13204 |
+| `fireflies_ingestion_jobs` | 27241 | 27241 |
+| `ingestion_dead_letter` | 17 | 17 |
+| `ingestion_jobs` | 436 | 436 |
+| `packet_refresh_jobs` | 1540 | 1540 |
+| `rag_pipeline_state` | 1 | 1 |
+| `source_intelligence_jobs` | 11087 | 11087 |
+| `source_signal_candidates` | 7538 | 7538 |
+| `source_sync_health_snapshots` | 330 | 330 |
+| `source_sync_runs` | 3670 | 3670 |
+
+- [x] Update backend writers/readers so these tables use the RAG DB clients
+  before Render crons are resumed.
+- [x] Update checked frontend/admin/assistant health readers so these tables use
+  the RAG DB clients when `RAG_DATABASE_READS_ENABLED=true`.
+
 ### Phase 3: Microsoft Graph Content
 
-- [ ] Update Outlook ingestion to write full email body/thread text to RAG metadata.
-- [ ] Update Teams ingestion to write full message/conversation text to RAG metadata.
-- [ ] Update OneDrive ingestion to write extracted text to RAG metadata and Storage.
-- [ ] Update Graph embedding candidate selection so it reads candidate IDs from app DB but payload/content from RAG metadata.
+- [x] Update Outlook ingestion to write full email body/thread text to RAG metadata.
+- [x] Update Teams ingestion to write full message/conversation text to RAG metadata.
+- [x] Update OneDrive ingestion to write extracted text to RAG metadata and Storage.
+- [x] Update Graph embedding candidate selection so it reads candidate IDs from app DB but payload/content from RAG metadata.
 - [ ] Verify emails, Teams, OneDrive each show source counts for synced, RAG metadata present, chunked, embedded.
 
 ### Phase 4: Consumers And Fallbacks
 
-- [ ] Update `daily_digest.py`, `task_extraction.py`, `compiler.py`, `email_compiler.py`, and `teams_compiler.py` to hydrate content from RAG metadata/Storage.
+- [x] Update `daily_digest.py`, `task_extraction.py`, `compiler.py`, `email_compiler.py`, and `teams_compiler.py` to hydrate content from RAG metadata/Storage.
+  - Pipeline parser/embedder/extractor hydration is done.
+  - Daily digest, task extraction, packet compiler, Outlook email compiler, and Teams compiler now read full content from RAG metadata.
 - [ ] Update executive brief fallback logic so it does not select `content/raw_text` from app DB.
 - [ ] Move `match_document_metadata_by_summary` or replacement summary search to the RAG DB.
-- [ ] Keep app DB metadata hydration to titles, dates, source URLs, and project IDs only.
+- [x] Keep app DB metadata hydration to titles, dates, source URLs, and project IDs only in checked AI/RAG paths.
+  - Broad `document_metadata.select("*")` reads were removed from the checked pipeline/helper paths.
 
 ### Phase 5: App DB De-Load
 
-- [ ] Stop new writes to app DB `document_metadata.content`, `raw_text`, and `summary_embedding`.
+- [x] Stop new writes to app DB `document_metadata.content`, `raw_text`, and `summary_embedding` in checked Fireflies, pipeline, Outlook, Teams, and OneDrive ingestion paths.
 - [ ] Add a migration or maintenance job to null or compact old app DB payload columns after parity.
 - [ ] Replace admin content viewer with a backend route that reads RAG metadata or Storage.
-- [ ] Add health check that fails if a new large app DB `document_metadata.content` row is written after cutover.
+- [x] Add health check that fails if app DB `document_metadata` broad/heavy reads return in AI/RAG paths.
+  - Command: `npm run rag:verify:metadata-boundary`
+- [ ] Add live data health check that fails if a new large app DB `document_metadata.content` row is written after cutover.
 
 ## Acceptance Criteria
 
@@ -249,13 +337,28 @@ These are AI/RAG surfaces and should read chunks or RAG metadata, not full
   - [ ] RAG DB metadata availability
   - [ ] RAG DB chunk/vector availability
   - [ ] storage source availability
-- [ ] Cron jobs are bounded and cannot scan or embed more than their configured limits.
+
+## 2026-05-14 Full-Content Boundary Verification
+
+- Python compile passed for the touched backend RAG split files.
+- `cd frontend && npm run typecheck -- --pretty false` passed.
+- `npm run rag:verify:metadata-boundary` passed.
+- The metadata-boundary guardrail checks the AI/RAG backend and frontend paths for forbidden app DB `document_metadata.select("*")` reads and app DB metadata selects of `content`, `raw_text`, or `summary_embedding`.
+- [x] Cron jobs are bounded and cannot scan or embed more than their configured limits.
+  - Graph delta fetches now cap pages/items by default.
+  - Render `alleato-graph-sync`, `alleato-teams-channel-sync`, and `alleato-teams-dm-sync` have live cap env vars set through the Render API.
+  - `node -r dotenv/config scripts/verify/verify-render-web-scheduler-disabled.mjs` passed.
+  - `npm run verify:live-db-incident` passed after the live Render env update; app DB, pooler, and REST are healthy and high-risk crons remain suspended.
 
 ## Immediate Next Slice
 
-Do Fireflies metadata split before emails/Teams:
+Deploy the code-level Graph delta caps, then resume Render crons in this order:
 
-1. Add `rag_document_metadata` to the RAG DB.
-2. Extend `scripts/backfill-fireflies-transcript-chunks-from-storage.mjs` to upsert full storage markdown into `rag_document_metadata.content`.
-3. Verify the RAG metadata count and `## Transcript` coverage for 2026 Fireflies meetings.
-4. Only after parity, stop relying on app DB `document_metadata.content` for Fireflies.
+1. `alleato-source-sync-health`
+2. `alleato-rag-health`
+3. `alleato-source-rag-health`
+4. `alleato-teams-dm-sync`
+5. `alleato-teams-channel-sync`
+6. `alleato-graph-sync`
+
+After each resume, run the live DB incident verifier and inspect the cron output before enabling the next one.

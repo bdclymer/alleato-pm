@@ -4,7 +4,11 @@ import { z } from "zod";
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 
 const actionSchema = z.object({
   candidateId: z.string().uuid(),
@@ -69,8 +73,11 @@ export const GET = withApiGuardrails(
       Math.max(1, Number(request.nextUrl.searchParams.get("limit") ?? 100)),
     );
     const serviceSupabase = createServiceClient();
+    const ragSupabase = isRagDatabaseReadsEnabled()
+      ? createRagServiceClient()
+      : serviceSupabase;
 
-    const { data: candidates, error } = await serviceSupabase
+    const { data: candidates, error } = await ragSupabase
       .from("document_attribution_candidates")
       .select(
         "id, source_document_id, candidate_project_id, candidate_project_name, confidence, attribution_method, evidence_terms, reasoning, status, created_at",
@@ -131,8 +138,11 @@ export const POST = withApiGuardrails(
       "api.admin.project-attribution-candidates.POST",
     );
     const serviceSupabase = createServiceClient();
+    const ragSupabase = isRagDatabaseReadsEnabled()
+      ? createRagServiceClient()
+      : serviceSupabase;
 
-    const { data: candidate, error: candidateError } = await serviceSupabase
+    const { data: candidate, error: candidateError } = await ragSupabase
       .from("document_attribution_candidates")
       .select("id, source_document_id, candidate_project_id, candidate_project_name, status")
       .eq("id", body.candidateId)
@@ -159,7 +169,7 @@ export const POST = withApiGuardrails(
     }
 
     if (body.action === "reject") {
-      const { error } = await serviceSupabase
+      const { error } = await ragSupabase
         .from("document_attribution_candidates")
         .update({
           status: "rejected",
@@ -231,7 +241,7 @@ export const POST = withApiGuardrails(
       });
     }
 
-    const { error: candidateUpdateError } = await serviceSupabase
+    const { error: candidateUpdateError } = await ragSupabase
       .from("document_attribution_candidates")
       .update({
         status: "approved",

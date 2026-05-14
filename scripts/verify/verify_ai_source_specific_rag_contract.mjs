@@ -8,11 +8,19 @@ const route = readFileSync(
   resolve(repoRoot, "frontend/src/app/api/ai-assistant/chat/route.ts"),
   "utf8",
 );
+const chatHandler = readFileSync(
+  resolve(repoRoot, "frontend/src/lib/ai/chat-handler.ts"),
+  "utf8",
+);
 const detector = readFileSync(
   resolve(repoRoot, "frontend/src/lib/ai/detect-rag-request.ts"),
   "utf8",
 );
-const contractSource = `${route}\n${detector}`;
+const sourceSpecificRag = readFileSync(
+  resolve(repoRoot, "frontend/src/lib/ai/retrieval/source-specific-rag.ts"),
+  "utf8",
+);
+const contractSource = `${route}\n${chatHandler}\n${detector}\n${sourceSpecificRag}`;
 
 const requiredRouteFragments = [
   "detectSourceSpecificRagRequest",
@@ -40,7 +48,7 @@ const requiredRouteFragments = [
 
 const failures = requiredRouteFragments
   .filter((fragment) => !contractSource.includes(fragment))
-  .map((fragment) => `chat route missing source-specific RAG contract fragment: ${fragment}`);
+  .map((fragment) => `chat implementation missing source-specific RAG contract fragment: ${fragment}`);
 
 const aprilRangePattern =
   /april/i.test(contractSource) &&
@@ -53,10 +61,18 @@ if (!aprilRangePattern) {
   failures.push("chat route does not parse natural-language month date ranges for source-specific RAG prompts");
 }
 
+const sourceSpecificIndex = chatHandler.indexOf("sourceSpecificRagRequest &&");
+const sourceLookupIndex = chatHandler.indexOf(
+  "if (assistantIntent === \"source_lookup\")",
+  Math.max(sourceSpecificIndex, 0),
+);
+const streamTextIndex = chatHandler.indexOf("result = streamText", Math.max(sourceSpecificIndex, 0));
 const sourceSpecificBeforeModelTools =
-  route.indexOf("if (sourceSpecificRagRequest)") > -1 &&
-  route.indexOf("if (sourceSpecificRagRequest)") < route.indexOf("if (assistantIntent === \"source_lookup\")") &&
-  route.indexOf("if (sourceSpecificRagRequest)") < route.indexOf("const result = streamText");
+  sourceSpecificIndex > -1 &&
+  sourceLookupIndex > -1 &&
+  streamTextIndex > -1 &&
+  sourceSpecificIndex < sourceLookupIndex &&
+  sourceSpecificIndex < streamTextIndex;
 
 if (!sourceSpecificBeforeModelTools) {
   failures.push("source-specific RAG must run before source lookup fallback and streamText synthesis");

@@ -22,8 +22,11 @@ import type {
 type AlleatoSupabaseClient = SupabaseClient<Database>;
 type SourceDocumentPreview = Pick<
   Database["public"]["Tables"]["document_metadata"]["Row"],
-  "id" | "type" | "category" | "content" | "raw_text" | "summary" | "overview" | "description" | "notes"
->;
+  "id" | "type" | "category" | "summary" | "overview" | "description" | "notes"
+> & {
+  content?: string | null;
+  raw_text?: string | null;
+};
 
 const SUPABASE_IN_FILTER_CHUNK_SIZE = 100;
 
@@ -485,7 +488,7 @@ export async function loadPacketCards(input: {
         chunkArray(sourceDocumentIds).map((ids) =>
           input.supabase
             .from("document_metadata")
-            .select("id,type,category,content,raw_text,summary,overview,description,notes")
+            .select("id,type,category,summary,overview,description,notes")
             .in("id", ids),
         ),
       )

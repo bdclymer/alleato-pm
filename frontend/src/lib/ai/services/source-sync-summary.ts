@@ -4,7 +4,11 @@ import {
   type ProjectIntelligenceSummarySource,
 } from "@/lib/ai/services/project-intelligence-summary";
 import type { SourceSyncStatus } from "@/app/api/admin/source-sync/_contracts";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
 
 const MAX_ALERT_SOURCES = 6;
@@ -63,16 +67,19 @@ export type SourceSyncAiBriefSnapshotListItem = SourceSyncAiBriefSnapshot & {
 
 function createSourceSyncRunSnapshotLedger(): SourceSyncRunSnapshotLedger {
   const supabase = createServiceClient();
+  const ragSupabase = isRagDatabaseReadsEnabled()
+    ? createRagServiceClient()
+    : supabase;
   return {
     async insertAiBriefSnapshot(insert) {
-      return supabase
+      return ragSupabase
         .from("source_sync_runs")
         .insert(insert)
         .select("id, finished_at, items_seen")
         .single();
     },
     async listAiBriefSnapshots(limit) {
-      return supabase
+      return ragSupabase
         .from("source_sync_runs")
         .select("id, finished_at, started_at, items_seen, metadata")
         .eq("source", "source_sync_ai_brief")

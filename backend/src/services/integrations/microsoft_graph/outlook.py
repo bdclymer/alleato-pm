@@ -20,6 +20,7 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from ...intelligence.compiler import process_source_document_to_packet
+from ...supabase_helpers import SupabaseRagStore
 from .client import get_graph_client
 from .email_classification import EmailIntakeAction, classify_graph_email_for_intake
 from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
@@ -1078,7 +1079,7 @@ def _sync_email_attachment(
         f"project_auto:{assignment_method}" if project_id else "unassigned",
     ]
 
-    supabase_client.from_("document_metadata").insert({
+    SupabaseRagStore(supabase_client).upsert_document_metadata({
         "id": doc_id,
         "title": attachment_name,
         "source": "microsoft_graph",
@@ -1101,7 +1102,7 @@ def _sync_email_attachment(
         "file_path": storage_path,
         "content_hash": metadata_content_hash,
         "source_metadata": source_metadata,
-    }).execute()
+    })
 
     if project_id and public_url:
         _upsert_project_document_by_source(supabase_client, {
@@ -1199,7 +1200,7 @@ def _sync_email_link(
         f"Source email document: {email_doc_id}",
     ])
 
-    supabase_client.from_("document_metadata").insert({
+    SupabaseRagStore(supabase_client).upsert_document_metadata({
         "id": doc_id,
         "title": label[:250],
         "source": "microsoft_graph",
@@ -1217,7 +1218,7 @@ def _sync_email_link(
         "source_path": f"outlook/{msg_id}/links",
         "source_web_url": url,
         "source_metadata": source_metadata,
-    }).execute()
+    })
 
     if project_id:
         _upsert_project_document_by_source(supabase_client, {
@@ -1314,9 +1315,8 @@ def sync_outlook_emails(
 
     for folder_name, base_path in folders:
         folder_token = inbox_token if folder_name == "Inbox" else sent_token
-        folder_base = base_path if not folder_token else folder_token
         try:
-            folder_items, folder_delta = graph.get_delta(folder_base, None)
+            folder_items, folder_delta = graph.get_delta(base_path, folder_token)
             items.extend(folder_items)
             if folder_name == "Inbox":
                 new_inbox_token = folder_delta
@@ -1653,8 +1653,23 @@ def sync_outlook_emails(
                         "project_id": project_id,
                         "source_metadata": effective_source_metadata,
                     }).eq("id", doc_id).execute()
+                    SupabaseRagStore(supabase_client).upsert_rag_document_metadata({
+                        "id": doc_id,
+                        "app_document_id": doc_id,
+                        "title": f"Email: {subject}",
+                        "source": "microsoft_graph",
+                        "source_system": "outlook_email",
+                        "source_item_id": msg_id,
+                        "source_web_url": email_web_link,
+                        "storage_bucket": existing_doc.get("storage_bucket") or DOCUMENT_BUCKET,
+                        "file_path": existing_doc.get("file_path") or storage_path,
+                        "content": body_text,
+                        "raw_text": body_text,
+                        "source_metadata": effective_source_metadata,
+                        "parsing_status": "raw_ingested",
+                    })
                 else:
-                    supabase_client.from_("document_metadata").insert({
+                    SupabaseRagStore(supabase_client).upsert_document_metadata({
                         "id": doc_id,
                         "title": f"Email: {subject}",
                         "source": "microsoft_graph",
@@ -1674,7 +1689,7 @@ def sync_outlook_emails(
                         "storage_bucket": DOCUMENT_BUCKET,
                         "file_path": storage_path,
                         "source_metadata": source_metadata,
-                    }).execute()
+                    })
 
                 if intake_email_id:
                     supabase_client.from_("outlook_email_intake").update(

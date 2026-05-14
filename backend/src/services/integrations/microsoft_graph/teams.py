@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from ...intelligence.compiler import process_source_document_to_packet
+from ...supabase_helpers import SupabaseRagStore, get_rag_read_client
 from .client import get_graph_client
 from .project_inference import infer_project_id
 
@@ -34,6 +35,23 @@ LOW_VALUE_MESSAGE_WORDS = {
     "sounds",
     "good",
 }
+
+
+def _fetch_rag_document_text(doc_id: str) -> str:
+    try:
+        row = (
+            get_rag_read_client()
+            .from_("rag_document_metadata")
+            .select("content,raw_text")
+            .eq("id", doc_id)
+            .single()
+            .execute()
+            .data
+            or {}
+        )
+        return str(row.get("content") or row.get("raw_text") or "")
+    except Exception:
+        return ""
 
 
 def _strip_html(text: str) -> str:
@@ -249,7 +267,7 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
         participants=participants,
     )
 
-    supabase_client.from_("document_metadata").insert({
+    SupabaseRagStore(supabase_client).upsert_document_metadata({
         "id": doc_id,
         "title": f"Teams: {team_name} / {channel_name}",
         "source": "microsoft_graph",
@@ -261,7 +279,7 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
         "status": "raw_ingested",
         "tags": ",".join(["teams", team_name.lower(), channel_name.lower(), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
         "project_id": project_id,
-    }).execute()
+    })
     _run_source_intelligence_compiler(supabase_client, doc_id)
     if project_id:
         logger.info(
@@ -470,13 +488,14 @@ def _process_chat_message(
     if existing and existing.data:
         existing_resp = (
             supabase_client.from_("document_metadata")
-            .select("id, content, participants, project_id, source_metadata")
+            .select("id, participants, project_id, source_metadata")
             .eq("id", doc_id)
             .single()
             .execute()
         )
         existing_doc = existing_resp.data
-        if existing_doc and message_marker in (existing_doc.get("content") or ""):
+        existing_content = _fetch_rag_document_text(doc_id)
+        if existing_doc and message_marker in existing_content:
             raise _AlreadyIngested()
 
     sender_field = msg.get("from") or {}
@@ -486,7 +505,7 @@ def _process_chat_message(
 
     line = f"{message_marker} [{created_time}] {sender_name}: {body}"
     if existing_doc:
-        previous_content = (existing_doc.get("content") or "").rstrip()
+        previous_content = _fetch_rag_document_text(doc_id).rstrip()
         text = f"{previous_content}\n{line}"
     else:
         text = f"[Teams Direct Message Conversation: {chat_display_name}]\nDate: {date_key}\n\n{line}"
@@ -543,10 +562,7 @@ def _process_chat_message(
             "conversation_doc_id": doc_id,
         },
     }
-    if existing_doc:
-        supabase_client.from_("document_metadata").update(row).eq("id", doc_id).execute()
-    else:
-        supabase_client.from_("document_metadata").insert(row).execute()
+    SupabaseRagStore(supabase_client).upsert_document_metadata(row)
     if is_embedding_ready:
         _run_source_intelligence_compiler(supabase_client, doc_id)
 

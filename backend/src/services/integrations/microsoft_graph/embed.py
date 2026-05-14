@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from ...ai_transport import retry_ai_call
-from ...supabase_helpers import get_rag_write_client, rag_database_writes_enabled
+from ...supabase_helpers import get_rag_read_client, get_rag_write_client, rag_database_writes_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -240,7 +240,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     try:
         resp = (
             supabase_client.from_("document_metadata")
-            .select("id, title, content, category, source, date, participants, tags, project_id, type")
+            .select("id, title, category, source, date, participants, tags, project_id, type")
             .eq("id", metadata_id)
             .single()
             .execute()
@@ -254,7 +254,21 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         logger.warning("[GraphEmbed] Document %s not found", metadata_id)
         return 0
 
-    content = (doc.get("content") or "").strip()
+    try:
+        rag_doc = (
+            get_rag_read_client()
+            .from_("rag_document_metadata")
+            .select("content,raw_text")
+            .eq("id", metadata_id)
+            .single()
+            .execute()
+            .data
+            or {}
+        )
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Failed to hydrate RAG metadata for %s: %s", metadata_id, exc)
+        rag_doc = {}
+    content = (rag_doc.get("content") or rag_doc.get("raw_text") or "").strip()
     if not content:
         logger.warning("[GraphEmbed] Document %s has no content — skipping", metadata_id)
         # Still mark as embedded so we don't retry it forever

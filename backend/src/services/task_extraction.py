@@ -20,7 +20,7 @@ from typing import Any
 
 from openai import OpenAI
 
-from .supabase_helpers import get_supabase_client
+from .supabase_helpers import get_rag_read_client, get_supabase_client
 from .task_assignees import TaskAssigneeResolver, clean_text
 
 logger = logging.getLogger(__name__)
@@ -166,6 +166,38 @@ def _build_text(doc: dict[str, Any]) -> str:
                 text = text[:3000]
             parts.append(text)
     return "\n\n".join(parts)
+
+
+def _hydrate_rag_content(docs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    ids = [str(doc.get("id")) for doc in docs if doc.get("id")]
+    if not ids:
+        return docs
+    try:
+        rows = (
+            get_rag_read_client()
+            .table("rag_document_metadata")
+            .select("id,content,raw_text,summary,overview")
+            .in_("id", ids)
+            .execute()
+            .data
+            or []
+        )
+    except Exception:
+        logger.warning("[TaskExtraction] Could not hydrate RAG document content", exc_info=True)
+        return docs
+
+    by_id = {str(row.get("id")): row for row in rows if row.get("id")}
+    hydrated = []
+    for doc in docs:
+        rag = by_id.get(str(doc.get("id"))) or {}
+        hydrated.append(
+            {
+                **doc,
+                "content": rag.get("content") or rag.get("raw_text"),
+                "summary": rag.get("summary") or rag.get("overview") or doc.get("summary"),
+            }
+        )
+    return hydrated
 
 
 def _task_quality_rejection_reason(task: dict[str, Any]) -> str | None:
@@ -366,7 +398,7 @@ def run_task_extraction(
     # conversations that were backfilled or recompiled inside the ingestion window.
     result = (
         client_db.table("document_metadata")
-        .select("id,title,type,source_system,summary,content,action_items,bullet_points,project_id,date,captured_at,created_at,source_metadata")
+        .select("id,title,type,source_system,summary,action_items,bullet_points,project_id,date,captured_at,created_at,source_metadata")
         .in_("type", list(TASK_SOURCE_TYPES))
         .not_.in_("type", list(EXCLUDE_TYPES))
         .or_(f"date.gte.{since},captured_at.gte.{since},created_at.gte.{since}")
@@ -376,7 +408,7 @@ def run_task_extraction(
         .limit(candidate_limit)
         .execute()
     )
-    docs = result.data or []
+    docs = _hydrate_rag_content(result.data or [])
     logger.info(
         "[TaskExtraction] Found %d docs in last %d days (limit=%d)",
         len(docs),

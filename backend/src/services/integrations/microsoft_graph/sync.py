@@ -133,6 +133,30 @@ def _limit_sync_users(
     )[:limit]
 
 
+def _bounded_int_env(name: str, default_limit: int, minimum: int = 1, maximum: int = 100) -> int:
+    try:
+        value = int(os.environ.get(name, str(default_limit)))
+    except ValueError:
+        logger.warning("[GraphSync] Invalid integer for %s; using %d", name, default_limit)
+        value = default_limit
+    return max(minimum, min(value, maximum))
+
+
+def _limit_sync_items(
+    values: list[Any],
+    *,
+    env_key: str,
+    default_limit: int,
+    label: str,
+) -> list[Any]:
+    if not values:
+        return []
+    limit = _bounded_int_env(env_key, default_limit, 1, len(values))
+    if len(values) > limit:
+        logger.info("[GraphSync] Limiting %s from %d to %d via %s", label, len(values), limit, env_key)
+    return values[:limit]
+
+
 def _save_sync_state(
     supabase: Client,
     source: str,
@@ -297,6 +321,14 @@ def run_graph_sync(
             ]
         else:
             user_emails = [e.strip() for e in outlook_users if e and e.strip()]
+        user_emails = _limit_sync_users(
+            supabase,
+            source="outlook_email",
+            users=user_emails,
+            env_key="OUTLOOK_SYNC_MAX_USERS",
+            default_limit=1,
+        )
+        summary["outlook_users_selected"] = user_emails
 
         for user_email in user_emails:
             started_at = datetime.now(timezone.utc)
@@ -331,6 +363,13 @@ def run_graph_sync(
     if sync_teams:
         try:
             channels = get_all_teams_and_channels(supabase)
+            channels = _limit_sync_items(
+                channels,
+                env_key="TEAMS_CHANNEL_SYNC_MAX_CHANNELS",
+                default_limit=5,
+                label="Teams channels",
+            )
+            summary["teams_channels_selected"] = len(channels)
             for ch in channels:
                 resource_id = f"{ch['team_id']}:{ch['channel_id']}"
                 resource_name = f"Teams: {ch['team_name']} / {ch['channel_name']}"
@@ -467,10 +506,25 @@ def run_graph_sync(
             for e in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",")
             if e.strip()
         ]
+        user_emails = _limit_sync_users(
+            supabase,
+            source="onedrive_file",
+            users=user_emails,
+            env_key="ONEDRIVE_SYNC_MAX_USERS",
+            default_limit=1,
+        )
         # Support multiple folders via ONEDRIVE_SYNC_FOLDERS (comma-separated)
         # Falls back to ONEDRIVE_SYNC_FOLDER (singular) for backwards compat
         folders_raw = os.environ.get("ONEDRIVE_SYNC_FOLDERS") or os.environ.get("ONEDRIVE_SYNC_FOLDER", "/Projects")
         onedrive_folders = [f.strip() for f in folders_raw.split(",") if f.strip()]
+        onedrive_folders = _limit_sync_items(
+            onedrive_folders,
+            env_key="ONEDRIVE_SYNC_MAX_FOLDERS",
+            default_limit=2,
+            label="OneDrive folders",
+        )
+        summary["onedrive_users_selected"] = user_emails
+        summary["onedrive_folders_selected"] = onedrive_folders
 
         for user_email in user_emails:
             for folder_path in onedrive_folders:
@@ -513,6 +567,12 @@ def run_graph_sync(
     sync_sharepoint = run_onedrive and os.environ.get("GRAPH_SYNC_SHAREPOINT", "true").lower() == "true"
     sp_raw = os.environ.get("SHAREPOINT_SYNC_FOLDERS", "") if sync_sharepoint else ""
     sp_entries = [e.strip() for e in sp_raw.split(",") if e.strip()]
+    sp_entries = _limit_sync_items(
+        sp_entries,
+        env_key="SHAREPOINT_SYNC_MAX_FOLDERS",
+        default_limit=2,
+        label="SharePoint folders",
+    )
     for entry in sp_entries:
         try:
             site_part, folder_path = entry.split(":", 1) if ":" in entry else (entry, "/")

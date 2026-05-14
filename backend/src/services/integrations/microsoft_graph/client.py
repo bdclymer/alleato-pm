@@ -17,6 +17,15 @@ GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 TOKEN_URL = "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
 
 
+def _bounded_int_env(name: str, default: int, minimum: int, maximum: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except ValueError:
+        logger.warning("[Graph] Invalid integer for %s; using %d", name, default)
+        value = default
+    return max(minimum, min(value, maximum))
+
+
 class GraphClient:
     """Microsoft Graph API client with automatic token refresh."""
 
@@ -113,24 +122,51 @@ class GraphClient:
         resp = httpx.delete(url, headers=headers, timeout=90)
         resp.raise_for_status()
 
-    def get_all_pages(self, path: str, params: Optional[dict] = None) -> list[dict]:
-        """Fetch all pages following @odata.nextLink."""
+    def get_all_pages(
+        self,
+        path: str,
+        params: Optional[dict] = None,
+        *,
+        max_pages: Optional[int] = None,
+        max_items: Optional[int] = None,
+    ) -> list[dict]:
+        """Fetch pages following @odata.nextLink with a production safety cap."""
         results = []
         first_url = path if path.startswith("https://") else f"{GRAPH_BASE}{path}"
         url: Optional[str] = first_url
         is_first = True
-        while url:
+        page_limit = max_pages or _bounded_int_env("GRAPH_PAGE_MAX_PAGES", 5, 1, 50)
+        item_limit = max_items or _bounded_int_env("GRAPH_PAGE_MAX_ITEMS", 500, 1, 5000)
+        pages_fetched = 0
+        while url and pages_fetched < page_limit and len(results) < item_limit:
             data = self.get(url, params if is_first else None)
             is_first = False
-            results.extend(data.get("value", []))
+            results.extend(data.get("value", [])[: max(0, item_limit - len(results))])
             url = data.get("@odata.nextLink")
+            pages_fetched += 1
+        if url:
+            logger.warning(
+                "[Graph] Page fetch capped at pages=%d items=%d for %s",
+                pages_fetched,
+                len(results),
+                path,
+            )
         return results
 
-    def get_delta(self, path: str, delta_token: Optional[str] = None) -> tuple[list[dict], str]:
+    def get_delta(
+        self,
+        path: str,
+        delta_token: Optional[str] = None,
+        *,
+        max_pages: Optional[int] = None,
+        max_items: Optional[int] = None,
+    ) -> tuple[list[dict], str]:
         """
         Fetch delta results. Returns (items, new_delta_token).
         On first call, pass delta_token=None to get all items + initial delta token.
         On subsequent calls, pass the saved delta token to get only changes.
+        The fetch is capped by default so a reset token cannot drain an entire
+        mailbox/folder/channel in one cron run.
         """
         if delta_token:
             # delta_token is a full URL from the previous @odata.deltaLink
@@ -141,10 +177,14 @@ class GraphClient:
         items = []
         new_delta_token = ""
         current_url = url
+        page_limit = max_pages or _bounded_int_env("GRAPH_DELTA_MAX_PAGES", 5, 1, 50)
+        item_limit = max_items or _bounded_int_env("GRAPH_DELTA_MAX_ITEMS", 500, 1, 5000)
+        pages_fetched = 0
 
-        while current_url:
+        while current_url and pages_fetched < page_limit and len(items) < item_limit:
             data = self.get(current_url)
-            items.extend(data.get("value", []))
+            items.extend(data.get("value", [])[: max(0, item_limit - len(items))])
+            pages_fetched += 1
             if "@odata.nextLink" in data:
                 current_url = data["@odata.nextLink"]
             elif "@odata.deltaLink" in data:
@@ -152,6 +192,16 @@ class GraphClient:
                 current_url = None
             else:
                 current_url = None
+
+        if current_url:
+            new_delta_token = delta_token or ""
+            logger.warning(
+                "[Graph] Delta fetch capped at pages=%d items=%d for %s; preserving prior delta token=%s",
+                pages_fetched,
+                len(items),
+                path,
+                bool(delta_token),
+            )
 
         return items, new_delta_token
 

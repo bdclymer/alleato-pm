@@ -263,7 +263,7 @@ def run_financial_parser(metadata_id: str) -> Dict[str, Any]:
 
     resp = (
         client.table("document_metadata")
-        .select("*")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,updated_at,summary,overview,status,storage_bucket,file_path,file_name,url,source_web_url,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -358,10 +358,19 @@ def run_financial_parser(metadata_id: str) -> Dict[str, Any]:
         {
             "overview": overview,
             "status": "segmented",
-            "content": combined_content,
-            "raw_text": combined_content,
         }
     ).eq("id", metadata_id).execute()
+    get_rag_write_client().table("rag_document_metadata").upsert(
+        {
+            "id": metadata_id,
+            "app_document_id": metadata_id,
+            "overview": overview,
+            "content": combined_content,
+            "raw_text": combined_content,
+            "content_length": len(combined_content),
+            "parsing_status": "segmented",
+        }
+    ).execute()
 
     get_rag_write_client().table("fireflies_ingestion_jobs").update(
         {"stage": "segmented", "error_message": None}

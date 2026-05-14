@@ -11,7 +11,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from src.services.supabase_helpers import get_rag_read_client
+from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
 
 STALE_SYNC_MINUTES = 120
@@ -421,7 +421,7 @@ def record_sync_run(
         "error_message": error_message,
         "metadata": metadata or {},
     }
-    response = supabase.table("source_sync_runs").insert(payload).execute()
+    response = get_rag_write_client().table("source_sync_runs").insert(payload).execute()
     rows = response.data or []
     return dict(rows[0]) if rows else payload
 
@@ -463,7 +463,7 @@ def update_sync_run(
     if metadata is not None:
         payload["metadata"] = metadata
 
-    response = supabase.table("source_sync_runs").update(payload).eq("id", run_id).execute()
+    response = get_rag_write_client().table("source_sync_runs").update(payload).eq("id", run_id).execute()
     rows = response.data or []
     return dict(rows[0]) if rows else payload
 
@@ -490,7 +490,7 @@ def update_source_health_snapshot(
         "generated_at": _iso(_utcnow()),
     }
     response = (
-        supabase.table("source_sync_health_snapshots")
+        get_rag_write_client().table("source_sync_health_snapshots")
         .upsert(payload, on_conflict="source,resource_id")
         .execute()
     )
@@ -865,13 +865,13 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         limit=JOB_HEALTH_SAMPLE_LIMIT,
     )
     source_jobs = _table_rows(
-        supabase,
+        get_rag_read_client(),
         "source_intelligence_jobs",
         "status,source_document_id,last_error,queued_at,started_at,finished_at,updated_at",
         limit=JOB_HEALTH_SAMPLE_LIMIT,
     )
     packet_jobs = _table_rows(
-        supabase,
+        get_rag_read_client(),
         "packet_refresh_jobs",
         "status,last_error,queued_at,started_at,finished_at,updated_at",
     )
@@ -881,7 +881,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "id,metadata_id,source_system,extraction_source,created_at,updated_at",
     )
     snapshots = _table_rows(
-        supabase,
+        get_rag_read_client(),
         "source_sync_health_snapshots",
         "source,resource_id,resource_name,status,last_sync_at,last_success_at,last_error_at,last_error_message,items_synced,unprocessed_count,unembedded_count,uncompiled_count,stale_minutes,metadata",
     )
@@ -891,7 +891,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "source,resource_id,resource_name,status,expiration_at,last_notification_at,last_error_message",
     )
     sync_runs = _table_rows(
-        supabase,
+        get_rag_read_client(),
         "source_sync_runs",
         "id,source,resource_id,resource_name,stage,status,started_at,finished_at,items_seen,items_synced,items_failed,error_code,error_message,metadata",
         limit=50,

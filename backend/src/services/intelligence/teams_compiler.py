@@ -11,8 +11,10 @@ from typing import Any, Dict, List, Optional
 
 try:
     from src.services.integrations.microsoft_graph.project_inference import infer_project_id
+    from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 except ModuleNotFoundError:  # Allows backend-local scripts with sys.path.insert(0, "src").
     from services.integrations.microsoft_graph.project_inference import infer_project_id
+    from services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
 from .client import COMPILER_MODEL_DEFAULT, COMPILER_MODEL_LARGE, extract_with_retry
 from .compiler import (
@@ -26,6 +28,25 @@ from .prompts import build_extraction_messages
 from ..task_assignees import TaskAssigneeResolver
 
 logger = logging.getLogger(__name__)
+
+
+def _fetch_rag_content(doc_id: str) -> str:
+    try:
+        row = (
+            get_rag_read_client()
+            .table("rag_document_metadata")
+            .select("content,raw_text")
+            .eq("id", doc_id)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        first = row[0] if row else {}
+        return str(first.get("content") or first.get("raw_text") or "")
+    except Exception:
+        logger.warning("[TeamsCompiler] Could not hydrate RAG content for %s", doc_id, exc_info=True)
+        return ""
 
 TASK_EXTRACTION_PROMPT_VERSION = "teams_compiler.tasks.v5.gpt-5.5"
 
@@ -459,8 +480,9 @@ def write_attribution_candidates(supabase, doc_id: str, candidates: List[Dict[st
         return 0
     # Remove stale candidates before inserting — prevents duplicates when a document
     # is retried or recompiled (no unique constraint exists on this table).
-    supabase.table("document_attribution_candidates").delete().eq("source_document_id", doc_id).execute()
-    supabase.table("document_attribution_candidates").insert(rows).execute()
+    rag_client = get_rag_write_client()
+    rag_client.table("document_attribution_candidates").delete().eq("source_document_id", doc_id).execute()
+    rag_client.table("document_attribution_candidates").insert(rows).execute()
     return len(rows)
 
 
@@ -776,7 +798,7 @@ def write_packet_first_signals(
         result["skipped_reason"] = "missing intelligence target"
         return result
 
-    supabase.table("source_signal_candidates").delete().eq(
+    get_rag_write_client().table("source_signal_candidates").delete().eq(
         "source_document_id", doc_id
     ).eq("compiler_version", PACKET_COMPILER_VERSION).execute()
 
@@ -871,7 +893,7 @@ def compile_conversation(
     try:
         response = (
             supabase.table("document_metadata")
-            .select("id, title, content, participants, date, project_id, project, tags, type, source_metadata")
+            .select("id, title, participants, date, project_id, project, tags, type, source_metadata")
             .eq("id", doc_id)
             .limit(1)
             .execute()
@@ -885,7 +907,7 @@ def compile_conversation(
             result.update({"status": "skipped", "error": "document is not a teams_dm_conversation"})
             return result
 
-        content = doc.get("content") or ""
+        content = _fetch_rag_content(doc_id)
         if _substantive_text_length(content) < MIN_COMPILER_CHARS:
             _mark_status(supabase, doc_id, "skipped_low_content", doc.get("source_metadata"))
             result.update({"status": "skipped", "error": None})

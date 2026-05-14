@@ -53,8 +53,22 @@ const SAFE_RESTART_REQUIRED_ENV = new Map([
     new Map([
       ["GRAPH_SYNC_TEAMS", "false"],
       ["GRAPH_SYNC_TEAMS_DM", "false"],
+      ["GRAPH_DELTA_MAX_PAGES", "3"],
+      ["GRAPH_DELTA_MAX_ITEMS", "250"],
+      ["OUTLOOK_SYNC_MAX_USERS", "1"],
+      ["ONEDRIVE_SYNC_MAX_USERS", "1"],
+      ["ONEDRIVE_SYNC_MAX_FOLDERS", "2"],
+      ["SHAREPOINT_SYNC_MAX_FOLDERS", "2"],
       ["GRAPH_EMBEDDING_LIMIT", "25"],
       ["TEAMS_COMPILER_BATCH_SIZE", "25"],
+    ]),
+  ],
+  [
+    "alleato-teams-channel-sync",
+    new Map([
+      ["GRAPH_DELTA_MAX_PAGES", "3"],
+      ["GRAPH_DELTA_MAX_ITEMS", "250"],
+      ["TEAMS_CHANNEL_SYNC_MAX_CHANNELS", "3"],
     ]),
   ],
   [

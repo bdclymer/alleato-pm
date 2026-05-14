@@ -15,7 +15,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from ..supabase_helpers import get_rag_write_client, get_supabase_client
+from ..supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import DocumentChunk, MeetingSegment, TranscriptLine
 from . import llm
@@ -230,7 +230,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("*")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,updated_at,summary,overview,status,fireflies_id,participants,participants_array,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -239,8 +239,18 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     if not metadata:
         raise ValueError(f"document_metadata not found: {metadata_id}")
 
-    content = metadata.get("content") or metadata.get("raw_text")
-    meeting_summary = metadata.get("summary") or metadata.get("overview") or ""
+    rag_metadata = (
+        get_rag_read_client()
+        .table("rag_document_metadata")
+        .select("content,raw_text,summary,overview")
+        .eq("id", metadata_id)
+        .single()
+        .execute()
+        .data
+        or {}
+    )
+    content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
+    meeting_summary = rag_metadata.get("summary") or rag_metadata.get("overview") or metadata.get("summary") or metadata.get("overview") or ""
     title = metadata.get("title") or "Untitled"
     project_id = metadata.get("project_id")
     started_at = metadata.get("started_at") or metadata.get("captured_at")
@@ -387,9 +397,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         )
 
     # 12. Update metadata status
-    client.table("document_metadata").update(
+    client.table("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
+    rag_client.table("rag_document_metadata").update(
         {
-            "status": "embedded",
+            "embedding_status": "embedded",
             **({"summary_embedding": summary_embedding} if summary_embedding is not None else {}),
         }
     ).eq("id", metadata_id).execute()

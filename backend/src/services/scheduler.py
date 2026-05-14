@@ -851,46 +851,49 @@ def _mark_fireflies_item_non_vectorizable(
 
 def _close_abandoned_fireflies_backlog_runs(stale_minutes: int = 120) -> int:
     """Fail loudly on orphaned backlog runs that never wrote a terminal status."""
-    database_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
-    if not database_url:
-        return 0
-
-    import psycopg2
-
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=max(stale_minutes, 1))
-    conn = None
     try:
-        conn = psycopg2.connect(database_url, sslmode="require")
-        with conn, conn.cursor() as cur:
-            cur.execute(
-                """
-                update public.source_sync_runs
-                   set status = 'failed',
-                       finished_at = now(),
-                       error_code = 'ABANDONED_RUNNING_ROW',
-                       error_message = 'Shared document pipeline backlog run was left running and was auto-closed by a later scheduler pass.',
-                       metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(
-                         'auto_closed', true,
-                         'auto_closed_reason', 'abandoned_running_row',
-                         'auto_closed_at', to_char(now() at time zone 'utc', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"')
-                       )
-                 where resource_id = 'fireflies_ingestion_jobs'
-                   and stage = 'vectorization'
-                   and status = 'running'
-                   and started_at <= %s
-                """,
-                (cutoff,),
-            )
-            return cur.rowcount or 0
+        from .supabase_helpers import get_rag_write_client
+
+        client = get_rag_write_client()
+        rows = (
+            client.table("source_sync_runs")
+            .select("id, metadata")
+            .eq("resource_id", "fireflies_ingestion_jobs")
+            .eq("stage", "vectorization")
+            .eq("status", "running")
+            .lte("started_at", cutoff.isoformat())
+            .limit(100)
+            .execute()
+        ).data or []
+        closed = 0
+        for row in rows:
+            metadata = row.get("metadata") if isinstance(row.get("metadata"), dict) else {}
+            client.table("source_sync_runs").update(
+                {
+                    "status": "failed",
+                    "finished_at": datetime.now(timezone.utc).isoformat(),
+                    "error_code": "ABANDONED_RUNNING_ROW",
+                    "error_message": (
+                        "Shared document pipeline backlog run was left running and was "
+                        "auto-closed by a later scheduler pass."
+                    ),
+                    "metadata": {
+                        **metadata,
+                        "auto_closed": True,
+                        "auto_closed_reason": "abandoned_running_row",
+                        "auto_closed_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                }
+            ).eq("id", row["id"]).execute()
+            closed += 1
+        return closed
     except Exception:
         logger.warning(
             "[Scheduler] Failed to auto-close abandoned shared pipeline backlog rows",
             exc_info=True,
         )
         return 0
-    finally:
-        if conn is not None:
-            conn.close()
 
 
 def _record_fireflies_backlog_run(client, result: dict) -> None:

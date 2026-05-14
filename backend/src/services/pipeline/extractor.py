@@ -14,7 +14,7 @@ import logging
 import re
 from typing import Any, Dict, List
 
-from ..supabase_helpers import get_rag_write_client, get_supabase_client
+from ..supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from ..task_assignees import TaskAssigneeResolver
 from .models import DecisionItem, OpportunityItem, RiskItem, TaskItem
@@ -188,7 +188,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("*")
+        .select("id,title,type,category,source,source_system,project_id,client_id,date,captured_at,created_at,updated_at,summary,overview,meeting_summary,status,fireflies_id,participants,participants_array,action_items,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -196,6 +196,22 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     metadata = resp.data
     if not metadata:
         raise ValueError(f"document_metadata not found: {metadata_id}")
+    rag_metadata = (
+        get_rag_read_client()
+        .table("rag_document_metadata")
+        .select("content,raw_text")
+        .eq("id", metadata_id)
+        .single()
+        .execute()
+        .data
+        or {}
+    )
+    if rag_metadata.get("content") or rag_metadata.get("raw_text"):
+        metadata = {
+            **metadata,
+            "content": rag_metadata.get("content"),
+            "raw_text": rag_metadata.get("raw_text"),
+        }
 
     if _is_interview_meeting(metadata):
         fireflies_id = str(metadata.get("fireflies_id") or metadata_id)

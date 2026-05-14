@@ -2420,10 +2420,10 @@ export function createProjectTools(
         if (resolvedProjectId) {
           const { data: docRows } = await supabase
             .from("document_metadata")
-            .select("*")
+            .select("id,title,date,project,project_id,participants,category,summary,overview,action_items,bullet_points")
             .eq("project_id", resolvedProjectId)
             .or("type.eq.meeting,category.eq.meeting")
-            .textSearch("content", query.split(" ").join(" & "))
+            .textSearch("summary", query.split(" ").join(" & "))
             .order("date", { ascending: false })
             .limit(maxResults ?? 10);
           const docs = (docRows ?? []) as AnyRow[];

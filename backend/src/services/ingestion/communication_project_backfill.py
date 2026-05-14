@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List
 
 from supabase import Client
 
+from ..supabase_helpers import get_rag_write_client
 from .project_assignment import ProjectAssigner
 
 SOURCE_FILTERS = {
@@ -137,7 +138,7 @@ def run_incremental_project_backfill(
                 }
             ).eq("id", document["id"]).execute()
 
-            client.table("document_attribution_candidates").insert(
+            get_rag_write_client().table("document_attribution_candidates").insert(
                 {
                     "source_document_id": document["id"],
                     "candidate_project_id": int(project_id),

@@ -18,7 +18,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from ..supabase_helpers import get_rag_write_client, get_supabase_client
+from ..supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client
 from .models import MeetingSegment
 from . import llm
 
@@ -315,7 +315,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("*")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,updated_at,summary,overview,status,fireflies_id,participants,participants_array,storage_bucket,file_path,file_name,url,source_web_url,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -329,7 +329,17 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     logger.info("[DocParser] Processing: %s (%s) [%s]", title, metadata_id, category)
 
     # 2. Get text content — either from stored content or from file storage
-    content = metadata.get("content") or metadata.get("raw_text")
+    rag_metadata = (
+        get_rag_read_client()
+        .table("rag_document_metadata")
+        .select("content,raw_text")
+        .eq("id", metadata_id)
+        .single()
+        .execute()
+        .data
+        or {}
+    )
+    content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
     file_bytes: Optional[bytes] = None
 
     # If no inline content, try to fetch from Supabase storage
@@ -353,9 +363,16 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
 
     # 4. Store raw text if not already stored
     if not content:
-        client.table("document_metadata").update(
-            {"raw_text": extracted_text[:500_000]}  # Cap at 500K chars
-        ).eq("id", metadata_id).execute()
+        get_rag_write_client().table("rag_document_metadata").upsert(
+            {
+                "id": metadata_id,
+                "app_document_id": metadata_id,
+                "raw_text": extracted_text[:500_000],
+                "content": extracted_text[:500_000],
+                "content_length": len(extracted_text[:500_000]),
+                "parsing_status": "raw_text_extracted",
+            }
+        ).execute()
 
     # 5. Generate document summary
     if extracted_is_too_short:
@@ -436,7 +453,17 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     }
     # Store content for the embedder to use if we extracted from a file
     if file_bytes and not content:
-        update_data["content"] = extracted_text[:500_000]
+        get_rag_write_client().table("rag_document_metadata").upsert(
+            {
+                "id": metadata_id,
+                "app_document_id": metadata_id,
+                "content": extracted_text[:500_000],
+                "raw_text": extracted_text[:500_000],
+                "content_length": len(extracted_text[:500_000]),
+                "parsing_status": "segmented",
+                "overview": summary,
+            }
+        ).execute()
 
     client.table("document_metadata").update(update_data).eq("id", metadata_id).execute()
 

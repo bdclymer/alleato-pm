@@ -186,8 +186,6 @@ function sourceTextForTask(row: TaskSourceReviewRow): string {
     asString(metadata.decisions) ? `Decisions: ${asString(metadata.decisions)}` : null,
     asString(metadata.bullet_points) ? `Bullet points: ${asString(metadata.bullet_points)}` : null,
     asString(metadata.notes) ? `Notes: ${asString(metadata.notes)}` : null,
-    asString(metadata.content) ? `Transcript/content: ${asString(metadata.content)}` : null,
-    asString(metadata.raw_text) ? `Raw transcript: ${asString(metadata.raw_text)}` : null,
   ]
     .filter((value): value is string => Boolean(value))
     .join("\n\n");
@@ -328,8 +326,6 @@ export async function loadTaskSourceReviewPacket(params: {
         bullet_points,
         notes,
         summary,
-        content,
-        raw_text,
         fireflies_link,
         meeting_link,
         source_web_url

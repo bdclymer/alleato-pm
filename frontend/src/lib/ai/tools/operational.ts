@@ -2173,7 +2173,7 @@ export function createOperationalTools(
 
           const meetingLookup = supabase
             .from("document_metadata")
-            .select("*")
+            .select("id,title,date,project,project_id,participants,participants_array,duration_minutes,summary,overview,action_items,bullet_points")
             .eq("id", resolvedId);
           const scopedMeetingLookup = scope.isAdmin
             ? meetingLookup

@@ -15,6 +15,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
+
 COMPILER_VERSION = "ai_intelligence_compiler_v0_1"
 ACTIVE_JOB_STATUSES = ("queued", "running", "succeeded")
 ACTIVE_REFRESH_STATUSES = ("queued", "running")
@@ -89,6 +91,14 @@ def confidence_label(score: float) -> str:
 def _single_row(response: Any) -> Optional[Dict[str, Any]]:
     data = getattr(response, "data", None) or []
     return data[0] if data else None
+
+
+def _rag_read() -> Any:
+    return get_rag_read_client()
+
+
+def _rag_write() -> Any:
+    return get_rag_write_client()
 
 
 def _clean_text(value: Any) -> str:
@@ -186,13 +196,29 @@ def _participants(document: Dict[str, Any]) -> List[str]:
 def _fetch_source_document(supabase: Any, source_document_id: str) -> Dict[str, Any]:
     row = _single_row(
         supabase.table("document_metadata")
-        .select("*")
+        .select("id,title,type,category,source,source_system,project_id,project,date,captured_at,created_at,updated_at,summary,overview,status,participants,participants_array,source_metadata")
         .eq("id", source_document_id)
         .limit(1)
         .execute()
     )
     if not row:
         raise ValueError(f"document_metadata row not found: {source_document_id}")
+    rag_row = _single_row(
+        _rag_read()
+        .table("rag_document_metadata")
+        .select("content,raw_text,summary,overview")
+        .eq("id", source_document_id)
+        .limit(1)
+        .execute()
+    ) or {}
+    if rag_row.get("content") or rag_row.get("raw_text"):
+        row = {
+            **row,
+            "content": rag_row.get("content"),
+            "raw_text": rag_row.get("raw_text"),
+            "summary": rag_row.get("summary") or row.get("summary"),
+            "overview": rag_row.get("overview") or row.get("overview"),
+        }
     return row
 
 
@@ -227,7 +253,7 @@ def _record_document_compiler_status(
 
 def _fetch_signal_candidate(supabase: Any, candidate_id: str) -> Dict[str, Any]:
     row = _single_row(
-        supabase.table("source_signal_candidates")
+        _rag_read().table("source_signal_candidates")
         .select("*")
         .eq("id", candidate_id)
         .limit(1)
@@ -352,17 +378,17 @@ def get_intelligence_compiler_status(
     """Return health counts for the packet-first intelligence compiler."""
     now = now or datetime.now(timezone.utc)
     source_jobs = _table_rows(
-        supabase,
+        _rag_read(),
         "source_intelligence_jobs",
         "id,status,queued_at,started_at,updated_at,finished_at,last_error",
     )
     packet_jobs = _table_rows(
-        supabase,
+        _rag_read(),
         "packet_refresh_jobs",
         "id,status,queued_at,started_at,updated_at,finished_at,output_packet_id,last_error",
     )
     signal_candidates = _table_rows(
-        supabase,
+        _rag_read(),
         "source_signal_candidates",
         "id,source_document_id,status,confidence,created_at,promoted_insight_card_id",
     )
@@ -592,8 +618,9 @@ def enqueue_source_intelligence_job(
     compiler_version: str = COMPILER_VERSION,
 ) -> Dict[str, Any]:
     """Enqueue a source compiler job, reusing an active identical job when possible."""
+    job_client = _rag_write()
     query = (
-        supabase.table("source_intelligence_jobs")
+        job_client.table("source_intelligence_jobs")
         .select("*")
         .eq("source_document_id", source_document_id)
         .eq("job_type", job_type)
@@ -619,7 +646,7 @@ def enqueue_source_intelligence_job(
         "input_snapshot": input_snapshot or {},
     }
     return _single_row(
-        supabase.table("source_intelligence_jobs").insert(payload).execute()
+        job_client.table("source_intelligence_jobs").insert(payload).execute()
     ) or payload
 
 
@@ -636,8 +663,9 @@ def claim_queued_source_jobs(
     backend service layer operates through the Supabase client. The job ledger
     keeps attempts bounded and visible even when two workers race.
     """
+    job_client = _rag_write()
     query = (
-        supabase.table("source_intelligence_jobs")
+        job_client.table("source_intelligence_jobs")
         .select("*")
         .eq("status", "queued")
         .eq("compiler_version", compiler_version)
@@ -658,7 +686,7 @@ def claim_queued_source_jobs(
             "updated_at": _utc_now(),
         }
         updated = _single_row(
-            supabase.table("source_intelligence_jobs")
+            job_client.table("source_intelligence_jobs")
             .update(update)
             .eq("id", row["id"])
             .eq("status", "queued")
@@ -675,7 +703,7 @@ def mark_source_job_succeeded(
     *,
     output_summary: Optional[Dict[str, Any]] = None,
 ) -> None:
-    supabase.table("source_intelligence_jobs").update(
+    _rag_write().table("source_intelligence_jobs").update(
         {
             "status": "succeeded",
             "finished_at": _utc_now(),
@@ -695,7 +723,7 @@ def mark_source_job_failed(
     max_attempts: int = 3,
 ) -> None:
     row = _single_row(
-        supabase.table("source_intelligence_jobs")
+        _rag_read().table("source_intelligence_jobs")
         .select("attempt_count")
         .eq("id", job_id)
         .limit(1)
@@ -703,7 +731,7 @@ def mark_source_job_failed(
     )
     attempts = int((row or {}).get("attempt_count") or 0)
     status = "queued" if retryable and attempts < max_attempts else "failed"
-    supabase.table("source_intelligence_jobs").update(
+    _rag_write().table("source_intelligence_jobs").update(
         {
             "status": status,
             "last_error": error[:2000],
@@ -762,7 +790,7 @@ def write_source_signal_candidate(
         "compiler_version": compiler_version,
     }
     return _single_row(
-        supabase.table("source_signal_candidates").insert(payload).execute()
+        _rag_write().table("source_signal_candidates").insert(payload).execute()
     ) or payload
 
 
@@ -788,7 +816,7 @@ def write_document_attribution_candidate(
     bounded_score = max(0.0, min(1.0, float(confidence_score)))
     status = "auto_assigned" if bounded_score >= 0.85 else "pending_review"
 
-    supabase.table("document_attribution_candidates").delete().eq(
+    _rag_write().table("document_attribution_candidates").delete().eq(
         "source_document_id", source_document_id
     ).eq("compiler_version", compiler_version).execute()
 
@@ -809,7 +837,7 @@ def write_document_attribution_candidate(
         "compiler_version": compiler_version,
     }
     return _single_row(
-        supabase.table("document_attribution_candidates").insert(payload).execute()
+        _rag_write().table("document_attribution_candidates").insert(payload).execute()
     ) or payload
 
 
@@ -857,8 +885,9 @@ def enqueue_packet_refresh(
     compiler_version: str = COMPILER_VERSION,
 ) -> Dict[str, Any]:
     """Enqueue a deduped packet refresh for a target."""
+    job_client = _rag_write()
     existing = _single_row(
-        supabase.table("packet_refresh_jobs")
+        job_client.table("packet_refresh_jobs")
         .select("*")
         .eq("target_id", target_id)
         .eq("compiler_version", compiler_version)
@@ -869,7 +898,7 @@ def enqueue_packet_refresh(
     if existing:
         if trigger_insight_card_id and not existing.get("trigger_insight_card_id"):
             updated = _single_row(
-                supabase.table("packet_refresh_jobs")
+                job_client.table("packet_refresh_jobs")
                 .update(
                     {
                         "reason": reason,
@@ -896,7 +925,7 @@ def enqueue_packet_refresh(
         "compiler_version": compiler_version,
     }
     return _single_row(
-        supabase.table("packet_refresh_jobs").insert(payload).execute()
+        job_client.table("packet_refresh_jobs").insert(payload).execute()
     ) or payload
 
 
@@ -1303,7 +1332,7 @@ def promote_signal_candidate(
         }
 
     if not candidate.get("target_id"):
-        supabase.table("source_signal_candidates").update(
+        _rag_write().table("source_signal_candidates").update(
             {
                 "status": "needs_review",
                 "extraction_json": {
@@ -1340,7 +1369,7 @@ def promote_signal_candidate(
     )
 
     updated_candidate = _single_row(
-        supabase.table("source_signal_candidates")
+        _rag_write().table("source_signal_candidates")
         .update(
             {
                 "status": "promoted",
@@ -1377,8 +1406,9 @@ def claim_queued_packet_refresh_jobs(
     limit: int = 5,
     compiler_version: str = COMPILER_VERSION,
 ) -> List[Dict[str, Any]]:
+    job_client = _rag_write()
     query = (
-        supabase.table("packet_refresh_jobs")
+        job_client.table("packet_refresh_jobs")
         .select("*")
         .eq("status", "queued")
         .eq("compiler_version", compiler_version)
@@ -1390,7 +1420,7 @@ def claim_queued_packet_refresh_jobs(
     claimed: List[Dict[str, Any]] = []
     for row in rows:
         updated = _single_row(
-            supabase.table("packet_refresh_jobs")
+            job_client.table("packet_refresh_jobs")
             .update(
                 {
                     "status": "running",
@@ -1414,7 +1444,7 @@ def mark_packet_refresh_succeeded(
     *,
     output_packet_id: Optional[str] = None,
 ) -> None:
-    supabase.table("packet_refresh_jobs").update(
+    _rag_write().table("packet_refresh_jobs").update(
         {
             "status": "succeeded",
             "output_packet_id": output_packet_id,
@@ -1434,7 +1464,7 @@ def mark_packet_refresh_failed(
     max_attempts: int = 3,
 ) -> None:
     row = _single_row(
-        supabase.table("packet_refresh_jobs")
+        _rag_read().table("packet_refresh_jobs")
         .select("attempt_count")
         .eq("id", job_id)
         .limit(1)
@@ -1442,7 +1472,7 @@ def mark_packet_refresh_failed(
     )
     attempts = int((row or {}).get("attempt_count") or 0)
     status = "queued" if retryable and attempts < max_attempts else "failed"
-    supabase.table("packet_refresh_jobs").update(
+    _rag_write().table("packet_refresh_jobs").update(
         {
             "status": status,
             "last_error": error[:2000],
@@ -1460,7 +1490,7 @@ def process_packet_refresh_job(
 ) -> Dict[str, Any]:
     """Run one packet refresh job and record the output packet id."""
     job = _single_row(
-        supabase.table("packet_refresh_jobs")
+        _rag_read().table("packet_refresh_jobs")
         .select("*")
         .eq("id", job_id)
         .limit(1)
@@ -1476,7 +1506,7 @@ def process_packet_refresh_job(
     }
     if job.get("status") != "running":
         update_payload["attempt_count"] = int(job.get("attempt_count") or 0) + 1
-    supabase.table("packet_refresh_jobs").update(update_payload).eq("id", job_id).execute()
+    _rag_write().table("packet_refresh_jobs").update(update_payload).eq("id", job_id).execute()
 
     try:
         result = compile_current_packet(
@@ -1763,7 +1793,7 @@ def process_source_document(
         }
         if existing_job.get("status") != "running":
             update_payload["attempt_count"] = int(existing_job.get("attempt_count") or 0) + 1
-        supabase.table("source_intelligence_jobs").update(update_payload).eq("id", job_id).execute()
+        _rag_write().table("source_intelligence_jobs").update(update_payload).eq("id", job_id).execute()
 
     try:
         existing_project_id = document.get("project_id")

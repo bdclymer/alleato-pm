@@ -150,28 +150,106 @@ class SupabaseRagStore:
     def __init__(self, client: Optional[Client] = None, rag_client: Optional[Client] = None) -> None:
         self._client = client or get_supabase_client()
         self._rag_client = rag_client or get_rag_write_client()
+        self._rag_read_client = rag_client or get_rag_read_client()
 
     # document_metadata -------------------------------------------------
     def upsert_document_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        response = self._client.table("document_metadata").upsert(metadata).execute()
-        return response.data[0] if response.data else metadata
+        """Upsert source metadata while keeping large RAG payloads out of the app DB."""
+        document_id = metadata.get("id")
+        has_rag_payload = any(
+            metadata.get(field) is not None
+            for field in ("content", "raw_text", "summary_embedding")
+        )
+        app_payload = self._app_document_catalog_payload(metadata)
+        rag_payload = self._rag_document_metadata_payload(metadata) if document_id and has_rag_payload else None
+
+        app_result: Dict[str, Any] = app_payload
+        app_has_fields_beyond_id = any(key != "id" for key in app_payload)
+        if app_payload.get("id") and app_has_fields_beyond_id:
+            app_result = self.upsert_app_document_catalog(app_payload)
+
+        if rag_payload:
+            self.upsert_rag_document_metadata(rag_payload)
+
+        return {**app_result, **{k: v for k, v in metadata.items() if k in {"content", "raw_text", "summary_embedding"}}}
 
     def upsert_app_document_catalog(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Upsert the app-facing catalog row without large RAG payload fields."""
-        catalog = dict(metadata)
-        for field in ("content", "raw_text", "summary_embedding"):
-            catalog.pop(field, None)
+        catalog = self._app_document_catalog_payload(metadata)
         response = self._client.table("document_metadata").upsert(catalog).execute()
         return response.data[0] if response.data else catalog
 
     def upsert_rag_document_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Upsert the RAG-side full payload and processing metadata row."""
-        response = self._rag_client.table("rag_document_metadata").upsert(metadata).execute()
-        return response.data[0] if response.data else metadata
+        payload = self._rag_document_metadata_payload(metadata)
+        response = self._rag_client.table("rag_document_metadata").upsert(payload).execute()
+        return response.data[0] if response.data else payload
+
+    def _app_document_catalog_payload(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        catalog = dict(metadata)
+        for field in ("content", "raw_text", "summary_embedding"):
+            catalog.pop(field, None)
+        return catalog
+
+    def _rag_document_metadata_payload(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        document_id = metadata.get("id") or metadata.get("app_document_id")
+        if not document_id:
+            raise ValueError("rag_document_metadata payload requires id or app_document_id")
+        content = metadata.get("content")
+        raw_text = metadata.get("raw_text")
+        full_text = content or raw_text
+        processing_metadata = metadata.get("processing_metadata")
+        if not isinstance(processing_metadata, dict):
+            processing_metadata = {}
+        processing_metadata = {
+            **processing_metadata,
+            "app_status": metadata.get("status"),
+            "participants": metadata.get("participants"),
+            "participants_array": metadata.get("participants_array"),
+            "tags": metadata.get("tags"),
+        }
+        source_metadata = metadata.get("source_metadata")
+        if not isinstance(source_metadata, dict):
+            source_metadata = {}
+
+        payload = {
+            "id": str(document_id),
+            "app_document_id": str(metadata.get("app_document_id") or document_id),
+            "project_id": metadata.get("project_id"),
+            "source": metadata.get("source"),
+            "source_system": metadata.get("source_system"),
+            "source_item_id": metadata.get("source_item_id") or metadata.get("fireflies_id"),
+            "fireflies_id": metadata.get("fireflies_id"),
+            "title": metadata.get("title"),
+            "type": metadata.get("type"),
+            "category": metadata.get("category"),
+            "source_web_url": metadata.get("source_web_url"),
+            "url": metadata.get("url"),
+            "storage_bucket": metadata.get("storage_bucket"),
+            "storage_path": metadata.get("storage_path") or metadata.get("file_path") or metadata.get("source_path"),
+            "file_name": metadata.get("file_name"),
+            "content": content,
+            "raw_text": raw_text or content,
+            "content_hash": metadata.get("content_hash"),
+            "content_length": len(str(full_text)) if full_text is not None else None,
+            "summary": metadata.get("summary"),
+            "overview": metadata.get("overview"),
+            "summary_embedding": metadata.get("summary_embedding"),
+            "parsing_status": metadata.get("parsing_status") or metadata.get("status"),
+            "embedding_status": metadata.get("embedding_status"),
+            "processing_metadata": {k: v for k, v in processing_metadata.items() if v is not None},
+            "source_metadata": source_metadata,
+            "last_synced_at": metadata.get("last_synced_at") or metadata.get("updated_at") or metadata.get("created_at"),
+            "last_content_loaded_at": datetime.utcnow().isoformat() if full_text else metadata.get("last_content_loaded_at"),
+            "last_indexed_at": metadata.get("last_indexed_at"),
+            "created_at": metadata.get("created_at"),
+            "updated_at": metadata.get("updated_at"),
+        }
+        return {key: value for key, value in payload.items() if value is not None}
 
     def fetch_rag_document_metadata(self, document_id: str) -> Optional[Dict[str, Any]]:
         response = (
-            self._rag_client.table("rag_document_metadata")
+            self._rag_read_client.table("rag_document_metadata")
             .select("*")
             .eq("id", document_id)
             .single()
@@ -181,7 +259,7 @@ class SupabaseRagStore:
 
     def fetch_rag_document_content(self, document_id: str) -> Optional[str]:
         response = (
-            self._rag_client.table("rag_document_metadata")
+            self._rag_read_client.table("rag_document_metadata")
             .select("content,raw_text")
             .eq("id", document_id)
             .single()
@@ -213,7 +291,7 @@ class SupabaseRagStore:
     def fetch_document_metadata(self, document_id: str) -> Optional[Dict[str, Any]]:
         response = (
             self._client.table("document_metadata")
-            .select("*")
+            .select("id,title,type,category,source,source_system,source_item_id,project_id,project,date,captured_at,created_at,updated_at,summary,overview,status,fireflies_id,fireflies_link,meeting_link,url,source_web_url,storage_bucket,file_path,file_name,participants,participants_array,source_metadata")
             .eq("id", document_id)
             .single()
             .execute()
@@ -555,7 +633,7 @@ class SupabaseRagStore:
             "content_hash": content_hash,
             "status": "running",
         }
-        response = self._client.table("ingestion_jobs").insert(payload).execute()
+        response = self._rag_client.table("ingestion_jobs").insert(payload).execute()
         data = response.data or []
         return data[0]["id"] if data else None
 
@@ -565,7 +643,7 @@ class SupabaseRagStore:
         payload = {"status": status, "finished_at": datetime.utcnow().isoformat()}
         if error:
             payload["error"] = error
-        self._client.table("ingestion_jobs").update(payload).eq("id", job_id).execute()
+        self._rag_client.table("ingestion_jobs").update(payload).eq("id", job_id).execute()
 
 
 __all__ = [

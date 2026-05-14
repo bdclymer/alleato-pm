@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
-from ..supabase_helpers import get_rag_write_client, get_supabase_client
+from ..supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import MeetingSegment, TranscriptLine
 from . import llm
@@ -171,7 +171,7 @@ def run_parser(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("*")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,updated_at,summary,overview,status,fireflies_id,participants,participants_array,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -180,9 +180,19 @@ def run_parser(metadata_id: str) -> Dict[str, Any]:
     if not metadata:
         raise ValueError(f"document_metadata not found: {metadata_id}")
 
-    content = metadata.get("content") or metadata.get("raw_text")
+    rag_metadata = (
+        get_rag_read_client()
+        .table("rag_document_metadata")
+        .select("content,raw_text")
+        .eq("id", metadata_id)
+        .single()
+        .execute()
+        .data
+        or {}
+    )
+    content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
     if not content:
-        raise ValueError(f"No content in document_metadata: {metadata_id}")
+        raise ValueError(f"No RAG content found for document: {metadata_id}")
 
     title = metadata.get("title") or "Untitled Meeting"
     logger.info("[Parser] Processing: %s (%s)", title, metadata_id)
@@ -280,6 +290,9 @@ def run_parser(metadata_id: str) -> Dict[str, Any]:
     # 8. Update document_metadata with generated summary
     client.table("document_metadata").update(
         {"overview": meeting_summary, "status": "segmented"}
+    ).eq("id", metadata_id).execute()
+    get_rag_write_client().table("rag_document_metadata").update(
+        {"overview": meeting_summary, "parsing_status": "segmented"}
     ).eq("id", metadata_id).execute()
 
     # 9. Advance job stage to 'segmented'
