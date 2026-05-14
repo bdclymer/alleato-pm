@@ -6497,6 +6497,20 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
               });
             } else {
               sourceLookupOutput = normalizeSemanticSearchOutput(searchOutput);
+              toolTrace.push({
+                tool: "semanticSearch",
+                input: {
+                  query: lastUserContent,
+                  projectId: selectedProjectId ?? null,
+                  matchCount: 12,
+                  threshold: 0.5,
+                  skipRerank: false,
+                },
+                output: {
+                  resultCount: sourceLookupOutput.results.length,
+                },
+                timestamp: new Date().toISOString(),
+              });
             }
           } else {
             toolTrace.push({
