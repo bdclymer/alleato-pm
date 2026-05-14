@@ -82,29 +82,23 @@ if (cases.length === 0) {
 }
 
 // ───────────────────────────────────────────────────────── Auth + run dir
-if (!existsSync(AUTH_PATH)) {
-  console.error(
-    `Missing auth state at ${AUTH_PATH}. Run: cd frontend && npx playwright test tests/auth.setup.ts`,
-  );
-  process.exit(1);
-}
-const authState = JSON.parse(await fs.readFile(AUTH_PATH, "utf8"));
+const authState = existsSync(AUTH_PATH)
+  ? JSON.parse(await fs.readFile(AUTH_PATH, "utf8"))
+  : { cookies: [], origins: [] };
 let cookieHeader = (authState.cookies ?? [])
   .map((c) => `${c.name}=${c.value}`)
   .join("; ");
-if (!cookieHeader) {
-  console.error("Auth state has no cookies. Re-run auth.setup.ts.");
-  process.exit(1);
-}
 
 // ─────────────────────────────────────────────────────── Auth refresh
-const SUPABASE_URL = "https://lgveqfnpkxvzbnnwuled.supabase.co";
+const SUPABASE_URL = process.env.AI_EVAL_SUPABASE_URL || "https://lgveqfnpkxvzbnnwuled.supabase.co";
 const SUPABASE_ANON_KEY =
+  process.env.AI_EVAL_SUPABASE_ANON_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndmVxZm5wa3h2emJubnd1bGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTQxNjYsImV4cCI6MjA3MDgzMDE2Nn0.g56kDPUokoJpWY7vXd3GTMXpOc4WFOU0hDVWfGMZtO8";
-const SUPABASE_EMAIL = "test1@mail.com";
-const SUPABASE_PASSWORD = "test12026!!!";
+const SUPABASE_EMAIL = process.env.AI_EVAL_SUPABASE_EMAIL || "test1@mail.com";
+const SUPABASE_PASSWORD = process.env.AI_EVAL_SUPABASE_PASSWORD || "test12026!!!";
 const SUPABASE_COOKIE_NAME = "sb-lgveqfnpkxvzbnnwuled-auth-token";
 const REFRESH_BUFFER_SEC = 5 * 60; // refresh if expiring within 5 minutes
+const AUTH_REFRESH_RETRIES = 3;
 
 function getCookieExpiry(header) {
   // Find the auth cookie in the header string and decode its expiry.
@@ -135,22 +129,39 @@ async function refreshAuthIfNeeded() {
   }
 
   // Token is missing, expired, or expiring soon — fetch a fresh one.
-  const res = await fetch(
-    `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        apikey: SUPABASE_ANON_KEY,
-        authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ email: SUPABASE_EMAIL, password: SUPABASE_PASSWORD }),
-    },
-  );
+  if (!cookieHeader) {
+    console.log(`[auth] Auth state missing or empty at ${AUTH_PATH}; creating a fresh eval session.`);
+  }
+  let res = null;
+  let lastAuthError = null;
+  for (let attempt = 1; attempt <= AUTH_REFRESH_RETRIES; attempt += 1) {
+    try {
+      res = await fetch(
+        `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ email: SUPABASE_EMAIL, password: SUPABASE_PASSWORD }),
+        },
+      );
+      if (res.ok || res.status < 500 || attempt === AUTH_REFRESH_RETRIES) break;
+      lastAuthError = new Error(`HTTP ${res.status}`);
+    } catch (error) {
+      lastAuthError = error;
+      if (attempt === AUTH_REFRESH_RETRIES) break;
+    }
+    const backoffMs = 500 * attempt;
+    console.warn(`[auth] Refresh attempt ${attempt} failed; retrying in ${backoffMs}ms.`);
+    await new Promise((resolve) => setTimeout(resolve, backoffMs));
+  }
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Auth refresh failed (HTTP ${res.status}): ${text.slice(0, 200)}`);
+  if (!res?.ok) {
+    const text = res ? await res.text().catch(() => "") : String(lastAuthError?.message ?? "unknown error");
+    throw new Error(`Auth refresh failed (HTTP ${res?.status ?? "unknown"}): ${text.slice(0, 200)}`);
   }
 
   const session = await res.json();
@@ -188,6 +199,7 @@ async function refreshAuthIfNeeded() {
   } else {
     authState.cookies = [...(authState.cookies ?? []), newCookie];
   }
+  mkdirSync(path.dirname(AUTH_PATH), { recursive: true });
   await fs.writeFile(AUTH_PATH, JSON.stringify(authState, null, 2));
 
   // Rebuild the cookie header string.
@@ -201,7 +213,7 @@ async function refreshAuthIfNeeded() {
   return cookieHeader;
 }
 
-const runStamp = new Date().toISOString().replace(/[:.]/g, "-");
+const runStamp = `${new Date().toISOString().replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
 const runDir = path.join(repoRoot, "docs/ai-plan/evals/runs", runStamp);
 mkdirSync(runDir, { recursive: true });
 
@@ -233,8 +245,6 @@ function tokenizeUserId() {
     return null;
   }
 }
-const userId = tokenizeUserId();
-
 async function postPromptAndDrain(testCase, sessionId, messageId) {
   const currentCookieHeader = await refreshAuthIfNeeded();
   const messages = Array.isArray(testCase.messages) && testCase.messages.length > 0
@@ -600,6 +610,7 @@ function scoreCase(testCase, runOutput, persisted) {
 // ─────────────────────────────────────────────────────────── Run loop
 // Always start with a fresh token so we don't begin the run with a stale one.
 await refreshAuthIfNeeded();
+const userId = tokenizeUserId();
 
 console.log(`AI Assistant eval suite — ${cases.length} cases`);
 console.log(`Endpoint: ${CHAT_ENDPOINT}`);

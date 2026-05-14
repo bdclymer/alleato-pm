@@ -1,0 +1,52 @@
+name: AI Assistant Prod Evals
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 8 * * *"
+
+jobs:
+  prod-evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      AI_EVAL_BASE_URL: ${{ secrets.API_SMOKE_BASE_URL || 'https://projects.alleatogroup.com' }}
+      AI_EVAL_SUPABASE_EMAIL: ${{ secrets.AI_EVAL_SUPABASE_EMAIL }}
+      AI_EVAL_SUPABASE_PASSWORD: ${{ secrets.AI_EVAL_SUPABASE_PASSWORD }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Validate required secrets
+        run: |
+          if [[ -z "${DATABASE_URL}" ]]; then
+            echo "DATABASE_URL secret is required for AI assistant prod evals."
+            exit 1
+          fi
+
+      - name: Run Outlook inbox eval bundle
+        env:
+          AI_EVAL_CASE_TIMEOUT_MS: "120000"
+        run: npm run rag:verify:inbox-evals
+
+      - name: Run source sync and Teams eval bundle
+        env:
+          AI_EVAL_CASE_TIMEOUT_MS: "240000"
+        run: npm run rag:verify:source-sync-evals
+
+      - name: Upload eval artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-assistant-prod-eval-runs
+          path: docs/ai-plan/evals/runs
+          if-no-files-found: warn

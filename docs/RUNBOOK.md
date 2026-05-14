@@ -171,6 +171,8 @@ API_SMOKE_BASE_URL=https://projects.alleatogroup.com node scripts/api-smoke-cont
 | `cd frontend && npm run design:ratchet` | Design system ratchet check |
 | `cd frontend && npm run design:no-new-disables` | Detect new ESLint disable comments |
 
+The AI inbox and source-sync evals also run daily through `.github/workflows/ai-assistant-prod-evals.yml`; use the manual commands above when validating a live fix before the next scheduled run.
+
 ---
 
 ## 7. Vercel Cron Jobs
