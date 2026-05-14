@@ -11,6 +11,7 @@
  */
 
 import {
+  detectRecentEmailInboxRequest,
   detectSourceLookupRecentTeamsRequest,
   detectSourceSpecificRagRequest,
 } from "../detect-rag-request";
@@ -181,6 +182,32 @@ describe("detectSourceSpecificRagRequest — existing patterns not regressed", (
 
   it('returns null for general project queries that should use other paths', () => {
     const result = detectSourceSpecificRagRequest("what is the project status");
+    expect(result).toBeNull();
+  });
+});
+
+describe("detectRecentEmailInboxRequest — Outlook inbox routing", () => {
+  it.each([
+    ["Can you tell me my last five emails?", 1],
+    ["Is there anything urgent in my inbox?", 1],
+    ["What important emails have I received this morning?", 0],
+    ["What came in through Outlook today that needs my attention?", 0],
+    ["Show me any emails from today that need a reply.", 0],
+    ["What mail arrived today?", 0],
+    ["Any important messages I got today?", 0],
+  ])("routes %p to structured Outlook intake", (prompt, daysBack) => {
+    const result = detectRecentEmailInboxRequest(prompt);
+
+    expect(result).toEqual({
+      daysBack,
+      limit: 50,
+      reason: "structured_outlook_inbox_query",
+    });
+  });
+
+  it("does not treat Teams messages as Outlook inbox mail", () => {
+    const result = detectRecentEmailInboxRequest("What Teams messages came in today?");
+
     expect(result).toBeNull();
   });
 });

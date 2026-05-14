@@ -33,6 +33,17 @@ export type SourceSpecificRagRequest = {
   limit: number;
 };
 
+export type RecentEmailInboxRequest = {
+  daysBack: number;
+  limit: number;
+  reason: "structured_outlook_inbox_query";
+};
+
+const EMAIL_INBOX_WORDS = /\b(e-?mails?|mail|outlook|inbox)\b/i;
+const MESSAGE_INBOX_WORDS = /\b(messages?|correspondence)\b/i;
+const EMAIL_RECENCY_OR_TRIAGE_WORDS =
+  /\b(today|this morning|morning|yesterday|this week|last week|last five|last 5|recent|latest|new|arrived|received|came in|got|important|urgent|priority|needs? (a )?reply|reply|respond|follow[- ]?up|unread|inbox)\b/i;
+
 function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -154,6 +165,33 @@ const GENERAL_MEETING_PHRASES = [
   "meeting recap",
   "meeting recaps",
 ];
+
+export function detectRecentEmailInboxRequest(message: string): RecentEmailInboxRequest | null {
+  const hasEmailWord = EMAIL_INBOX_WORDS.test(message);
+  const hasMessageWord = MESSAGE_INBOX_WORDS.test(message);
+  const looksLikeInboxMessage =
+    hasMessageWord &&
+    /\b(received|arrived|came in|got|inbox|reply|respond|unread)\b/i.test(message) &&
+    !/\b(teams|chat|meeting|text messages?)\b/i.test(message);
+
+  if ((!hasEmailWord && !looksLikeInboxMessage) || !EMAIL_RECENCY_OR_TRIAGE_WORDS.test(message)) {
+    return null;
+  }
+
+  const daysBack = /\b(today|this morning|morning)\b/i.test(message)
+    ? 0
+    : /\byesterday\b/i.test(message)
+      ? 1
+      : /\b(this week|last week)\b/i.test(message)
+        ? 7
+        : 1;
+
+  return {
+    daysBack,
+    limit: /\b(all|everything|every)\b/i.test(message) ? 100 : 50,
+    reason: "structured_outlook_inbox_query",
+  };
+}
 
 /**
  * Detects whether the user message targets a specific data source that should be

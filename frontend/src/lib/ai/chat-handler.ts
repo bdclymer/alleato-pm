@@ -78,8 +78,10 @@ import {
   type RecordRetrievalFeedbackParams,
 } from "@/lib/ai/services/feedback-event-service";
 import {
+  detectRecentEmailInboxRequest,
   detectSourceSpecificRagRequest,
   detectSourceLookupRecentTeamsRequest,
+  type RecentEmailInboxRequest,
   type SourceSpecificRagKind,
   type SourceSpecificRagRequest,
 } from "@/lib/ai/detect-rag-request";
@@ -462,6 +464,138 @@ function firstEmailFromOutput(output: unknown): Record<string, unknown> | null {
 
 function emailThreadMessagesFromOutput(output: unknown): Record<string, unknown>[] {
   return isRecord(output) ? recordArray(output.messages) : [];
+}
+
+function numberValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function booleanValue(value: unknown): boolean {
+  return value === true;
+}
+
+function formatRecentEmailTime(value: unknown): string | null {
+  const raw = stringValue(value);
+  if (!raw) return null;
+  const parsed = Date.parse(raw);
+  if (!Number.isFinite(parsed)) return raw;
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(new Date(parsed));
+}
+
+function scoreRecentEmailAttention(row: Record<string, unknown>, prompt: string): number {
+  const subject = stringValue(row.latestSubject) ?? stringValue(row.subject) ?? "";
+  const preview = stringValue(row.latestPreview) ?? stringValue(row.preview) ?? "";
+  const text = `${subject} ${preview}`.toLowerCase();
+  let score = 0;
+  if (/\b(urgent|asap|immediate|critical|priority)\b/.test(text)) score += 6;
+  if (/\b(reply|respond|response|follow up|following up|need|needs|needed|question|approval|review)\b/.test(text)) score += 4;
+  if (/\b(today|tomorrow|due|deadline|waiting|blocked|issue|problem|doesn'?t align|don'?t align)\b/.test(text)) score += 3;
+  if (/\b(co|change order|title commitment|quote|drawing|owner|client|survey|permit|invoice|payment)\b/.test(text)) score += 2;
+  if (booleanValue(row.hasAttachments)) score += 1;
+  if (/\b(urgent|important|attention|reply|respond)\b/i.test(prompt)) score += 1;
+  return score;
+}
+
+function rowSenderLabel(row: Record<string, unknown>): string {
+  const senders = Array.isArray(row.senders)
+    ? row.senders.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    : [];
+  return stringValue(row.from) ?? (senders.slice(0, 3).join(", ") || "Unknown sender");
+}
+
+function formatRecentEmailInboxAnswer(params: {
+  request: RecentEmailInboxRequest;
+  prompt: string;
+  output: unknown;
+}): string {
+  const { request, prompt, output } = params;
+  const rangeLabel = request.daysBack === 0
+    ? "today / this morning"
+    : request.daysBack === 1
+      ? "the last day"
+      : `the last ${request.daysBack} days`;
+
+  if (!isRecord(output)) {
+    return [
+      `I checked Outlook email intake for your inbox for ${rangeLabel}, but the result came back in an unexpected shape.`,
+      "Cause: the structured Outlook tool returned a non-object response.",
+      "Detection gap: this inbox wording previously could fall through to semantic retrieval instead of failing loudly.",
+      "Prevention: this request is now routed through getRecentEmails before any source-search fallback.",
+    ].join("\n");
+  }
+
+  const error = stringValue(output.error);
+  if (error) {
+    return [
+      `I checked Outlook email intake for your inbox for ${rangeLabel}, but the structured inbox lookup failed.`,
+      `Error: ${error}`,
+      "I did not answer from semantic search because that would risk missing live inbox items.",
+    ].join("\n");
+  }
+
+  const summary = stringValue(output.summary);
+  const cutoff = stringValue(output.dataCutoffNote);
+  const threads = recordArray(output.threads);
+  const emails = recordArray(output.emails);
+  const rows = (threads.length > 0 ? threads : emails)
+    .slice()
+    .sort((a, b) => {
+      const scoreDiff = scoreRecentEmailAttention(b, prompt) - scoreRecentEmailAttention(a, prompt);
+      if (scoreDiff !== 0) return scoreDiff;
+      const aTime = Date.parse(stringValue(a.latestReceivedAt) ?? stringValue(a.receivedAt) ?? "");
+      const bTime = Date.parse(stringValue(b.latestReceivedAt) ?? stringValue(b.receivedAt) ?? "");
+      return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0);
+    });
+
+  const count = numberValue(output.count) ?? emails.length;
+  if (rows.length === 0) {
+    return [
+      `I checked Outlook email intake for your inbox for ${rangeLabel}.`,
+      summary ?? `No emails were returned for ${rangeLabel}.`,
+      cutoff ? `Data freshness: ${cutoff}` : null,
+      "I did not use semantic search or the document retrieval bundle for this answer.",
+    ].filter(Boolean).join("\n");
+  }
+
+  const wantsTriage = /\b(important|urgent|priority|attention|reply|respond|follow[- ]?up)\b/i.test(prompt);
+  const heading = wantsTriage
+    ? "Items that look most important or need attention:"
+    : "Most recent inbox items:";
+  const limit = /\b(last five|last 5)\b/i.test(prompt) ? 5 : Math.min(rows.length, 8);
+
+  const lines = rows.slice(0, limit).map((row, index) => {
+    const subject = stringValue(row.latestSubject) ?? stringValue(row.subject) ?? "(no subject)";
+    const receivedAt = formatRecentEmailTime(row.latestReceivedAt) ?? formatRecentEmailTime(row.receivedAt);
+    const messageCount = numberValue(row.messageCount);
+    const preview = stringValue(row.latestPreview) ?? stringValue(row.preview);
+    const tags = [
+      messageCount && messageCount > 1 ? `${messageCount} messages` : null,
+      booleanValue(row.hasAttachments) ? "attachment" : null,
+    ].filter(Boolean).join(", ");
+    return [
+      `${index + 1}. ${subject}`,
+      `   From: ${rowSenderLabel(row)}${receivedAt ? ` | Received: ${receivedAt}` : ""}${tags ? ` | ${tags}` : ""}`,
+      preview ? `   Why it may matter: ${preview.slice(0, 220)}` : null,
+    ].filter(Boolean).join("\n");
+  });
+
+  return [
+    `I checked Outlook email intake for your inbox for ${rangeLabel}.`,
+    summary ?? `Found ${count} received email${count === 1 ? "" : "s"}.`,
+    cutoff ? `Data freshness: ${cutoff}` : null,
+    "",
+    heading,
+    ...lines,
+    "",
+    "This answer came from structured Outlook intake via getRecentEmails, not semantic search.",
+  ].filter(Boolean).join("\n");
 }
 
 function inferEmailActionQuery(message: string): string | undefined {
@@ -4233,6 +4367,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
       : "";
     const actionFollowUpResponse = shouldUseActionFollowUpResponse(lastUserContent);
     const sourceQualityFollowUpResponse = shouldUseSourceQualityFollowUpResponse(lastUserContent);
+    const recentEmailInboxRequest = detectRecentEmailInboxRequest(lastUserContent);
     const sourceSpecificRagRequest = detectSourceSpecificRagRequest(lastUserContent);
     const taskSourceReviewRequest = detectTaskSourceReviewRequest(lastUserContent);
     const sourceLookupRecentTeamsRequest = sourceSpecificRagRequest
@@ -4268,6 +4403,7 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
         selectedProjectId: selectedProjectId ?? null,
         deterministicIntent: deterministicAssistantIntent,
         taskSourceReview: taskSourceReviewRequest,
+        recentEmailInboxRequest,
         sourceSpecificRagKind: sourceSpecificRagRequest?.kind ?? null,
         sourceLookupRecentTeamsKind: sourceLookupRecentTeamsRequest?.kind ?? null,
       },
@@ -5483,6 +5619,93 @@ export async function handleChatLegacy({ request }: { request: Request }): Promi
           writeStrategistStatus(writer, {
             stage: "complete",
             message: "CMO content calendar saved",
+            status: "success",
+          });
+          return;
+        }
+
+        if (recentEmailInboxRequest && assistantIntent !== "email_action") {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Checking Outlook inbox via structured email intake",
+            status: "loading",
+          });
+
+          const recentEmailsTool = (tools as Record<string, ExecutableTool>).getRecentEmails;
+          const recentEmailsOutput = recentEmailsTool?.execute
+            ? await withTimeout(
+                recentEmailsTool.execute({
+                  daysBack: recentEmailInboxRequest.daysBack,
+                  direction: "mailbox",
+                  limit: recentEmailInboxRequest.limit,
+                  groupByThread: true,
+                  timeZone: "America/New_York",
+                }),
+                20_000,
+                "getRecentEmails timed out during inbox fast path",
+              )
+            : {
+                error: "getRecentEmails is not available in the AI assistant tool map.",
+              };
+
+          const content = isTimeoutResult(recentEmailsOutput)
+            ? [
+                "I checked Outlook email intake for your inbox, but the structured inbox lookup timed out.",
+                "I did not answer from semantic search because that would risk missing live inbox items.",
+                "Cause: getRecentEmails did not return before the server-side timeout.",
+                "Prevention: inbox/date/triage wording now routes through getRecentEmails before any source-search fallback, so this fails loudly instead of returning stale RAG evidence.",
+              ].join("\n")
+            : formatRecentEmailInboxAnswer({
+                request: recentEmailInboxRequest,
+                prompt: lastUserContent,
+                output: recentEmailsOutput,
+              });
+
+          writeStrategistStatus(writer, {
+            stage: "synthesis",
+            message: "Writing Outlook inbox answer",
+            status: "loading",
+          });
+
+          await writeTextResponse(writer, "recent-email-inbox-fast-path", content);
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            dataParts: assistantWidgetDataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Outlook inbox check complete",
             status: "success",
           });
           return;
