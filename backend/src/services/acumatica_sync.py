@@ -271,6 +271,9 @@ class AcumaticaFinancialSyncService:
         for entity, handler in (
             ("projects", self._sync_projects),
             ("vendors", self._sync_vendors),
+            ("accounts", self._sync_accounts),
+            ("customers", self._sync_customers),
+            ("project_tasks", self._sync_project_tasks),
             ("change_orders", self._sync_change_orders),
             ("change_orders_projection", self._sync_change_orders_projection),
             ("subcontracts", self._sync_subcontracts),
@@ -279,6 +282,7 @@ class AcumaticaFinancialSyncService:
             ("commitments_projection", self._sync_commitments_projection),
             ("ar_invoices", self._sync_ar_invoices),
             ("ar_payments", self._sync_payments),
+            ("payment_applications", self._sync_payment_applications),
             ("ap_checks", self._sync_checks),
             ("project_budgets", self._sync_project_budgets),
         ):
@@ -2042,6 +2046,230 @@ class AcumaticaFinancialSyncService:
                     "erp_system": "acumatica",
                 }
             ).eq("id", project_id).execute()
+
+        result.upserted = len(rows)
+        return result
+
+
+    # ------------------------------------------------------------------
+    # Reference data syncs
+    # ------------------------------------------------------------------
+
+    def _sync_accounts(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        """Sync GL accounts into acumatica_accounts."""
+        result = EntitySyncResult(entity="accounts")
+        records = self.session.fetch_entity(
+            "Account",
+            top=500,
+            select="AccountID,AccountCD,Description,Type,Active,CurrencyID,LastModifiedDateTime",
+            modified_after=last_cursor,
+        )
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+        for account in records:
+            account_id = account.get("AccountID")
+            if not account_id:
+                result.skipped += 1
+                continue
+            rows.append(
+                {
+                    "external_key": f"Account:{account_id}",
+                    "account_id": account_id,
+                    "account_cd": account.get("AccountCD"),
+                    "description": account.get("Description"),
+                    "type": account.get("Type"),
+                    "active": account.get("Active"),
+                    "currency_id": account.get("CurrencyID"),
+                    "last_modified_at": _iso_timestamp(account.get("LastModifiedDateTime")),
+                    "acumatica_sync_at": synced_at,
+                    "updated_at": synced_at,
+                }
+            )
+
+        for chunk in _chunked(rows):
+            self.supabase.table("acumatica_accounts").upsert(
+                list(chunk), on_conflict="external_key"
+            ).execute()
+
+        result.upserted = len(rows)
+        return result
+
+    def _sync_customers(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        """Sync AR customers into acumatica_customers."""
+        result = EntitySyncResult(entity="customers")
+        records = self.session.fetch_entity(
+            "Customer",
+            top=200,
+            select="CustomerID,CustomerName,Status,CurrencyID,Terms,TaxZone,Email,Phone1,LastModifiedDateTime",
+            modified_after=last_cursor,
+        )
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+        for customer in records:
+            customer_id = customer.get("CustomerID")
+            if not customer_id:
+                result.skipped += 1
+                continue
+            rows.append(
+                {
+                    "external_key": f"Customer:{customer_id}",
+                    "customer_id": customer_id,
+                    "customer_name": customer.get("CustomerName") or customer_id,
+                    "status": customer.get("Status"),
+                    "currency_id": customer.get("CurrencyID"),
+                    "terms": customer.get("Terms"),
+                    "tax_zone": customer.get("TaxZone"),
+                    "email": customer.get("Email"),
+                    "phone": customer.get("Phone1"),
+                    "last_modified_at": _iso_timestamp(customer.get("LastModifiedDateTime")),
+                    "acumatica_sync_at": synced_at,
+                    "raw_payload": customer,
+                    "updated_at": synced_at,
+                }
+            )
+
+        for chunk in _chunked(rows):
+            self.supabase.table("acumatica_customers").upsert(
+                list(chunk), on_conflict="external_key"
+            ).execute()
+
+        result.upserted = len(rows)
+        return result
+
+    def _sync_project_tasks(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        """Sync project tasks into acumatica_project_tasks."""
+        result = EntitySyncResult(entity="project_tasks")
+        records = self.session.fetch_entity(
+            "ProjectTask",
+            top=200,
+            select="ProjectID,ProjectTaskID,Description,Status,Default,ExternalRefNbr,LastModifiedDateTime",
+            modified_after=last_cursor,
+        )
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+        for task in records:
+            project_id = task.get("ProjectID")
+            project_task_id = task.get("ProjectTaskID")
+            if not project_id or not project_task_id:
+                result.skipped += 1
+                continue
+            rows.append(
+                {
+                    "external_key": f"ProjectTask:{project_id}:{project_task_id}",
+                    "project_id": project_id,
+                    "project_task_id": project_task_id,
+                    "description": task.get("Description"),
+                    "status": task.get("Status"),
+                    "is_default": task.get("Default"),
+                    "external_ref_nbr": task.get("ExternalRefNbr"),
+                    "last_modified_at": _iso_timestamp(task.get("LastModifiedDateTime")),
+                    "acumatica_sync_at": synced_at,
+                    "updated_at": synced_at,
+                }
+            )
+
+        for chunk in _chunked(rows):
+            self.supabase.table("acumatica_project_tasks").upsert(
+                list(chunk), on_conflict="external_key"
+            ).execute()
+
+        result.upserted = len(rows)
+        return result
+
+    def _sync_payment_applications(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        """Sync AR payment application lines into acumatica_payment_applications.
+
+        Each AR Payment can be applied against multiple invoices.  We expand
+        the ApplicationHistory sub-entity to get one row per
+        (payment, applied-invoice) pair.
+
+        Unique constraint: (payment_reference_nbr, payment_type,
+                             invoice_reference_nbr, invoice_type)
+        """
+        result = EntitySyncResult(entity="payment_applications")
+        records = self.session.fetch_entity(
+            "Payment",
+            top=100,
+            expand="ApplicationHistory",
+            select="ReferenceNbr,Type,CustomerID,ApplicationHistory",
+            modified_after=last_cursor,
+        )
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        rows: List[Dict[str, Any]] = []
+        for payment in records:
+            payment_ref = payment.get("ReferenceNbr")
+            payment_type = payment.get("Type") or "Payment"
+            customer_id = payment.get("CustomerID") or payment.get("Customer")
+            payment_external_key = f"Payment:{payment_type}:{payment_ref}"
+
+            for app in payment.get("ApplicationHistory") or []:
+                invoice_ref = app.get("AdjRefNbr") or app.get("DocRefNbr")
+                invoice_type = app.get("AdjDocType") or app.get("DocType") or "Invoice"
+                if not invoice_ref:
+                    result.skipped += 1
+                    continue
+
+                # Resolve project from AR invoice table if available (best-effort)
+                resolved_project_code: Optional[str] = None
+                resolution_method: Optional[str] = None
+                ar_invoice_rows = (
+                    self.supabase.table("acumatica_ar_invoices")
+                    .select("project")
+                    .eq("reference_nbr", invoice_ref)
+                    .limit(1)
+                    .execute()
+                ).data or []
+                if ar_invoice_rows and ar_invoice_rows[0].get("project"):
+                    resolved_project_code = ar_invoice_rows[0]["project"]
+                    resolution_method = "ar_invoice_lookup"
+
+                rows.append(
+                    {
+                        "payment_external_key": payment_external_key,
+                        "payment_reference_nbr": payment_ref,
+                        "payment_type": payment_type,
+                        "invoice_reference_nbr": invoice_ref,
+                        "invoice_type": invoice_type,
+                        "customer_id": customer_id,
+                        "amount_applied": _num(app.get("AmountApplied") or app.get("AdjAmt")),
+                        "balance": _num(app.get("Balance") or app.get("CuryAdjdBilledAmt")),
+                        "resolved_project_code": resolved_project_code,
+                        "resolution_method": resolution_method,
+                    }
+                )
+
+        if not rows:
+            return result
+
+        # Upsert on composite unique constraint
+        for chunk in _chunked(rows):
+            self.supabase.table("acumatica_payment_applications").upsert(
+                list(chunk),
+                on_conflict="payment_reference_nbr,payment_type,invoice_reference_nbr,invoice_type",
+            ).execute()
 
         result.upserted = len(rows)
         return result

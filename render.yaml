@@ -6,7 +6,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0,7 * * *"
+    schedule: "0 */2 * * *"
     dockerCommand: >-
       python3 -c "
       import json, sys;
