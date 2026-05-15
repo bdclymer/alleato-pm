@@ -1081,6 +1081,8 @@ export function EstimateDetailClientV2({
             insurance={insurance}
             fee={fee}
             grandTotal={grandTotal}
+            durationMonths={durationMonths}
+            durationWeeks={durationWeeks}
             onContingencyBlur={(v) => {
               setContingencyAmount(v);
               void patchEstimate({ contingency_amount: v });
@@ -1662,6 +1664,8 @@ function SummaryTab({
   insurance,
   fee,
   grandTotal,
+  durationMonths,
+  durationWeeks,
   onContingencyBlur,
   onInsuranceRateBlur,
   onFeeRateBlur,
@@ -1679,6 +1683,8 @@ function SummaryTab({
   insurance: number;
   fee: number;
   grandTotal: number;
+  durationMonths: number;
+  durationWeeks: number;
   onContingencyBlur: (v: number) => void;
   onInsuranceRateBlur: (v: number) => void;
   onFeeRateBlur: (v: number) => void;
@@ -1764,7 +1770,7 @@ function SummaryTab({
                   </td>
                 </tr>
                 {expanded.has("01") && gcItems.map((item) => {
-                  const qty = item.qty ?? 0;
+                  const qty = getEffectiveQty(item, durationMonths, durationWeeks);
                   const rowTotal = qty * (item.rate ?? 0) * (item.allocation ?? 0);
                   return (
                     <tr key={item.id} className="border-b border-border/20 bg-muted/10">
