@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, ChevronDown, ChevronRight, Printer, Plus, Search, Trash2, X } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, ExternalLink, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { PageShell, PageTabs } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Modal as Dialog,
   ModalContent as DialogContent,
@@ -1943,6 +1944,49 @@ function SubListTab({
     }
   }, [projectId, estimateId, bidItemsBySubId, onPatchSub, loadBidItems]);
 
+  // Bid invitation modal state
+  const [bidInviteSubId, setBidInviteSubId] = React.useState<number | null>(null);
+  const [bidInviteDueDate, setBidInviteDueDate] = React.useState("");
+  const [bidInviteMessage, setBidInviteMessage] = React.useState("");
+  const [bidInviteSending, setBidInviteSending] = React.useState(false);
+
+  const sendBidInvitation = React.useCallback(async () => {
+    if (!bidInviteSubId) return;
+    setBidInviteSending(true);
+    try {
+      const result = await apiFetch<{ success: boolean; draft?: { webLink?: string | null }; recipient?: string }>(
+        `/api/projects/${projectId}/estimates/${estimateId}/sublist/${bidInviteSubId}/bid-invitation`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            bid_due_date: bidInviteDueDate || undefined,
+            custom_message: bidInviteMessage || undefined,
+          }),
+        }
+      );
+      if (result?.success) {
+        // Update local email_sent state
+        void onPatchSub(bidInviteSubId, { email_sent: "Yes" });
+        toast.success("Bid invitation draft created in Outlook", {
+          description: result.draft?.webLink
+            ? undefined
+            : `Draft sent to ${result.recipient ?? "recipient"}`,
+          action: result.draft?.webLink
+            ? { label: "Open in Outlook", onClick: () => window.open(result.draft!.webLink!, "_blank") }
+            : undefined,
+          duration: 8000,
+        });
+        setBidInviteSubId(null);
+        setBidInviteDueDate("");
+        setBidInviteMessage("");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send bid invitation");
+    } finally {
+      setBidInviteSending(false);
+    }
+  }, [bidInviteSubId, bidInviteDueDate, bidInviteMessage, projectId, estimateId, onPatchSub]);
+
   // Load companies once on mount
   React.useEffect(() => {
     const supabaseClient = createClient();
@@ -2131,7 +2175,7 @@ function SubListTab({
               <th className="w-6 py-2 pl-4 pr-2 font-medium">#</th>
               <SortTh col="company" label="Company" />
               <SortTh col="intend_to_submit" label="Intend?" className="w-24" />
-              <SortTh col="email_sent" label="Email Sent?" className="w-24" />
+              <th className="w-28 px-2 py-2 text-left text-xs font-medium text-muted-foreground">Bid Invite</th>
               <th className="w-28 px-2 py-2 text-left text-xs font-medium text-muted-foreground">Last Call</th>
               <SortTh col="bid_received" label="Bid Rec'd?" className="w-24" />
               <SortTh col="contact_name" label="Contact" />
@@ -2346,13 +2390,25 @@ function SubListTab({
                           placeholder="—"
                         />
                       </td>
-                      <td className="w-24 px-2 py-1">
-                        <InlineSelect
-                          value={sub.email_sent ?? ""}
-                          options={EMAIL_SENT_OPTIONS}
-                          onValueChange={(v) => void onPatchSub(sub.id, { email_sent: v || null })}
-                          placeholder="—"
-                        />
+                      {/* Email Sent — send bid invitation via Outlook */}
+                      <td className="w-28 px-2 py-1">
+                        {sub.email_sent === "Yes" ? (
+                          <span className="flex items-center gap-1 text-xs text-status-success">
+                            <Mail className="h-3 w-3" /> Sent
+                          </span>
+                        ) : sub.email ? (
+                          <Button
+                            variant="ghost"
+                            type="button"
+                            size="sm"
+                            className="h-6 w-full justify-start gap-1 px-1.5 text-xs text-primary hover:text-primary"
+                            onClick={() => setBidInviteSubId(sub.id)}
+                          >
+                            <Mail className="h-3 w-3" /> Send invite
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/40">—</span>
+                        )}
                       </td>
                       {/* Phone Follow-Up — call log popover */}
                       <td className="w-28 px-2 py-1">
@@ -2495,17 +2551,36 @@ function SubListTab({
                         />
                       </td>
 
-                      {/* Award action */}
-                      <td className="w-10 py-1 pr-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`h-7 w-7 ${sub.is_awarded ? "text-status-warning hover:text-status-warning/80" : "text-muted-foreground/30 hover:text-status-warning"}`}
-                          title={sub.is_awarded ? "Revoke award" : "Award this sub"}
-                          onClick={() => void onAwardSub(sub.id, sub.is_awarded)}
-                        >
-                          <span className="text-base leading-none">{sub.is_awarded ? "★" : "☆"}</span>
-                        </Button>
+                      {/* Award action + Use bid */}
+                      <td className="w-20 py-1 pr-2 text-right">
+                        <div className="flex items-center justify-end gap-0.5">
+                          {sub.is_awarded && sub.price && sub.price > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              type="button"
+                              className="h-6 gap-1 px-1.5 text-[10px] text-muted-foreground hover:text-primary"
+                              title="Flow this bid into the estimate detail"
+                              onClick={() => {
+                                void apiFetch(
+                                  `/api/projects/${projectId}/estimates/${estimateId}/sublist/${sub.id}/use-bid`,
+                                  { method: "POST" }
+                                ).then(() => toast.success("Bid flowed into estimate"));
+                              }}
+                            >
+                              Use bid
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`h-7 w-7 ${sub.is_awarded ? "text-status-warning hover:text-status-warning/80" : "text-muted-foreground/30 hover:text-status-warning"}`}
+                            title={sub.is_awarded ? "Revoke award" : "Award this sub"}
+                            onClick={() => void onAwardSub(sub.id, sub.is_awarded)}
+                          >
+                            <span className="text-base leading-none">{sub.is_awarded ? "★" : "☆"}</span>
+                          </Button>
+                        </div>
                       </td>
                     </tr>
 
@@ -2754,6 +2829,61 @@ function SubListTab({
           </div>
         );
       })()}
+
+      {/* ── Bid Invitation Modal (PRP 2.2) ────────────────────────────────── */}
+      <Dialog open={bidInviteSubId !== null} onOpenChange={(open) => { if (!open) setBidInviteSubId(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send Bid Invitation</DialogTitle>
+            <DialogDescription>
+              {(() => {
+                const sub = sublistSubs.find((s) => s.id === bidInviteSubId);
+                return sub
+                  ? `Draft an Outlook bid invitation to ${sub.company ?? "this sub"} (${sub.email ?? "—"}).`
+                  : "Draft a bid invitation email via Outlook.";
+              })()}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Bid Due Date (optional)</Label>
+              <Input
+                type="date"
+                value={bidInviteDueDate}
+                onChange={(e) => setBidInviteDueDate(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Additional message (optional)</Label>
+              <Textarea
+                value={bidInviteMessage}
+                onChange={(e) => setBidInviteMessage(e.target.value)}
+                placeholder="Any special instructions or notes to include..."
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+            <div className="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
+              A draft email will be created in your Outlook inbox. The draft includes the project name, division, scope of work items, and due date. Review and send from Outlook.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" type="button" onClick={() => setBidInviteSubId(null)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={bidInviteSending}
+              onClick={() => void sendBidInvitation()}
+              className="gap-1.5"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              {bidInviteSending ? "Creating draft…" : "Create Outlook Draft"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
