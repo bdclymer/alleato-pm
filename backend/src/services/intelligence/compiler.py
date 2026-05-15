@@ -318,7 +318,30 @@ def _section_for_card(card_type: str) -> str:
         return "decisions"
     if card_type in {"task", "open_question"}:
         return "follow_ups"
+    if card_type in {"sentiment", "initiative_signal"}:
+        return "strategic_read"
     return "current_read"
+
+
+# Allowed insight_cards.card_type values. Mirrors InsightCardType in
+# frontend/src/lib/ai/intelligence/types.ts and the CHECK constraint on
+# insight_cards.card_type. Keep these three in lockstep.
+INSIGHT_CARD_TYPES = {
+    "risk",
+    "decision",
+    "blocker",
+    "task",
+    "product_need",
+    "process_issue",
+    "project_update",
+    "open_question",
+    "requirement",
+    "financial_exposure",
+    "change_management",
+    "schedule_risk",
+    "sentiment",
+    "initiative_signal",
+}
 
 
 def _confidence_counts(cards: List[Dict[str, Any]]) -> Dict[str, int]:
@@ -858,6 +881,20 @@ def classify_basic_signal(document: Dict[str, Any]) -> Dict[str, Any]:
         signal_type = "decision"
     if re.search(r"\b(action item|todo|follow up|needs to|will handle|owner|due)\b", haystack):
         signal_type = "task"
+    # Structural hints win: if the source payload carries an extracted
+    # `sentiment_reason` field, it's a sentiment signal; if it carries a
+    # `strategic_read` field or an `initiative_name` it's an initiative_signal.
+    # Free-text emotional cues alone are too noisy for deterministic routing,
+    # so plain keyword matches are not used here — those rely on the LLM
+    # extractor with the structured prompt fields in prompts.py.
+    if isinstance(document.get("sentiment_reason"), str) and document["sentiment_reason"].strip():
+        signal_type = "sentiment"
+    elif (
+        isinstance(document.get("strategic_read"), str) and document["strategic_read"].strip()
+    ) or (
+        isinstance(document.get("initiative_name"), str) and document["initiative_name"].strip()
+    ):
+        signal_type = "initiative_signal"
 
     excerpt = content[:900] if content else title
     normalized_key_source = f"{signal_type}:{title}:{excerpt[:160]}".lower()

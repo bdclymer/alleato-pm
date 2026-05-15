@@ -50,6 +50,18 @@ export const ACTION_CARD_TYPES: InsightCardType[] = ["task", "open_question", "r
 export const PROCESS_CARD_TYPES: InsightCardType[] = ["process_issue", "product_need"];
 
 /**
+ * Card types capturing team/owner emotional signal extracted from comms
+ * (e.g. "Where are employees confused?", "Who's frustrated?").
+ */
+export const SENTIMENT_CARD_TYPES: InsightCardType[] = ["sentiment"];
+
+/**
+ * Card types capturing strategic direction signals from comms
+ * (e.g. "Company is shifting focus", "New BD push").
+ */
+export const INITIATIVE_CARD_TYPES: InsightCardType[] = ["initiative_signal"];
+
+/**
  * Pipeline A had an `opportunity` type that Pipeline B does NOT have a clean
  * equivalent for. Surface this in tool responses so the model doesn't pretend
  * to have opportunity data it does not.
@@ -114,6 +126,13 @@ export function deriveSeverity(card: {
 
   if (RISK_CARD_TYPES.includes(type)) return "high";
   if (type === "change_management" && conf === "high") return "high";
+
+  // Sentiment and initiative_signal default to medium severity regardless
+  // of confidence band, except low-confidence which stays low.
+  if (type === "sentiment" || type === "initiative_signal") {
+    if (conf === "low") return "low";
+    return "medium";
+  }
 
   if (conf === "high" || conf === "medium") return "medium";
   return "low";

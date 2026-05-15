@@ -145,7 +145,8 @@ def _insight_signal_type(insight_type: Any) -> str:
         "task": "task",
         "process_breakdown": "process_issue",
         "root_cause": "process_issue",
-        "sentiment": "process_issue",
+        "sentiment": "sentiment",
+        "initiative_signal": "initiative_signal",
     }
     return mapping.get(value, "project_update")
 

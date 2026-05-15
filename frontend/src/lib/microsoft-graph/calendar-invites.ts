@@ -113,7 +113,7 @@ export function resolveOutlookOrganizerEmail(
   return resolved;
 }
 
-async function getGraphToken(): Promise<string> {
+export async function getGraphToken(): Promise<string> {
   const env = graphEnv();
   if (!env.ok) {
     throw new Error(

@@ -28,7 +28,9 @@ export type InsightCardType =
   | "requirement"
   | "financial_exposure"
   | "change_management"
-  | "schedule_risk";
+  | "schedule_risk"
+  | "sentiment"
+  | "initiative_signal";
 
 export type ConfidenceLevel = "high" | "medium" | "low";
 

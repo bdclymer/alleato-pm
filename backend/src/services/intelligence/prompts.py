@@ -98,6 +98,11 @@ RULES:
 - Identify internal Alleato initiatives by name: "Alleato AI", "JobPlanner", "Financial workflow"
 - Do not invent dates, owners, project IDs, costs, or decisions.
 - Prefer fewer high-quality outputs over noisy extraction.
+
+SENTIMENT vs INITIATIVE_SIGNAL (use these insight_type values when applicable):
+- `sentiment`: a person or group is clearly expressing emotion that affects the work — frustration, confusion, urgency, conflict, or strong positive momentum. Always populate the top-level `sentiment` object with `sentiment_reason` and `business_implication` so the consumer can act on it. Examples: "Field guys are confused about the new submittal flow", "Owner is frustrated about RFI turnaround", "Team is burned out from the last two weeks of overtime".
+- `initiative_signal`: leadership is signalling a strategic shift, new capability, or product/process need — not a project task. Always populate the top-level `initiative_signals[]` with `initiative_name`, `strategic_read`, and either `requested_capability` or `pain_point`. Examples: "Company is shifting focus to industrial work", "New BD push into healthcare", "We need a tool that auto-routes RFIs to the right discipline".
+- These are NOT risks, blockers, or tasks. Do NOT downgrade them into `process_breakdown` or `client_relationship` — emit them with their own insight_type so the org-pulse and strategy views can surface them.
 - OWNER RULE: Set `owner` to the exact sender name from the message where the commitment was made (the `sender` field before the colon in each message line). If "Glenn Ducharme: I'll send the contract today", owner is "Glenn Ducharme". Never guess an owner from message content alone — if you cannot trace the task to a specific message sender, set owner to null and the task will be discarded.
 - ASSIGNED-BY RULE: When one person clearly directs another person to do work, set `assigned_by` to the sender who gave the direction. If the task is a self-commitment, set `assigned_by` to null.
 
@@ -203,6 +208,12 @@ RULES:
 - Prefer fewer high-quality outputs over noisy extraction. A 3-message courtesy thread should produce
   little or nothing.
 - Identify internal Alleato initiatives by name: "Alleato AI", "JobPlanner", "Financial workflow".
+
+SENTIMENT vs INITIATIVE_SIGNAL (use these insight_type values when applicable):
+- `sentiment`: someone in the thread is clearly expressing emotion that affects the work — frustration, confusion, urgency, conflict, or strong positive momentum. Populate the top-level `sentiment` object with `sentiment_reason` and `business_implication`. Examples: "Owner is frustrated about RFI turnaround", "Vendor is confused about the submittal scope", "Client is excited about the new schedule".
+- `initiative_signal`: leadership or a stakeholder is signalling a strategic shift, new capability, or product/process need — not a project task. Populate `initiative_signals[]` with `initiative_name`, `strategic_read`, and either `requested_capability` or `pain_point`. Examples: "Owner wants Alleato to bid more industrial work", "Client is exploring a healthcare facilities partnership".
+- These are NOT risks, blockers, or tasks. Do NOT downgrade them into `process_breakdown` or `client_relationship` — emit them with their own insight_type so the org-pulse and strategy views can surface them.
+
 - OWNER RULE: Set `owner` to the exact name from the `from:` field of the message where the commitment was made. If the delimiter says "from: Glenn Ducharme <g@alleato.com>" and Glenn wrote "I'll submit the RFI Monday", owner is "Glenn Ducharme". Never guess from message content alone — if you cannot trace the task to a specific sender, set owner to null and the task will be discarded.
 - ASSIGNED-BY RULE: When one person clearly directs another person to do work, set `assigned_by` to the sender who gave the direction. If the task is a self-commitment, set `assigned_by` to null.
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
+import { listOutlookCalendarEvents } from "@/lib/microsoft-graph/calendar-events";
 
 type AnyRow = Record<string, unknown>;
 
@@ -363,5 +364,241 @@ export function createOutlookOperationsTools(
         },
       ),
     }),
+
+    // -----------------------------------------------------------------------
+    // getOutlookCalendarEvents — read the owner's Outlook calendar.
+    // -----------------------------------------------------------------------
+
+    getOutlookCalendarEvents: tool({
+      description:
+        "Read calendar events from Outlook for a date window. " +
+        "Use this when the user asks 'what meetings do I have today / tomorrow / this week', " +
+        "'is my calendar free Tuesday afternoon', 'who am I meeting with', 'what's next on my schedule'. " +
+        "Use createOutlookCalendarInvite for WRITES (scheduling); this tool only READS. " +
+        "Returns event subject, start/end (in America/New_York timezone), location, attendees, organizer, " +
+        "online meeting join URL, and importance. Recurring meetings are expanded into individual instances " +
+        "within the window. Cancelled and all-day events are included; the caller can filter as needed.",
+      inputSchema: z.object({
+        window: z
+          .enum([
+            "today",
+            "tomorrow",
+            "this_week",
+            "next_week",
+            "next_24_hours",
+            "next_7_days",
+            "custom",
+          ])
+          .default("tomorrow")
+          .describe(
+            "Convenience window. Use 'custom' with startIso/endIso for arbitrary ranges.",
+          ),
+        startIso: z
+          .string()
+          .optional()
+          .describe("Required when window='custom'. ISO 8601 timestamp; assumed America/New_York if no offset."),
+        endIso: z
+          .string()
+          .optional()
+          .describe("Required when window='custom'. Exclusive end timestamp."),
+        userEmail: z
+          .string()
+          .optional()
+          .describe(
+            "Mailbox to read (e.g. 'bclymer@alleatogroup.com'). Defaults to the configured owner mailbox.",
+          ),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(50)
+          .optional()
+          .default(25)
+          .describe("Max events to return (1-50, default 25)."),
+        includeCancelled: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe("If false (default), cancelled events are filtered out of the result."),
+      }),
+      execute: withTrace(
+        "getOutlookCalendarEvents",
+        options,
+        async ({ window, startIso, endIso, userEmail, limit, includeCancelled }) => {
+          const access = await requireAdminForOutlook();
+          if (!access.ok) return { error: access.error };
+
+          const resolved = resolveCalendarWindow(window, startIso, endIso);
+          if ("error" in resolved) return { error: resolved.error };
+
+          const result = await listOutlookCalendarEvents({
+            startIso: resolved.startIso,
+            endIso: resolved.endIso,
+            userEmail: userEmail ?? null,
+            limit: limit ?? 25,
+          });
+
+          if (!result.ok) {
+            return { error: result.error, userEmail: result.userEmail ?? null };
+          }
+
+          const events = includeCancelled
+            ? result.events
+            : result.events.filter((event) => !event.isCancelled);
+
+          return {
+            userEmail: result.userEmail,
+            window,
+            startIso: resolved.startIso,
+            endIso: resolved.endIso,
+            timezone: "America/New_York",
+            eventCount: events.length,
+            truncated: result.truncated,
+            events: events.map((event) => ({
+              id: event.id,
+              subject: event.subject,
+              start: event.startDateTime,
+              end: event.endDateTime,
+              isAllDay: event.isAllDay,
+              isCancelled: event.isCancelled,
+              location: event.location,
+              organizerEmail: event.organizerEmail,
+              organizerName: event.organizerName,
+              attendees: event.attendees.slice(0, 12).map((a) => ({
+                email: a.email,
+                name: a.name,
+                response: a.response,
+                type: a.type,
+              })),
+              attendeeCount: event.attendees.length,
+              bodyPreview: event.bodyPreview,
+              joinUrl: event.joinUrl,
+              webLink: event.webLink,
+              importance: event.importance,
+              showAs: event.showAs,
+              responseStatus: event.responseStatus,
+            })),
+            failsLoudly:
+              "If Graph returns an auth or permission error, the tool surfaces it inline in the `error` field and the AI must explain to the user which mailbox or permission is missing rather than pretending the calendar was checked.",
+          };
+        },
+      ),
+    }),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Calendar window helper — resolves enum windows to ISO timestamps in the
+// America/New_York timezone (the owner's local timezone).
+// ---------------------------------------------------------------------------
+
+function resolveCalendarWindow(
+  window: "today" | "tomorrow" | "this_week" | "next_week" | "next_24_hours" | "next_7_days" | "custom",
+  startIsoInput?: string,
+  endIsoInput?: string,
+): { startIso: string; endIso: string } | { error: string } {
+  if (window === "custom") {
+    if (!startIsoInput || !endIsoInput) {
+      return {
+        error:
+          "window='custom' requires both startIso and endIso (ISO 8601 with offset).",
+      };
+    }
+    return { startIso: startIsoInput, endIso: endIsoInput };
+  }
+
+  const now = new Date();
+  const easternToday = easternDayBounds(now, 0);
+
+  switch (window) {
+    case "today":
+      return easternToday;
+    case "tomorrow":
+      return easternDayBounds(now, 1);
+    case "this_week": {
+      // ET-local week boundary: today 00:00 → Sunday 23:59 of the same ET week.
+      const startOfTodayLocal = easternStartOfDay(now, 0);
+      const daysToSunday = 7 - localEasternDayOfWeek(now); // 0=Sun..6=Sat
+      const endLocal = easternStartOfDay(now, daysToSunday + 1);
+      return { startIso: startOfTodayLocal, endIso: endLocal };
+    }
+    case "next_week": {
+      const daysToNextMon = 8 - localEasternDayOfWeek(now);
+      const startLocal = easternStartOfDay(now, daysToNextMon);
+      const endLocal = easternStartOfDay(now, daysToNextMon + 7);
+      return { startIso: startLocal, endIso: endLocal };
+    }
+    case "next_24_hours":
+      return {
+        startIso: now.toISOString(),
+        endIso: new Date(now.getTime() + 24 * 3_600_000).toISOString(),
+      };
+    case "next_7_days":
+      return {
+        startIso: now.toISOString(),
+        endIso: new Date(now.getTime() + 7 * 24 * 3_600_000).toISOString(),
+      };
+  }
+}
+
+function easternDayBounds(now: Date, daysFromToday: number): { startIso: string; endIso: string } {
+  return {
+    startIso: easternStartOfDay(now, daysFromToday),
+    endIso: easternStartOfDay(now, daysFromToday + 1),
+  };
+}
+
+function easternStartOfDay(now: Date, daysFromToday: number): string {
+  // Compute today's ET calendar date, advance by N days, then format as
+  // "<date>T00:00:00<eastern-offset>". Graph accepts this and will
+  // interpret it in the embedded offset's timezone.
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  const year = Number(get("year"));
+  const month = Number(get("month"));
+  const day = Number(get("day"));
+  // Compose the date in UTC then shift by daysFromToday whole days.
+  const base = new Date(Date.UTC(year, month - 1, day + daysFromToday, 12, 0, 0));
+  const baseEasternDate = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(base);
+  const getBase = (type: string) => baseEasternDate.find((p) => p.type === type)?.value ?? "";
+  const y = getBase("year");
+  const m = getBase("month");
+  const d = getBase("day");
+  const offset = easternOffset(base);
+  return `${y}-${m}-${d}T00:00:00${offset}`;
+}
+
+function easternOffset(d: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    timeZoneName: "shortOffset",
+    hour: "2-digit",
+  }).formatToParts(d);
+  const value = parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT-05";
+  const match = value.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+  if (!match) return "-05:00";
+  const sign = match[1];
+  const hours = match[2].padStart(2, "0");
+  const minutes = (match[3] ?? "00").padStart(2, "0");
+  return `${sign}${hours}:${minutes}`;
+}
+
+function localEasternDayOfWeek(d: Date): number {
+  // 0 = Sunday, 6 = Saturday — in America/New_York timezone.
+  const name = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    weekday: "short",
+  }).format(d);
+  const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return map[name] ?? 0;
 }
