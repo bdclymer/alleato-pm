@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser, getIsAdmin } from "@/lib/auth/current-user";
 import { apiErrorResponse } from "@/lib/api-error";
 
 /**
@@ -14,45 +15,23 @@ export const GET = withApiGuardrails(
   
     const supabase = await createClient();
 
-    // Get the current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Use deduplicated getCurrentUser() — avoids redundant getUser() in the same request
+    const user = await getCurrentUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({
         authenticated: false,
         error: "Not logged in",
       }, { status: 401 });
     }
 
-    // Check admin status in user_profiles
-    const { data: profile, error: profileError } = await supabase
-      .from("user_profiles")
-      .select("id, email, is_admin, full_name")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      return NextResponse.json({
-        authenticated: true,
-        userId: user.id,
-        email: user.email,
-        error: "Failed to fetch user profile",
-        details: profileError.message,
-      }, { status: 500 });
-    }
-
-    if (!profile) {
-      return NextResponse.json({
-        authenticated: true,
-        userId: user.id,
-        email: user.email,
-        error: "User profile not found",
-        hint: "User may need to complete profile setup",
-      }, { status: 404 });
-    }
+    // Read is_admin from JWT claim — no DB round-trip needed.
+    // NOTE: until the custom_access_token_hook is registered in Supabase Dashboard,
+    // this will always return false. See docs/deployment/AUTH-JWT-HOOK-RUNBOOK.md.
+    const isAdmin = await getIsAdmin();
 
     // Check if user has a person_id link
-    const { data: authLink, error: authLinkError } = await supabase
+    const { data: authLink } = await supabase
       .from("users_auth")
       .select("person_id")
       .eq("auth_user_id", user.id)
@@ -61,16 +40,16 @@ export const GET = withApiGuardrails(
     return NextResponse.json({
       authenticated: true,
       userId: user.id,
-      email: profile.email,
-      fullName: profile.full_name,
-      isAdmin: profile.is_admin === true,
+      email: user.email,
+      isAdmin,
       hasPersonLink: !!authLink?.person_id,
       personId: authLink?.person_id || null,
       adminAccess: {
-        enabled: profile.is_admin === true,
-        description: profile.is_admin
-          ? "✅ You have super admin access to all projects"
-          : "❌ You do not have admin access",
+        enabled: isAdmin,
+        description: isAdmin
+          ? "You have super admin access to all projects"
+          : "You do not have admin access",
+        source: "jwt_claim",
       },
     });
     },

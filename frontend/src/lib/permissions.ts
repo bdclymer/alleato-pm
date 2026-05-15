@@ -6,6 +6,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser, getIsAdmin } from "@/lib/auth/current-user";
 import {
   ALL_GRANULAR_FLAGS,
   ALL_MODULES,
@@ -48,29 +49,24 @@ export async function loadUserPermissions(
   const supabase = await createClient();
 
   if (!userId) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // Use deduplicated getCurrentUser() to avoid a second getUser() call
+    const user = await getCurrentUser();
     if (!user) return null;
     userId = user.id;
   }
 
-  const [profileResult, userAuthResult] = await Promise.all([
-    supabase
-      .from("user_profiles")
-      .select("is_admin")
-      .eq("id", userId)
-      .maybeSingle(),
-    supabase
-      .from("users_auth")
-      .select("person_id")
-      .eq("auth_user_id", userId)
-      .maybeSingle(),
-  ]);
+  // Read is_admin from JWT claim (set by custom_access_token_hook) — no DB round-trip.
+  // Falls back to false if hook is not yet registered or token predates the hook.
+  const isAdmin = await getIsAdmin();
+
+  const userAuthResult = await supabase
+    .from("users_auth")
+    .select("person_id")
+    .eq("auth_user_id", userId)
+    .maybeSingle();
 
   if (!userAuthResult.data) return null;
   const personId = userAuthResult.data.person_id;
-  const isAdmin = profileResult.data?.is_admin === true;
 
   const [membershipResult, overridesResult, granularOverridesResult, companyTemplateResult] = await Promise.all([
     supabase

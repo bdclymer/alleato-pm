@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser, getIsAdmin } from "@/lib/auth/current-user";
 import ClientDashboard from "./client-dashboard";
 
 export const metadata: Metadata = {
@@ -17,20 +18,12 @@ export default async function ClientDashboardPage({ params }: PageProps) {
   const projectIdNum = parseInt(projectId, 10);
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getCurrentUser() is deduplicated per request via React cache()
+  const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
-  // Check for super admin first - they can access all dashboards
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  // Super admins bypass membership checks
-  const isAdmin = profile?.is_admin === true;
+  // Read is_admin from JWT claim (set by custom_access_token_hook) — no DB round-trip.
+  const isAdmin = await getIsAdmin();
 
   if (!isAdmin) {
     // For non-admin users, verify user is a client for this project via membership

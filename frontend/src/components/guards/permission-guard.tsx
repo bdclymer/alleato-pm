@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser, getIsAdmin } from "@/lib/auth/current-user";
 
 interface PermissionGuardProps {
   projectId: number;
@@ -25,19 +26,14 @@ export async function PermissionGuard({
 }: PermissionGuardProps) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Use deduplicated getCurrentUser() — avoids redundant getUser() calls within
+  // the same request render when multiple guards are composed.
+  const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
-  // Check app admin — bypass all permissions
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.is_admin === true) {
+  // Read is_admin from JWT claim (set by custom_access_token_hook) — no DB round-trip.
+  const isAdmin = await getIsAdmin();
+  if (isAdmin) {
     return <>{children}</>;
   }
 
