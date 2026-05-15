@@ -34,6 +34,7 @@ interface OriginOption {
 
 interface GeneralInfoSectionProps {
   formData: ChangeEventFormData;
+  nextNumber?: string;
   errors: Partial<Record<keyof ChangeEventFormData, string>>;
   updateFormData: (updates: Partial<ChangeEventFormData>) => void;
   primeContractSelectOptions: Array<{ value: string; label: string }>;
@@ -43,6 +44,7 @@ interface GeneralInfoSectionProps {
 
 export function GeneralInfoSection({
   formData,
+  nextNumber,
   errors,
   updateFormData,
   primeContractSelectOptions,
@@ -85,9 +87,10 @@ export function GeneralInfoSection({
       <FormGrid columns={3}>
         <TextField
           label="Number"
-          value={formData.contractNumber}
+          value={formData.contractNumber || nextNumber || ""}
           onChange={(e) => updateFormData({ contractNumber: e.target.value })}
-          placeholder="Auto-generated"
+          placeholder={nextNumber ? nextNumber : "Auto-generated"}
+          disabled={!formData.contractNumber && !!nextNumber}
           error={errors.contractNumber}
         />
         <TextField

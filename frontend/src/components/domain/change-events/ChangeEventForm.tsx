@@ -32,6 +32,7 @@ export function ChangeEventForm({
 }: ChangeEventFormProps) {
   const {
     formData,
+    nextNumber,
     errors,
     updateFormData,
     updateLineItem,
@@ -94,6 +95,7 @@ export function ChangeEventForm({
         <div className="space-y-4">
           <GeneralInfoSection
             formData={formData}
+            nextNumber={nextNumber}
             errors={errors}
             updateFormData={updateFormData}
             primeContractSelectOptions={primeContractSelectOptions}

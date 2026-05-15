@@ -248,6 +248,9 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
       { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
       { name: "Files", path: "/files", icon: FolderOpen, requiresProject: false },
+      { name: "Estimates", path: "/estimates", icon: ClipboardList, requiresProject: false },
+      { name: "Prime Contracts", path: "/prime-contracts", icon: FileText, requiresProject: false },
+      { name: "Change Events", path: "/change-events", icon: Clock, requiresProject: false },
       { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
       { name: "Docs", path: "/docs", icon: BookOpen, requiresProject: false },
       { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
@@ -299,6 +302,14 @@ export const headerNavGroups: HeaderNavGroup[] = [
     id: "finance",
     label: "Financial",
     tools: [
+      {
+        name: "Estimates",
+        path: "estimates",
+        requiresProject: true,
+        icon: ClipboardList,
+        description: "Pre-construction estimates",
+        module: "budget",
+      },
       {
         name: "Budget",
         path: "budget",
@@ -357,7 +368,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
       },
     ],
     subGroups: [
-      { label: "Budgeting", toolNames: ["Budget", "Direct Costs"] },
+      { label: "Budgeting", toolNames: ["Estimates", "Budget", "Direct Costs"] },
       {
         label: "Contracts",
         toolNames: ["Prime Contracts", "Commitments", "Invoicing"],
@@ -566,6 +577,27 @@ export const headerNavGroups: HeaderNavGroup[] = [
         requiresProject: false,
         icon: FolderOpen,
         description: "Company files and documents",
+      },
+      {
+        name: "Estimates",
+        path: "/estimates",
+        requiresProject: false,
+        icon: ClipboardList,
+        description: "All estimates across projects",
+      },
+      {
+        name: "Prime Contracts",
+        path: "/prime-contracts",
+        requiresProject: false,
+        icon: FileText,
+        description: "All prime contracts across projects",
+      },
+      {
+        name: "Change Events",
+        path: "/change-events",
+        requiresProject: false,
+        icon: Clock,
+        description: "All change events across projects",
       },
     ],
   },

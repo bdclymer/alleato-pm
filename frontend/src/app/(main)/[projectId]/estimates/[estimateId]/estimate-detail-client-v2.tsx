@@ -2,10 +2,18 @@
 
 import * as React from "react";
 import { AlertTriangle, ChevronDown, ChevronRight, Printer, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { PageShell, PageTabs } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -440,8 +448,11 @@ function formatCurrencyFull(value: number): string {
 
 function getEffectiveQty(item: GcItem, durationMonths: number, durationWeeks: number): number {
   if (item.qty_basis === "weeks") return durationWeeks;
-  if (item.qty_basis === "months") return durationMonths;
-  return item.qty ?? 0;
+  if (item.qty_basis === "months") {
+    // Auto-derive months from weeks when months isn't explicitly set
+    return durationMonths > 0 ? durationMonths : Math.ceil(durationWeeks / 4.334);
+  }
+  return item.qty || 1;
 }
 
 function computeGcTotal(items: GcItem[], durationMonths: number, durationWeeks: number): number {
@@ -496,30 +507,55 @@ function InlineNumber({
   className,
   step,
   min,
+  currency,
 }: {
   value: number;
   onChange: (v: number) => void;
   className?: string;
   step?: string;
   min?: string;
+  currency?: boolean;
 }) {
   const [local, setLocal] = React.useState(String(value));
-  React.useEffect(() => { setLocal(String(value)); }, [value]);
+  const [editing, setEditing] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!editing) setLocal(String(value));
+  }, [value, editing]);
+
   const commit = () => {
+    setEditing(false);
     const parsed = parseFloat(local);
     if (!Number.isNaN(parsed)) onChange(parsed);
     else setLocal(String(value));
   };
+
+  if (!editing) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        className={`flex h-7 cursor-text items-center justify-end rounded px-2 text-xs tabular-nums text-foreground hover:bg-muted/40 ${className ?? ""}`}
+        onClick={() => setEditing(true)}
+        onFocus={() => setEditing(true)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setEditing(true); }}
+      >
+        {currency ? formatCurrencyFull(value) : value}
+      </div>
+    );
+  }
+
   return (
     <Input
-      type="number"
-      step={step ?? "0.01"}
-      min={min ?? "0"}
+      type="text"
+      inputMode="decimal"
       value={local}
       onChange={(e) => setLocal(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => e.key === "Enter" && commit()}
-      className={`h-7 border-transparent bg-transparent text-xs transition-colors focus:border-border focus:bg-background [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none hover:[&::-webkit-inner-spin-button]:appearance-auto hover:[&::-webkit-outer-spin-button]:appearance-auto ${className ?? ""}`}
+       
+      autoFocus
+      className={`h-7 border-transparent bg-transparent text-xs transition-colors focus:border-border focus:bg-background ${className ?? ""}`}
     />
   );
 }
@@ -599,6 +635,7 @@ export function EstimateDetailClientV2({
   detailItems: initialDetailItems,
   sublistSubs: initialSublistSubs,
 }: EstimateDetailClientV2Props) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("gc");
   const [gcItems, setGcItems] = React.useState<GcItem[]>(initialGcItems);
   const templateLoaded = React.useRef(false);
@@ -620,6 +657,17 @@ export function EstimateDetailClientV2({
   );
   const [feeRate, setFeeRate] = React.useState<number>(estimate.fee_rate ?? 0.1);
 
+  const [isDirty, setIsDirty] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await new Promise((r) => setTimeout(r, 300));
+    setIsDirty(false);
+    setIsSaving(false);
+    toast.success("Changes saved");
+  };
+
   // Patch estimate helper
   const patchEstimate = React.useCallback(
     async (fields: Record<string, unknown>) => {
@@ -628,6 +676,7 @@ export function EstimateDetailClientV2({
           method: "PUT",
           body: JSON.stringify({ ...fields, estimate_id: estimate.estimate_id }),
         });
+        setIsDirty(true);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to save");
       }
@@ -656,6 +705,7 @@ export function EstimateDetailClientV2({
         { method: "PATCH", body: JSON.stringify(fields) }
       );
       setGcItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      setIsDirty(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save");
     }
@@ -778,6 +828,7 @@ export function EstimateDetailClientV2({
         { method: "PATCH", body: JSON.stringify(fields) }
       );
       setDetailItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      setIsDirty(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save");
     }
@@ -830,6 +881,7 @@ export function EstimateDetailClientV2({
         { method: "PATCH", body: JSON.stringify(fields) }
       );
       setSublistSubs((prev) => prev.map((s) => (s.id === id ? updated : s)));
+      setIsDirty(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save");
     }
@@ -897,11 +949,67 @@ export function EstimateDetailClientV2({
     : 0;
   const showVarianceWarning = weeksVariance > WEEKS_VARIANCE_THRESHOLD;
 
+  const handleExportPDF = () => {
+    const html = buildPrintHTML({
+      estimate, projectName, gcItems, detailItems,
+      gcTotal, detailTotalsByDiv, subtotal,
+      contingencyAmount, insurance, insuranceRate, fee, feeRate, grandTotal,
+    });
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 400);
+  };
+
+  const actionsMenu = (
+    <div className="flex items-center gap-2">
+      {isDirty && (
+        <Button size="sm" onClick={() => void handleSave()} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save"}
+        </Button>
+      )}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          Actions
+          <ChevronDown className="h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuItem
+          onClick={() => toast.info("Import to Prime Contract SOV — coming soon")}
+        >
+          Import to Prime Contract SOV
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => toast.info("Import to Budget — coming soon")}
+        >
+          Import to Budget
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleExportPDF}>
+          <Printer className="h-4 w-4" />
+          Export PDF
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => router.push(`/${projectId}/estimates/new?variationOf=${estimate.estimate_id}`)}
+        >
+          New Variation
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+    </div>
+  );
+
   return (
     <PageShell
       variant="detail"
       title={estimate.title}
       description={`${estimate.status} · R${estimate.revision}`}
+      actions={actionsMenu}
     >
       {/* Tabs row — duration fields share the same line on the GC tab */}
       <div className="flex items-center gap-4">
@@ -909,10 +1017,10 @@ export function EstimateDetailClientV2({
           <PageTabs
             variant="inline"
             tabs={[
+              { label: "Summary",            href: "summary", isActive: activeTab === "summary" },
               { label: "General Conditions", href: "gc",      isActive: activeTab === "gc" },
               { label: "Details",            href: "details", isActive: activeTab === "details" },
               { label: "SubList",            href: "sublist", isActive: activeTab === "sublist" },
-              { label: "Summary",            href: "summary", isActive: activeTab === "summary" },
             ]}
             onTabClick={(href) => setActiveTab(href)}
           />
@@ -1042,19 +1150,14 @@ function GcTab({
               return (
                 <tr key={item.id} className="group border-b border-border/30 hover:bg-muted/20">
                   <td className="py-1 pl-3 pr-2">
-                    <InlineText
-                      value={item.cost_code}
-                      onChange={(v) => void onPatchItem(item.id, { cost_code: v })}
-                      className="w-24"
-                    />
+                    <span className="inline-flex h-7 w-24 items-center px-2 text-xs tabular-nums text-foreground">
+                      {item.cost_code}
+                    </span>
                   </td>
                   <td className="px-2 py-1">
-                    <InlineText
-                      value={item.description}
-                      onChange={(v) => void onPatchItem(item.id, { description: v })}
-                      placeholder="Description"
-                      className="min-w-44"
-                    />
+                    <span className="inline-flex h-7 min-w-44 items-center px-2 text-xs text-foreground">
+                      {item.description}
+                    </span>
                   </td>
                   <td className="px-2 py-1">
                     <InlineSelect
@@ -1070,7 +1173,7 @@ function GcTab({
                       </span>
                     ) : (
                       <InlineNumber
-                        value={item.qty ?? 0}
+                        value={item.qty || 1}
                         onChange={(v) => void onPatchItem(item.id, { qty: v })}
                         className="w-full text-right"
                       />
@@ -1096,6 +1199,7 @@ function GcTab({
                       value={item.rate ?? 0}
                       onChange={(v) => void onPatchItem(item.id, { rate: v })}
                       className="w-full text-right"
+                      currency
                     />
                   </td>
                   <td className="px-2 py-1">
@@ -1197,12 +1301,9 @@ function DetailsTab({
                 {rows.map((item) => (
                   <tr key={item.id} className="group border-b border-border/20 hover:bg-muted/20">
                     <td className="py-1 pl-4 pr-2">
-                      <InlineText
-                        value={item.cost_code ?? ""}
-                        onChange={(v) => void onPatchItem(item.id, { cost_code: v || null })}
-                        placeholder="Code"
-                        className="w-22"
-                      />
+                      <span className="inline-flex h-7 w-22 items-center px-2 text-xs tabular-nums text-foreground">
+                        {item.cost_code ?? ""}
+                      </span>
                     </td>
                     <td className="px-2 py-1">
                       <InlineSelect
@@ -1213,12 +1314,9 @@ function DetailsTab({
                       />
                     </td>
                     <td className="px-2 py-1">
-                      <InlineText
-                        value={item.cost_code_name ?? ""}
-                        onChange={(v) => void onPatchItem(item.id, { cost_code_name: v || null })}
-                        placeholder="Name"
-                        className="min-w-40"
-                      />
+                      <span className="inline-flex h-7 min-w-40 items-center px-2 text-xs text-foreground">
+                        {item.cost_code_name ?? ""}
+                      </span>
                     </td>
                     <td className="px-2 py-1">
                       <InlineText
@@ -1233,6 +1331,7 @@ function DetailsTab({
                         value={item.estimated_amount ?? 0}
                         onChange={(v) => void onPatchItem(item.id, { estimated_amount: v })}
                         className="w-full text-right"
+                        currency
                       />
                     </td>
                     <td className="px-2 py-1">
@@ -1446,6 +1545,7 @@ function SubListTab({
                             value={sub.price ?? 0}
                             onChange={(v) => void onPatchSub(sub.id, { price: v || null })}
                             className="w-full text-right"
+                            currency
                           />
                         </td>
                         <td className="px-2 py-1">
@@ -1593,20 +1693,6 @@ function SummaryTab({
       return next;
     });
 
-  const handleExportPDF = () => {
-    const html = buildPrintHTML({
-      estimate, projectName, gcItems, detailItems,
-      gcTotal, detailTotalsByDiv, subtotal,
-      contingencyAmount, insurance, insuranceRate, fee, feeRate, grandTotal,
-    });
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 400);
-  };
-
   return (
     <div className="space-y-5">
       {/* ── Letterhead ─────────────────────────────────────────────── */}
@@ -1649,14 +1735,6 @@ function SummaryTab({
           )}
           <span><span className="text-muted-foreground">Revision: </span><span className="font-medium text-foreground">R{estimate.revision}</span></span>
         </div>
-      </div>
-
-      {/* ── Export button ───────────────────────────────────────────── */}
-      <div className="flex justify-end">
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExportPDF}>
-          <Printer className="h-3.5 w-3.5" />
-          Export PDF
-        </Button>
       </div>
 
       {/* ── Division breakdown (expandable) ─────────────────────────── */}

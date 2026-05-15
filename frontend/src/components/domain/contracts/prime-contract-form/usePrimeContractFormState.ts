@@ -248,6 +248,22 @@ export function usePrimeContractFormState({
     void fetchExistingMarkups();
   }, [mode, projectId]);
 
+  // Auto-map fee → 55-0500 and insurance → 55-0050 once budget codes load
+  React.useEffect(() => {
+    if (budgetCodes.length === 0) return;
+    const feeCode = budgetCodes.find((c) => c.code === "55-0500");
+    const insuranceCode = budgetCodes.find((c) => c.code === "55-0050");
+    if (!feeCode && !insuranceCode) return;
+    setMarkups((prev) =>
+      prev.map((m) => {
+        if (m.maps_to !== "all") return m;
+        if (m.markup_type === "fee" && feeCode) return { ...m, maps_to: feeCode.id };
+        if (m.markup_type === "insurance" && insuranceCode) return { ...m, maps_to: insuranceCode.id };
+        return m;
+      }),
+    );
+  }, [budgetCodes]);
+
   // Compute markup-driven SOV items from the current base SOV totals
   const computedMarkupSovItems = React.useMemo((): SOVLineItem[] => {
     if (markups.length === 0) return [];
@@ -273,17 +289,21 @@ export function usePrimeContractFormState({
         runningTotal += markupAmount;
         const label =
           m.markup_type.charAt(0).toUpperCase() + m.markup_type.slice(1);
+        const budgetCode =
+          m.maps_to !== "all" ? budgetCodes.find((c) => c.id === m.maps_to) : undefined;
         return {
           id: `sov-markup-${m.id}`,
           isMarkup: true,
           markupType: m.markup_type,
+          budgetCodeId: budgetCode?.id,
+          budgetCodeLabel: budgetCode?.fullLabel,
           description: `${label} (${Number(m.percentage).toFixed(2)}%)`,
           amount: markupAmount,
           billedToDate: 0,
           amountRemaining: markupAmount,
         };
       });
-  }, [markups, formData.sovItems, formData.accountingMethod]);
+  }, [markups, formData.sovItems, formData.accountingMethod, budgetCodes]);
 
   // Merged SOV items for display: user items + computed markup rows
   const sovDisplayItems = React.useMemo(

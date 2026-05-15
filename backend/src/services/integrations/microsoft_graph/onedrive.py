@@ -6,6 +6,7 @@ import io
 import logging
 import os
 from datetime import datetime, timezone
+from pathlib import PurePosixPath
 from typing import Optional
 
 from .client import get_graph_client
@@ -21,6 +22,72 @@ from .project_inference import infer_project_id
 from ...supabase_helpers import SupabaseRagStore, get_rag_read_client
 
 logger = logging.getLogger(__name__)
+
+
+def _actual_parent_path(item: dict) -> str:
+    """Extract the real folder path from Graph API parentReference.
+    Graph returns paths like '/drive/root:/Alleato Group/2026 Jobs/ProjectX'."""
+    ref_path = (item.get("parentReference") or {}).get("path", "")
+    if "root:/" in ref_path:
+        return ref_path.split("root:/", 1)[1]
+    return ref_path.lstrip("/")
+
+
+def _item_source_path(item: dict, folder_path: str, name: str) -> str:
+    """Build source_path using the actual parent folder from the Graph item,
+    preserving subfolders that the configured root folder misses."""
+    actual_parent = _actual_parent_path(item)
+    if actual_parent:
+        return str(PurePosixPath(actual_parent) / name)
+    return source_path(folder_path, name)
+
+
+def _project_subfolder(item: dict, root_folder: str) -> Optional[str]:
+    """Return the first subfolder name below root_folder, if any.
+    e.g. root='Alleato Group/2026 Jobs', actual parent='Alleato Group/2026 Jobs/Vermillion Rise'
+    → 'Vermillion Rise'"""
+    actual_parent = _actual_parent_path(item)
+    root = root_folder.strip("/")
+    parent = actual_parent.strip("/")
+    if root and parent.startswith(root + "/"):
+        parts = [p for p in parent[len(root) + 1:].split("/") if p]
+        return parts[0] if parts else None
+    return None
+
+
+def _lookup_project_by_folder(supabase_client, folder_name: str) -> Optional[int]:
+    """Direct case-insensitive project name match. Highest-confidence signal."""
+    try:
+        res = (
+            supabase_client.from_("projects")
+            .select("id")
+            .ilike("name", folder_name)
+            .limit(1)
+            .execute()
+        )
+        if res.data:
+            return int(res.data[0]["id"])
+    except Exception as exc:
+        logger.warning("[OneDrive] folder→project lookup failed: %s", exc)
+    return None
+
+
+def _assign_project(
+    supabase_client,
+    item: dict,
+    root_folder: str,
+    title: str,
+    content: str,
+    participants: list,
+) -> tuple[Optional[int], str, float]:
+    """Try folder-name match first, fall back to fuzzy inference."""
+    subfolder = _project_subfolder(item, root_folder)
+    if subfolder:
+        project_id = _lookup_project_by_folder(supabase_client, subfolder)
+        if project_id:
+            logger.info("[OneDrive] Assigned project_id=%s via folder name '%s'", project_id, subfolder)
+            return project_id, "folder_name", 1.0
+    return infer_project_id(supabase_client, title=title, content=content, participants=participants)
 
 # File types we can extract text from
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".md", ".csv"}
@@ -193,8 +260,10 @@ def sync_onedrive_folder(
             project_id = existing_doc.get("project_id")
             if not project_id:
                 clean_content = _fetch_rag_document_text(doc_id)
-                project_id, assignment_method, _ = infer_project_id(
+                project_id, assignment_method, _ = _assign_project(
                     supabase_client,
+                    item=item,
+                    root_folder=folder_path,
                     title=name,
                     content=clean_content,
                     participants=[user_email],
@@ -261,8 +330,10 @@ def sync_onedrive_folder(
         try:
             # Strip null bytes — PostgreSQL text columns reject \u0000
             clean_content = text_content[:50000].replace("\x00", "")
-            project_id, assignment_method, assignment_confidence = infer_project_id(
+            project_id, assignment_method, assignment_confidence = _assign_project(
                 supabase_client,
+                item=item,
+                root_folder=folder_path,
                 title=name,
                 content=clean_content,
                 participants=[created_by, user_email],
@@ -283,7 +354,7 @@ def sync_onedrive_folder(
                 "source_system": "onedrive",
                 "source_item_id": item_id,
                 "source_drive_id": graph_id_safe((item.get("parentReference") or {}).get("driveId")),
-                "source_path": source_path(folder_path, name),
+                "source_path": _item_source_path(item, folder_path, name),
                 "source_web_url": web_url or None,
                 "source_etag": item.get("eTag") or item.get("cTag"),
                 "source_last_modified_at": modified,
@@ -389,8 +460,10 @@ def sync_sharepoint_folder(
             project_id = existing_doc.get("project_id")
             if not project_id:
                 clean_content = _fetch_rag_document_text(doc_id)
-                project_id, assignment_method, _ = infer_project_id(
+                project_id, assignment_method, _ = _assign_project(
                     supabase_client,
+                    item=item,
+                    root_folder=folder_path,
                     title=name,
                     content=clean_content,
                     participants=[site_name],
@@ -451,8 +524,10 @@ def sync_sharepoint_folder(
 
         try:
             clean_content = text_content[:50000].replace("\x00", "")
-            project_id, assignment_method, _ = infer_project_id(
+            project_id, assignment_method, _ = _assign_project(
                 supabase_client,
+                item=item,
+                root_folder=folder_path,
                 title=name,
                 content=clean_content,
                 participants=[created_by, site_name],
@@ -474,7 +549,7 @@ def sync_sharepoint_folder(
                 "source_item_id": item_id,
                 "source_drive_id": graph_id_safe((item.get("parentReference") or {}).get("driveId")),
                 "source_site_id": graph_id_safe((item.get("parentReference") or {}).get("siteId")),
-                "source_path": source_path(folder_path, name),
+                "source_path": _item_source_path(item, folder_path, name),
                 "source_web_url": web_url or None,
                 "source_etag": item.get("eTag") or item.get("cTag"),
                 "source_last_modified_at": modified,

@@ -29,6 +29,7 @@ interface FileItem {
   title: string | null;
   file_name: string | null;
   file_path: string | null;
+  source_path: string | null;
   source_web_url: string | null;
   url: string | null;
   source_system: string | null;
@@ -95,12 +96,13 @@ function friendlySource(item: FileItem): string {
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
-  { id: "name",       label: "Name",    alwaysVisible: true },
-  { id: "source",     label: "Source",  defaultVisible: true },
-  { id: "project",    label: "Project", defaultVisible: true },
-  { id: "date",       label: "Date",    defaultVisible: true },
-  { id: "division",   label: "Division",defaultVisible: false },
-  { id: "tags",       label: "Tags",    defaultVisible: false },
+  { id: "name",       label: "Name",        alwaysVisible: true },
+  { id: "source",     label: "Source",      defaultVisible: true },
+  { id: "folder",     label: "Folder Path", defaultVisible: true },
+  { id: "project",    label: "Project",     defaultVisible: true },
+  { id: "date",       label: "Date",        defaultVisible: true },
+  { id: "division",   label: "Division",    defaultVisible: false },
+  { id: "tags",       label: "Tags",        defaultVisible: false },
 ];
 
 const defaultVisibleColumns = columns.filter((c) => c.defaultVisible !== false).map((c) => c.id);
@@ -131,13 +133,31 @@ function buildColumns(): TableColumn<FileItem>[] {
     },
     {
       ...columns[2],
+      render: (item) => {
+        if (!item.source_path) return <CellText value={null} muted />;
+        // Show the folder portion only (strip the filename)
+        const parts = item.source_path.split("/");
+        const folder = parts.length > 1 ? parts.slice(0, -1).join(" / ") : item.source_path;
+        return <CellText value={folder} muted />;
+      },
+      csvValue: (item) => {
+        if (!item.source_path) return "";
+        const parts = item.source_path.split("/");
+        return parts.length > 1 ? parts.slice(0, -1).join("/") : item.source_path;
+      },
+      sortValue: (item) => item.source_path ?? "",
+      sortable: true,
+      width: 280,
+    },
+    {
+      ...columns[3],
       render: (item) => <CellText value={item.project} muted />,
       csvValue: (item) => item.project ?? "",
       sortValue: (item) => item.project ?? "",
       sortable: true,
     },
     {
-      ...columns[3],
+      ...columns[4],
       render: (item) => <TableDateValue value={item.date ?? item.created_at} />,
       csvValue: (item) => item.date ?? item.created_at ?? "",
       sortValue: (item) => {
@@ -147,14 +167,14 @@ function buildColumns(): TableColumn<FileItem>[] {
       sortable: true,
     },
     {
-      ...columns[4],
+      ...columns[5],
       render: (item) => <CellText value={item.division} muted />,
       csvValue: (item) => item.division ?? "",
       sortValue: (item) => item.division ?? "",
       sortable: true,
     },
     {
-      ...columns[5],
+      ...columns[6],
       render: (item) => <TruncatedCell value={item.tags} maxWidth={200} className="text-sm" />,
       csvValue: (item) => item.tags ?? "",
       sortable: false,

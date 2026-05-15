@@ -64,6 +64,16 @@ export function useChangeEventFormData({
         : [createEmptyLineItem()],
   });
 
+  const [nextNumber, setNextNumber] = React.useState<string>("");
+
+  // Fetch the predicted next number on mount (create mode only)
+  React.useEffect(() => {
+    if (initialData?.contractNumber || initialData?.number) return;
+    apiFetch<{ number: string }>(`/api/projects/${projectId}/change-events/next-number`)
+      .then((res) => setNextNumber(res.number))
+      .catch(() => setNextNumber(""));
+  }, [projectId, initialData?.contractNumber, initialData?.number]);
+
   const [errors, setErrors] = React.useState<
     Partial<Record<keyof ChangeEventFormData, string>>
   >({});
@@ -406,6 +416,7 @@ export function useChangeEventFormData({
 
   return {
     formData,
+    nextNumber,
     errors,
     updateFormData,
     updateLineItem,

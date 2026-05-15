@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  ArrowLeft,
   Calendar,
   ChevronDown,
   Clock,
   ExternalLink,
   FileText,
   FolderOpen,
+  MoreVertical,
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -31,6 +31,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -358,8 +364,8 @@ export function MeetingDetailContent({
   allDecisions: _allDecisions,
   allOpportunities,
   transcriptContent,
-  backHref,
-  backLabel,
+  backHref: _backHref,
+  backLabel: _backLabel,
   relatedMeetings = [],
   relatedMeetingsBaseHref,
   digestSlot,
@@ -443,17 +449,24 @@ export function MeetingDetailContent({
   return (
     <PageContainer maxWidth="xl" className="pb-12">
       {/* Page header */}
-      <div className="mb-6">
-        <Link
-          href={backHref}
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          {backLabel}
-        </Link>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        { }
         <h1 className="text-2xl font-semibold text-foreground">
           {meeting.title || "Untitled Meeting"}
         </h1>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Meeting actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setAssignmentDialogOpen(true)}>
+              Edit
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Meta bar */}

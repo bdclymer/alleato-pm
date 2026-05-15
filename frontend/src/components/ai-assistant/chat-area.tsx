@@ -77,7 +77,7 @@ import {
 import {
   PromptInput,
   PromptInputTextarea,
-  PromptInputActions,
+  PromptInputFooter,
   PromptInputAction,
   PromptInputActionMenu,
   PromptInputActionMenuTrigger,
@@ -118,7 +118,6 @@ import {
 import type { DynamicToolUIPart, FileUIPart } from "ai";
 import { toast } from "sonner";
 import { WelcomeScreen } from "./welcome-screen";
-import { AssistantShortcutPanel } from "./assistant-shortcut-panel";
 import {
   TracePanel,
   type AssistantTraceDiagnostics,
@@ -772,9 +771,9 @@ function ToolCallItem({
           </ConfirmationRejected>
         </Confirmation>
         {preview && (
-          <div className="space-y-2 rounded-md border border-border/60 bg-background p-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Pending Write
+          <div className="space-y-2 rounded-xl bg-muted/40 p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+              Pending write
             </p>
             {previewEntries.length > 0 && (
               <div className="space-y-1">
@@ -862,9 +861,9 @@ function ToolCallItem({
               <Link
                 key={`${link.label}-${link.href}`}
                 href={link.href}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-foreground hover:bg-muted"
+                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted/70"
               >
-                <LinkIcon className="h-3 w-3" />
+                <LinkIcon className="h-3 w-3 shrink-0" />
                 {link.label}
               </Link>
             ))}
@@ -1547,7 +1546,7 @@ export function ChatArea({
           hasMessages ? "min-h-8 pb-2 pt-0.5" : "min-h-12 pb-3 pt-1",
         )}
       />
-      <PromptInputActions className="flex items-center justify-between gap-2 px-0 pb-0">
+      <PromptInputFooter className="flex items-center justify-between gap-2 px-0 pb-1.5">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <PromptInputActionMenu>
             <PromptInputActionMenuTrigger
@@ -1731,7 +1730,7 @@ export function ChatArea({
             )}
           />
         </div>
-      </PromptInputActions>
+      </PromptInputFooter>
     </PromptInput>
   );
 
@@ -1748,12 +1747,7 @@ export function ChatArea({
                 </InfoAlert>
               ) : null
             }
-          >
-            <AssistantShortcutPanel
-              disabled={isStreaming}
-              onSelectPrompt={onSubmit}
-            />
-          </WelcomeScreen>
+          />
         </div>
       ) : (
         <>
@@ -1781,6 +1775,11 @@ export function ChatArea({
                   : [];
                 const leadingAssistantWidgetParts = assistantWidgetParts.filter(
                   (widget) => !isOutlookInboxSummaryWidget(widget),
+                );
+                // Widgets that fully replace the text response — suppress duplicate text
+                const textSuppressingTypes = new Set(["task_summary"]);
+                const widgetSuppressesText = leadingAssistantWidgetParts.some(
+                  (w) => textSuppressingTypes.has(w.type),
                 );
                 const trailingAssistantWidgetParts = assistantWidgetParts.filter(
                   isOutlookInboxSummaryWidget,
@@ -2021,20 +2020,8 @@ export function ChatArea({
                             />
                           ))}
 
-                          <div className="mb-2 flex items-center justify-end gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-                              onClick={() => handleCopy(formattedAssistantText)}
-                            >
-                              <CopyIcon className="h-3.5 w-3.5" />
-                              Copy
-                            </Button>
-                          </div>
-
-                          {/* Main text response */}
+                          {/* Main text response — hidden when a widget fully replaces it */}
+                          {!widgetSuppressesText && (
                           <MessageResponse
                             className="text-sm leading-6"
                             isAnimating={isStreaming && isLastMessage}
@@ -2042,6 +2029,7 @@ export function ChatArea({
                           >
                             {formattedAssistantText}
                           </MessageResponse>
+                          )}
 
                           {trailingAssistantWidgetParts.map((widget) => (
                             <AssistantWidgetRenderer
@@ -2054,13 +2042,12 @@ export function ChatArea({
                           ))}
 
                           {responseQuality && (
-                            <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-                              <span>
-                                Confidence: <span className="font-medium">{responseQuality.confidence}</span>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground capitalize">
+                                {responseQuality.confidence} confidence
                               </span>
-                              <span>/</span>
-                              <span>
-                                Sources: <span className="font-medium">{responseQuality.sourceQuality}</span>
+                              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground capitalize">
+                                {responseQuality.sourceQuality} sources
                               </span>
                             </div>
                           )}
@@ -2071,9 +2058,9 @@ export function ChatArea({
                               {inlineSources.map((src) => (
                                 <span
                                   key={src}
-                                  className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                                  className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground"
                                 >
-                                  <FileTextIcon className="h-3 w-3 shrink-0 opacity-60" />
+                                  <FileTextIcon className="h-3 w-3 shrink-0 opacity-50" />
                                   {src}
                                 </span>
                               ))}

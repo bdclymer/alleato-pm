@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -36,24 +37,28 @@ import {
   getEstimateSearchableText,
   getStatusColor,
   getStatusLabel,
-} from "./estimates-table-utils";
+} from "../../(main)/[projectId]/estimates/estimates-table-utils";
+import { GlobalProjectPickerDialog } from "@/components/domain/global-project-picker-dialog";
 
-interface EstimatesClientProps {
-  projectId: string;
-  projectName: string;
-  estimates: EstimateRow[];
+type EstimateWithProject = EstimateRow & {
+  projects: { id: number; name: string | null } | null;
+};
+
+const GLOBAL_VISIBLE_COLUMNS = ["title", "project", ...DEFAULT_VISIBLE_COLUMNS];
+
+interface EstimatesGlobalClientProps {
+  estimates: EstimateWithProject[];
 }
 
-export function EstimatesClient({
-  projectId,
+export function EstimatesGlobalClient({
   estimates,
-}: EstimatesClientProps): ReactElement {
+}: EstimatesGlobalClientProps): ReactElement {
   const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = useSearchParams()!;
 
   const tableState = useUnifiedTableState({
-    entityKey: "estimates",
+    entityKey: "global-estimates",
     searchParams,
     pathname,
     router,
@@ -65,7 +70,7 @@ export function EstimatesClient({
       search: "",
       sortBy: "updated_at",
       sortDirection: "desc",
-      visibleColumns: DEFAULT_VISIBLE_COLUMNS,
+      visibleColumns: GLOBAL_VISIBLE_COLUMNS,
       filters: {
         status: searchParams.get("status") || undefined,
       },
@@ -74,7 +79,8 @@ export function EstimatesClient({
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [estimateToDelete, setEstimateToDelete] =
-    React.useState<EstimateRow | null>(null);
+    React.useState<EstimateWithProject | null>(null);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
 
   const filteredItems = React.useMemo(() => {
     const searchValue = tableState.debouncedSearch.trim().toLowerCase();
@@ -88,7 +94,9 @@ export function EstimatesClient({
         return false;
 
       if (searchValue) {
-        return getEstimateSearchableText(item).includes(searchValue);
+        const projectName = item.projects?.name ?? "";
+        const base = getEstimateSearchableText(item);
+        return (base + " " + projectName.toLowerCase()).includes(searchValue);
       }
 
       return true;
@@ -100,40 +108,11 @@ export function EstimatesClient({
     Math.ceil(filteredItems.length / tableState.perPage)
   );
 
-  const [isCreating, setIsCreating] = React.useState(false);
-
-  const handleCreateEstimate = async () => {
-    setIsCreating(true);
-    try {
-      const today = new Date().toISOString().split("T")[0];
-      const result = await apiFetch<{ estimate_id: number }>(
-        `/api/projects/${projectId}/estimates`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: "New Estimate",
-            revision: 1,
-            status: "draft",
-            estimate_date: today,
-            insurance_rate: 0.0125,
-            fee_rate: 0.1,
-            contingency_amount: 0,
-          }),
-        }
-      );
-      router.push(`/${projectId}/estimates/${result.estimate_id}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create estimate");
-      setIsCreating(false);
-    }
-  };
-
   const handleDelete = async () => {
     if (!estimateToDelete) return;
     try {
       await apiFetch(
-        `/api/projects/${projectId}/estimates/${estimateToDelete.estimate_id}`,
+        `/api/projects/${estimateToDelete.project_id}/estimates/${estimateToDelete.estimate_id}`,
         { method: "DELETE" }
       );
       toast.success("Estimate deleted");
@@ -149,13 +128,21 @@ export function EstimatesClient({
   const handleBulkDelete = async () => {
     const ids = tableState.selectedIds ?? [];
     if (ids.length === 0) return;
+
+    const byId = new Map(
+      estimates.map((e) => [String(e.estimate_id), e])
+    );
+
     try {
       await Promise.all(
-        ids.map((id) =>
-          apiFetch(`/api/projects/${projectId}/estimates/${id}`, {
-            method: "DELETE",
-          })
-        )
+        ids.map((id) => {
+          const estimate = byId.get(id);
+          if (!estimate) return Promise.resolve();
+          return apiFetch(
+            `/api/projects/${estimate.project_id}/estimates/${estimate.estimate_id}`,
+            { method: "DELETE" }
+          );
+        })
       );
       toast.success(`${ids.length} estimate${ids.length === 1 ? "" : "s"} deleted`);
       tableState.setSelectedIds([]);
@@ -171,36 +158,54 @@ export function EstimatesClient({
         id: "title",
         label: "Title",
         defaultVisible: true,
-        render: (item: EstimateRow) => (
+        render: (item: EstimateWithProject) => (
           <span className="font-medium text-foreground">{item.title}</span>
         ),
-        sortValue: (item: EstimateRow) => item.title,
+        sortValue: (item: EstimateWithProject) => item.title,
+      },
+      {
+        id: "project",
+        label: "Project",
+        defaultVisible: true,
+        render: (item: EstimateWithProject) =>
+          item.projects ? (
+            <Link
+              href={`/${item.project_id}/estimates`}
+              className="text-primary hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {item.projects.name ?? "—"}
+            </Link>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+        sortValue: (item: EstimateWithProject) => item.projects?.name ?? "",
       },
       {
         id: "estimate_number",
         label: "Estimate #",
         defaultVisible: true,
-        render: (item: EstimateRow) => (
+        render: (item: EstimateWithProject) => (
           <span className="text-muted-foreground">
             {item.estimate_number || "—"}
           </span>
         ),
-        sortValue: (item: EstimateRow) => item.estimate_number ?? "",
+        sortValue: (item: EstimateWithProject) => item.estimate_number ?? "",
       },
       {
         id: "revision",
         label: "Rev",
         defaultVisible: true,
-        render: (item: EstimateRow) => (
+        render: (item: EstimateWithProject) => (
           <span className="text-muted-foreground">R{item.revision}</span>
         ),
-        sortValue: (item: EstimateRow) => item.revision,
+        sortValue: (item: EstimateWithProject) => item.revision,
       },
       {
         id: "status",
         label: "Status",
         defaultVisible: true,
-        render: (item: EstimateRow) => (
+        render: (item: EstimateWithProject) => (
           <div className="flex items-center gap-2">
             <div
               className={`h-2 w-2 rounded-full ${getStatusColor(item.status)}`}
@@ -208,51 +213,51 @@ export function EstimatesClient({
             <span className="text-sm">{getStatusLabel(item.status)}</span>
           </div>
         ),
-        sortValue: (item: EstimateRow) => item.status,
+        sortValue: (item: EstimateWithProject) => item.status,
       },
       {
         id: "estimator",
         label: "Estimator",
         defaultVisible: true,
-        render: (item: EstimateRow) => (
+        render: (item: EstimateWithProject) => (
           <span className="text-muted-foreground">
             {item.estimator || "—"}
           </span>
         ),
-        sortValue: (item: EstimateRow) => item.estimator ?? "",
+        sortValue: (item: EstimateWithProject) => item.estimator ?? "",
       },
       {
         id: "estimate_date",
         label: "Date",
         defaultVisible: true,
-        render: (item: EstimateRow) => (
+        render: (item: EstimateWithProject) => (
           <span className="text-muted-foreground">
             {formatDate(item.estimate_date)}
           </span>
         ),
-        sortValue: (item: EstimateRow) => item.estimate_date ?? "",
+        sortValue: (item: EstimateWithProject) => item.estimate_date ?? "",
       },
       {
         id: "location",
         label: "Location",
         defaultVisible: false,
-        render: (item: EstimateRow) => (
+        render: (item: EstimateWithProject) => (
           <span className="text-muted-foreground">
             {item.location || "—"}
           </span>
         ),
-        sortValue: (item: EstimateRow) => item.location ?? "",
+        sortValue: (item: EstimateWithProject) => item.location ?? "",
       },
       {
         id: "updated_at",
         label: "Last Updated",
         defaultVisible: true,
-        render: (item: EstimateRow) => (
+        render: (item: EstimateWithProject) => (
           <span className="text-muted-foreground">
             {formatDate(item.updated_at)}
           </span>
         ),
-        sortValue: (item: EstimateRow) => item.updated_at,
+        sortValue: (item: EstimateWithProject) => item.updated_at,
       },
     ],
     []
@@ -263,15 +268,11 @@ export function EstimatesClient({
       <UnifiedTablePage
         header={{
           title: "Estimates",
-          description: "Manage project estimates and quantity takeoffs",
+          description: "All estimates across projects",
           actions: (
-            <Button
-              size="sm"
-              onClick={() => void handleCreateEstimate()}
-              disabled={isCreating}
-            >
+            <Button size="sm" onClick={() => setPickerOpen(true)}>
               <Plus />
-              {isCreating ? "Creating..." : "New Estimate"}
+              New Estimate
             </Button>
           ),
         }}
@@ -299,12 +300,10 @@ export function EstimatesClient({
         }}
         table={{
           columns,
-          getRowId: (item: EstimateRow) => String(item.estimate_id),
-          onRowClick: (item: EstimateRow) =>
-            router.push(
-              `/${projectId}/estimates/${item.estimate_id}`
-            ),
-          rowActions: (item: EstimateRow) => (
+          getRowId: (item: EstimateWithProject) => String(item.estimate_id),
+          onRowClick: (item: EstimateWithProject) =>
+            router.push(`/${item.project_id}/estimates/${item.estimate_id}`),
+          rowActions: (item: EstimateWithProject) => (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -316,7 +315,7 @@ export function EstimatesClient({
                   onClick={(e) => {
                     e.stopPropagation();
                     router.push(
-                      `/${projectId}/estimates/${item.estimate_id}`
+                      `/${item.project_id}/estimates/${item.estimate_id}`
                     );
                   }}
                 >
@@ -326,7 +325,7 @@ export function EstimatesClient({
                   onClick={(e) => {
                     e.stopPropagation();
                     router.push(
-                      `/${projectId}/estimates/${item.estimate_id}/edit`
+                      `/${item.project_id}/estimates/${item.estimate_id}/edit`
                     );
                   }}
                 >
@@ -347,13 +346,19 @@ export function EstimatesClient({
           ),
         }}
         views={{
-          list: (item: EstimateRow) => (
+          list: (item: EstimateWithProject) => (
             <div className="flex items-center justify-between p-4">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">
                   {item.title}
                 </p>
                 <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                  {item.projects?.name && (
+                    <>
+                      <span>{item.projects.name}</span>
+                      <span>·</span>
+                    </>
+                  )}
                   <span>{item.estimator || "No estimator"}</span>
                   <span>·</span>
                   <span>R{item.revision}</span>
@@ -394,18 +399,13 @@ export function EstimatesClient({
         }}
         emptyState={{
           title: "No estimates yet",
-          description:
-            "Create your first estimate to start building quantity takeoffs for this project.",
+          description: "Create an estimate to start building quantity takeoffs.",
           filteredDescription: "No estimates match your current filters.",
           isFiltered: filteredItems.length < estimates.length,
           action: (
-            <Button
-              size="sm"
-              onClick={() => void handleCreateEstimate()}
-              disabled={isCreating}
-            >
+            <Button size="sm" onClick={() => setPickerOpen(true)}>
               <Plus />
-              {isCreating ? "Creating..." : "New Estimate"}
+              New Estimate
             </Button>
           ),
         }}
@@ -439,6 +439,13 @@ export function EstimatesClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <GlobalProjectPickerDialog
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        toolPath="estimates"
+        toolLabel="Estimate"
+      />
     </>
   );
 }

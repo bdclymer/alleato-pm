@@ -66,6 +66,10 @@ module.exports = {
       'submittals/new/page.tsx',
       // Budget page: complex legacy Suspense wrapper — BudgetPageContent owns its own header.
       '[projectId]/budget/page.tsx',
+      // Global cross-project table pages under (tables)/: thin server components that fetch
+      // data and pass it to a client component that owns the UnifiedTablePage shell.
+      // Adding PageShell here would create a double shell.
+      '(tables)/',
     ];
     if (skipPatterns.some(p => filename.includes(p))) return {};
 

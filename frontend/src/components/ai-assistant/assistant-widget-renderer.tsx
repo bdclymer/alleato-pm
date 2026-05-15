@@ -29,12 +29,20 @@ import {
   ThumbsDownIcon,
   ThumbsUpIcon,
   TrendingUpIcon,
+  UserIcon,
   UsersRoundIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { InfoAlert } from "@/components/ds/InfoAlert";
+import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { Button } from "@/components/ui/button";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import {
   Command,
   CommandEmpty,
@@ -121,17 +129,17 @@ function WidgetShell({
   return (
     <section
       className={cn(
-        "mb-3 overflow-hidden rounded-lg border border-border bg-background",
+        "mb-3 overflow-hidden rounded-xl bg-muted/40",
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-border/70 px-3 py-2.5">
-        <div className="flex min-w-0 items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground">
             {icon}
           </div>
           <div className="min-w-0">
-            <div className="text-[11px] font-medium uppercase text-muted-foreground">
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
               {eyebrow}
             </div>
             <div className="truncate text-sm font-semibold text-foreground">
@@ -141,7 +149,7 @@ function WidgetShell({
         </div>
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </div>
-      <div className="space-y-3 px-3 py-3">{children}</div>
+      <div className="space-y-3 px-4 pb-4 pt-1">{children}</div>
     </section>
   );
 }
@@ -150,8 +158,10 @@ function WidgetMeta({ children, tone = "muted" }: { children: ReactNode; tone?: 
   return (
     <span
       className={cn(
-        "whitespace-nowrap text-right text-xs font-medium capitalize",
-        tone === "danger" ? "text-destructive" : "text-muted-foreground",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium capitalize",
+        tone === "danger"
+          ? "bg-destructive/10 text-destructive"
+          : "bg-background/80 text-muted-foreground",
       )}
     >
       {children}
@@ -781,7 +791,256 @@ function formatDateLabel(value?: string | null) {
   }).format(date);
 }
 
+type TaskItem = TaskSummaryWidgetPayload["items"][number];
+
+function TaskDetailModal({
+  task,
+  open,
+  onClose,
+}: {
+  task: TaskItem | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [dueDate, setDueDate] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // sync local state whenever the selected task changes
+  const stableId = task?.id;
+  if (dueDate === "" && task?.dueDate) {
+    setDueDate(task.dueDate.slice(0, 10));
+  }
+
+  if (!task) return null;
+
+  async function handleSaveDueDate() {
+    if (!stableId) return;
+    setSaving(true);
+    try {
+      await apiFetch(`/api/tasks/${stableId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ due_date: dueDate || null }),
+      });
+      toast.success("Due date updated");
+    } catch {
+      toast.error("Failed to update due date");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const STATUS_PILL: Record<string, string> = {
+    open: "bg-primary/10 text-primary",
+    "in progress": "bg-amber-500/10 text-amber-600",
+    completed: "bg-muted text-muted-foreground",
+    closed: "bg-muted text-muted-foreground",
+  };
+  const pillCls = STATUS_PILL[(task.status ?? "").toLowerCase()] ?? "bg-muted text-muted-foreground";
+  const dueDateChanged = dueDate !== (task.dueDate?.slice(0, 10) ?? "");
+
+  return (
+    <Modal open={open} onOpenChange={(v) => { if (!v) { setDueDate(""); onClose(); } }}>
+      <ModalContent className="max-w-lg">
+        <ModalHeader>
+          <ModalTitle className="text-base leading-snug pr-6">{task.title}</ModalTitle>
+        </ModalHeader>
+
+        <div className="flex flex-wrap gap-2">
+          {task.status ? (
+            <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium capitalize", pillCls)}>
+              {task.status}
+            </span>
+          ) : null}
+          {task.priority ? (
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium capitalize text-muted-foreground">
+              {task.priority}
+            </span>
+          ) : null}
+        </div>
+
+        {task.description ? (
+          <p className="text-sm text-muted-foreground leading-relaxed">{task.description}</p>
+        ) : null}
+
+        <div className="grid gap-3">
+          {task.assigneeName ? (
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+                <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Assigned to</p>
+                <p className="text-sm font-medium text-foreground">{task.assigneeName}</p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex items-start gap-3">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+              <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Due date</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="h-8 text-sm"
+                />
+                {dueDateChanged ? (
+                  <Button size="sm" variant="outline" onClick={handleSaveDueDate} disabled={saving} className="h-7 text-xs">
+                    {saving ? <Loader2Icon className="h-3 w-3 animate-spin" /> : "Save"}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          {task.projectName ? (
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+                <FolderIcon className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Project</p>
+                <p className="text-sm font-medium text-foreground">{task.projectName}</p>
+              </div>
+            </div>
+          ) : null}
+
+          {task.sourceTitle ? (
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+                <FileTextIcon className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Source</p>
+                <p className="text-sm font-medium text-foreground">{task.sourceTitle}</p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex items-center gap-3">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+              <CalendarClockIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Created</p>
+              <p className="text-sm font-medium text-foreground">{formatDateLabel(task.createdAt) ?? task.createdAt}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-3">
+          <Link
+            href={task.href}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+            onClick={() => { setDueDate(""); onClose(); }}
+          >
+            View full task <ExternalLinkIcon className="h-3 w-3" />
+          </Link>
+          <TaskFeedbackButtons
+            taskId={task.id}
+            projectId={task.projectId}
+            taskSnapshot={{
+              name: task.title,
+              assignee: task.assigneeName,
+              dueDate: task.dueDate,
+              priority: task.priority ?? "medium",
+              notes: task.description,
+              projectId: task.projectId,
+              source: task.sourceTitle,
+            }}
+          />
+        </div>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+const STATUS_DOT: Record<string, string> = {
+  open: "bg-primary",
+  "in progress": "bg-amber-500",
+  completed: "bg-muted-foreground",
+  closed: "bg-muted-foreground/40",
+};
+
+function TaskCard({
+  task,
+  onClick,
+}: {
+  task: TaskItem;
+  onClick: () => void;
+}) {
+  const dot = STATUS_DOT[(task.status ?? "").toLowerCase()] ?? "bg-muted-foreground/40";
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={onClick}
+      className="h-auto w-full cursor-pointer rounded-xl bg-background/60 p-3 text-left transition-colors hover:bg-background"
+    >
+      <div className="flex items-start gap-3">
+        {/* icon */}
+        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+          <ListChecksIcon className="h-4 w-4 text-muted-foreground" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          {/* title row */}
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-semibold leading-snug text-foreground line-clamp-2">
+              {task.title}
+            </p>
+            {(task.status || task.priority) ? (
+              <span className="shrink-0 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium capitalize text-muted-foreground">
+                {[task.status, task.priority].filter(Boolean).join(" · ")}
+              </span>
+            ) : null}
+          </div>
+
+          {/* meta row */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {task.assigneeName ? (
+              <span className="flex items-center gap-1">
+                <UserIcon className="h-3 w-3 shrink-0" />
+                {task.assigneeName}
+              </span>
+            ) : null}
+            {task.projectName ? (
+              <span className="flex items-center gap-1">
+                <FolderIcon className="h-3 w-3 shrink-0" />
+                {task.projectName}
+              </span>
+            ) : null}
+            {task.dueDate ? (
+              <span className="flex items-center gap-1">
+                <CalendarIcon className="h-3 w-3 shrink-0" />
+                {formatDateLabel(task.dueDate)}
+              </span>
+            ) : null}
+            {task.sourceTitle ? (
+              <span className="flex items-center gap-1">
+                <FileTextIcon className="h-3 w-3 shrink-0" />
+                {task.sourceTitle}
+              </span>
+            ) : null}
+            <span className="flex items-center gap-1 ml-auto">
+              <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />
+              Created {formatDateLabel(task.createdAt) ?? task.createdAt}
+            </span>
+          </div>
+        </div>
+      </div>
+    </Button>
+  );
+}
+
 function TaskSummaryWidget({ widget }: { widget: TaskSummaryWidgetPayload }) {
+  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
+
   return (
     <WidgetShell
       eyebrow="Verified task register"
@@ -799,36 +1058,18 @@ function TaskSummaryWidget({ widget }: { widget: TaskSummaryWidgetPayload }) {
           <span>{widget.emptyState ?? "No task rows matched this request."}</span>
         </InfoAlert>
       ) : (
-        <div className="divide-y divide-border/70">
+        <div className="flex flex-col gap-2">
           {widget.items.map((task) => (
-            <div key={task.id} className="grid gap-2 py-3 first:pt-0 last:pb-0">
-              <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                <Link
-                  href={task.href}
-                  className="min-w-0 text-sm font-semibold text-foreground underline-offset-4 hover:underline"
-                >
-                  {task.title}
-                </Link>
-                <div className="shrink-0 text-right text-xs text-muted-foreground">
-                  {[task.status, task.priority].filter(Boolean).join(" / ")}
-                </div>
-              </div>
-              {task.description ? (
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {task.description}
-                </p>
-              ) : null}
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                {task.assigneeName ? <span>Owner: {task.assigneeName}</span> : null}
-                {task.projectName ? <span>Project: {task.projectName}</span> : null}
-                {task.dueDate ? <span>Due: {formatDateLabel(task.dueDate)}</span> : null}
-                {task.sourceTitle ? <span>Source: {task.sourceTitle}</span> : null}
-                <span>Created: {formatDateLabel(task.createdAt) ?? task.createdAt}</span>
-              </div>
-            </div>
+            <TaskCard key={task.id} task={task} onClick={() => setSelectedTask(task)} />
           ))}
         </div>
       )}
+
+      <TaskDetailModal
+        task={selectedTask}
+        open={selectedTask !== null}
+        onClose={() => setSelectedTask(null)}
+      />
     </WidgetShell>
   );
 }
@@ -960,7 +1201,7 @@ function EmailCardActions({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2.5">
+    <div className="flex flex-wrap items-center gap-1.5 pt-2.5">
       <Button
         size="sm"
         variant="outline"
@@ -1074,8 +1315,8 @@ function OutlookInboxSummaryWidget({
           <div
             key={item.id}
             className={cn(
-              "rounded-lg bg-card transition-shadow",
-              isOpen ? "shadow-xs" : "hover:shadow-xs",
+              "rounded-xl bg-background/60 transition-colors",
+              isOpen ? "" : "hover:bg-background",
             )}
           >
             {/* Header row — always visible */}
@@ -1355,9 +1596,9 @@ function MeetingIntelligenceWidget({ widget }: { widget: MeetingIntelligenceWidg
           <span>{widget.emptyState ?? "No meeting rows matched this request."}</span>
         </InfoAlert>
       ) : (
-        <div className="divide-y divide-border/70">
+        <div className="space-y-3">
           {widget.meetings.map((meeting) => (
-            <div key={meeting.id} className="grid gap-2 py-3 first:pt-0 last:pb-0">
+            <div key={meeting.id} className="grid gap-2 rounded-xl bg-background/60 px-3 py-2.5">
               <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
                 <Link
                   href={meeting.href}
@@ -1441,12 +1682,12 @@ function OwnerSnapshotWidget({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <div className="text-xs font-medium text-muted-foreground">Money</div>
-          <div className="mt-1 grid gap-1 text-sm text-foreground">
+          <div className="mt-1 space-y-1">
             {Object.entries(widget.money).map(([label, value]) =>
               value ? (
-                <div key={label} className="flex justify-between gap-3 border-b border-border/60 py-1 last:border-0">
+                <div key={label} className="flex justify-between gap-3 rounded-lg bg-background/60 px-2.5 py-1.5 text-sm">
                   <span className="capitalize text-muted-foreground">{label.replace(/([A-Z])/g, " $1")}</span>
-                  <span className="font-medium">{value}</span>
+                  <span className="font-medium text-foreground">{value}</span>
                 </div>
               ) : null,
             )}
@@ -1454,9 +1695,9 @@ function OwnerSnapshotWidget({
         </div>
         <div>
           <div className="text-xs font-medium text-muted-foreground">Owner actions</div>
-          <div className="mt-1 divide-y divide-border/60">
+          <div className="mt-1 space-y-1">
             {widget.ownerActions.slice(0, 4).map((action) => (
-              <div key={action.id} className="py-2 text-sm">
+              <div key={action.id} className="rounded-lg bg-background/60 px-2.5 py-2 text-sm">
                 <div className="font-medium text-foreground">{action.title}</div>
                 {action.projectName || action.ownerName ? (
                   <div className="text-xs text-muted-foreground">
@@ -1466,7 +1707,7 @@ function OwnerSnapshotWidget({
               </div>
             ))}
             {widget.ownerActions.length === 0 ? (
-              <div className="py-2 text-sm text-muted-foreground">No owner actions were returned.</div>
+              <div className="rounded-lg bg-background/60 px-2.5 py-2 text-sm text-muted-foreground">No owner actions were returned.</div>
             ) : null}
           </div>
         </div>
@@ -1530,12 +1771,12 @@ function OwnerActionQueueWidget({
         <div className="space-y-4">
           {widget.groups.map((group) => (
             <div key={group.id}>
-              <div className="mb-1 text-xs font-medium text-muted-foreground">
+              <div className="mb-2 text-xs font-medium text-muted-foreground">
                 {group.title}
               </div>
-              <div className="divide-y divide-border/60">
+              <div className="space-y-1.5">
                 {group.items.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex items-start justify-between gap-4 py-2.5">
+                  <div key={item.id} className="flex items-start justify-between gap-4 rounded-xl bg-background/60 px-3 py-2.5">
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-foreground">{item.title}</div>
                       <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -1602,10 +1843,10 @@ function MeetingInsightsWidget({
           const list = Array.isArray(items) ? items : [];
           return (
             <div key={label as string}>
-              <div className="text-xs font-medium text-muted-foreground">{label as string}</div>
-              <div className="mt-1 divide-y divide-border/60">
+              <div className="mb-1.5 text-xs font-medium text-muted-foreground">{label as string}</div>
+              <div className="space-y-1">
                 {list.slice(0, 4).map((item) => (
-                  <div key={item.id} className="py-2 text-sm">
+                  <div key={item.id} className="rounded-lg bg-background/60 px-3 py-2 text-sm">
                     <div className="font-medium text-foreground">{item.title}</div>
                     {"detail" in item && item.detail ? (
                       <div className="text-xs text-muted-foreground">{item.detail}</div>
@@ -1613,7 +1854,7 @@ function MeetingInsightsWidget({
                   </div>
                 ))}
                 {list.length === 0 ? (
-                  <div className="py-2 text-sm text-muted-foreground">None returned.</div>
+                  <div className="rounded-lg bg-background/60 px-3 py-2 text-sm text-muted-foreground">None returned.</div>
                 ) : null}
               </div>
             </div>

@@ -123,12 +123,6 @@ function parseGeneralConditions(workbook: WorkBook): {
       );
     }
 
-    if (budgetAmount <= 0) {
-      rowWarnings.push(
-        `${buildWarningPrefix(sheetName, rowNumber)}: Budget amount is ${budgetAmount}; review before creating budget/SOV lines.`,
-      );
-    }
-
     warnings.push(...rowWarnings);
     rows.push({
       sourceSheet: sheetName,
@@ -198,12 +192,6 @@ function parseDetails(workbook: WorkBook): {
     if (!costTypeCode) {
       rowWarnings.push(
         `${buildWarningPrefix(sheetName, rowNumber)}: Cost type "${costType || "(blank)"}" is not importable.`,
-      );
-    }
-
-    if (budgetAmount <= 0) {
-      rowWarnings.push(
-        `${buildWarningPrefix(sheetName, rowNumber)}: Budget amount is ${budgetAmount}; review before creating budget/SOV lines.`,
       );
     }
 

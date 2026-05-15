@@ -201,7 +201,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     return NextResponse.json({
       success: true,
-      createdCostCodes: missingCostCodeRows.length,
+      createdCostCodes: 0,
       addedProjectBudgetCodes: toInsert.length,
       reactivatedProjectBudgetCodes: toActivate.length,
     });

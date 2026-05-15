@@ -178,11 +178,11 @@ export const EstimateCreateSchema = z.object({
   location: optionalString,
   estimator: optionalString,
   project_duration_weeks: z.preprocess(
-    (val) => (val === "" || (typeof val === "number" && Number.isNaN(val)) ? null : val),
+    (val) => (val === "" || val === 0 || (typeof val === "number" && Number.isNaN(val)) ? null : val),
     z.coerce.number().int().positive().nullable().optional()
   ),
   project_duration_months: z.preprocess(
-    (val) => (val === "" || (typeof val === "number" && Number.isNaN(val)) ? null : val),
+    (val) => (val === "" || val === 0 || (typeof val === "number" && Number.isNaN(val)) ? null : val),
     z.coerce.number().positive().nullable().optional()
   ),
   contingency_amount: nonNegativeNumber,

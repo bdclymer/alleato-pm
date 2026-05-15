@@ -353,6 +353,8 @@ export class EstimateService {
     if (data.estimator !== undefined) updatePayload.estimator = data.estimator;
     if (data.project_duration_weeks !== undefined)
       updatePayload.project_duration_weeks = data.project_duration_weeks;
+    if (data.project_duration_months !== undefined)
+      updatePayload.project_duration_months = data.project_duration_months;
     if (data.contingency_amount !== undefined)
       updatePayload.contingency_amount = data.contingency_amount;
     if (data.insurance_rate !== undefined)

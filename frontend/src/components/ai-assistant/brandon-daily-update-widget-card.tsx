@@ -14,10 +14,10 @@ import { cn } from "@/lib/utils";
 type Tone = NonNullable<BrandonBriefItem["tone"]>;
 
 const toneStyles: Record<Tone, string> = {
-  neutral: "border-border bg-background text-foreground",
-  good: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  watch: "border-amber-200 bg-amber-50 text-amber-950",
-  risk: "border-red-200 bg-red-50 text-red-950",
+  neutral: "bg-muted text-muted-foreground border-transparent",
+  good: "bg-primary/10 text-primary border-primary/20",
+  watch: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/40",
+  risk: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 function formatGeneratedAt(value: string): string {
@@ -30,9 +30,9 @@ function formatGeneratedAt(value: string): string {
 }
 
 function metricTone(count: number, variant: "danger" | "warning" | "info"): string {
-  if (variant === "danger") return count > 0 ? "text-red-700" : "text-muted-foreground";
-  if (variant === "warning") return count > 0 ? "text-amber-700" : "text-muted-foreground";
-  return count > 0 ? "text-blue-700" : "text-muted-foreground";
+  if (variant === "danger") return count > 0 ? "text-destructive" : "text-muted-foreground";
+  if (variant === "warning") return count > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground";
+  return count > 0 ? "text-primary" : "text-muted-foreground";
 }
 
 function Section({
@@ -49,11 +49,11 @@ function Section({
         <Badge variant="outline">{items.length}</Badge>
       </div>
       {items.length > 0 ? (
-        <div className="divide-y divide-border">
+        <div className="space-y-2">
           {items.map((item) => (
             <article
               key={`${item.sourceId ?? item.title}-${item.date}`}
-              className="py-4 first:pt-2 last:pb-0"
+              className="rounded-xl bg-background/60 px-3 py-3"
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-1">
@@ -133,7 +133,7 @@ function Section({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
+        <div className="rounded-xl bg-background/60 px-4 py-3 text-sm text-muted-foreground">
           No current items in this section.
         </div>
       )}
@@ -152,11 +152,11 @@ function TopFocus({
         <SectionRuleHeading label="Top executive focus" className="mb-0 pb-0" />
         <Badge variant="outline">{brief.topExecutiveFocus.length}</Badge>
       </div>
-      <div className="divide-y divide-border">
+      <div className="space-y-2">
         {brief.topExecutiveFocus.map((entry) => (
           <article
             key={`${entry.item.sourceId ?? entry.item.title}-${entry.item.date}`}
-            className="py-4 first:pt-2 last:pb-0"
+            className="rounded-xl bg-background/60 px-3 py-3"
           >
             <div className="text-sm font-semibold leading-5 text-foreground">
               {entry.item.title}
@@ -190,7 +190,7 @@ export function BrandonDailyUpdateWidgetCard({
   const startHere = brief?.startHere.join(" ");
 
   return (
-    <div className="mb-4 rounded-lg border border-border bg-background p-4 sm:p-5">
+    <div className="mb-4 rounded-xl bg-muted/40 p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="text-base font-semibold text-foreground">
@@ -214,7 +214,7 @@ export function BrandonDailyUpdateWidgetCard({
       </div>
 
       {firstAction ? (
-        <div className="mt-4 border-l-2 border-red-600/50 pl-3">
+        <div className="mt-4 border-l-2 border-destructive/40 pl-3">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Start here
           </div>
@@ -229,20 +229,20 @@ export function BrandonDailyUpdateWidgetCard({
         </div>
       ) : null}
 
-      <div className="mt-4 grid grid-cols-3 divide-x divide-border rounded-md bg-muted/40">
-        <div className="px-3 py-2">
+      <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-background/60 p-1">
+        <div className="rounded-lg bg-muted/40 px-3 py-2">
           <div className={cn("text-lg font-semibold", metricTone(packet.sections.needsBrandon.length, "danger"))}>
             {packet.sections.needsBrandon.length}
           </div>
           <div className="text-xs text-muted-foreground">Needs Brandon</div>
         </div>
-        <div className="px-3 py-2">
+        <div className="rounded-lg bg-muted/40 px-3 py-2">
           <div className={cn("text-lg font-semibold", metricTone(packet.sections.waitingOnOthers.length, "warning"))}>
             {packet.sections.waitingOnOthers.length}
           </div>
           <div className="text-xs text-muted-foreground">Waiting</div>
         </div>
-        <div className="px-3 py-2">
+        <div className="rounded-lg bg-muted/40 px-3 py-2">
           <div className={cn("text-lg font-semibold", metricTone(packet.sections.importantUpdates.length, "info"))}>
             {packet.sections.importantUpdates.length}
           </div>

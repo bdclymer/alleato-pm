@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
+import { AnimatedOrb } from "./animated-orb";
 
 interface WelcomeScreenProps {
   children?: ReactNode;
@@ -16,31 +17,32 @@ export function WelcomeScreen({
 }: WelcomeScreenProps) {
   const fullName = useCurrentUserName();
   const rawFirstName = fullName.split(" ")[0] ?? "";
-  // Capitalize first letter so lowercase profile names render as "Megan", not "megan".
   const firstName = rawFirstName
     ? rawFirstName.charAt(0).toUpperCase() + rawFirstName.slice(1)
     : rawFirstName;
 
   return (
-    <div className="flex flex-1 items-start justify-center overflow-y-auto px-4 py-8 sm:px-6 lg:items-center lg:py-12">
-      <div className="w-full max-w-4xl space-y-7">
-        <div className="space-y-2 text-center">
-          <p className="text-xs font-medium text-muted-foreground">
-            Hi, {firstName}
-          </p>
-          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">
-            What do you want to work through today?
+    <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-40 pt-16 sm:px-6">
+      <div className="w-full max-w-xl">
+        <div className="space-y-3 text-center">
+          <div className="orb-intro mx-auto flex h-24 w-24 items-center justify-center">
+            <AnimatedOrb size={96} />
+          </div>
+          <h1 className="text-blur-intro text-xl font-semibold text-muted-foreground sm:text-2xl">
+            Hello, {firstName}
           </h1>
+          <p className="text-sm text-muted-foreground/75 sm:text-base">
+            How can I help?
+          </p>
         </div>
 
-        {composer && (
-          <div className="mx-auto w-full max-w-3xl">
+        {(composer || children) && (
+          <div className="mx-auto mt-8 max-w-3xl">
             {error && <div className="mb-2">{error}</div>}
             {composer}
+            {children}
           </div>
         )}
-
-        {children && <div className="mx-auto w-full">{children}</div>}
       </div>
     </div>
   );
