@@ -1948,6 +1948,40 @@ function SubListTab({
     }
   }, [projectId, estimateId, bidItemsBySubId, onPatchSub, loadBidItems]);
 
+  // Smart suggestions state (5.2)
+  type SuggestedCompany = {
+    id: string; name: string;
+    contact_name?: string | null; contact_email?: string | null; contact_phone?: string | null;
+    vendor_class?: string | null; type?: string | null;
+    is_trade_match: boolean; prior_contracts: number;
+    bid_history: { total: number; awarded: number } | null;
+    score: number;
+  };
+  const [suggestionsCache, setSuggestionsCache] = React.useState<Record<string, SuggestedCompany[]>>({});
+  const [expandedSuggestions, setExpandedSuggestions] = React.useState<Set<string>>(new Set());
+
+  const loadSuggestions = React.useCallback(async (divCode: string, excludeIds: string[]) => {
+    const qs = new URLSearchParams({ division_code: divCode, limit: "6" });
+    if (excludeIds.length) qs.set("exclude_company_ids", excludeIds.join(","));
+    try {
+      const data = await apiFetch<SuggestedCompany[]>(`/api/estimates/suggest-subs?${qs.toString()}`);
+      if (data) setSuggestionsCache((prev) => ({ ...prev, [divCode]: data }));
+    } catch { /* silently ignore */ }
+  }, []);
+
+  const toggleSuggestions = React.useCallback((divCode: string, excludeIds: string[]) => {
+    setExpandedSuggestions((prev) => {
+      const next = new Set(prev);
+      if (next.has(divCode)) {
+        next.delete(divCode);
+      } else {
+        next.add(divCode);
+        if (!suggestionsCache[divCode]) void loadSuggestions(divCode, excludeIds);
+      }
+      return next;
+    });
+  }, [suggestionsCache, loadSuggestions]);
+
   // Bid invitation modal state
   const [bidInviteSubId, setBidInviteSubId] = React.useState<number | null>(null);
   const [bidInviteDueDate, setBidInviteDueDate] = React.useState("");
@@ -2297,6 +2331,18 @@ function SubListTab({
                           variant="ghost"
                           size="sm"
                           className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            const existingIds = divRows.map((s) => s.company_id).filter(Boolean) as string[];
+                            toggleSuggestions(div.code, existingIds);
+                          }}
+                        >
+                          {expandedSuggestions.has(div.code) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                          Suggest
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
                           onClick={() => void onEnsureRows(div.code, div.name)}
                         >
                           <Plus className="h-3 w-3" /> Add sub
@@ -2387,6 +2433,78 @@ function SubListTab({
                               Add
                             </Button>
                           </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Smart suggestions panel (5.2) */}
+                  {expandedSuggestions.has(div.code) && (
+                    <tr>
+                      <td colSpan={12} className="bg-muted/20 px-6 py-3">
+                        <div className="max-w-2xl">
+                          <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Suggested Subs — Division {div.code}
+                          </p>
+                          {!suggestionsCache[div.code] ? (
+                            <p className="text-xs text-muted-foreground">Loading suggestions…</p>
+                          ) : suggestionsCache[div.code]!.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">No suggestions found for this division.</p>
+                          ) : (
+                            <div className="space-y-1">
+                              {suggestionsCache[div.code]!.map((company) => (
+                                <div key={company.id} className="flex items-center gap-3 px-2 py-1.5">
+                                  <div className="flex-1 min-w-0">
+                                    <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                                      {company.name}
+                                      {company.is_trade_match && (
+                                        <span className="rounded bg-primary/10 px-1 py-0.5 text-[9px] font-medium text-primary">Trade</span>
+                                      )}
+                                      {company.prior_contracts > 0 && (
+                                        <span className="text-[9px] text-muted-foreground">{company.prior_contracts} prior contract{company.prior_contracts !== 1 ? "s" : ""}</span>
+                                      )}
+                                      {company.bid_history && company.bid_history.total > 0 && (
+                                        <span className="text-[9px] text-muted-foreground">
+                                          · {Math.round((company.bid_history.awarded / company.bid_history.total) * 100)}% win rate
+                                        </span>
+                                      )}
+                                    </span>
+                                    {(company.vendor_class ?? company.type) && (
+                                      <span className="text-[10px] text-muted-foreground">{company.vendor_class ?? company.type}</span>
+                                    )}
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type="button"
+                                    className="h-6 shrink-0 px-2 text-[10px]"
+                                    onClick={async () => {
+                                      await onEnsureRows(div.code, div.name);
+                                      // Find the newly created sub (last in list for this division)
+                                      const newSubs = sublistSubs.filter((s) => s.division_code === div.code);
+                                      const newSub = newSubs[newSubs.length - 1];
+                                      if (newSub) {
+                                        await onPatchSub(newSub.id, {
+                                          company: company.name,
+                                          company_id: company.id,
+                                          contact_name: company.contact_name ?? null,
+                                          email: company.contact_email ?? null,
+                                          cell: company.contact_phone ?? null,
+                                        });
+                                      }
+                                      // Remove from suggestions list
+                                      setSuggestionsCache((prev) => ({
+                                        ...prev,
+                                        [div.code]: (prev[div.code] ?? []).filter((c) => c.id !== company.id),
+                                      }));
+                                    }}
+                                  >
+                                    + Add
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
