@@ -1710,7 +1710,7 @@ function SummaryTab({
           {/* Contacts */}
           <div className="flex shrink-0 gap-8">
             {ALLEATO_CONTACTS.map((c) => (
-              <div key={c.email} className="text-right text-xs">
+              <div key={c.email} className="text-xs">
                 <p className="font-semibold text-foreground">{c.name}</p>
                 <p className="text-muted-foreground">{c.title}</p>
                 <p className="text-muted-foreground">{c.email}</p>
