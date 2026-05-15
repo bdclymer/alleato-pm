@@ -334,6 +334,8 @@ export function UnifiedTablePage<T>({
   // Built-in delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [itemToDelete, setItemToDelete] = React.useState<T | null>(null);
+  // Built-in bulk delete confirmation dialog state (auto-built effectiveBulkDelete only)
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
 
   const handleDeleteIntent = React.useCallback((item: T) => {
     setItemToDelete(item);
@@ -348,21 +350,24 @@ export function UnifiedTablePage<T>({
     setItemToDelete(null);
   }, [itemToDelete, table]);
 
-  // Auto-built bulk delete: uses table.onDelete for each selected item so
-  // callers don't need to wire toolbar.onBulkDelete separately.
+  // Auto-built bulk delete: opens built-in confirmation dialog, then deletes after confirm.
+  // Callers don't need to wire toolbar.onBulkDelete — providing table.onDelete is enough.
   const effectiveBulkDelete = React.useMemo(() => {
     if (toolbar.onBulkDelete) return toolbar.onBulkDelete;
     if (!table.onDelete) return undefined;
-    return () => {
-      const itemsById = new Map(data.items.map((item) => [table.getRowId(item), item]));
-      selectedIds.forEach((id) => {
-        const item = itemsById.get(id);
-        if (item) table.onDelete!(item);
-      });
-      // Clear selection after bulk delete
-      handleSelectAll(false);
-    };
-  }, [toolbar.onBulkDelete, table, data.items, selectedIds, handleSelectAll]);
+    return () => setBulkDeleteDialogOpen(true);
+  }, [toolbar.onBulkDelete, table.onDelete]);
+
+  const handleBulkDeleteConfirm = React.useCallback(() => {
+    if (!table.onDelete) return;
+    const itemsById = new Map(data.items.map((item) => [table.getRowId(item), item]));
+    selectedIds.forEach((id) => {
+      const item = itemsById.get(id);
+      if (item) table.onDelete!(item);
+    });
+    handleSelectAll(false);
+    setBulkDeleteDialogOpen(false);
+  }, [data.items, selectedIds, table, handleSelectAll]);
 
   // ── Internal view state ──────────────────────────────────────────────────────
   // UnifiedTablePage owns view state internally so individual pages never need
@@ -2053,6 +2058,30 @@ export function UnifiedTablePage<T>({
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+      {!toolbar.onBulkDelete && table.onDelete && (
+        <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete {selectedIds.length} {selectedIds.length === 1 ? "item" : "items"}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete {selectedIds.length} selected{" "}
+                {selectedIds.length === 1 ? "item" : "items"}. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleBulkDeleteConfirm}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete {selectedIds.length} {selectedIds.length === 1 ? "item" : "items"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
