@@ -1799,10 +1799,11 @@ function SubListTab({
       } else {
         next.add(divCode);
         if (!scopeItemsByDiv[divCode]) void loadScopeItems(divCode);
+        if (!benchmarkCache[divCode]) void loadBenchmark(divCode);
       }
       return next;
     });
-  }, [scopeItemsByDiv, loadScopeItems]);
+  }, [scopeItemsByDiv, loadScopeItems, benchmarkCache, loadBenchmark]);
 
   const addScopeItem = React.useCallback(async (divCode: string) => {
     const desc = (newScopeDesc[divCode] ?? "").trim();
@@ -1989,6 +1990,34 @@ function SubListTab({
       setBidInviteSending(false);
     }
   }, [bidInviteSubId, bidInviteDueDate, bidInviteMessage, projectId, estimateId, onPatchSub]);
+
+  // Company bid history cache (5.1)
+  const [bidHistoryCache, setBidHistoryCache] = React.useState<Record<string, { total_bids: number; awarded: number; win_rate: number; avg_price: number | null; divisions: { code: string; bids: number; awarded: number }[] }>>({});
+
+  const loadBidHistory = React.useCallback(async (companyId: string) => {
+    if (bidHistoryCache[companyId] !== undefined) return; // already cached
+    setBidHistoryCache((prev) => ({ ...prev, [companyId]: { total_bids: 0, awarded: 0, win_rate: 0, avg_price: null, divisions: [] } }));
+    try {
+      const data = await apiFetch<{ total_bids: number; awarded: number; win_rate: number; avg_price: number | null; divisions: { code: string; bids: number; awarded: number }[] }>(
+        `/api/companies/${companyId}/bid-history`
+      );
+      if (data) setBidHistoryCache((prev) => ({ ...prev, [companyId]: data }));
+    } catch { /* silently ignore */ }
+  }, [bidHistoryCache]);
+
+  // Division benchmark cache (5.3)
+  const [benchmarkCache, setBenchmarkCache] = React.useState<Record<string, { count: number; min: number | null; max: number | null; avg: number | null; source: string }>>({});
+
+  const loadBenchmark = React.useCallback(async (divCode: string) => {
+    if (benchmarkCache[divCode] !== undefined) return;
+    setBenchmarkCache((prev) => ({ ...prev, [divCode]: { count: 0, min: null, max: null, avg: null, source: "none" } }));
+    try {
+      const data = await apiFetch<{ count: number; min: number | null; max: number | null; avg: number | null; source: string }>(
+        `/api/estimates/benchmark?division_code=${divCode}`
+      );
+      if (data) setBenchmarkCache((prev) => ({ ...prev, [divCode]: data }));
+    } catch { /* silently ignore */ }
+  }, [benchmarkCache]);
 
   // Load companies once on mount
   React.useEffect(() => {
@@ -2242,6 +2271,18 @@ function SubListTab({
                               Low bid: {formatCurrencyFull(lowestBid)}
                             </span>
                           )}
+                          {(() => {
+                            const bm = benchmarkCache[div.code];
+                            if (!bm || bm.count === 0 || bm.min === null || bm.max === null) return null;
+                            return (
+                              <span
+                                className="cursor-help border-b border-dashed border-muted-foreground/40"
+                                title={`Historical range based on ${bm.count} ${bm.source === "awarded_bids" ? "awarded bid" : "estimate"}${bm.count !== 1 ? "s" : ""}`}
+                              >
+                                Hist. {formatCurrencyFull(bm.min)}–{formatCurrencyFull(bm.max)}
+                              </span>
+                            );
+                          })()}
                         </span>
                         <Button
                           variant="ghost"
@@ -2269,12 +2310,41 @@ function SubListTab({
                     <tr>
                       <td colSpan={12} className="bg-muted/10 px-6 py-3">
                         <div className="max-w-2xl">
-                          <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                            Scope Package — Division {div.code}
-                          </p>
+                          <div className="mb-2 flex items-center justify-between">
+                            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              Scope Package — Division {div.code}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              type="button"
+                              size="sm"
+                              className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-primary"
+                              onClick={async () => {
+                                try {
+                                  const result = await apiFetch<{ seeded: number; items: ScopeItem[] }>(
+                                    `/api/projects/${projectId}/estimates/${estimateId}/scope-items/seed`,
+                                    { method: "POST", body: JSON.stringify({ division_code: div.code }) }
+                                  );
+                                  if (result && result.seeded > 0) {
+                                    setScopeItemsByDiv((prev) => ({
+                                      ...prev,
+                                      [div.code]: [...(prev[div.code] ?? []), ...result.items],
+                                    }));
+                                    toast.success(`Added ${result.seeded} scope items from estimate`);
+                                  } else {
+                                    toast.info("No new items to seed from estimate");
+                                  }
+                                } catch {
+                                  toast.error("Failed to seed scope items");
+                                }
+                              }}
+                            >
+                              <Plus className="h-3 w-3" /> Seed from estimate
+                            </Button>
+                          </div>
                           <div className="mb-2 space-y-1">
                             {(scopeItemsByDiv[div.code] ?? []).length === 0 ? (
-                              <p className="text-xs text-muted-foreground">No scope items yet. Add items below.</p>
+                              <p className="text-xs text-muted-foreground">No scope items yet. Add items below or seed from the estimate.</p>
                             ) : (
                               (scopeItemsByDiv[div.code] ?? []).map((item) => (
                                 <div key={item.id} className="group flex items-start gap-2">
@@ -2379,9 +2449,25 @@ function SubListTab({
                             value={sub.company ?? ""}
                             onChange={(v) => void onPatchSub(sub.id, { company: v || null, company_id: v ? sub.company_id : null })}
                             placeholder="Company name"
-                            onFocus={() => { setOpenComboboxId(sub.id); setOpenComboboxDivision(sub.division_code); }}
+                            onFocus={() => {
+                              setOpenComboboxId(sub.id);
+                              setOpenComboboxDivision(sub.division_code);
+                              if (sub.company_id && !bidHistoryCache[sub.company_id]) void loadBidHistory(sub.company_id);
+                            }}
                             onBlur={() => setTimeout(() => setOpenComboboxId((prev) => prev === sub.id ? null : prev), 150)}
                           />
+                          {sub.company_id && (() => {
+                            const history = bidHistoryCache[sub.company_id];
+                            if (!history || history.total_bids === 0) return null;
+                            return (
+                              <span
+                                className="mt-0.5 block text-[9px] text-muted-foreground"
+                                title={`${history.total_bids} bid${history.total_bids !== 1 ? "s" : ""} — ${history.win_rate}% win rate${history.avg_price ? ` — avg ${formatCurrencyFull(history.avg_price)}` : ""}`}
+                              >
+                                {history.total_bids} bid{history.total_bids !== 1 ? "s" : ""} · {history.win_rate}% wins
+                              </span>
+                            );
+                          })()}
                         </div>
                       </td>
 
