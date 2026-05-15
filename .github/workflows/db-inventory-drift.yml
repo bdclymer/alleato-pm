@@ -1,0 +1,81 @@
+name: DB Inventory Drift Check
+
+on:
+  push:
+    paths:
+      - "supabase/migrations/**/*.sql"
+      - "frontend/src/**/*.ts"
+      - "frontend/src/**/*.tsx"
+      - "backend/src/**/*.py"
+      - "docs/architecture/tables.yaml"
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  drift-check:
+    name: Schema Drift Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Run schema drift check (check-only)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RAG_DATABASE_URL: ${{ secrets.RAG_DATABASE_URL }}
+        run: node scripts/dev-tools/generate-db-inventory.mjs --check-only
+
+  regenerate:
+    name: Regenerate & Open PR on Drift
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Regenerate inventory
+        id: regen
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RAG_DATABASE_URL: ${{ secrets.RAG_DATABASE_URL }}
+        run: |
+          node scripts/dev-tools/generate-db-inventory.mjs
+          echo "changed=$(git diff --quiet frontend/src/components/dev-tools/db-inventory.generated.ts && echo 'false' || echo 'true')" >> $GITHUB_OUTPUT
+
+      - name: Open PR with regenerated file
+        if: steps.regen.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(db-inventory): regenerate after schema/code drift"
+          title: "chore(db-inventory): regenerate after schema/code drift"
+          body: |
+            ## DB Inventory Drift Detected
+
+            The database inventory generated file drifted from the current schema or codebase.
+            This PR regenerates it.
+
+            ```
+            ${{ steps.regen.outputs.diff_stat }}
+            ```
+
+            **Review before merging**: verify any new tables have appropriate YAML entries in `docs/architecture/tables.yaml`.
+          branch: "chore/db-inventory-drift"
+          delete-branch: true

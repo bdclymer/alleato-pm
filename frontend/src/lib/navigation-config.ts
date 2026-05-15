@@ -143,6 +143,7 @@ export const adminTools: NavigationTool[] = [
   { name: "Operations Readiness", path: "/operations-readiness", icon: CheckCircle, requiresProject: false, adminOnly: true },
   { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
   { name: "Database Tables", path: "/database", icon: Table, requiresProject: false, adminOnly: true },
+  { name: "Database Inventory", path: "/admin/database-inventory", icon: Table, requiresProject: false, adminOnly: true },
   { name: "What's New", path: "/updates", icon: TrendingUp, requiresProject: false },
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
   { name: "Procore Docs", path: "/procore-docs", icon: BookOpen, requiresProject: false },
