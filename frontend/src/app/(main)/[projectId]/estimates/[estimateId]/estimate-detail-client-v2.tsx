@@ -1418,6 +1418,27 @@ function SubListTab({
 
   return (
     <div className="space-y-4">
+      {/* Single sticky column header above all sections */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-border text-left text-muted-foreground">
+              <th className="py-1.5 pl-4 pr-2 font-medium w-6">#</th>
+              <th className="px-2 py-1.5 font-medium">Company</th>
+              <th className="px-2 py-1.5 font-medium w-28">Intend to Submit?</th>
+              <th className="px-2 py-1.5 font-medium w-24">Email Sent?</th>
+              <th className="px-2 py-1.5 font-medium w-28">Phone Follow Up?</th>
+              <th className="px-2 py-1.5 font-medium w-24">Bid Received?</th>
+              <th className="px-2 py-1.5 font-medium">Contact</th>
+              <th className="px-2 py-1.5 font-medium">Email</th>
+              <th className="px-2 py-1.5 font-medium">Cell</th>
+              <th className="px-2 py-1.5 font-medium w-28 text-right">Price</th>
+              <th className="px-2 py-1.5 font-medium">Comments</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
       {subListDivisions.map((div) => {
         const rows = sublistSubs.filter((s) => s.division_code === div.code);
         // Fill 5 positions
@@ -1444,21 +1465,7 @@ function SubListTab({
 
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border/50 text-left text-muted-foreground">
-                    <th className="py-1.5 pl-4 pr-2 font-medium w-6">#</th>
-                    <th className="px-2 py-1.5 font-medium">Company</th>
-                    <th className="px-2 py-1.5 font-medium w-28">Intend to Submit?</th>
-                    <th className="px-2 py-1.5 font-medium w-24">Email Sent?</th>
-                    <th className="px-2 py-1.5 font-medium w-28">Phone Follow Up?</th>
-                    <th className="px-2 py-1.5 font-medium w-24">Bid Received?</th>
-                    <th className="px-2 py-1.5 font-medium">Contact</th>
-                    <th className="px-2 py-1.5 font-medium">Email</th>
-                    <th className="px-2 py-1.5 font-medium">Cell</th>
-                    <th className="px-2 py-1.5 font-medium w-28 text-right">Price</th>
-                    <th className="px-2 py-1.5 font-medium">Comments</th>
-                  </tr>
-                </thead>
+                <thead />
                 <tbody>
                   {filled.map((sub, idx) => {
                     const pos = idx + 1;
