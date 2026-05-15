@@ -1726,18 +1726,18 @@ function SummaryTab({
         </div>
 
         {/* Project info bar */}
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs">
-          <span><span className="text-muted-foreground">Project: </span><span className="font-medium text-foreground">{projectName}</span></span>
+        <div className="mt-6 flex flex-wrap gap-x-6 gap-y-1 text-xs text-foreground">
+          <span><span>Project: </span><span className="font-medium">{projectName}</span></span>
           {estimate.location && (
-            <span><span className="text-muted-foreground">Location: </span><span className="font-medium text-foreground">{estimate.location}</span></span>
+            <span><span>Location: </span><span className="font-medium">{estimate.location}</span></span>
           )}
           {estimate.estimate_date && (
-            <span><span className="text-muted-foreground">Date: </span><span className="font-medium text-foreground">{estimate.estimate_date}</span></span>
+            <span><span>Date: </span><span className="font-medium">{estimate.estimate_date}</span></span>
           )}
           {estimate.estimator && (
-            <span><span className="text-muted-foreground">Estimator: </span><span className="font-medium text-foreground">{estimate.estimator}</span></span>
+            <span><span>Estimator: </span><span className="font-medium">{estimate.estimator}</span></span>
           )}
-          <span><span className="text-muted-foreground">Revision: </span><span className="font-medium text-foreground">R{estimate.revision}</span></span>
+          <span><span>Revision: </span><span className="font-medium">R{estimate.revision}</span></span>
         </div>
       </div>
 
