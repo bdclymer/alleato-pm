@@ -655,13 +655,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             stack: error instanceof Error ? error.stack?.split("\n").slice(0, 5).join("\n") : undefined,
           });
         },
-        onFinish: ({ finishReason, usage, text, toolCalls }) => {
+        onFinish: ({ finishReason, usage, text, toolCalls, steps }) => {
+          const toolCallNames = toolCalls?.map((c) => c.toolName) ?? [];
           console.log("[handler-v2] streamText onFinish", {
             finishReason,
             usage,
             text_chars: text?.length ?? 0,
             text_preview: text?.slice(0, 200) ?? "",
-            tool_calls: toolCalls?.map((c) => c.toolName) ?? [],
+            tool_calls: toolCallNames,
+            step_count: steps?.length ?? 0,
           });
           waitUntil(traceChatCompletion({
             userId: args.user.id,
@@ -669,7 +671,24 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             modelId: args.activeModel,
             input: inputText,
             output: text ?? "",
-            usage,
+            usage: {
+              inputTokens: (usage as { promptTokens?: number }).promptTokens,
+              outputTokens: (usage as { completionTokens?: number }).completionTokens,
+            },
+            toolCallNames,
+            stepCount: steps?.length ?? toolCallNames.length,
+            intent: plan.intent,
+            metadata: {
+              planReason: plan.reason,
+              responseFormat: plan.responseFormat,
+              retrievalSources: Object.keys(plan.sources),
+              retrievalWarnings: retrievalCtx.warnings.map((w) => `${w.source}: ${w.message}`),
+              retrievalDurationsMs: retrievalCtx.durationsMs,
+              hasIntelligencePacket: Boolean(retrievalCtx.intelligencePacket),
+              hasProjectSnapshot: Boolean(retrievalCtx.projectSnapshot),
+              hasSemanticResults: Boolean(retrievalCtx.semanticVectorResults),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
           }));
         },
       });
