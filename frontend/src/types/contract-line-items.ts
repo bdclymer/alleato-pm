@@ -16,6 +16,8 @@ export interface ContractLineItem {
   unit_of_measure: string | null;
   unit_cost: number;
   total_cost: number; // Auto-calculated: quantity * unit_cost
+  /** Non-null for auto-computed markup rows (e.g. 'insurance', 'fee'). Read-only in the SOV UI. */
+  markup_type?: string | null;
   created_at: string;
   updated_at: string;
   // UI-only fields for SOV grouping (not persisted to DB)

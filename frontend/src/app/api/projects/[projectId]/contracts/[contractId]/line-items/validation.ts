@@ -8,6 +8,8 @@ import { z } from "zod";
  * budget_code_id is a UUID FK to project_budget_codes.
  */
 
+const MARKUP_TYPES = ['insurance', 'fee', 'overhead', 'profit', 'bond', 'tax', 'other'] as const;
+
 export const createLineItemSchema = z.object({
   contract_id: z.string().uuid(),
   line_number: z.number().int().positive(),
@@ -17,6 +19,7 @@ export const createLineItemSchema = z.object({
   quantity: z.number().min(0).optional().default(0),
   unit_of_measure: z.string().max(50).optional().nullable(),
   unit_cost: z.number().min(0).optional().default(0),
+  markup_type: z.enum(MARKUP_TYPES).optional().nullable(),
 });
 
 export const updateLineItemSchema = z.object({

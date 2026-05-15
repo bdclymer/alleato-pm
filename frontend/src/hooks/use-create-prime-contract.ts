@@ -112,10 +112,11 @@ export function useCreatePrimeContract(projectId: string) {
               body: JSON.stringify({
                 line_number: i + 1,
                 description: item.description || `Line ${i + 1}`,
-                budget_code_id: item.budgetCodeId || null,
+                budget_code_id: item.isMarkup ? null : (item.budgetCodeId || null),
                 quantity,
                 unit_cost: unitCost,
                 unit_of_measure: item.unitOfMeasure || null,
+                markup_type: item.isMarkup ? (item.markupType ?? null) : null,
               }),
             },
             SUBMIT_TIMEOUT_MS,
@@ -140,6 +141,7 @@ export function useCreatePrimeContract(projectId: string) {
               markup_type: markup.markup_type,
               percentage: markup.percentage,
               compound: markup.compound,
+              maps_to_budget_code_id: markup.maps_to !== "all" ? markup.maps_to : null,
             }),
           });
         } catch {

@@ -1,7 +1,9 @@
 import {
   ChevronDown,
+  ChevronRight,
   FileText,
   GripVertical,
+  Lock,
   MoreVertical,
   Paperclip,
   Plus,
@@ -10,7 +12,7 @@ import {
   Upload,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   DndContext,
   closestCenter,
@@ -55,6 +57,7 @@ import {
   InlineTableHeader,
   InlineTableHeaderCell,
   InlineTableHeaderRow,
+  InlineTableRow,
 } from "@/components/ds/inline-table";
 import { getCostTypeLabel } from "@/constants/budget";
 import { formatPercent } from "@/lib/format";
@@ -105,6 +108,32 @@ interface PrimeContractOverviewTabProps {
   onDeleteSovLine?: (lineId: string) => Promise<void>;
   onImportEstimateToSov?: () => void;
 }
+
+const DIVISION_NAMES: Record<string, string> = {
+  "00": "General Requirements",
+  "01": "General Conditions",
+  "02": "Existing Conditions",
+  "03": "Concrete",
+  "04": "Masonry",
+  "05": "Metals",
+  "06": "Wood, Plastics & Composites",
+  "07": "Thermal & Moisture Protection",
+  "08": "Openings",
+  "09": "Finishes",
+  "10": "Specialties",
+  "11": "Equipment",
+  "12": "Furnishings",
+  "21": "Fire Suppression",
+  "22": "Plumbing",
+  "23": "HVAC",
+  "26": "Electrical",
+  "27": "Communications",
+  "28": "Electronic Safety & Security",
+  "31": "Earthwork",
+  "32": "Exterior Improvements",
+  "33": "Utilities",
+  "55": "Contractor Fee",
+};
 
 export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   const {
@@ -212,6 +241,52 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     displayedSovTotal > 0
       ? Math.min(1, Math.max(0, invoicesTotal / displayedSovTotal))
       : 0;
+
+  const [collapsedDivisions, setCollapsedDivisions] = useState<Set<string>>(new Set());
+
+  const getDivCode = (item: (typeof displayedSovItems)[number]) => {
+    const bc = item.budget_code_id
+      ? budgetCodes.find((c) => c.id === item.budget_code_id)
+      : budgetCodes.find(
+          (c) =>
+            (c.legacyCostCodeId && c.legacyCostCodeId === item.cost_code_id) ||
+            (!!item.cost_code?.code && c.code === item.cost_code.code),
+        );
+    const code = bc?.code || item.cost_code?.code || "--";
+    return code === "--" ? "XX" : (code.split("-")[0] || "XX");
+  };
+
+  const divisionTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const item of displayedSovItems) {
+      if (item.is_group_header) continue;
+      const div = getDivCode(item);
+      const lineTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+      totals[div] = (totals[div] ?? 0) + lineTotal;
+    }
+    return totals;
+   
+  }, [displayedSovItems, budgetCodes]);
+
+  const viewModeRows = useMemo(() => {
+    const rows: Array<
+      | { type: "division"; code: string }
+      | { type: "item"; item: (typeof displayedSovItems)[number]; divCode: string }
+    > = [];
+    let lastDiv = "";
+    for (const item of displayedSovItems) {
+      if (item.is_group_header) continue;
+      const divCode = getDivCode(item);
+      if (divCode !== lastDiv) {
+        rows.push({ type: "division", code: divCode });
+        lastDiv = divCode;
+      }
+      rows.push({ type: "item", item, divCode });
+    }
+    return rows;
+   
+  }, [displayedSovItems, budgetCodes]);
+
   const renderDateOrDash = (value: string | null | undefined) =>
     value ? formatDate(value) : <span className="text-muted-foreground/40">—</span>;
   const handleAttachmentFilesSelected = (files: File[]) => {
@@ -455,7 +530,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               title="No SOV lines yet"
               description="Add SOV lines with budget codes to track the contract value."
             />
-          ) : (
+          ) : isSovEditing ? (
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -547,6 +622,44 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 </>
                               )}
                             </SortableSovRow>
+                          );
+                        }
+
+                        // Markup rows are read-only — never show budget code selector or edit controls
+                        if (item.markup_type) {
+                          const markupTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                          const markupBilled = markupTotal * billedToDateRatio;
+                          return (
+                            <InlineTableRow
+                              key={item.id}
+                              className="border-b border-border/60 bg-muted/30"
+                            >
+                              <InlineTableCell className="w-10 px-1 py-1">
+                                <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                              </InlineTableCell>
+                              <InlineTableCell className="min-w-72 px-1 py-1">
+                                <span className="inline-flex items-center gap-1.5 text-xs">
+                                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                                    Markup
+                                  </span>
+                                </span>
+                              </InlineTableCell>
+                              <InlineTableCell className="min-w-64 px-1 py-1">
+                                <span className="text-xs text-foreground">{item.description}</span>
+                              </InlineTableCell>
+                              <InlineTableCell align="right" className="w-20 px-1 py-1" />
+                              <InlineTableCell className="w-16 px-1 py-1" />
+                              <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
+                                {formatCurrency(markupTotal)}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
+                                {formatCurrency(markupBilled)}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
+                                {formatCurrency(markupTotal - markupBilled)}
+                              </InlineTableCell>
+                              <InlineTableCell className="w-24 px-1 py-1" />
+                            </InlineTableRow>
                           );
                         }
 
@@ -759,6 +872,190 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 </div>
               </SortableContext>
             </DndContext>
+          ) : (
+            <div className="overflow-x-auto overflow-hidden rounded-md border border-border/70 bg-muted/20">
+              <InlineTable variant="edit">
+                <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
+                  <InlineTableHeaderRow>
+                    <InlineTableHeaderCell className="w-10 px-1 py-1.5" />
+                    <InlineTableHeaderCell className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      Budget Code
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      Description
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      Amount
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      Bill to Date
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      Amount Remaining
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-24 px-1 py-1.5" />
+                  </InlineTableHeaderRow>
+                </InlineTableHeader>
+                <InlineTableBody>
+                  {viewModeRows.map((row) => {
+                    if (row.type === "division") {
+                      const isCollapsed = collapsedDivisions.has(row.code);
+                      return (
+                        <tr
+                          key={`div-${row.code}`}
+                          className="border-b border-border/60 bg-muted/40"
+                        >
+                          <td className="w-10 px-1 py-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:bg-muted"
+                              onClick={() =>
+                                setCollapsedDivisions((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(row.code)) next.delete(row.code);
+                                  else next.add(row.code);
+                                  return next;
+                                })
+                              }
+                            >
+                              {isCollapsed ? (
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </td>
+                          <td colSpan={4} className="px-1 py-2">
+                            <span className="text-xs font-semibold text-foreground">
+                              {row.code} {DIVISION_NAMES[row.code] ?? `Division ${row.code}`}
+                            </span>
+                          </td>
+                          <td className="px-1 py-2 text-right">
+                            <span className="text-xs font-semibold tabular-nums">
+                              {formatCurrency(divisionTotals[row.code] ?? 0)}
+                            </span>
+                          </td>
+                          <td />
+                        </tr>
+                      );
+                    }
+
+                    const { item, divCode } = row;
+                    if (collapsedDivisions.has(divCode)) return null;
+
+                    // Markup rows are read-only — render a locked badge row
+                    if (item.markup_type) {
+                      const markupTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                      const markupBilled = markupTotal * billedToDateRatio;
+                      return (
+                        <tr key={item.id} className="border-b border-border/60 bg-muted/30">
+                          <td className="w-10 px-1 py-1">
+                            <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                          </td>
+                          <td className="min-w-72 px-1 py-1">
+                            <span className="inline-flex items-center gap-1.5 text-xs">
+                              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                                Markup
+                              </span>
+                            </span>
+                          </td>
+                          <td className="min-w-64 px-1 py-1 text-xs text-foreground">{item.description}</td>
+                          <td className="w-40 px-1 py-1 text-right text-xs tabular-nums">{formatCurrency(markupTotal)}</td>
+                          <td className="w-40 px-1 py-1 text-right text-xs tabular-nums">{formatCurrency(markupBilled)}</td>
+                          <td className="w-40 px-1 py-1 text-right text-xs font-semibold tabular-nums">{formatCurrency(markupTotal - markupBilled)}</td>
+                          <td className="w-24 px-1 py-1" />
+                        </tr>
+                      );
+                    }
+
+                    const bc = item.budget_code_id
+                      ? budgetCodes.find((c) => c.id === item.budget_code_id)
+                      : budgetCodes.find(
+                          (c) =>
+                            (c.legacyCostCodeId && c.legacyCostCodeId === item.cost_code_id) ||
+                            (!!item.cost_code?.code && c.code === item.cost_code.code),
+                        );
+                    const displayBudgetCode = bc?.code || item.cost_code?.code || "--";
+                    const displayBudgetDescription = bc?.description || item.cost_code?.name || "";
+                    const displayCostType = bc?.costType ? getCostTypeLabel(bc.costType) : "";
+                    const lineTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                    const lineBilledToDate = lineTotal * billedToDateRatio;
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className="border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
+                      >
+                        <td className="w-10 px-1 py-1" />
+                        <td className="min-w-72 px-1 py-1 align-top">
+                          <div className="flex items-baseline gap-2 text-xs leading-tight">
+                            <span className="font-medium">
+                              {displayBudgetDescription
+                                ? `${displayBudgetCode} - ${displayBudgetDescription}`
+                                : displayBudgetCode}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {displayCostType || "—"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="min-w-64 px-1 py-1 align-top">
+                          <div className="pt-2 text-xs leading-tight">
+                            {item.description || "--"}
+                          </div>
+                        </td>
+                        <td className="w-40 px-1 py-1 align-top text-right">
+                          <div className="pt-2 text-xs tabular-nums">
+                            {formatCurrency(lineTotal)}
+                          </div>
+                        </td>
+                        <td className="w-40 px-1 py-1 align-top text-right">
+                          <div className="pt-2 text-xs tabular-nums">
+                            {formatCurrency(lineBilledToDate)}
+                          </div>
+                        </td>
+                        <td className="w-40 px-1 py-1 align-top text-right">
+                          <div className="pt-2 text-xs font-semibold tabular-nums">
+                            {formatCurrency(lineTotal - lineBilledToDate)}
+                          </div>
+                        </td>
+                        <td className="w-24 px-1 py-1 align-top">
+                          <div className="flex justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-muted-foreground"
+                                  aria-label={`Actions for line item ${item.line_number}`}
+                                >
+                                  <MoreVertical />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={onStartSovEdit}>
+                                  Edit
+                                </DropdownMenuItem>
+                                {onDeleteSovLine && (
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => onDeleteSovLine(item.id)}
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </InlineTableBody>
+              </InlineTable>
+            </div>
           )}
 
           <div className="flex justify-start pt-1">

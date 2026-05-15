@@ -8615,6 +8615,7 @@ export type Database = {
           description: string
           id: string
           line_number: number
+          markup_type: string | null
           quantity: number | null
           total_cost: number | null
           unit_cost: number | null
@@ -8629,6 +8630,7 @@ export type Database = {
           description: string
           id?: string
           line_number: number
+          markup_type?: string | null
           quantity?: number | null
           total_cost?: number | null
           unit_cost?: number | null
@@ -8643,6 +8645,7 @@ export type Database = {
           description?: string
           id?: string
           line_number?: number
+          markup_type?: string | null
           quantity?: number | null
           total_cost?: number | null
           unit_cost?: number | null
