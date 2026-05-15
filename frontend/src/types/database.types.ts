@@ -12147,6 +12147,53 @@ export type Database = {
           },
         ]
       }
+      estimate_sublist_scope_items: {
+        Row: {
+          created_at: string
+          description: string
+          division_code: string
+          estimate_id: number
+          id: number
+          is_checked: boolean
+          notes: string | null
+          sort_order: number
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          division_code: string
+          estimate_id: number
+          id?: number
+          is_checked?: boolean
+          notes?: string | null
+          sort_order?: number
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          division_code?: string
+          estimate_id?: number
+          id?: number
+          is_checked?: boolean
+          notes?: string | null
+          sort_order?: number
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_sublist_scope_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
       estimate_sublist_subs: {
         Row: {
           bid_received: string | null

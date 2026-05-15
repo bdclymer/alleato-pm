@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { PageShell, PageTabs } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Modal as Dialog,
   ModalContent as DialogContent,
@@ -53,6 +54,7 @@ type GcItem = Database["public"]["Tables"]["estimate_gc_items"]["Row"];
 type DetailItem = Database["public"]["Tables"]["estimate_detail_items"]["Row"];
 type SublistSub = Database["public"]["Tables"]["estimate_sublist_subs"]["Row"];
 type CallLog = Database["public"]["Tables"]["estimate_sublist_call_logs"]["Row"];
+type ScopeItem = Database["public"]["Tables"]["estimate_sublist_scope_items"]["Row"];
 
 interface EstimateDetailClientV2Props {
   projectId: string;
@@ -1757,6 +1759,91 @@ function SubListTab({
     }
   }, [projectId, estimateId, callLogOutcome, callLogNotes, onPatchSub]);
 
+  // Scope package state
+  const [scopeItemsByDiv, setScopeItemsByDiv] = React.useState<Record<string, ScopeItem[]>>({});
+  const [expandedScopeDivs, setExpandedScopeDivs] = React.useState<Set<string>>(new Set());
+  const [newScopeDesc, setNewScopeDesc] = React.useState<Record<string, string>>({});
+
+  const loadScopeItems = React.useCallback(async (divCode: string) => {
+    try {
+      const items = await apiFetch<ScopeItem[]>(
+        `/api/projects/${projectId}/estimates/${estimateId}/scope-items?division_code=${divCode}`
+      );
+      setScopeItemsByDiv((prev) => ({ ...prev, [divCode]: items ?? [] }));
+    } catch {
+      // silently ignore
+    }
+  }, [projectId, estimateId]);
+
+  const toggleScopeDiv = React.useCallback((divCode: string) => {
+    setExpandedScopeDivs((prev) => {
+      const next = new Set(prev);
+      if (next.has(divCode)) {
+        next.delete(divCode);
+      } else {
+        next.add(divCode);
+        if (!scopeItemsByDiv[divCode]) void loadScopeItems(divCode);
+      }
+      return next;
+    });
+  }, [scopeItemsByDiv, loadScopeItems]);
+
+  const addScopeItem = React.useCallback(async (divCode: string) => {
+    const desc = (newScopeDesc[divCode] ?? "").trim();
+    if (!desc) return;
+    try {
+      const item = await apiFetch<ScopeItem>(
+        `/api/projects/${projectId}/estimates/${estimateId}/scope-items`,
+        {
+          method: "POST",
+          body: JSON.stringify({ division_code: divCode, description: desc, sort_order: (scopeItemsByDiv[divCode]?.length ?? 0) }),
+        }
+      );
+      if (item) {
+        setScopeItemsByDiv((prev) => ({ ...prev, [divCode]: [...(prev[divCode] ?? []), item] }));
+        setNewScopeDesc((prev) => ({ ...prev, [divCode]: "" }));
+      }
+    } catch {
+      toast.error("Failed to add scope item");
+    }
+  }, [projectId, estimateId, newScopeDesc, scopeItemsByDiv]);
+
+  const toggleScopeItemChecked = React.useCallback(async (divCode: string, item: ScopeItem) => {
+    const updated = { ...item, is_checked: !item.is_checked };
+    setScopeItemsByDiv((prev) => ({
+      ...prev,
+      [divCode]: (prev[divCode] ?? []).map((s) => s.id === item.id ? updated : s),
+    }));
+    try {
+      await apiFetch(
+        `/api/projects/${projectId}/estimates/${estimateId}/scope-items/${item.id}`,
+        { method: "PATCH", body: JSON.stringify({ is_checked: updated.is_checked }) }
+      );
+    } catch {
+      // revert
+      setScopeItemsByDiv((prev) => ({
+        ...prev,
+        [divCode]: (prev[divCode] ?? []).map((s) => s.id === item.id ? item : s),
+      }));
+    }
+  }, [projectId, estimateId]);
+
+  const deleteScopeItem = React.useCallback(async (divCode: string, itemId: number) => {
+    setScopeItemsByDiv((prev) => ({
+      ...prev,
+      [divCode]: (prev[divCode] ?? []).filter((s) => s.id !== itemId),
+    }));
+    try {
+      await apiFetch(
+        `/api/projects/${projectId}/estimates/${estimateId}/scope-items/${itemId}`,
+        { method: "DELETE" }
+      );
+    } catch {
+      toast.error("Failed to delete scope item");
+      void loadScopeItems(divCode);
+    }
+  }, [projectId, estimateId, loadScopeItems]);
+
   // Load companies once on mount
   React.useEffect(() => {
     const supabaseClient = createClient();
@@ -2014,6 +2101,15 @@ function SubListTab({
                           variant="ghost"
                           size="sm"
                           className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                          onClick={() => toggleScopeDiv(div.code)}
+                        >
+                          {expandedScopeDivs.has(div.code) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                          Scope
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
                           onClick={() => void onEnsureRows(div.code, div.name)}
                         >
                           <Plus className="h-3 w-3" /> Add sub
@@ -2021,6 +2117,64 @@ function SubListTab({
                       </div>
                     </td>
                   </tr>
+
+                  {/* Scope Package (collapsible) */}
+                  {expandedScopeDivs.has(div.code) && (
+                    <tr>
+                      <td colSpan={12} className="bg-muted/10 px-6 py-3">
+                        <div className="max-w-2xl">
+                          <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Scope Package — Division {div.code}
+                          </p>
+                          <div className="mb-2 space-y-1">
+                            {(scopeItemsByDiv[div.code] ?? []).length === 0 ? (
+                              <p className="text-xs text-muted-foreground">No scope items yet. Add items below.</p>
+                            ) : (
+                              (scopeItemsByDiv[div.code] ?? []).map((item) => (
+                                <div key={item.id} className="group flex items-start gap-2">
+                                  <Checkbox
+                                    checked={item.is_checked}
+                                    onCheckedChange={() => void toggleScopeItemChecked(div.code, item)}
+                                    className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                  />
+                                  <span className={`flex-1 text-xs ${item.is_checked ? "text-foreground" : "text-muted-foreground line-through"}`}>
+                                    {item.description}
+                                    {item.notes && <span className="ml-1 text-muted-foreground">— {item.notes}</span>}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    type="button"
+                                    size="icon"
+                                    className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100"
+                                    onClick={() => void deleteScopeItem(div.code, item.id)}
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </Button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                          <div className="flex gap-1.5">
+                            <Input
+                              placeholder="Add scope item…"
+                              value={newScopeDesc[div.code] ?? ""}
+                              onChange={(e) => setNewScopeDesc((prev) => ({ ...prev, [div.code]: e.target.value }))}
+                              onKeyDown={(e) => { if (e.key === "Enter") void addScopeItem(div.code); }}
+                              className="h-7 flex-1 text-xs"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => void addScopeItem(div.code)}
+                            >
+                              Add
+                            </Button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
 
                   {/* Sub rows */}
                   {divRows.map((sub, idx) => (
