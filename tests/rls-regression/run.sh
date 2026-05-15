@@ -30,6 +30,14 @@ if [[ ! -f "$TSX" ]]; then
   TSX="$REPO_ROOT/frontend/node_modules/.bin/tsx"
 fi
 
+# Wrapper: run probe from frontend dir so @supabase/supabase-js resolves correctly.
+# probe.ts imports from @supabase/supabase-js which lives in frontend/node_modules.
+run_probe() {
+  local persona="$1"
+  local snapshot_dir="${2:-before}"
+  (cd "$REPO_ROOT/frontend" && NODE_PATH=./node_modules "$TSX" "$SCRIPT_DIR/probe.ts" "$persona" "$snapshot_dir")
+}
+
 PERSONAS=("admin" "member-67" "member-none" "external")
 
 echo "========================================================"
@@ -42,7 +50,7 @@ echo ""
 # Step 1: Setup (idempotent)
 # ---------------------------------------------------------------------------
 echo "--- Step 1: Setup test users ---"
-"$TSX" "$SCRIPT_DIR/setup.ts"
+(cd "$REPO_ROOT/frontend" && NODE_PATH=./node_modules "$TSX" "$SCRIPT_DIR/setup.ts")
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -56,7 +64,7 @@ mkdir -p "$SCRIPT_DIR/snapshots/before"
 for persona in "${PERSONAS[@]}"; do
   echo "  Probing: $persona"
   # Run sequentially to avoid statement timeouts from concurrent RLS scans
-  "$TSX" "$SCRIPT_DIR/probe.ts" "$persona" "before" 2>&1 | grep -v "^{" | grep -v "^  \[" || true
+  run_probe "$persona" "before" 2>&1 | grep -v "^{" | grep -v "^  \[" || true
 done
 echo ""
 echo "  Baseline snapshots written to tests/rls-regression/snapshots/before/"
@@ -91,7 +99,7 @@ mkdir -p "$SCRIPT_DIR/snapshots/after"
 for persona in "${PERSONAS[@]}"; do
   echo "  Probing: $persona"
   # Run sequentially to avoid statement timeouts from concurrent RLS scans
-  "$TSX" "$SCRIPT_DIR/probe.ts" "$persona" "after" 2>&1 | grep -v "^{" | grep -v "^  \[" || true
+  run_probe "$persona" "after" 2>&1 | grep -v "^{" | grep -v "^  \[" || true
 done
 echo ""
 echo "  Post-migration snapshots written to tests/rls-regression/snapshots/after/"
@@ -101,7 +109,7 @@ echo ""
 # Step 5: Diff
 # ---------------------------------------------------------------------------
 echo "--- Step 5: Diffing before vs after ---"
-"$TSX" "$SCRIPT_DIR/diff.ts" "snapshots/before" "snapshots/after"
+(cd "$REPO_ROOT/frontend" && NODE_PATH=./node_modules "$TSX" "$SCRIPT_DIR/diff.ts" "snapshots/before" "snapshots/after")
 
 echo ""
 echo "Done. Full report at: tests/rls-regression/snapshots/diff-report.md"
