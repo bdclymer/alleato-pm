@@ -470,8 +470,24 @@ export function UnifiedTablePage<T>({
       })),
     [table.columns, toolbar.columns],
   );
+  // Internal column visibility — persisted to localStorage when the caller
+  // does not supply toolbar.visibleColumns / toolbar.onColumnVisibilityChange.
+  const colStorageKey = `alleato:cols:${header.title}`;
+  const [internalVisibleColumns, setInternalVisibleColumns] = React.useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`alleato:cols:${header.title}`);
+        if (stored) {
+          const parsed = JSON.parse(stored) as unknown;
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed as string[];
+        }
+      } catch { /* ignore */ }
+    }
+    const baseCols = (toolbar.columns ?? table.columns) as Array<{ id: string; defaultVisible?: boolean; alwaysVisible?: boolean }>;
+    return baseCols.filter((c) => c.defaultVisible !== false || c.alwaysVisible).map((c) => c.id);
+  });
   // Always include alwaysVisible columns even if stale localStorage omits them
-  const rawVisibleColumns = toolbar.visibleColumns ?? toolbarColumns.map((column) => column.id);
+  const rawVisibleColumns = toolbar.visibleColumns ?? internalVisibleColumns;
   const visibleColumns = React.useMemo(() => {
     const alwaysVisibleIds = toolbarColumns.filter((c) => c.alwaysVisible).map((c) => c.id);
     const missing = alwaysVisibleIds.filter((id) => !rawVisibleColumns.includes(id));
@@ -492,11 +508,19 @@ export function UnifiedTablePage<T>({
     (() => {
       // no-op by default so pages without filters don't need wiring
     });
-  const handleColumnVisibilityChange =
-    toolbar.onColumnVisibilityChange ??
-    (() => {
-      // no-op by default so pages without column picker don't need wiring
-    });
+  const handleColumnVisibilityChange = React.useCallback(
+    (columns: string[]) => {
+      if (toolbar.onColumnVisibilityChange) {
+        toolbar.onColumnVisibilityChange(columns);
+      } else {
+        setInternalVisibleColumns(columns);
+        try {
+          localStorage.setItem(colStorageKey, JSON.stringify(columns));
+        } catch { /* ignore */ }
+      }
+    },
+    [toolbar.onColumnVisibilityChange, colStorageKey],
+  );
   const [columnWidths, setColumnWidths] = React.useState<Record<string, number>>({});
   const [columnOrder, setColumnOrder] = React.useState<string[]>(visibleColumns);
   const [columnPinning, setColumnPinning] = React.useState<{ left: string[]; right: string[] }>(() => ({
