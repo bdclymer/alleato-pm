@@ -25,6 +25,7 @@ export interface CommitmentListFilters {
   search?: string;
   companyId?: string;
   type?: string;
+  primeContractId?: string;
   deleted?: "exclude" | "only" | "include";
 }
 
@@ -82,6 +83,7 @@ export function useCommitmentsList(
       if (filters?.search) params.set("search", filters.search);
       if (filters?.companyId) params.set("companyId", filters.companyId);
       if (filters?.type) params.set("type", filters.type);
+      if (filters?.primeContractId) params.set("prime_contract_id", filters.primeContractId);
       if (filters?.deleted) params.set("deleted", filters.deleted);
 
       const data = await apiFetch<unknown>(`/api/commitments?${params}`, { signal });

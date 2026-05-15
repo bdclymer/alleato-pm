@@ -204,6 +204,9 @@ export interface Contract {
   payments_received: number;
   remaining_balance: number;
   percent_paid: number;
+  estimate_id?: number | null;
+  estimate_version?: number | null;
+  last_synced_from_estimate_at?: string | null;
 }
 
 export interface BudgetCode {

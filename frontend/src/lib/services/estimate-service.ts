@@ -28,7 +28,6 @@ import {
   EstimateTypes,
   calculateLineItemCosts,
 } from "@/lib/schemas/estimates";
-import { buildInitialEstimateTemplateLineItems } from "@/lib/estimates/template";
 
 type CompanyEstimateQueryRow = Pick<
   EstimateRow,
@@ -322,11 +321,8 @@ export class EstimateService {
 
     if (error) throw new Error(`Failed to create estimate: ${error.message}`);
 
-    const durationWeeks = data.project_duration_weeks ?? 12;
-    await this.bulkAddLineItems(
-      (estimate as EstimateRow).estimate_id,
-      buildInitialEstimateTemplateLineItems(durationWeeks)
-    );
+    // V1 template line items removed — V2 uses estimate_gc_items + estimate_detail_items,
+    // populated by the editor UI rather than seeded on create.
 
     return estimate as EstimateRow;
   }

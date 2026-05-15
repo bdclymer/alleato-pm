@@ -187,6 +187,7 @@ export function PrimeContractCommitmentsTab({
     status: typeof activeFilters.status === "string" ? activeFilters.status : undefined,
     type: typeof activeFilters.type === "string" ? activeFilters.type : undefined,
     search: tableState.debouncedSearch || undefined,
+    primeContractId: contractId,
   });
 
   const resolvedError =

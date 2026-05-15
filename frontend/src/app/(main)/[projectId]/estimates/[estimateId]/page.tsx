@@ -33,19 +33,6 @@ export default async function EstimateDetailPage({
     );
   }
 
-  // Fetch line items (kept for legacy compatibility / future use)
-  const { data: lineItems } = await supabase
-    .from("estimate_line_items")
-    .select("*")
-    .eq("estimate_id", estimateIdNum)
-    .order("sort_order", { ascending: true });
-
-  // Fetch division totals
-  const { data: divisionTotals } = await supabase
-    .from("v_estimate_division_totals")
-    .select("*")
-    .eq("estimate_id", estimateIdNum);
-
   // Fetch alternates
   const { data: alternates } = await supabase
     .from("estimate_alternates")
@@ -89,19 +76,6 @@ export default async function EstimateDetailPage({
       gcItems={(gcItems ?? []) as GcItem[]}
       detailItems={(detailItems ?? []) as DetailItem[]}
       sublistSubs={(sublistSubs ?? []) as SublistSub[]}
-      lineItems={lineItems || []}
-      divisionTotals={
-        (divisionTotals || []).map((d) => ({
-          division_code: d.division_code as string,
-          division_name: d.division_name as string,
-          material_total: Number(d.material_total) || 0,
-          labor_total: Number(d.labor_total) || 0,
-          equipment_total: Number(d.equipment_total) || 0,
-          subcontract_total: Number(d.subcontract_total) || 0,
-          division_total: Number(d.division_total) || 0,
-          line_count: Number(d.line_count) || 0,
-        }))
-      }
       alternates={alternates || []}
       allowances={allowances || []}
     />

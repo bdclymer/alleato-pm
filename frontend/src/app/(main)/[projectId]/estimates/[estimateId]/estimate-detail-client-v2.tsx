@@ -37,12 +37,11 @@ import {
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
+import { SeedBudgetFromEstimateModal } from "@/components/domain/estimates/SeedBudgetFromEstimateModal";
 import type { Database } from "@/types/database.types";
 import type {
-  DivisionTotal,
   EstimateAllowanceRow,
   EstimateAlternateRow,
-  EstimateLineItemRow,
   EstimateRow,
 } from "@/lib/schemas/estimates";
 
@@ -64,9 +63,6 @@ interface EstimateDetailClientV2Props {
   gcItems: GcItem[];
   detailItems: DetailItem[];
   sublistSubs: SublistSub[];
-  // legacy props (not used in V2 tabs but kept for possible future use)
-  lineItems: EstimateLineItemRow[];
-  divisionTotals: DivisionTotal[];
   alternates: EstimateAlternateRow[];
   allowances: EstimateAllowanceRow[];
 }
@@ -725,6 +721,7 @@ export function EstimateDetailClientV2({
   const [showCreateTemplate, setShowCreateTemplate] = React.useState(false);
   const [templateName, setTemplateName] = React.useState("");
   const [isSavingTemplate, setIsSavingTemplate] = React.useState(false);
+  const [showSeedBudget, setShowSeedBudget] = React.useState(false);
   const [pendingTemplate, setPendingTemplate] = React.useState<GcTemplate | null>(null);
   const [showLoadConfirm, setShowLoadConfirm] = React.useState(false);
   const [isLoadingTemplate, setIsLoadingTemplate] = React.useState(false);
@@ -1182,9 +1179,15 @@ export function EstimateDetailClientV2({
           Import to Prime Contract SOV
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => toast.info("Import to Budget — coming soon")}
+          disabled={estimate.status !== "approved"}
+          onClick={() => setShowSeedBudget(true)}
+          title={
+            estimate.status !== "approved"
+              ? "Estimate must be approved before seeding the budget"
+              : undefined
+          }
         >
-          Import to Budget
+          Seed Budget from Estimate
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleExportPDF}>
@@ -1378,6 +1381,14 @@ export function EstimateDetailClientV2({
           />
         )}
       </div>
+
+      <SeedBudgetFromEstimateModal
+        open={showSeedBudget}
+        onOpenChange={setShowSeedBudget}
+        projectId={projectId}
+        estimateId={estimate.estimate_id}
+        estimateTitle={estimate.title}
+      />
     </PageShell>
   );
 }

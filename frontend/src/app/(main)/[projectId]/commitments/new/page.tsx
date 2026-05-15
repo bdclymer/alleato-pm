@@ -35,8 +35,18 @@ export default function NewCommitmentPage() {
             ? {
                 sovLines: [
                   {
+                    lineNumber: undefined,
+                    changeEventLineItem: undefined,
+                    budgetCode: undefined,
+                    budgetCodeId: undefined,
+                    budgetCodeLabel: undefined,
                     description: prefillTitle,
                     amount: prefillAmount,
+                    quantity: undefined,
+                    unitCost: undefined,
+                    unitOfMeasure: undefined,
+                    billedToDate: undefined,
+                    isGroup: undefined,
                   },
                 ],
               }

@@ -26,7 +26,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { ContentSectionStack, PageShell, PageTabs, SectionRuleHeading } from "@/components/layout";
-import { EmptyState } from "@/components/ds";
+import { EmptyState, EstimateVersionBadge } from "@/components/ds";
+import { SyncFromEstimateModal } from "@/components/domain/contracts/SyncFromEstimateModal";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -246,6 +247,7 @@ export default function ProjectContractDetailPage() {
   const [documentDialogTab, setDocumentDialogTab] = useState<"download" | "email">("download");
   const [isSyncing, setIsSyncing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSyncFromEstimateOpen, setIsSyncFromEstimateOpen] = useState(false);
 
   // #endregion
 
@@ -894,7 +896,19 @@ export default function ProjectContractDetailPage() {
   return (
     <PageShell
       variant="detailWide"
-      eyebrow={contract.contract_number ? `#${contract.contract_number}` : `#${contract.id.slice(0, 8)}`}
+      eyebrow={
+        <span className="inline-flex items-center gap-2">
+          {contract.contract_number ? `#${contract.contract_number}` : `#${contract.id.slice(0, 8)}`}
+          {contract.estimate_id != null && (
+            <EstimateVersionBadge
+              projectId={projectId}
+              estimateId={contract.estimate_id}
+              estimateVersion={contract.estimate_version ?? null}
+              lastSyncedAt={contract.last_synced_from_estimate_at ?? null}
+            />
+          )}
+        </span>
+      }
       title={contract.title}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
       onBack={() => router.push(`/${projectId}/prime-contracts`)}
@@ -926,6 +940,22 @@ export default function ProjectContractDetailPage() {
                   <RefreshCw className={`h-4 w-4 mr-2${isSyncing ? " animate-spin" : ""}`} />
                   Resync to ERP
                 </DropdownMenuItem>
+                {contract.estimate_id != null && (
+                  <DropdownMenuItem
+                    disabled={contract.executed || !["draft", "out_for_signature"].includes(contract.status)}
+                    onClick={() => setIsSyncFromEstimateOpen(true)}
+                    title={
+                      contract.executed
+                        ? "Contract is executed — SOV cannot be changed"
+                        : !["draft", "out_for_signature"].includes(contract.status)
+                          ? `Contract is ${contract.status} — only Draft and Out for Signature can be resynced`
+                          : undefined
+                    }
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Sync from Estimate
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem disabled={isExporting} onClick={handleErpExport}>
                   <Upload className={`h-4 w-4 mr-2${isExporting ? " animate-pulse" : ""}`} />
                   Import
@@ -1161,6 +1191,18 @@ export default function ProjectContractDetailPage() {
         budgetCodes={budgetCodes}
         existingLineItems={lineItems}
         onImported={(items) => setLineItems((prev) => [...prev, ...items])}
+      />
+      <SyncFromEstimateModal
+        open={isSyncFromEstimateOpen}
+        onOpenChange={setIsSyncFromEstimateOpen}
+        projectId={projectId}
+        contractId={contractId}
+        onSuccess={() => {
+          // Refetch contract + SOV by triggering query invalidation; the page also
+          // self-fetches on mount, so a hard refetch is sufficient for the SOV tab.
+          queryClient.invalidateQueries({ queryKey: ["prime-contract", contractId] });
+          router.refresh();
+        }}
       />
       {ConfirmDialog}
     </PageShell>

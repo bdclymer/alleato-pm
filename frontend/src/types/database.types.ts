@@ -4857,6 +4857,7 @@ export type Database = {
           default_curve_id: string | null
           default_ftc_method: string | null
           description: string | null
+          estimate_id: number | null
           forecasting_enabled: boolean
           id: string
           original_amount: number
@@ -4878,6 +4879,7 @@ export type Database = {
           default_curve_id?: string | null
           default_ftc_method?: string | null
           description?: string | null
+          estimate_id?: number | null
           forecasting_enabled?: boolean
           id?: string
           original_amount?: number
@@ -4899,6 +4901,7 @@ export type Database = {
           default_curve_id?: string | null
           default_ftc_method?: string | null
           description?: string | null
+          estimate_id?: number | null
           forecasting_enabled?: boolean
           id?: string
           original_amount?: number
@@ -4940,6 +4943,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "forecasting_curves"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
           },
           {
             foreignKeyName: "budget_lines_project_budget_code_id_fkey"
@@ -19901,12 +19911,15 @@ export type Database = {
           description: string | null
           end_date: string | null
           erp_status: string
+          estimate_id: number | null
+          estimate_version: number | null
           exclusions: string | null
           executed: boolean
           executed_at: string | null
           id: string
           inclusions: string | null
           is_private: boolean
+          last_synced_from_estimate_at: string | null
           original_contract_value: number
           payment_terms: string | null
           project_id: number
@@ -19936,12 +19949,15 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           erp_status?: string
+          estimate_id?: number | null
+          estimate_version?: number | null
           exclusions?: string | null
           executed?: boolean
           executed_at?: string | null
           id?: string
           inclusions?: string | null
           is_private?: boolean
+          last_synced_from_estimate_at?: string | null
           original_contract_value?: number
           payment_terms?: string | null
           project_id: number
@@ -19971,12 +19987,15 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           erp_status?: string
+          estimate_id?: number | null
+          estimate_version?: number | null
           exclusions?: string | null
           executed?: boolean
           executed_at?: string | null
           id?: string
           inclusions?: string | null
           is_private?: boolean
+          last_synced_from_estimate_at?: string | null
           original_contract_value?: number
           payment_terms?: string | null
           project_id?: number
@@ -20018,6 +20037,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contracts_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
@@ -23605,6 +23631,7 @@ export type Database = {
           issued_on_date: string | null
           non_admin_user_ids: string[] | null
           payment_terms: string | null
+          prime_contract_id: string | null
           project_id: number
           ship_to: string | null
           ship_via: string | null
@@ -23640,6 +23667,7 @@ export type Database = {
           issued_on_date?: string | null
           non_admin_user_ids?: string[] | null
           payment_terms?: string | null
+          prime_contract_id?: string | null
           project_id: number
           ship_to?: string | null
           ship_via?: string | null
@@ -23675,6 +23703,7 @@ export type Database = {
           issued_on_date?: string | null
           non_admin_user_ids?: string[] | null
           payment_terms?: string | null
+          prime_contract_id?: string | null
           project_id?: number
           ship_to?: string | null
           ship_via?: string | null
@@ -23685,6 +23714,20 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_orders_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
@@ -27232,6 +27275,7 @@ export type Database = {
           is_private: boolean | null
           issued_on_date: string | null
           non_admin_user_ids: string[] | null
+          prime_contract_id: string | null
           project: string | null
           project_id: number
           signed_contract_received_date: string | null
@@ -27261,6 +27305,7 @@ export type Database = {
           is_private?: boolean | null
           issued_on_date?: string | null
           non_admin_user_ids?: string[] | null
+          prime_contract_id?: string | null
           project?: string | null
           project_id: number
           signed_contract_received_date?: string | null
@@ -27290,6 +27335,7 @@ export type Database = {
           is_private?: boolean | null
           issued_on_date?: string | null
           non_admin_user_ids?: string[] | null
+          prime_contract_id?: string | null
           project?: string | null
           project_id?: number
           signed_contract_received_date?: string | null
@@ -27299,6 +27345,20 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "subcontracts_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "subcontracts_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
@@ -34827,6 +34887,7 @@ export type Database = {
           default_curve_id: string | null
           default_ftc_method: string | null
           description: string | null
+          estimate_id: number | null
           forecasting_enabled: boolean
           id: string
           original_amount: number

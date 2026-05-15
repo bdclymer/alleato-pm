@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import { SeedBudgetFromEstimateModal } from "@/components/domain/estimates/SeedBudgetFromEstimateModal";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -74,6 +75,8 @@ export function EstimatesClient({
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [estimateToDelete, setEstimateToDelete] =
+    React.useState<EstimateRow | null>(null);
+  const [seedBudgetEstimate, setSeedBudgetEstimate] =
     React.useState<EstimateRow | null>(null);
 
   const filteredItems = React.useMemo(() => {
@@ -332,6 +335,16 @@ export function EstimatesClient({
                 >
                   Edit
                 </DropdownMenuItem>
+                {item.status === "approved" && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSeedBudgetEstimate(item);
+                    }}
+                  >
+                    Seed Budget
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={(e) => {
@@ -439,6 +452,16 @@ export function EstimatesClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SeedBudgetFromEstimateModal
+        open={seedBudgetEstimate != null}
+        onOpenChange={(open) => {
+          if (!open) setSeedBudgetEstimate(null);
+        }}
+        projectId={projectId}
+        estimateId={seedBudgetEstimate?.estimate_id ?? 0}
+        estimateTitle={seedBudgetEstimate?.title}
+      />
     </>
   );
 }

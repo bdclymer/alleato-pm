@@ -199,6 +199,7 @@ export const GET = withApiGuardrails(
     let companyId = searchParams.get("companyId");
     const projectId = searchParams.get("projectId");
     const type = searchParams.get("type");
+    const primeContractId = searchParams.get("prime_contract_id");
     const deletedParam = searchParams.get("deleted");
     const deleted: "exclude" | "only" | "include" =
       deletedParam === "only" || deletedParam === "include" ? deletedParam : "exclude";
@@ -236,9 +237,25 @@ export const GET = withApiGuardrails(
       }
     }
 
-    const filters = { projectId, status, companyId, search, type };
+    const filters = { projectId, status, companyId, search, type, primeContractId };
     const from = (page - 1) * limit;
     const to = from + limit - 1;
+
+    // When filtering by prime_contract_id, pre-resolve matching subcontract + PO ids
+    // (commitments_unified view does not expose prime_contract_id).
+    let primeContractFilterIds: string[] | null = null;
+    if (filters.primeContractId) {
+      const [scIds, poIds] = await Promise.all([
+        supabase.from("subcontracts").select("id").eq("prime_contract_id", filters.primeContractId),
+        supabase.from("purchase_orders").select("id").eq("prime_contract_id", filters.primeContractId),
+      ]);
+      if (scIds.error) throw scIds.error;
+      if (poIds.error) throw poIds.error;
+      primeContractFilterIds = [
+        ...((scIds.data ?? []).map((r) => r.id).filter((id): id is string => Boolean(id))),
+        ...((poIds.data ?? []).map((r) => r.id).filter((id): id is string => Boolean(id))),
+      ];
+    }
 
     let baseQuery = supabase
       .from("commitments_unified")
@@ -255,6 +272,18 @@ export const GET = withApiGuardrails(
     if (filters.companyId) baseQuery = baseQuery.eq("contract_company_id", filters.companyId);
     if (filters.search) baseQuery = baseQuery.or(`contract_number.ilike.%${filters.search}%,title.ilike.%${filters.search}%`);
     if (filters.type) baseQuery = baseQuery.eq("commitment_type", filters.type);
+    if (primeContractFilterIds !== null) {
+      if (primeContractFilterIds.length === 0) {
+        // No commitments linked to this contract — short-circuit to empty result.
+        return NextResponse.json({
+          data: [],
+          meta: { page, limit, total: 0, totalPages: 1 },
+        }, {
+          headers: { "Cache-Control": "private, max-age=10, stale-while-revalidate=30" },
+        });
+      }
+      baseQuery = baseQuery.in("id", primeContractFilterIds);
+    }
 
     const {
       data: baseRows,

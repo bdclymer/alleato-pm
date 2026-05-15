@@ -84,6 +84,7 @@ export { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 export { DetailActions } from "./DetailActions";
 export { EditModeActions } from "./EditModeActions";
 export { SplitButton } from "./SplitButton";
+export { EstimateVersionBadge } from "./EstimateVersionBadge";
 
 // ---------------------------------------------------------------------------
 // Approved shadcn/ui Primitives (re-exported for single import path)

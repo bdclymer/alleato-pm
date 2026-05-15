@@ -4,7 +4,8 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Plus, Settings } from "lucide-react";
-import { StatusBadge } from "@/components/ds";
+import { StatusBadge, SplitButton } from "@/components/ds";
+import { CreatePrimeContractFromEstimateModal } from "@/components/domain/contracts/CreatePrimeContractFromEstimateModal";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 
@@ -85,6 +86,8 @@ export default function ProjectContractsPage(): ReactElement {
   const queryClient = useQueryClient();
 
   useProjectTitle("Prime Contracts");
+
+  const [createFromEstimateOpen, setCreateFromEstimateOpen] = React.useState(false);
 
   const initialStatus = searchParams.get("status") ?? "";
   const initialExecuted = searchParams.get("executed") ?? "";
@@ -489,14 +492,21 @@ export default function ProjectContractsPage(): ReactElement {
               >
                 <Settings />
               </Button>
-              <Button
+              <SplitButton
                 size="sm"
+                label="Create"
                 onClick={() => router.push(`/${projectId}/prime-contracts/new`)}
-                aria-label="Create new contract"
-              >
-                <Plus />
-                Create
-              </Button>
+                actions={[
+                  {
+                    label: "Blank Contract",
+                    onClick: () => router.push(`/${projectId}/prime-contracts/new`),
+                  },
+                  {
+                    label: "From Estimate…",
+                    onClick: () => setCreateFromEstimateOpen(true),
+                  },
+                ]}
+              />
             </div>
           ),
         }}
@@ -803,6 +813,12 @@ export default function ProjectContractsPage(): ReactElement {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreatePrimeContractFromEstimateModal
+        open={createFromEstimateOpen}
+        onOpenChange={setCreateFromEstimateOpen}
+        projectId={projectId}
+      />
     </>
   );
 }
