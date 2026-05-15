@@ -609,7 +609,7 @@ function InlineSelect({
 }) {
   return (
     <Select value={value || ""} onValueChange={onValueChange}>
-      <SelectTrigger className={`h-7 border-transparent bg-transparent text-xs focus:border-border focus:bg-background ${className ?? ""}`}>
+      <SelectTrigger className={`h-7 w-full border-transparent bg-transparent text-xs focus:border-border focus:bg-background ${className ?? ""}`}>
         <SelectValue placeholder={placeholder ?? "—"} />
       </SelectTrigger>
       <SelectContent>
@@ -1132,7 +1132,7 @@ function GcTab({
             <tr className="border-b border-border bg-muted/30 text-left text-muted-foreground">
               <th className="py-2 pl-3 pr-2 font-medium">Cost Code</th>
               <th className="px-2 py-2 font-medium">Description</th>
-              <th className="w-28 px-2 py-2 font-medium">Cost Type</th>
+              <th className="w-32 px-2 py-2 font-medium">Cost Type</th>
               <th className="w-20 px-2 py-2 text-right font-medium">Qty</th>
               <th className="w-16 px-2 py-2 font-medium">Unit</th>
               <th className="w-32 px-2 py-2 text-right font-medium">Rate</th>
@@ -1161,7 +1161,7 @@ function GcTab({
                       {item.description}
                     </span>
                   </td>
-                  <td className="px-2 py-1">
+                  <td className="w-32 px-2 py-1">
                     <InlineSelect
                       value={item.cost_type}
                       options={COST_TYPE_OPTIONS.map((o) => ({ value: o, label: o }))}
