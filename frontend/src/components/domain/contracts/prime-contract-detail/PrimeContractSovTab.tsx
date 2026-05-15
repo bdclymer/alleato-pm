@@ -2,6 +2,7 @@ import {
   ChevronDown,
   FileText,
   GripVertical,
+  Lock,
   MoreVertical,
   Plus,
   Rows3,
@@ -43,6 +44,7 @@ import {
   InlineTableHeader,
   InlineTableHeaderCell,
   InlineTableHeaderRow,
+  InlineTableRow,
 } from "@/components/ds/inline-table";
 import { EmptyState } from "@/components/ds";
 import { getCostTypeLabel } from "@/constants/budget";
@@ -267,6 +269,44 @@ export function PrimeContractSovTab({
                               </>
                             )}
                           </SortableSovRow>
+                        );
+                      }
+
+                      // Markup rows are read-only — render locked badge row, never editable
+                      if (item.markup_type) {
+                        const markupTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                        const markupBilled = markupTotal * billedToDateRatio;
+                        return (
+                          <InlineTableRow
+                            key={item.id}
+                            className="border-b border-border/60 bg-muted/30"
+                          >
+                            <InlineTableCell className="w-10 px-1 py-1">
+                              <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                            </InlineTableCell>
+                            <InlineTableCell className="min-w-72 px-1 py-1">
+                              <span className="inline-flex items-center gap-1.5 text-xs">
+                                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                                  Markup
+                                </span>
+                              </span>
+                            </InlineTableCell>
+                            <InlineTableCell className="min-w-64 px-1 py-1 text-xs text-foreground">
+                              {item.description}
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-20 px-1 py-1" />
+                            <InlineTableCell className="w-16 px-1 py-1" />
+                            <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
+                              {formatCurrency(markupTotal)}
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
+                              {formatCurrency(markupBilled)}
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-40 px-1 py-1 tabular-nums text-xs">
+                              {formatCurrency(markupTotal - markupBilled)}
+                            </InlineTableCell>
+                            <InlineTableCell className="w-24 px-1 py-1" />
+                          </InlineTableRow>
                         );
                       }
 
