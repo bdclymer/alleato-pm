@@ -52,6 +52,7 @@ import type {
 type GcItem = Database["public"]["Tables"]["estimate_gc_items"]["Row"];
 type DetailItem = Database["public"]["Tables"]["estimate_detail_items"]["Row"];
 type SublistSub = Database["public"]["Tables"]["estimate_sublist_subs"]["Row"];
+type CallLog = Database["public"]["Tables"]["estimate_sublist_call_logs"]["Row"];
 
 interface EstimateDetailClientV2Props {
   projectId: string;
@@ -1708,6 +1709,54 @@ function SubListTab({
   const [openComboboxId, setOpenComboboxId] = React.useState<number | null>(null);
   const [openComboboxDivision, setOpenComboboxDivision] = React.useState<string>("");
 
+  // Call log state
+  const [callLogsBySubId, setCallLogsBySubId] = React.useState<Record<number, CallLog[]>>({});
+  const [openCallLogSubId, setOpenCallLogSubId] = React.useState<number | null>(null);
+  const [callLogOutcome, setCallLogOutcome] = React.useState<string>("");
+  const [callLogNotes, setCallLogNotes] = React.useState<string>("");
+  const [callLogSubmitting, setCallLogSubmitting] = React.useState(false);
+
+  const loadCallLogs = React.useCallback(async (subId: number) => {
+    try {
+      const logs = await apiFetch<CallLog[]>(
+        `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/call-logs`
+      );
+      setCallLogsBySubId((prev) => ({ ...prev, [subId]: logs ?? [] }));
+    } catch {
+      // silently ignore
+    }
+  }, [projectId, estimateId]);
+
+  const openCallLog = React.useCallback((subId: number) => {
+    setOpenCallLogSubId(subId);
+    setCallLogOutcome("");
+    setCallLogNotes("");
+    void loadCallLogs(subId);
+  }, [loadCallLogs]);
+
+  const submitCallLog = React.useCallback(async (subId: number) => {
+    if (!callLogOutcome) return;
+    setCallLogSubmitting(true);
+    try {
+      const log = await apiFetch<CallLog>(
+        `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/call-logs`,
+        { method: "POST", body: JSON.stringify({ outcome: callLogOutcome, notes: callLogNotes || undefined }) }
+      );
+      if (log) {
+        setCallLogsBySubId((prev) => ({ ...prev, [subId]: [log, ...(prev[subId] ?? [])] }));
+        // Update phone_follow_up on the sub row to reflect latest outcome
+        await onPatchSub(subId, { phone_follow_up: callLogOutcome === "Reached" ? "Yes" : "No" });
+      }
+      setCallLogOutcome("");
+      setCallLogNotes("");
+      toast.success("Call logged");
+    } catch {
+      toast.error("Failed to log call");
+    } finally {
+      setCallLogSubmitting(false);
+    }
+  }, [projectId, estimateId, callLogOutcome, callLogNotes, onPatchSub]);
+
   // Load companies once on mount
   React.useEffect(() => {
     const supabaseClient = createClient();
@@ -1897,7 +1946,7 @@ function SubListTab({
               <SortTh col="company" label="Company" />
               <SortTh col="intend_to_submit" label="Intend?" className="w-24" />
               <SortTh col="email_sent" label="Email Sent?" className="w-24" />
-              <SortTh col="phone_follow_up" label="Phone F/U?" className="w-24" />
+              <th className="w-28 px-2 py-2 text-left text-xs font-medium text-muted-foreground">Last Call</th>
               <SortTh col="bid_received" label="Bid Rec'd?" className="w-24" />
               <SortTh col="contact_name" label="Contact" />
               <SortTh col="email" label="Email" />
@@ -2052,13 +2101,89 @@ function SubListTab({
                           placeholder="—"
                         />
                       </td>
-                      <td className="w-24 px-2 py-1">
-                        <InlineSelect
-                          value={sub.phone_follow_up ?? ""}
-                          options={PHONE_OPTIONS}
-                          onValueChange={(v) => void onPatchSub(sub.id, { phone_follow_up: v || null })}
-                          placeholder="—"
-                        />
+                      {/* Phone Follow-Up — call log popover */}
+                      <td className="w-28 px-2 py-1">
+                        <div className="relative">
+                          <Button
+                            variant="ghost"
+                            type="button"
+                            size="sm"
+                            className="h-6 w-full justify-start px-1.5 text-xs"
+                            onClick={() => openCallLog(sub.id)}
+                          >
+                            {sub.phone_follow_up ? (
+                              <span className={sub.phone_follow_up === "Yes" ? "text-status-success" : "text-muted-foreground"}>
+                                {sub.phone_follow_up === "Yes" ? "Reached" : "No contact"}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground/50">Log call</span>
+                            )}
+                          </Button>
+                          {openCallLogSubId === sub.id && (
+                            <div
+                              className="absolute left-0 top-8 z-50 w-72 rounded-md border border-border bg-popover p-3 shadow-sm"
+                              onMouseDown={(e) => e.stopPropagation()}
+                            >
+                              <div className="mb-2 flex items-center justify-between">
+                                <span className="text-xs font-medium">Log phone call</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  type="button"
+                                  className="h-5 w-5"
+                                  onClick={() => setOpenCallLogSubId(null)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <div className="mb-2 grid grid-cols-2 gap-1">
+                                {(["Reached", "Voicemail", "No Answer", "Declined"] as const).map((outcome) => (
+                                  <Button
+                                    key={outcome}
+                                    variant={callLogOutcome === outcome ? "default" : "outline"}
+                                    type="button"
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    onClick={() => setCallLogOutcome(outcome)}
+                                  >
+                                    {outcome}
+                                  </Button>
+                                ))}
+                              </div>
+                              <Input
+                                placeholder="Notes (optional)"
+                                value={callLogNotes}
+                                onChange={(e) => setCallLogNotes(e.target.value)}
+                                className="mb-2 h-7 text-xs"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-7 w-full text-xs"
+                                disabled={!callLogOutcome || callLogSubmitting}
+                                onClick={() => void submitCallLog(sub.id)}
+                              >
+                                {callLogSubmitting ? "Saving…" : "Log call"}
+                              </Button>
+                              {/* History */}
+                              {(callLogsBySubId[sub.id] ?? []).length > 0 && (
+                                <div className="mt-3 border-t border-border pt-2">
+                                  <p className="mb-1 text-[10px] font-medium uppercase text-muted-foreground">History</p>
+                                  <div className="max-h-32 space-y-1 overflow-y-auto">
+                                    {(callLogsBySubId[sub.id] ?? []).map((log) => (
+                                      <div key={log.id} className="text-[10px] text-muted-foreground">
+                                        <span className="font-medium text-foreground">{log.outcome}</span>
+                                        {" — "}
+                                        {new Date(log.called_at).toLocaleDateString()}
+                                        {log.notes && <span className="block pl-2 text-muted-foreground">{log.notes}</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="w-24 px-2 py-1">
                         <InlineSelect

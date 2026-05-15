@@ -1,3 +1,4 @@
+Using workdir /Users/meganharrison/Documents/alleato-pm
 export type Json =
   | string
   | number
@@ -11974,6 +11975,30 @@ export type Database = {
           },
         ]
       }
+      estimate_gc_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          items: Json
+          name: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          items?: Json
+          name: string
+          template_id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          items?: Json
+          name?: string
+          template_id?: string
+        }
+        Relationships: []
+      }
       estimate_line_items: {
         Row: {
           comment_type: string | null
@@ -12084,6 +12109,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
+      estimate_sublist_call_logs: {
+        Row: {
+          called_at: string
+          created_at: string
+          id: number
+          notes: string | null
+          outcome: string
+          sub_id: number
+        }
+        Insert: {
+          called_at?: string
+          created_at?: string
+          id?: number
+          notes?: string | null
+          outcome: string
+          sub_id: number
+        }
+        Update: {
+          called_at?: string
+          created_at?: string
+          id?: number
+          notes?: string | null
+          outcome?: string
+          sub_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_sublist_call_logs_sub_id_fkey"
+            columns: ["sub_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_sublist_subs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -34974,3 +35034,4 @@ export const Constants = {
     },
   },
 } as const
+<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />
