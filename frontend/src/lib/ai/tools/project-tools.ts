@@ -836,8 +836,7 @@ export function createProjectTools(
               id: resolvedProjectId,
               name: project.name,
               projectNumber: project.project_number,
-              client: project.client,
-              phase: project.phase ?? project.current_phase,
+              phase: project.phase ?? project.stage,
               healthStatus: project.health_status,
               completionPct: project.completion_percentage,
               summary: project.summary,
@@ -1153,7 +1152,6 @@ export function createProjectTools(
             id: p.id,
             name: p.name,
             projectNumber: p.project_number,
-            client: p.client,
             phase: p.phase,
             state: p.state,
             summary: p.summary,
@@ -2497,7 +2495,41 @@ export function createProjectTools(
           .optional()
           .default("any")
           .describe(
-            "Filter by document category. 'any' returns all categories.",
+            "Filter by document category (legacy). 'any' returns all categories. Prefer documentType when available.",
+          ),
+        documentType: z
+          .enum([
+            "executed_contract",
+            "contract_proposal",
+            "change_order_executed",
+            "insurance_certificate",
+            "lien_waiver_progress",
+            "lien_waiver_final",
+            "w9",
+            "closeout_manual",
+            "closeout_warranty",
+            "closeout_asbuilt",
+            "permit",
+            "permit_inspection",
+            "drawing_revision",
+            "progress_photo",
+            "email_message",
+            "teams_message",
+            "meeting_transcript",
+            "invoice_document",
+            "submittal",
+            "rfi_response",
+            "daily_report",
+            "email_attachment",
+            "other",
+          ])
+          .optional()
+          .describe(
+            "Filter by structured document type taxonomy key. " +
+            "More precise than category — use this when you know the exact document type. " +
+            "Examples: 'find the executed contract' → documentType='executed_contract'; " +
+            "'show lien waivers' → documentType='lien_waiver_progress' or 'lien_waiver_final'; " +
+            "'get COI' → documentType='insurance_certificate'.",
           ),
         titleKeyword: z
           .string()
@@ -2523,7 +2555,7 @@ export function createProjectTools(
       execute: withTrace(
         "findProjectDocuments",
         options,
-        async ({ projectId, projectName, category, titleKeyword, sinceIso, limit }) => {
+        async ({ projectId, projectName, category, documentType, titleKeyword, sinceIso, limit }) => {
           let resolvedProjectId = projectId;
           // Resolve projectName → id when needed.
           if (!resolvedProjectId && projectName) {
@@ -2545,7 +2577,7 @@ export function createProjectTools(
           let q = supabase
             .from("document_metadata")
             .select(
-              "id, file_name, title, type, category, date, summary, description, file_path, file_id, project_id, captured_at",
+              "id, file_name, title, type, category, document_type, date, summary, description, file_path, file_id, project_id, captured_at",
             )
             .order("date", { ascending: false, nullsFirst: false })
             .order("captured_at", { ascending: false })
@@ -2557,9 +2589,11 @@ export function createProjectTools(
             q = q.in("project_id", scopedProjectIds);
           }
 
-          if (category && category !== "any") {
-            // category column on document_metadata covers most types; type column
-            // covers a few legacy values. Match either.
+          // documentType takes precedence — exact FK match against taxonomy
+          if (documentType) {
+            q = q.eq("document_type", documentType);
+          } else if (category && category !== "any") {
+            // Legacy category fallback: match category or type columns
             q = q.or(`category.ilike.%${category}%,type.ilike.%${category}%`);
           }
 
@@ -2583,6 +2617,7 @@ export function createProjectTools(
           return {
             resolvedProjectId: resolvedProjectId ?? null,
             documentCount: rows.length,
+            documentType: documentType ?? null,
             category: category ?? "any",
             titleKeyword: titleKeyword ?? null,
             documents: rows.map((d) => ({
@@ -2591,6 +2626,7 @@ export function createProjectTools(
               title: d.title,
               type: d.type,
               category: d.category,
+              documentType: d.document_type,
               date: d.date,
               capturedAt: d.captured_at,
               projectId: d.project_id,
@@ -2607,7 +2643,7 @@ export function createProjectTools(
             })),
             note:
               rows.length === 0
-                ? "No documents matched. The document_metadata table only includes 'category' values that have been backfilled — most rows are tagged 'document'. Try titleKeyword for substring matches in file_name/title."
+                ? "No documents matched. Try titleKeyword for substring matches in file_name/title, or omit documentType/category to browse all."
                 : null,
           };
         },
@@ -2622,7 +2658,7 @@ export function createProjectTools(
         "say about fire ratings'). " +
         "For finding a specific FILE (the permit, the contract, the drawings) " +
         "use findProjectDocuments instead. " +
-        "For project FACTS (address, client, phase, manager) use getProjectDetails. " +
+        "For project FACTS (address, phase, manager) use getProjectDetails. " +
         "Works across ALL projects by default; optionally filter by projectId/Name.",
       inputSchema: z.object({
         query: z
@@ -2750,7 +2786,7 @@ export function createProjectTools(
     getProjectDetails: tool({
       description:
         "**USE THIS FIRST for any STRUCTURED FACT about a specific project**: " +
-        "address, city, state, client, project_number, current_phase, " +
+        "address, city, state, project_number, stage, " +
         "project_manager, OneDrive folder link, budget, completion %, " +
         "health_score, work_scope, delivery_method, team_members, " +
         "stakeholders, ERP / Acumatica project id, dates. " +
@@ -2858,8 +2894,7 @@ export function createProjectTools(
             id: project.id,
             name: project.name,
             projectNumber: project.project_number,
-            client: project.client,
-            phase: project.phase ?? project.current_phase,
+            phase: project.phase ?? project.stage,
             state: project.state,
             address: project.address,
             budget: project.budget,

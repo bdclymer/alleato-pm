@@ -6656,229 +6656,6 @@ export type Database = {
         }
         Relationships: []
       }
-      chat_messages: {
-        Row: {
-          content: string
-          created_at: string | null
-          id: string
-          metadata: Json | null
-          role: string
-          session_id: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          id?: string
-          metadata?: Json | null
-          role: string
-          session_id?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          id?: string
-          metadata?: Json | null
-          role?: string
-          session_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "chat_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_sessions: {
-        Row: {
-          context: Json | null
-          created_at: string | null
-          id: string
-          title: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          context?: Json | null
-          created_at?: string | null
-          id?: string
-          title?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          context?: Json | null
-          created_at?: string | null
-          id?: string
-          title?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      chat_thread_attachment_files: {
-        Row: {
-          attachment_id: string
-          created_at: string
-          filename: string | null
-          mime_type: string | null
-          size_bytes: number | null
-          storage_path: string
-          thread_id: string | null
-        }
-        Insert: {
-          attachment_id: string
-          created_at?: string
-          filename?: string | null
-          mime_type?: string | null
-          size_bytes?: number | null
-          storage_path: string
-          thread_id?: string | null
-        }
-        Update: {
-          attachment_id?: string
-          created_at?: string
-          filename?: string | null
-          mime_type?: string | null
-          size_bytes?: number | null
-          storage_path?: string
-          thread_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_thread_attachment_files_attachment_id_fkey"
-            columns: ["attachment_id"]
-            isOneToOne: true
-            referencedRelation: "chat_thread_attachments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_thread_attachments: {
-        Row: {
-          created_at: string
-          filename: string | null
-          id: string
-          mime_type: string | null
-          payload: Json | null
-          thread_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          filename?: string | null
-          id: string
-          mime_type?: string | null
-          payload?: Json | null
-          thread_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          filename?: string | null
-          id?: string
-          mime_type?: string | null
-          payload?: Json | null
-          thread_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_thread_attachments_thread_id_fkey"
-            columns: ["thread_id"]
-            isOneToOne: false
-            referencedRelation: "chat_threads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_thread_feedback: {
-        Row: {
-          created_at: string
-          feedback: string
-          id: string
-          item_ids: string[]
-          metadata: Json
-          thread_id: string
-        }
-        Insert: {
-          created_at?: string
-          feedback: string
-          id?: string
-          item_ids: string[]
-          metadata?: Json
-          thread_id: string
-        }
-        Update: {
-          created_at?: string
-          feedback?: string
-          id?: string
-          item_ids?: string[]
-          metadata?: Json
-          thread_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_thread_feedback_thread_id_fkey"
-            columns: ["thread_id"]
-            isOneToOne: false
-            referencedRelation: "chat_threads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_thread_items: {
-        Row: {
-          created_at: string
-          id: string
-          item_type: string
-          payload: Json
-          thread_id: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          item_type: string
-          payload: Json
-          thread_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          item_type?: string
-          payload?: Json
-          thread_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_thread_items_thread_id_fkey"
-            columns: ["thread_id"]
-            isOneToOne: false
-            referencedRelation: "chat_threads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_threads: {
-        Row: {
-          created_at: string
-          id: string
-          metadata: Json
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          metadata?: Json
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          metadata?: Json
-          updated_at?: string
-        }
-        Relationships: []
-      }
       chats: {
         Row: {
           id: string
@@ -6939,50 +6716,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "documents_ordered_view"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      code_examples: {
-        Row: {
-          chunk_number: number
-          content: string
-          created_at: string
-          embedding: string | null
-          id: number
-          metadata: Json
-          source_id: string
-          summary: string
-          url: string
-        }
-        Insert: {
-          chunk_number: number
-          content: string
-          created_at?: string
-          embedding?: string | null
-          id?: number
-          metadata?: Json
-          source_id: string
-          summary: string
-          url: string
-        }
-        Update: {
-          chunk_number?: number
-          content?: string
-          created_at?: string
-          embedding?: string | null
-          id?: number
-          metadata?: Json
-          source_id?: string
-          summary?: string
-          url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "code_examples_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["source_id"]
           },
         ]
       }
@@ -10216,6 +9949,7 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           division: string | null
+          document_type: string | null
           duration_minutes: number | null
           extended_sections: Json | null
           file_id: number | null
@@ -10289,6 +10023,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           division?: string | null
+          document_type?: string | null
           duration_minutes?: number | null
           extended_sections?: Json | null
           file_id?: number | null
@@ -10362,6 +10097,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           division?: string | null
+          document_type?: string | null
           duration_minutes?: number | null
           extended_sections?: Json | null
           file_id?: number | null
@@ -10418,6 +10154,13 @@ export type Database = {
           workflow_target?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "document_metadata_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
@@ -10536,6 +10279,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      document_type_taxonomy: {
+        Row: {
+          applies_to: string[]
+          category: string
+          created_at: string
+          display_name: string
+          is_active: boolean
+          required_metadata: Json | null
+          retention_days: number | null
+          sort_order: number
+          source_system: string | null
+          type_key: string
+        }
+        Insert: {
+          applies_to: string[]
+          category: string
+          created_at?: string
+          display_name: string
+          is_active?: boolean
+          required_metadata?: Json | null
+          retention_days?: number | null
+          sort_order?: number
+          source_system?: string | null
+          type_key: string
+        }
+        Update: {
+          applies_to?: string[]
+          category?: string
+          created_at?: string
+          display_name?: string
+          is_active?: boolean
+          required_metadata?: Json | null
+          retention_days?: number | null
+          sort_order?: number
+          source_system?: string | null
+          type_key?: string
+        }
+        Relationships: []
       }
       document_user_access: {
         Row: {
@@ -22675,12 +22457,9 @@ export type Database = {
           budget_locked_by: string | null
           budget_used: number | null
           category: string | null
-          client: string | null
-          client_id: string | null
           company_id: string | null
           completion_percentage: number | null
           created_at: string
-          current_phase: string | null
           delivery_method: string | null
           document_count: number
           erp_last_direct_cost_sync: string | null
@@ -22701,6 +22480,7 @@ export type Database = {
           project_manager: number | null
           project_number: string | null
           project_sector: string | null
+          stage: string | null
           stakeholders: Json | null
           "start date": string | null
           state: string | null
@@ -22725,12 +22505,9 @@ export type Database = {
           budget_locked_by?: string | null
           budget_used?: number | null
           category?: string | null
-          client?: string | null
-          client_id?: string | null
           company_id?: string | null
           completion_percentage?: number | null
           created_at?: string
-          current_phase?: string | null
           delivery_method?: string | null
           document_count?: number
           erp_last_direct_cost_sync?: string | null
@@ -22751,6 +22528,7 @@ export type Database = {
           project_manager?: number | null
           project_number?: string | null
           project_sector?: string | null
+          stage?: string | null
           stakeholders?: Json | null
           "start date"?: string | null
           state?: string | null
@@ -22775,12 +22553,9 @@ export type Database = {
           budget_locked_by?: string | null
           budget_used?: number | null
           category?: string | null
-          client?: string | null
-          client_id?: string | null
           company_id?: string | null
           completion_percentage?: number | null
           created_at?: string
-          current_phase?: string | null
           delivery_method?: string | null
           document_count?: number
           erp_last_direct_cost_sync?: string | null
@@ -22801,6 +22576,7 @@ export type Database = {
           project_manager?: number | null
           project_number?: string | null
           project_sector?: string | null
+          stage?: string | null
           stakeholders?: Json | null
           "start date"?: string | null
           state?: string | null
@@ -22812,13 +22588,6 @@ export type Database = {
           work_scope?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "projects_client_company_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "projects_company_id_fkey"
             columns: ["company_id"]
@@ -26380,63 +26149,6 @@ export type Database = {
             columns: ["subcontract_id"]
             isOneToOne: false
             referencedRelation: "subcontracts_with_totals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subcontractor_contacts: {
-        Row: {
-          contact_type: string | null
-          created_at: string | null
-          email: string | null
-          id: string
-          is_primary: boolean | null
-          mobile_phone: string | null
-          name: string
-          notes: string | null
-          phone: string | null
-          subcontractor_id: string | null
-          title: string | null
-        }
-        Insert: {
-          contact_type?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          is_primary?: boolean | null
-          mobile_phone?: string | null
-          name: string
-          notes?: string | null
-          phone?: string | null
-          subcontractor_id?: string | null
-          title?: string | null
-        }
-        Update: {
-          contact_type?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          is_primary?: boolean | null
-          mobile_phone?: string | null
-          name?: string
-          notes?: string | null
-          phone?: string | null
-          subcontractor_id?: string | null
-          title?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subcontractor_contacts_subcontractor_id_fkey"
-            columns: ["subcontractor_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subcontractor_contacts_subcontractor_id_fkey"
-            columns: ["subcontractor_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractors_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -32597,7 +32309,6 @@ export type Database = {
         Row: {
           budget_utilization: number | null
           completion_percentage: number | null
-          current_phase: string | null
           "est completion": string | null
           health_score: number | null
           health_status: string | null
@@ -32606,6 +32317,7 @@ export type Database = {
           name: string | null
           open_critical_items: number | null
           recent_documents_count: number | null
+          stage: string | null
           summary: string | null
           summary_updated_at: string | null
           total_insights_count: number | null
@@ -32613,7 +32325,6 @@ export type Database = {
         Insert: {
           budget_utilization?: never
           completion_percentage?: number | null
-          current_phase?: string | null
           "est completion"?: string | null
           health_score?: number | null
           health_status?: string | null
@@ -32622,6 +32333,7 @@ export type Database = {
           name?: string | null
           open_critical_items?: never
           recent_documents_count?: never
+          stage?: string | null
           summary?: string | null
           summary_updated_at?: string | null
           total_insights_count?: never
@@ -32629,7 +32341,6 @@ export type Database = {
         Update: {
           budget_utilization?: never
           completion_percentage?: number | null
-          current_phase?: string | null
           "est completion"?: string | null
           health_score?: number | null
           health_status?: string | null
@@ -32638,6 +32349,7 @@ export type Database = {
           name?: string | null
           open_critical_items?: never
           recent_documents_count?: never
+          stage?: string | null
           summary?: string | null
           summary_updated_at?: string | null
           total_insights_count?: never
@@ -32785,11 +32497,9 @@ export type Database = {
           budget_locked_by: string | null
           budget_used: number | null
           category: string | null
-          client: string | null
-          client_id: string | null
+          company_id: string | null
           completion_percentage: number | null
           created_at: string | null
-          current_phase: string | null
           delivery_method: string | null
           document_count: number | null
           erp_last_direct_cost_sync: string | null
@@ -32810,6 +32520,7 @@ export type Database = {
           project_manager: number | null
           project_number: string | null
           project_sector: string | null
+          stage: string | null
           stakeholders: Json | null
           "start date": string | null
           state: string | null
@@ -32822,8 +32533,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "projects_client_company_id_fkey"
-            columns: ["client_id"]
+            foreignKeyName: "projects_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
@@ -33421,6 +33132,7 @@ export type Database = {
         Returns: boolean
       }
       current_person_id: { Args: never; Returns: string }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       decay_memory_confidence: {
         Args: never
         Returns: {

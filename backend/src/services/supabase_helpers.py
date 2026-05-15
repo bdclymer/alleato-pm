@@ -223,6 +223,7 @@ class SupabaseRagStore:
             "title": metadata.get("title"),
             "type": metadata.get("type"),
             "category": metadata.get("category"),
+            "document_type": metadata.get("document_type"),
             "source_web_url": metadata.get("source_web_url"),
             "url": metadata.get("url"),
             "storage_bucket": metadata.get("storage_bucket"),
