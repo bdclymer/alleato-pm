@@ -49,7 +49,7 @@ export function useCreatePrimeContract(projectId: string) {
       const sovTotal = sovItems.reduce(
         (sum, item) =>
           sum +
-          (data.accountingMethod === "unit_quantity"
+          (data.accountingMethod === "unit_quantity" && !item.isMarkup
             ? (item.quantity ?? 0) * (item.unitCost ?? 0)
             : item.amount || 0),
         0,
@@ -101,8 +101,9 @@ export function useCreatePrimeContract(projectId: string) {
       for (let i = 0; i < sovItems.length; i++) {
         const item = sovItems[i];
         // Sequential inserts to avoid UNIQUE(contract_id, line_number) race condition
-        const quantity = data.accountingMethod === "unit_quantity" ? item.quantity ?? 0 : 1;
-        const unitCost = data.accountingMethod === "unit_quantity" ? item.unitCost ?? 0 : item.amount || 0;
+        // Markup items are always amount-based regardless of accounting method
+        const quantity = data.accountingMethod === "unit_quantity" && !item.isMarkup ? item.quantity ?? 0 : 1;
+        const unitCost = data.accountingMethod === "unit_quantity" && !item.isMarkup ? item.unitCost ?? 0 : item.amount || 0;
         try {
           await apiFetchWithTimeout(
             `/api/projects/${projectId}/contracts/${newContract.id}/line-items`,
@@ -123,6 +124,26 @@ export function useCreatePrimeContract(projectId: string) {
           sovErrors.push(
             `Line ${i + 1} (${item.description || "untitled"}): ${err instanceof Error ? err.message : "Unknown error"}`,
           );
+        }
+      }
+
+      // Save markups that don't yet exist in the DB (temp IDs start with "markup-")
+      const newMarkups = (data.markups || []).filter((m) =>
+        m.id.startsWith("markup-"),
+      );
+      for (const markup of newMarkups) {
+        try {
+          await apiFetch(`/api/projects/${projectId}/vertical-markup`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              markup_type: markup.markup_type,
+              percentage: markup.percentage,
+              compound: markup.compound,
+            }),
+          });
+        } catch {
+          // Non-critical: markups can be configured later in the Financial Markup tab
         }
       }
 

@@ -57,8 +57,10 @@ import {
   ChevronRight,
   Download,
   FileSpreadsheet,
+  Lock,
   Plus,
   Search,
+  Trash2,
   Upload,
   X,
 } from "lucide-react";
@@ -100,9 +102,14 @@ export function PrimeContractSovSection({
   onAddSovLine,
   onUpdateSovLine,
   onRemoveSovLine,
+  selectedSovItems,
+  onToggleSovItemSelection,
+  onToggleAllSovItems,
+  onBulkRemoveSovLines,
   onHandleBudgetCodeSelect,
   onHandleImportFromBudgetSuccess,
   onHandleImportEstimateWorkbookSuccess,
+  onBudgetCodesActivated,
 }: {
   projectId: string;
   formData: Partial<ContractFormData>;
@@ -132,11 +139,16 @@ export function PrimeContractSovSection({
   onAddSovLine: () => void;
   onUpdateSovLine: (id: string, updates: Partial<SOVLineItem>) => void;
   onRemoveSovLine: (id: string) => void;
+  selectedSovItems: Set<string>;
+  onToggleSovItemSelection: (id: string) => void;
+  onToggleAllSovItems: (checked: boolean) => void;
+  onBulkRemoveSovLines: () => void;
   onHandleBudgetCodeSelect: (rowId: string, code: BudgetCode) => void;
   onHandleImportFromBudgetSuccess: (items: unknown[]) => void;
   onHandleImportEstimateWorkbookSuccess: (
     rows: EstimateWorkbookImportRow[],
   ) => void;
+  onBudgetCodesActivated?: () => Promise<void>;
 }) {
   return (
     <>
@@ -187,6 +199,31 @@ export function PrimeContractSovSection({
         >
           <InlineTableHeader>
             <InlineTableHeaderRow>
+              <InlineTableHeaderCell className="w-10">
+                {(() => {
+                  const nonGroupItems = (formData.sovItems || []).filter(
+                    (item) => !item.isGroup,
+                  );
+                  const allSelected =
+                    nonGroupItems.length > 0 &&
+                    nonGroupItems.every((item) =>
+                      selectedSovItems.has(item.id),
+                    );
+                  const someSelected =
+                    !allSelected && selectedSovItems.size > 0;
+                  return (
+                    <Checkbox
+                      checked={allSelected}
+                      data-state={someSelected ? "indeterminate" : undefined}
+                      disabled={nonGroupItems.length === 0}
+                      onCheckedChange={(checked) =>
+                        onToggleAllSovItems(checked === true)
+                      }
+                      aria-label="Select all line items"
+                    />
+                  );
+                })()}
+              </InlineTableHeaderCell>
               <InlineTableHeaderCell className="min-w-80">
                 Budget Code
               </InlineTableHeaderCell>
@@ -240,7 +277,8 @@ export function PrimeContractSovSection({
                     type="group"
                     data-testid={`sov-group-${index}`}
                   >
-                    <InlineTableCell colSpan={sovColumnCount - 1}>
+                    <InlineTableCell />
+                    <InlineTableCell colSpan={sovColumnCount - 2}>
                       <Input
                         value={item.description}
                         onChange={(e) =>
@@ -267,11 +305,68 @@ export function PrimeContractSovSection({
                       </Button>
                     </InlineTableCell>
                   </InlineTableRow>
+                ) : item.isMarkup ? (
+                  <InlineTableRow
+                    key={item.id}
+                    data-testid={`sov-markup-${index}`}
+                    className="bg-muted/30"
+                  >
+                    <InlineTableCell>
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                          Markup
+                        </span>
+                      </span>
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      <span className="text-sm text-foreground">
+                        {item.description}
+                      </span>
+                    </InlineTableCell>
+                    {isUnitQuantityMode ? (
+                      <>
+                        <InlineTableCell />
+                        <InlineTableCell />
+                      </>
+                    ) : null}
+                    <InlineTableCell>
+                      <span className="block h-10 text-right text-sm leading-10 text-foreground tabular-nums">
+                        $
+                        {(item.amount || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </InlineTableCell>
+                    <InlineTableCell align="right" numeric>
+                      $0.00
+                    </InlineTableCell>
+                    <InlineTableCell align="right" numeric>
+                      $
+                      {(item.amount || 0).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </InlineTableCell>
+                    <InlineTableCell />
+                  </InlineTableRow>
                 ) : (
                   <InlineTableRow
                     key={item.id}
                     data-testid={`sov-line-${index}`}
                   >
+                    <InlineTableCell>
+                      <Checkbox
+                        checked={selectedSovItems.has(item.id)}
+                        onCheckedChange={() =>
+                          onToggleSovItemSelection(item.id)
+                        }
+                        aria-label="Select line item"
+                      />
+                    </InlineTableCell>
                     <InlineTableCell>
                       <Popover
                         open={openBudgetCodePopover === item.id}
@@ -464,6 +559,19 @@ export function PrimeContractSovSection({
                     {(formData.sovItems || []).length} line items
                   </span>
                 ) : null}
+                {selectedSovItems.size > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onBulkRemoveSovLines}
+                    className="ml-4 h-auto p-0 text-sm font-medium text-destructive hover:text-destructive"
+                    data-testid="sov-bulk-delete"
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    Delete {selectedSovItems.size} selected
+                  </Button>
+                ) : null}
               </InlineTableFooterCell>
               <InlineTableFooterCell />
             </InlineTableFooterRow>
@@ -535,6 +643,7 @@ export function PrimeContractSovSection({
         budgetCodes={budgetCodes}
         existingSovItems={formData.sovItems || []}
         onImportRows={onHandleImportEstimateWorkbookSuccess}
+        onBudgetCodesActivated={onBudgetCodesActivated}
       />
     </>
   );
@@ -575,6 +684,7 @@ function EstimateWorkbookImportModal({
   budgetCodes,
   existingSovItems,
   onImportRows,
+  onBudgetCodesActivated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -582,6 +692,7 @@ function EstimateWorkbookImportModal({
   budgetCodes: BudgetCode[];
   existingSovItems: SOVLineItem[];
   onImportRows: (rows: EstimateWorkbookImportRow[]) => void;
+  onBudgetCodesActivated?: () => Promise<void>;
 }) {
   const [file, setFile] = React.useState<File | null>(null);
   const [rows, setRows] = React.useState<EstimateWorkbookImportRow[]>([]);
@@ -660,23 +771,38 @@ function EstimateWorkbookImportModal({
       const preview = await apiFetch<{
         rows: EstimateWorkbookImportRow[];
         warnings: string[];
+        missingBudgetCodeMappingCount?: number;
       }>(`/api/projects/${projectId}/contracts/estimate-import/preview`, {
         method: "POST",
         body: formData,
       });
       const ownerRows = preview.rows.filter((row) => row.includeInOwnerSov);
+
+      // Auto-activate any budget codes that are missing so all valid rows are importable
+      const rowsMissingCodes = ownerRows.filter(
+        (row) => row.warnings.length === 0 && !(row as { hasBudgetCodeMapping?: boolean }).hasBudgetCodeMapping,
+      );
+      if (rowsMissingCodes.length > 0 && onBudgetCodesActivated) {
+        await apiFetch(`/api/projects/${projectId}/budget-codes/activate`, {
+          method: "POST",
+          body: JSON.stringify({
+            rows: rowsMissingCodes.map((row) => ({
+              costCode: row.costCode,
+              costTypeCode: row.costTypeCode,
+              description: row.description,
+            })),
+          }),
+        });
+        // Refresh parent's budget codes so mapping in handleImportEstimateWorkbookSuccess succeeds
+        await onBudgetCodesActivated();
+      }
+
       setRows(ownerRows);
       setWarnings(preview.warnings);
       setSelectedRows(
         new Set(
           ownerRows
-            .filter((row) => {
-              const budgetCode = resolveEstimateBudgetCode(row, budgetCodes);
-              return (
-                row.warnings.length === 0 &&
-                !existingBudgetCodeIds.has(budgetCode?.id ?? "")
-              );
-            })
+            .filter((row) => row.warnings.length === 0)
             .map((row) => getEstimateRowKey(row)),
         ),
       );

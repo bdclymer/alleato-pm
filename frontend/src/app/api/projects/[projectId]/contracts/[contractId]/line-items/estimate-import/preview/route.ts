@@ -177,10 +177,7 @@ export const POST = withApiGuardrails<{
     selectedByDefault:
       row.includeInOwnerSov &&
       !existingCostCodeIds.has(row.costCode) &&
-      row.warnings.length === 0 &&
-      activeBudgetCodeByCostCodeAndType.has(
-        `${row.costCode}|${costTypeIdByCode.get(row.costTypeCode) ?? ""}`,
-      ),
+      row.warnings.length === 0,
   }));
 
   return NextResponse.json({

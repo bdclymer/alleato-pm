@@ -11,7 +11,28 @@ import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { createClient } from "@/lib/supabase/client";
 import type { EstimateWorkbookImportRow } from "@/lib/prime-contracts/estimate-workbook-sov";
 
-import type { BudgetCode, ContractFormData, SOVLineItem } from "./types";
+import type { BudgetCode, ContractFormData, MarkupFormItem, SOVLineItem } from "./types";
+
+const DEFAULT_MARKUPS: MarkupFormItem[] = [
+  {
+    id: "markup-default-1",
+    markup_type: "insurance",
+    percentage: 1.35,
+    compound: true,
+    calculation_order: 1,
+    display_in: "horizontal",
+    maps_to: "all",
+  },
+  {
+    id: "markup-default-2",
+    markup_type: "fee",
+    percentage: 10,
+    compound: true,
+    calculation_order: 2,
+    display_in: "horizontal",
+    maps_to: "all",
+  },
+];
 
 interface PrimeContractFormStateArgs {
   initialData?: Partial<ContractFormData>;
@@ -76,6 +97,12 @@ export function usePrimeContractFormState({
   >({});
   const [showImportFromBudget, setShowImportFromBudget] = React.useState(false);
   const [sovActionMenuKey, setSovActionMenuKey] = React.useState(0);
+  const [markups, setMarkups] = React.useState<MarkupFormItem[]>(
+    mode === "create" ? DEFAULT_MARKUPS : [],
+  );
+  const [selectedSovItems, setSelectedSovItems] = React.useState<Set<string>>(
+    new Set(),
+  );
   const [showAddCompany, setShowAddCompany] = React.useState(false);
   const [newCompanyName, setNewCompanyName] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
@@ -162,32 +189,107 @@ export function usePrimeContractFormState({
     void fetchNextContractNumber();
   }, [mode, projectId, initialData?.number]);
 
+  const fetchBudgetCodes = React.useCallback(async () => {
+    if (!projectId) return;
+    try {
+      setLoadingBudgetCodes(true);
+      const { budgetCodes } = await apiFetchWithTransientRouteRetry<{
+        budgetCodes: BudgetCode[];
+      }>(`/api/projects/${projectId}/budget-codes`);
+      setBudgetCodes(budgetCodes || []);
+    } catch (error) {
+      console.error("[ContractForm] Failed to load budget codes:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load budget codes",
+      );
+      setBudgetCodes([]);
+    } finally {
+      setLoadingBudgetCodes(false);
+    }
+  }, [projectId]);
+
   React.useEffect(() => {
-    const fetchBudgetCodes = async () => {
-      if (!projectId) return;
+    void fetchBudgetCodes();
+  }, [fetchBudgetCodes]);
 
+  // For create mode: fetch existing project markups; use defaults only if none exist
+  React.useEffect(() => {
+    if (mode !== "create") return;
+    const fetchExistingMarkups = async () => {
       try {
-        setLoadingBudgetCodes(true);
-        const { budgetCodes } = await apiFetchWithTransientRouteRetry<{
-          budgetCodes: BudgetCode[];
-        }>(`/api/projects/${projectId}/budget-codes`);
-
-        setBudgetCodes(budgetCodes || []);
-      } catch (error) {
-        console.error("[ContractForm] Failed to load budget codes:", error);
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to load budget codes",
-        );
-        setBudgetCodes([]);
-      } finally {
-        setLoadingBudgetCodes(false);
+        const { markups: existing } = await apiFetch<{
+          markups: Array<{
+            id: string;
+            markup_type: string;
+            percentage: number;
+            compound: boolean;
+            calculation_order: number;
+            maps_to_budget_code_id?: string | null;
+          }>;
+        }>(`/api/projects/${projectId}/vertical-markup`);
+        if (existing && existing.length > 0) {
+          setMarkups(
+            existing.map((m) => ({
+              id: m.id,
+              markup_type: m.markup_type,
+              percentage: m.percentage,
+              compound: m.compound,
+              calculation_order: m.calculation_order,
+              display_in: "horizontal" as const,
+              maps_to: m.maps_to_budget_code_id ?? "all",
+            })),
+          );
+        }
+        // If no existing markups, DEFAULT_MARKUPS (set in useState) are kept
+      } catch {
+        // Non-critical — keep defaults on fetch failure
       }
     };
+    void fetchExistingMarkups();
+  }, [mode, projectId]);
 
-    void fetchBudgetCodes();
-  }, [projectId]);
+  // Compute markup-driven SOV items from the current base SOV totals
+  const computedMarkupSovItems = React.useMemo((): SOVLineItem[] => {
+    if (markups.length === 0) return [];
+    const baseItems = (formData.sovItems || []).filter(
+      (item) => !item.isGroup,
+    );
+    const baseTotal = baseItems.reduce((sum, item) => {
+      if (formData.accountingMethod === "unit_quantity") {
+        return sum + (item.quantity ?? 0) * (item.unitCost ?? 0);
+      }
+      return sum + (item.amount || 0);
+    }, 0);
+
+    const sorted = [...markups].sort(
+      (a, b) => a.calculation_order - b.calculation_order,
+    );
+    let runningTotal = baseTotal;
+    return sorted
+      .filter((m) => m.percentage > 0)
+      .map((m) => {
+        const base = m.compound ? runningTotal : baseTotal;
+        const markupAmount = (base * m.percentage) / 100;
+        runningTotal += markupAmount;
+        const label =
+          m.markup_type.charAt(0).toUpperCase() + m.markup_type.slice(1);
+        return {
+          id: `sov-markup-${m.id}`,
+          isMarkup: true,
+          markupType: m.markup_type,
+          description: `${label} (${Number(m.percentage).toFixed(2)}%)`,
+          amount: markupAmount,
+          billedToDate: 0,
+          amountRemaining: markupAmount,
+        };
+      });
+  }, [markups, formData.sovItems, formData.accountingMethod]);
+
+  // Merged SOV items for display: user items + computed markup rows
+  const sovDisplayItems = React.useMemo(
+    () => [...(formData.sovItems || []), ...computedMarkupSovItems],
+    [formData.sovItems, computedMarkupSovItems],
+  );
 
   React.useEffect(() => {
     const fetchCostCodes = async () => {
@@ -251,9 +353,18 @@ export function usePrimeContractFormState({
         return;
       }
 
-      await onSubmit(formData as ContractFormData, pendingAttachmentFiles);
+      const submitData: ContractFormData = {
+        ...(formData as ContractFormData),
+        // Include markup SOV items at the end of the SOV for line-item creation
+        sovItems: [
+          ...(formData.sovItems || []),
+          ...computedMarkupSovItems,
+        ],
+        markups,
+      };
+      await onSubmit(submitData, pendingAttachmentFiles);
     },
-    [formData, onSubmit, pendingAttachmentFiles],
+    [formData, computedMarkupSovItems, markups, onSubmit, pendingAttachmentFiles],
   );
 
   const updateFormData = React.useCallback(
@@ -482,7 +593,46 @@ export function usePrimeContractFormState({
       ...prev,
       sovItems: (prev.sovItems || []).filter((item) => item.id !== id),
     }));
+    setSelectedSovItems((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   }, []);
+
+  const toggleSovItemSelection = React.useCallback((id: string) => {
+    setSelectedSovItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAllSovItems = React.useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        const nonGroupIds = (formData.sovItems || [])
+          .filter((item) => !item.isGroup)
+          .map((item) => item.id);
+        setSelectedSovItems(new Set(nonGroupIds));
+      } else {
+        setSelectedSovItems(new Set());
+      }
+    },
+    [formData.sovItems],
+  );
+
+  const bulkRemoveSovLines = React.useCallback(() => {
+    setFormData((prev) => ({
+      ...prev,
+      sovItems: (prev.sovItems || []).filter(
+        (item) => !selectedSovItems.has(item.id),
+      ),
+    }));
+    setSelectedSovItems(new Set());
+  }, [selectedSovItems]);
 
   const toggleSovAccountingMethod = React.useCallback(() => {
     setFormData((prev) => {
@@ -688,10 +838,11 @@ export function usePrimeContractFormState({
   );
 
   const isUnitQuantityMode = formData.accountingMethod === "unit_quantity";
-  const sovColumnCount = isUnitQuantityMode ? 8 : 6;
+  const sovColumnCount = isUnitQuantityMode ? 9 : 7;
 
   const sovTotals = React.useMemo(() => {
-    const items = (formData.sovItems || []).filter((item) => !item.isGroup);
+    // Include both user items and computed markup items in totals
+    const items = sovDisplayItems.filter((item) => !item.isGroup);
     return {
       amount: items.reduce((sum, item) => sum + (item.amount || 0), 0),
       billedToDate: items.reduce(
@@ -703,7 +854,7 @@ export function usePrimeContractFormState({
         0,
       ),
     };
-  }, [formData.sovItems]);
+  }, [sovDisplayItems]);
 
   return {
     formData,
@@ -743,6 +894,10 @@ export function usePrimeContractFormState({
     addSOVGroup,
     updateSOVLine,
     removeSOVLine,
+    selectedSovItems,
+    toggleSovItemSelection,
+    toggleAllSovItems,
+    bulkRemoveSovLines,
     toggleSovAccountingMethod,
     handleImportFromBudgetSuccess,
     handleImportEstimateWorkbookSuccess,
@@ -755,8 +910,13 @@ export function usePrimeContractFormState({
     setNewBudgetCodeData,
     setShowImportFromBudget,
     setShowImportEstimateWorkbook,
+    fetchBudgetCodes,
     setSovActionMenuKey,
     setShowAddCompany,
     setNewCompanyName,
+    markups,
+    setMarkups,
+    sovDisplayItems,
+    computedMarkupSovItems,
   };
 }

@@ -25,6 +25,7 @@ import {
   PrimeContractCreateBudgetCodeModal,
   PrimeContractSovSection,
 } from "@/components/domain/contracts/prime-contract-form/sov";
+import { FinancialMarkupFormSection } from "@/components/domain/contracts/prime-contract-form/financial-markup-form-section";
 import { usePrimeContractFormState } from "@/components/domain/contracts/prime-contract-form/usePrimeContractFormState";
 
 // ============================================================================
@@ -107,6 +108,10 @@ export function ContractForm({
     addSOVGroup,
     updateSOVLine,
     removeSOVLine,
+    selectedSovItems,
+    toggleSovItemSelection,
+    toggleAllSovItems,
+    bulkRemoveSovLines,
     toggleSovAccountingMethod,
     handleImportFromBudgetSuccess,
     handleImportEstimateWorkbookSuccess,
@@ -119,9 +124,13 @@ export function ContractForm({
     setNewBudgetCodeData,
     setShowImportFromBudget,
     setShowImportEstimateWorkbook,
+    fetchBudgetCodes,
     setSovActionMenuKey,
     setShowAddCompany,
     setNewCompanyName,
+    markups,
+    setMarkups,
+    sovDisplayItems,
   } = usePrimeContractFormState({
     initialData,
     projectId,
@@ -167,9 +176,17 @@ export function ContractForm({
             onUpdateFormData={updateFormData}
           />
 
+          {mode === "create" ? (
+            <FinancialMarkupFormSection
+              markups={markups}
+              budgetCodes={budgetCodes}
+              onChange={setMarkups}
+            />
+          ) : null}
+
           <PrimeContractSovSection
             projectId={projectId}
-            formData={formData}
+            formData={{ ...formData, sovItems: sovDisplayItems }}
             budgetCodes={budgetCodes}
             loadingBudgetCodes={loadingBudgetCodes}
             filteredBudgetCodes={filteredBudgetCodes}
@@ -194,11 +211,16 @@ export function ContractForm({
             onAddSovLine={addSOVLine}
             onUpdateSovLine={updateSOVLine}
             onRemoveSovLine={removeSOVLine}
+            selectedSovItems={selectedSovItems}
+            onToggleSovItemSelection={toggleSovItemSelection}
+            onToggleAllSovItems={toggleAllSovItems}
+            onBulkRemoveSovLines={bulkRemoveSovLines}
             onHandleBudgetCodeSelect={handleBudgetCodeSelect}
             onHandleImportFromBudgetSuccess={handleImportFromBudgetSuccess}
             onHandleImportEstimateWorkbookSuccess={
               handleImportEstimateWorkbookSuccess
             }
+            onBudgetCodesActivated={fetchBudgetCodes}
           />
 
           <PrimeContractScopeSection

@@ -10,9 +10,21 @@ export interface BudgetCode {
   fullLabel: string;
 }
 
+export interface MarkupFormItem {
+  id: string; // "markup-*" prefix = not yet in DB; UUID = already saved
+  markup_type: string;
+  percentage: number;
+  compound: boolean;
+  calculation_order: number;
+  display_in: "horizontal" | "vertical";
+  maps_to: string; // "all" or budget code ID
+}
+
 export interface SOVLineItem {
   id: string;
   isGroup?: boolean;
+  isMarkup?: boolean;
+  markupType?: string;
   changeEventLineItemId?: string;
   budgetCodeId?: string;
   budgetCodeLabel?: string;
@@ -46,6 +58,7 @@ export interface ContractFormData {
   signedContractReceivedDate?: Date;
   contractTerminationDate?: Date;
   sovItems?: SOVLineItem[];
+  markups?: MarkupFormItem[];
   accountingMethod?: "amount" | "unit_quantity";
   paymentTerms?: string;
   billingSchedule?: string;
