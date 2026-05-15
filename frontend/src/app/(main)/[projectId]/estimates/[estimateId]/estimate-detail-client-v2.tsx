@@ -180,6 +180,41 @@ const ALL_DIVISIONS: Array<{ code: string; name: string }> = [
   { code: "50", name: "Design" },
 ];
 
+/** Maps CSI division codes → trade keywords to match against company vendor_class / type */
+const CSI_DIVISION_TRADES: Record<string, string[]> = {
+  "02": ["demolition", "environmental", "existing conditions", "abatement"],
+  "03": ["concrete", "structural concrete"],
+  "04": ["masonry", "brick", "block"],
+  "05": ["steel", "metals", "structural steel", "iron"],
+  "06": ["carpentry", "wood", "millwork", "cabinetry", "framing"],
+  "07": ["roofing", "waterproofing", "insulation", "caulking", "sealants", "moisture protection"],
+  "08": ["doors", "windows", "glazing", "openings", "hardware"],
+  "09": ["drywall", "painting", "flooring", "tile", "finishes", "ceilings", "acoustical"],
+  "10": ["specialties", "toilet", "signage", "lockers"],
+  "11": ["equipment"],
+  "12": ["furnishings", "furniture", "blinds"],
+  "13": ["special construction"],
+  "14": ["elevator", "conveying", "escalator"],
+  "21": ["fire sprinkler", "fire suppression", "sprinkler"],
+  "22": ["plumbing", "mechanical", "piping"],
+  "23": ["hvac", "mechanical", "heating", "cooling", "ventilation", "air conditioning"],
+  "25": ["automation", "controls", "building automation", "bas"],
+  "26": ["electrical", "electric", "lighting", "power"],
+  "27": ["data", "communications", "low voltage", "telecom", "av", "audio visual"],
+  "28": ["security", "fire alarm", "access control", "cctv", "electronic safety"],
+  "31": ["earthwork", "grading", "excavation", "site work"],
+  "32": ["paving", "landscaping", "site improvements", "concrete flatwork", "exterior"],
+  "33": ["utilities", "underground", "site utilities"],
+  "50": ["design", "architect", "engineer"],
+};
+
+function companyMatchesDivision(company: { vendor_class?: string | null; type?: string | null }, divisionCode: string): boolean {
+  const keywords = CSI_DIVISION_TRADES[divisionCode];
+  if (!keywords) return false;
+  const haystack = `${company.vendor_class ?? ""} ${company.type ?? ""}`.toLowerCase();
+  return keywords.some((kw) => haystack.includes(kw));
+}
+
 const DETAIL_DIVISIONS: Array<{
   division_code: string;
   division_header: string;
@@ -1029,6 +1064,7 @@ export function EstimateDetailClientV2({
   const awardSub = React.useCallback(
     async (subId: number, revoke = false) => {
       try {
+        const subBefore = sublistSubs.find((s) => s.id === subId);
         const updated = await apiFetch<SublistSub>(
           `/api/projects/${projectId}/estimates/${estimate.estimate_id}/sublist/${subId}/award`,
           { method: "POST", body: JSON.stringify({ revoke }) }
@@ -1042,12 +1078,40 @@ export function EstimateDetailClientV2({
             return { ...s, is_awarded: false };
           });
         });
-        toast.success(revoke ? "Award revoked" : "Sub awarded");
+
+        if (revoke) {
+          toast.success("Award revoked");
+        } else {
+          // Offer to create a subcontract from the awarded bid
+          const divName = ALL_DIVISIONS.find((d) => d.code === subBefore?.division_code)?.name ?? subBefore?.division_code ?? "";
+          const hasCompany = !!subBefore?.company_id;
+          const hasPrice = typeof subBefore?.price === "number" && subBefore.price > 0;
+
+          if (hasCompany && hasPrice) {
+            const params = new URLSearchParams({
+              type: "subcontract",
+              vendor_id: subBefore!.company_id!,
+              title: `Division ${subBefore!.division_code} ${divName} — ${subBefore!.company ?? ""}`,
+              amount: String(subBefore!.price),
+              description: `Subcontract for Division ${subBefore!.division_code} (${divName}) work.`,
+            });
+            toast.success("Sub awarded!", {
+              description: `${subBefore!.company ?? "Sub"} awarded for Division ${subBefore!.division_code}.`,
+              action: {
+                label: "Create Subcontract →",
+                onClick: () => router.push(`/${projectId}/commitments/new?${params.toString()}`),
+              },
+              duration: 8000,
+            });
+          } else {
+            toast.success("Sub awarded");
+          }
+        }
       } catch {
         toast.error("Failed to update award");
       }
     },
-    [projectId, estimate.estimate_id]
+    [projectId, estimate.estimate_id, sublistSubs, router]
   );
 
   // ---------------------------------------------------------------------------
@@ -1642,23 +1706,38 @@ function SubListTab({
   const [companies, setCompanies] = React.useState<Company[]>([]);
   const [companySearch, setCompanySearch] = React.useState("");
   const [openComboboxId, setOpenComboboxId] = React.useState<number | null>(null);
+  const [openComboboxDivision, setOpenComboboxDivision] = React.useState<string>("");
 
   // Load companies once on mount
   React.useEffect(() => {
     const supabaseClient = createClient();
     supabaseClient
       .from("companies")
-      .select("id, name, contact_name, contact_email, contact_phone, type, is_vendor")
+      .select("id, name, contact_name, contact_email, contact_phone, type, vendor_class, is_vendor")
       .order("name", { ascending: true })
       .limit(2000)
       .then(({ data }) => { if (data) setCompanies(data as Company[]); });
   }, []);
 
   const filteredCompanies = React.useMemo(() => {
-    if (!companySearch) return companies.slice(0, 50);
     const q = companySearch.toLowerCase();
-    return companies.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 50);
-  }, [companies, companySearch]);
+    const nameMatches = q
+      ? companies.filter((c) => c.name.toLowerCase().includes(q))
+      : companies;
+
+    if (openComboboxDivision) {
+      // Sort trade-matching companies to the top
+      const matching: Company[] = [];
+      const rest: Company[] = [];
+      for (const c of nameMatches) {
+        if (companyMatchesDivision(c, openComboboxDivision)) matching.push(c);
+        else rest.push(c);
+      }
+      return [...matching, ...rest].slice(0, 50);
+    }
+
+    return nameMatches.slice(0, 50);
+  }, [companies, companySearch, openComboboxDivision]);
 
   const selectCompany = React.useCallback(
     async (sub: SublistSub, company: Company) => {
@@ -1921,18 +2000,28 @@ function SubListTab({
                                 {filteredCompanies.length === 0 ? (
                                   <p className="px-3 py-4 text-center text-xs text-muted-foreground">No companies found</p>
                                 ) : (
-                                  filteredCompanies.map((c) => (
-                                    <Button
-                                      key={c.id}
-                                      variant="ghost"
-                                      type="button"
-                                      className="flex h-auto w-full flex-col items-start gap-0.5 rounded-none px-3 py-1.5 text-xs"
-                                      onClick={() => void selectCompany(sub, c)}
-                                    >
-                                      <span className="font-medium text-foreground">{c.name}</span>
-                                      {c.type && <span className="text-[10px] text-muted-foreground">{c.type}</span>}
-                                    </Button>
-                                  ))
+                                  filteredCompanies.map((c) => {
+                                    const isTradeMatch = companyMatchesDivision(c, sub.division_code);
+                                    return (
+                                      <Button
+                                        key={c.id}
+                                        variant="ghost"
+                                        type="button"
+                                        className="flex h-auto w-full flex-col items-start gap-0.5 rounded-none px-3 py-1.5 text-xs"
+                                        onClick={() => void selectCompany(sub, c)}
+                                      >
+                                        <span className="flex w-full items-center gap-1.5">
+                                          <span className="font-medium text-foreground">{c.name}</span>
+                                          {isTradeMatch && (
+                                            <span className="rounded bg-primary/10 px-1 py-0.5 text-[9px] font-medium text-primary">Trade</span>
+                                          )}
+                                        </span>
+                                        {(c.type ?? c.vendor_class) && (
+                                          <span className="text-[10px] text-muted-foreground">{c.type ?? c.vendor_class}</span>
+                                        )}
+                                      </Button>
+                                    );
+                                  })
                                 )}
                               </div>
                             </div>
@@ -1941,7 +2030,7 @@ function SubListTab({
                             value={sub.company ?? ""}
                             onChange={(v) => void onPatchSub(sub.id, { company: v || null, company_id: v ? sub.company_id : null })}
                             placeholder="Company name"
-                            onFocus={() => setOpenComboboxId(sub.id)}
+                            onFocus={() => { setOpenComboboxId(sub.id); setOpenComboboxDivision(sub.division_code); }}
                             onBlur={() => setTimeout(() => setOpenComboboxId((prev) => prev === sub.id ? null : prev), 150)}
                           />
                         </div>

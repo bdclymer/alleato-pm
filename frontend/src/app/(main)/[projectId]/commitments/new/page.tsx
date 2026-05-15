@@ -18,6 +18,32 @@ export default function NewCommitmentPage() {
   const projectId = Number(params.projectId);
   const type = searchParams.get("type") || "subcontract"; // 'subcontract' or 'purchase_order'
 
+  // Pre-fill data passed from SubList award flow
+  const prefillVendorId = searchParams.get("vendor_id") ?? undefined;
+  const prefillTitle = searchParams.get("title") ?? undefined;
+  const prefillAmount = searchParams.get("amount") ? Number(searchParams.get("amount")) : undefined;
+  const prefillDescription = searchParams.get("description") ?? undefined;
+
+  const subcontractInitialData =
+    prefillVendorId || prefillTitle
+      ? {
+          contractCompanyId: prefillVendorId ?? "",
+          title: prefillTitle ?? "",
+          description: prefillDescription ?? "",
+          status: "Draft" as const,
+          ...(prefillAmount && prefillTitle
+            ? {
+                sovLines: [
+                  {
+                    description: prefillTitle,
+                    amount: prefillAmount,
+                  },
+                ],
+              }
+            : {}),
+        }
+      : undefined;
+
   const parseApiError = async (response: Response) => {
     const rawBody = await response.text();
     const fallbackError = `Request failed with status ${response.status}`;
@@ -272,6 +298,7 @@ export default function NewCommitmentPage() {
           projectId={projectId}
           onSubmit={handleSubmitSubcontract}
           onCancel={handleCancel}
+          initialData={subcontractInitialData}
         />
       )}
     </PageShell>
