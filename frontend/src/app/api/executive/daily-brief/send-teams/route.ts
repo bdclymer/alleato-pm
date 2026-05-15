@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createClient } from "@/lib/supabase/server";
-import { sendApprovedExecutiveBriefingToTeams } from "@/lib/executive/executive-briefing-teams-delivery";
+import { sendOwnerBriefingToTeams } from "@/lib/executive/owner-briefing-delivery";
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
@@ -54,24 +54,22 @@ export const POST = withApiGuardrails("executive/daily-brief/send-teams#POST", a
     );
   }
 
-  let body: { userId?: string } = {};
+  let body: { dryRun?: boolean } = {};
   try {
     const text = await request.text();
-    if (text) body = JSON.parse(text) as { userId?: string };
+    if (text) body = JSON.parse(text) as { dryRun?: boolean };
   } catch (error) {
-    console.warn("[executive-briefing] Ignoring invalid optional Teams send body.", {
+    console.warn("[owner-briefing] Ignoring invalid optional Teams send body.", {
       error: error instanceof Error ? error.message : String(error),
     });
   }
 
-  const result = await sendApprovedExecutiveBriefingToTeams({
-    userId: body.userId,
-  });
+  const result = await sendOwnerBriefingToTeams({ dryRun: body.dryRun });
   if (result.ok) {
     return NextResponse.json(result);
   }
 
   return NextResponse.json(result, {
-    status: result.status === "blocked" ? 400 : 409,
+    status: result.status === "blocked" ? 400 : 500,
   });
 });

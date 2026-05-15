@@ -50,9 +50,14 @@ const EMAIL_ACTION_PATTERNS = [
   /\b(email|e-mail|reply|respond)\b.{0,50}\b(draft|write|prepare|compose|back)\b/i,
 ];
 
+// Broad pattern for any mention of a communication artifact. Does NOT include
+// "meetings?" because "review recent meetings" and "show meeting insights" are
+// status/briefing questions that should go through packet-first retrieval, not
+// a narrow vector search. Meeting-specific explicit lookups are covered by
+// EXPLICIT_SOURCE_LOOKUP_PATTERNS below.
 const SOURCE_LOOKUP_PATTERNS = [
-  /\b(source|evidence|citation|transcript|emails?|e-mails?|inbox|mails?|outlook|teams|messages?|meetings?|documents?)\b/i,
-  /\bshow me\b.*\b(where|source|messages?|emails?|e-mails?|inbox|meetings?)\b/i,
+  /\b(source|evidence|citation|transcript|emails?|e-mails?|inbox|mails?|outlook|teams|messages?|documents?)\b/i,
+  /\bshow me\b.*\b(where|source|messages?|emails?|e-mails?|inbox)\b/i,
 ];
 
 const EXPLICIT_SOURCE_LOOKUP_PATTERNS = [
@@ -100,6 +105,8 @@ function hasSelectedProjectContext(options?: IntentClassificationOptions): boole
 function isProjectStatusBriefingPrompt(text: string): boolean {
   return (
     /\b(latest|status|update|current|what changed|briefing)\b/i.test(text) ||
+    // Meeting review and insight requests need full packet retrieval, not narrow RAG.
+    /\b(meeting insights?|review (recent )?meetings?|meeting summary|meeting summaries|recent meetings?|what (happened|came up|was discussed) in (the )?meeting)\b/i.test(text) ||
     OWNER_PORTFOLIO_BRIEFING_PATTERNS.some((pattern) => pattern.test(text))
   );
 }

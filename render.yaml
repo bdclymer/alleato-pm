@@ -202,6 +202,35 @@ services:
       - key: TEAMS_COMPILER_BATCH_SIZE
         value: "25"
 
+  # Generates AI daily project recap (saved to daily_recaps table) from
+  # meeting transcripts of the prior 24 hours. Runs daily at 09:30 UTC
+  # (~5:30 AM ET) so a fresh recap is ready before the executive daily brief
+  # cron fires at 11/12 UTC (~7 AM ET). Without this cron, the CEO Daily Brief
+  # reads stale recaps.
+  - type: cron
+    name: alleato-daily-recap
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "30 9 * * *"
+    dockerCommand: >-
+      python3 /app/scripts/generate_daily_recap.py --days 1 --verbose
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services:/app/src/workers
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
   # Extracts action items from meetings, emails, and Teams messages daily at 7 AM UTC.
   # Replaces the former Vercel cron route (/api/admin/cron/extract-brandon-tasks).
   - type: cron
@@ -309,6 +338,41 @@ services:
         sync: false
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_TOKEN
         sync: false
+
+  # Scheduled periodic packet refresh — guarantees intelligence packets are
+  # never older than ~6h regardless of source-signal activity. The owner
+  # briefing depends on fresh packets; without this, projects with quiet
+  # comms sit stale indefinitely.
+  # Runs 4x/day in UTC: 02:00, 09:00, 15:00, 21:00.
+  # 09:00 UTC fires ~1h before the 11:00 UTC executive briefing morning cron,
+  # so the briefing always reads packets refreshed within the last ~1h.
+  - type: cron
+    name: alleato-packet-refresh-periodic
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "0 2,9,15,21 * * *"
+    dockerCommand: >-
+      python3 src/scripts/enqueue_periodic_packet_refresh.py
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services:/app/src/workers
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
 
   # Generates the approved executive Daily Brief on Render and then sends the
   # stored packet to Teams through a short-lived delivery endpoint.

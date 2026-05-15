@@ -18,6 +18,7 @@ import type {
   ResolvedIntelligenceTarget,
   SourceCoverageSummary,
 } from "./types";
+import { PACKET_STALE_AFTER_HOURS } from "./types";
 
 type AlleatoSupabaseClient = SupabaseClient<Database>;
 type SourceDocumentPreview = Pick<
@@ -268,6 +269,12 @@ function mapPacket(row: IntelligencePacketRow, cards: InsightCard[]): ClientProj
     cards,
   );
 
+  const generatedAtMs = row.generated_at ? new Date(row.generated_at).getTime() : NaN;
+  const ageHours = Number.isFinite(generatedAtMs)
+    ? Math.max(0, (Date.now() - generatedAtMs) / 3_600_000)
+    : Number.POSITIVE_INFINITY;
+  const isStale = ageHours > PACKET_STALE_AFTER_HOURS;
+
   return {
     id: row.id,
     targetId: row.target_id,
@@ -289,6 +296,8 @@ function mapPacket(row: IntelligencePacketRow, cards: InsightCard[]): ClientProj
     packetJson: toRecord(row.packet_json),
     compilerVersion: row.compiler_version,
     cards,
+    ageHours,
+    isStale,
   };
 }
 

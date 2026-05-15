@@ -1,0 +1,220 @@
+/**
+ * Owner Briefing Delivery — orchestrates the daily Teams send for Brandon and
+ * Megan. Replaces sendApprovedExecutiveBriefingToTeams (legacy path that
+ * blasted all bot users with a daily_recaps packet built from raw documents).
+ *
+ * Flow:
+ *   1. Build the briefing data from Pipeline B (insight_cards + intelligence_packets).
+ *   2. Build the Adaptive Card.
+ *   3. Send to each owner via the bot framework proactive channel.
+ *   4. Audit the send in `source_sync_runs`.
+ */
+
+import { createServiceClient } from "@/lib/supabase/service";
+import type { Json } from "@/types/database.types";
+import {
+  buildOwnerBriefingData,
+  type OwnerBriefingData,
+} from "./owner-briefing-builder";
+import { buildOwnerBriefingCard } from "./owner-briefing-card";
+import {
+  OWNER_BRIEFING_RECIPIENTS,
+  type OwnerBriefingRecipient,
+} from "./owner-briefing-recipients";
+
+export type OwnerBriefingDeliveryResult =
+  | {
+      ok: true;
+      status: "sent";
+      sentAt: string;
+      recipients: Array<{
+        userId: string;
+        email: string;
+        displayName: string;
+        sent: boolean;
+        reason?: string;
+      }>;
+      decisionsNeeded: number;
+      actionsRequired: number;
+      projectsShown: number;
+    }
+  | {
+      ok: false;
+      status: "blocked" | "failed";
+      reason: string;
+    };
+
+const DELIVERY_SOURCE = "owner_briefing";
+
+export async function sendOwnerBriefingToTeams(input: {
+  /** Override recipient list for testing. Defaults to OWNER_BRIEFING_RECIPIENTS. */
+  recipients?: OwnerBriefingRecipient[];
+  /** Optional override for `now` to reproduce a specific day's brief. */
+  now?: Date;
+  /** Dry run — build the card and data but do not send. */
+  dryRun?: boolean;
+}): Promise<OwnerBriefingDeliveryResult> {
+  const recipients = input.recipients ?? OWNER_BRIEFING_RECIPIENTS;
+  if (recipients.length === 0) {
+    return { ok: false, status: "blocked", reason: "no_recipients_configured" };
+  }
+
+  const appBaseUrl =
+    process.env.EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    "https://projects.alleatogroup.com";
+
+  const actionToken =
+    process.env.OWNER_BRIEFING_ACTION_TOKEN?.trim() ||
+    process.env.CRON_SECRET?.trim() ||
+    "";
+
+  if (!actionToken) {
+    return {
+      ok: false,
+      status: "blocked",
+      reason:
+        "OWNER_BRIEFING_ACTION_TOKEN (or CRON_SECRET) must be set so Acknowledge/Snooze links can authenticate.",
+    };
+  }
+
+  const auditClient = createServiceClient();
+  const runStartedAt = new Date().toISOString();
+  const runMetadata = {
+    recipients: recipients.map((r) => ({ id: r.supabaseUserId, email: r.email })),
+    dryRun: Boolean(input.dryRun),
+  };
+
+  const { data: auditRow, error: auditInsertError } = await auditClient
+    .from("source_sync_runs")
+    .insert({
+      source: DELIVERY_SOURCE,
+      resource_id: "scheduled_owner_briefing",
+      stage: "source_sync",
+      status: "running",
+      started_at: runStartedAt,
+      metadata: runMetadata as unknown as Json,
+    })
+    .select("id")
+    .single();
+  if (auditInsertError || !auditRow) {
+    return {
+      ok: false,
+      status: "failed",
+      reason: `Failed to insert audit row: ${auditInsertError?.message ?? "unknown"}`,
+    };
+  }
+  const auditId = auditRow.id;
+
+  try {
+    // Single shared briefing object — same content for both recipients. We
+    // only personalize the greeting via the per-recipient firstName when
+    // rebuilding the card.
+    const briefing = await buildOwnerBriefingData({
+      recipientName: recipients[0].firstName,
+      now: input.now,
+    });
+
+    const sendResults = await Promise.all(
+      recipients.map(async (recipient): Promise<{
+        userId: string;
+        email: string;
+        displayName: string;
+        sent: boolean;
+        reason?: string;
+      }> => {
+        const personalized: OwnerBriefingData = {
+          ...briefing,
+          recipientName: recipient.firstName,
+          greeting: rewriteGreeting(briefing.greeting, recipient.firstName),
+        };
+        const card = buildOwnerBriefingCard(personalized, {
+          appBaseUrl,
+          actionToken,
+        });
+
+        if (input.dryRun) {
+          return {
+            userId: recipient.supabaseUserId,
+            email: recipient.email,
+            displayName: recipient.displayName,
+            sent: false,
+            reason: "dry_run",
+          };
+        }
+
+        try {
+          const { sendProactiveCard } = await import("@/lib/bot/teams-chat");
+          await sendProactiveCard(recipient.supabaseUserId, card);
+          return {
+            userId: recipient.supabaseUserId,
+            email: recipient.email,
+            displayName: recipient.displayName,
+            sent: true,
+          };
+        } catch (err) {
+          const reason = err instanceof Error ? err.message : String(err);
+          console.error("[owner-briefing] send failed", {
+            userId: recipient.supabaseUserId,
+            email: recipient.email,
+            reason,
+          });
+          return {
+            userId: recipient.supabaseUserId,
+            email: recipient.email,
+            displayName: recipient.displayName,
+            sent: false,
+            reason,
+          };
+        }
+      }),
+    );
+
+    const finishedAt = new Date().toISOString();
+    const result: OwnerBriefingDeliveryResult = {
+      ok: true,
+      status: "sent",
+      sentAt: finishedAt,
+      recipients: sendResults,
+      decisionsNeeded: briefing.portfolio.totalDecisionsNeeded,
+      actionsRequired: briefing.portfolio.totalActionsRequired,
+      projectsShown: briefing.topProjects.length,
+    };
+
+    await auditClient
+      .from("source_sync_runs")
+      .update({
+        status: sendResults.some((r) => r.sent) ? "succeeded" : "failed",
+        finished_at: finishedAt,
+        metadata: {
+          ...runMetadata,
+          decisionsNeeded: briefing.portfolio.totalDecisionsNeeded,
+          actionsRequired: briefing.portfolio.totalActionsRequired,
+          projectsShown: briefing.topProjects.length,
+          stalePacketCount: briefing.portfolio.stalePacketCount,
+          sendResults,
+        } as unknown as Json,
+      })
+      .eq("id", auditId)
+      .throwOnError();
+
+    return result;
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    const finishedAt = new Date().toISOString();
+    await auditClient
+      .from("source_sync_runs")
+      .update({
+        status: "failed",
+        finished_at: finishedAt,
+        metadata: { ...runMetadata, error: reason } as unknown as Json,
+      })
+      .eq("id", auditId);
+    return { ok: false, status: "failed", reason };
+  }
+}
+
+function rewriteGreeting(greeting: string, firstName: string): string {
+  // The builder always renders "Good morning, <name>." — swap the name.
+  return greeting.replace(/, [^.]+\./, `, ${firstName}.`);
+}

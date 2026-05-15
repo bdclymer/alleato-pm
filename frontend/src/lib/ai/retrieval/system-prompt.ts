@@ -56,6 +56,24 @@ function renderIntelligencePacket(raw: unknown): string {
   const packet = raw as Record<string, unknown>;
   const lines: string[] = [];
 
+  // Staleness warning — packets older than the freshness window may misrepresent
+  // current state. Tell the model so it doesn't assert stale facts.
+  const isStale = packet.isStale === true;
+  const ageHours = typeof packet.ageHours === "number" ? packet.ageHours : null;
+  if (isStale && ageHours !== null) {
+    const ageDisplay =
+      ageHours >= 48
+        ? `${Math.round(ageHours / 24)} days`
+        : `${Math.round(ageHours)} hours`;
+    lines.push(
+      [
+        "## ⚠️ STALE PACKET WARNING",
+        `This intelligence packet was generated ${ageDisplay} ago and may be out of date.`,
+        "Treat it as background context only — confirm critical claims by calling fresh tools (getProjectBriefingSnapshot, getMeetingsByDate, getRecentEmails) before stating numbers, dates, or decisions to the user.",
+      ].join("\n"),
+    );
+  }
+
   const summary = compactText(packet.executiveSummary ?? packet.executive_summary);
   if (summary) {
     lines.push(`## Executive Summary\n${summary}`);
@@ -203,9 +221,23 @@ export function assembleSystemPromptFromContext(
   }
 
   if (ctx.sourceSpecificRagAnswer) {
-    parts.push(
-      `# Source-Specific RAG Result\n\n${compactText(ctx.sourceSpecificRagAnswer.content, 2500) ?? ""}`,
-    );
+    const content = compactText(ctx.sourceSpecificRagAnswer.content, 2500);
+    if (content) {
+      parts.push(`# Source-Specific RAG Result\n\n${content}`);
+    } else {
+      // Pre-fetch was attempted but returned no rows. Tell the model to use
+      // its runtime tools rather than saying "no data found."
+      const kind = plan.sources.sourceSpecificRag?.kind ?? "data";
+      parts.push(
+        [
+          `# Pre-fetch Returned No Results (${kind})`,
+          "",
+          "The server-side retrieval for this query found no matching records.",
+          "Do NOT say 'no data available'. Instead, use your available tools to answer the question directly.",
+          "Call the most relevant tool (e.g. getMeetingIntelligence, getMeetingsByDate, getActionItemsAndInsights, getRecentEmails) and report what you find.",
+        ].join("\n"),
+      );
+    }
   }
 
   if (ctx.warnings.length > 0) {
@@ -218,7 +250,17 @@ export function assembleSystemPromptFromContext(
   void plan;
 
   if (parts.length === 0) {
-    return basePrompt;
+    // No retrieval context was pre-loaded. Tell the model to reach for its
+    // runtime tools rather than confabulating or refusing.
+    const noDataBlock = [
+      "# No Pre-fetched Context",
+      "",
+      "Nothing was pre-loaded for this query — no packet, snapshot, emails, or meetings.",
+      "Use your available tools to answer. Do NOT invent facts about projects, people, budgets, schedules, or communications.",
+      "If you need project-specific data: call getProjectDetails, getMeetingIntelligence, getActionItemsAndInsights, or searchDocuments.",
+      "If the user has not specified a project, ask which one they mean before calling project-scoped tools.",
+    ].join("\n");
+    return `${noDataBlock}\n\n---\n\n${basePrompt}`;
   }
 
   return `${parts.join("\n\n---\n\n")}\n\n---\n\n${basePrompt}`;

@@ -33,6 +33,14 @@ type TraceParams = {
   metadata?: Record<string, unknown>;
 };
 
+export type TraceToolCall = {
+  name: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  durationMs?: number;
+  error?: string;
+};
+
 export async function traceChatCompletion(params: TraceParams): Promise<void> {
   const lf = getClient();
   if (!lf) return;
@@ -79,6 +87,8 @@ export async function traceChatCompletion(params: TraceParams): Promise<void> {
       cachedInputTokens: params.usage?.cachedInputTokens,
       stepCount: params.stepCount,
       toolCallNames: params.toolCallNames,
+      intent: params.intent,
+      ...params.metadata,
     },
   });
 

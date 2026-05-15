@@ -138,4 +138,16 @@ export type ClientProjectIntelligencePacket = {
   packetJson: Record<string, unknown>;
   compilerVersion: string | null;
   cards: InsightCard[];
+  // Derived staleness fields — computed at load time, not stored in DB.
+  // generated_at older than PACKET_STALE_AFTER_HOURS triggers a warning in the
+  // system prompt so the model does not assert the packet is current.
+  ageHours: number;
+  isStale: boolean;
 };
+
+/**
+ * How old a packet may be before we flag it as stale. Tied to the periodic
+ * refresh cron in render.yaml (alleato-packet-refresh-periodic, every 6h);
+ * 8h gives 2h of slack for delayed cron runs.
+ */
+export const PACKET_STALE_AFTER_HOURS = 8;

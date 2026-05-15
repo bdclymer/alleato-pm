@@ -608,6 +608,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       const tools = createStrategistTools(args.user.id, {
         pinnedProjectId: args.selectedProjectId,
         sessionId: args.sessionId,
+        includeActionTools: true,
       });
 
       if (process.env.NODE_ENV !== "production") {
@@ -655,11 +656,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             stack: error instanceof Error ? error.stack?.split("\n").slice(0, 5).join("\n") : undefined,
           });
         },
-        onFinish: ({ finishReason, usage, text, toolCalls, steps }) => {
-          const toolCallNames = toolCalls?.map((c) => c.toolName) ?? [];
+        onFinish: ({ finishReason, totalUsage, text, toolCalls, steps }) => {
+          // Aggregate tool call names across ALL agentic steps, not just the last.
+          const toolCallNames =
+            steps?.flatMap((s) => (s.toolCalls ?? []).map((c) => c.toolName)) ??
+            toolCalls?.map((c) => c.toolName) ??
+            [];
           console.log("[handler-v2] streamText onFinish", {
             finishReason,
-            usage,
+            totalUsage,
             text_chars: text?.length ?? 0,
             text_preview: text?.slice(0, 200) ?? "",
             tool_calls: toolCallNames,
@@ -672,8 +677,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             input: inputText,
             output: text ?? "",
             usage: {
-              inputTokens: (usage as { promptTokens?: number }).promptTokens,
-              outputTokens: (usage as { completionTokens?: number }).completionTokens,
+              inputTokens: totalUsage.inputTokens,
+              outputTokens: totalUsage.outputTokens,
             },
             toolCallNames,
             stepCount: steps?.length ?? toolCallNames.length,
