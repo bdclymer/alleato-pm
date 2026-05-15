@@ -1696,12 +1696,12 @@ function SummaryTab({
   return (
     <div className="space-y-5">
       {/* ── Letterhead ─────────────────────────────────────────────── */}
-      <div className="rounded-lg bg-muted p-5">
+      <div className="rounded-lg p-5">
         <div className="flex items-start justify-between gap-6">
           {/* Logo + address */}
           <div className="flex items-start gap-4">
             <img
-              src="/Alleato-Group-Logo_Light.png"
+              src="/Alleato-Group-Logo_Dark.png"
               alt="Alleato Group LLC"
               className="h-12 w-auto object-contain"
             />
