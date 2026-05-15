@@ -1042,7 +1042,7 @@ export function EstimateDetailClientV2({
 
   // Add a single new row to a division (unlimited slots — PRP 1.3)
   const ensureSublistRows = React.useCallback(
-    async (divCode: string, divName: string) => {
+    async (divCode: string, divName: string): Promise<SublistSub | null> => {
       const existing = sublistSubs.filter((s) => s.division_code === divCode);
       const nextPos = (existing.reduce((max, s) => Math.max(max, s.position ?? 0), 0)) + 1;
       try {
@@ -1058,8 +1058,10 @@ export function EstimateDetailClientV2({
           }
         );
         setSublistSubs((prev) => [...prev, created]);
+        return created;
       } catch {
         // silently ignore — rows will be created on first edit
+        return null;
       }
     },
     [sublistSubs, projectId, estimate.estimate_id]
@@ -1715,7 +1717,7 @@ function SubListTab({
   estimateId: string;
   detailTotalsByDiv: Record<string, number>;
   onPatchSub: (id: number, fields: Partial<SublistSub>) => Promise<void>;
-  onEnsureRows: (divCode: string, divName: string) => Promise<void>;
+  onEnsureRows: (divCode: string, divName: string) => Promise<SublistSub | null>;
   onAwardSub: (subId: number, revoke?: boolean) => Promise<void>;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -1790,6 +1792,20 @@ function SubListTab({
       // silently ignore
     }
   }, [projectId, estimateId]);
+
+  // Division benchmark cache (5.3) — must be before toggleScopeDiv to avoid TDZ
+  const [benchmarkCache, setBenchmarkCache] = React.useState<Record<string, { count: number; min: number | null; max: number | null; avg: number | null; source: string }>>({});
+
+  const loadBenchmark = React.useCallback(async (divCode: string) => {
+    if (benchmarkCache[divCode] !== undefined) return;
+    setBenchmarkCache((prev) => ({ ...prev, [divCode]: { count: 0, min: null, max: null, avg: null, source: "none" } }));
+    try {
+      const data = await apiFetch<{ count: number; min: number | null; max: number | null; avg: number | null; source: string }>(
+        `/api/estimates/benchmark?division_code=${divCode}`
+      );
+      if (data) setBenchmarkCache((prev) => ({ ...prev, [divCode]: data }));
+    } catch { /* silently ignore */ }
+  }, [benchmarkCache]);
 
   const toggleScopeDiv = React.useCallback((divCode: string) => {
     setExpandedScopeDivs((prev) => {
@@ -2038,20 +2054,6 @@ function SubListTab({
       if (data) setBidHistoryCache((prev) => ({ ...prev, [companyId]: data }));
     } catch { /* silently ignore */ }
   }, [bidHistoryCache]);
-
-  // Division benchmark cache (5.3)
-  const [benchmarkCache, setBenchmarkCache] = React.useState<Record<string, { count: number; min: number | null; max: number | null; avg: number | null; source: string }>>({});
-
-  const loadBenchmark = React.useCallback(async (divCode: string) => {
-    if (benchmarkCache[divCode] !== undefined) return;
-    setBenchmarkCache((prev) => ({ ...prev, [divCode]: { count: 0, min: null, max: null, avg: null, source: "none" } }));
-    try {
-      const data = await apiFetch<{ count: number; min: number | null; max: number | null; avg: number | null; source: string }>(
-        `/api/estimates/benchmark?division_code=${divCode}`
-      );
-      if (data) setBenchmarkCache((prev) => ({ ...prev, [divCode]: data }));
-    } catch { /* silently ignore */ }
-  }, [benchmarkCache]);
 
   // Load companies once on mount
   React.useEffect(() => {
@@ -2479,10 +2481,8 @@ function SubListTab({
                                     type="button"
                                     className="h-6 shrink-0 px-2 text-[10px]"
                                     onClick={async () => {
-                                      await onEnsureRows(div.code, div.name);
-                                      // Find the newly created sub (last in list for this division)
-                                      const newSubs = sublistSubs.filter((s) => s.division_code === div.code);
-                                      const newSub = newSubs[newSubs.length - 1];
+                                      // Use returned sub directly — avoids stale closure grabbing wrong row
+                                      const newSub = await onEnsureRows(div.code, div.name);
                                       if (newSub) {
                                         await onPatchSub(newSub.id, {
                                           company: company.name,

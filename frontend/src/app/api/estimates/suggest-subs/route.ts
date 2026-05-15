@@ -67,7 +67,7 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
     .from("companies")
     .select("id, name, contact_name, contact_email, contact_phone, vendor_class, type, is_vendor")
     .eq("is_vendor", true)
-    .not("id", "in", excludeIds.length > 0 ? `(${excludeIds.map((id) => `'${id}'`).join(",")})` : "('00000000-0000-0000-0000-000000000000')")
+    .not("id", "in", `(${excludeIds.length > 0 ? excludeIds.join(",") : "00000000-0000-0000-0000-000000000000"})`)
     .limit(500);
 
   if (companiesError) {

@@ -109,7 +109,7 @@ export const POST = withApiGuardrails<{
         division_name: divisionName,
         cost_code: null,
         cost_code_name: itemDescription,
-        cost_type: "Trade",
+        cost_type: "Subcontract",
         sub_name: companyLabel,
         estimated_amount: sub.price,
         work_description: itemDescription,

@@ -66,21 +66,29 @@ export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>
     }
 
     const body = await request.json();
-    const { division_code, division_name, position, ...rest } = body;
+    const { division_code, division_name, ...rest } = body;
 
-    // Upsert: if division_code + position already exists for this estimate, update it
+    // Compute next position for this division (auto-increment per division)
+    const { data: maxRow } = await supabase
+      .from("estimate_sublist_subs")
+      .select("position")
+      .eq("estimate_id", estimateIdNum)
+      .eq("division_code", division_code ?? "02")
+      .order("position", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextPosition = (maxRow?.position ?? 0) + 1;
+
     const { data, error } = await supabase
       .from("estimate_sublist_subs")
-      .upsert(
-        {
-          estimate_id: estimateIdNum,
-          division_code: division_code ?? "02",
-          division_name: division_name ?? "",
-          position: position ?? 1,
-          ...rest,
-        },
-        { onConflict: "estimate_id,division_code,position" }
-      )
+      .insert({
+        estimate_id: estimateIdNum,
+        division_code: division_code ?? "02",
+        division_name: division_name ?? "",
+        position: nextPosition,
+        ...rest,
+      })
       .select()
       .single();
 
