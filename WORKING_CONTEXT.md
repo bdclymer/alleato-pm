@@ -8,8 +8,64 @@
 ## Current focus
 
 **Status:** All changes committed and pushed to main. Session ended cleanly.
-**Last updated:** 2026-05-14
-**Last worked on by:** Claude Code (session ending ~4:30pm ET)
+**Last updated:** 2026-05-15
+**Last worked on by:** Claude Code (Phase 4 Pattern C session)
+
+---
+
+## What was done this session (2026-05-15)
+
+Phase 4 Day 3-6 of CONSOLIDATED-IMPLEMENTATION-PLAN.md — Pattern C unified file architecture. Single commit: `f65e7069e`.
+
+### Key schema corrections made during implementation
+
+- `commitments` table does NOT exist — `commitments_unified` is a UNION ALL view over `subcontracts` + `purchase_orders` base tables. FK constraints cannot reference views; two junction tables were created instead: `subcontract_documents` + `purchase_order_documents`.
+- `document_metadata.id` is TEXT (not UUID). All junction FK columns are `text`.
+- Existing RLS pattern uses `current_is_app_admin()` + `current_is_project_member(bigint)` — the helper function was written to match, not reinvent.
+- `drawing_revisions` table pre-existed as a file-based revision system — `document_metadata_id` was added as a nullable column rather than creating a new table.
+- `submittal_documents` + `contract_documents` pre-existed as file-storage tables — new Pattern C junctions named `submittal_doc_links` to avoid conflict.
+- `project_documents` pre-existed as file-storage table — new junction named `project_documents_v2`.
+
+### Task 1 — Shared RLS helper
+- `public.user_can_access_entity(entity_type text, entity_id text)` applied to DB
+- Handles: project, subcontract, purchase_order, prime_contract, change_order, invoice, submittal, rfi, drawing, company
+- Migration: `supabase/migrations/20260523100000_create_user_can_access_entity_helper.sql`
+
+### Task 2 — 9 junction tables
+All RLS-enabled, using shared helper:
+- `subcontract_documents`, `purchase_order_documents`, `prime_contract_documents`
+- `change_order_documents`, `owner_invoice_documents`, `company_documents`
+- `project_documents_v2`, `submittal_doc_links`, `rfi_documents`
+- Migration: `supabase/migrations/20260523110000_create_document_junction_tables.sql`
+
+### Task 3 — Drawings hybrid
+- `drawings.document_metadata_id` column added (nullable)
+- `drawing_revisions.document_metadata_id` column added to existing table
+- Migration: `supabase/migrations/20260523120000_drawings_pattern_c_hybrid.sql`
+
+### Task 4 — email_attachments backfill
+- 471 rows promoted to `document_metadata` with `source_system='email_attachment_legacy'`
+- Only 3 have `extracted_text`/`raw_text` — will embed on next sync
+- Migration: `supabase/migrations/20260523130000_backfill_email_attachments_to_document_metadata.sql`
+
+### Task 5 — DocumentPicker frontend
+- `frontend/src/components/ds/document-picker.tsx` — `DocumentPicker` + `LinkedDocumentsList`
+- `frontend/src/app/api/document-picker/types/route.ts` — taxonomy filtered by entity type
+- `frontend/src/app/api/document-picker/attach/route.ts` — hardcoded entity→junction map
+- `frontend/src/app/api/document-picker/linked/route.ts` — linked docs enriched with titles
+- Barrel-exported from `frontend/src/components/ds/index.ts`
+
+### Task 6 — Embedding pipeline extension
+- `_source_type_for_document` now handles `email_attachment_legacy` source_system
+- `embed_pending_attachment_documents()` embeds legacy attachment rows with `raw_text`
+- Hooked into `run_graph_sync()` after main embed sweep (capped 20/run)
+
+### Task 7 — Wired to commitments detail page
+- `frontend/src/components/commitments/tabs/AttachmentsTab.tsx` — added "Linked Documents" section with `DocumentPicker` + `LinkedDocumentsList`
+
+### Database types
+- Regenerated `frontend/src/types/database.types.ts` after applying all migrations
+- Removed Supabase CLI injected `<claude-code-hint>` annotation that broke TS parse
 
 ---
 
