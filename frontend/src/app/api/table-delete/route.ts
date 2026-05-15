@@ -27,7 +27,6 @@ const TABLE_ALLOWLIST = [
   "daily_recaps",
   "notes",
   "meeting_segments",
-  "ai_insights",
   "specifications",
   "drawings",
   "photos",

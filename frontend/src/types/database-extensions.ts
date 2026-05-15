@@ -101,16 +101,9 @@ export type DocumentMetadataExtended = DocumentMetadata & {
   duration?: number;
 };
 
-/**
- * Extended AI insight type.
- * May include additional computed fields from API responses.
- */
-export type AIInsight = Database["public"]["Tables"]["ai_insights"]["Row"];
-
-export type AIInsightExtended = AIInsight & {
-  related_documents?: string[];
-  confidence_score?: number;
-};
+// AIInsight type removed when ai_insights table was dropped on 2026-05-15
+// in favor of Pipeline B's insight_cards. Use
+// Database["public"]["Tables"]["insight_cards"]["Row"] for the row type.
 
 // =============================================================================
 // Joined/Computed Types
