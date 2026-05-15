@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import time
+from datetime import datetime
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
 from src.services.agents.deep_project_intelligence_contracts import (
@@ -176,7 +177,7 @@ EXECUTIVE_SOURCE_PROBES = (
     _SourceProbe(
         "tasks",
         "executive_briefing_follow_ups",
-        timestamp_fields=("due_date", "completed_at", "created_at", "updated_at"),
+        timestamp_fields=("updated_at", "source_date", "created_at"),
         title_fields=("title", "summary", "section"),
         source_id_fields=("id", "source_id"),
     ),
@@ -213,7 +214,7 @@ EXECUTIVE_SOURCE_PROBES = (
     _SourceProbe(
         "projects",
         "projects",
-        timestamp_fields=("updated_at", "created_at"),
+        timestamp_fields=("summary_updated_at", "created_at"),
         title_fields=("name", "project_name", "title"),
         source_id_fields=("id",),
     ),
@@ -737,10 +738,12 @@ def _deep_agent_executive_prompt(
         )
         for item in evidence[:10]
     ]
+    today = datetime.utcnow().strftime("%Y-%m-%d")
     return "\n".join(
         [
             f"Question: {request.question}",
             f"Organization: {organization.name}",
+            f"Today's date (UTC): {today}",
             "",
             "Executive source coverage:",
             *source_lines,
@@ -750,6 +753,7 @@ def _deep_agent_executive_prompt(
             "",
             "Write a concise business-wide executive synthesis for a construction operator.",
             "Prioritize today's meetings, urgent inbox/team follow-ups, important tasks, operational risks, and process recommendations when the evidence supports them.",
+            "A source is only stale if its latest timestamp is more than 7 days behind today's date. Do not add staleness warnings for sources with recent data.",
             "Do not claim checked sources are available when source coverage says missing or failed.",
             "Do not send emails, create invites, mutate tasks, or imply write actions were completed.",
             "Do not mention RAG, embeddings, or implementation internals.",
