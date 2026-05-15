@@ -751,6 +751,32 @@ export function UnifiedTablePage<T>({
     return [...ordered, ...remaining];
   }, [resolvedFeatures.enableRowReorder, rowOrderIds, sortedItems, sorting?.sortBy, table]);
 
+  // Auto-built CSV exporter: used when toolbar.onExport is not provided.
+  // Only exports columns that define csvValue — columns without it are silently skipped.
+  const effectiveOnExport = React.useMemo(() => {
+    if (toolbar.onExport) return toolbar.onExport;
+    if (!resolvedFeatures.enableExport) return undefined;
+    const exportableCols = visibleColumns
+      .map((id) => table.columns.find((c) => c.id === id))
+      .filter((c): c is TableColumn<T> => Boolean(c?.csvValue));
+    if (exportableCols.length === 0) return undefined;
+    return () => {
+      const escape = (val: string) => `"${val.replace(/"/g, '""')}"`;
+      const headers = exportableCols.map((c) => escape(c.label)).join(",");
+      const rows = rowOrderedItems.map((item) =>
+        exportableCols.map((c) => escape(String(c.csvValue!(item) ?? ""))).join(","),
+      );
+      const csv = [headers, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${header.title.toLowerCase().replace(/\s+/g, "-")}-export.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+  }, [toolbar.onExport, resolvedFeatures.enableExport, visibleColumns, table.columns, rowOrderedItems, header.title]);
+
   React.useEffect(() => {
     if (!resolvedFeatures.enableRowReorder || sorting?.sortBy) {
       setRowOrderIds((prev) => (prev.length === 0 ? prev : []));
@@ -1107,7 +1133,7 @@ export function UnifiedTablePage<T>({
       sortBy={sorting?.sortBy}
       sortDirection={sorting?.sortDirection}
       onSortChange={sorting?.onSortChange}
-      onExport={toolbar.onExport}
+      onExport={effectiveOnExport}
       onBulkDelete={effectiveBulkDelete}
       mobilePanelActions={toolbar.mobilePanelActions}
       customActions={toolbar.customActions}
