@@ -102,7 +102,7 @@ export default function CommitmentPcoDetailPage() {
       setShowDeleteDialog(false);
       router.push(`/${projectId}/commitment-pcos`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete PCO");
+      toast.error("Failed to delete PCO");
     }
   }, [projectId, pcoId, router]);
 
@@ -116,7 +116,7 @@ export default function CommitmentPcoDetailPage() {
       setShowPromoteDialog(false);
       fetchPco();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to promote PCO");
+      toast.error("Failed to promote PCO");
     }
   }, [projectId, pcoId, fetchPco]);
 

@@ -42,7 +42,7 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
         setAttachments([]);
         return;
       }
-      toast.error(error instanceof Error ? error.message : "Failed to load attachments");
+      toast.error("Failed to load attachments");
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +67,7 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
       toast.success(`${files.length} file(s) uploaded successfully`);
       await fetchAttachments();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to upload files");
+      toast.error("Failed to upload files");
     } finally {
       setIsUploading(false);
     }
@@ -84,7 +84,7 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
       toast.success("Attachment deleted");
       setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete attachment");
+      toast.error("Failed to delete attachment");
     } finally {
       setDeletingIds((prev) => {
         const next = new Set(prev);

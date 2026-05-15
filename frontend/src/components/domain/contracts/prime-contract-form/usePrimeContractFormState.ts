@@ -199,9 +199,7 @@ export function usePrimeContractFormState({
       setBudgetCodes(budgetCodes || []);
     } catch (error) {
       console.error("[ContractForm] Failed to load budget codes:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load budget codes",
-      );
+      toast.error("Failed to load budget codes");
       setBudgetCodes([]);
     } finally {
       setLoadingBudgetCodes(false);

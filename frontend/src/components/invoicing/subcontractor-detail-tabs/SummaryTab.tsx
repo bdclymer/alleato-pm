@@ -221,7 +221,7 @@ export function SummaryTab({
       toast.success("Invoice updated");
       await onSave?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
+      toast.error("Failed to save");
     } finally {
       setSaving(false);
     }

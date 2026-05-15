@@ -422,7 +422,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "ERP sync failed");
+      toast.error("ERP sync failed");
     } finally {
       setIsSyncing(false);
     }
@@ -487,7 +487,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         // Trigger re-fetch by navigating to same page
         router.refresh();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to delete company");
+        toast.error("Failed to delete company");
       }
     },
     [router],

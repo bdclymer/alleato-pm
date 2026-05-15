@@ -109,7 +109,7 @@ export function AddToCommitmentCODialog({
           })),
         );
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Could not load commitments. Please try again.");
+        toast.error("Could not load commitments. Please try again.");
         setCommitments([]);
       } finally {
         setIsLoadingCommitments(false);
@@ -150,7 +150,7 @@ export function AddToCommitmentCODialog({
           })),
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not load existing PCOs.");
+      toast.error("Could not load existing PCOs.");
       setExistingPcos([]);
     } finally {
       setIsLoadingPcos(false);
@@ -292,7 +292,7 @@ export function AddToCommitmentCODialog({
         router.push(`/${projectId}/commitment-pcos/${pcoId}`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to process commitment PCO");
+      toast.error("Failed to process commitment PCO");
     } finally {
       setIsSubmitting(false);
     }

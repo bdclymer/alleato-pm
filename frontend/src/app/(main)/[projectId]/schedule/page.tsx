@@ -278,7 +278,7 @@ export default function ProjectSchedulePage() {
       }
       setRelatedActionItemsByTaskId(grouped);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to load related action items");
+      toast.error("Failed to load related action items");
     }
   }, [projectId]);
 

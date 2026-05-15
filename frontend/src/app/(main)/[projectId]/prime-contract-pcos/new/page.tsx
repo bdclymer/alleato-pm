@@ -269,7 +269,7 @@ export default function NewPrimeContractPcoPage() {
       );
       setContacts(data.map((c) => ({ id: c.id, name: c.name })));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not load contacts");
+      toast.error("Could not load contacts");
       contactsFetched.current = false; // allow retry
     }
   }, [projectId]);
@@ -481,7 +481,7 @@ export default function NewPrimeContractPcoPage() {
         router.push(buildPcoDetailPath(created.id, data.prime_contract_id));
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create PCO");
+      toast.error("Failed to create PCO");
     } finally {
       setIsSubmitting(false);
     }

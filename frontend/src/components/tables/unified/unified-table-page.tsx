@@ -1053,9 +1053,7 @@ export function UnifiedTablePage<T>({
         }
         setInlineEdits((prev) => ({ ...prev, [cellKey]: nextValue }));
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to update cell value",
-        );
+        toast.error("Failed to update cell value");
       } finally {
         setEditingCell(null);
         setEditingValue("");

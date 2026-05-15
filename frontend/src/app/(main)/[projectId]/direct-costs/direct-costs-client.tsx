@@ -217,7 +217,7 @@ export function DirectCostsClient({
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "ERP sync failed");
+      toast.error("ERP sync failed");
     } finally {
       setIsSyncing(false);
     }
@@ -339,7 +339,7 @@ export function DirectCostsClient({
         method: "DELETE",
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete direct cost");
+      toast.error("Failed to delete direct cost");
       return;
     }
 

@@ -154,7 +154,7 @@ export function SubcontractorInvoiceDetail({
       toast.success(successMsg);
       await refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Status update failed");
+      toast.error("Status update failed");
     } finally {
       setBusy(false);
     }
@@ -179,7 +179,7 @@ export function SubcontractorInvoiceDetail({
         submitted = true;
         toast.success("Submitted for review");
       } else {
-        toast.error(err instanceof Error ? err.message : "Submit failed");
+        toast.error("Submit failed");
       }
     } finally {
       if (submitted) {
@@ -199,7 +199,7 @@ export function SubcontractorInvoiceDetail({
       toast.success(successMsg);
       await refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Status update failed");
+      toast.error("Status update failed");
     } finally {
       setBusy(false);
     }
@@ -214,7 +214,7 @@ export function SubcontractorInvoiceDetail({
       toast.success("Owner approval recorded");
       await refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Status update failed");
+      toast.error("Status update failed");
     } finally {
       setBusy(false);
     }
@@ -276,7 +276,7 @@ export function SubcontractorInvoiceDetail({
       await refetch();
       setActiveTab("emails");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send email");
+      toast.error("Failed to send email");
     } finally {
       setEmailBusy(false);
     }
@@ -293,7 +293,7 @@ export function SubcontractorInvoiceDetail({
       await refetch();
       setActiveTab("emails");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to invite subcontractor");
+      toast.error("Failed to invite subcontractor");
     } finally {
       setBusy(false);
     }
@@ -319,7 +319,7 @@ export function SubcontractorInvoiceDetail({
       await refetch();
       setActiveTab("history");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to resend");
+      toast.error("Failed to resend");
     }
   }
 
@@ -356,7 +356,7 @@ export function SubcontractorInvoiceDetail({
       await refetch();
       setActiveTab("history");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to mark paid");
+      toast.error("Failed to mark paid");
     } finally {
       setBusy(false);
     }
@@ -696,9 +696,7 @@ export function SubcontractorInvoiceDetail({
                   setReviewModalOpen(false);
                   await refetch();
                 } catch (err) {
-                  toast.error(
-                    err instanceof Error ? err.message : "Update failed",
-                  );
+                  toast.error("Update failed");
                 } finally {
                   setBusy(false);
                 }

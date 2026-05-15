@@ -420,9 +420,7 @@ export default function NewSubcontractorInvoicePage() {
       );
       router.push(`/${projectId}/invoicing/subcontractor/${data.id}`);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to save invoice",
-      );
+      toast.error("Failed to save invoice");
     } finally {
       setSubmitting(false);
     }

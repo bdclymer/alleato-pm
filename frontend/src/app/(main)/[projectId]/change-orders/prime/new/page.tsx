@@ -148,7 +148,7 @@ export default function NewPrimeContractCOPage() {
       toast.success("Change order created");
       router.push(`/${projectId}/change-orders/prime/${created.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create");
+      toast.error("Failed to create");
     } finally {
       setIsSubmitting(false);
     }

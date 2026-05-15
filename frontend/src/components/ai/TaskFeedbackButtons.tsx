@@ -73,7 +73,7 @@ export function TaskFeedbackButtons({
     try {
       await submitFeedback("good");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to record feedback");
+      toast.error("Failed to record feedback");
     }
   };
 
@@ -95,7 +95,7 @@ export function TaskFeedbackButtons({
         onTrivial();
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to record feedback");
+      toast.error("Failed to record feedback");
     }
     setBadReasonCategory(null);
     setBadReason("");

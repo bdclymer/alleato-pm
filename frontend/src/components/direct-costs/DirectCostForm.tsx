@@ -522,9 +522,7 @@ export function DirectCostForm({
         router.push(`/${projectId}/direct-costs`)
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to save direct cost'
-      )
+      toast.error('Failed to save direct cost')
     } finally {
       setIsSubmitting(false)
     }

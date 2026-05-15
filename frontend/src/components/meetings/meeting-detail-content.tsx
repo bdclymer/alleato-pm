@@ -426,7 +426,7 @@ export function MeetingDetailContent({
       setAssignmentDialogOpen(false);
       toast.success(nextProjectId ? "Meeting assigned to project" : "Project assignment removed");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to assign meeting to project");
+      toast.error("Failed to assign meeting to project");
     } finally {
       setIsSavingProject(false);
     }

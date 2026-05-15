@@ -93,11 +93,7 @@ export function BudgetModificationsModal({
       setModifications(data.modifications || []);
     } catch (error) {
       console.error("Failed to fetch budget modifications:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to load budget modifications",
-      );
+      toast.error("Failed to load budget modifications");
     } finally {
       setLoading(false);
     }
@@ -136,11 +132,7 @@ export function BudgetModificationsModal({
         onModificationChanged?.();
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : `Failed to ${action} modification`,
-      );
+      toast.error(`Failed to ${action} modification`);
     } finally {
       setActionLoading(null);
     }
@@ -167,9 +159,7 @@ export function BudgetModificationsModal({
       await fetchModifications();
       onModificationChanged?.();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to void modification",
-      );
+      toast.error("Failed to void modification");
     } finally {
       setActionLoading(null);
       setVoidReason("");

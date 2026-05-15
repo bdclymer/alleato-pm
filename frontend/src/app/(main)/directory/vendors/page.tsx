@@ -560,7 +560,7 @@ export default function DirectoryVendorsPage(): ReactElement {
       );
       await fetchVendors();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "ERP sync failed");
+      toast.error("ERP sync failed");
     } finally {
       setIsSyncing(false);
     }

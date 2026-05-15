@@ -244,7 +244,7 @@ export function useChangeEventDetail(
         );
         toast.success(`Status updated to ${normalized}`);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to update status");
+        toast.error("Failed to update status");
         throw err;
       }
     },
@@ -259,9 +259,7 @@ export function useChangeEventDetail(
 
       toast.success("Change event deleted");
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to delete change event",
-      );
+      toast.error("Failed to delete change event");
       throw err;
     }
   }, [projectId, changeEventId]);
@@ -411,7 +409,7 @@ export function useChangeEventDetail(
         await fetchChangeEventDetails();
         toast.success("Change event updated");
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to save changes");
+        toast.error("Failed to save changes");
         throw err;
       }
     },
@@ -428,9 +426,7 @@ export function useChangeEventDetail(
         setLineItems((prev) => prev.filter((li) => li.id !== lineItemId));
         toast.success("Line item deleted");
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to delete line item",
-        );
+        toast.error("Failed to delete line item");
         throw err;
       }
     },
@@ -480,9 +476,7 @@ export function useChangeEventDetail(
         await fetchRelatedItems();
         toast.success("Related item linked");
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to link related item",
-        );
+        toast.error("Failed to link related item");
         throw err;
       }
     },
@@ -504,9 +498,7 @@ export function useChangeEventDetail(
         toast.success("Related item removed");
       } catch (err) {
         await fetchRelatedItems();
-        toast.error(
-          err instanceof Error ? err.message : "Failed to unlink related item",
-        );
+        toast.error("Failed to unlink related item");
         throw err;
       }
     },

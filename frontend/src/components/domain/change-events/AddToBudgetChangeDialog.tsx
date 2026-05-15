@@ -93,9 +93,7 @@ export function AddToBudgetChangeDialog({
           })),
         );
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Could not load budget changes.",
-        );
+        toast.error("Could not load budget changes.");
         setBudgetChanges([]);
       } finally {
         setIsLoadingBudgetChanges(false);
@@ -146,9 +144,7 @@ export function AddToBudgetChangeDialog({
       onSuccess();
       onClose();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to process budget change",
-      );
+      toast.error("Failed to process budget change");
     } finally {
       setIsSubmitting(false);
     }

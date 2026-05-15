@@ -73,7 +73,7 @@ export function KnowledgeUploadDialog({
       toast.success("Knowledge source uploaded and queued for processing");
       handleClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Upload failed");
+      toast.error("Upload failed");
     } finally {
       setIsUploading(false);
     }

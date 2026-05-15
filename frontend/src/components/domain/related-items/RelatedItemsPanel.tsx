@@ -128,7 +128,7 @@ function AddLinkDialog({
       resetForm();
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add link");
+      toast.error("Failed to add link");
     }
   }
 
@@ -297,7 +297,7 @@ export function RelatedItemsPanel({
       await removeMutation.mutateAsync({ linkId, tableName });
       toast.success(`Removed link to "${title}"`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to remove link");
+      toast.error("Failed to remove link");
     }
   }
 

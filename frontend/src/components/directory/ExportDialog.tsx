@@ -107,9 +107,7 @@ export function ExportDialog({
       toast.success("Export started. Check your downloads.");
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to export data",
-      );
+      toast.error("Failed to export data");
     } finally {
       setIsExporting(false);
     }

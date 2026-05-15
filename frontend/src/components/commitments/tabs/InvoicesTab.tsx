@@ -81,7 +81,7 @@ export const InvoicesTab = memo(function InvoicesTab({
         router.push(`/${projectId}/commitments/${commitmentId}/invoices/${response.data.id}`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create retainage release invoice");
+      toast.error("Failed to create retainage release invoice");
     } finally {
       setIsCreating(false);
     }

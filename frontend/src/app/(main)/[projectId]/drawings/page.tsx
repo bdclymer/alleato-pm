@@ -443,7 +443,7 @@ export default function ProjectDrawingsPage() {
       URL.revokeObjectURL(url);
       toast.success(`Downloaded ${count} drawing${count === 1 ? "" : "s"}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Bulk download failed");
+      toast.error("Bulk download failed");
     }
   };
 
@@ -496,9 +496,7 @@ export default function ProjectDrawingsPage() {
       anchor.click();
       document.body.removeChild(anchor);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to download drawing",
-      );
+      toast.error("Failed to download drawing");
     }
   };
 

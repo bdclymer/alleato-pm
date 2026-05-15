@@ -419,9 +419,9 @@ function BudgetPageContent() {
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create snapshot",
+        "Failed to create snapshot",
         { id: toastId },
-      );
+);
     }
   }, [activeTab, projectId, router]);
 

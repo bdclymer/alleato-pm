@@ -194,7 +194,7 @@ export function RelatedItemsTab({
       setShowDialog(false);
       void fetchItems();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to link item");
+      toast.error("Failed to link item");
     } finally {
       setIsLinking(false);
     }

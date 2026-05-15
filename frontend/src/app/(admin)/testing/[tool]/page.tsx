@@ -85,7 +85,7 @@ export default function ToolPage() {
       );
       router.push(`/testing/runs/${run_id}`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unable to start run.");
+      toast.error("Unable to start run.");
     } finally {
       setStarting(false);
     }

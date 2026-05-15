@@ -114,6 +114,7 @@ export const projectManagementTools: NavigationTool[] = [
 ];
 
 export const financialManagementTools: NavigationTool[] = [
+  { name: "Estimates", path: "estimates", icon: ClipboardList, requiresProject: true, module: "budget" },
   { name: "Budget", path: "budget", icon: TrendingUp, requiresProject: true, module: "budget" },
   { name: "Prime Contracts", path: "prime-contracts", icon: FileText, requiresProject: true, module: "contracts" },
   { name: "Commitments", path: "commitments", icon: Hammer, requiresProject: true, module: "contracts" },

@@ -491,7 +491,7 @@ function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess
       onOpenChange(false);
       onSuccess(body.data);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add line item");
+      toast.error("Failed to add line item");
     } finally {
       setIsSaving(false);
     }
@@ -643,9 +643,7 @@ function InvoiceEditForm({
       toast.success("Invoice updated successfully");
       onSuccess(body.data);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to update invoice",
-      );
+      toast.error("Failed to update invoice");
     } finally {
       setIsSaving(false);
     }
@@ -820,7 +818,7 @@ export default function InvoiceDetailPage() {
       // Refresh invoice to get server-computed values
       await fetchInvoice();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save changes");
+      toast.error("Failed to save changes");
     } finally {
       setIsSavingSOV(false);
     }
@@ -870,7 +868,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice submitted successfully");
       await fetchInvoice();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to submit invoice");
+      toast.error("Failed to submit invoice");
     }
   };
 
@@ -886,7 +884,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice returned for revision");
       await fetchInvoice();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to request revision");
+      toast.error("Failed to request revision");
     }
   };
 
@@ -904,7 +902,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice approved successfully");
       await fetchInvoice();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to approve invoice");
+      toast.error("Failed to approve invoice");
     }
   };
 
@@ -920,7 +918,7 @@ export default function InvoiceDetailPage() {
       setApproveAsNotedDialogOpen(false);
       await fetchInvoice();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to approve invoice as noted");
+      toast.error("Failed to approve invoice as noted");
     } finally {
       setIsApprovingAsNoted(false);
     }
@@ -942,7 +940,7 @@ export default function InvoiceDetailPage() {
       setVoidReason("");
       await fetchInvoice();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to void invoice");
+      toast.error("Failed to void invoice");
     } finally {
       setIsVoiding(false);
     }
@@ -963,7 +961,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice deleted successfully");
       router.push(`/${projectId}/invoices`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete invoice");
+      toast.error("Failed to delete invoice");
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);

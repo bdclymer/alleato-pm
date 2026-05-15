@@ -25,11 +25,7 @@ export function ExecutiveBriefingRefreshButton({
         router.refresh();
         toast.success("Executive brief regenerated with the latest source data.");
       } catch (caught) {
-        toast.error(
-          caught instanceof Error
-            ? caught.message
-            : "Executive brief regeneration failed.",
-        );
+        toast.error("Executive brief regeneration failed.");
       }
     });
   };

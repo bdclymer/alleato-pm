@@ -1312,11 +1312,7 @@ export function GenericDataTable({
       setIsEditDialogOpen(false);
       setEditingRow(null);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to save changes. Please try again.",
-      );
+      toast.error("Failed to save changes. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -1388,11 +1384,7 @@ export function GenericDataTable({
         setEditingCell(null);
         setEditingValue("");
       } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to save changes. Please try again.",
-        );
+        toast.error("Failed to save changes. Please try again.");
       } finally {
         setIsSavingCell(false);
       }

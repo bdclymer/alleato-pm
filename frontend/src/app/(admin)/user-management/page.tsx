@@ -446,7 +446,7 @@ export default function PermissionsAdminPage() {
       toast.success("Template created");
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to create template");
+      toast.error("Failed to create template");
     },
   });
 
@@ -473,7 +473,7 @@ export default function PermissionsAdminPage() {
       toast.success("Template updated");
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update template");
+      toast.error("Failed to update template");
     },
   });
 
@@ -499,7 +499,7 @@ export default function PermissionsAdminPage() {
       toast.success("Permission saved");
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update permission");
+      toast.error("Failed to update permission");
     },
   });
 
@@ -513,7 +513,7 @@ export default function PermissionsAdminPage() {
       toast.success("Template deleted");
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to delete template");
+      toast.error("Failed to delete template");
     },
   });
 
@@ -538,7 +538,7 @@ export default function PermissionsAdminPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to invite user");
+      toast.error("Failed to invite user");
     },
   });
 
@@ -552,7 +552,7 @@ export default function PermissionsAdminPage() {
       toast.success("User removed from App Users");
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to delete user");
+      toast.error("Failed to delete user");
     },
   });
 
@@ -574,7 +574,7 @@ export default function PermissionsAdminPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "User auth links need manual review");
+      toast.error("User auth links need manual review");
     },
   });
 

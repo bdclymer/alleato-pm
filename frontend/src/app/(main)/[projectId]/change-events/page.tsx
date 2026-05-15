@@ -236,7 +236,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
           toast.success("Change event moved to recycle bin");
           refetchChangeEvents();
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Failed to delete change event");
+          toast.error("Failed to delete change event");
         }
       });
     },
@@ -253,7 +253,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
           refetchChangeEvents();
         })
         .catch((err: unknown) => {
-          toast.error(err instanceof Error ? err.message : "Failed to restore change event");
+          toast.error("Failed to restore change event");
         });
     },
     [projectId, refetchChangeEvents],
@@ -303,7 +303,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         tableState.setSelectedIds([]);
         refetchChangeEvents();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to bulk delete change events");
+        toast.error("Failed to bulk delete change events");
       }
     });
   }, [projectId, refetchChangeEvents, tableState, bulkDeleteDialog]);
@@ -350,7 +350,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         setShowRfqSheet(false);
         tableState.setSelectedIds([]);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to send RFQ");
+        toast.error("Failed to send RFQ");
       } finally {
         setIsCreatingRfq(false);
       }

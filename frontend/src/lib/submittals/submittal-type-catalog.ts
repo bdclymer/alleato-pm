@@ -8,7 +8,10 @@ type SubmittalTypeRow = {
 };
 
 export const CANONICAL_SUBMITTAL_TYPE_NAMES = [
+  "Contract",
   "Document",
+  "Drawings",
+  "Material Samples",
   "Other",
   "Pay Request",
   "Payroll",
@@ -17,7 +20,6 @@ export const CANONICAL_SUBMITTAL_TYPE_NAMES = [
   "Product Information",
   "Product Manual",
   "Sample",
-  "Shop Drawing",
   "Specification",
 ] as const;
 

@@ -244,7 +244,7 @@ function InlineProjectSelect({
       toast.success(projectId ? "Project assigned" : "Assignment cleared");
       onSaved();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update");
+      toast.error("Failed to update");
     } finally {
       setSaving(false);
       setOpen(false);
@@ -775,9 +775,7 @@ export function OutlookIntakeClient({
       setSelectedIds([]);
       void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to reclassify selected emails",
-      );
+      toast.error("Failed to reclassify selected emails");
     } finally {
       setIsBulkActing(false);
     }
@@ -801,7 +799,7 @@ export function OutlookIntakeClient({
       );
       void queryClient.invalidateQueries({ queryKey: ["outlook-intake"] });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to reclassify email");
+      toast.error("Failed to reclassify email");
     }
   }
 
@@ -1142,11 +1140,7 @@ export function OutlookIntakeClient({
                             queryKey: ["outlook-intake"],
                           });
                         } catch (err) {
-                          toast.error(
-                            err instanceof Error
-                              ? err.message
-                              : "Failed to update",
-                          );
+                          toast.error("Failed to update");
                         }
                       }}
                     >
@@ -1169,11 +1163,7 @@ export function OutlookIntakeClient({
                           queryKey: ["outlook-intake"],
                         });
                       } catch (err) {
-                        toast.error(
-                          err instanceof Error
-                            ? err.message
-                            : "Failed to update",
-                        );
+                        toast.error("Failed to update");
                       }
                     }}
                   >

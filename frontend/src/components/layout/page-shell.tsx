@@ -73,7 +73,7 @@ const variantConfig: Record<
 > = {
   dashboard: { containerMaxWidth: "full", contentMaxWidth: "max-w-[1800px]", spacing: "space-y-14" },
   table:     { containerMaxWidth: "full", spacing: "space-y-4" },
-  form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-5xl",  spacing: "space-y-8", headerPadding: "pt-10" },
+  form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-5xl",  spacing: "space-y-8" },
   detail:    { containerMaxWidth: "full", contentMaxWidth: "max-w-6xl",  spacing: "space-y-6" },
   detailWide:{ containerMaxWidth: "full", contentMaxWidth: "max-w-screen-2xl",  spacing: "space-y-6" },
   content:   { containerMaxWidth: "full", contentMaxWidth: "max-w-4xl",  spacing: "space-y-8" },
@@ -148,12 +148,27 @@ export function PageShell({
   // For form/detail/content, resolve the actions: prefer explicit actions, fall back to back button
   const resolvedActions = actions ?? (variant === "form" ? backButton : undefined);
 
+  // Form pages get an enhanced title: slightly larger, semibold, with a primary accent line and visible description.
+  const effectiveTitleContent =
+    titleContent ??
+    (variant === "form" ? (
+      <div className="flex flex-col gap-1.5 py-1">
+        <h1 className="text-[2rem] sm:text-[2.25rem] font-semibold text-foreground tracking-tight">
+          {title}
+        </h1>
+        {description && (
+          <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+        )}
+        <div className="mt-2 h-0.5 w-10 bg-primary rounded-full" />
+      </div>
+    ) : undefined);
+
   const header = showHeader ? (
     <PageHeader
       title={title}
       eyebrow={eyebrow}
       description={description}
-      titleContent={titleContent}
+      titleContent={effectiveTitleContent}
       actions={resolvedActions}
       statusBadge={statusBadge}
       tabs={tabs}
@@ -181,7 +196,7 @@ export function PageShell({
   // Form/detail/content/dashboard: constrained inner width
   if (config.contentMaxWidth) {
     return (
-      <PageContainer maxWidth={config.containerMaxWidth} className={cn(fillHeight && "flex flex-col min-h-0", className)}>
+      <PageContainer maxWidth={config.containerMaxWidth} className={cn(variant === "form" && "form-page-bg", fillHeight && "flex flex-col min-h-0", className)}>
         <div ref={rootRef} className={cn("mx-auto w-full min-w-0", config.contentMaxWidth, config.headerPadding, fillHeight && "flex flex-col flex-1 min-h-0")}>
           {header}
           <div className={cn(config.spacing, "min-w-0 pt-6 pb-12", fillHeight && "flex flex-col flex-1 min-h-0", contentClassName)}>{children}</div>

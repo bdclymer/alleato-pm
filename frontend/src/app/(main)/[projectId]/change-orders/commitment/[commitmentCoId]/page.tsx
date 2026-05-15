@@ -335,7 +335,7 @@ export default function CommitmentCODetailPage() {
       setLineItemDraft(emptyDraft);
       fetchLineItemsFn();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add line item");
+      toast.error("Failed to add line item");
     } finally {
       setLineItemSaving(false);
     }
@@ -360,7 +360,7 @@ export default function CommitmentCODetailPage() {
       setLineItemDraft(emptyDraft);
       fetchLineItemsFn();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update line item");
+      toast.error("Failed to update line item");
     } finally {
       setLineItemSaving(false);
     }
@@ -599,7 +599,7 @@ export default function CommitmentCODetailPage() {
       setIsEditing(false);
       toast.success("Change order updated");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update");
+      toast.error("Failed to update");
     } finally {
       setIsSaving(false);
     }
@@ -621,7 +621,7 @@ export default function CommitmentCODetailPage() {
       toast.success("Change order deleted");
       router.push(`/${projectId}/change-orders?tab=commitment`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete");
+      toast.error("Failed to delete");
     }
   }, [co, contractId, projectId, commitmentCoId, router, confirm]);
 
@@ -635,7 +635,7 @@ export default function CommitmentCODetailPage() {
       await fetchCo();
       toast.success("Change order approved");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to approve");
+      toast.error("Failed to approve");
     }
   }, [co, contractId, commitmentCoId, fetchCo]);
 
@@ -660,7 +660,7 @@ export default function CommitmentCODetailPage() {
       setRejectionReason("");
       toast.success("Change order rejected");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to reject");
+      toast.error("Failed to reject");
     }
   }, [co, contractId, projectId, commitmentCoId, rejectionReason]);
 

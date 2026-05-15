@@ -551,7 +551,7 @@ export default function PrimeContractCODetailPage() {
       cancelLineItemEdit();
       fetchLineItems();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save line item");
+      toast.error("Failed to save line item");
     } finally {
       setLineItemSaving(false);
     }
@@ -576,7 +576,7 @@ export default function PrimeContractCODetailPage() {
         toast.success("Line item deleted");
         fetchLineItems();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to delete line item");
+        toast.error("Failed to delete line item");
       }
     },
     [apiBase, fetchLineItems],
@@ -623,7 +623,7 @@ export default function PrimeContractCODetailPage() {
         toast.success("File uploaded");
         fetchAttachments();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Upload failed");
+        toast.error("Upload failed");
       }
       e.target.value = "";
     },
@@ -645,7 +645,7 @@ export default function PrimeContractCODetailPage() {
         toast.success("Attachment deleted");
         fetchAttachments();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Delete failed");
+        toast.error("Delete failed");
       }
     },
     [apiBase, fetchAttachments],
@@ -816,7 +816,7 @@ export default function PrimeContractCODetailPage() {
       setIsEditing(false);
       toast.success("Change order updated");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update");
+      toast.error("Failed to update");
     } finally {
       setIsSaving(false);
     }
@@ -839,7 +839,7 @@ export default function PrimeContractCODetailPage() {
       toast.success("Change order deleted");
       router.push(`/${projectId}/change-orders?tab=prime`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete");
+      toast.error("Failed to delete");
     }
   }, [co, apiBase, router, projectId, confirm]);
 
@@ -855,7 +855,7 @@ export default function PrimeContractCODetailPage() {
       setCo((prev) => (prev ? { ...prev, ...updated } : prev));
       toast.success("Change order approved");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to approve");
+      toast.error("Failed to approve");
     }
   }, [co, apiBase]);
 
@@ -883,7 +883,7 @@ export default function PrimeContractCODetailPage() {
       setRejectionReason("");
       toast.success("Change order rejected");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to reject");
+      toast.error("Failed to reject");
     }
   }, [co, apiBase, rejectionReason]);
 

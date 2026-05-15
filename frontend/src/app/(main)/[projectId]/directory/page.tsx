@@ -404,9 +404,7 @@ function AddMemberDialog({
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to add member"
-      );
+      toast.error("Failed to add member");
     } finally {
       setSaving(false);
     }
@@ -628,7 +626,7 @@ function AssignExistingCompanyDialog({
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to assign company");
+      toast.error("Failed to assign company");
     } finally {
       setSaving(false);
     }
@@ -743,7 +741,7 @@ function ProjectTeamSection({
       await deleteRole(role.id);
       toast.success("Role deleted");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete role");
+      toast.error("Failed to delete role");
     }
   };
 
@@ -1029,7 +1027,7 @@ function TemplateSelector({
       toast.success("Permission template updated");
       onAssigned();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to assign template");
+      toast.error("Failed to assign template");
     } finally {
       setAssigning(false);
     }
@@ -1252,7 +1250,7 @@ function ExternalMembersSection({
       await refetch();
       toast.success("Member removed");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to remove member");
+      toast.error("Failed to remove member");
     } finally {
       setRemovingPersonId(null);
     }
@@ -1385,7 +1383,7 @@ function VendorsSection({
       await onRemoveVendor(pv.id);
       toast.success(`${name} removed`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to remove vendor");
+      toast.error("Failed to remove vendor");
     } finally {
       setRemovingId(null);
     }

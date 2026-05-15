@@ -93,9 +93,7 @@ export function AddToPrimePCODialog({
       onClose();
       router.push(formPath);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to open Prime PCO form",
-      );
+      toast.error("Failed to open Prime PCO form");
     } finally {
       setIsSubmitting(false);
     }

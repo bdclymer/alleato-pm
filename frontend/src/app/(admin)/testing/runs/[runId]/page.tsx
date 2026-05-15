@@ -166,7 +166,7 @@ function CaseDetail({
       );
       onStatusChange(result.id, updated.status);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to update status.");
+      toast.error("Failed to update status.");
     } finally {
       setUpdatingStatus(false);
     }
@@ -187,7 +187,7 @@ function CaseDetail({
         toast.success(already_existed ? "Issue already exists" : `Issue #${updated.github_issue_number} created`);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to create GitHub issue.");
+      toast.error("Failed to create GitHub issue.");
     } finally {
       setFilingIssue(false);
     }
@@ -565,7 +565,7 @@ export default function RunPage() {
         );
         setLocalScreenshots((prev) => [...prev, { url: dataUrl, label: file.name }]);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Screenshot upload failed.");
+        toast.error("Screenshot upload failed.");
       } finally {
         setUploadingScreenshot(false);
       }

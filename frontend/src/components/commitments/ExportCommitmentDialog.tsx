@@ -137,9 +137,7 @@ export function ExportCommitmentDialog({
       toast.success(`Commitment exported successfully as ${format.toUpperCase()}`);
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to export commitment"
-      );
+      toast.error("Failed to export commitment");
     } finally {
       setIsExporting(false);
     }

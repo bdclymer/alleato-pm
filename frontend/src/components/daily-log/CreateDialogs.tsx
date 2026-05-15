@@ -30,7 +30,7 @@ export function CreateDailyLogButton({ projectId }: { projectId: number }) {
         body: JSON.stringify({ table: "daily_logs", data: { project_id: projectId, log_date: date } }),
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create daily log");
+      toast.error("Failed to create daily log");
       return;
     }
     toast.success("Daily log created");
@@ -76,7 +76,7 @@ export function CreateManpowerButton({ dailyLogs }: { dailyLogs: DailyLogSummary
         body: JSON.stringify({ table: "daily_log_manpower", data: payload }),
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create manpower entry");
+      toast.error("Failed to create manpower entry");
       return;
     }
     toast.success("Manpower entry created");
@@ -132,7 +132,7 @@ export function CreateEquipmentButton({ dailyLogs }: { dailyLogs: DailyLogSummar
         body: JSON.stringify({ table: "daily_log_equipment", data: payload }),
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create equipment entry");
+      toast.error("Failed to create equipment entry");
       return;
     }
     toast.success("Equipment entry created");
@@ -184,7 +184,7 @@ export function CreateNoteButton({ dailyLogs }: { dailyLogs: DailyLogSummary[] }
         body: JSON.stringify({ table: "daily_log_notes", data: payload }),
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create note");
+      toast.error("Failed to create note");
       return;
     }
     toast.success("Note created");

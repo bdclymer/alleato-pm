@@ -190,7 +190,7 @@ export function DocumentDeliveryDialog({
 
       toast.success("PDF downloaded");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Download failed");
+      toast.error("Download failed");
     } finally {
       setIsDownloading(false);
     }
@@ -227,7 +227,7 @@ export function DocumentDeliveryDialog({
       onEmailSent?.();
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Send failed");
+      toast.error("Send failed");
     } finally {
       setIsSending(false);
     }

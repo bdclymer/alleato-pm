@@ -127,7 +127,7 @@ export function SubcontractorSovTab({
       setHasUnsavedChanges(false);
       onCountChange?.((payload.data.lineItems || []).length);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to load Subcontractor SOV.");
+      toast.error("Failed to load Subcontractor SOV.");
     } finally {
       setIsLoading(false);
     }
@@ -234,7 +234,7 @@ export function SubcontractorSovTab({
       toast.success("Subcontractor SOV saved.");
       await fetchSsov();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save subcontractor SOV.");
+      toast.error("Failed to save subcontractor SOV.");
     } finally {
       setIsSaving(false);
     }
@@ -261,7 +261,7 @@ export function SubcontractorSovTab({
         await fetchSsov();
         if (action === "submit") await onSubmitted?.();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Action failed.");
+        toast.error("Action failed.");
       } finally {
         setIsSubmitting(false);
       }

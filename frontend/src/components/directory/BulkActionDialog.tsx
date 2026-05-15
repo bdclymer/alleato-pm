@@ -133,9 +133,7 @@ export function BulkActionDialog({
       onOpenChange(false);
       if (onComplete) onComplete();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to run bulk action",
-      );
+      toast.error("Failed to run bulk action");
     } finally {
       setIsSubmitting(false);
     }

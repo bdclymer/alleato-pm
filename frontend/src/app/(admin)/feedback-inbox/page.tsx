@@ -572,7 +572,7 @@ function CommentInput({
         </div>
       )}
 
-      {/* eslint-disable-next-line design-system/no-raw-form-controls -- hidden file input requires ref; no DS primitive available */}
+      { }
       <input
         ref={fileInputRef}
         type="file"
@@ -702,7 +702,7 @@ function CommentsSection({
         toast.success(`Comment added and ${mentions.length} user${mentions.length > 1 ? "s" : ""} notified`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add comment");
+      toast.error("Failed to add comment");
     } finally {
       setSubmitting(false);
     }
@@ -1246,7 +1246,7 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
       }
       toast.success("Tool assigned");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to assign tool");
+      toast.error("Failed to assign tool");
     } finally {
       setLoading(false);
     }
@@ -1279,7 +1279,7 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
         toast("No matching tool found", { description: "Assign one manually." });
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Auto-match failed");
+      toast.error("Auto-match failed");
     } finally {
       setLoading(false);
     }
@@ -1772,7 +1772,7 @@ export default function FeedbackInboxPage() {
       setItems(data.items ?? []);
       setTotal(data.total ?? 0);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to load feedback items");
+      toast.error("Failed to load feedback items");
     } finally {
       setLoading(false);
     }
@@ -1877,9 +1877,7 @@ export default function FeedbackInboxPage() {
       toast.success(`Marked as ${statusLabel}`);
       fetchItems();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to update status",
-      );
+      toast.error("Failed to update status");
     } finally {
       setUpdatingId(null);
     }
@@ -1901,9 +1899,7 @@ export default function FeedbackInboxPage() {
       );
       fetchItems();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to send to GitHub",
-      );
+      toast.error("Failed to send to GitHub");
     } finally {
       setSendingToGitHub(false);
     }
@@ -1924,7 +1920,7 @@ export default function FeedbackInboxPage() {
       }
       fetchItems();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete feedback item");
+      toast.error("Failed to delete feedback item");
     } finally {
       setDeletingId(null);
     }

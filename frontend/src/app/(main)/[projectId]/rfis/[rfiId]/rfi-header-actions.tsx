@@ -68,7 +68,7 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
         router.push(`/${projectId}/change-events/${newId}`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create change event");
+      toast.error("Failed to create change event");
     } finally {
       setIsCreatingCE(false);
     }

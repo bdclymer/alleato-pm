@@ -191,9 +191,7 @@ export function EmailCommitmentDialog({
       );
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send email"
-      );
+      toast.error("Failed to send email");
     } finally {
       setIsSending(false);
     }

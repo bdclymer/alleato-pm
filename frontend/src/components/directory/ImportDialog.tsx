@@ -125,11 +125,7 @@ export function ImportDialog({
       setFile(null);
       if (onComplete) onComplete();
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to import directory data",
-      );
+      toast.error("Failed to import directory data");
     } finally {
       setIsSubmitting(false);
     }
@@ -153,11 +149,7 @@ export function ImportDialog({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to download template",
-      );
+      toast.error("Failed to download template");
     }
   };
 

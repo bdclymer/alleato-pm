@@ -351,7 +351,7 @@ function EmailDraftFeedbackControls({
       setFeedbackText("");
       toast.success("Draft feedback recorded");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Draft feedback could not be recorded");
+      toast.error("Draft feedback could not be recorded");
     } finally {
       setIsSubmitting(false);
     }
@@ -1074,9 +1074,35 @@ function TaskSummaryWidget({ widget }: { widget: TaskSummaryWidgetPayload }) {
   );
 }
 
+const EMAIL_HEADER_LINE = /^(Subject|Date|From|To|Sent|Cc|Bcc):\s/i;
+const EMAIL_STANDALONE_ADDRESS = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+
+// Inline patterns that mark where boilerplate begins within a paragraph.
+// When matched mid-paragraph, truncate there and stop processing further paragraphs.
+const INLINE_BOILERPLATE_CUTOFFS: RegExp[] = [
+  /[ \t]{4,}/,                                          // 4+ spaces = Outlook sig separator
+  /\bthis email and any files\b/i,
+  /\bif you are not the intended recipient\b/i,
+  /\bthis message (is |contains |and any )/i,
+  /\s[OMTFD]:\s*[+(]?\d/,                               // Phone lines: "O: (859)", "M: (513)"
+  /\sMobile[:\s]+[\d(+]/i,                              // "Mobile 317.437.5361"
+  /\s\|\s*(Email|Web|Phone|Tel|Mobile|Fax)[\s:]/i,      // "| Email:" delimiter blocks
+];
+
+function truncateAtBoilerplate(text: string): { content: string; truncated: boolean } {
+  for (const pattern of INLINE_BOILERPLATE_CUTOFFS) {
+    const idx = text.search(pattern);
+    if (idx > 0) {
+      return { content: text.slice(0, idx).replace(/[\s,.:]+$/, "").trim(), truncated: true };
+    }
+  }
+  return { content: text, truncated: false };
+}
+
 function cleanEmailBodyPreview(value?: string | null): string[] {
   if (!value) return [];
-  return value
+
+  const normalized = value
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
@@ -1084,12 +1110,24 @@ function cleanEmailBodyPreview(value?: string | null): string[] {
     .replace(/&quot;/gi, "\"")
     .replace(/\r\n/g, "\n")
     .replace(/\s+(From|Sent|To|Cc|Bcc|Subject):\s/gi, "\n$1: ")
-    .replace(/\n{3,}/g, "\n\n")
-    .split(/\n+/)
-    .map((paragraph) => paragraph.replace(/[ \t]+/g, " ").trim())
-    .filter(Boolean)
-    .filter((paragraph) => !/^Caution:\s*EXTERNAL EMAIL$/i.test(paragraph))
-    .slice(0, 5);
+    .replace(/\n{3,}/g, "\n\n");
+
+  const result: string[] = [];
+
+  for (const raw of normalized.split(/\n+/)) {
+    const p = raw.replace(/[ \t]+/g, " ").trim();
+    if (!p) continue;
+    if (EMAIL_HEADER_LINE.test(p)) continue;
+    if (/^Caution:\s*EXTERNAL EMAIL$/i.test(p)) continue;
+    if (EMAIL_STANDALONE_ADDRESS.test(p)) continue;
+
+    const { content, truncated } = truncateAtBoilerplate(p);
+    if (content) result.push(content);
+    if (truncated) break; // everything after a boilerplate marker is noise
+    if (result.length >= 5) break;
+  }
+
+  return result;
 }
 
 function getInitials(name?: string | null, email?: string | null): string {
@@ -1114,7 +1152,7 @@ function formatTimeLabel(value?: string | null): string | null {
   if (isToday) {
     return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
   }
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date);
 }
 
 function EmailCardFeedback({
@@ -1377,12 +1415,6 @@ function OutlookInboxSummaryWidget({
             {/* Expanded body */}
             {isOpen ? (
               <div className="px-3 pb-3">
-                {/* Recommended action pill */}
-                <div className="mb-2.5 ml-11 rounded bg-muted/60 px-2.5 py-1.5 text-xs text-foreground">
-                  <span className="font-medium text-primary">Next step: </span>
-                  {item.recommendedAction}
-                </div>
-
                 {/* Email body */}
                 <div className="ml-11 space-y-2 rounded-md bg-muted/30 px-3 py-2.5 text-sm leading-relaxed text-foreground [overflow-wrap:anywhere]">
                   {bodyParagraphs.length > 0 ? (

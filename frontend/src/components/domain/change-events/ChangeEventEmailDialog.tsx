@@ -82,9 +82,7 @@ export function ChangeEventEmailDialog({
       setRecipients("");
       setMessage("");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send email. Please try again."
-      );
+      toast.error("Failed to send email. Please try again.");
     } finally {
       setIsSending(false);
     }

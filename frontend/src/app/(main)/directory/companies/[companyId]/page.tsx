@@ -309,7 +309,7 @@ export default function CompanyDetailsPage() {
       );
       setProjects(payload.data || []);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to load projects");
+      toast.error("Failed to load projects");
     }
   }, []);
 
@@ -345,7 +345,7 @@ export default function CompanyDetailsPage() {
       setEditOpen(false);
       await loadDetails();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update company");
+      toast.error("Failed to update company");
     } finally {
       setIsSavingCompany(false);
     }
@@ -372,7 +372,7 @@ export default function CompanyDetailsPage() {
       setSelectedExistingContactId("");
       await loadDetails();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add contact");
+      toast.error("Failed to add contact");
     } finally {
       setIsSavingContact(false);
     }
@@ -407,7 +407,7 @@ export default function CompanyDetailsPage() {
       setNewContactForm({ first_name: "", last_name: "", email: "", phone_business: "", job_title: "" });
       await loadDetails();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create contact");
+      toast.error("Failed to create contact");
     } finally {
       setIsSavingContact(false);
     }
@@ -451,7 +451,7 @@ export default function CompanyDetailsPage() {
       setEditingContactId("");
       await loadDetails();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update contact");
+      toast.error("Failed to update contact");
     } finally {
       setIsUpdatingContact(false);
     }
@@ -470,7 +470,7 @@ export default function CompanyDetailsPage() {
       await loadDetails();
       toast.success("Primary contact updated");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to set primary contact");
+      toast.error("Failed to set primary contact");
     } finally {
       setSettingPrimaryContactId(null);
     }
@@ -498,7 +498,7 @@ export default function CompanyDetailsPage() {
       toast.success("Contact removed from company");
       await loadDetails();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to remove contact from company");
+      toast.error("Failed to remove contact from company");
     } finally {
       setRemovingContactId(null);
     }
@@ -527,7 +527,7 @@ export default function CompanyDetailsPage() {
       setConfirmProjectAccessImpact(false);
       await loadDetails();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add company to project");
+      toast.error("Failed to add company to project");
     } finally {
       setIsAddingToProject(false);
     }

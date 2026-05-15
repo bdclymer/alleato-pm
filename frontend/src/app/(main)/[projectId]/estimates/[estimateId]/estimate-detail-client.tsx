@@ -232,7 +232,7 @@ export function EstimateDetailClient({
           ...updates,
         });
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to save line item");
+        toast.error("Failed to save line item");
       }
     },
     [localLineItems, persistLineItem, updateLineItemState]
@@ -262,7 +262,7 @@ export function EstimateDetailClient({
           ...updates,
         });
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to save line item");
+        toast.error("Failed to save line item");
       }
     },
     [localLineItems, persistLineItem, updateLineItemState]
@@ -291,7 +291,7 @@ export function EstimateDetailClient({
         );
         setLocalLineItems((prev) => [...prev, created]);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to add line item");
+        toast.error("Failed to add line item");
       }
     },
     [estimate.estimate_id, localLineItems, projectId]
@@ -309,7 +309,7 @@ export function EstimateDetailClient({
         );
       } catch (error) {
         setLocalLineItems(previous);
-        toast.error(error instanceof Error ? error.message : "Failed to delete line item");
+        toast.error("Failed to delete line item");
       }
     },
     [estimate.estimate_id, localLineItems, projectId]

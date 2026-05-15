@@ -165,7 +165,7 @@ export default function EditPrimeContractPcoPage() {
       const data: PrimeContractPcoResponse = await response.json();
       setFormData(toFormData(data));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to load prime contract PCO");
+      toast.error("Failed to load prime contract PCO");
       router.push(`/${projectId}/prime-contract-pcos`);
     } finally {
       setIsLoading(false);
@@ -220,7 +220,7 @@ export default function EditPrimeContractPcoPage() {
       toast.success("Prime Contract PCO updated");
       router.push(buildDetailPath(formData.prime_contract_id));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save prime contract PCO");
+      toast.error("Failed to save prime contract PCO");
     } finally {
       setIsSaving(false);
     }

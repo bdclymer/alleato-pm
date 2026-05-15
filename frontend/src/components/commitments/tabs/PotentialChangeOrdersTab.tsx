@@ -285,7 +285,7 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
         setShowCreateForm(false)
         await fetchPcos()
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to create PCO')
+        toast.error('Failed to create PCO')
       } finally {
         setIsSaving(false)
       }
@@ -316,7 +316,7 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
         setEditingId(null)
         await fetchPcos()
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to update PCO')
+        toast.error('Failed to update PCO')
       } finally {
         setIsSaving(false)
       }
@@ -336,7 +336,7 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
         toast.success('PCO deleted')
         await fetchPcos()
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to delete PCO')
+        toast.error('Failed to delete PCO')
       }
     },
     [baseUrl, fetchPcos],

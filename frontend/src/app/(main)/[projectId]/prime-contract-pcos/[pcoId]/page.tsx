@@ -254,7 +254,7 @@ export default function PrimeContractPcoDetailPage() {
         router.push(`/${projectId}/prime-contract-pcos`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete PCO");
+      toast.error("Failed to delete PCO");
     }
   }, [projectId, pcoId, router, contractIdFromRoute]);
 
@@ -274,7 +274,7 @@ export default function PrimeContractPcoDetailPage() {
       setShowPromoteDialog(false);
       fetchPco();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to promote PCO");
+      toast.error("Failed to promote PCO");
     } finally {
       setIsPromoting(false);
     }

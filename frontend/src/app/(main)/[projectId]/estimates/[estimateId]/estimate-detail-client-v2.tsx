@@ -678,7 +678,7 @@ export function EstimateDetailClientV2({
         });
         setIsDirty(true);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to save");
+        toast.error("Failed to save");
       }
     },
     [projectId, estimate.estimate_id]
@@ -707,7 +707,7 @@ export function EstimateDetailClientV2({
       setGcItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
       setIsDirty(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
+      toast.error("Failed to save");
     }
   };
 
@@ -731,7 +731,7 @@ export function EstimateDetailClientV2({
       );
       setGcItems((prev) => [...prev, created]);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add row");
+      toast.error("Failed to add row");
     }
   };
 
@@ -745,7 +745,7 @@ export function EstimateDetailClientV2({
       );
     } catch (err) {
       setGcItems(prev);
-      toast.error(err instanceof Error ? err.message : "Failed to delete");
+      toast.error("Failed to delete");
     }
   };
 
@@ -764,7 +764,7 @@ export function EstimateDetailClientV2({
       );
       setGcItems(items);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to load template");
+      toast.error("Failed to load template");
     }
   }, [projectId, estimate.estimate_id]);
 
@@ -805,7 +805,7 @@ export function EstimateDetailClientV2({
       );
       setDetailItems(created);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to load detail template");
+      toast.error("Failed to load detail template");
     }
   }, [projectId, estimate.estimate_id]);
 
@@ -830,7 +830,7 @@ export function EstimateDetailClientV2({
       setDetailItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
       setIsDirty(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
+      toast.error("Failed to save");
     }
   };
 
@@ -852,7 +852,7 @@ export function EstimateDetailClientV2({
       );
       setDetailItems((prev) => [...prev, created]);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add row");
+      toast.error("Failed to add row");
     }
   };
 
@@ -866,7 +866,7 @@ export function EstimateDetailClientV2({
       );
     } catch (err) {
       setDetailItems(prev);
-      toast.error(err instanceof Error ? err.message : "Failed to delete");
+      toast.error("Failed to delete");
     }
   };
 
@@ -883,7 +883,7 @@ export function EstimateDetailClientV2({
       setSublistSubs((prev) => prev.map((s) => (s.id === id ? updated : s)));
       setIsDirty(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
+      toast.error("Failed to save");
     }
   };
 

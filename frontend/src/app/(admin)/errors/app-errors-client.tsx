@@ -260,7 +260,7 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
           toast.success("Error status updated");
         })
         .catch((error) => {
-          toast.error(error instanceof Error ? error.message : "Failed to update error status");
+          toast.error("Failed to update error status");
         })
         .finally(() => setPendingId(null));
     });
@@ -276,7 +276,7 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
         setLinearIssueUrl(payload.group.linear_issue_url ?? "");
       })
       .catch((error) => {
-        toast.error(error instanceof Error ? error.message : "Failed to load error details");
+        toast.error("Failed to load error details");
       })
       .finally(() => setDetailLoading(false));
   }
@@ -311,7 +311,7 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
         toast.success("Linear link saved");
       })
       .catch((error) => {
-        toast.error(error instanceof Error ? error.message : "Failed to save Linear link");
+        toast.error("Failed to save Linear link");
       })
       .finally(() => setPendingId(null));
   }
@@ -329,7 +329,7 @@ export function AppErrorsClient({ rows, loadError }: AppErrorsClientProps) {
         toast.success(issue.created ? `Created ${issue.identifier}` : `${issue.identifier} is already linked`);
       })
       .catch((error) => {
-        toast.error(error instanceof Error ? error.message : "Failed to create Linear issue");
+        toast.error("Failed to create Linear issue");
       })
       .finally(() => setLinearCreating(false));
   }

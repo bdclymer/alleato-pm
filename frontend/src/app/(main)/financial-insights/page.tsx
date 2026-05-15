@@ -67,9 +67,7 @@ export default function FinancialInsightsPage() {
       const result = await crossRefMutation.mutateAsync({ projectId });
       setCrossRefResult(result);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Cross-reference failed",
-      );
+      toast.error("Cross-reference failed");
     }
   };
 

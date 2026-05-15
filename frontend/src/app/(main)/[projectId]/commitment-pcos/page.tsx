@@ -222,7 +222,7 @@ export default function CommitmentPcosPage(): ReactElement {
           toast.success("PCO deleted");
           fetchPcos();
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Failed to delete PCO");
+          toast.error("Failed to delete PCO");
         }
       });
     },
@@ -240,7 +240,7 @@ export default function CommitmentPcosPage(): ReactElement {
           toast.success("PCO promoted to Change Order");
           fetchPcos();
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Failed to promote PCO");
+          toast.error("Failed to promote PCO");
         }
       });
     },
@@ -287,7 +287,7 @@ export default function CommitmentPcosPage(): ReactElement {
         tableState.setSelectedIds([]);
         fetchPcos();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to bulk delete PCOs");
+        toast.error("Failed to bulk delete PCOs");
       }
     });
   }, [projectId, fetchPcos, tableState, bulkDeleteDialog]);
@@ -314,9 +314,7 @@ export default function CommitmentPcosPage(): ReactElement {
         tableState.setSelectedIds([]);
         fetchPcos();
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to promote selected PCOs",
-        );
+        toast.error("Failed to promote selected PCOs");
       }
     });
   }, [bulkPromoteDialog, fetchPcos, projectId, tableState]);

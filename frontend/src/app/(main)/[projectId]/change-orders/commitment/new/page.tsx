@@ -442,7 +442,7 @@ export default function NewCommitmentCOPage() {
       );
       setContacts(data.map((c) => ({ id: c.id, name: c.name })));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not load contacts");
+      toast.error("Could not load contacts");
       contactsFetched.current = false;
     }
   }, [projectId]);
@@ -546,7 +546,7 @@ export default function NewCommitmentCOPage() {
       toast.success("Commitment change order created");
       router.push(`/${projectId}/change-orders/commitment/${created.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create");
+      toast.error("Failed to create");
     } finally {
       setIsSubmitting(false);
     }

@@ -100,9 +100,7 @@ export function ExportDialog({
       toast.success(`Direct costs exported as ${format.toUpperCase()}`);
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to export direct costs"
-      );
+      toast.error("Failed to export direct costs");
     } finally {
       setIsExporting(false);
     }

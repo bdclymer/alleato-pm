@@ -235,11 +235,7 @@ export default function BudgetSetupPage() {
       toast.success(`Successfully created ${lineItems.length} budget line(s)`);
       router.push(`/${projectId}/budget`);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to create budget lines",
-      );
+      toast.error("Failed to create budget lines");
     } finally {
       setLoading(false);
     }

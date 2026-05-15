@@ -78,7 +78,7 @@ export function TaskTrainingClient({ goodFeedback, badFeedback }: TaskTrainingCl
       });
     } catch (err) {
       setPromotedState((prev) => ({ ...prev, [id]: current }));
-      toast.error(err instanceof Error ? err.message : "Failed to update promotion status");
+      toast.error("Failed to update promotion status");
     } finally {
       setPromoting((prev) => ({ ...prev, [id]: false }));
     }

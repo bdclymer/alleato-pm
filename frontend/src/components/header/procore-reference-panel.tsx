@@ -306,7 +306,7 @@ export function ProcoreReferencePanel() {
         { method: "POST" },
       );
       toast[d?.success ? "success" : "error"](d?.success ? "Cache cleared — refresh the page." : (d?.message ?? "Failed"));
-    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to clear cache"); }
+    } catch (err) { toast.error("Failed to clear cache"); }
   };
 
   const regenTypes = async () => {
@@ -316,7 +316,7 @@ export function ProcoreReferencePanel() {
         { method: "POST" },
       );
       toast[d?.success ? "success" : "error"](d?.success ? "Types regenerated successfully." : (d?.message ?? "Failed"));
-    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to regenerate types"); }
+    } catch (err) { toast.error("Failed to regenerate types"); }
   };
 
   const checkRoutes = async () => {
@@ -324,7 +324,7 @@ export function ProcoreReferencePanel() {
     try {
       const d = await apiFetch<{ conflicts?: string }>("/api/dev-tools/check-routes");
       toast.info(d?.conflicts ?? "No route conflicts found");
-    } catch (err) { toast.error(err instanceof Error ? err.message : "Route check failed"); }
+    } catch (err) { toast.error("Route check failed"); }
     finally { setIsCheckingRoutes(false); }
   };
 

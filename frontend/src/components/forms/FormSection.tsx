@@ -21,7 +21,7 @@ export function FormSection({
   className,
 }: FormSectionProps) {
   return (
-    <section className={cn("space-y-4 border-b border-border/70 pb-8 last:border-b-0 last:pb-0", className)}>
+    <section className={cn("space-y-4 pb-4 last:pb-0", className)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-0.5">
           {/* eslint-disable-next-line design-system/no-raw-heading */}

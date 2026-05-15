@@ -701,9 +701,7 @@ export default function CommitmentDetailPage() {
       toast.success("Commitment deleted successfully");
       router.push(`/${projectId}/commitments`);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to delete commitment",
-      );
+      toast.error("Failed to delete commitment");
     }
   }, [commitment, commitmentId, projectId, router, queryClient, confirm]);
 

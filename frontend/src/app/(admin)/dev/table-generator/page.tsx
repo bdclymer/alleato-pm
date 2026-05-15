@@ -597,7 +597,7 @@ export default function TableGeneratorPage() {
       const data = await apiFetch<{ tables?: string[] }>("/api/dev/schema");
       setTables(data.tables || []);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to fetch tables");
+      toast.error("Failed to fetch tables");
     } finally {
       setIsFetchingTables(false);
     }
@@ -643,7 +643,7 @@ export default function TableGeneratorPage() {
         toast.success(`Loaded ${cols.length} columns from ${table}`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to fetch columns");
+      toast.error("Failed to fetch columns");
     } finally {
       setIsLoading(false);
     }

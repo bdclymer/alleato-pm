@@ -1553,7 +1553,7 @@ export function TasksInbox({
       setItems(data.data ?? []);
       setTotal((data.data ?? []).length);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to load tasks");
+      toast.error("Failed to load tasks");
     } finally {
       setLoading(false);
     }
@@ -1572,7 +1572,7 @@ export function TasksInbox({
         });
         if (!cancelled) setProjects(result.data ?? []);
       } catch (err) {
-        if (!cancelled) toast.error(err instanceof Error ? err.message : "Failed to load projects");
+        if (!cancelled) toast.error("Failed to load projects");
       } finally {
         if (!cancelled) setProjectsLoading(false);
       }
@@ -1593,7 +1593,7 @@ export function TasksInbox({
         });
         if (!cancelled) setUsers(result.users ?? []);
       } catch (err) {
-        if (!cancelled) toast.error(err instanceof Error ? err.message : "Failed to load users");
+        if (!cancelled) toast.error("Failed to load users");
       } finally {
         if (!cancelled) setUsersLoading(false);
       }
@@ -1787,7 +1787,7 @@ export function TasksInbox({
       setItems((prev) => prev.map((t) => (t.id === id ? { ...t, ...localPatch } : t)));
       return true;
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update task");
+      toast.error("Failed to update task");
       return false;
     } finally {
       setUpdatingId(null);
@@ -1880,7 +1880,7 @@ export function TasksInbox({
       setBulkAssigneeUserId("__no_change__");
       toast.success(`Updated ${selectedTaskIds.length} selected task${selectedTaskIds.length === 1 ? "" : "s"}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update selected tasks");
+      toast.error("Failed to update selected tasks");
     } finally {
       setBulkUpdating(false);
     }
@@ -1899,7 +1899,7 @@ export function TasksInbox({
       setItems((prev) => prev.filter((t) => t.id !== id));
       setTotal((prev) => prev - 1);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete task");
+      toast.error("Failed to delete task");
     } finally {
       setDeletingId(null);
     }
@@ -1925,7 +1925,7 @@ export function TasksInbox({
       setSelectedTaskIds([]);
       toast.success(`Deleted ${selectedSet.size} selected task${selectedSet.size === 1 ? "" : "s"}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete selected tasks");
+      toast.error("Failed to delete selected tasks");
     } finally {
       setBulkDeleting(false);
       setBulkDeleteDialogOpen(false);

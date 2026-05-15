@@ -909,11 +909,7 @@ export const PromptInput = ({
             }
           } catch (error) {
             // Don't clear on error - user may want to retry
-            toast.error(
-              error instanceof Error
-                ? error.message
-                : "Message submission failed. Your draft was kept."
-            );
+            toast.error("Message submission failed. Your draft was kept.");
           }
         } else {
           // Sync function completed without throwing, clear inputs
@@ -924,11 +920,7 @@ export const PromptInput = ({
         }
       } catch (error) {
         // Don't clear on error - user may want to retry
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Message submission failed. Your draft was kept."
-        );
+        toast.error("Message submission failed. Your draft was kept.");
       }
     },
     [usingProvider, controller, files, onSubmit, clear]

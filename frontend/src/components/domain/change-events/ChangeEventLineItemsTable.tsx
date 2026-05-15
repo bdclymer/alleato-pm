@@ -353,7 +353,7 @@ export function ChangeEventLineItemsTable({
       setDialogOpen(false);
       onLineItemsChange?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save line item");
+      toast.error("Failed to save line item");
     } finally {
       setIsSaving(false);
     }

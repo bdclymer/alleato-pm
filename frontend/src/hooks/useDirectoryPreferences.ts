@@ -81,9 +81,7 @@ export function useDirectoryPreferences(projectId: string) {
             : [...prev.savedFilters, data.data],
         }));
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to save filter",
-        );
+        toast.error("Failed to save filter");
       }
     },
     [projectId],
@@ -103,9 +101,7 @@ export function useDirectoryPreferences(projectId: string) {
           ),
         }));
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to delete filter",
-        );
+        toast.error("Failed to delete filter");
       }
     },
     [projectId],

@@ -29,9 +29,7 @@ export function DirectoryActivityPanel({
       const payload = await response.json();
       setEntries(payload.data || []);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to load activity log",
-      );
+      toast.error("Unable to load activity log");
     } finally {
       setLoading(false);
     }

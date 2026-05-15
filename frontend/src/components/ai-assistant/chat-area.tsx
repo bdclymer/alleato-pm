@@ -1560,36 +1560,28 @@ export function ChatArea({
               <PromptInputActionAddScreenshot label="Take screenshot" />
             </PromptInputActionMenuContent>
           </PromptInputActionMenu>
-          <PromptInputAction tooltip="Paste from clipboard">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className={composerIconButtonClass}
-              onClick={handlePasteFromClipboard}
-              aria-label="Paste from clipboard"
-            >
-              <ClipboardPasteIcon className="h-3.5 w-3.5" />
-            </Button>
+          <PromptInputAction
+            tooltip="Paste from clipboard"
+            className={composerIconButtonClass}
+            onClick={handlePasteFromClipboard}
+            aria-label="Paste from clipboard"
+          >
+            <ClipboardPasteIcon className="h-3.5 w-3.5" />
           </PromptInputAction>
-          <PromptInputAction tooltip={isRecording ? "Stop voice input" : "Voice input"}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className={cn(
-                composerIconButtonClass,
-                isRecording && "text-primary hover:text-primary",
-              )}
-              onClick={toggleRecording}
-              aria-label={isRecording ? "Stop voice input" : "Start voice input"}
-            >
-              {isRecording ? (
-                <MicOffIcon className="h-3.5 w-3.5" />
-              ) : (
-                <MicIcon className="h-3.5 w-3.5" />
-              )}
-            </Button>
+          <PromptInputAction
+            tooltip={isRecording ? "Stop voice input" : "Voice input"}
+            className={cn(
+              composerIconButtonClass,
+              isRecording && "text-primary hover:text-primary",
+            )}
+            onClick={toggleRecording}
+            aria-label={isRecording ? "Stop voice input" : "Start voice input"}
+          >
+            {isRecording ? (
+              <MicOffIcon className="h-3.5 w-3.5" />
+            ) : (
+              <MicIcon className="h-3.5 w-3.5" />
+            )}
           </PromptInputAction>
           {isRecording && (
             <div className="w-24 shrink-0">

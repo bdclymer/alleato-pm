@@ -126,7 +126,7 @@ export default function DocumentPipelinePage() {
       const data = await apiFetch<{ documents: Document[] }>("/api/documents/status");
       setDocuments(data.documents);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to fetch documents");
+      toast.error("Failed to fetch documents");
     }
   };
 
@@ -177,12 +177,9 @@ export default function DocumentPipelinePage() {
       // Refresh data to show updated status
       await loadData();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to trigger pipeline phase",
-        {
-          id: `trigger-${phase}`, // Replaces the loading toast
-        },
-      );
+      toast.error("Failed to trigger pipeline phase", {
+        id: `trigger-${phase}`, // Replaces the loading toast
+      });
     } finally {
       setTriggering(null);
     }

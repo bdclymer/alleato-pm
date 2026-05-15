@@ -205,7 +205,7 @@ export function useCreatePrimeContract(projectId: string) {
         }
       }
 
-      toast.error(err instanceof Error ? err.message : "Failed to create contract");
+      toast.error("Failed to create contract");
     } finally {
       setIsSubmitting(false);
     }

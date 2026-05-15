@@ -403,7 +403,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
         toast.success("Status updated");
         await queryClient.invalidateQueries({ queryKey: ["commitments", projectId] });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to update status");
+        toast.error("Failed to update status");
       }
     },
     [projectId, queryClient],
@@ -425,7 +425,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Commitments sync failed");
+      toast.error("Commitments sync failed");
     } finally {
       setIsSyncing(false);
     }

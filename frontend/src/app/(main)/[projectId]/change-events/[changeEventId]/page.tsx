@@ -218,7 +218,7 @@ export default function ChangeEventDetailPage() {
       setShowRfqSheet(false);
       void actions.refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create RFQ");
+      toast.error("Failed to create RFQ");
     } finally {
       setIsCreatingRfq(false);
     }
@@ -296,7 +296,7 @@ export default function ChangeEventDetailPage() {
       // Show all non-void PCOs — server validates if the action is allowed
       setExistingPrimePCOs(pcos.filter((p) => p.status !== "void"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not load existing PCOs");
+      toast.error("Could not load existing PCOs");
     } finally {
       setHasFetchedPCOs(true);
     }
@@ -318,7 +318,7 @@ export default function ChangeEventDetailPage() {
       toast.success(`Added to ${pcoLabel}`);
       void refreshLineage();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add to PCO");
+      toast.error("Failed to add to PCO");
     }
   }, [projectId, changeEventId, refreshLineage]);
 
@@ -353,7 +353,7 @@ export default function ChangeEventDetailPage() {
       toast.success("Attachment uploaded");
       actions.refetch();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to upload attachment");
+      toast.error("Failed to upload attachment");
     } finally {
       setIsUploadingAttachment(false);
     }
@@ -371,7 +371,7 @@ export default function ChangeEventDetailPage() {
       toast.success("Attachment deleted");
       actions.refetch();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete attachment");
+      toast.error("Failed to delete attachment");
     }
   }, [projectId, changeEventId, actions]);
 
@@ -451,7 +451,7 @@ export default function ChangeEventDetailPage() {
       URL.revokeObjectURL(url);
       toast.success("PDF downloaded", { id: "pdf-export" });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to generate PDF", {
+      toast.error("Failed to generate PDF", {
         id: "pdf-export",
       });
     }
@@ -688,9 +688,9 @@ export default function ChangeEventDetailPage() {
                 }
               } catch (err) {
                 toast.error(
-                  err instanceof Error ? err.message : "Failed to clone",
+                  "Failed to clone",
                   { id: "clone-ce" },
-                );
+);
               }
             }}
           >

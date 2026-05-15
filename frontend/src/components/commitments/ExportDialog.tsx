@@ -145,9 +145,7 @@ export function ExportDialog({
       );
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Export failed. Please try again."
-      );
+      toast.error("Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }

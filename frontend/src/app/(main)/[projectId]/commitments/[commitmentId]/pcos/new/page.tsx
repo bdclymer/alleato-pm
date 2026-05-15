@@ -240,9 +240,7 @@ export default function NewCommitmentPcoPage() {
         `/${projectId}/commitments/${commitmentId}?tab=change-orders`,
       );
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to create PCO",
-      );
+      toast.error("Failed to create PCO");
     } finally {
       setIsSubmitting(false);
     }

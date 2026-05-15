@@ -124,9 +124,7 @@ export default function EditEstimatePage() {
       toast.success("Estimate updated successfully");
       router.push(`/${projectId}/estimates/${estimateId}`);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update estimate"
-      );
+      toast.error("Failed to update estimate");
     }
   };
 

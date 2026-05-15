@@ -523,7 +523,7 @@ function RoleBasedTeamSection({ projectId }: { projectId: number }) {
         await updateRoleMembers(roleId, [personId]);
         toast.success("Role assigned");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to assign role");
+        toast.error("Failed to assign role");
       } finally {
         setAssigning(false);
         setActiveRoleId(null);

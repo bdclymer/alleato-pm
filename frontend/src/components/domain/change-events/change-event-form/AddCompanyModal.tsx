@@ -59,11 +59,7 @@ export function AddCompanyModal({
     } catch (error) {
       // apiFetch throws ApiError with the real server message. Surface it
       // instead of swallowing the failure silently (per CLAUDE.md Rule 2).
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to add company to project directory.",
-      );
+      toast.error("Failed to add company to project directory.");
     } finally {
       setSaving(false);
     }

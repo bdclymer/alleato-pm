@@ -68,7 +68,7 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update project access");
+      toast.error("Failed to update project access");
     },
   });
 
@@ -89,7 +89,7 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update company access");
+      toast.error("Failed to update company access");
     },
   });
 
@@ -122,7 +122,7 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update permission exception");
+      toast.error("Failed to update permission exception");
     },
   });
 

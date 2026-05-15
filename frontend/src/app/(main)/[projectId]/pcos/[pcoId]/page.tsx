@@ -96,9 +96,7 @@ export default function PCODetailPage() {
       // Navigate to the change orders list
       router.push(`/${projectId}/change-orders`);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to convert PCO"
-      );
+      toast.error("Failed to convert PCO");
     } finally {
       setIsConverting(false);
       setConvertDialogOpen(false);

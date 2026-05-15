@@ -143,7 +143,7 @@ export function ChangeEventRfqsTab({
       await fetchRfqs();
       onResponseRecorded?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to record response");
+      toast.error("Failed to record response");
     } finally {
       setIsRecordingResponse(false);
     }

@@ -124,7 +124,7 @@ export function EstimatesClient({
       );
       router.push(`/${projectId}/estimates/${result.estimate_id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create estimate");
+      toast.error("Failed to create estimate");
       setIsCreating(false);
     }
   };

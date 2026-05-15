@@ -217,11 +217,7 @@ export default function ProjectContractsPage(): ReactElement {
 
   React.useEffect(() => {
     if (!contractsError) return;
-    toast.error(
-      contractsError instanceof Error
-        ? contractsError.message
-        : "Failed to load contracts",
-    );
+    toast.error("Failed to load contracts");
   }, [contractsError]);
 
   React.useEffect(() => {
@@ -372,8 +368,7 @@ export default function ProjectContractsPage(): ReactElement {
       });
       toast.success(`Contract "${deletingTitle}" deleted successfully`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      toast.error(`Failed to delete contract: ${message}`);
+      toast.error("Failed to delete contract. Please try again.");
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);

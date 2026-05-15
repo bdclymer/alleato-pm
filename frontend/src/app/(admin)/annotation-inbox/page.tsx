@@ -313,7 +313,7 @@ export default function AnnotationInboxPage() {
       if (result?.id) setSelectedId(result.id);
       toast.success("Task created");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create task");
+      toast.error("Failed to create task");
     } finally {
       setCreating(false);
     }
@@ -517,7 +517,7 @@ export default function AnnotationInboxPage() {
       });
     } catch (error) {
       setSavingReply(false);
-      toast.error(error instanceof Error ? error.message : "Failed to post reply");
+      toast.error("Failed to post reply");
       return;
     }
     setSavingReply(false);
@@ -655,7 +655,7 @@ export default function AnnotationInboxPage() {
           {/* Issue list */}
           <section
             className="relative flex flex-col border-r border-border shrink-0 overflow-hidden transition-[width] duration-150"
-            // eslint-disable-next-line react/forbid-component-props
+             
             style={{ width: leftCollapsed ? 0 : leftWidth, minWidth: leftCollapsed ? 0 : undefined }}
           >
             {/* Search + filters */}
@@ -880,7 +880,7 @@ export default function AnnotationInboxPage() {
                 {/* Properties sidebar — Linear-style right rail */}
                 <aside
                   className="shrink-0 border-l border-border overflow-y-auto py-4 px-1 overflow-hidden transition-[width] duration-150"
-                  // eslint-disable-next-line react/forbid-component-props
+                   
                   style={{ width: rightCollapsed ? 0 : rightWidth, minWidth: rightCollapsed ? 0 : undefined }}
                 >
                   <div className="space-y-0.5">

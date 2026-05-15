@@ -96,7 +96,7 @@ export default function InvoiceDetailPage({
         );
         setContract(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to load contract details");
+        toast.error("Failed to load contract details");
       }
     }
     fetchContract();
@@ -111,7 +111,7 @@ export default function InvoiceDetailPage({
         );
         setBillingPeriods(Array.isArray(data) ? data : data.items ?? []);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to load billing periods");
+        toast.error("Failed to load billing periods");
       }
     }
     fetchBillingPeriods();
@@ -138,7 +138,7 @@ export default function InvoiceDetailPage({
 
         setPreviousPaymentDue(previousTotal);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to load previous payment applications");
+        toast.error("Failed to load previous payment applications");
       }
     }
     if (invoice) {

@@ -212,11 +212,7 @@ export function AssignMemberDialog({
         );
       } catch (error) {
         setPeople([]);
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to load project members",
-        );
+        toast.error("Failed to load project members");
       }
     };
 
@@ -236,7 +232,7 @@ export function AssignMemberDialog({
       toast.success("Role assignment updated");
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update role assignment");
+      toast.error("Failed to update role assignment");
     } finally {
       setSaving(false);
     }

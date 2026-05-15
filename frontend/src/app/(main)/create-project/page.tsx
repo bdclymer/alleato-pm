@@ -403,7 +403,7 @@ function CreateProjectForm() {
 
       <Form onSubmit={form.handleSubmit(handleSubmit)}>
         <FormLayoutProvider layout="horizontal">
-          <div className="flex flex-col gap-16">
+          <div className="flex flex-col gap-8">
             {effectiveFormSections.length > 0 ? (
               effectiveFormSections.map(renderSection)
             ) : (

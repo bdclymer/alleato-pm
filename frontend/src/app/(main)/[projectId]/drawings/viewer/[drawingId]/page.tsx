@@ -326,7 +326,7 @@ export default function DrawingViewerPage() {
         toast.success("Drawing downloaded");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to download drawing");
+      toast.error("Failed to download drawing");
     }
   }, [projectId, drawingId, drawing, drawingIdentity]);
 

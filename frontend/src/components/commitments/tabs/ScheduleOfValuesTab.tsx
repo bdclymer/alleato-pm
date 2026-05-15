@@ -225,11 +225,7 @@ export function ScheduleOfValuesTab({
         onLineItemsChange(items);
       }
     } catch (saveError) {
-      toast.error(
-        saveError instanceof Error
-          ? saveError.message
-          : "Unable to save line items.",
-      );
+      toast.error("Unable to save line items.");
     } finally {
       setIsSaving(false);
     }
@@ -263,11 +259,7 @@ export function ScheduleOfValuesTab({
         await onImportComplete();
       }
     } catch (importError) {
-      toast.error(
-        importError instanceof Error
-          ? importError.message
-          : "Unable to import schedule of values from budget.",
-      );
+      toast.error("Unable to import schedule of values from budget.");
     } finally {
       setIsImporting(false);
     }

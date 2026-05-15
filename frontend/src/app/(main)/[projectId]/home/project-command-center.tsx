@@ -596,7 +596,7 @@ function SidebarTeamSection({
       const newRole = await createRole(roleName);
       setAssignDialog({ open: true, role: newRole });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : `Failed to create ${roleName} role`);
+      toast.error(`Failed to create ${roleName} role`);
     } finally {
       setCreating(null);
       setLoadingRoleName(null);
