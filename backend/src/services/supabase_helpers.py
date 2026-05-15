@@ -21,6 +21,8 @@ from __future__ import annotations
 import os
 import re
 import json
+import time
+import threading
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
@@ -130,6 +132,47 @@ def get_rag_read_client() -> Client:
     if rag_database_reads_enabled():
         return get_rag_supabase_client()
     return get_supabase_client()
+
+
+# ── Storage upload throttle ────────────────────────────────────────────────────
+# Limits concurrent storage uploads to prevent burst-hammering Supabase's
+# storage service during large syncs. Free-tier projects have limited compute;
+# a burst of 10+ simultaneous uploads causes 544/522 cascades and DB restarts.
+_STORAGE_UPLOAD_SEMAPHORE = threading.Semaphore(3)
+_STORAGE_INTER_UPLOAD_DELAY = float(os.getenv("STORAGE_INTER_UPLOAD_DELAY", "0.5"))
+_STORAGE_UPLOAD_MAX_RETRIES = int(os.getenv("STORAGE_UPLOAD_MAX_RETRIES", "3"))
+
+
+def storage_upload_with_retry(
+    storage_bucket,
+    path: str,
+    data: bytes,
+    options: dict,
+    *,
+    method: str = "upload",
+) -> None:
+    """Upload bytes to a Supabase storage bucket with retry + exponential backoff.
+
+    Uses a global semaphore to cap concurrent uploads at 3 and sleeps between
+    uploads to prevent burst traffic from overloading free-tier Supabase projects.
+    """
+    with _STORAGE_UPLOAD_SEMAPHORE:
+        last_exc: Exception | None = None
+        for attempt in range(_STORAGE_UPLOAD_MAX_RETRIES):
+            try:
+                if method == "update":
+                    storage_bucket.update(path, data, options)
+                else:
+                    storage_bucket.upload(path, data, options)
+                if _STORAGE_INTER_UPLOAD_DELAY > 0:
+                    time.sleep(_STORAGE_INTER_UPLOAD_DELAY)
+                return
+            except Exception as exc:
+                last_exc = exc
+                if attempt < _STORAGE_UPLOAD_MAX_RETRIES - 1:
+                    wait = 2 ** attempt  # 1s, 2s, 4s
+                    time.sleep(wait)
+        raise last_exc  # type: ignore[misc]
 
 
 @dataclass
@@ -281,11 +324,11 @@ class SupabaseRagStore:
         storage = self._client.storage.from_(bucket)
         if upsert:
             try:
-                storage.update(path, data, {"content-type": content_type})
+                storage_upload_with_retry(storage, path, data, {"content-type": content_type}, method="update")
             except Exception:
-                storage.upload(path, data, {"content-type": content_type})
+                storage_upload_with_retry(storage, path, data, {"content-type": content_type}, method="upload")
         else:
-            storage.upload(path, data, {"content-type": content_type})
+            storage_upload_with_retry(storage, path, data, {"content-type": content_type}, method="upload")
 
         return storage.get_public_url(path)
 
@@ -667,4 +710,5 @@ __all__ = [
     "get_supabase_client",
     "rag_database_reads_enabled",
     "rag_database_writes_enabled",
+    "storage_upload_with_retry",
 ]

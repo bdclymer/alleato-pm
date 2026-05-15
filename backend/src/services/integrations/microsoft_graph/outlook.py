@@ -20,7 +20,7 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from ...intelligence.compiler import process_source_document_to_packet
-from ...supabase_helpers import SupabaseRagStore
+from ...supabase_helpers import SupabaseRagStore, storage_upload_with_retry
 from .client import get_graph_client
 from .email_classification import EmailIntakeAction, classify_graph_email_for_intake
 from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
@@ -1029,7 +1029,8 @@ def _sync_email_attachment(
             metadata_content_hash = None
         else:
             try:
-                supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+                storage_upload_with_retry(
+                    supabase_client.storage.from_(DOCUMENT_BUCKET),
                     storage_path,
                     raw_bytes,
                     {"content-type": content_type, "upsert": "true"},
@@ -1038,7 +1039,8 @@ def _sync_email_attachment(
                 if not content_type.startswith("image/"):
                     raise
                 storage_content_type = "application/octet-stream"
-                supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+                storage_upload_with_retry(
+                    supabase_client.storage.from_(DOCUMENT_BUCKET),
                     storage_path,
                     raw_bytes,
                     {"content-type": storage_content_type, "upsert": "true"},
@@ -1628,7 +1630,8 @@ def sync_outlook_emails(
                 needs_storage_upload = not existing_doc or not existing_doc.get("file_path")
                 if needs_storage_upload:
                     try:
-                        supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+                        storage_upload_with_retry(
+                            supabase_client.storage.from_(DOCUMENT_BUCKET),
                             storage_path,
                             body_text.encode("utf-8"),
                             {"content-type": "text/plain", "upsert": "true"},

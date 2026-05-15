@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from ...intelligence.compiler import process_source_document_to_packet
-from ...supabase_helpers import SupabaseRagStore, get_rag_read_client
+from ...supabase_helpers import SupabaseRagStore, get_rag_read_client, storage_upload_with_retry
 from .client import get_graph_client
 from .project_inference import infer_project_id
 
@@ -241,7 +241,8 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
     # Upload to storage
     storage_path = f"teams/{team_id}/{channel_id}/{msg_id}.txt"
     try:
-        supabase_client.storage.from_("documents").upload(
+        storage_upload_with_retry(
+            supabase_client.storage.from_("documents"),
             storage_path,
             thread_text.encode("utf-8"),
             {"content-type": "text/plain", "upsert": "true"},
@@ -512,7 +513,8 @@ def _process_chat_message(
 
     storage_path = f"teams/chats/{chat_id}/{date_key}.txt"
     try:
-        supabase_client.storage.from_("documents").upload(
+        storage_upload_with_retry(
+            supabase_client.storage.from_("documents"),
             storage_path,
             text.encode("utf-8"),
             {"content-type": "text/plain", "upsert": "true"},

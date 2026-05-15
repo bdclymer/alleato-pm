@@ -19,7 +19,7 @@ from .project_documents import (
     upsert_project_document_by_source,
 )
 from .project_inference import infer_project_id
-from ...supabase_helpers import SupabaseRagStore, get_rag_read_client
+from ...supabase_helpers import SupabaseRagStore, get_rag_read_client, storage_upload_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -318,7 +318,8 @@ def sync_onedrive_folder(
 
         # Upload extracted text to Supabase Storage for AI search.
         try:
-            supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+            storage_upload_with_retry(
+                supabase_client.storage.from_(DOCUMENT_BUCKET),
                 storage_path,
                 text_content.encode("utf-8"),
                 {"content-type": "text/plain", "upsert": "true"},
@@ -513,7 +514,8 @@ def sync_sharepoint_folder(
         created_by = item.get("createdBy", {}).get("user", {}).get("displayName", site_name)
 
         try:
-            supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+            storage_upload_with_retry(
+                supabase_client.storage.from_(DOCUMENT_BUCKET),
                 storage_path,
                 text_content.encode("utf-8"),
                 {"content-type": "text/plain", "upsert": "true"},
