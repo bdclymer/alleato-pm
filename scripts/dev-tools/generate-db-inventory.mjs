@@ -94,7 +94,11 @@ log(`Loaded ${yamlByName.size} entries from tables.yaml`);
 // ─── DB connections ───────────────────────────────────────────────────────────
 
 async function createPool(url, label) {
-  const pool = new pg.Pool({ connectionString: url, max: 5, ssl: url.includes("sslmode=require") ? { rejectUnauthorized: false } : undefined });
+  // Strip sslmode from the URL so the programmatic ssl config takes effect.
+  // pg treats sslmode=require as verify-full which fails against Supabase pooler certs.
+  const cleanUrl = url.replace(/[?&]sslmode=[^&]+/, (m) => (m.startsWith("?") ? "?" : "")).replace(/\?$/, "");
+  const useSSL = url.includes("sslmode=require") || url.includes("sslmode=verify");
+  const pool = new pg.Pool({ connectionString: cleanUrl, max: 5, ssl: useSSL ? { rejectUnauthorized: false } : undefined });
   try {
     const client = await pool.connect();
     client.release();
@@ -201,7 +205,7 @@ function grepTable(tableName) {
   // Source code patterns
   const quotedTable = tableName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const codePattern = new RegExp(
-    `\\.from\\(['"](${quotedTable})['"]\)|\\.table\\(['"](${quotedTable})['"]\)`,
+    `\\.from\\(['"](?:${quotedTable})['"]\\)|\\.table\\(['"](?:${quotedTable})['"]\\)`,
     "g"
   );
 
@@ -489,27 +493,7 @@ export type DbInventoryStatus =
   | "orphan-mirror";
 
 export type DbInventoryDomain =
-  | "projects"
-  | "people"
-  | "permissions"
-  | "financial"
-  | "acumatica-erp"
-  | "change-management"
-  | "commitments"
-  | "documents"
-  | "communications"
-  | "chat-bot"
-  | "intelligence"
-  | "ai-feedback-memory"
-  | "sync-infrastructure"
-  | "workflow"
-  | "marketing"
-  | "admin-feedback"
-  | "media"
-  | "fm-asrs"
-  | "procore-parity"
-  | "support-knowledge"
-  | "infra-meta";
+${[...new Set([...yamlByName.values()].map((e) => e.domain))].sort().map((d) => `  | ${JSON.stringify(d)}`).join("\n")};
 
 export type DbInventoryReference = {
   filePath: string;
