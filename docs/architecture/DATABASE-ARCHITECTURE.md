@@ -147,8 +147,8 @@ What's actually populated, what's not:
 | `projects.name` | MAIN | ✅ all rows | Project resolution by name works |
 | `projects.project_number` | MAIN | ✅ all rows | Useful for cross-system lookup |
 | `projects.address` | MAIN | ❌ mostly null (sampled 5 Goodwill projects, all null) | Owner questions about addresses cannot be answered without backfill |
-| `projects.client` | MAIN | ❌ mostly null | Same |
-| `projects.current_phase` | MAIN | ❌ mostly null | Same |
+| ~~`projects.client`~~ | MAIN | DROPPED 2026-05-15 (Wave 3) | Use `company_id` → `companies` join |
+| ~~`projects.current_phase`~~ | MAIN | RENAMED to `stage` (Wave 3) | Still mostly null; backfill TBD |
 | `projects.state` | MAIN | ❌ mostly null | Same |
 | `projects.budget`, `projects.budget_used` | MAIN | Partially populated (depends on Acumatica sync) | Budget questions work for some projects, not others |
 | `document_metadata.category` | MAIN | ❌ 99% set to "document" (generic) | `findProjectDocuments(category=...)` can't narrow to permits/drawings/specs without backfill |
@@ -200,3 +200,133 @@ These are things I (or anyone) should NOT assume the answer to:
 5. Is there a target for closing the dual-write reliability gap (queue + retry)?
 
 When in doubt, ask before changing anything in either database.
+
+---
+
+## 12. Unified File Architecture (Pattern C)
+
+**Decision (2026-05-15, user-confirmed):** ONE `document_metadata` table for all file content — no per-entity attachment tables, no per-source tables, no parallel uploads index. Email bodies, Teams messages, Fireflies transcripts, OneDrive uploads, executed contracts, proposals, insurance certs, lien waivers, closeout binders, permits, photos, and the file part of drawings all share the same row shape and the same RLS surface. Entity association is via lightweight junction tables, not by duplicating the file row.
+
+This supersedes the prior `documents` (legacy), `email_attachments`, per-entity `*_attachments`, and OneDrive-specific upload tables. Those will be migrated or dropped phase-by-phase (Phase 4 Day 5–6; Phase 7 for legacy `documents`).
+
+### 12.1 Why "Pattern C"
+
+We considered three patterns:
+
+- **A: Per-entity attachment tables.** What we had (`commitment_attachments`, `change_event_attachments`, etc.). Each table was a parallel mini-implementation of upload + storage + RLS. Drift was inevitable; the AI assistant couldn't see all files in one query.
+- **B: One `document_metadata` but separate tables per source system** (`email_documents`, `teams_documents`, `onedrive_documents`). Slightly cleaner than A but still N writers and N readers.
+- **C: One `document_metadata`, one taxonomy table, junction rows for entity links.** Selected. Single search path, single auth surface, single embedding pipeline.
+
+### 12.2 Components
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  document_type_taxonomy  (23 rows)                         │
+│    type_key (pk)  ── display_name ── category              │
+│    applies_to text[]   ── source_system   ── retention_days│
+└────────────────────────────────────────────────────────────┘
+                   ▲
+                   │ FK
+┌──────────────────┴────────────────────────────────────────┐
+│  document_metadata  (~36.9K rows; see §3)                 │
+│    + document_type text ── references taxonomy(type_key)  │
+└───────────────────────────────────────────────────────────┘
+                   ▲
+                   │ FK (CASCADE)
+┌──────────────────┴────────────────────────────────────────┐
+│  *_documents junction tables (one per parent entity)      │
+│    parent_entity_id ─ document_metadata_id ─ document_type│
+│    attached_at  ──  attached_by                           │
+└───────────────────────────────────────────────────────────┘
+```
+
+### 12.3 `document_type_taxonomy`
+
+Created 2026-05-15 (Phase 4 Day 1, migrations `20260520000000` + `20260520010000`).
+
+| Column | Purpose |
+|---|---|
+| `type_key` | Primary key. Stable string identifier (e.g. `executed_contract`, `lien_waiver_final`) |
+| `display_name` | Human-readable label in dropdowns |
+| `category` | Coarse grouping: `contract`, `compliance`, `closeout`, `permit`, `drawing`, `photo`, `communication`, `financial`, `other` |
+| `applies_to` | `text[]` of entity slugs the type can attach to (`commitment`, `prime_contract`, `change_order`, `invoice`, `company`, `project`, `submittal`, `rfi`, `drawing`, `meeting`, `daily_report`) — drives the file-picker dropdown |
+| `source_system` | Nullable. Used when type is system-injected (`graph_email`, `graph_teams`, `fireflies`, `graph_attachment`) — keeps the picker from showing user-uploadable types |
+| `required_metadata` | Reserved for per-type required fields (e.g. executed_date on contracts) |
+| `retention_days` | Reserved for retention policy enforcement |
+| `is_active` | Soft-disable flag |
+| `sort_order` | Render order |
+
+Seeded with 23 type keys spanning all eight categories. New types can be inserted by migration without code changes.
+
+### 12.4 `document_metadata.document_type`
+
+Added by migration `20260520020000`. References `document_type_taxonomy(type_key)`. Backfilled from `category` patterns by migration `20260520030000`:
+
+- `category='teams_message'` → `document_type='teams_message'`
+- `category='email'` → `document_type='email_message'`
+- `category='meeting'` → `document_type='meeting_transcript'`
+- Path patterns under `/contracts/`, `/permits/`, `/closeout/`, `/insurance/` → respective taxonomy keys
+
+As of 2026-05-15: **30,288 of 36,855 rows populated.** Remaining 6,567 rows await Phase 9 LLM categorization (gpt-4.1-nano with taxonomy as choices, batched 100).
+
+### 12.5 Junction tables
+
+Pattern (one per parent entity):
+
+```sql
+create table commitment_documents (
+  commitment_id uuid references commitments(id) on delete cascade,
+  document_metadata_id uuid references document_metadata(id) on delete cascade,
+  document_type text references document_type_taxonomy(type_key),
+  attached_at timestamptz default now(),
+  attached_by uuid references auth.users(id),
+  primary key (commitment_id, document_metadata_id)
+);
+```
+
+RLS inherits from parent entity access via a `user_can_access_entity()` helper (read access to the commitment = read access to every doc in `commitment_documents` for that commitment).
+
+**Status as of 2026-05-15:**
+
+| Junction table | State |
+|---|---|
+| `submittal_documents` | Live |
+| `project_documents` | Live (pre-Pattern C) |
+| `commitment_documents` | Planned — Phase 4 Day 3 |
+| `prime_contract_documents` | Planned — Phase 4 Day 3 |
+| `change_order_documents` | Planned — Phase 4 Day 3 |
+| `owner_invoice_documents` / `invoice_documents` | Planned — Phase 4 Day 4 |
+| `company_documents` | Planned — Phase 4 Day 4 |
+| `rfi_documents` | Planned — Phase 4 Day 4 |
+
+### 12.6 Drawings: hybrid (file + revision history)
+
+Drawings are the one exception to a pure junction layout. Drawing-specific fields (sheet_number, discipline, revision, set_id) stay on `drawings`. The underlying file (PDF, DWG) goes through `document_metadata` like everything else. `drawing_revisions` (44 rows, preexisting) tracks revision history; each revision FK-links to its `document_metadata.id` so the current and historical files coexist with the rest of the file system.
+
+```
+drawings.document_metadata_id  →  document_metadata.id   (current file)
+drawing_revisions.document_metadata_id  →  document_metadata.id   (per revision)
+```
+
+### 12.7 Migration sequence
+
+1. **Taxonomy** — create + seed (Day 1, applied)
+2. **Column on `document_metadata`** — add `document_type` FK + indexes (Day 2, applied)
+3. **Backfill `document_type`** from `category` + path patterns (Day 2, applied)
+4. **Junction tables per entity** — `commitment_documents`, etc. (Day 3–4, in progress)
+5. **Drawings hybrid** — `drawings.document_metadata_id` already exists; `drawing_revisions` is the history table (in place)
+6. **Frontend file picker** — `<DocumentPicker entity="commitment" entityId={id} />` reads taxonomy filtered by `applies_to @> array[entity]` (Day 5)
+7. **Embedding pipeline extension** — `embed_pending_graph_documents()` already embeds anything in `document_metadata`; once junctions exist, the `findProjectDocuments` AI tool gains a `document_type` enum (Day 5–6)
+8. **Phase 9 LLM categorization** of the 6,567 remaining generic rows (Phase 9, follow-up)
+
+### 12.8 Pattern C readers
+
+- AI assistant: `findProjectDocuments({ project_id, document_type })` filters by taxonomy
+- Each entity detail page: junction join → `document_metadata` for the file list
+- Owner briefing builder: joins `insight_card_evidence.source_document_id` → `document_metadata` and can now resolve to taxonomy type for richer rendering
+
+### 12.9 Status summary
+
+- **Landed (Phase 4 Day 1–2):** taxonomy, column, backfill of 82% of rows
+- **In progress (Day 3–6):** entity junction tables, frontend picker, embedding integration
+- **Deferred (Phase 9):** LLM categorization of remaining 6,567 generic rows

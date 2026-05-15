@@ -1,8 +1,60 @@
 # Database Table Inventory
 
-> **Authoritative reference for every table in MAIN and RAG, including: purpose, writers (file:line + what triggers them), readers, and population schedule. Verified 2026-05-15.** Read this BEFORE writing any migration, deleting any table, or building any tool that touches data.
+> **Authoritative reference for every table in MAIN and RAG, including: purpose, writers (file:line + what triggers them), readers, and population schedule. Original audit 2026-05-15; post-Wave-3 corrections applied below.** Read this BEFORE writing any migration, deleting any table, or building any tool that touches data.
 >
 > This file is the operational counterpart to [DATABASE-ARCHITECTURE.md](./DATABASE-ARCHITECTURE.md) — that doc explains *why* the split exists; this one explains *what every table does*.
+
+---
+
+## 2026-05-15 → 2026-05-15 (post-Wave-3) Corrections
+
+Several claims in the original inventory were wrong or have been resolved by Waves 1–3 + Phase 4 Day 1–2. The table below is the running diff. Always trust this section over older entries until the body is rewritten.
+
+| Table / claim | Prior state in this doc | Reality (verified by SQL or commit) |
+|---|---|---|
+| `user_profiles` | "empty — 123 code references; CRITICAL privilege bug" | **53 rows (= every auth.users row).** Backfilled in migration `20260516000000` (commit `2f32ca2c6`). Trigger keeps auth.users → user_profiles in sync going forward. Privilege bug resolved. |
+| `acumatica_sync_runs` | "empty despite a writer" | **53 rows, growing every 2h.** Cron firing on schedule. |
+| `acumatica_payment_applications` | "183 rows, NO WRITER" | **Now has a Python writer** (Wave 1C). Ongoing 2h sync. Initial 183 rows from backfill. |
+| `document_metadata.category` "99% generic" | "99% set to 'document'" | **Actual distribution (2026-05-15):** 74% `teams_message` (27,295), 14% `document` generic (5,059), 7% `email` (2,481), 4% null (1,407), rest distributed across `financial_document`, `specification`, `Contract`, `drawing`, etc. The "99% generic" claim was based on too-narrow a sample. |
+| `document_metadata.document_type` | (column did not exist) | **New column** referencing `document_type_taxonomy(type_key)`. **30,288 of 36,855 rows populated** via path-pattern backfill (migration `20260520030000`). 6,567 rows awaiting Phase 9 LLM categorization. |
+| `document_user_access`, `document_group_access` | "Dormant" | **LOAD-BEARING but empty.** Wired into RLS policies on `document_metadata` / `document_rows` / `document_chunks` via `supabase/migrations/20260427130000_secure_rag_documents_rls.sql` with FK CASCADE. Empty because the management UI hasn't shipped. **KEEP — do not drop.** |
+| `outlook_email_intake_attachments` | "needs redesign" | **Architecture is correct.** All required columns present (`promotion_status`, `promotion_reason`, `promotion_attempt_count`, `promoted_at`, `document_metadata_id`). Promotion worker `backend/src/services/integrations/microsoft_graph/attachment_promotion.py` is wired into `run_graph_sync` post Wave 1E. **Not incomplete architecture.** |
+| `projects.client` (text) | "mostly null" | **DROPPED.** Migration `2269f1b12`. |
+| `projects.client_id` | listed as canonical company link | **DROPPED.** `company_id` is canonical. `client_id` rows pointed at stale "Alleato Group delete" entries. |
+| `projects.current_phase` | listed as a column | **RENAMED to `stage`** in migration `2269f1b12`. All code updated. |
+| `chat_messages`, `chat_sessions`, `chat_threads`, `chat_thread_items`, `chat_thread_attachments`, `chat_thread_attachment_files`, `chat_thread_feedback` | "DROP CANDIDATES" | **DROPPED.** Migration `20260516020000_drop_dead_legacy_tables.sql`. `chat_history` + `conversations` remain as the live chat surface. |
+| `subcontractor_contacts` | "DROP CANDIDATE" | **DROPPED.** Same migration. |
+| `project_health_dashboard` view | "broke when Pipeline A dropped" | **Recreated against `insight_cards` + `intelligence_targets`** in migration `20260515100000`. Live. |
+| `projects_with_counts` view | (not previously listed) | **Recreated** post Pipeline A drop. Live. |
+
+### Newly created tables (Phase 4 Day 1–2, applied)
+
+| Table | Rows | Source |
+|---|---|---|
+| `document_type_taxonomy` | 23 | Migrations `20260520000000` + `20260520010000` (seed). 8 categories × 23 type keys × `applies_to` array |
+
+### Newly created tables (Phase 4 Day 3–6, partial)
+
+Wave 4N is **in progress**. As of 2026-05-15 the following document-junction tables exist:
+
+| Table | Status |
+|---|---|
+| `submittal_documents` | Live |
+| `drawing_revisions` | Live (preexisting; now part of Pattern C hybrid) |
+| `project_documents` | Preexisting (project uploads); part of unified arch |
+
+Still to be created (planned for Phase 4 Day 3–6):
+
+- `commitment_documents`
+- `prime_contract_documents`
+- `change_order_documents`
+- `owner_invoice_documents` / `invoice_documents`
+- `company_documents`
+- `rfi_documents`
+
+See [DATABASE-ARCHITECTURE.md §12 "Unified File Architecture (Pattern C)"](./DATABASE-ARCHITECTURE.md#12-unified-file-architecture-pattern-c) for the design.
+
+---
 
 ## How to use this doc
 
@@ -16,13 +68,13 @@
 
 ## Critical findings (fix before more work)
 
-1. **`user_profiles` is empty but 123 code paths read it.** Every permission check, admin gate, task author display, and shell route silently falls back to null/non-admin. Either RLS hides rows from the role used by the audit, or the table is genuinely empty. Either way: implicit privilege bug. **Highest priority.**
+1. ~~**`user_profiles` is empty but 123 code paths read it.**~~ **RESOLVED 2026-05-15.** Backfilled to 53 rows (= all auth.users) via migration `20260516000000`. Trigger keeps rows in sync. Privilege bug closed.
 
-2. **`users_auth` has 1 row despite ~6 distinct insert paths.** Most signups are not producing the auth↔people bridge row. Investigate the signup flow and `lib/supabase/auth-guard.ts`.
+2. **`users_auth` has 1 row despite ~6 distinct insert paths.** Most signups are not producing the auth↔people bridge row. Investigate the signup flow and `lib/supabase/auth-guard.ts`. (Still open.)
 
-3. **`acumatica_payment_applications` (183 rows) has NO writer in current code.** Schema defined in migration `20260413000001`, frontend `arPaymentConfig` writes `acumatica_payments` only. If invoice-paid logic depends on this join table, it is silently degrading.
+3. ~~**`acumatica_payment_applications` (183 rows) has NO writer.**~~ **RESOLVED.** Python writer added in Wave 1C; ongoing 2h sync.
 
-4. **`acumatica_sync_runs` is empty despite having a writer at `acumatica_sync.py:408`.** Likely a wrapping `try/except` is swallowing the insert, or `ACUMATICA_FINANCIAL_SYNC_ENABLED` is gating the call off. Sync runs are happening but not logged.
+4. ~~**`acumatica_sync_runs` is empty despite having a writer.**~~ **RESOLVED.** 53 rows, growing every 2h.
 
 5. **`documents` is legacy (12,471 rows) but the project-setup wizard still writes to it** — parallel to `document_metadata`. Two indexes of project files exist; migrate or pick one.
 
@@ -93,9 +145,9 @@ These are the only places in code that intentionally write to multiple tables in
 
 ## Projects core
 
-### `projects` (110 rows)
+### `projects` (111 rows)
 - **Purpose:** Master project record. Integer `id` is the FK target for nearly every project-scoped table.
-- **Schema gotchas:** Several columns are mostly null: `address`, `city`, `state`, `client`, `current_phase`. `project_manager` is FK→`people.id` (uuid). `team_members` is `uuid[]`; `stakeholders` is JSONB.
+- **Schema gotchas:** Several columns are mostly null: `address`, `city`, `state`. `stage` (renamed from `current_phase` in Wave 3) is also mostly null. `project_manager` is FK→`people.id` (uuid). `team_members` is `uuid[]`; `stakeholders` is JSONB. `company_id` (FK → companies.id) is the canonical owner/client link; the legacy `client` text and `client_id` columns were dropped in Wave 3.
 - **Writers — cron / sync:**
   - `backend/src/services/acumatica_sync.py:505, :562, :948, :2038` — Acumatica project sync (cron `alleato-acumatica-financial-sync`, 2×/day).
   - `frontend/src/lib/acumatica/export-service.ts:531` — writes `acumatica_project_id` back after exporting a new project to Acumatica.
@@ -176,7 +228,7 @@ These are the only places in code that intentionally write to multiple tables in
 - **Writers/Readers:** `lib/permissions.ts:97, :425, :441`; permission API routes; project shell. Feature defined; unused.
 
 ### Dormant directory tables
-- `subcontractors`, `subcontractor_contacts`, `subcontractor_documents`, `subcontractor_projects` — superseded by `companies` (`is_vendor=true`) + `project_companies`. **Drop candidates.**
+- `subcontractors`, `subcontractor_documents`, `subcontractor_projects` — superseded by `companies` (`is_vendor=true`) + `project_companies`. **Drop candidates.** (`subcontractor_contacts` was dropped 2026-05-15 via migration `20260516020000`.)
 - `vendor_contacts` (empty) — UI tries to read; no writer in code.
 - `prospects` (empty) — `(main)/directory/prospects/page.tsx` reads/writes; never used.
 
@@ -188,11 +240,11 @@ These are the only places in code that intentionally write to multiple tables in
 - **Readers:** Many `permissions.ts` and `shell/route.ts` lookups.
 - **🚨 Bug:** Only 1 row despite ~7 writer paths. Most signups not producing the bridge row. Investigate.
 
-### `user_profiles` (table empty — 123 code references)
-- **Purpose:** Per-user app preferences + `is_admin` flag.
-- **Writers:** `api/users/me/onboarding/route.ts:19`, `api/permissions/users/route.ts:432`, `api/permissions/users/[personId]/{route,company-template}.ts`, `api/admin/set-admin-status/route.ts:51`, `api/dev/make-admin/route.ts:73`.
-- **Readers:** ~110 sites across permissions, shell route, AI tools, tasks/comments.
-- **🚨 CRITICAL:** Table is empty but every permission check reads from it. Either RLS hides rows from the role used by the audit, or the table genuinely is empty and reads silently return null (treating everyone as non-admin). **Investigate immediately.**
+### `user_profiles` (53 rows — fully backfilled 2026-05-15)
+- **Purpose:** Per-user app preferences + `is_admin` flag. Source of truth for the `is_admin` JWT claim issued by the custom access token hook.
+- **Writers:** `api/users/me/onboarding/route.ts:19`, `api/permissions/users/route.ts:432`, `api/permissions/users/[personId]/{route,company-template}.ts`, `api/admin/set-admin-status/route.ts:51`, `api/dev/make-admin/route.ts:73`. **Plus:** Postgres trigger backfills auth.users → user_profiles on signup (migration `20260516000000`).
+- **Readers:** ~110 sites — but most no longer hit the table directly; the rewritten `is_admin()` reads from JWT (Phase 1.5).
+- **Status:** Resolved. 53 rows = every auth.users row. See `docs/deployment/AUTH-MIGRATION-RUNBOOK.md`.
 
 ### Other permission tables
 | Table | Rows | Status |
@@ -253,14 +305,14 @@ All populated by the Render cron `alleato-acumatica-financial-sync` (2×/day) vi
 | `acumatica_checks` | 2,775 | `acumatica_sync.py:1132`; frontend `mirror-sync.ts:337` | Projects into `commitment_payments` (`:1279`); updates `subcontractor_invoices` paid-flag (`:1198, :1218`) | Accounting checks, dashboard, AP-payments; `accounting/payment-guardrails.ts:29` for duplicate-payment prevention |
 | `acumatica_customers` | 58 | **Frontend only** (`mirror-sync.ts:167`) | Reads back at `:882` to backfill `ar_invoices.customer_name` | None directly |
 | `acumatica_payments` | 368 | `acumatica_sync.py:1963`; frontend `mirror-sync.ts:282` | — | `accounting/payments`, `accounting/invoices` (paid logic), dashboard |
-| **`acumatica_payment_applications`** | 183 | **🚨 NO WRITER** in current code. Schema in migration `20260413000001`. Rows from historical/manual load. | — | If invoice-paid logic depends on this, silently degrading |
+| **`acumatica_payment_applications`** | 183 | **`acumatica_sync.py`** (Wave 1C, 2026-05-15) writes via `sync_payment_applications()`. Initial 183 rows from backfill; refreshed every 2h. | — | Resolved — invoice-paid logic backed again |
 | `acumatica_project_budgets` | 6,172 | `acumatica_sync.py:2035`; frontend `mirror-sync.ts:467` | — | `accounting/wip/route.ts:103` only |
 | `acumatica_projects` | 87 | `acumatica_sync.py:556`; also upserts to `projects` table (`:562`); frontend `mirror-sync.ts:208` | Sets `projects.acumatica_project_id` matching key | Accounting routes (invoices/projects/dashboard/bills/wip) |
 | `acumatica_project_tasks` | 99 | **Frontend only** (`mirror-sync.ts:231`) | — | Accounting cross-references |
 | `acumatica_purchase_orders` | 204 | `acumatica_sync.py:1458`; frontend `mirror-sync.ts:361` | Projects into `purchase_orders` (`:1808`) | AI summaries |
 | `acumatica_subcontracts` | 718 | `acumatica_sync.py:1399`; frontend `mirror-sync.ts:387` | Projects into `subcontracts` + `subcontract_sov_items` (`:1738, :1797`) | AI summaries |
 | `acumatica_sync_state` | 25 | `acumatica_sync.py:378`; frontend `mirror-sync.ts:553`; cron route `:159` | — | Cursor reads before sync |
-| **`acumatica_sync_runs`** | empty | Writer exists at `acumatica_sync.py:408` (`_record_sync_run`) | — | **🚨 No rows despite writer.** Likely exception path or env-flag gate |
+| **`acumatica_sync_runs`** | 53 | Writer at `acumatica_sync.py:408` (`_record_sync_run`) | Admin sync-health views | Resolved — populating every 2h since Wave 1C |
 | `erp_sync_log` | 51 | **Frontend only**: `api/cron/acumatica-sync/route.ts:231`, `sync-service.ts:299` | — | None (diagnostic) |
 | `acumatica_outbound_audit_logs` | empty | Writer exists at `export-service.ts:65`; never used in prod | — | Admin view at `api/admin/acumatica-outbound-logs/route.ts:362` |
 
@@ -439,20 +491,22 @@ AI tools: rpc("search_document_chunks")  [operational.ts:1369, document-intellig
 
 | Table | DB | Rows | Status |
 |---|---|---|---|
-| **`document_metadata`** | MAIN | 36,511 | LIVE — primary catalog. Written by `upsert_document_metadata` (called from all ingestion paths) + admin upload routes |
+| **`document_metadata`** | MAIN | 36,855 | LIVE — primary catalog. Written by `upsert_document_metadata` (called from all ingestion paths) + admin upload routes. **New column `document_type`** FK → `document_type_taxonomy(type_key)`; 30,288/36,855 rows populated (Phase 4 Day 2 backfill, migration `20260520030000`); 6,567 await Phase 9 LLM categorization. Actual category distribution (not 99% generic as previously claimed): 74% `teams_message`, 14% `document` generic, 7% `email`, 4% null, rest distributed |
 | **`rag_document_metadata`** | RAG | 36,657 | LIVE — embedding-side mirror. `app_document_id` FK back to MAIN.id. ONLY backend pipeline reads it |
 | **`document_chunks`** (RAG) | RAG | 109,171 | LIVE — THE unified vector store. `pipeline/embedder.py:477` upsert/`:487` delete. AI tools read via `rpc("search_document_chunks")` |
 | `document_chunks` (MAIN) | MAIN | 103,255 | **🚨 STALE** — do not write. RAG is canonical. `database.types.ts` keeps declaration only for typing |
 | `documents` (LEGACY) | MAIN | 12,471 | Project-setup wizard still writes via `project-setup-wizard/*-setup.tsx`. Parallel to `document_metadata`. Migration target |
 | `document_rows` | MAIN | 12,354 | Loaded by ETL outside the repo; read by `tools/structured-queries.ts:436, :555` |
 | `document_attribution_candidates` | both | MAIN 13,233 / RAG 13,193 | LIVE review queue from `ingestion/project_assignment.py`. **No UI shipped yet** (known gap) |
-| `document_user_access` | MAIN | empty | **Dormant** |
-| `document_group_access` | MAIN | empty | **Dormant** |
+| `document_user_access` | MAIN | empty | **LOAD-BEARING — DO NOT DROP.** Wired into RLS policies on `document_metadata`/`document_rows`/`document_chunks` via FK CASCADE (migration `20260427130000_secure_rag_documents_rls.sql`). Per-document ACL override. Empty because management UI isn't built yet |
+| `document_group_access` | MAIN | empty | **LOAD-BEARING — DO NOT DROP.** Same RLS wiring as `document_user_access`, but group-scoped |
 | `document_insights` | MAIN | empty | **Dormant** |
 | `document_executive_summaries` | MAIN | empty | **Dormant** |
 | `documents_rfis_links` | MAIN | empty | **Dormant** |
 | `documents_submittals_links` | MAIN | empty | **Dormant** |
 | `search_documents` | MAIN | 4 | Scratch table — no code references. **Drop candidate.** |
+| **`document_type_taxonomy`** | MAIN | 23 | LIVE — Pattern C unified file taxonomy (Phase 4 Day 1). Referenced by `document_metadata.document_type` and by junction tables (`submittal_documents.document_type`, etc.). Categories: `contract`, `compliance`, `closeout`, `permit`, `drawing`, `photo`, `communication`, `financial`, `other`. `applies_to` array drives the per-entity file-picker dropdown |
+| **`submittal_documents`** | MAIN | LIVE | Pattern C junction (Phase 4 Day 3). Submittal ↔ document_metadata, with `document_type` FK. RLS inherits from parent submittal access |
 
 ## Drawings (all MAIN)
 
@@ -483,7 +537,7 @@ Graph cron `alleato-graph-sync` (every 2h)
 | Table | Rows | Writers | Readers |
 |---|---|---|---|
 | `outlook_email_intake` | 812 | `outlook.py:532-562, :750-752, :1695`; `intake_reclassification.py:78, :163`; `attachment_promotion.py` | `api/outlook-intake/*`, `api/email-attachments/[id]`, AI tools `outlook-operations.ts`, `operational.ts:2991` (`getRecentEmails`) |
-| `outlook_email_intake_attachments` | 627 (355 MB) | `outlook.py:883-894`, `attachment_promotion.py:161-238` | Outlook-intake routes, email-attachment routes |
+| `outlook_email_intake_attachments` | 627 (355 MB) | `outlook.py:883-894`, `attachment_promotion.py:161-238`. **Promotion worker wired into `run_graph_sync()` post-Wave-1E.** Promotes pending attachments to `document_metadata` with `source_system='graph_attachment'`; respects `promotion_attempt_count` retry cap. | Outlook-intake routes, email-attachment routes. Schema has `promotion_status`, `promotion_reason`, `promotion_attempt_count`, `promoted_at`, `document_metadata_id` — no redesign needed |
 | `email_attachments` | 419 (391 MB) | `api/email-attachments/route.ts`, `api/projects/[projectId]/email-attachments/[id]/route.ts` (insert/update/delete) | Same | Separate in-app attachment store (manual upload + change-event/contract attachments). NOT the same as outlook_email_intake_attachments |
 | `project_emails` | 623 | `outlook.py` project-assignment + outbound API routes (5 places) | Email panels, AI assistant timeline, progress reports |
 | `outlook_email_skip_audit` | empty | None | None | **Dormant** |
@@ -514,7 +568,8 @@ Fireflies API ─► fireflies_ingestion_jobs queue (27K rows)
 |---|---|---|
 | **`chat_history`** | 2,908 | LIVE — message-level persistence for AI assistant + bots. Written by `handler-v2.ts:404, :425, :477, :514, :530` + `bot-core.ts:606` |
 | **`conversations`** | 226 | LIVE — session/thread metadata. Written by `handler-v2.ts:448, :559` |
-| `chat_messages`, `chat_sessions`, `chat_threads`, `chat_thread_items`, `chat_thread_attachments`, `chat_thread_attachment_files`, `chat_thread_feedback`, `chats`, `messages`, `notes` | empty | **ALL DEAD SCHEMA.** No code references. **Drop candidates.** |
+| ~~`chat_messages`, `chat_sessions`, `chat_threads`, `chat_thread_items`, `chat_thread_attachments`, `chat_thread_attachment_files`, `chat_thread_feedback`~~ | DROPPED | Dropped 2026-05-15 via migration `20260516020000_drop_dead_legacy_tables.sql`. Verified zero code references first. |
+| `chats`, `messages`, `notes` | empty | **Still empty, no code references.** Remaining drop candidates |
 
 ## Teams Bot + Team Chat
 
@@ -754,10 +809,10 @@ Most tables here have **zero code references** — feature build started, not fi
 
 # Cleanup recommendations (priority order)
 
-1. **`user_profiles` / `users_auth` bug** (critical) — fix the privilege gap.
-2. **`acumatica_payment_applications` writer gap** — either restore the writer or stop reading from the table.
-3. **Drop dead chat schema** — `chat_messages`, `chat_sessions`, `chat_threads`, `chat_thread_*`, `chats`, `messages`, `notes`.
-4. **Drop dormant subcontractor* tables** — superseded by `companies.is_vendor` + `project_companies`.
+1. ~~`user_profiles` bug~~ — resolved 2026-05-15. `users_auth` 1-row bug still open.
+2. ~~`acumatica_payment_applications` writer gap~~ — resolved 2026-05-15 (Wave 1C).
+3. ~~Drop dead chat schema~~ — `chat_messages`, `chat_sessions`, `chat_threads`, `chat_thread_*` dropped 2026-05-15. `chats`, `messages`, `notes` remain as candidates.
+4. **Drop dormant subcontractor tables** — `subcontractor_documents`, `subcontractor_projects` still candidates. (`subcontractor_contacts` dropped 2026-05-15.)
 5. **Truncate MAIN orphan copies** of `document_chunks`, `packet_refresh_jobs`, `source_signal_candidates`, `source_intelligence_jobs` (canonical lives in RAG).
 6. **Decide on `documents` vs `document_metadata`** — they're parallel project file indexes.
 7. **Drop dead CO/PCO variants** — `change_orders` generic, all dormant `pco_*`, `pcco_*`, `cco_*`, `change_event_*` link tables.
