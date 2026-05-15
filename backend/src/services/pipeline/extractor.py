@@ -453,20 +453,14 @@ def _upsert_insight(
     metadata_id: str,
     details: Dict[str, Any] | None = None,
 ) -> None:
-    """Upsert a single insight row into the unified insights table."""
-    import json
-    client.table("insights").upsert(
-        {
-            "metadata_id": metadata_id,
-            "type": insight_type,
-            "description": item.description,
-            "owner_name": getattr(item, "owner", None),
-            "embedding": item.embedding,
-            "status": "active" if insight_type == "decision" else "open",
-            "details": details or {},
-        },
-        on_conflict="metadata_id,type,description",
-    ).execute()
+    """DEPRECATED: legacy Pipeline A writer for the `insights` table.
+
+    Pipeline B (insight_cards via promote_signal_candidate) replaced this
+    in the 2026-05-15 migration. Kept as a no-op so existing call sites
+    do not error during the transition; remove after stability window.
+    """
+    _ = client, insight_type, item, metadata_id, details  # noqa: F841
+    return None
 
 
 _TITLE_CLAUSE_RE = re.compile(

@@ -31,11 +31,14 @@ import {
   DECISION_CARD_TYPES,
   ACTION_CARD_TYPES,
   deriveSeverity,
+  mapLegacyInsightTypeToCardType,
+  severityToConfidence,
   resolveTargetIdsForProjects,
   findInsightCardIdsBySourceDocuments,
   insightCardBaseQuery,
   type InsightCardWithTarget,
 } from "@/lib/ai/insight-cards";
+import type { Json } from "@/types/database.types";
 import {
   normalizeRetrievalWeightQuerySignature,
   retrievalWeightMultiplierForItem,
@@ -2462,25 +2465,58 @@ export function createOperationalTools(
               }
             }
 
+            // Pipeline B requires a target. Resolve project_id → target_id;
+            // if no target exists, bail with a clear instruction.
+            if (!resolvedProjectId) {
+              return {
+                error:
+                  "Pipeline B insight cards must be linked to a project target. Provide projectId or projectName.",
+              };
+            }
+            const targetMap = await resolveTargetIdsForProjects(supabase, [resolvedProjectId]);
+            const targetId = targetMap.get(resolvedProjectId);
+            if (!targetId) {
+              return {
+                error: `No active intelligence target exists for project ${resolvedProjectName ?? resolvedProjectId}. Ask an admin to bootstrap it before saving insights.`,
+              };
+            }
+
+            const cardType = mapLegacyInsightTypeToCardType(insightType);
+            const confidence = severityToConfidence(severity ?? "medium");
+            const nowIso = new Date().toISOString();
+            const cardMetadata = {
+              severity_input: severity ?? "medium",
+              insight_type_input: insightType,
+              meeting_id: meetingId ?? null,
+              meeting_name: meetingName ?? null,
+              meeting_date: meetingDate ?? null,
+              exact_quotes_text: quotes ?? null,
+              stakeholders_affected: stakeholders ?? [],
+              financial_impact: financialImpact ?? null,
+            };
+
             const { data, error } = await supabase
-              .from("ai_insights")
+              .from("insight_cards")
               .insert({
+                primary_target_id: targetId,
+                card_type: cardType,
                 title,
-                description,
-                insight_type: insightType,
-                severity: severity ?? "medium",
-                project_id: resolvedProjectId ?? null,
-                project_name: resolvedProjectName ?? null,
-                meeting_id: meetingId ?? null,
-                meeting_name: meetingName ?? null,
-                meeting_date: meetingDate ?? null,
-                exact_quotes_text: quotes ?? null,
-                stakeholders_affected: stakeholders ?? [],
-                financial_impact: financialImpact ?? null,
-                status: "active",
-                approval_status: "draft",
+                summary: description,
+                why_it_matters: null,
+                current_status: "open",
+                confidence,
+                // Drafts start needing review since the AI assistant flagged
+                // them on the user's behalf, not the deterministic compiler.
+                attribution_status: "needs_review",
+                next_action: null,
+                suggested_owner_label: null,
+                first_seen_at: nowIso,
+                last_seen_at: nowIso,
+                source_count: 1,
+                compiler_version: "ai_assistant_save_insight_v1",
+                metadata: cardMetadata as unknown as Json,
               })
-              .select("id, title, insight_type, severity, project_name")
+              .select("id, title, card_type, confidence")
               .single();
 
             if (error)
@@ -2488,8 +2524,14 @@ export function createOperationalTools(
 
             return {
               success: true,
-              savedInsight: data,
-              message: `Insight saved as draft: "${title}" (${insightType}, ${severity}). ${resolvedProjectName ? `Linked to project: ${resolvedProjectName}.` : ""} A team member must approve it before it appears in AI analysis and search results.`,
+              savedInsight: {
+                id: data.id,
+                title: data.title,
+                insight_type: data.card_type,
+                severity: severity ?? "medium",
+                project_name: resolvedProjectName ?? null,
+              },
+              message: `Insight saved as draft: "${title}" (${insightType}, ${severity ?? "medium"}). ${resolvedProjectName ? `Linked to project: ${resolvedProjectName}.` : ""} A team member must approve it before it appears in AI analysis and search results.`,
             };
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Unknown error";

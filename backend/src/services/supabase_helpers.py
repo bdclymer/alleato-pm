@@ -363,14 +363,25 @@ class SupabaseRagStore:
             ).execute()
 
     def list_insights(self, project_id: Optional[int] = None, limit: int = 20) -> List[Dict[str, Any]]:
-        query = self._client.table("project_insights").select("*").order("captured_at", desc=True).limit(limit)
-        if project_id is not None:
-            query = query.eq("project_id", project_id)
-        response = query.execute()
-        return response.data or []
+        """DEPRECATED: legacy Pipeline A reader for project_insights.
+
+        Pipeline B (insight_cards + intelligence_packets) replaced this in the
+        2026-05-15 migration. Returns an empty list during the transition;
+        callers should migrate to the helper module
+        frontend/src/lib/ai/insight-cards or the Python equivalent if/when
+        Pipeline A is fully removed.
+        """
+        _ = project_id, limit  # noqa: F841
+        return []
 
     def insert_insight(self, insight: Dict[str, Any]) -> None:
-        self._client.table("project_insights").insert(insight).execute()
+        """DEPRECATED: legacy Pipeline A writer for project_insights.
+
+        Pipeline B writes the same content to insight_cards via the
+        promote_signal_candidate flow. No-op during the transition.
+        """
+        _ = insight  # noqa: F841
+        return None
 
     # document chunks ---------------------------------------------------
     def delete_chunks_for_document(self, document_id: str) -> None:

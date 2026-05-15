@@ -581,35 +581,15 @@ def write_insight_cards(
     insights: List[Dict[str, Any]],
     project_id: Optional[int],
 ) -> int:
-    if not project_id:
-        return 0
-    rows: List[Dict[str, Any]] = []
-    for insight in insights:
-        if _to_float(insight.get("confidence")) < 0.8:
-            continue
-        if insight.get("target_type") and insight.get("target_type") != "client_project":
-            continue
-        summary = _clean_text(insight.get("summary"))
-        if not summary:
-            continue
-        rows.append(
-            {
-                "project_id": int(project_id),
-                "summary": summary,
-                "detail": insight,
-                "severity": insight.get("severity") or "info",
-                "source_document_ids": [head_doc_id],
-                "metadata": {
-                    "compiler": "email_thread_compiler",
-                    "source_message_ids": insight.get("source_message_ids") or [],
-                    "insight_type": insight.get("insight_type"),
-                },
-            }
-        )
-    if not rows:
-        return 0
-    supabase.table("project_insights").insert(rows).execute()
-    return len(rows)
+    """DEPRECATED: legacy Pipeline A writer for project_insights.
+
+    Replaced by Pipeline B (insight_cards + intelligence_packets) in the
+    2026-05-15 migration. Kept as a no-op so existing call sites do not
+    error during the transition; remove after stability window when the
+    drop migration 20260515080000_drop_pipeline_a_intelligence.sql lands.
+    """
+    _ = supabase, head_doc_id, insights, project_id  # noqa: F841
+    return 0
 
 
 def write_structured_insights(
@@ -618,47 +598,13 @@ def write_structured_insights(
     items: List[Dict[str, Any]],
     project_id: Optional[int],
 ) -> int:
-    rows: List[Dict[str, Any]] = []
-    project_ids = [int(project_id)] if project_id else []
-    for item in items:
-        item_type = item.get("_compiler_type") or item.get("type")
-        confidence = _to_float(item.get("confidence"), 0.8)
-        if confidence < 0.7:
-            continue
-        if item_type == "risk":
-            description = _clean_text(item.get("risk_title") or item.get("evidence"))
-            owner_name = None
-        elif item_type == "decision":
-            description = _clean_text(item.get("decision_text"))
-            owner_name = item.get("decider")
-        elif item_type == "sentiment":
-            description = _clean_text(item.get("sentiment_reason") or item.get("business_implication"))
-            owner_name = None
-        elif item_type == "initiative_signal":
-            description = _clean_text(item.get("summary") or item.get("strategic_read"))
-            owner_name = None
-        else:
-            description = _clean_text(item.get("description") or item.get("summary"))
-            owner_name = item.get("owner_name")
-        if not description:
-            continue
-        rows.append(
-            {
-                "metadata_id": head_doc_id,
-                "project_id": int(project_id) if project_id else None,
-                "project_ids": project_ids,
-                "type": item_type,
-                "description": description,
-                "owner_name": owner_name,
-                "status": "open",
-                "details": item,
-            }
-        )
-    if not rows:
-        return 0
-    supabase.table("insights").delete().eq("metadata_id", head_doc_id).execute()
-    supabase.table("insights").insert(rows).execute()
-    return len(rows)
+    """DEPRECATED: legacy Pipeline A writer for the `insights` table.
+
+    Pipeline B writes the same extractions to `insight_cards` via the
+    promote_signal_candidate flow. Kept as a no-op for the transition.
+    """
+    _ = supabase, head_doc_id, items, project_id  # noqa: F841
+    return 0
 
 
 def write_tasks(
