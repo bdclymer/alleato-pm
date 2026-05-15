@@ -12093,6 +12093,7 @@ export type Database = {
           cell: string | null
           comments: string | null
           company: string | null
+          company_id: string | null
           contact_name: string | null
           created_at: string | null
           division_code: string
@@ -12102,6 +12103,7 @@ export type Database = {
           estimate_id: number
           id: number
           intend_to_submit: string | null
+          is_awarded: boolean
           phone_follow_up: string | null
           position: number | null
           price: number | null
@@ -12122,6 +12124,7 @@ export type Database = {
           cell?: string | null
           comments?: string | null
           company?: string | null
+          company_id?: string | null
           contact_name?: string | null
           created_at?: string | null
           division_code?: string
@@ -12131,6 +12134,7 @@ export type Database = {
           estimate_id: number
           id?: number
           intend_to_submit?: string | null
+          is_awarded?: boolean
           phone_follow_up?: string | null
           position?: number | null
           price?: number | null
@@ -12151,6 +12155,7 @@ export type Database = {
           cell?: string | null
           comments?: string | null
           company?: string | null
+          company_id?: string | null
           contact_name?: string | null
           created_at?: string | null
           division_code?: string
@@ -12160,6 +12165,7 @@ export type Database = {
           estimate_id?: number
           id?: number
           intend_to_submit?: string | null
+          is_awarded?: boolean
           phone_follow_up?: string | null
           position?: number | null
           price?: number | null
@@ -12176,6 +12182,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "estimate_sublist_subs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estimate_sublist_subs_estimate_id_fkey"
             columns: ["estimate_id"]

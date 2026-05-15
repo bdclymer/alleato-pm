@@ -8,13 +8,25 @@ import { toast } from "sonner";
 import { PageShell, PageTabs } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
+  Modal as Dialog,
+  ModalContent as DialogContent,
+  ModalDescription as DialogDescription,
+  ModalFooter as DialogFooter,
+  ModalHeader as DialogHeader,
+  ModalTitle as DialogTitle,
+} from "@/components/ui/unified-modal";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 import type {
   DivisionTotal,
@@ -480,11 +493,15 @@ function InlineText({
   onChange,
   placeholder,
   className,
+  onFocus,
+  onBlur: onBlurProp,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   className?: string;
+  onFocus?: React.FocusEventHandler<HTMLInputElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
 }) {
   const [local, setLocal] = React.useState(value);
   React.useEffect(() => { setLocal(value); }, [value]);
@@ -493,7 +510,8 @@ function InlineText({
     <Input
       value={local}
       onChange={(e) => setLocal(e.target.value)}
-      onBlur={commit}
+      onBlur={(e) => { commit(); onBlurProp?.(e); }}
+      onFocus={onFocus}
       onKeyDown={(e) => e.key === "Enter" && commit()}
       placeholder={placeholder}
       className={`h-7 border-transparent bg-transparent text-xs transition-colors focus:border-border focus:bg-background ${className ?? ""}`}
@@ -659,6 +677,101 @@ export function EstimateDetailClientV2({
 
   const [isDirty, setIsDirty] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+
+  // Template state
+  type GcTemplate = { template_id: string; name: string; created_at: string };
+  type GcTemplateItem = { cost_code: string; description: string; cost_type: string; qty_basis: string | null; rate: number | null; allocation: number | null; sort_order?: number | null };
+  const [templates, setTemplates] = React.useState<GcTemplate[]>([]);
+  const [templatesLoading, setTemplatesLoading] = React.useState(false);
+  const [showCreateTemplate, setShowCreateTemplate] = React.useState(false);
+  const [templateName, setTemplateName] = React.useState("");
+  const [isSavingTemplate, setIsSavingTemplate] = React.useState(false);
+  const [pendingTemplate, setPendingTemplate] = React.useState<GcTemplate | null>(null);
+  const [showLoadConfirm, setShowLoadConfirm] = React.useState(false);
+  const [isLoadingTemplate, setIsLoadingTemplate] = React.useState(false);
+
+  const fetchTemplates = React.useCallback(async () => {
+    setTemplatesLoading(true);
+    try {
+      const data = await apiFetch<GcTemplate[]>("/api/estimates/gc-templates");
+      setTemplates(data);
+    } catch {
+      toast.error("Failed to load templates");
+    } finally {
+      setTemplatesLoading(false);
+    }
+  }, []);
+
+  const handleCreateTemplate = async () => {
+    if (!templateName.trim()) return;
+    setIsSavingTemplate(true);
+    try {
+      const items: GcTemplateItem[] = gcItems.map((item) => ({
+        cost_code: item.cost_code,
+        description: item.description,
+        cost_type: item.cost_type,
+        qty_basis: item.qty_basis,
+        rate: item.rate,
+        allocation: item.allocation,
+        sort_order: item.sort_order,
+      }));
+      await apiFetch("/api/estimates/gc-templates", {
+        method: "POST",
+        body: JSON.stringify({ name: templateName.trim(), items }),
+      });
+      toast.success(`Template "${templateName.trim()}" saved`);
+      setShowCreateTemplate(false);
+      setTemplateName("");
+    } catch {
+      toast.error("Failed to save template");
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  const handleSelectTemplate = (template: GcTemplate) => {
+    setPendingTemplate(template);
+    setShowLoadConfirm(true);
+  };
+
+  const handleConfirmLoadTemplate = async () => {
+    if (!pendingTemplate) return;
+    setIsLoadingTemplate(true);
+    try {
+      // Delete all existing GC items
+      await Promise.all(
+        gcItems.map((item) =>
+          apiFetch(`/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items/${item.id}`, {
+            method: "DELETE",
+          })
+        )
+      );
+      // Fetch full template to get items
+      const allTemplates = await apiFetch<Array<GcTemplate & { items: GcTemplateItem[] }>>("/api/estimates/gc-templates");
+      const full = allTemplates.find((t) => t.template_id === pendingTemplate.template_id);
+      const templateItems: GcTemplateItem[] = (full as unknown as { items: GcTemplateItem[] } | undefined)?.items ?? [];
+      // Insert template items into this estimate
+      const created = await Promise.all(
+        templateItems.map((item, idx) =>
+          apiFetch<GcItem>(
+            `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
+            {
+              method: "POST",
+              body: JSON.stringify({ ...item, sort_order: item.sort_order ?? idx + 1 }),
+            }
+          )
+        )
+      );
+      setGcItems(created);
+      toast.success(`Loaded template "${pendingTemplate.name}"`);
+    } catch {
+      toast.error("Failed to load template");
+    } finally {
+      setIsLoadingTemplate(false);
+      setShowLoadConfirm(false);
+      setPendingTemplate(null);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -887,37 +1000,54 @@ export function EstimateDetailClientV2({
     }
   };
 
-  // Ensure 5 rows exist for a given division (creates them if missing)
+  // Add a single new row to a division (unlimited slots — PRP 1.3)
   const ensureSublistRows = React.useCallback(
     async (divCode: string, divName: string) => {
       const existing = sublistSubs.filter((s) => s.division_code === divCode);
-      const missing: number[] = [];
-      for (let pos = 1; pos <= 5; pos++) {
-        if (!existing.find((s) => s.position === pos)) missing.push(pos);
-      }
-      if (missing.length === 0) return;
+      const nextPos = (existing.reduce((max, s) => Math.max(max, s.position ?? 0), 0)) + 1;
       try {
-        const created = await Promise.all(
-          missing.map((pos) =>
-            apiFetch<SublistSub>(
-              `/api/projects/${projectId}/estimates/${estimate.estimate_id}/sublist`,
-              {
-                method: "POST",
-                body: JSON.stringify({
-                  division_code: divCode,
-                  division_name: divName,
-                  position: pos,
-                }),
-              }
-            )
-          )
+        const created = await apiFetch<SublistSub>(
+          `/api/projects/${projectId}/estimates/${estimate.estimate_id}/sublist`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              division_code: divCode,
+              division_name: divName,
+              position: nextPos,
+            }),
+          }
         );
-        setSublistSubs((prev) => [...prev, ...created]);
+        setSublistSubs((prev) => [...prev, created]);
       } catch {
         // silently ignore — rows will be created on first edit
       }
     },
     [sublistSubs, projectId, estimate.estimate_id]
+  );
+
+  // Award a sub (un-awards all others in the same division atomically)
+  const awardSub = React.useCallback(
+    async (subId: number, revoke = false) => {
+      try {
+        const updated = await apiFetch<SublistSub>(
+          `/api/projects/${projectId}/estimates/${estimate.estimate_id}/sublist/${subId}/award`,
+          { method: "POST", body: JSON.stringify({ revoke }) }
+        );
+        // Refresh all subs in same division from server response
+        setSublistSubs((prev) => {
+          const divCode = prev.find((s) => s.id === subId)?.division_code;
+          return prev.map((s) => {
+            if (s.division_code !== divCode) return s;
+            if (s.id === subId) return revoke ? { ...s, is_awarded: false } : (updated ?? { ...s, is_awarded: true });
+            return { ...s, is_awarded: false };
+          });
+        });
+        toast.success(revoke ? "Award revoked" : "Sub awarded");
+      } catch {
+        toast.error("Failed to update award");
+      }
+    },
+    [projectId, estimate.estimate_id]
   );
 
   // ---------------------------------------------------------------------------
@@ -995,12 +1125,90 @@ export function EstimateDetailClientV2({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
+          onClick={() => { setTemplateName(""); setShowCreateTemplate(true); }}
+        >
+          Create Template
+        </DropdownMenuItem>
+        <DropdownMenuSub onOpenChange={(open) => { if (open) void fetchTemplates(); }}>
+          <DropdownMenuSubTrigger>Load Template</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-52">
+            {templatesLoading ? (
+              <DropdownMenuItem disabled>Loading…</DropdownMenuItem>
+            ) : templates.length === 0 ? (
+              <DropdownMenuItem disabled>No templates saved</DropdownMenuItem>
+            ) : (
+              templates.map((t) => (
+                <DropdownMenuItem key={t.template_id} onClick={() => handleSelectTemplate(t)}>
+                  {t.name}
+                </DropdownMenuItem>
+              ))
+            )}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
           onClick={() => router.push(`/${projectId}/estimates/new?variationOf=${estimate.estimate_id}`)}
         >
           New Variation
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    {/* Create Template dialog */}
+    <Dialog open={showCreateTemplate} onOpenChange={setShowCreateTemplate}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Save as Template</DialogTitle>
+          <DialogDescription>
+            Save the current General Conditions items as a reusable template.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-2 py-2">
+          <Label htmlFor="template-name">Template name</Label>
+          <Input
+            id="template-name"
+            placeholder="e.g. Warehouse Standard GC"
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") void handleCreateTemplate(); }}
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowCreateTemplate(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => void handleCreateTemplate()} disabled={!templateName.trim() || isSavingTemplate}>
+            {isSavingTemplate ? "Saving…" : "Save Template"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Load Template overwrite confirmation */}
+    <Dialog open={showLoadConfirm} onOpenChange={setShowLoadConfirm}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Load Template</DialogTitle>
+          <DialogDescription>
+            Loading <strong>&ldquo;{pendingTemplate?.name}&rdquo;</strong> will replace all current
+            General Conditions items. This cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setShowLoadConfirm(false); setPendingTemplate(null); }}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => void handleConfirmLoadTemplate()}
+            disabled={isLoadingTemplate}
+          >
+            {isLoadingTemplate ? "Loading…" : "Replace & Load"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </div>
   );
 
@@ -1062,8 +1270,12 @@ export function EstimateDetailClientV2({
         {activeTab === "sublist" && (
           <SubListTab
             sublistSubs={sublistSubs}
+            projectId={projectId}
+            estimateId={String(estimate.estimate_id)}
+            detailTotalsByDiv={detailTotalsByDiv}
             onPatchSub={patchSublistSub}
             onEnsureRows={ensureSublistRows}
+            onAwardSub={awardSub}
           />
         )}
         {activeTab === "summary" && (
@@ -1404,19 +1616,64 @@ const BID_OPTIONS = [
   { value: "Other", label: "Other" },
 ];
 
+type Company = Database["public"]["Tables"]["companies"]["Row"];
+
 function SubListTab({
   sublistSubs,
+  projectId,
+  estimateId,
+  detailTotalsByDiv,
   onPatchSub,
   onEnsureRows,
+  onAwardSub,
 }: {
   sublistSubs: SublistSub[];
+  projectId: string;
+  estimateId: string;
+  detailTotalsByDiv: Record<string, number>;
   onPatchSub: (id: number, fields: Partial<SublistSub>) => Promise<void>;
   onEnsureRows: (divCode: string, divName: string) => Promise<void>;
+  onAwardSub: (subId: number, revoke?: boolean) => Promise<void>;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [filterIntend, setFilterIntend] = React.useState("");
   const [filterBid, setFilterBid] = React.useState("");
   const [sortConfig, setSortConfig] = React.useState<{ col: keyof SublistSub; dir: "asc" | "desc" } | null>(null);
+  const [companies, setCompanies] = React.useState<Company[]>([]);
+  const [companySearch, setCompanySearch] = React.useState("");
+  const [openComboboxId, setOpenComboboxId] = React.useState<number | null>(null);
+
+  // Load companies once on mount
+  React.useEffect(() => {
+    const supabaseClient = createClient();
+    supabaseClient
+      .from("companies")
+      .select("id, name, contact_name, contact_email, contact_phone, type, is_vendor")
+      .order("name", { ascending: true })
+      .limit(2000)
+      .then(({ data }) => { if (data) setCompanies(data as Company[]); });
+  }, []);
+
+  const filteredCompanies = React.useMemo(() => {
+    if (!companySearch) return companies.slice(0, 50);
+    const q = companySearch.toLowerCase();
+    return companies.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 50);
+  }, [companies, companySearch]);
+
+  const selectCompany = React.useCallback(
+    async (sub: SublistSub, company: Company) => {
+      setOpenComboboxId(null);
+      setCompanySearch("");
+      await onPatchSub(sub.id, {
+        company_id: company.id,
+        company: company.name,
+        contact_name: company.contact_name ?? sub.contact_name,
+        email: company.contact_email ?? sub.email,
+        cell: company.contact_phone ?? sub.cell,
+      });
+    },
+    [onPatchSub],
+  );
 
   const hasActiveFilter = Boolean(searchQuery || filterIntend || filterBid || sortConfig);
 
@@ -1559,15 +1816,16 @@ function SubListTab({
             <tr className="border-b border-border bg-muted/20 text-left text-muted-foreground">
               <th className="w-6 py-2 pl-4 pr-2 font-medium">#</th>
               <SortTh col="company" label="Company" />
-              <SortTh col="intend_to_submit" label="Intend to Submit?" className="w-32" />
+              <SortTh col="intend_to_submit" label="Intend?" className="w-24" />
               <SortTh col="email_sent" label="Email Sent?" className="w-24" />
-              <SortTh col="phone_follow_up" label="Phone Follow Up?" className="w-28" />
-              <SortTh col="bid_received" label="Bid Received?" className="w-24" />
+              <SortTh col="phone_follow_up" label="Phone F/U?" className="w-24" />
+              <SortTh col="bid_received" label="Bid Rec'd?" className="w-24" />
               <SortTh col="contact_name" label="Contact" />
               <SortTh col="email" label="Email" />
               <SortTh col="cell" label="Cell" />
               <SortTh col="price" label="Price" className="w-28 text-right" />
               <th className="px-2 py-2 font-medium">Comments</th>
+              <th className="w-10 py-2 pr-4 font-medium" />
             </tr>
           </thead>
           <tbody>
@@ -1580,21 +1838,21 @@ function SubListTab({
                 null,
               );
 
+              const awardedSub = divRows.find((r) => r.is_awarded);
+              const estimateBudget = detailTotalsByDiv[div.code] ?? 0;
+
               return (
                 <React.Fragment key={div.code}>
                   {/* Spacer row creates visual gap between sections */}
                   {visIdx > 0 && (
                     <tr aria-hidden="true">
-                      <td colSpan={11} className="h-2 bg-background p-0" />
+                      <td colSpan={12} className="h-2 bg-background p-0" />
                     </tr>
                   )}
 
                   {/* Division group header */}
-                  <tr
-                    className="cursor-pointer border-t border-b border-border/60 bg-muted/30 hover:bg-muted/40"
-                    onClick={() => void onEnsureRows(div.code, div.name)}
-                  >
-                    <td colSpan={11} className="px-4 py-2">
+                  <tr className="border-t border-b border-border/60 bg-muted/30">
+                    <td colSpan={12} className="px-4 py-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-foreground">
                           {div.code} – {div.name}
@@ -1605,31 +1863,91 @@ function SubListTab({
                           </span>
                         )}
                         {bidCount > 0 && (
-                          <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-400">
+                          <span className="rounded bg-status-success/10 px-1.5 py-0.5 text-[10px] font-medium text-status-success">
                             {bidCount} bid{bidCount !== 1 ? "s" : ""} received
                           </span>
                         )}
-                        {lowestBid !== null && (
-                          <span className="ml-auto text-[10px] text-muted-foreground">
-                            Low: {formatCurrencyFull(lowestBid)}
+                        {awardedSub && (
+                          <span className="rounded bg-status-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-status-warning">
+                            ★ Awarded: {awardedSub.company ?? "—"}
                           </span>
                         )}
+                        <span className="ml-auto flex items-center gap-3 text-[10px] text-muted-foreground">
+                          {estimateBudget > 0 && (
+                            <span>Budget: {formatCurrencyFull(estimateBudget)}</span>
+                          )}
+                          {lowestBid !== null && (
+                            <span className={lowestBid <= estimateBudget || estimateBudget === 0 ? "text-status-success" : "text-destructive"}>
+                              Low bid: {formatCurrencyFull(lowestBid)}
+                            </span>
+                          )}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                          onClick={() => void onEnsureRows(div.code, div.name)}
+                        >
+                          <Plus className="h-3 w-3" /> Add sub
+                        </Button>
                       </div>
                     </td>
                   </tr>
 
                   {/* Sub rows */}
                   {divRows.map((sub, idx) => (
-                    <tr key={sub.id} className="border-b border-border/20 hover:bg-muted/20">
+                    <tr
+                      key={sub.id}
+                      className={`border-b border-border/20 hover:bg-muted/20 ${sub.is_awarded ? "bg-status-warning/5" : ""}`}
+                    >
                       <td className="py-1 pl-4 pr-2 text-muted-foreground">{sub.position ?? idx + 1}</td>
+
+                      {/* Company — combobox linked to Directory */}
                       <td className="px-2 py-1">
-                        <InlineText
-                          value={sub.company ?? ""}
-                          onChange={(v) => void onPatchSub(sub.id, { company: v || null })}
-                          placeholder="Company name"
-                        />
+                        <div className="relative">
+                          {openComboboxId === sub.id ? (
+                            <div className="absolute left-0 top-0 z-50 w-72 rounded-md border border-border bg-popover shadow-sm">
+                              <div className="border-b border-border p-2">
+                                <Input
+                                  autoFocus
+                                  placeholder="Search company..."
+                                  value={companySearch}
+                                  onChange={(e) => setCompanySearch(e.target.value)}
+                                  className="h-7 text-xs"
+                                  onKeyDown={(e) => { if (e.key === "Escape") { setOpenComboboxId(null); setCompanySearch(""); } }}
+                                />
+                              </div>
+                              <div className="max-h-48 overflow-y-auto">
+                                {filteredCompanies.length === 0 ? (
+                                  <p className="px-3 py-4 text-center text-xs text-muted-foreground">No companies found</p>
+                                ) : (
+                                  filteredCompanies.map((c) => (
+                                    <Button
+                                      key={c.id}
+                                      variant="ghost"
+                                      type="button"
+                                      className="flex h-auto w-full flex-col items-start gap-0.5 rounded-none px-3 py-1.5 text-xs"
+                                      onClick={() => void selectCompany(sub, c)}
+                                    >
+                                      <span className="font-medium text-foreground">{c.name}</span>
+                                      {c.type && <span className="text-[10px] text-muted-foreground">{c.type}</span>}
+                                    </Button>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          ) : null}
+                          <InlineText
+                            value={sub.company ?? ""}
+                            onChange={(v) => void onPatchSub(sub.id, { company: v || null, company_id: v ? sub.company_id : null })}
+                            placeholder="Company name"
+                            onFocus={() => setOpenComboboxId(sub.id)}
+                            onBlur={() => setTimeout(() => setOpenComboboxId((prev) => prev === sub.id ? null : prev), 150)}
+                          />
+                        </div>
                       </td>
-                      <td className="w-32 px-2 py-1">
+
+                      <td className="w-24 px-2 py-1">
                         <InlineSelect
                           value={sub.intend_to_submit ?? ""}
                           options={INTEND_OPTIONS}
@@ -1645,7 +1963,7 @@ function SubListTab({
                           placeholder="—"
                         />
                       </td>
-                      <td className="w-28 px-2 py-1">
+                      <td className="w-24 px-2 py-1">
                         <InlineSelect
                           value={sub.phone_follow_up ?? ""}
                           options={PHONE_OPTIONS}
@@ -1697,25 +2015,22 @@ function SubListTab({
                           placeholder="Comments"
                         />
                       </td>
-                    </tr>
-                  ))}
 
-                  {/* Add sub — always visible at bottom of each division, hidden when filtering */}
-                  {!hasActiveFilter && (
-                    <tr className="border-b border-border/10">
-                      <td className="py-1.5 pl-4 pr-2 text-muted-foreground" />
-                      <td colSpan={10} className="px-2 py-1.5">
+                      {/* Award action */}
+                      <td className="w-10 py-1 pr-3 text-right">
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-auto gap-1 p-0 text-xs text-muted-foreground hover:text-foreground"
-                          onClick={() => void onEnsureRows(div.code, div.name)}
+                          size="icon"
+                          className={`h-7 w-7 ${sub.is_awarded ? "text-status-warning hover:text-status-warning/80" : "text-muted-foreground/30 hover:text-status-warning"}`}
+                          title={sub.is_awarded ? "Revoke award" : "Award this sub"}
+                          onClick={() => void onAwardSub(sub.id, sub.is_awarded)}
                         >
-                          <Plus className="h-3 w-3" /> Add sub
+                          <span className="text-base leading-none">{sub.is_awarded ? "★" : "☆"}</span>
                         </Button>
                       </td>
                     </tr>
-                  )}
+                  ))}
+
                 </React.Fragment>
               );
             })}
@@ -1723,7 +2038,7 @@ function SubListTab({
             {/* Empty state when all filtered out */}
             {visibleDivisions.length === 0 && (
               <tr>
-                <td colSpan={11} className="py-10 text-center text-muted-foreground">
+                <td colSpan={12} className="py-10 text-center text-muted-foreground">
                   No subs match the current filters.
                 </td>
               </tr>
@@ -1731,6 +2046,70 @@ function SubListTab({
           </tbody>
         </table>
       </div>
+
+      {/* ── Bid Comparison Summary (PRP 3.3) ─────────────────────────────── */}
+      {(() => {
+        const divsWithBids = ALL_DIVISIONS.filter((div) => {
+          const rows = sublistSubs.filter((s) => s.division_code === div.code && s.price && s.price > 0);
+          return rows.length > 0;
+        });
+        if (divsWithBids.length === 0) return null;
+
+        return (
+          <div className="overflow-hidden rounded-md border border-border">
+            <div className="border-b border-border bg-muted/30 px-4 py-2">
+              <span className="text-xs font-semibold text-foreground">Bid Comparison</span>
+            </div>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border/50 text-left text-muted-foreground">
+                  <th className="py-2 pl-4 font-medium">Division</th>
+                  <th className="px-3 py-2 text-right font-medium">Est. Budget</th>
+                  <th className="px-3 py-2 text-right font-medium">Bids</th>
+                  <th className="px-3 py-2 text-right font-medium">Low Bid</th>
+                  <th className="px-3 py-2 text-right font-medium">Avg Bid</th>
+                  <th className="px-3 py-2 text-right font-medium">Δ Budget</th>
+                  <th className="px-3 py-2 font-medium">Awarded</th>
+                </tr>
+              </thead>
+              <tbody>
+                {divsWithBids.map((div) => {
+                  const rows = sublistSubs.filter((s) => s.division_code === div.code && s.price && s.price > 0);
+                  const budget = detailTotalsByDiv[div.code] ?? 0;
+                  const prices = rows.map((r) => r.price!);
+                  const low = Math.min(...prices);
+                  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+                  const delta = budget > 0 ? low - budget : null;
+                  const awarded = sublistSubs.find((s) => s.division_code === div.code && s.is_awarded);
+                  return (
+                    <tr key={div.code} className="border-b border-border/20 hover:bg-muted/20">
+                      <td className="py-2 pl-4 font-medium text-foreground">{div.code} – {div.name}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                        {budget > 0 ? formatCurrencyFull(budget) : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">{rows.length}</td>
+                      <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
+                        {formatCurrencyFull(low)}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                        {formatCurrencyFull(avg)}
+                      </td>
+                      <td className={`px-3 py-2 text-right tabular-nums font-medium ${delta === null ? "text-muted-foreground" : delta <= 0 ? "text-status-success" : "text-destructive"}`}>
+                        {delta === null ? "—" : `${delta > 0 ? "+" : ""}${formatCurrencyFull(delta)}`}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {awarded ? (
+                          <span className="font-medium text-status-warning">★ {awarded.company ?? "—"}</span>
+                        ) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
     </div>
   );
 }
