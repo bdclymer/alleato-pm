@@ -6412,6 +6412,101 @@ export type Database = {
           },
         ]
       }
+      change_order_documents: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          change_order_id: string
+          document_metadata_id: string
+          document_type: string | null
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          change_order_id: string
+          document_metadata_id: string
+          document_type?: string | null
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          change_order_id?: string
+          document_metadata_id?: string
+          document_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_order_documents_change_order_id_fkey"
+            columns: ["change_order_id"]
+            isOneToOne: false
+            referencedRelation: "change_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_order_documents_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+        ]
+      }
       change_orders: {
         Row: {
           amount: number | null
@@ -7640,6 +7735,101 @@ export type Database = {
           vision?: string | null
         }
         Relationships: []
+      }
+      company_documents: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          company_id: string
+          document_metadata_id: string
+          document_type: string | null
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          company_id: string
+          document_metadata_id: string
+          document_type?: string | null
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          company_id?: string
+          document_metadata_id?: string
+          document_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+        ]
       }
       contract_billing_periods: {
         Row: {
@@ -11124,6 +11314,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          document_metadata_id: string | null
           drawing_date: string | null
           drawing_id: string
           drawing_set_id: string | null
@@ -11141,6 +11332,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          document_metadata_id?: string | null
           drawing_date?: string | null
           drawing_id: string
           drawing_set_id?: string | null
@@ -11158,6 +11350,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          document_metadata_id?: string | null
           drawing_date?: string | null
           drawing_id?: string
           drawing_set_id?: string | null
@@ -11173,6 +11366,62 @@ export type Database = {
           uploaded_by?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "drawing_revisions_drawing_id_fkey"
             columns: ["drawing_id"]
@@ -11335,6 +11584,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           discipline: string | null
+          document_metadata_id: string | null
           drawing_number: string
           drawing_type: string | null
           id: string
@@ -11352,6 +11602,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           discipline?: string | null
+          document_metadata_id?: string | null
           drawing_number: string
           drawing_type?: string | null
           id?: string
@@ -11369,6 +11620,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           discipline?: string | null
+          document_metadata_id?: string | null
           drawing_number?: string
           drawing_type?: string | null
           id?: string
@@ -11384,6 +11636,62 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "drawing_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -17515,6 +17823,101 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_invoice_documents: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          document_metadata_id: string
+          document_type: string | null
+          owner_invoice_id: number
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id: string
+          document_type?: string | null
+          owner_invoice_id: number
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id?: string
+          document_type?: string | null
+          owner_invoice_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+          {
+            foreignKeyName: "owner_invoice_documents_owner_invoice_id_fkey"
+            columns: ["owner_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "owner_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_invoice_line_items: {
         Row: {
           acumatica_line_nbr: number | null
@@ -19260,6 +19663,108 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prime_contract_documents: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          document_metadata_id: string
+          document_type: string | null
+          prime_contract_id: string
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id: string
+          document_type?: string | null
+          prime_contract_id: string
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id?: string
+          document_type?: string | null
+          prime_contract_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_documents_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -21533,6 +22038,136 @@ export type Database = {
           },
         ]
       }
+      project_documents_v2: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          document_metadata_id: string
+          document_type: string | null
+          project_id: number
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id: string
+          document_type?: string | null
+          project_id: number
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id?: string
+          document_type?: string | null
+          project_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_v2_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_emails: {
         Row: {
           bcc_list: string[] | null
@@ -23535,6 +24170,108 @@ export type Database = {
           },
         ]
       }
+      purchase_order_documents: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          document_metadata_id: string
+          document_type: string | null
+          purchase_order_id: string
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id: string
+          document_type?: string | null
+          purchase_order_id: string
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id?: string
+          document_type?: string | null
+          purchase_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_documents_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders_with_totals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_order_sov_items: {
         Row: {
           acumatica_line_nbr: number | null
@@ -24439,6 +25176,101 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "rfi_assignees_rfi_id_fkey"
+            columns: ["rfi_id"]
+            isOneToOne: false
+            referencedRelation: "rfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rfi_documents: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          document_metadata_id: string
+          document_type: string | null
+          rfi_id: string
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id: string
+          document_type?: string | null
+          rfi_id: string
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id?: string
+          document_type?: string | null
+          rfi_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rfi_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfi_documents_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+          {
+            foreignKeyName: "rfi_documents_rfi_id_fkey"
             columns: ["rfi_id"]
             isOneToOne: false
             referencedRelation: "rfis"
@@ -26294,6 +27126,108 @@ export type Database = {
           },
         ]
       }
+      subcontract_documents: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          document_metadata_id: string
+          document_type: string | null
+          subcontract_id: string
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id: string
+          document_type?: string | null
+          subcontract_id: string
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id?: string
+          document_type?: string | null
+          subcontract_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_totals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontract_sov_items: {
         Row: {
           acumatica_line_nbr: number | null
@@ -27607,6 +28541,101 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "submittal_distributions_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submittal_doc_links: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          document_metadata_id: string
+          document_type: string | null
+          submittal_id: string
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id: string
+          document_type?: string | null
+          submittal_id: string
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          document_metadata_id?: string
+          document_type?: string | null
+          submittal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+          {
+            foreignKeyName: "submittal_doc_links_submittal_id_fkey"
             columns: ["submittal_id"]
             isOneToOne: false
             referencedRelation: "submittals"
@@ -34916,6 +35945,10 @@ export type Database = {
           source_kind?: string
         }
         Returns: string
+      }
+      user_can_access_entity: {
+        Args: { entity_id: string; entity_type: string }
+        Returns: boolean
       }
       validate_project_assignment: {
         Args: { p_document_id: string; p_project_id: number }

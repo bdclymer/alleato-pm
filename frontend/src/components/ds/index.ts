@@ -86,6 +86,10 @@ export { EditModeActions } from "./EditModeActions";
 export { SplitButton } from "./SplitButton";
 export { EstimateVersionBadge } from "./EstimateVersionBadge";
 
+// Document picker — Pattern C junction link UI
+export { DocumentPicker, LinkedDocumentsList } from "./document-picker";
+export type { DocumentPickerProps, DocumentPickerEntityType } from "./document-picker";
+
 // ---------------------------------------------------------------------------
 // Approved shadcn/ui Primitives (re-exported for single import path)
 // ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 
 import { AttachmentListItem } from "@/components/ds";
+import { DocumentPicker, LinkedDocumentsList } from "@/components/ds/document-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ds/text";
@@ -22,10 +23,16 @@ type Attachment = {
 
 interface AttachmentsTabProps {
   commitmentId: string;
+  /** Entity type — subcontract or purchase_order. Defaults to 'commitment'
+   *  which the API resolves at attach time. */
+  commitmentEntityType?: 'commitment' | 'subcontract' | 'purchase_order';
 }
 
 
-export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: AttachmentsTabProps) {
+export const AttachmentsTab = memo(function AttachmentsTab({
+  commitmentId,
+  commitmentEntityType = 'commitment',
+}: AttachmentsTabProps) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -178,6 +185,24 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
           })}
         </div>
       ) : null}
+
+      {/* Pattern C — linked AI-indexed documents */}
+      <div className="pt-2 border-t border-border/50 mt-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <Text size="sm" weight="medium" variant="muted">
+            Linked Documents
+          </Text>
+          <DocumentPicker
+            entityType={commitmentEntityType}
+            entityId={commitmentId}
+            triggerLabel="Link Document"
+          />
+        </div>
+        <LinkedDocumentsList
+          entityType={commitmentEntityType}
+          entityId={commitmentId}
+        />
+      </div>
     </div>
   );
 });

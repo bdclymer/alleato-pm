@@ -133,6 +133,9 @@ def _content_hash(text: str) -> str:
 
 def _source_type_for_document(doc: Dict[str, Any]) -> str:
     category = doc.get("category")
+    source_system = doc.get("source_system") or ""
+    if source_system == "email_attachment_legacy":
+        return "email_attachment"
     if category == "teams_message":
         doc_type = doc.get("type")
         if doc_type in ("teams_dm_conversation", "teams_dm"):
@@ -144,6 +147,8 @@ def _source_type_for_document(doc: Dict[str, Any]) -> str:
         return "email"
     if category == "document":
         return "onedrive_document"
+    if category == "email_attachment":
+        return "email_attachment"
     return "microsoft_graph"
 
 
@@ -637,6 +642,80 @@ def _has_embedded_graph_chunks(supabase_client, metadata_id: str) -> bool:
     except Exception as exc:
         logger.warning("[GraphEmbed] Could not inspect chunks for %s: %s", metadata_id, exc)
         return False
+
+
+def embed_pending_attachment_documents(supabase_client, limit: int = 50) -> Dict[str, Any]:
+    """
+    Embed email_attachment_legacy rows that have raw_text and no chunks yet.
+
+    These were backfilled from email_attachments → document_metadata in the
+    20260523130000 migration. They have source_system='email_attachment_legacy'
+    and source=NULL, so they are invisible to embed_pending_graph_documents which
+    filters on source='microsoft_graph'. This function handles them separately.
+
+    Only rows with raw_text are useful to embed — attachments without extracted
+    text (binary PDFs with no OCR) are skipped.
+
+    Idempotent: rows already in document_chunks are skipped via _has_embedded_graph_chunks.
+    """
+    started_at = datetime.now(timezone.utc)
+
+    try:
+        # Fetch candidates: email_attachment_legacy rows with raw_text, not yet embedded
+        resp = (
+            supabase_client.from_("document_metadata")
+            .select("id, category, source_system, status, file_name, title")
+            .eq("source_system", "email_attachment_legacy")
+            .not_.is_("raw_text", "null")
+            .in_("status", ["active", "raw_ingested", "error"])
+            .order("created_at", desc=True)
+            .limit(limit * 2)  # fetch extra so we can filter out already-embedded ones
+            .execute()
+        )
+        candidates = resp.data or []
+    except Exception as exc:
+        logger.error("[AttachEmbed] Failed to query candidates: %s", exc)
+        return {"embedded": 0, "errors": 1}
+
+    if not candidates:
+        logger.info("[AttachEmbed] No email attachment candidates to embed")
+        return {"embedded": 0, "errors": 0}
+
+    # Filter out rows that already have chunks
+    pending = [
+        doc for doc in candidates
+        if not _has_embedded_graph_chunks(supabase_client, doc["id"])
+    ][:limit]
+
+    if not pending:
+        logger.info("[AttachEmbed] All candidates already embedded (%d checked)", len(candidates))
+        return {"embedded": 0, "errors": 0}
+
+    logger.info("[AttachEmbed] Embedding %d email attachment documents", len(pending))
+    total_chunks = 0
+    errors = 0
+
+    for doc in pending:
+        doc_id = doc["id"]
+        try:
+            n = embed_graph_document(supabase_client, doc_id)
+            total_chunks += n
+        except Exception as exc:
+            logger.error("[AttachEmbed] Error embedding %s: %s", doc_id, exc)
+            errors += 1
+        time.sleep(0.1)
+
+    logger.info(
+        "[AttachEmbed] Done — %d embedded, %d errors, %d total chunks",
+        len(pending) - errors,
+        errors,
+        total_chunks,
+    )
+    return {
+        "embedded": len(pending) - errors,
+        "total_chunks": total_chunks,
+        "errors": errors,
+    }
 
 
 def _record_graph_embed_run(

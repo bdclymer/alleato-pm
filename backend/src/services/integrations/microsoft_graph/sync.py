@@ -14,7 +14,7 @@ from .outlook import sync_outlook_emails
 from .teams import sync_teams_channel, get_all_teams_and_channels, sync_user_chat_messages, ChatReadPermissionError
 from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
-from .embed import embed_pending_graph_documents
+from .embed import embed_pending_graph_documents, embed_pending_attachment_documents
 from .attachment_promotion import promote_outlook_intake_attachments
 
 logger = logging.getLogger(__name__)
@@ -635,6 +635,19 @@ def run_graph_sync(
             summary["embed"] = {"error": str(e)}
     else:
         summary["embed"] = {"status": "skipped", "reason": "run_embedding=false"}
+
+    # ── Embed email attachment documents (Pattern C backfill) ────────────────
+    # Picks up email_attachment_legacy rows with raw_text that the Graph embed
+    # sweep misses (they have source=NULL, not source='microsoft_graph').
+    # Capped at 20 per run to avoid delaying the Teams compiler.
+    if run_embedding:
+        try:
+            attach_embed_result = embed_pending_attachment_documents(supabase, limit=20)
+            summary["embed_attachments"] = attach_embed_result
+            logger.info("[GraphSync] Attachment embedding complete: %s", attach_embed_result)
+        except Exception as e:
+            logger.warning("[GraphSync] Attachment embedding step failed (non-fatal): %s", e)
+            summary["embed_attachments"] = {"error": str(e)}
 
     # ── Compile Teams DM conversations into structured intelligence ───────────
     # Runs after embed so newly embedded conversations are picked up immediately.
