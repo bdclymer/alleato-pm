@@ -100,6 +100,7 @@ export interface TableColumn<T> extends ColumnConfig {
 export type SortDirection = "asc" | "desc";
 
 export interface UnifiedTableFeatures {
+  enableSorting?: boolean;
   enableSearch?: boolean;
   enableViews?: boolean;
   enableFilters?: boolean;
@@ -306,6 +307,7 @@ export function UnifiedTablePage<T>({
   columnGroups,
 }: UnifiedTablePageProps<T>): ReactElement {
   const resolvedFeatures: Required<UnifiedTableFeatures> = {
+    enableSorting: features?.enableSorting ?? true,
     enableSearch: features?.enableSearch ?? true,
     enableViews: features?.enableViews ?? true,
     enableFilters: features?.enableFilters ?? true,
@@ -320,6 +322,10 @@ export function UnifiedTablePage<T>({
     enableVirtualization: features?.enableVirtualization ?? false,
     enableInlineEditing: features?.enableInlineEditing ?? false,
   };
+  // Internal sort state — used when the parent does not supply a sorting prop
+  const [internalSortBy, setInternalSortBy] = React.useState<string | null>(null);
+  const [internalSortDirection, setInternalSortDirection] = React.useState<SortDirection>("asc");
+
   // Internal selection state — used when the parent does not supply a selection prop
   const [internalSelectedIds, setInternalSelectedIds] = React.useState<string[]>([]);
   const selectedIds = selection?.selectedIds ?? internalSelectedIds;
@@ -329,6 +335,19 @@ export function UnifiedTablePage<T>({
   const handleSelectRow = selection?.onSelectRow ?? ((id: string, checked: boolean) => {
     setInternalSelectedIds((prev) => checked ? (prev.includes(id) ? prev : [...prev, id]) : prev.filter((i) => i !== id));
   });
+  const effectiveSorting = React.useMemo(() => {
+    if (sorting) return sorting;
+    if (!resolvedFeatures.enableSorting) return undefined;
+    return {
+      sortBy: internalSortBy,
+      sortDirection: internalSortDirection,
+      onSortChange: (col: string, dir: SortDirection) => {
+        setInternalSortBy(col);
+        setInternalSortDirection(dir);
+      },
+    };
+  }, [sorting, resolvedFeatures.enableSorting, internalSortBy, internalSortDirection]);
+
   const effectiveSelectedCount = toolbar.selectedCount ?? selectedIds.length;
   const hasRowSelection = resolvedFeatures.enableRowSelection;
   const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions || table.onDelete || table.onEdit);
@@ -675,8 +694,8 @@ export function UnifiedTablePage<T>({
   }, [isSidePanelOpen, panelMounted, updatePanelTogglePosition]);
 
   const sortedItems = React.useMemo(() => {
-    if (!sorting?.sortBy) return data.items;
-    const column = table.columns.find((col) => col.id === sorting.sortBy);
+    if (!effectiveSorting?.sortBy) return data.items;
+    const column = table.columns.find((col) => col.id === effectiveSorting.sortBy);
     const getSortValue = column?.sortValue;
     if (!getSortValue) return data.items;
 
@@ -685,19 +704,19 @@ export function UnifiedTablePage<T>({
       const valueB = getSortValue(b);
 
       if (valueA == null && valueB == null) return 0;
-      if (valueA == null) return sorting.sortDirection === "asc" ? -1 : 1;
-      if (valueB == null) return sorting.sortDirection === "asc" ? 1 : -1;
+      if (valueA == null) return effectiveSorting!.sortDirection === "asc" ? -1 : 1;
+      if (valueB == null) return effectiveSorting!.sortDirection === "asc" ? 1 : -1;
 
       if (typeof valueA === "number" && typeof valueB === "number") {
-        return sorting.sortDirection === "asc" ? valueA - valueB : valueB - valueA;
+        return effectiveSorting!.sortDirection === "asc" ? valueA - valueB : valueB - valueA;
       }
 
       const comparison = String(valueA).localeCompare(String(valueB));
-      return sorting.sortDirection === "asc" ? comparison : -comparison;
+      return effectiveSorting!.sortDirection === "asc" ? comparison : -comparison;
     });
 
     return sorted;
-  }, [data.items, sorting?.sortBy, sorting?.sortDirection, table.columns]);
+  }, [data.items, effectiveSorting?.sortBy, effectiveSorting?.sortDirection, table.columns]);
 
   React.useEffect(() => {
     if (!hasUserManagedColumnOrderRef.current) {
@@ -742,7 +761,7 @@ export function UnifiedTablePage<T>({
   ]);
 
   const rowOrderedItems = React.useMemo(() => {
-    const isManualRowOrderEnabled = resolvedFeatures.enableRowReorder && !sorting?.sortBy;
+    const isManualRowOrderEnabled = resolvedFeatures.enableRowReorder && !effectiveSorting?.sortBy;
     if (!isManualRowOrderEnabled) return sortedItems;
     if (rowOrderIds.length === 0) return sortedItems;
 
@@ -751,7 +770,7 @@ export function UnifiedTablePage<T>({
     const orderedIds = new Set(ordered.map((item) => table.getRowId(item)));
     const remaining = sortedItems.filter((item) => !orderedIds.has(table.getRowId(item)));
     return [...ordered, ...remaining];
-  }, [resolvedFeatures.enableRowReorder, rowOrderIds, sortedItems, sorting?.sortBy, table]);
+  }, [resolvedFeatures.enableRowReorder, rowOrderIds, sortedItems, effectiveSorting?.sortBy, table]);
 
   // Auto-built CSV exporter: used when toolbar.onExport is not provided.
   // Only exports columns that define csvValue — columns without it are silently skipped.
@@ -780,7 +799,7 @@ export function UnifiedTablePage<T>({
   }, [toolbar.onExport, resolvedFeatures.enableExport, visibleColumns, table.columns, rowOrderedItems, header.title]);
 
   React.useEffect(() => {
-    if (!resolvedFeatures.enableRowReorder || sorting?.sortBy) {
+    if (!resolvedFeatures.enableRowReorder || effectiveSorting?.sortBy) {
       setRowOrderIds((prev) => (prev.length === 0 ? prev : []));
       return;
     }
@@ -796,7 +815,7 @@ export function UnifiedTablePage<T>({
       const nextOrder = [...preserved, ...additions];
       return areStringArraysEqual(prev, nextOrder) ? prev : nextOrder;
     });
-  }, [resolvedFeatures.enableRowReorder, rowOrderedItems, sorting?.sortBy, table]);
+  }, [resolvedFeatures.enableRowReorder, rowOrderedItems, effectiveSorting?.sortBy, table]);
 
   const paginatedItems = React.useMemo(() => {
     if (!pagination?.clientSide) return rowOrderedItems;
@@ -814,18 +833,18 @@ export function UnifiedTablePage<T>({
   const showTable = !data.isLoading && !data.error && rowOrderedItems.length > 0;
 
   const handleSortClick = (columnId: string) => {
-    if (!sorting) return;
+    if (!effectiveSorting) return;
     const nextDirection =
-      sorting.sortBy === columnId && sorting.sortDirection === "asc" ? "desc" : "asc";
-    sorting.onSortChange(columnId, nextDirection);
+      effectiveSorting.sortBy === columnId && effectiveSorting.sortDirection === "asc" ? "desc" : "asc";
+    effectiveSorting.onSortChange(columnId, nextDirection);
   };
 
   const renderSortIcon = (columnId: string) => {
-    if (!sorting || sorting.sortBy !== columnId) {
+    if (!effectiveSorting || effectiveSorting.sortBy !== columnId) {
       return <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground/0 group-hover/th:text-muted-foreground transition-colors" />;
     }
 
-    return sorting.sortDirection === "asc" ? (
+    return effectiveSorting.sortDirection === "asc" ? (
       <ChevronUp className="ml-1 h-3 w-3" />
     ) : (
       <ChevronDown className="ml-1 h-3 w-3" />
@@ -1132,9 +1151,9 @@ export function UnifiedTablePage<T>({
       visibleColumns={visibleColumns}
       onColumnVisibilityChange={handleColumnVisibilityChange}
       sortOptions={table.columns.filter((column) => column.sortable !== false)}
-      sortBy={sorting?.sortBy}
-      sortDirection={sorting?.sortDirection}
-      onSortChange={sorting?.onSortChange}
+      sortBy={effectiveSorting?.sortBy}
+      sortDirection={effectiveSorting?.sortDirection}
+      onSortChange={effectiveSorting?.onSortChange}
       onExport={effectiveOnExport}
       onBulkDelete={effectiveBulkDelete}
       mobilePanelActions={toolbar.mobilePanelActions}
@@ -1360,7 +1379,7 @@ export function UnifiedTablePage<T>({
                     </TableHead>
                   )}
                   {orderedVisibleColumns.map((column) => {
-                      const isSortable = column.sortable !== false && Boolean(sorting);
+                      const isSortable = column.sortable !== false && Boolean(effectiveSorting);
                       const isHideable = !column.alwaysVisible;
                       const columnAlignment = column.align ?? headerAlignment;
                       const width = columnWidths[column.id] ?? column.width;
@@ -1411,8 +1430,8 @@ export function UnifiedTablePage<T>({
                             )}
                           aria-sort={
                             isSortable
-                              ? sorting?.sortBy === column.id
-                                ? sorting.sortDirection === "asc"
+                              ? effectiveSorting?.sortBy === column.id
+                                ? effectiveSorting.sortDirection === "asc"
                                   ? "ascending"
                                   : "descending"
                                 : "none"
@@ -1482,7 +1501,7 @@ export function UnifiedTablePage<T>({
                                     <DropdownMenuItem
                                       onClick={(event) => {
                                         event.stopPropagation();
-                                        sorting?.onSortChange(column.id, "asc");
+                                        effectiveSorting?.onSortChange(column.id, "asc");
                                       }}
                                     >
                                       <ArrowUp className="mr-2 h-3.5 w-3.5" />
@@ -1491,7 +1510,7 @@ export function UnifiedTablePage<T>({
                                     <DropdownMenuItem
                                       onClick={(event) => {
                                         event.stopPropagation();
-                                        sorting?.onSortChange(column.id, "desc");
+                                        effectiveSorting?.onSortChange(column.id, "desc");
                                       }}
                                     >
                                       <ArrowDown className="mr-2 h-3.5 w-3.5" />
@@ -1612,16 +1631,16 @@ export function UnifiedTablePage<T>({
                     style={style}
                     draggable={
                       resolvedFeatures.enableRowReorder &&
-                      !sorting?.sortBy &&
+                      !effectiveSorting?.sortBy &&
                       !resolvedFeatures.enableVirtualization
                     }
                     onDragStart={() => setDraggedRowId(table.getRowId(item))}
                     onDragOver={(event) => {
-                      if (!(resolvedFeatures.enableRowReorder && !sorting?.sortBy)) return;
+                      if (!(resolvedFeatures.enableRowReorder && !effectiveSorting?.sortBy)) return;
                       event.preventDefault();
                     }}
                     onDrop={() => {
-                      if (!(resolvedFeatures.enableRowReorder && !sorting?.sortBy)) return;
+                      if (!(resolvedFeatures.enableRowReorder && !effectiveSorting?.sortBy)) return;
                       handleRowDrop(table.getRowId(item));
                       setDraggedRowId(null);
                     }}
