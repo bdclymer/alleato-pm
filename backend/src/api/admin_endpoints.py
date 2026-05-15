@@ -489,3 +489,55 @@ async def run_project_backfill(
         "limit": request.limit,
         "min_confidence": request.min_confidence,
     }
+
+
+class OneDriveProjectBackfillRequest(BaseModel):
+    batch_size: int = 500
+    dry_run: bool = False
+    use_content_inference: bool = False
+
+
+@router.post("/documents/onedrive-project-backfill", dependencies=[Depends(require_admin_api_key)])
+async def run_onedrive_project_backfill(
+    request: OneDriveProjectBackfillRequest,
+    background_tasks: BackgroundTasks,
+    store: SupabaseRagStore = Depends(get_rag_store),
+):
+    """Assign project_id to unassigned OneDrive/SharePoint files using folder-name matching.
+
+    Processes files in document_metadata with category=document and project_id IS NULL.
+    Primary strategy: match the folder name from source_path against projects.name.
+    Optional: fall back to content inference (set use_content_inference=true).
+    """
+    from services.integrations.microsoft_graph.onedrive_project_assignment_backfill import (
+        run_onedrive_project_assignment_backfill,
+    )
+
+    def _run():
+        result = run_onedrive_project_assignment_backfill(
+            store._client,
+            batch_size=request.batch_size,
+            dry_run=request.dry_run,
+            use_content_inference=request.use_content_inference,
+        )
+        logger.info("[Admin] OneDrive project backfill complete: %s", result)
+
+    if request.dry_run:
+        # Run synchronously so caller gets the dry-run report immediately
+        from services.integrations.microsoft_graph.onedrive_project_assignment_backfill import (
+            run_onedrive_project_assignment_backfill,
+        )
+        result = run_onedrive_project_assignment_backfill(
+            store._client,
+            batch_size=request.batch_size,
+            dry_run=True,
+            use_content_inference=request.use_content_inference,
+        )
+        return {"status": "dry_run_complete", **result}
+
+    background_tasks.add_task(_run)
+    return {
+        "status": "started",
+        "batch_size": request.batch_size,
+        "use_content_inference": request.use_content_inference,
+    }

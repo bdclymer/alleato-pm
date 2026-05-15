@@ -40,6 +40,8 @@ interface FileItem {
   project: string | null;
   date: string | null;
   created_at: string | null;
+  source_last_modified_at: string | null;
+  source_size: number | null;
   status: string | null;
   tags: string | null;
   division: string | null;
@@ -93,88 +95,185 @@ function friendlySource(item: FileItem): string {
   return sys || "—";
 }
 
+// ── Folder helpers ────────────────────────────────────────────────────────────
+
+function parentFolderName(item: FileItem): string {
+  if (!item.source_path) return "—";
+  const parts = item.source_path.split("/").filter(Boolean);
+  // Strip the filename (last segment), return the immediate parent folder
+  return parts.length >= 2 ? (parts[parts.length - 2] ?? "—") : "—";
+}
+
+function fullFolderPath(item: FileItem): string {
+  if (!item.source_path) return "";
+  const parts = item.source_path.split("/").filter(Boolean);
+  return parts.length > 1 ? parts.slice(0, -1).join(" / ") : "";
+}
+
+// ── File size ─────────────────────────────────────────────────────────────────
+
+function formatSize(bytes: number | null): string {
+  if (!bytes || bytes <= 0) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+// ── Assignment method from tags ───────────────────────────────────────────────
+
+function assignmentMethod(item: FileItem): string | null {
+  if (!item.tags) return null;
+  const match = item.tags.match(/project_auto:([a-z_]+)/);
+  return match?.[1] ?? null;
+}
+
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
-  { id: "name",       label: "Name",        alwaysVisible: true },
-  { id: "source",     label: "Source",      defaultVisible: true },
-  { id: "folder",     label: "Folder Path", defaultVisible: true },
-  { id: "project",    label: "Project",     defaultVisible: true },
-  { id: "date",       label: "Date",        defaultVisible: true },
-  { id: "division",   label: "Division",    defaultVisible: false },
-  { id: "tags",       label: "Tags",        defaultVisible: false },
+  { id: "name",        label: "Name",          alwaysVisible: true },
+  { id: "project",     label: "Project",        defaultVisible: true },
+  { id: "folder",      label: "Folder",         defaultVisible: true },
+  { id: "modified",    label: "Modified",       defaultVisible: true },
+  { id: "size",        label: "Size",           defaultVisible: true },
+  { id: "source",      label: "Source",         defaultVisible: true },
+  { id: "full_path",   label: "Full Path",      defaultVisible: false },
+  { id: "division",    label: "Division",       defaultVisible: false },
+  { id: "tags",        label: "Tags",           defaultVisible: false },
 ];
 
 const defaultVisibleColumns = columns.filter((c) => c.defaultVisible !== false).map((c) => c.id);
 
 function buildColumns(): TableColumn<FileItem>[] {
   return [
+    // Name
     {
       ...columns[0],
-      render: (item) => (
-        <div className="flex items-center gap-2.5 min-w-0">
-          <FileTypeIcon item={item} />
-          <span className="font-medium truncate">
-            {item.file_name ?? item.title ?? "Untitled"}
-          </span>
-        </div>
-      ),
+      render: (item) => {
+        const href = item.source_web_url ?? item.url;
+        const method = assignmentMethod(item);
+        return (
+          <div className="flex items-center gap-2.5 min-w-0">
+            <FileTypeIcon item={item} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="font-medium truncate">
+                  {item.file_name ?? item.title ?? "Untitled"}
+                </span>
+                {href && (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    title="Open in OneDrive"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+              {method && (
+                <span className="text-[10px] text-muted-foreground/60 leading-none">
+                  assigned via {method.replace(/_/g, " ")}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      },
       csvValue: (item) => item.file_name ?? item.title ?? "",
       sortValue: (item) => (item.file_name ?? item.title ?? "").toLowerCase(),
       sortable: true,
-      width: 380,
+      width: 400,
     },
+    // Project
     {
       ...columns[1],
+      render: (item) =>
+        item.project ? (
+          <CellText value={item.project} muted />
+        ) : (
+          <span className="text-sm text-muted-foreground/50 italic">Unassigned</span>
+        ),
+      csvValue: (item) => item.project ?? "",
+      sortValue: (item) => item.project ?? "",
+      sortable: true,
+      width: 200,
+    },
+    // Folder (immediate parent folder name)
+    {
+      ...columns[2],
+      render: (item) => {
+        const parent = parentFolderName(item);
+        const full = fullFolderPath(item);
+        return (
+          <span className="text-sm text-muted-foreground truncate" title={full || undefined}>
+            {parent}
+          </span>
+        );
+      },
+      csvValue: (item) => parentFolderName(item),
+      sortValue: (item) => parentFolderName(item).toLowerCase(),
+      sortable: true,
+      width: 200,
+    },
+    // Modified (OneDrive mod date)
+    {
+      ...columns[3],
+      render: (item) => (
+        <TableDateValue value={item.source_last_modified_at ?? item.date ?? item.created_at} />
+      ),
+      csvValue: (item) => item.source_last_modified_at ?? item.date ?? item.created_at ?? "",
+      sortValue: (item) => {
+        const d = item.source_last_modified_at ?? item.date ?? item.created_at;
+        return d ? new Date(d).getTime() : 0;
+      },
+      sortable: true,
+    },
+    // Size
+    {
+      ...columns[4],
+      render: (item) => (
+        <span className="text-sm text-muted-foreground tabular-nums">
+          {formatSize(item.source_size)}
+        </span>
+      ),
+      csvValue: (item) => formatSize(item.source_size),
+      sortValue: (item) => item.source_size ?? 0,
+      sortable: true,
+    },
+    // Source
+    {
+      ...columns[5],
       render: (item) => <CellText value={friendlySource(item)} muted />,
       csvValue: (item) => friendlySource(item),
       sortValue: (item) => friendlySource(item),
       sortable: true,
     },
+    // Full path (hidden by default)
     {
-      ...columns[2],
+      ...columns[6],
       render: (item) => {
-        if (!item.source_path) return <CellText value={null} muted />;
-        // Show the folder portion only (strip the filename)
-        const parts = item.source_path.split("/");
-        const folder = parts.length > 1 ? parts.slice(0, -1).join(" / ") : item.source_path;
-        return <CellText value={folder} muted />;
+        const full = fullFolderPath(item);
+        return <CellText value={full || null} muted />;
       },
-      csvValue: (item) => {
-        if (!item.source_path) return "";
-        const parts = item.source_path.split("/");
-        return parts.length > 1 ? parts.slice(0, -1).join("/") : item.source_path;
-      },
-      sortValue: (item) => item.source_path ?? "",
+      csvValue: (item) => fullFolderPath(item),
+      sortValue: (item) => fullFolderPath(item).toLowerCase(),
       sortable: true,
-      width: 280,
+      width: 320,
     },
+    // Division
     {
-      ...columns[3],
-      render: (item) => <CellText value={item.project} muted />,
-      csvValue: (item) => item.project ?? "",
-      sortValue: (item) => item.project ?? "",
-      sortable: true,
-    },
-    {
-      ...columns[4],
-      render: (item) => <TableDateValue value={item.date ?? item.created_at} />,
-      csvValue: (item) => item.date ?? item.created_at ?? "",
-      sortValue: (item) => {
-        const d = item.date ?? item.created_at;
-        return d ? new Date(d).getTime() : 0;
-      },
-      sortable: true,
-    },
-    {
-      ...columns[5],
+      ...columns[7],
       render: (item) => <CellText value={item.division} muted />,
       csvValue: (item) => item.division ?? "",
       sortValue: (item) => item.division ?? "",
       sortable: true,
     },
+    // Tags
     {
-      ...columns[6],
+      ...columns[8],
       render: (item) => <TruncatedCell value={item.tags} maxWidth={200} className="text-sm" />,
       csvValue: (item) => item.tags ?? "",
       sortable: false,
@@ -245,7 +344,7 @@ export function FilesClient({ items, errorMessage }: FilesClientProps) {
       page: 1,
       perPage: 50,
       search: "",
-      sortBy: "date",
+      sortBy: "modified",
       sortDirection: "desc",
       visibleColumns: defaultVisibleColumns,
       filters: {},
@@ -264,7 +363,9 @@ export function FilesClient({ items, errorMessage }: FilesClientProps) {
           (item.file_name ?? item.title ?? "").toLowerCase().includes(q) ||
           (item.project ?? "").toLowerCase().includes(q) ||
           (item.division ?? "").toLowerCase().includes(q) ||
-          friendlySource(item).toLowerCase().includes(q),
+          friendlySource(item).toLowerCase().includes(q) ||
+          parentFolderName(item).toLowerCase().includes(q) ||
+          fullFolderPath(item).toLowerCase().includes(q),
       );
     }
 
