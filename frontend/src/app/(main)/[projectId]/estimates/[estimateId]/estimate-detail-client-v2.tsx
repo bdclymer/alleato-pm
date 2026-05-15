@@ -1720,7 +1720,7 @@ function SummaryTab({
         </div>
 
         {/* Project info bar */}
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 border-t border-border pt-4 text-xs">
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs">
           <span><span className="text-muted-foreground">Project: </span><span className="font-medium text-foreground">{projectName}</span></span>
           {estimate.location && (
             <span><span className="text-muted-foreground">Location: </span><span className="font-medium text-foreground">{estimate.location}</span></span>
