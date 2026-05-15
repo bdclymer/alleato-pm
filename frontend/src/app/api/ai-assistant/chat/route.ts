@@ -1,9 +1,9 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { handleChatLegacy } from "@/lib/ai/chat-handler";
+import { handleChatV2 } from "./handler-v2";
 
 export const maxDuration = 120;
 
 export const POST = withApiGuardrails(
   "ai-assistant/chat#POST",
-  async ({ request }) => handleChatLegacy({ request }),
+  async ({ request }) => handleChatV2({ request }),
 );

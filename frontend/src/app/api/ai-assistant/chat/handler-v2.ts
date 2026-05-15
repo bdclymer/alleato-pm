@@ -21,6 +21,13 @@ import {
   createWeeklyMarketingContentWorkflow,
   type CmoWeeklyContentWorkflowResult,
 } from "@/lib/ai/services/marketing-service";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import {
+  DEFAULT_AI_ASSISTANT_MODEL,
+  isAiAssistantModelId,
+} from "@/lib/ai/assistant-models";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 type HandlerArgs = {
   user: { id: string };
@@ -357,7 +364,7 @@ function writeTextResponse(
   writer.write({ type: "text-end", id });
 }
 
-export async function handleChatV2(args: HandlerArgs): Promise<Response> {
+async function runChatV2(args: HandlerArgs): Promise<Response> {
   const lastUserMessage = [...args.messages].reverse().find((m) => m.role === "user");
   const lastUserContent = lastUserMessage ? extractTextFromParts(lastUserMessage.parts) : "";
 
@@ -596,10 +603,7 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
         },
       } as never);
 
-      const fullSystemPrompt = assembleSystemPromptFromContext(plan, retrievalCtx, baseSystemPrompt);
-      // TEMP: bisect — try with minimal prompt to confirm whether prompt content itself triggers the error
-      const minimalSystemPrompt = "You are Alleato, an AI assistant for construction project management. Answer the user's question briefly using available knowledge.";
-      const systemPrompt = process.env.HANDLER_V2_MINIMAL_PROMPT === "true" ? minimalSystemPrompt : fullSystemPrompt;
+      const systemPrompt = assembleSystemPromptFromContext(plan, retrievalCtx, baseSystemPrompt);
 
       const tools = createStrategistTools(args.user.id, {
         pinnedProjectId: args.selectedProjectId,
@@ -675,4 +679,41 @@ export async function handleChatV2(args: HandlerArgs): Promise<Response> {
   });
 
   return createUIMessageStreamResponse({ stream });
+}
+
+export async function handleChatV2({ request }: { request: Request }): Promise<Response> {
+  const user = await getApiRouteUser();
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "ai-assistant/chat#POST",
+      message: "Unauthorized",
+      status: 401,
+    });
+  }
+
+  const body = await request.json();
+  const { id: sessionId, messages, selectedProjectId, selectedModel } = body as {
+    id: string;
+    messages: UIMessage[];
+    selectedProjectId?: number;
+    selectedModel?: unknown;
+  };
+
+  if (!sessionId || !messages?.length) {
+    return new Response("session id and messages are required", { status: 400 });
+  }
+
+  const activeModel = isAiAssistantModelId(selectedModel)
+    ? selectedModel
+    : DEFAULT_AI_ASSISTANT_MODEL;
+
+  return runChatV2({
+    user,
+    sessionId,
+    messages,
+    selectedProjectId,
+    activeModel,
+    supabase: createServiceClient(),
+  });
 }
