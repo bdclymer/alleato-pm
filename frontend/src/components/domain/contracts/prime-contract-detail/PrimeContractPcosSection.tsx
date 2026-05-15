@@ -66,7 +66,8 @@ export function PrimeContractPcosSection({
             : allPcos,
         );
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to load potential change orders");
+        console.error("Failed to load potential change orders:", error);
+        toast.error("Failed to load potential change orders. Try refreshing the page.");
       } finally {
         setIsLoading(false);
       }

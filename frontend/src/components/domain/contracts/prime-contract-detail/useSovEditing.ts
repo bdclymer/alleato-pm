@@ -115,7 +115,8 @@ export function useSovEditing({ projectId, contractId, lineItems, setLineItems, 
       await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineId}`, { method: "DELETE" });
       toast.success("Line item deleted");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete line item");
+      console.error("Failed to delete line item:", error);
+      toast.error("Failed to delete line item. Please try again.");
       await restoreLineItems();
     }
   }, [projectId, contractId, setLineItems]);
@@ -199,7 +200,8 @@ export function useSovEditing({ projectId, contractId, lineItems, setLineItems, 
       setSovDraftBudgetCodeIds({});
       toast.success("Schedule of values updated");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save schedule of values");
+      console.error("Failed to save schedule of values:", error);
+      toast.error("Failed to save schedule of values. Please try again.");
     } finally {
       setIsSavingSovChanges(false);
     }

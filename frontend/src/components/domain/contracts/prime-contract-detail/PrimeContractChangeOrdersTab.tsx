@@ -49,9 +49,8 @@ async function downloadPrimeContractChangeOrderPdf(
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   } catch (error) {
-    toast.error(
-      error instanceof Error ? error.message : "Failed to download change order PDF",
-    );
+    console.error("Failed to download change order PDF:", error);
+    toast.error("Failed to download change order PDF. Please try again.");
   }
 }
 
@@ -84,7 +83,8 @@ export function PrimeContractChangeOrdersTab({
       );
       toast.success("Change order approved");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to approve change order");
+      console.error("Failed to approve change order:", error);
+      toast.error("Failed to approve change order. Please try again.");
     }
   }, [contractId, projectId, setChangeOrders]);
 

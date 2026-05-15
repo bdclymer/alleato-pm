@@ -290,9 +290,8 @@ export default function ProjectContractDetailPage() {
           toast.error(`Failed to load schedule of values (${response.status})`);
         }
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to load schedule of values",
-        );
+        console.error("Failed to load schedule of values:", err);
+        toast.error("Failed to load schedule of values. Try refreshing the page.");
       } finally {
         setLineItemsLoading(false);
       }
@@ -337,9 +336,8 @@ export default function ProjectContractDetailPage() {
           ccos.filter((co) => String(co.contract_id ?? "") === String(contractId)),
         );
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to load change orders",
-        );
+        console.error("Failed to load change orders:", err);
+        toast.error("Failed to load change orders. Try refreshing the page.");
       }
     };
     fetchChangeOrders();
@@ -375,7 +373,8 @@ export default function ProjectContractDetailPage() {
         const payload = (await response.json()) as { data?: OwnerInvoiceSummary[] };
         setOwnerInvoices(payload.data ?? []);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to load owner invoices");
+        console.error("Failed to load owner invoices:", err);
+        toast.error("Failed to load owner invoices. Try refreshing the page.");
       } finally {
         setOwnerInvoicesLoading(false);
       }
@@ -447,9 +446,8 @@ export default function ProjectContractDetailPage() {
         );
         if (response.ok) { const data = await response.json(); setAttachments(data.data || []); }
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to load attachments",
-        );
+        console.error("Failed to load attachments:", error);
+        toast.error("Failed to load attachments. Try refreshing the page.");
       } finally { setAttachmentsLoading(false); }
     };
     fetchAttachments();
@@ -549,7 +547,7 @@ export default function ProjectContractDetailPage() {
       setPayments(payList || []);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "ERP sync failed");
+      handleFormError(err, { entity: "ERP sync", action: "save" });
     } finally {
       setIsSyncing(false);
     }
@@ -576,7 +574,7 @@ export default function ProjectContractDetailPage() {
       toast.success(`ERP export complete: ${totalCreated} created, ${totalUpdated} updated, ${totalSkipped} skipped${errors.length > 0 ? ` (${errors.length} errors)` : ""}`);
       if (errors.length > 0) toast.error(errors.slice(0, 2).join(" | "));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "ERP export failed");
+      handleFormError(err, { entity: "ERP export", action: "save" });
     } finally {
       setIsExporting(false);
     }
@@ -726,7 +724,7 @@ export default function ProjectContractDetailPage() {
       setLineItems(refreshedItems || []);
       setLineItemForm({ lineNumber: "", description: "", quantity: "1", unitCost: "0", unitOfMeasure: "", budgetCodeId: "" });
       setShowAddLineItemDialog(false);
-    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to create line item"); } finally { setIsSubmittingLineItem(false); }
+    } catch (err) { handleFormError(err, { entity: "line item", action: "create" }); } finally { setIsSubmittingLineItem(false); }
   };
 
   const handleDeleteLineItem = async () => {
@@ -829,7 +827,7 @@ export default function ProjectContractDetailPage() {
       toast.success("Contract updated successfully");
       setIsEditing(false);
       router.refresh();
-    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to update contract"); } finally { setIsSavingEdit(false); }
+    } catch (err) { handleFormError(err, { entity: "contract", action: "update" }); } finally { setIsSavingEdit(false); }
   };
 
   // #endregion

@@ -251,7 +251,8 @@ export function PrimeContractFinancialMarkupTab({
       persistMarkupPreferences(nextMapsToById, nextDisplayById);
       toast.success("Markup deleted");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete markup");
+      console.error("Failed to delete markup:", err);
+      toast.error("Failed to delete markup. Please try again.");
     } finally {
       setDeletingMarkupId(null);
     }
@@ -281,7 +282,8 @@ export function PrimeContractFinancialMarkupTab({
       setEditingMarkupRowIds((prev) => ({ ...prev, [newMarkup.id]: true }));
       toast.success("Markup row added");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add markup");
+      console.error("Failed to add markup:", err);
+      toast.error("Failed to add markup. Please try again.");
     } finally {
       setIsSubmittingMarkup(false);
     }
@@ -377,7 +379,8 @@ export function PrimeContractFinancialMarkupTab({
       persistMarkupPreferences(markupMapsToById, markupDisplayById);
       toast.success("Markup changes saved");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save markup table");
+      console.error("Failed to save markup table:", err);
+      toast.error("Failed to save markup changes. Please try again.");
     } finally {
       setIsSavingMarkupTable(false);
     }

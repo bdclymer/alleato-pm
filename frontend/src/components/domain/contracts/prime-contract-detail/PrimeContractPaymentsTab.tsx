@@ -57,7 +57,8 @@ export function PrimeContractPaymentsTab({
       setContract(result.contract);
       toast.success("Payments synced from Acumatica");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to sync payments from ERP");
+      console.error("Failed to sync payments from ERP:", error);
+      toast.error("Failed to sync payments from Acumatica. Please try again.");
     } finally {
       setIsSyncing(false);
     }

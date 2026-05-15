@@ -219,7 +219,8 @@ export function PrimeContractCommitmentsTab({
         toast.success("Status updated");
         await refetch();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to update status");
+        console.error("Failed to update commitment status:", err);
+        toast.error("Failed to update status. Please try again.");
       }
     },
     [refetch],
