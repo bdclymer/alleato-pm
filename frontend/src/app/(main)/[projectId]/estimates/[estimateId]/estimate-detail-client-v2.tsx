@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, ChevronDown, ChevronRight, Printer, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, Printer, Plus, Search, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -1413,166 +1413,324 @@ function SubListTab({
   onPatchSub: (id: number, fields: Partial<SublistSub>) => Promise<void>;
   onEnsureRows: (divCode: string, divName: string) => Promise<void>;
 }) {
-  // SubList skips Div 01 General Conditions
-  const subListDivisions = ALL_DIVISIONS;
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [filterIntend, setFilterIntend] = React.useState("");
+  const [filterBid, setFilterBid] = React.useState("");
+  const [sortConfig, setSortConfig] = React.useState<{ col: keyof SublistSub; dir: "asc" | "desc" } | null>(null);
+
+  const hasActiveFilter = Boolean(searchQuery || filterIntend || filterBid || sortConfig);
+
+  const toggleSort = (col: keyof SublistSub) => {
+    setSortConfig((prev) =>
+      prev?.col === col
+        ? prev.dir === "asc"
+          ? { col, dir: "desc" }
+          : null
+        : { col, dir: "asc" },
+    );
+  };
+
+  const filteredSubs = React.useMemo(() => {
+    let rows = [...sublistSubs];
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      rows = rows.filter(
+        (r) =>
+          (r.company ?? "").toLowerCase().includes(q) ||
+          (r.contact_name ?? "").toLowerCase().includes(q) ||
+          (r.email ?? "").toLowerCase().includes(q),
+      );
+    }
+    if (filterIntend) rows = rows.filter((r) => r.intend_to_submit === filterIntend);
+    if (filterBid) rows = rows.filter((r) => r.bid_received === filterBid);
+    if (sortConfig) {
+      rows.sort((a, b) => {
+        const av =
+          sortConfig.col === "price"
+            ? (Number(a[sortConfig.col]) || 0)
+            : String(a[sortConfig.col] ?? "").toLowerCase();
+        const bv =
+          sortConfig.col === "price"
+            ? (Number(b[sortConfig.col]) || 0)
+            : String(b[sortConfig.col] ?? "").toLowerCase();
+        return sortConfig.dir === "asc"
+          ? av < bv ? -1 : av > bv ? 1 : 0
+          : av > bv ? -1 : av < bv ? 1 : 0;
+      });
+    }
+    return rows;
+  }, [sublistSubs, searchQuery, filterIntend, filterBid, sortConfig]);
+
+  const visibleDivisions = React.useMemo(
+    () =>
+      hasActiveFilter
+        ? ALL_DIVISIONS.filter((div) => filteredSubs.some((s) => s.division_code === div.code))
+        : ALL_DIVISIONS,
+    [filteredSubs, hasActiveFilter],
+  );
+
+  const SortTh = ({
+    col,
+    label,
+    className,
+  }: {
+    col: keyof SublistSub;
+    label: string;
+    className?: string;
+  }) => (
+    <th
+      className={`cursor-pointer select-none px-2 py-2 font-medium hover:text-foreground ${sortConfig?.col === col ? "text-foreground" : ""} ${className ?? ""}`}
+      onClick={() => toggleSort(col)}
+    >
+      <span className="flex items-center gap-0.5">
+        {label}
+        <ChevronDown
+          className={`h-3 w-3 shrink-0 transition-transform ${
+            sortConfig?.col === col
+              ? sortConfig.dir === "asc"
+                ? "rotate-180 opacity-80"
+                : "opacity-80"
+              : "opacity-20"
+          }`}
+        />
+      </span>
+    </th>
+  );
 
   return (
-    <div className="space-y-4">
-      {/* Single sticky column header above all sections */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="text-left text-muted-foreground">
-              <th className="py-1.5 pl-4 pr-2 font-medium w-6">#</th>
-              <th className="px-2 py-1.5 font-medium">Company</th>
-              <th className="px-2 py-1.5 font-medium w-28">Intend to Submit?</th>
-              <th className="px-2 py-1.5 font-medium w-24">Email Sent?</th>
-              <th className="px-2 py-1.5 font-medium w-28">Phone Follow Up?</th>
-              <th className="px-2 py-1.5 font-medium w-24">Bid Received?</th>
-              <th className="px-2 py-1.5 font-medium">Contact</th>
-              <th className="px-2 py-1.5 font-medium">Email</th>
-              <th className="px-2 py-1.5 font-medium">Cell</th>
-              <th className="px-2 py-1.5 font-medium w-28 text-right">Price</th>
-              <th className="px-2 py-1.5 font-medium">Comments</th>
-            </tr>
-          </thead>
-        </table>
+    <div className="space-y-3">
+      {/* ── Toolbar ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-52">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search company or contact..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 pl-8 text-xs"
+          />
+        </div>
+        <Select value={filterIntend} onValueChange={setFilterIntend}>
+          <SelectTrigger className="h-8 w-40 text-xs">
+            <SelectValue placeholder="Intend to submit" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="" className="text-xs">All subs</SelectItem>
+            <SelectItem value="Yes" className="text-xs">Intending: Yes</SelectItem>
+            <SelectItem value="No" className="text-xs">Intending: No</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterBid} onValueChange={setFilterBid}>
+          <SelectTrigger className="h-8 w-36 text-xs">
+            <SelectValue placeholder="Bid received" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="" className="text-xs">All bids</SelectItem>
+            <SelectItem value="Yes" className="text-xs">Bid received</SelectItem>
+            <SelectItem value="No" className="text-xs">No bid yet</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasActiveFilter && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1 text-xs text-muted-foreground"
+            onClick={() => {
+              setSearchQuery("");
+              setFilterIntend("");
+              setFilterBid("");
+              setSortConfig(null);
+            }}
+          >
+            <X className="h-3.5 w-3.5" /> Clear filters
+          </Button>
+        )}
+        <span className="ml-auto text-xs text-muted-foreground">
+          {filteredSubs.length} sub{filteredSubs.length !== 1 ? "s" : ""}
+          {hasActiveFilter ? ` matching` : " total"}
+        </span>
       </div>
 
-      {subListDivisions.map((div) => {
-        const rows = sublistSubs.filter((s) => s.division_code === div.code);
-        // Fill 5 positions
-        const filled: (SublistSub | null)[] = Array.from({ length: 5 }, (_, i) => {
-          return rows.find((r) => r.position === i + 1) ?? null;
-        });
-        const intendYesCount = rows.filter((r) => r.intend_to_submit === "Yes").length;
+      {/* ── Single unified table ─────────────────────────────────────────── */}
+      <div className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-border bg-muted/20 text-left text-muted-foreground">
+              <th className="w-6 py-2 pl-4 pr-2 font-medium">#</th>
+              <SortTh col="company" label="Company" />
+              <SortTh col="intend_to_submit" label="Intend to Submit?" className="w-32" />
+              <SortTh col="email_sent" label="Email Sent?" className="w-24" />
+              <SortTh col="phone_follow_up" label="Phone Follow Up?" className="w-28" />
+              <SortTh col="bid_received" label="Bid Received?" className="w-24" />
+              <SortTh col="contact_name" label="Contact" />
+              <SortTh col="email" label="Email" />
+              <SortTh col="cell" label="Cell" />
+              <SortTh col="price" label="Price" className="w-28 text-right" />
+              <th className="px-2 py-2 font-medium">Comments</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleDivisions.map((div, visIdx) => {
+              const divRows = filteredSubs.filter((s) => s.division_code === div.code);
+              const intendCount = divRows.filter((r) => r.intend_to_submit === "Yes").length;
+              const bidCount = divRows.filter((r) => r.bid_received === "Yes").length;
+              const lowestBid = divRows.reduce<number | null>(
+                (min, r) => (r.price && r.price > 0 ? (min === null || r.price < min ? r.price : min) : min),
+                null,
+              );
 
-        return (
-          <div key={div.code} className="overflow-hidden rounded-md border border-border">
-            <div
-              className="flex items-center gap-2 border-b border-border bg-card px-4 py-2 cursor-pointer"
-              onClick={() => void onEnsureRows(div.code, div.name)}
-            >
-              <span className="text-xs font-semibold text-foreground">
-                {div.code} {div.name}
-              </span>
-              {intendYesCount > 0 && (
-                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                  {intendYesCount} intending
-                </span>
-              )}
-            </div>
+              return (
+                <React.Fragment key={div.code}>
+                  {/* Spacer row creates visual gap between sections */}
+                  {visIdx > 0 && (
+                    <tr aria-hidden="true">
+                      <td colSpan={11} className="h-2 bg-background p-0" />
+                    </tr>
+                  )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead />
-                <tbody>
-                  {filled.map((sub, idx) => {
-                    const pos = idx + 1;
-                    if (!sub) {
-                      return (
-                        <tr key={pos} className="border-b border-border/20">
-                          <td className="py-1.5 pl-4 pr-2 text-muted-foreground">{pos}</td>
-                          <td colSpan={10} className="px-2 py-1.5">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto gap-1 p-0 text-xs text-muted-foreground hover:text-foreground"
-                              onClick={() => void onEnsureRows(div.code, div.name)}
-                            >
-                              <Plus className="h-3 w-3" /> Add sub
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    }
-                    return (
-                      <tr key={sub.id} className="border-b border-border/20 hover:bg-muted/20">
-                        <td className="py-1 pl-4 pr-2 text-muted-foreground">{pos}</td>
-                        <td className="px-2 py-1">
-                          <InlineText
-                            value={sub.company ?? ""}
-                            onChange={(v) => void onPatchSub(sub.id, { company: v || null })}
-                            placeholder="Company name"
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineSelect
-                            value={sub.intend_to_submit ?? ""}
-                            options={INTEND_OPTIONS}
-                            onValueChange={(v) => void onPatchSub(sub.id, { intend_to_submit: v || null })}
-                            placeholder="—"
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineSelect
-                            value={sub.email_sent ?? ""}
-                            options={EMAIL_SENT_OPTIONS}
-                            onValueChange={(v) => void onPatchSub(sub.id, { email_sent: v || null })}
-                            placeholder="—"
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineSelect
-                            value={sub.phone_follow_up ?? ""}
-                            options={PHONE_OPTIONS}
-                            onValueChange={(v) => void onPatchSub(sub.id, { phone_follow_up: v || null })}
-                            placeholder="—"
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineSelect
-                            value={sub.bid_received ?? ""}
-                            options={BID_OPTIONS}
-                            onValueChange={(v) => void onPatchSub(sub.id, { bid_received: v || null })}
-                            placeholder="—"
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineText
-                            value={sub.contact_name ?? ""}
-                            onChange={(v) => void onPatchSub(sub.id, { contact_name: v || null })}
-                            placeholder="Name"
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineText
-                            value={sub.email ?? ""}
-                            onChange={(v) => void onPatchSub(sub.id, { email: v || null })}
-                            placeholder="email@..."
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineText
-                            value={sub.cell ?? ""}
-                            onChange={(v) => void onPatchSub(sub.id, { cell: v || null })}
-                            placeholder="Phone"
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineNumber
-                            value={sub.price ?? 0}
-                            onChange={(v) => void onPatchSub(sub.id, { price: v || null })}
-                            className="w-full text-right"
-                            currency
-                          />
-                        </td>
-                        <td className="px-2 py-1">
-                          <InlineText
-                            value={sub.comments ?? ""}
-                            onChange={(v) => void onPatchSub(sub.id, { comments: v || null })}
-                            placeholder="Comments"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      })}
+                  {/* Division group header */}
+                  <tr
+                    className="cursor-pointer border-t border-b border-border/60 bg-muted/30 hover:bg-muted/40"
+                    onClick={() => void onEnsureRows(div.code, div.name)}
+                  >
+                    <td colSpan={11} className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground">
+                          {div.code} – {div.name}
+                        </span>
+                        {intendCount > 0 && (
+                          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                            {intendCount} intending
+                          </span>
+                        )}
+                        {bidCount > 0 && (
+                          <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-400">
+                            {bidCount} bid{bidCount !== 1 ? "s" : ""} received
+                          </span>
+                        )}
+                        {lowestBid !== null && (
+                          <span className="ml-auto text-[10px] text-muted-foreground">
+                            Low: {formatCurrencyFull(lowestBid)}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Sub rows */}
+                  {divRows.map((sub, idx) => (
+                    <tr key={sub.id} className="border-b border-border/20 hover:bg-muted/20">
+                      <td className="py-1 pl-4 pr-2 text-muted-foreground">{sub.position ?? idx + 1}</td>
+                      <td className="px-2 py-1">
+                        <InlineText
+                          value={sub.company ?? ""}
+                          onChange={(v) => void onPatchSub(sub.id, { company: v || null })}
+                          placeholder="Company name"
+                        />
+                      </td>
+                      <td className="w-32 px-2 py-1">
+                        <InlineSelect
+                          value={sub.intend_to_submit ?? ""}
+                          options={INTEND_OPTIONS}
+                          onValueChange={(v) => void onPatchSub(sub.id, { intend_to_submit: v || null })}
+                          placeholder="—"
+                        />
+                      </td>
+                      <td className="w-24 px-2 py-1">
+                        <InlineSelect
+                          value={sub.email_sent ?? ""}
+                          options={EMAIL_SENT_OPTIONS}
+                          onValueChange={(v) => void onPatchSub(sub.id, { email_sent: v || null })}
+                          placeholder="—"
+                        />
+                      </td>
+                      <td className="w-28 px-2 py-1">
+                        <InlineSelect
+                          value={sub.phone_follow_up ?? ""}
+                          options={PHONE_OPTIONS}
+                          onValueChange={(v) => void onPatchSub(sub.id, { phone_follow_up: v || null })}
+                          placeholder="—"
+                        />
+                      </td>
+                      <td className="w-24 px-2 py-1">
+                        <InlineSelect
+                          value={sub.bid_received ?? ""}
+                          options={BID_OPTIONS}
+                          onValueChange={(v) => void onPatchSub(sub.id, { bid_received: v || null })}
+                          placeholder="—"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <InlineText
+                          value={sub.contact_name ?? ""}
+                          onChange={(v) => void onPatchSub(sub.id, { contact_name: v || null })}
+                          placeholder="Name"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <InlineText
+                          value={sub.email ?? ""}
+                          onChange={(v) => void onPatchSub(sub.id, { email: v || null })}
+                          placeholder="email@..."
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <InlineText
+                          value={sub.cell ?? ""}
+                          onChange={(v) => void onPatchSub(sub.id, { cell: v || null })}
+                          placeholder="Phone"
+                        />
+                      </td>
+                      <td className="w-28 px-2 py-1">
+                        <InlineNumber
+                          value={sub.price ?? 0}
+                          onChange={(v) => void onPatchSub(sub.id, { price: v || null })}
+                          className="w-full text-right"
+                          currency
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <InlineText
+                          value={sub.comments ?? ""}
+                          onChange={(v) => void onPatchSub(sub.id, { comments: v || null })}
+                          placeholder="Comments"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+
+                  {/* Add sub — always visible at bottom of each division, hidden when filtering */}
+                  {!hasActiveFilter && (
+                    <tr className="border-b border-border/10">
+                      <td className="py-1.5 pl-4 pr-2 text-muted-foreground" />
+                      <td colSpan={10} className="px-2 py-1.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto gap-1 p-0 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => void onEnsureRows(div.code, div.name)}
+                        >
+                          <Plus className="h-3 w-3" /> Add sub
+                        </Button>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+
+            {/* Empty state when all filtered out */}
+            {visibleDivisions.length === 0 && (
+              <tr>
+                <td colSpan={11} className="py-10 text-center text-muted-foreground">
+                  No subs match the current filters.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
