@@ -158,7 +158,9 @@ export interface UnifiedTablePageProps<T> {
     defaultPinnedLeftColumns?: string[];
     defaultPinnedRightColumns?: string[];
     rowActions?: (item: T) => ReactNode;
-    /** Called when user clicks Delete in the default row-actions menu. When provided without custom rowActions, renders a default "⋯" dropdown with Delete. */
+    /** Called when user clicks Edit in the default row-actions menu. */
+    onEdit?: (item: T) => void;
+    /** Called when user clicks Delete in the default row-actions menu. When provided without custom rowActions, renders a default "⋯" dropdown with Edit + Delete. */
     onDelete?: (item: T) => void;
     getRowId: (item: T) => string;
     onRowClick?: (item: T) => void;
@@ -329,7 +331,7 @@ export function UnifiedTablePage<T>({
   });
   const effectiveSelectedCount = toolbar.selectedCount ?? selectedIds.length;
   const hasRowSelection = resolvedFeatures.enableRowSelection;
-  const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions || table.onDelete);
+  const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions || table.onDelete || table.onEdit);
 
   // Built-in delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -1763,7 +1765,7 @@ export function UnifiedTablePage<T>({
                         className={cn("pl-2", sidePanel ? "pr-4" : "pr-2")}
                         onClick={(event) => event.stopPropagation()}
                       >
-                        {table.rowActions ? table.rowActions(item) : table.onDelete ? (
+                        {table.rowActions ? table.rowActions(item) : (table.onDelete || table.onEdit) ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Row actions">
@@ -1771,13 +1773,21 @@ export function UnifiedTablePage<T>({
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleDeleteIntent(item)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
+                              {table.onEdit && (
+                                <DropdownMenuItem onClick={() => table.onEdit!(item)}>
+                                  Edit
+                                </DropdownMenuItem>
+                              )}
+                              {table.onEdit && table.onDelete && <DropdownMenuSeparator />}
+                              {table.onDelete && (
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => handleDeleteIntent(item)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         ) : null}
