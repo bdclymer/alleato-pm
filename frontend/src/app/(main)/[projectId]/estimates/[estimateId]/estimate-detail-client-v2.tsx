@@ -1700,13 +1700,11 @@ function SummaryTab({
         <div className="flex items-start justify-between gap-6">
           {/* Logo + address */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10">
-              <span className="text-lg font-black tracking-tight text-primary">A</span>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-foreground">Alleato Group LLC</p>
-              <p className="text-xs text-muted-foreground">Construction Management</p>
-            </div>
+            <img
+              src="/Alleato-Group-Logo_Light.png"
+              alt="Alleato Group LLC"
+              className="h-12 w-auto object-contain"
+            />
           </div>
 
           {/* Contacts */}
