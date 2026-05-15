@@ -43,6 +43,8 @@ const CARD_TYPE_ICON: Record<InsightCardType, string> = {
   process_issue: "🔧",
   project_update: "📌",
   requirement: "📋",
+  sentiment: "💬",
+  initiative_signal: "🧭",
 };
 
 const NEW_TAG = "🆕";

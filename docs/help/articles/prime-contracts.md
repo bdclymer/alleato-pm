@@ -49,6 +49,34 @@ To edit the SOV:
 2. Select the **Schedule of Values** tab.
 3. Add, edit, or delete lines as the contract evolves.
 
+### Import an Estimate Workbook into the SOV
+
+If your project team uses the Alleato estimate workbook (`.xlsm` or `.xlsx`), you can import it directly into the SOV instead of entering lines by hand.
+
+**When creating a new prime contract:**
+
+1. On the new contract form, scroll to the SOV section.
+2. Open the **Actions** dropdown and select **Import Excel SOV**.
+3. Upload the Alleato estimate workbook.
+4. A preview table appears. Each row shows the cost code, description, cost type, amount, and a status indicator:
+   - **Mapped** — line item matched a known project budget code.
+   - **Needs budget code** — the cost code is not yet active; it will be activated on import.
+   - **Review warning** — the amount is $0. These rows are deselected by default.
+5. Deselect any rows you do not want to include.
+6. Click **Import**. The selected lines populate the SOV and can be edited before you save the contract.
+
+**On an existing prime contract:**
+
+1. Open the prime contract and select the **Schedule of Values** tab.
+2. Open the **Add** menu and select **Estimate Workbook**.
+3. Follow the same upload and preview steps above.
+
+**Things to know:**
+
+- Only rows marked `includeInOwnerSov` in the workbook appear in the preview. Rows without that flag are excluded automatically.
+- The system will never create new cost codes on its own. If a row references a code that does not exist in the system (for example, a typo like `0-2113` instead of `02-2113`), that row shows an error and cannot be imported until the code is corrected in the workbook.
+- **Insurance** and **Fee** markup rows appear in the SOV with a padlock icon. These rows are locked and cannot be edited directly in the SOV.
+
 ## Modifications
 
 Approved [Change Orders](/docs/change-orders) appear as modifications on the prime contract. Each modification updates the revised contract value automatically.
@@ -61,3 +89,4 @@ Upload the executed contract, exhibits, insurance certificates, and bonds to the
 
 - [Change Orders](/docs/change-orders)
 - [Invoicing](/docs/invoicing)
+- [Estimates](/docs/estimates)

@@ -43,6 +43,46 @@ export const GET = withApiGuardrails<{ projectId: string; estimateId: string }>(
   }
 );
 
+// Deletes ALL gc items for this estimate in one query — used by the Load Template flow.
+export const DELETE = withApiGuardrails<{ projectId: string; estimateId: string }>(
+  "projects/[projectId]/estimates/[estimateId]/gc-items#DELETE",
+  async ({ params }) => {
+    const { estimateId } = await params;
+    const supabase = await createClient();
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "gc-items#DELETE", message: "Authentication required." });
+    }
+
+    const estimateIdNum = parseInt(estimateId, 10);
+    if (isNaN(estimateIdNum)) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "gc-items#DELETE",
+        message: "Invalid estimate ID.",
+        details: { estimateId },
+      });
+    }
+
+    const { error } = await supabase
+      .from("estimate_gc_items")
+      .delete()
+      .eq("estimate_id", estimateIdNum);
+
+    if (error) {
+      throw new GuardrailError({
+        code: "DB_ERROR",
+        where: "gc-items#DELETE",
+        message: error.message,
+        cause: error,
+      });
+    }
+
+    return new Response(null, { status: 204 });
+  }
+);
+
 export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>(
   "projects/[projectId]/estimates/[estimateId]/gc-items#POST",
   async ({ request, params }) => {

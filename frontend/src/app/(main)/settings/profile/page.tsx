@@ -1,29 +1,18 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
 import { useMemo } from "react";
 
 import { PageShell } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { ProfileImageUpload } from "@/components/misc/profile-image-upload";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { DetailField, DetailFieldGrid } from "@/components/ds/DetailField";
+import { ErrorState } from "@/components/ds/error-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { getBestAvatarUrl } from "@/lib/gravatar";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 import { TelegramLinkPanel } from "../integrations/telegram-link-panel";
 import { TeamsLinkPanel } from "../integrations/teams-link-panel";
-
-
-function InfoRow({ label, value }: { label: string; value?: string }) {
-  return (
-    <div className="grid gap-1 sm:grid-cols-[160px_1fr] sm:gap-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="text-sm text-foreground break-words">{value || "Not set"}</p>
-    </div>
-  );
-}
 
 export default function ProfilePage() {
   const { profile, isLoading, error } = useCurrentUserProfile();
@@ -38,81 +27,84 @@ export default function ProfilePage() {
       .slice(0, 2);
   }, [profile?.fullName]);
 
+  if (error) {
+    return (
+      <PageShell variant="content" title="Profile" showHeader={false}>
+        <ErrorState title="Couldn't load your profile" description={error} />
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell variant="content" title="Profile" showHeader={false}>
-        {error ? (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Couldn't load profile</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-
-        <section className="space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex items-start gap-4 min-w-0">
-              <Avatar className="h-14 w-14 shrink-0">
-                {profile?.avatarUrl ? (
-                  <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
-                ) : profile?.email ? (
-                  <AvatarImage
-                    src={getBestAvatarUrl(undefined, profile.email)}
-                    alt={profile.fullName}
-                  />
-                ) : null}
-                <AvatarFallback>{initials || "?"}</AvatarFallback>
-              </Avatar>
-              <div className="space-y-2 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* eslint-disable-next-line design-system/no-raw-heading */}
-                  <h2 className="text-lg font-semibold text-foreground break-words">
-                    {profile?.fullName || (isLoading ? "Loading..." : "Unknown user")}
-                  </h2>
-                  <Badge variant={profile?.isAdmin ? "default" : "secondary"}>
-                    {profile?.isAdmin ? "Super Admin" : "Standard user"}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground break-words">
-                  {profile?.title || "No title set"}
-                  {profile?.company ? ` · ${profile.company}` : ""}
-                </p>
-              </div>
+      {/* Identity header */}
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4 min-w-0">
+          <Avatar className="h-14 w-14 shrink-0">
+            {profile?.avatarUrl ? (
+              <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
+            ) : profile?.email ? (
+              <AvatarImage
+                src={getBestAvatarUrl(undefined, profile.email)}
+                alt={profile.fullName}
+              />
+            ) : null}
+            <AvatarFallback className="text-base">
+              {isLoading ? "…" : (initials || "?")}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-base font-semibold text-foreground leading-snug break-words">
+                {profile?.fullName || (isLoading ? "Loading…" : "Unknown user")}
+              </span>
+              <Badge variant={profile?.isAdmin ? "default" : "secondary"} className="shrink-0">
+                {profile?.isAdmin ? "Super Admin" : "Member"}
+              </Badge>
             </div>
-
-            <ProfileImageUpload
-              currentImage={profile?.avatarUrl}
-              userEmail={profile?.email || ""}
-              userName={profile?.fullName || "User"}
-            />
+            {(profile?.title || profile?.company) && (
+              <p className="text-sm text-muted-foreground truncate">
+                {[profile.title, profile.company].filter(Boolean).join(" · ")}
+              </p>
+            )}
           </div>
-        </section>
+        </div>
+        <div className="shrink-0">
+          <ProfileImageUpload
+            currentImage={profile?.avatarUrl}
+            userEmail={profile?.email || ""}
+            userName={profile?.fullName || "User"}
+          />
+        </div>
+      </section>
 
-        <section className="space-y-4">
-          <SectionRuleHeading label="Active account details" />
-          <div className="space-y-4">
-            <InfoRow label="Email" value={profile?.email} />
-            <Separator />
-            <InfoRow label="Phone" value={profile?.phone} />
-            <Separator />
-            <InfoRow label="Location" value={profile?.location} />
-            <Separator />
-            <InfoRow label="Timezone" value={profile?.timezone} />
-            <Separator />
-            <InfoRow label="Region" value={profile?.region} />
-            <Separator />
-            <InfoRow label="Role" value={profile?.role} />
+      {/* Account details */}
+      <section className="space-y-4">
+        <SectionRuleHeading label="Account details" />
+        <DetailFieldGrid cols={2}>
+          <DetailField label="Email" value={profile?.email} />
+          <DetailField label="Phone" value={profile?.phone} />
+          <DetailField label="Location" value={profile?.location} />
+          <DetailField label="Timezone" value={profile?.timezone} />
+          <DetailField label="Region" value={profile?.region} />
+          <DetailField label="Role" value={profile?.role} />
+        </DetailFieldGrid>
+      </section>
+
+      {/* Integrations */}
+      <section className="space-y-5">
+        <SectionRuleHeading label="Integrations" />
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Telegram</p>
+            <TelegramLinkPanel />
           </div>
-        </section>
-
-        <section className="space-y-4">
-          <SectionRuleHeading label="Telegram" />
-          <TelegramLinkPanel />
-        </section>
-
-        <section className="space-y-4">
-          <SectionRuleHeading label="Microsoft Teams" />
-          <TeamsLinkPanel />
-        </section>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Microsoft Teams</p>
+            <TeamsLinkPanel />
+          </div>
+        </div>
+      </section>
     </PageShell>
   );
 }

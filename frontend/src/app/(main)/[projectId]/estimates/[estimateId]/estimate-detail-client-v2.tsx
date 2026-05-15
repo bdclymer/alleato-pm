@@ -775,31 +775,33 @@ export function EstimateDetailClientV2({
     if (!pendingTemplate) return;
     setIsLoadingTemplate(true);
     try {
-      // Delete all existing GC items
-      await Promise.all(
-        gcItems.map((item) =>
-          apiFetch(`/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items/${item.id}`, {
-            method: "DELETE",
-          })
-        )
-      );
+      // Bulk-delete all existing GC items in one server-side query
+      await apiFetch(`/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`, {
+        method: "DELETE",
+      });
       // Fetch full template to get items
       const allTemplates = await apiFetch<Array<GcTemplate & { items: GcTemplateItem[] }>>("/api/estimates/gc-templates");
       const templateList = Array.isArray(allTemplates) ? allTemplates : [];
       const full = templateList.find((t) => t.template_id === pendingTemplate.template_id);
       const templateItems: GcTemplateItem[] = (full as unknown as { items: GcTemplateItem[] } | undefined)?.items ?? [];
-      // Insert template items into this estimate
-      const created = await Promise.all(
-        templateItems.map((item, idx) =>
-          apiFetch<GcItem>(
-            `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
-            {
-              method: "POST",
-              body: JSON.stringify({ ...item, sort_order: item.sort_order ?? idx + 1 }),
-            }
+      // Insert in batches of 10 to avoid connection pool exhaustion
+      const BATCH = 10;
+      const created: GcItem[] = [];
+      for (let i = 0; i < templateItems.length; i += BATCH) {
+        const batch = templateItems.slice(i, i + BATCH);
+        const results = await Promise.all(
+          batch.map((item, batchIdx) =>
+            apiFetch<GcItem>(
+              `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
+              {
+                method: "POST",
+                body: JSON.stringify({ ...item, sort_order: item.sort_order ?? i + batchIdx + 1 }),
+              }
+            )
           )
-        )
-      );
+        );
+        created.push(...results);
+      }
       setGcItems(created);
       toast.success(`Loaded template "${pendingTemplate.name}"`);
     } catch {

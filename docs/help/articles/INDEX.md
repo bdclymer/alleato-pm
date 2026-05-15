@@ -43,6 +43,7 @@ Every published article, grouped by category.
 | [Invoicing](/docs/invoicing) | Owner pay applications and subcontractor invoices. |
 | [Direct Costs](/docs/direct-costs) | Record non-contract project costs. |
 | [Prime Contracts](/docs/prime-contracts) | Manage owner contracts and modifications. |
+| [Estimates](/docs/estimates) | Build quantity takeoff estimates and import them into a prime contract SOV. |
 
 ## Field Operations
 

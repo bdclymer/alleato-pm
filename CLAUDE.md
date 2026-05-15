@@ -201,6 +201,19 @@ When I say "watch mode", call `agentation_watch_annotations` in a loop. For each
 
 ---
 
+## Saved Research Snapshots (read before re-crawling)
+
+Deep architectural analysis is expensive. Before spawning research agents, check if a memory snapshot already covers the domain:
+
+- **Financial domain** (estimates, prime contracts, commitments, budget): `~/.claude/projects/-Users-meganharrison-Documents-alleato-pm/memory/architecture_financial_domain.md` — full FK map, table columns, API routes, tech debt. Verified 2026-05-15.
+- **Index:** `~/.claude/projects/-Users-meganharrison-Documents-alleato-pm/memory/MEMORY.md`
+
+**Light-refresh protocol:** Load the snapshot → run `git log --oneline --since=<snapshot date> -- <relevant files>` → read only changed files → cross-analyze deltas. This saves ~400k tokens vs a full re-crawl.
+
+After any deep research session, save a new snapshot to the memory directory following the pattern in `feedback_reuse_deep_research.md`.
+
+---
+
 ## Behavioral Rules
 
 - Use MCP, CLI, or Bash — never tell the user to do something manually.
