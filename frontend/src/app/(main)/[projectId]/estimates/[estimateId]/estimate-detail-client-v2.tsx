@@ -2653,6 +2653,96 @@ function SubListTab({
           </div>
         );
       })()}
+
+      {/* ── Bid Leveling View (PRP 3.2) ───────────────────────────────────── */}
+      {(() => {
+        // Only show for divisions that have scope items loaded AND at least 2 subs with bid items
+        const levelableDivs = ALL_DIVISIONS.filter((div) => {
+          const scopeItems = scopeItemsByDiv[div.code] ?? [];
+          const subsWithBids = sublistSubs.filter((s) =>
+            s.division_code === div.code && (bidItemsBySubId[s.id] ?? []).length > 0
+          );
+          return scopeItems.length > 0 && subsWithBids.length >= 1;
+        });
+        if (levelableDivs.length === 0) return null;
+
+        return (
+          <div className="mt-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-foreground">Bid Leveling</span>
+              <span className="text-[10px] text-muted-foreground">(open scope + bid items to populate)</span>
+            </div>
+            {levelableDivs.map((div) => {
+              const scopeItems = scopeItemsByDiv[div.code] ?? [];
+              const divSubs = sublistSubs.filter((s) => s.division_code === div.code && (bidItemsBySubId[s.id] ?? []).length > 0);
+
+              return (
+                <div key={div.code} className="overflow-hidden rounded-md border border-border">
+                  <div className="border-b border-border bg-muted/30 px-4 py-2">
+                    <span className="text-xs font-semibold text-foreground">Division {div.code} — {div.name}</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border/40 bg-muted/10">
+                          <th className="min-w-48 px-3 py-2 text-left font-medium text-muted-foreground">Scope Item</th>
+                          {divSubs.map((sub) => (
+                            <th key={sub.id} className="min-w-28 px-3 py-2 text-right font-medium text-muted-foreground">
+                              {sub.company ?? `Sub ${sub.position ?? sub.id}`}
+                              {sub.is_awarded && <span className="ml-1 text-status-warning">★</span>}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scopeItems.map((scopeItem) => (
+                          <tr key={scopeItem.id} className="border-b border-border/20">
+                            <td className={`px-3 py-1.5 ${!scopeItem.is_checked ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                              {scopeItem.description}
+                            </td>
+                            {divSubs.map((sub) => {
+                              const bidItem = (bidItemsBySubId[sub.id] ?? []).find((b) => b.scope_item_id === scopeItem.id);
+                              if (!bidItem) return (
+                                <td key={sub.id} className="px-3 py-1.5 text-right text-muted-foreground/50">—</td>
+                              );
+                              return (
+                                <td key={sub.id} className={`px-3 py-1.5 text-right ${bidItem.is_excluded ? "text-muted-foreground line-through" : "font-medium text-foreground"}`}>
+                                  {bidItem.is_excluded ? <span className="text-[10px]">Excl.</span> : formatCurrencyFull(Number(bidItem.amount))}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                        {/* Totals row */}
+                        <tr className="border-t border-border/60 bg-muted/20">
+                          <td className="px-3 py-2 font-semibold text-foreground">Total</td>
+                          {divSubs.map((sub) => {
+                            const total = (bidItemsBySubId[sub.id] ?? [])
+                              .filter((b) => !b.is_excluded)
+                              .reduce((s, b) => s + Number(b.amount), 0);
+                            const budget = detailTotalsByDiv[div.code] ?? 0;
+                            const delta = budget > 0 ? total - budget : null;
+                            return (
+                              <td key={sub.id} className="px-3 py-2 text-right">
+                                <div className="font-semibold text-foreground">{formatCurrencyFull(total)}</div>
+                                {delta !== null && (
+                                  <div className={`text-[10px] ${delta > 0 ? "text-destructive" : "text-status-success"}`}>
+                                    {delta > 0 ? "+" : ""}{formatCurrencyFull(delta)} vs budget
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }
