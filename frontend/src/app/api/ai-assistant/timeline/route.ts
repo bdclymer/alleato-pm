@@ -3,6 +3,11 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  insightCardBaseQuery,
+  resolveTargetIdsForProjects,
+  deriveSeverity,
+} from "@/lib/ai/insight-cards";
 
 type TimelineItem = {
   id: string;
@@ -123,14 +128,19 @@ export const GET = withApiGuardrails(
       : Promise.resolve({ data: [], error: null } as const);
 
     const insightsPromise = projectId
-      ? supabase
-          .from("ai_insights")
-          .select("id, project_id, title, description, insight_type, severity, created_at")
-          .eq("project_id", projectId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso)
-          .order("created_at", { ascending: false })
-          .limit(150)
+      ? (async () => {
+          const targetMap = await resolveTargetIdsForProjects(supabase, [projectId]);
+          const targetId = targetMap.get(projectId);
+          if (!targetId) {
+            return { data: [], error: null } as const;
+          }
+          return insightCardBaseQuery(supabase, { includeAnyStatus: true })
+            .eq("primary_target_id", targetId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso)
+            .order("created_at", { ascending: false })
+            .limit(150);
+        })()
       : Promise.resolve({ data: [], error: null } as const);
 
     const teamsPromise = allowAdminCommsSources
@@ -207,7 +217,10 @@ export const GET = withApiGuardrails(
     const insightItems = (insightsRes.data ?? []).reduce<TimelineItem[]>((acc, row) => {
         const timestamp = normalizeTimestamp(row.created_at);
         if (!timestamp) return acc;
-        const detailParts = [row.insight_type, row.severity]
+        const target = (row as { intelligence_targets?: { project_id: number | null } | null })
+          .intelligence_targets ?? null;
+        const rowProjectId = target?.project_id ?? projectId ?? null;
+        const detailParts = [row.card_type, deriveSeverity(row)]
           .filter(Boolean)
           .map((v) => String(v));
         acc.push({
@@ -215,11 +228,11 @@ export const GET = withApiGuardrails(
           source: "insight" as const,
           title: row.title || "AI insight",
           detail:
-            row.description ||
+            row.summary ||
             (detailParts.length > 0 ? detailParts.join(" · ") : null),
           timestamp,
-          href: row.project_id ? `/${row.project_id}/insights` : "/insights",
-          projectId: row.project_id ?? null,
+          href: rowProjectId ? `/${rowProjectId}/insights` : "/insights",
+          projectId: rowProjectId,
         });
         return acc;
       }, []);

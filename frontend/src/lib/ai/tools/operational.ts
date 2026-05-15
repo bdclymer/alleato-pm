@@ -27,6 +27,16 @@ import {
   type MemoryVisibility,
 } from "@/lib/ai/services/ai-memory-service";
 import {
+  RISK_CARD_TYPES,
+  DECISION_CARD_TYPES,
+  ACTION_CARD_TYPES,
+  deriveSeverity,
+  resolveTargetIdsForProjects,
+  findInsightCardIdsBySourceDocuments,
+  insightCardBaseQuery,
+  type InsightCardWithTarget,
+} from "@/lib/ai/insight-cards";
+import {
   normalizeRetrievalWeightQuerySignature,
   retrievalWeightMultiplierForItem,
   type RetrievalWeightScoringRow,
@@ -1121,19 +1131,23 @@ export function createOperationalTools(
               .gte("created_at", lookbackStr)
               .order("created_at", { ascending: true })
               .limit(200),
-            supabase
-              .from("ai_insights")
-              .select("id, severity, created_at, insight_type")
-              .eq("project_id", resolved.id)
-              .gte("created_at", lookbackStr)
-              .order("created_at", { ascending: true })
-              .limit(500),
+            // Pipeline B: resolve project → target_id and read insight_cards (any card_type).
+            (async () => {
+              const tm = await resolveTargetIdsForProjects(supabase, [resolved.id]);
+              const tid = tm.get(resolved.id);
+              if (!tid) return { data: [], error: null };
+              return await insightCardBaseQuery(supabase, { includeAnyStatus: true })
+                .eq("primary_target_id", tid)
+                .gte("created_at", lookbackStr)
+                .order("created_at", { ascending: true })
+                .limit(500);
+            })(),
           ]);
 
           const rfis = (rfiRes.data ?? []) as AnyRow[];
           const submittals = (submittalRes.data ?? []) as AnyRow[];
           const cos = (coRes.data ?? []) as AnyRow[];
-          const insights = (insightRes.data ?? []) as AnyRow[];
+          const insights = ((insightRes as { data: unknown }).data ?? []) as unknown as InsightCardWithTarget[];
 
           // Monthly aggregation helper
           function monthKey(dateStr: string): string {
@@ -1176,15 +1190,17 @@ export function createOperationalTools(
             string,
             { total: number; critical: number }
           >();
-          insights.forEach((i) => {
-            if (i.created_at) {
-              const key = monthKey(i.created_at as string);
+          insights.forEach((card) => {
+            if (card.created_at) {
+              const key = monthKey(card.created_at as string);
               const existing = insightByMonth.get(key) ?? {
                 total: 0,
                 critical: 0,
               };
               existing.total += 1;
-              if (i.severity === "critical" || i.severity === "high") {
+              // Pipeline B: derive severity from card_type + confidence.
+              const sev = deriveSeverity(card);
+              if (sev === "critical" || sev === "high") {
                 existing.critical += 1;
               }
               insightByMonth.set(key, existing);
@@ -2195,16 +2211,21 @@ export function createOperationalTools(
             ? meetingLookup
             : meetingLookup.in("project_id", scope.allowedProjectIds);
 
+          // Pipeline B: find insight_cards whose evidence points at this
+          // meeting document, then fetch them with the shared base query.
+          const evidence = await findInsightCardIdsBySourceDocuments(supabase, [
+            resolvedId,
+          ]);
+          const cardFetch = evidence.allCardIds.length
+            ? insightCardBaseQuery(supabase, { includeAnyStatus: true }).in(
+                "id",
+                evidence.allCardIds,
+              )
+            : Promise.resolve({ data: [] as InsightCardWithTarget[], error: null });
+
           const [meetingRes, insightsRes] = await Promise.all([
             scopedMeetingLookup.single(),
-            // Structured insights extracted from this meeting (decisions/risks/opportunities)
-            supabase
-              .from("insights")
-              .select(
-                "type, description, owner_name, status, details, created_at",
-              )
-              .eq("metadata_id", resolvedId)
-              .order("type"),
+            cardFetch,
           ]);
 
           // If direct ID lookup failed and we have a title, the ID may have been guessed
@@ -2220,13 +2241,21 @@ export function createOperationalTools(
           }
 
           const m = meetingRes.data as AnyRow;
-          const allInsights = (insightsRes.data ?? []) as AnyRow[];
+          const allCards = ((insightsRes as { data: unknown }).data ??
+            []) as unknown as InsightCardWithTarget[];
 
-          // Group insights by type for easy consumption
-          const decisions = allInsights.filter((i) => i.type === "decision");
-          const risks = allInsights.filter((i) => i.type === "risk");
-          const opportunities = allInsights.filter(
-            (i) => i.type === "opportunity",
+          // Pipeline B grouping: bucket by card_type instead of legacy `type`.
+          const decisions = allCards.filter((c) =>
+            DECISION_CARD_TYPES.includes(c.card_type as never),
+          );
+          const risks = allCards.filter((c) =>
+            RISK_CARD_TYPES.includes(c.card_type as never),
+          );
+          const actionItems = allCards.filter(
+            (c) =>
+              ACTION_CARD_TYPES.includes(c.card_type as never) &&
+              typeof c.next_action === "string" &&
+              c.next_action.trim().length > 0,
           );
 
           return {
@@ -2245,24 +2274,43 @@ export function createOperationalTools(
               actionItems: m.action_items,
               bulletPoints: m.bullet_points,
             },
-            decisions: decisions.map((i) => ({
-              description: i.description,
-              owner: i.owner_name,
-              rationale: (i.details as AnyRow)?.rationale,
-            })),
-            risks: risks.map((i) => ({
-              description: i.description,
-              owner: i.owner_name,
-              category: (i.details as AnyRow)?.category,
-              likelihood: (i.details as AnyRow)?.likelihood,
-              impact: (i.details as AnyRow)?.impact,
-              mitigationPlan: (i.details as AnyRow)?.mitigation_plan,
-            })),
-            opportunities: opportunities.map((i) => ({
-              description: i.description,
-              owner: i.owner_name,
-              type: (i.details as AnyRow)?.opportunity_type,
-              nextStep: (i.details as AnyRow)?.next_step,
+            decisions: decisions.map((c) => {
+              const meta = (c.metadata ?? {}) as AnyRow;
+              return {
+                description: c.summary,
+                owner: c.suggested_owner_label,
+                rationale: meta.rationale ?? c.why_it_matters,
+              };
+            }),
+            risks: risks.map((c) => {
+              const meta = (c.metadata ?? {}) as AnyRow;
+              return {
+                description: c.summary,
+                owner: c.suggested_owner_label,
+                category: meta.category,
+                likelihood: meta.likelihood,
+                impact: meta.impact,
+                mitigationPlan: meta.mitigation_plan ?? c.next_action,
+              };
+            }),
+            // Pipeline B does not model `opportunity` as a card_type. Surface
+            // an explicit flag so the caller (and the model) does not invent
+            // opportunities. We can extend the classifier later to add an
+            // opportunity card_type if needed.
+            opportunities: [] as Array<{
+              description: unknown;
+              owner: unknown;
+              type: unknown;
+              nextStep: unknown;
+            }>,
+            opportunitiesUnavailable: true,
+            // NEW: Pipeline B captures action items as task / open_question /
+            // requirement cards with `next_action` filled in. Surface them
+            // here since they're highly useful in a meeting view.
+            actionItems: actionItems.map((c) => ({
+              description: c.title,
+              owner: c.suggested_owner_label,
+              nextAction: c.next_action,
             })),
           };
         },

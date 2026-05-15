@@ -178,32 +178,73 @@ export async function findMarketingSourceCandidates(params: {
     }
   }
 
-  if (sourceEnabled(params.sourceTypes, "ai_insights")) {
+  // Pipeline B: pull marketing-relevant source candidates from insight_cards.
+  // We accept both the legacy "ai_insights" source-type key (kept for backwards
+  // compatibility with callers) and the new "insight_cards" key.
+  if (
+    sourceEnabled(params.sourceTypes, "ai_insights") ||
+    sourceEnabled(params.sourceTypes, "insight_cards")
+  ) {
+    const marketingCardTypes = [
+      "project_update",
+      "decision",
+      "change_management",
+    ];
+
     let query = supabase
-      .from("ai_insights")
-      .select("id,title,description,created_at,meeting_date,project_id,project_name,severity,insight_type,exact_quotes_text")
+      .from("insight_cards")
+      .select(
+        "id,title,summary,why_it_matters,created_at,last_seen_at,card_type,confidence,attribution_status,primary_target_id,intelligence_targets:primary_target_id(id,project_id,name)",
+      )
+      .neq("attribution_status", "rejected")
+      .in("card_type", marketingCardTypes)
       .order("created_at", { ascending: false, nullsFirst: false })
       .limit(limit);
-    if (params.projectId != null) query = query.eq("project_id", params.projectId);
     if (params.dateRange?.start) query = query.gte("created_at", params.dateRange.start);
     if (params.dateRange?.end) query = query.lte("created_at", params.dateRange.end);
-    const { data, error } = await query;
-    if (error) throw dbError("findMarketingSourceCandidates.ai_insights", error.message);
 
-    for (const row of data ?? []) {
-      const summary = nonEmpty(row.exact_quotes_text) ?? nonEmpty(row.description);
+    const { data, error } = await query;
+    if (error) throw dbError("findMarketingSourceCandidates.insight_cards", error.message);
+
+    type InsightCardRow = {
+      id: string;
+      title: string;
+      summary: string | null;
+      why_it_matters: string | null;
+      created_at: string | null;
+      last_seen_at: string | null;
+      card_type: string;
+      confidence: string;
+      intelligence_targets: { id: string; project_id: number | null; name: string | null } | null;
+    };
+
+    for (const rawRow of data ?? []) {
+      const row = rawRow as unknown as InsightCardRow;
+      const target = row.intelligence_targets ?? null;
+      const rowProjectId = target?.project_id ?? null;
+
+      if (params.projectId != null && rowProjectId !== params.projectId) continue;
+
+      const summary = nonEmpty(row.summary) ?? nonEmpty(row.why_it_matters);
       if (!summary) continue;
+
+      const projectName = target?.name ?? null;
+      const conf: "low" | "medium" | "high" =
+        row.confidence === "high" || row.confidence === "medium"
+          ? (row.confidence as "high" | "medium")
+          : "low";
+
       candidates.push({
-        sourceTable: "ai_insights",
-        sourceId: String(row.id),
+        sourceTable: "insight_cards",
+        sourceId: row.id,
         sourceTitle: nonEmpty(row.title) ?? "AI insight",
-        sourceDate: row.meeting_date ?? row.created_at ?? null,
+        sourceDate: row.last_seen_at ?? row.created_at ?? null,
         sourceUrl: null,
-        projectId: row.project_id ?? null,
-        projectName: row.project_name ?? null,
+        projectId: rowProjectId,
+        projectName,
         summary: truncate(summary),
-        confidence: row.severity ? "medium" : "low",
-        citationText: `${row.title}${row.project_name ? ` - ${row.project_name}` : ""}`,
+        confidence: conf,
+        citationText: `${row.title}${projectName ? ` - ${projectName}` : ""}`,
       });
     }
   }

@@ -11,6 +11,17 @@ import { createOutlookOperationsTools } from "./outlook-operations";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 import type { MeetingIntelligenceWidgetPayload } from "@/lib/ai/assistant-widgets";
+import {
+  RISK_CARD_TYPES,
+  DECISION_CARD_TYPES,
+  ACTION_CARD_TYPES,
+  deriveSeverity,
+  resolveTargetIdsForProjects,
+  findInsightCardIdsBySourceDocuments,
+  insightCardBaseQuery,
+  sortByUrgencyDesc,
+  type InsightCardWithTarget,
+} from "@/lib/ai/insight-cards";
 
 // Existing AI tool outputs are heterogeneous Supabase rows from many tables/views.
 // Keep this broad row shape until the tool layer is split into typed modules.
@@ -240,27 +251,32 @@ function extractSentences(content: unknown, terms: RegExp, limit: number): strin
 
 function buildMeetingIntelligenceFromRows(params: {
   rows: AnyRow[];
-  insights: AnyRow[];
+  // Pipeline B: insight cards grouped by source_document_id (meeting metadata id).
+  insightsByMeeting: Map<string, InsightCardWithTarget[]>;
   dateLabel: string;
   intent: "completed" | "insights" | "risks" | "decisions" | "actions" | "summary";
   limit: number;
   retrievalNote?: string;
+  // Pipeline B has no `opportunity` card_type — surface that explicitly to the model.
+  opportunitiesUnavailable?: boolean;
 }): MeetingIntelligenceWidgetPayload {
-  const insightsByMeeting = new Map<string, AnyRow[]>();
-  for (const insight of params.insights) {
-    const id = String(insight.metadata_id ?? "");
-    if (!id) continue;
-    const rows = insightsByMeeting.get(id) ?? [];
-    rows.push(insight);
-    insightsByMeeting.set(id, rows);
-  }
+  const insightsByMeeting = params.insightsByMeeting;
 
   const meetings = params.rows.slice(0, params.limit).map((row) => {
-    const meetingInsights = insightsByMeeting.get(String(row.id)) ?? [];
-    const riskInsights = meetingInsights.filter((insight) => lowerStatus(insight.type) === "risk");
-    const decisionInsights = meetingInsights.filter((insight) => lowerStatus(insight.type) === "decision");
+    const meetingCards = insightsByMeeting.get(String(row.id)) ?? [];
+    const riskInsights = meetingCards.filter((c) =>
+      RISK_CARD_TYPES.includes(c.card_type as typeof RISK_CARD_TYPES[number]),
+    );
+    const decisionInsights = meetingCards.filter((c) =>
+      DECISION_CARD_TYPES.includes(c.card_type as typeof DECISION_CARD_TYPES[number]),
+    );
+    const actionCards = meetingCards.filter((c) =>
+      ACTION_CARD_TYPES.includes(c.card_type as typeof ACTION_CARD_TYPES[number]),
+    );
     const criticalRisks = [
-      ...riskInsights.map((insight) => trimText(insight.description, 240)).filter((value): value is string => Boolean(value)),
+      ...riskInsights
+        .map((c) => trimText(c.summary ?? c.why_it_matters ?? c.title, 240))
+        .filter((value): value is string => Boolean(value)),
       ...extractSentences(
         `${row.summary ?? ""} ${row.overview ?? ""} ${row.content ?? ""}`,
         /\b(risk|critical|blocked|delay|delayed|issue|concern|exposure|problem|missing|late|overdue)\b/i,
@@ -269,7 +285,9 @@ function buildMeetingIntelligenceFromRows(params: {
     ].slice(0, 4);
     const decisions = [
       ...parseTextList(row.decisions),
-      ...decisionInsights.map((insight) => trimText(insight.description, 240)).filter((value): value is string => Boolean(value)),
+      ...decisionInsights
+        .map((c) => trimText(c.summary ?? c.title, 240))
+        .filter((value): value is string => Boolean(value)),
       ...extractSentences(
         `${row.summary ?? ""} ${row.overview ?? ""} ${row.content ?? ""}`,
         /\b(decided|decision|approved|rejected|agreed|confirmed|selected)\b/i,
@@ -278,6 +296,9 @@ function buildMeetingIntelligenceFromRows(params: {
     ].slice(0, 4);
     const actionItems = [
       ...parseTextList(row.action_items),
+      ...actionCards
+        .map((c) => trimText(c.next_action ?? c.summary ?? c.title, 240))
+        .filter((value): value is string => Boolean(value)),
       ...extractSentences(
         `${row.summary ?? ""} ${row.overview ?? ""} ${row.content ?? ""}`,
         /\b(action item|follow up|follow-up|needs to|must|assigned|owner|due|by friday|by monday)\b/i,
@@ -337,6 +358,9 @@ function buildMeetingIntelligenceFromRows(params: {
       decisionCount > 0
         ? `${decisionCount} decision signal${decisionCount === 1 ? "" : "s"} found across the matched meetings.`
         : "No decision signals were found in the matched meetings.",
+      ...(params.opportunitiesUnavailable
+        ? ["Opportunity tracking is not available in the current intelligence pipeline; only risks, decisions, and actions are surfaced."]
+        : []),
     ],
     recommendedNextActions:
       meetings.length === 0
@@ -430,7 +454,7 @@ export function createProjectTools(
             return {
               ...buildMeetingIntelligenceFromRows({
                 rows: [],
-                insights: [],
+                insightsByMeeting: new Map(),
                 dateLabel: startDate && endDate ? `${startDate} to ${endDate}` : "No accessible project scope",
                 intent: intent ?? "summary",
                 limit: limit ?? 10,
@@ -499,23 +523,44 @@ export function createProjectTools(
           }
 
           const ids = meetingRows.map((row) => String(row.id)).filter(Boolean);
-          const { data: insightRows, error: insightError } = ids.length > 0
-            ? await supabase
-                .from("insights")
-                .select("metadata_id,type,description,owner_name,status,details,created_at")
-                .in("metadata_id", ids)
-            : { data: [], error: null };
-          if (insightError) {
-            throw new Error(`Meeting insight lookup failed: ${insightError.message}`);
+
+          // Pipeline B: source_document_id (meeting metadata id) → insight_card_evidence → insight_cards.
+          // Legacy Pipeline A read `insights.metadata_id IN (ids)` directly.
+          const insightsByMeeting = new Map<string, InsightCardWithTarget[]>();
+          if (ids.length > 0) {
+            const { cardIdsByDocId, allCardIds } = await findInsightCardIdsBySourceDocuments(
+              supabase,
+              ids,
+            );
+            if (allCardIds.length > 0) {
+              const { data: cardRows, error: cardErr } = await insightCardBaseQuery(supabase)
+                .in("id", allCardIds);
+              if (cardErr) {
+                throw new Error(`Meeting insight card lookup failed: ${cardErr.message}`);
+              }
+              const cards = ((cardRows ?? []) as unknown) as InsightCardWithTarget[];
+              const cardById = new Map<string, InsightCardWithTarget>(
+                cards.map((c) => [c.id, c]),
+              );
+              for (const [docId, cardIds] of cardIdsByDocId.entries()) {
+                const bucket: InsightCardWithTarget[] = [];
+                for (const cid of cardIds) {
+                  const c = cardById.get(cid);
+                  if (c) bucket.push(c);
+                }
+                if (bucket.length > 0) insightsByMeeting.set(docId, bucket);
+              }
+            }
           }
 
           return buildMeetingIntelligenceFromRows({
             rows: meetingRows,
-            insights: (insightRows ?? []) as AnyRow[],
+            insightsByMeeting,
             dateLabel: window.dateLabel,
             intent: intent ?? "summary",
             limit: targetLimit,
             retrievalNote,
+            opportunitiesUnavailable: true,
           });
         },
       ),
@@ -1239,9 +1284,19 @@ export function createProjectTools(
             };
           }
 
+          // Pipeline B: resolve project_id → primary_target_id, then read insight_cards.
+          // ACTIVE_CARD_STATUSES filter is applied by `insightCardBaseQuery`, replacing the
+          // legacy Pipeline A `resolved` flag. project_issue_summary and project_health_dashboard
+          // views are intentionally left untouched (they may pull from non-Pipeline-A data;
+          // deferred to a separate cleanup pass).
+          const projRiskTargetMap = await resolveTargetIdsForProjects(supabase, projectIds);
+          const projRiskTargetIds = Array.from(projRiskTargetMap.values());
+          const targetIdToProjectId = new Map<string, number>();
+          for (const [pid, tid] of projRiskTargetMap.entries()) targetIdToProjectId.set(tid, pid);
+
           const [risksRes, insightsRes, issueRes, healthRes, meetingRes] =
             await Promise.all([
-               
+
               supabase
                 .from("risks" as never)
                 .select(
@@ -1250,14 +1305,12 @@ export function createProjectTools(
                 .in("project_id", projectIds)
                 .order("created_at", { ascending: false })
                 .limit(2000) as unknown as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
-              supabase
-                .from("ai_insights")
-                .select(
-                  "id, project_id, project_name, title, description, severity, insight_type, resolved, created_at",
-                )
-                .in("project_id", projectIds)
-                .order("created_at", { ascending: false })
-                .limit(2000),
+              projRiskTargetIds.length > 0
+                ? insightCardBaseQuery(supabase)
+                    .in("primary_target_id", projRiskTargetIds)
+                    .in("card_type", [...RISK_CARD_TYPES, "change_management"])
+                    .limit(2000)
+                : Promise.resolve({ data: [], error: null }),
               supabase
                 .from("project_issue_summary")
                 .select("project_id, total_issues, total_cost")
@@ -1276,7 +1329,7 @@ export function createProjectTools(
             ]);
 
           const risks = (risksRes.data ?? []) as AnyRow[];
-          const insights = (insightsRes.data ?? []) as AnyRow[];
+          const insights = (((insightsRes as { data: unknown }).data) ?? []) as unknown as InsightCardWithTarget[];
           const issueRows = (issueRes.data ?? []) as AnyRow[];
           const healthRows = (healthRes.data ?? []) as AnyRow[];
           const meetings = (meetingRes.data ?? []) as AnyRow[];
@@ -1315,15 +1368,15 @@ export function createProjectTools(
             riskByProject.set(row.project_id, arr);
           });
 
-          const insightsByProject = new Map<number, AnyRow[]>();
-          insights.forEach((row) => {
-            if (typeof row.project_id !== "number") return;
-            const resolved = Number(row.resolved ?? 0) === 1;
-            if (resolved) return;
-            const arr = insightsByProject.get(row.project_id) ?? [];
-            arr.push(row);
-            insightsByProject.set(row.project_id, arr);
-          });
+          // Pipeline B: group insight_cards by project_id via target_id reverse lookup.
+          const insightsByProject = new Map<number, InsightCardWithTarget[]>();
+          for (const card of insights) {
+            const pid = targetIdToProjectId.get(card.primary_target_id);
+            if (typeof pid !== "number") continue;
+            const arr = insightsByProject.get(pid) ?? [];
+            arr.push(card);
+            insightsByProject.set(pid, arr);
+          }
 
           const riskyProjects = projects
             .map((project) => {
@@ -1334,8 +1387,9 @@ export function createProjectTools(
               const health = healthByProject.get(pid);
               const latestMeeting = latestMeetingByProject.get(pid);
 
-              const criticalInsightCount = projectInsights.filter((i) => {
-                const sev = String(i.severity ?? "").toLowerCase();
+              // Pipeline B: derive severity from card_type + confidence.
+              const criticalInsightCount = projectInsights.filter((c) => {
+                const sev = deriveSeverity(c);
                 return sev === "critical" || sev === "high";
               }).length;
 
@@ -1478,6 +1532,11 @@ export function createProjectTools(
           return { error: accessCheck.error };
         }
 
+        // Pipeline B: resolve project_id → primary_target_id; sort cards client-side via
+        // sortByUrgencyDesc (no DB `severity` column to order on).
+        const riskAnalysisTargetMap = await resolveTargetIdsForProjects(supabase, [resolvedId]);
+        const riskAnalysisTargetId = riskAnalysisTargetMap.get(resolvedId) ?? null;
+
         const [
           insightsRes,
           changeOrdersRes,
@@ -1487,13 +1546,12 @@ export function createProjectTools(
           budgetRes,
           meetingsRes,
         ] = await Promise.all([
-          supabase
-            .from("ai_insights")
-            .select("*")
-            .eq("project_id", resolvedId)
-            .in("resolved", [0])
-            .order("severity", { ascending: true })
-            .limit(20),
+          riskAnalysisTargetId
+            ? insightCardBaseQuery(supabase)
+                .eq("primary_target_id", riskAnalysisTargetId)
+                .in("card_type", [...RISK_CARD_TYPES, "process_issue", "open_question"])
+                .limit(200)
+            : Promise.resolve({ data: [], error: null }),
           supabase
             .from("prime_contract_change_orders")
             .select("id, title, total_amount, status, due_date, description")
@@ -1535,7 +1593,8 @@ export function createProjectTools(
         ]);
 
         const project = projectRes.data as AnyRow | null;
-        const insights = (insightsRes.data ?? []) as AnyRow[];
+        const insightCardsAll = (((insightsRes as { data: unknown }).data) ?? []) as unknown as InsightCardWithTarget[];
+        const insights = sortByUrgencyDesc(insightCardsAll).slice(0, 20);
         const changeOrders = (changeOrdersRes.data ?? []) as AnyRow[];
         const rfis = (rfisRes.data ?? []) as AnyRow[];
         const tasks = (scheduleRes.data ?? []) as AnyRow[];
@@ -1587,9 +1646,11 @@ export function createProjectTools(
         const overdueRFIs = rfis.filter(
           (r) => r.due_date && r.due_date < now,
         );
-        const criticalInsights = insights.filter(
-          (i) => i.severity === "critical" || i.severity === "high",
-        );
+        // Pipeline B: derive severity from card_type + confidence.
+        const criticalInsights = insights.filter((c) => {
+          const sev = deriveSeverity(c);
+          return sev === "critical" || sev === "high";
+        });
 
         return {
           sourceRef: `[Source: Risk Analysis - ${resolvedName ?? project?.name ?? `Project ${resolvedId}`}]`,
@@ -1619,15 +1680,25 @@ export function createProjectTools(
             approvedChangeOrderTotal: approvedCOAmount,
             budgetGrowthPct,
           },
-          criticalInsights: criticalInsights.slice(0, 10).map((i) => ({
-            title: i.title,
-            description: i.description,
-            severity: i.severity,
-            type: i.insight_type,
-            financialImpact: i.financial_impact,
-            timelineImpactDays: i.timeline_impact_days,
-            businessImpact: i.business_impact,
-          })),
+          criticalInsights: criticalInsights.slice(0, 10).map((card) => {
+            const meta = (card.metadata ?? {}) as Record<string, unknown>;
+            return {
+              title: card.title,
+              description: card.summary ?? card.why_it_matters ?? null,
+              severity: deriveSeverity(card),
+              type: card.card_type,
+              financialImpact:
+                typeof meta.financial_impact === "number" ? meta.financial_impact : null,
+              timelineImpactDays:
+                typeof meta.timeline_impact_days === "number"
+                  ? meta.timeline_impact_days
+                  : null,
+              businessImpact:
+                (typeof meta.business_impact === "string" ? meta.business_impact : null) ??
+                card.summary ??
+                null,
+            };
+          }),
           overdueItems: {
             tasks: overdueTasks.slice(0, 10).map((t) => ({
               name: t.name,
@@ -2007,23 +2078,26 @@ export function createProjectTools(
           };
         }
 
-        const insightQuery = supabase
-          .from("ai_insights")
-          .select("*")
-          .in("project_id", scopedProjectIds)
-          .order("created_at", { ascending: false })
-          .limit((maxResults ?? 20) * 3); // fetch extra to account for JS-side resolved filter
-
+        // Pipeline B: resolve project_ids → target_ids, then read insight_cards for the FULL
+        // picture (any card_type). ACTIVE_CARD_STATUSES is enforced by insightCardBaseQuery,
+        // replacing the legacy `resolved` flag.
         const sourceErrors: string[] = [];
-        const { data: insightRows, error: insightError } = await insightQuery;
-        if (insightError) {
-          sourceErrors.push(`ai_insights lookup failed: ${insightError.message}`);
+        const actionTargetMap = await resolveTargetIdsForProjects(supabase, scopedProjectIds);
+        const actionTargetIds = Array.from(actionTargetMap.values());
+        const targetIdToProject = new Map<string, number>();
+        for (const [pid, tid] of actionTargetMap.entries()) targetIdToProject.set(tid, pid);
+
+        let insightCardsForActions: InsightCardWithTarget[] = [];
+        if (actionTargetIds.length > 0) {
+          const { data: cardRows, error: cardErr } = await insightCardBaseQuery(supabase)
+            .in("primary_target_id", actionTargetIds)
+            .limit((maxResults ?? 20) * 3);
+          if (cardErr) {
+            sourceErrors.push(`insight_cards lookup failed: ${cardErr.message}`);
+          }
+          insightCardsForActions = ((cardRows ?? []) as unknown) as InsightCardWithTarget[];
         }
-        // Filter unresolved in JS — handles boolean false, integer 0, and null
-        const insights = ((insightRows ?? []) as AnyRow[]).filter((row) => {
-          const r = row.resolved;
-          return r === null || r === undefined || r === false || r === 0 || r === "0";
-        }).slice(0, maxResults ?? 20);
+        const insights = sortByUrgencyDesc(insightCardsForActions).slice(0, maxResults ?? 20);
 
         // Meeting summaries and structured action items are the richest signal.
         const docQuery = supabase
@@ -2132,19 +2206,29 @@ export function createProjectTools(
           .sort((a, b) => b.priority - a.priority)
           .slice(0, maxResults ?? 20);
 
+        // Pipeline B: derive severity, due date from card.metadata.
         const prioritizedInsights = insights
-          .map((i) => {
-            const severity = String(i.severity ?? "").toLowerCase();
+          .map((card) => {
+            const sev = deriveSeverity(card);
             const severityWeight =
-              severity === "critical" ? 100 : severity === "high" ? 80 : severity === "medium" ? 60 : 40;
+              sev === "critical" ? 100 : sev === "high" ? 80 : sev === "medium" ? 60 : 40;
+            const meta = (card.metadata ?? {}) as Record<string, unknown>;
+            const dueDate =
+              typeof meta.due_date === "string" ? meta.due_date : null;
+            const daysUntilDue =
+              dueDate && /^\d{4}-\d{2}-\d{2}/.test(dueDate)
+                ? Math.ceil(
+                    (new Date(dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+                  )
+                : null;
             return {
-              title: i.title,
-              description: i.description,
-              type: i.insight_type,
-              severity: i.severity,
-              daysUntilDue: i.days_until_due,
-              dueDate: i.due_date,
-              assignee: i.assignee,
+              title: card.title,
+              description: card.summary ?? card.why_it_matters ?? null,
+              type: card.card_type,
+              severity: sev,
+              daysUntilDue,
+              dueDate,
+              assignee: card.suggested_owner_label,
               priority: severityWeight,
             };
           })
@@ -2156,16 +2240,29 @@ export function createProjectTools(
           openTasks,
           priorityItems: prioritizedInsights,
           structuredActionItems: prioritizedMeetingActions,
-          unresolvedInsights: insights.map((i) => ({
-            title: i.title,
-            description: i.description,
-            type: i.insight_type,
-            severity: i.severity,
-            financialImpact: i.financial_impact,
-            timelineImpactDays: i.timeline_impact_days,
-            projectName: i.project_name,
-            businessImpact: i.business_impact,
-          })),
+          unresolvedInsights: insights.map((card) => {
+            const meta = (card.metadata ?? {}) as Record<string, unknown>;
+            const pid = targetIdToProject.get(card.primary_target_id);
+            return {
+              title: card.title,
+              description: card.summary ?? card.why_it_matters ?? null,
+              type: card.card_type,
+              severity: deriveSeverity(card),
+              financialImpact:
+                typeof meta.financial_impact === "number" ? meta.financial_impact : null,
+              timelineImpactDays:
+                typeof meta.timeline_impact_days === "number"
+                  ? meta.timeline_impact_days
+                  : null,
+              projectName:
+                card.intelligence_targets?.name ??
+                (typeof pid === "number" ? `Project ${pid}` : null),
+              businessImpact:
+                (typeof meta.business_impact === "string" ? meta.business_impact : null) ??
+                card.summary ??
+                null,
+            };
+          }),
           meetingInsights: docs.map((d) => ({
             sourceRef: `[Source: Meeting - "${d.title}" - ${d.date}]`,
             meeting: d.title,

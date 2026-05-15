@@ -3,15 +3,21 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  insightCardBaseQuery,
+  resolveTargetIdsForProjects,
+  deriveSeverity,
+  type InsightCardWithTarget,
+} from "@/lib/ai/insight-cards";
 
 /**
  * GET /api/financial-insights/alerts
  *
- * Returns financial alerts from the ai_insights table.
+ * Returns financial alerts from the Pipeline B `insight_cards` table.
  *
  * Query params:
- *   ?status=open         — filter by status (default: "open")
- *   ?severity=critical   — optional severity filter
+ *   ?status=open         — filter by current_status (default: "open")
+ *   ?severity=critical   — optional derived-severity filter
  *   ?project_id=67       — optional project filter
  *   ?limit=50            — pagination limit (default: 50, max: 200)
  */
@@ -36,31 +42,17 @@ export const GET = withApiGuardrails("/api/financial-insights/alerts#GET", async
 
   const supabase = createServiceClient();
 
-    // Build the query — financial insights use insight_type values that
-    // start with "budget_" or specific financial types.
-    const financialInsightTypes = [
-      "budget_overrun",
-      "budget_mismatch",
-      "cash_gap",
-      "negative_net_position",
-      "financial_anomaly",
-      "cost_overrun",
-    ];
+  // Financial alerts live under card types tied to monetary exposure.
+  const financialCardTypes = ["financial_exposure", "risk", "change_management"];
 
-    let query = supabase
-      .from("ai_insights")
-      .select("*", { count: "exact" })
-      .in("insight_type", financialInsightTypes)
-      .order("created_at", { ascending: false })
-      .limit(limit);
+  let query = insightCardBaseQuery(supabase, { includeAnyStatus: true })
+    .in("card_type", financialCardTypes)
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
-    if (status) {
-      query = query.eq("status", status);
-    }
-
-    if (severity) {
-      query = query.eq("severity", severity);
-    }
+  if (status) {
+    query = query.eq("current_status", status);
+  }
 
   if (projectId) {
     const projectIdNum = parseInt(projectId, 10);
@@ -73,10 +65,15 @@ export const GET = withApiGuardrails("/api/financial-insights/alerts#GET", async
         details: { project_id: projectId },
       });
     }
-    query = query.eq("project_id", projectIdNum);
+    const targetMap = await resolveTargetIdsForProjects(supabase, [projectIdNum]);
+    const targetId = targetMap.get(projectIdNum);
+    if (!targetId) {
+      return NextResponse.json({ alerts: [], total: 0 });
+    }
+    query = query.eq("primary_target_id", targetId);
   }
 
-  const { data, error, count } = await query;
+  const { data, error } = await query;
 
   if (error) {
     throw new GuardrailError({
@@ -87,8 +84,16 @@ export const GET = withApiGuardrails("/api/financial-insights/alerts#GET", async
     });
   }
 
+  let cards = (data ?? []) as unknown as InsightCardWithTarget[];
+
+  // Derived-severity filter happens client-side because Pipeline B has no
+  // severity column.
+  if (severity) {
+    cards = cards.filter((card) => deriveSeverity(card) === severity);
+  }
+
   return NextResponse.json({
-    alerts: data ?? [],
-    total: count ?? 0,
+    alerts: cards,
+    total: cards.length,
   });
 });

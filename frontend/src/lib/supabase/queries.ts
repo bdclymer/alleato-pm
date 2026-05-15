@@ -13,6 +13,10 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import {
+  insightCardBaseQuery,
+  resolveTargetIdsForProjects,
+} from "@/lib/ai/insight-cards";
 
 // =============================================================================
 // Project Queries
@@ -302,10 +306,16 @@ export async function getProjectInsights(
     limit?: number;
   },
 ) {
-  let query = supabase
-    .from("ai_insights")
-    .select("*")
-    .eq("project_id", projectId);
+  const targetMap = await resolveTargetIdsForProjects(supabase, [projectId]);
+  const targetId = targetMap.get(projectId);
+  if (!targetId) {
+    return { data: [], error: null } as const;
+  }
+
+  let query = insightCardBaseQuery(supabase, { includeAnyStatus: true }).eq(
+    "primary_target_id",
+    targetId,
+  );
 
   if (options?.limit) {
     query = query.limit(options.limit);

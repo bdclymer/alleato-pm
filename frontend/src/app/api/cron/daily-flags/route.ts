@@ -1,12 +1,12 @@
 /**
  * POST /api/cron/daily-flags
  *
- * Daily cron job that scans all active projects and auto-creates ai_insights
- * records for:
- *   1. Budget variances exceeding 10%
- *   2. Past-due RFIs
- *   3. Late schedule tasks
- *   4. Stale change events (unresolved > 7 days)
+ * Daily cron job that scans all active projects and auto-creates Pipeline B
+ * `insight_cards` records for:
+ *   1. Budget variances exceeding 10%        → card_type=financial_exposure
+ *   2. Past-due RFIs                          → card_type=schedule_risk
+ *   3. Late schedule tasks                    → card_type=schedule_risk
+ *   4. Stale change events (unresolved > 7 days) → card_type=change_management
  *
  * Secured via CRON_SECRET env var (set in Vercel).
  * Vercel cron schedule: "0 6 * * *" (daily at 6am UTC)
@@ -19,10 +19,14 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { logEvent } from "@/lib/guardrails/observability";
 import { logger } from "@/lib/logger";
+import {
+  resolveTargetIdsForProjects,
+  severityToConfidence,
+} from "@/lib/ai/insight-cards";
 
 export const maxDuration = 120;
 
-type InsightInsert = Database["public"]["Tables"]["ai_insights"]["Insert"];
+type InsightCardInsert = Database["public"]["Tables"]["insight_cards"]["Insert"];
 
 interface FlagStats {
   budgetFlags: number;
@@ -30,6 +34,19 @@ interface FlagStats {
   scheduleFlags: number;
   changeEventFlags: number;
 }
+
+// Per-flag metadata so we can dedupe on (target, alert_subtype) without
+// requiring exact title matches.
+type FlagSubtype =
+  | "budget_variance"
+  | "past_due_rfi"
+  | "schedule_slippage"
+  | "unresolved_change_event";
+
+type FlagDraft = {
+  subtype: FlagSubtype;
+  insert: InsightCardInsert;
+};
 
 const BATCH_SIZE = 10;
 
@@ -49,9 +66,9 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
 
   const supabase = createServiceClient();
   const now = new Date();
-  const todayStr = now.toISOString().split("T")[0];
+  const nowIso = now.toISOString();
+  const todayStr = nowIso.split("T")[0];
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   // 1. Get active projects
   const { data: projects, error: projectsError } = await supabase
@@ -75,6 +92,12 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
     return NextResponse.json({ success: true, projectsChecked: 0, flagsCreated: 0, breakdown: { budgetFlags: 0, rfiFlags: 0, scheduleFlags: 0, changeEventFlags: 0 } });
   }
 
+  // Resolve intelligence_targets up front so we don't hit it inside the loop.
+  const targetMap = await resolveTargetIdsForProjects(
+    supabase,
+    projects.map((p) => p.id),
+  );
+
   const stats: FlagStats = { budgetFlags: 0, rfiFlags: 0, scheduleFlags: 0, changeEventFlags: 0 };
   let totalFlagsCreated = 0;
 
@@ -83,7 +106,14 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
     const batch = projects.slice(i, i + BATCH_SIZE);
 
     await Promise.all(batch.map(async (project) => {
-      const insightsToInsert: InsightInsert[] = [];
+      const targetId = targetMap.get(project.id);
+      if (!targetId) {
+        // Skip projects without an active intelligence_target — we can't write
+        // an insight_card without one.
+        return;
+      }
+
+      const drafts: FlagDraft[] = [];
 
       // Run all 4 checks in parallel for this project
       const [budgetResult, rfiResult, scheduleResult, ceResult] = await Promise.all([
@@ -121,25 +151,50 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
           .not("status", "in", "(Approved,Rejected,Void,Closed)"),
       ]);
 
+      const makeBase = (severity: "critical" | "warning"): Pick<
+        InsightCardInsert,
+        | "primary_target_id"
+        | "confidence"
+        | "current_status"
+        | "attribution_status"
+        | "first_seen_at"
+        | "last_seen_at"
+        | "source_count"
+        | "compiler_version"
+      > => ({
+        primary_target_id: targetId,
+        confidence: severityToConfidence(severity),
+        current_status: "open",
+        attribution_status: "auto_assigned",
+        first_seen_at: nowIso,
+        last_seen_at: nowIso,
+        source_count: 1,
+        compiler_version: "cron_daily_flags_v1",
+      });
+
       // Process budget variance
       if (budgetResult.data?.budget_utilization && budgetResult.data.budget_utilization > 1.1) {
         const utilization = budgetResult.data.budget_utilization;
         const variancePercent = Math.round((utilization - 1) * 100);
-        const severity = utilization > 1.2 ? "critical" : "warning";
+        const severity: "critical" | "warning" = utilization > 1.2 ? "critical" : "warning";
 
-        insightsToInsert.push({
-          project_id: project.id,
-          project_name: project.name,
-          title: `Budget variance exceeds ${variancePercent}% on ${project.name}`,
-          description: `Budget utilization is at ${Math.round(utilization * 100)}% — costs have exceeded the approved budget by ${variancePercent}%. Immediate review recommended.`,
-          insight_type: "budget_variance",
-          severity,
-          status: "open",
-          resolved: 0,
-          financial_impact: null,
-          confidence_score: 1.0,
-          metadata: { budget_utilization: utilization, variance_percent: variancePercent },
-          created_at: now.toISOString(),
+        drafts.push({
+          subtype: "budget_variance",
+          insert: {
+            ...makeBase(severity),
+            card_type: "financial_exposure",
+            title: `Budget variance exceeds ${variancePercent}% on ${project.name}`,
+            summary: `Budget utilization is at ${Math.round(utilization * 100)}% — costs have exceeded the approved budget by ${variancePercent}%. Immediate review recommended.`,
+            why_it_matters:
+              severity === "critical"
+                ? "Costs are significantly over budget — leadership review required."
+                : "Budget tracking off plan — review needed.",
+            metadata: {
+              alert_subtype: "budget_variance",
+              budget_utilization: utilization,
+              variance_percent: variancePercent,
+            },
+          },
         });
       }
 
@@ -153,21 +208,24 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
             return Math.floor((now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
           })
         );
-        const severity = maxOverdueDays > 7 ? "critical" : "warning";
+        const severity: "critical" | "warning" = maxOverdueDays > 7 ? "critical" : "warning";
 
-        insightsToInsert.push({
-          project_id: project.id,
-          project_name: project.name,
-          title: `${overdueRfis.length} past-due RFI${overdueRfis.length > 1 ? "s" : ""} on ${project.name}`,
-          description: `${overdueRfis.length} RFI${overdueRfis.length > 1 ? "s are" : " is"} past due (longest overdue: ${maxOverdueDays} days). Subjects: ${overdueRfis.slice(0, 3).map((r) => `#${r.number} "${r.subject}"`).join(", ")}${overdueRfis.length > 3 ? ` and ${overdueRfis.length - 3} more` : ""}.`,
-          insight_type: "past_due_rfi",
-          severity,
-          status: "open",
-          resolved: 0,
-          timeline_impact_days: maxOverdueDays,
-          confidence_score: 1.0,
-          metadata: { rfi_ids: rfiIds, count: overdueRfis.length, max_overdue_days: maxOverdueDays },
-          created_at: now.toISOString(),
+        drafts.push({
+          subtype: "past_due_rfi",
+          insert: {
+            ...makeBase(severity),
+            card_type: "schedule_risk",
+            title: `${overdueRfis.length} past-due RFI${overdueRfis.length > 1 ? "s" : ""} on ${project.name}`,
+            summary: `${overdueRfis.length} RFI${overdueRfis.length > 1 ? "s are" : " is"} past due (longest overdue: ${maxOverdueDays} days). Subjects: ${overdueRfis.slice(0, 3).map((r) => `#${r.number} "${r.subject}"`).join(", ")}${overdueRfis.length > 3 ? ` and ${overdueRfis.length - 3} more` : ""}.`,
+            why_it_matters: "Open RFIs past their due date typically block field progress.",
+            metadata: {
+              alert_subtype: "past_due_rfi",
+              rfi_ids: rfiIds,
+              count: overdueRfis.length,
+              max_overdue_days: maxOverdueDays,
+              timeline_impact_days: maxOverdueDays,
+            },
+          },
         });
       }
 
@@ -186,21 +244,27 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
             return Math.floor((now.getTime() - finish.getTime()) / (1000 * 60 * 60 * 24));
           })
         );
-        const severity = hasMilestone ? "critical" : "warning";
+        const severity: "critical" | "warning" = hasMilestone ? "critical" : "warning";
 
-        insightsToInsert.push({
-          project_id: project.id,
-          project_name: project.name,
-          title: `${lateTasks.length} late schedule task${lateTasks.length > 1 ? "s" : ""} on ${project.name}${hasMilestone ? " (includes milestones)" : ""}`,
-          description: `${lateTasks.length} task${lateTasks.length > 1 ? "s are" : " is"} past their finish date (longest: ${maxLateDays} days late).${hasMilestone ? " This includes milestone tasks which may impact downstream deliverables." : ""} Examples: ${lateTasks.slice(0, 3).map((t) => `"${t.name}"`).join(", ")}${lateTasks.length > 3 ? ` and ${lateTasks.length - 3} more` : ""}.`,
-          insight_type: "schedule_slippage",
-          severity,
-          status: "open",
-          resolved: 0,
-          timeline_impact_days: maxLateDays,
-          confidence_score: 1.0,
-          metadata: { task_ids: lateTasks.map((t) => t.id), count: lateTasks.length, has_milestone: hasMilestone, max_late_days: maxLateDays },
-          created_at: now.toISOString(),
+        drafts.push({
+          subtype: "schedule_slippage",
+          insert: {
+            ...makeBase(severity),
+            card_type: "schedule_risk",
+            title: `${lateTasks.length} late schedule task${lateTasks.length > 1 ? "s" : ""} on ${project.name}${hasMilestone ? " (includes milestones)" : ""}`,
+            summary: `${lateTasks.length} task${lateTasks.length > 1 ? "s are" : " is"} past their finish date (longest: ${maxLateDays} days late).${hasMilestone ? " This includes milestone tasks which may impact downstream deliverables." : ""} Examples: ${lateTasks.slice(0, 3).map((t) => `"${t.name}"`).join(", ")}${lateTasks.length > 3 ? ` and ${lateTasks.length - 3} more` : ""}.`,
+            why_it_matters: hasMilestone
+              ? "Milestone slip — downstream tasks and owner commitments at risk."
+              : "Schedule slipping — review recovery plan.",
+            metadata: {
+              alert_subtype: "schedule_slippage",
+              task_ids: lateTasks.map((t) => t.id),
+              count: lateTasks.length,
+              has_milestone: hasMilestone,
+              max_late_days: maxLateDays,
+              timeline_impact_days: maxLateDays,
+            },
+          },
         });
       }
 
@@ -213,44 +277,51 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
             return Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
           })
         );
-        const severity = maxStaleDays > 30 ? "critical" : "warning";
+        const severity: "critical" | "warning" = maxStaleDays > 30 ? "critical" : "warning";
 
-        insightsToInsert.push({
-          project_id: project.id,
-          project_name: project.name,
-          title: `${staleCEs.length} unresolved change event${staleCEs.length > 1 ? "s" : ""} on ${project.name}`,
-          description: `${staleCEs.length} change event${staleCEs.length > 1 ? "s have" : " has"} been open for more than 7 days (oldest: ${maxStaleDays} days). Events: ${staleCEs.slice(0, 3).map((ce) => `#${ce.number} "${ce.title}"`).join(", ")}${staleCEs.length > 3 ? ` and ${staleCEs.length - 3} more` : ""}.`,
-          insight_type: "unresolved_change_event",
-          severity,
-          status: "open",
-          resolved: 0,
-          timeline_impact_days: maxStaleDays,
-          confidence_score: 1.0,
-          metadata: { change_event_ids: staleCEs.map((ce) => ce.id), count: staleCEs.length, max_stale_days: maxStaleDays },
-          created_at: now.toISOString(),
+        drafts.push({
+          subtype: "unresolved_change_event",
+          insert: {
+            ...makeBase(severity),
+            card_type: "change_management",
+            title: `${staleCEs.length} unresolved change event${staleCEs.length > 1 ? "s" : ""} on ${project.name}`,
+            summary: `${staleCEs.length} change event${staleCEs.length > 1 ? "s have" : " has"} been open for more than 7 days (oldest: ${maxStaleDays} days). Events: ${staleCEs.slice(0, 3).map((ce) => `#${ce.number} "${ce.title}"`).join(", ")}${staleCEs.length > 3 ? ` and ${staleCEs.length - 3} more` : ""}.`,
+            why_it_matters: "Open change events delay cost/schedule certainty.",
+            metadata: {
+              alert_subtype: "unresolved_change_event",
+              change_event_ids: staleCEs.map((ce) => ce.id),
+              count: staleCEs.length,
+              max_stale_days: maxStaleDays,
+              timeline_impact_days: maxStaleDays,
+            },
+          },
         });
       }
 
-      // Dedup and insert
-      for (const insight of insightsToInsert) {
-        // Check if an unresolved insight with the same project + type already exists today
-        const { data: existing } = await supabase
-          .from("ai_insights")
-          .select("id")
-          .eq("project_id", insight.project_id!)
-          .eq("insight_type", insight.insight_type!)
-          .eq("resolved", 0)
-          .gte("created_at", `${todayStr}T00:00:00.000Z`)
-          .lte("created_at", `${todayStr}T23:59:59.999Z`)
-          .limit(1);
+      // Dedup and insert: skip if an open insight_card for this
+      // (target, alert_subtype) already exists today.
+      const todayStart = `${todayStr}T00:00:00.000Z`;
+      const todayEnd = `${todayStr}T23:59:59.999Z`;
 
-        if (existing && existing.length > 0) {
-          continue; // Skip duplicate
+      for (const draft of drafts) {
+        const { data: existing } = await supabase
+          .from("insight_cards")
+          .select("id, metadata")
+          .eq("primary_target_id", targetId)
+          .neq("current_status", "resolved")
+          .gte("created_at", todayStart)
+          .lte("created_at", todayEnd);
+
+        const dup = (existing ?? []).find(
+          (row) => (row.metadata as { alert_subtype?: string } | null)?.alert_subtype === draft.subtype,
+        );
+        if (dup) {
+          continue;
         }
 
         const { error: insertError } = await supabase
-          .from("ai_insights")
-          .insert(insight);
+          .from("insight_cards")
+          .insert(draft.insert);
 
         if (insertError) {
           logger.error({ msg: `[cron/daily-flags] Failed to insert insight for project ${project.id}:`, data: insertError });
@@ -258,10 +329,10 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
         }
 
         totalFlagsCreated++;
-        if (insight.insight_type === "budget_variance") stats.budgetFlags++;
-        else if (insight.insight_type === "past_due_rfi") stats.rfiFlags++;
-        else if (insight.insight_type === "schedule_slippage") stats.scheduleFlags++;
-        else if (insight.insight_type === "unresolved_change_event") stats.changeEventFlags++;
+        if (draft.subtype === "budget_variance") stats.budgetFlags++;
+        else if (draft.subtype === "past_due_rfi") stats.rfiFlags++;
+        else if (draft.subtype === "schedule_slippage") stats.scheduleFlags++;
+        else if (draft.subtype === "unresolved_change_event") stats.changeEventFlags++;
       }
     }));
   }
@@ -285,6 +356,6 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
     projectsChecked: projects.length,
     flagsCreated: totalFlagsCreated,
     breakdown: stats,
-    runAt: now.toISOString(),
+    runAt: nowIso,
   });
 });

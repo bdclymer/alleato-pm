@@ -6,17 +6,36 @@ import { logger } from "@/lib/logger";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createAcumaticaClient } from "@/lib/acumatica/client";
 import type { ProjectBudgetSummary } from "@/lib/acumatica/types";
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
+import {
+  resolveTargetIdsForProjects,
+  severityToConfidence,
+} from "@/lib/ai/insight-cards";
 
-type AiInsightInsert = Database["public"]["Tables"]["ai_insights"]["Insert"];
+type InsightCardInsert = Database["public"]["Tables"]["insight_cards"]["Insert"];
 
+/**
+ * Internal draft type — captures the fields we know about a financial alert
+ * before we resolve project_id → primary_target_id.
+ */
+type FinancialAlertDraft = {
+  projectId: number;
+  projectName: string;
+  title: string;
+  summary: string;
+  severity: "critical" | "warning" | "info";
+  cardType: "financial_exposure";
+  financialImpact: number;
+  businessImpact: string;
+  metadata: Record<string, unknown>;
+};
 
 /**
  * POST /api/financial-insights/scan
  *
  * Triggers a budget health scan across all projects that have an
  * acumatica_project_id. For each project it compares Alleato budget data
- * against Acumatica actuals and generates alerts for:
+ * against Acumatica actuals and writes Pipeline B insight_cards for:
  *   - Budget overruns (actual > budget)
  *   - Budget mismatches (Alleato budget vs Acumatica revised budget >10% diff)
  *   - Negative net position (expenses > income)
@@ -62,6 +81,12 @@ export const POST = withApiGuardrails(
         errors: ["No projects with acumatica_project_id found"],
       });
     }
+
+    // Resolve all project ids → intelligence_targets ids once up front.
+    const targetMap = await resolveTargetIdsForProjects(
+      supabase,
+      projects.map((p) => p.id),
+    );
 
     // Initialize Acumatica client
     const acumatica = createAcumaticaClient();
@@ -113,12 +138,12 @@ export const POST = withApiGuardrails(
           continue;
         }
 
-        const alerts: AiInsightInsert[] = [];
+        const drafts: FinancialAlertDraft[] = [];
 
         // 3a. Check: Budget Overrun — Acumatica actual cost > Alleato budget
         if (alleatoBudgetTotal > 0 && acuSummary.totals.actualCosts > alleatoBudgetTotal) {
           const overrunPercent = (acuSummary.totals.actualCosts / alleatoBudgetTotal) * 100;
-          let severity: string;
+          let severity: "critical" | "warning" | "info";
           if (overrunPercent > 150) {
             severity = "critical";
           } else if (overrunPercent > 120) {
@@ -129,24 +154,24 @@ export const POST = withApiGuardrails(
 
           const overrunAmount = acuSummary.totals.actualCosts - alleatoBudgetTotal;
 
-          alerts.push({
+          drafts.push({
+            projectId: project.id,
+            projectName,
             title: `Budget Overrun: ${projectName}`,
-            description: `Acumatica actual costs ($${acuSummary.totals.actualCosts.toLocaleString()}) exceed the Alleato budget ($${alleatoBudgetTotal.toLocaleString()}) by ${overrunPercent.toFixed(1)}%. Overrun amount: $${overrunAmount.toLocaleString()}.`,
+            summary: `Acumatica actual costs ($${acuSummary.totals.actualCosts.toLocaleString()}) exceed the Alleato budget ($${alleatoBudgetTotal.toLocaleString()}) by ${overrunPercent.toFixed(1)}%. Overrun amount: $${overrunAmount.toLocaleString()}.`,
             severity,
-            insight_type: "budget_overrun",
-            confidence_score: 0.95,
-            financial_impact: overrunAmount,
-            project_id: project.id,
-            project_name: projectName,
-            status: "open",
-            business_impact: severity === "critical"
+            cardType: "financial_exposure",
+            financialImpact: overrunAmount,
+            businessImpact: severity === "critical"
               ? "Severe cost overrun requiring immediate executive attention"
               : "Budget variance detected — review recommended",
             metadata: {
+              alert_subtype: "budget_overrun",
               alleato_budget: alleatoBudgetTotal,
               acumatica_actual: acuSummary.totals.actualCosts,
               overrun_percent: overrunPercent,
               acumatica_project_id: acumaticaProjectId,
+              financial_impact: overrunAmount,
               scan_timestamp: new Date().toISOString(),
             },
           });
@@ -158,22 +183,22 @@ export const POST = withApiGuardrails(
           const diffPercent = (diff / alleatoBudgetTotal) * 100;
 
           if (diffPercent > 10) {
-            alerts.push({
+            drafts.push({
+              projectId: project.id,
+              projectName,
               title: `Budget Mismatch: ${projectName}`,
-              description: `Alleato budget ($${alleatoBudgetTotal.toLocaleString()}) and Acumatica revised budget ($${acuSummary.totals.revisedBudget.toLocaleString()}) differ by ${diffPercent.toFixed(1)}% ($${diff.toLocaleString()}).`,
+              summary: `Alleato budget ($${alleatoBudgetTotal.toLocaleString()}) and Acumatica revised budget ($${acuSummary.totals.revisedBudget.toLocaleString()}) differ by ${diffPercent.toFixed(1)}% ($${diff.toLocaleString()}).`,
               severity: "warning",
-              insight_type: "budget_mismatch",
-              confidence_score: 0.9,
-              financial_impact: diff,
-              project_id: project.id,
-              project_name: projectName,
-              status: "open",
-              business_impact: "Budget records are out of sync between systems — reconciliation needed",
+              cardType: "financial_exposure",
+              financialImpact: diff,
+              businessImpact: "Budget records are out of sync between systems — reconciliation needed",
               metadata: {
+                alert_subtype: "budget_mismatch",
                 alleato_budget: alleatoBudgetTotal,
                 acumatica_revised_budget: acuSummary.totals.revisedBudget,
                 difference_percent: diffPercent,
                 acumatica_project_id: acumaticaProjectId,
+                financial_impact: diff,
                 scan_timestamp: new Date().toISOString(),
               },
             });
@@ -183,70 +208,101 @@ export const POST = withApiGuardrails(
         // 3c. Check: Negative Net Position — expenses > income
         if (acuSummary.totals.expenses > acuSummary.totals.income && acuSummary.totals.expenses > 0) {
           const deficit = acuSummary.totals.expenses - acuSummary.totals.income;
-          const severity = deficit > 100_000 ? "critical" : "warning";
+          const severity: "critical" | "warning" = deficit > 100_000 ? "critical" : "warning";
 
-          alerts.push({
+          drafts.push({
+            projectId: project.id,
+            projectName,
             title: `Negative Net Position: ${projectName}`,
-            description: `Project expenses ($${acuSummary.totals.expenses.toLocaleString()}) exceed income ($${acuSummary.totals.income.toLocaleString()}) by $${deficit.toLocaleString()}.`,
+            summary: `Project expenses ($${acuSummary.totals.expenses.toLocaleString()}) exceed income ($${acuSummary.totals.income.toLocaleString()}) by $${deficit.toLocaleString()}.`,
             severity,
-            insight_type: "negative_net_position",
-            confidence_score: 0.95,
-            financial_impact: deficit,
-            project_id: project.id,
-            project_name: projectName,
-            status: "open",
-            business_impact: severity === "critical"
+            cardType: "financial_exposure",
+            financialImpact: deficit,
+            businessImpact: severity === "critical"
               ? "Significant cash flow deficit — immediate review required"
               : "Project is currently operating at a loss",
             metadata: {
+              alert_subtype: "negative_net_position",
               acumatica_income: acuSummary.totals.income,
               acumatica_expenses: acuSummary.totals.expenses,
               deficit,
               acumatica_project_id: acumaticaProjectId,
+              financial_impact: deficit,
               scan_timestamp: new Date().toISOString(),
             },
           });
         }
 
-        // 4. Upsert alerts — use title + project_id as natural key to avoid duplicates
-        for (const alert of alerts) {
+        // 4. Upsert alerts — use title + primary_target_id as natural key
+        const targetId = targetMap.get(project.id);
+        if (!targetId) {
+          // No active intelligence_target for this project. Skip — we cannot
+          // write an insight_card without a target.
+          if (drafts.length > 0) {
+            errors.push(
+              `No active intelligence_target for project ${projectName} (id ${project.id}); skipped ${drafts.length} alert(s).`,
+            );
+          }
+          continue;
+        }
+
+        const nowIso = new Date().toISOString();
+
+        for (const draft of drafts) {
+          // Look up existing card by title + target — equivalent to old
+          // (title, project_id) natural key.
           const { data: existing } = await supabase
-            .from("ai_insights")
+            .from("insight_cards")
             .select("id")
-            .eq("title", alert.title!)
-            .eq("project_id", alert.project_id!)
+            .eq("title", draft.title)
+            .eq("primary_target_id", targetId)
+            .in("card_type", ["financial_exposure", "risk", "change_management"])
             .maybeSingle();
 
           if (existing) {
-            // Update existing alert with fresh data
             const { error: updateError } = await supabase
-              .from("ai_insights")
+              .from("insight_cards")
               .update({
-                description: alert.description,
-                severity: alert.severity,
-                confidence_score: alert.confidence_score,
-                financial_impact: alert.financial_impact,
-                status: alert.status,
-                business_impact: alert.business_impact,
-                metadata: alert.metadata,
+                summary: draft.summary,
+                why_it_matters: draft.businessImpact,
+                confidence: severityToConfidence(draft.severity),
+                current_status: "open",
+                last_seen_at: nowIso,
+                metadata: draft.metadata as Json,
+                compiler_version: "financial_insights_scan_v1",
               })
               .eq("id", existing.id);
 
             if (updateError) {
-              logger.error({ msg: `[financial-insights/scan] Failed to update alert for ${projectName}`, error: updateError.message });
-              errors.push(`Failed to update alert "${alert.title}": ${updateError.message}`);
+              logger.error({ msg: `[financial-insights/scan] Failed to update alert for ${draft.projectName}`, error: updateError.message });
+              errors.push(`Failed to update alert "${draft.title}": ${updateError.message}`);
             } else {
               alertsGenerated++;
             }
           } else {
-            // Insert new alert
+            const insert: InsightCardInsert = {
+              primary_target_id: targetId,
+              card_type: draft.cardType,
+              title: draft.title,
+              summary: draft.summary,
+              why_it_matters: draft.businessImpact,
+              confidence: severityToConfidence(draft.severity),
+              current_status: "open",
+              attribution_status: "auto_assigned",
+              first_seen_at: nowIso,
+              last_seen_at: nowIso,
+              source_count: 1,
+              compiler_version: "financial_insights_scan_v1",
+              metadata: draft.metadata as Json,
+            };
+
             const { error: insertError } = await supabase
-              .from("ai_insights")
-              .insert(alert);
+              .from("insight_cards")
+              .insert(insert);
 
             if (insertError) {
-              logger.error({ msg: `[financial-insights/scan] Failed to insert alert for ${projectName}`, error: insertError.message });
-              errors.push(`Failed to insert alert "${alert.title}": ${insertError.message}`);
+              logger.error({ msg: `[financial-insights/scan] Failed to insert alert for ${draft.projectName}`, error: insertError.message });
+              errors.push(`Failed to insert alert "${draft.title}": ${insertError.message}`);
             } else {
               alertsGenerated++;
             }

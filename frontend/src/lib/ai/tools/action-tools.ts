@@ -12,6 +12,14 @@ import type { Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
+import {
+  RISK_CARD_TYPES,
+  deriveSeverity,
+  mapLegacyInsightTypeToCardType,
+  severityToConfidence,
+  resolveTargetIdsForProjects,
+  insightCardBaseQuery,
+} from "@/lib/ai/insight-cards";
 import { buildAdminFeedbackTitle } from "@/lib/admin-feedback/title";
 import { createGitHubIssue } from "@/lib/admin-feedback/github";
 import { matchFeedbackToTool } from "@/lib/admin-feedback/tool-matcher";
@@ -1724,13 +1732,33 @@ export function createActionTools(
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
 
+        const cardType = mapLegacyInsightTypeToCardType(insightType);
+        const confidence = severityToConfidence(severity);
+        const nowIso = new Date().toISOString();
+        const cardMetadata = {
+          severity_input: severity,
+          insight_type_input: insightType,
+          financial_impact: financialImpact ?? null,
+          timeline_impact_days: timelineImpactDays ?? null,
+          flagged_by: "ai_assistant",
+        };
+
         if (!confirmed) {
           return {
             action: "preview",
             message: "I'll log this risk. Reply **confirm** to proceed.",
             preview: {
-              table: "ai_insights",
-              fields: { project_id: projectId, title, description, severity, insight_type: insightType, financial_impact: financialImpact, timeline_impact_days: timelineImpactDays, resolved: 0 },
+              table: "insight_cards",
+              fields: {
+                project_id: projectId,
+                title,
+                summary: description,
+                card_type: cardType,
+                confidence,
+                current_status: "open",
+                attribution_status: "auto_assigned",
+                metadata: cardMetadata,
+              },
             },
           };
         }
@@ -1739,19 +1767,45 @@ export function createActionTools(
         const replay = await getReplayResponse("flagProjectRisk", idempotencyKey);
         if (replay) return replay;
 
+        // Resolve project_id → intelligence_targets.id (Pipeline B keys cards by target UUID).
+        const targetMap = await resolveTargetIdsForProjects(supabase, [projectId]);
+        const targetId = targetMap.get(projectId);
+        if (!targetId) {
+          const failure = {
+            success: false,
+            error: `No active intelligence target exists for project ${projectId}. Ask an admin to bootstrap the project's intelligence target before flagging risks.`,
+          };
+          await recordWriteAudit({
+            toolName: "flagProjectRisk",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
         const { data, error } = await supabase
-          .from("ai_insights")
+          .from("insight_cards")
           .insert({
-            project_id: projectId,
+            primary_target_id: targetId,
+            card_type: cardType,
             title,
-            description,
-            severity,
-            insight_type: insightType,
-            financial_impact: financialImpact ?? null,
-            timeline_impact_days: timelineImpactDays ?? null,
-            resolved: 0,
+            summary: description,
+            why_it_matters: null,
+            current_status: "open",
+            confidence,
+            attribution_status: "auto_assigned",
+            next_action: null,
+            suggested_owner_label: null,
+            first_seen_at: nowIso,
+            last_seen_at: nowIso,
+            source_count: 1,
+            compiler_version: "manual_user_flag_v1",
+            metadata: cardMetadata as unknown as Json,
           })
-          .select("id, title, severity")
+          .select("id, title, card_type")
           .single();
 
         if (error) {
@@ -1770,7 +1824,7 @@ export function createActionTools(
         const response = {
           success: true,
           message: `Risk **"${title}"** flagged as ${severity}.`,
-          record: data,
+          record: { id: data.id, title: data.title, card_type: data.card_type, severity },
         };
         await recordWriteAudit({
           toolName: "flagProjectRisk",
@@ -2266,13 +2320,17 @@ export function createActionTools(
           .order("date", { ascending: false })
           .limit(5);
 
-        const insightData = await supabase
-          .from("ai_insights")
-          .select("id, title, description, severity, insight_type, created_at")
-          .eq("project_id", project.id)
-          .eq("resolved", 0)
-          .order("created_at", { ascending: false })
-          .limit(10);
+        // Pipeline B: resolve project → target, then pull recent risk-bucket
+        // insight cards for the LLM synthesis prompt.
+        const summaryTargetMap = await resolveTargetIdsForProjects(supabase, [project.id]);
+        const summaryTargetId = summaryTargetMap.get(project.id);
+        const insightData = summaryTargetId
+          ? await insightCardBaseQuery(supabase)
+              .eq("primary_target_id", summaryTargetId)
+              .in("card_type", [...RISK_CARD_TYPES, "change_management", "process_issue"])
+              .order("created_at", { ascending: false })
+              .limit(10)
+          : { data: [], error: null };
 
         // Compute summary stats
         const tasks = scheduleData.data ?? [];
@@ -2351,10 +2409,10 @@ export function createActionTools(
             date: m.date,
             summary: m.summary?.substring(0, 200),
           })),
-          activeRisks: insights.map(i => ({
-            title: i.title,
-            severity: i.severity,
-            type: i.insight_type,
+          activeRisks: insights.map((card) => ({
+            title: card.title,
+            severity: deriveSeverity({ card_type: card.card_type, confidence: card.confidence }),
+            type: card.card_type,
           })),
         };
 

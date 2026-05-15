@@ -19,6 +19,7 @@ import {
   getOpenAICompatibleClientConfig,
   getOpenAIModelId,
 } from "@/lib/ai/provider-config";
+import { resolveTargetIdsForProjects } from "@/lib/ai/insight-cards";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -193,7 +194,7 @@ export async function writeMemory(
 }
 
 // ---------------------------------------------------------------------------
-// Commitment → ai_insights bridge
+// Commitment → insight_cards bridge (Pipeline B)
 // ---------------------------------------------------------------------------
 
 async function bridgeCommitmentToInsight(params: {
@@ -204,13 +205,24 @@ async function bridgeCommitmentToInsight(params: {
 }): Promise<void> {
   const supabase = createServiceClient();
 
-  // Avoid duplicate action items: check if one already exists with this content
+  // Resolve project_id → intelligence_targets.id. Without an active target we
+  // cannot write a card; skip silently rather than failing the memory write.
+  const targetMap = await resolveTargetIdsForProjects(supabase, [params.projectId]);
+  const targetId = targetMap.get(params.projectId);
+  if (!targetId) {
+    return;
+  }
+
+  const titleStub = params.content.substring(0, 80);
+
+  // Avoid duplicate action items: check if a task card already exists with
+  // similar title text for this target.
   const { data: existing, error: existingError } = await supabase
-    .from("ai_insights")
+    .from("insight_cards")
     .select("id")
-    .eq("project_id", params.projectId)
-    .eq("insight_type", "action_item")
-    .ilike("title", params.content.substring(0, 80) + "%")
+    .eq("primary_target_id", targetId)
+    .eq("card_type", "task")
+    .ilike("title", `${titleStub}%`)
     .limit(1);
 
   if (existingError) {
@@ -219,17 +231,27 @@ async function bridgeCommitmentToInsight(params: {
 
   if (existing && existing.length > 0) return;
 
-  const { error: insertError } = await supabase.from("ai_insights").insert({
-    project_id: params.projectId,
+  const nowIso = new Date().toISOString();
+
+  const { error: insertError } = await supabase.from("insight_cards").insert({
+    primary_target_id: targetId,
+    card_type: "task",
     title: params.content.substring(0, 255),
-    description:
+    summary:
       `Commitment captured by AI assistant: ${params.content}\n\n` +
       `Source: memory ID ${params.memoryId}`,
-    insight_type: "action_item",
-    severity: "medium",
-    status: "open",
-    confidence_score: 80,
-    meeting_id: params.meetingId ?? null,
+    confidence: "medium",
+    current_status: "open",
+    attribution_status: "auto_assigned",
+    first_seen_at: nowIso,
+    last_seen_at: nowIso,
+    source_count: 1,
+    compiler_version: "ai_memory_commitment_bridge_v1",
+    metadata: {
+      memory_id: params.memoryId,
+      meeting_id: params.meetingId ?? null,
+      legacy_insight_type: "action_item",
+    },
   });
 
   if (insertError) {
