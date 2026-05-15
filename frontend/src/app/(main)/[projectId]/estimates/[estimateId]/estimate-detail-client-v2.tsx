@@ -731,7 +731,7 @@ export function EstimateDetailClientV2({
     setTemplatesLoading(true);
     try {
       const data = await apiFetch<GcTemplate[]>("/api/estimates/gc-templates");
-      setTemplates(data);
+      setTemplates(Array.isArray(data) ? data : []);
     } catch {
       toast.error("Failed to load templates");
     } finally {
@@ -785,7 +785,8 @@ export function EstimateDetailClientV2({
       );
       // Fetch full template to get items
       const allTemplates = await apiFetch<Array<GcTemplate & { items: GcTemplateItem[] }>>("/api/estimates/gc-templates");
-      const full = allTemplates.find((t) => t.template_id === pendingTemplate.template_id);
+      const templateList = Array.isArray(allTemplates) ? allTemplates : [];
+      const full = templateList.find((t) => t.template_id === pendingTemplate.template_id);
       const templateItems: GcTemplateItem[] = (full as unknown as { items: GcTemplateItem[] } | undefined)?.items ?? [];
       // Insert template items into this estimate
       const created = await Promise.all(
@@ -1716,8 +1717,8 @@ function SubListTab({
   onAwardSub: (subId: number, revoke?: boolean) => Promise<void>;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [filterIntend, setFilterIntend] = React.useState("");
-  const [filterBid, setFilterBid] = React.useState("");
+  const [filterIntend, setFilterIntend] = React.useState("all");
+  const [filterBid, setFilterBid] = React.useState("all");
   const [sortConfig, setSortConfig] = React.useState<{ col: keyof SublistSub; dir: "asc" | "desc" } | null>(null);
   const [companies, setCompanies] = React.useState<Company[]>([]);
   const [companySearch, setCompanySearch] = React.useState("");
@@ -2033,7 +2034,7 @@ function SubListTab({
     [onPatchSub],
   );
 
-  const hasActiveFilter = Boolean(searchQuery || filterIntend || filterBid || sortConfig);
+  const hasActiveFilter = Boolean(searchQuery || filterIntend !== "all" || filterBid !== "all" || sortConfig);
 
   const toggleSort = (col: keyof SublistSub) => {
     setSortConfig((prev) =>
@@ -2056,8 +2057,8 @@ function SubListTab({
           (r.email ?? "").toLowerCase().includes(q),
       );
     }
-    if (filterIntend) rows = rows.filter((r) => r.intend_to_submit === filterIntend);
-    if (filterBid) rows = rows.filter((r) => r.bid_received === filterBid);
+    if (filterIntend !== "all") rows = rows.filter((r) => r.intend_to_submit === filterIntend);
+    if (filterBid !== "all") rows = rows.filter((r) => r.bid_received === filterBid);
     if (sortConfig) {
       rows.sort((a, b) => {
         const av =
@@ -2131,7 +2132,7 @@ function SubListTab({
             <SelectValue placeholder="Intend to submit" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="" className="text-xs">All subs</SelectItem>
+            <SelectItem value="all" className="text-xs">All subs</SelectItem>
             <SelectItem value="Yes" className="text-xs">Intending: Yes</SelectItem>
             <SelectItem value="No" className="text-xs">Intending: No</SelectItem>
           </SelectContent>
@@ -2141,7 +2142,7 @@ function SubListTab({
             <SelectValue placeholder="Bid received" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="" className="text-xs">All bids</SelectItem>
+            <SelectItem value="all" className="text-xs">All bids</SelectItem>
             <SelectItem value="Yes" className="text-xs">Bid received</SelectItem>
             <SelectItem value="No" className="text-xs">No bid yet</SelectItem>
           </SelectContent>
@@ -2153,8 +2154,8 @@ function SubListTab({
             className="h-8 gap-1 text-xs text-muted-foreground"
             onClick={() => {
               setSearchQuery("");
-              setFilterIntend("");
-              setFilterBid("");
+              setFilterIntend("all");
+              setFilterBid("all");
               setSortConfig(null);
             }}
           >
