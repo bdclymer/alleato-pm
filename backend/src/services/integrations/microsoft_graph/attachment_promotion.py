@@ -189,6 +189,7 @@ def _select_pending_attachments(supabase_client, limit: int) -> list[dict[str, A
             """
         )
         .in_("promotion_status", ["pending", "failed"])
+        .lt("promotion_attempt_count", 3)
         .order("created_at", desc=False)
         .limit(limit)
         .execute()

@@ -15,6 +15,7 @@ from .teams import sync_teams_channel, get_all_teams_and_channels, sync_user_cha
 from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
 from .embed import embed_pending_graph_documents
+from .attachment_promotion import promote_outlook_intake_attachments
 
 logger = logging.getLogger(__name__)
 
@@ -281,8 +282,10 @@ def run_graph_sync(
     run_onedrive: bool = True,
     run_embedding: bool = True,
     run_teams_compiler: bool = True,
+    run_attachment_promotion: bool = True,
     embed_limit: int = 25,
     teams_compiler_batch_size: int = 25,
+    attachment_promotion_limit: int = 50,
     outlook_users: Optional[list[str]] = None,
     verify_outlook_persisted_count: bool = True,
 ) -> dict:
@@ -307,6 +310,7 @@ def run_graph_sync(
             "source_sync": "enabled",
             "embedding": "enabled" if run_embedding else "skipped",
             "teams_compiler": "enabled" if run_teams_compiler else "skipped",
+            "attachment_promotion": "enabled" if run_attachment_promotion else "skipped",
         },
     }
 
@@ -652,6 +656,39 @@ def run_graph_sync(
             summary["teams_compiler"] = {"error": str(e)}
     else:
         summary["teams_compiler"] = {"status": "skipped", "reason": "run_teams_compiler=false"}
+
+    # ── Promote pending Outlook intake attachments ────────────────────────────
+    # Runs after embedding so newly-promoted docs are picked up by the NEXT
+    # embedding pass (or immediately if run_embedding runs again below).
+    # The scheduler also runs this as a dedicated 30-minute job; running it here
+    # too ensures freshly-synced emails get attachments promoted in the same run.
+    if run_attachment_promotion:
+        try:
+            promotion_result = promote_outlook_intake_attachments(
+                supabase, limit=attachment_promotion_limit
+            )
+            summary["attachment_promotion"] = promotion_result
+            logger.info(
+                "[GraphSync] Attachment promotion complete — seen: %d, promoted: %d, "
+                "skipped: %d, review_needed: %d, failed: %d",
+                promotion_result.get("seen", 0),
+                promotion_result.get("promoted", 0),
+                promotion_result.get("skipped", 0),
+                promotion_result.get("review_needed", 0),
+                promotion_result.get("failed", 0),
+            )
+            if promotion_result.get("failed"):
+                logger.warning(
+                    "[GraphSync] Attachment promotion had %d failure(s): %s",
+                    promotion_result["failed"],
+                    promotion_result.get("failures"),
+                )
+        except Exception as e:
+            logger.error("[GraphSync] Attachment promotion step failed: %s", e)
+            summary["errors"].append(f"Attachment promotion failed: {e}")
+            summary["attachment_promotion"] = {"error": str(e)}
+    else:
+        summary["attachment_promotion"] = {"status": "skipped", "reason": "run_attachment_promotion=false"}
 
     # Report status accurately — "complete" only if no errors
     status = "complete" if not summary["errors"] else "complete_with_errors"
