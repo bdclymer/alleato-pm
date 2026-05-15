@@ -151,6 +151,21 @@ No `<Alert>`/`<Card>` wrappers. No `Bot` icon — use "A" or `BriefcaseIcon`. Us
 
 ---
 
+## Two Supabase Projects (RAG migration 2026-05-15)
+
+This app uses **two** Supabase projects. Using the wrong one will silently give stale data or fail on write.
+
+| Project | Ref | What lives here |
+|---------|-----|-----------------|
+| **AI APP** (primary app DB) | `lgveqfnpkxvzbnnwuled` | All app tables: projects, contracts, budgets, RFIs, submittals, emails, meetings, insights, tasks, etc. Reached via `SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_URL`. |
+| **AI Database** (RAG vector store) | `fqcvmfqldlewvbsuxdvz` | **Active** `document_chunks`, `rag_document_metadata`, `rag_pipeline_state`. Reached via `RAG_SUPABASE_URL` and the `get_rag_read_client()` / `get_rag_write_client()` helpers. |
+
+**Legacy tables in AI APP (do not write):** `document_chunks` and `rag_pipeline_state` still exist in the AI APP project but were migrated on 2026-05-15. They are now **read-only at the database level** — a `BEFORE INSERT/UPDATE/DELETE/TRUNCATE` trigger raises `LEGACY TABLE: ...` with a pointer to the new location. Reads still work for historical queries. Never re-enable writes here; point clients at the AI Database project instead.
+
+**Rule of thumb:** anything RAG/embeddings/chunks → AI Database (use the RAG client). Everything else → AI APP (use the regular Supabase client).
+
+---
+
 ## Key Patterns
 
 **API fetch (components/hooks):** `apiFetch` from `@/lib/api-client` — never raw `fetch`.
