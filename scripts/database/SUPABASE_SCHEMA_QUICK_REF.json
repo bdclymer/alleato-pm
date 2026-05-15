@@ -9342,7 +9342,7 @@
         "client_id",
         "completion_percentage",
         "created_at",
-        "current_phase",
+        "stage",
         "delivery_method",
         "erp_last_direct_cost_sync",
         "erp_last_job_cost_sync",
@@ -9432,7 +9432,7 @@
           "type": "text",
           "nullable": false
         },
-        "current_phase": {
+        "stage": {
           "type": "text",
           "nullable": true
         },
@@ -14353,7 +14353,7 @@
       "columns": [
         "budget_utilization",
         "completion_percentage",
-        "current_phase",
+        "stage",
         "health_score",
         "health_status",
         "id",
@@ -14374,7 +14374,7 @@
           "type": "numeric",
           "nullable": true
         },
-        "current_phase": {
+        "stage": {
           "type": "text",
           "nullable": true
         },
@@ -14425,7 +14425,7 @@
       "columns": [
         "budget_utilization",
         "completion_percentage",
-        "current_phase",
+        "stage",
         "health_score",
         "health_status",
         "id",
@@ -14445,7 +14445,7 @@
           "type": "numeric",
           "nullable": true
         },
-        "current_phase": {
+        "stage": {
           "type": "text",
           "nullable": true
         },
@@ -14535,7 +14535,7 @@
         "client_id",
         "completion_percentage",
         "created_at",
-        "current_phase",
+        "stage",
         "erp_last_direct_cost_sync",
         "erp_last_job_cost_sync",
         "erp_sync_status",
@@ -14609,7 +14609,7 @@
           "type": "text",
           "nullable": true
         },
-        "current_phase": {
+        "stage": {
           "type": "text",
           "nullable": true
         },

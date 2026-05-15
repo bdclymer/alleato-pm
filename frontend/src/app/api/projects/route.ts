@@ -27,8 +27,6 @@ const CreateProjectSchema = z
 
 type ProjectApiRow = Record<string, unknown> & {
   id: number;
-  client?: string | null;
-  client_id?: string | null;
   company_id?: string | null;
 };
 
@@ -51,6 +49,13 @@ function cleanClientName(value: unknown): string | null {
   return trimmed;
 }
 
+/**
+ * Resolves a display client name for each project from:
+ * 1. projects.company_id → companies.name (canonical)
+ * 2. Fallback: most recent prime_contracts.client_id or contract_company_id → companies.name
+ *
+ * Injects as `client` on the response object for backwards-compatible display.
+ */
 async function applyResolvedClientNames(
   supabase: ReturnType<typeof createServiceClient>,
   projects: ProjectApiRow[],
@@ -60,6 +65,7 @@ async function applyResolvedClientNames(
     return projects;
   }
 
+  // Fallback: prime contract client lookup
   const { data: primeContracts, error: primeContractsError } = await supabase
     .from("prime_contracts")
     .select("project_id, client_id, contract_company_id, created_at")
@@ -79,29 +85,23 @@ async function applyResolvedClientNames(
   const primeClientByProjectId = new Map<number, string>();
   for (const contract of (primeContracts ?? []) as PrimeContractClientRow[]) {
     if (primeClientByProjectId.has(contract.project_id)) continue;
-
     const companyId = contract.client_id ?? contract.contract_company_id;
     if (companyId) {
       primeClientByProjectId.set(contract.project_id, companyId);
     }
   }
 
-  const projectCompanyIds = projects.flatMap((project) => [
-    project.client_id,
-    project.company_id,
-  ]);
   const companyIds = Array.from(
     new Set(
-      [...projectCompanyIds, ...primeClientByProjectId.values()].filter(
-        (id): id is string => typeof id === "string" && id.trim().length > 0,
-      ),
+      [
+        ...projects.map((p) => p.company_id).filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+        ...primeClientByProjectId.values(),
+      ],
     ),
   );
+
   if (companyIds.length === 0) {
-    return projects.map((project) => ({
-      ...project,
-      client: cleanClientName(project.client),
-    }));
+    return projects.map((project) => ({ ...project, client: null }));
   }
 
   const { data: companies, error: companiesError } = await supabase
@@ -113,21 +113,18 @@ async function applyResolvedClientNames(
     throw new GuardrailError({
       code: "INTERNAL_ERROR",
       where: "/api/projects#GET",
-      message: "Failed to fetch prime contract company names.",
+      message: "Failed to fetch company names.",
       details: { reason: companiesError.message },
       cause: companiesError,
     });
   }
 
   const companyNameById = new Map(
-    ((companies ?? []) as CompanyNameRow[])
-      .map((company) => [company.id, cleanClientName(company.name)]),
+    ((companies ?? []) as CompanyNameRow[]).map((company) => [company.id, cleanClientName(company.name)]),
   );
 
   return projects.map((project) => {
     const clientName =
-      (project.client_id ? companyNameById.get(project.client_id) : null) ??
-      cleanClientName(project.client) ??
       (project.company_id ? companyNameById.get(project.company_id) : null) ??
       (primeClientByProjectId.get(project.id)
         ? companyNameById.get(primeClientByProjectId.get(project.id) as string)

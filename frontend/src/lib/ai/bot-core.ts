@@ -232,7 +232,7 @@ export async function assembleSystemPrompt(options: {
       const supabase = createServiceClient();
       const { data: project } = await supabase
         .from("projects")
-        .select("name, project_number, phase, client, health_status")
+        .select("name, project_number, phase, health_status")
         .eq("id", selectedProjectId)
         .single();
 
@@ -241,7 +241,6 @@ export async function assembleSystemPrompt(options: {
           project.name,
           project.project_number ? `#${project.project_number}` : null,
           project.phase ? `Phase: ${project.phase}` : null,
-          project.client ? `Client: ${project.client}` : null,
           project.health_status ? `Status: ${project.health_status}` : null,
         ]
           .filter(Boolean)
@@ -320,7 +319,7 @@ export async function assembleLeanAdvisorSystemPrompt(options: {
       const supabase = createServiceClient();
       const { data: project } = await supabase
         .from("projects")
-        .select("name, project_number, phase, client, health_status")
+        .select("name, project_number, phase, health_status")
         .eq("id", selectedProjectId)
         .single();
 
@@ -329,7 +328,6 @@ export async function assembleLeanAdvisorSystemPrompt(options: {
           project.name,
           project.project_number ? `#${project.project_number}` : null,
           project.phase ? `Phase: ${project.phase}` : null,
-          project.client ? `Client: ${project.client}` : null,
           project.health_status ? `Status: ${project.health_status}` : null,
         ]
           .filter(Boolean)
@@ -391,7 +389,7 @@ export async function assembleTaskWriteSystemPrompt(options: {
       const supabase = createServiceClient();
       const { data: project } = await supabase
         .from("projects")
-        .select("name, project_number, phase, client, health_status")
+        .select("name, project_number, phase, health_status")
         .eq("id", selectedProjectId)
         .single();
 
@@ -400,7 +398,6 @@ export async function assembleTaskWriteSystemPrompt(options: {
           project.name,
           project.project_number ? `#${project.project_number}` : null,
           project.phase ? `Phase: ${project.phase}` : null,
-          project.client ? `Client: ${project.client}` : null,
           project.health_status ? `Status: ${project.health_status}` : null,
         ]
           .filter(Boolean)

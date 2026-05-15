@@ -1668,10 +1668,13 @@ export default function ProjectDirectoryPage() {
     const supabase = createClient();
     supabase
       .from("projects")
-      .select("client")
+      .select("company_id, companies(name)")
       .eq("id", parseInt(projectId, 10))
       .single()
-      .then(({ data }) => { if (data?.client) setClientName(data.client); });
+      .then(({ data }) => {
+        const companyName = (data as { companies?: { name?: string } | null } | null)?.companies?.name;
+        if (companyName) setClientName(companyName);
+      });
   }, [projectId]);
 
   const { users: members, refetch: refetchMembers } = useProjectUsers(projectId, { type: "all" });

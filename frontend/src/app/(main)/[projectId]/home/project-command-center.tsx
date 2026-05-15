@@ -707,9 +707,6 @@ function ProjectDetailsSidebar({
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Project Details
           </p>
-          {project.client && (
-            <p className="mt-0.5 text-xs text-muted-foreground">{project.client}</p>
-          )}
         </div>
         <Button variant="ghost" size="sm" onClick={onEditProject} className="h-7 text-xs px-2">
           Edit
@@ -1378,14 +1375,8 @@ export function ProjectCommandCenter({
               {project.name ?? "Untitled Project"}
             </h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              {project.current_phase && (
-                <span className="text-sm text-muted-foreground">{project.current_phase}</span>
-              )}
-              {project.current_phase && project.client && (
-                <span className="text-sm text-muted-foreground/40">·</span>
-              )}
-              {project.client && (
-                <span className="text-sm text-muted-foreground">{project.client}</span>
+              {project.stage && (
+                <span className="text-sm text-muted-foreground">{project.stage}</span>
               )}
             </div>
           </div>

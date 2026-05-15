@@ -311,7 +311,7 @@ def retrieve_projects(supabase) -> Tuple[str, str]:
     """Fetch list of active projects."""
     result = (
         supabase.table("projects")
-        .select("id, name, phase, client, health_status, project_number")
+        .select("id, name, phase, health_status, project_number")
         .order("name", desc=False)
         .limit(50)
         .execute()
@@ -324,9 +324,8 @@ def retrieve_projects(supabase) -> Tuple[str, str]:
     for r in rows:
         name = r.get("name") or "Untitled"
         phase = r.get("phase") or ""
-        client = r.get("client") or ""
         health = r.get("health_status") or ""
-        parts = [p for p in [phase, client, health] if p]
+        parts = [p for p in [phase, health] if p]
         meta = f" ({', '.join(parts)})" if parts else ""
         lines.append(f"  • {name}{meta}")
 

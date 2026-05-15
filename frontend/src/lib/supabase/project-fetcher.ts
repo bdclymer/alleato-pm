@@ -63,7 +63,7 @@ export async function getProjectById(projectId: string): Promise<{
  * @returns Object with project info, numeric projectId, and supabase client
  */
 export async function getProjectInfo(projectId: string): Promise<{
-  project: Pick<Project, "id" | "name" | "client">;
+  project: Pick<Project, "id" | "name">;
   numericProjectId: number;
   supabase: ReturnType<typeof createServiceClient>;
 }> {
@@ -77,7 +77,7 @@ export async function getProjectInfo(projectId: string): Promise<{
 
   const { data: project, error } = await supabase
     .from("projects")
-    .select("id, name, client")
+    .select("id, name")
     .eq("id", numericProjectId)
     .single();
 

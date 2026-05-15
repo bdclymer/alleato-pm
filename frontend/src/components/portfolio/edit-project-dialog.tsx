@@ -356,8 +356,7 @@ export function EditProjectDialog({
       const updatePayload = {
         name: formData.name,
         "job number": formData.project_number || null,
-        client: formData.client || null,
-        current_phase: formData.stage || null,
+        stage: formData.stage || null,
         phase: formData.phase || null,
         category: formData.project_type || null,
         type: formData.project_type || null,

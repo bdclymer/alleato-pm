@@ -252,7 +252,7 @@ export async function findMarketingSourceCandidates(params: {
   if (sourceEnabled(params.sourceTypes, "projects")) {
     let query = supabase
       .from("projects")
-      .select("id,name,client,company_id,phase,current_phase,health_status,summary,summary_updated_at,project_sector")
+      .select("id,name,company_id,phase,stage,health_status,summary,summary_updated_at,project_sector")
       .order("summary_updated_at", { ascending: false, nullsFirst: false })
       .limit(limit);
     if (params.projectId != null) query = query.eq("id", params.projectId);
@@ -273,7 +273,7 @@ export async function findMarketingSourceCandidates(params: {
         projectName: row.name ?? null,
         summary: truncate(summary),
         confidence: "medium",
-        citationText: `${sourceTitle}${row.client ? ` - ${row.client}` : ""}`,
+        citationText: sourceTitle,
       });
     }
   }

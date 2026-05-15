@@ -15,7 +15,7 @@ export interface Project {
   category: string | null;
   aliases: string[] | null;
   team_members: string[] | null;
-  current_phase: string | null;
+  stage: string | null;
   completion_percentage: number | null;
   budget: number | null;
   budget_used: number | null;

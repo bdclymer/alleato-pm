@@ -102,7 +102,7 @@ export function EditMeetingModal({
       const supabase = createClient();
       const { data, error } = await supabase
         .from("projects")
-        .select("id, name, client")
+        .select("id, name")
         .ilike("name", `%${projectSearch}%`)
         .order("name")
         .limit(10);
@@ -232,11 +232,6 @@ export function EditMeetingModal({
                           <span className="font-medium text-foreground">
                             {project.name}
                           </span>
-                          {project.client && (
-                            <span className="text-xs text-muted-foreground">
-                              {project.client}
-                            </span>
-                          )}
                         </div>
                       </Button>
                     ))}

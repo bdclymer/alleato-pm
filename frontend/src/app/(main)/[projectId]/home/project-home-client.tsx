@@ -173,15 +173,15 @@ function toPortfolioProject(project: Project): PortfolioProject {
     name: project.name || "",
     projectNumber: project["job number"] || "",
     jobNumber: project["job number"] || undefined,
-    client: project.client || "",
+    client: "",
     address: project.address || "",
     city,
     state: project.state || "",
     zip,
     phone,
     status: project.archived ? "Inactive" : "Active",
-    currentPhase: project.current_phase || "",
-    stage: project.current_phase || "",
+    currentPhase: project.stage || "",
+    stage: project.stage || "",
     workScope: project.work_scope || "",
     projectSector: project.project_sector || "",
     deliveryMethod: project.delivery_method || "",
@@ -958,7 +958,7 @@ export function ProjectHomeClient({
   }, [pendingChangeOrders, openRfis, lastDailyLog, commitments, project.id]);
 
   // Meta
-  const projectMeta = [localProject.type, localProject.project_sector, localProject.current_phase].filter(Boolean).join(" · ");
+  const projectMeta = [localProject.type, localProject.project_sector, localProject.stage].filter(Boolean).join(" · ");
 
   // Budget breakdown
   const budgetBreakdown = React.useMemo(() => {
@@ -1011,9 +1011,9 @@ export function ProjectHomeClient({
               <h1 className="text-2xl font-semibold text-foreground tracking-tight">
                 {localProject.name || "Untitled Project"}
               </h1>
-              {(projectMeta || localProject.client) && (
+              {projectMeta && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {[projectMeta, localProject.client].filter(Boolean).join(" · ")}
+                  {projectMeta}
                 </p>
               )}
             </div>

@@ -2239,7 +2239,7 @@ export function createActionTools(
         if (projectId) {
           const { data, error } = await supabase
             .from("projects")
-            .select("id, name, phase, health_status, health_score, client, completion_percentage")
+            .select("id, name, phase, health_status, health_score, completion_percentage")
             .eq("id", projectId)
             .single();
           if (error || !data) return { success: false, error: `Project ${projectId} not found` };
@@ -2247,7 +2247,7 @@ export function createActionTools(
         } else if (projectName) {
           const { data, error } = await supabase
             .from("projects")
-            .select("id, name, phase, health_status, health_score, client, completion_percentage")
+            .select("id, name, phase, health_status, health_score, completion_percentage")
             .ilike("name", `%${projectName}%`)
             .limit(1)
             .single();
@@ -2268,7 +2268,7 @@ export function createActionTools(
 
         const projectDetails = await supabase
           .from("projects")
-          .select("id, name, phase, health_status, health_score, client, completion_percentage, budget, budget_used, summary")
+          .select("id, name, phase, health_status, health_score, completion_percentage, budget, budget_used, summary")
           .eq("id", project.id)
           .single();
 
@@ -2370,7 +2370,6 @@ export function createActionTools(
             phase: proj?.phase,
             healthStatus: proj?.health_status,
             healthScore: proj?.health_score,
-            client: proj?.client,
             completionPct: proj?.completion_percentage,
           },
           financial: {

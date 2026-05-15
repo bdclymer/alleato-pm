@@ -55,7 +55,7 @@ interface FormData {
   job_number: string;
   stage: string;
   phase: string;
-  client: string;
+  company_id: string;
   project_type: string;
   work_scope: string;
   project_sector: string;
@@ -96,9 +96,9 @@ function initForm(project: Project): FormData {
   return {
     name: project.name || "",
     job_number: project["job number"] || project.project_number || "",
-    stage: project.current_phase || "",
+    stage: project.stage || "",
     phase: project.phase || "",
-    client: project.client || "",
+    company_id: project.company_id || "",
     project_type: project.type || project.category || "",
     work_scope: project.work_scope || "",
     project_sector: project.project_sector || "",
@@ -234,19 +234,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
     }
   }, [open, project]);
 
-  const clientOptions = React.useMemo(() => {
-    const currentValue = form.client.trim();
-    if (!currentValue) return companyOptions;
-    const hasMatch = companyOptions.some((option) => option.label === currentValue);
-    return hasMatch
-      ? companyOptions
-      : [{ value: `current:${currentValue}`, label: currentValue }, ...companyOptions];
-  }, [companyOptions, form.client]);
-
-  const selectedClientValue = React.useMemo(() => {
-    const match = clientOptions.find((option) => option.label === form.client);
-    return match?.value;
-  }, [clientOptions, form.client]);
+  const selectedClientValue = form.company_id || undefined;
 
   const set = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -260,8 +248,8 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
       const payload = {
         name: form.name,
         "job number": form.job_number || null,
-        client: form.client || null,
-        current_phase: form.stage || null,
+        company_id: form.company_id || null,
+        stage: form.stage || null,
         phase: form.phase || null,
         category: form.project_type || null,
         type: form.project_type || null,
@@ -348,15 +336,10 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
                 />
                 <AutocompleteField
                   label="Client"
-                  options={clientOptions}
+                  options={companyOptions}
                   value={selectedClientValue}
                   onValueChange={(value) => {
-                    if (!value) {
-                      set("client", "");
-                      return;
-                    }
-                    const selected = clientOptions.find((option) => option.value === value);
-                    set("client", selected?.label ?? "");
+                    set("company_id", value ?? "");
                   }}
                   placeholder={isLoadingCompanies ? "Loading companies..." : "Select client"}
                   searchPlaceholder="Search companies..."

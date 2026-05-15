@@ -586,7 +586,7 @@ export async function buildProjectOperatingSummarySources({
   ] = await Promise.all([
     supabase
       .from("projects")
-      .select("id,name,project_number,phase,current_phase,client,summary,summary_updated_at,created_at,health_status,completion_percentage,budget,budget_used,erp_system,erp_sync_status,erp_last_job_cost_sync,erp_last_direct_cost_sync,acumatica_project_id,work_scope,project_sector,delivery_method")
+      .select("id,name,project_number,phase,stage,summary,summary_updated_at,created_at,health_status,completion_percentage,budget,budget_used,erp_system,erp_sync_status,erp_last_job_cost_sync,erp_last_direct_cost_sync,acumatica_project_id,work_scope,project_sector,delivery_method")
       .eq("id", projectId)
       .single(),
     supabase
@@ -731,8 +731,7 @@ export async function buildProjectOperatingSummarySources({
       text: joinFields([
         ["Project", project.name],
         ["Project number", project.project_number],
-        ["Phase", project.current_phase ?? project.phase],
-        ["Client", project.client],
+        ["Phase", project.stage ?? project.phase],
         ["Summary", project.summary],
         ["Health", project.health_status],
         ["Completion percent", project.completion_percentage],

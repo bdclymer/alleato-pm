@@ -8400,7 +8400,7 @@ export type Database = {
           client_id: number | null
           completion_percentage: number | null
           created_at: string
-          current_phase: string | null
+          stage: string | null
           delivery_method: string | null
           erp_last_direct_cost_sync: string | null
           erp_last_job_cost_sync: string | null
@@ -8447,7 +8447,7 @@ export type Database = {
           client_id?: number | null
           completion_percentage?: number | null
           created_at?: string
-          current_phase?: string | null
+          stage?: string | null
           delivery_method?: string | null
           erp_last_direct_cost_sync?: string | null
           erp_last_job_cost_sync?: string | null
@@ -8494,7 +8494,7 @@ export type Database = {
           client_id?: number | null
           completion_percentage?: number | null
           created_at?: string
-          current_phase?: string | null
+          stage?: string | null
           delivery_method?: string | null
           erp_last_direct_cost_sync?: string | null
           erp_last_job_cost_sync?: string | null

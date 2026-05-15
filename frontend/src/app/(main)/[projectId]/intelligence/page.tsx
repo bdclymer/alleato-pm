@@ -31,7 +31,7 @@ type ProjectRow = Pick<
   | "budget"
   | "budget_used"
   | "phase"
-  | "current_phase"
+  | "stage"
   | "created_at"
   | "summary"
   | "work_scope"
@@ -520,7 +520,7 @@ export default async function ProjectIntelligencePage({
   const supabase = createServiceClient();
   const projectResult = await supabase
     .from("projects")
-    .select("id, name, project_number, budget, budget_used, phase, current_phase, created_at, summary, work_scope")
+    .select("id, name, project_number, budget, budget_used, phase, stage, created_at, summary, work_scope")
     .eq("id", numericProjectId)
     .single();
 

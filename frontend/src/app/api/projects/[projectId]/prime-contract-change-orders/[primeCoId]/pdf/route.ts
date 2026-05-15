@@ -70,7 +70,7 @@ export const GET = withApiGuardrails<{ projectId: string; primeCoId: string }>(
     // ── 3. Fetch project info ──
     const { data: project } = await supabase
       .from("projects")
-      .select("id, name, project_number, address, state, client_id, company_id")
+      .select("id, name, project_number, address, state, company_id")
       .eq("id", projectIdNum)
       .single();
 
@@ -93,9 +93,9 @@ export const GET = withApiGuardrails<{ projectId: string; primeCoId: string }>(
       }
     }
 
-    // Fall back to project's client_id if not found on contract
-    if (!ownerCompanyId && project?.client_id) {
-      ownerCompanyId = project.client_id;
+    // Fall back to project's company_id if not found on contract
+    if (!ownerCompanyId && project?.company_id) {
+      ownerCompanyId = project.company_id;
     }
 
     // ── 5. Fetch owner (client) company ──

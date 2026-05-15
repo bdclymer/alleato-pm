@@ -196,7 +196,7 @@ def ensure_operating_target(supabase: Any, project_id: int) -> Dict[str, Any]:
     project = _single_row(
         _execute(
             supabase.table("projects")
-            .select("id,name,project_number,client,aliases")
+            .select("id,name,project_number,aliases")
             .eq("id", int(project_id))
             .limit(1),
             operation="load project for operating summary target",
@@ -231,7 +231,7 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
         _execute(
             supabase.table("projects")
             .select(
-                "id,name,project_number,phase,current_phase,client,summary,summary_updated_at,"
+                "id,name,project_number,phase,stage,summary,summary_updated_at,"
                 "created_at,health_status,completion_percentage,budget,budget_used,erp_system,"
                 "erp_sync_status,erp_last_job_cost_sync,erp_last_direct_cost_sync,"
                 "acumatica_project_id,work_scope,project_sector,delivery_method"
@@ -325,8 +325,7 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
                 [
                     ("Project", project.get("name")),
                     ("Project number", project.get("project_number")),
-                    ("Phase", project.get("current_phase") or project.get("phase")),
-                    ("Client", project.get("client")),
+                    ("Phase", project.get("stage") or project.get("phase")),
                     ("Summary", project.get("summary")),
                     ("Health", project.get("health_status")),
                     ("Budget", project.get("budget")),

@@ -126,7 +126,7 @@ function CreateProjectForm() {
       const payload = {
         name: values.name,
         "job number": values.project_number || null,
-        current_phase: values.stage || null,
+        stage: values.stage || null,
         phase: values.phase || null,
         type: values.project_type || null,
         summary: values.description || null,

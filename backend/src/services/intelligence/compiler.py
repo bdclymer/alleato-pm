@@ -267,7 +267,7 @@ def _fetch_signal_candidate(supabase: Any, candidate_id: str) -> Dict[str, Any]:
 def _fetch_project(supabase: Any, project_id: int) -> Dict[str, Any]:
     row = _single_row(
         supabase.table("projects")
-        .select("id, name, project_number, client, aliases")
+        .select("id, name, project_number, aliases")
         .eq("id", int(project_id))
         .limit(1)
         .execute()

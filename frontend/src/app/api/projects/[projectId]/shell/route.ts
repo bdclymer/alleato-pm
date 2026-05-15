@@ -22,7 +22,6 @@ const ProjectShellSchema = z.object({
     name: z.string(),
     number: z.string().optional(),
     status: z.string().optional(),
-    client: z.string().optional(),
     start_date: z.string().optional(),
     end_date: z.string().optional(),
   }),
@@ -238,7 +237,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       await Promise.all([
         authResult.serviceClient
           .from("projects")
-          .select('id, name, "job number", phase, client, "start date", "est completion"')
+          .select('id, name, "job number", phase, "start date", "est completion"')
           .eq("id", projectIdNum)
           .single(),
         permissionsPromise,
@@ -274,10 +273,6 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       status:
         typeof projectRecord.phase === "string"
           ? projectRecord.phase
-          : undefined,
-      client:
-        typeof projectRecord.client === "string"
-          ? projectRecord.client
           : undefined,
       start_date:
         typeof projectRecord["start date"] === "string"

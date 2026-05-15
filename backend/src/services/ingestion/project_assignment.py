@@ -43,7 +43,7 @@ class ProjectAssigner:
         """Get all active projects with matching signals."""
         if self._project_cache is None:
             response = self.client.table("projects").select(
-                "id, name, project_number, client, aliases, team_members, stakeholders"
+                "id, name, project_number, aliases, team_members, stakeholders"
             ).execute()
             self._project_cache = response.data or []
         return self._project_cache
@@ -207,15 +207,12 @@ class ProjectAssigner:
             score = 0.0
             project_number = self._normalize_text(project.get("project_number"))
             project_name = self._normalize_text(project.get("name"))
-            client_name = self._normalize_text(project.get("client"))
 
             # Exact phrase matches
             if project_number and self._contains_token(title_lower, project_number):
                 score = max(score, 0.98)
             if project_name and project_name in title_lower:
                 score = max(score, 0.95)
-            if client_name and client_name in title_lower:
-                score = max(score, 0.90)
             if project_name and self._fuzzy_phrase_match(project_name, title_lower):
                 score = max(score, 0.88)
             if client_name and self._fuzzy_phrase_match(client_name, title_lower):
@@ -327,11 +324,6 @@ class ProjectAssigner:
             project_name = self._normalize_text(project.get("name"))
             if project_name and project_name in content_lower:
                 score += 3
-
-            # Client name mentions
-            client_name = self._normalize_text(project.get("client"))
-            if client_name and client_name in content_lower:
-                score += 2
 
             # Alias mentions (short aliases matter, e.g. WFC)
             for alias in self._extract_aliases(project):

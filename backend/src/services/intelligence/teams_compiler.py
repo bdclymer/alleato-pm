@@ -246,7 +246,7 @@ def normalize_conversation(doc: Dict[str, Any], messages: List[Dict[str, str]]) 
 def _fetch_projects(supabase) -> List[Dict[str, Any]]:
     response = (
         supabase.table("projects")
-        .select("id, name, client, aliases, project_number")
+        .select("id, name, aliases, project_number")
         .execute()
     )
     return response.data or []
@@ -264,7 +264,7 @@ def _project_name(supabase, project_id: Optional[int], projects: Optional[List[D
 
 
 def _project_terms(project: Dict[str, Any]) -> List[str]:
-    terms = [project.get("name"), project.get("client"), project.get("project_number")]
+    terms = [project.get("name"), project.get("project_number")]
     terms.extend(project.get("aliases") or [])
     return [_clean_text(term) for term in terms if _clean_text(term)]
 
@@ -282,10 +282,6 @@ def _title_candidates(projects: List[Dict[str, Any]], normalized: Dict[str, Any]
         if project_name and project_name in title_text:
             evidence.append(str(project.get("name")))
             score = max(score, 0.95)
-        client = _normalize_match_text(project.get("client"))
-        if client and client in title_text:
-            evidence.append(str(project.get("client")))
-            score = max(score, 0.9)
         for alias in project.get("aliases") or []:
             alias_norm = _normalize_match_text(alias)
             if alias_norm and _contains_token(title_text, alias_norm):

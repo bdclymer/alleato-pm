@@ -91,7 +91,6 @@ interface ProgressReportProjectRow {
   name: string | null;
   project_number: string | null;
   "job number": string | null;
-  client: string | null;
 }
 
 function parseContacts(value: unknown): ProgressReportContact[] {
@@ -396,7 +395,7 @@ export async function listAllProgressReports(): Promise<ProgressReportAllListIte
   if (projectIds.length > 0) {
     const { data: projects, error: projectsError } = await db
       .from("projects")
-      .select('id, name, project_number, "job number", client')
+      .select('id, name, project_number, "job number"')
       .in("id", projectIds);
 
     if (projectsError) throw new Error(projectsError.message);
@@ -422,7 +421,7 @@ export async function listAllProgressReports(): Promise<ProgressReportAllListIte
         name: project?.name ?? null,
         project_number: project?.project_number ?? null,
         job_number: project?.["job number"] ?? null,
-        client: project?.client ?? null,
+        client: null,
       },
     };
   });
@@ -533,7 +532,7 @@ export async function createProgressReportDraft({
   ] = await Promise.all([
     db
       .from("projects")
-      .select(`name, project_number, client, "start date", "est completion"`)
+      .select(`name, project_number, "start date", "est completion"`)
       .eq("id", projectId)
       .single(),
     db
@@ -595,7 +594,7 @@ export async function createProgressReportDraft({
     project: {
       name: projectResult.data.name,
       project_number: projectResult.data.project_number,
-      client: projectResult.data.client,
+      client: null,
       start_date: projectResult.data["start date"],
       scheduled_completion_date: projectResult.data["est completion"],
     },

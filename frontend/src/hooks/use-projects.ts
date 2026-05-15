@@ -7,8 +7,7 @@ export interface Project {
   id: number;
   name: string | null;
   project_number: string | null;
-  client: string | null;
-  client_id: string | null;
+  company_id: string | null;
   phase: string | null;
   state: string | null;
   address: string | null;
@@ -41,8 +40,8 @@ interface UseProjectsOptions {
   phase?: string;
   // Whether to include archived projects
   includeArchived?: boolean;
-  // Filter by client ID
-  clientId?: string;
+  // Filter by company ID
+  companyId?: string;
   // Limit number of results
   limit?: number;
   // Whether to auto-fetch on mount
@@ -68,7 +67,7 @@ export function useProjects(
     search,
     phase,
     includeArchived = false,
-    clientId,
+    companyId,
     limit = 100,
     enabled = true,
   } = options;
@@ -104,8 +103,8 @@ export function useProjects(
         query = query.eq("archived", false);
       }
 
-      if (clientId) {
-        query = query.eq("client_id", clientId);
+      if (companyId) {
+        query = query.eq("company_id", companyId);
       }
 
       const { data, error: queryError } = await query;
@@ -122,7 +121,7 @@ export function useProjects(
     } finally {
       setIsLoading(false);
     }
-  }, [search, phase, includeArchived, clientId, limit, enabled]);
+  }, [search, phase, includeArchived, companyId, limit, enabled]);
 
   useEffect(() => {
     fetchProjects();
