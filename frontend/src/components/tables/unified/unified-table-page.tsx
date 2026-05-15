@@ -127,7 +127,7 @@ export interface UnifiedTablePageProps<T> {
   toolbar: {
     totalItems: number;
     filteredItems: number;
-    selectedCount: number;
+    selectedCount?: number;
     searchValue: string;
     onSearchChange: (value: string) => void;
     searchPlaceholder?: string;
@@ -327,6 +327,7 @@ export function UnifiedTablePage<T>({
   const handleSelectRow = selection?.onSelectRow ?? ((id: string, checked: boolean) => {
     setInternalSelectedIds((prev) => checked ? (prev.includes(id) ? prev : [...prev, id]) : prev.filter((i) => i !== id));
   });
+  const effectiveSelectedCount = toolbar.selectedCount ?? selectedIds.length;
   const hasRowSelection = resolvedFeatures.enableRowSelection;
   const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions || table.onDelete);
 
@@ -346,6 +347,22 @@ export function UnifiedTablePage<T>({
     setDeleteDialogOpen(false);
     setItemToDelete(null);
   }, [itemToDelete, table]);
+
+  // Auto-built bulk delete: uses table.onDelete for each selected item so
+  // callers don't need to wire toolbar.onBulkDelete separately.
+  const effectiveBulkDelete = React.useMemo(() => {
+    if (toolbar.onBulkDelete) return toolbar.onBulkDelete;
+    if (!table.onDelete) return undefined;
+    return () => {
+      const itemsById = new Map(data.items.map((item) => [table.getRowId(item), item]));
+      selectedIds.forEach((id) => {
+        const item = itemsById.get(id);
+        if (item) table.onDelete!(item);
+      });
+      // Clear selection after bulk delete
+      handleSelectAll(false);
+    };
+  }, [toolbar.onBulkDelete, table, data.items, selectedIds, handleSelectAll]);
 
   // ── Internal view state ──────────────────────────────────────────────────────
   // UnifiedTablePage owns view state internally so individual pages never need
@@ -1067,7 +1084,7 @@ export function UnifiedTablePage<T>({
       )}
       totalItems={toolbar.totalItems}
       filteredItems={toolbar.filteredItems}
-      selectedCount={toolbar.selectedCount}
+      selectedCount={effectiveSelectedCount}
       searchValue={toolbar.searchValue}
       onSearchChange={toolbar.onSearchChange}
       searchPlaceholder={toolbar.searchPlaceholder}
@@ -1086,7 +1103,7 @@ export function UnifiedTablePage<T>({
       sortDirection={sorting?.sortDirection}
       onSortChange={sorting?.onSortChange}
       onExport={toolbar.onExport}
-      onBulkDelete={toolbar.onBulkDelete}
+      onBulkDelete={effectiveBulkDelete}
       mobilePanelActions={toolbar.mobilePanelActions}
       customActions={toolbar.customActions}
       density={density}
