@@ -1,4 +1,3 @@
-Using workdir /Users/meganharrison/Documents/alleato-pm
 export type Json =
   | string
   | number
@@ -12109,6 +12108,57 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
+      estimate_sublist_bid_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: number
+          is_excluded: boolean
+          notes: string | null
+          scope_item_id: number | null
+          sub_id: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description: string
+          id?: number
+          is_excluded?: boolean
+          notes?: string | null
+          scope_item_id?: number | null
+          sub_id: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: number
+          is_excluded?: boolean
+          notes?: string | null
+          scope_item_id?: number | null
+          sub_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_sublist_bid_items_scope_item_id_fkey"
+            columns: ["scope_item_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_sublist_scope_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimate_sublist_bid_items_sub_id_fkey"
+            columns: ["sub_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_sublist_subs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -35081,4 +35131,3 @@ export const Constants = {
     },
   },
 } as const
-<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />

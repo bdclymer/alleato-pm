@@ -55,6 +55,7 @@ type DetailItem = Database["public"]["Tables"]["estimate_detail_items"]["Row"];
 type SublistSub = Database["public"]["Tables"]["estimate_sublist_subs"]["Row"];
 type CallLog = Database["public"]["Tables"]["estimate_sublist_call_logs"]["Row"];
 type ScopeItem = Database["public"]["Tables"]["estimate_sublist_scope_items"]["Row"];
+type BidItem = Database["public"]["Tables"]["estimate_sublist_bid_items"]["Row"];
 
 interface EstimateDetailClientV2Props {
   projectId: string;
@@ -1844,6 +1845,93 @@ function SubListTab({
     }
   }, [projectId, estimateId, loadScopeItems]);
 
+  // Bid items state (structured bid entry per sub)
+  const [bidItemsBySubId, setBidItemsBySubId] = React.useState<Record<number, BidItem[]>>({});
+  const [expandedBidSubIds, setExpandedBidSubIds] = React.useState<Set<number>>(new Set());
+  const [newBidDesc, setNewBidDesc] = React.useState<Record<number, string>>({});
+  const [newBidAmount, setNewBidAmount] = React.useState<Record<number, string>>({});
+
+  const loadBidItems = React.useCallback(async (subId: number) => {
+    try {
+      const items = await apiFetch<BidItem[]>(
+        `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/bid-items`
+      );
+      setBidItemsBySubId((prev) => ({ ...prev, [subId]: items ?? [] }));
+    } catch { /* silently ignore */ }
+  }, [projectId, estimateId]);
+
+  const toggleBidExpand = React.useCallback((subId: number) => {
+    setExpandedBidSubIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(subId)) {
+        next.delete(subId);
+      } else {
+        next.add(subId);
+        if (!bidItemsBySubId[subId]) void loadBidItems(subId);
+      }
+      return next;
+    });
+  }, [bidItemsBySubId, loadBidItems]);
+
+  const addBidItem = React.useCallback(async (subId: number) => {
+    const desc = (newBidDesc[subId] ?? "").trim();
+    const amount = parseFloat(newBidAmount[subId] ?? "0") || 0;
+    if (!desc) return;
+    try {
+      const item = await apiFetch<BidItem>(
+        `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/bid-items`,
+        { method: "POST", body: JSON.stringify({ description: desc, amount }) }
+      );
+      if (item) {
+        setBidItemsBySubId((prev) => ({ ...prev, [subId]: [...(prev[subId] ?? []), item] }));
+        setNewBidDesc((prev) => ({ ...prev, [subId]: "" }));
+        setNewBidAmount((prev) => ({ ...prev, [subId]: "" }));
+        // Update local sub price
+        const newTotal = [...(bidItemsBySubId[subId] ?? []), item]
+          .filter((b) => !b.is_excluded)
+          .reduce((s, b) => s + Number(b.amount), 0);
+        void onPatchSub(subId, { price: newTotal });
+      }
+    } catch {
+      toast.error("Failed to add bid item");
+    }
+  }, [projectId, estimateId, newBidDesc, newBidAmount, bidItemsBySubId, onPatchSub]);
+
+  const patchBidItem = React.useCallback(async (subId: number, itemId: number, fields: Partial<BidItem>) => {
+    setBidItemsBySubId((prev) => ({
+      ...prev,
+      [subId]: (prev[subId] ?? []).map((b) => b.id === itemId ? { ...b, ...fields } : b),
+    }));
+    try {
+      await apiFetch(
+        `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/bid-items/${itemId}`,
+        { method: "PATCH", body: JSON.stringify(fields) }
+      );
+      // Recompute local total
+      const updatedItems = (bidItemsBySubId[subId] ?? []).map((b) => b.id === itemId ? { ...b, ...fields } : b);
+      const total = updatedItems.filter((b) => !b.is_excluded).reduce((s, b) => s + Number(b.amount), 0);
+      void onPatchSub(subId, { price: total });
+    } catch {
+      toast.error("Failed to update bid item");
+    }
+  }, [projectId, estimateId, bidItemsBySubId, onPatchSub]);
+
+  const deleteBidItem = React.useCallback(async (subId: number, itemId: number) => {
+    const remaining = (bidItemsBySubId[subId] ?? []).filter((b) => b.id !== itemId);
+    setBidItemsBySubId((prev) => ({ ...prev, [subId]: remaining }));
+    try {
+      await apiFetch(
+        `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/bid-items/${itemId}`,
+        { method: "DELETE" }
+      );
+      const total = remaining.filter((b) => !b.is_excluded).reduce((s, b) => s + Number(b.amount), 0);
+      void onPatchSub(subId, { price: total });
+    } catch {
+      toast.error("Failed to delete bid item");
+      void loadBidItems(subId);
+    }
+  }, [projectId, estimateId, bidItemsBySubId, onPatchSub, loadBidItems]);
+
   // Load companies once on mount
   React.useEffect(() => {
     const supabaseClient = createClient();
@@ -2178,8 +2266,8 @@ function SubListTab({
 
                   {/* Sub rows */}
                   {divRows.map((sub, idx) => (
+                    <React.Fragment key={sub.id}>
                     <tr
-                      key={sub.id}
                       className={`border-b border-border/20 hover:bg-muted/20 ${sub.is_awarded ? "bg-status-warning/5" : ""}`}
                     >
                       <td className="py-1 pl-4 pr-2 text-muted-foreground">{sub.position ?? idx + 1}</td>
@@ -2369,12 +2457,24 @@ function SubListTab({
                         />
                       </td>
                       <td className="w-28 px-2 py-1">
-                        <InlineNumber
-                          value={sub.price ?? 0}
-                          onChange={(v) => void onPatchSub(sub.id, { price: v || null })}
-                          className="w-full text-right"
-                          currency
-                        />
+                        <div className="flex items-center gap-0.5">
+                          <InlineNumber
+                            value={sub.price ?? 0}
+                            onChange={(v) => void onPatchSub(sub.id, { price: v || null })}
+                            className="flex-1 text-right"
+                            currency
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            className="h-5 w-5 shrink-0 text-muted-foreground/40 hover:text-primary"
+                            title="Detail bid"
+                            onClick={() => toggleBidExpand(sub.id)}
+                          >
+                            {expandedBidSubIds.has(sub.id) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                          </Button>
+                        </div>
                       </td>
                       <td className="px-2 py-1">
                         <InlineText
@@ -2397,6 +2497,81 @@ function SubListTab({
                         </Button>
                       </td>
                     </tr>
+
+                    {/* Bid detail panel */}
+                    {expandedBidSubIds.has(sub.id) && (
+                      <tr>
+                        <td colSpan={12} className="bg-muted/10 px-8 py-3">
+                          <div className="max-w-xl">
+                            <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              Bid Line Items — {sub.company ?? "Sub"}
+                            </p>
+                            <div className="mb-2 space-y-1">
+                              {(bidItemsBySubId[sub.id] ?? []).length === 0 ? (
+                                <p className="text-xs text-muted-foreground">No line items. Add items below or enter lump sum in the price field.</p>
+                              ) : (
+                                (bidItemsBySubId[sub.id] ?? []).map((item) => (
+                                  <div key={item.id} className="group flex items-center gap-2">
+                                    <Checkbox
+                                      checked={!item.is_excluded}
+                                      onCheckedChange={(v) => void patchBidItem(sub.id, item.id, { is_excluded: !v })}
+                                      className="h-3.5 w-3.5 shrink-0"
+                                      title={item.is_excluded ? "Excluded from total" : "Included"}
+                                    />
+                                    <span className={`flex-1 text-xs ${item.is_excluded ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                                      {item.description}
+                                    </span>
+                                    <span className={`w-24 shrink-0 text-right text-xs ${item.is_excluded ? "text-muted-foreground line-through" : "font-medium text-foreground"}`}>
+                                      {formatCurrencyFull(Number(item.amount))}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      type="button"
+                                      size="icon"
+                                      className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100"
+                                      onClick={() => void deleteBidItem(sub.id, item.id)}
+                                    >
+                                      <X className="h-2.5 w-2.5" />
+                                    </Button>
+                                  </div>
+                                ))
+                              )}
+                              {(bidItemsBySubId[sub.id] ?? []).length > 0 && (
+                                <div className="border-t border-border/40 pt-1 text-right text-xs font-semibold text-foreground">
+                                  Total: {formatCurrencyFull(
+                                    (bidItemsBySubId[sub.id] ?? []).filter((b) => !b.is_excluded).reduce((s, b) => s + Number(b.amount), 0)
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-1.5">
+                              <Input
+                                placeholder="Description"
+                                value={newBidDesc[sub.id] ?? ""}
+                                onChange={(e) => setNewBidDesc((prev) => ({ ...prev, [sub.id]: e.target.value }))}
+                                className="h-7 flex-1 text-xs"
+                              />
+                              <Input
+                                placeholder="$0"
+                                type="number"
+                                value={newBidAmount[sub.id] ?? ""}
+                                onChange={(e) => setNewBidAmount((prev) => ({ ...prev, [sub.id]: e.target.value }))}
+                                className="h-7 w-24 text-right text-xs"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => void addBidItem(sub.id)}
+                              >
+                                Add
+                              </Button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   ))}
 
                 </React.Fragment>
