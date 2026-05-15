@@ -150,6 +150,18 @@ export function PrimeContractSovSection({
   ) => void;
   onBudgetCodesActivated?: () => Promise<void>;
 }) {
+  const sovSubtotal = (formData.sovItems || [])
+    .filter((item) => !item.isMarkup && !item.isGroup)
+    .reduce(
+      (sum, item) =>
+        sum +
+        (isUnitQuantityMode
+          ? (item.quantity ?? 0) * (item.unitCost ?? 0)
+          : item.amount || 0),
+      0,
+    );
+  const hasMarkupItems = (formData.sovItems || []).some((item) => item.isMarkup);
+
   return (
     <>
       <FormSection
@@ -270,8 +282,48 @@ export function PrimeContractSovSection({
                 </InlineTableCell>
               </InlineTableRow>
             ) : (
-              formData.sovItems?.map((item, index) =>
-                item.isGroup ? (
+              formData.sovItems?.flatMap((item, index) => {
+                const subtotalRow =
+                  hasMarkupItems &&
+                  item.isMarkup &&
+                  (index === 0 || !formData.sovItems![index - 1].isMarkup) ? (
+                    <InlineTableRow
+                      key="__subtotal__"
+                      className="border-t border-border bg-muted/20"
+                    >
+                      <InlineTableCell />
+                      <InlineTableCell
+                        colSpan={isUnitQuantityMode ? 4 : 2}
+                        className="py-2"
+                      >
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Subtotal
+                        </span>
+                      </InlineTableCell>
+                      <InlineTableCell className="py-2">
+                        <span className="block h-8 text-right text-sm font-medium leading-8 tabular-nums">
+                          $
+                          {sovSubtotal.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric className="py-2 text-muted-foreground">
+                        $0.00
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric className="py-2">
+                        $
+                        {sovSubtotal.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </InlineTableCell>
+                      <InlineTableCell />
+                    </InlineTableRow>
+                  ) : null;
+
+                const itemRow = item.isGroup ? (
                   <InlineTableRow
                     key={item.id}
                     type="group"
@@ -315,11 +367,17 @@ export function PrimeContractSovSection({
                       <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
                     </InlineTableCell>
                     <InlineTableCell>
-                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                          Markup
+                      {item.budgetCodeLabel ? (
+                        <span className="text-sm text-foreground">
+                          {item.budgetCodeLabel}
                         </span>
-                      </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                            Markup
+                          </span>
+                        </span>
+                      )}
                     </InlineTableCell>
                     <InlineTableCell>
                       <span className="text-sm text-foreground">
@@ -531,8 +589,12 @@ export function PrimeContractSovSection({
                       </Button>
                     </InlineTableCell>
                   </InlineTableRow>
-                ),
-              )
+                );
+
+                return [subtotalRow, itemRow].filter(
+                  (r): r is React.ReactElement => r !== null,
+                );
+              })
             )}
           </InlineTableBody>
           <InlineTableFooter>
@@ -778,31 +840,47 @@ function EstimateWorkbookImportModal({
       });
       const ownerRows = preview.rows.filter((row) => row.includeInOwnerSov);
 
-      // Auto-activate any budget codes that are missing so all valid rows are importable
+      // Auto-activate budget codes that are not yet mapped to this project.
+      // The activate endpoint rejects cost codes that don't exist in the system —
+      // those rows will stay as "Needs budget code" in the preview table.
       const rowsMissingCodes = ownerRows.filter(
         (row) => row.warnings.length === 0 && !(row as { hasBudgetCodeMapping?: boolean }).hasBudgetCodeMapping,
       );
       if (rowsMissingCodes.length > 0 && onBudgetCodesActivated) {
-        await apiFetch(`/api/projects/${projectId}/budget-codes/activate`, {
-          method: "POST",
-          body: JSON.stringify({
-            rows: rowsMissingCodes.map((row) => ({
-              costCode: row.costCode,
-              costTypeCode: row.costTypeCode,
-              description: row.description,
-            })),
-          }),
-        });
-        // Refresh parent's budget codes so mapping in handleImportEstimateWorkbookSuccess succeeds
-        await onBudgetCodesActivated();
+        try {
+          await apiFetch(`/api/projects/${projectId}/budget-codes/activate`, {
+            method: "POST",
+            body: JSON.stringify({
+              rows: rowsMissingCodes.map((row) => ({
+                costCode: row.costCode,
+                costTypeCode: row.costTypeCode,
+                description: row.description,
+              })),
+            }),
+          });
+          // Refresh parent's budget codes so mapping in handleImportEstimateWorkbookSuccess succeeds
+          await onBudgetCodesActivated();
+        } catch (activateError) {
+          // Surface the error (e.g. unknown cost code typo in template) as a warning
+          // but still show the preview so the user can see which rows are affected
+          const msg =
+            activateError instanceof Error
+              ? activateError.message
+              : "Some rows reference cost codes that don't exist in the system.";
+          toast.error(msg);
+          setWarnings((prev) => [msg, ...prev]);
+        }
       }
 
       setRows(ownerRows);
-      setWarnings(preview.warnings);
+      setWarnings((prev) => [...prev, ...preview.warnings]);
       setSelectedRows(
         new Set(
           ownerRows
-            .filter((row) => row.warnings.length === 0)
+            .filter((row) => {
+              const budgetCode = resolveEstimateBudgetCode(row, budgetCodes);
+              return row.warnings.length === 0 && Boolean(budgetCode);
+            })
             .map((row) => getEstimateRowKey(row)),
         ),
       );

@@ -12,11 +12,6 @@ interface ActivateBudgetCodeRow {
   description: string;
 }
 
-interface CostCodeDivision {
-  id: string;
-  code: string;
-}
-
 function normalizeRows(input: unknown): ActivateBudgetCodeRow[] {
   if (!input || typeof input !== "object" || !("rows" in input)) return [];
   const rows = (input as { rows: unknown }).rows;
@@ -40,26 +35,6 @@ function normalizeRows(input: unknown): ActivateBudgetCodeRow[] {
     .filter((row): row is ActivateBudgetCodeRow => Boolean(row));
 }
 
-function resolveDivisionId(costCodeId: string, divisions: CostCodeDivision[]): string | null {
-  const [prefix] = costCodeId.split("-");
-  const cleanedPrefix = prefix?.trim() || "";
-  const normalizedPrefix = cleanedPrefix.replace(/^0+(\d)/, "$1");
-
-  const byCode = divisions.find((division) => {
-    const divisionCode = division.code.trim();
-    const normalizedDivisionCode = divisionCode.replace(/^0+(\d)/, "$1");
-    return divisionCode === cleanedPrefix || normalizedDivisionCode === normalizedPrefix;
-  });
-
-  if (byCode) return byCode.id;
-
-  const generalDivision = divisions.find(
-    (d) => d.id.toLowerCase() === "general" || d.code.toLowerCase() === "general",
-  );
-  if (generalDivision) return generalDivision.id;
-
-  return divisions[0]?.id ?? null;
-}
 
 export const POST = withApiGuardrails<{ projectId: string }>(
   WHERE,
@@ -141,49 +116,16 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }
 
     const existingCostCodeIds = new Set((existingCostCodes ?? []).map((row) => row.id));
-    const missingCostCodeRows = uniqueRows.filter((row) => !existingCostCodeIds.has(row.costCode));
+    const unknownCostCodes = uniqueRows
+      .filter((row) => !existingCostCodeIds.has(row.costCode))
+      .map((row) => row.costCode);
 
-    if (missingCostCodeRows.length > 0) {
-      const { data: divisionsData, error: divisionsError } = await supabase
-        .from("cost_code_divisions")
-        .select("id, code")
-        .eq("is_active", true)
-        .order("code", { ascending: true });
-
-      if (divisionsError) {
-        throw new GuardrailError({
-          code: "UPSTREAM_FAILURE",
-          where: WHERE,
-          message: "Failed to resolve cost-code divisions.",
-          details: divisionsError.message,
-        });
-      }
-
-      const divisions: CostCodeDivision[] = divisionsData ?? [];
-      const costCodesToInsert = missingCostCodeRows.map((row) => {
-        const divisionId = resolveDivisionId(row.costCode, divisions);
-        if (!divisionId) {
-          throw new GuardrailError({
-            code: "INVALID_PAYLOAD",
-            where: WHERE,
-            message: `Could not determine division for cost code "${row.costCode}".`,
-          });
-        }
-        return { id: row.costCode, title: row.description, division_id: divisionId, status: "active" };
+    if (unknownCostCodes.length > 0) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: WHERE,
+        message: `Unknown cost code${unknownCostCodes.length === 1 ? "" : "s"}: ${[...new Set(unknownCostCodes)].join(", ")}. Only cost codes that already exist in the system can be activated — new cost codes cannot be created via this endpoint.`,
       });
-
-      const { error: createCostCodesError } = await supabase
-        .from("cost_codes")
-        .upsert(costCodesToInsert, { onConflict: "id" });
-
-      if (createCostCodesError) {
-        throw new GuardrailError({
-          code: "UPSTREAM_FAILURE",
-          where: WHERE,
-          message: "Failed to create missing cost codes.",
-          details: createCostCodesError.message,
-        });
-      }
     }
 
     const { data: existingProjectBudgetCodes, error: existingProjectBudgetCodesError } =
