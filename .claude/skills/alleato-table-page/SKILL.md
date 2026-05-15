@@ -70,7 +70,32 @@ const tableState = useUnifiedTableState({
 
 ---
 
-## UnifiedTablePage Props Structure
+## Features are ON by default — opt out, not in
+
+Every feature works with zero configuration. The only required props are `header`, `toolbar` (totalItems, filteredItems, searchValue, onSearchChange, currentView, onViewChange), `data`, `table.columns`, `table.getRowId`, and `emptyState`.
+
+**What you do NOT need to wire manually:**
+- `toolbar.selectedCount` — derived from internal selection state automatically
+- `toolbar.onBulkDelete` — auto-built from `table.onDelete` (with confirmation dialog)
+- `toolbar.onExport` — auto-built CSV from columns that define `csvValue`
+- `sorting` prop — internal sort state; works as long as columns define `sortable`/`sortValue`
+- `pagination` prop — defaults to 25 rows/page client-side automatically
+- `toolbar.onColumnVisibilityChange` — auto-persists to localStorage by `header.title`
+
+**To disable a feature:**
+```tsx
+features={{ enablePagination: false, enableSorting: false, enableExport: false }}
+```
+
+**To add Edit to the default row actions menu:**
+```tsx
+table={{ onEdit: (item) => router.push(`.../${item.id}/edit`), onDelete: handleDelete }}
+```
+This renders a "⋯" menu with Edit + Delete (separator between them) automatically.
+
+---
+
+## Minimal viable table page
 
 ```tsx
 <UnifiedTablePage
@@ -78,13 +103,52 @@ const tableState = useUnifiedTableState({
     title: "Commitments",
     description: "Manage purchase orders and subcontracts",
     actions: <Button size="sm"><Plus className="h-4 w-4 mr-2" />Create</Button>,
-    //        ^^^ ONLY the primary Create/Add button. Nothing else.
+  }}
+  toolbar={{
+    totalItems: items.length,
+    filteredItems: items.length,
+    searchValue: tableState.searchInput,
+    onSearchChange: tableState.setSearchInput,
+    searchPlaceholder: "Search commitments...",
+    currentView: tableState.currentView,
+    onViewChange: tableState.setCurrentView,
+  }}
+  data={{ items, isLoading, error }}
+  table={{
+    columns: tableColumns,
+    onEdit: (item) => router.push(`commitments/${item.id}/edit`),
+    onDelete: handleDelete,   // bulk delete + single delete both auto-wired
+    getRowId: (item) => String(item.id),
+    onRowClick: (item) => router.push(`commitments/${item.id}`),
+  }}
+  emptyState={{
+    title: "No commitments",
+    description: "Create your first commitment to get started.",
+    filteredDescription: "No commitments match your current filters.",
+    isFiltered: Boolean(tableState.debouncedSearch),
+    action: <Button onClick={handleCreate}>Create Commitment</Button>,
+  }}
+/>
+```
+
+Sorting, pagination (25/page), export, bulk delete, row selection, column visibility — all automatic.
+
+---
+
+## Full props example (when URL-synced state is needed)
+
+```tsx
+<UnifiedTablePage
+  header={{
+    title: "Commitments",
+    description: "Manage purchase orders and subcontracts",
+    actions: <Button size="sm"><Plus className="h-4 w-4 mr-2" />Create</Button>,
   }}
   tabs={tabs}           // optional — TabItem[]
   toolbar={{
     totalItems,
     filteredItems: totalItems,
-    selectedCount: tableState.selectedIds.length,
+    // selectedCount is optional — omit it and the component derives it internally
     searchValue: tableState.searchInput,
     onSearchChange: tableState.setSearchInput,
     searchPlaceholder: "Search commitments...",
@@ -93,17 +157,11 @@ const tableState = useUnifiedTableState({
       tableState.setCurrentView(view);
       tableState.setSearchParams({ view });
     },
-    filters: myFilters,            // FilterConfig[] — defines filter UI
+    filters: myFilters,
     activeFilters,
     onFilterChange: handleFilterChange,
     onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-    columns: myColumnConfig,       // ColumnConfig[] — for column visibility toggle
-    visibleColumns: tableState.visibleColumns,
-    onColumnVisibilityChange: tableState.setVisibleColumns,
-    onBulkDelete: tableState.selectedIds.length > 0
-      ? () => setBulkDeleteDialogOpen(true)
-      : undefined,
-    customActions: <SomeIconButton />,  // extra icon buttons in toolbar icon row
+    customActions: <SomeIconButton />,
   }}
   data={{
     items: sortedItems,
@@ -112,22 +170,13 @@ const tableState = useUnifiedTableState({
     error: resolvedError,
   }}
   table={{
-    columns: tableColumns,          // TableColumn<T>[]
-    onDelete: handleDeleteIntent,   // triggers default "⋯" dropdown with Delete
-    getRowId: (item) => item.id,
+    columns: tableColumns,
+    onEdit: (item) => router.push(`${item.id}/edit`),
+    onDelete: handleDelete,
+    getRowId: (item) => String(item.id),
     onRowClick: handleRowClick,
     activeRowId: null,
     stickyHeader: true,
-  }}
-  sorting={{
-    sortBy: tableState.sortBy,
-    sortDirection: tableState.sortDirection,
-    onSortChange: (col, dir) => tableState.setSortBy(col),
-  }}
-  selection={{
-    selectedIds: tableState.selectedIds,
-    onSelectAll: handleSelectAll,
-    onSelectRow: handleSelectRow,
   }}
   emptyState={{
     title: "No commitments",
@@ -136,25 +185,7 @@ const tableState = useUnifiedTableState({
     isFiltered: Boolean(tableState.debouncedSearch) || hasActiveFilters,
     action: <Button onClick={handleCreate}>Create Commitment</Button>,
   }}
-  pagination={{
-    page: tableState.page,
-    totalPages,
-    perPage: tableState.perPage,
-    onPageChange: tableState.setPage,
-    onPerPageChange: (val) => tableState.setPerPage(Number(val)),
-  }}
-  layout={{
-    fullBleedTable: true,
-  }}
-  features={{
-    enableSearch: true,
-    enableFilters: true,
-    enableColumnToggle: true,
-    enableExport: true,
-    enableBulkDelete: true,
-    enableRowSelection: true,
-    enableRowActions: true,
-  }}
+  layout={{ fullBleedTable: true }}
 />
 ```
 
@@ -268,15 +299,26 @@ const activeFilters = useMemo<Record<string, FilterValue>>(
 
 ## Delete Pattern
 
-**Single delete** — use `table.onDelete` (renders default "⋯" menu):
-```tsx
-table={{ onDelete: handleDeleteIntent }}
-```
-Pair with `AlertDialog` state + the delete mutation hook.
+**Single delete** — provide `table.onDelete`. The component renders a built-in "⋯" menu with Delete and a confirmation dialog automatically. No separate AlertDialog state needed in the page.
 
-**Bulk delete** — use `toolbar.onBulkDelete` + `AlertDialog`:
 ```tsx
-toolbar={{ onBulkDelete: selectedIds.length > 0 ? () => setBulkDeleteDialogOpen(true) : undefined }}
+table={{ onDelete: (item) => deleteItem(item.id) }}
+```
+
+**Edit + Delete** — provide both. The built-in "⋯" menu shows Edit first, then a separator, then Delete.
+
+```tsx
+table={{
+  onEdit: (item) => router.push(`${item.id}/edit`),
+  onDelete: (item) => deleteItem(item.id),
+}}
+```
+
+**Bulk delete** — automatic when `table.onDelete` is provided. Selecting rows and clicking the trash icon in the toolbar shows a "Delete N items?" confirmation dialog before deleting. No manual `toolbar.onBulkDelete` wiring needed.
+
+**Custom bulk delete** — override with `toolbar.onBulkDelete` to handle confirmation yourself:
+```tsx
+toolbar={{ onBulkDelete: selectedIds.length > 0 ? () => setMyBulkDeleteOpen(true) : undefined }}
 ```
 
 ---
@@ -312,31 +354,26 @@ Toolbar (`toolbar.customActions`) is where extra icon buttons go (e.g., ERP sync
 - `PageHeader` from `@/components/design-system` — use `header` prop of `UnifiedTablePage`
 - Generic `[id]` route params — always use `[projectId]`, `[contractId]`, etc.
 
-### ALWAYS include all standard features
-Every table page must have: row selection, row actions (edit + delete), bulk delete, search, filters, column visibility, pagination, export, empty state. No exceptions.
+### Standard features are automatic — do NOT wire them manually unless you need URL-sync
+Row selection, bulk delete (with confirmation), search, column visibility (persisted to localStorage), pagination (25/page), export (CSV from `csvValue` columns), and sorting are all ON by default. You only need to wire these manually when you want URL-sync via `useUnifiedTableState`.
+
+### Edit and Delete via `table.onEdit` / `table.onDelete` — no `rowActions` boilerplate
+Providing `table.onEdit` and/or `table.onDelete` auto-builds the "⋯" menu. Only use `table.rowActions` when you need custom menu items beyond Edit/Delete.
 
 ### Page is "use client"
 All table pages are client components — they use hooks, router, and interactive state.
 
-### Sort client-side when server pagination isn't used
+### Sorting is automatic — no `sorting` prop needed
+Define `sortable: true` and `sortValue` on columns. The component handles sort state internally. Column headers are clickable, sort arrows appear, ascending/descending works out of the box.
+
 ```ts
-const sortedItems = React.useMemo(() => {
-  if (!tableState.sortBy) return items;
-  const col = tableColumns.find((c) => c.id === tableState.sortBy);
-  if (!col?.sortValue) return items;
-  return [...items].sort((a, b) => {
-    const va = col.sortValue!(a);
-    const vb = col.sortValue!(b);
-    if (va == null) return tableState.sortDirection === "asc" ? -1 : 1;
-    if (vb == null) return tableState.sortDirection === "asc" ? 1 : -1;
-    if (typeof va === "number" && typeof vb === "number")
-      return tableState.sortDirection === "asc" ? va - vb : vb - va;
-    return tableState.sortDirection === "asc"
-      ? String(va).localeCompare(String(vb))
-      : String(vb).localeCompare(String(va));
-  });
-}, [items, tableColumns, tableState.sortBy, tableState.sortDirection]);
+{ id: "amount", label: "Amount", sortable: true, sortValue: (item) => item.amount, render: ... }
 ```
+
+Pass the `sorting` prop only when you need sort state in the URL (via `useUnifiedTableState`).
+
+### Pagination is automatic — no `pagination` prop needed
+Defaults to 25 rows/page with client-side slicing. Pass `pagination` prop only when integrating server-side pagination or URL-synced page state.
 
 ---
 
