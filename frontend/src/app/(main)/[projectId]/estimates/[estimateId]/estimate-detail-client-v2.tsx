@@ -636,7 +636,7 @@ export function EstimateDetailClientV2({
   sublistSubs: initialSublistSubs,
 }: EstimateDetailClientV2Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = React.useState("gc");
+  const [activeTab, setActiveTab] = React.useState("summary");
   const [gcItems, setGcItems] = React.useState<GcItem[]>(initialGcItems);
   const templateLoaded = React.useRef(false);
   const [detailItems, setDetailItems] = React.useState<DetailItem[]>(initialDetailItems);
