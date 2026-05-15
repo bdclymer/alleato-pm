@@ -2453,13 +2453,177 @@ export function createProjectTools(
       ),
     }),
 
+    findProjectDocuments: tool({
+      description:
+        "**USE THIS to FIND specific documents/files for a project** — " +
+        "permits, contracts, drawings, specs, certificates, daily reports, " +
+        "RFIs, submittals, change orders, financial docs. " +
+        "This is a STRUCTURED lookup against document_metadata by project " +
+        "and document category/type/title keyword. NOT a content search — " +
+        "use searchDocuments for content-inside-the-document queries " +
+        "(e.g. 'what does the spec say about fire ratings'). " +
+        "Returns: file_name, title, type, category, date, OneDrive link, " +
+        "summary, and a content preview. " +
+        "Examples: 'find the permit for Westfield Collective' " +
+        "→ category='permit' or titleKeyword='permit'; " +
+        "'show me drawings for Goodwill' → category='drawing' or titleKeyword='drawing'; " +
+        "'pull the latest contract' → category='contract' ordered by date desc.",
+      inputSchema: z.object({
+        projectId: z
+          .number()
+          .optional()
+          .describe("Project ID — use this when known"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Project name (partial, case-insensitive match)"),
+        category: z
+          .enum([
+            "contract",
+            "permit",
+            "drawing",
+            "specification",
+            "submittal",
+            "rfi",
+            "daily_report",
+            "change_order",
+            "certificate",
+            "insurance",
+            "financial_document",
+            "meeting",
+            "email",
+            "any",
+          ])
+          .optional()
+          .default("any")
+          .describe(
+            "Filter by document category. 'any' returns all categories.",
+          ),
+        titleKeyword: z
+          .string()
+          .optional()
+          .describe(
+            "Substring to look for in file_name, title, or summary " +
+            "(case-insensitive). Use when category alone isn't enough " +
+            "(e.g. titleKeyword='certificate of occupancy').",
+          ),
+        sinceIso: z
+          .string()
+          .optional()
+          .describe("Only documents whose date is >= this ISO timestamp"),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(50)
+          .optional()
+          .default(15)
+          .describe("Max documents to return (1-50, default 15)"),
+      }),
+      execute: withTrace(
+        "findProjectDocuments",
+        options,
+        async ({ projectId, projectName, category, titleKeyword, sinceIso, limit }) => {
+          let resolvedProjectId = projectId;
+          // Resolve projectName → id when needed.
+          if (!resolvedProjectId && projectName) {
+            const { data: nameMatch } = await supabase
+              .from("projects")
+              .select("id")
+              .ilike("name", `%${projectName}%`)
+              .limit(1)
+              .maybeSingle();
+            resolvedProjectId = (nameMatch as { id: number } | null)?.id;
+          }
+          const scopedProjectIds = await guardrails.getScopedProjectIds(resolvedProjectId);
+          if (resolvedProjectId && !scopedProjectIds.includes(resolvedProjectId)) {
+            return {
+              error: `You do not have access to project ${resolvedProjectId}.`,
+            };
+          }
+
+          let q = supabase
+            .from("document_metadata")
+            .select(
+              "id, file_name, title, type, category, date, summary, description, file_path, file_id, project_id, captured_at",
+            )
+            .order("date", { ascending: false, nullsFirst: false })
+            .order("captured_at", { ascending: false })
+            .limit(limit ?? 15);
+
+          if (resolvedProjectId) {
+            q = q.eq("project_id", resolvedProjectId);
+          } else if (scopedProjectIds.length > 0) {
+            q = q.in("project_id", scopedProjectIds);
+          }
+
+          if (category && category !== "any") {
+            // category column on document_metadata covers most types; type column
+            // covers a few legacy values. Match either.
+            q = q.or(`category.ilike.%${category}%,type.ilike.%${category}%`);
+          }
+
+          if (titleKeyword && titleKeyword.trim()) {
+            const keyword = titleKeyword.trim().replace(/[%]/g, "");
+            q = q.or(
+              `file_name.ilike.%${keyword}%,title.ilike.%${keyword}%,description.ilike.%${keyword}%`,
+            );
+          }
+
+          if (sinceIso) {
+            q = q.gte("date", sinceIso);
+          }
+
+          const { data, error } = await q;
+          if (error) {
+            return { error: `findProjectDocuments failed: ${error.message}` };
+          }
+
+          const rows = (data ?? []) as AnyRow[];
+          return {
+            resolvedProjectId: resolvedProjectId ?? null,
+            documentCount: rows.length,
+            category: category ?? "any",
+            titleKeyword: titleKeyword ?? null,
+            documents: rows.map((d) => ({
+              id: d.id,
+              fileName: d.file_name,
+              title: d.title,
+              type: d.type,
+              category: d.category,
+              date: d.date,
+              capturedAt: d.captured_at,
+              projectId: d.project_id,
+              summary:
+                typeof d.summary === "string" && d.summary.length > 0
+                  ? String(d.summary).slice(0, 400)
+                  : null,
+              description:
+                typeof d.description === "string" && d.description.length > 0
+                  ? String(d.description).slice(0, 400)
+                  : null,
+              fileId: d.file_id,
+              filePath: d.file_path,
+            })),
+            note:
+              rows.length === 0
+                ? "No documents matched. The document_metadata table only includes 'category' values that have been backfilled — most rows are tagged 'document'. Try titleKeyword for substring matches in file_name/title."
+                : null,
+          };
+        },
+      ),
+    }),
+
     searchDocuments: tool({
       description:
-        "Search meeting transcripts, notes, and project documents by keyword. " +
-        "Works across ALL projects by default — no project filter needed. " +
-        "Optionally filter by project name or ID. " +
-        "Use when investigating specific topics, decisions, or looking for " +
-        "context on a particular issue discussed in meetings.",
+        "Vector SEARCH inside document CONTENT — meeting transcripts, email " +
+        "bodies, doc text — by topic or keyword. Use ONLY when you need to " +
+        "find the specific TEXT inside documents (e.g. 'what does the spec " +
+        "say about fire ratings'). " +
+        "For finding a specific FILE (the permit, the contract, the drawings) " +
+        "use findProjectDocuments instead. " +
+        "For project FACTS (address, client, phase, manager) use getProjectDetails. " +
+        "Works across ALL projects by default; optionally filter by projectId/Name.",
       inputSchema: z.object({
         query: z
           .string()
@@ -2585,15 +2749,25 @@ export function createProjectTools(
 
     getProjectDetails: tool({
       description:
-        "Get comprehensive details for a specific project including contracts, " +
-        "schedule, RFIs, and recent meeting activity with action items. " +
-        "Use when diving deep into a single project.",
+        "**USE THIS FIRST for any STRUCTURED FACT about a specific project**: " +
+        "address, city, state, client, project_number, current_phase, " +
+        "project_manager, OneDrive folder link, budget, completion %, " +
+        "health_score, work_scope, delivery_method, team_members, " +
+        "stakeholders, ERP / Acumatica project id, dates. " +
+        "Do NOT use searchDocuments or semanticSearch for these — they are " +
+        "structured columns on the projects table and this tool returns " +
+        "them directly. " +
+        "ALSO returns recent contracts, schedule, RFIs, and meeting activity " +
+        "for deeper context. " +
+        "Accepts either projectId (preferred when known) or projectName " +
+        "(partial match — for example 'Goodwill Allisonville' resolves to " +
+        "the project named 'Goodwill Allisonville Road').",
       inputSchema: z.object({
         projectId: z.number().optional().describe("Project ID if known"),
         projectName: z
           .string()
           .optional()
-          .describe("Project name to search for (partial match)"),
+          .describe("Project name (partial match — case-insensitive ilike)"),
       }),
       execute: withTrace(
         "getProjectDetails",
