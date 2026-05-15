@@ -1747,12 +1747,7 @@ function SummaryTab({
           <span className="text-xs font-semibold text-foreground">Division Breakdown</span>
         </div>
         <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-border text-left text-muted-foreground">
-              <th className="py-2 pl-4 pr-2 font-medium">Division</th>
-              <th className="py-2 pr-4 text-right font-medium">Total</th>
-            </tr>
-          </thead>
+          <thead />
           <tbody>
             {/* ── GC – Division 01 ── */}
             {gcTotal > 0 && (
