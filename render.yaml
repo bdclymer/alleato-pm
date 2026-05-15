@@ -6,9 +6,16 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 0 1 1 *"
+    schedule: "0 */4 * * *"
     dockerCommand: >-
-      echo "alleato-acumatica-financial-sync disabled while DB incident guard is active"
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.acumatica_sync import run_acumatica_financial_sync;
+      result = run_acumatica_financial_sync();
+      print(json.dumps(result, indent=2, default=str));
+      sys.exit(1 if result.get('status') == 'error' else 0)
+      "
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
