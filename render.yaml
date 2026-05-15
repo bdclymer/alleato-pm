@@ -374,6 +374,43 @@ services:
       - key: RAG_DATABASE_WRITES_ENABLED
         value: "true"
 
+  # Domain (company_process) packet compiler — synthesizes cross-project
+  # communications about a single business function (accounting, operations,
+  # business development, people & talent) into an intelligence_packets row
+  # plus recurring-issue insight_cards. Powers the AI assistant's
+  # getDomainIntelligence tool for questions like "what's going on with
+  # accounting?". Runs 4×/day, staggered 30m after the project-level
+  # packet refresh cron so domain compilation reads the freshest source data.
+  - type: cron
+    name: alleato-domain-packet-compiler
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "30 2,9,15,21 * * *"
+    dockerCommand: >-
+      python3 src/scripts/run_domain_packet_compiler.py --lookback-days 60 --doc-limit 150
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DOMAIN_PACKET_LOOKBACK_DAYS
+        value: "60"
+      - key: DOMAIN_PACKET_DOC_LIMIT
+        value: "150"
+      - key: DOMAIN_PACKET_MODEL
+        value: "gpt-5.4-mini"
+
   # Generates the approved executive Daily Brief on Render and then sends the
   # stored packet to Teams through a short-lived delivery endpoint.
   - type: cron

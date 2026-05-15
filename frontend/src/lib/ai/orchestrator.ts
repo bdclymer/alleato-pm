@@ -51,6 +51,7 @@ import {
   type CreateStructuredOutputToolsOptions,
 } from "@/lib/ai/tools/structured-output";
 import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelligence";
+import { createIntelligenceTools } from "@/lib/ai/tools/intelligence-tools";
 import { createAssistantSelfInspectionTools } from "@/lib/ai/assistant-self-knowledge";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
@@ -592,6 +593,7 @@ function createDefaultSpecialistTools(
   return {
     ...createProjectTools(userId, options),
     ...createWebSearchTools(options),
+    ...createIntelligenceTools(options),
   } as ToolSet;
 }
 
@@ -905,6 +907,7 @@ export function createStrategistTools(
   const webSearchTools = createWebSearchTools(options);
   const structuredOutputTools = createStructuredOutputTools(options);
   const documentIntelligenceTools = createDocumentIntelligenceTools(userId, options);
+  const intelligenceTools = createIntelligenceTools({ onTrace: options.onTrace });
   const strategistBaseTools = baseTools;
 
   const toolsWithoutSelfInspection = {
@@ -915,6 +918,7 @@ export function createStrategistTools(
     ...progressReportTools,
     ...workspaceTools,
     ...documentIntelligenceTools,
+    ...intelligenceTools,
     // The Strategist's specialist consultation tools
     consultCFO: makeConsultTool(
       "cfo",
