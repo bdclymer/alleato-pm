@@ -101,6 +101,7 @@ export type SortDirection = "asc" | "desc";
 
 export interface UnifiedTableFeatures {
   enableSorting?: boolean;
+  enablePagination?: boolean;
   enableSearch?: boolean;
   enableViews?: boolean;
   enableFilters?: boolean;
@@ -308,6 +309,7 @@ export function UnifiedTablePage<T>({
 }: UnifiedTablePageProps<T>): ReactElement {
   const resolvedFeatures: Required<UnifiedTableFeatures> = {
     enableSorting: features?.enableSorting ?? true,
+    enablePagination: features?.enablePagination ?? true,
     enableSearch: features?.enableSearch ?? true,
     enableViews: features?.enableViews ?? true,
     enableFilters: features?.enableFilters ?? true,
@@ -325,6 +327,9 @@ export function UnifiedTablePage<T>({
   // Internal sort state — used when the parent does not supply a sorting prop
   const [internalSortBy, setInternalSortBy] = React.useState<string | null>(null);
   const [internalSortDirection, setInternalSortDirection] = React.useState<SortDirection>("asc");
+  // Internal pagination state — used when the parent does not supply a pagination prop
+  const [internalPage, setInternalPage] = React.useState(1);
+  const [internalPerPage, setInternalPerPage] = React.useState(25);
 
   // Internal selection state — used when the parent does not supply a selection prop
   const [internalSelectedIds, setInternalSelectedIds] = React.useState<string[]>([]);
@@ -817,12 +822,16 @@ export function UnifiedTablePage<T>({
     });
   }, [resolvedFeatures.enableRowReorder, rowOrderedItems, effectiveSorting?.sortBy, table]);
 
+  // Slice client-side when: caller passes pagination.clientSide, OR no pagination prop + enablePagination.
+  const shouldClientPaginate = pagination?.clientSide || (!pagination && resolvedFeatures.enablePagination);
+  const activePage = pagination?.page ?? internalPage;
+  const activePerPage = pagination?.perPage ?? internalPerPage;
+
   const paginatedItems = React.useMemo(() => {
-    if (!pagination?.clientSide) return rowOrderedItems;
-    const start = (pagination.page - 1) * pagination.perPage;
-    const end = start + pagination.perPage;
-    return rowOrderedItems.slice(start, end);
-  }, [pagination?.clientSide, pagination?.page, pagination?.perPage, rowOrderedItems]);
+    if (!shouldClientPaginate) return rowOrderedItems;
+    const start = (activePage - 1) * activePerPage;
+    return rowOrderedItems.slice(start, start + activePerPage);
+  }, [shouldClientPaginate, activePage, activePerPage, rowOrderedItems]);
 
   const allSelected =
     rowOrderedItems.length > 0 &&
@@ -1927,30 +1936,43 @@ export function UnifiedTablePage<T>({
         });
       })()}
 
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex flex-col gap-4 items-center justify-between pt-6 md:flex-row">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Rows per page</span>
-            <Select value={String(pagination.perPage)} onValueChange={pagination.onPerPageChange}>
-              <SelectTrigger variant="inline" size="sm" className="h-8 w-16 px-1">
-                <SelectValue placeholder={String(pagination.perPage)} />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 25, 50, 100, 150].map((size) => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {(() => {
+        const paginProps = pagination ?? (resolvedFeatures.enablePagination ? {
+          page: internalPage,
+          totalPages: Math.max(1, Math.ceil(rowOrderedItems.length / internalPerPage)),
+          perPage: internalPerPage,
+          onPageChange: setInternalPage,
+          onPerPageChange: (val: string) => {
+            setInternalPerPage(Number(val));
+            setInternalPage(1);
+          },
+        } : null);
+        if (!paginProps || paginProps.totalPages <= 1) return null;
+        return (
+          <div className="flex flex-col gap-4 items-center justify-between pt-6 md:flex-row">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Rows per page</span>
+              <Select value={String(paginProps.perPage)} onValueChange={paginProps.onPerPageChange}>
+                <SelectTrigger variant="inline" size="sm" className="h-8 w-16 px-1">
+                  <SelectValue placeholder={String(paginProps.perPage)} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 25, 50, 100, 150].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <SimplePagination
+              currentPage={paginProps.page}
+              totalPages={paginProps.totalPages}
+              onPageChange={paginProps.onPageChange}
+            />
           </div>
-          <SimplePagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            onPageChange={pagination.onPageChange}
-          />
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 
