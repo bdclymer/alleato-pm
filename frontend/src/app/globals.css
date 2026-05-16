@@ -2131,8 +2131,8 @@
   inset: 0;
   background-image: url("/images/arch-sketch-bg.png");
   background-repeat: no-repeat;
-  background-position: right bottom;
-  background-size: 680px 680px;
+  background-position: right top;
+  background-size: 900px 900px;
   opacity: 0.07;
   pointer-events: none;
   z-index: 0;
