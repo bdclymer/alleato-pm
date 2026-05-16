@@ -1582,6 +1582,125 @@ function normalizeOutlookEmailDraftToolOutput(output: unknown): OutlookEmailDraf
   };
 }
 
+function normalizeGetRecentEmailsToolOutput(output: unknown): OutlookInboxSummaryWidgetPayload | null {
+  const record = asRecord(output);
+  if (record.error) return null;
+
+  const threads = Array.isArray(record.threads) ? record.threads : [];
+  const emails = Array.isArray(record.emails) ? record.emails : [];
+  const source = threads.length > 0 ? threads : emails;
+  if (source.length === 0 && !record.summary) return null;
+
+  const appliedFilter = asRecord(record.appliedFilter);
+  const mailbox =
+    typeof appliedFilter.email === "string" ? appliedFilter.email : null;
+
+  const items: OutlookInboxSummaryWidgetPayload["items"] = source.map((raw) => {
+    const t = asRecord(raw);
+    const isThread = "threadKey" in t;
+    const id = isThread
+      ? String(t.threadKey ?? t.latestId ?? "")
+      : String(t.id ?? "");
+    const subject = isThread
+      ? String(t.latestSubject ?? "No subject")
+      : String(t.subject ?? "No subject");
+    const fromName = isThread
+      ? (typeof t.latestFromName === "string" ? t.latestFromName : null)
+      : (typeof t.fromName === "string" ? t.fromName : null);
+    const fromEmail = isThread
+      ? (typeof t.latestFromEmail === "string" ? t.latestFromEmail : null)
+      : (typeof t.fromEmail === "string" ? t.fromEmail : null);
+    const senders = Array.isArray(t.senders)
+      ? (t.senders as string[])
+      : fromEmail
+        ? [fromEmail]
+        : [];
+    const recipients = Array.isArray(t.recipients)
+      ? (t.recipients as string[])
+      : Array.isArray(t.toList)
+        ? (t.toList as string[])
+        : [];
+    const receivedAt = isThread
+      ? (typeof t.latestReceivedAt === "string" ? t.latestReceivedAt : null)
+      : (typeof t.receivedAt === "string" ? t.receivedAt : null);
+    const preview = isThread
+      ? (typeof t.latestPreview === "string" ? t.latestPreview : null)
+      : (typeof t.preview === "string" ? t.preview : null);
+    const bodyText = isThread ? null : (typeof t.bodyText === "string" ? t.bodyText : null);
+    const webLink = isThread
+      ? (Array.isArray(t.webLinks) ? (t.webLinks[0] as string | undefined) ?? null : null)
+      : (typeof t.webLink === "string" ? t.webLink : null);
+    const projectIds = Array.isArray(t.projectIds)
+      ? (t.projectIds as number[])
+      : typeof t.projectId === "number"
+        ? [t.projectId]
+        : [];
+    const messageCount =
+      typeof t.messageCount === "number" ? t.messageCount : 1;
+    const hasAttachments = t.hasAttachments === true;
+    const graphMessageId = isThread
+      ? (typeof t.latestGraphMessageId === "string" ? t.latestGraphMessageId : null)
+      : (typeof t.graphMessageId === "string" ? t.graphMessageId : null);
+    const conversationId = isThread
+      ? (typeof t.conversationId === "string" ? t.conversationId : null)
+      : (typeof t.conversationId === "string" ? t.conversationId : null);
+
+    return {
+      id,
+      graphMessageId,
+      conversationId,
+      subject,
+      fromName,
+      fromEmail,
+      senders,
+      recipients,
+      receivedAt,
+      messageCount,
+      hasAttachments,
+      attentionScore: 0,
+      preview,
+      bodyText,
+      webLink,
+      projectIds,
+      recommendedAction: "Review",
+      replyPrompt: `Reply to the email "${subject}" from ${fromName ?? fromEmail ?? "sender"}.`,
+      draftPrompt: `Draft a follow-up email regarding "${subject}".`,
+    };
+  });
+
+  const totalCount =
+    typeof record.count === "number"
+      ? record.count
+      : items.length;
+  const threadCount =
+    typeof record.threadCount === "number" ? record.threadCount : null;
+  const summary = typeof record.summary === "string" ? record.summary : "";
+  const dataCutoffNote =
+    typeof record.dataCutoffNote === "string" ? record.dataCutoffNote : null;
+
+  const dateLabel = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  return {
+    type: "outlook_inbox_summary",
+    id: `recent-emails-${Date.now()}`,
+    title: "Recent Emails",
+    subtitle: mailbox ?? "Your Outlook inbox",
+    dateLabel,
+    summary,
+    dataCutoffNote,
+    mailbox,
+    totalCount,
+    threadCount,
+    actionSummary: `${items.length} email${items.length === 1 ? "" : "s"} shown`,
+    items,
+    emptyState: "No emails found for this date range.",
+  };
+}
+
 function MeetingIntelligenceWidget({ widget }: { widget: MeetingIntelligenceWidgetPayload }) {
   return (
     <WidgetShell
@@ -2733,6 +2852,7 @@ const assistantToolComponentRegistry: Record<string, (output: unknown) => Assist
   getMeetingIntelligence: normalizeMeetingToolOutput,
   createOutlookCalendarInvite: normalizeCalendarInviteToolOutput,
   draftOutlookEmail: normalizeOutlookEmailDraftToolOutput,
+  getRecentEmails: normalizeGetRecentEmailsToolOutput,
 };
 
 export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegistry): boolean {
