@@ -47,12 +47,17 @@ def _get_batch_size() -> int:
 
 
 def _fetch_no_text_records(supabase: Client, limit: int) -> list[dict]:
-    """Fetch document_metadata rows with status='no_text' that are PDFs."""
+    """Fetch document_metadata rows with status='no_text'.
+
+    The no_text status is set exclusively by the OneDrive ingestion pipeline
+    when pypdf extracts < 50 chars — no further type filtering needed.
+    We exclude records with no source_web_url since we can't download them.
+    """
     result = (
         supabase.from_("document_metadata")
         .select("id, title, source_web_url, source_path, type")
         .eq("status", "no_text")
-        .or_("type.ilike.%.pdf%,type.ilike.%pdf%,type.is.null")
+        .not_.is_("source_web_url", "null")
         .limit(limit)
         .execute()
     )
