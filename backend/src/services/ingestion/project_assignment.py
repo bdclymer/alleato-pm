@@ -207,6 +207,7 @@ class ProjectAssigner:
             score = 0.0
             project_number = self._normalize_text(project.get("project_number"))
             project_name = self._normalize_text(project.get("name"))
+            client_name = self._normalize_text(project.get("client_name") or project.get("client") or "")
 
             # Exact phrase matches
             if project_number and self._contains_token(title_lower, project_number):
