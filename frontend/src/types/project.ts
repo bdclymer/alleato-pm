@@ -11,7 +11,6 @@ export interface Project {
   onedrive: string | null;
   phase: string | null;
   state: string | null;
-  client_id: number | null;
   category: string | null;
   aliases: string[] | null;
   team_members: string[] | null;

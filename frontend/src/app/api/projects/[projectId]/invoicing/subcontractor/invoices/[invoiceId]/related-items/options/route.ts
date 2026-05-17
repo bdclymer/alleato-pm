@@ -238,9 +238,10 @@ export const GET = withApiGuardrails(
 
       case "document": {
         let q = supabase
-          .from("documents")
+          .from("document_metadata")
           .select("id, title, file_name, source")
           .eq("project_id", parsedProjectId)
+          .is("deleted_at", null)
           .limit(limit);
         if (search) q = q.or(`title.ilike.%${search}%,file_name.ilike.%${search}%`);
         else q = q.order("created_at", { ascending: false });

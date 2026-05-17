@@ -33,15 +33,10 @@ interface UploadedDocument {
   id: string;
   project_id: number;
   title: string;
-  file_id: string;
-  url: string;
-  content: string;
-  metadata: {
-    fileName: string;
-    fileType: string;
-    fileSize: number;
-    category: string;
-  };
+  file_name: string;
+  file_path: string;
+  source_size: number;
+  category: string;
 }
 
 interface UploadingFile {
@@ -123,29 +118,24 @@ export function DocumentUploadSetup({
             );
           }
 
-          // Get public URL
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from("documents").getPublicUrl(filePath);
-
-          // Create document record
-          const { data: document, error: dbError } = await supabase
-            .from("documents")
+          // Create document_metadata record
+          const docId = crypto.randomUUID();
+          const { error: dbError } = await supabase
+            .from("document_metadata")
             .insert({
-              project_id: parseInt(projectId),
+              id: docId,
               title: uploadFile.file.name,
-              file_id: uploadFile.id,
-              url: publicUrl,
-              content: "", // Empty content for file uploads
-              metadata: {
-                fileName: uploadFile.file.name,
-                fileType: uploadFile.file.type || "application/octet-stream",
-                fileSize: uploadFile.file.size,
-                category,
-              },
-            })
-            .select()
-            .single();
+              file_name: uploadFile.file.name,
+              file_path: filePath,
+              storage_bucket: "documents",
+              category,
+              type: "document",
+              source: "manual_upload",
+              status: "uploaded",
+              project_id: parseInt(projectId, 10),
+              source_size: uploadFile.file.size,
+              date: new Date().toISOString().split("T")[0],
+            });
 
           if (dbError) {
             throw new Error(
@@ -153,16 +143,26 @@ export function DocumentUploadSetup({
             );
           }
 
+          const newDoc: UploadedDocument = {
+            id: docId,
+            project_id: parseInt(projectId, 10),
+            title: uploadFile.file.name,
+            file_name: uploadFile.file.name,
+            file_path: filePath,
+            source_size: uploadFile.file.size,
+            category,
+          };
+
           // Update file status
           setUploadingFiles((prev) =>
             prev.map((f) =>
               f.id === uploadFile.id
-                ? { ...f, status: "success" as const, documentId: document.id }
+                ? { ...f, status: "success" as const, documentId: docId }
                 : f,
             ),
           );
 
-          setUploadedDocuments((prev) => [...prev, document as unknown as UploadedDocument]);
+          setUploadedDocuments((prev) => [...prev, newDoc]);
         } catch (err) {
           let errorMessage = "Upload failed";
 
@@ -214,7 +214,7 @@ export function DocumentUploadSetup({
       setLoading(true);
 
       const { error } = await supabase
-        .from("documents")
+        .from("document_metadata")
         .delete()
         .eq("id", documentId);
 
@@ -350,7 +350,7 @@ export function DocumentUploadSetup({
                 {uploadedDocuments.map((doc) => {
                   const category =
                     documentCategories[
-                      doc.metadata.category as keyof typeof documentCategories
+                      doc.category as keyof typeof documentCategories
                     ] || documentCategories.other;
                   const Icon = category.icon;
 
@@ -366,7 +366,7 @@ export function DocumentUploadSetup({
                         <Badge variant="secondary">{category.label}</Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatFileSize(doc.metadata.fileSize || 0)}
+                        {formatFileSize(doc.source_size || 0)}
                       </TableCell>
                       <TableCell>
                         <Button

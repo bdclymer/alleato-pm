@@ -94,14 +94,23 @@ export default async function ClientDashboardPage({ params }: PageProps) {
     .order("date_submitted", { ascending: false })
     .limit(5);
 
-  // Fetch recent documents
-  const { data: documents } = await supabase
-    .from("documents")
-    .select("id, name, file_url, file_size, file_type, folder_path, uploaded_at")
+  // Fetch recent documents from document_metadata
+  const { data: rawDocuments } = await supabase
+    .from("document_metadata")
+    .select("id, title, file_name, file_path, source_size, type, created_at, url")
     .eq("project_id", projectIdNum)
-    .eq("is_private", false)
-    .order("uploaded_at", { ascending: false })
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
     .limit(10);
+
+  const documents = (rawDocuments ?? []).map((doc) => ({
+    id: doc.id,
+    name: doc.title ?? doc.file_name,
+    file_url: doc.url ?? null,
+    file_size: doc.source_size ?? null,
+    file_type: doc.type ?? null,
+    uploaded_at: doc.created_at,
+  }));
 
   return (
     <ClientDashboard
