@@ -8,8 +8,73 @@
 ## Current focus
 
 **Status:** All changes committed and pushed to main. Session ended cleanly.
-**Last updated:** 2026-05-15
-**Last worked on by:** Claude Code (Phase 4 Pattern C session)
+**Last updated:** 2026-05-17
+**Last worked on by:** Claude Code (Consolidated implementation plan — Phases 1–10 complete)
+
+---
+
+## What was done this session (2026-05-17, second session)
+
+### Consolidated implementation plan — all phases complete
+
+Audited `docs/architecture/CONSOLIDATED-IMPLEMENTATION-PLAN.md` against live DB and codebase. Discovered most phases were already done. Completed all remaining work:
+
+**Phase 2.3 — Acumatica drift prevention:**  
+`AFTER INSERT OR UPDATE FOR EACH STATEMENT` triggers on 8 Acumatica tables insert sentinel rows into `acumatica_sync_runs`. Enables staleness alerting per table. Migration: `20260517020000`.
+
+**Phase 3 follow-up:**  
+Removed stale `client_id: number | null` field from `frontend/src/types/project.ts` (DB column was already dropped; type hadn't been updated).
+
+**Phase 7.1 — Migrated all `documents` DB table reads/writes to `document_metadata`:**
+- `frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx` — switched query + remapped columns
+- `frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items/options/route.ts` — switched `"document"` case
+- `frontend/src/components/project-setup-wizard/document-upload-setup.tsx` — full insert + delete migration; updated `UploadedDocument` interface
+
+**Phase 7.2 — 30-day soak audit trigger:**  
+`documents_access_audit` table + trigger deployed. Every INSERT/UPDATE/DELETE on legacy `documents` table is logged. Hard drop eligible 2026-06-17 if audit shows zero rows. Migration: `20260517030000`.
+
+**Phase 1.2.3 (hook registration):**  
+Verified via Supabase Management API that `custom_access_token_hook` was already enabled on the remote (`hook_custom_access_token_enabled: true`). Synced `supabase/config.toml` to reflect this.
+
+**Handoff doc:**  
+`docs/handoffs/2026-05-17-architecture-state-handoff.md` — full architecture state for new session onboarding.
+
+Key commits: `7afffb68d` (phase 7 + drift triggers), `22fa8bd99` (config.toml sync + handoff doc).
+
+---
+
+## What was done this session (2026-05-17, first session)
+
+### Files table overhaul + Azure OCR pipeline
+
+**Files table (`frontend/src/app/(tables)/files/`):**
+- Name column is the only link; external link moved to row actions (⋯ menu)
+- Simplified file type icon — single `File` icon instead of type-specific icons
+- Inline project assignment (`InlineProjectSelect`) with optimistic updates
+- Inline tag editing (`InlineTagEditor`) with chip display, optimistic updates
+- Full path now parsed from `source_web_url` when `source_path` is shallow (fixes truncated paths)
+- 6 filters: File Type, Project, Source, Assignment, RAG Status, Modified after/before
+- New **Indexed** column with colour-coded status badges (Indexed / Pending / Partial / No text / OCR failed)
+- Tags PATCH wired through existing `/api/documents/[docId]/assign-project` route (added `tags` to `ALLOWED_FIELDS`)
+
+**OneDrive sync fixes:**
+- `GRAPH_DELTA_MAX_PAGES` raised 5→20, `GRAPH_DELTA_MAX_ITEMS` raised 500→3000 — fixed 2026 Jobs files not syncing
+- Scanned PDFs no longer skipped; always save metadata with `status='no_text'`
+- `_strip_folder_prefix()` + fuzzy project matching in backfill for numeric job prefixes like `25-104`
+- 124 new `no_text` files created from 2026 Jobs sync
+
+**Azure Document Intelligence OCR pipeline:**
+- `backend/src/services/integrations/azure/document_intelligence.py` — Azure DI client, prebuilt-read model, 20-page cap
+- `backend/src/services/integrations/microsoft_graph/ocr_worker.py` — background worker: queries `no_text` → downloads via Graph → OCR → sets `status='raw_ingested'` (full) or `status='ocr_partial'` (hit page cap)
+- `ocr_partial` files ARE embedded for RAG but flagged visually in the Files table so staff can identify PDFs where only the first N pages were indexed
+- Wired into `run_graph_sync()` after embed step (20 docs/run)
+- `POST /admin/documents/ocr-backfill` for manual backfill trigger
+- `azure-ai-documentintelligence>=1.0.0` added to `requirements.txt`
+
+**Activation required (user action):**
+- Add `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT` + `AZURE_DOCUMENT_INTELLIGENCE_KEY` to backend env vars
+- Deploy to Render (image rebuild needed for new pip package)
+- Call `POST /admin/documents/ocr-backfill` 7× to process 124 existing `no_text` files
 
 ---
 
@@ -144,13 +209,14 @@ Nothing actively blocked. All changes pushed to main.
 
 ## What's next / follow-ups
 
-1. **Deep Agents production validation** — the bridge is gated behind `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED`. Needs end-to-end test with a real project question before toggling on in production.
-2. **Outlook email widget actions** — Project assignment and Task creation currently delegate to `onSubmit` (AI handles them). Could wire to direct API calls if the assistant round-trip feels slow in practice.
-3. **Radix Select + browser automation gap** — ~30 cascading E2E failures trace to this. The dropdown test pattern needs a dedicated fix before Playwright suite can cover full CRUD flows.
-4. **Estimates tool** — has no seed data; E2E tests can't run until seed data is created.
-5. **`/prp-validate` runs needed** — Change Events, Change Management, Commitments, Direct Costs, Invoicing, Prime Contracts, Estimates still need PRP validation.
-6. **Low-confidence review queue** — `document_attribution_candidates` table still has no UI.
-7. **GitHub billing** — CI workflows are still disabled (billing lock at github.com/settings/billing).
+1. **Azure OCR activation** — Add env vars + deploy + run backfill (see 2026-05-17 session notes above)
+2. **Deep Agents production validation** — the bridge is gated behind `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED`. Needs end-to-end test with a real project question before toggling on in production.
+3. **Outlook email widget actions** — Project assignment and Task creation currently delegate to `onSubmit` (AI handles them). Could wire to direct API calls if the assistant round-trip feels slow in practice.
+4. **Radix Select + browser automation gap** — ~30 cascading E2E failures trace to this. The dropdown test pattern needs a dedicated fix before Playwright suite can cover full CRUD flows.
+5. **Estimates tool** — has no seed data; E2E tests can't run until seed data is created.
+6. **`/prp-validate` runs needed** — Change Events, Change Management, Commitments, Direct Costs, Invoicing, Prime Contracts, Estimates still need PRP validation.
+7. **Low-confidence review queue** — `document_attribution_candidates` table still has no UI.
+8. **GitHub billing** — CI workflows are still disabled (billing lock at github.com/settings/billing).
 
 ---
 
