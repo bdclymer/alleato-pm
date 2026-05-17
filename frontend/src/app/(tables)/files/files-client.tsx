@@ -348,15 +348,15 @@ function IndexedBadge({ status }: { status: string | null }) {
 
 const columns: ColumnConfig[] = [
   { id: "name",          label: "Name",                 alwaysVisible: true },
-  { id: "document_type", label: "Document Type",        defaultVisible: true },
+  { id: "document_type", label: "Type",                 defaultVisible: true },
   { id: "category",      label: "Category",             defaultVisible: true },
   { id: "date",          label: "Date",                 defaultVisible: true },
   { id: "overview",      label: "Overview",             defaultVisible: true },
   { id: "status",        label: "Status",               defaultVisible: true },
-  { id: "access_level",  label: "Access Level",         defaultVisible: true },
+  { id: "access_level",  label: "Access",               defaultVisible: true },
   { id: "project",       label: "Project",              defaultVisible: true },
   { id: "source",        label: "Source",               defaultVisible: true },
-  { id: "modified",      label: "Source Last Modified", defaultVisible: false },
+  { id: "modified",      label: "Last Modified",        defaultVisible: false },
   { id: "participants",  label: "Participants",          defaultVisible: false },
   { id: "folder",        label: "Folder",               defaultVisible: false },
   { id: "size",          label: "Size",                 defaultVisible: false },
