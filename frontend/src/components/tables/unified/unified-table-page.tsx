@@ -1655,7 +1655,7 @@ export function UnifiedTablePage<T>({
                     }}
                     className={cn(
                       "group/row cursor-pointer transition-colors duration-150",
-                      "hover:bg-muted",
+                      "hover:bg-muted/40",
                       table.activeRowId === table.getRowId(item) && "bg-muted",
                       selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
                     )}
