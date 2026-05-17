@@ -61,7 +61,7 @@ export const GET = withApiGuardrails(
         );
       if (signed) {
         for (const entry of signed) {
-          if (entry.signedUrl) {
+          if (entry.signedUrl && entry.path) {
             signedUrls[entry.path] = entry.signedUrl;
           }
         }

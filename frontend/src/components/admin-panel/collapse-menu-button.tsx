@@ -75,7 +75,7 @@ export function CollapseMenuButton({
             <div className="flex items-center">
               <p
                 className={cn(
-                  "max-w-[150px] truncate text-xs",
+                  "max-w-[150px] truncate text-xs text-foreground",
                   isOpen
                     ? "translate-x-0 opacity-100"
                     : "-translate-x-96 opacity-0"
@@ -115,7 +115,7 @@ export function CollapseMenuButton({
             <Link href={href} onClick={onLinkClick}>
               <p
                 className={cn(
-                  "max-w-[170px] truncate text-xs",
+                  "max-w-[170px] truncate text-xs text-foreground",
                   isOpen
                     ? "translate-x-0 opacity-100"
                     : "-translate-x-96 opacity-0"
@@ -142,7 +142,7 @@ export function CollapseMenuButton({
                   <div className="flex items-center">
                     <p
                       className={cn(
-                        "max-w-[200px] truncate text-xs",
+                        "max-w-[200px] truncate text-xs text-foreground",
                         isOpen === false ? "opacity-0" : "opacity-100"
                       )}
                     >

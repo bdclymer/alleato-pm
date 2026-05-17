@@ -73,7 +73,7 @@ export function Menu({ isOpen, projectId, onLinkClick }: MenuProps) {
                               <Link href={href} onClick={onLinkClick}>
                                 <p
                                   className={cn(
-                                    "max-w-[200px] truncate text-xs",
+                                    "max-w-[200px] truncate text-xs text-foreground",
                                     isOpen === false
                                       ? "-translate-x-96 opacity-0"
                                       : "translate-x-0 opacity-100"

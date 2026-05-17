@@ -97,7 +97,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         costCodeId = item.cost_code_id;
       }
 
-      if (!costCodeId) {
+      if (!costCodeId || !costTypeId) {
         skipped.push(`Line ${item.line_number}: "${item.description}" — no budget code or cost code mapped`);
         continue;
       }
