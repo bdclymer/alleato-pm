@@ -1,17 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { useMemo, useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  ExternalLink,
-  File,
-  FileImage,
-  FileSpreadsheet,
-  FileText,
-  FileType,
-  Presentation,
-} from "lucide-react";
+import { ExternalLink, File } from "lucide-react";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -82,20 +73,18 @@ function getFileGroup(item: FileItem): FileGroup {
   return "other";
 }
 
-const FILE_GROUP_META: Record<FileGroup, { label: string; icon: React.ElementType; color: string }> = {
-  pdf:          { label: "PDF",          icon: FileText,        color: "text-muted-foreground" },
-  word:         { label: "Word",         icon: FileType,        color: "text-muted-foreground" },
-  spreadsheet:  { label: "Spreadsheets", icon: FileSpreadsheet, color: "text-muted-foreground" },
-  presentation: { label: "Slides",       icon: Presentation,    color: "text-muted-foreground" },
-  image:        { label: "Images",       icon: FileImage,       color: "text-muted-foreground" },
-  text:         { label: "Text",         icon: FileText,        color: "text-muted-foreground" },
-  other:        { label: "Other",        icon: File,            color: "text-muted-foreground" },
+const FILE_GROUP_META: Record<FileGroup, { label: string }> = {
+  pdf:          { label: "PDF" },
+  word:         { label: "Word" },
+  spreadsheet:  { label: "Spreadsheets" },
+  presentation: { label: "Slides" },
+  image:        { label: "Images" },
+  text:         { label: "Text" },
+  other:        { label: "Other" },
 };
 
-function FileTypeIcon({ item, className }: { item: FileItem; className?: string }) {
-  const group = getFileGroup(item);
-  const { icon: Icon, color } = FILE_GROUP_META[group];
-  return <Icon className={cn("h-4 w-4 shrink-0", color, className)} />;
+function FileTypeIcon({ className }: { item: FileItem; className?: string }) {
+  return <File className={cn("h-4 w-4 shrink-0 text-muted-foreground", className)} />;
 }
 
 // ── Source label ──────────────────────────────────────────────────────────────
