@@ -333,30 +333,32 @@ def sync_onedrive_folder(
 
         # Extract text (strip null bytes — postgres rejects \u0000 in text columns)
         text_content = _extract_text(raw_bytes, ext).replace("\x00", "")
-        if len(text_content.strip()) < 50:
-            logger.debug(f"[OneDrive] Too little text extracted from {name}, skipping")
-            continue
+        has_text = len(text_content.strip()) >= 50
 
         # Get file metadata
         modified = item.get("lastModifiedDateTime", datetime.now(timezone.utc).isoformat())
         web_url = item.get("webUrl", "")
         created_by = item.get("createdBy", {}).get("user", {}).get("displayName", user_email)
 
-        # Upload extracted text to Supabase Storage for AI search.
-        try:
-            storage_upload_with_retry(
-                supabase_client.storage.from_(DOCUMENT_BUCKET),
-                storage_path,
-                text_content.encode("utf-8"),
-                {"content-type": "text/plain", "upsert": "true"},
-            )
-        except Exception as e:
-            logger.warning(f"[OneDrive] Storage upload failed for {name}: {e}")
-            continue
+        # Only upload to storage when we have meaningful extracted text
+        if has_text:
+            try:
+                storage_upload_with_retry(
+                    supabase_client.storage.from_(DOCUMENT_BUCKET),
+                    storage_path,
+                    text_content.encode("utf-8"),
+                    {"content-type": "text/plain", "upsert": "true"},
+                )
+            except Exception as e:
+                logger.warning(f"[OneDrive] Storage upload failed for {name}: {e}")
+        else:
+            logger.debug(f"[OneDrive] Scanned/no-text file, saving metadata only: {name}")
 
         try:
+            clean_content = text_content[:50000].replace("\x00", "") if has_text else ""
+            # Always save metadata so the file appears in Files even when text extraction
+            # failed (scanned PDFs, image-only documents, etc.)
             # Strip null bytes — PostgreSQL text columns reject \u0000
-            clean_content = text_content[:50000].replace("\x00", "")
             project_id, assignment_method, assignment_confidence = _assign_project(
                 supabase_client,
                 item=item,
@@ -371,11 +373,11 @@ def sync_onedrive_folder(
                 "source": "microsoft_graph",
                 "category": "document",
                 "type": "document",
-                "content": clean_content,
+                "content": clean_content or None,
                 "date": modified[:10] if modified else None,
                 "url": web_url,
                 "participants": ", ".join([created_by, user_email]),
-                "status": "raw_ingested",
+                "status": "raw_ingested" if has_text else "no_text",
                 "tags": ",".join(["onedrive", ext.lstrip("."), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
                 "project_id": project_id,
                 "source_system": "onedrive",
@@ -386,8 +388,8 @@ def sync_onedrive_folder(
                 "source_etag": item.get("eTag") or item.get("cTag"),
                 "source_last_modified_at": modified,
                 "source_size": size,
-                "storage_bucket": DOCUMENT_BUCKET,
-                "file_path": storage_path,
+                "storage_bucket": DOCUMENT_BUCKET if has_text else None,
+                "file_path": storage_path if has_text else None,
                 "source_metadata": {
                     "graph_source": "onedrive",
                     "graph_owner": user_email,

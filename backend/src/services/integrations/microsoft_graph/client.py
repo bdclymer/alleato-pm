@@ -177,8 +177,8 @@ class GraphClient:
         items = []
         new_delta_token = ""
         current_url = url
-        page_limit = max_pages or _bounded_int_env("GRAPH_DELTA_MAX_PAGES", 5, 1, 50)
-        item_limit = max_items or _bounded_int_env("GRAPH_DELTA_MAX_ITEMS", 500, 1, 5000)
+        page_limit = max_pages or _bounded_int_env("GRAPH_DELTA_MAX_PAGES", 20, 1, 100)
+        item_limit = max_items or _bounded_int_env("GRAPH_DELTA_MAX_ITEMS", 3000, 1, 10000)
         pages_fetched = 0
 
         while current_url and pages_fetched < page_limit and len(items) < item_limit:
