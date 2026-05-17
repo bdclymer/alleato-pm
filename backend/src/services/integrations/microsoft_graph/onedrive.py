@@ -55,8 +55,15 @@ def _project_subfolder(item: dict, root_folder: str) -> Optional[str]:
     return None
 
 
+def _strip_folder_prefix(folder_name: str) -> str:
+    """Strip numeric job-number prefix like '25- 104 ' or '26-001 ' from folder names."""
+    import re
+    stripped = re.sub(r"^\d{2}-\s*\d+\s+", "", folder_name).strip()
+    return stripped if stripped else folder_name
+
+
 def _lookup_project_by_folder(supabase_client, folder_name: str) -> Optional[int]:
-    """Direct case-insensitive project name match. Highest-confidence signal."""
+    """Case-insensitive project name match with fallback for numeric-prefix folder names."""
     try:
         res = (
             supabase_client.from_("projects")
@@ -69,6 +76,25 @@ def _lookup_project_by_folder(supabase_client, folder_name: str) -> Optional[int
             return int(res.data[0]["id"])
     except Exception as exc:
         logger.warning("[OneDrive] folder→project lookup failed: %s", exc)
+        return None
+
+    # Strip numeric job-number prefix (e.g. "25- 104 Danville Theatre" → "Danville Theatre")
+    # then do a partial contains match
+    stripped = _strip_folder_prefix(folder_name)
+    if stripped and stripped != folder_name:
+        try:
+            res = (
+                supabase_client.from_("projects")
+                .select("id")
+                .ilike("name", f"%{stripped}%")
+                .limit(1)
+                .execute()
+            )
+            if res.data:
+                logger.info("[OneDrive] folder '%s' matched project via stripped name '%s'", folder_name, stripped)
+                return int(res.data[0]["id"])
+        except Exception as exc:
+            logger.warning("[OneDrive] stripped folder→project lookup failed: %s", exc)
     return None
 
 

@@ -6,14 +6,17 @@ For each unassigned document we try two strategies in order:
 2. Content inference — pass title + content to ProjectAssigner (same path as live sync).
 
 Documents that get assigned are updated in document_metadata and a tag is appended.
+Also backfills source_path from source_web_url when source_path is missing subfolders.
 """
 
 from __future__ import annotations
 
 import logging
 import os
+import re
 from pathlib import PurePosixPath
 from typing import Any, Optional
+from urllib.parse import unquote, urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -38,42 +41,102 @@ def _infer_source_system(row: dict) -> Optional[str]:
     return None
 
 
-def _parent_folder_from_path(source_path: str) -> Optional[str]:
-    """Return the first non-trivial folder segment from the source_path.
+_SKIP_PREFIXES = {"alleato group", "2026 jobs", "2025 jobs", "jobs", "projects", "documents"}
 
-    OneDrive paths look like:
-      Alleato Group/2026 Jobs/Vermillion Rise Warehouse/Estimates/Budget.xlsx
-    We want the first subfolder that likely corresponds to a project, which is typically
-    position [2] (index) after splitting on '/'.  We skip known root segments.
+
+def _extract_path_from_url(url: str) -> Optional[str]:
+    """Extract full file path from a SharePoint/OneDrive URL.
+
+    Personal OneDrive:  .../personal/{user}/Documents/{Alleato Group/2025 Jobs/...}
+    SharePoint site:    .../sites/{site}/Shared%20Documents/{...}
+    """
+    try:
+        parsed = urlparse(url)
+        path = parsed.path
+
+        # Personal OneDrive
+        personal = re.match(r".*/personal/[^/]+/Documents/(.+)", path)
+        if personal:
+            return unquote(personal.group(1))
+
+        # SharePoint site — try Shared Documents or generic Documents library
+        site = re.match(r".*/sites/[^/]+/(?:Shared%20Documents|Documents|[^/]+/[^/]+)/(.+)", path)
+        if site:
+            return unquote(site.group(1))
+    except Exception:
+        pass
+    return None
+
+
+_COMMON_WORDS = {"the", "a", "an", "and", "or", "of", "in", "at", "for", "to", "ca", "il", "in", "oh"}
+
+
+def _parent_folder_from_path(source_path: str) -> Optional[str]:
+    """Return the first non-trivial folder segment from a OneDrive/SharePoint path.
+
+    e.g. 'Alleato Group/2026 Jobs/Vermillion Rise Warehouse/Estimates/Budget.xlsx'
+    → 'Vermillion Rise Warehouse'
+
+    Strips numeric job-number prefixes: '25- 104 - Danville Theatre' → 'Danville Theatre'
     """
     parts = [p for p in source_path.strip("/").split("/") if p]
     if not parts:
         return None
 
-    # Try known root prefixes to skip, then return first meaningful segment
-    SKIP_PREFIXES = {"alleato group", "2026 jobs", "2025 jobs", "jobs", "projects"}
-    for i, part in enumerate(parts):
-        if part.lower() in SKIP_PREFIXES:
+    for part in parts:
+        if part.lower() in _SKIP_PREFIXES:
             continue
-        # Return this segment as the candidate project folder name
-        return part
-    return parts[-1] if parts else None
+        # Strip numeric job-number prefix including optional trailing dash:
+        # "25- 104 Danville" → "Danville"  |  "25- 127 - Ulta Beauty" → "Ulta Beauty"
+        stripped = re.sub(r"^\d{2}-\s*\d+\s*-?\s*", "", part).strip()
+        # Also strip leading dash if left over
+        stripped = re.sub(r"^-\s*", "", stripped).strip()
+        return stripped if stripped else part
+    return None
+
+
+def _significant_words(text: str) -> list[str]:
+    """Extract significant words (>2 chars, not common) from a project/folder name."""
+    words = re.findall(r"[A-Za-z]+", text)
+    return [w.lower() for w in words if len(w) > 2 and w.lower() not in _COMMON_WORDS]
 
 
 def _lookup_project_by_folder(client: Any, folder_name: str) -> Optional[int]:
-    """Case-insensitive exact match against projects.name."""
+    """Case-insensitive match against projects.name with progressive fallbacks."""
+    # 1. Exact match
     try:
-        res = (
-            client.from_("projects")
-            .select("id")
-            .ilike("name", folder_name)
-            .limit(1)
-            .execute()
-        )
+        res = client.from_("projects").select("id, name").ilike("name", folder_name).limit(1).execute()
         if res.data:
             return int(res.data[0]["id"])
     except Exception as exc:
         logger.warning("[OneDriveBackfill] folder lookup failed for '%s': %s", folder_name, exc)
+        return None
+
+    # 2. Partial contains match
+    try:
+        res = client.from_("projects").select("id, name").ilike("name", f"%{folder_name}%").limit(1).execute()
+        if res.data:
+            logger.info("[OneDriveBackfill] partial match '%s' → project %s", folder_name, res.data[0]["id"])
+            return int(res.data[0]["id"])
+    except Exception as exc:
+        logger.warning("[OneDriveBackfill] partial lookup failed for '%s': %s", folder_name, exc)
+
+    # 3. Keyword matching — find projects containing ALL significant words
+    keywords = _significant_words(folder_name)
+    if len(keywords) >= 2:
+        try:
+            all_projects = client.from_("projects").select("id, name").execute()
+            for project in (all_projects.data or []):
+                project_words = set(_significant_words(project["name"]))
+                if all(kw in project_words for kw in keywords):
+                    logger.info(
+                        "[OneDriveBackfill] keyword match '%s' → project %s '%s' via %s",
+                        folder_name, project["id"], project["name"], keywords,
+                    )
+                    return int(project["id"])
+        except Exception as exc:
+            logger.warning("[OneDriveBackfill] keyword lookup failed for '%s': %s", folder_name, exc)
+
     return None
 
 
@@ -109,8 +172,8 @@ def run_onedrive_project_assignment_backfill(
     response = (
         client.from_("document_metadata")
         .select(
-            "id, title, file_name, source_path, source_system, tags, project_id, "
-            "content, raw_text, participants"
+            "id, title, file_name, source_path, source_web_url, url, source_system, "
+            "tags, project_id, content, raw_text, participants"
         )
         .eq("category", "document")
         .is_("project_id", "null")
@@ -134,15 +197,26 @@ def run_onedrive_project_assignment_backfill(
 
     for row in eligible:
         doc_id = row["id"]
-        source_path = row.get("source_path") or ""
+        stored_path = row.get("source_path") or ""
         title = row.get("file_name") or row.get("title") or ""
+
+        # Resolve the best available path — prefer URL-derived when source_path is shallow
+        resolved_source_path = stored_path
+        url = row.get("source_web_url") or row.get("url") or ""
+        if url:
+            url_path = _extract_path_from_url(url)
+            stored_depth = len([p for p in stored_path.split("/") if p])
+            url_depth = len([p for p in (url_path or "").split("/") if p]) if url_path else 0
+            if url_path and url_depth > stored_depth:
+                resolved_source_path = url_path
+                logger.debug("[OneDriveBackfill] %s: using URL path (%d segments vs %d)", doc_id, url_depth, stored_depth)
 
         project_id: Optional[int] = None
         method = "unresolved"
 
-        # Strategy 1: folder name → project name
-        if source_path:
-            folder_name = _parent_folder_from_path(source_path)
+        # Strategy 1: folder name → project name (using best available path)
+        if resolved_source_path:
+            folder_name = _parent_folder_from_path(resolved_source_path)
             if folder_name:
                 project_id = _lookup_project_by_folder(client, folder_name)
                 if project_id:
@@ -175,10 +249,14 @@ def run_onedrive_project_assignment_backfill(
             try:
                 new_tags = _append_tag(row.get("tags"), f"{BACKFILL_TAG}")
                 new_tags = _append_tag(new_tags, f"project_auto:{method.split(':')[0]}")
-                client.from_("document_metadata").update({
+                update_payload: dict = {
                     "project_id": project_id,
                     "tags": new_tags,
-                }).eq("id", doc_id).execute()
+                }
+                # Also persist the richer source_path so the UI shows the full folder
+                if resolved_source_path and resolved_source_path != stored_path:
+                    update_payload["source_path"] = resolved_source_path
+                client.from_("document_metadata").update(update_payload).eq("id", doc_id).execute()
             except Exception as exc:
                 result["failed"] += 1
                 result["errors"].append({"id": doc_id, "error": str(exc)})

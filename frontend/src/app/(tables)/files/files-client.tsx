@@ -97,16 +97,48 @@ function friendlySource(item: FileItem): string {
 
 // ── Folder helpers ────────────────────────────────────────────────────────────
 
+function parsePathFromSharePointUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    // Personal OneDrive: /personal/{user}/Documents/{full/path/file.pdf}
+    const personalMatch = parsed.pathname.match(/\/personal\/[^/]+\/Documents\/(.+)/);
+    if (personalMatch) return decodeURIComponent(personalMatch[1]);
+    // SharePoint site: /sites/{site}/Shared%20Documents/{full/path/file.pdf}
+    const siteMatch = parsed.pathname.match(/\/sites\/[^/]+\/(?:Shared%20Documents|Documents|[^/]+\/[^/]+)\/(.+)/);
+    if (siteMatch) return decodeURIComponent(siteMatch[1]);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function resolvedPath(item: FileItem): string[] {
+  // Prefer source_path if it contains at least 3 segments (has project subfolder)
+  if (item.source_path) {
+    const parts = item.source_path.split("/").filter(Boolean);
+    if (parts.length >= 3) return parts;
+  }
+  // Fall back to parsing the SharePoint/OneDrive URL for the full path
+  const url = item.source_web_url ?? item.url;
+  if (url) {
+    const urlPath = parsePathFromSharePointUrl(url);
+    if (urlPath) {
+      const parts = urlPath.split("/").filter(Boolean);
+      if (parts.length >= 2) return parts;
+    }
+  }
+  // Last resort: use whatever source_path has
+  if (item.source_path) return item.source_path.split("/").filter(Boolean);
+  return [];
+}
+
 function parentFolderName(item: FileItem): string {
-  if (!item.source_path) return "—";
-  const parts = item.source_path.split("/").filter(Boolean);
-  // Strip the filename (last segment), return the immediate parent folder
+  const parts = resolvedPath(item);
   return parts.length >= 2 ? (parts[parts.length - 2] ?? "—") : "—";
 }
 
 function fullFolderPath(item: FileItem): string {
-  if (!item.source_path) return "";
-  const parts = item.source_path.split("/").filter(Boolean);
+  const parts = resolvedPath(item);
   return parts.length > 1 ? parts.slice(0, -1).join(" / ") : "";
 }
 

@@ -541,3 +541,81 @@ async def run_onedrive_project_backfill(
         "batch_size": request.batch_size,
         "use_content_inference": request.use_content_inference,
     }
+
+
+class SourcePathBackfillRequest(BaseModel):
+    batch_size: int = 1000
+    dry_run: bool = False
+
+
+@router.post("/documents/backfill-source-paths", dependencies=[Depends(require_admin_api_key)])
+async def backfill_source_paths(
+    request: SourcePathBackfillRequest,
+    store: SupabaseRagStore = Depends(get_rag_store),
+):
+    """Enrich source_path from source_web_url for all OneDrive/SharePoint documents.
+
+    Many older records have source_path truncated at the root folder because they were
+    synced before parentReference path extraction was added.  This endpoint parses the
+    full path from source_web_url (which always contains the complete URL) and writes it
+    back to source_path so the Files UI shows the correct folder tree.
+    """
+    from services.integrations.microsoft_graph.onedrive_project_assignment_backfill import (
+        _extract_path_from_url,
+        _infer_source_system,
+    )
+
+    client = store._client
+    response = (
+        client.from_("document_metadata")
+        .select("id, source_path, source_web_url, url, source_system")
+        .eq("category", "document")
+        .not_.is_("source_web_url", "null")
+        .limit(request.batch_size)
+        .execute()
+    )
+    rows = response.data or []
+
+    updated = 0
+    skipped = 0
+    failed = 0
+    errors = []
+
+    for row in rows:
+        if not _infer_source_system(row):
+            continue
+
+        url = row.get("source_web_url") or row.get("url") or ""
+        url_path = _extract_path_from_url(url) if url else None
+        if not url_path:
+            skipped += 1
+            continue
+
+        stored_path = row.get("source_path") or ""
+        stored_depth = len([p for p in stored_path.split("/") if p])
+        url_depth = len([p for p in url_path.split("/") if p])
+
+        if url_depth <= stored_depth:
+            skipped += 1
+            continue
+
+        if not request.dry_run:
+            try:
+                client.from_("document_metadata").update(
+                    {"source_path": url_path}
+                ).eq("id", row["id"]).execute()
+                updated += 1
+            except Exception as exc:
+                failed += 1
+                errors.append({"id": row["id"], "error": str(exc)})
+        else:
+            updated += 1  # dry-run count
+
+    return {
+        "scanned": len(rows),
+        "updated": updated,
+        "skipped": skipped,
+        "failed": failed,
+        "dry_run": request.dry_run,
+        "errors": errors[:20],
+    }
