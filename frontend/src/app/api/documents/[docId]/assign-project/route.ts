@@ -1,8 +1,8 @@
+import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = new Set([
   "title",
@@ -11,6 +11,7 @@ const ALLOWED_FIELDS = new Set([
   "source",
   "status",
   "project_id",
+  "tags",
 ]);
 
 export const PATCH = withApiGuardrails<{ docId: string }>(

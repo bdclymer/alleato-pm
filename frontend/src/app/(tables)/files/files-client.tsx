@@ -7,10 +7,12 @@ import {
   UnifiedTablePage,
   useUnifiedTableState,
   type ColumnConfig,
+  type FilterConfig,
   type TableColumn,
 } from "@/components/tables/unified";
-import { CellText, TableDateValue, TruncatedCell } from "@/components/tables/unified";
+import { CellText, TableDateValue } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -210,6 +212,90 @@ function InlineProjectSelect({
   );
 }
 
+// ── Inline tag editor ─────────────────────────────────────────────────────────
+
+function InlineTagEditor({
+  item,
+  onSave,
+}: {
+  item: FileItem;
+  onSave: (docId: string, tags: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(item.tags ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const currentTags = (item.tags ?? "").split(",").map((t) => t.trim()).filter(Boolean);
+
+  const open = () => { setValue(item.tags ?? ""); setEditing(true); };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await apiFetch(`/api/documents/${item.id}/assign-project`, {
+        method: "PATCH",
+        body: JSON.stringify({ tags: value }),
+      });
+      onSave(item.id, value);
+      setEditing(false);
+    } catch {
+      // revert on failure
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <Input
+        ref={(el) => el?.focus()}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") handleSave();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="h-7 border-0 bg-transparent px-1.5 text-xs shadow-none focus-visible:ring-0"
+        placeholder="tag1, tag2, …"
+        disabled={saving}
+      />
+    );
+  }
+
+  if (currentTags.length === 0) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 px-1.5 text-xs text-muted-foreground/40 italic font-normal hover:text-muted-foreground"
+        onClick={(e) => { e.stopPropagation(); open(); }}
+      >
+        Add tags
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-auto px-1.5 py-1 flex flex-wrap gap-1 justify-start"
+      title="Click to edit tags"
+      onClick={(e) => { e.stopPropagation(); open(); }}
+    >
+      {currentTags.map((tag) => (
+        <span
+          key={tag}
+          className="inline-flex items-center rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+        >
+          {tag}
+        </span>
+      ))}
+    </Button>
+  );
+}
+
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
@@ -229,6 +315,7 @@ const defaultVisibleColumns = columns.filter((c) => c.defaultVisible !== false).
 function buildColumns(
   projects: Project[],
   onProjectSave: (docId: string, projectId: number | null, projectName: string | null) => void,
+  onTagSave: (docId: string, tags: string) => void,
 ): TableColumn<FileItem>[] {
   return [
     // Name — the filename itself is the only link to the file
@@ -342,12 +429,13 @@ function buildColumns(
       sortValue: (item) => item.division ?? "",
       sortable: true,
     },
-    // Tags
+    // Tags — inline editable
     {
       ...columns[8],
-      render: (item) => <TruncatedCell value={item.tags} maxWidth={200} className="text-sm" />,
+      render: (item) => <InlineTagEditor item={item} onSave={onTagSave} />,
       csvValue: (item) => item.tags ?? "",
       sortable: false,
+      width: 240,
     },
   ];
 }
@@ -378,10 +466,11 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
 
   const activeGroup = (searchParams.get("group") ?? "") as FileGroup | "";
 
-  // Optimistic project overrides so edits reflect immediately
+  // Optimistic overrides for inline edits
   const [projectOverrides, setProjectOverrides] = useState<
     Record<string, { project_id: number | null; project: string | null }>
   >({});
+  const [tagOverrides, setTagOverrides] = useState<Record<string, string>>({});
 
   const handleProjectSave = useCallback(
     (docId: string, projectId: number | null, projectName: string | null) => {
@@ -390,10 +479,71 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     [],
   );
 
+  const handleTagSave = useCallback((docId: string, tags: string) => {
+    setTagOverrides((prev) => ({ ...prev, [docId]: tags }));
+  }, []);
+
   const itemsWithOverrides = useMemo(
-    () => items.map((item) => ({ ...item, ...(projectOverrides[item.id] ?? {}) })),
-    [items, projectOverrides],
+    () => items.map((item) => ({
+      ...item,
+      ...(projectOverrides[item.id] ?? {}),
+      ...(tagOverrides[item.id] !== undefined ? { tags: tagOverrides[item.id] } : {}),
+    })),
+    [items, projectOverrides, tagOverrides],
   );
+
+  // Filter configs — project options built from the projects list
+  const fileFilters = useMemo<FilterConfig[]>(() => [
+    {
+      id: "file_type",
+      label: "File Type",
+      type: "multiSelect",
+      options: [
+        { value: "pdf",          label: "PDF" },
+        { value: "word",         label: "Word" },
+        { value: "spreadsheet",  label: "Spreadsheet" },
+        { value: "presentation", label: "Slides" },
+        { value: "image",        label: "Image" },
+        { value: "text",         label: "Text" },
+        { value: "other",        label: "Other" },
+      ],
+    },
+    {
+      id: "project_id",
+      label: "Project",
+      type: "multiSelect",
+      options: projects.map((p) => ({ value: String(p.id), label: p.name })),
+    },
+    {
+      id: "source",
+      label: "Source",
+      type: "select",
+      options: [
+        { value: "OneDrive",   label: "OneDrive" },
+        { value: "SharePoint", label: "SharePoint" },
+        { value: "Uploaded",   label: "Uploaded" },
+      ],
+    },
+    {
+      id: "assigned",
+      label: "Assignment",
+      type: "select",
+      options: [
+        { value: "assigned",   label: "Assigned to project" },
+        { value: "unassigned", label: "Unassigned" },
+      ],
+    },
+    {
+      id: "modified_after",
+      label: "Modified after",
+      type: "date",
+    },
+    {
+      id: "modified_before",
+      label: "Modified before",
+      type: "date",
+    },
+  ], [projects]);
 
   const itemsWithGroup = useMemo(
     () => itemsWithOverrides.map((item) => ({ item, group: getFileGroup(item) })),
@@ -437,6 +587,8 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     },
   });
 
+  const af = tableState.filters;
+
   const filteredItems = useMemo(() => {
     let result = activeGroup
       ? itemsWithGroup.filter(({ group }) => group === activeGroup).map(({ item }) => item)
@@ -455,12 +607,71 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
       );
     }
 
+    // File type filter
+    const fileTypeFilter = af.file_type;
+    if (Array.isArray(fileTypeFilter) && fileTypeFilter.length > 0) {
+      result = result.filter((item) => fileTypeFilter.includes(getFileGroup(item)));
+    }
+
+    // Project filter
+    const projectFilter = af.project_id;
+    if (Array.isArray(projectFilter) && projectFilter.length > 0) {
+      result = result.filter(
+        (item) => item.project_id != null && projectFilter.includes(String(item.project_id)),
+      );
+    }
+
+    // Source filter
+    if (typeof af.source === "string" && af.source) {
+      result = result.filter((item) => friendlySource(item) === af.source);
+    }
+
+    // Assignment filter
+    if (af.assigned === "assigned") {
+      result = result.filter((item) => item.project_id != null);
+    } else if (af.assigned === "unassigned") {
+      result = result.filter((item) => item.project_id == null);
+    }
+
+    // Modified after
+    if (typeof af.modified_after === "string" && af.modified_after) {
+      const from = new Date(af.modified_after);
+      result = result.filter((item) => {
+        const d = item.source_last_modified_at ?? item.date ?? item.created_at;
+        return d ? new Date(d) >= from : false;
+      });
+    }
+
+    // Modified before
+    if (typeof af.modified_before === "string" && af.modified_before) {
+      const to = new Date(af.modified_before);
+      result = result.filter((item) => {
+        const d = item.source_last_modified_at ?? item.date ?? item.created_at;
+        return d ? new Date(d) <= to : false;
+      });
+    }
+
     return result;
-  }, [activeGroup, itemsWithGroup, itemsWithOverrides, tableState.debouncedSearch]);
+  }, [activeGroup, itemsWithGroup, itemsWithOverrides, tableState.debouncedSearch, af]);
+
+  const handleFilterChange = useCallback(
+    (next: Record<string, unknown>) => {
+      tableState.setSearchParams(
+        Object.fromEntries(
+          Object.entries(next).map(([k, v]) => [
+            k,
+            Array.isArray(v) ? v.join(",") : (v == null ? null : String(v)),
+          ]),
+        ),
+      );
+      tableState.setPage(1);
+    },
+    [tableState],
+  );
 
   const tableColumns = useMemo(
-    () => buildColumns(projects, handleProjectSave),
-    [projects, handleProjectSave],
+    () => buildColumns(projects, handleProjectSave, handleTagSave),
+    [projects, handleProjectSave, handleTagSave],
   );
 
   const sortedItems = useMemo(() => {
@@ -507,10 +718,10 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
           tableState.setCurrentView(view);
           tableState.setSearchParams({ view });
         },
-        filters: [],
-        activeFilters: {},
-        onFilterChange: () => {},
-        onClearFilters: () => {},
+        filters: fileFilters,
+        activeFilters: af,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () => handleFilterChange({}),
         columns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
