@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ExternalLink,
@@ -20,6 +20,14 @@ import {
 } from "@/components/tables/unified";
 import { CellText, TableDateValue, TruncatedCell } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -47,8 +55,14 @@ interface FileItem {
   division: string | null;
 }
 
+interface Project {
+  id: number;
+  name: string;
+}
+
 interface FilesClientProps {
   items: FileItem[];
+  projects: Project[];
   errorMessage: string | null;
 }
 
@@ -69,13 +83,13 @@ function getFileGroup(item: FileItem): FileGroup {
 }
 
 const FILE_GROUP_META: Record<FileGroup, { label: string; icon: React.ElementType; color: string }> = {
-  pdf:          { label: "PDF",           icon: FileText,        color: "text-muted-foreground" },
-  word:         { label: "Word",          icon: FileType,        color: "text-muted-foreground" },
-  spreadsheet:  { label: "Spreadsheets",  icon: FileSpreadsheet, color: "text-muted-foreground" },
-  presentation: { label: "Slides",        icon: Presentation,    color: "text-muted-foreground" },
-  image:        { label: "Images",        icon: FileImage,       color: "text-muted-foreground" },
-  text:         { label: "Text",          icon: FileText,        color: "text-muted-foreground" },
-  other:        { label: "Other",         icon: File,            color: "text-muted-foreground" },
+  pdf:          { label: "PDF",          icon: FileText,        color: "text-muted-foreground" },
+  word:         { label: "Word",         icon: FileType,        color: "text-muted-foreground" },
+  spreadsheet:  { label: "Spreadsheets", icon: FileSpreadsheet, color: "text-muted-foreground" },
+  presentation: { label: "Slides",       icon: Presentation,    color: "text-muted-foreground" },
+  image:        { label: "Images",       icon: FileImage,       color: "text-muted-foreground" },
+  text:         { label: "Text",         icon: FileText,        color: "text-muted-foreground" },
+  other:        { label: "Other",        icon: File,            color: "text-muted-foreground" },
 };
 
 function FileTypeIcon({ item, className }: { item: FileItem; className?: string }) {
@@ -100,10 +114,8 @@ function friendlySource(item: FileItem): string {
 function parsePathFromSharePointUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
-    // Personal OneDrive: /personal/{user}/Documents/{full/path/file.pdf}
     const personalMatch = parsed.pathname.match(/\/personal\/[^/]+\/Documents\/(.+)/);
     if (personalMatch) return decodeURIComponent(personalMatch[1]);
-    // SharePoint site: /sites/{site}/Shared%20Documents/{full/path/file.pdf}
     const siteMatch = parsed.pathname.match(/\/sites\/[^/]+\/(?:Shared%20Documents|Documents|[^/]+\/[^/]+)\/(.+)/);
     if (siteMatch) return decodeURIComponent(siteMatch[1]);
     return null;
@@ -113,12 +125,10 @@ function parsePathFromSharePointUrl(url: string): string | null {
 }
 
 function resolvedPath(item: FileItem): string[] {
-  // Prefer source_path if it contains at least 3 segments (has project subfolder)
   if (item.source_path) {
     const parts = item.source_path.split("/").filter(Boolean);
     if (parts.length >= 3) return parts;
   }
-  // Fall back to parsing the SharePoint/OneDrive URL for the full path
   const url = item.source_web_url ?? item.url;
   if (url) {
     const urlPath = parsePathFromSharePointUrl(url);
@@ -127,7 +137,6 @@ function resolvedPath(item: FileItem): string[] {
       if (parts.length >= 2) return parts;
     }
   }
-  // Last resort: use whatever source_path has
   if (item.source_path) return item.source_path.split("/").filter(Boolean);
   return [];
 }
@@ -152,62 +161,109 @@ function formatSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
-// ── Assignment method from tags ───────────────────────────────────────────────
+// ── Inline project select ─────────────────────────────────────────────────────
 
-function assignmentMethod(item: FileItem): string | null {
-  if (!item.tags) return null;
-  const match = item.tags.match(/project_auto:([a-z_]+)/);
-  return match?.[1] ?? null;
+function InlineProjectSelect({
+  item,
+  projects,
+  onSave,
+}: {
+  item: FileItem;
+  projects: Project[];
+  onSave: (docId: string, projectId: number | null, projectName: string | null) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  const handleChange = async (value: string) => {
+    const projectId = value === "__none__" ? null : parseInt(value, 10);
+    const project = projects.find((p) => p.id === projectId) ?? null;
+    setSaving(true);
+    try {
+      await apiFetch(`/api/documents/${item.id}/assign-project`, {
+        method: "PATCH",
+        body: JSON.stringify({ project_id: projectId }),
+      });
+      onSave(item.id, projectId, project?.name ?? null);
+    } catch {
+      // silently revert — user can retry
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Select
+      value={item.project_id != null ? String(item.project_id) : "__none__"}
+      onValueChange={handleChange}
+      disabled={saving}
+    >
+      <SelectTrigger
+        className="h-7 w-full max-w-55 border-0 bg-transparent px-1.5 text-sm shadow-none focus:ring-0 hover:bg-muted/60 data-[state=open]:bg-muted/60"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <SelectValue>
+          {item.project ?? (
+            <span className="text-muted-foreground/50 italic">Unassigned</span>
+          )}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="max-h-72">
+        <SelectItem value="__none__">
+          <span className="text-muted-foreground italic">Unassigned</span>
+        </SelectItem>
+        {projects.map((p) => (
+          <SelectItem key={p.id} value={String(p.id)}>
+            {p.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
-  { id: "name",        label: "Name",          alwaysVisible: true },
-  { id: "project",     label: "Project",        defaultVisible: true },
-  { id: "folder",      label: "Folder",         defaultVisible: true },
-  { id: "modified",    label: "Modified",       defaultVisible: true },
-  { id: "size",        label: "Size",           defaultVisible: true },
-  { id: "source",      label: "Source",         defaultVisible: true },
-  { id: "full_path",   label: "Full Path",      defaultVisible: false },
-  { id: "division",    label: "Division",       defaultVisible: false },
-  { id: "tags",        label: "Tags",           defaultVisible: false },
+  { id: "name",      label: "Name",     alwaysVisible: true },
+  { id: "project",   label: "Project",  defaultVisible: true },
+  { id: "folder",    label: "Folder",   defaultVisible: true },
+  { id: "modified",  label: "Modified", defaultVisible: true },
+  { id: "size",      label: "Size",     defaultVisible: true },
+  { id: "source",    label: "Source",   defaultVisible: true },
+  { id: "full_path", label: "Full Path",defaultVisible: false },
+  { id: "division",  label: "Division", defaultVisible: false },
+  { id: "tags",      label: "Tags",     defaultVisible: false },
 ];
 
 const defaultVisibleColumns = columns.filter((c) => c.defaultVisible !== false).map((c) => c.id);
 
-function buildColumns(): TableColumn<FileItem>[] {
+function buildColumns(
+  projects: Project[],
+  onProjectSave: (docId: string, projectId: number | null, projectName: string | null) => void,
+): TableColumn<FileItem>[] {
   return [
-    // Name
+    // Name — the filename itself is the only link to the file
     {
       ...columns[0],
       render: (item) => {
         const href = item.source_web_url ?? item.url;
-        const method = assignmentMethod(item);
         return (
           <div className="flex items-center gap-2.5 min-w-0">
             <FileTypeIcon item={item} />
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="font-medium truncate">
+              {href ? (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="font-medium truncate block hover:underline underline-offset-2"
+                >
                   {item.file_name ?? item.title ?? "Untitled"}
-                </span>
-                {href && (
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                    title="Open in OneDrive"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </div>
-              {method && (
-                <span className="text-[10px] text-muted-foreground/60 leading-none">
-                  assigned via {method.replace(/_/g, " ")}
+                </a>
+              ) : (
+                <span className="font-medium truncate block">
+                  {item.file_name ?? item.title ?? "Untitled"}
                 </span>
               )}
             </div>
@@ -217,23 +273,20 @@ function buildColumns(): TableColumn<FileItem>[] {
       csvValue: (item) => item.file_name ?? item.title ?? "",
       sortValue: (item) => (item.file_name ?? item.title ?? "").toLowerCase(),
       sortable: true,
-      width: 400,
+      width: 380,
     },
-    // Project
+    // Project — inline editable
     {
       ...columns[1],
-      render: (item) =>
-        item.project ? (
-          <CellText value={item.project} muted />
-        ) : (
-          <span className="text-sm text-muted-foreground/50 italic">Unassigned</span>
-        ),
+      render: (item) => (
+        <InlineProjectSelect item={item} projects={projects} onSave={onProjectSave} />
+      ),
       csvValue: (item) => item.project ?? "",
       sortValue: (item) => item.project ?? "",
       sortable: true,
-      width: 200,
+      width: 240,
     },
-    // Folder (immediate parent folder name)
+    // Folder (immediate parent)
     {
       ...columns[2],
       render: (item) => {
@@ -250,7 +303,7 @@ function buildColumns(): TableColumn<FileItem>[] {
       sortable: true,
       width: 200,
     },
-    // Modified (OneDrive mod date)
+    // Modified
     {
       ...columns[3],
       render: (item) => (
@@ -286,10 +339,7 @@ function buildColumns(): TableColumn<FileItem>[] {
     // Full path (hidden by default)
     {
       ...columns[6],
-      render: (item) => {
-        const full = fullFolderPath(item);
-        return <CellText value={full || null} muted />;
-      },
+      render: (item) => <CellText value={fullFolderPath(item) || null} muted />,
       csvValue: (item) => fullFolderPath(item),
       sortValue: (item) => fullFolderPath(item).toLowerCase(),
       sortable: true,
@@ -331,21 +381,36 @@ function renderRowActions(item: FileItem) {
 
 const ACTIVE_GROUPS: FileGroup[] = ["pdf", "word", "spreadsheet", "presentation", "image", "text", "other"];
 
-export function FilesClient({ items, errorMessage }: FilesClientProps) {
-  const rawSearchParams = useSearchParams()!;
+export function FilesClient({ items, projects, errorMessage }: FilesClientProps) {
+  const rawSearchParams = useSearchParams();
   const searchParams = rawSearchParams ?? new URLSearchParams();
-  const pathname = usePathname()! ?? "";
+  const pathname = usePathname() ?? "";
   const router = useRouter();
 
   const activeGroup = (searchParams.get("group") ?? "") as FileGroup | "";
 
-  // Pre-compute group for each item once
-  const itemsWithGroup = useMemo(
-    () => items.map((item) => ({ item, group: getFileGroup(item) })),
-    [items],
+  // Optimistic project overrides so edits reflect immediately
+  const [projectOverrides, setProjectOverrides] = useState<
+    Record<string, { project_id: number | null; project: string | null }>
+  >({});
+
+  const handleProjectSave = useCallback(
+    (docId: string, projectId: number | null, projectName: string | null) => {
+      setProjectOverrides((prev) => ({ ...prev, [docId]: { project_id: projectId, project: projectName } }));
+    },
+    [],
   );
 
-  // Count per group
+  const itemsWithOverrides = useMemo(
+    () => items.map((item) => ({ ...item, ...(projectOverrides[item.id] ?? {}) })),
+    [items, projectOverrides],
+  );
+
+  const itemsWithGroup = useMemo(
+    () => itemsWithOverrides.map((item) => ({ item, group: getFileGroup(item) })),
+    [itemsWithOverrides],
+  );
+
   const groupCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const { group } of itemsWithGroup) {
@@ -355,7 +420,7 @@ export function FilesClient({ items, errorMessage }: FilesClientProps) {
   }, [itemsWithGroup]);
 
   const tabs = [
-    { label: `All (${items.length.toLocaleString()})`, href: pathname, isActive: !activeGroup },
+    { label: `All (${itemsWithOverrides.length.toLocaleString()})`, href: pathname, isActive: !activeGroup },
     ...ACTIVE_GROUPS
       .filter((g) => (groupCounts[g] ?? 0) > 0)
       .map((g) => ({
@@ -367,7 +432,7 @@ export function FilesClient({ items, errorMessage }: FilesClientProps) {
 
   const tableState = useUnifiedTableState({
     entityKey: "files",
-    searchParams: rawSearchParams,
+    searchParams: searchParams,
     pathname,
     router,
     defaults: {
@@ -386,7 +451,7 @@ export function FilesClient({ items, errorMessage }: FilesClientProps) {
   const filteredItems = useMemo(() => {
     let result = activeGroup
       ? itemsWithGroup.filter(({ group }) => group === activeGroup).map(({ item }) => item)
-      : items;
+      : itemsWithOverrides;
 
     const q = tableState.debouncedSearch.trim().toLowerCase();
     if (q) {
@@ -402,9 +467,12 @@ export function FilesClient({ items, errorMessage }: FilesClientProps) {
     }
 
     return result;
-  }, [activeGroup, itemsWithGroup, items, tableState.debouncedSearch]);
+  }, [activeGroup, itemsWithGroup, itemsWithOverrides, tableState.debouncedSearch]);
 
-  const tableColumns = useMemo(() => buildColumns(), []);
+  const tableColumns = useMemo(
+    () => buildColumns(projects, handleProjectSave),
+    [projects, handleProjectSave],
+  );
 
   const sortedItems = useMemo(() => {
     const col = tableColumns.find((c) => c.id === tableState.sortBy);
@@ -439,7 +507,7 @@ export function FilesClient({ items, errorMessage }: FilesClientProps) {
       tabs={tabs}
       layout={{ fullBleedTable: true }}
       toolbar={{
-        totalItems: items.length,
+        totalItems: itemsWithOverrides.length,
         filteredItems: filteredItems.length,
         selectedCount: 0,
         searchValue: tableState.searchInput,
@@ -468,10 +536,6 @@ export function FilesClient({ items, errorMessage }: FilesClientProps) {
         columns: tableColumns,
         getRowId: (item) => item.id,
         rowActions: renderRowActions,
-        onRowClick: (item) => {
-          const href = item.source_web_url ?? item.url;
-          if (href) window.open(href, "_blank", "noopener,noreferrer");
-        },
       }}
       sorting={{
         sortBy: tableState.sortBy,
