@@ -18,7 +18,6 @@ distinctly so operators can spot PDFs that weren't fully read.
 """
 import logging
 import os
-from datetime import datetime, timezone
 from typing import Optional
 
 from supabase import Client
@@ -105,7 +104,6 @@ def _update_record_after_ocr(
     update_payload: dict = {
         "status": status,
         "content": text[:100000],  # hard cap to avoid oversized rows
-        "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     supabase.from_("document_metadata").update(update_payload).eq("id", doc_id).execute()
     logger.info(
@@ -121,7 +119,6 @@ def _mark_ocr_failed(supabase: Client, doc_id: str, reason: str) -> None:
     """Mark a record as ocr_failed so it's skipped on the next pass."""
     supabase.from_("document_metadata").update({
         "status": "ocr_failed",
-        "updated_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", doc_id).execute()
     logger.warning("[OCRWorker] Marked %s as ocr_failed: %s", doc_id, reason)
 
