@@ -104,7 +104,7 @@ def _update_record_after_ocr(
     status = "ocr_partial" if capped else "raw_ingested"
     update_payload: dict = {
         "status": status,
-        "text_content": text[:100000],  # hard cap to avoid oversized rows
+        "content": text[:100000],  # hard cap to avoid oversized rows
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     supabase.from_("document_metadata").update(update_payload).eq("id", doc_id).execute()
