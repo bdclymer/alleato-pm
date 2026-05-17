@@ -37,6 +37,7 @@ interface FileItem {
   source: string | null;
   category: string | null;
   type: string | null;
+  document_type: string | null;
   project_id: number | null;
   project: string | null;
   date: string | null;
@@ -46,6 +47,9 @@ interface FileItem {
   status: string | null;
   tags: string | null;
   division: string | null;
+  overview: string | null;
+  participants: string | null;
+  access_level: string | null;
 }
 
 interface Project {
@@ -343,19 +347,33 @@ function IndexedBadge({ status }: { status: string | null }) {
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
-  { id: "name",      label: "Name",     alwaysVisible: true },
-  { id: "project",   label: "Project",  defaultVisible: true },
-  { id: "folder",    label: "Folder",   defaultVisible: true },
-  { id: "modified",  label: "Modified", defaultVisible: true },
-  { id: "size",      label: "Size",     defaultVisible: true },
-  { id: "source",    label: "Source",   defaultVisible: true },
-  { id: "indexed",   label: "Indexed",  defaultVisible: true },
-  { id: "full_path", label: "Full Path",defaultVisible: false },
-  { id: "division",  label: "Division", defaultVisible: false },
-  { id: "tags",      label: "Tags",     defaultVisible: false },
+  { id: "name",          label: "Name",                 alwaysVisible: true },
+  { id: "document_type", label: "Document Type",        defaultVisible: true },
+  { id: "category",      label: "Category",             defaultVisible: true },
+  { id: "date",          label: "Date",                 defaultVisible: true },
+  { id: "overview",      label: "Overview",             defaultVisible: true },
+  { id: "status",        label: "Status",               defaultVisible: true },
+  { id: "access_level",  label: "Access Level",         defaultVisible: true },
+  { id: "project",       label: "Project",              defaultVisible: true },
+  { id: "source",        label: "Source",               defaultVisible: true },
+  { id: "modified",      label: "Source Last Modified", defaultVisible: false },
+  { id: "participants",  label: "Participants",          defaultVisible: false },
+  { id: "folder",        label: "Folder",               defaultVisible: false },
+  { id: "size",          label: "Size",                 defaultVisible: false },
+  { id: "full_path",     label: "Full Path",            defaultVisible: false },
+  { id: "division",      label: "Division",             defaultVisible: false },
+  { id: "tags",          label: "Tags",                 defaultVisible: false },
 ];
 
-const defaultVisibleColumns = columns.filter((c) => c.defaultVisible !== false).map((c) => c.id);
+const defaultVisibleColumns = columns
+  .filter((c) => c.alwaysVisible || c.defaultVisible)
+  .map((c) => c.id);
+
+function col(id: string): ColumnConfig {
+  const found = columns.find((c) => c.id === id);
+  if (!found) throw new Error(`Column config not found: ${id}`);
+  return found;
+}
 
 function buildColumns(
   projects: Project[],
@@ -363,9 +381,8 @@ function buildColumns(
   onTagSave: (docId: string, tags: string) => void,
 ): TableColumn<FileItem>[] {
   return [
-    // Name — the filename itself is the only link to the file
     {
-      ...columns[0],
+      ...col("name"),
       render: (item) => {
         const href = item.source_web_url ?? item.url;
         return (
@@ -394,22 +411,108 @@ function buildColumns(
       csvValue: (item) => item.file_name ?? item.title ?? "",
       sortValue: (item) => (item.file_name ?? item.title ?? "").toLowerCase(),
       sortable: true,
-      width: 380,
+      width: 320,
     },
-    // Project — inline editable
     {
-      ...columns[1],
+      ...col("document_type"),
+      render: (item) => <CellText value={item.document_type} muted />,
+      csvValue: (item) => item.document_type ?? "",
+      sortValue: (item) => item.document_type ?? "",
+      sortable: true,
+    },
+    {
+      ...col("category"),
+      render: (item) => <CellText value={item.category} muted />,
+      csvValue: (item) => item.category ?? "",
+      sortValue: (item) => item.category ?? "",
+      sortable: true,
+    },
+    {
+      ...col("date"),
+      render: (item) => <TableDateValue value={item.date ?? item.created_at} />,
+      csvValue: (item) => item.date ?? item.created_at ?? "",
+      sortValue: (item) => {
+        const d = item.date ?? item.created_at;
+        return d ? new Date(d).getTime() : 0;
+      },
+      sortable: true,
+    },
+    {
+      ...col("overview"),
+      render: (item) =>
+        item.overview ? (
+          <span className="text-sm text-muted-foreground line-clamp-2" title={item.overview}>
+            {item.overview}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground/40">—</span>
+        ),
+      csvValue: (item) => item.overview ?? "",
+      sortValue: (item) => item.overview ?? "",
+      sortable: false,
+      width: 280,
+    },
+    {
+      ...col("status"),
+      render: (item) => <IndexedBadge status={item.status} />,
+      csvValue: (item) => item.status ?? "",
+      sortValue: (item) => item.status ?? "",
+      sortable: true,
+      width: 110,
+    },
+    {
+      ...col("access_level"),
+      render: (item) => <CellText value={item.access_level} muted />,
+      csvValue: (item) => item.access_level ?? "",
+      sortValue: (item) => item.access_level ?? "",
+      sortable: true,
+    },
+    {
+      ...col("project"),
       render: (item) => (
         <InlineProjectSelect item={item} projects={projects} onSave={onProjectSave} />
       ),
       csvValue: (item) => item.project ?? "",
       sortValue: (item) => item.project ?? "",
       sortable: true,
-      width: 240,
+      width: 220,
     },
-    // Folder (immediate parent)
     {
-      ...columns[2],
+      ...col("source"),
+      render: (item) => <CellText value={friendlySource(item)} muted />,
+      csvValue: (item) => friendlySource(item),
+      sortValue: (item) => friendlySource(item),
+      sortable: true,
+    },
+    {
+      ...col("modified"),
+      render: (item) => (
+        <TableDateValue value={item.source_last_modified_at ?? item.date ?? item.created_at} />
+      ),
+      csvValue: (item) => item.source_last_modified_at ?? item.date ?? item.created_at ?? "",
+      sortValue: (item) => {
+        const d = item.source_last_modified_at ?? item.date ?? item.created_at;
+        return d ? new Date(d).getTime() : 0;
+      },
+      sortable: true,
+    },
+    {
+      ...col("participants"),
+      render: (item) =>
+        item.participants ? (
+          <span className="text-sm text-muted-foreground truncate" title={item.participants}>
+            {item.participants}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground/40">—</span>
+        ),
+      csvValue: (item) => item.participants ?? "",
+      sortValue: (item) => item.participants ?? "",
+      sortable: false,
+      width: 220,
+    },
+    {
+      ...col("folder"),
       render: (item) => {
         const parent = parentFolderName(item);
         const full = fullFolderPath(item);
@@ -424,22 +527,8 @@ function buildColumns(
       sortable: true,
       width: 200,
     },
-    // Modified
     {
-      ...columns[3],
-      render: (item) => (
-        <TableDateValue value={item.source_last_modified_at ?? item.date ?? item.created_at} />
-      ),
-      csvValue: (item) => item.source_last_modified_at ?? item.date ?? item.created_at ?? "",
-      sortValue: (item) => {
-        const d = item.source_last_modified_at ?? item.date ?? item.created_at;
-        return d ? new Date(d).getTime() : 0;
-      },
-      sortable: true,
-    },
-    // Size
-    {
-      ...columns[4],
+      ...col("size"),
       render: (item) => (
         <span className="text-sm text-muted-foreground tabular-nums">
           {formatSize(item.source_size)}
@@ -449,43 +538,23 @@ function buildColumns(
       sortValue: (item) => item.source_size ?? 0,
       sortable: true,
     },
-    // Source
     {
-      ...columns[5],
-      render: (item) => <CellText value={friendlySource(item)} muted />,
-      csvValue: (item) => friendlySource(item),
-      sortValue: (item) => friendlySource(item),
-      sortable: true,
-    },
-    // Indexed — RAG indexing status
-    {
-      ...columns[6],
-      render: (item) => <IndexedBadge status={item.status} />,
-      csvValue: (item) => item.status ?? "",
-      sortValue: (item) => item.status ?? "",
-      sortable: true,
-      width: 100,
-    },
-    // Full path (hidden by default)
-    {
-      ...columns[7],
+      ...col("full_path"),
       render: (item) => <CellText value={fullFolderPath(item) || null} muted />,
       csvValue: (item) => fullFolderPath(item),
       sortValue: (item) => fullFolderPath(item).toLowerCase(),
       sortable: true,
       width: 320,
     },
-    // Division
     {
-      ...columns[8],
+      ...col("division"),
       render: (item) => <CellText value={item.division} muted />,
       csvValue: (item) => item.division ?? "",
       sortValue: (item) => item.division ?? "",
       sortable: true,
     },
-    // Tags — inline editable
     {
-      ...columns[9],
+      ...col("tags"),
       render: (item) => <InlineTagEditor item={item} onSave={onTagSave} />,
       csvValue: (item) => item.tags ?? "",
       sortable: false,
