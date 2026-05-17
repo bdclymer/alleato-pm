@@ -296,6 +296,50 @@ function InlineTagEditor({
   );
 }
 
+// ── Indexed / RAG status badge ────────────────────────────────────────────────
+
+function IndexedBadge({ status }: { status: string | null }) {
+  if (status === "embedded") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-status-success bg-status-success/10 px-1.5 py-0.5 rounded">
+        Indexed
+      </span>
+    );
+  }
+  if (status === "ocr_partial") {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs font-medium text-status-warning bg-status-warning/10 px-1.5 py-0.5 rounded"
+        title="OCR ran but this PDF exceeded the page cap — only the first pages were indexed. The full document may not be searchable."
+      >
+        Partial
+      </span>
+    );
+  }
+  if (status === "no_text") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+        No text
+      </span>
+    );
+  }
+  if (status === "ocr_failed") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-status-error bg-status-error/10 px-1.5 py-0.5 rounded">
+        OCR failed
+      </span>
+    );
+  }
+  if (status === "raw_ingested") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-status-info bg-status-info/10 px-1.5 py-0.5 rounded">
+        Pending
+      </span>
+    );
+  }
+  return <span className="text-xs text-muted-foreground">{status ?? "—"}</span>;
+}
+
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
@@ -305,6 +349,7 @@ const columns: ColumnConfig[] = [
   { id: "modified",  label: "Modified", defaultVisible: true },
   { id: "size",      label: "Size",     defaultVisible: true },
   { id: "source",    label: "Source",   defaultVisible: true },
+  { id: "indexed",   label: "Indexed",  defaultVisible: true },
   { id: "full_path", label: "Full Path",defaultVisible: false },
   { id: "division",  label: "Division", defaultVisible: false },
   { id: "tags",      label: "Tags",     defaultVisible: false },
@@ -412,9 +457,18 @@ function buildColumns(
       sortValue: (item) => friendlySource(item),
       sortable: true,
     },
-    // Full path (hidden by default)
+    // Indexed — RAG indexing status
     {
       ...columns[6],
+      render: (item) => <IndexedBadge status={item.status} />,
+      csvValue: (item) => item.status ?? "",
+      sortValue: (item) => item.status ?? "",
+      sortable: true,
+      width: 100,
+    },
+    // Full path (hidden by default)
+    {
+      ...columns[7],
       render: (item) => <CellText value={fullFolderPath(item) || null} muted />,
       csvValue: (item) => fullFolderPath(item),
       sortValue: (item) => fullFolderPath(item).toLowerCase(),
@@ -423,7 +477,7 @@ function buildColumns(
     },
     // Division
     {
-      ...columns[7],
+      ...columns[8],
       render: (item) => <CellText value={item.division} muted />,
       csvValue: (item) => item.division ?? "",
       sortValue: (item) => item.division ?? "",
@@ -431,7 +485,7 @@ function buildColumns(
     },
     // Tags — inline editable
     {
-      ...columns[8],
+      ...columns[9],
       render: (item) => <InlineTagEditor item={item} onSave={onTagSave} />,
       csvValue: (item) => item.tags ?? "",
       sortable: false,
@@ -459,12 +513,11 @@ function renderRowActions(item: FileItem) {
 const ACTIVE_GROUPS: FileGroup[] = ["pdf", "word", "spreadsheet", "presentation", "image", "text", "other"];
 
 export function FilesClient({ items, projects, errorMessage }: FilesClientProps) {
-  const rawSearchParams = useSearchParams();
-  const searchParams = rawSearchParams ?? new URLSearchParams();
+  const searchParams = useSearchParams();
   const pathname = usePathname() ?? "";
   const router = useRouter();
 
-  const activeGroup = (searchParams.get("group") ?? "") as FileGroup | "";
+  const activeGroup = ((searchParams?.get("group") ?? "")) as FileGroup | "";
 
   // Optimistic overrides for inline edits
   const [projectOverrides, setProjectOverrides] = useState<
@@ -534,6 +587,18 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
       ],
     },
     {
+      id: "indexed",
+      label: "RAG Status",
+      type: "multiSelect",
+      options: [
+        { value: "embedded",    label: "Indexed" },
+        { value: "raw_ingested", label: "Pending indexing" },
+        { value: "ocr_partial", label: "Partially indexed (page cap)" },
+        { value: "no_text",     label: "No text / not indexed" },
+        { value: "ocr_failed",  label: "OCR failed" },
+      ],
+    },
+    {
       id: "modified_after",
       label: "Modified after",
       type: "date",
@@ -587,7 +652,7 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     },
   });
 
-  const af = tableState.filters;
+  const af = tableState.activeFilters;
 
   const filteredItems = useMemo(() => {
     let result = activeGroup
@@ -631,6 +696,12 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
       result = result.filter((item) => item.project_id != null);
     } else if (af.assigned === "unassigned") {
       result = result.filter((item) => item.project_id == null);
+    }
+
+    // RAG status filter
+    const indexedFilter = af.indexed;
+    if (Array.isArray(indexedFilter) && indexedFilter.length > 0) {
+      result = result.filter((item) => indexedFilter.includes(item.status ?? ""));
     }
 
     // Modified after
@@ -677,9 +748,10 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
   const sortedItems = useMemo(() => {
     const col = tableColumns.find((c) => c.id === tableState.sortBy);
     if (!col?.sortValue) return filteredItems;
+    const sortValue = col.sortValue;
     return [...filteredItems].sort((a, b) => {
-      const va = col.sortValue!(a);
-      const vb = col.sortValue!(b);
+      const va = sortValue(a);
+      const vb = sortValue(b);
       if (va == null) return tableState.sortDirection === "asc" ? -1 : 1;
       if (vb == null) return tableState.sortDirection === "asc" ? 1 : -1;
       if (typeof va === "number" && typeof vb === "number")

@@ -619,3 +619,46 @@ async def backfill_source_paths(
         "dry_run": request.dry_run,
         "errors": errors[:20],
     }
+
+
+class OcrBackfillRequest(BaseModel):
+    batch_size: int = 20
+    page_cap: int = 20
+
+
+@router.post("/documents/ocr-backfill", dependencies=[Depends(require_admin_api_key)])
+async def run_ocr_backfill(
+    request: OcrBackfillRequest,
+    store: SupabaseRagStore = Depends(get_rag_store),
+):
+    """Run an OCR pass over documents with status='no_text'.
+
+    Useful for backfilling scanned PDFs that pypdf couldn't extract text from.
+    - batch_size: max documents to process per call (default 20)
+    - page_cap: max pages per document sent to Azure DI (default 20, ~$0.03/doc max)
+
+    Documents that hit the page cap are marked ocr_partial — they ARE embedded
+    for RAG search but are flagged in the Files table so staff can identify
+    PDFs where only the first N pages were processed.
+
+    After this completes, call /sync/embed to embed the newly-OCR'd documents,
+    or wait for the next 30-minute sync cron which runs OCR + embed automatically.
+    """
+    from services.integrations.microsoft_graph.ocr_worker import run_ocr_pass
+    from services.integrations.azure.document_intelligence import is_configured
+
+    if not is_configured():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Azure Document Intelligence is not configured. "
+                "Set AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT and AZURE_DOCUMENT_INTELLIGENCE_KEY."
+            ),
+        )
+
+    result = run_ocr_pass(
+        store._client,
+        limit=request.batch_size,
+        page_cap=request.page_cap,
+    )
+    return result

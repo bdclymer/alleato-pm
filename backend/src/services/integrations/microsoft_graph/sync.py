@@ -281,9 +281,11 @@ def run_graph_sync(
     run_teams: bool = True,
     run_onedrive: bool = True,
     run_embedding: bool = True,
+    run_ocr: bool = True,
     run_teams_compiler: bool = True,
     run_attachment_promotion: bool = True,
     embed_limit: int = 25,
+    ocr_batch_size: int = 20,
     teams_compiler_batch_size: int = 25,
     attachment_promotion_limit: int = 50,
     outlook_users: Optional[list[str]] = None,
@@ -309,6 +311,7 @@ def run_graph_sync(
         "phases": {
             "source_sync": "enabled",
             "embedding": "enabled" if run_embedding else "skipped",
+            "ocr": "enabled" if run_ocr else "skipped",
             "teams_compiler": "enabled" if run_teams_compiler else "skipped",
             "attachment_promotion": "enabled" if run_attachment_promotion else "skipped",
         },
@@ -635,6 +638,29 @@ def run_graph_sync(
             summary["embed"] = {"error": str(e)}
     else:
         summary["embed"] = {"status": "skipped", "reason": "run_embedding=false"}
+
+    # ── OCR fallback for scanned PDFs (no_text → raw_ingested or ocr_partial) ─
+    # Runs after the first embed pass so newly-OCR'd docs can be embedded
+    # in the same sync run (they'll be picked up if embed runs again later,
+    # or on the next 30-minute cron pass).
+    if run_ocr:
+        try:
+            from .ocr_worker import run_ocr_pass
+            ocr_result = run_ocr_pass(supabase, limit=ocr_batch_size)
+            summary["ocr"] = ocr_result
+            if ocr_result.get("ocr_partial", 0):
+                logger.warning(
+                    "[GraphSync] OCR page cap hit on %d file(s) — marked ocr_partial. "
+                    "Check /files?status=ocr_partial to review.",
+                    ocr_result["ocr_partial"],
+                )
+            logger.info("[GraphSync] OCR pass complete: %s", ocr_result)
+        except Exception as e:
+            logger.error("[GraphSync] OCR pass failed: %s", e)
+            summary["errors"].append(f"OCR pass failed: {e}")
+            summary["ocr"] = {"error": str(e)}
+    else:
+        summary["ocr"] = {"status": "skipped", "reason": "run_ocr=false"}
 
     # ── Embed email attachment documents (Pattern C backfill) ────────────────
     # Picks up email_attachment_legacy rows with raw_text that the Graph embed
