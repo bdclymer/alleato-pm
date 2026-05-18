@@ -2548,9 +2548,6 @@ function SubListTab({
                                         </span>
                                       )}
                                     </span>
-                                    {(company.vendor_class ?? company.type) && (
-                                      <span className="text-[10px] text-muted-foreground">{company.vendor_class ?? company.type}</span>
-                                    )}
                                   </div>
                                   <Button
                                     variant="outline"
