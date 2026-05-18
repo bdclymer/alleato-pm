@@ -7,6 +7,50 @@
 
 ## Current focus
 
+**Status:** Pattern C attachment consolidation — batch 1 of 2 shipped (commitments). 6 more entities + form audit pending.
+**Last updated:** 2026-05-18
+**Last worked on by:** Claude Code (Pattern C attachment migration — batch 1)
+
+## Pattern C attachment migration — batch 1 (2026-05-18)
+
+Audit revealed the immediate user-reported bug: commitments page had **dual attachment storage** — new/edit pages wrote to legacy `attachments` table, detail page read from Pattern C `subcontract_documents`/`purchase_order_documents`. Files uploaded during create/edit invisible on detail. Plus the upload flow was serial (`for` loop), which compounded the "only one file uploads" UX issue.
+
+**Shipped:**
+- Migrated **18 production rows** into Pattern C junctions:
+  - 12 commitments rows from `attachments` → `subcontract_documents`
+  - 3 prime_contracts rows from `attachments` → `prime_contract_documents`
+  - 2 rows from `change_event_attachments` → new `change_event_documents` junction
+  - 1 row from `submittal_attachments` → `submittal_doc_links`
+  - (14 NULL-attached_to_table rows in `attachments` left as orphans — test uploads, files remain in storage)
+- Created `change_event_documents` junction with RLS
+- Extended `user_can_access_entity()` to handle `change_event` + `subcontractor_invoice`
+- Rewrote `commitments/new/page.tsx` + `commitments/[id]/edit/page.tsx` to POST to `/api/document-picker/upload` (Pattern C) and parallelized via `Promise.all` — multi-upload now works correctly
+- Edit page now reads existing attachments via `/api/document-picker/linked`
+- Deleted dead `frontend/src/components/commitments/tabs/AttachmentsTab.tsx`
+- Deleted legacy `/api/commitments/[commitmentId]/attachments/` route tree (3 files)
+
+**Migrations:**
+- `backfill_attachments_to_pattern_c_v2`
+- `create_change_event_documents_and_backfill_v2`
+
+**Remaining (batch 2 — next session) — all empty tables, no data urgency:**
+1. Locate + rewrite the prime_contracts UI/API that historically wrote to `attachments` (writers may have already moved to Pattern C via `EntityAttachments` on detail page — needs grep verification)
+2. Rewrite 6 more attachment API routes → Pattern C:
+   - `/api/projects/[projectId]/commitment-change-orders/[id]/attachments` (uses `cco_attachments`)
+   - `/api/projects/[projectId]/prime-contract-change-orders/[id]/attachments` (uses `pcco_attachments`)
+   - `/api/projects/[projectId]/prime-contract-pcos/[pcoId]` (uses `prime_contract_pco_attachments`)
+   - `/api/projects/[projectId]/invoicing/owner/[id]/attachments` (uses `invoice_attachments`)
+   - `/api/projects/[projectId]/change-events/[id]/attachments` (uses `change_event_attachments`) + update `ChangeEventAttachmentsSection.tsx`
+   - `/api/projects/[projectId]/submittals/[id]/attachments` (uses `submittal_attachments`) + update `use-submittals.ts`
+3. Create junctions if needed for empty tables: `subcontractor_invoice_documents`, `commitment_pco_documents`, `prime_contract_pco_documents`
+4. Recreate `commitments_schema_gaps` view without `subcontract_attachments` dependency
+5. Drop 9 legacy tables: `cco_attachments`, `pcco_attachments`, `prime_contract_pco_attachments`, `invoice_attachments`, `change_event_attachments`, `submittal_attachments`, `subcontract_attachments`, `purchase_order_attachments`, `attachments`
+6. **Form audit:** sweep entire app for the dual-pattern (legacy `*_attachments` writer + Pattern C reader on same entity). User explicitly requested this.
+
+---
+
+## Prior session focus
+
 **Status:** All changes committed and pushed to main. Session ended cleanly.
 **Last updated:** 2026-05-17
 **Last worked on by:** Claude Code (Consolidated implementation plan — Phases 1–10 complete)
