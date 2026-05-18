@@ -31,7 +31,7 @@ try:  # Optional OpenAI dependency for embeddings
 except ImportError:  # pragma: no cover - handled in EmbeddingGenerator
     OpenAI = None  # type: ignore
 
-from supabase_helpers import DocumentChunk, SupabaseRagStore
+from supabase_helpers import DocumentChunk, SupabaseRagStore, get_rag_write_client
 
 TIMESTAMP_LINE = re.compile(r"^\[(?P<stamp>\d{2}:\d{2})\]\s+\*\*(?P<speaker>.+?)\*\*:\s*(?P<text>.+)$")
 SECTION_PREFIX = "## "
@@ -1951,13 +1951,13 @@ class FirefliesIngestionPipeline:
         import urllib.request
 
         for mem in valid:
-            # DO NOT write embedding here. ai_memories.embedding has an HNSW index in
-            # PM APP that OOMs the database under concurrent inserts (m=32, ef=200).
-            # Vector search for memories goes through document_chunks in the AI Database.
+            # DO NOT write embedding to PM APP ai_memories.embedding — HNSW index OOMs under concurrent inserts.
+            # Instead: insert text-only to PM APP, then sync embedding to AI DB document_chunks.
+            content_text = mem["content"].strip()
             payload = json.dumps({
                 "user_id": "00000000-0000-0000-0000-000000000001",
                 "type": mem["type"],
-                "content": mem["content"].strip(),
+                "content": content_text,
                 "project_id": project_id,
                 "meeting_id": document_id,
                 "confidence": float(mem.get("confidence", 0.85)),
@@ -1973,16 +1973,49 @@ class FirefliesIngestionPipeline:
                     "Content-Type": "application/json",
                     "apikey": supabase_key,
                     "Authorization": f"Bearer {supabase_key}",
-                    "Prefer": "return=minimal",
+                    "Prefer": "return=representation",
                 },
                 method="POST",
             )
+            memory_id: Optional[str] = None
             try:
                 with urllib.request.urlopen(req, timeout=10) as resp:
-                    if resp.status not in (200, 201):
+                    if resp.status in (200, 201):
+                        body = json.loads(resp.read().decode("utf-8"))
+                        rows = body if isinstance(body, list) else [body]
+                        if rows and rows[0].get("id"):
+                            memory_id = rows[0]["id"]
+                    else:
                         logger.warning("Memory insert returned %d", resp.status)
             except Exception as e:
                 logger.warning("Failed to insert meeting memory: %s", e)
+
+            # Sync embedding to AI Database document_chunks for semantic search
+            if memory_id:
+                try:
+                    embed_text = f"ai_memory: {content_text}"
+                    vecs = self.embedder.embed([embed_text])
+                    if vecs:
+                        rag_client = get_rag_write_client()
+                        rag_client.table("document_chunks").upsert(
+                            {
+                                "chunk_id": f"ai_memory_{memory_id}",
+                                "document_id": memory_id,
+                                "chunk_index": 0,
+                                "text": embed_text,
+                                "source_type": "ai_memory",
+                                "embedding": json.dumps(vecs[0]),
+                                "metadata": {
+                                    "type": mem["type"],
+                                    "project_id": project_id,
+                                    "meeting_id": document_id,
+                                    "source": "meeting_ingest",
+                                },
+                            },
+                            on_conflict="chunk_id",
+                        ).execute()
+                except Exception as e:
+                    logger.warning("Failed to sync memory embedding to AI DB: %s", e)
 
 
 if __name__ == "__main__":

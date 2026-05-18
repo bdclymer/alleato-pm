@@ -14,7 +14,8 @@
  */
 
 import OpenAI from "openai";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createServiceClient, createRagServiceClient } from "@/lib/supabase/service";
+import type { Json } from "@/types/database.types";
 import {
   getOpenAICompatibleClientConfig,
   getOpenAIModelId,
@@ -57,13 +58,40 @@ function getOpenAI(): OpenAI {
 }
 
 export async function embed(text: string): Promise<number[]> {
-  // ai_memories.embedding is halfvec(3072) — must use text-embedding-3-large at 3072 dims
   const response = await getOpenAI().embeddings.create({
     model: getOpenAIModelId("text-embedding-3-large"),
     dimensions: 3072,
     input: text.substring(0, 8000),
   });
   return response.data[0].embedding;
+}
+
+// Write a memory's embedding to AI Database document_chunks (fqcvmfqldlewvbsuxdvz).
+// PM APP holds the text record; AI DB holds the searchable vector.
+async function _syncMemoryChunkToAiDb(
+  memoryId: string,
+  content: string,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const vec = await embed(content);
+    const ragClient = createRagServiceClient();
+    await ragClient.from("document_chunks").upsert(
+      {
+        chunk_id: `ai_memory_${memoryId}`,
+        document_id: memoryId,
+        chunk_index: 0,
+        text: content,
+        source_type: "ai_memory",
+        embedding: JSON.stringify(vec),
+        metadata: metadata as Json,
+      },
+      { onConflict: "chunk_id" },
+    );
+  } catch (e) {
+    // Non-fatal: PM APP record already written. Log and continue.
+    console.warn("[ai-memory-service] Failed to sync chunk to AI DB:", e instanceof Error ? e.message : e);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -123,6 +151,10 @@ export async function writeMemory(
         .eq("id", dup.id);
 
       if (updateError) return { error: updateError.message };
+      void _syncMemoryChunkToAiDb(dup.id, params.content, {
+        user_id: params.userId, type: params.type, project_id: params.projectId ?? null,
+        meeting_id: params.meetingId ?? null, visibility: params.visibility ?? "private",
+      });
       return { id: dup.id, action: "updated" };
     }
 
@@ -169,6 +201,12 @@ export async function writeMemory(
 
     if (error) return { error: `Memory save failed: ${error.message}` };
     const memoryId = data.id;
+
+    // Sync embedding to AI Database asynchronously — non-blocking.
+    void _syncMemoryChunkToAiDb(memoryId, params.content, {
+      user_id: params.userId, type: params.type, project_id: safeProjectId,
+      meeting_id: params.meetingId ?? null, visibility: params.visibility ?? "private",
+    });
 
     // --- Commitment bridge ---
     // Commitment memories automatically surface as action items in ai_insights
@@ -269,33 +307,56 @@ export async function searchMemories(params: {
 
   try {
     const embeddingVec = await embed(params.query);
+    const ragClient = createRagServiceClient();
 
-    const { data, error } = await supabase.rpc("search_ai_memories", {
-      query_embedding: JSON.stringify(embeddingVec),
-      p_user_id: params.userId,
-      match_count: params.matchCount ?? 8,
-      match_threshold: params.matchThreshold ?? 0.45,
-      filter_type: params.type ?? undefined,
-      filter_project_id: params.projectId ?? undefined,
-    });
+    // Search document_chunks in AI Database — embeddings live there now.
+    const { data: chunks, error: chunkError } = await ragClient.rpc(
+      "search_document_chunks",
+      {
+        query_embedding: JSON.stringify(embeddingVec),
+        filter_source_types: ["ai_memory"],
+        filter_project_id: params.projectId ?? undefined,
+        match_count: params.matchCount ?? 8,
+        match_threshold: params.matchThreshold ?? 0.45,
+      },
+    );
 
-    if (error) {
-      throw new Error(`AI memory search failed: ${error.message}`);
-    }
-    if (!data) return [];
+    if (chunkError) throw new Error(`AI memory search failed: ${chunkError.message}`);
+    if (!chunks || chunks.length === 0) return [];
 
-    const ids = (data as AiMemory[]).map((m) => m.id);
-    if (ids.length > 0) {
-      supabase
-        .rpc("touch_ai_memories", { memory_ids: ids })
+    // Hydrate full memory records from PM APP using document_id = memory.id
+    const memoryIds = (chunks as Array<{ document_id: string; similarity: number }>)
+      .map((c) => c.document_id);
+    const similarityMap = new Map(
+      (chunks as Array<{ document_id: string; similarity: number }>).map((c) => [
+        c.document_id,
+        c.similarity,
+      ]),
+    );
+
+    let q = supabase
+      .from("ai_memories")
+      .select("id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at")
+      .in("id", memoryIds);
+    if (params.type) q = q.eq("type", params.type);
+
+    const { data: memories, error: memError } = await q;
+    if (memError) throw new Error(`Memory hydration failed: ${memError.message}`);
+    if (!memories) return [];
+
+    const results = memories
+      .map((m) => ({ ...m, similarity: similarityMap.get(m.id) ?? 0 }))
+      .sort((a, b) => b.similarity - a.similarity) as AiMemory[];
+
+    if (results.length > 0) {
+      void supabase
+        .rpc("touch_ai_memories", { memory_ids: results.map((m) => m.id) })
         .then(({ error: touchError }) => {
-          if (touchError) {
-            console.error("[ai-memory-service] Failed to touch memories:", touchError);
-          }
+          if (touchError) console.error("[ai-memory-service] touch failed:", touchError);
         });
     }
 
-    return data as AiMemory[];
+    return results;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown memory search error";
     throw new Error(message);

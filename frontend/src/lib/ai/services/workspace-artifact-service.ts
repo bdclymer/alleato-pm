@@ -15,9 +15,36 @@
  *     belt-and-suspenders guard on top of RLS.
  */
 
-import { createServiceClient } from "@/lib/supabase/service";
 import { embed } from "@/lib/ai/services/ai-memory-service";
+import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
+
+// Write artifact embedding to AI Database document_chunks.
+// PM APP holds the record; AI DB holds the searchable vector.
+async function _syncArtifactChunkToAiDb(
+  artifactId: string,
+  embedText: string,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const vec = await embed(embedText);
+    const ragClient = createRagServiceClient();
+    await ragClient.from("document_chunks").upsert(
+      {
+        chunk_id: `workspace_artifact_${artifactId}`,
+        document_id: artifactId,
+        chunk_index: 0,
+        text: embedText,
+        source_type: "workspace_artifact",
+        embedding: JSON.stringify(vec),
+        metadata: metadata as Json,
+      },
+      { onConflict: "chunk_id" },
+    );
+  } catch (e) {
+    console.warn("[workspace-artifact-service] Failed to sync chunk to AI DB:", e instanceof Error ? e.message : e);
+  }
+}
 
 type WorkspaceArtifactInsert =
   Database["public"]["Tables"]["workspace_artifacts"]["Insert"];
@@ -138,6 +165,15 @@ export async function createArtifact(
     .single();
 
   if (error) return { error: `Artifact create failed: ${error.message}` };
+
+  const embedText = `${params.artifactType}: ${params.title}\n${JSON.stringify(params.content).substring(0, 4000)}`;
+  void _syncArtifactChunkToAiDb(data.id, embedText, {
+    user_id: params.userId,
+    artifact_type: params.artifactType,
+    project_id: params.projectId ?? null,
+    status: params.status ?? "draft",
+  });
+
   return { id: data.id };
 }
 
@@ -187,8 +223,6 @@ export async function updateArtifact(
   if (params.sessionId !== undefined) updates.session_id = params.sessionId;
   if (params.tags !== undefined) updates.tags = params.tags;
 
-  // No re-embedding on update — embedding column is blocked in PM APP (OOM fix).
-
   const { error: updateError } = await supabase
     .from("workspace_artifacts")
     .update(updates)
@@ -196,6 +230,19 @@ export async function updateArtifact(
     .eq("user_id", userId);
 
   if (updateError) return { error: `Artifact update failed: ${updateError.message}` };
+
+  // Re-sync embedding to AI DB if content or title changed.
+  if (params.content !== undefined || params.title !== undefined) {
+    const newTitle = (params.title ?? current.title) as string;
+    const newContent = (params.content ?? current.content) as Record<string, unknown>;
+    const embedText = `${current.artifact_type}: ${newTitle}\n${JSON.stringify(newContent).substring(0, 4000)}`;
+    void _syncArtifactChunkToAiDb(id, embedText, {
+      user_id: userId,
+      artifact_type: current.artifact_type,
+      status: params.status ?? null,
+    });
+  }
+
   return { id, version: newVersion };
 }
 
@@ -295,41 +342,45 @@ export async function searchArtifacts(params: SearchArtifactsParams): Promise<Wo
   try {
     embeddingVec = await embed(params.query);
   } catch (e) {
-    console.warn(
-      "[workspace-artifact-service] Embed failed for search — falling back to listArtifacts:",
-      e instanceof Error ? e.message : e,
-    );
-    return listArtifacts({
-      userId: params.userId,
-      projectId: params.projectId ?? undefined,
-      status: params.status,
-      limit: params.matchCount ?? 10,
-    });
+    console.warn("[workspace-artifact-service] Embed failed — falling back to list:", e instanceof Error ? e.message : e);
+    return listArtifacts({ userId: params.userId, projectId: params.projectId ?? undefined, status: params.status, limit: params.matchCount ?? 10 });
   }
 
-  const { data, error } = await supabase.rpc("search_workspace_artifacts", {
-    query_embedding: JSON.stringify(embeddingVec),
-    p_user_id: params.userId,
-    p_project_id: params.projectId ?? undefined,
-    p_status: params.status ?? undefined,
-    match_count: params.matchCount ?? 10,
-    match_threshold: params.matchThreshold ?? 0.45,
-  });
-
-  if (error) {
-    console.error(
-      "[workspace-artifact-service] searchArtifacts RPC error — falling back to list:",
-      error.message,
-    );
-    return listArtifacts({
-      userId: params.userId,
-      projectId: params.projectId ?? undefined,
-      status: params.status,
-      limit: params.matchCount ?? 10,
+  try {
+    const ragClient = createRagServiceClient();
+    const { data: chunks, error: chunkError } = await ragClient.rpc("search_document_chunks", {
+      query_embedding: JSON.stringify(embeddingVec),
+      filter_source_types: ["workspace_artifact"],
+      filter_project_id: params.projectId ?? undefined,
+      match_count: params.matchCount ?? 10,
+      match_threshold: params.matchThreshold ?? 0.45,
     });
-  }
 
-  return (data ?? []) as unknown as WorkspaceArtifact[];
+    if (chunkError) throw new Error(chunkError.message);
+    if (!chunks || chunks.length === 0) return [];
+
+    const artifactIds = (chunks as Array<{ document_id: string; similarity: number }>).map((c) => c.document_id);
+    const similarityMap = new Map(
+      (chunks as Array<{ document_id: string; similarity: number }>).map((c) => [c.document_id, c.similarity]),
+    );
+
+    let q = supabase
+      .from("workspace_artifacts")
+      .select(SELECT_COLS)
+      .in("id", artifactIds)
+      .eq("user_id", params.userId);
+    if (params.status) q = q.eq("status", params.status);
+
+    const { data: artifacts, error: artError } = await q;
+    if (artError) throw new Error(artError.message);
+
+    return ((artifacts ?? []) as WorkspaceArtifact[])
+      .map((a) => ({ ...a, similarity: similarityMap.get(a.id) ?? 0 }))
+      .sort((a, b) => ((b as WorkspaceArtifact & { similarity: number }).similarity) - ((a as WorkspaceArtifact & { similarity: number }).similarity));
+  } catch (e) {
+    console.error("[workspace-artifact-service] searchArtifacts failed — falling back to list:", e instanceof Error ? e.message : e);
+    return listArtifacts({ userId: params.userId, projectId: params.projectId ?? undefined, status: params.status, limit: params.matchCount ?? 10 });
+  }
 }
 
 // ---------------------------------------------------------------------------

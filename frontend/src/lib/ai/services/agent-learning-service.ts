@@ -6,6 +6,8 @@ import {
   getOpenAICompatibleClientConfig,
   getOpenAIModelId,
 } from "@/lib/ai/provider-config";
+import { createRagServiceClient } from "@/lib/supabase/service";
+import type { Json } from "@/types/database.types";
 
 type AgentLearningSource = "thumbs_down" | "admin_feedback" | "eval_failure";
 type AgentLearningStatus = "candidate" | "active" | "archived";
@@ -173,6 +175,32 @@ function extractKeywords(text: string, limit = 8) {
   return [...new Set(words)].slice(0, limit);
 }
 
+
+async function _syncLearningChunkToAiDb(
+  learningId: string,
+  embedText: string,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const vec = await embedLearning(embedText);
+    if (!vec) return;
+    const ragClient = createRagServiceClient();
+    await ragClient.from("document_chunks").upsert(
+      {
+        chunk_id: `agent_learning_${learningId}`,
+        document_id: learningId,
+        chunk_index: 0,
+        text: embedText,
+        source_type: "agent_learning",
+        embedding: JSON.stringify(vec),
+        metadata: metadata as Json,
+      },
+      { onConflict: "chunk_id" },
+    );
+  } catch (e) {
+    console.warn("[agent-learning-service] Failed to sync chunk to AI DB:", e instanceof Error ? e.message : e);
+  }
+}
 
 async function embedLearning(text: string) {
   try {
@@ -345,7 +373,16 @@ export async function upsertAgentLearning(input: UpsertAgentLearningInput) {
     return null;
   }
 
-  return data as AgentLearning;
+  const learning = data as AgentLearning;
+  const embedText = `${input.title}\n${input.symptoms}\n${input.preventionPrompt}`;
+  void _syncLearningChunkToAiDb(learning.id, embedText, {
+    source: input.source,
+    status: nextStatus,
+    project_id: input.projectId ?? null,
+    tool_id: input.toolId ?? null,
+  });
+
+  return learning;
 }
 
 export async function getRelevantAgentLearnings(params: {
@@ -358,16 +395,36 @@ export async function getRelevantAgentLearnings(params: {
   const queryEmbedding = await embedLearning(params.messageText.slice(0, 8000));
 
   if (queryEmbedding) {
-    const { data, error } = await supabase.rpc("search_agent_learnings", {
-      query_embedding: JSON.stringify(queryEmbedding),
-      match_count: matchCount,
-      match_threshold: 0.45,
-      filter_project_id: params.projectId ?? null,
-      filter_tool_id: null,
-    });
+    try {
+      const ragClient = createRagServiceClient();
+      const { data: chunks, error: chunksError } = await ragClient.rpc("search_document_chunks", {
+        query_embedding: JSON.stringify(queryEmbedding),
+        filter_source_types: ["agent_learning"],
+        filter_project_id: params.projectId ?? undefined,
+        match_count: matchCount,
+        match_threshold: 0.45,
+      });
 
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return data as AgentLearning[];
+      if (!chunksError && Array.isArray(chunks) && chunks.length > 0) {
+        const learningIds = (chunks as Array<{ document_id: string; similarity: number }>).map((c) => c.document_id);
+        const similarityMap = new Map(
+          (chunks as Array<{ document_id: string; similarity: number }>).map((c) => [c.document_id, c.similarity]),
+        );
+
+        const { data: learnings } = await supabase
+          .from(AGENT_LEARNINGS_TABLE)
+          .select("id, title, source, status, prevention_prompt, scope_tags, tool_id, project_id, occurrences, confidence")
+          .in("id", learningIds)
+          .eq("status", "active");
+
+        if (learnings && learnings.length > 0) {
+          return (learnings as AgentLearning[])
+            .map((l) => ({ ...l, similarity: similarityMap.get(l.id) ?? 0 }))
+            .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0));
+        }
+      }
+    } catch (e) {
+      console.warn("[agent-learning-service] AI DB search failed — falling back to keyword search:", e instanceof Error ? e.message : e);
     }
   }
 
