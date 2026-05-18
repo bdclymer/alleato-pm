@@ -138,7 +138,8 @@ function getApiErrorMessage(status: number, body: ApiErrorBody): string {
 }
 
 function reportApiFailure(url: string, status: number, body: ApiErrorBody): void {
-  if (typeof window === "undefined" || url.includes("/api/app-error-events")) {
+  // 401/403 are user-state, not application errors — do not pollute telemetry
+  if (typeof window === "undefined" || url.includes("/api/app-error-events") || status === 401 || status === 403) {
     return;
   }
 

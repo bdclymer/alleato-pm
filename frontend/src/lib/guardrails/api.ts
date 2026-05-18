@@ -146,7 +146,12 @@ export function withApiGuardrails<TParams = RouteParams>(
         },
       });
 
-      if (where !== "/api/app-error-events#POST") {
+      // 401/403 are user-state, not application errors — do not pollute telemetry
+      const authCodes = new Set(["AUTH_EXPIRED", "UNAUTHORIZED", "AUTH_FORBIDDEN", "FORBIDDEN"]);
+      const httpStatus = error.status ?? catalog.httpStatus;
+      const isAuthNoise = authCodes.has(error.code) || httpStatus === 401 || httpStatus === 403;
+
+      if (where !== "/api/app-error-events#POST" && !isAuthNoise) {
         const user = await resolveApiRouteUserForTelemetry();
         await recordAppErrorEvent({
           source: "api",
