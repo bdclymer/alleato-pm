@@ -78,6 +78,47 @@ def _standalone_tools_enabled() -> bool:
     return _env_flag("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED")
 
 
+def _deep_agents_memory_enabled() -> bool:
+    return _env_flag("DEEP_AGENTS_MEMORY_ENABLED")
+
+
+def _runtime_memory_middleware() -> list[Any]:
+    if not _deep_agents_memory_enabled():
+        return []
+    try:
+        from src.services.agents.memory import DbMemoryMiddleware
+
+        return [DbMemoryMiddleware()]
+    except Exception:
+        return []
+
+
+def _deep_agent_config(
+    user_id: str,
+    session_id: str | None,
+    *,
+    project_id: int | None = None,
+    scope: str = "project-intelligence",
+) -> dict[str, Any]:
+    thread_id = session_id or f"{scope}:{user_id}:{project_id or 'global'}"
+    configurable: dict[str, Any] = {
+        "thread_id": thread_id,
+        "user_id": user_id,
+    }
+    if project_id is not None:
+        configurable["project_id"] = project_id
+    return {"configurable": configurable}
+
+
+def _invoke_agent(agent: Any, payload: dict[str, Any], config: dict[str, Any]) -> Any:
+    try:
+        return agent.invoke(payload, config=config)
+    except TypeError as exc:
+        if "config" not in str(exc):
+            raise
+        return agent.invoke(payload)
+
+
 def _runtime_tools() -> list[Any]:
     if not _standalone_tools_enabled():
         return []
@@ -119,6 +160,7 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         "acumaticaToolsEnabled": _env_flag("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED"),
         "draftToolsEnabled": _env_flag("DEEP_AGENTS_DRAFT_TOOLS_ENABLED"),
         "subagentsEnabled": _env_flag("DEEP_AGENTS_SUBAGENTS_ENABLED"),
+        "memoryEnabled": _deep_agents_memory_enabled(),
     }
     runtime = os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", CONTRACT_SPIKE_MODE)
     groups = [
@@ -156,6 +198,14 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
     ]
     active_tools = list(deep_agents_runtime_tool_names())
     active_subagents = list(deep_agents_runtime_subagent_names())
+    memory_middleware = _runtime_memory_middleware()
+    known_missing = [
+        "FilesystemBackend",
+        "skills directory runtime loading",
+        "runtime AGENTS.md injection",
+    ]
+    if not memory_middleware:
+        known_missing.append("DbMemoryMiddleware")
     return {
         "status": "active"
         if flags["projectIntelligenceEnabled"] and runtime == DEEP_AGENT_RUNTIME_MODE
@@ -168,12 +218,12 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         "groups": groups,
         "subagentCount": len(active_subagents),
         "subagents": active_subagents,
-        "knownMissing": [
-            "FilesystemBackend",
-            "DbMemoryMiddleware",
-            "skills directory runtime loading",
-            "runtime AGENTS.md injection",
-        ],
+        "memory": {
+            "enabled": bool(memory_middleware),
+            "middleware": "DbMemoryMiddleware" if memory_middleware else None,
+            "databaseUrlConfigured": bool(os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")),
+        },
+        "knownMissing": known_missing,
     }
 
 
@@ -975,6 +1025,7 @@ def _run_deep_agents_runtime(
             """Return structured risk, overdue, and chase-list context for this project."""
             return project_risk_snapshot(_store_client(store), request.project_id)
 
+        memory_middleware = _runtime_memory_middleware()
         agent = create_agent(
             model=model,
             tools=[
@@ -994,9 +1045,12 @@ def _run_deep_agents_runtime(
                 "If sources are missing, say so plainly."
             ),
             subagents=_runtime_subagents(),
+            middleware=memory_middleware,
         )
-        result = agent.invoke(
-            {"messages": [{"role": "user", "content": _deep_agent_prompt(request, project, sources, evidence)}]}
+        result = _invoke_agent(
+            agent,
+            {"messages": [{"role": "user", "content": _deep_agent_prompt(request, project, sources, evidence)}]},
+            _deep_agent_config(request.user_id, request.session_id, project_id=request.project_id),
         )
         text = _extract_agent_text(result)
         if not text:
@@ -1006,7 +1060,10 @@ def _run_deep_agents_runtime(
             tool="deepagents_runtime",
             status="success",
             durationMs=max(0, int((time.perf_counter() - started) * 1000)),
-            detail="Deep Agents runtime produced a synthesis from checked source coverage.",
+            detail=(
+                "Deep Agents runtime produced a synthesis from checked source coverage"
+                + (" with durable memory." if memory_middleware else ".")
+            ),
         )
     except Exception as exc:
         return None, ToolTraceItem(
@@ -1045,6 +1102,7 @@ def _run_deep_agents_executive_runtime(
             """Return portfolio-level PM context across active projects."""
             return portfolio_overview(_store_client(store), phase="Current", max_projects=25)
 
+        memory_middleware = _runtime_memory_middleware()
         agent = create_agent(
             model=model,
             tools=[source_coverage, pm_portfolio_overview, *_runtime_tools()],
@@ -1058,9 +1116,12 @@ def _run_deep_agents_executive_runtime(
                 "task, project mutation, Teams post, RFI, commitment, or change event was completed."
             ),
             subagents=_runtime_subagents(),
+            middleware=memory_middleware,
         )
-        result = agent.invoke(
-            {"messages": [{"role": "user", "content": _deep_agent_executive_prompt(request, organization, sources, evidence)}]}
+        result = _invoke_agent(
+            agent,
+            {"messages": [{"role": "user", "content": _deep_agent_executive_prompt(request, organization, sources, evidence)}]},
+            _deep_agent_config(request.user_id, request.session_id, scope="executive-intelligence"),
         )
         text = _extract_agent_text(result)
         if not text:
@@ -1070,7 +1131,10 @@ def _run_deep_agents_executive_runtime(
             tool="deepagents_runtime",
             status="success",
             durationMs=max(0, int((time.perf_counter() - started) * 1000)),
-            detail="Deep Agents runtime produced an executive synthesis from checked source coverage.",
+            detail=(
+                "Deep Agents runtime produced an executive synthesis from checked source coverage"
+                + (" with durable memory." if memory_middleware else ".")
+            ),
         )
     except Exception as exc:
         return None, ToolTraceItem(

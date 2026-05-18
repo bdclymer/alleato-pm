@@ -350,6 +350,8 @@ def test_deep_agents_runtime_inventory_reports_effective_surface(monkeypatch):
     monkeypatch.setenv("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED", "true")
     monkeypatch.setenv("DEEP_AGENTS_DRAFT_TOOLS_ENABLED", "true")
     monkeypatch.setenv("DEEP_AGENTS_SUBAGENTS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_MEMORY_ENABLED", "true")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example")
 
     inventory = deep_agents_runtime_inventory()
 
@@ -359,7 +361,10 @@ def test_deep_agents_runtime_inventory_reports_effective_surface(monkeypatch):
     assert "query_db" in inventory["tools"]
     assert "draft_rfi" in inventory["tools"]
     assert "financial-analyst" in inventory["subagents"]
-    assert "DbMemoryMiddleware" in inventory["knownMissing"]
+    assert inventory["memory"]["enabled"] is True
+    assert inventory["memory"]["middleware"] == "DbMemoryMiddleware"
+    assert inventory["memory"]["databaseUrlConfigured"] is True
+    assert "DbMemoryMiddleware" not in inventory["knownMissing"]
 
 
 def test_deep_agents_runtime_invokes_installed_graph_with_bindable_model(monkeypatch):
@@ -576,6 +581,37 @@ def test_executive_deep_agents_runtime_can_synthesize_business_packet():
     assert response.answer == "Executive synthesis from Deep Agents."
     assert response.tool_trace[-1].tool == "deepagents_runtime"
     assert response.tool_trace[-1].status == "success"
+
+
+def test_deep_agents_runtime_attaches_memory_middleware(monkeypatch):
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("DEEP_AGENTS_MEMORY_ENABLED", "true")
+
+    class _Agent:
+        def invoke(self, payload, config=None):
+            captured["payload"] = payload
+            captured["config"] = config
+            return {"messages": [{"role": "assistant", "content": "Runtime synthesis with memory."}]}
+
+    def create_agent(**kwargs):
+        captured["kwargs"] = kwargs
+        return _Agent()
+
+    response = build_project_status_contract_spike(
+        _request(),
+        _Store({"id": 43, "name": "Westfield Collective"}, client=_FakeSupabase({"intelligence_targets": []})),
+        runtime="deep_agents",
+        create_agent=create_agent,
+    )
+
+    kwargs = captured["kwargs"]
+    assert response.mode == "deep_agents"
+    assert kwargs["middleware"]
+    assert kwargs["middleware"][0].__class__.__name__ == "DbMemoryMiddleware"
+    assert captured["config"]["configurable"]["thread_id"] == "session-1"
+    assert captured["config"]["configurable"]["user_id"] == "user-1"
+    assert captured["config"]["configurable"]["project_id"] == 43
+    assert "durable memory" in response.tool_trace[-1].detail
 
 
 def test_contract_spike_fails_loudly_when_project_is_missing():

@@ -337,6 +337,8 @@ services:
         value: gpt-5.4-mini
       - key: CONTENT_BUILDER_IMAGE_MODEL
         value: gemini-2.5-flash-image
+      - key: DEEP_AGENTS_MEMORY_ENABLED
+        value: true
       - key: DEEP_AGENTS_STANDALONE_TOOLS_ENABLED
         value: true
       - key: DEEP_AGENTS_SQL_TOOLS_ENABLED

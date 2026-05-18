@@ -74,9 +74,39 @@ def _research_backend() -> Any:
         return None
 
 
+def _deep_agents_memory_enabled() -> bool:
+    return os.getenv("DEEP_AGENTS_MEMORY_ENABLED", "").strip().lower() == "true"
+
+
+def _memory_middleware() -> list[Any]:
+    if not _deep_agents_memory_enabled():
+        return []
+    try:
+        from src.services.agents.memory import DbMemoryMiddleware
+
+        return [DbMemoryMiddleware()]
+    except Exception:
+        return []
+
+
 def _agent_config(request: ResearchRequest) -> dict[str, Any]:
     thread_id = request.session_id or f"research:{request.user_id}"
-    return {"configurable": {"thread_id": thread_id}}
+    configurable: dict[str, Any] = {
+        "thread_id": thread_id,
+        "user_id": request.user_id,
+    }
+    if request.project_id is not None:
+        configurable["project_id"] = request.project_id
+    return {"configurable": configurable}
+
+
+def _invoke_agent(agent: Any, payload: dict[str, Any], config: dict[str, Any]) -> Any:
+    try:
+        return agent.invoke(payload, config=config)
+    except TypeError as exc:
+        if "config" not in str(exc):
+            raise
+        return agent.invoke(payload)
 
 
 def _research_prompt(request: ResearchRequest) -> str:
@@ -185,10 +215,15 @@ def run_research_agent(
         if skill_roots:
             kwargs["skills"] = skill_roots
 
+        middleware = _memory_middleware()
+        if middleware:
+            kwargs["middleware"] = middleware
+
         agent = create_agent(**kwargs)
-        result = agent.invoke(
+        result = _invoke_agent(
+            agent,
             {"messages": [{"role": "user", "content": _research_prompt(request)}]},
-            config=_agent_config(request),
+            _agent_config(request),
         )
         answer = _extract_agent_text(result)
         if not answer:
@@ -204,7 +239,10 @@ def run_research_agent(
                     tool="deepagents_research_runtime",
                     status="success",
                     durationMs=max(0, int((time.perf_counter() - started) * 1000)),
-                    detail="Deep Agents research runtime produced an answer.",
+                    detail=(
+                        "Deep Agents research runtime produced an answer"
+                        + (" with durable memory." if middleware else ".")
+                    ),
                 )
             ],
             skillsLoaded=loaded_skills,

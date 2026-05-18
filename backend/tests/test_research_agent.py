@@ -79,9 +79,36 @@ def test_run_research_agent_uses_deep_agents_tools_subagents_and_skills():
     assert any(getattr(tool, "name", "") == "web_search" for tool in captured["tools"])
     assert any(subagent["name"] == "web_researcher" for subagent in captured["subagents"])
     assert captured["config"]["configurable"]["thread_id"] == "session-1"
+    assert captured["config"]["configurable"]["user_id"] == "user-1"
+    assert captured["config"]["configurable"]["project_id"] == 983
     prompt = captured["payload"]["messages"][0]["content"]
     assert "Project ID supplied by caller: 983" in prompt
     assert "research-only" in prompt
+
+
+def test_run_research_agent_attaches_memory_middleware_when_enabled(monkeypatch):
+    captured: dict[str, Any] = {}
+
+    monkeypatch.setenv("DEEP_AGENTS_MEMORY_ENABLED", "true")
+
+    def fake_create_agent(**kwargs):
+        captured.update(kwargs)
+        return _FakeAgent(captured)
+
+    response = run_research_agent(
+        ResearchRequest(
+            userId="user-1",
+            sessionId="session-1",
+            projectId=983,
+            question="Research procurement risks",
+        ),
+        create_agent=fake_create_agent,
+    )
+
+    assert response.mode == "deep_agents"
+    assert captured["middleware"]
+    assert captured["middleware"][0].__class__.__name__ == "DbMemoryMiddleware"
+    assert "durable memory" in response.tool_trace[0].detail
 
 
 def test_run_research_agent_fails_loudly_on_empty_runtime_response():
