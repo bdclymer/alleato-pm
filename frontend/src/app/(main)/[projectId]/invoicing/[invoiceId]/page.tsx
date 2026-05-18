@@ -69,7 +69,7 @@ import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { apiFetch, apiFetchWithTimeout } from "@/lib/api-client";
 import { formatPercent } from "@/lib/format";
-import { InvoiceAttachments } from "@/components/domain/invoices/InvoiceAttachments";
+import { EntityAttachments } from "@/components/ds";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1363,8 +1363,12 @@ export default function InvoiceDetailPage() {
             </Card>
           )}
 
-          {/* Payment Confirmation & Attachments */}
-          <InvoiceAttachments projectId={projectId} invoiceId={invoiceId} />
+          {/* Attachments */}
+          <EntityAttachments
+            entityType="invoice"
+            entityId={String(invoiceId)}
+            projectId={projectId}
+          />
         </div>
       </PageShell>
 

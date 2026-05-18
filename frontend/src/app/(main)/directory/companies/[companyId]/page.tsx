@@ -20,7 +20,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
 import { PageShell } from "@/components/layout";
-import { ErrorState, EmptyState as DsEmptyState, SectionHeader as DsSectionHeader } from "@/components/ds";
+import { EntityAttachments, ErrorState, EmptyState as DsEmptyState, SectionHeader as DsSectionHeader } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -961,6 +961,17 @@ export default function CompanyDetailsPage() {
                         ? "Review the invoice list before changing project access."
                         : "Add contacts, projects, or meetings to build out the company record."}
                   </p>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-border bg-background p-5">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Attachments</p>
+                <div className="mt-4">
+                  <EntityAttachments
+                    entityType="company"
+                    entityId={companyId}
+                    projectId="0"
+                  />
                 </div>
               </section>
 

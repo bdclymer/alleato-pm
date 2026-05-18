@@ -195,7 +195,6 @@ export const AttachmentsTab = memo(function AttachmentsTab({
           <DocumentPicker
             entityType={commitmentEntityType}
             entityId={commitmentId}
-            triggerLabel="Link Document"
           />
         </div>
         <LinkedDocumentsList

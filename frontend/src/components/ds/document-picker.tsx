@@ -1,28 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, Link2, Loader2, Plus } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { apiFetch } from '@/lib/api-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Download, FileText, Loader2, Trash2, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalTitle,
-  ModalTrigger,
-} from '@/components/ui/unified-modal';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { apiFetch } from '@/lib/api-client';
+import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,68 +26,311 @@ export type DocumentPickerEntityType =
   | 'drawing'
   | 'company';
 
-interface TaxonomyType {
-  type_key: string;
-  display_name: string;
-  category: string;
-}
-
-interface AttachedDocument {
+interface LinkedDoc {
   document_metadata_id: string;
   document_type: string | null;
   attached_at: string;
-  title?: string;
+  title: string | null;
+  file_name: string | null;
+  file_path: string | null;
+  source_size: number | null;
+  download_url: string | null;
 }
 
 export interface DocumentPickerProps {
   entityType: DocumentPickerEntityType;
   entityId: string;
-  /** Label shown on the trigger button. Defaults to "Link Document". */
-  triggerLabel?: string;
-  /** Called after a document is successfully attached. */
   onAttached?: (documentMetadataId: string) => void;
 }
 
-// ─── Linked documents list ────────────────────────────────────────────────────
-
-interface LinkedDocumentsListProps {
+export interface LinkedDocumentsListProps {
   entityType: DocumentPickerEntityType;
   entityId: string;
 }
 
-export function LinkedDocumentsList({ entityType, entityId }: LinkedDocumentsListProps) {
-  const { data: docs = [], isLoading } = useQuery<AttachedDocument[]>({
-    queryKey: ['linked-docs', entityType, entityId],
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatBytes(bytes: number | null): string {
+  if (!bytes || bytes <= 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+const ACCEPTED_TYPES = [
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv',
+  '.png', '.jpg', '.jpeg', '.gif', '.webp',
+  '.dwg', '.dxf', '.zip', '.txt',
+].join(',');
+
+const MAX_SIZE_BYTES = 50 * 1024 * 1024;
+
+// ─── EntityAttachments ────────────────────────────────────────────────────────
+
+export interface EntityAttachmentsProps {
+  entityType: DocumentPickerEntityType;
+  entityId: string;
+  projectId: string | number;
+  defaultDocumentType?: string;
+  className?: string;
+}
+
+export function EntityAttachments({
+  entityType,
+  entityId,
+  projectId,
+  defaultDocumentType,
+  className,
+}: EntityAttachmentsProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState<string[]>([]);
+  const fileInputId = useRef(`entity-attach-${entityType}-${entityId}`);
+  const queryClient = useQueryClient();
+
+  const queryKey = useMemo(
+    () => ['entity-attachments', entityType, entityId] as const,
+    [entityType, entityId]
+  );
+
+  const { data: docs = [], isLoading } = useQuery<LinkedDoc[]>({
+    queryKey,
     queryFn: () =>
-      apiFetch<AttachedDocument[]>(
+      apiFetch<LinkedDoc[]>(
+        `/api/document-picker/linked?entityType=${entityType}&entityId=${encodeURIComponent(entityId)}`
+      ),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (documentMetadataId: string) =>
+      apiFetch(
+        `/api/document-picker/linked?entityType=${entityType}&entityId=${encodeURIComponent(entityId)}&documentMetadataId=${encodeURIComponent(documentMetadataId)}`,
+        { method: 'DELETE' }
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast.success('Document removed');
+    },
+    onError: () => toast.error('Failed to remove document'),
+  });
+
+  const uploadFile = useCallback(
+    async (file: File) => {
+      if (file.size > MAX_SIZE_BYTES) {
+        toast.error(`${file.name} exceeds the 50 MB limit`);
+        return;
+      }
+      setUploading((prev) => [...prev, file.name]);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('entityType', entityType);
+        fd.append('entityId', entityId);
+        fd.append('projectId', String(projectId));
+        if (defaultDocumentType) fd.append('documentType', defaultDocumentType);
+        await apiFetch('/api/document-picker/upload', { method: 'POST', body: fd });
+        void queryClient.invalidateQueries({ queryKey });
+        toast.success(`${file.name} uploaded`);
+      } catch {
+        toast.error(`Failed to upload ${file.name}`);
+      } finally {
+        setUploading((prev) => prev.filter((n) => n !== file.name));
+      }
+    },
+    [entityType, entityId, projectId, defaultDocumentType, queryClient, queryKey]
+  );
+
+  const handleFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files) return;
+      Array.from(files).forEach((f) => void uploadFile(f));
+    },
+    [uploadFile]
+  );
+
+  const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const onDragLeave = () => setIsDragging(false);
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const isUploadingAny = uploading.length > 0;
+
+  return (
+    <div className={cn('space-y-4', className)}>
+      {/* Drop zone — using <label> so clicking opens the file picker without JS */}
+      <label
+        htmlFor={fileInputId.current}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        className={cn(
+          'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors',
+          isDragging
+            ? 'border-primary bg-primary/5'
+            : 'border-border hover:border-primary/40 hover:bg-muted/30',
+          isUploadingAny && 'pointer-events-none opacity-60'
+        )}
+      >
+        <Input
+          id={fileInputId.current}
+          type="file"
+          multiple
+          accept={ACCEPTED_TYPES}
+          className="sr-only"
+          onChange={(e) => handleFiles(e.target.files)}
+          disabled={isUploadingAny}
+        />
+        {isUploadingAny ? (
+          <>
+            <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              Uploading {uploading.join(', ')}…
+            </p>
+          </>
+        ) : (
+          <>
+            <Upload className="h-7 w-7 text-muted-foreground" />
+            <p className="text-sm font-medium">
+              {isDragging ? 'Drop files here' : 'Drag & drop or click to upload'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              PDF, Word, Excel, images, DWG — max 50 MB
+            </p>
+          </>
+        )}
+      </label>
+
+      {/* Document list */}
+      {isLoading ? (
+        <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading…
+        </div>
+      ) : docs.length === 0 && !isUploadingAny ? (
+        <p className="text-sm text-muted-foreground">No documents attached yet.</p>
+      ) : (
+        <ul className="divide-y divide-border/50">
+          {docs.map((doc) => {
+            const name = doc.title ?? doc.file_name ?? doc.document_metadata_id;
+            const isRemoving =
+              removeMutation.isPending &&
+              removeMutation.variables === doc.document_metadata_id;
+            return (
+              <li
+                key={doc.document_metadata_id}
+                className={cn(
+                  'flex items-center gap-3 py-2.5 first:pt-0',
+                  isRemoving && 'opacity-50'
+                )}
+              >
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {[
+                      doc.source_size ? formatBytes(doc.source_size) : null,
+                      doc.document_type ?? null,
+                      doc.attached_at ? formatDate(doc.attached_at) : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {doc.download_url && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => window.open(doc.download_url ?? '', '_blank')}
+                      title="Download"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    disabled={isRemoving}
+                    onClick={() => removeMutation.mutate(doc.document_metadata_id)}
+                    title="Remove"
+                  >
+                    {isRemoving ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ─── LinkedDocumentsList (backwards compat) ───────────────────────────────────
+
+export function LinkedDocumentsList({ entityType, entityId }: LinkedDocumentsListProps) {
+  const queryKey = useMemo(
+    () => ['entity-attachments', entityType, entityId] as const,
+    [entityType, entityId]
+  );
+
+  const { data: docs = [], isLoading } = useQuery<LinkedDoc[]>({
+    queryKey,
+    queryFn: () =>
+      apiFetch<LinkedDoc[]>(
         `/api/document-picker/linked?entityType=${entityType}&entityId=${encodeURIComponent(entityId)}`
       ),
   });
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-muted-foreground py-2">
+      <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        <span className="text-sm">Loading linked documents…</span>
+        Loading linked documents…
       </div>
     );
   }
 
-  if (!docs.length) {
-    return null;
-  }
+  if (!docs.length) return null;
 
   return (
-    <ul className="space-y-1 mt-2">
+    <ul className="mt-2 space-y-1">
       {docs.map((doc) => (
-        <li
-          key={doc.document_metadata_id}
-          className="flex items-center gap-2 text-sm text-foreground"
-        >
+        <li key={doc.document_metadata_id} className="flex items-center gap-2 text-sm">
           <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">{doc.title ?? doc.document_metadata_id}</span>
+          <span className="truncate">
+            {doc.title ?? doc.file_name ?? doc.document_metadata_id}
+          </span>
           {doc.document_type && (
-            <span className="text-xs text-muted-foreground shrink-0">({doc.document_type})</span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              ({doc.document_type})
+            </span>
+          )}
+          {doc.download_url && (
+            <a
+              href={doc.download_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto shrink-0 text-xs text-primary hover:underline"
+            >
+              Download
+            </a>
           )}
         </li>
       ))}
@@ -108,158 +338,73 @@ export function LinkedDocumentsList({ entityType, entityId }: LinkedDocumentsLis
   );
 }
 
-// ─── DocumentPicker (dialog trigger) ─────────────────────────────────────────
+// ─── DocumentPicker (kept for backwards compat) ───────────────────────────────
 
-export function DocumentPicker({
-  entityType,
-  entityId,
-  triggerLabel = 'Link Document',
-  onAttached,
-}: DocumentPickerProps) {
+export function DocumentPicker({ entityType, entityId, onAttached }: DocumentPickerProps) {
   const [open, setOpen] = useState(false);
-  const [selectedDocumentId, setSelectedDocumentId] = useState('');
-  const [selectedDocumentType, setSelectedDocumentType] = useState('');
+  const [docId, setDocId] = useState('');
   const queryClient = useQueryClient();
 
-  // Fetch taxonomy filtered to this entity type
-  const { data: types = [], isLoading: typesLoading } = useQuery<TaxonomyType[]>({
-    queryKey: ['doc-picker-types', entityType],
-    queryFn: () =>
-      apiFetch<TaxonomyType[]>(`/api/document-picker/types?for=${entityType}`),
-    enabled: open,
-  });
-
-  // Group taxonomy by category for the select
-  const grouped = types.reduce<Record<string, TaxonomyType[]>>((acc, t) => {
-    acc[t.category] = acc[t.category] ?? [];
-    acc[t.category].push(t);
-    return acc;
-  }, {});
+  const queryKey = useMemo(
+    () => ['entity-attachments', entityType, entityId] as const,
+    [entityType, entityId]
+  );
 
   const attachMutation = useMutation({
-    mutationFn: (vars: { documentMetadataId: string; documentType: string }) =>
+    mutationFn: (documentMetadataId: string) =>
       apiFetch('/api/document-picker/attach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          entityType,
-          entityId,
-          documentMetadataId: vars.documentMetadataId,
-          documentType: vars.documentType || null,
-        }),
+        body: JSON.stringify({ entityType, entityId, documentMetadataId }),
       }),
-    onSuccess: (_data, vars) => {
-      void queryClient.invalidateQueries({ queryKey: ['linked-docs', entityType, entityId] });
-      onAttached?.(vars.documentMetadataId);
+    onSuccess: (_data, documentMetadataId) => {
+      void queryClient.invalidateQueries({ queryKey });
+      onAttached?.(documentMetadataId);
       setOpen(false);
-      setSelectedDocumentId('');
-      setSelectedDocumentType('');
+      setDocId('');
+      toast.success('Document linked');
     },
+    onError: () => toast.error('Failed to link document'),
   });
 
-  const handleAttach = () => {
-    if (!selectedDocumentId) return;
-    attachMutation.mutate({
-      documentMetadataId: selectedDocumentId,
-      documentType: selectedDocumentType,
-    });
-  };
+  if (!open) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-1.5">
+        <X className="h-3.5 w-3.5 rotate-45" />
+        Link existing
+      </Button>
+    );
+  }
 
   return (
-    <Modal open={open} onOpenChange={setOpen}>
-      <ModalTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Link2 className="h-3.5 w-3.5" />
-          {triggerLabel}
-        </Button>
-      </ModalTrigger>
-      <ModalContent size="md">
-        <ModalHeader>
-          <ModalTitle>Link a Document</ModalTitle>
-        </ModalHeader>
-
-        <div className="space-y-4 pt-2">
-          {/* Document metadata ID input — in a full implementation this would be
-              a searchable combobox over document_metadata. For now: text input
-              with paste-in ID, consistent with Phase 5 scope. */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">
-              Document ID
-            </label>
-            <Input
-              value={selectedDocumentId}
-              onChange={(e) => setSelectedDocumentId(e.target.value)}
-              placeholder="Paste document_metadata ID…"
-            />
-          </div>
-
-          {/* Document type select */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">
-              Document Type
-            </label>
-            {typesLoading ? (
-              <div className="flex items-center gap-2 text-muted-foreground text-sm py-1">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Loading types…
-              </div>
-            ) : types.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No types defined for this entity.</p>
-            ) : (
-              <Select
-                value={selectedDocumentType}
-                onValueChange={setSelectedDocumentType}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select type (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(grouped).map(([category, items]) => (
-                    <SelectGroup key={category}>
-                      <SelectLabel className="capitalize">{category}</SelectLabel>
-                      {items.map((t) => (
-                        <SelectItem key={t.type_key} value={t.type_key}>
-                          {t.display_name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setOpen(false)}
-              disabled={attachMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleAttach}
-              disabled={!selectedDocumentId || attachMutation.isPending}
-              className="gap-1.5"
-            >
-              {attachMutation.isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Plus className="h-3.5 w-3.5" />
-              )}
-              Link
-            </Button>
-          </div>
-
-          {attachMutation.isError && (
-            <p className="text-sm text-destructive">
-              Failed to link document. Please try again.
-            </p>
-          )}
-        </div>
-      </ModalContent>
-    </Modal>
+    <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+      <Input
+        className="flex-1 border-0 bg-transparent p-0 text-sm shadow-none outline-none focus-visible:ring-0 placeholder:text-muted-foreground"
+        placeholder="Paste document_metadata ID…"
+        value={docId}
+        onChange={(e) => setDocId(e.target.value)}
+      />
+      <Button
+        size="sm"
+        disabled={!docId || attachMutation.isPending}
+        onClick={() => attachMutation.mutate(docId)}
+      >
+        {attachMutation.isPending ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          'Link'
+        )}
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          setOpen(false);
+          setDocId('');
+        }}
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
   );
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Copy, MoreHorizontal, Send, Trash2 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
-import { AttachmentUploadPanel, StatusBadge, EmptyState } from "@/components/ds";
+import { EntityAttachments, StatusBadge, EmptyState } from "@/components/ds";
 import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,7 +35,6 @@ import {
   useDeleteSubmittal,
   useDuplicateSubmittal,
   useRespondToWorkflowStep,
-  useUploadSubmittalAttachment,
   useWorkflowTemplates,
   type SubmittalDetail,
   type WorkflowTemplateStep,
@@ -336,10 +335,8 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   const supabase = createClient();
   const deleteMutation = useDeleteSubmittal(projectId);
   const duplicateMutation = useDuplicateSubmittal(projectId);
-  const uploadAttachmentMutation = useUploadSubmittalAttachment(projectId, submittal.id);
   const [respondingStep, setRespondingStep] = React.useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
-  const [attachments, setAttachments] = React.useState(submittal.submittal_attachments ?? []);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
 
   const { users } = useAuthUsers(String(projectId));
@@ -369,12 +366,6 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   async function handleDuplicate() {
     const newRecord = await duplicateMutation.mutateAsync(submittal.id);
     router.push(`/${projectId}/submittals/${newRecord.id}`);
-  }
-
-  /** Uploads one attachment and prepends it to the local attachment list on success. */
-  async function handleUploadAttachment(file: File) {
-    const uploadedAttachment = await uploadAttachmentMutation.mutateAsync(file);
-    setAttachments((current) => [uploadedAttachment, ...current]);
   }
 
   const actions = (
@@ -475,22 +466,10 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                   </div>
                 )}
 
-                <AttachmentUploadPanel
-                  title="Attachments"
-                  description=""
-                  headerVariant="muted"
-                  files={attachments.map((attachment) => ({
-                    id: attachment.id,
-                    name: attachment.file_name,
-                    sizeBytes: attachment.file_size,
-                    uploadedAtLabel: attachment.created_at
-                      ? formatDate(attachment.created_at)
-                      : null,
-                    downloadUrl: attachment.file_url,
-                  }))}
-                  onUploadFile={handleUploadAttachment}
-                  emptyTitle="No attachments"
-                  emptyDescription="Attach files to this submittal to share with your team."
+                <EntityAttachments
+                  entityType="submittal"
+                  entityId={String(submittal.id)}
+                  projectId={projectId}
                 />
               </div>
 

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Check, Edit, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -22,8 +22,8 @@ import {
   InlineTableHeaderRow,
   InlineTableRow,
   StatusBadge,
-  EmptyState,
   ErrorState,
+  EntityAttachments,
 } from "@/components/ds";
 import { useMasterCostCodes, useCostCodeTypes } from "@/hooks/use-project-cost-codes";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
@@ -165,7 +165,6 @@ export default function CommitmentCODetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams()!;
   const params = useParams()!;
-  const attachmentInputRef = useRef<HTMLInputElement>(null);
   const projectId = params.projectId as string;
   const commitmentCoId = params.commitmentCoId as string;
 
@@ -263,17 +262,6 @@ export default function CommitmentCODetailPage() {
 
   const grandTotal = lineItemSubtotal + markupTotal;
 
-  // Attachments
-  interface Attachment {
-    id: string;
-    fileName: string;
-    fileSize: number;
-    mimeType: string;
-    uploadedAt: string;
-  }
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [attachmentsLoading, setAttachmentsLoading] = useState(true);
-  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
 
   // Fetch CO data
   const fetchCo = useCallback(async () => {
@@ -465,71 +453,6 @@ export default function CommitmentCODetailPage() {
     </Select>
   );
 
-  // Fetch attachments
-  const fetchAttachmentsFn = useCallback(async () => {
-    setAttachmentsLoading(true);
-    setAttachmentsError(null);
-    try {
-      const json = await apiFetch<{ data?: Attachment[] }>(
-        `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`,
-      );
-      setAttachments(json.data ?? []);
-    } catch (err) {
-      console.error("Failed to fetch attachments:", err);
-      setAttachmentsError(
-        err instanceof Error ? err.message : "Failed to fetch attachments",
-      );
-    } finally {
-      setAttachmentsLoading(false);
-    }
-  }, [projectId, commitmentCoId]);
-
-  useEffect(() => {
-    if (co) fetchAttachmentsFn();
-  }, [co, fetchAttachmentsFn]);
-
-  const handleFileUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const formData = new FormData();
-      formData.append("file", file);
-      try {
-        await apiFetch(
-          `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`,
-          { method: "POST", body: formData },
-        );
-        toast.success(`${file.name} uploaded`);
-        fetchAttachmentsFn();
-      } catch {
-        toast.error("Failed to upload file");
-      }
-      e.target.value = "";
-    },
-    [projectId, commitmentCoId, fetchAttachmentsFn],
-  );
-
-  const handleDeleteAttachment = useCallback(
-    async (attachmentId: string) => {
-      const ok = await confirm({
-        description: "Delete this attachment?",
-        variant: "destructive",
-        confirmLabel: "Delete",
-      });
-      if (!ok) return;
-      try {
-        await apiFetch(
-          `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments/${attachmentId}`,
-          { method: "DELETE" },
-        );
-        toast.success("Attachment deleted");
-        setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
-      } catch {
-        toast.error("Failed to delete attachment");
-      }
-    },
-    [projectId, commitmentCoId, confirm],
-  );
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") setIsEditing(true);
@@ -1429,69 +1352,11 @@ export default function CommitmentCODetailPage() {
           {/* Attachments */}
           <section className="space-y-4">
             <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
-            <div className="mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => attachmentInputRef.current?.click()}
-              >
-                Upload File
-              </Button>
-              <Input
-                ref={attachmentInputRef}
-                id="cco-attachment-upload"
-                type="file"
-                className="hidden"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-                onChange={handleFileUpload}
-                aria-label="Upload attachment"
-              />
-            </div>
-            {attachmentsLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <Skeleton className="h-4 w-4" />
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-4 w-20 ml-auto" />
-                  </div>
-                ))}
-              </div>
-            ) : attachmentsError ? (
-              <ErrorState error={attachmentsError} onRetry={fetchAttachmentsFn} />
-            ) : attachments.length === 0 ? (
-              <EmptyState
-                title="No attachments yet"
-                description="Upload files to attach them to this change order."
-              />
-            ) : (
-              <div className="space-y-2">
-                {attachments.map((att) => (
-                  <div
-                    key={att.id}
-                    className="flex items-center justify-between rounded-md border border-border px-3 py-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{att.fileName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(att.fileSize / 1024).toFixed(0)} KB
-                        {att.uploadedAt &&
-                          ` — ${new Date(att.uploadedAt).toLocaleDateString()}`}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive"
-                      aria-label={`Delete attachment ${att.fileName}`}
-                      onClick={() => handleDeleteAttachment(att.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <EntityAttachments
+              entityType="change_order"
+              entityId={commitmentCoId}
+              projectId={projectId}
+            />
           </section>
 
           {/* Rejection reason */}

@@ -128,7 +128,6 @@ export default function ChangeEventDetailPage() {
   const {
     changeEvent,
     lineItems,
-    attachments,
     historyEntries,
     relatedItems,
     rfqCount,
@@ -233,7 +232,7 @@ export default function ChangeEventDetailPage() {
   const [showPrimePCODialog, setShowPrimePCODialog] = useState(false);
   const [showBudgetChangeDialog, setShowBudgetChangeDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+
   const [lineageCount, setLineageCount] = useState(0);
   const [lineageRefreshSignal, setLineageRefreshSignal] = useState(0);
   const [existingPrimePCOs, setExistingPrimePCOs] = useState<Array<{id: string; pco_number: string; title: string; status: string}>>([]);
@@ -341,39 +340,6 @@ export default function ChangeEventDetailPage() {
     };
   }, [refreshLineage]);
 
-  const handleUploadAttachment = useCallback(async (file: File) => {
-    setIsUploadingAttachment(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      await apiFetch(
-        `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
-        { method: "POST", body: formData },
-      );
-      toast.success("Attachment uploaded");
-      actions.refetch();
-    } catch (error) {
-      toast.error("Failed to upload attachment");
-    } finally {
-      setIsUploadingAttachment(false);
-    }
-  }, [projectId, changeEventId, actions]);
-
-  const handleDeleteAttachment = useCallback(async (attachmentId: string) => {
-    try {
-      await apiFetch(
-        `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
-        {
-          method: "DELETE",
-          body: JSON.stringify({ attachmentIds: [attachmentId] }),
-        },
-      );
-      toast.success("Attachment deleted");
-      actions.refetch();
-    } catch (error) {
-      toast.error("Failed to delete attachment");
-    }
-  }, [projectId, changeEventId, actions]);
 
   useProjectTitle(
     changeEvent
@@ -788,11 +754,7 @@ export default function ChangeEventDetailPage() {
           <TabsContent value="general">
             <ChangeEventGeneralInfoPanel
               changeEvent={changeEvent}
-              attachments={attachments}
               projectId={projectId}
-              onUploadAttachment={handleUploadAttachment}
-              onDeleteAttachment={handleDeleteAttachment}
-              isUploadingAttachment={isUploadingAttachment}
             />
             <div className="mt-10">
               <ChangeEventLineItemsTable

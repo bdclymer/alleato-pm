@@ -5,7 +5,6 @@ import {
   GripVertical,
   Lock,
   MoreVertical,
-  Paperclip,
   Plus,
   Rows3,
   Trash2,
@@ -36,7 +35,7 @@ import {
   SectionRuleHeading,
   SummaryValueRow,
 } from "@/components/layout";
-import { EmptyState } from "@/components/ds";
+import { EmptyState, EntityAttachments } from "@/components/ds";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -47,9 +46,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoneyField } from "@/components/forms/MoneyField";
-import { FileUploadField } from "@/components/forms/FileUploadField";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import {
   InlineTable,
   InlineTableBody,
@@ -64,7 +62,6 @@ import { formatPercent } from "@/lib/format";
 import type {
   BudgetCode,
   Contract,
-  ContractAttachment,
   ContractLineItem,
   PrimeContractCO,
 } from "../types";
@@ -72,11 +69,7 @@ import type {
 interface PrimeContractOverviewTabProps {
   contract: Contract;
   changeOrders: PrimeContractCO[];
-  attachments: ContractAttachment[];
-  attachmentsLoading: boolean;
-  isUploadingAttachment: boolean;
-  handleUploadAttachment: (file: File) => Promise<void>;
-  handleDeleteAttachment: (attachmentId: string) => Promise<void>;
+  projectId: string;
   formatDate: (value: string | null | undefined) => string;
   getTextValue: (
     value: string | null | undefined,
@@ -139,11 +132,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   const {
     contract,
     changeOrders,
-    attachments,
-    attachmentsLoading,
-    isUploadingAttachment,
-    handleUploadAttachment,
-    handleDeleteAttachment,
+    projectId,
     formatDate,
     getTextValue,
     inclusionsList,
@@ -289,13 +278,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
   const renderDateOrDash = (value: string | null | undefined) =>
     value ? formatDate(value) : <span className="text-muted-foreground/40">—</span>;
-  const handleAttachmentFilesSelected = (files: File[]) => {
-    void (async () => {
-      for (const file of files) {
-        await handleUploadAttachment(file);
-      }
-    })();
-  };
 
   return (
     <ContentSectionStack className="space-y-8 pb-20">
@@ -377,54 +359,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 {getTextValue(contract.description).text}
               </LabelValueRow>
               <LabelValueRow label="Attachments" stacked labelClassName="w-36" className="mt-6">
-                {attachmentsLoading ? (
-                  <div className="flex flex-wrap gap-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-4" />
-                        <Skeleton className="h-4 w-28" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <FileUploadField
-                      label={<span className="sr-only">Upload attachment</span>}
-                      variant="link"
-                      showMetaText={false}
-                      multiple
-                      maxFiles={25}
-                      disabled={isUploadingAttachment}
-                      onFilesSelected={handleAttachmentFilesSelected}
-                    />
-                    {attachments.map((att) => (
-                      <div key={att.id} className="group inline-flex items-center gap-1.5">
-                        <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                        {att.downloadUrl || att.url ? (
-                          <a
-                            href={att.downloadUrl || att.url || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-foreground hover:underline"
-                          >
-                            {att.fileName}
-                          </a>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">{att.fileName}</span>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 shrink-0 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
-                          onClick={() => handleDeleteAttachment(att.id)}
-                          aria-label={`Delete ${att.fileName}`}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <EntityAttachments
+                  entityType="prime_contract"
+                  entityId={String(contract.id)}
+                  projectId={projectId}
+                />
               </LabelValueRow>
             </DetailPanel>
 

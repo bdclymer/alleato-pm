@@ -9,6 +9,7 @@ import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItem
 import {
   Checkbox,
   EditModeActions,
+  EntityAttachments,
   Form,
   FormControl,
   FormField,
@@ -603,6 +604,18 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
           <div className="mt-3 divide-y divide-border/40">
             <SidebarField label="Schedule" value={rfi.schedule_impact} />
             <SidebarField label="Cost" value={rfi.cost_impact} />
+          </div>
+        </div>
+
+        {/* Attachments */}
+        <div className="mt-6 border-t border-border/40 pt-6">
+          <SectionLabel>Attachments</SectionLabel>
+          <div className="mt-3">
+            <EntityAttachments
+              entityType="rfi"
+              entityId={rfi.id}
+              projectId={String(projectId)}
+            />
           </div>
         </div>
 

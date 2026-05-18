@@ -1,12 +1,7 @@
 "use client";
 
-import type {
-  ChangeEventDetail,
-  ChangeEventAttachment,
-} from "@/types/change-events";
-import { StatusBadge } from "@/components/ds";
-import { Button } from "@/components/ui/button";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import type { ChangeEventDetail } from "@/types/change-events";
+import { EntityAttachments, StatusBadge } from "@/components/ds";
 import {
   ContentSectionStack,
   LabelValueRow,
@@ -20,20 +15,12 @@ function formatCurrency(value: string | number | null | undefined): string {
 
 interface ChangeEventGeneralInfoPanelProps {
   changeEvent: ChangeEventDetail;
-  attachments: ChangeEventAttachment[];
   projectId: number;
-  onUploadAttachment?: (file: File) => void;
-  onDeleteAttachment?: (attachmentId: string) => void;
-  isUploadingAttachment?: boolean;
 }
 
 export function ChangeEventGeneralInfoPanel({
   changeEvent,
-  attachments,
   projectId,
-  onUploadAttachment,
-  onDeleteAttachment,
-  isUploadingAttachment,
 }: ChangeEventGeneralInfoPanelProps) {
   const primeContractId =
     changeEvent.prime_contract_id ?? changeEvent.primeContractId;
@@ -91,72 +78,13 @@ export function ChangeEventGeneralInfoPanel({
                   </LabelValueRow>
                 </dl>
 
-                {/* Attachments inline under Details */}
+                {/* Attachments */}
                 <div className="pt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Attachments</span>
-                    {onUploadAttachment && (
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          className="sr-only"
-                          disabled={isUploadingAttachment}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) onUploadAttachment(file);
-                            e.target.value = "";
-                          }}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                          disabled={isUploadingAttachment}
-                          className="h-6 px-2 text-xs text-primary hover:text-primary"
-                        >
-                          <span>
-                            <Plus className="h-3 w-3" />
-                            {isUploadingAttachment ? "Uploading..." : "Add"}
-                          </span>
-                        </Button>
-                      </label>
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-3">
-                    {attachments.length === 0 ? (
-                      <p className="text-sm italic text-muted-foreground">No attachments yet</p>
-                    ) : (
-                      attachments.map((att) => (
-                        <div key={att.id} className="group flex items-center gap-1.5 text-sm">
-                          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                          {att.downloadUrl ? (
-                            <a
-                              href={att.downloadUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-foreground hover:underline"
-                            >
-                              {att.fileName}
-                            </a>
-                          ) : (
-                            <span className="text-muted-foreground">
-                              {att.fileName}
-                            </span>
-                          )}
-                          {onDeleteAttachment && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 hover:text-destructive"
-                              onClick={() => onDeleteAttachment(att.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
+                  <EntityAttachments
+                    entityType="change_order"
+                    entityId={String(changeEvent.id)}
+                    projectId={String(projectId)}
+                  />
                 </div>
               </div>
 

@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
-import { AttachmentsTab } from "@/components/commitments/tabs/AttachmentsTab";
+import { EntityAttachments } from "@/components/ds";
 import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
 import { ChangeManagementTab } from "@/components/commitments/tabs/ChangeManagementTab";
 import { EmailsTab } from "@/components/commitments/tabs/EmailsTab";
@@ -514,7 +514,11 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                 {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
               </LabelValueRow>
               <LabelValueRow label="Attachments" labelClassName="w-36" className="mt-6">
-                <AttachmentsTab commitmentId={commitmentId} />
+                <EntityAttachments
+                  entityType="commitment"
+                  entityId={commitmentId}
+                  projectId={projectId}
+                />
               </LabelValueRow>
             </DetailPanel>
 

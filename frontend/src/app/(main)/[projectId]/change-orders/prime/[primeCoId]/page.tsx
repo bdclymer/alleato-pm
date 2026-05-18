@@ -25,6 +25,7 @@ import { z } from "zod";
 
 import {
   EmptyState,
+  EntityAttachments,
   InlineTable,
   InlineTableBody,
   InlineTableCell,
@@ -366,18 +367,6 @@ export default function PrimeContractCODetailPage() {
     [],
   );
 
-  // Attachments
-  interface Attachment {
-    id: string;
-    fileName: string;
-    filePath: string;
-    fileSize: number;
-    mimeType: string;
-    uploadedAt: string;
-  }
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [attachmentsLoading, setAttachmentsLoading] = useState(true);
-  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
 
   const [emails, setEmails] = useState<ProjectEmail[]>([]);
   const [emailsLoading, setEmailsLoading] = useState(true);
@@ -586,70 +575,6 @@ export default function PrimeContractCODetailPage() {
     (lineItemForm.quantity ? Number(lineItemForm.quantity) : 0) *
     (lineItemForm.unit_cost ? Number(lineItemForm.unit_cost) : 0);
 
-  // ---- Fetch attachments ---------------------------------------------------
-  const fetchAttachments = useCallback(async () => {
-    setAttachmentsLoading(true);
-    setAttachmentsError(null);
-    try {
-      const res = await fetch(`${apiBase}/attachments`);
-      if (!res.ok) throw new Error("Failed to fetch attachments");
-      const json = await res.json();
-      setAttachments(json.data ?? []);
-    } catch (err) {
-      console.error("Failed to fetch attachments:", err);
-      setAttachmentsError(
-        err instanceof Error ? err.message : "Failed to fetch attachments",
-      );
-    } finally {
-      setAttachmentsLoading(false);
-    }
-  }, [apiBase]);
-
-  const handleFileUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      try {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch(`${apiBase}/attachments`, {
-          method: "POST",
-          body: fd,
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: "Upload failed" }));
-          throw new Error(err.error || "Upload failed");
-        }
-        toast.success("File uploaded");
-        fetchAttachments();
-      } catch (err) {
-        toast.error("Upload failed");
-      }
-      e.target.value = "";
-    },
-    [apiBase, fetchAttachments],
-  );
-
-  const handleDeleteAttachment = useCallback(
-    async (attachmentId: string) => {
-      try {
-        const res = await fetch(`${apiBase}/attachments/${attachmentId}`, {
-          method: "DELETE",
-        });
-        if (!res.ok) {
-          const err = await res
-            .json()
-            .catch(() => ({ error: "Delete failed" }));
-          throw new Error(err.error || "Delete failed");
-        }
-        toast.success("Attachment deleted");
-        fetchAttachments();
-      } catch (err) {
-        toast.error("Delete failed");
-      }
-    },
-    [apiBase, fetchAttachments],
-  );
 
   // ---- Related Items -------------------------------------------------------
   const fetchRelatedItems = useCallback(async () => {
@@ -735,14 +660,12 @@ export default function PrimeContractCODetailPage() {
       }
     };
     fetchData();
-    fetchAttachments();
     fetchEmails();
     fetchLineItems();
     fetchRelatedItems();
   }, [
     apiBase,
     projectId,
-    fetchAttachments,
     fetchEmails,
     fetchLineItems,
     fetchRelatedItems,
@@ -2123,93 +2046,11 @@ export default function PrimeContractCODetailPage() {
 
               {/* ── Attachments ───────────────────────────────────── */}
               <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-1 items-center gap-2">
-                    <Paperclip className="h-4 w-4 text-muted-foreground" />
-                    <SectionRuleHeading
-                      label="Attachments"
-                      className="flex-1 [&_span]:text-primary"
-                    />
-                  </div>
-                  {attachments.length > 0 && (
-                    <Button variant="outline" size="sm" asChild>
-                      <label className="cursor-pointer">
-                        <FileUp className="mr-1 h-4 w-4" />
-                        Upload File
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={handleFileUpload}
-                          aria-label="Upload attachment"
-                        />
-                      </label>
-                    </Button>
-                  )}
-                </div>
-                {attachmentsLoading ? (
-                  <div className="space-y-2">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <Skeleton className="h-4 w-4" />
-                        <Skeleton className="h-4 w-48" />
-                        <Skeleton className="h-4 w-20 ml-auto" />
-                      </div>
-                    ))}
-                  </div>
-                ) : attachmentsError ? (
-                  <p className="text-sm text-destructive">{attachmentsError}</p>
-                ) : attachments.length === 0 ? (
-                  <EmptyState
-                    icon={<Paperclip />}
-                    title="No attachments"
-                    description="Upload files related to this change order"
-                    action={
-                      <Button size="sm" variant="outline" onClick={() => document.getElementById("attachment-upload-empty")?.click()}>
-                        <Plus />
-                        Upload File
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    {attachments.map((att) => (
-                      <div
-                        key={att.id}
-                        className="flex items-center justify-between rounded-md border border-border px-4 py-2"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {att.fileName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {att.fileSize < 1024
-                              ? `${att.fileSize} B`
-                              : att.fileSize < 1024 * 1024
-                                ? `${(att.fileSize / 1024).toFixed(1)} KB`
-                                : `${(att.fileSize / (1024 * 1024)).toFixed(1)} MB`}
-                            {" · "}
-                            {formatDate(att.uploadedAt)}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={`Delete attachment ${att.fileName}`}
-                          onClick={() => handleDeleteAttachment(att.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {/* Hidden input for empty-state upload action */}
-                <input
-                  id="attachment-upload-empty"
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  aria-label="Upload attachment"
+                <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
+                <EntityAttachments
+                  entityType="change_order"
+                  entityId={primeCoId}
+                  projectId={projectId}
                 />
               </section>
             </ContentSectionStack>

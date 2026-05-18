@@ -5,12 +5,9 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
-  ChevronDown,
-  Clock,
   CreditCard,
   DollarSign,
   Download,
-  FileText,
   GitBranch,
   History,
   Mail,
@@ -74,13 +71,11 @@ import type {
   BudgetCode,
   ChangeOrderFormState,
   Contract,
-  ContractAttachment,
   ContractLineItem,
   ContractTab,
   LineItemFormState,
   OwnerInvoiceSummary,
   Payment,
-  PaymentApplication,
   PrimeContractCO,
   VerticalMarkup,
 } from "./types";
@@ -237,10 +232,6 @@ export default function ProjectContractDetailPage() {
     inclusions: "", exclusions: "", is_private: false, payment_terms: "", billing_schedule: "",
   });
 
-  // ── Attachments ─────────────────────────────────────────────────────────
-  const [attachments, setAttachments] = useState<ContractAttachment[]>([]);
-  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
-  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
 
   // ── Document / sync dialogs ─────────────────────────────────────────────
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
@@ -438,22 +429,6 @@ export default function ProjectContractDetailPage() {
     });
   }, [contract]);
 
-  useEffect(() => {
-    if (!contract) return;
-    const fetchAttachments = async () => {
-      try {
-        setAttachmentsLoading(true);
-        const response = await fetchWithTransientRouteRetry(
-          `/api/projects/${projectId}/contracts/${contractId}/attachments`,
-        );
-        if (response.ok) { const data = await response.json(); setAttachments(data.data || []); }
-      } catch (error) {
-        console.error("Failed to load attachments:", error);
-        toast.error("Failed to load attachments. Try refreshing the page.");
-      } finally { setAttachmentsLoading(false); }
-    };
-    fetchAttachments();
-  }, [contract, contractId, projectId]);
 
   // #endregion
 
@@ -582,43 +557,6 @@ export default function ProjectContractDetailPage() {
     }
   };
 
-  // ── Attachments ─────────────────────────────────────────────────────────
-
-  const handleUploadAttachment = async (file: File) => {
-    setIsUploadingAttachment(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const newAttachment = await apiFetch<{
-        id: string;
-        fileName: string;
-        url: string | null;
-        downloadUrl: string | null;
-        uploadedBy: { id: string; email: string } | null;
-        uploadedAt: string;
-      }>(`/api/projects/${projectId}/contracts/${contractId}/attachments`, {
-        method: "POST",
-        body: formData,
-      });
-      setAttachments((prev) => [{
-        id: newAttachment.id,
-        fileName: newAttachment.fileName,
-        url: newAttachment.url ?? null,
-        downloadUrl: newAttachment.downloadUrl ?? undefined,
-        uploadedBy: newAttachment.uploadedBy ?? null,
-        uploadedAt: newAttachment.uploadedAt,
-      }, ...prev]);
-      toast.success(`"${file.name}" uploaded successfully`);
-    } catch { toast.error("Failed to upload attachment"); } finally { setIsUploadingAttachment(false); }
-  };
-
-  const handleDeleteAttachment = async (attachmentId: string) => {
-    try {
-      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/attachments/${attachmentId}`, { method: "DELETE" });
-      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
-      toast.success("Attachment deleted");
-    } catch { toast.error("Failed to delete attachment"); }
-  };
 
   // ── Change Order CRUD (for dialogs) ─────────────────────────────────────
 
@@ -997,8 +935,7 @@ export default function ProjectContractDetailPage() {
       <ContentSectionStack className="pt-3">
         {activeTab === "overview" && (
           <PrimeContractOverviewTab
-            contract={contract} changeOrders={changeOrders} attachments={attachments} attachmentsLoading={attachmentsLoading}
-            isUploadingAttachment={isUploadingAttachment} handleUploadAttachment={handleUploadAttachment} handleDeleteAttachment={handleDeleteAttachment}
+            contract={contract} changeOrders={changeOrders} projectId={String(projectId)}
             formatDate={formatDate} getTextValue={getTextValue} inclusionsList={inclusionsList} exclusionsList={exclusionsList}
             formatStatusLabel={formatStatusLabel} formatCurrency={formatCurrency} lineItemsLoading={lineItemsLoading} lineItems={lineItems}
             budgetCodes={budgetCodes} sovDraftBudgetCodeIds={sov.sovDraftBudgetCodeIds} isSovEditing={sov.isSovEditing} isSavingSovChanges={sov.isSavingSovChanges}
