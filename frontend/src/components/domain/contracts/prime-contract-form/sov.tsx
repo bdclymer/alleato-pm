@@ -191,6 +191,7 @@ export function PrimeContractSovSection({
         <InlineTable
           data-testid="sov-table"
           data-accounting-method={formData.accountingMethod}
+          tableClassName="text-xs"
         >
           <InlineTableHeader>
             <InlineTableHeaderRow>
@@ -219,10 +220,10 @@ export function PrimeContractSovSection({
                   );
                 })()}
               </InlineTableHeaderCell>
-              <InlineTableHeaderCell className="min-w-80">
+              <InlineTableHeaderCell className="w-56 min-w-56">
                 Budget Code
               </InlineTableHeaderCell>
-              <InlineTableHeaderCell className="min-w-56">
+              <InlineTableHeaderCell className="w-48 min-w-48">
                 Description
               </InlineTableHeaderCell>
               {isUnitQuantityMode ? (
@@ -235,13 +236,13 @@ export function PrimeContractSovSection({
                   </InlineTableHeaderCell>
                 </>
               ) : null}
-              <InlineTableHeaderCell className="w-36">
+              <InlineTableHeaderCell className="w-52 min-w-52">
                 Amount
               </InlineTableHeaderCell>
-              <InlineTableHeaderCell className="w-36">
+              <InlineTableHeaderCell className="w-36 min-w-36">
                 Billed to Date
               </InlineTableHeaderCell>
-              <InlineTableHeaderCell className="w-36">
+              <InlineTableHeaderCell className="w-44 min-w-44">
                 Amount Remaining
               </InlineTableHeaderCell>
               <InlineTableHeaderCell className="w-10" />
@@ -279,12 +280,12 @@ export function PrimeContractSovSection({
                         colSpan={isUnitQuantityMode ? 4 : 2}
                         className="py-2"
                       >
-                        <span className="text-sm font-medium text-muted-foreground">
+                        <span className="text-xs font-medium text-muted-foreground">
                           Subtotal
                         </span>
                       </InlineTableCell>
                       <InlineTableCell className="py-2">
-                        <span className="block h-8 text-right text-sm font-medium leading-8 tabular-nums">
+                        <span className="block h-8 text-right text-xs font-medium leading-8 tabular-nums">
                           $
                           {sovSubtotal.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
@@ -292,10 +293,10 @@ export function PrimeContractSovSection({
                           })}
                         </span>
                       </InlineTableCell>
-                      <InlineTableCell align="right" numeric className="py-2 text-muted-foreground">
+                      <InlineTableCell align="right" numeric className="py-2 text-xs text-muted-foreground">
                         $0.00
                       </InlineTableCell>
-                      <InlineTableCell align="right" numeric className="py-2">
+                      <InlineTableCell align="right" numeric className="py-2 text-xs">
                         $
                         {sovSubtotal.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
@@ -322,7 +323,7 @@ export function PrimeContractSovSection({
                           })
                         }
                         placeholder="Group name"
-                        className="h-10 font-semibold"
+                        className="!h-8 !text-xs font-semibold"
                         data-testid="sov-group-name"
                       />
                     </InlineTableCell>
@@ -364,11 +365,11 @@ export function PrimeContractSovSection({
                     </InlineTableCell>
                     <InlineTableCell>
                       {item.budgetCodeLabel ? (
-                        <span className="text-sm font-medium text-muted-foreground">
+                        <span className="text-xs font-medium text-muted-foreground">
                           {item.budgetCodeLabel}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                           <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                             Markup
                           </span>
@@ -376,7 +377,7 @@ export function PrimeContractSovSection({
                       )}
                     </InlineTableCell>
                     <InlineTableCell>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         {item.description}
                       </span>
                     </InlineTableCell>
@@ -387,7 +388,7 @@ export function PrimeContractSovSection({
                       </>
                     ) : null}
                     <InlineTableCell>
-                      <span className="block h-10 text-right text-sm leading-10 text-muted-foreground tabular-nums">
+                      <span className="block h-8 text-right text-xs leading-8 text-muted-foreground tabular-nums">
                         $
                         {(item.amount || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
@@ -433,7 +434,7 @@ export function PrimeContractSovSection({
                             type="button"
                             variant="outline"
                             role="combobox"
-                            className="h-8 w-full justify-between border-border bg-background text-left text-sm font-normal"
+                            className="h-8 w-full justify-between border-border bg-background px-3 text-left !text-xs font-normal"
                             data-testid="sov-line-budget-code"
                           >
                             <span className="truncate">
@@ -499,7 +500,7 @@ export function PrimeContractSovSection({
                           })
                         }
                         placeholder="Description"
-                        className="h-10"
+                        className="!h-8 px-3 !text-xs"
                         data-testid="sov-line-description"
                       />
                     </InlineTableCell>
@@ -516,7 +517,7 @@ export function PrimeContractSovSection({
                                 quantity: Number(e.target.value || 0),
                               })
                             }
-                            className="h-10"
+                            className="!h-8 px-3 !text-xs"
                             data-testid="sov-line-quantity"
                           />
                         </InlineTableCell>
@@ -531,7 +532,7 @@ export function PrimeContractSovSection({
                                 unitCost: Number(e.target.value || 0),
                               })
                             }
-                            className="h-10"
+                            className="!h-8 px-3 !text-xs"
                             data-testid="sov-line-unit-cost"
                           />
                         </InlineTableCell>
@@ -546,7 +547,7 @@ export function PrimeContractSovSection({
                           onUpdateSovLine(item.id, { amount: val ?? 0 })
                         }
                         showCurrency={false}
-                        className="h-10"
+                        className="!h-8 pl-6 pr-2 !text-xs"
                         data-testid="sov-line-amount"
                         readOnly={formData.accountingMethod === "unit_quantity"}
                       />

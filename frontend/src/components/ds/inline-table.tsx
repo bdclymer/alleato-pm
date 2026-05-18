@@ -35,6 +35,7 @@ function useInlineTable() {
 
 interface InlineTableProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: TableVariant;
+  tableClassName?: string;
   children: React.ReactNode;
 }
 
@@ -52,6 +53,7 @@ interface InlineTableProps extends React.HTMLAttributes<HTMLDivElement> {
 export function InlineTable({
   variant = "edit",
   className,
+  tableClassName,
   children,
   ...props
 }: InlineTableProps) {
@@ -65,6 +67,7 @@ export function InlineTable({
           className={cn(
             "w-full",
             variant === "edit" ? "text-sm" : "text-xs",
+            tableClassName,
           )}
         >
           {children}
