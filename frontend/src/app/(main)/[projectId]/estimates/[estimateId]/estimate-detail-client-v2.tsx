@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
 import { appToast as toast } from "@/lib/toast/app-toast";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { SeedBudgetFromEstimateModal } from "@/components/domain/estimates/SeedBudgetFromEstimateModal";
 import { ExpandableSearch } from "@/components/tables/unified/expandable-search";
@@ -1570,6 +1571,23 @@ function DetailsTab({
   onAddRow: (divCode: string, divName: string) => Promise<void>;
   onDeleteRow: (id: number) => Promise<void>;
 }) {
+  const firstDivisionCode = DETAIL_DIVISIONS[0]?.division_code ?? "";
+  const [openDivisionCodes, setOpenDivisionCodes] = React.useState<Set<string>>(
+    () => new Set(firstDivisionCode ? [firstDivisionCode] : [])
+  );
+
+  const toggleDivision = React.useCallback((divisionCode: string) => {
+    setOpenDivisionCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(divisionCode)) {
+        next.delete(divisionCode);
+      } else {
+        next.add(divisionCode);
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <div className="overflow-x-auto rounded-md border border-border">
       <table className="w-full text-xs">
@@ -1589,90 +1607,117 @@ function DetailsTab({
           {DETAIL_DIVISIONS.map((div) => {
             const rows = detailItems.filter((i) => i.division_code === div.division_code);
             const divTotal = rows.reduce((s, i) => s + (i.estimated_amount ?? 0), 0);
+            const isOpen = openDivisionCodes.has(div.division_code);
             return (
               <React.Fragment key={div.division_code}>
-                {/* Division separator row — styled like a merged cell */}
-                <tr className="border-b border-t border-border bg-muted/60">
-                  <td colSpan={5} className="py-2 pl-4 pr-2">
-                    <span className="font-semibold text-foreground">{div.division_header}</span>
+                <tr
+                  className={cn(
+                    "border-b border-t border-border bg-muted/60 transition-colors hover:bg-muted/70",
+                    isOpen && "border-b-border/40"
+                  )}
+                >
+                  <td colSpan={5} className="py-1.5 pl-2 pr-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      aria-expanded={isOpen}
+                      onClick={() => toggleDivision(div.division_code)}
+                      className="h-auto min-h-8 w-full justify-start gap-2 rounded-sm px-2 py-0 text-left font-semibold text-foreground hover:bg-transparent hover:text-foreground"
+                    >
+                      {isOpen ? (
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      )}
+                      <span>{div.division_header}</span>
+                      <span className="font-normal text-muted-foreground">
+                        {rows.length} row{rows.length === 1 ? "" : "s"}
+                      </span>
+                    </Button>
                   </td>
                   <td colSpan={2} className="py-2 pr-4 text-right font-medium tabular-nums text-muted-foreground">
                     {divTotal > 0 ? formatCurrency(divTotal) : ""}
                   </td>
                 </tr>
 
-                {/* Line item rows */}
-                {rows.map((item) => (
-                  <tr key={item.id} className="group border-b border-border/20 hover:bg-muted/20">
-                    <td className="py-1 pl-4 pr-2">
-                      <span className="inline-flex h-7 w-22 items-center px-2 text-xs tabular-nums text-foreground">
-                        {formatCostCodeDisplay(item.cost_code)}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1">
-                      <InlineSelect
-                        value={item.cost_type ?? ""}
-                        options={COST_TYPE_OPTIONS.map((o) => ({ value: o, label: o }))}
-                        onValueChange={(v) => void onPatchItem(item.id, { cost_type: v || null })}
-                        placeholder="—"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <span className="inline-flex h-7 min-w-40 items-center px-2 text-xs text-foreground">
-                        {item.cost_code_name ?? ""}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1">
-                      <InlineText
-                        value={item.work_description ?? ""}
-                        onChange={(v) => void onPatchItem(item.id, { work_description: v || null })}
-                        placeholder="Description"
-                        className="min-w-40"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <InlineNumber
-                        value={item.estimated_amount ?? 0}
-                        onChange={(v) => void onPatchItem(item.id, { estimated_amount: v })}
-                        className="w-full text-right"
-                        currency
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <InlineText
-                        value={item.sub_name ?? ""}
-                        onChange={(v) => void onPatchItem(item.id, { sub_name: v || null })}
-                        placeholder="Sub name"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Delete row"
-                        onClick={() => void onDeleteRow(item.id)}
-                        className="h-6 p-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                {isOpen && (
+                  <>
+                    {rows.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="group border-b border-border/20 hover:bg-muted/20"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                        <td className="py-1 pl-4 pr-2">
+                          <span className="inline-flex h-7 w-22 items-center px-2 text-xs tabular-nums text-foreground">
+                            {formatCostCodeDisplay(item.cost_code)}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1">
+                          <InlineSelect
+                            value={item.cost_type ?? ""}
+                            options={COST_TYPE_OPTIONS.map((o) => ({ value: o, label: o }))}
+                            onValueChange={(v) => void onPatchItem(item.id, { cost_type: v || null })}
+                            placeholder="—"
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <span className="inline-flex h-7 min-w-40 items-center px-2 text-xs text-foreground">
+                            {item.cost_code_name ?? ""}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1">
+                          <InlineText
+                            value={item.work_description ?? ""}
+                            onChange={(v) => void onPatchItem(item.id, { work_description: v || null })}
+                            placeholder="Description"
+                            className="min-w-40"
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <InlineNumber
+                            value={item.estimated_amount ?? 0}
+                            onChange={(v) => void onPatchItem(item.id, { estimated_amount: v })}
+                            className="w-full text-right"
+                            currency
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <InlineText
+                            value={item.sub_name ?? ""}
+                            onChange={(v) => void onPatchItem(item.id, { sub_name: v || null })}
+                            placeholder="Sub name"
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label="Delete row"
+                            onClick={() => void onDeleteRow(item.id)}
+                            className="h-6 p-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
 
-                {/* Add row for this division */}
-                <tr className="border-b border-border/10">
-                  <td colSpan={7} className="py-1 pl-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto gap-1 p-0 text-[11px] text-muted-foreground/60 hover:text-muted-foreground"
-                      onClick={() => void onAddRow(div.division_code, div.division_header.replace(/^\d+-\d+\s+/, ""))}
-                    >
-                      <Plus className="h-3 w-3" />
-                      Add row
-                    </Button>
-                  </td>
-                </tr>
+                    <tr className="border-b border-border/10">
+                      <td colSpan={7} className="py-1 pl-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto gap-1 p-0 text-[11px] text-muted-foreground/60 hover:text-muted-foreground"
+                          onClick={() => void onAddRow(div.division_code, div.division_header.replace(/^\d+-\d+\s+/, ""))}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add row
+                        </Button>
+                      </td>
+                    </tr>
+                  </>
+                )}
               </React.Fragment>
             );
           })}
