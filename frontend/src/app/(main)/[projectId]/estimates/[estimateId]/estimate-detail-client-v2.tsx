@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, ChevronDown, ChevronRight, ExternalLink, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronRight, ExternalLink, Loader2, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -717,6 +717,7 @@ export function EstimateDetailClientV2({
   const templateLoaded = React.useRef(false);
   const [detailItems, setDetailItems] = React.useState<DetailItem[]>(initialDetailItems);
   const [sublistSubs, setSublistSubs] = React.useState<SublistSub[]>(initialSublistSubs);
+  const creatingSublistDivisionsRef = React.useRef(new Set<string>());
 
   // Estimate-level editable fields
   const initialDurationMonths = estimate.project_duration_months ?? 0;
@@ -1084,6 +1085,9 @@ export function EstimateDetailClientV2({
   // Add a single new row to a division (unlimited slots — PRP 1.3)
   const ensureSublistRows = React.useCallback(
     async (divCode: string, divName: string): Promise<SublistSub | null> => {
+      if (creatingSublistDivisionsRef.current.has(divCode)) return null;
+      creatingSublistDivisionsRef.current.add(divCode);
+
       const existing = sublistSubs.filter((s) => s.division_code === divCode);
       const nextPos = (existing.reduce((max, s) => Math.max(max, s.position ?? 0), 0)) + 1;
       try {
@@ -1104,6 +1108,8 @@ export function EstimateDetailClientV2({
         console.error("Failed to create estimate sublist row", error);
         toast.error("Failed to add sub");
         return null;
+      } finally {
+        creatingSublistDivisionsRef.current.delete(divCode);
       }
     },
     [sublistSubs, projectId, estimate.estimate_id]
@@ -1767,6 +1773,34 @@ function SubListTab({
   const [companySearch, setCompanySearch] = React.useState("");
   const [openComboboxId, setOpenComboboxId] = React.useState<number | null>(null);
   const [openComboboxDivision, setOpenComboboxDivision] = React.useState<string>("");
+  const addingSubDivisionsRef = React.useRef(new Set<string>());
+  const [addingSubDivisions, setAddingSubDivisions] = React.useState<Set<string>>(() => new Set());
+
+  const setDivisionAdding = React.useCallback((divCode: string, isAdding: boolean) => {
+    setAddingSubDivisions((prev) => {
+      const next = new Set(prev);
+      if (isAdding) {
+        next.add(divCode);
+      } else {
+        next.delete(divCode);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleEnsureRows = React.useCallback(async (divCode: string, divName: string): Promise<SublistSub | null> => {
+    if (addingSubDivisionsRef.current.has(divCode)) return null;
+
+    addingSubDivisionsRef.current.add(divCode);
+    setDivisionAdding(divCode, true);
+
+    try {
+      return await onEnsureRows(divCode, divName);
+    } finally {
+      addingSubDivisionsRef.current.delete(divCode);
+      setDivisionAdding(divCode, false);
+    }
+  }, [onEnsureRows, setDivisionAdding]);
 
   // Call log state
   const [callLogsBySubId, setCallLogsBySubId] = React.useState<Record<number, CallLog[]>>({});
@@ -2336,6 +2370,7 @@ function SubListTab({
           <tbody>
             {visibleDivisions.map((div, visIdx) => {
               const divRows = filteredSubs.filter((s) => s.division_code === div.code);
+              const isAddingSub = addingSubDivisions.has(div.code);
               const intendCount = divRows.filter((r) => r.intend_to_submit === "Yes").length;
               const bidCount = divRows.filter((r) => r.bid_received === "Yes").length;
               const lowestBid = divRows.reduce<number | null>(
@@ -2428,10 +2463,12 @@ function SubListTab({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                          onClick={() => void onEnsureRows(div.code, div.name)}
+                          className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-60"
+                          disabled={isAddingSub}
+                          onClick={() => void handleEnsureRows(div.code, div.name)}
                         >
-                          <Plus className="h-3 w-3" /> Add sub
+                          {isAddingSub ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                          {isAddingSub ? "Adding" : "Add sub"}
                         </Button>
                       </div>
                     </td>
@@ -2561,9 +2598,10 @@ function SubListTab({
                                     size="sm"
                                     type="button"
                                     className="h-6 shrink-0 px-2 text-[10px]"
+                                    disabled={isAddingSub}
                                     onClick={async () => {
                                       // Use returned sub directly — avoids stale closure grabbing wrong row
-                                      const newSub = await onEnsureRows(div.code, div.name);
+                                      const newSub = await handleEnsureRows(div.code, div.name);
                                       if (newSub) {
                                         await onPatchSub(newSub.id, {
                                           company: company.name,
