@@ -1,8 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import { assignPermissionTemplate } from "@/lib/permissions";
+import { assignPermissionTemplate, loadUserPermissions } from "@/lib/permissions";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/current-user", () => ({
+  getCurrentUser: jest.fn(),
+  getIsAdmin: jest.fn(async () => false),
 }));
 
 const createClientMock = createClient as jest.Mock;
@@ -87,5 +92,41 @@ describe("assignPermissionTemplate", () => {
         template_id: "project-template-1",
       }),
     );
+  });
+});
+
+describe("loadUserPermissions", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("allows app admins from user_profiles when the JWT admin claim is stale", async () => {
+    const from = jest.fn((table: string) => {
+      if (table === "user_profiles") {
+        return createQuery({ data: { is_admin: true }, error: null });
+      }
+      if (table === "users_auth") {
+        return createQuery({ data: null, error: null });
+      }
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    createClientMock.mockResolvedValue({
+      from,
+    });
+
+    const result = await loadUserPermissions(761, "admin-auth-user");
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        userId: "admin-auth-user",
+        personId: "admin-auth-user",
+        projectId: 761,
+        isAdmin: true,
+      }),
+    );
+    expect(result?.overrides.budget).toBe("none");
+    expect(from).not.toHaveBeenCalledWith("project_directory_memberships");
+    expect(from).not.toHaveBeenCalledWith("user_module_permissions");
   });
 });

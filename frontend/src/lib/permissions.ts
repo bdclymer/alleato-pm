@@ -55,15 +55,25 @@ export async function loadUserPermissions(
     userId = user.id;
   }
 
-  // Read is_admin from JWT claim (set by custom_access_token_hook) — no DB round-trip.
-  // Falls back to false if hook is not yet registered or token predates the hook.
-  const isAdmin = await getIsAdmin();
+  const jwtIsAdmin = await getIsAdmin();
+  const isAdmin = jwtIsAdmin || (await loadProfileAdminStatus(supabase, userId));
 
   const userAuthResult = await supabase
     .from("users_auth")
     .select("person_id")
     .eq("auth_user_id", userId)
     .maybeSingle();
+
+  if (isAdmin) {
+    return {
+      userId: userId!,
+      personId: userAuthResult.data?.person_id ?? userId!,
+      projectId,
+      overrides: emptyModulePermissions(),
+      granularOverrides: {},
+      isAdmin: true,
+    };
+  }
 
   if (!userAuthResult.data) return null;
   const personId = userAuthResult.data.person_id;
@@ -116,9 +126,7 @@ export async function loadUserPermissions(
       }
     : undefined;
 
-  const emptyOverrides = Object.fromEntries(
-    ALL_MODULES.map((m) => [m, "none" as PermissionLevel])
-  ) as Record<PermissionModule, PermissionLevel>;
+  const emptyOverrides = emptyModulePermissions();
 
   const overrides = (overridesResult.data ?? []).reduce((acc, row) => {
     if (ALL_MODULES.includes(row.module as PermissionModule)) {
@@ -141,6 +149,25 @@ export async function loadUserPermissions(
   );
 
   return { userId: userId!, personId, projectId, template, overrides, granularOverrides, isAdmin };
+}
+
+function emptyModulePermissions(): Record<PermissionModule, PermissionLevel> {
+  return Object.fromEntries(
+    ALL_MODULES.map((m) => [m, "none" as PermissionLevel])
+  ) as Record<PermissionModule, PermissionLevel>;
+}
+
+async function loadProfileAdminStatus(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return data?.is_admin === true;
 }
 
 // ---------------------------------------------------------------------------
