@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronRight, ExternalLink, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -2229,6 +2229,24 @@ function SubListTab({
         : ALL_DIVISIONS,
     [filteredSubs, hasActiveFilter],
   );
+  const sublistMetrics = React.useMemo(() => {
+    const bids = sublistSubs.filter((sub) => sub.bid_received === "Yes");
+    const bidTotal = bids.reduce((sum, sub) => sum + (sub.price ?? 0), 0);
+    const divisionsWithCoverage = new Set(
+      sublistSubs
+        .filter((sub) => sub.company || sub.price || sub.bid_received === "Yes")
+        .map((sub) => sub.division_code),
+    ).size;
+
+    return {
+      divisionsWithCoverage,
+      totalSubs: sublistSubs.length,
+      intending: sublistSubs.filter((sub) => sub.intend_to_submit === "Yes").length,
+      bidsReceived: bids.length,
+      awarded: sublistSubs.filter((sub) => sub.is_awarded).length,
+      bidTotal,
+    };
+  }, [sublistSubs]);
 
   const SortTh = ({
     col,
@@ -2259,70 +2277,92 @@ function SubListTab({
   );
 
   return (
-    <div className="space-y-3">
-      {/* ── Toolbar ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-52">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+        {[
+          { label: "Divisions", value: `${sublistMetrics.divisionsWithCoverage}/${ALL_DIVISIONS.length}` },
+          { label: "Subs", value: sublistMetrics.totalSubs },
+          { label: "Intending", value: sublistMetrics.intending },
+          { label: "Bids", value: sublistMetrics.bidsReceived },
+          { label: "Awarded", value: sublistMetrics.awarded },
+          { label: "Bid total", value: formatCurrency(sublistMetrics.bidTotal) },
+        ].map((metric) => (
+          <div key={metric.label} className="space-y-1 border-b border-border/50 pb-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {metric.label}
+            </div>
+            <div className="text-base font-semibold tabular-nums text-foreground">
+              {metric.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative min-w-0 flex-1 md:max-w-sm">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search company or contact..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 pl-8 text-xs"
+            className="h-9 pl-8 text-sm"
           />
         </div>
-        <Select value={filterIntend} onValueChange={setFilterIntend}>
-          <SelectTrigger className="h-8 w-40 text-xs">
-            <SelectValue placeholder="Intend to submit" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" className="text-xs">All subs</SelectItem>
-            <SelectItem value="Yes" className="text-xs">Intending: Yes</SelectItem>
-            <SelectItem value="No" className="text-xs">Intending: No</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterBid} onValueChange={setFilterBid}>
-          <SelectTrigger className="h-8 w-36 text-xs">
-            <SelectValue placeholder="Bid received" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" className="text-xs">All bids</SelectItem>
-            <SelectItem value="Yes" className="text-xs">Bid received</SelectItem>
-            <SelectItem value="No" className="text-xs">No bid yet</SelectItem>
-          </SelectContent>
-        </Select>
-        {hasActiveFilter && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1 text-xs text-muted-foreground"
-            onClick={() => {
-              setSearchQuery("");
-              setFilterIntend("all");
-              setFilterBid("all");
-              setSortConfig(null);
-            }}
-          >
-            <X className="h-3.5 w-3.5" /> Clear filters
-          </Button>
-        )}
-        <span className="ml-auto text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={filterIntend} onValueChange={setFilterIntend}>
+            <SelectTrigger className="h-9 w-40 text-sm">
+              <SelectValue placeholder="Intend to submit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">All subs</SelectItem>
+              <SelectItem value="Yes" className="text-xs">Intending: Yes</SelectItem>
+              <SelectItem value="No" className="text-xs">Intending: No</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterBid} onValueChange={setFilterBid}>
+            <SelectTrigger className="h-9 w-36 text-sm">
+              <SelectValue placeholder="Bid received" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">All bids</SelectItem>
+              <SelectItem value="Yes" className="text-xs">Bid received</SelectItem>
+              <SelectItem value="No" className="text-xs">No bid yet</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasActiveFilter && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 gap-1 text-sm text-muted-foreground"
+              onClick={() => {
+                setSearchQuery("");
+                setFilterIntend("all");
+                setFilterBid("all");
+                setSortConfig(null);
+              }}
+            >
+              <X className="h-3.5 w-3.5" /> Clear
+            </Button>
+          )}
+        </div>
+        <span className="text-sm text-muted-foreground md:ml-auto">
           {filteredSubs.length} sub{filteredSubs.length !== 1 ? "s" : ""}
-          {hasActiveFilter ? ` matching` : " total"}
+          {hasActiveFilter ? " matching" : " total"}
         </span>
       </div>
 
-      {/* ── Single unified table ─────────────────────────────────────────── */}
+      {/* Single unified table */}
       <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-border bg-muted/20 text-left text-muted-foreground">
-              <th className="w-6 py-2 pl-4 pr-2 font-medium">#</th>
+        <table className="w-full min-w-full text-xs">
+          <thead className="sticky top-0 z-20 bg-card">
+            <tr className="border-b border-border bg-muted/30 text-left text-muted-foreground">
+              <th className="w-10 py-2.5 pl-4 pr-2 font-medium">#</th>
               <SortTh col="company" label="Company" />
               <SortTh col="intend_to_submit" label="Intend?" className="w-24" />
-              <th className="w-28 px-2 py-2 text-left text-xs font-medium text-muted-foreground">Bid Invite</th>
-              <th className="w-28 px-2 py-2 text-left text-xs font-medium text-muted-foreground">Last Call</th>
+              <th className="w-28 px-2 py-2.5 text-left text-xs font-medium text-muted-foreground">Bid Invite</th>
+              <th className="w-28 px-2 py-2.5 text-left text-xs font-medium text-muted-foreground">Last Call</th>
               <SortTh col="bid_received" label="Bid Rec'd?" className="w-24" />
               <SortTh col="contact_name" label="Contact" />
               <SortTh col="email" label="Email" />
@@ -2347,36 +2387,41 @@ function SubListTab({
 
               return (
                 <React.Fragment key={div.code}>
-                  {/* Spacer row creates visual gap between sections */}
                   {visIdx > 0 && (
                     <tr aria-hidden="true">
-                      <td colSpan={12} className="h-2 bg-background p-0" />
+                      <td colSpan={12} className="h-3 bg-background p-0" />
                     </tr>
                   )}
 
                   {/* Division group header */}
-                  <tr className="border-t border-b border-border/60 bg-muted/30">
-                    <td colSpan={12} className="px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-foreground">
-                          {div.code} – {div.name}
-                        </span>
+                  <tr className="border-y border-border bg-muted/50">
+                    <td colSpan={12} className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="mr-2 flex min-w-56 items-center gap-2">
+                          <span className="font-mono text-[11px] font-semibold tabular-nums text-muted-foreground">
+                            {div.code}
+                          </span>
+                          <span className="text-sm font-semibold text-foreground">
+                            {div.name}
+                          </span>
+                        </div>
                         {intendCount > 0 && (
-                          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                             {intendCount} intending
                           </span>
                         )}
                         {bidCount > 0 && (
-                          <span className="rounded bg-status-success/10 px-1.5 py-0.5 text-[10px] font-medium text-status-success">
+                          <span className="rounded-full bg-status-success/10 px-2 py-0.5 text-[10px] font-medium text-status-success">
                             {bidCount} bid{bidCount !== 1 ? "s" : ""} received
                           </span>
                         )}
                         {awardedSub && (
-                          <span className="rounded bg-status-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-status-warning">
-                            ★ Awarded: {awardedSub.company ?? "—"}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-status-warning/10 px-2 py-0.5 text-[10px] font-medium text-status-warning">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Awarded: {awardedSub.company ?? "Unassigned"}
                           </span>
                         )}
-                        <span className="ml-auto flex items-center gap-3 text-[10px] text-muted-foreground">
+                        <span className="ml-auto flex flex-wrap items-center justify-end gap-3 text-[10px] text-muted-foreground">
                           {estimateBudget > 0 && (
                             <span>Budget: {formatCurrencyFull(estimateBudget)}</span>
                           )}
@@ -2592,9 +2637,13 @@ function SubListTab({
                   {divRows.map((sub, idx) => (
                     <React.Fragment key={sub.id}>
                     <tr
-                      className={`border-b border-border/20 hover:bg-muted/20 ${sub.is_awarded ? "bg-status-warning/5" : ""}`}
+                      className={`border-b border-border/30 transition-colors hover:bg-muted/30 ${sub.is_awarded ? "bg-status-warning/5" : ""}`}
                     >
-                      <td className="py-1 pl-4 pr-2 text-muted-foreground">{sub.position ?? idx + 1}</td>
+                      <td className="py-1.5 pl-4 pr-2 text-muted-foreground">
+                        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-muted px-1.5 font-mono text-[10px] tabular-nums">
+                          {sub.position ?? idx + 1}
+                        </span>
+                      </td>
 
                       {/* Company — combobox linked to Directory */}
                       <td className="px-2 py-1">
@@ -2880,7 +2929,7 @@ function SubListTab({
                             title={sub.is_awarded ? "Revoke award" : "Award this sub"}
                             onClick={() => void onAwardSub(sub.id, sub.is_awarded)}
                           >
-                            <span className="text-base leading-none">{sub.is_awarded ? "★" : "☆"}</span>
+                            <CheckCircle2 className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -2980,8 +3029,23 @@ function SubListTab({
             {/* Empty state when all filtered out */}
             {visibleDivisions.length === 0 && (
               <tr>
-                <td colSpan={12} className="py-10 text-center text-muted-foreground">
-                  No subs match the current filters.
+                <td colSpan={12} className="py-12 text-center">
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-foreground">No subs match the current filters</div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-muted-foreground"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setFilterIntend("all");
+                        setFilterBid("all");
+                        setSortConfig(null);
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  </div>
                 </td>
               </tr>
             )}
@@ -3238,7 +3302,7 @@ function buildPrintHTML(opts: {
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Estimate – ${opts.estimate.title}</title>
 <style>
-  body{font-family:Arial,sans-serif;font-size:11px;color:#111;margin:0;padding:24px;}
+  body{font-family:system-ui,sans-serif;font-size:11px;color:#111;margin:0;padding:24px;}
   table{width:100%;border-collapse:collapse;}
   .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #d97706;}
   .logo{font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#d97706;}
