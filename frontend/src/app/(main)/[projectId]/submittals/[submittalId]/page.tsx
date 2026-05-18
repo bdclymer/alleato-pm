@@ -11,6 +11,15 @@ interface Props {
   params: Promise<{ projectId: string; submittalId: string }>;
 }
 
+type SubmittalDetailBase = Omit<
+  SubmittalDetail,
+  "attachments" | "responsible_contractor" | "responsible_contractor_id"
+>;
+
+type SubmittalDetailRow = SubmittalDetailBase & {
+  responsible_contractor_id: string | number | null;
+};
+
 export default async function SubmittalDetailPage({ params }: Props) {
   const { projectId, submittalId } = await params;
   const supabase = createServiceClient();
@@ -68,8 +77,13 @@ export default async function SubmittalDetailPage({ params }: Props) {
     entityId: submittalId,
   });
 
+  const submittalRow = submittal as SubmittalDetailRow;
   const submittalDetail: SubmittalDetail = {
-    ...(submittal as Omit<SubmittalDetail, "responsible_contractor">),
+    ...submittalRow,
+    responsible_contractor_id:
+      submittalRow.responsible_contractor_id === null
+        ? null
+        : String(submittalRow.responsible_contractor_id),
     responsible_contractor: null,
     attachments: attachments.map((attachment) => ({
       id: attachment.document_metadata_id,

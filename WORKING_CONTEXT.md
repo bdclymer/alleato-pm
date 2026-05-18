@@ -7,7 +7,7 @@
 
 ## Current focus
 
-**Status:** Pattern C attachment consolidation — batch 2 shipped and browser-verified; legacy table drop/form audit remains.
+**Status:** Pattern C attachment consolidation — batch 2 shipped, browser-verified, and form audit guardrailed; legacy table drop remains.
 **Last updated:** 2026-05-18
 **Last worked on by:** Codex (Pattern C attachment migration — batch 2)
 
@@ -55,9 +55,16 @@ Codex used `.codex/skills/pattern-c-attachment-migration/SKILL.md` to continue t
 - Temporary verification uploads were removed from `project-files`, `document_metadata`, and the relevant junction tables.
 - Browser verification exposed and fixed an owner-invoice schema bug: ownership now resolves through `owner_invoices.prime_contract_id -> prime_contracts.project_id` because `owner_invoices` has no direct `project_id`.
 - A stale Next.js `.next` dev cache produced transient local 500s (`Cannot find module './vendor-chunks/...` / `Cannot read properties of undefined (reading 'call')`); clearing `.next` and restarting the frontend restored route execution.
+- Follow-up form audit found one remaining dual-pattern reader: submittal detail embedded-selected legacy `submittal_attachments` while upload wrote Pattern C. Fixed the server page to hydrate attachments from `submittal_doc_links`/`document_metadata` through `listLinkedPatternCDocuments()`.
+- Change event form/upload callers now post one file per request in parallel, matching the Pattern C upload route contract and preserving multi-file behavior.
+- Added/reused `scripts/audit-pattern-c-attachments.mjs`; `node scripts/audit-pattern-c-attachments.mjs` passes and fails on direct legacy table access, embedded legacy relation selects, or generated `Database["public"]["Tables"][legacy_table]` usage in app source.
+- Targeted verification passed:
+  - `node scripts/audit-pattern-c-attachments.mjs`
+  - `npm run check:routes`
+  - targeted `npx eslint ...` on touched files (0 errors; pre-existing design-system warnings only)
+  - `cd frontend && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false`
 
 **Still pending before closeout:**
-- Form audit: sweep the app for any remaining dual-pattern writer/reader mismatch.
 - Recreate `commitments_schema_gaps` without legacy attachment table dependency before dropping legacy tables.
 - Drop the legacy attachment tables only after final live reconciliation:
   - `cco_attachments`
