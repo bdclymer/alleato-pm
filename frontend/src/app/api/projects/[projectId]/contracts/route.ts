@@ -99,9 +99,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .select("contract_id, approved_change_orders, pending_change_orders, draft_change_orders, revised_contract_amount, invoiced_amount, payments_received, remaining_balance, percent_paid")
         .eq("project_id", projectIdNum),
       supabase
-        .from("attachments")
-        .select("attached_to_id")
-        .eq("attached_to_table", "prime_contracts"),
+        .from("prime_contract_documents")
+        .select("prime_contract_id"),
     ]);
 
     if (contractsResult.error) {
@@ -114,7 +113,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     );
     const attachmentCountByContractId = new Map<string, number>();
     for (const att of attachmentCountsResult.data ?? []) {
-      const id = att.attached_to_id as string;
+      const id = att.prime_contract_id as string;
       attachmentCountByContractId.set(id, (attachmentCountByContractId.get(id) ?? 0) + 1);
     }
 

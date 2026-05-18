@@ -1,158 +1,124 @@
-import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import {
+  listLinkedPatternCDocuments,
+  uploadAndLinkPatternCDocument,
+} from "@/lib/documents/pattern-c-attachments";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
-interface RouteParams {
-  params: Promise<{ projectId: string; primeCoId: string }>;
+async function verifyPrimeContractChangeOrder(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectId: number,
+  primeCoId: number,
+) {
+  const { data: pcco, error: pccoError } = await supabase
+    .from("prime_contract_change_orders")
+    .select("id")
+    .eq("id", primeCoId)
+    .eq("project_id", projectId)
+    .single();
+
+  return !pccoError && !!pcco;
 }
 
-/**
- * GET /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments
- * Returns all attachments for a PCCO
- */
 export const GET = withApiGuardrails(
   "projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments#GET",
-  async ({ request, params }) => {
-  
+  async ({ params }) => {
     const { projectId, primeCoId } = await params;
+    const projectIdNum = Number(projectId);
+    const primeCoIdNum = Number(primeCoId);
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
-    // Authenticate caller
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments#GET", message: "Authentication required." });
     }
 
-    // Verify the PCCO belongs to the requested project
-    const { data: pcco, error: pccoError } = await supabase
-      .from("prime_contract_change_orders")
-      .select("id")
-      .eq("id", Number(primeCoId))
-      .eq("project_id", Number(projectId))
-      .single();
-
-    if (pccoError || !pcco) {
+    if (!(await verifyPrimeContractChangeOrder(supabase, projectIdNum, primeCoIdNum))) {
       return NextResponse.json({ error: "Change order not found" }, { status: 404 });
     }
 
-    const { data: attachments, error } = await supabase
-      .from("pcco_attachments")
-      .select("*")
-      .eq("pcco_id", Number(primeCoId))
-      .order("uploaded_at", { ascending: false });
+    try {
+      const attachments = await listLinkedPatternCDocuments({
+        supabase,
+        serviceClient,
+        entityType: "prime_contract_change_order",
+        entityId: primeCoId,
+      });
 
-    if (error) {
+      return NextResponse.json({
+        data: attachments.map((attachment) => ({
+          id: attachment.document_metadata_id,
+          fileName: attachment.file_name ?? attachment.title,
+          filePath: attachment.file_path,
+          fileSize: attachment.source_size,
+          mimeType: attachment.mime_type,
+          uploadedAt: attachment.attached_at,
+          downloadUrl: attachment.download_url,
+        })),
+      });
+    } catch (error) {
       return apiErrorResponse(error);
     }
-
-    const formatted = (attachments || []).map((a) => ({
-      id: a.id,
-      fileName: a.file_name,
-      filePath: a.file_path,
-      fileSize: a.file_size,
-      mimeType: a.mime_type,
-      uploadedAt: a.uploaded_at,
-    }));
-
-    return NextResponse.json({ data: formatted });
-    },
+  },
 );
 
-/**
- * POST /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments
- * Upload an attachment to a PCCO
- */
 export const POST = withApiGuardrails(
   "projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments#POST",
   async ({ request, params }) => {
-  
     const { projectId, primeCoId } = await params;
-
-    const guard = await requirePermission(Number(projectId), "change_orders", "write");
+    const projectIdNum = Number(projectId);
+    const primeCoIdNum = Number(primeCoId);
+    const guard = await requirePermission(projectIdNum, "change_orders", "write");
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
+    const serviceClient = createServiceClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments#POST", message: "Authentication required." });
     }
 
-    // Verify the PCCO belongs to the requested project before accepting the upload
-    const { data: pcco, error: pccoError } = await supabase
-      .from("prime_contract_change_orders")
-      .select("id")
-      .eq("id", Number(primeCoId))
-      .eq("project_id", Number(projectId))
-      .single();
-
-    if (pccoError || !pcco) {
+    if (!(await verifyPrimeContractChangeOrder(supabase, projectIdNum, primeCoIdNum))) {
       return NextResponse.json({ error: "Change order not found" }, { status: 404 });
     }
 
     const formData = await request.formData();
-    const file = (formData.get("file") || formData.get("files")) as File;
-
+    const file = (formData.get("file") || formData.get("files")) as File | null;
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const storagePath = `${projectId}/pcco-attachments/${primeCoId}/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("project-files")
-      .upload(storagePath, file, {
-        contentType: file.type,
-        upsert: false,
+    try {
+      const attachment = await uploadAndLinkPatternCDocument({
+        supabase,
+        serviceClient,
+        file,
+        projectId: projectIdNum,
+        entityType: "prime_contract_change_order",
+        entityId: primeCoId,
+        userId: user.id,
       });
 
-    if (uploadError) {
       return NextResponse.json(
-        { error: "Failed to upload file", details: uploadError.message },
-        { status: 400 },
+        {
+          id: attachment.documentMetadataId,
+          fileName: attachment.title,
+          filePath: attachment.filePath,
+          fileSize: attachment.fileSize,
+          mimeType: attachment.mimeType,
+          uploadedAt: attachment.attachedAt,
+          downloadUrl: attachment.signedUrl,
+        },
+        { status: 201 },
       );
+    } catch (error) {
+      return apiErrorResponse(error);
     }
-
-    const { data: attachment, error: dbError } = await supabase
-      .from("pcco_attachments")
-      .insert({
-        pcco_id: Number(primeCoId),
-        file_name: file.name,
-        file_path: storagePath,
-        file_size: file.size,
-        mime_type: file.type,
-        uploaded_by: user.id,
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      await supabase.storage.from("project-files").remove([storagePath]);
-      return NextResponse.json(
-        { error: "Failed to create attachment record", details: dbError.message },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json(
-      {
-        id: attachment.id,
-        fileName: attachment.file_name,
-        filePath: attachment.file_path,
-        fileSize: attachment.file_size,
-        mimeType: attachment.mime_type,
-        uploadedAt: attachment.uploaded_at,
-      },
-      { status: 201 },
-    );
-    },
+  },
 );

@@ -1,92 +1,35 @@
-import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { deletePatternCDocumentLink } from "@/lib/documents/pattern-c-attachments";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
-import { logger } from "@/lib/logger";
+import { createClient } from "@/lib/supabase/server";
 
-interface RouteParams {
-  params: Promise<{ projectId: string; commitmentCoId: string; attachmentId: string }>;
-}
-
-/**
- * DELETE /api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]
- * Delete a single CCO attachment
- */
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]#DELETE",
-  async ({ request, params }) => {
-  
+  async ({ params }) => {
     const { projectId, commitmentCoId, attachmentId } = await params;
-    const supabase = await createClient();
+    const projectIdNum = Number(projectId);
+    const guard = await requirePermission(projectIdNum, "contracts", "admin");
+    if (guard.denied) return guard.response;
 
-    // Authenticate
+    const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]#DELETE", message: "Authentication required." });
     }
 
-    // Verify the CCO belongs to this project via its commitment
-    const { data: cco, error: ccoError } = await supabase
-      .from("contract_change_orders")
-      .select("id, contract_id")
-      .eq("id", commitmentCoId)
-      .single();
-
-    if (ccoError || !cco) {
-      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
+    try {
+      await deletePatternCDocumentLink({
+        supabase,
+        entityType: "commitment_change_order",
+        entityId: commitmentCoId,
+        documentMetadataId: attachmentId,
+      });
+      return NextResponse.json({ message: "Attachment deleted successfully" });
+    } catch (error) {
+      return apiErrorResponse(error);
     }
-
-    const { data: commitment } = await supabase
-      .from("commitments_unified")
-      .select("id, project_id")
-      .eq("id", cco.contract_id)
-      .is("deleted_at", null)
-      .single();
-
-    if (!commitment || commitment.project_id !== Number(projectId)) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    // Fetch the attachment row — scoped to the parent CCO to prevent cross-CO deletion
-    const { data: attachment, error: fetchError } = await supabase
-      .from("cco_attachments")
-      .select("id, file_path")
-      .eq("id", attachmentId)
-      .eq("cco_id", commitmentCoId)
-      .single();
-
-    if (fetchError || !attachment) {
-      return NextResponse.json(
-        { error: "Attachment not found" },
-        { status: 404 },
-      );
-    }
-
-    // Delete DB row first; storage removal is best-effort cleanup
-    const { error: deleteError } = await supabase
-      .from("cco_attachments")
-      .delete()
-      .eq("id", attachmentId)
-      .eq("cco_id", commitmentCoId);
-
-    if (deleteError) {
-      return NextResponse.json(
-        { error: "Failed to delete attachment", details: deleteError.message },
-        { status: 400 },
-      );
-    }
-
-    // Remove from storage (best-effort — log errors but don't fail the request)
-    const { error: storageError } = await supabase.storage
-      .from("project-files")
-      .remove([attachment.file_path]);
-
-    if (storageError) {
-      logger.error({ msg: "Storage cleanup failed for CCO attachment:", data: storageError.message });
-    }
-
-    return NextResponse.json({ message: "Attachment deleted successfully" });
-    },
+  },
 );

@@ -1,7 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse, classifyError } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 import { updateContractSchema } from "../validation";
@@ -235,8 +234,6 @@ export const DELETE = withApiGuardrails(
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
-    const serviceClient = createServiceClient();
-
     // Get current user
     const {
       data: { user },
@@ -298,19 +295,6 @@ export const DELETE = withApiGuardrails(
         { status: classified.status },
       );
     }
-
-    // Keep uploaded files, but detach legacy polymorphic links from deleted contract
-    // to avoid stale references in the attachments table.
-    // NOTE: prime_contract_attachments now provides FK-enforced links and will cascade.
-    await serviceClient
-      .from("attachments")
-      .update({
-        attached_to_id: null,
-        attached_to_table: null,
-      })
-      .eq("project_id", parseInt(projectId, 10))
-      .eq("attached_to_table", "prime_contracts")
-      .eq("attached_to_id", contractId);
 
     return NextResponse.json(
       { message: "Contract deleted successfully" },

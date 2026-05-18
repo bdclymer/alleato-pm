@@ -1,196 +1,100 @@
+import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
+import {
+  deletePatternCDocumentLink,
+  listLinkedPatternCDocuments,
+} from "@/lib/documents/pattern-c-attachments";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
-import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
-interface RouteParams {
-  params: Promise<{
-    projectId: string;
-    changeEventId: string;
-    attachmentId: string;
-  }>;
-}
-
-/**
- * GET /api/projects/[id]/change-events/[changeEventId]/attachments/[attachmentId]
- * Returns a single attachment metadata
- */
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]#GET",
-  async ({ request, params }) => {
-  
+  async ({ params }) => {
     const { projectId, changeEventId, attachmentId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
-    // Verify change event exists
     const { data: changeEvent, error: eventError } = await supabase
-      .from('change_events')
-      .select('id')
-      .eq('project_id', parseInt(projectId, 10))
-      .eq('id', changeEventId)
-      .is('deleted_at', null)
+      .from("change_events")
+      .select("id")
+      .eq("project_id", Number(projectId))
+      .eq("id", changeEventId)
+      .is("deleted_at", null)
       .single();
 
     if (eventError || !changeEvent) {
-      return NextResponse.json(
-        { error: 'Change event not found' },
-        { status: 404 }
-      );
+      return Response.json({ success: false, error_message: "Change event not found", error: "Change event not found" }, { status: 404 });
     }
 
-    // Get attachment
-    const { data: attachment, error } = await supabase
-      .from('change_event_attachments')
-      .select('*')
-      .eq('change_event_id', changeEventId)
-      .eq('id', attachmentId)
-      .single();
-
-    if (error || !attachment) {
-      return NextResponse.json(
-        { error: 'Attachment not found' },
-        { status: 404 }
-      );
-    }
-
-    // Resolve uploader (no FK relationship; fetch separately when present)
-    let uploader: { id: string; email: string | null } | null = null;
-    if (attachment.uploaded_by) {
-      const { data: userRow } = await supabase
-        .from('user_profiles')
-        .select('id, email')
-        .eq('id', attachment.uploaded_by)
-        .maybeSingle();
-      if (userRow) {
-        uploader = { id: userRow.id, email: userRow.email ?? null };
+    try {
+      const attachments = await listLinkedPatternCDocuments({
+        supabase,
+        serviceClient,
+        entityType: "change_event",
+        entityId: changeEventId,
+      });
+      const attachment = attachments.find((row) => row.document_metadata_id === attachmentId);
+      if (!attachment) {
+        return Response.json({ success: false, error_message: "Attachment not found", error: "Attachment not found" }, { status: 404 });
       }
+
+      return NextResponse.json({
+        id: attachment.document_metadata_id,
+        changeEventId,
+        fileName: attachment.file_name ?? attachment.title,
+        filePath: attachment.file_path,
+        fileSize: attachment.source_size,
+        mimeType: attachment.mime_type,
+        uploadedBy: null,
+        uploadedAt: attachment.attached_at,
+        publicUrl: attachment.download_url,
+        downloadUrl: attachment.download_url,
+        _links: {
+          self: `/api/projects/${projectId}/change-events/${changeEventId}/attachments/${attachmentId}`,
+          download: `/api/projects/${projectId}/change-events/${changeEventId}/attachments/${attachmentId}/download`,
+          changeEvent: `/api/projects/${projectId}/change-events/${changeEventId}`,
+        },
+      });
+    } catch (error) {
+      return apiErrorResponse(error);
     }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('project-files')
-      .getPublicUrl(attachment.file_path);
-
-    // Format response
-    const response = {
-      id: attachment.id,
-      changeEventId: attachment.change_event_id,
-      fileName: attachment.file_name,
-      filePath: attachment.file_path,
-      fileSize: attachment.file_size,
-      mimeType: attachment.mime_type,
-      uploadedBy: uploader,
-      uploadedAt: attachment.uploaded_at,
-      publicUrl,
-      downloadUrl: `/api/projects/${projectId}/change-events/${changeEventId}/attachments/${attachmentId}/download`,
-      _links: {
-        self: `/api/projects/${projectId}/change-events/${changeEventId}/attachments/${attachmentId}`,
-        download: `/api/projects/${projectId}/change-events/${changeEventId}/attachments/${attachmentId}/download`,
-        changeEvent: `/api/projects/${projectId}/change-events/${changeEventId}`,
-      },
-    };
-
-    return NextResponse.json(response);
-    },
+  },
 );
 
-/**
- * DELETE /api/projects/[id]/change-events/[changeEventId]/attachments/[attachmentId]
- * Deletes a single attachment
- */
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]#DELETE",
-  async ({ request, params }) => {
-  
+  async ({ params }) => {
     const { projectId, changeEventId, attachmentId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
+    const projectIdNum = Number(projectId);
     const guard = await requirePermission(projectIdNum, "change_orders", "admin");
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
-
-    // Get current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
+    const serviceClient = createServiceClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]#DELETE", message: "Authentication required." });
     }
 
-    // Verify change event exists
-    const { data: changeEvent, error: eventError } = await supabase
-      .from('change_events')
-      .select('id')
-      .eq('project_id', parseInt(projectId, 10))
-      .eq('id', changeEventId)
-      .is('deleted_at', null)
-      .single();
+    try {
+      await deletePatternCDocumentLink({
+        supabase,
+        entityType: "change_event",
+        entityId: changeEventId,
+        documentMetadataId: attachmentId,
+      });
 
-    if (eventError || !changeEvent) {
-      return NextResponse.json(
-        { error: 'Change event not found' },
-        { status: 404 }
-      );
+      await serviceClient
+        .from("change_events")
+        .update({ updated_at: new Date().toISOString(), updated_by: user.id })
+        .eq("id", changeEventId);
+
+      return new NextResponse(null, { status: 204 });
+    } catch (error) {
+      return apiErrorResponse(error);
     }
-
-    // Get attachment details before deletion
-    const { data: attachment, error: fetchError } = await supabase
-      .from('change_event_attachments')
-      .select('file_path, file_name')
-      .eq('change_event_id', changeEventId)
-      .eq('id', attachmentId)
-      .single();
-
-    if (fetchError || !attachment) {
-      return NextResponse.json(
-        { error: 'Attachment not found' },
-        { status: 404 }
-      );
-    }
-
-    // Delete from storage
-    const { error: storageError } = await supabase.storage
-      .from('project-files')
-      .remove([attachment.file_path]);
-
-    if (storageError) {
-      }
-
-    // Delete database record
-    const { error: deleteError } = await supabase
-      .from('change_event_attachments')
-      .delete()
-      .eq('id', attachmentId);
-
-    if (deleteError) {
-      return NextResponse.json(
-        { error: 'Failed to delete attachment', details: deleteError.message },
-        { status: 400 }
-      );
-    }
-
-    // Update change event modification timestamp
-    await supabase
-      .from('change_events')
-      .update({
-        updated_at: new Date().toISOString(),
-        updated_by: user.id,
-      })
-      .eq('id', changeEventId);
-
-    // Create audit log entry
-    await supabase.from('change_event_history').insert({
-      change_event_id: changeEventId,
-      field_name: 'attachment_removed',
-      old_value: attachment.file_name,
-      changed_by: user.id,
-      change_type: 'UPDATE',
-    });
-
-    return new NextResponse(null, { status: 204 });
-    },
+  },
 );

@@ -316,7 +316,7 @@ drawing_revisions.document_metadata_id  →  document_metadata.id   (per revisio
 1. **Taxonomy** — create + seed ✅ (migration `20260520000000` + `20260520010000`)
 2. **Column on `document_metadata`** — add `document_type` FK + indexes ✅ (migration `20260520020000`)
 3. **Backfill `document_type`** from `category` + path patterns ✅ (migration `20260520030000`)
-4. **Junction tables per entity** ✅ (migration `20260523110000` — all 9 junction tables live)
+4. **Junction tables per entity** ✅ (migration `20260523110000` created the first 9 junction tables; migration `20260524020000` added remaining attachment junctions for commitment COs, prime-contract COs, prime-contract PCOs, and subcontractor invoices)
 5. **Drawings hybrid** ✅ (migrations `20260523120000` — `drawings.document_metadata_id` + `drawing_revisions.document_metadata_id`)
 6. **Frontend file picker** ✅ `<DocumentPicker>` + `<LinkedDocumentsList>` in `frontend/src/components/ds/document-picker.tsx`; wired to Commitments detail page `AttachmentsTab`
 7. **Embedding pipeline extension** ✅ `embed_pending_attachment_documents()` in `ocr_worker.py`; hooked into `run_graph_sync()`
@@ -328,8 +328,8 @@ drawing_revisions.document_metadata_id  →  document_metadata.id   (per revisio
 - Each entity detail page: junction join → `document_metadata` for the file list; `<DocumentPicker>` component handles attachment
 - Owner briefing builder: joins `insight_card_evidence.source_document_id` → `document_metadata` and can resolve to taxonomy type for richer rendering
 
-### 12.9 Status summary (as of 2026-05-17)
+### 12.9 Status summary (as of 2026-05-18)
 
-- **Landed:** taxonomy, column, path-based backfill (82% → ~83%), all 9 junction tables, drawings hybrid FKs, frontend picker, embedding extension, `email_attachments` legacy backfill (471 rows promoted)
+- **Landed:** taxonomy, column, path-based backfill (82% → ~83%), Pattern C junction tables, drawings hybrid FKs, frontend picker, embedding extension, `email_attachments` legacy backfill (471 rows promoted), and per-entity attachment route conversion to Pattern C
 - **Running:** 30-day `documents` table soak audit — drop eligible **2026-06-17** if `documents_access_audit` shows zero rows
-- **Deferred:** LLM categorization of remaining ~17% generic rows; per-entity legacy attachment tables (`cco_attachments`, `invoice_attachments`, etc.) migration deferred until after soak drop
+- **Deferred:** LLM categorization of remaining ~17% generic rows; legacy attachment table drops are pending final browser verification and row reconciliation

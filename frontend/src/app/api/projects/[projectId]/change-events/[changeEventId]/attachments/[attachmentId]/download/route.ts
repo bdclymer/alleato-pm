@@ -1,87 +1,67 @@
+import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
+import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
-import { apiErrorResponse } from "@/lib/api-error";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
-interface RouteParams {
-  params: Promise<{
-    projectId: string;
-    changeEventId: string;
-    attachmentId: string;
-  }>;
-}
-
-/**
- * GET /api/projects/[id]/change-events/[changeEventId]/attachments/[attachmentId]/download
- * Downloads an attachment file from Supabase Storage
- */
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download#GET",
-  async ({ request, params }) => {
-  
+  async ({ params }) => {
     const { projectId, changeEventId, attachmentId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download#GET", message: "Authentication required." });
     }
 
-    // Verify change event exists and belongs to project
     const { data: changeEvent, error: eventError } = await supabase
-      .from('change_events')
-      .select('id')
-      .eq('project_id', parseInt(projectId, 10))
-      .eq('id', changeEventId)
-      .is('deleted_at', null)
+      .from("change_events")
+      .select("id")
+      .eq("project_id", Number(projectId))
+      .eq("id", changeEventId)
+      .is("deleted_at", null)
       .single();
 
     if (eventError || !changeEvent) {
-      return NextResponse.json(
-        { error: 'Change event not found' },
-        { status: 404 }
-      );
+      return Response.json({ success: false, error_message: "Change event not found", error: "Change event not found" }, { status: 404 });
     }
 
-    // Get attachment metadata
-    const { data: attachment, error: fetchError } = await supabase
-      .from('change_event_attachments')
-      .select('file_path, file_name, mime_type')
-      .eq('change_event_id', changeEventId)
-      .eq('id', attachmentId)
-      .single();
+    try {
+      const attachments = await listLinkedPatternCDocuments({
+        supabase,
+        serviceClient,
+        entityType: "change_event",
+        entityId: changeEventId,
+      });
+      const attachment = attachments.find((row) => row.document_metadata_id === attachmentId);
+      if (!attachment?.file_path) {
+        return Response.json({ success: false, error_message: "Attachment not found", error: "Attachment not found" }, { status: 404 });
+      }
 
-    if (fetchError || !attachment) {
-      return NextResponse.json(
-        { error: 'Attachment not found' },
-        { status: 404 }
-      );
+      const { data: fileData, error: downloadError } = await serviceClient.storage
+        .from("project-files")
+        .download(attachment.file_path);
+
+      if (downloadError || !fileData) {
+        return NextResponse.json(
+          { error: "Failed to download file", details: downloadError?.message },
+          { status: 404 },
+        );
+      }
+
+      const buffer = Buffer.from(await fileData.arrayBuffer());
+      const headers = new Headers();
+      headers.set("Content-Type", attachment.mime_type || "application/octet-stream");
+      headers.set("Content-Disposition", `attachment; filename="${attachment.file_name ?? attachment.title ?? "attachment"}"`);
+      headers.set("Content-Length", buffer.length.toString());
+
+      return new NextResponse(buffer, { headers });
+    } catch (error) {
+      return apiErrorResponse(error);
     }
-
-    // Download file from Supabase Storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from('project-files')
-      .download(attachment.file_path);
-
-    if (downloadError || !fileData) {
-      return NextResponse.json(
-        {
-          error: 'Failed to download file',
-          details: downloadError?.message
-        },
-        { status: 404 }
-      );
-    }
-
-    // Convert blob to buffer
-    const buffer = Buffer.from(await fileData.arrayBuffer());
-
-    // Set appropriate headers for file download
-    const headers = new Headers();
-    headers.set('Content-Type', attachment.mime_type || 'application/octet-stream');
-    headers.set('Content-Disposition', `attachment; filename="${attachment.file_name}"`);
-    headers.set('Content-Length', buffer.length.toString());
-
-    return new NextResponse(buffer, { headers });
-    },
+  },
 );

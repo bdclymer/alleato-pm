@@ -7,9 +7,48 @@
 
 ## Current focus
 
-**Status:** Pattern C attachment consolidation — migration skill + manifest created; batch 2 route conversion still pending.
+**Status:** Pattern C attachment consolidation — batch 2 route conversion in progress; shared registry + remaining junction migration applied.
 **Last updated:** 2026-05-18
-**Last worked on by:** Codex (Pattern C attachment migration skill + guardrails)
+**Last worked on by:** Codex (Pattern C attachment migration — batch 2)
+
+## Pattern C attachment migration — batch 2 (2026-05-18)
+
+Codex used `.codex/skills/pattern-c-attachment-migration/SKILL.md` to continue the consolidation instead of repeating per-route one-off logic.
+
+**Shipped in working tree:**
+- Created/applied `supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql`.
+- New Pattern C junctions:
+  - `commitment_change_order_documents`
+  - `prime_contract_change_order_documents`
+  - `prime_contract_pco_documents`
+  - `subcontractor_invoice_documents`
+- Extended `user_can_access_entity()` for:
+  - `commitment_change_order`
+  - `prime_contract_change_order`
+  - `prime_contract_pco`
+- Added shared frontend Pattern C registry/helper:
+  - `frontend/src/lib/documents/pattern-c-attachments.ts`
+- Refactored `/api/document-picker/upload`, `/api/document-picker/linked`, and `/api/document-picker/attach` to use the shared registry.
+- Converted legacy-compatible attachment API routes to write/read Pattern C:
+  - prime contract attachments
+  - commitment change order attachments
+  - prime contract change order attachments
+  - owner invoice attachments
+  - change event attachments
+  - submittal attachment upload
+  - prime contract PCO detail attachment reader
+- Regenerated Supabase DB types and dev-tools DB inventory after adding the new junctions.
+
+**Verification so far:**
+- `npm run check:routes` passed.
+- `npm run db:migrations:verify-applied -- supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql` passed.
+- Legacy table source grep is clean for app source after route conversion.
+- Full `tsc --noEmit` with default memory OOMed; rerun is in progress with `NODE_OPTIONS=--max-old-space-size=8192`.
+
+**Still pending before closeout:**
+- Resolve any TypeScript errors from the high-memory typecheck.
+- Run changed-file quality/finish flow with explicit task-owned file list because unrelated dirty files exist.
+- Perform browser/user-flow attachment verification if time allows; otherwise leave it as the next required validation before table drops.
 
 ## Pattern C attachment migration system pass (2026-05-18)
 

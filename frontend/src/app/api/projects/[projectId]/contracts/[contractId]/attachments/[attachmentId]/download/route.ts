@@ -1,23 +1,16 @@
-import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
+import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
-interface RouteParams {
-  params: Promise<{ projectId: string; contractId: string; attachmentId: string }>;
-}
-
-/**
- * GET /api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download
- * Resolves attachment URL and redirects for download/open.
- */
 export const GET = withApiGuardrails(
   "projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download#GET",
-  async ({ request, params }) => {
-  
+  async ({ params }) => {
     const { projectId, contractId, attachmentId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     const { data: contract } = await supabase
       .from("prime_contracts")
@@ -27,41 +20,24 @@ export const GET = withApiGuardrails(
       .single();
 
     if (!contract) {
-      return NextResponse.json({ error: "Contract not found" }, { status: 404 });
+      return Response.json({ success: false, error_message: "Contract not found", error: "Contract not found" }, { status: 404 });
     }
 
-    let attachment: { id: string; url: string | null } | null = null;
-
-    if (!attachment) {
-      const { data: legacyAttachment, error: legacyError } = await supabase
-        .from("attachments")
-        .select("id, url")
-        .eq("id", attachmentId)
-        .eq("attached_to_id", contractId)
-        .eq("attached_to_table", "prime_contracts")
-        .single();
-
-      if (legacyError || !legacyAttachment) {
-        return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
+    try {
+      const attachments = await listLinkedPatternCDocuments({
+        supabase,
+        serviceClient,
+        entityType: "prime_contract",
+        entityId: contractId,
+      });
+      const attachment = attachments.find((row) => row.document_metadata_id === attachmentId);
+      if (!attachment?.download_url) {
+        return Response.json({ success: false, error_message: "Attachment not found", error: "Attachment not found" }, { status: 404 });
       }
 
-      attachment = legacyAttachment;
+      return NextResponse.redirect(new URL(attachment.download_url));
+    } catch (error) {
+      return apiErrorResponse(error);
     }
-
-    if (!attachment.url) {
-      return NextResponse.json(
-        { error: "Attachment URL is missing for this record" },
-        { status: 400 },
-      );
-    }
-
-    let redirectTo: URL;
-    try {
-      redirectTo = new URL(attachment.url);
-    } catch {
-      redirectTo = new URL(attachment.url, process.env.NEXT_PUBLIC_SUPABASE_URL);
-    }
-
-    return NextResponse.redirect(redirectTo);
-    },
+  },
 );

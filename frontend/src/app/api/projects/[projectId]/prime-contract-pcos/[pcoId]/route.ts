@@ -11,9 +11,11 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -49,6 +51,7 @@ export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
   
     const { projectId, pcoId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     // Auth check
     const {
@@ -124,12 +127,12 @@ export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
       .eq("pco_id", pcoId)
       .eq("pco_type", "prime");
 
-    // Get attachments
-    const { data: attachments } = await supabase
-      .from("prime_contract_pco_attachments")
-      .select("id, file_name, file_path, file_size, mime_type, uploaded_at, uploaded_by")
-      .eq("pco_id", pcoId)
-      .order("uploaded_at", { ascending: false });
+    const attachments = await listLinkedPatternCDocuments({
+      supabase,
+      serviceClient,
+      entityType: "prime_contract_pco",
+      entityId: pcoId,
+    });
 
     // Resolve creator display name (best effort)
     let creatorName: string | null = null;
@@ -156,7 +159,15 @@ export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
       line_items_count: items.length,
       calculated_amount: pco.total_amount ?? totalAmount,
       change_event_links: changeEventLinks || [],
-      attachments: attachments || [],
+      attachments: attachments.map((attachment) => ({
+        id: attachment.document_metadata_id,
+        file_name: attachment.file_name ?? attachment.title,
+        file_path: attachment.file_path,
+        file_size: attachment.source_size,
+        mime_type: attachment.mime_type,
+        uploaded_at: attachment.attached_at,
+        download_url: attachment.download_url,
+      })),
       created_by_name: creatorName,
       _links: {
         self: `/api/projects/${projectId}/prime-contract-pcos/${pcoId}`,

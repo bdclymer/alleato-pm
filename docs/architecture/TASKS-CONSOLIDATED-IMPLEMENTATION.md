@@ -57,15 +57,16 @@
 - [x] Build `<DocumentPicker>` component (`frontend/src/components/ds/document-picker.tsx`)
 - [x] Extend `embed_pending_graph_documents()` for new types
 - [x] Extend `findProjectDocuments` AI tool enum to match taxonomy
-- [ ] Migrate per-entity attachment tables → `document_metadata` + junctions (deferred until after 2026-06-17 soak)
-  - [ ] `cco_attachments`
-  - [ ] `invoice_attachments`
-  - [ ] `submittal_attachments`
-  - [ ] `change_event_attachments`
-  - [ ] `purchase_order_attachments`
-  - [ ] `subcontract_attachments`
-  - [ ] `pcco_attachments`
-  - [ ] `prime_contract_pco_attachments`
+- [x] Migrate per-entity attachment writers/readers → `document_metadata` + junctions
+  - [x] `cco_attachments` → `commitment_change_order_documents`
+  - [x] `invoice_attachments` → `owner_invoice_documents` / `subcontractor_invoice_documents`
+  - [x] `submittal_attachments` → `submittal_doc_links`
+  - [x] `change_event_attachments` → `change_event_documents`
+  - [x] `purchase_order_attachments` → `purchase_order_documents`
+  - [x] `subcontract_attachments` → `subcontract_documents`
+  - [x] `pcco_attachments` → `prime_contract_change_order_documents`
+  - [x] `prime_contract_pco_attachments` → `prime_contract_pco_documents`
+  - [ ] Drop legacy attachment tables after browser verification and final row reconciliation
 
 ## Phase 5 — Outlook Attachment Promotion Pipeline
 

@@ -3688,6 +3688,17 @@ tables:
     purpose: "Pattern C junction: change orders ↔ document_metadata. TODO: expand metadata, identify writers/readers."
     relatedTables: []
 
+  - name: commitment_change_order_documents
+    db: MAIN
+    domain: documents
+    owner: core
+    status: live
+    purpose: "Pattern C junction: commitment change orders ↔ document_metadata. Replaces cco_attachments writers."
+    relatedTables:
+      - contract_change_orders
+      - document_metadata
+      - document_type_taxonomy
+
   - name: company_documents
     db: MAIN
     domain: documents
@@ -3735,6 +3746,39 @@ tables:
     status: live
     purpose: "Pattern C junction: owner invoices ↔ document_metadata. TODO: expand metadata, identify writers/readers."
     relatedTables: []
+
+  - name: prime_contract_change_order_documents
+    db: MAIN
+    domain: documents
+    owner: core
+    status: live
+    purpose: "Pattern C junction: prime contract change orders ↔ document_metadata. Replaces pcco_attachments writers."
+    relatedTables:
+      - prime_contract_change_orders
+      - document_metadata
+      - document_type_taxonomy
+
+  - name: prime_contract_pco_documents
+    db: MAIN
+    domain: documents
+    owner: core
+    status: live
+    purpose: "Pattern C junction: prime contract PCOs ↔ document_metadata. Replaces prime_contract_pco_attachments readers."
+    relatedTables:
+      - prime_contract_pcos
+      - document_metadata
+      - document_type_taxonomy
+
+  - name: subcontractor_invoice_documents
+    db: MAIN
+    domain: documents
+    owner: core
+    status: live
+    purpose: "Pattern C junction: subcontractor invoices ↔ document_metadata. Replaces subcontractor side of invoice_attachments."
+    relatedTables:
+      - subcontractor_invoices
+      - document_metadata
+      - document_type_taxonomy
 
   - name: submittal_doc_links
     db: MAIN

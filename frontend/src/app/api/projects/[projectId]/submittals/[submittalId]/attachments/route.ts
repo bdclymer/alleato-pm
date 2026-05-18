@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
+import { uploadAndLinkPatternCDocument } from "@/lib/documents/pattern-c-attachments";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { requirePermission } from "@/lib/permissions-guard";
 
-/**
- * POST /api/projects/[projectId]/submittals/[submittalId]/attachments
- * Uploads a single file and creates a submittal_attachments record.
- */
 export const POST = withApiGuardrails(
   "projects/[projectId]/submittals/[submittalId]/attachments#POST",
   async ({ request, params }) => {
@@ -22,15 +19,10 @@ export const POST = withApiGuardrails(
     const guard = await requirePermission(projectIdNum, "submittals", "write");
     if (guard.denied) return guard.response;
 
-    // Sensitive: auth check + storage write + DB write for project attachments.
     const supabase = await createClient();
     const serviceClient = createServiceClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
@@ -39,8 +31,7 @@ export const POST = withApiGuardrails(
       });
     }
 
-    // Validate that the submittal exists in this project before writing files/rows.
-    const { data: submittal, error: submittalError } = await serviceClient
+    const { data: submittal, error: submittalError } = await supabase
       .from("submittals")
       .select("id")
       .eq("project_id", projectIdNum)
@@ -58,64 +49,32 @@ export const POST = withApiGuardrails(
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const sanitizedFileName = file.name?.trim();
-    if (!sanitizedFileName) {
-      return NextResponse.json({ error: "Invalid file name" }, { status: 400 });
-    }
-
-    const extension = sanitizedFileName.includes(".")
-      ? sanitizedFileName.split(".").pop()
-      : "bin";
-    const storageFileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${extension}`;
-    const storagePath = `${projectId}/submittals/${submittalId}/attachments/${storageFileName}`;
-    const contentType = file.type?.trim() || "application/octet-stream";
-
-    const fileBuffer = await file.arrayBuffer();
-    const { error: uploadError } = await serviceClient.storage
-      .from("project-files")
-      .upload(storagePath, fileBuffer, {
-        contentType,
-        upsert: false,
+    try {
+      const attachment = await uploadAndLinkPatternCDocument({
+        supabase,
+        serviceClient,
+        file,
+        projectId: projectIdNum,
+        entityType: "submittal",
+        entityId: submittalId,
+        userId: user.id,
       });
 
-    if (uploadError) {
       return NextResponse.json(
-        { error: "Failed to upload file", details: uploadError.message },
-        { status: 400 },
+        {
+          id: attachment.documentMetadataId,
+          file_name: attachment.title,
+          file_url: attachment.signedUrl,
+          file_size: attachment.fileSize,
+          content_type: attachment.mimeType,
+          is_current: true,
+          uploaded_by: user.id,
+          created_at: attachment.attachedAt,
+        },
+        { status: 201 },
       );
+    } catch (error) {
+      return apiErrorResponse(error);
     }
-
-    const {
-      data: { publicUrl },
-    } = serviceClient.storage.from("project-files").getPublicUrl(storagePath);
-
-    const { data: attachment, error: insertError } = await serviceClient
-      .from("submittal_attachments")
-      .insert({
-        submittal_id: submittalId,
-        file_name: sanitizedFileName,
-        file_url: publicUrl,
-        file_size: file.size,
-        content_type: contentType,
-        is_current: true,
-        uploaded_by: user.id,
-      })
-      .select(
-        "id, file_name, file_url, file_size, content_type, is_current, uploaded_by, created_at",
-      )
-      .single();
-
-    if (insertError || !attachment) {
-      await serviceClient.storage.from("project-files").remove([storagePath]);
-      if (insertError) {
-        return apiErrorResponse(insertError);
-      }
-      return NextResponse.json(
-        { error: "Failed to create attachment record" },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json(attachment, { status: 201 });
   },
 );

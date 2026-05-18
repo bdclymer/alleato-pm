@@ -1,7 +1,7 @@
 // AUTO-GENERATED — DO NOT EDIT BY HAND.
 // Regenerate with: npm run db:inventory
 // Source: docs/architecture/tables.yaml + live Supabase (MAIN + RAG) + codebase grep.
-// Generated: 2026-05-18T16:27:52.333Z
+// Generated: 2026-05-18T17:11:26.849Z
 
 export type DbInventoryStatus =
   | "live"
@@ -76,7 +76,7 @@ export type DbInventory = {
 };
 
 export const DB_INVENTORY: DbInventory = {
-  generatedAt: "2026-05-18T16:27:52.333Z",
+  generatedAt: "2026-05-18T17:11:26.849Z",
   generatorVersion: "1",
   tables: [
     {
@@ -96,7 +96,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:52.334Z",
+        refreshedAt: "2026-05-18T17:11:26.851Z",
       },
       columns: [{ name: "hash", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -123,7 +123,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:53.529Z",
+        refreshedAt: "2026-05-18T17:11:27.480Z",
       },
       columns: [{ name: "id", dataType: "character varying", isNullable: false }, { name: "checksum", dataType: "character varying", isNullable: false }, { name: "finished_at", dataType: "timestamp with time zone", isNullable: true }, { name: "migration_name", dataType: "character varying", isNullable: false }, { name: "logs", dataType: "text", isNullable: true }, { name: "rolled_back_at", dataType: "timestamp with time zone", isNullable: true }, { name: "started_at", dataType: "timestamp with time zone", isNullable: false }, { name: "applied_steps_count", dataType: "integer", isNullable: false }],
       references: {
@@ -149,8 +149,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "856 kB",
         lastAutoanalyze: "2026-05-18T15:26:01.951Z",
         nLiveTup: 112,
-        nDeadTup: 48,
-        refreshedAt: "2026-05-18T16:27:53.939Z",
+        nDeadTup: 57,
+        refreshedAt: "2026-05-18T17:11:27.849Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "name", dataType: "text", isNullable: true }, { name: "job number", dataType: "text", isNullable: true }, { name: "start date", dataType: "date", isNullable: true }, { name: "est completion", dataType: "date", isNullable: true }, { name: "est revenue", dataType: "numeric", isNullable: true }, { name: "est profit", dataType: "numeric", isNullable: true }, { name: "address", dataType: "text", isNullable: true }, { name: "onedrive", dataType: "text", isNullable: true }, { name: "phase", dataType: "text", isNullable: true }, { name: "state", dataType: "text", isNullable: true }, { name: "category", dataType: "text", isNullable: true }, { name: "aliases", dataType: "ARRAY", isNullable: true }, { name: "team_members", dataType: "ARRAY", isNullable: true }, { name: "stage", dataType: "character varying", isNullable: true }, { name: "completion_percentage", dataType: "integer", isNullable: true }, { name: "budget", dataType: "numeric", isNullable: true }, { name: "budget_used", dataType: "numeric", isNullable: true }, { name: "summary", dataType: "text", isNullable: true }, { name: "summary_metadata", dataType: "jsonb", isNullable: true }, { name: "summary_updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "health_score", dataType: "numeric", isNullable: true }, { name: "health_status", dataType: "text", isNullable: true }, { name: "access", dataType: "text", isNullable: true }, { name: "archived", dataType: "boolean", isNullable: false }, { name: "archived_by", dataType: "uuid", isNullable: true }, { name: "archived_at", dataType: "timestamp with time zone", isNullable: true }, { name: "erp_system", dataType: "text", isNullable: true }, { name: "erp_last_job_cost_sync", dataType: "timestamp with time zone", isNullable: true }, { name: "erp_last_direct_cost_sync", dataType: "timestamp with time zone", isNullable: true }, { name: "erp_sync_status", dataType: "text", isNullable: true }, { name: "project_manager", dataType: "bigint", isNullable: true }, { name: "project_number", dataType: "character varying", isNullable: true }, { name: "stakeholders", dataType: "jsonb", isNullable: true }, { name: "budget_locked", dataType: "boolean", isNullable: true }, { name: "budget_locked_at", dataType: "timestamp with time zone", isNullable: true }, { name: "budget_locked_by", dataType: "uuid", isNullable: true }, { name: "work_scope", dataType: "text", isNullable: true }, { name: "project_sector", dataType: "text", isNullable: true }, { name: "delivery_method", dataType: "text", isNullable: true }, { name: "name_code", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "document_count", dataType: "bigint", isNullable: false }, { name: "acumatica_project_id", dataType: "text", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -202,7 +202,6 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/lock/route.ts", lineNumber: 36, kind: "read", snippet: ".from(\"projects\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/lock/route.ts", lineNumber: 128, kind: "read", snippet: ".from(\"projects\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/lock/route.ts", lineNumber: 255, kind: "read", snippet: ".from(\"projects\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 309, kind: "read", snippet: ".from(\"projects\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/email/route.ts", lineNumber: 98, kind: "read", snippet: ".from(\"projects\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/pdf/route.ts", lineNumber: 60, kind: "read", snippet: ".from(\"projects\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitments/[commitmentId]/subcontractor-sov/route.ts", lineNumber: 331, kind: "read", snippet: ".from(\"projects\")" },
@@ -372,12 +371,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 17568,
+        approxRows: 17577,
         totalSize: "37 MB",
         lastAutoanalyze: "2026-05-18T06:52:37.235Z",
-        nLiveTup: 17568,
+        nLiveTup: 17577,
         nDeadTup: 39,
-        refreshedAt: "2026-05-18T16:27:54.547Z",
+        refreshedAt: "2026-05-18T17:11:28.313Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "operation", dataType: "text", isNullable: false }, { name: "changed_by", dataType: "uuid", isNullable: true }, { name: "changed_at", dataType: "timestamp with time zone", isNullable: false }, { name: "changed_columns", dataType: "ARRAY", isNullable: true }, { name: "old_data", dataType: "jsonb", isNullable: true }, { name: "new_data", dataType: "jsonb", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }],
       references: {
@@ -408,7 +407,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:55.551Z",
+        refreshedAt: "2026-05-18T17:11:29.184Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "external_project_id", dataType: "bigint", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -435,7 +434,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 37,
         nDeadTup: 2,
-        refreshedAt: "2026-05-18T16:27:55.928Z",
+        refreshedAt: "2026-05-18T17:11:29.567Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "company_id", dataType: "uuid", isNullable: false }, { name: "email_address", dataType: "character varying", isNullable: true }, { name: "primary_contact_id", dataType: "uuid", isNullable: true }, { name: "erp_vendor_id", dataType: "character varying", isNullable: true }, { name: "company_type", dataType: "character varying", isNullable: true }, { name: "status", dataType: "character varying", isNullable: true }, { name: "logo_url", dataType: "character varying", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -510,7 +509,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6041,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:56.315Z",
+        refreshedAt: "2026-05-18T17:11:30.301Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "reference_type", dataType: "text", isNullable: false }, { name: "source_system", dataType: "text", isNullable: true }, { name: "source_document_metadata_id", dataType: "text", isNullable: true }, { name: "confidence", dataType: "numeric", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -559,7 +558,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-18T03:39:26.724Z",
         nLiveTup: 2469,
         nDeadTup: 254,
-        refreshedAt: "2026-05-18T16:27:56.767Z",
+        refreshedAt: "2026-05-18T17:11:30.709Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "folder", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_url", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: true }, { name: "content_type", dataType: "text", isNullable: true }, { name: "version", dataType: "integer", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "uploaded_by", dataType: "text", isNullable: true }, { name: "reviewed_by", dataType: "text", isNullable: true }, { name: "reviewed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "source_system", dataType: "text", isNullable: true }, { name: "source_drive_id", dataType: "text", isNullable: true }, { name: "source_item_id", dataType: "text", isNullable: true }, { name: "source_site_id", dataType: "text", isNullable: true }, { name: "source_path", dataType: "text", isNullable: true }, { name: "source_web_url", dataType: "text", isNullable: true }, { name: "source_etag", dataType: "text", isNullable: true }, { name: "source_last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "source_size", dataType: "bigint", isNullable: true }, { name: "sync_status", dataType: "text", isNullable: false }, { name: "sync_error", dataType: "text", isNullable: true }, { name: "last_synced_at", dataType: "timestamp with time zone", isNullable: true }, { name: "storage_bucket", dataType: "text", isNullable: true }, { name: "storage_path", dataType: "text", isNullable: true }, { name: "content_hash", dataType: "text", isNullable: true }, { name: "workflow_target", dataType: "text", isNullable: true }, { name: "division", dataType: "text", isNullable: true }, { name: "trade", dataType: "text", isNullable: true }, { name: "source_metadata", dataType: "jsonb", isNullable: false }],
       references: {
@@ -604,8 +603,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "4200 kB",
         lastAutoanalyze: "2026-05-18T02:48:06.188Z",
         nLiveTup: 760,
-        nDeadTup: 53,
-        refreshedAt: "2026-05-18T16:27:57.708Z",
+        nDeadTup: 47,
+        refreshedAt: "2026-05-18T17:11:31.061Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "subject", dataType: "text", isNullable: false }, { name: "body", dataType: "text", isNullable: true }, { name: "body_html", dataType: "text", isNullable: true }, { name: "from_name", dataType: "text", isNullable: true }, { name: "from_email", dataType: "text", isNullable: true }, { name: "to_list", dataType: "ARRAY", isNullable: true }, { name: "cc_list", dataType: "ARRAY", isNullable: true }, { name: "bcc_list", dataType: "ARRAY", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "sent_at", dataType: "timestamp with time zone", isNullable: true }, { name: "received_at", dataType: "timestamp with time zone", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "is_starred", dataType: "boolean", isNullable: true }, { name: "has_attachments", dataType: "boolean", isNullable: true }, { name: "related_tool", dataType: "text", isNullable: true }, { name: "related_id", dataType: "text", isNullable: true }, { name: "distribution_group", dataType: "text", isNullable: true }, { name: "thread_id", dataType: "text", isNullable: true }, { name: "created_by", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "graph_message_id", dataType: "text", isNullable: true }, { name: "mailbox_user_id", dataType: "text", isNullable: true }, { name: "conversation_id", dataType: "text", isNullable: true }, { name: "body_text", dataType: "text", isNullable: true }, { name: "project_sync_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -669,7 +668,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 514,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:58.173Z",
+        refreshedAt: "2026-05-18T17:11:31.520Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "rule_type", dataType: "text", isNullable: false }, { name: "pattern", dataType: "text", isNullable: false }, { name: "pattern_normalized", dataType: "text", isNullable: false }, { name: "confidence", dataType: "numeric", isNullable: false }, { name: "priority", dataType: "integer", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -708,7 +707,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3276,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:58.607Z",
+        refreshedAt: "2026-05-18T17:11:31.874Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "sub_job_id", dataType: "uuid", isNullable: true }, { name: "cost_code_id", dataType: "text", isNullable: false }, { name: "cost_type_id", dataType: "uuid", isNullable: true }, { name: "description", dataType: "text", isNullable: false }, { name: "description_mode", dataType: "text", isNullable: false }, { name: "is_active", dataType: "boolean", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "sub_job_key", dataType: "uuid", isNullable: true }],
       references: {
@@ -797,7 +796,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:59.148Z",
+        refreshedAt: "2026-05-18T17:11:32.436Z",
       },
       columns: [{ name: "project_id", dataType: "integer", isNullable: false }, { name: "red_negative_values", dataType: "boolean", isNullable: false }, { name: "autocalculate_forecast_to_complete", dataType: "boolean", isNullable: false }, { name: "enable_advanced_forecasting", dataType: "boolean", isNullable: false }, { name: "allow_modifying_grand_total", dataType: "boolean", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -837,7 +836,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 33,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:59.513Z",
+        refreshedAt: "2026-05-18T17:11:32.814Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "permission_template_id", dataType: "uuid", isNullable: true }, { name: "role", dataType: "text", isNullable: true }, { name: "invited_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_invited_at", dataType: "timestamp with time zone", isNullable: true }, { name: "invite_status", dataType: "text", isNullable: true }, { name: "invite_token", dataType: "text", isNullable: true }, { name: "invite_expires_at", dataType: "timestamp with time zone", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "is_employee_of_company", dataType: "boolean", isNullable: true }, { name: "is_insurance_manager", dataType: "boolean", isNullable: true }, { name: "employee_id", dataType: "character varying", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "user_type", dataType: "text", isNullable: false }],
       references: {
@@ -857,7 +856,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/lib/ai/tools/action-tools.ts", lineNumber: 1462, kind: "write", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 362, kind: "write", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 395, kind: "write", snippet: ".from(\"project_directory_memberships\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 286, kind: "write", snippet: ".from(\"project_directory_memberships\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 313, kind: "write", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/services/directoryAdminService.ts", lineNumber: 230, kind: "write", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/services/directoryAdminService.ts", lineNumber: 239, kind: "write", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/services/directoryService.ts", lineNumber: 466, kind: "write", snippet: ".from(\"project_directory_memberships\")" },
@@ -898,7 +897,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 148, kind: "read", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 450, kind: "read", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 547, kind: "read", snippet: ".from(\"project_directory_memberships\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 73, kind: "read", snippet: ".from(\"project_directory_memberships\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 83, kind: "read", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/lib/progress-reports/server.ts", lineNumber: 242, kind: "read", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/lib/supabase/auth-guard.ts", lineNumber: 169, kind: "read", snippet: ".from(\"project_directory_memberships\")" },
           { filePath: "frontend/src/services/directoryService.ts", lineNumber: 452, kind: "read", snippet: ".from(\"project_directory_memberships\")" },
@@ -981,7 +980,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 8,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:27:59.886Z",
+        refreshedAt: "2026-05-18T17:11:33.211Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "report_type", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "week_start", dataType: "date", isNullable: false }, { name: "week_end", dataType: "date", isNullable: false }, { name: "construction_start_date", dataType: "date", isNullable: true }, { name: "scheduled_completion_date", dataType: "date", isNullable: true }, { name: "past_week_highlights", dataType: "text", isNullable: false }, { name: "upcoming_week_activities", dataType: "text", isNullable: false }, { name: "open_items", dataType: "text", isNullable: false }, { name: "weather_days_lost", dataType: "integer", isNullable: false }, { name: "contacts", dataType: "jsonb", isNullable: false }, { name: "client_recipients", dataType: "ARRAY", isNullable: false }, { name: "source_snapshot", dataType: "jsonb", isNullable: false }, { name: "sent_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -1028,7 +1027,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:00.287Z",
+        refreshedAt: "2026-05-18T17:11:33.588Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "progress_report_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "project_photo_id", dataType: "bigint", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "caption", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -1071,7 +1070,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:00.647Z",
+        refreshedAt: "2026-05-18T17:11:33.944Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "album", dataType: "text", isNullable: true }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_url", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: true }, { name: "content_type", dataType: "text", isNullable: true }, { name: "width", dataType: "integer", isNullable: true }, { name: "height", dataType: "integer", isNullable: true }, { name: "date_taken", dataType: "date", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "trade", dataType: "text", isNullable: true }, { name: "tags", dataType: "ARRAY", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "starred", dataType: "boolean", isNullable: true }, { name: "uploaded_by", dataType: "text", isNullable: true }, { name: "created_by", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -1118,7 +1117,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:01.021Z",
+        refreshedAt: "2026-05-18T17:11:34.304Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_photo_id", dataType: "bigint", isNullable: false }, { name: "punch_item_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "link_type", dataType: "text", isNullable: false }, { name: "note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -1152,7 +1151,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 338,
         nDeadTup: 2,
-        refreshedAt: "2026-05-18T16:28:01.395Z",
+        refreshedAt: "2026-05-18T17:11:34.666Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "role_name", dataType: "character varying", isNullable: false }, { name: "role_type", dataType: "character varying", isNullable: true }, { name: "display_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -1198,7 +1197,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 12,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:01.766Z",
+        refreshedAt: "2026-05-18T17:11:35.022Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_role_id", dataType: "uuid", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "assigned_at", dataType: "timestamp with time zone", isNullable: true }, { name: "assigned_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -1239,7 +1238,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 72,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:02.131Z",
+        refreshedAt: "2026-05-18T17:11:35.366Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "snapshot_date", dataType: "date", isNullable: false }, { name: "risk_score", dataType: "numeric", isNullable: true }, { name: "open_risks", dataType: "integer", isNullable: true }, { name: "critical_risks", dataType: "integer", isNullable: true }, { name: "open_issues", dataType: "integer", isNullable: true }, { name: "overdue_tasks", dataType: "integer", isNullable: true }, { name: "aging_rfis", dataType: "integer", isNullable: true }, { name: "unresolved_insights", dataType: "integer", isNullable: true }, { name: "trend", dataType: "text", isNullable: true }, { name: "risk_narrative", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -1272,7 +1271,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:02.511Z",
+        refreshedAt: "2026-05-18T17:11:35.740Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "vendor_id", dataType: "uuid", isNullable: false }, { name: "added_at", dataType: "timestamp with time zone", isNullable: false }, { name: "added_by", dataType: "uuid", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }],
       references: {
@@ -1312,7 +1311,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:02.884Z",
+        refreshedAt: "2026-05-18T17:11:36.099Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "number", dataType: "text", isNullable: false }, { name: "subject", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "to_company", dataType: "text", isNullable: true }, { name: "to_contact", dataType: "text", isNullable: true }, { name: "from_company", dataType: "text", isNullable: true }, { name: "from_contact", dataType: "text", isNullable: true }, { name: "sent_date", dataType: "date", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "received_date", dataType: "date", isNullable: true }, { name: "remarks", dataType: "text", isNullable: true }, { name: "delivery_method", dataType: "text", isNullable: true }, { name: "copies_sent", dataType: "integer", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "ball_in_court", dataType: "text", isNullable: true }, { name: "created_by", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -1352,7 +1351,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:03.283Z",
+        refreshedAt: "2026-05-18T17:11:36.450Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "preferences", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -1388,7 +1387,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:03.650Z",
+        refreshedAt: "2026-05-18T17:11:36.791Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "membership_id", dataType: "uuid", isNullable: false }, { name: "role_name", dataType: "character varying", isNullable: false }, { name: "assigned_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -1421,7 +1420,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:04.027Z",
+        refreshedAt: "2026-05-18T17:11:37.142Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "user_email", dataType: "character varying", isNullable: true }, { name: "project_name", dataType: "text", isNullable: true }, { name: "company_name", dataType: "text", isNullable: true }, { name: "contact_phone", dataType: "character varying", isNullable: true }, { name: "project_data", dataType: "jsonb", isNullable: false }, { name: "lead_score", dataType: "integer", isNullable: true }, { name: "status", dataType: "character varying", isNullable: true }, { name: "estimated_value", dataType: "numeric", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -1453,7 +1452,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:04.417Z",
+        refreshedAt: "2026-05-18T17:11:37.524Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "group_type", dataType: "text", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -1482,7 +1481,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:04.775Z",
+        refreshedAt: "2026-05-18T17:11:37.886Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "briefing_content", dataType: "text", isNullable: false }, { name: "briefing_type", dataType: "character varying", isNullable: true }, { name: "source_documents", dataType: "ARRAY", isNullable: false }, { name: "generated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "generated_by", dataType: "character varying", isNullable: true }, { name: "token_count", dataType: "integer", isNullable: true }, { name: "version", dataType: "integer", isNullable: true }],
       references: {
@@ -1512,7 +1511,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:05.149Z",
+        refreshedAt: "2026-05-18T17:11:38.268Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "title", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }],
       references: {
@@ -1539,7 +1538,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 545,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:05.524Z",
+        refreshedAt: "2026-05-18T17:11:38.616Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "website", dataType: "text", isNullable: true }, { name: "address", dataType: "text", isNullable: true }, { name: "state", dataType: "text", isNullable: true }, { name: "city", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "currency_symbol", dataType: "character varying", isNullable: true }, { name: "currency_code", dataType: "character varying", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "logo_url", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "customer_id", dataType: "text", isNullable: true }, { name: "contact_name", dataType: "text", isNullable: true }, { name: "contact_email", dataType: "text", isNullable: true }, { name: "contact_phone", dataType: "text", isNullable: true }, { name: "zip_code", dataType: "text", isNullable: true }, { name: "country", dataType: "text", isNullable: true }, { name: "tax_id", dataType: "text", isNullable: true }, { name: "legal_name", dataType: "text", isNullable: true }, { name: "vendor_class", dataType: "text", isNullable: true }, { name: "terms", dataType: "text", isNullable: true }, { name: "payment_method", dataType: "text", isNullable: true }, { name: "ap_account", dataType: "text", isNullable: true }, { name: "cash_account", dataType: "text", isNullable: true }, { name: "is_1099_vendor", dataType: "boolean", isNullable: true }, { name: "is_foreign_entity", dataType: "boolean", isNullable: true }, { name: "is_labor_union", dataType: "boolean", isNullable: true }, { name: "is_tax_agency", dataType: "boolean", isNullable: true }, { name: "acumatica_vendor_id", dataType: "text", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "is_vendor", dataType: "boolean", isNullable: false }, { name: "primary_contact_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -1659,7 +1658,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 23833, kind: "migration", snippet: "CREATE POLICY service_role_all_companies ON public.companies TO service_role USING (true);" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1589, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 1" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1591, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 1" },
         ],
       },
     },
@@ -1680,7 +1679,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:05.913Z",
+        refreshedAt: "2026-05-18T17:11:38.975Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "goals", dataType: "jsonb", isNullable: true }, { name: "strategic_initiatives", dataType: "jsonb", isNullable: true }, { name: "okrs", dataType: "jsonb", isNullable: true }, { name: "resource_constraints", dataType: "jsonb", isNullable: true }, { name: "policies", dataType: "jsonb", isNullable: true }, { name: "org_structure", dataType: "jsonb", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "mission", dataType: "text", isNullable: true }, { name: "vision", dataType: "text", isNullable: true }, { name: "company_history", dataType: "text", isNullable: true }, { name: "key_differentiators", dataType: "jsonb", isNullable: true }, { name: "competitive_landscape", dataType: "jsonb", isNullable: true }, { name: "target_markets", dataType: "jsonb", isNullable: true }, { name: "core_values", dataType: "jsonb", isNullable: true }, { name: "annual_revenue_range", dataType: "text", isNullable: true }, { name: "employee_count", dataType: "integer", isNullable: true }, { name: "founded_year", dataType: "integer", isNullable: true }, { name: "headquarters", dataType: "text", isNullable: true }, { name: "service_areas", dataType: "jsonb", isNullable: true }, { name: "certifications", dataType: "jsonb", isNullable: true }, { name: "key_clients", dataType: "jsonb", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }],
       references: {
@@ -1711,10 +1710,10 @@ export const DB_INVENTORY: DbInventory = {
       liveStats: {
         approxRows: 1140,
         totalSize: "1976 kB",
-        lastAutoanalyze: "2026-05-18T16:28:04.865Z",
+        lastAutoanalyze: "2026-05-18T17:10:07.066Z",
         nLiveTup: 1140,
-        nDeadTup: 241,
-        refreshedAt: "2026-05-18T16:28:06.297Z",
+        nDeadTup: 249,
+        refreshedAt: "2026-05-18T17:11:39.341Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "first_name", dataType: "text", isNullable: false }, { name: "last_name", dataType: "text", isNullable: false }, { name: "email", dataType: "text", isNullable: true }, { name: "phone_mobile", dataType: "text", isNullable: true }, { name: "phone_business", dataType: "text", isNullable: true }, { name: "job_title", dataType: "text", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "person_type", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: true }, { name: "address_line1", dataType: "text", isNullable: true }, { name: "address_line2", dataType: "text", isNullable: true }, { name: "city", dataType: "text", isNullable: true }, { name: "state", dataType: "text", isNullable: true }, { name: "zip", dataType: "text", isNullable: true }, { name: "country", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "profile_photo_url", dataType: "text", isNullable: true }, { name: "business_unit", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "auth_user_id", dataType: "uuid", isNullable: true }, { name: "linkedin", dataType: "text", isNullable: true }, { name: "company", dataType: "text", isNullable: true }],
       references: {
@@ -1879,10 +1878,10 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 23861, kind: "migration", snippet: "CREATE POLICY service_role_all_people ON public.people TO service_role USING (true);" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1728, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/people/route.ts\", lineNumber: 122, kind: \"write\", snippet: \".from('people')\" }," },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1774, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/people/route.ts\", lineNumber: 32, kind: \"read\", snippet: \".from('people')\" }," },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1879, kind: "unknown", snippet: "{ filePath: \"frontend/src/components/dev-tools/db-inventory.generated.ts\", lineNumber: 1728, kind: \"unknown\", snippet: \"" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1880, kind: "unknown", snippet: "{ filePath: \"frontend/src/components/dev-tools/db-inventory.generated.ts\", lineNumber: 1774, kind: \"unknown\", snippet: \"" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1730, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/people/route.ts\", lineNumber: 122, kind: \"write\", snippet: \".from('people')\" }," },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1777, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/people/route.ts\", lineNumber: 32, kind: \"read\", snippet: \".from('people')\" }," },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1882, kind: "unknown", snippet: "{ filePath: \"frontend/src/components/dev-tools/db-inventory.generated.ts\", lineNumber: 1728, kind: \"unknown\", snippet: \"" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 1883, kind: "unknown", snippet: "{ filePath: \"frontend/src/components/dev-tools/db-inventory.generated.ts\", lineNumber: 1774, kind: \"unknown\", snippet: \"" },
         ],
       },
     },
@@ -1903,21 +1902,21 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 14,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:06.718Z",
+        refreshedAt: "2026-05-18T17:11:39.745Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "template_id", dataType: "uuid", isNullable: false }, { name: "assigned_by", dataType: "uuid", isNullable: true }, { name: "assigned_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
         writes: [
           { filePath: "frontend/src/app/api/permissions/users/[personId]/route.ts", lineNumber: 63, kind: "write", snippet: ".from(\"person_company_templates\")" },
           { filePath: "frontend/src/app/api/permissions/users/route.ts", lineNumber: 537, kind: "write", snippet: ".from(\"person_company_templates\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 421, kind: "write", snippet: ".from(\"person_company_templates\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 437, kind: "write", snippet: ".from(\"person_company_templates\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 448, kind: "write", snippet: ".from(\"person_company_templates\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 464, kind: "write", snippet: ".from(\"person_company_templates\")" },
         ],
         reads: [
           { filePath: "frontend/src/app/api/permissions/users/route.ts", lineNumber: 128, kind: "read", snippet: ".from(\"person_company_templates\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/shell/route.ts", lineNumber: 120, kind: "read", snippet: ".from(\"person_company_templates\")" },
           { filePath: "frontend/src/lib/app-capabilities.ts", lineNumber: 73, kind: "read", snippet: ".from(\"person_company_templates\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 93, kind: "read", snippet: ".from(\"person_company_templates\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 103, kind: "read", snippet: ".from(\"person_company_templates\")" },
         ],
         migrations: [
           { filePath: "supabase/migrations/20260429110000_company_employee_permission_templates.sql", lineNumber: 111, kind: "migration", snippet: "INSERT INTO public.person_company_templates (" },
@@ -1942,7 +1941,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:07.097Z",
+        refreshedAt: "2026-05-18T17:11:40.107Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "company_id", dataType: "uuid", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -1975,7 +1974,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:07.484Z",
+        refreshedAt: "2026-05-18T17:11:40.493Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "company_name", dataType: "text", isNullable: false }, { name: "contact_name", dataType: "text", isNullable: true }, { name: "contact_title", dataType: "text", isNullable: true }, { name: "contact_email", dataType: "text", isNullable: true }, { name: "contact_phone", dataType: "text", isNullable: true }, { name: "lead_source", dataType: "text", isNullable: true }, { name: "referral_contact", dataType: "text", isNullable: true }, { name: "industry", dataType: "text", isNullable: true }, { name: "project_type", dataType: "text", isNullable: true }, { name: "estimated_project_value", dataType: "numeric", isNullable: true }, { name: "estimated_start_date", dataType: "date", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "probability", dataType: "integer", isNullable: true }, { name: "next_follow_up", dataType: "date", isNullable: true }, { name: "last_contacted", dataType: "timestamp with time zone", isNullable: true }, { name: "assigned_to", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "tags", dataType: "ARRAY", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "ai_summary", dataType: "text", isNullable: true }, { name: "ai_score", dataType: "numeric", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "client_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -2012,7 +2011,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 30,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:07.879Z",
+        refreshedAt: "2026-05-18T17:11:40.858Z",
       },
       columns: [{ name: "person_id", dataType: "uuid", isNullable: false }, { name: "auth_user_id", dataType: "uuid", isNullable: false }, { name: "last_login_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -2051,7 +2050,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 288, kind: "read", snippet: ".from(\"users_auth\")" },
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 562, kind: "read", snippet: ".from(\"users_auth\")" },
           { filePath: "frontend/src/lib/permissions/user-link-reconciliation.ts", lineNumber: 69, kind: "read", snippet: ".from(\"users_auth\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 63, kind: "read", snippet: ".from(\"users_auth\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 62, kind: "read", snippet: ".from(\"users_auth\")" },
           { filePath: "frontend/src/lib/supabase/auth-guard.ts", lineNumber: 30, kind: "read", snippet: ".from(\"users_auth\")" },
           { filePath: "backend/src/services/acumatica_sync.py", lineNumber: 622, kind: "read", snippet: "self.supabase.table(\"users_auth\")" },
         ],
@@ -2074,7 +2073,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 23882, kind: "migration", snippet: "CREATE POLICY service_role_all_users_auth ON public.users_auth TO service_role USING (true);" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 2037, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 614, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 2040, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 614, kind: \"read\", snippet: " },
         ],
       },
     },
@@ -2095,7 +2094,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 53,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:08.240Z",
+        refreshedAt: "2026-05-18T17:11:41.235Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "email", dataType: "text", isNullable: false }, { name: "full_name", dataType: "text", isNullable: true }, { name: "is_admin", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "role", dataType: "text", isNullable: true }, { name: "is_active", dataType: "boolean", isNullable: false }, { name: "onboarding_completed_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -2172,9 +2171,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/permissions/users/route.ts", lineNumber: 111, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/permissions/users/route.ts", lineNumber: 368, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/history/route.ts", lineNumber: 83, kind: "read", snippet: ".from(\"user_profiles\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 62, kind: "read", snippet: ".from('user_profiles')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/route.ts", lineNumber: 80, kind: "read", snippet: ".from(\"user_profiles\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 125, kind: "read", snippet: "? await supabase.from(\"user_profiles\").select(\"is_admin\").eq(\"id\", currentUserId).maybeSingle()" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 124, kind: "read", snippet: "? await supabase.from(\"user_profiles\").select(\"is_admin\").eq(\"id\", currentUserId).maybeSingle()" },
           { filePath: "frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/change-history/route.ts", lineNumber: 44, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/email-attachments/[attachmentId]/download/route.ts", lineNumber: 54, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/email-attachments/[attachmentId]/route.ts", lineNumber: 20, kind: "read", snippet: ".from(\"user_profiles\")" },
@@ -2185,7 +2183,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/emails/route.ts", lineNumber: 50, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/emails/route.ts", lineNumber: 151, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/invite/route.ts", lineNumber: 61, kind: "read", snippet: ".from(\"user_profiles\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 138, kind: "read", snippet: ".from(\"user_profiles\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 141, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/progress-reports/[reportId]/email/route.ts", lineNumber: 52, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/rfis/[rfiId]/route.ts", lineNumber: 57, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/rfis/[rfiId]/route.ts", lineNumber: 304, kind: "read", snippet: ".from(\"user_profiles\")" },
@@ -2207,7 +2205,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/team-chat/previews/route.ts", lineNumber: 25, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/app/api/users/route.ts", lineNumber: 34, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/components/dev/DevDebugPanel.tsx", lineNumber: 101, kind: "read", snippet: "const { debugInfo, apiCalls } = useDebugRegistry(); // Fetch current user React.useEffect(() => { if (process.env.NODE_E" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 2172, kind: "read", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 2175, kind: "read", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
           { filePath: "frontend/src/lib/ai/tools/action-tools.ts", lineNumber: 3628, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/lib/ai/tools/guardrails.ts", lineNumber: 38, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/lib/app-capabilities.ts", lineNumber: 45, kind: "read", snippet: ".from(\"user_profiles\")" },
@@ -2217,6 +2215,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/lib/integrations/email-notifications.tsx", lineNumber: 93, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/lib/integrations/email-notifications.tsx", lineNumber: 116, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/lib/permissions/user-link-reconciliation.ts", lineNumber: 62, kind: "read", snippet: ".from(\"user_profiles\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 165, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/lib/progress-reports/server.ts", lineNumber: 561, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/lib/supabase/auth-guard.ts", lineNumber: 131, kind: "read", snippet: ".from(\"user_profiles\")" },
           { filePath: "frontend/src/lib/users/current-user-profile-server.ts", lineNumber: 61, kind: "read", snippet: ".from(\"user_profiles\")" },
@@ -2266,7 +2265,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:08.614Z",
+        refreshedAt: "2026-05-18T17:11:41.635Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "emails_default", dataType: "boolean", isNullable: true }, { name: "rfis_default", dataType: "boolean", isNullable: true }, { name: "submittals_default", dataType: "boolean", isNullable: true }, { name: "punchlist_items_default", dataType: "boolean", isNullable: true }, { name: "weather_delay_email", dataType: "boolean", isNullable: true }, { name: "weather_delay_phone", dataType: "boolean", isNullable: true }, { name: "daily_log_default", dataType: "boolean", isNullable: true }, { name: "delay_log_default", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "drawings_default", dataType: "boolean", isNullable: true }],
       references: {
@@ -2310,7 +2309,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:08.987Z",
+        refreshedAt: "2026-05-18T17:11:41.992Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "permission_level", dataType: "character varying", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -2351,21 +2350,21 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:09.371Z",
+        refreshedAt: "2026-05-18T17:11:42.406Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "module", dataType: "text", isNullable: false }, { name: "level", dataType: "text", isNullable: false }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
         writes: [
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 336, kind: "write", snippet: ".from(\"user_module_permissions\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 387, kind: "write", snippet: ".from(\"user_module_permissions\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 363, kind: "write", snippet: ".from(\"user_module_permissions\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 414, kind: "write", snippet: ".from(\"user_module_permissions\")" },
           { filePath: "frontend/src/services/directoryService.ts", lineNumber: 809, kind: "write", snippet: ".from(\"user_module_permissions\")" },
           { filePath: "frontend/src/services/directoryService.ts", lineNumber: 821, kind: "write", snippet: ".from(\"user_module_permissions\")" },
         ],
         reads: [
           { filePath: "frontend/src/app/api/projects/[projectId]/shell/route.ts", lineNumber: 125, kind: "read", snippet: ".from(\"user_module_permissions\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 83, kind: "read", snippet: ".from(\"user_module_permissions\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 328, kind: "read", snippet: ".from(\"user_module_permissions\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 379, kind: "read", snippet: ".from(\"user_module_permissions\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 93, kind: "read", snippet: ".from(\"user_module_permissions\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 355, kind: "read", snippet: ".from(\"user_module_permissions\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 406, kind: "read", snippet: ".from(\"user_module_permissions\")" },
           { filePath: "frontend/src/services/directoryService.ts", lineNumber: 754, kind: "read", snippet: ".from(\"user_module_permissions\")" },
         ],
         migrations: [
@@ -2393,7 +2392,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:09.783Z",
+        refreshedAt: "2026-05-18T17:11:42.788Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "flag", dataType: "text", isNullable: false }, { name: "effect", dataType: "text", isNullable: false }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -2408,7 +2407,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/permissions/users/route.ts", lineNumber: 134, kind: "read", snippet: ".from(\"user_granular_permission_overrides\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/shell/route.ts", lineNumber: 130, kind: "read", snippet: ".from(\"user_granular_permission_overrides\")" },
           { filePath: "frontend/src/lib/app-capabilities.ts", lineNumber: 78, kind: "read", snippet: ".from(\"user_granular_permission_overrides\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 88, kind: "read", snippet: ".from(\"user_granular_permission_overrides\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 98, kind: "read", snippet: ".from(\"user_granular_permission_overrides\")" },
         ],
         migrations: [
           { filePath: "supabase/migrations/20260426102000_user_granular_permission_overrides.sql", lineNumber: 20, kind: "migration", snippet: "ON public.user_granular_permission_overrides (person_id, flag)" },
@@ -2438,7 +2437,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:10.149Z",
+        refreshedAt: "2026-05-18T17:11:43.154Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "all_project_tasks_weekly", dataType: "boolean", isNullable: true }, { name: "resource_tasks_assigned_to_id", dataType: "uuid", isNullable: true }, { name: "upon_schedule_changes", dataType: "boolean", isNullable: true }, { name: "upon_schedule_change_requests", dataType: "boolean", isNullable: true }, { name: "project_schedule_lookahead_weekly", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -2479,15 +2478,15 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 15,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:10.523Z",
+        refreshedAt: "2026-05-18T17:11:43.513Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "scope", dataType: "text", isNullable: true }, { name: "rules_json", dataType: "jsonb", isNullable: false }, { name: "is_system", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "granular_flags", dataType: "ARRAY", isNullable: false }],
       references: {
         writes: [
           { filePath: "frontend/src/app/api/permissions/templates/route.ts", lineNumber: 30, kind: "write", snippet: "const { error: insertError } = await service.from(\"permission_templates\").insert({" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 210, kind: "write", snippet: ".from(\"permission_templates\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 234, kind: "write", snippet: ".from(\"permission_templates\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 249, kind: "write", snippet: ".from(\"permission_templates\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 237, kind: "write", snippet: ".from(\"permission_templates\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 261, kind: "write", snippet: ".from(\"permission_templates\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 276, kind: "write", snippet: ".from(\"permission_templates\")" },
           { filePath: "frontend/src/services/permissionService.ts", lineNumber: 193, kind: "write", snippet: ".from(\"permission_templates\")" },
           { filePath: "frontend/src/services/permissionService.ts", lineNumber: 222, kind: "write", snippet: ".from(\"permission_templates\")" },
           { filePath: "frontend/src/services/permissionService.ts", lineNumber: 235, kind: "write", snippet: ".from(\"permission_templates\")" },
@@ -2505,8 +2504,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/components/directory/PersonEditDialog.tsx", lineNumber: 149, kind: "read", snippet: ".from(\"permission_templates\")" },
           { filePath: "frontend/src/hooks/use-permission-templates.ts", lineNumber: 25, kind: "read", snippet: ".from(\"permission_templates\")" },
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 273, kind: "read", snippet: ".from(\"permission_templates\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 185, kind: "read", snippet: ".from(\"permission_templates\")" },
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 274, kind: "read", snippet: ".from(\"permission_templates\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 212, kind: "read", snippet: ".from(\"permission_templates\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 301, kind: "read", snippet: ".from(\"permission_templates\")" },
           { filePath: "frontend/src/lib/supabase/auth-guard.ts", lineNumber: 228, kind: "read", snippet: ".from(\"permission_templates\")" },
           { filePath: "frontend/src/services/directoryAdminService.ts", lineNumber: 642, kind: "read", snippet: ".from(\"permission_templates\")" },
           { filePath: "frontend/src/services/directoryService.ts", lineNumber: 635, kind: "read", snippet: ".from(\"permission_templates\")" },
@@ -2561,17 +2560,17 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:10.952Z",
+        refreshedAt: "2026-05-18T17:11:43.910Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "changed_by", dataType: "uuid", isNullable: true }, { name: "action", dataType: "text", isNullable: false }, { name: "module", dataType: "text", isNullable: true }, { name: "old_level", dataType: "text", isNullable: true }, { name: "new_level", dataType: "text", isNullable: true }, { name: "template_id", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
         writes: [
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 462, kind: "write", snippet: "await supabase.from(\"permission_audit_log\").insert(entry);" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 489, kind: "write", snippet: "await supabase.from(\"permission_audit_log\").insert(entry);" },
           { filePath: "frontend/src/services/directoryService.ts", lineNumber: 837, kind: "write", snippet: ".from(\"permission_audit_log\")" },
           { filePath: "frontend/src/services/directoryService.ts", lineNumber: 864, kind: "write", snippet: ".from(\"permission_audit_log\")" },
         ],
         reads: [
-          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 483, kind: "read", snippet: ".from(\"permission_audit_log\")" },
+          { filePath: "frontend/src/lib/permissions.ts", lineNumber: 510, kind: "read", snippet: ".from(\"permission_audit_log\")" },
           { filePath: "frontend/src/services/directoryAdminService.ts", lineNumber: 322, kind: "read", snippet: ".from(\"permission_audit_log\")" },
         ],
         migrations: [
@@ -2600,7 +2599,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:11.320Z",
+        refreshedAt: "2026-05-18T17:11:44.368Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -2644,7 +2643,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:11.711Z",
+        refreshedAt: "2026-05-18T17:11:44.746Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "group_id", dataType: "uuid", isNullable: false }, { name: "person_id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -2684,7 +2683,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:12.080Z",
+        refreshedAt: "2026-05-18T17:11:45.134Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -2713,7 +2712,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:12.451Z",
+        refreshedAt: "2026-05-18T17:11:45.503Z",
       },
       columns: [{ name: "group_id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "role", dataType: "text", isNullable: true }],
       references: {
@@ -2740,7 +2739,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:12.811Z",
+        refreshedAt: "2026-05-18T17:11:45.893Z",
       },
       columns: [{ name: "id", dataType: "text", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "createdAt", dataType: "timestamp without time zone", isNullable: false }, { name: "updatedAt", dataType: "timestamp without time zone", isNullable: false }],
       references: {
@@ -2769,7 +2768,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:13.185Z",
+        refreshedAt: "2026-05-18T17:11:46.300Z",
       },
       columns: [{ name: "id", dataType: "text", isNullable: false }, { name: "userId", dataType: "uuid", isNullable: false }, { name: "organizationId", dataType: "text", isNullable: false }, { name: "role", dataType: "text", isNullable: false }, { name: "createdAt", dataType: "timestamp without time zone", isNullable: false }, { name: "updatedAt", dataType: "timestamp without time zone", isNullable: false }],
       references: {
@@ -2799,7 +2798,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:13.557Z",
+        refreshedAt: "2026-05-18T17:11:46.659Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "text", isNullable: false }],
       references: {
@@ -2826,7 +2825,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:13.916Z",
+        refreshedAt: "2026-05-18T17:11:47.036Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "commitment_id", dataType: "character varying", isNullable: false }, { name: "billing_period_id", dataType: "uuid", isNullable: true }, { name: "message", dataType: "text", isNullable: true }, { name: "invited_by", dataType: "uuid", isNullable: false }, { name: "invited_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -2853,7 +2852,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:14.283Z",
+        refreshedAt: "2026-05-18T17:11:47.410Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "platform", dataType: "text", isNullable: false }, { name: "platform_user_id", dataType: "text", isNullable: false }, { name: "supabase_user_id", dataType: "uuid", isNullable: false }, { name: "display_name", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -2907,7 +2906,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:14.666Z",
+        refreshedAt: "2026-05-18T17:11:47.773Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "supabase_user_id", dataType: "uuid", isNullable: false }, { name: "thread_json", dataType: "jsonb", isNullable: false }, { name: "is_dm", dataType: "boolean", isNullable: false }, { name: "last_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -2944,7 +2943,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:15.026Z",
+        refreshedAt: "2026-05-18T17:11:48.168Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "code", dataType: "text", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "expires_at", dataType: "timestamp with time zone", isNullable: false }, { name: "used_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -2984,7 +2983,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:15.402Z",
+        refreshedAt: "2026-05-18T17:11:48.566Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "code", dataType: "text", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "expires_at", dataType: "timestamp with time zone", isNullable: false }, { name: "used_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3024,7 +3023,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 382,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:15.775Z",
+        refreshedAt: "2026-05-18T17:11:48.970Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "platform", dataType: "text", isNullable: false }, { name: "checkpoint", dataType: "text", isNullable: false }, { name: "platform_user_id", dataType: "text", isNullable: true }, { name: "supabase_user_id", dataType: "uuid", isNullable: true }, { name: "thread_id", dataType: "text", isNullable: true }, { name: "message_preview", dataType: "text", isNullable: true }, { name: "extra", dataType: "jsonb", isNullable: true }],
       references: {
@@ -3056,7 +3055,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6399,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:16.229Z",
+        refreshedAt: "2026-05-18T17:11:49.459Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "reference_nbr", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "vendor_id", dataType: "text", isNullable: true }, { name: "vendor_ref", dataType: "text", isNullable: true }, { name: "project_code", dataType: "text", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "date", dataType: "date", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "post_period", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "currency_id", dataType: "text", isNullable: true }, { name: "cash_account", dataType: "text", isNullable: true }, { name: "terms", dataType: "text", isNullable: true }, { name: "approved_for_payment", dataType: "boolean", isNullable: true }, { name: "hold", dataType: "boolean", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: true }, { name: "balance", dataType: "numeric", isNullable: true }, { name: "tax_total", dataType: "numeric", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3099,7 +3098,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4044,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:16.649Z",
+        refreshedAt: "2026-05-18T17:11:49.906Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "bill_id", dataType: "bigint", isNullable: false }, { name: "line_nbr", dataType: "integer", isNullable: true }, { name: "account", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "extended_cost", dataType: "numeric", isNullable: true }, { name: "inventory_id", dataType: "text", isNullable: true }, { name: "po_order_nbr", dataType: "text", isNullable: true }, { name: "po_order_type", dataType: "text", isNullable: true }, { name: "project_code", dataType: "text", isNullable: true }, { name: "project_task", dataType: "text", isNullable: true }, { name: "qty", dataType: "numeric", isNullable: true }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "tax_category", dataType: "text", isNullable: true }, { name: "transaction_description", dataType: "text", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "uom", dataType: "text", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3133,7 +3132,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 154,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:17.326Z",
+        refreshedAt: "2026-05-18T17:11:50.714Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "account_id", dataType: "text", isNullable: false }, { name: "account_cd", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "active", dataType: "boolean", isNullable: true }, { name: "currency_id", dataType: "text", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3166,7 +3165,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 468,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:17.714Z",
+        refreshedAt: "2026-05-18T17:11:52.036Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "reference_nbr", dataType: "text", isNullable: false }, { name: "type", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "date", dataType: "date", isNullable: true }, { name: "post_period", dataType: "text", isNullable: true }, { name: "customer", dataType: "text", isNullable: true }, { name: "project", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: true }, { name: "balance", dataType: "numeric", isNullable: true }, { name: "tax_total", dataType: "numeric", isNullable: true }, { name: "hold", dataType: "boolean", isNullable: true }, { name: "link_ar_account", dataType: "text", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "billing_period_id", dataType: "uuid", isNullable: true }, { name: "billing_period", dataType: "text", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "external_key", dataType: "text", isNullable: false }, { name: "customer_name", dataType: "text", isNullable: true }, { name: "currency_id", dataType: "text", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }],
       references: {
@@ -3210,7 +3209,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1922,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:18.154Z",
+        refreshedAt: "2026-05-18T17:11:52.445Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "invoice_id", dataType: "bigint", isNullable: false }, { name: "line_nbr", dataType: "integer", isNullable: true }, { name: "transaction_description", dataType: "text", isNullable: true }, { name: "qty", dataType: "numeric", isNullable: true }, { name: "unit_price", dataType: "numeric", isNullable: true }, { name: "extended_price", dataType: "numeric", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: true }, { name: "discount_amount", dataType: "numeric", isNullable: true }, { name: "account", dataType: "text", isNullable: true }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "project_task", dataType: "text", isNullable: true }, { name: "tax_category", dataType: "text", isNullable: true }, { name: "uom", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -3242,7 +3241,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4069,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:18.565Z",
+        refreshedAt: "2026-05-18T17:11:52.819Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "reference_nbr", dataType: "text", isNullable: false }, { name: "project_code", dataType: "text", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "customer_id", dataType: "text", isNullable: true }, { name: "class", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "reverse_status", dataType: "text", isNullable: true }, { name: "revenue_change_nbr", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "detailed_description", dataType: "text", isNullable: true }, { name: "external_ref_nbr", dataType: "text", isNullable: true }, { name: "original_co_ref_nbr", dataType: "text", isNullable: true }, { name: "change_date", dataType: "date", isNullable: true }, { name: "completion_date", dataType: "date", isNullable: true }, { name: "hold", dataType: "boolean", isNullable: true }, { name: "contract_time_change_days", dataType: "integer", isNullable: true }, { name: "commitments_change_total", dataType: "numeric", isNullable: true }, { name: "cost_budget_change_total", dataType: "numeric", isNullable: true }, { name: "revenue_budget_change_total", dataType: "numeric", isNullable: true }, { name: "gross_margin", dataType: "numeric", isNullable: true }, { name: "gross_margin_amount", dataType: "numeric", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3280,7 +3279,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2775,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:18.980Z",
+        refreshedAt: "2026-05-18T17:11:53.225Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "reference_nbr", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "vendor_id", dataType: "text", isNullable: true }, { name: "vendor_name", dataType: "text", isNullable: true }, { name: "payment_ref", dataType: "text", isNullable: true }, { name: "application_date", dataType: "date", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "payment_method", dataType: "text", isNullable: true }, { name: "cash_account", dataType: "text", isNullable: true }, { name: "currency_id", dataType: "text", isNullable: true }, { name: "payment_amount", dataType: "numeric", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "applied_to_documents", dataType: "numeric", isNullable: true }],
       references: {
@@ -3319,7 +3318,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 58,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:19.366Z",
+        refreshedAt: "2026-05-18T17:11:53.595Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "customer_id", dataType: "text", isNullable: false }, { name: "customer_name", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: true }, { name: "currency_id", dataType: "text", isNullable: true }, { name: "terms", dataType: "text", isNullable: true }, { name: "tax_zone", dataType: "text", isNullable: true }, { name: "email", dataType: "text", isNullable: true }, { name: "phone", dataType: "text", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3352,7 +3351,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 369,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:19.766Z",
+        refreshedAt: "2026-05-18T17:11:53.961Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "reference_nbr", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "project_code", dataType: "text", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "customer_id", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "payment_method", dataType: "text", isNullable: true }, { name: "payment_ref", dataType: "text", isNullable: true }, { name: "external_ref", dataType: "text", isNullable: true }, { name: "cash_account", dataType: "text", isNullable: true }, { name: "currency_id", dataType: "text", isNullable: true }, { name: "application_date", dataType: "date", isNullable: true }, { name: "hold", dataType: "boolean", isNullable: true }, { name: "payment_amount", dataType: "numeric", isNullable: true }, { name: "available_balance", dataType: "numeric", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "customer_name", dataType: "text", isNullable: true }],
       references: {
@@ -3391,7 +3390,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 183,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:20.150Z",
+        refreshedAt: "2026-05-18T17:11:54.338Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "payment_external_key", dataType: "text", isNullable: false }, { name: "payment_reference_nbr", dataType: "text", isNullable: false }, { name: "payment_type", dataType: "text", isNullable: true }, { name: "invoice_reference_nbr", dataType: "text", isNullable: false }, { name: "invoice_type", dataType: "text", isNullable: true }, { name: "customer_id", dataType: "text", isNullable: true }, { name: "amount_applied", dataType: "numeric", isNullable: true }, { name: "balance", dataType: "numeric", isNullable: true }, { name: "resolved_project_code", dataType: "text", isNullable: true }, { name: "resolution_method", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -3430,7 +3429,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6172,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:20.524Z",
+        refreshedAt: "2026-05-18T17:11:54.695Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "project_code", dataType: "text", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "project_task_id", dataType: "text", isNullable: true }, { name: "account_group", dataType: "text", isNullable: true }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "record_type", dataType: "text", isNullable: true }, { name: "inventory_id", dataType: "text", isNullable: true }, { name: "uom", dataType: "text", isNullable: true }, { name: "unit_rate", dataType: "numeric", isNullable: true }, { name: "original_budgeted_amount", dataType: "numeric", isNullable: true }, { name: "revised_budgeted_amount", dataType: "numeric", isNullable: true }, { name: "budgeted_co_amount", dataType: "numeric", isNullable: true }, { name: "actual_amount", dataType: "numeric", isNullable: true }, { name: "actual_plus_open_committed_amount", dataType: "numeric", isNullable: true }, { name: "original_committed_amount", dataType: "numeric", isNullable: true }, { name: "revised_committed_amount", dataType: "numeric", isNullable: true }, { name: "committed_co_amount", dataType: "numeric", isNullable: true }, { name: "committed_invoiced_amount", dataType: "numeric", isNullable: true }, { name: "committed_open_amount", dataType: "numeric", isNullable: true }, { name: "cost_at_completion", dataType: "numeric", isNullable: true }, { name: "cost_to_complete", dataType: "numeric", isNullable: true }, { name: "variance_amount", dataType: "numeric", isNullable: true }, { name: "percentage_of_completion", dataType: "numeric", isNullable: true }, { name: "retainage", dataType: "numeric", isNullable: true }, { name: "draft_invoices_amount", dataType: "numeric", isNullable: true }, { name: "pending_invoice_amount", dataType: "numeric", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3466,7 +3465,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 87,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:20.928Z",
+        refreshedAt: "2026-05-18T17:11:55.075Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "project_id", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "customer", dataType: "text", isNullable: true }, { name: "hold", dataType: "boolean", isNullable: true }, { name: "income", dataType: "numeric", isNullable: true }, { name: "expenses", dataType: "numeric", isNullable: true }, { name: "assets", dataType: "numeric", isNullable: true }, { name: "liabilities", dataType: "numeric", isNullable: true }, { name: "template_id", dataType: "text", isNullable: true }, { name: "external_ref_nbr", dataType: "text", isNullable: true }, { name: "local_project_id", dataType: "integer", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3505,7 +3504,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 99,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:21.309Z",
+        refreshedAt: "2026-05-18T17:11:55.447Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "project_id", dataType: "text", isNullable: false }, { name: "project_task_id", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "is_default", dataType: "boolean", isNullable: true }, { name: "external_ref_nbr", dataType: "text", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3538,7 +3537,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 204,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:21.692Z",
+        refreshedAt: "2026-05-18T17:11:55.812Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "order_nbr", dataType: "text", isNullable: false }, { name: "order_type", dataType: "text", isNullable: true }, { name: "project_code", dataType: "text", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "vendor_id", dataType: "text", isNullable: true }, { name: "vendor_ref", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "terms", dataType: "text", isNullable: true }, { name: "date", dataType: "date", isNullable: true }, { name: "promised_on", dataType: "date", isNullable: true }, { name: "currency_id", dataType: "text", isNullable: true }, { name: "hold", dataType: "boolean", isNullable: true }, { name: "control_total", dataType: "numeric", isNullable: true }, { name: "line_total", dataType: "numeric", isNullable: true }, { name: "order_total", dataType: "numeric", isNullable: true }, { name: "tax_total", dataType: "numeric", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "vendor_acumatica_id", dataType: "text", isNullable: true }, { name: "vendor_uuid", dataType: "uuid", isNullable: true }],
       references: {
@@ -3579,7 +3578,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 718,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:22.079Z",
+        refreshedAt: "2026-05-18T17:11:56.194Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "external_key", dataType: "text", isNullable: false }, { name: "subcontract_nbr", dataType: "text", isNullable: false }, { name: "project_code", dataType: "text", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "vendor_id", dataType: "text", isNullable: true }, { name: "vendor_ref", dataType: "text", isNullable: true }, { name: "owner", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "terms", dataType: "text", isNullable: true }, { name: "date", dataType: "date", isNullable: true }, { name: "start_date", dataType: "date", isNullable: true }, { name: "currency_id", dataType: "text", isNullable: true }, { name: "apply_retainage", dataType: "boolean", isNullable: true }, { name: "retainage_pct", dataType: "numeric", isNullable: true }, { name: "retainage_total", dataType: "numeric", isNullable: true }, { name: "control_total", dataType: "numeric", isNullable: true }, { name: "line_total", dataType: "numeric", isNullable: true }, { name: "discount_total", dataType: "numeric", isNullable: true }, { name: "tax_total", dataType: "numeric", isNullable: true }, { name: "subcontract_total", dataType: "numeric", isNullable: true }, { name: "last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "vendor_acumatica_id", dataType: "text", isNullable: true }, { name: "vendor_uuid", dataType: "uuid", isNullable: true }],
       references: {
@@ -3619,7 +3618,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 26,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:22.452Z",
+        refreshedAt: "2026-05-18T17:11:56.599Z",
       },
       columns: [{ name: "entity_name", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "last_started_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_success_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_cursor", dataType: "timestamp with time zone", isNullable: true }, { name: "last_error", dataType: "text", isNullable: true }, { name: "last_stats", dataType: "jsonb", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3650,7 +3649,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 53,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:22.819Z",
+        refreshedAt: "2026-05-18T17:11:56.944Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "entity_name", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "started_at", dataType: "timestamp with time zone", isNullable: false }, { name: "finished_at", dataType: "timestamp with time zone", isNullable: true }, { name: "cursor", dataType: "timestamp with time zone", isNullable: true }, { name: "fetched", dataType: "integer", isNullable: true }, { name: "upserted", dataType: "integer", isNullable: true }, { name: "projected", dataType: "integer", isNullable: true }, { name: "skipped", dataType: "integer", isNullable: true }, { name: "errors", dataType: "integer", isNullable: true }, { name: "error_message", dataType: "text", isNullable: true }, { name: "stats", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3684,7 +3683,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:23.192Z",
+        refreshedAt: "2026-05-18T17:11:57.303Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "run_id", dataType: "uuid", isNullable: false }, { name: "triggered_by_user_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: true }, { name: "entity_name", dataType: "text", isNullable: false }, { name: "source_table", dataType: "text", isNullable: false }, { name: "source_record_id", dataType: "text", isNullable: false }, { name: "source_reference", dataType: "text", isNullable: true }, { name: "acumatica_entity", dataType: "text", isNullable: false }, { name: "acumatica_reference", dataType: "text", isNullable: true }, { name: "acumatica_doc_type", dataType: "text", isNullable: true }, { name: "operation", dataType: "text", isNullable: false }, { name: "success", dataType: "boolean", isNullable: false }, { name: "error_message", dataType: "text", isNullable: true }, { name: "request_payload", dataType: "jsonb", isNullable: true }, { name: "response_payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3720,7 +3719,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 75,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:23.568Z",
+        refreshedAt: "2026-05-18T17:11:57.661Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "erp_system", dataType: "text", isNullable: true }, { name: "last_job_cost_sync", dataType: "timestamp with time zone", isNullable: true }, { name: "last_direct_cost_sync", dataType: "timestamp with time zone", isNullable: true }, { name: "sync_status", dataType: "text", isNullable: true }, { name: "payload", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -3746,8 +3745,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "1208 kB",
         lastAutoanalyze: null,
         nLiveTup: 612,
-        nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:23.970Z",
+        nDeadTup: 31,
+        refreshedAt: "2026-05-18T17:11:58.013Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "sub_job_id", dataType: "uuid", isNullable: true }, { name: "cost_code_id", dataType: "text", isNullable: false }, { name: "cost_type_id", dataType: "uuid", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "original_amount", dataType: "numeric", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "sub_job_key", dataType: "uuid", isNullable: true }, { name: "project_budget_code_id", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "unit_of_measure", dataType: "text", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "default_ftc_method", dataType: "character varying", isNullable: true }, { name: "default_curve_id", dataType: "uuid", isNullable: true }, { name: "forecasting_enabled", dataType: "boolean", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: true }],
       references: {
@@ -3780,8 +3779,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/lines/[lineId]/route.ts", lineNumber: 101, kind: "read", snippet: ".from(\"budget_lines\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/lines/[lineId]/route.ts", lineNumber: 253, kind: "read", snippet: ".from(\"budget_lines\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/lines/[lineId]/route.ts", lineNumber: 395, kind: "read", snippet: ".from(\"budget_lines\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 51, kind: "read", snippet: ".from(\"budget_lines\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 292, kind: "read", snippet: ".from(\"budget_lines\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 52, kind: "read", snippet: ".from(\"budget_lines\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 312, kind: "read", snippet: ".from(\"budget_lines\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/pending-cost-changes/route.ts", lineNumber: 45, kind: "read", snippet: ".from(\"budget_lines\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/route.ts", lineNumber: 208, kind: "read", snippet: ".from(\"budget_lines\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/route.ts", lineNumber: 301, kind: "read", snippet: ".from(\"budget_lines\")" },
@@ -3834,7 +3833,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 23215, kind: "migration", snippet: "CREATE POLICY budget_lines_update ON public.budget_lines FOR UPDATE USING ((auth.uid() IS NOT NULL));" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 3786, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 8" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 3790, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 8" },
         ],
       },
     },
@@ -3852,10 +3851,10 @@ export const DB_INVENTORY: DbInventory = {
       liveStats: {
         approxRows: 1843,
         totalSize: "1744 kB",
-        lastAutoanalyze: null,
+        lastAutoanalyze: "2026-05-18T16:59:06.398Z",
         nLiveTup: 1843,
-        nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:24.480Z",
+        nDeadTup: 351,
+        refreshedAt: "2026-05-18T17:11:58.394Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "budget_line_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "field_name", dataType: "text", isNullable: false }, { name: "old_value", dataType: "text", isNullable: true }, { name: "new_value", dataType: "text", isNullable: true }, { name: "changed_by", dataType: "uuid", isNullable: true }, { name: "changed_at", dataType: "timestamp with time zone", isNullable: false }, { name: "change_type", dataType: "text", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }],
       references: {
@@ -3907,24 +3906,24 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "144 kB",
         lastAutoanalyze: null,
         nLiveTup: 33,
-        nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:24.954Z",
+        nDeadTup: 1,
+        refreshedAt: "2026-05-18T17:11:58.796Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "number", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "reason", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "effective_date", dataType: "date", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
         writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 340, kind: "write", snippet: ".from(\"budget_modifications\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 381, kind: "write", snippet: ".from(\"budget_modifications\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 538, kind: "write", snippet: ".from(\"budget_modifications\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 671, kind: "write", snippet: ".from(\"budget_modifications\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 363, kind: "write", snippet: ".from(\"budget_modifications\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 444, kind: "write", snippet: ".from(\"budget_modifications\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 603, kind: "write", snippet: ".from(\"budget_modifications\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 736, kind: "write", snippet: ".from(\"budget_modifications\")" },
         ],
         reads: [
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/lines/[lineId]/route.ts", lineNumber: 440, kind: "read", snippet: ".from(\"budget_modifications\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/lock/route.ts", lineNumber: 148, kind: "read", snippet: ".from(\"budget_modifications\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 100, kind: "read", snippet: ".from(\"budget_modifications\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 323, kind: "read", snippet: ".from(\"budget_modifications\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 456, kind: "read", snippet: ".from(\"budget_modifications\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 625, kind: "read", snippet: ".from(\"budget_modifications\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 101, kind: "read", snippet: ".from(\"budget_modifications\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 339, kind: "read", snippet: ".from(\"budget_modifications\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 521, kind: "read", snippet: ".from(\"budget_modifications\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 690, kind: "read", snippet: ".from(\"budget_modifications\")" },
         ],
         migrations: [
           { filePath: "supabase/migrations/20260414123000_budget_rls_and_atomic_upsert.sql", lineNumber: 187, kind: "migration", snippet: "DROP POLICY IF EXISTS budget_modifications_select ON public.budget_modifications;" },
@@ -3965,19 +3964,19 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "104 kB",
         lastAutoanalyze: null,
         nLiveTup: 33,
-        nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:25.382Z",
+        nDeadTup: 2,
+        refreshedAt: "2026-05-18T17:11:59.139Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "budget_modification_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "sub_job_id", dataType: "uuid", isNullable: true }, { name: "cost_code_id", dataType: "text", isNullable: false }, { name: "cost_type_id", dataType: "uuid", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "modification_type", dataType: "text", isNullable: true }, { name: "change_event_id", dataType: "uuid", isNullable: true }],
       references: {
         writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 365, kind: "write", snippet: ".from(\"budget_mod_lines\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 658, kind: "write", snippet: ".from(\"budget_mod_lines\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 438, kind: "write", snippet: ".from(\"budget_mod_lines\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 723, kind: "write", snippet: ".from(\"budget_mod_lines\")" },
         ],
         reads: [
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/details/route.ts", lineNumber: 121, kind: "read", snippet: ".from(\"budget_mod_lines\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/details/route.ts", lineNumber: 166, kind: "read", snippet: ".from(\"budget_mod_lines\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 64, kind: "read", snippet: ".from(\"budget_mod_lines\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 65, kind: "read", snippet: ".from(\"budget_mod_lines\")" },
         ],
         migrations: [
           { filePath: "supabase/migrations/20260414123000_budget_rls_and_atomic_upsert.sql", lineNumber: 147, kind: "migration", snippet: "DROP POLICY IF EXISTS budget_mod_lines_select ON public.budget_mod_lines;" },
@@ -4016,15 +4015,15 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:25.769Z",
+        refreshedAt: "2026-05-18T17:11:59.487Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "budget_modification_id", dataType: "uuid", isNullable: false }, { name: "budget_line_id", dataType: "uuid", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "voided_reason", dataType: "text", isNullable: true }],
       references: {
         writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 531, kind: "write", snippet: ".from(\"budget_modification_lines\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 596, kind: "write", snippet: ".from(\"budget_modification_lines\")" },
         ],
         reads: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 526, kind: "read", snippet: ".from(\"budget_modification_lines\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts", lineNumber: 591, kind: "read", snippet: ".from(\"budget_modification_lines\")" },
         ],
         migrations: [
           { filePath: "supabase/migrations/20260414123000_budget_rls_and_atomic_upsert.sql", lineNumber: 332, kind: "migration", snippet: "DROP POLICY IF EXISTS budget_modification_lines_select ON public.budget_modification_lines;" },
@@ -4057,7 +4056,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:26.170Z",
+        refreshedAt: "2026-05-18T17:11:59.854Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "number", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "change_event_id", dataType: "uuid", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -4093,7 +4092,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 26,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:26.578Z",
+        refreshedAt: "2026-05-18T17:12:00.218Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "is_default", dataType: "boolean", isNullable: true }, { name: "is_system", dataType: "boolean", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -4152,7 +4151,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 312,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:26.989Z",
+        refreshedAt: "2026-05-18T17:12:00.574Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "view_id", dataType: "uuid", isNullable: false }, { name: "column_key", dataType: "character varying", isNullable: false }, { name: "display_name", dataType: "character varying", isNullable: true }, { name: "display_order", dataType: "integer", isNullable: false }, { name: "width", dataType: "integer", isNullable: true }, { name: "is_visible", dataType: "boolean", isNullable: true }, { name: "is_locked", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -4196,7 +4195,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 353,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:27.380Z",
+        refreshedAt: "2026-05-18T17:12:00.935Z",
       },
       columns: [{ name: "id", dataType: "text", isNullable: false }, { name: "division_id", dataType: "uuid", isNullable: false }, { name: "division_title", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -4223,7 +4222,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/line-items/estimate-import/activate-budget-codes/route.ts", lineNumber: 162, kind: "read", snippet: ".from(\"cost_codes\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/line-items/route.ts", lineNumber: 68, kind: "read", snippet: ".from(\"cost_codes\")" },
           { filePath: "frontend/src/app/api/projects/bootstrap/route.ts", lineNumber: 184, kind: "read", snippet: ".from(\"cost_codes\")" },
-          { filePath: "frontend/src/components/budget/BudgetLineItemCreatorModal.tsx", lineNumber: 193, kind: "read", snippet: ".from(\"cost_codes\")" },
+          { filePath: "frontend/src/components/budget/BudgetLineItemCreatorModal.tsx", lineNumber: 192, kind: "read", snippet: ".from(\"cost_codes\")" },
           { filePath: "frontend/src/components/budget/InlineBudgetLineItemCreator.tsx", lineNumber: 159, kind: "read", snippet: ".from(\"cost_codes\")" },
           { filePath: "frontend/src/components/budget/budget-line-item-form.tsx", lineNumber: 208, kind: "read", snippet: ".from(\"cost_codes\")" },
           { filePath: "frontend/src/components/domain/contracts/CreatePurchaseOrderForm.tsx", lineNumber: 309, kind: "read", snippet: ".from(\"cost_codes\")" },
@@ -4258,7 +4257,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 40,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:27.773Z",
+        refreshedAt: "2026-05-18T17:12:01.298Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "code", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "is_active", dataType: "boolean", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -4293,7 +4292,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 9,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:28.173Z",
+        refreshedAt: "2026-05-18T17:12:01.656Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "code", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -4338,7 +4337,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:28.568Z",
+        refreshedAt: "2026-05-18T17:12:02.027Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "budget_line_id", dataType: "uuid", isNullable: false }, { name: "forecast_date", dataType: "date", isNullable: false }, { name: "method", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "quantity", dataType: "numeric", isNullable: false }, { name: "units", dataType: "character varying", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: false }, { name: "utilization_rate", dataType: "numeric", isNullable: true }, { name: "start_date", dataType: "date", isNullable: true }, { name: "end_date", dataType: "date", isNullable: true }, { name: "units_remaining_mode", dataType: "character varying", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -4384,7 +4383,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:28.990Z",
+        refreshedAt: "2026-05-18T17:12:02.376Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "budget_line_id", dataType: "uuid", isNullable: false }, { name: "forecast_date", dataType: "date", isNullable: false }, { name: "forecasted_cost", dataType: "numeric", isNullable: false }, { name: "forecast_to_complete", dataType: "numeric", isNullable: false }, { name: "projected_final_cost", dataType: "numeric", isNullable: false }, { name: "variance_at_completion", dataType: "numeric", isNullable: false }, { name: "burn_rate", dataType: "numeric", isNullable: true }, { name: "percent_complete", dataType: "numeric", isNullable: true }, { name: "ftc_method", dataType: "text", isNullable: false }, { name: "curve_id", dataType: "uuid", isNullable: true }, { name: "manual_override", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -4419,7 +4418,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:29.398Z",
+        refreshedAt: "2026-05-18T17:12:02.762Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "budget_line_item_id", dataType: "uuid", isNullable: false }, { name: "budget_code", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "event_type", dataType: "text", isNullable: false }, { name: "changed_field", dataType: "text", isNullable: true }, { name: "from_value", dataType: "text", isNullable: true }, { name: "to_value", dataType: "text", isNullable: true }, { name: "performed_by", dataType: "uuid", isNullable: true }, { name: "performed_by_name", dataType: "text", isNullable: true }, { name: "performed_at", dataType: "timestamp with time zone", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }],
       references: {
@@ -4451,7 +4450,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:29.980Z",
+        refreshedAt: "2026-05-18T17:12:03.117Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "snapshot_type", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "is_baseline", dataType: "boolean", isNullable: true }, { name: "line_items", dataType: "jsonb", isNullable: false }, { name: "grand_totals", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -4495,7 +4494,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 8,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:30.555Z",
+        refreshedAt: "2026-05-18T17:12:03.513Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "factor_name", dataType: "character varying", isNullable: false }, { name: "factor_type", dataType: "character varying", isNullable: false }, { name: "base_cost_per_unit", dataType: "numeric", isNullable: true }, { name: "unit_type", dataType: "character varying", isNullable: true }, { name: "complexity_multiplier", dataType: "numeric", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -4525,7 +4524,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:31.125Z",
+        refreshedAt: "2026-05-18T17:12:03.889Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "budget_item_id", dataType: "uuid", isNullable: true }, { name: "forecast_date", dataType: "date", isNullable: false }, { name: "forecast_to_complete", dataType: "numeric", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -4558,7 +4557,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 11,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:31.557Z",
+        refreshedAt: "2026-05-18T17:12:04.248Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "division_id", dataType: "uuid", isNullable: false }, { name: "new_title", dataType: "text", isNullable: true }, { name: "updated_count", dataType: "integer", isNullable: true }, { name: "changed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "changed_by", dataType: "text", isNullable: true }],
       references: {
@@ -4587,7 +4586,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6555,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:31.971Z",
+        refreshedAt: "2026-05-18T17:12:04.603Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "cost_type", dataType: "text", isNullable: false }, { name: "date", dataType: "date", isNullable: false }, { name: "vendor_id", dataType: "uuid", isNullable: true }, { name: "invoice_number", dataType: "character varying", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "terms", dataType: "character varying", isNullable: true }, { name: "received_date", dataType: "date", isNullable: true }, { name: "paid_date", dataType: "date", isNullable: true }, { name: "total_amount", dataType: "numeric", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by_user_id", dataType: "uuid", isNullable: false }, { name: "updated_by_user_id", dataType: "uuid", isNullable: false }, { name: "is_deleted", dataType: "boolean", isNullable: true }, { name: "employee_id", dataType: "uuid", isNullable: true }, { name: "acumatica_document_key", dataType: "text", isNullable: true }, { name: "acumatica_ref_nbr", dataType: "text", isNullable: true }, { name: "acumatica_doc_type", dataType: "text", isNullable: true }, { name: "acumatica_financial_period", dataType: "text", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -4653,7 +4652,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 8820,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:32.727Z",
+        refreshedAt: "2026-05-18T17:12:05.194Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "direct_cost_id", dataType: "uuid", isNullable: false }, { name: "budget_code_id", dataType: "uuid", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: false }, { name: "uom", dataType: "character varying", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: false }, { name: "line_total", dataType: "numeric", isNullable: true }, { name: "line_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -4707,7 +4706,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 400,
         nDeadTup: 6,
-        refreshedAt: "2026-05-18T16:28:33.346Z",
+        refreshedAt: "2026-05-18T17:12:05.581Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_number", dataType: "text", isNullable: false }, { name: "contract_company_id", dataType: "uuid", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "executed", dataType: "boolean", isNullable: false }, { name: "default_retainage_percent", dataType: "numeric", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "inclusions", dataType: "text", isNullable: true }, { name: "exclusions", dataType: "text", isNullable: true }, { name: "start_date", dataType: "date", isNullable: true }, { name: "estimated_completion_date", dataType: "date", isNullable: true }, { name: "actual_completion_date", dataType: "date", isNullable: true }, { name: "contract_date", dataType: "date", isNullable: true }, { name: "signed_contract_received_date", dataType: "date", isNullable: true }, { name: "issued_on_date", dataType: "date", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "non_admin_user_ids", dataType: "ARRAY", isNullable: true }, { name: "allow_non_admin_view_sov_items", dataType: "boolean", isNullable: true }, { name: "invoice_contact_ids", dataType: "ARRAY", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_external_key", dataType: "text", isNullable: true }, { name: "project", dataType: "text", isNullable: true }, { name: "prime_contract_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -4725,8 +4724,6 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/commitments/[commitmentId]/export/route.ts", lineNumber: 230, kind: "read", snippet: "? await supabase.from(\"subcontracts\").select(\"*\").eq(\"id\", id).single()" },
           { filePath: "frontend/src/app/api/commitments/[commitmentId]/route.ts", lineNumber: 125, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "frontend/src/app/api/commitments/route.ts", lineNumber: 249, kind: "read", snippet: "supabase.from(\"subcontracts\").select(\"id\").eq(\"prime_contract_id\", filters.primeContractId)," },
-          { filePath: "frontend/src/app/api/document-picker/attach/route.ts", lineNumber: 110, kind: "read", snippet: ".from('subcontracts')" },
-          { filePath: "frontend/src/app/api/document-picker/upload/route.ts", lineNumber: 104, kind: "read", snippet: ".from('subcontracts')" },
           { filePath: "frontend/src/app/api/estimates/suggest-subs/route.ts", lineNumber: 79, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts", lineNumber: 121, kind: "read", snippet: ".from('subcontracts')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/route.ts", lineNumber: 229, kind: "read", snippet: ".from(\"subcontracts\")" },
@@ -4738,7 +4735,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/route.ts", lineNumber: 555, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/convert-to-co/route.ts", lineNumber: 238, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/convert-to-co/route.ts", lineNumber: 279, kind: "read", snippet: ".from(\"subcontracts\")" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 4725, kind: "read", snippet: "{ filePath: \"frontend/src/app/api/document-picker/attach/route.ts\", lineNumber: 110, kind: \"read\", snippet: \".from('subc" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 4728, kind: "read", snippet: "{ filePath: \"frontend/src/app/api/document-picker/attach/route.ts\", lineNumber: 110, kind: \"read\", snippet: \".from('subc" },
           { filePath: "frontend/src/lib/acumatica/export-service.ts", lineNumber: 209, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "frontend/src/lib/acumatica/export-service.ts", lineNumber: 1337, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "frontend/src/lib/ai/tools/financial.ts", lineNumber: 212, kind: "read", snippet: ".from(\"subcontracts\")" },
@@ -4746,6 +4743,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 118, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 199, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "frontend/src/lib/commitments/subcontractor-sov-service.ts", lineNumber: 477, kind: "read", snippet: ".from(\"subcontracts\")" },
+          { filePath: "frontend/src/lib/documents/pattern-c-attachments.ts", lineNumber: 155, kind: "read", snippet: "supabase.from(\"subcontracts\").select(\"id\").eq(\"id\", entityId).maybeSingle()," },
           { filePath: "frontend/src/lib/supabase/queries.ts", lineNumber: 183, kind: "read", snippet: ".from(\"subcontracts\")" },
           { filePath: "backend/src/services/acumatica_sync.py", lineNumber: 1750, kind: "read", snippet: "self.supabase.table(\"subcontracts\")" },
         ],
@@ -4779,8 +4777,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 19852, kind: "migration", snippet: "CREATE TRIGGER update_subcontracts_updated_at BEFORE UPDATE ON public.subcontracts FOR EACH ROW EXECUTE FUNCTION public." },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 4726, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/upload/route.ts\", lineNumber: 104, kind: \"read\", snippet: \".from('subc" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 4728, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 1" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 4729, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/upload/route.ts\", lineNumber: 104, kind: \"read\", snippet: \".from('subc" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 4731, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 1" },
         ],
       },
     },
@@ -4801,7 +4799,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 966,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:33.809Z",
+        refreshedAt: "2026-05-18T17:12:05.954Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "subcontract_id", dataType: "uuid", isNullable: false }, { name: "line_number", dataType: "integer", isNullable: true }, { name: "change_event_line_item", dataType: "text", isNullable: true }, { name: "budget_code", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: true }, { name: "billed_to_date", dataType: "numeric", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "acumatica_line_nbr", dataType: "integer", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "unit_of_measure", dataType: "text", isNullable: true }, { name: "retainage_percent", dataType: "numeric", isNullable: true }],
       references: {
@@ -4858,7 +4856,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 10,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:34.202Z",
+        refreshedAt: "2026-05-18T17:12:06.304Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submission_id", dataType: "uuid", isNullable: false }, { name: "line_number", dataType: "integer", isNullable: true }, { name: "budget_code", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "billed_to_date", dataType: "numeric", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "source_sov_item_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -4901,7 +4899,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 27,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:34.594Z",
+        refreshedAt: "2026-05-18T17:12:06.664Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "commitment_id", dataType: "uuid", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "submitted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "reviewed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "review_notes", dataType: "text", isNullable: true }, { name: "invite_sent_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "submitted_by", dataType: "uuid", isNullable: true }, { name: "reviewed_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -4949,7 +4947,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2433,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:34.960Z",
+        refreshedAt: "2026-05-18T17:12:07.018Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "subcontract_id", dataType: "uuid", isNullable: true }, { name: "purchase_order_id", dataType: "uuid", isNullable: true }, { name: "billing_period_id", dataType: "uuid", isNullable: true }, { name: "invoice_number", dataType: "text", isNullable: true }, { name: "period_start", dataType: "date", isNullable: true }, { name: "period_end", dataType: "date", isNullable: true }, { name: "billing_date", dataType: "date", isNullable: true }, { name: "status", dataType: "USER-DEFINED", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "submitted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "is_retainage_release", dataType: "boolean", isNullable: false }, { name: "acumatica_ref_nbr", dataType: "text", isNullable: true }, { name: "acumatica_doc_type", dataType: "text", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_ap_bill_id", dataType: "bigint", isNullable: true }],
       references: {
@@ -5013,6 +5011,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260502090000_commitment_payments_acumatica_projection.sql", lineNumber: 11, kind: "migration", snippet: "ON public.subcontractor_invoices (acumatica_doc_type, acumatica_ref_nbr)" },
           { filePath: "supabase/migrations/20260502090000_commitment_payments_acumatica_projection.sql", lineNumber: 15, kind: "migration", snippet: "ON public.subcontractor_invoices (acumatica_ap_bill_id)" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 78, kind: "migration", snippet: "from public.subcontractor_invoices si" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 88, kind: "migration", snippet: "from public.subcontractor_invoices si" },
         ],
         unknown: [],
       },
@@ -5034,7 +5033,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 17,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:35.368Z",
+        refreshedAt: "2026-05-18T17:12:07.432Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "invoice_id", dataType: "bigint", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "scheduled_value", dataType: "numeric", isNullable: false }, { name: "work_completed_previous", dataType: "numeric", isNullable: false }, { name: "work_completed_period", dataType: "numeric", isNullable: false }, { name: "work_completed_pct", dataType: "numeric", isNullable: false }, { name: "materials_stored", dataType: "numeric", isNullable: false }, { name: "retainage_pct", dataType: "numeric", isNullable: false }, { name: "retainage_amount", dataType: "numeric", isNullable: false }, { name: "retainage_released", dataType: "numeric", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "balance_to_finish", dataType: "numeric", isNullable: true }, { name: "total_completed_stored", dataType: "numeric", isNullable: true }, { name: "materials_retainage_pct", dataType: "numeric", isNullable: false }, { name: "materials_retainage_amount", dataType: "numeric", isNullable: false }, { name: "previous_work_retainage", dataType: "numeric", isNullable: false }, { name: "previous_materials_retainage", dataType: "numeric", isNullable: false }, { name: "work_retainage_released", dataType: "numeric", isNullable: false }, { name: "materials_retainage_released", dataType: "numeric", isNullable: false }, { name: "budget_code", dataType: "text", isNullable: true }, { name: "line_item_type", dataType: "text", isNullable: true }, { name: "commitment_value", dataType: "numeric", isNullable: true }, { name: "change_value", dataType: "numeric", isNullable: true }, { name: "work_completed_previous_pct", dataType: "numeric", isNullable: true }, { name: "net_amount_this_period", dataType: "numeric", isNullable: true }],
       references: {
@@ -5072,7 +5071,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2444,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:35.758Z",
+        refreshedAt: "2026-05-18T17:12:07.804Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "invoice_id", dataType: "bigint", isNullable: false }, { name: "actor_user_id", dataType: "uuid", isNullable: true }, { name: "actor_email", dataType: "text", isNullable: true }, { name: "event_type", dataType: "text", isNullable: false }, { name: "field_name", dataType: "text", isNullable: true }, { name: "old_value", dataType: "jsonb", isNullable: true }, { name: "new_value", dataType: "jsonb", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -5114,7 +5113,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 872,
         nDeadTup: 4,
-        refreshedAt: "2026-05-18T16:28:36.168Z",
+        refreshedAt: "2026-05-18T17:12:08.219Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "commitment_id", dataType: "uuid", isNullable: false }, { name: "commitment_type", dataType: "text", isNullable: false }, { name: "action", dataType: "text", isNullable: false }, { name: "changed_fields", dataType: "jsonb", isNullable: true }, { name: "actor_id", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -5146,7 +5145,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2775,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:36.623Z",
+        refreshedAt: "2026-05-18T17:12:08.640Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "subcontract_id", dataType: "uuid", isNullable: true }, { name: "purchase_order_id", dataType: "uuid", isNullable: true }, { name: "subcontractor_invoice_id", dataType: "bigint", isNullable: true }, { name: "acumatica_check_id", dataType: "bigint", isNullable: true }, { name: "acumatica_ap_bill_id", dataType: "bigint", isNullable: true }, { name: "external_key", dataType: "text", isNullable: false }, { name: "payment_number", dataType: "text", isNullable: true }, { name: "payment_ref", dataType: "text", isNullable: true }, { name: "payment_method", dataType: "text", isNullable: true }, { name: "payment_date", dataType: "date", isNullable: true }, { name: "vendor_id", dataType: "text", isNullable: true }, { name: "vendor_name", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "status", dataType: "text", isNullable: true }, { name: "source", dataType: "text", isNullable: false }, { name: "raw_payload", dataType: "jsonb", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -5188,7 +5187,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:37.080Z",
+        refreshedAt: "2026-05-18T17:12:09.109Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "commitment_id", dataType: "uuid", isNullable: false }, { name: "commitment_type", dataType: "text", isNullable: false }, { name: "pco_number", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "total_amount", dataType: "numeric", isNullable: true }, { name: "schedule_impact", dataType: "integer", isNullable: true }, { name: "designated_reviewer_id", dataType: "uuid", isNullable: true }, { name: "due_date", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_by", dataType: "uuid", isNullable: true }, { name: "promoted_to_co_id", dataType: "uuid", isNullable: true }, { name: "promoted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "change_reason", dataType: "text", isNullable: true }, { name: "revision", dataType: "integer", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "executed", dataType: "boolean", isNullable: true }, { name: "signed_co_received_date", dataType: "date", isNullable: true }, { name: "requested_by", dataType: "text", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "field_change", dataType: "boolean", isNullable: true }, { name: "reference", dataType: "text", isNullable: true }, { name: "paid_in_full", dataType: "boolean", isNullable: true }, { name: "contract_company", dataType: "text", isNullable: true }],
       references: {
@@ -5246,7 +5245,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:37.474Z",
+        refreshedAt: "2026-05-18T17:12:09.479Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "commitment_id", dataType: "uuid", isNullable: false }, { name: "commitment_type", dataType: "text", isNullable: false }, { name: "related_type", dataType: "text", isNullable: false }, { name: "related_id", dataType: "text", isNullable: false }, { name: "related_number", dataType: "text", isNullable: true }, { name: "related_title", dataType: "text", isNullable: false }, { name: "related_status", dataType: "text", isNullable: true }, { name: "related_url", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -5288,7 +5287,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:37.858Z",
+        refreshedAt: "2026-05-18T17:12:09.845Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "commitment_change_order_id", dataType: "uuid", isNullable: false }, { name: "budget_line_id", dataType: "uuid", isNullable: true }, { name: "cost_code_id", dataType: "text", isNullable: true }, { name: "cost_type_id", dataType: "uuid", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -5335,7 +5334,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 19,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:38.235Z",
+        refreshedAt: "2026-05-18T17:12:10.229Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "contract_number", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "vendor_id", dataType: "uuid", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "USER-DEFINED", isNullable: false }, { name: "original_contract_value", dataType: "numeric", isNullable: false }, { name: "revised_contract_value", dataType: "numeric", isNullable: false }, { name: "start_date", dataType: "date", isNullable: true }, { name: "end_date", dataType: "date", isNullable: true }, { name: "retention_percentage", dataType: "numeric", isNullable: true }, { name: "payment_terms", dataType: "text", isNullable: true }, { name: "billing_schedule", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "executed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "contractor_id", dataType: "uuid", isNullable: true }, { name: "architect_engineer_id", dataType: "uuid", isNullable: true }, { name: "contract_company_id", dataType: "uuid", isNullable: true }, { name: "substantial_completion_date", dataType: "date", isNullable: true }, { name: "actual_completion_date", dataType: "date", isNullable: true }, { name: "signed_contract_received_date", dataType: "date", isNullable: true }, { name: "contract_termination_date", dataType: "date", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: false }, { name: "inclusions", dataType: "text", isNullable: true }, { name: "exclusions", dataType: "text", isNullable: true }, { name: "executed", dataType: "boolean", isNullable: false }, { name: "client_id", dataType: "uuid", isNullable: true }, { name: "erp_status", dataType: "text", isNullable: false }, { name: "allowed_user_ids", dataType: "ARRAY", isNullable: false }, { name: "allow_sov_view", dataType: "boolean", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: true }, { name: "estimate_version", dataType: "integer", isNullable: true }, { name: "last_synced_from_estimate_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -5347,7 +5346,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/route.ts", lineNumber: 281, kind: "write", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/sync-from-estimate/route.ts", lineNumber: 261, kind: "write", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/from-estimate/route.ts", lineNumber: 206, kind: "write", snippet: ".from(\"prime_contracts\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 245, kind: "write", snippet: ".from(\"prime_contracts\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 244, kind: "write", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/approve/route.ts", lineNumber: 124, kind: "write", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/bootstrap/route.ts", lineNumber: 159, kind: "write", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/components/project-setup-wizard/contract-setup.tsx", lineNumber: 89, kind: "write", snippet: ".from(\"prime_contracts\")" },
@@ -5367,9 +5366,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/checklist/route.ts", lineNumber: 35, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/advanced-settings/route.ts", lineNumber: 79, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/advanced-settings/route.ts", lineNumber: 119, kind: "read", snippet: ".from(\"prime_contracts\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download/route.ts", lineNumber: 23, kind: "read", snippet: ".from(\"prime_contracts\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/route.ts", lineNumber: 43, kind: "read", snippet: ".from(\"prime_contracts\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/route.ts", lineNumber: 139, kind: "read", snippet: ".from(\"prime_contracts\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download/route.ts", lineNumber: 16, kind: "read", snippet: ".from(\"prime_contracts\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/route.ts", lineNumber: 19, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/approve/route.ts", lineNumber: 50, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/approve/route.ts", lineNumber: 118, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/reject/route.ts", lineNumber: 53, kind: "read", snippet: ".from(\"prime_contracts\")" },
@@ -5396,7 +5394,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/sync-from-estimate/route.ts", lineNumber: 73, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/from-estimate/route.ts", lineNumber: 198, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 50, kind: "read", snippet: ".from(\"prime_contracts\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 230, kind: "read", snippet: ".from(\"prime_contracts\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 229, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/directory/companies/sync/route.ts", lineNumber: 63, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/route.ts", lineNumber: 65, kind: "read", snippet: ".from(\"prime_contracts\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items/options/route.ts", lineNumber: 125, kind: "read", snippet: ".from(\"prime_contracts\")" },
@@ -5449,6 +5447,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260523000000_estimate_contract_budget_links.sql", lineNumber: 13, kind: "migration", snippet: "ON public.prime_contracts (estimate_id)" },
           { filePath: "supabase/migrations/20260523100000_create_user_can_access_entity_helper.sql", lineNumber: 41, kind: "migration", snippet: "from public.prime_contracts pc" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 49, kind: "migration", snippet: "from public.prime_contracts pc" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 37, kind: "migration", snippet: "from public.prime_contracts pc" },
           { filePath: "supabase/migrations/_ignored_legacy/20260409000001_consolidate_vendors_into_companies.sql", lineNumber: 102, kind: "migration", snippet: "UPDATE prime_contracts pc" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 18025, kind: "migration", snippet: "CREATE INDEX idx_prime_contracts_actual_completion_date ON public.prime_contracts USING btree (actual_completion_date);" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 18032, kind: "migration", snippet: "CREATE INDEX idx_prime_contracts_architect_engineer_id ON public.prime_contracts USING btree (architect_engineer_id);" },
@@ -5466,7 +5465,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 19418, kind: "migration", snippet: "CREATE TRIGGER prime_contracts_updated_at BEFORE UPDATE ON public.prime_contracts FOR EACH ROW EXECUTE FUNCTION public.u" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 5361, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 411, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 5366, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 411, kind: \"read\", snippet: " },
         ],
       },
     },
@@ -5487,7 +5486,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 139,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:38.670Z",
+        refreshedAt: "2026-05-18T17:12:10.663Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "contract_id", dataType: "uuid", isNullable: true }, { name: "pcco_number", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: true }, { name: "executed", dataType: "boolean", isNullable: true }, { name: "submitted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "total_amount", dataType: "numeric", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "acumatica_external_key", dataType: "text", isNullable: true }, { name: "prime_contract_id", dataType: "uuid", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "revision", dataType: "integer", isNullable: true }, { name: "change_reason", dataType: "text", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "schedule_impact", dataType: "integer", isNullable: true }, { name: "field_change", dataType: "boolean", isNullable: true }, { name: "reference", dataType: "text", isNullable: true }, { name: "paid_in_full", dataType: "boolean", isNullable: true }, { name: "signed_co_received_date", dataType: "date", isNullable: true }, { name: "request_received_from", dataType: "text", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "invoiced_date", dataType: "date", isNullable: true }, { name: "created_by", dataType: "text", isNullable: true }, { name: "contract_company", dataType: "text", isNullable: true }, { name: "rejection_reason", dataType: "text", isNullable: true }, { name: "review_date", dataType: "date", isNullable: true }, { name: "designated_reviewer", dataType: "text", isNullable: true }, { name: "revised_substantial_completion_date", dataType: "date", isNullable: true }],
       references: {
@@ -5539,8 +5538,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/convert-to-co/route.ts", lineNumber: 103, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/approve/route.ts", lineNumber: 43, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/approve/route.ts", lineNumber: 110, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/route.ts", lineNumber: 31, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/route.ts", lineNumber: 90, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/route.ts", lineNumber: 19, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]/route.ts", lineNumber: 37, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]/route.ts", lineNumber: 111, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/route.ts", lineNumber: 33, kind: "read", snippet: ".from(\"prime_contract_change_orders\")" },
@@ -5577,6 +5575,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260413000007_prime_contract_pcos_extended_fields.sql", lineNumber: 2, kind: "migration", snippet: "-- Matches the field set on prime_contract_change_orders for consistency" },
           { filePath: "supabase/migrations/20260414000001_change_management_scope_guardrails.sql", lineNumber: 155, kind: "migration", snippet: "ON public.prime_contract_change_orders (project_id, status, created_at DESC)" },
           { filePath: "supabase/migrations/20260414000001_change_management_scope_guardrails.sql", lineNumber: 158, kind: "migration", snippet: "ON public.prime_contract_change_orders (prime_contract_id)" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 59, kind: "migration", snippet: "from public.prime_contract_change_orders pcco" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 17857, kind: "migration", snippet: "CREATE INDEX idx_pccos_contract ON public.prime_contract_change_orders USING btree (contract_id);" },
         ],
         unknown: [],
@@ -5599,7 +5598,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 21,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:39.091Z",
+        refreshedAt: "2026-05-18T17:12:11.019Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "payment_application_id", dataType: "uuid", isNullable: true }, { name: "payment_number", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "payment_date", dataType: "date", isNullable: false }, { name: "method", dataType: "text", isNullable: true }, { name: "reference_number", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "acumatica_ref_nbr", dataType: "text", isNullable: true }, { name: "acumatica_doc_type", dataType: "text", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -5654,7 +5653,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:39.484Z",
+        refreshedAt: "2026-05-18T17:12:11.408Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "prime_co_id", dataType: "integer", isNullable: false }, { name: "related_type", dataType: "text", isNullable: false }, { name: "related_id", dataType: "text", isNullable: false }, { name: "related_number", dataType: "text", isNullable: true }, { name: "related_title", dataType: "text", isNullable: false }, { name: "related_status", dataType: "text", isNullable: true }, { name: "related_url", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -5697,7 +5696,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:39.859Z",
+        refreshedAt: "2026-05-18T17:12:12.099Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "co_tier_count", dataType: "smallint", isNullable: false }, { name: "allow_standard_users_create_pcco", dataType: "boolean", isNullable: false }, { name: "allow_standard_users_create_pco", dataType: "boolean", isNullable: false }, { name: "sov_always_editable", dataType: "boolean", isNullable: false }, { name: "show_markup_on_co_pdf", dataType: "boolean", isNullable: false }, { name: "show_markup_on_invoice_pdf", dataType: "boolean", isNullable: false }, { name: "default_distribution_prime_contract", dataType: "text", isNullable: true }, { name: "default_distribution_pcco", dataType: "text", isNullable: true }, { name: "default_distribution_pco", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "enable_completed_work_retainage", dataType: "boolean", isNullable: false }, { name: "enable_stored_materials_retainage", dataType: "boolean", isNullable: false }, { name: "default_retainage_percent", dataType: "numeric", isNullable: false }],
       references: {
@@ -5736,7 +5735,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 143,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:40.255Z",
+        refreshedAt: "2026-05-18T17:12:12.573Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "change_order_number", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "requested_by", dataType: "uuid", isNullable: true }, { name: "requested_date", dataType: "date", isNullable: false }, { name: "approved_by", dataType: "uuid", isNullable: true }, { name: "approved_date", dataType: "date", isNullable: true }, { name: "rejection_reason", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "acumatica_external_key", dataType: "text", isNullable: true }, { name: "parallel_mode", dataType: "boolean", isNullable: false }, { name: "prime_change_order_id", dataType: "bigint", isNullable: true }, { name: "contract_type", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "designated_reviewer", dataType: "text", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "invoiced_date", dataType: "date", isNullable: true }, { name: "executed", dataType: "boolean", isNullable: true }, { name: "field_change", dataType: "boolean", isNullable: true }, { name: "paid_in_full", dataType: "boolean", isNullable: true }, { name: "schedule_impact", dataType: "integer", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "reference", dataType: "text", isNullable: true }, { name: "revision", dataType: "integer", isNullable: true }, { name: "created_by", dataType: "text", isNullable: true }, { name: "contract_company", dataType: "text", isNullable: true }, { name: "change_reason", dataType: "text", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "signed_co_received_date", dataType: "date", isNullable: true }, { name: "paid_date", dataType: "date", isNullable: true }, { name: "request_received_from", dataType: "text", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }],
       references: {
@@ -5779,9 +5778,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/budget/pending-cost-changes/route.ts", lineNumber: 236, kind: "read", snippet: ".from(\"contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/lineage/route.ts", lineNumber: 89, kind: "read", snippet: ".from(\"contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/checklist/route.ts", lineNumber: 55, kind: "read", snippet: ".from(\"contract_change_orders\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts", lineNumber: 32, kind: "read", snippet: ".from(\"contract_change_orders\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts", lineNumber: 31, kind: "read", snippet: ".from(\"contract_change_orders\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts", lineNumber: 100, kind: "read", snippet: ".from(\"contract_change_orders\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts", lineNumber: 19, kind: "read", snippet: ".from(\"contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/export/route.ts", lineNumber: 49, kind: "read", snippet: ".from(\"contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/route.ts", lineNumber: 56, kind: "read", snippet: ".from(\"contract_change_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-pcos/[pcoId]/promote/route.ts", lineNumber: 74, kind: "read", snippet: ".from(\"contract_change_orders\")" },
@@ -5813,6 +5810,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260414000001_change_management_scope_guardrails.sql", lineNumber: 149, kind: "migration", snippet: "ON public.contract_change_orders (project_id)" },
           { filePath: "supabase/migrations/20260414000001_change_management_scope_guardrails.sql", lineNumber: 152, kind: "migration", snippet: "ON public.contract_change_orders (project_id, status, requested_date DESC)" },
           { filePath: "supabase/migrations/20260417210000_commitments_schema_gaps.sql", lineNumber: 178, kind: "migration", snippet: "FROM contract_change_orders cco" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 51, kind: "migration", snippet: "from public.contract_change_orders cco" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16688, kind: "migration", snippet: "CREATE INDEX idx_change_orders_approved_by ON public.contract_change_orders USING btree (approved_by);" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16702, kind: "migration", snippet: "CREATE INDEX idx_change_orders_contract ON public.contract_change_orders USING btree (contract_id);" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16709, kind: "migration", snippet: "CREATE INDEX idx_change_orders_created_at ON public.contract_change_orders USING btree (created_at);" },
@@ -5840,7 +5838,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 171,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:40.662Z",
+        refreshedAt: "2026-05-18T17:12:12.922Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "line_number", dataType: "integer", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "cost_code_id", dataType: "text", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "unit_of_measure", dataType: "text", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "total_cost", dataType: "numeric", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "budget_code_id", dataType: "uuid", isNullable: true }, { name: "markup_type", dataType: "text", isNullable: true }],
       references: {
@@ -5898,7 +5896,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:41.062Z",
+        refreshedAt: "2026-05-18T17:12:13.319Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "document_name", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: false }, { name: "file_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: true }, { name: "mime_type", dataType: "text", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: false }, { name: "version", dataType: "integer", isNullable: false }, { name: "is_current_version", dataType: "boolean", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -5933,7 +5931,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:41.444Z",
+        refreshedAt: "2026-05-18T17:12:13.704Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "prime_contract_id", dataType: "uuid", isNullable: false }, { name: "pco_number", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "total_amount", dataType: "numeric", isNullable: true }, { name: "schedule_impact", dataType: "integer", isNullable: true }, { name: "designated_reviewer_id", dataType: "uuid", isNullable: true }, { name: "due_date", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_by", dataType: "uuid", isNullable: true }, { name: "promoted_to_co_id", dataType: "bigint", isNullable: true }, { name: "promoted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "revision", dataType: "integer", isNullable: true }, { name: "change_reason", dataType: "text", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: false }, { name: "executed", dataType: "boolean", isNullable: false }, { name: "signed_co_received_date", dataType: "date", isNullable: true }, { name: "request_received_from", dataType: "text", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "field_change", dataType: "boolean", isNullable: false }, { name: "reference", dataType: "text", isNullable: true }, { name: "paid_in_full", dataType: "boolean", isNullable: false }],
       references: {
@@ -5941,8 +5939,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/add-to-pco/route.ts", lineNumber: 166, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/promote/route.ts", lineNumber: 169, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/promote/route.ts", lineNumber: 194, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 261, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 347, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 272, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 358, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/promote-bulk/route.ts", lineNumber: 132, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/route.ts", lineNumber: 212, kind: "write", snippet: ".from(\"prime_contract_pcos\")" },
         ],
@@ -5951,9 +5949,9 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/prime-pcos/route.ts", lineNumber: 53, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/route.ts", lineNumber: 468, kind: "read", snippet: ".from('prime_contract_pcos')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/promote/route.ts", lineNumber: 42, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 65, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 198, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 307, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 68, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 209, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 318, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/promote-bulk/route.ts", lineNumber: 43, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/route.ts", lineNumber: 100, kind: "read", snippet: ".from(\"prime_contract_pcos\")" },
         ],
@@ -5970,9 +5968,10 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1308, kind: "migration", snippet: "FROM prime_contract_pcos p" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1317, kind: "migration", snippet: "FROM prime_contract_pcos p" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1326, kind: "migration", snippet: "FROM prime_contract_pcos p" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 66, kind: "migration", snippet: "from public.prime_contract_pcos pco" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 5946, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 468, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 5952, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 468, kind: \"read\", snippet: " },
         ],
       },
     },
@@ -5993,20 +5992,20 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:41.823Z",
+        refreshedAt: "2026-05-18T17:12:14.053Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "pco_id", dataType: "uuid", isNullable: false }, { name: "file_name", dataType: "character varying", isNullable: false }, { name: "file_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: false }, { name: "mime_type", dataType: "character varying", isNullable: false }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
         writes: [],
-        reads: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 129, kind: "read", snippet: ".from(\"prime_contract_pco_attachments\")" },
-        ],
+        reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260414221000_create_prime_contract_pco_attachments.sql", lineNumber: 32, kind: "migration", snippet: "ON public.prime_contract_pco_attachments (pco_id, uploaded_at DESC);" },
           { filePath: "supabase/migrations/20260414221000_create_prime_contract_pco_attachments.sql", lineNumber: 34, kind: "migration", snippet: "ON public.prime_contract_pco_attachments (uploaded_by);" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1302, kind: "migration", snippet: "drop policy if exists \"prime_contract_pco_attachments_delete\" on public.prime_contract_pco_attachments;" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1311, kind: "migration", snippet: "drop policy if exists \"prime_contract_pco_attachments_insert\" on public.prime_contract_pco_attachments;" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1320, kind: "migration", snippet: "drop policy if exists \"prime_contract_pco_attachments_select\" on public.prime_contract_pco_attachments;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 449, kind: "migration", snippet: "from public.prime_contract_pco_attachments a" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 464, kind: "migration", snippet: "from public.prime_contract_pco_attachments a" },
         ],
         unknown: [],
       },
@@ -6028,7 +6027,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:42.186Z",
+        refreshedAt: "2026-05-18T17:12:14.405Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "uom", dataType: "text", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "line_amount", dataType: "numeric", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "budget_code_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -6060,7 +6059,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:42.549Z",
+        refreshedAt: "2026-05-18T17:12:14.751Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "application_number", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "retention_amount", dataType: "numeric", isNullable: false }, { name: "net_amount", dataType: "numeric", isNullable: true }, { name: "period_from", dataType: "date", isNullable: true }, { name: "period_to", dataType: "date", isNullable: true }, { name: "submitted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "submitted_by", dataType: "text", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_by", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "billing_period_id", dataType: "uuid", isNullable: true }, { name: "billing_date", dataType: "date", isNullable: true }, { name: "percent_complete", dataType: "numeric", isNullable: true }],
       references: {
@@ -6130,24 +6129,20 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:42.979Z",
+        refreshedAt: "2026-05-18T17:12:15.111Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "pcco_id", dataType: "bigint", isNullable: false }, { name: "file_name", dataType: "character varying", isNullable: false }, { name: "file_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: false }, { name: "mime_type", dataType: "character varying", isNullable: false }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
-        writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]/route.ts", lineNumber: 51, kind: "write", snippet: ".from(\"pcco_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/route.ts", lineNumber: 126, kind: "write", snippet: ".from(\"pcco_attachments\")" },
-        ],
-        reads: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]/route.ts", lineNumber: 36, kind: "read", snippet: ".from(\"pcco_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/route.ts", lineNumber: 42, kind: "read", snippet: ".from(\"pcco_attachments\")" },
-        ],
+        writes: [],
+        reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260319000002_create_change_order_attachment_tables.sql", lineNumber: 30, kind: "migration", snippet: "ON public.pcco_attachments (pcco_id, uploaded_at DESC);" },
           { filePath: "supabase/migrations/20260508122000_add_missing_fk_actor_indexes.sql", lineNumber: 13, kind: "migration", snippet: "CREATE INDEX IF NOT EXISTS idx_pcco_attachments_uploaded_by ON public.pcco_attachments (uploaded_by);" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1073, kind: "migration", snippet: "drop policy if exists \"pcco_attachments_delete\" on public.pcco_attachments;" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1080, kind: "migration", snippet: "drop policy if exists \"pcco_attachments_insert\" on public.pcco_attachments;" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 1087, kind: "migration", snippet: "drop policy if exists \"pcco_attachments_select\" on public.pcco_attachments;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 388, kind: "migration", snippet: "from public.pcco_attachments a" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 403, kind: "migration", snippet: "from public.pcco_attachments a" },
         ],
         unknown: [],
       },
@@ -6169,7 +6164,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:43.379Z",
+        refreshedAt: "2026-05-18T17:12:15.471Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "pcco_id", dataType: "bigint", isNullable: false }, { name: "pco_id", dataType: "bigint", isNullable: true }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "uom", dataType: "text", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "line_amount", dataType: "numeric", isNullable: true }],
       references: {
@@ -6215,24 +6210,20 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:43.784Z",
+        refreshedAt: "2026-05-18T17:12:15.846Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "cco_id", dataType: "uuid", isNullable: false }, { name: "file_name", dataType: "character varying", isNullable: false }, { name: "file_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: false }, { name: "mime_type", dataType: "character varying", isNullable: false }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
-        writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts", lineNumber: 69, kind: "write", snippet: ".from(\"cco_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts", lineNumber: 135, kind: "write", snippet: ".from(\"cco_attachments\")" },
-        ],
-        reads: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts", lineNumber: 54, kind: "read", snippet: ".from(\"cco_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts", lineNumber: 52, kind: "read", snippet: ".from(\"cco_attachments\")" },
-        ],
+        writes: [],
+        reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260319000002_create_change_order_attachment_tables.sql", lineNumber: 53, kind: "migration", snippet: "ON public.cco_attachments (cco_id, uploaded_at DESC);" },
           { filePath: "supabase/migrations/20260508122000_add_missing_fk_actor_indexes.sql", lineNumber: 14, kind: "migration", snippet: "CREATE INDEX IF NOT EXISTS idx_cco_attachments_uploaded_by ON public.cco_attachments (uploaded_by);" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 288, kind: "migration", snippet: "drop policy if exists \"cco_attachments_delete\" on public.cco_attachments;" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 295, kind: "migration", snippet: "drop policy if exists \"cco_attachments_insert\" on public.cco_attachments;" },
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 302, kind: "migration", snippet: "drop policy if exists \"cco_attachments_select\" on public.cco_attachments;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 326, kind: "migration", snippet: "from public.cco_attachments a" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 342, kind: "migration", snippet: "from public.cco_attachments a" },
         ],
         unknown: [],
       },
@@ -6254,7 +6245,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:44.158Z",
+        refreshedAt: "2026-05-18T17:12:16.185Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "period_number", dataType: "integer", isNullable: false }, { name: "billing_date", dataType: "date", isNullable: false }, { name: "start_date", dataType: "date", isNullable: false }, { name: "end_date", dataType: "date", isNullable: false }, { name: "work_completed", dataType: "numeric", isNullable: false }, { name: "stored_materials", dataType: "numeric", isNullable: false }, { name: "current_payment_due", dataType: "numeric", isNullable: true }, { name: "retention_percentage", dataType: "numeric", isNullable: false }, { name: "retention_amount", dataType: "numeric", isNullable: false }, { name: "net_payment_due", dataType: "numeric", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -6287,7 +6278,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:44.537Z",
+        refreshedAt: "2026-05-18T17:12:16.539Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "billing_period_id", dataType: "uuid", isNullable: true }, { name: "payment_number", dataType: "text", isNullable: false }, { name: "payment_date", dataType: "date", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "payment_type", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "check_number", dataType: "text", isNullable: true }, { name: "reference_number", dataType: "text", isNullable: true }, { name: "approved_by", dataType: "uuid", isNullable: true }, { name: "approved_date", dataType: "date", isNullable: true }, { name: "paid_date", dataType: "date", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -6321,7 +6312,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:44.922Z",
+        refreshedAt: "2026-05-18T17:12:16.897Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "snapshot_date", dataType: "timestamp with time zone", isNullable: false }, { name: "snapshot_data", dataType: "jsonb", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "reason", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -6352,7 +6343,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:45.297Z",
+        refreshedAt: "2026-05-18T17:12:17.251Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "company_id", dataType: "uuid", isNullable: false }, { name: "view_name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "filters", dataType: "jsonb", isNullable: true }, { name: "columns", dataType: "jsonb", isNullable: true }, { name: "sort_order", dataType: "jsonb", isNullable: true }, { name: "is_default", dataType: "boolean", isNullable: false }, { name: "is_shared", dataType: "boolean", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -6393,14 +6384,14 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 42,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:45.667Z",
+        refreshedAt: "2026-05-18T17:12:17.615Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "number", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "type", dataType: "character varying", isNullable: false }, { name: "reason", dataType: "character varying", isNullable: true }, { name: "scope", dataType: "character varying", isNullable: false }, { name: "status", dataType: "character varying", isNullable: false }, { name: "origin", dataType: "character varying", isNullable: true }, { name: "expecting_revenue", dataType: "boolean", isNullable: false }, { name: "line_item_revenue_source", dataType: "character varying", isNullable: true }, { name: "prime_contract_id", dataType: "uuid", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "internal_subtype", dataType: "text", isNullable: true }, { name: "originator_role", dataType: "text", isNullable: true }, { name: "potential_change_order_id", dataType: "bigint", isNullable: true }, { name: "workflow_stage", dataType: "text", isNullable: true }, { name: "origin_id", dataType: "text", isNullable: true }, { name: "sent_to_prime_pco", dataType: "boolean", isNullable: true }, { name: "sent_to_commitment_pco", dataType: "boolean", isNullable: true }],
       references: {
         writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 178, kind: "write", snippet: ".from('change_events')" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 191, kind: "write", snippet: ".from(\"change_events\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 331, kind: "write", snippet: ".from(\"change_events\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 91, kind: "write", snippet: ".from(\"change_events\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 122, kind: "write", snippet: ".from(\"change_events\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 197, kind: "write", snippet: ".from(\"change_events\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts", lineNumber: 222, kind: "write", snippet: ".from('change_events')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts", lineNumber: 342, kind: "write", snippet: ".from('change_events')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts", lineNumber: 337, kind: "write", snippet: ".from('change_events')" },
@@ -6424,12 +6415,9 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/cron/daily-flags/route.ts", lineNumber: 146, kind: "read", snippet: ".from(\"change_events\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/approvals/route.ts", lineNumber: 35, kind: "read", snippet: ".from(\"change_events\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/approvals/route.ts", lineNumber: 104, kind: "read", snippet: ".from(\"change_events\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download/route.ts", lineNumber: 32, kind: "read", snippet: ".from('change_events')" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 29, kind: "read", snippet: ".from('change_events')" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 126, kind: "read", snippet: ".from('change_events')" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 29, kind: "read", snippet: ".from(\"change_events\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 109, kind: "read", snippet: ".from(\"change_events\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 267, kind: "read", snippet: ".from(\"change_events\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download/route.ts", lineNumber: 22, kind: "read", snippet: ".from(\"change_events\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 21, kind: "read", snippet: ".from(\"change_events\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 20, kind: "read", snippet: ".from(\"change_events\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/email/route.ts", lineNumber: 61, kind: "read", snippet: ".from(\"change_events\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/history/route.ts", lineNumber: 41, kind: "read", snippet: ".from('change_events')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts", lineNumber: 32, kind: "read", snippet: ".from('change_events')" },
@@ -6478,6 +6466,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260414000001_change_management_scope_guardrails.sql", lineNumber: 161, kind: "migration", snippet: "ON public.change_events (project_id, prime_contract_id)" },
           { filePath: "supabase/migrations/20260505180000_add_missing_fk_indexes.sql", lineNumber: 47, kind: "migration", snippet: "ON public.change_events (prime_contract_id)" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 63, kind: "migration", snippet: "from public.change_events ce" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 73, kind: "migration", snippet: "from public.change_events ce" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16625, kind: "migration", snippet: "CREATE INDEX idx_change_events_created_at ON public.change_events USING btree (created_at DESC);" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16632, kind: "migration", snippet: "CREATE INDEX idx_change_events_created_by ON public.change_events USING btree (created_by);" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16639, kind: "migration", snippet: "CREATE INDEX idx_change_events_deleted_at ON public.change_events USING btree (deleted_at) WHERE (deleted_at IS NULL);" },
@@ -6490,25 +6479,25 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 19460, kind: "migration", snippet: "CREATE TRIGGER refresh_summary_on_change_event AFTER INSERT OR DELETE OR UPDATE ON public.change_events FOR EACH STATEME" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6393, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6396, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6397, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6398, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 3" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6399, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 4" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6404, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 642, kind: \"write\", snippet:" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6419, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6420, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6421, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6426, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/history/route.ts\", lineNumber: 41, " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6427, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6428, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6429, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6430, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 3" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6431, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 2" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6432, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 3" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6445, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 161, kind: \"read\", snippet: " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6446, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 222, kind: \"read\", snippet: " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6447, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 278, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6401, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6404, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6405, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6406, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 3" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6407, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 4" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6412, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 642, kind: \"write\", snippet:" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6427, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6428, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6429, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6434, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/history/route.ts\", lineNumber: 41, " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6435, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6436, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6437, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6438, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 3" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6439, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 2" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6440, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 3" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6453, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 161, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6454, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 222, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6455, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 278, kind: \"read\", snippet: " },
         ],
       },
     },
@@ -6529,7 +6518,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 25,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:46.077Z",
+        refreshedAt: "2026-05-18T17:12:17.996Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "budget_code_id", dataType: "uuid", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "vendor_id", dataType: "uuid", isNullable: true }, { name: "contract_id", dataType: "uuid", isNullable: true }, { name: "unit_of_measure", dataType: "character varying", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "revenue_rom", dataType: "numeric", isNullable: true }, { name: "cost_rom", dataType: "numeric", isNullable: true }, { name: "non_committed_cost", dataType: "numeric", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "commitment_id", dataType: "uuid", isNullable: true }, { name: "commitment_type", dataType: "text", isNullable: true }, { name: "commitment_line_item_id", dataType: "uuid", isNullable: true }, { name: "latest_price", dataType: "numeric", isNullable: true }, { name: "budget_line_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -6568,16 +6557,16 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 19467, kind: "migration", snippet: "CREATE TRIGGER refresh_summary_on_line_item AFTER INSERT OR DELETE OR UPDATE ON public.change_event_line_items FOR EACH " },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6528, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6529, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6530, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 2" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6531, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 4" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6536, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
           { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6537, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
           { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6538, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6539, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 5" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6542, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 238, kind: \"read\", snippet: " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6543, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 360, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6539, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 2" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6540, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 4" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6545, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6546, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6547, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6548, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 5" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6551, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 238, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6552, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 360, kind: \"read\", snippet: " },
         ],
       },
     },
@@ -6598,24 +6587,22 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 54,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:46.469Z",
+        refreshedAt: "2026-05-18T17:12:18.357Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "field_name", dataType: "character varying", isNullable: false }, { name: "old_value", dataType: "text", isNullable: true }, { name: "new_value", dataType: "text", isNullable: true }, { name: "changed_by", dataType: "uuid", isNullable: true }, { name: "changed_at", dataType: "timestamp with time zone", isNullable: false }, { name: "change_type", dataType: "character varying", isNullable: false }],
       references: {
         writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 186, kind: "write", snippet: "await supabase.from('change_event_history').insert({" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 199, kind: "write", snippet: "await serviceClient.from(\"change_event_history\").insert({" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 348, kind: "write", snippet: "await serviceClient.from(\"change_event_history\").insert(auditEntries);" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 126, kind: "write", snippet: "await serviceClient.from(\"change_event_history\").insert({" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts", lineNumber: 231, kind: "write", snippet: ".from('change_event_history')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts", lineNumber: 351, kind: "write", snippet: ".from('change_event_history')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/restore/route.ts", lineNumber: 71, kind: "write", snippet: "await supabase.from(\"change_event_history\").insert({" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/route.ts", lineNumber: 668, kind: "write", snippet: "await supabase.from(\"change_event_history\").insert(auditEntries);" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/route.ts", lineNumber: 798, kind: "write", snippet: "await supabase.from(\"change_event_history\").insert({" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/route.ts", lineNumber: 653, kind: "write", snippet: "await supabase.from('change_event_history').insert({" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6597, kind: "write", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6600, kind: "write", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6601, kind: "write", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6605, kind: "write", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 653, kind: \"write\", snippet:" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6606, kind: "write", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6609, kind: "write", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6610, kind: "write", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts\", " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6614, kind: "write", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 653, kind: \"write\", snippet:" },
         ],
         reads: [
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/history/route.ts", lineNumber: 62, kind: "read", snippet: ".from('change_event_history')" },
@@ -6628,7 +6615,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16527, kind: "migration", snippet: "CREATE INDEX idx_ce_history_changed_by ON public.change_event_history USING btree (changed_by);" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6612, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/history/route.ts\", lineNumber: 62, " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6621, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/history/route.ts\", lineNumber: 62, " },
         ],
       },
     },
@@ -6649,7 +6636,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:46.859Z",
+        refreshedAt: "2026-05-18T17:12:18.745Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "rfq_number", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "status", dataType: "character varying", isNullable: false }, { name: "assigned_company_id", dataType: "uuid", isNullable: true }, { name: "assigned_contact_id", dataType: "uuid", isNullable: true }, { name: "include_attachments", dataType: "boolean", isNullable: false }, { name: "due_date", dataType: "date", isNullable: false }, { name: "sent_at", dataType: "timestamp with time zone", isNullable: true }, { name: "response_received_at", dataType: "timestamp with time zone", isNullable: true }, { name: "estimated_total_amount", dataType: "numeric", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: false }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -6686,8 +6673,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 19481, kind: "migration", snippet: "CREATE TRIGGER refresh_summary_on_rfqs AFTER INSERT OR DELETE OR UPDATE ON public.change_event_rfqs FOR EACH STATEMENT E" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6664, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 254, kind: \"read\", snippet: " },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6665, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 433, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6673, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 254, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6674, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 433, kind: \"read\", snippet: " },
         ],
       },
     },
@@ -6708,7 +6695,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:47.258Z",
+        refreshedAt: "2026-05-18T17:12:19.145Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "rfq_id", dataType: "uuid", isNullable: false }, { name: "line_item_id", dataType: "uuid", isNullable: true }, { name: "responder_company_id", dataType: "uuid", isNullable: true }, { name: "responder_contact_id", dataType: "uuid", isNullable: true }, { name: "unit_price", dataType: "numeric", isNullable: false }, { name: "extended_amount", dataType: "numeric", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "status", dataType: "character varying", isNullable: false }, { name: "submitted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -6752,7 +6739,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:47.625Z",
+        refreshedAt: "2026-05-18T17:12:19.514Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "approver_id", dataType: "uuid", isNullable: false }, { name: "approval_status", dataType: "character varying", isNullable: false }, { name: "comments", dataType: "text", isNullable: true }, { name: "responded_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -6789,22 +6776,12 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:47.988Z",
+        refreshedAt: "2026-05-18T17:12:19.934Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "file_name", dataType: "character varying", isNullable: false }, { name: "file_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: false }, { name: "mime_type", dataType: "character varying", isNullable: false }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
-        writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 165, kind: "write", snippet: ".from('change_event_attachments')" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 163, kind: "write", snippet: ".from(\"change_event_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 317, kind: "write", snippet: ".from(\"change_event_attachments\")" },
-        ],
-        reads: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download/route.ts", lineNumber: 48, kind: "read", snippet: ".from('change_event_attachments')" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 45, kind: "read", snippet: ".from('change_event_attachments')" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts", lineNumber: 142, kind: "read", snippet: ".from('change_event_attachments')" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 45, kind: "read", snippet: ".from(\"change_event_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts", lineNumber: 291, kind: "read", snippet: ".from(\"change_event_attachments\")" },
-        ],
+        writes: [],
+        reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 308, kind: "migration", snippet: "from public.change_event_attachments cea" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 323, kind: "migration", snippet: "from public.change_event_attachments cea" },
@@ -6812,10 +6789,10 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16506, kind: "migration", snippet: "CREATE INDEX idx_ce_attachments_uploaded_at ON public.change_event_attachments USING btree (uploaded_at DESC);" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6788, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6793, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6794, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6795, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6797, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6802, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6803, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6804, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts" },
         ],
       },
     },
@@ -6836,7 +6813,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:48.347Z",
+        refreshedAt: "2026-05-18T17:12:20.278Z",
       },
       columns: [{ name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -6870,7 +6847,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:48.719Z",
+        refreshedAt: "2026-05-18T17:12:20.629Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "pco_id", dataType: "uuid", isNullable: false }, { name: "pco_type", dataType: "text", isNullable: false }, { name: "linked_at", dataType: "timestamp with time zone", isNullable: false }, { name: "linked_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -6879,7 +6856,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-change-orders/route.ts", lineNumber: 383, kind: "write", snippet: ".from(\"change_event_pco_links\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-pcos/[pcoId]/route.ts", lineNumber: 271, kind: "write", snippet: ".from(\"change_event_pco_links\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-pcos/bulk-create/route.ts", lineNumber: 188, kind: "write", snippet: ".from(\"change_event_pco_links\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 340, kind: "write", snippet: ".from(\"change_event_pco_links\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 351, kind: "write", snippet: ".from(\"change_event_pco_links\")" },
         ],
         reads: [
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/commitment-pcos/route.ts", lineNumber: 30, kind: "read", snippet: ".from(\"change_event_pco_links\")" },
@@ -6889,7 +6866,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-pcos/[pcoId]/route.ts", lineNumber: 73, kind: "read", snippet: ".from(\"change_event_pco_links\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-pcos/route.ts", lineNumber: 78, kind: "read", snippet: ".from(\"change_event_pco_links\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitments/[commitmentId]/change-events/route.ts", lineNumber: 56, kind: "read", snippet: ".from(\"change_event_pco_links\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 110, kind: "read", snippet: ".from(\"change_event_pco_links\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 113, kind: "read", snippet: ".from(\"change_event_pco_links\")" },
         ],
         migrations: [
           { filePath: "supabase/migrations/20260410140000_create_pco_tables.sql", lineNumber: 100, kind: "migration", snippet: "ON public.change_event_pco_links(change_event_id, pco_id, pco_type);" },
@@ -6898,7 +6875,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260410140000_create_pco_tables.sql", lineNumber: 146, kind: "migration", snippet: "ON public.change_event_pco_links FOR ALL" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6843, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 452, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 6888, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 452, kind: \"read\", snippet: " },
         ],
       },
     },
@@ -6919,7 +6896,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:49.106Z",
+        refreshedAt: "2026-05-18T17:12:21.011Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "related_type", dataType: "text", isNullable: false }, { name: "related_id", dataType: "text", isNullable: false }, { name: "related_number", dataType: "text", isNullable: true }, { name: "related_title", dataType: "text", isNullable: false }, { name: "related_status", dataType: "text", isNullable: true }, { name: "related_url", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -6957,7 +6934,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:49.479Z",
+        refreshedAt: "2026-05-18T17:12:21.378Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "project_document_id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "link_type", dataType: "text", isNullable: false }, { name: "note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -6991,7 +6968,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:49.862Z",
+        refreshedAt: "2026-05-18T17:12:21.741Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "pco_id", dataType: "bigint", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: false }, { name: "estimated_amount", dataType: "numeric", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "added_at", dataType: "timestamp with time zone", isNullable: false }, { name: "added_by_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -7034,7 +7011,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:50.242Z",
+        refreshedAt: "2026-05-18T17:12:22.114Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "pco_id", dataType: "uuid", isNullable: false }, { name: "pco_type", dataType: "text", isNullable: false }, { name: "change_event_id", dataType: "uuid", isNullable: true }, { name: "change_event_line_item_id", dataType: "uuid", isNullable: true }, { name: "budget_code_id", dataType: "uuid", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "unit_of_measure", dataType: "text", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -7044,7 +7021,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/line-items/route.ts", lineNumber: 124, kind: "write", snippet: ".from(\"pco_line_items\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/line-items/route.ts", lineNumber: 238, kind: "write", snippet: ".from(\"pco_line_items\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/line-items/route.ts", lineNumber: 306, kind: "write", snippet: ".from(\"pco_line_items\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 333, kind: "write", snippet: ".from(\"pco_line_items\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 344, kind: "write", snippet: ".from(\"pco_line_items\")" },
         ],
         reads: [
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/add-to-pco/route.ts", lineNumber: 268, kind: "read", snippet: ".from(\"pco_line_items\")" },
@@ -7058,7 +7035,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/pcos/route.ts", lineNumber: 107, kind: "read", snippet: "? supabase.from(\"pco_line_items\").select(\"pco_id\").in(\"pco_id\", uuidPcoIds)" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/promote/route.ts", lineNumber: 80, kind: "read", snippet: ".from(\"pco_line_items\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/promote/route.ts", lineNumber: 131, kind: "read", snippet: ".from(\"pco_line_items\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 93, kind: "read", snippet: ".from(\"pco_line_items\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts", lineNumber: 96, kind: "read", snippet: ".from(\"pco_line_items\")" },
         ],
         migrations: [
           { filePath: "supabase/migrations/20260401000001_change_workflow_tables.sql", lineNumber: 58, kind: "migration", snippet: "-- 2. ADD FK FROM pco_line_items → potential_change_orders" },
@@ -7092,7 +7069,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:50.623Z",
+        refreshedAt: "2026-05-18T17:12:22.466Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "pco_id", dataType: "bigint", isNullable: false }, { name: "version", dataType: "integer", isNullable: false }, { name: "snapshot_data", dataType: "jsonb", isNullable: false }, { name: "submitted_at", dataType: "timestamp with time zone", isNullable: false }, { name: "submitted_by_id", dataType: "uuid", isNullable: true }, { name: "client_decision", dataType: "text", isNullable: true }, { name: "client_decision_at", dataType: "timestamp with time zone", isNullable: true }, { name: "client_decision_note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -7129,7 +7106,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:50.993Z",
+        refreshedAt: "2026-05-18T17:12:22.813Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "number", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "current_version", dataType: "integer", isNullable: false }, { name: "created_by_id", dataType: "uuid", isNullable: true }, { name: "estimated_value", dataType: "numeric", isNullable: true }, { name: "approved_value", dataType: "numeric", isNullable: true }, { name: "markup_percentage", dataType: "numeric", isNullable: true }, { name: "schedule_impact_days", dataType: "integer", isNullable: true }, { name: "schedule_impact_description", dataType: "text", isNullable: true }, { name: "rfq_required", dataType: "boolean", isNullable: false }, { name: "rfq_status", dataType: "text", isNullable: true }, { name: "annotation", dataType: "text", isNullable: true }, { name: "annotation_note", dataType: "text", isNullable: true }, { name: "root_cause", dataType: "text", isNullable: true }, { name: "prime_change_order_id", dataType: "bigint", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "submitted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -7186,7 +7163,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:51.369Z",
+        refreshedAt: "2026-05-18T17:12:23.183Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "parent_type", dataType: "text", isNullable: false }, { name: "parent_id", dataType: "text", isNullable: false }, { name: "author_id", dataType: "uuid", isNullable: false }, { name: "author_role", dataType: "text", isNullable: true }, { name: "body", dataType: "text", isNullable: false }, { name: "visible_to_client", dataType: "boolean", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -7219,7 +7196,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:51.753Z",
+        refreshedAt: "2026-05-18T17:12:23.542Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "recipient_id", dataType: "uuid", isNullable: false }, { name: "type", dataType: "text", isNullable: false }, { name: "reference_type", dataType: "text", isNullable: false }, { name: "reference_id", dataType: "text", isNullable: false }, { name: "message", dataType: "text", isNullable: false }, { name: "read_at", dataType: "timestamp with time zone", isNullable: true }, { name: "email_sent_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -7252,7 +7229,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:52.123Z",
+        refreshedAt: "2026-05-18T17:12:23.898Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "number", dataType: "integer", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: true }, { name: "change_event_id", dataType: "uuid", isNullable: true }, { name: "commitment_id", dataType: "uuid", isNullable: true }, { name: "prime_contract_id", dataType: "uuid", isNullable: true }, { name: "reason", dataType: "text", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "executed_date", dataType: "date", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -7273,6 +7250,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260522000000_close_rls_enforcement_gaps.sql", lineNumber: 179, kind: "migration", snippet: "DROP POLICY IF EXISTS change_orders_delete ON public.change_orders;" },
           { filePath: "supabase/migrations/20260523100000_create_user_can_access_entity_helper.sql", lineNumber: 48, kind: "migration", snippet: "from public.change_orders co" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 56, kind: "migration", snippet: "from public.change_orders co" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 44, kind: "migration", snippet: "from public.change_orders co" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16695, kind: "migration", snippet: "CREATE INDEX idx_change_orders_co_number ON public.change_orders USING btree (co_number);" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 16716, kind: "migration", snippet: "CREATE INDEX idx_change_orders_project_id ON public.change_orders USING btree (project_id);" },
         ],
@@ -7296,7 +7274,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 129,
         nDeadTup: 5,
-        refreshedAt: "2026-05-18T16:28:52.532Z",
+        refreshedAt: "2026-05-18T17:12:24.254Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "contract_number", dataType: "text", isNullable: false }, { name: "contract_company_id", dataType: "uuid", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "executed", dataType: "boolean", isNullable: false }, { name: "default_retainage_percent", dataType: "numeric", isNullable: true }, { name: "assigned_to", dataType: "uuid", isNullable: true }, { name: "bill_to", dataType: "text", isNullable: true }, { name: "payment_terms", dataType: "text", isNullable: true }, { name: "ship_to", dataType: "text", isNullable: true }, { name: "ship_via", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "accounting_method", dataType: "text", isNullable: true }, { name: "contract_date", dataType: "date", isNullable: true }, { name: "delivery_date", dataType: "date", isNullable: true }, { name: "signed_po_received_date", dataType: "date", isNullable: true }, { name: "issued_on_date", dataType: "date", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "non_admin_user_ids", dataType: "ARRAY", isNullable: true }, { name: "allow_non_admin_view_sov_items", dataType: "boolean", isNullable: true }, { name: "invoice_contact_ids", dataType: "ARRAY", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_external_key", dataType: "text", isNullable: true }, { name: "inclusions", dataType: "text", isNullable: true }, { name: "exclusions", dataType: "text", isNullable: true }, { name: "start_date", dataType: "date", isNullable: true }, { name: "estimated_completion_date", dataType: "date", isNullable: true }, { name: "actual_completion_date", dataType: "date", isNullable: true }, { name: "prime_contract_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -7312,8 +7290,6 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/commitments/[commitmentId]/export/route.ts", lineNumber: 231, kind: "read", snippet: ": await supabase.from(\"purchase_orders\").select(\"*\").eq(\"id\", id).single();" },
           { filePath: "frontend/src/app/api/commitments/[commitmentId]/route.ts", lineNumber: 157, kind: "read", snippet: ".from(\"purchase_orders\")" },
           { filePath: "frontend/src/app/api/commitments/route.ts", lineNumber: 250, kind: "read", snippet: "supabase.from(\"purchase_orders\").select(\"id\").eq(\"prime_contract_id\", filters.primeContractId)," },
-          { filePath: "frontend/src/app/api/document-picker/attach/route.ts", lineNumber: 119, kind: "read", snippet: ".from('purchase_orders')" },
-          { filePath: "frontend/src/app/api/document-picker/upload/route.ts", lineNumber: 113, kind: "read", snippet: ".from('purchase_orders')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts", lineNumber: 117, kind: "read", snippet: ".from('purchase_orders')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/route.ts", lineNumber: 247, kind: "read", snippet: ".from(\"purchase_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-pcos/[pcoId]/route.ts", lineNumber: 64, kind: "read", snippet: ".from(\"purchase_orders\")" },
@@ -7321,10 +7297,11 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/commitment-pcos/route.ts", lineNumber: 235, kind: "read", snippet: ".from(\"purchase_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items/options/route.ts", lineNumber: 96, kind: "read", snippet: ".from(\"purchase_orders\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/route.ts", lineNumber: 572, kind: "read", snippet: ".from(\"purchase_orders\")" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 7270, kind: "read", snippet: "{ filePath: \"frontend/src/app/api/document-picker/attach/route.ts\", lineNumber: 119, kind: \"read\", snippet: \".from('purc" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 7315, kind: "read", snippet: "{ filePath: \"frontend/src/app/api/document-picker/attach/route.ts\", lineNumber: 119, kind: \"read\", snippet: \".from('purc" },
           { filePath: "frontend/src/lib/acumatica/export-service.ts", lineNumber: 216, kind: "read", snippet: ".from(\"purchase_orders\")" },
           { filePath: "frontend/src/lib/acumatica/export-service.ts", lineNumber: 1342, kind: "read", snippet: ".from(\"purchase_orders\")" },
           { filePath: "frontend/src/lib/ai/tools/financial.ts", lineNumber: 222, kind: "read", snippet: ".from(\"purchase_orders\")" },
+          { filePath: "frontend/src/lib/documents/pattern-c-attachments.ts", lineNumber: 156, kind: "read", snippet: "supabase.from(\"purchase_orders\").select(\"id\").eq(\"id\", entityId).maybeSingle()," },
           { filePath: "frontend/src/lib/supabase/queries.ts", lineNumber: 194, kind: "read", snippet: ".from(\"purchase_orders\")" },
           { filePath: "backend/src/services/acumatica_sync.py", lineNumber: 1857, kind: "read", snippet: "self.supabase.table(\"purchase_orders\")" },
         ],
@@ -7354,8 +7331,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 19635, kind: "migration", snippet: "CREATE TRIGGER trigger_generate_po_contract_number BEFORE INSERT ON public.purchase_orders FOR EACH ROW EXECUTE FUNCTION" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 7271, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/upload/route.ts\", lineNumber: 113, kind: \"read\", snippet: \".from('purc" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 7272, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 1" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 7316, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/upload/route.ts\", lineNumber: 113, kind: \"read\", snippet: \".from('purc" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 7317, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts\", lineNumber: 1" },
         ],
       },
     },
@@ -7376,7 +7353,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 198,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:52.983Z",
+        refreshedAt: "2026-05-18T17:12:24.651Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "purchase_order_id", dataType: "uuid", isNullable: false }, { name: "line_number", dataType: "integer", isNullable: false }, { name: "change_event_line_item", dataType: "text", isNullable: true }, { name: "budget_code", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "uom", dataType: "text", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "billed_to_date", dataType: "numeric", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "acumatica_line_nbr", dataType: "integer", isNullable: true }],
       references: {
@@ -7429,7 +7406,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:53.369Z",
+        refreshedAt: "2026-05-18T17:12:25.030Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "purchase_order_id", dataType: "uuid", isNullable: false }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_type", dataType: "text", isNullable: true }, { name: "storage_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -7465,7 +7442,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 35,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:53.746Z",
+        refreshedAt: "2026-05-18T17:12:25.404Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "invoice_number", dataType: "text", isNullable: true }, { name: "period_start", dataType: "date", isNullable: true }, { name: "period_end", dataType: "date", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "submitted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "billing_period_id", dataType: "uuid", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "prime_contract_id", dataType: "uuid", isNullable: true }, { name: "acumatica_ref_nbr", dataType: "text", isNullable: true }, { name: "acumatica_doc_type", dataType: "text", isNullable: true }, { name: "acumatica_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "gross_amount", dataType: "numeric", isNullable: true }, { name: "net_amount", dataType: "numeric", isNullable: true }, { name: "paid_amount", dataType: "numeric", isNullable: true }, { name: "percent_complete", dataType: "numeric", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "billing_date", dataType: "date", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "payment_application_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -7489,10 +7466,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/billing-periods/[periodId]/route.ts", lineNumber: 210, kind: "read", snippet: ".from(\"owner_invoices\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/approve/route.ts", lineNumber: 25, kind: "read", snippet: ".from(\"owner_invoices\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/approve-as-noted/route.ts", lineNumber: 24, kind: "read", snippet: ".from(\"owner_invoices\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]/route.ts", lineNumber: 35, kind: "read", snippet: ".from(\"owner_invoices\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]/route.ts", lineNumber: 113, kind: "read", snippet: ".from(\"owner_invoices\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/route.ts", lineNumber: 31, kind: "read", snippet: ".from(\"owner_invoices\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/route.ts", lineNumber: 110, kind: "read", snippet: ".from(\"owner_invoices\")" },
+          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/route.ts", lineNumber: 18, kind: "read", snippet: ".from(\"owner_invoices\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]/route.ts", lineNumber: 38, kind: "read", snippet: ".from(\"owner_invoices\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items/route.ts", lineNumber: 13, kind: "read", snippet: ".from(\"owner_invoices\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/pdf/route.ts", lineNumber: 26, kind: "read", snippet: ".from(\"owner_invoices\")" },
@@ -7526,6 +7500,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260522000000_close_rls_enforcement_gaps.sql", lineNumber: 275, kind: "migration", snippet: "DROP POLICY IF EXISTS owner_invoices_delete ON public.owner_invoices;" },
           { filePath: "supabase/migrations/20260523100000_create_user_can_access_entity_helper.sql", lineNumber: 56, kind: "migration", snippet: "from public.owner_invoices oi" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 70, kind: "migration", snippet: "from public.owner_invoices oi" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 80, kind: "migration", snippet: "from public.owner_invoices oi" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 17780, kind: "migration", snippet: "CREATE INDEX idx_owner_invoices_contract ON public.owner_invoices USING btree (contract_id);" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 17787, kind: "migration", snippet: "CREATE INDEX idx_owner_invoices_contract_id ON public.owner_invoices USING btree (contract_id);" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 17794, kind: "migration", snippet: "CREATE INDEX idx_owner_invoices_updated_at ON public.owner_invoices USING btree (updated_at);" },
@@ -7555,7 +7530,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 604,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:54.149Z",
+        refreshedAt: "2026-05-18T17:12:25.807Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "invoice_id", dataType: "bigint", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "category", dataType: "text", isNullable: true }, { name: "approved_amount", dataType: "numeric", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "acumatica_line_nbr", dataType: "integer", isNullable: true }, { name: "scheduled_value", dataType: "numeric", isNullable: false }, { name: "work_completed_previous", dataType: "numeric", isNullable: false }, { name: "work_completed_period", dataType: "numeric", isNullable: false }, { name: "work_completed_pct", dataType: "numeric", isNullable: false }, { name: "materials_stored", dataType: "numeric", isNullable: false }, { name: "retainage_pct", dataType: "numeric", isNullable: false }, { name: "retainage_amount", dataType: "numeric", isNullable: false }, { name: "retainage_released", dataType: "numeric", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "net_amount_this_period", dataType: "numeric", isNullable: true }, { name: "balance_to_finish", dataType: "numeric", isNullable: true }, { name: "total_completed_stored", dataType: "numeric", isNullable: true }],
       references: {
@@ -7603,7 +7578,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 28,
         nDeadTup: 16,
-        refreshedAt: "2026-05-18T16:28:54.533Z",
+        refreshedAt: "2026-05-18T17:12:26.198Z",
       },
       columns: [{ name: "estimate_id", dataType: "integer", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "estimate_number", dataType: "text", isNullable: true }, { name: "revision", dataType: "integer", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "estimate_date", dataType: "date", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "estimator", dataType: "text", isNullable: true }, { name: "project_duration_weeks", dataType: "numeric", isNullable: true }, { name: "contingency_amount", dataType: "numeric", isNullable: false }, { name: "insurance_rate", dataType: "numeric", isNullable: false }, { name: "fee_rate", dataType: "numeric", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "is_deleted", dataType: "boolean", isNullable: false }, { name: "estimate_type", dataType: "text", isNullable: true }, { name: "project_duration_months", dataType: "numeric", isNullable: true }],
       references: {
@@ -7657,7 +7632,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 594,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:54.930Z",
+        refreshedAt: "2026-05-18T17:12:26.609Z",
       },
       columns: [{ name: "line_item_id", dataType: "integer", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: false }, { name: "line_number", dataType: "integer", isNullable: true }, { name: "division_code", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "length", dataType: "numeric", isNullable: true }, { name: "width", dataType: "numeric", isNullable: true }, { name: "depth", dataType: "numeric", isNullable: true }, { name: "number_of_each", dataType: "numeric", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "unit", dataType: "text", isNullable: true }, { name: "material_unit_price", dataType: "numeric", isNullable: true }, { name: "material_cost", dataType: "numeric", isNullable: true }, { name: "labor_crew_size", dataType: "numeric", isNullable: true }, { name: "labor_hours", dataType: "numeric", isNullable: true }, { name: "labor_man_hours", dataType: "numeric", isNullable: true }, { name: "labor_rate", dataType: "numeric", isNullable: true }, { name: "labor_cost", dataType: "numeric", isNullable: true }, { name: "equipment_duration", dataType: "numeric", isNullable: true }, { name: "equipment_unit", dataType: "text", isNullable: true }, { name: "equipment_rate", dataType: "numeric", isNullable: true }, { name: "equipment_cost", dataType: "numeric", isNullable: true }, { name: "subcontract_unit_price", dataType: "numeric", isNullable: true }, { name: "subcontract_cost", dataType: "numeric", isNullable: true }, { name: "total_cost", dataType: "numeric", isNullable: true }, { name: "comments", dataType: "text", isNullable: true }, { name: "comment_type", dataType: "text", isNullable: true }, { name: "vendor_name", dataType: "text", isNullable: true }, { name: "gc_cost_code", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -7701,7 +7676,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-18T15:46:02.633Z",
         nLiveTup: 3800,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:55.333Z",
+        refreshedAt: "2026-05-18T17:12:26.999Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: false }, { name: "division_code", dataType: "text", isNullable: false }, { name: "division_name", dataType: "text", isNullable: false }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "cost_type", dataType: "text", isNullable: true }, { name: "cost_code_name", dataType: "text", isNullable: true }, { name: "work_description", dataType: "text", isNullable: true }, { name: "estimated_amount", dataType: "numeric", isNullable: true }, { name: "sub_name", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -7749,8 +7724,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "448 kB",
         lastAutoanalyze: "2026-05-18T15:52:02.707Z",
         nLiveTup: 1559,
-        nDeadTup: 75,
-        refreshedAt: "2026-05-18T16:28:55.741Z",
+        nDeadTup: 74,
+        refreshedAt: "2026-05-18T17:12:27.436Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: false }, { name: "cost_code", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "cost_type", dataType: "text", isNullable: false }, { name: "qty", dataType: "numeric", isNullable: true }, { name: "qty_basis", dataType: "text", isNullable: true }, { name: "unit", dataType: "text", isNullable: true }, { name: "rate", dataType: "numeric", isNullable: true }, { name: "allocation", dataType: "numeric", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -7794,7 +7769,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:56.162Z",
+        refreshedAt: "2026-05-18T17:12:27.873Z",
       },
       columns: [{ name: "alternate_id", dataType: "integer", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: false }, { name: "alternate_number", dataType: "integer", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "alternate_type", dataType: "text", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -7831,7 +7806,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:56.534Z",
+        refreshedAt: "2026-05-18T17:12:28.240Z",
       },
       columns: [{ name: "allowance_id", dataType: "integer", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: false }, { name: "allowance_number", dataType: "integer", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "scope_type", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -7868,7 +7843,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 8,
         nDeadTup: 3,
-        refreshedAt: "2026-05-18T16:28:56.906Z",
+        refreshedAt: "2026-05-18T17:12:28.638Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: false }, { name: "division_code", dataType: "text", isNullable: false }, { name: "division_name", dataType: "text", isNullable: false }, { name: "position", dataType: "integer", isNullable: true }, { name: "company", dataType: "text", isNullable: true }, { name: "intend_to_submit", dataType: "text", isNullable: true }, { name: "email_sent", dataType: "text", isNullable: true }, { name: "phone_follow_up", dataType: "text", isNullable: true }, { name: "bid_received", dataType: "text", isNullable: true }, { name: "contact_name", dataType: "text", isNullable: true }, { name: "email", dataType: "text", isNullable: true }, { name: "cell", dataType: "text", isNullable: true }, { name: "price", dataType: "numeric", isNullable: true }, { name: "comments", dataType: "text", isNullable: true }, { name: "scope_1", dataType: "text", isNullable: true }, { name: "scope_2", dataType: "text", isNullable: true }, { name: "scope_3", dataType: "text", isNullable: true }, { name: "scope_4", dataType: "text", isNullable: true }, { name: "scope_5", dataType: "text", isNullable: true }, { name: "scope_6", dataType: "text", isNullable: true }, { name: "scope_7", dataType: "text", isNullable: true }, { name: "scope_8", dataType: "text", isNullable: true }, { name: "scope_9", dataType: "text", isNullable: true }, { name: "scope_10", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "is_awarded", dataType: "boolean", isNullable: false }],
       references: {
@@ -7924,7 +7899,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:57.286Z",
+        refreshedAt: "2026-05-18T17:12:29.011Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "qto_id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "division", dataType: "text", isNullable: true }, { name: "item_code", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "unit", dataType: "text", isNullable: true }, { name: "quantity", dataType: "numeric", isNullable: true }, { name: "unit_cost", dataType: "numeric", isNullable: true }, { name: "extended_cost", dataType: "numeric", isNullable: true }, { name: "source_reference", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -7954,7 +7929,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:57.658Z",
+        refreshedAt: "2026-05-18T17:12:29.430Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "title", dataType: "text", isNullable: true }, { name: "version", dataType: "integer", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }],
       references: {
@@ -7983,7 +7958,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:58.022Z",
+        refreshedAt: "2026-05-18T17:12:29.818Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_id", dataType: "uuid", isNullable: true }, { name: "commitment_id", dataType: "uuid", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "total_amount", dataType: "numeric", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -8028,7 +8003,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:58.413Z",
+        refreshedAt: "2026-05-18T17:12:30.225Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "sov_id", dataType: "uuid", isNullable: true }, { name: "line_number", dataType: "integer", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "cost_code_id", dataType: "text", isNullable: true }, { name: "scheduled_value", dataType: "numeric", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -8063,7 +8038,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 14,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:58.790Z",
+        refreshedAt: "2026-05-18T17:12:30.585Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "markup_type", dataType: "text", isNullable: false }, { name: "percentage", dataType: "numeric", isNullable: false }, { name: "calculation_order", dataType: "integer", isNullable: false }, { name: "compound", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -8091,7 +8066,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 22927, kind: "migration", snippet: "CREATE POLICY \"Users can view vertical markup\" ON public.vertical_markup FOR SELECT USING (true);" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8024, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 353, kind: \"read\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8080, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/projects/[projectId]/change-events/route.ts\", lineNumber: 353, kind: \"read\", snippet: " },
         ],
       },
     },
@@ -8112,7 +8087,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:59.158Z",
+        refreshedAt: "2026-05-18T17:12:31.009Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "contract_number", dataType: "character varying", isNullable: false }, { name: "contract_type", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "status", dataType: "character varying", isNullable: true }, { name: "contract_amount", dataType: "numeric", isNullable: true }, { name: "change_order_amount", dataType: "numeric", isNullable: true }, { name: "revised_amount", dataType: "numeric", isNullable: true }, { name: "start_date", dataType: "date", isNullable: true }, { name: "end_date", dataType: "date", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -8144,7 +8119,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:59.522Z",
+        refreshedAt: "2026-05-18T17:12:31.393Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "budget_item_id", dataType: "uuid", isNullable: false }, { name: "forecast_to_complete", dataType: "numeric", isNullable: true }, { name: "projected_costs", dataType: "numeric", isNullable: true }, { name: "estimated_completion_cost", dataType: "numeric", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -8171,7 +8146,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:28:59.900Z",
+        refreshedAt: "2026-05-18T17:12:31.756Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "company_id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "curve_type", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "curve_config", dataType: "jsonb", isNullable: false }, { name: "is_active", dataType: "boolean", isNullable: false }, { name: "is_default", dataType: "boolean", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -8202,24 +8177,20 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:00.280Z",
+        refreshedAt: "2026-05-18T17:12:32.139Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "owner_invoice_id", dataType: "bigint", isNullable: true }, { name: "subcontractor_invoice_id", dataType: "bigint", isNullable: true }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: true }, { name: "mime_type", dataType: "text", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
-        writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]/route.ts", lineNumber: 57, kind: "write", snippet: ".from(\"invoice_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/route.ts", lineNumber: 146, kind: "write", snippet: ".from(\"invoice_attachments\")" },
-        ],
-        reads: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]/route.ts", lineNumber: 46, kind: "read", snippet: ".from(\"invoice_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]/route.ts", lineNumber: 124, kind: "read", snippet: ".from(\"invoice_attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/route.ts", lineNumber: 42, kind: "read", snippet: ".from(\"invoice_attachments\")" },
-        ],
+        writes: [],
+        reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260409000003_invoice_extras.sql", lineNumber: 67, kind: "migration", snippet: "CREATE INDEX IF NOT EXISTS idx_invoice_attach_owner   ON invoice_attachments(owner_invoice_id);" },
           { filePath: "supabase/migrations/20260409000003_invoice_extras.sql", lineNumber: 68, kind: "migration", snippet: "CREATE INDEX IF NOT EXISTS idx_invoice_attach_sub     ON invoice_attachments(subcontractor_invoice_id);" },
           { filePath: "supabase/migrations/20260409000003_invoice_extras.sql", lineNumber: 71, kind: "migration", snippet: "ON invoice_attachments FOR ALL" },
           { filePath: "supabase/migrations/20260508122000_add_missing_fk_actor_indexes.sql", lineNumber: 19, kind: "migration", snippet: "CREATE INDEX IF NOT EXISTS idx_invoice_attachments_uploaded_by ON public.invoice_attachments (uploaded_by);" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 510, kind: "migration", snippet: "from public.invoice_attachments a" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 529, kind: "migration", snippet: "from public.invoice_attachments a" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 544, kind: "migration", snippet: "from public.invoice_attachments a" },
         ],
         unknown: [],
       },
@@ -8241,7 +8212,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:00.676Z",
+        refreshedAt: "2026-05-18T17:12:32.512Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "owner_invoice_id", dataType: "bigint", isNullable: true }, { name: "subcontractor_invoice_id", dataType: "bigint", isNullable: true }, { name: "payment_number", dataType: "text", isNullable: true }, { name: "payment_method", dataType: "text", isNullable: true }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "payment_date", dataType: "date", isNullable: true }, { name: "check_number", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -8279,7 +8250,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:01.045Z",
+        refreshedAt: "2026-05-18T17:12:32.880Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "default_billing_start_day", dataType: "integer", isNullable: true }, { name: "default_billing_end_day", dataType: "integer", isNullable: true }, { name: "default_billing_due_day", dataType: "integer", isNullable: true }, { name: "default_retainage_percent", dataType: "numeric", isNullable: true }, { name: "allow_over_billing", dataType: "boolean", isNullable: true }, { name: "notify_subs_on_approval", dataType: "boolean", isNullable: true }, { name: "send_under_review_digest", dataType: "boolean", isNullable: true }, { name: "invite_reminder_frequency_days", dataType: "integer", isNullable: true }, { name: "invoice_pdf_footer_text", dataType: "text", isNullable: true }, { name: "invitation_custom_message", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -8312,7 +8283,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:01.414Z",
+        refreshedAt: "2026-05-18T17:12:33.265Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "payment_application_id", dataType: "uuid", isNullable: false }, { name: "sov_item_id", dataType: "bigint", isNullable: true }, { name: "change_order_id", dataType: "uuid", isNullable: true }, { name: "item_number", dataType: "text", isNullable: false }, { name: "budget_code", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: false }, { name: "scheduled_value", dataType: "numeric", isNullable: false }, { name: "work_completed_previous", dataType: "numeric", isNullable: false }, { name: "work_completed_this_period", dataType: "numeric", isNullable: false }, { name: "materials_stored", dataType: "numeric", isNullable: false }, { name: "total_completed", dataType: "numeric", isNullable: true }, { name: "percent_complete", dataType: "numeric", isNullable: true }, { name: "balance_to_finish", dataType: "numeric", isNullable: true }, { name: "retainage_previous_work", dataType: "numeric", isNullable: false }, { name: "retainage_previous_materials", dataType: "numeric", isNullable: false }, { name: "retainage_this_period_work_pct", dataType: "numeric", isNullable: false }, { name: "retainage_this_period_work", dataType: "numeric", isNullable: false }, { name: "retainage_this_period_materials_pct", dataType: "numeric", isNullable: false }, { name: "retainage_this_period_materials", dataType: "numeric", isNullable: false }, { name: "retainage_released_work", dataType: "numeric", isNullable: false }, { name: "retainage_released_materials", dataType: "numeric", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -8356,7 +8327,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:01.787Z",
+        refreshedAt: "2026-05-18T17:12:33.716Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "contract_id", dataType: "uuid", isNullable: false }, { name: "invoice_id", dataType: "bigint", isNullable: true }, { name: "payment_date", dataType: "date", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "method", dataType: "text", isNullable: true }, { name: "reference_number", dataType: "text", isNullable: true }],
       references: {
@@ -8388,7 +8359,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 9,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:02.168Z",
+        refreshedAt: "2026-05-18T17:12:34.157Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "period_number", dataType: "integer", isNullable: false }, { name: "start_date", dataType: "date", isNullable: false }, { name: "end_date", dataType: "date", isNullable: false }, { name: "is_closed", dataType: "boolean", isNullable: true }, { name: "closed_date", dataType: "timestamp with time zone", isNullable: true }, { name: "closed_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "name", dataType: "character varying", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }],
       references: {
@@ -8433,7 +8404,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:02.530Z",
+        refreshedAt: "2026-05-18T17:12:35.159Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "code", dataType: "character varying", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "is_active", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -8468,7 +8439,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:02.897Z",
+        refreshedAt: "2026-05-18T17:12:35.840Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "subcontract_id", dataType: "uuid", isNullable: false }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: true }, { name: "file_type", dataType: "text", isNullable: true }, { name: "storage_path", dataType: "text", isNullable: false }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -8497,7 +8468,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:03.284Z",
+        refreshedAt: "2026-05-18T17:12:36.201Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "invoice_id", dataType: "bigint", isNullable: false }, { name: "sent_by_user_id", dataType: "uuid", isNullable: true }, { name: "sent_by_email", dataType: "text", isNullable: true }, { name: "to_recipients", dataType: "ARRAY", isNullable: false }, { name: "cc_recipients", dataType: "ARRAY", isNullable: false }, { name: "subject", dataType: "text", isNullable: true }, { name: "body", dataType: "text", isNullable: true }, { name: "email_type", dataType: "text", isNullable: false }, { name: "sent_at", dataType: "timestamp with time zone", isNullable: false }, { name: "status", dataType: "text", isNullable: false }],
       references: {
@@ -8530,7 +8501,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:03.659Z",
+        refreshedAt: "2026-05-18T17:12:36.577Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "invoice_id", dataType: "bigint", isNullable: false }, { name: "related_type", dataType: "text", isNullable: false }, { name: "related_id", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "linked_at", dataType: "timestamp with time zone", isNullable: false }, { name: "linked_by_user_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -8558,12 +8529,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 37694,
+        approxRows: 37699,
         totalSize: "351 MB",
         lastAutoanalyze: "2026-05-18T13:27:59.199Z",
-        nLiveTup: 37694,
-        nDeadTup: 196,
-        refreshedAt: "2026-05-18T16:29:04.017Z",
+        nLiveTup: 37699,
+        nDeadTup: 307,
+        refreshedAt: "2026-05-18T17:12:36.942Z",
       },
       columns: [{ name: "id", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: true }, { name: "url", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "source", dataType: "text", isNullable: true }, { name: "content", dataType: "text", isNullable: true }, { name: "summary", dataType: "text", isNullable: true }, { name: "participants", dataType: "text", isNullable: true }, { name: "tags", dataType: "text", isNullable: true }, { name: "category", dataType: "text", isNullable: true }, { name: "fireflies_id", dataType: "text", isNullable: true }, { name: "fireflies_link", dataType: "text", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "project", dataType: "text", isNullable: true }, { name: "date", dataType: "timestamp with time zone", isNullable: true }, { name: "duration_minutes", dataType: "integer", isNullable: true }, { name: "bullet_points", dataType: "text", isNullable: true }, { name: "action_items", dataType: "text", isNullable: true }, { name: "file_id", dataType: "integer", isNullable: true }, { name: "overview", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "access_level", dataType: "text", isNullable: true }, { name: "captured_at", dataType: "timestamp with time zone", isNullable: true }, { name: "content_hash", dataType: "text", isNullable: true }, { name: "participants_array", dataType: "ARRAY", isNullable: true }, { name: "phase", dataType: "text", isNullable: false }, { name: "audio", dataType: "text", isNullable: true }, { name: "video", dataType: "text", isNullable: true }, { name: "file_name", dataType: "text", isNullable: true }, { name: "file_path", dataType: "text", isNullable: true }, { name: "storage_bucket", dataType: "text", isNullable: true }, { name: "raw_text", dataType: "text", isNullable: true }, { name: "summary_embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "organizer_email", dataType: "text", isNullable: true }, { name: "host_email", dataType: "text", isNullable: true }, { name: "meeting_link", dataType: "text", isNullable: true }, { name: "sentiment", dataType: "jsonb", isNullable: true }, { name: "keywords", dataType: "ARRAY", isNullable: true }, { name: "meeting_type", dataType: "text", isNullable: true }, { name: "topics_discussed", dataType: "ARRAY", isNullable: true }, { name: "speakers", dataType: "jsonb", isNullable: true }, { name: "analytics", dataType: "jsonb", isNullable: true }, { name: "transcript_chapters", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "outline", dataType: "text", isNullable: true }, { name: "extended_sections", dataType: "jsonb", isNullable: true }, { name: "meeting_attendees", dataType: "jsonb", isNullable: true }, { name: "meeting_attendance", dataType: "jsonb", isNullable: true }, { name: "channels", dataType: "jsonb", isNullable: true }, { name: "is_silent_meeting", dataType: "boolean", isNullable: true }, { name: "calendar_type", dataType: "text", isNullable: true }, { name: "privacy", dataType: "text", isNullable: true }, { name: "decisions", dataType: "jsonb", isNullable: true }, { name: "key_topics", dataType: "jsonb", isNullable: true }, { name: "summary_bullets", dataType: "jsonb", isNullable: true }, { name: "source_system", dataType: "text", isNullable: true }, { name: "source_drive_id", dataType: "text", isNullable: true }, { name: "source_item_id", dataType: "text", isNullable: true }, { name: "source_site_id", dataType: "text", isNullable: true }, { name: "source_path", dataType: "text", isNullable: true }, { name: "source_web_url", dataType: "text", isNullable: true }, { name: "source_etag", dataType: "text", isNullable: true }, { name: "source_last_modified_at", dataType: "timestamp with time zone", isNullable: true }, { name: "source_size", dataType: "bigint", isNullable: true }, { name: "workflow_target", dataType: "text", isNullable: true }, { name: "division", dataType: "text", isNullable: true }, { name: "trade", dataType: "text", isNullable: true }, { name: "source_metadata", dataType: "jsonb", isNullable: false }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "document_type", dataType: "text", isNullable: true }],
       references: {
@@ -8573,7 +8544,6 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/(admin)/document-metadata/document-metadata-client.tsx", lineNumber: 1100, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/(main)/actions/executive-briefing-actions.ts", lineNumber: 264, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/admin/project-attribution-candidates/route.ts", lineNumber: 222, kind: "write", snippet: ".from(\"document_metadata\")" },
-          { filePath: "frontend/src/app/api/document-picker/upload/route.ts", lineNumber: 162, kind: "write", snippet: ".from('document_metadata')" },
           { filePath: "frontend/src/app/api/documents/[docId]/assign-project/route.ts", lineNumber: 82, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/documents/upload/route.ts", lineNumber: 117, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/knowledge/route.ts", lineNumber: 175, kind: "write", snippet: ".from(\"document_metadata\")" },
@@ -8582,13 +8552,13 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/route.ts", lineNumber: 65, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/route.ts", lineNumber: 97, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/meetings/route.ts", lineNumber: 98, kind: "write", snippet: ".from(\"document_metadata\")" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8543, kind: "write", snippet: "{ filePath: \"backend/src/scripts/backfill_meeting_summary_embeddings.py\", lineNumber: 214, kind: \"write\", snippet: \"supa" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8546, kind: "write", snippet: "{ filePath: \"backend/src/scripts/fix_document_statuses.py\", lineNumber: 85, kind: \"write\", snippet: \"client.table('docum" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8547, kind: "write", snippet: "{ filePath: \"backend/src/scripts/quick_status_fix.py\", lineNumber: 62, kind: \"write\", snippet: \"result = client.table('d" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8548, kind: "write", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 37, kind: \"write\", snippet: \"result = client.ta" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8549, kind: "write", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 58, kind: \"write\", snippet: \"result = client.ta" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8550, kind: "write", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 77, kind: \"write\", snippet: \"result = client.ta" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8551, kind: "write", snippet: "{ filePath: \"backend/src/scripts/update_done_to_complete.py\", lineNumber: 41, kind: \"write\", snippet: \"result = client.t" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8603, kind: "write", snippet: "{ filePath: \"backend/src/scripts/backfill_meeting_summary_embeddings.py\", lineNumber: 214, kind: \"write\", snippet: \"supa" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8606, kind: "write", snippet: "{ filePath: \"backend/src/scripts/fix_document_statuses.py\", lineNumber: 85, kind: \"write\", snippet: \"client.table('docum" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8607, kind: "write", snippet: "{ filePath: \"backend/src/scripts/quick_status_fix.py\", lineNumber: 62, kind: \"write\", snippet: \"result = client.table('d" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8608, kind: "write", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 37, kind: \"write\", snippet: \"result = client.ta" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8609, kind: "write", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 58, kind: \"write\", snippet: \"result = client.ta" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8610, kind: "write", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 77, kind: \"write\", snippet: \"result = client.ta" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8611, kind: "write", snippet: "{ filePath: \"backend/src/scripts/update_done_to_complete.py\", lineNumber: 41, kind: \"write\", snippet: \"result = client.t" },
           { filePath: "frontend/src/components/meetings/edit-meeting-modal.tsx", lineNumber: 152, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/components/project-setup-wizard/document-upload-setup.tsx", lineNumber: 124, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/components/project-setup-wizard/document-upload-setup.tsx", lineNumber: 217, kind: "write", snippet: ".from(\"document_metadata\")" },
@@ -8600,6 +8570,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/lib/ai/services/feedback-event-service.ts", lineNumber: 2553, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/ai/tools/action-tools.ts", lineNumber: 1977, kind: "write", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/ai/tools/action-tools.ts", lineNumber: 2444, kind: "write", snippet: ".from(\"document_metadata\")" },
+          { filePath: "frontend/src/lib/documents/pattern-c-attachments.ts", lineNumber: 289, kind: "write", snippet: ".from(\"document_metadata\")" },
+          { filePath: "frontend/src/lib/documents/pattern-c-attachments.ts", lineNumber: 332, kind: "write", snippet: "await supabase.from(\"document_metadata\").delete().eq(\"id\", docId);" },
           { filePath: "backend/src/scripts/backfill_meeting_summary_embeddings.py", lineNumber: 214, kind: "write", snippet: "supabase.table('document_metadata').update({" },
           { filePath: "backend/src/scripts/clean_and_reingest.py", lineNumber: 59, kind: "write", snippet: "docs = client.table(\"document_metadata\").select(\"id, title, fireflies_id\").execute()" },
           { filePath: "backend/src/scripts/clean_and_reingest.py", lineNumber: 62, kind: "write", snippet: "result = client.table(\"document_metadata\").delete().eq(\"id\", doc['id']).execute()" },
@@ -8650,7 +8622,6 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/directory/companies/[companyId]/details/route.ts", lineNumber: 314, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/docs-search/route.ts", lineNumber: 27, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/document-metadata/[docId]/content/route.ts", lineNumber: 25, kind: "read", snippet: ".from(\"document_metadata\")" },
-          { filePath: "frontend/src/app/api/document-picker/linked/route.ts", lineNumber: 107, kind: "read", snippet: ".from('document_metadata')" },
           { filePath: "frontend/src/app/api/documents/status/route.ts", lineNumber: 20, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/executive/intelligence-stats/route.ts", lineNumber: 37, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/executive/intelligence-stats/route.ts", lineNumber: 42, kind: "read", snippet: ".from(\"document_metadata\")" },
@@ -8669,16 +8640,16 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/prep/generate/route.ts", lineNumber: 62, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/route.ts", lineNumber: 20, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/app/api/projects/[projectId]/meetings/route.ts", lineNumber: 28, kind: "read", snippet: ".from(\"document_metadata\")" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8684, kind: "read", snippet: "{ filePath: \"backend/src/scripts/fix_document_statuses.py\", lineNumber: 26, kind: \"read\", snippet: \"all_docs = client.ta" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8685, kind: "read", snippet: "{ filePath: \"backend/src/scripts/fix_document_statuses.py\", lineNumber: 97, kind: \"read\", snippet: \"result = client.tabl" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8687, kind: "read", snippet: "{ filePath: \"backend/src/scripts/process_existing_documents.py\", lineNumber: 67, kind: \"read\", snippet: \"client.table('d" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8688, kind: "read", snippet: "{ filePath: \"backend/src/scripts/quick_status_fix.py\", lineNumber: 75, kind: \"read\", snippet: \"all_docs = client.table('" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8689, kind: "read", snippet: "{ filePath: \"backend/src/scripts/quick_status_fix.py\", lineNumber: 87, kind: \"read\", snippet: \"result = client.table('do" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8693, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 44, kind: \"read\", snippet: \"embedded_docs = cli" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8694, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 65, kind: \"read\", snippet: \"segmented_docs = cl" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8695, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 82, kind: \"read\", snippet: \"result = client.tab" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8696, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_done_to_complete.py\", lineNumber: 25, kind: \"read\", snippet: \"docs = client.tabl" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8697, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_done_to_complete.py\", lineNumber: 46, kind: \"read\", snippet: \"final = client.tab" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8744, kind: "read", snippet: "{ filePath: \"backend/src/scripts/fix_document_statuses.py\", lineNumber: 26, kind: \"read\", snippet: \"all_docs = client.ta" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8745, kind: "read", snippet: "{ filePath: \"backend/src/scripts/fix_document_statuses.py\", lineNumber: 97, kind: \"read\", snippet: \"result = client.tabl" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8747, kind: "read", snippet: "{ filePath: \"backend/src/scripts/process_existing_documents.py\", lineNumber: 67, kind: \"read\", snippet: \"client.table('d" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8748, kind: "read", snippet: "{ filePath: \"backend/src/scripts/quick_status_fix.py\", lineNumber: 75, kind: \"read\", snippet: \"all_docs = client.table('" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8749, kind: "read", snippet: "{ filePath: \"backend/src/scripts/quick_status_fix.py\", lineNumber: 87, kind: \"read\", snippet: \"result = client.table('do" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8753, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 44, kind: \"read\", snippet: \"embedded_docs = cli" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8754, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 65, kind: \"read\", snippet: \"segmented_docs = cl" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8755, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 82, kind: \"read\", snippet: \"result = client.tab" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8756, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_done_to_complete.py\", lineNumber: 25, kind: \"read\", snippet: \"docs = client.tabl" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8757, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_done_to_complete.py\", lineNumber: 46, kind: \"read\", snippet: \"final = client.tab" },
           { filePath: "frontend/src/components/project-home/document-metadata-modal.tsx", lineNumber: 67, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/ai/intelligence/packet-service.ts", lineNumber: 499, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/ai/preflights.ts", lineNumber: 287, kind: "read", snippet: ".from(\"document_metadata\")" },
@@ -8722,6 +8693,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/lib/ai/tools/project-tools.ts", lineNumber: 2878, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/ai/tools/structured-queries.ts", lineNumber: 413, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/ai/tools/structured-queries.ts", lineNumber: 514, kind: "read", snippet: ".from(\"document_metadata\")" },
+          { filePath: "frontend/src/lib/documents/pattern-c-attachments.ts", lineNumber: 202, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/executive/brandon-daily-update.ts", lineNumber: 979, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/executive/brandon-daily-update.ts", lineNumber: 988, kind: "read", snippet: ".from(\"document_metadata\")" },
           { filePath: "frontend/src/lib/executive/brandon-daily-update.ts", lineNumber: 1085, kind: "read", snippet: ".from(\"document_metadata\")" },
@@ -8881,6 +8853,10 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 160, kind: "migration", snippet: "insert into public.document_metadata (" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 264, kind: "migration", snippet: "insert into public.document_metadata (" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 327, kind: "migration", snippet: "insert into public.document_metadata (" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 283, kind: "migration", snippet: "insert into public.document_metadata (" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 345, kind: "migration", snippet: "insert into public.document_metadata (" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 406, kind: "migration", snippet: "insert into public.document_metadata (" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 467, kind: "migration", snippet: "insert into public.document_metadata (" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 1301, kind: "migration", snippet: "FROM document_metadata dm" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 1813, kind: "migration", snippet: "FROM document_metadata dm" },
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 1832, kind: "migration", snippet: "FROM document_metadata dm" },
@@ -8930,9 +8906,9 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 24054, kind: "migration", snippet: "CREATE POLICY zapier_full_access ON public.document_metadata TO zapier USING (true) WITH CHECK (true);" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8517, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/upload/route.ts\", lineNumber: 162, kind: \"write\", snippet: \".from('doc" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8593, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 107, kind: \"read\", snippet: \".from('docu" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8678, kind: "unknown", snippet: "{ filePath: \"backend/src/scripts/backfill_meeting_summary_embeddings.py\", lineNumber: 95, kind: \"read\", snippet: \"supaba" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8576, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/upload/route.ts\", lineNumber: 162, kind: \"write\", snippet: \".from('doc" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8653, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 107, kind: \"read\", snippet: \".from('docu" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8738, kind: "unknown", snippet: "{ filePath: \"backend/src/scripts/backfill_meeting_summary_embeddings.py\", lineNumber: 95, kind: \"read\", snippet: \"supaba" },
         ],
       },
     },
@@ -8948,12 +8924,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 109708,
-        totalSize: "4474 MB",
-        lastAutoanalyze: "2026-05-18T15:31:39.605Z",
-        nLiveTup: 109708,
-        nDeadTup: 18391,
-        refreshedAt: "2026-05-18T16:29:04.772Z",
+        approxRows: 109955,
+        totalSize: "4488 MB",
+        lastAutoanalyze: "2026-05-18T16:44:42.291Z",
+        nLiveTup: 109955,
+        nDeadTup: 21816,
+        refreshedAt: "2026-05-18T17:12:37.923Z",
       },
       columns: [{ name: "chunk_id", dataType: "text", isNullable: false }, { name: "document_id", dataType: "text", isNullable: false }, { name: "chunk_index", dataType: "integer", isNullable: false }, { name: "text", dataType: "text", isNullable: false }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "content_hash", dataType: "text", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "source_type", dataType: "text", isNullable: true }, { name: "chunk_context", dataType: "text", isNullable: true }, { name: "embedding_contextual", dataType: "USER-DEFINED", isNullable: true }, { name: "contextualized_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -8973,8 +8949,8 @@ export const DB_INVENTORY: DbInventory = {
         ],
         reads: [
           { filePath: "frontend/src/app/api/admin/operations-readiness/status/route.ts", lineNumber: 232, kind: "read", snippet: ".from(\"document_chunks\")" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8927, kind: "read", snippet: "{ filePath: \"backend/src/scripts/process_existing_documents.py\", lineNumber: 86, kind: \"read\", snippet: \"existing_chunks" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8928, kind: "read", snippet: "{ filePath: \"backend/src/scripts/process_existing_documents.py\", lineNumber: 139, kind: \"read\", snippet: \"result = clien" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8991, kind: "read", snippet: "{ filePath: \"backend/src/scripts/process_existing_documents.py\", lineNumber: 86, kind: \"read\", snippet: \"existing_chunks" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 8992, kind: "read", snippet: "{ filePath: \"backend/src/scripts/process_existing_documents.py\", lineNumber: 139, kind: \"read\", snippet: \"result = clien" },
           { filePath: "frontend/src/lib/ai/tools/operational.ts", lineNumber: 3498, kind: "read", snippet: ".from(\"document_chunks\")" },
           { filePath: "backend/src/scripts/backfill_meeting_transcript_embeddings.py", lineNumber: 78, kind: "read", snippet: "client.table(\"document_chunks\")" },
           { filePath: "backend/src/scripts/backfill_transcript_chunk_titles.py", lineNumber: 138, kind: "read", snippet: "rag_client.table(\"document_chunks\")" },
@@ -9066,7 +9042,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-14T17:37:43.258Z",
         nLiveTup: 13308,
         nDeadTup: 14,
-        refreshedAt: "2026-05-18T16:29:08.736Z",
+        refreshedAt: "2026-05-18T17:12:39.683Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "source_document_id", dataType: "text", isNullable: false }, { name: "source_message_ids", dataType: "ARRAY", isNullable: false }, { name: "candidate_project_id", dataType: "bigint", isNullable: true }, { name: "candidate_project_name", dataType: "text", isNullable: true }, { name: "confidence", dataType: "numeric", isNullable: false }, { name: "attribution_method", dataType: "text", isNullable: false }, { name: "evidence_terms", dataType: "ARRAY", isNullable: false }, { name: "reasoning", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "reviewed_by", dataType: "uuid", isNullable: true }, { name: "reviewed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "candidate_target_id", dataType: "uuid", isNullable: true }, { name: "confidence_label", dataType: "text", isNullable: true }, { name: "matched_fields", dataType: "ARRAY", isNullable: false }, { name: "evidence", dataType: "jsonb", isNullable: false }, { name: "compiler_version", dataType: "text", isNullable: true }],
       references: {
@@ -9120,7 +9096,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 13062,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:09.095Z",
+        refreshedAt: "2026-05-18T17:12:39.995Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "dataset_id", dataType: "text", isNullable: true }, { name: "row_data", dataType: "jsonb", isNullable: true }],
       references: {
@@ -9158,7 +9134,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:09.635Z",
+        refreshedAt: "2026-05-18T17:12:40.575Z",
       },
       columns: [{ name: "document_id", dataType: "text", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "access_level", dataType: "text", isNullable: false }],
       references: {
@@ -9193,7 +9169,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:10.007Z",
+        refreshedAt: "2026-05-18T17:12:40.953Z",
       },
       columns: [{ name: "document_id", dataType: "text", isNullable: false }, { name: "group_id", dataType: "uuid", isNullable: false }, { name: "access_level", dataType: "text", isNullable: false }],
       references: {
@@ -9222,7 +9198,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:10.368Z",
+        refreshedAt: "2026-05-18T17:12:41.379Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "document_id", dataType: "text", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "insight_type", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "confidence_score", dataType: "numeric", isNullable: true }, { name: "generated_by", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "doc_title", dataType: "text", isNullable: true }, { name: "severity", dataType: "character varying", isNullable: true }, { name: "business_impact", dataType: "text", isNullable: true }, { name: "assignee", dataType: "text", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "financial_impact", dataType: "numeric", isNullable: true }, { name: "urgency_indicators", dataType: "ARRAY", isNullable: true }, { name: "resolved", dataType: "boolean", isNullable: true }, { name: "source_meetings", dataType: "ARRAY", isNullable: true }, { name: "dependencies", dataType: "ARRAY", isNullable: true }, { name: "stakeholders_affected", dataType: "ARRAY", isNullable: true }, { name: "exact_quotes", dataType: "ARRAY", isNullable: true }, { name: "numerical_data", dataType: "jsonb", isNullable: true }, { name: "critical_path_impact", dataType: "boolean", isNullable: true }, { name: "cross_project_impact", dataType: "ARRAY", isNullable: true }, { name: "document_date", dataType: "date", isNullable: true }, { name: "project_name", dataType: "text", isNullable: true }],
       references: {
@@ -9271,7 +9247,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:10.788Z",
+        refreshedAt: "2026-05-18T17:12:41.800Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "document_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "executive_summary", dataType: "text", isNullable: false }, { name: "critical_path_items", dataType: "integer", isNullable: true }, { name: "total_insights", dataType: "integer", isNullable: true }, { name: "confidence_average", dataType: "numeric", isNullable: true }, { name: "budget_discussions", dataType: "jsonb", isNullable: true }, { name: "cost_implications", dataType: "numeric", isNullable: true }, { name: "revenue_impact", dataType: "numeric", isNullable: true }, { name: "financial_decisions_count", dataType: "integer", isNullable: true }, { name: "delay_risks", dataType: "jsonb", isNullable: true }, { name: "critical_deadlines", dataType: "jsonb", isNullable: true }, { name: "timeline_concerns_count", dataType: "integer", isNullable: true }, { name: "relationship_changes", dataType: "jsonb", isNullable: true }, { name: "performance_issues", dataType: "jsonb", isNullable: true }, { name: "stakeholder_feedback_count", dataType: "integer", isNullable: true }, { name: "decisions_made", dataType: "jsonb", isNullable: true }, { name: "competitive_intel", dataType: "jsonb", isNullable: true }, { name: "strategic_pivots", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -9298,7 +9274,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:11.144Z",
+        refreshedAt: "2026-05-18T17:12:42.194Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_document_id", dataType: "bigint", isNullable: false }, { name: "rfi_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "link_type", dataType: "text", isNullable: false }, { name: "note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -9332,7 +9308,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:11.550Z",
+        refreshedAt: "2026-05-18T17:12:42.583Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_document_id", dataType: "bigint", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "link_type", dataType: "text", isNullable: false }, { name: "note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -9366,7 +9342,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:11.913Z",
+        refreshedAt: "2026-05-18T17:12:42.941Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_sync_id", dataType: "uuid", isNullable: false }, { name: "source_type", dataType: "text", isNullable: false }, { name: "source_id", dataType: "bigint", isNullable: false }, { name: "content", dataType: "text", isNullable: false }, { name: "embedding", dataType: "USER-DEFINED", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -9393,12 +9369,12 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 41,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:12.404Z",
+        refreshedAt: "2026-05-18T17:12:43.363Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "area_id", dataType: "uuid", isNullable: true }, { name: "drawing_number", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "discipline", dataType: "character varying", isNullable: true }, { name: "drawing_type", dataType: "character varying", isNullable: true }, { name: "current_revision_id", dataType: "uuid", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "is_published", dataType: "boolean", isNullable: false }, { name: "is_obsolete", dataType: "boolean", isNullable: false }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "deleted_by", dataType: "uuid", isNullable: true }, { name: "document_metadata_id", dataType: "text", isNullable: true }],
       references: {
         writes: [
-          { filePath: "frontend/src/app/api/document-picker/attach/route.ts", lineNumber: 138, kind: "write", snippet: ".from('drawings')" },
+          { filePath: "frontend/src/app/api/document-picker/attach/route.ts", lineNumber: 91, kind: "write", snippet: ".from('drawings')" },
           { filePath: "frontend/src/app/api/projects/[projectId]/drawings/bulk-status/route.ts", lineNumber: 54, kind: "write", snippet: ".from(\"drawings\")" },
           { filePath: "frontend/src/services/DrawingService.ts", lineNumber: 248, kind: "write", snippet: ".from(\"drawings\")" },
           { filePath: "frontend/src/services/DrawingService.ts", lineNumber: 306, kind: "write", snippet: ".from(\"drawings\")" },
@@ -9456,9 +9432,10 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 886, kind: "migration", snippet: "drop policy if exists \"drawings_select\" on public.drawings;" },
           { filePath: "supabase/migrations/20260523100000_create_user_can_access_entity_helper.sql", lineNumber: 78, kind: "migration", snippet: "from public.drawings d" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 99, kind: "migration", snippet: "from public.drawings d" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 109, kind: "migration", snippet: "from public.drawings d" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9422, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/attach/route.ts\", lineNumber: 138, kind: \"write\", snippet: \".from('dra" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9401, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/attach/route.ts\", lineNumber: 138, kind: \"write\", snippet: \".from('dra" },
           { filePath: "frontend/src/components/project-setup-wizard/drawings-setup.tsx", lineNumber: 86, kind: "unknown", snippet: ".from(\"drawings\")" },
           { filePath: "frontend/src/components/project-setup-wizard/drawings-setup.tsx", lineNumber: 97, kind: "unknown", snippet: "} = supabase.storage.from(\"drawings\").getPublicUrl(filePath);" },
         ],
@@ -9481,7 +9458,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 41,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:12.817Z",
+        refreshedAt: "2026-05-18T17:12:43.914Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "drawing_id", dataType: "uuid", isNullable: false }, { name: "revision_number", dataType: "character varying", isNullable: false }, { name: "drawing_set_id", dataType: "uuid", isNullable: true }, { name: "drawing_date", dataType: "date", isNullable: true }, { name: "received_date", dataType: "date", isNullable: false }, { name: "status", dataType: "character varying", isNullable: false }, { name: "file_url", dataType: "text", isNullable: false }, { name: "file_name", dataType: "character varying", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: false }, { name: "file_type", dataType: "character varying", isNullable: false }, { name: "is_current_revision", dataType: "boolean", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: true }],
       references: {
@@ -9531,7 +9508,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 13,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:13.200Z",
+        refreshedAt: "2026-05-18T17:12:44.282Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "issued_at", dataType: "timestamp with time zone", isNullable: false }, { name: "status", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -9575,7 +9552,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1451,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:13.581Z",
+        refreshedAt: "2026-05-18T17:12:44.643Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "drawing_revision_id", dataType: "uuid", isNullable: false }, { name: "downloaded_by", dataType: "uuid", isNullable: false }, { name: "downloaded_at", dataType: "timestamp with time zone", isNullable: false }, { name: "ip_address", dataType: "inet", isNullable: true }, { name: "user_agent", dataType: "text", isNullable: true }],
       references: {
@@ -9613,7 +9590,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 11,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:14.101Z",
+        refreshedAt: "2026-05-18T17:12:45.100Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "drawing_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "changed_by", dataType: "uuid", isNullable: false }, { name: "changed_at", dataType: "timestamp with time zone", isNullable: false }, { name: "field_name", dataType: "text", isNullable: false }, { name: "old_value", dataType: "text", isNullable: true }, { name: "new_value", dataType: "text", isNullable: true }, { name: "change_type", dataType: "text", isNullable: false }],
       references: {
@@ -9650,7 +9627,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 11,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:14.459Z",
+        refreshedAt: "2026-05-18T17:12:45.462Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "drawing_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "x_pct", dataType: "numeric", isNullable: false }, { name: "y_pct", dataType: "numeric", isNullable: false }, { name: "page", dataType: "integer", isNullable: false }, { name: "pin_type", dataType: "text", isNullable: false }, { name: "entity_id", dataType: "text", isNullable: true }, { name: "entity_label", dataType: "text", isNullable: true }, { name: "entity_number", dataType: "text", isNullable: true }, { name: "entity_status", dataType: "text", isNullable: true }, { name: "color", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -9686,7 +9663,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:14.833Z",
+        refreshedAt: "2026-05-18T17:12:45.842Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "parent_area_id", dataType: "uuid", isNullable: true }, { name: "name", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -9713,11 +9690,11 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 698, kind: "migration", snippet: "drop policy if exists \"drawing_areas_update\" on public.drawing_areas;" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9714, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 158, kind: \"write\", snippet: \".from('drawing_area" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9715, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 232, kind: \"write\", snippet: \".from('drawing_area" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9716, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 268, kind: \"write\", snippet: \".from('drawing_area" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9717, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 313, kind: \"write\", snippet: \".from('drawing_area" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9720, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 87, kind: \"read\", snippet: \".from('drawing_areas'" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9694, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 158, kind: \"write\", snippet: \".from('drawing_area" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9695, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 232, kind: \"write\", snippet: \".from('drawing_area" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9696, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 268, kind: \"write\", snippet: \".from('drawing_area" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9697, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 313, kind: \"write\", snippet: \".from('drawing_area" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 9700, kind: "unknown", snippet: "{ filePath: \"frontend/src/services/DrawingAreaService.ts\", lineNumber: 87, kind: \"read\", snippet: \".from('drawing_areas'" },
         ],
       },
     },
@@ -9738,7 +9715,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:15.212Z",
+        refreshedAt: "2026-05-18T17:12:46.190Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "drawing_revision_id", dataType: "uuid", isNullable: false }, { name: "sketch_number", dataType: "character varying", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "sketch_date", dataType: "date", isNullable: false }, { name: "file_url", dataType: "text", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -9781,7 +9758,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:15.569Z",
+        refreshedAt: "2026-05-18T17:12:46.558Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "drawing_id", dataType: "uuid", isNullable: false }, { name: "related_type", dataType: "character varying", isNullable: false }, { name: "related_id", dataType: "uuid", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -9824,7 +9801,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:15.941Z",
+        refreshedAt: "2026-05-18T17:12:46.913Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "drawing_id", dataType: "uuid", isNullable: false }, { name: "rfi_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "link_type", dataType: "text", isNullable: false }, { name: "note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -9857,8 +9834,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "8848 kB",
         lastAutoanalyze: "2026-05-18T14:26:59.920Z",
         nLiveTup: 1088,
-        nDeadTup: 168,
-        refreshedAt: "2026-05-18T16:29:16.314Z",
+        nDeadTup: 157,
+        refreshedAt: "2026-05-18T17:12:47.291Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "graph_message_id", dataType: "text", isNullable: false }, { name: "mailbox_user_id", dataType: "text", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "project_email_id", dataType: "bigint", isNullable: true }, { name: "document_metadata_id", dataType: "text", isNullable: true }, { name: "subject", dataType: "text", isNullable: false }, { name: "body", dataType: "text", isNullable: true }, { name: "body_html", dataType: "text", isNullable: true }, { name: "body_text", dataType: "text", isNullable: true }, { name: "from_name", dataType: "text", isNullable: true }, { name: "from_email", dataType: "text", isNullable: true }, { name: "to_list", dataType: "ARRAY", isNullable: true }, { name: "cc_list", dataType: "ARRAY", isNullable: true }, { name: "bcc_list", dataType: "ARRAY", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "match_status", dataType: "text", isNullable: false }, { name: "assignment_method", dataType: "text", isNullable: true }, { name: "assignment_confidence", dataType: "numeric", isNullable: true }, { name: "received_at", dataType: "timestamp with time zone", isNullable: true }, { name: "has_attachments", dataType: "boolean", isNullable: true }, { name: "web_link", dataType: "text", isNullable: true }, { name: "internet_message_id", dataType: "text", isNullable: true }, { name: "conversation_id", dataType: "text", isNullable: true }, { name: "source_metadata", dataType: "jsonb", isNullable: false }, { name: "last_synced_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -9912,8 +9889,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "652 MB",
         lastAutoanalyze: "2026-05-18T15:29:01.964Z",
         nLiveTup: 1008,
-        nDeadTup: 180,
-        refreshedAt: "2026-05-18T16:29:16.914Z",
+        nDeadTup: 176,
+        refreshedAt: "2026-05-18T17:12:47.854Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "intake_email_id", dataType: "bigint", isNullable: false }, { name: "email_attachment_id", dataType: "bigint", isNullable: true }, { name: "graph_attachment_id", dataType: "text", isNullable: false }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_url", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: true }, { name: "content_type", dataType: "text", isNullable: true }, { name: "checksum_sha256", dataType: "text", isNullable: true }, { name: "content", dataType: "bytea", isNullable: true }, { name: "extracted_text", dataType: "text", isNullable: true }, { name: "is_inline", dataType: "boolean", isNullable: true }, { name: "source_metadata", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "promotion_status", dataType: "text", isNullable: false }, { name: "promotion_reason", dataType: "text", isNullable: true }, { name: "promotion_attempt_count", dataType: "integer", isNullable: false }, { name: "promoted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "document_metadata_id", dataType: "text", isNullable: true }, { name: "project_document_id", dataType: "bigint", isNullable: true }],
       references: {
@@ -9955,7 +9932,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-18T02:52:06.536Z",
         nLiveTup: 687,
         nDeadTup: 147,
-        refreshedAt: "2026-05-18T16:29:17.468Z",
+        refreshedAt: "2026-05-18T17:12:48.365Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "email_id", dataType: "bigint", isNullable: false }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_url", dataType: "text", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: true }, { name: "content_type", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "project_sync_id", dataType: "uuid", isNullable: true }, { name: "graph_attachment_id", dataType: "text", isNullable: true }, { name: "extracted_text", dataType: "text", isNullable: true }, { name: "checksum_sha256", dataType: "text", isNullable: true }, { name: "content", dataType: "bytea", isNullable: true }, { name: "attachment_type", dataType: "text", isNullable: true }, { name: "attachment_category", dataType: "text", isNullable: true }],
       references: {
@@ -10001,7 +9978,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 46,
         nDeadTup: 6,
-        refreshedAt: "2026-05-18T16:29:17.949Z",
+        refreshedAt: "2026-05-18T17:12:48.864Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "graph_message_id", dataType: "text", isNullable: false }, { name: "mailbox_user_id", dataType: "text", isNullable: false }, { name: "internet_message_id", dataType: "text", isNullable: true }, { name: "conversation_id", dataType: "text", isNullable: true }, { name: "subject", dataType: "text", isNullable: false }, { name: "body_preview", dataType: "text", isNullable: true }, { name: "from_name", dataType: "text", isNullable: true }, { name: "from_email", dataType: "text", isNullable: true }, { name: "received_at", dataType: "timestamp with time zone", isNullable: true }, { name: "web_link", dataType: "text", isNullable: true }, { name: "classification_action", dataType: "text", isNullable: false }, { name: "classification_category", dataType: "text", isNullable: false }, { name: "classification_confidence", dataType: "numeric", isNullable: true }, { name: "classification_reason", dataType: "text", isNullable: false }, { name: "classification_signals", dataType: "jsonb", isNullable: false }, { name: "source_metadata", dataType: "jsonb", isNullable: false }, { name: "first_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "last_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -10038,7 +10015,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 33,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:18.337Z",
+        refreshedAt: "2026-05-18T17:12:49.256Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "resend_id", dataType: "text", isNullable: true }, { name: "template", dataType: "text", isNullable: false }, { name: "to_email", dataType: "text", isNullable: false }, { name: "from_email", dataType: "text", isNullable: true }, { name: "subject", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "entity_type", dataType: "text", isNullable: true }, { name: "entity_id", dataType: "text", isNullable: true }, { name: "user_id", dataType: "uuid", isNullable: true }, { name: "idempotency_key", dataType: "text", isNullable: true }, { name: "error", dataType: "jsonb", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "sent_at", dataType: "timestamp with time zone", isNullable: true }, { name: "delivered_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -10098,7 +10075,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:18.717Z",
+        refreshedAt: "2026-05-18T17:12:49.623Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "graph_message_id", dataType: "text", isNullable: false }, { name: "mailbox_user_id", dataType: "text", isNullable: false }, { name: "from_email", dataType: "text", isNullable: false }, { name: "subject", dataType: "text", isNullable: true }, { name: "body_text", dataType: "text", isNullable: true }, { name: "received_at", dataType: "timestamp with time zone", isNullable: false }, { name: "conversation_id", dataType: "text", isNullable: true }, { name: "project_sync_id", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -10125,7 +10102,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-14T17:37:43.817Z",
         nLiveTup: 27241,
         nDeadTup: 43,
-        refreshedAt: "2026-05-18T16:29:19.076Z",
+        refreshedAt: "2026-05-18T17:12:49.976Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "fireflies_id", dataType: "text", isNullable: false }, { name: "metadata_id", dataType: "text", isNullable: true }, { name: "stage", dataType: "text", isNullable: false }, { name: "attempt_count", dataType: "integer", isNullable: false }, { name: "last_attempt_at", dataType: "timestamp with time zone", isNullable: true }, { name: "error_message", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -10145,13 +10122,13 @@ export const DB_INVENTORY: DbInventory = {
         reads: [
           { filePath: "frontend/src/app/api/documents/trigger-pipeline/route.ts", lineNumber: 50, kind: "read", snippet: ".from(\"fireflies_ingestion_jobs\")" },
           { filePath: "frontend/src/app/api/documents/trigger-pipeline/route.ts", lineNumber: 167, kind: "read", snippet: ".from(\"fireflies_ingestion_jobs\")" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10176, kind: "read", snippet: "{ filePath: \"backend/src/api/admin_endpoints.py\", lineNumber: 156, kind: \"read\", snippet: \".table('fireflies_ingestion_j" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10177, kind: "read", snippet: "{ filePath: \"backend/src/api/admin_endpoints.py\", lineNumber: 172, kind: \"read\", snippet: \".table('fireflies_ingestion_j" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10178, kind: "read", snippet: "{ filePath: \"backend/src/api/admin_endpoints.py\", lineNumber: 314, kind: \"read\", snippet: \".table('fireflies_ingestion_j" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10179, kind: "read", snippet: "{ filePath: \"backend/src/api/admin_endpoints.py\", lineNumber: 322, kind: \"read\", snippet: \"recent_docs = supabase.table(" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10180, kind: "read", snippet: "{ filePath: \"backend/src/scripts/quick_status_fix.py\", lineNumber: 27, kind: \"read\", snippet: \"jobs = client.table('fire" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10182, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 27, kind: \"read\", snippet: \"done_jobs = client." },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10183, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_done_to_complete.py\", lineNumber: 19, kind: \"read\", snippet: \"jobs = client.tabl" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10156, kind: "read", snippet: "{ filePath: \"backend/src/api/admin_endpoints.py\", lineNumber: 156, kind: \"read\", snippet: \".table('fireflies_ingestion_j" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10157, kind: "read", snippet: "{ filePath: \"backend/src/api/admin_endpoints.py\", lineNumber: 172, kind: \"read\", snippet: \".table('fireflies_ingestion_j" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10158, kind: "read", snippet: "{ filePath: \"backend/src/api/admin_endpoints.py\", lineNumber: 314, kind: \"read\", snippet: \".table('fireflies_ingestion_j" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10159, kind: "read", snippet: "{ filePath: \"backend/src/api/admin_endpoints.py\", lineNumber: 322, kind: \"read\", snippet: \"recent_docs = supabase.table(" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10160, kind: "read", snippet: "{ filePath: \"backend/src/scripts/quick_status_fix.py\", lineNumber: 27, kind: \"read\", snippet: \"jobs = client.table('fire" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10162, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 27, kind: \"read\", snippet: \"done_jobs = client." },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10163, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_done_to_complete.py\", lineNumber: 19, kind: \"read\", snippet: \"jobs = client.tabl" },
           { filePath: "backend/src/api/admin_endpoints.py", lineNumber: 111, kind: "read", snippet: "supabase.table(\"fireflies_ingestion_jobs\")" },
           { filePath: "backend/src/api/admin_endpoints.py", lineNumber: 156, kind: "read", snippet: ".table('fireflies_ingestion_jobs')" },
           { filePath: "backend/src/api/admin_endpoints.py", lineNumber: 172, kind: "read", snippet: ".table('fireflies_ingestion_jobs')" },
@@ -10192,12 +10169,12 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 23436,
         nDeadTup: 333,
-        refreshedAt: "2026-05-18T16:29:19.595Z",
+        refreshedAt: "2026-05-18T17:12:50.301Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "metadata_id", dataType: "text", isNullable: false }, { name: "segment_index", dataType: "integer", isNullable: false }, { name: "title", dataType: "text", isNullable: true }, { name: "start_index", dataType: "integer", isNullable: false }, { name: "end_index", dataType: "integer", isNullable: false }, { name: "summary", dataType: "text", isNullable: true }, { name: "decisions", dataType: "jsonb", isNullable: false }, { name: "risks", dataType: "jsonb", isNullable: false }, { name: "tasks", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "project_ids", dataType: "ARRAY", isNullable: true }, { name: "data_class", dataType: "ARRAY", isNullable: true }, { name: "sentiment", dataType: "text", isNullable: true }, { name: "project_impact", dataType: "ARRAY", isNullable: true }, { name: "mentioned_people", dataType: "ARRAY", isNullable: true }, { name: "enriched_at", dataType: "timestamp with time zone", isNullable: true }, { name: "enrichment_model", dataType: "text", isNullable: true }, { name: "summary_embedding", dataType: "USER-DEFINED", isNullable: true }],
       references: {
         writes: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10221, kind: "write", snippet: "{ filePath: \"backend/src/scripts/backfill_segment_embeddings.py\", lineNumber: 138, kind: \"write\", snippet: \"supabase.tab" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10201, kind: "write", snippet: "{ filePath: \"backend/src/scripts/backfill_segment_embeddings.py\", lineNumber: 138, kind: \"write\", snippet: \"supabase.tab" },
           { filePath: "backend/src/scripts/backfill_segment_embeddings.py", lineNumber: 138, kind: "write", snippet: "supabase.table('meeting_segments').update({" },
           { filePath: "backend/src/services/pipeline/document_parser.py", lineNumber: 434, kind: "write", snippet: "client.table(\"meeting_segments\").upsert(" },
           { filePath: "backend/src/services/pipeline/financial_parser.py", lineNumber: 328, kind: "write", snippet: "client.table(\"meeting_segments\").delete().eq(\"metadata_id\", metadata_id).execute()" },
@@ -10208,10 +10185,10 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx", lineNumber: 47, kind: "read", snippet: ".from(\"meeting_segments\")" },
           { filePath: "frontend/src/app/(tables)/meeting-segments/page.tsx", lineNumber: 128, kind: "read", snippet: ".from(\"meeting_segments\")" },
           { filePath: "frontend/src/app/(tables)/meetings/[meetingId]/page.tsx", lineNumber: 44, kind: "read", snippet: ".from(\"meeting_segments\")" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10237, kind: "read", snippet: "{ filePath: \"backend/src/scripts/backfill_segment_embeddings.py\", lineNumber: 65, kind: \"read\", snippet: \"query = supaba" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10238, kind: "read", snippet: "{ filePath: \"backend/src/scripts/backfill_segment_embeddings.py\", lineNumber: 86, kind: \"read\", snippet: \"query = supaba" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10239, kind: "read", snippet: "{ filePath: \"backend/src/scripts/fix_document_statuses.py\", lineNumber: 55, kind: \"read\", snippet: \"segments = client.ta" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10240, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 70, kind: \"read\", snippet: \"segments = client.t" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10217, kind: "read", snippet: "{ filePath: \"backend/src/scripts/backfill_segment_embeddings.py\", lineNumber: 65, kind: \"read\", snippet: \"query = supaba" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10218, kind: "read", snippet: "{ filePath: \"backend/src/scripts/backfill_segment_embeddings.py\", lineNumber: 86, kind: \"read\", snippet: \"query = supaba" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10219, kind: "read", snippet: "{ filePath: \"backend/src/scripts/fix_document_statuses.py\", lineNumber: 55, kind: \"read\", snippet: \"segments = client.ta" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10220, kind: "read", snippet: "{ filePath: \"backend/src/scripts/update_document_status.py\", lineNumber: 70, kind: \"read\", snippet: \"segments = client.t" },
           { filePath: "frontend/src/lib/projectIntelligence.ts", lineNumber: 130, kind: "read", snippet: ".from(\"meeting_segments\")" },
           { filePath: "frontend/src/lib/supabase/queries.ts", lineNumber: 145, kind: "read", snippet: ".from(\"meeting_segments\")" },
           { filePath: "backend/src/scripts/backfill_segment_embeddings.py", lineNumber: 65, kind: "read", snippet: "query = supabase.table('meeting_segments').select(" },
@@ -10259,7 +10236,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 69,
         nDeadTup: 3,
-        refreshedAt: "2026-05-18T16:29:22.567Z",
+        refreshedAt: "2026-05-18T17:12:51.914Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "recap_date", dataType: "date", isNullable: false }, { name: "date_range_start", dataType: "date", isNullable: false }, { name: "date_range_end", dataType: "date", isNullable: false }, { name: "recap_text", dataType: "text", isNullable: false }, { name: "recap_html", dataType: "text", isNullable: true }, { name: "meeting_count", dataType: "integer", isNullable: true }, { name: "project_count", dataType: "integer", isNullable: true }, { name: "meetings_analyzed", dataType: "jsonb", isNullable: true }, { name: "risks", dataType: "jsonb", isNullable: true }, { name: "decisions", dataType: "jsonb", isNullable: true }, { name: "blockers", dataType: "jsonb", isNullable: true }, { name: "commitments", dataType: "jsonb", isNullable: true }, { name: "wins", dataType: "jsonb", isNullable: true }, { name: "sent_email", dataType: "boolean", isNullable: true }, { name: "sent_teams", dataType: "boolean", isNullable: true }, { name: "sent_at", dataType: "timestamp with time zone", isNullable: true }, { name: "recipients", dataType: "jsonb", isNullable: true }, { name: "generation_time_seconds", dataType: "double precision", isNullable: true }, { name: "model_used", dataType: "character varying", isNullable: true }, { name: "recap_kind", dataType: "text", isNullable: false }, { name: "workflow_status", dataType: "text", isNullable: false }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "approved_by", dataType: "uuid", isNullable: true }, { name: "approval_notes", dataType: "text", isNullable: true }, { name: "briefing_packet", dataType: "jsonb", isNullable: true }],
       references: {
@@ -10303,7 +10280,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:22.957Z",
+        refreshedAt: "2026-05-18T17:12:52.287Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "briefing_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "started_at", dataType: "timestamp with time zone", isNullable: true }, { name: "finished_at", dataType: "timestamp with time zone", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "token_usage", dataType: "jsonb", isNullable: true }, { name: "input_doc_ids", dataType: "ARRAY", isNullable: true }, { name: "error", dataType: "text", isNullable: true }],
       references: {
@@ -10330,7 +10307,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:23.357Z",
+        refreshedAt: "2026-05-18T17:12:52.649Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "meeting_id", dataType: "text", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "content", dataType: "text", isNullable: false }, { name: "generated_by", dataType: "text", isNullable: false }, { name: "model_used", dataType: "text", isNullable: true }, { name: "generation_time_ms", dataType: "integer", isNullable: true }, { name: "version", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -10371,7 +10348,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3101,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:23.729Z",
+        refreshedAt: "2026-05-18T17:12:53.014Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "session_id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: true }, { name: "role", dataType: "text", isNullable: false }, { name: "content", dataType: "text", isNullable: false }, { name: "sources", dataType: "jsonb", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -10421,7 +10398,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 341,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:24.403Z",
+        refreshedAt: "2026-05-18T17:12:53.717Z",
       },
       columns: [{ name: "session_id", dataType: "character varying", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "title", dataType: "character varying", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_message_at", dataType: "timestamp with time zone", isNullable: true }, { name: "is_archived", dataType: "boolean", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }],
       references: {
@@ -10473,7 +10450,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:24.788Z",
+        refreshedAt: "2026-05-18T17:12:54.091Z",
       },
       columns: [{ name: "id", dataType: "character varying", isNullable: false }],
       references: {
@@ -10502,7 +10479,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 32,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:25.176Z",
+        refreshedAt: "2026-05-18T17:12:54.457Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "computed_session_user_id", dataType: "uuid", isNullable: true }, { name: "session_id", dataType: "character varying", isNullable: false }, { name: "message", dataType: "jsonb", isNullable: false }, { name: "message_data", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -10539,7 +10516,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:25.559Z",
+        refreshedAt: "2026-05-18T17:12:54.818Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "title", dataType: "text", isNullable: true }, { name: "body", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "archived", dataType: "boolean", isNullable: true }],
       references: {
@@ -10547,8 +10524,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "frontend/src/app/api/notes/highlight/route.ts", lineNumber: 88, kind: "write", snippet: ".from(\"notes\")" },
         ],
         reads: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10572, kind: "read", snippet: "{ filePath: \"frontend/src/components/tutorial/fetch-data-steps.tsx\", lineNumber: 25, kind: \"read\", snippet: \"const { dat" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10573, kind: "read", snippet: "{ filePath: \"frontend/src/components/tutorial/fetch-data-steps.tsx\", lineNumber: 42, kind: \"read\", snippet: \"const { dat" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10552, kind: "read", snippet: "{ filePath: \"frontend/src/components/tutorial/fetch-data-steps.tsx\", lineNumber: 25, kind: \"read\", snippet: \"const { dat" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 10553, kind: "read", snippet: "{ filePath: \"frontend/src/components/tutorial/fetch-data-steps.tsx\", lineNumber: 42, kind: \"read\", snippet: \"const { dat" },
           { filePath: "frontend/src/components/tutorial/fetch-data-steps.tsx", lineNumber: 25, kind: "read", snippet: "const { data: notes } = await supabase.from('notes').select()" },
           { filePath: "frontend/src/components/tutorial/fetch-data-steps.tsx", lineNumber: 42, kind: "read", snippet: "const { data } = await supabase.from('notes').select()" },
         ],
@@ -10579,7 +10556,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 67,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:25.984Z",
+        refreshedAt: "2026-05-18T17:12:55.178Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "content", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "user_id", dataType: "uuid", isNullable: true }, { name: "session_id", dataType: "text", isNullable: true }, { name: "memory_type", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -10624,7 +10601,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:26.397Z",
+        refreshedAt: "2026-05-18T17:12:55.535Z",
       },
       columns: [{ name: "id", dataType: "text", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "topic", dataType: "text", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -10658,7 +10635,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:26.764Z",
+        refreshedAt: "2026-05-18T17:12:55.887Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "channel_id", dataType: "text", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: true }, { name: "user_name", dataType: "text", isNullable: false }, { name: "content", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -10706,7 +10683,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:27.135Z",
+        refreshedAt: "2026-05-18T17:12:56.256Z",
       },
       columns: [{ name: "id", dataType: "character varying", isNullable: false }, { name: "content", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp without time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp without time zone", isNullable: false }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "url", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "category", dataType: "text", isNullable: true }],
       references: {
@@ -10745,22 +10722,12 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 29,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:27.508Z",
+        refreshedAt: "2026-05-18T17:12:56.663Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "attached_to_table", dataType: "text", isNullable: true }, { name: "attached_to_id", dataType: "text", isNullable: true }, { name: "file_name", dataType: "text", isNullable: true }, { name: "url", dataType: "text", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
-        writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/route.ts", lineNumber: 72, kind: "write", snippet: ".from(\"attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/route.ts", lineNumber: 191, kind: "write", snippet: ".from(\"attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/route.ts", lineNumber: 306, kind: "write", snippet: ".from(\"attachments\")" },
-        ],
-        reads: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download/route.ts", lineNumber: 37, kind: "read", snippet: ".from(\"attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/route.ts", lineNumber: 50, kind: "read", snippet: ".from(\"attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/route.ts", lineNumber: 59, kind: "read", snippet: ".from(\"attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/route.ts", lineNumber: 79, kind: "read", snippet: ".from(\"attachments\")" },
-          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 102, kind: "read", snippet: ".from(\"attachments\")" },
-        ],
+        writes: [],
+        reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260328000001_prime_contract_attachments_fk_join.sql", lineNumber: 65, kind: "migration", snippet: "FROM public.attachments a" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 209, kind: "migration", snippet: "from public.attachments a" },
@@ -10789,7 +10756,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:27.874Z",
+        refreshedAt: "2026-05-18T17:12:57.010Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "album_id", dataType: "uuid", isNullable: true }, { name: "file_name", dataType: "text", isNullable: false }, { name: "storage_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "integer", isNullable: true }, { name: "mime_type", dataType: "text", isNullable: true }, { name: "width", dataType: "integer", isNullable: true }, { name: "height", dataType: "integer", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "tags", dataType: "ARRAY", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "gps_latitude", dataType: "double precision", isNullable: true }, { name: "gps_longitude", dataType: "double precision", isNullable: true }, { name: "date_taken", dataType: "timestamp with time zone", isNullable: true }, { name: "markup_data", dataType: "jsonb", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "camera_make", dataType: "text", isNullable: true }, { name: "camera_model", dataType: "text", isNullable: true }],
       references: {
@@ -10818,7 +10785,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:28.234Z",
+        refreshedAt: "2026-05-18T17:12:57.362Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "cover_photo_id", dataType: "uuid", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -10851,7 +10818,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:28.607Z",
+        refreshedAt: "2026-05-18T17:12:57.709Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "photo_id", dataType: "uuid", isNullable: false }, { name: "linked_type", dataType: "text", isNullable: false }, { name: "linked_id", dataType: "text", isNullable: false }, { name: "linked_title", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -10878,7 +10845,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:28.965Z",
+        refreshedAt: "2026-05-18T17:12:58.075Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "observation_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_path", dataType: "text", isNullable: false }, { name: "file_size", dataType: "integer", isNullable: false }, { name: "mime_type", dataType: "text", isNullable: false }, { name: "caption", dataType: "text", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -10905,7 +10872,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:29.362Z",
+        refreshedAt: "2026-05-18T17:12:58.420Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "daily_log_id", dataType: "uuid", isNullable: false }, { name: "project_photo_id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "link_type", dataType: "text", isNullable: false }, { name: "note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -10939,7 +10906,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 92,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:29.729Z",
+        refreshedAt: "2026-05-18T17:12:58.773Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "target_type", dataType: "text", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "slug", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "priority", dataType: "text", isNullable: true }, { name: "owner_person_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "last_signal_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11007,7 +10974,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-18T13:27:56.562Z",
         nLiveTup: 90,
         nDeadTup: 14,
-        refreshedAt: "2026-05-18T16:29:30.126Z",
+        refreshedAt: "2026-05-18T17:12:59.138Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "target_id", dataType: "uuid", isNullable: false }, { name: "packet_type", dataType: "text", isNullable: false }, { name: "packet_version", dataType: "text", isNullable: false }, { name: "generated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "covered_start_at", dataType: "timestamp with time zone", isNullable: true }, { name: "covered_end_at", dataType: "timestamp with time zone", isNullable: true }, { name: "freshness_status", dataType: "text", isNullable: false }, { name: "executive_summary", dataType: "text", isNullable: false }, { name: "current_status", dataType: "text", isNullable: true }, { name: "strategic_read", dataType: "text", isNullable: true }, { name: "why_it_matters", dataType: "text", isNullable: true }, { name: "recommended_next_moves", dataType: "ARRAY", isNullable: false }, { name: "confidence_summary", dataType: "jsonb", isNullable: false }, { name: "source_coverage", dataType: "jsonb", isNullable: false }, { name: "review_queue_count", dataType: "integer", isNullable: false }, { name: "stale_item_count", dataType: "integer", isNullable: false }, { name: "packet_json", dataType: "jsonb", isNullable: false }, { name: "compiler_version", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11059,7 +11026,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-18T15:29:01.662Z",
         nLiveTup: 2333,
         nDeadTup: 23,
-        refreshedAt: "2026-05-18T16:29:30.506Z",
+        refreshedAt: "2026-05-18T17:12:59.784Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "packet_id", dataType: "uuid", isNullable: false }, { name: "insight_card_id", dataType: "uuid", isNullable: false }, { name: "section", dataType: "text", isNullable: false }, { name: "rank", dataType: "integer", isNullable: false }, { name: "included_reason", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11101,8 +11068,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "15 MB",
         lastAutoanalyze: null,
         nLiveTup: 7237,
-        nDeadTup: 90,
-        refreshedAt: "2026-05-18T16:29:30.925Z",
+        nDeadTup: 87,
+        refreshedAt: "2026-05-18T17:13:00.202Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "primary_target_id", dataType: "uuid", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "card_type", dataType: "text", isNullable: false }, { name: "summary", dataType: "text", isNullable: false }, { name: "why_it_matters", dataType: "text", isNullable: true }, { name: "current_status", dataType: "text", isNullable: false }, { name: "confidence", dataType: "text", isNullable: false }, { name: "attribution_status", dataType: "text", isNullable: false }, { name: "suggested_owner_person_id", dataType: "uuid", isNullable: true }, { name: "suggested_owner_label", dataType: "text", isNullable: true }, { name: "next_action", dataType: "text", isNullable: true }, { name: "first_seen_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_seen_at", dataType: "timestamp with time zone", isNullable: true }, { name: "stale_after", dataType: "timestamp with time zone", isNullable: true }, { name: "source_count", dataType: "integer", isNullable: false }, { name: "compiler_version", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11169,7 +11136,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 8128,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:32.133Z",
+        refreshedAt: "2026-05-18T17:13:01.289Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "insight_card_id", dataType: "uuid", isNullable: false }, { name: "source_document_id", dataType: "text", isNullable: true }, { name: "source_chunk_id", dataType: "text", isNullable: true }, { name: "source_type", dataType: "text", isNullable: false }, { name: "source_title", dataType: "text", isNullable: true }, { name: "source_occurred_at", dataType: "timestamp with time zone", isNullable: true }, { name: "source_message_id", dataType: "text", isNullable: true }, { name: "participants", dataType: "ARRAY", isNullable: false }, { name: "excerpt", dataType: "text", isNullable: true }, { name: "summary", dataType: "text", isNullable: true }, { name: "relevance_reason", dataType: "text", isNullable: false }, { name: "evidence_role", dataType: "text", isNullable: false }, { name: "confidence", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11214,7 +11181,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6992,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:33.208Z",
+        refreshedAt: "2026-05-18T17:13:01.855Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "insight_card_id", dataType: "uuid", isNullable: false }, { name: "target_id", dataType: "uuid", isNullable: false }, { name: "relationship", dataType: "text", isNullable: false }, { name: "confidence", dataType: "text", isNullable: false }, { name: "attribution_status", dataType: "text", isNullable: false }, { name: "matched_terms", dataType: "ARRAY", isNullable: false }, { name: "reason", dataType: "text", isNullable: true }, { name: "reviewed_by", dataType: "uuid", isNullable: true }, { name: "reviewed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11255,7 +11222,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:33.665Z",
+        refreshedAt: "2026-05-18T17:13:02.301Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "review_type", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "insight_card_id", dataType: "uuid", isNullable: true }, { name: "target_link_id", dataType: "uuid", isNullable: true }, { name: "evidence_id", dataType: "uuid", isNullable: true }, { name: "review_reason", dataType: "text", isNullable: false }, { name: "proposed_value", dataType: "jsonb", isNullable: false }, { name: "reviewed_value", dataType: "jsonb", isNullable: true }, { name: "reviewed_by", dataType: "uuid", isNullable: true }, { name: "reviewed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11292,7 +11259,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-14T17:38:43.348Z",
         nLiveTup: 7648,
         nDeadTup: 131,
-        refreshedAt: "2026-05-18T16:29:34.074Z",
+        refreshedAt: "2026-05-18T17:13:02.657Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "source_document_id", dataType: "text", isNullable: false }, { name: "source_chunk_id", dataType: "text", isNullable: true }, { name: "target_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "signal_type", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "summary", dataType: "text", isNullable: false }, { name: "why_it_matters", dataType: "text", isNullable: true }, { name: "current_status", dataType: "text", isNullable: false }, { name: "confidence_score", dataType: "numeric", isNullable: false }, { name: "confidence", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "suggested_owner_person_id", dataType: "uuid", isNullable: true }, { name: "suggested_owner_label", dataType: "text", isNullable: true }, { name: "next_action", dataType: "text", isNullable: true }, { name: "stale_after", dataType: "timestamp with time zone", isNullable: true }, { name: "source_occurred_at", dataType: "timestamp with time zone", isNullable: true }, { name: "excerpt", dataType: "text", isNullable: true }, { name: "normalized_signal_key", dataType: "text", isNullable: false }, { name: "promoted_insight_card_id", dataType: "uuid", isNullable: true }, { name: "extraction_json", dataType: "jsonb", isNullable: false }, { name: "compiler_version", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11332,12 +11299,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 11422,
+        approxRows: 11437,
         totalSize: "15 MB",
-        lastAutoanalyze: "2026-05-14T17:37:43.555Z",
-        nLiveTup: 11422,
-        nDeadTup: 776,
-        refreshedAt: "2026-05-18T16:29:34.617Z",
+        lastAutoanalyze: "2026-05-18T16:40:38.556Z",
+        nLiveTup: 11437,
+        nDeadTup: 807,
+        refreshedAt: "2026-05-18T17:13:03.297Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "source_document_id", dataType: "text", isNullable: false }, { name: "source_hash", dataType: "text", isNullable: true }, { name: "job_type", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "priority", dataType: "integer", isNullable: false }, { name: "target_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "compiler_version", dataType: "text", isNullable: false }, { name: "attempt_count", dataType: "integer", isNullable: false }, { name: "last_error", dataType: "text", isNullable: true }, { name: "input_snapshot", dataType: "jsonb", isNullable: false }, { name: "output_summary", dataType: "jsonb", isNullable: false }, { name: "queued_at", dataType: "timestamp with time zone", isNullable: false }, { name: "started_at", dataType: "timestamp with time zone", isNullable: true }, { name: "finished_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11385,7 +11352,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-18T02:54:19.574Z",
         nLiveTup: 1633,
         nDeadTup: 24,
-        refreshedAt: "2026-05-18T16:29:35.009Z",
+        refreshedAt: "2026-05-18T17:13:03.801Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "target_id", dataType: "uuid", isNullable: false }, { name: "reason", dataType: "text", isNullable: false }, { name: "trigger_source_document_id", dataType: "text", isNullable: true }, { name: "trigger_insight_card_id", dataType: "uuid", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "priority", dataType: "integer", isNullable: false }, { name: "compiler_version", dataType: "text", isNullable: false }, { name: "attempt_count", dataType: "integer", isNullable: false }, { name: "last_error", dataType: "text", isNullable: true }, { name: "output_packet_id", dataType: "uuid", isNullable: true }, { name: "queued_at", dataType: "timestamp with time zone", isNullable: false }, { name: "started_at", dataType: "timestamp with time zone", isNullable: true }, { name: "finished_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11427,12 +11394,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 6028,
-        totalSize: "4000 kB",
+        approxRows: 6070,
+        totalSize: "4008 kB",
         lastAutoanalyze: "2026-05-18T14:56:35.743Z",
-        nLiveTup: 6028,
-        nDeadTup: 48,
-        refreshedAt: "2026-05-18T16:29:35.324Z",
+        nLiveTup: 6070,
+        nDeadTup: 56,
+        refreshedAt: "2026-05-18T17:13:04.133Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "resource_id", dataType: "text", isNullable: false }, { name: "resource_name", dataType: "text", isNullable: true }, { name: "stage", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "started_at", dataType: "timestamp with time zone", isNullable: false }, { name: "finished_at", dataType: "timestamp with time zone", isNullable: true }, { name: "items_seen", dataType: "integer", isNullable: false }, { name: "items_synced", dataType: "integer", isNullable: false }, { name: "items_created", dataType: "integer", isNullable: false }, { name: "items_updated", dataType: "integer", isNullable: false }, { name: "items_skipped", dataType: "integer", isNullable: false }, { name: "items_failed", dataType: "integer", isNullable: false }, { name: "error_code", dataType: "text", isNullable: true }, { name: "error_message", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11475,10 +11442,10 @@ export const DB_INVENTORY: DbInventory = {
       liveStats: {
         approxRows: 331,
         totalSize: "320 kB",
-        lastAutoanalyze: "2026-05-18T15:41:36.717Z",
+        lastAutoanalyze: "2026-05-18T16:39:38.092Z",
         nLiveTup: 331,
-        nDeadTup: 100,
-        refreshedAt: "2026-05-18T16:29:35.679Z",
+        nDeadTup: 83,
+        refreshedAt: "2026-05-18T17:13:04.580Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "resource_id", dataType: "text", isNullable: false }, { name: "resource_name", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "last_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_success_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_error_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_error_message", dataType: "text", isNullable: true }, { name: "items_synced", dataType: "integer", isNullable: false }, { name: "unprocessed_count", dataType: "integer", isNullable: false }, { name: "unembedded_count", dataType: "integer", isNullable: false }, { name: "uncompiled_count", dataType: "integer", isNullable: false }, { name: "stale_minutes", dataType: "integer", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "generated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11486,7 +11453,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "backend/src/services/health/source_sync_health.py", lineNumber: 493, kind: "write", snippet: "get_rag_write_client().table(\"source_sync_health_snapshots\")" },
         ],
         reads: [
-          { filePath: "frontend/src/lib/ai/source-health.ts", lineNumber: 166, kind: "read", snippet: ".from(\"source_sync_health_snapshots\")" },
+          { filePath: "frontend/src/lib/ai/source-health.ts", lineNumber: 169, kind: "read", snippet: ".from(\"source_sync_health_snapshots\")" },
         ],
         migrations: [
           { filePath: "supabase/migrations/20260507160000_source_sync_health_observability.sql", lineNumber: 108, kind: "migration", snippet: "on public.source_sync_health_snapshots(status, source);" },
@@ -11515,7 +11482,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:36.026Z",
+        refreshedAt: "2026-05-18T17:13:04.907Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "graph_subscription_id", dataType: "text", isNullable: true }, { name: "resource", dataType: "text", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "resource_id", dataType: "text", isNullable: false }, { name: "resource_name", dataType: "text", isNullable: true }, { name: "change_type", dataType: "text", isNullable: false }, { name: "notification_url", dataType: "text", isNullable: true }, { name: "client_state_hash", dataType: "text", isNullable: true }, { name: "lifecycle_notification_url", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "expiration_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_renewed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_notification_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_lifecycle_event_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_error_message", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11525,7 +11492,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "backend/src/services/integrations/microsoft_graph/webhooks.py", lineNumber: 189, kind: "write", snippet: "supabase.table(\"graph_subscriptions\").update(" },
         ],
         reads: [
-          { filePath: "frontend/src/lib/ai/source-health.ts", lineNumber: 173, kind: "read", snippet: ".from(\"graph_subscriptions\")" },
+          { filePath: "frontend/src/lib/ai/source-health.ts", lineNumber: 176, kind: "read", snippet: ".from(\"graph_subscriptions\")" },
           { filePath: "frontend/src/lib/ai/tools/outlook-operations.ts", lineNumber: 319, kind: "read", snippet: ".from(\"graph_subscriptions\")" },
           { filePath: "backend/src/services/integrations/microsoft_graph/subscriptions.py", lineNumber: 148, kind: "read", snippet: "supabase.table(\"graph_subscriptions\")" },
           { filePath: "backend/src/services/integrations/microsoft_graph/webhooks.py", lineNumber: 82, kind: "read", snippet: "supabase.table(\"graph_subscriptions\")" },
@@ -11557,8 +11524,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "464 kB",
         lastAutoanalyze: "2026-05-18T14:24:59.120Z",
         nLiveTup: 318,
-        nDeadTup: 111,
-        refreshedAt: "2026-05-18T16:29:36.406Z",
+        nDeadTup: 0,
+        refreshedAt: "2026-05-18T17:13:05.322Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "resource_id", dataType: "text", isNullable: false }, { name: "resource_name", dataType: "text", isNullable: true }, { name: "delta_token", dataType: "text", isNullable: true }, { name: "last_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "sync_status", dataType: "text", isNullable: false }, { name: "error_message", dataType: "text", isNullable: true }, { name: "items_synced", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11594,8 +11561,8 @@ export const DB_INVENTORY: DbInventory = {
         totalSize: "256 kB",
         lastAutoanalyze: "2026-05-14T17:37:43.262Z",
         nLiveTup: 450,
-        nDeadTup: 94,
-        refreshedAt: "2026-05-18T16:29:36.798Z",
+        nDeadTup: 7,
+        refreshedAt: "2026-05-18T17:13:05.691Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "fireflies_id", dataType: "text", isNullable: true }, { name: "document_id", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "error", dataType: "text", isNullable: true }, { name: "content_hash", dataType: "text", isNullable: true }, { name: "started_at", dataType: "timestamp with time zone", isNullable: true }, { name: "finished_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -11626,10 +11593,10 @@ export const DB_INVENTORY: DbInventory = {
       liveStats: {
         approxRows: 648,
         totalSize: "944 kB",
-        lastAutoanalyze: "2026-05-18T16:06:03.187Z",
+        lastAutoanalyze: "2026-05-18T16:57:06.377Z",
         nLiveTup: 648,
-        nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:37.126Z",
+        nDeadTup: 100,
+        refreshedAt: "2026-05-18T17:13:06.014Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "alert_key", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: false }, { name: "code", dataType: "text", isNullable: false }, { name: "severity", dataType: "text", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "resource_id", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "message", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "first_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "last_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "resolved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11670,7 +11637,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1218,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:37.498Z",
+        refreshedAt: "2026-05-18T17:13:06.427Z",
       },
       columns: [{ name: "source_id", dataType: "text", isNullable: false }, { name: "summary", dataType: "text", isNullable: true }, { name: "total_word_count", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "category", dataType: "text", isNullable: true }],
       references: {
@@ -11699,7 +11666,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:37.903Z",
+        refreshedAt: "2026-05-18T17:13:06.817Z",
       },
       columns: [{ name: "key", dataType: "text", isNullable: false }, { name: "value", dataType: "text", isNullable: false }],
       references: {
@@ -11730,7 +11697,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:38.261Z",
+        refreshedAt: "2026-05-18T17:13:07.194Z",
       },
       columns: [{ name: "pipeline_id", dataType: "text", isNullable: false }, { name: "pipeline_type", dataType: "text", isNullable: false }, { name: "last_check_time", dataType: "timestamp without time zone", isNullable: true }, { name: "known_files", dataType: "jsonb", isNullable: true }, { name: "last_run", dataType: "timestamp without time zone", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -11761,7 +11728,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:38.562Z",
+        refreshedAt: "2026-05-18T17:13:07.601Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "document_id", dataType: "uuid", isNullable: false }, { name: "job_type", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: true }, { name: "priority", dataType: "integer", isNullable: true }, { name: "attempts", dataType: "integer", isNullable: true }, { name: "max_attempts", dataType: "integer", isNullable: true }, { name: "error_message", dataType: "text", isNullable: true }, { name: "config", dataType: "jsonb", isNullable: true }, { name: "started_at", dataType: "timestamp with time zone", isNullable: true }, { name: "completed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -11792,7 +11759,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:38.931Z",
+        refreshedAt: "2026-05-18T17:13:07.989Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "sync_type", dataType: "text", isNullable: false }, { name: "last_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_successful_sync_at", dataType: "timestamp with time zone", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "error_message", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -11823,7 +11790,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 17,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:39.320Z",
+        refreshedAt: "2026-05-18T17:13:08.400Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "payload", dataType: "jsonb", isNullable: false }, { name: "error", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -11850,7 +11817,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: "2026-05-18T03:40:34.758Z",
         nLiveTup: 36147,
         nDeadTup: 24,
-        refreshedAt: "2026-05-18T16:29:39.625Z",
+        refreshedAt: "2026-05-18T17:13:08.772Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "type", dataType: "text", isNullable: false }, { name: "content", dataType: "text", isNullable: false }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "meeting_id", dataType: "text", isNullable: true }, { name: "confidence", dataType: "double precision", isNullable: false }, { name: "importance", dataType: "double precision", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "last_accessed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "access_count", dataType: "integer", isNullable: false }, { name: "expires_at", dataType: "timestamp with time zone", isNullable: true }, { name: "superseded_by", dataType: "uuid", isNullable: true }, { name: "is_active", dataType: "boolean", isNullable: false }, { name: "visibility", dataType: "text", isNullable: false }],
       references: {
@@ -11920,7 +11887,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2169,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:40.113Z",
+        refreshedAt: "2026-05-18T17:13:09.277Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "target_id", dataType: "uuid", isNullable: true }, { name: "session_id", dataType: "uuid", isNullable: true }, { name: "tool_name", dataType: "text", isNullable: false }, { name: "query_text", dataType: "text", isNullable: false }, { name: "source_document_id", dataType: "text", isNullable: true }, { name: "source_chunk_id", dataType: "text", isNullable: true }, { name: "rank", dataType: "integer", isNullable: true }, { name: "score", dataType: "numeric", isNullable: true }, { name: "cited", dataType: "boolean", isNullable: false }, { name: "user_referenced", dataType: "boolean", isNullable: false }, { name: "used_in_answer", dataType: "boolean", isNullable: false }, { name: "outcome", dataType: "text", isNullable: false }, { name: "metadata", dataType: "jsonb", isNullable: false }],
       references: {
@@ -11965,7 +11932,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 8,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:40.689Z",
+        refreshedAt: "2026-05-18T17:13:09.886Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "target_id", dataType: "uuid", isNullable: true }, { name: "session_id", dataType: "uuid", isNullable: true }, { name: "source_table", dataType: "text", isNullable: true }, { name: "source_record_id", dataType: "text", isNullable: true }, { name: "event_type", dataType: "text", isNullable: false }, { name: "event_family", dataType: "text", isNullable: false }, { name: "surface", dataType: "text", isNullable: false }, { name: "subject_type", dataType: "text", isNullable: false }, { name: "subject_id", dataType: "text", isNullable: true }, { name: "signal", dataType: "text", isNullable: false }, { name: "reason_category", dataType: "text", isNullable: true }, { name: "free_text", dataType: "text", isNullable: true }, { name: "before_snapshot", dataType: "jsonb", isNullable: false }, { name: "after_snapshot", dataType: "jsonb", isNullable: false }, { name: "source_context", dataType: "jsonb", isNullable: false }, { name: "metadata", dataType: "jsonb", isNullable: false }],
       references: {
@@ -12014,7 +11981,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:41.082Z",
+        refreshedAt: "2026-05-18T17:13:10.292Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "reviewed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "reviewed_by", dataType: "uuid", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "promotion_type", dataType: "text", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "target_id", dataType: "uuid", isNullable: true }, { name: "source_event_ids", dataType: "ARRAY", isNullable: false }, { name: "destination_table", dataType: "text", isNullable: true }, { name: "destination_record_id", dataType: "text", isNullable: true }, { name: "confidence", dataType: "numeric", isNullable: false }, { name: "risk_level", dataType: "text", isNullable: false }, { name: "proposed_learning", dataType: "jsonb", isNullable: false }, { name: "review_notes", dataType: "text", isNullable: true }, { name: "expires_at", dataType: "timestamp with time zone", isNullable: true }, { name: "superseded_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -12080,7 +12047,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:41.454Z",
+        refreshedAt: "2026-05-18T17:13:10.707Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "promotion_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "tool_name", dataType: "text", isNullable: false }, { name: "source_document_id", dataType: "text", isNullable: true }, { name: "source_chunk_id", dataType: "text", isNullable: true }, { name: "query_signature", dataType: "text", isNullable: false }, { name: "action", dataType: "text", isNullable: false }, { name: "weight_multiplier", dataType: "numeric", isNullable: false }, { name: "confidence", dataType: "numeric", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "metadata", dataType: "jsonb", isNullable: false }],
       references: {
@@ -12124,7 +12091,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:41.821Z",
+        refreshedAt: "2026-05-18T17:13:11.091Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "document_id", dataType: "text", isNullable: true }, { name: "review_type", dataType: "text", isNullable: false }, { name: "ai_finding", dataType: "text", isNullable: false }, { name: "ai_status", dataType: "text", isNullable: false }, { name: "ai_confidence", dataType: "double precision", isNullable: true }, { name: "spec_section", dataType: "text", isNullable: true }, { name: "requirement_type", dataType: "text", isNullable: true }, { name: "human_feedback", dataType: "text", isNullable: true }, { name: "feedback_category", dataType: "text", isNullable: true }, { name: "corrected_status", dataType: "text", isNullable: true }, { name: "corrected_reason", dataType: "text", isNullable: true }, { name: "source_of_truth_ref", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -12164,7 +12131,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:42.194Z",
+        refreshedAt: "2026-05-18T17:13:11.485Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "task_id", dataType: "uuid", isNullable: true }, { name: "signal", dataType: "text", isNullable: false }, { name: "reason", dataType: "text", isNullable: true }, { name: "task_snapshot", dataType: "jsonb", isNullable: false }, { name: "session_id", dataType: "text", isNullable: true }, { name: "learning_id", dataType: "uuid", isNullable: true }, { name: "promoted", dataType: "boolean", isNullable: false }, { name: "generated_task_id", dataType: "uuid", isNullable: true }, { name: "reason_category", dataType: "text", isNullable: true }],
       references: {
@@ -12209,7 +12176,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:42.579Z",
+        refreshedAt: "2026-05-18T17:13:11.842Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "job_type", dataType: "character varying", isNullable: false }, { name: "status", dataType: "character varying", isNullable: true }, { name: "model_version", dataType: "character varying", isNullable: true }, { name: "config", dataType: "jsonb", isNullable: true }, { name: "input_data", dataType: "jsonb", isNullable: true }, { name: "results", dataType: "jsonb", isNullable: true }, { name: "confidence_metrics", dataType: "jsonb", isNullable: true }, { name: "processing_time_ms", dataType: "integer", isNullable: true }, { name: "error_message", dataType: "text", isNullable: true }, { name: "started_at", dataType: "timestamp with time zone", isNullable: true }, { name: "completed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -12238,7 +12205,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:42.971Z",
+        refreshedAt: "2026-05-18T17:13:12.202Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "version", dataType: "character varying", isNullable: false }, { name: "model_type", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "config", dataType: "jsonb", isNullable: true }, { name: "performance_metrics", dataType: "jsonb", isNullable: true }, { name: "is_active", dataType: "boolean", isNullable: true }, { name: "deployment_date", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -12265,7 +12232,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:43.331Z",
+        refreshedAt: "2026-05-18T17:13:12.557Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "tool_name", dataType: "text", isNullable: false }, { name: "idempotency_key", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "request_payload", dataType: "jsonb", isNullable: false }, { name: "response_payload", dataType: "jsonb", isNullable: true }],
       references: {
@@ -12295,7 +12262,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 235,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:43.711Z",
+        refreshedAt: "2026-05-18T17:13:12.902Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "fingerprint", dataType: "text", isNullable: false }, { name: "section", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "summary", dataType: "text", isNullable: false }, { name: "recommended_action", dataType: "text", isNullable: true }, { name: "why_it_matters", dataType: "text", isNullable: true }, { name: "owner", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "tone", dataType: "text", isNullable: true }, { name: "state", dataType: "text", isNullable: false }, { name: "source_type", dataType: "text", isNullable: true }, { name: "source_detail", dataType: "text", isNullable: true }, { name: "source_id", dataType: "text", isNullable: true }, { name: "source_url", dataType: "text", isNullable: true }, { name: "project_label", dataType: "text", isNullable: true }, { name: "source_date", dataType: "text", isNullable: true }, { name: "first_seen_recap_id", dataType: "uuid", isNullable: true }, { name: "last_seen_recap_id", dataType: "uuid", isNullable: true }, { name: "first_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "last_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "resolved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "resolved_by", dataType: "uuid", isNullable: true }, { name: "resolution_note", dataType: "text", isNullable: true }, { name: "payload", dataType: "jsonb", isNullable: false }],
       references: {
@@ -12341,7 +12308,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 12,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:44.139Z",
+        refreshedAt: "2026-05-18T17:13:13.311Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "priority", dataType: "text", isNullable: false }, { name: "labels", dataType: "ARRAY", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "linked_record_type", dataType: "text", isNullable: true }, { name: "linked_record_id", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "external_id", dataType: "text", isNullable: true }, { name: "github_issue_url", dataType: "text", isNullable: true }, { name: "assignee", dataType: "text", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "assignee_id", dataType: "uuid", isNullable: true }, { name: "dispatch_status", dataType: "text", isNullable: true }],
       references: {
@@ -12387,10 +12354,10 @@ export const DB_INVENTORY: DbInventory = {
       liveStats: {
         approxRows: 957,
         totalSize: "3472 kB",
-        lastAutoanalyze: "2026-05-18T16:28:05.039Z",
+        lastAutoanalyze: "2026-05-18T17:11:07.080Z",
         nLiveTup: 957,
-        nDeadTup: 201,
-        refreshedAt: "2026-05-18T16:29:44.525Z",
+        nDeadTup: 206,
+        refreshedAt: "2026-05-18T17:13:13.718Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "metadata_id", dataType: "text", isNullable: false }, { name: "segment_id", dataType: "uuid", isNullable: true }, { name: "source_chunk_id", dataType: "uuid", isNullable: true }, { name: "description", dataType: "text", isNullable: false }, { name: "assignee_name", dataType: "text", isNullable: true }, { name: "assignee_email", dataType: "text", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "client_id", dataType: "bigint", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "priority", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "source_system", dataType: "text", isNullable: false }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "project_ids", dataType: "ARRAY", isNullable: true }, { name: "file_name", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "assigned_by", dataType: "text", isNullable: true }, { name: "extraction_source", dataType: "text", isNullable: true }, { name: "extraction_model", dataType: "text", isNullable: true }, { name: "extraction_prompt_version", dataType: "text", isNullable: true }, { name: "extraction_metadata", dataType: "jsonb", isNullable: false }, { name: "assignee_person_id", dataType: "uuid", isNullable: true }, { name: "schedule_task_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -12462,8 +12429,8 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/schema_dump.sql", lineNumber: 19173, kind: "migration", snippet: "CREATE INDEX tasks_project_ids_gin_idx ON public.tasks USING gin (project_ids);" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 12466, kind: "unknown", snippet: "{ filePath: \"frontend/src/lib/supabase/project-fetcher.ts\", lineNumber: 26, kind: \"read\", snippet: \"*     .from('tasks')" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 12487, kind: "unknown", snippet: "{ filePath: \"frontend/src/components/dev-tools/db-inventory.generated.ts\", lineNumber: 12566, kind: \"unknown\", snippet: " },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 12443, kind: "unknown", snippet: "{ filePath: \"frontend/src/lib/supabase/project-fetcher.ts\", lineNumber: 26, kind: \"read\", snippet: \"*     .from('tasks')" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 12465, kind: "unknown", snippet: "{ filePath: \"frontend/src/components/dev-tools/db-inventory.generated.ts\", lineNumber: 12466, kind: \"unknown\", snippet: " },
         ],
       },
     },
@@ -12484,7 +12451,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:44.982Z",
+        refreshedAt: "2026-05-18T17:13:14.161Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "task_id", dataType: "uuid", isNullable: false }, { name: "author_id", dataType: "uuid", isNullable: false }, { name: "body", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -12532,7 +12499,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:45.346Z",
+        refreshedAt: "2026-05-18T17:13:14.519Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "task", dataType: "text", isNullable: true }, { name: "is_complete", dataType: "boolean", isNullable: true }, { name: "inserted_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -12572,7 +12539,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 20,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:45.716Z",
+        refreshedAt: "2026-05-18T17:13:14.865Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "number", dataType: "integer", isNullable: false }, { name: "subject", dataType: "text", isNullable: false }, { name: "question", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "due_date", dataType: "date", isNullable: true }, { name: "date_initiated", dataType: "date", isNullable: true }, { name: "closed_date", dataType: "date", isNullable: true }, { name: "rfi_manager", dataType: "text", isNullable: true }, { name: "received_from", dataType: "text", isNullable: true }, { name: "assignees", dataType: "ARRAY", isNullable: true }, { name: "distribution_list", dataType: "ARRAY", isNullable: true }, { name: "ball_in_court", dataType: "text", isNullable: true }, { name: "responsible_contractor", dataType: "text", isNullable: true }, { name: "specification", dataType: "text", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "sub_job", dataType: "text", isNullable: true }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "rfi_stage", dataType: "text", isNullable: true }, { name: "schedule_impact", dataType: "text", isNullable: true }, { name: "cost_impact", dataType: "text", isNullable: true }, { name: "reference", dataType: "text", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: false }, { name: "created_by", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "rfi_manager_employee_id", dataType: "bigint", isNullable: true }, { name: "ball_in_court_employee_id", dataType: "bigint", isNullable: true }, { name: "created_by_employee_id", dataType: "bigint", isNullable: true }, { name: "drawing_number", dataType: "text", isNullable: true }, { name: "source_system", dataType: "text", isNullable: true }, { name: "source_project_document_id", dataType: "bigint", isNullable: true }, { name: "response_project_document_id", dataType: "bigint", isNullable: true }, { name: "source_document_metadata_id", dataType: "text", isNullable: true }, { name: "response_document_metadata_id", dataType: "text", isNullable: true }, { name: "source_metadata", dataType: "jsonb", isNullable: false }],
       references: {
@@ -12659,7 +12626,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:46.119Z",
+        refreshedAt: "2026-05-18T17:13:15.272Z",
       },
       columns: [{ name: "rfi_id", dataType: "uuid", isNullable: false }, { name: "employee_id", dataType: "bigint", isNullable: false }, { name: "is_primary", dataType: "boolean", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -12686,7 +12653,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:46.491Z",
+        refreshedAt: "2026-05-18T17:13:15.621Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "rfi_id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "link_type", dataType: "text", isNullable: false }, { name: "note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -12720,7 +12687,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 16,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:46.949Z",
+        refreshedAt: "2026-05-18T17:13:16.099Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "specification_id", dataType: "uuid", isNullable: true }, { name: "submittal_type_id", dataType: "uuid", isNullable: true }, { name: "submittal_number", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "submitted_by", dataType: "uuid", isNullable: false }, { name: "submitter_company", dataType: "character varying", isNullable: true }, { name: "submission_date", dataType: "timestamp with time zone", isNullable: true }, { name: "required_approval_date", dataType: "date", isNullable: true }, { name: "priority", dataType: "character varying", isNullable: true }, { name: "status", dataType: "character varying", isNullable: true }, { name: "current_version", dataType: "integer", isNullable: true }, { name: "total_versions", dataType: "integer", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "revision", dataType: "integer", isNullable: false }, { name: "specification_section", dataType: "text", isNullable: true }, { name: "submittal_type", dataType: "text", isNullable: true }, { name: "division", dataType: "text", isNullable: true }, { name: "submittal_package_id", dataType: "uuid", isNullable: true }, { name: "responsible_contractor_id", dataType: "integer", isNullable: true }, { name: "received_from_id", dataType: "uuid", isNullable: true }, { name: "submittal_manager_id", dataType: "uuid", isNullable: true }, { name: "final_due_date", dataType: "date", isNullable: true }, { name: "lead_time", dataType: "integer", isNullable: true }, { name: "required_on_site_date", dataType: "date", isNullable: true }, { name: "sent_date", dataType: "date", isNullable: true }, { name: "cost_code_id", dataType: "integer", isNullable: true }, { name: "location_id", dataType: "integer", isNullable: true }, { name: "ball_in_court", dataType: "text", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: false }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -12814,7 +12781,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:47.348Z",
+        refreshedAt: "2026-05-18T17:13:16.481Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "steps", dataType: "jsonb", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -12852,7 +12819,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:47.712Z",
+        refreshedAt: "2026-05-18T17:13:16.827Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "event_type", dataType: "character varying", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "submittal_id", dataType: "uuid", isNullable: true }, { name: "user_id", dataType: "uuid", isNullable: true }, { name: "event_data", dataType: "jsonb", isNullable: true }, { name: "session_id", dataType: "character varying", isNullable: true }, { name: "ip_address", dataType: "inet", isNullable: true }, { name: "user_agent", dataType: "text", isNullable: true }, { name: "occurred_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -12879,7 +12846,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 241,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:48.075Z",
+        refreshedAt: "2026-05-18T17:13:17.180Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "parent_task_id", dataType: "uuid", isNullable: true }, { name: "name", dataType: "text", isNullable: false }, { name: "start_date", dataType: "date", isNullable: true }, { name: "finish_date", dataType: "date", isNullable: true }, { name: "duration_days", dataType: "integer", isNullable: true }, { name: "percent_complete", dataType: "integer", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "is_milestone", dataType: "boolean", isNullable: true }, { name: "constraint_type", dataType: "text", isNullable: true }, { name: "constraint_date", dataType: "date", isNullable: true }, { name: "wbs_code", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "assignee", dataType: "text", isNullable: true }, { name: "assignee_person_id", dataType: "uuid", isNullable: true }, { name: "priority", dataType: "text", isNullable: false }],
       references: {
@@ -12947,7 +12914,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:48.464Z",
+        refreshedAt: "2026-05-18T17:13:17.564Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "task_id", dataType: "uuid", isNullable: false }, { name: "deadline_date", dataType: "date", isNullable: false }, { name: "deadline_type", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -12979,7 +12946,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:48.830Z",
+        refreshedAt: "2026-05-18T17:13:17.926Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "predecessor_task_id", dataType: "uuid", isNullable: false }, { name: "task_id", dataType: "uuid", isNullable: false }, { name: "dependency_type", dataType: "text", isNullable: false }, { name: "lag_days", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -13015,7 +12982,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:49.197Z",
+        refreshedAt: "2026-05-18T17:13:18.273Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "number", dataType: "integer", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "priority", dataType: "text", isNullable: true }, { name: "assignee_id", dataType: "uuid", isNullable: true }, { name: "assignee_company", dataType: "text", isNullable: true }, { name: "punch_item_manager_id", dataType: "uuid", isNullable: true }, { name: "final_approver_id", dataType: "uuid", isNullable: true }, { name: "ball_in_court", dataType: "text", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "date_notified", dataType: "timestamp with time zone", isNullable: true }, { name: "date_closed", dataType: "timestamp with time zone", isNullable: true }, { name: "date_resolved", dataType: "timestamp with time zone", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "trade", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "reference", dataType: "text", isNullable: true }, { name: "is_private", dataType: "boolean", isNullable: true }, { name: "is_deleted", dataType: "boolean", isNullable: true }, { name: "closed_by_id", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "cost_impact", dataType: "numeric", isNullable: true }, { name: "drawing_reference", dataType: "text", isNullable: true }],
       references: {
@@ -13074,7 +13041,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:49.614Z",
+        refreshedAt: "2026-05-18T17:13:18.662Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "punch_item_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "content", dataType: "text", isNullable: false }, { name: "mentions", dataType: "ARRAY", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13111,7 +13078,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:49.985Z",
+        refreshedAt: "2026-05-18T17:13:19.021Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "category_id", dataType: "uuid", isNullable: true }, { name: "name", dataType: "text", isNullable: false }, { name: "title_pattern", dataType: "text", isNullable: true }, { name: "description_template", dataType: "text", isNullable: true }, { name: "priority", dataType: "text", isNullable: true }, { name: "trade", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "assignee_company", dataType: "text", isNullable: true }, { name: "ball_in_court", dataType: "text", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "drawing_reference", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -13141,7 +13108,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:50.350Z",
+        refreshedAt: "2026-05-18T17:13:19.399Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -13171,7 +13138,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:50.708Z",
+        refreshedAt: "2026-05-18T17:13:19.760Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "issue_title", dataType: "text", isNullable: false }, { name: "issue_category", dataType: "text", isNullable: false }, { name: "issue_summary", dataType: "text", isNullable: false }, { name: "business_impact", dataType: "ARRAY", isNullable: true }, { name: "severity", dataType: "text", isNullable: false }, { name: "frequency_score", dataType: "smallint", isNullable: true }, { name: "first_seen_date", dataType: "date", isNullable: false }, { name: "last_seen_date", dataType: "date", isNullable: false }, { name: "functional_owner", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "recommended_countermeasure", dataType: "text", isNullable: true }, { name: "evidence_count", dataType: "integer", isNullable: false }, { name: "playbook_url", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13209,7 +13176,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 9,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:51.083Z",
+        refreshedAt: "2026-05-18T17:13:20.124Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "recurring_issue_id", dataType: "uuid", isNullable: false }, { name: "source_type", dataType: "text", isNullable: false }, { name: "source_date", dataType: "date", isNullable: true }, { name: "source_title", dataType: "text", isNullable: true }, { name: "meeting_id", dataType: "uuid", isNullable: true }, { name: "email_id", dataType: "uuid", isNullable: true }, { name: "document_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "people_involved", dataType: "ARRAY", isNullable: true }, { name: "excerpt", dataType: "text", isNullable: true }, { name: "confidence", dataType: "text", isNullable: false }, { name: "tagged_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13246,7 +13213,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:51.443Z",
+        refreshedAt: "2026-05-18T17:13:20.470Z",
       },
       columns: [{ name: "recurring_issue_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "added_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13279,7 +13246,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:51.806Z",
+        refreshedAt: "2026-05-18T17:13:20.822Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "requester_name", dataType: "text", isNullable: false }, { name: "requester_user_id", dataType: "uuid", isNullable: true }, { name: "requester_person_id", dataType: "uuid", isNullable: true }, { name: "source", dataType: "text", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "request_type", dataType: "text", isNullable: false }, { name: "raw_request", dataType: "text", isNullable: false }, { name: "assistant_summary", dataType: "text", isNullable: false }, { name: "stakeholder_problem", dataType: "text", isNullable: true }, { name: "desired_outcome", dataType: "text", isNullable: true }, { name: "affected_users", dataType: "jsonb", isNullable: false }, { name: "affected_pages", dataType: "jsonb", isNullable: false }, { name: "affected_workflows", dataType: "jsonb", isNullable: false }, { name: "acceptance_criteria", dataType: "jsonb", isNullable: false }, { name: "verification_steps", dataType: "jsonb", isNullable: false }, { name: "open_questions", dataType: "jsonb", isNullable: false }, { name: "assumptions", dataType: "jsonb", isNullable: false }, { name: "readiness_goal_clarity", dataType: "text", isNullable: false }, { name: "readiness_data_clarity", dataType: "text", isNullable: false }, { name: "readiness_ux_clarity", dataType: "text", isNullable: false }, { name: "readiness_acceptance_status", dataType: "text", isNullable: false }, { name: "readiness_implementation_risk", dataType: "text", isNullable: false }, { name: "readiness_missing_requirements", dataType: "jsonb", isNullable: false }, { name: "ready_for_build", dataType: "boolean", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "priority", dataType: "text", isNullable: false }, { name: "linear_issue_id", dataType: "text", isNullable: true }, { name: "linear_issue_url", dataType: "text", isNullable: true }, { name: "linear_draft_body", dataType: "text", isNullable: true }, { name: "claude_handoff_path", dataType: "text", isNullable: true }, { name: "source_session_id", dataType: "uuid", isNullable: true }, { name: "source_message_id", dataType: "uuid", isNullable: true }, { name: "source_metadata", dataType: "jsonb", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "linear_sync_status", dataType: "text", isNullable: false }, { name: "linear_last_synced_at", dataType: "timestamp with time zone", isNullable: true }, { name: "linear_sync_error", dataType: "text", isNullable: true }],
       references: {
@@ -13336,7 +13303,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 8,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:52.196Z",
+        refreshedAt: "2026-05-18T17:13:21.196Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "feature_request_id", dataType: "uuid", isNullable: false }, { name: "event_type", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "body", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13371,7 +13338,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:52.573Z",
+        refreshedAt: "2026-05-18T17:13:21.631Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "feature_request_id", dataType: "uuid", isNullable: false }, { name: "sub_issue_id", dataType: "uuid", isNullable: true }, { name: "linear_issue_id", dataType: "text", isNullable: true }, { name: "event_type", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "body", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13407,7 +13374,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:52.935Z",
+        refreshedAt: "2026-05-18T17:13:22.001Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "feature_request_id", dataType: "uuid", isNullable: false }, { name: "implementation_plan_id", dataType: "uuid", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "body", dataType: "text", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "source_step", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "linear_issue_id", dataType: "text", isNullable: true }, { name: "linear_issue_url", dataType: "text", isNullable: true }, { name: "linear_state", dataType: "text", isNullable: true }, { name: "sync_notes", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13447,7 +13414,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 10,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:53.294Z",
+        refreshedAt: "2026-05-18T17:13:22.365Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "phase", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "bullet_points", dataType: "ARRAY", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -13485,7 +13452,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 310,
         nDeadTup: 5,
-        refreshedAt: "2026-05-18T16:29:53.661Z",
+        refreshedAt: "2026-05-18T17:13:22.760Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "page_url", dataType: "text", isNullable: false }, { name: "page_path", dataType: "text", isNullable: false }, { name: "page_title", dataType: "text", isNullable: true }, { name: "target_id", dataType: "text", isNullable: true }, { name: "target_selector", dataType: "text", isNullable: false }, { name: "target_text", dataType: "text", isNullable: true }, { name: "target_tag", dataType: "text", isNullable: true }, { name: "dom_path", dataType: "text", isNullable: true }, { name: "target_rect", dataType: "jsonb", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "comment", dataType: "text", isNullable: false }, { name: "request_type", dataType: "text", isNullable: false }, { name: "severity", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "screenshot_url", dataType: "text", isNullable: true }, { name: "screenshot_path", dataType: "text", isNullable: true }, { name: "github_issue_number", dataType: "integer", isNullable: true }, { name: "github_issue_url", dataType: "text", isNullable: true }, { name: "github_issue_state", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "tool_id", dataType: "integer", isNullable: true }, { name: "agent_context", dataType: "jsonb", isNullable: true }, { name: "board_status", dataType: "text", isNullable: false }, { name: "position", dataType: "double precision", isNullable: false }, { name: "assignee_id", dataType: "uuid", isNullable: true }, { name: "linear_issue_id", dataType: "text", isNullable: true }],
       references: {
@@ -13557,7 +13524,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 9,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:54.109Z",
+        refreshedAt: "2026-05-18T17:13:23.190Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "feedback_item_id", dataType: "uuid", isNullable: false }, { name: "author_id", dataType: "uuid", isNullable: false }, { name: "body", dataType: "text", isNullable: false }, { name: "mentions", dataType: "ARRAY", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "screenshot_url", dataType: "text", isNullable: true }, { name: "screenshot_path", dataType: "text", isNullable: true }],
       references: {
@@ -13594,7 +13561,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:54.491Z",
+        refreshedAt: "2026-05-18T17:13:23.536Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "inspector_id", dataType: "uuid", isNullable: true }, { name: "scheduled_date", dataType: "date", isNullable: true }, { name: "completed_date", dataType: "date", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "template_id", dataType: "uuid", isNullable: true }, { name: "number", dataType: "integer", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "is_deleted", dataType: "boolean", isNullable: true }, { name: "inspector_name", dataType: "text", isNullable: true }, { name: "inspection_type", dataType: "text", isNullable: true }, { name: "inspection_date", dataType: "date", isNullable: true }],
       references: {
@@ -13624,7 +13591,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 7,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:54.874Z",
+        refreshedAt: "2026-05-18T17:13:23.927Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "category", dataType: "USER-DEFINED", isNullable: false }, { name: "severity", dataType: "USER-DEFINED", isNullable: true }, { name: "status", dataType: "USER-DEFINED", isNullable: true }, { name: "reported_by", dataType: "text", isNullable: true }, { name: "date_reported", dataType: "date", isNullable: true }, { name: "date_resolved", dataType: "date", isNullable: true }, { name: "direct_cost", dataType: "numeric", isNullable: true }, { name: "indirect_cost", dataType: "numeric", isNullable: true }, { name: "total_cost", dataType: "numeric", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }],
       references: {
@@ -13651,7 +13618,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:55.248Z",
+        refreshedAt: "2026-05-18T17:13:24.289Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "specification_id", dataType: "uuid", isNullable: true }, { name: "document_id", dataType: "uuid", isNullable: true }, { name: "discrepancy_type", dataType: "character varying", isNullable: false }, { name: "severity", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "spec_requirement", dataType: "text", isNullable: true }, { name: "submittal_content", dataType: "text", isNullable: true }, { name: "suggested_resolution", dataType: "text", isNullable: true }, { name: "confidence_score", dataType: "numeric", isNullable: true }, { name: "location_in_doc", dataType: "jsonb", isNullable: true }, { name: "status", dataType: "character varying", isNullable: true }, { name: "identified_by", dataType: "character varying", isNullable: true }, { name: "ai_model_version", dataType: "character varying", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -13686,7 +13653,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:55.630Z",
+        refreshedAt: "2026-05-18T17:13:24.646Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: false }, { name: "parent_type", dataType: "text", isNullable: false }, { name: "parent_id", dataType: "text", isNullable: false }, { name: "event_type", dataType: "text", isNullable: false }, { name: "actor_id", dataType: "uuid", isNullable: true }, { name: "actor_role", dataType: "text", isNullable: true }, { name: "summary", dataType: "text", isNullable: false }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13733,7 +13700,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 51,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:56.013Z",
+        refreshedAt: "2026-05-18T17:13:25.007Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "timestamp", dataType: "timestamp with time zone", isNullable: true }, { name: "user_query", dataType: "text", isNullable: false }],
       references: {
@@ -13766,7 +13733,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:56.453Z",
+        refreshedAt: "2026-05-18T17:13:25.385Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "feature_request_id", dataType: "uuid", isNullable: false }, { name: "version", dataType: "integer", isNullable: false }, { name: "summary", dataType: "text", isNullable: false }, { name: "affected_routes", dataType: "jsonb", isNullable: false }, { name: "affected_components", dataType: "jsonb", isNullable: false }, { name: "affected_tables", dataType: "jsonb", isNullable: false }, { name: "data_requirements", dataType: "jsonb", isNullable: false }, { name: "implementation_steps", dataType: "jsonb", isNullable: false }, { name: "acceptance_criteria", dataType: "jsonb", isNullable: false }, { name: "verification_steps", dataType: "jsonb", isNullable: false }, { name: "risks", dataType: "jsonb", isNullable: false }, { name: "open_questions", dataType: "jsonb", isNullable: false }, { name: "generated_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13802,7 +13769,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:56.826Z",
+        refreshedAt: "2026-05-18T17:13:25.729Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "feature_request_id", dataType: "uuid", isNullable: false }, { name: "implementation_plan_id", dataType: "uuid", isNullable: true }, { name: "handoff_path", dataType: "text", isNullable: false }, { name: "handoff_title", dataType: "text", isNullable: false }, { name: "linear_issue_id", dataType: "text", isNullable: true }, { name: "validation_status", dataType: "text", isNullable: false }, { name: "validation_errors", dataType: "jsonb", isNullable: false }, { name: "generated_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -13837,7 +13804,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 16,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:57.193Z",
+        refreshedAt: "2026-05-18T17:13:26.108Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "entity_type", dataType: "text", isNullable: false }, { name: "entity_id", dataType: "text", isNullable: false }, { name: "parent_comment_id", dataType: "uuid", isNullable: true }, { name: "body", dataType: "text", isNullable: false }, { name: "author_id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -13880,7 +13847,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:57.574Z",
+        refreshedAt: "2026-05-18T17:13:26.470Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "entity_type", dataType: "text", isNullable: true }, { name: "entity_id", dataType: "text", isNullable: true }, { name: "comment_id", dataType: "uuid", isNullable: true }, { name: "actor_id", dataType: "uuid", isNullable: true }, { name: "kind", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "body", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "read_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -13926,7 +13893,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:57.968Z",
+        refreshedAt: "2026-05-18T17:13:26.829Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "reviewer_id", dataType: "uuid", isNullable: false }, { name: "review_type", dataType: "character varying", isNullable: false }, { name: "status", dataType: "character varying", isNullable: true }, { name: "decision", dataType: "character varying", isNullable: true }, { name: "comments", dataType: "text", isNullable: true }, { name: "review_criteria_met", dataType: "jsonb", isNullable: true }, { name: "started_at", dataType: "timestamp with time zone", isNullable: true }, { name: "completed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "due_date", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -13958,7 +13925,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:58.330Z",
+        refreshedAt: "2026-05-18T17:13:27.244Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "review_id", dataType: "uuid", isNullable: false }, { name: "document_id", dataType: "uuid", isNullable: true }, { name: "discrepancy_id", dataType: "uuid", isNullable: true }, { name: "comment_type", dataType: "character varying", isNullable: true }, { name: "comment", dataType: "text", isNullable: false }, { name: "location_in_doc", dataType: "jsonb", isNullable: true }, { name: "priority", dataType: "character varying", isNullable: true }, { name: "status", dataType: "character varying", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: false }],
       references: {
@@ -13985,7 +13952,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:58.694Z",
+        refreshedAt: "2026-05-18T17:13:27.585Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "transmittal_id", dataType: "bigint", isNullable: false }, { name: "item_type", dataType: "text", isNullable: false }, { name: "item_title", dataType: "text", isNullable: false }, { name: "revision", dataType: "text", isNullable: true }, { name: "quantity", dataType: "integer", isNullable: true }, { name: "remarks", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -14015,7 +13982,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:59.063Z",
+        refreshedAt: "2026-05-18T17:13:27.940Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "daily_log_id", dataType: "uuid", isNullable: true }, { name: "equipment_name", dataType: "character varying", isNullable: false }, { name: "hours_operated", dataType: "numeric", isNullable: true }, { name: "hours_idle", dataType: "numeric", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -14044,7 +14011,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:59.434Z",
+        refreshedAt: "2026-05-18T17:13:28.292Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "daily_log_id", dataType: "uuid", isNullable: true }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "trade", dataType: "character varying", isNullable: true }, { name: "workers_count", dataType: "integer", isNullable: false }, { name: "hours_worked", dataType: "numeric", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -14073,7 +14040,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:29:59.806Z",
+        refreshedAt: "2026-05-18T17:13:28.634Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "daily_log_id", dataType: "uuid", isNullable: true }, { name: "category", dataType: "character varying", isNullable: true }, { name: "description", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -14102,7 +14069,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:00.185Z",
+        refreshedAt: "2026-05-18T17:13:29.002Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "section_id", dataType: "bigint", isNullable: false }, { name: "revision_number", dataType: "integer", isNullable: false }, { name: "content", dataType: "text", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: false }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: false }, { name: "file_url", dataType: "text", isNullable: false }, { name: "file_name", dataType: "character varying", isNullable: false }, { name: "file_size", dataType: "bigint", isNullable: false }, { name: "file_type", dataType: "character varying", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }],
       references: {
@@ -14146,7 +14113,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:00.580Z",
+        refreshedAt: "2026-05-18T17:13:29.391Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "area_id", dataType: "bigint", isNullable: false }, { name: "section_id", dataType: "bigint", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -14187,7 +14154,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:00.948Z",
+        refreshedAt: "2026-05-18T17:13:29.746Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -14232,7 +14199,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:01.308Z",
+        refreshedAt: "2026-05-18T17:13:30.112Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "division_number", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -14259,7 +14226,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:01.671Z",
+        refreshedAt: "2026-05-18T17:13:30.451Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "section_number", dataType: "character varying", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "character varying", isNullable: false }, { name: "current_revision_id", dataType: "bigint", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -14313,7 +14280,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:02.043Z",
+        refreshedAt: "2026-05-18T17:13:30.821Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "section_id", dataType: "bigint", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "subscribed_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -14350,7 +14317,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 13,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:02.434Z",
+        refreshedAt: "2026-05-18T17:13:31.181Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "source_table", dataType: "text", isNullable: true }, { name: "source_id", dataType: "text", isNullable: true }, { name: "source_url", dataType: "text", isNullable: true }, { name: "source_title", dataType: "text", isNullable: true }, { name: "source_date", dataType: "date", isNullable: true }, { name: "item_type", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "summary", dataType: "text", isNullable: false }, { name: "strategic_rationale", dataType: "text", isNullable: true }, { name: "recommended_use", dataType: "jsonb", isNullable: false }, { name: "confidence", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -14391,7 +14358,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:02.824Z",
+        refreshedAt: "2026-05-18T17:13:31.564Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "company_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "campaign_id", dataType: "uuid", isNullable: true }, { name: "planned_date", dataType: "date", isNullable: false }, { name: "channel", dataType: "text", isNullable: false }, { name: "funnel_stage", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "angle", dataType: "text", isNullable: false }, { name: "target_audience", dataType: "text", isNullable: true }, { name: "source_item_ids", dataType: "ARRAY", isNullable: false }, { name: "rationale", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "owner_user_id", dataType: "uuid", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -14435,7 +14402,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:03.206Z",
+        refreshedAt: "2026-05-18T17:13:31.923Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "calendar_item_id", dataType: "uuid", isNullable: false }, { name: "asset_type", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "body", dataType: "text", isNullable: false }, { name: "source_citations", dataType: "jsonb", isNullable: false }, { name: "review_notes", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -14475,7 +14442,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:03.576Z",
+        refreshedAt: "2026-05-18T17:13:32.259Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "asset_id", dataType: "uuid", isNullable: true }, { name: "calendar_item_id", dataType: "uuid", isNullable: true }, { name: "channel", dataType: "text", isNullable: false }, { name: "measured_at", dataType: "timestamp with time zone", isNullable: false }, { name: "impressions", dataType: "integer", isNullable: true }, { name: "engagements", dataType: "integer", isNullable: true }, { name: "clicks", dataType: "integer", isNullable: true }, { name: "leads", dataType: "integer", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -14509,7 +14476,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:03.933Z",
+        refreshedAt: "2026-05-18T17:13:32.624Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "category", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: true }, { name: "priority", dataType: "text", isNullable: true }, { name: "completion_percentage", dataType: "integer", isNullable: true }, { name: "owner", dataType: "text", isNullable: true }, { name: "team_members", dataType: "ARRAY", isNullable: true }, { name: "stakeholders", dataType: "ARRAY", isNullable: true }, { name: "start_date", dataType: "date", isNullable: true }, { name: "target_completion", dataType: "date", isNullable: true }, { name: "actual_completion", dataType: "date", isNullable: true }, { name: "keywords", dataType: "ARRAY", isNullable: true }, { name: "aliases", dataType: "ARRAY", isNullable: true }, { name: "budget", dataType: "numeric", isNullable: true }, { name: "budget_used", dataType: "numeric", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "documentation_links", dataType: "ARRAY", isNullable: true }, { name: "related_project_ids", dataType: "ARRAY", isNullable: true }],
       references: {
@@ -14542,7 +14509,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:04.316Z",
+        refreshedAt: "2026-05-18T17:13:33.006Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "artifact_type", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "version", dataType: "integer", isNullable: false }, { name: "content", dataType: "jsonb", isNullable: false }, { name: "context_snapshot", dataType: "jsonb", isNullable: false }, { name: "session_id", dataType: "text", isNullable: true }, { name: "promoted_to", dataType: "text", isNullable: true }, { name: "promoted_at", dataType: "timestamp with time zone", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "tags", dataType: "ARRAY", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -14599,7 +14566,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 46,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:04.683Z",
+        refreshedAt: "2026-05-18T17:13:33.375Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "table_number", dataType: "integer", isNullable: false }, { name: "table_id", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "asrs_type", dataType: "text", isNullable: false }, { name: "system_type", dataType: "text", isNullable: false }, { name: "protection_scheme", dataType: "text", isNullable: false }, { name: "commodity_types", dataType: "ARRAY", isNullable: true }, { name: "ceiling_height_min_ft", dataType: "numeric", isNullable: true }, { name: "ceiling_height_max_ft", dataType: "numeric", isNullable: true }, { name: "storage_height_max_ft", dataType: "numeric", isNullable: true }, { name: "aisle_width_requirements", dataType: "text", isNullable: true }, { name: "rack_configuration", dataType: "jsonb", isNullable: true }, { name: "sprinkler_specifications", dataType: "jsonb", isNullable: true }, { name: "design_parameters", dataType: "jsonb", isNullable: true }, { name: "special_conditions", dataType: "ARRAY", isNullable: true }, { name: "applicable_figures", dataType: "ARRAY", isNullable: true }, { name: "estimated_page_number", dataType: "integer", isNullable: true }, { name: "extraction_status", dataType: "text", isNullable: true }, { name: "raw_data", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp without time zone", isNullable: true }, { name: "section_references", dataType: "ARRAY", isNullable: true }, { name: "container_type", dataType: "text", isNullable: true }, { name: "figures", dataType: "uuid", isNullable: true }, { name: "image", dataType: "text", isNullable: true }],
       references: {
@@ -14646,7 +14613,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 13,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:05.112Z",
+        refreshedAt: "2026-05-18T17:13:33.784Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "session_id", dataType: "text", isNullable: true }, { name: "user_input", dataType: "jsonb", isNullable: false }, { name: "parsed_requirements", dataType: "jsonb", isNullable: true }, { name: "matched_table_ids", dataType: "ARRAY", isNullable: true }, { name: "similarity_scores", dataType: "ARRAY", isNullable: true }, { name: "selected_configuration", dataType: "jsonb", isNullable: true }, { name: "contact_info", dataType: "jsonb", isNullable: true }, { name: "project_details", dataType: "jsonb", isNullable: true }, { name: "lead_score", dataType: "integer", isNullable: true }, { name: "lead_status", dataType: "text", isNullable: true }, { name: "cost_analysis", dataType: "jsonb", isNullable: true }, { name: "recommendations", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -14683,7 +14650,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 31,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:05.497Z",
+        refreshedAt: "2026-05-18T17:13:34.148Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "figure_number", dataType: "integer", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "clean_caption", dataType: "text", isNullable: false }, { name: "normalized_summary", dataType: "text", isNullable: false }, { name: "figure_type", dataType: "text", isNullable: false }, { name: "asrs_type", dataType: "text", isNullable: false }, { name: "container_type", dataType: "text", isNullable: true }, { name: "max_depth_ft", dataType: "numeric", isNullable: true }, { name: "max_depth_m", dataType: "numeric", isNullable: true }, { name: "max_spacing_ft", dataType: "numeric", isNullable: true }, { name: "max_spacing_m", dataType: "numeric", isNullable: true }, { name: "ceiling_height_ft", dataType: "numeric", isNullable: true }, { name: "aisle_width_ft", dataType: "numeric", isNullable: true }, { name: "related_tables", dataType: "ARRAY", isNullable: true }, { name: "applicable_commodities", dataType: "ARRAY", isNullable: true }, { name: "system_requirements", dataType: "jsonb", isNullable: true }, { name: "special_conditions", dataType: "ARRAY", isNullable: true }, { name: "machine_readable_claims", dataType: "jsonb", isNullable: true }, { name: "callouts_labels", dataType: "ARRAY", isNullable: true }, { name: "axis_titles", dataType: "ARRAY", isNullable: true }, { name: "axis_units", dataType: "ARRAY", isNullable: true }, { name: "embedded_tables", dataType: "jsonb", isNullable: true }, { name: "footnotes", dataType: "ARRAY", isNullable: true }, { name: "page_number", dataType: "integer", isNullable: true }, { name: "section_reference", dataType: "text", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "search_keywords", dataType: "ARRAY", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp without time zone", isNullable: true }, { name: "section_references", dataType: "ARRAY", isNullable: true }, { name: "image", dataType: "text", isNullable: true }],
       references: {
@@ -14730,7 +14697,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 66,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:05.899Z",
+        refreshedAt: "2026-05-18T17:13:34.524Z",
       },
       columns: [{ name: "id", dataType: "character varying", isNullable: false }, { name: "number", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "slug", dataType: "character varying", isNullable: false }, { name: "sort_key", dataType: "integer", isNullable: false }, { name: "parent_id", dataType: "character varying", isNullable: true }, { name: "page_start", dataType: "integer", isNullable: false }, { name: "page_end", dataType: "integer", isNullable: false }, { name: "section_path", dataType: "ARRAY", isNullable: true }, { name: "breadcrumb_display", dataType: "ARRAY", isNullable: true }, { name: "is_visible", dataType: "boolean", isNullable: true }, { name: "section_type", dataType: "character varying", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -14763,7 +14730,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:06.316Z",
+        refreshedAt: "2026-05-18T17:13:34.903Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "table_id", dataType: "text", isNullable: false }, { name: "ceiling_height_ft", dataType: "numeric", isNullable: false }, { name: "storage_height_ft", dataType: "numeric", isNullable: true }, { name: "aisle_width_ft", dataType: "numeric", isNullable: true }, { name: "sprinkler_count", dataType: "integer", isNullable: true }, { name: "k_factor", dataType: "numeric", isNullable: true }, { name: "k_factor_type", dataType: "text", isNullable: true }, { name: "pressure_psi", dataType: "numeric", isNullable: true }, { name: "pressure_bar", dataType: "numeric", isNullable: true }, { name: "orientation", dataType: "text", isNullable: true }, { name: "response_type", dataType: "text", isNullable: true }, { name: "temperature_rating", dataType: "integer", isNullable: true }, { name: "design_area_sqft", dataType: "numeric", isNullable: true }, { name: "spacing_ft", dataType: "numeric", isNullable: true }, { name: "coverage_type", dataType: "text", isNullable: true }, { name: "special_conditions", dataType: "ARRAY", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -14797,7 +14764,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:06.727Z",
+        refreshedAt: "2026-05-18T17:13:35.260Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "rule_name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "trigger_conditions", dataType: "jsonb", isNullable: true }, { name: "suggested_changes", dataType: "jsonb", isNullable: true }, { name: "estimated_savings_min", dataType: "numeric", isNullable: true }, { name: "estimated_savings_max", dataType: "numeric", isNullable: true }, { name: "implementation_difficulty", dataType: "text", isNullable: true }, { name: "is_active", dataType: "boolean", isNullable: true }, { name: "priority_level", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -14824,7 +14791,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:07.091Z",
+        refreshedAt: "2026-05-18T17:13:35.598Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "form_submission_id", dataType: "uuid", isNullable: true }, { name: "suggestion_type", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "original_config", dataType: "jsonb", isNullable: true }, { name: "suggested_config", dataType: "jsonb", isNullable: true }, { name: "estimated_savings", dataType: "numeric", isNullable: true }, { name: "implementation_effort", dataType: "text", isNullable: true }, { name: "risk_level", dataType: "text", isNullable: true }, { name: "technical_justification", dataType: "text", isNullable: true }, { name: "applicable_codes", dataType: "ARRAY", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -14851,7 +14818,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:07.474Z",
+        refreshedAt: "2026-05-18T17:13:35.959Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "condition_from", dataType: "jsonb", isNullable: true }, { name: "condition_to", dataType: "jsonb", isNullable: true }, { name: "cost_impact", dataType: "numeric", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }],
       references: {
@@ -14878,7 +14845,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 629,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:07.870Z",
+        refreshedAt: "2026-05-18T17:13:36.310Z",
       },
       columns: [{ name: "id", dataType: "character varying", isNullable: false }, { name: "section_id", dataType: "character varying", isNullable: false }, { name: "block_type", dataType: "character varying", isNullable: false }, { name: "ordinal", dataType: "integer", isNullable: false }, { name: "source_text", dataType: "text", isNullable: false }, { name: "html", dataType: "text", isNullable: false }, { name: "meta", dataType: "jsonb", isNullable: true }, { name: "page_reference", dataType: "integer", isNullable: true }, { name: "inline_figures", dataType: "ARRAY", isNullable: true }, { name: "inline_tables", dataType: "ARRAY", isNullable: true }, { name: "search_vector", dataType: "tsvector", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -14913,7 +14880,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 7,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:08.237Z",
+        refreshedAt: "2026-05-18T17:13:36.678Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "component_type", dataType: "text", isNullable: false }, { name: "factor_name", dataType: "text", isNullable: false }, { name: "base_cost_per_unit", dataType: "numeric", isNullable: true }, { name: "unit_type", dataType: "text", isNullable: true }, { name: "complexity_multiplier", dataType: "numeric", isNullable: true }, { name: "region_adjustments", dataType: "jsonb", isNullable: true }, { name: "last_updated", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -14940,7 +14907,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:08.667Z",
+        refreshedAt: "2026-05-18T17:13:37.059Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "filename", dataType: "text", isNullable: true }, { name: "content", dataType: "text", isNullable: true }, { name: "document_type", dataType: "text", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "related_table_ids", dataType: "ARRAY", isNullable: true }, { name: "source", dataType: "text", isNullable: true }, { name: "processing_status", dataType: "text", isNullable: true }, { name: "processing_notes", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -14973,7 +14940,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 45,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:09.061Z",
+        refreshedAt: "2026-05-18T17:13:37.451Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "table_id", dataType: "text", isNullable: false }, { name: "embedding", dataType: "USER-DEFINED", isNullable: false }, { name: "content_text", dataType: "text", isNullable: false }, { name: "content_type", dataType: "text", isNullable: false }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -15008,7 +14975,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 43,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:09.460Z",
+        refreshedAt: "2026-05-18T17:13:37.855Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "doc_id", dataType: "text", isNullable: false }, { name: "doc_version", dataType: "text", isNullable: false }, { name: "page_number", dataType: "integer", isNullable: true }, { name: "clause_id", dataType: "text", isNullable: true }, { name: "section_path", dataType: "ARRAY", isNullable: true }, { name: "content_type", dataType: "text", isNullable: false }, { name: "raw_text", dataType: "text", isNullable: false }, { name: "chunk_summary", dataType: "text", isNullable: true }, { name: "chunk_size", dataType: "integer", isNullable: true }, { name: "search_keywords", dataType: "ARRAY", isNullable: true }, { name: "topics", dataType: "ARRAY", isNullable: true }, { name: "extracted_requirements", dataType: "ARRAY", isNullable: true }, { name: "compliance_type", dataType: "text", isNullable: true }, { name: "related_figures", dataType: "ARRAY", isNullable: true }, { name: "related_tables", dataType: "ARRAY", isNullable: true }, { name: "related_sections", dataType: "ARRAY", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "cost_impact", dataType: "text", isNullable: true }, { name: "savings_opportunities", dataType: "ARRAY", isNullable: true }, { name: "complexity_score", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -15049,7 +15016,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 70,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:09.842Z",
+        refreshedAt: "2026-05-18T17:13:38.243Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "number", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "parent_id", dataType: "uuid", isNullable: true }, { name: "slug", dataType: "text", isNullable: false }, { name: "sort_key", dataType: "integer", isNullable: false }],
       references: {
@@ -15080,7 +15047,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 476,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:10.216Z",
+        refreshedAt: "2026-05-18T17:13:38.637Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "section_id", dataType: "uuid", isNullable: false }, { name: "ordinal", dataType: "integer", isNullable: false }, { name: "block_type", dataType: "text", isNullable: false }, { name: "source_text", dataType: "text", isNullable: true }, { name: "html", dataType: "text", isNullable: true }, { name: "meta", dataType: "jsonb", isNullable: true }],
       references: {
@@ -15112,7 +15079,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:10.625Z",
+        refreshedAt: "2026-05-18T17:13:39.052Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "config_name", dataType: "character varying", isNullable: false }, { name: "asrs_type", dataType: "character varying", isNullable: false }, { name: "max_height_ft", dataType: "numeric", isNullable: true }, { name: "container_types", dataType: "ARRAY", isNullable: true }, { name: "typical_applications", dataType: "ARRAY", isNullable: true }, { name: "cost_multiplier", dataType: "numeric", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -15142,7 +15109,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:11.011Z",
+        refreshedAt: "2026-05-18T17:13:39.409Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "asrs_type", dataType: "text", isNullable: false }, { name: "container_type", dataType: "text", isNullable: false }, { name: "max_depth_ft", dataType: "double precision", isNullable: false }, { name: "max_spacing_ft", dataType: "double precision", isNullable: false }, { name: "figure_number", dataType: "integer", isNullable: false }, { name: "sprinkler_count", dataType: "integer", isNullable: false }, { name: "sprinkler_numbering", dataType: "text", isNullable: true }, { name: "page_number", dataType: "integer", isNullable: false }, { name: "title", dataType: "text", isNullable: true }, { name: "requires_flue_spaces", dataType: "boolean", isNullable: true }, { name: "requires_vertical_barriers", dataType: "boolean", isNullable: true }, { name: "created_at", dataType: "timestamp without time zone", isNullable: true }],
       references: {
@@ -15171,7 +15138,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:11.388Z",
+        refreshedAt: "2026-05-18T17:13:39.775Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "doc", dataType: "text", isNullable: false }, { name: "version", dataType: "text", isNullable: false }, { name: "clause_id", dataType: "text", isNullable: true }, { name: "page", dataType: "integer", isNullable: true }, { name: "purpose", dataType: "text", isNullable: false }, { name: "preconditions", dataType: "jsonb", isNullable: false }, { name: "inputs", dataType: "jsonb", isNullable: false }, { name: "decision", dataType: "jsonb", isNullable: false }, { name: "citations", dataType: "jsonb", isNullable: false }, { name: "related_table_ids", dataType: "ARRAY", isNullable: true }, { name: "related_figure_ids", dataType: "ARRAY", isNullable: true }, { name: "inserted_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "section_id", dataType: "uuid", isNullable: true }],
       references: {
@@ -15198,7 +15165,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:11.755Z",
+        refreshedAt: "2026-05-18T17:13:40.132Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "section_id", dataType: "uuid", isNullable: false }, { name: "asrs_type", dataType: "text", isNullable: true }, { name: "container_wall", dataType: "text", isNullable: true }, { name: "container_material", dataType: "text", isNullable: true }, { name: "container_top", dataType: "text", isNullable: true }, { name: "commodity_class", dataType: "text", isNullable: true }, { name: "ceiling_height_min", dataType: "numeric", isNullable: true }, { name: "ceiling_height_max", dataType: "numeric", isNullable: true }, { name: "sprinkler_scheme", dataType: "text", isNullable: true }, { name: "k_factor", dataType: "numeric", isNullable: true }, { name: "density_gpm_ft2", dataType: "numeric", isNullable: true }, { name: "area_ft2", dataType: "numeric", isNullable: true }, { name: "pressure_psi", dataType: "numeric", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }],
       references: {
@@ -15225,7 +15192,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:12.106Z",
+        refreshedAt: "2026-05-18T17:13:40.513Z",
       },
       columns: [{ name: "block_id", dataType: "uuid", isNullable: false }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }],
       references: {
@@ -15252,7 +15219,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:12.478Z",
+        refreshedAt: "2026-05-18T17:13:40.892Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "uuid", isNullable: true }, { name: "recommendation_type", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "potential_savings", dataType: "numeric", isNullable: true }, { name: "priority_level", dataType: "character varying", isNullable: false }, { name: "implementation_effort", dataType: "character varying", isNullable: true }, { name: "technical_details", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -15282,7 +15249,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:12.853Z",
+        refreshedAt: "2026-05-18T17:13:41.273Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "route", dataType: "text", isNullable: false }, { name: "element_description", dataType: "text", isNullable: true }, { name: "element_selector", dataType: "text", isNullable: true }, { name: "violation_type", dataType: "text", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "screenshot_url", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "fixed_in_file", dataType: "text", isNullable: true }, { name: "fixed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "priority", dataType: "text", isNullable: true }, { name: "submitted_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -15319,7 +15286,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 35,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:13.252Z",
+        refreshedAt: "2026-05-18T17:13:41.644Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: false }, { name: "new_link", dataType: "text", isNullable: true }, { name: "procore_link", dataType: "text", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "prp_path", dataType: "text", isNullable: true }, { name: "tutorials", dataType: "text", isNullable: true }, { name: "slug", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "action_buttons", dataType: "text", isNullable: true }, { name: "test_results", dataType: "text", isNullable: true }, { name: "procore_screenshot", dataType: "text", isNullable: true }, { name: "procore_workflow", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "page_layout", dataType: "text", isNullable: true }, { name: "doc_page", dataType: "text", isNullable: true }, { name: "overview", dataType: "text", isNullable: true }],
       references: {
@@ -15358,7 +15325,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 138,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:13.614Z",
+        refreshedAt: "2026-05-18T17:13:42.056Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "module_id", dataType: "uuid", isNullable: true }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "include_in_rebuild", dataType: "boolean", isNullable: true }, { name: "complexity", dataType: "text", isNullable: true }, { name: "estimated_hours", dataType: "integer", isNullable: true }, { name: "ai_enhancement_possible", dataType: "boolean", isNullable: true }, { name: "ai_enhancement_notes", dataType: "text", isNullable: true }, { name: "screenshot_ids", dataType: "ARRAY", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "slug", dataType: "text", isNullable: true }, { name: "procore_tool_url", dataType: "text", isNullable: true }, { name: "priority", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "match_score", dataType: "numeric", isNullable: true }, { name: "page_count", dataType: "integer", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "category", dataType: "text", isNullable: true }, { name: "tabs", dataType: "text", isNullable: true }],
       references: {
@@ -15392,7 +15359,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 391,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:13.990Z",
+        refreshedAt: "2026-05-18T17:13:42.455Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "feature_id", dataType: "uuid", isNullable: true }, { name: "name", dataType: "text", isNullable: false }, { name: "slug", dataType: "text", isNullable: false }, { name: "page_type", dataType: "text", isNullable: true }, { name: "procore_url", dataType: "text", isNullable: true }, { name: "screenshot_path", dataType: "text", isNullable: true }, { name: "dom_path", dataType: "text", isNullable: true }, { name: "metadata_path", dataType: "text", isNullable: true }, { name: "alleato_route", dataType: "text", isNullable: true }, { name: "alleato_url", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "implementation_notes", dataType: "text", isNullable: true }, { name: "button_count", dataType: "integer", isNullable: true }, { name: "form_field_count", dataType: "integer", isNullable: true }, { name: "table_column_count", dataType: "integer", isNullable: true }, { name: "linear_issue_id", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "tool_id", dataType: "bigint", isNullable: true }],
       references: {
@@ -15428,7 +15395,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 24,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:14.395Z",
+        refreshedAt: "2026-05-18T17:13:42.883Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "display_name", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: false }, { name: "app_path", dataType: "text", isNullable: true }, { name: "docs_url", dataType: "text", isNullable: true }, { name: "complexity", dataType: "text", isNullable: true }, { name: "key_features", dataType: "jsonb", isNullable: true }, { name: "dependencies", dataType: "jsonb", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "rebuild_notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "status", dataType: "text", isNullable: true }, { name: "procore_link", dataType: "text", isNullable: true }, { name: "prp_folder", dataType: "text", isNullable: true }],
       references: {
@@ -15458,7 +15425,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 22,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:14.774Z",
+        refreshedAt: "2026-05-18T17:13:43.234Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "session_id", dataType: "uuid", isNullable: true }, { name: "name", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: false }, { name: "subcategory", dataType: "text", isNullable: true }, { name: "source_url", dataType: "text", isNullable: true }, { name: "page_title", dataType: "text", isNullable: true }, { name: "fullpage_path", dataType: "text", isNullable: true }, { name: "viewport_path", dataType: "text", isNullable: true }, { name: "fullpage_storage_path", dataType: "text", isNullable: true }, { name: "viewport_storage_path", dataType: "text", isNullable: true }, { name: "viewport_width", dataType: "integer", isNullable: true }, { name: "viewport_height", dataType: "integer", isNullable: true }, { name: "fullpage_height", dataType: "integer", isNullable: true }, { name: "file_size_bytes", dataType: "integer", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "detected_components", dataType: "jsonb", isNullable: true }, { name: "color_palette", dataType: "jsonb", isNullable: true }, { name: "ai_analysis", dataType: "jsonb", isNullable: true }, { name: "captured_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "new_url", dataType: "text", isNullable: true }],
       references: {
@@ -15490,7 +15457,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:15.232Z",
+        refreshedAt: "2026-05-18T17:13:43.607Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "started_at", dataType: "timestamp with time zone", isNullable: false }, { name: "completed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "capture_type", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "total_screenshots", dataType: "integer", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -15517,7 +15484,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 148,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:15.591Z",
+        refreshedAt: "2026-05-18T17:13:43.951Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "page_path", dataType: "text", isNullable: false }, { name: "page_name", dataType: "text", isNullable: false }, { name: "page_type", dataType: "text", isNullable: false }, { name: "header_component", dataType: "text", isNullable: true }, { name: "auto_status", dataType: "text", isNullable: false }, { name: "manual_status", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "priority", dataType: "integer", isNullable: true }, { name: "assigned_to", dataType: "text", isNullable: true }, { name: "last_scanned_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "procore_screenshot", dataType: "text", isNullable: true }, { name: "stage", dataType: "text", isNullable: true }, { name: "documentation", dataType: "text", isNullable: true }, { name: "layout_type", dataType: "text", isNullable: true }, { name: "action_buttons", dataType: "text", isNullable: true }, { name: "tabs", dataType: "text", isNullable: true }],
       references: {
@@ -15556,7 +15523,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 864,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:16.006Z",
+        refreshedAt: "2026-05-18T17:13:44.332Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "screenshot_id", dataType: "uuid", isNullable: true }, { name: "component_type", dataType: "text", isNullable: false }, { name: "component_name", dataType: "text", isNullable: true }, { name: "x", dataType: "integer", isNullable: true }, { name: "y", dataType: "integer", isNullable: true }, { name: "width", dataType: "integer", isNullable: true }, { name: "height", dataType: "integer", isNullable: true }, { name: "local_path", dataType: "text", isNullable: true }, { name: "storage_path", dataType: "text", isNullable: true }, { name: "styles", dataType: "jsonb", isNullable: true }, { name: "content", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -15586,7 +15553,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:16.377Z",
+        refreshedAt: "2026-05-18T17:13:44.695Z",
       },
       columns: [{ name: "feature_id", dataType: "uuid", isNullable: false }, { name: "tool_id", dataType: "integer", isNullable: true }, { name: "frontend_route", dataType: "text", isNullable: true }, { name: "api_routes", dataType: "ARRAY", isNullable: false }, { name: "db_tables", dataType: "ARRAY", isNullable: false }, { name: "component_paths", dataType: "ARRAY", isNullable: false }, { name: "mapping_status", dataType: "text", isNullable: false }, { name: "owner", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "linked_test_case_id", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -15617,7 +15584,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2334,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:16.813Z",
+        refreshedAt: "2026-05-18T17:13:45.046Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "url", dataType: "text", isNullable: false }, { name: "slug", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "markdown_content", dataType: "text", isNullable: false }, { name: "breadcrumb", dataType: "ARRAY", isNullable: true }, { name: "category", dataType: "text", isNullable: true }, { name: "subcategory", dataType: "text", isNullable: true }, { name: "tags", dataType: "ARRAY", isNullable: true }, { name: "content_hash", dataType: "text", isNullable: false }, { name: "word_count", dataType: "integer", isNullable: true }, { name: "last_crawled_at", dataType: "timestamp with time zone", isNullable: true }, { name: "source_updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "fts", dataType: "tsvector", isNullable: true }],
       references: {
@@ -15663,7 +15630,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 5218,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:17.514Z",
+        refreshedAt: "2026-05-18T17:13:45.651Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "article_id", dataType: "bigint", isNullable: false }, { name: "chunk_index", dataType: "integer", isNullable: false }, { name: "chunk_text", dataType: "text", isNullable: false }, { name: "heading", dataType: "text", isNullable: true }, { name: "token_count", dataType: "integer", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -15700,7 +15667,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 6,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:18.515Z",
+        refreshedAt: "2026-05-18T17:13:46.397Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "parent_page_id", dataType: "bigint", isNullable: true }, { name: "path", dataType: "text", isNullable: false }, { name: "checksum", dataType: "text", isNullable: true }, { name: "meta", dataType: "jsonb", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "source", dataType: "text", isNullable: true }],
       references: {
@@ -15730,7 +15697,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:18.894Z",
+        refreshedAt: "2026-05-18T17:13:46.752Z",
       },
       columns: [{ name: "id", dataType: "bigint", isNullable: false }, { name: "page_id", dataType: "bigint", isNullable: false }, { name: "content", dataType: "text", isNullable: true }, { name: "token_count", dataType: "integer", isNullable: true }, { name: "embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "slug", dataType: "text", isNullable: true }, { name: "heading", dataType: "text", isNullable: true }],
       references: {
@@ -15759,7 +15726,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 812,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:19.256Z",
+        refreshedAt: "2026-05-18T17:13:47.101Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "suite_id", dataType: "uuid", isNullable: false }, { name: "test_number", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: false }, { name: "subcategory", dataType: "text", isNullable: true }, { name: "test_name", dataType: "text", isNullable: false }, { name: "steps", dataType: "text", isNullable: true }, { name: "expected_result", dataType: "text", isNullable: true }, { name: "priority", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "test_type", dataType: "text", isNullable: false }, { name: "start_url", dataType: "text", isNullable: true }, { name: "context_note", dataType: "text", isNullable: true }, { name: "setup_steps", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "gap_type", dataType: "text", isNullable: true }, { name: "tool", dataType: "integer", isNullable: true }, { name: "source_url", dataType: "text", isNullable: true }, { name: "source_manifest_path", dataType: "text", isNullable: true }, { name: "source_article_id", dataType: "integer", isNullable: true }, { name: "source_chunk_id", dataType: "integer", isNullable: true }, { name: "procore_feature_id", dataType: "text", isNullable: true }],
       references: {
@@ -15948,7 +15915,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 307,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:19.674Z",
+        refreshedAt: "2026-05-18T17:13:47.496Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "run_id", dataType: "uuid", isNullable: false }, { name: "case_id", dataType: "uuid", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "severity", dataType: "text", isNullable: true }, { name: "video_url", dataType: "text", isNullable: true }, { name: "github_issue_number", dataType: "integer", isNullable: true }, { name: "github_issue_url", dataType: "text", isNullable: true }, { name: "github_issue_state", dataType: "text", isNullable: true }],
       references: {
@@ -15992,7 +15959,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 51,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:20.065Z",
+        refreshedAt: "2026-05-18T17:13:47.882Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "suite_id", dataType: "uuid", isNullable: false }, { name: "run_date", dataType: "timestamp with time zone", isNullable: false }, { name: "tester", dataType: "text", isNullable: true }, { name: "environment", dataType: "text", isNullable: false }, { name: "branch", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "slug", dataType: "text", isNullable: true }],
       references: {
@@ -16036,7 +16003,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 42,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:20.465Z",
+        refreshedAt: "2026-05-18T17:13:48.257Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "tool_name", dataType: "text", isNullable: false }, { name: "display_name", dataType: "text", isNullable: false }, { name: "source_doc_count", dataType: "integer", isNullable: false }, { name: "total_cases", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "last_generated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "tool_id", dataType: "bigint", isNullable: true }, { name: "suite_type", dataType: "text", isNullable: false }],
       references: {
@@ -16185,7 +16152,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 40,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:20.859Z",
+        refreshedAt: "2026-05-18T17:13:48.624Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "result_id", dataType: "uuid", isNullable: false }, { name: "storage_path", dataType: "text", isNullable: false }, { name: "public_url", dataType: "text", isNullable: true }, { name: "label", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -16219,7 +16186,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 318,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:21.273Z",
+        refreshedAt: "2026-05-18T17:13:48.990Z",
       },
       columns: [{ name: "schema_name", dataType: "text", isNullable: false }, { name: "table_name", dataType: "text", isNullable: false }, { name: "row_count", dataType: "bigint", isNullable: true }, { name: "rls_enabled", dataType: "boolean", isNullable: true }, { name: "primary_keys", dataType: "text", isNullable: true }, { name: "table_comment", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "category", dataType: "text", isNullable: true }, { name: "schema", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "fk_columns", dataType: "text", isNullable: true }, { name: "tools", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "documentation page", dataType: "text", isNullable: true }],
       references: {
@@ -16245,12 +16212,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 287,
+        approxRows: 290,
         totalSize: "360 kB",
         lastAutoanalyze: null,
-        nLiveTup: 287,
+        nLiveTup: 290,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:21.658Z",
+        refreshedAt: "2026-05-18T17:13:49.367Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "route", dataType: "text", isNullable: false }, { name: "comment", dataType: "text", isNullable: false }, { name: "screenshot_url", dataType: "text", isNullable: true }, { name: "element_selector", dataType: "text", isNullable: true }, { name: "component_hint", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: true }, { name: "ai_reply", dataType: "text", isNullable: true }, { name: "ai_replied_at", dataType: "timestamp with time zone", isNullable: true }, { name: "resolved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "agentation_id", dataType: "text", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "tool", dataType: "bigint", isNullable: true }],
       references: {
@@ -16297,7 +16264,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:22.083Z",
+        refreshedAt: "2026-05-18T17:13:49.770Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "feature", dataType: "text", isNullable: false }, { name: "page_url", dataType: "text", isNullable: true }, { name: "author_id", dataType: "uuid", isNullable: true }, { name: "author_name", dataType: "text", isNullable: false }, { name: "author_email", dataType: "text", isNullable: true }, { name: "content", dataType: "text", isNullable: false }, { name: "mentions", dataType: "ARRAY", isNullable: false }, { name: "parent_id", dataType: "uuid", isNullable: true }, { name: "resolved", dataType: "boolean", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -16333,12 +16300,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 3584,
+        approxRows: 3591,
         totalSize: "5808 kB",
         lastAutoanalyze: "2026-05-18T10:22:47.556Z",
-        nLiveTup: 3584,
+        nLiveTup: 3591,
         nDeadTup: 1,
-        refreshedAt: "2026-05-18T16:30:22.456Z",
+        refreshedAt: "2026-05-18T17:13:50.172Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "group_id", dataType: "uuid", isNullable: true }, { name: "source", dataType: "text", isNullable: false }, { name: "severity", dataType: "text", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: true }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "page_url", dataType: "text", isNullable: true }, { name: "page_path", dataType: "text", isNullable: true }, { name: "route", dataType: "text", isNullable: true }, { name: "action", dataType: "text", isNullable: true }, { name: "error_code", dataType: "text", isNullable: true }, { name: "error_message", dataType: "text", isNullable: false }, { name: "stack", dataType: "text", isNullable: true }, { name: "component_stack", dataType: "text", isNullable: true }, { name: "request_id", dataType: "text", isNullable: true }, { name: "status_code", dataType: "integer", isNullable: true }, { name: "user_agent", dataType: "text", isNullable: true }, { name: "app_version", dataType: "text", isNullable: true }, { name: "release_sha", dataType: "text", isNullable: true }, { name: "fingerprint", dataType: "text", isNullable: false }, { name: "browser_metadata", dataType: "jsonb", isNullable: false }, { name: "context", dataType: "jsonb", isNullable: false }],
       references: {
@@ -16371,12 +16338,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 943,
+        approxRows: 949,
         totalSize: "1056 kB",
         lastAutoanalyze: "2026-05-18T10:22:47.740Z",
-        nLiveTup: 943,
-        nDeadTup: 14,
-        refreshedAt: "2026-05-18T16:30:23.520Z",
+        nLiveTup: 949,
+        nDeadTup: 20,
+        refreshedAt: "2026-05-18T17:13:51.085Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "first_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "last_seen_at", dataType: "timestamp with time zone", isNullable: false }, { name: "signature", dataType: "text", isNullable: false }, { name: "source", dataType: "text", isNullable: false }, { name: "severity", dataType: "text", isNullable: false }, { name: "status", dataType: "text", isNullable: false }, { name: "event_count", dataType: "integer", isNullable: false }, { name: "affected_user_count", dataType: "integer", isNullable: false }, { name: "affected_project_count", dataType: "integer", isNullable: false }, { name: "latest_event_id", dataType: "uuid", isNullable: true }, { name: "latest_message", dataType: "text", isNullable: false }, { name: "latest_route", dataType: "text", isNullable: true }, { name: "latest_action", dataType: "text", isNullable: true }, { name: "latest_error_code", dataType: "text", isNullable: true }, { name: "latest_request_id", dataType: "text", isNullable: true }, { name: "latest_user_id", dataType: "uuid", isNullable: true }, { name: "latest_project_id", dataType: "integer", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: false }, { name: "linear_issue_id", dataType: "text", isNullable: true }, { name: "linear_issue_url", dataType: "text", isNullable: true }],
       references: {
@@ -16418,7 +16385,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:23.953Z",
+        refreshedAt: "2026-05-18T17:13:51.524Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "crawl_session_id", dataType: "uuid", isNullable: true }, { name: "name", dataType: "text", isNullable: false }, { name: "url", dataType: "text", isNullable: false }, { name: "page_id", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "h1", dataType: "text", isNullable: true }, { name: "screenshot_path", dataType: "text", isNullable: true }, { name: "dom_path", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -16445,7 +16412,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:24.407Z",
+        refreshedAt: "2026-05-18T17:13:51.888Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "page_id", dataType: "uuid", isNullable: true }, { name: "table_index", dataType: "integer", isNullable: true }, { name: "name", dataType: "text", isNullable: true }, { name: "css_classes", dataType: "text", isNullable: true }, { name: "html_id", dataType: "text", isNullable: true }, { name: "row_count", dataType: "integer", isNullable: true }],
       references: {
@@ -16472,7 +16439,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:24.781Z",
+        refreshedAt: "2026-05-18T17:13:52.239Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "ui_table_id", dataType: "uuid", isNullable: true }, { name: "name", dataType: "text", isNullable: false }, { name: "inferred_type", dataType: "text", isNullable: true }, { name: "editable", dataType: "boolean", isNullable: true }, { name: "computed", dataType: "boolean", isNullable: true }, { name: "required", dataType: "boolean", isNullable: true }, { name: "position", dataType: "integer", isNullable: true }],
       references: {
@@ -16499,7 +16466,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 7,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:25.159Z",
+        refreshedAt: "2026-05-18T17:13:52.635Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "source_app", dataType: "text", isNullable: false }, { name: "module", dataType: "text", isNullable: false }, { name: "started_at", dataType: "timestamp with time zone", isNullable: false }, { name: "completed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "crawler_version", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }],
       references: {
@@ -16526,7 +16493,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 831,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:25.556Z",
+        refreshedAt: "2026-05-18T17:13:53.021Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "page_id", dataType: "uuid", isNullable: true }, { name: "label", dataType: "text", isNullable: true }, { name: "action_type", dataType: "text", isNullable: true }, { name: "trigger_type", dataType: "text", isNullable: true }, { name: "http_method", dataType: "text", isNullable: true }, { name: "endpoint", dataType: "text", isNullable: true }, { name: "payload_schema", dataType: "jsonb", isNullable: true }, { name: "response_schema", dataType: "jsonb", isNullable: true }, { name: "affects_resource", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "permission_scope", dataType: "text", isNullable: true }, { name: "source", dataType: "text", isNullable: true }],
       references: {
@@ -16553,7 +16520,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 19,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:25.968Z",
+        refreshedAt: "2026-05-18T17:13:53.415Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "table_name", dataType: "text", isNullable: false }, { name: "display_name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "category", dataType: "text", isNullable: false }, { name: "icon_name", dataType: "text", isNullable: false }, { name: "is_visible", dataType: "boolean", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -16582,7 +16549,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:26.340Z",
+        refreshedAt: "2026-05-18T17:13:53.825Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "crawl_session_id", dataType: "uuid", isNullable: true }, { name: "compared_app", dataType: "text", isNullable: true }, { name: "module", dataType: "text", isNullable: true }, { name: "parity_score", dataType: "numeric", isNullable: true }, { name: "missing_features", dataType: "jsonb", isNullable: true }, { name: "missing_actions", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -16609,7 +16576,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:26.698Z",
+        refreshedAt: "2026-05-18T17:13:54.202Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "resource", dataType: "text", isNullable: false }, { name: "state", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }],
       references: {
@@ -16636,7 +16603,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:27.049Z",
+        refreshedAt: "2026-05-18T17:13:54.564Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "page_id", dataType: "uuid", isNullable: true }, { name: "component_type", dataType: "text", isNullable: false }, { name: "selector", dataType: "text", isNullable: true }, { name: "text_content", dataType: "text", isNullable: true }, { name: "html_tag", dataType: "text", isNullable: true }, { name: "classes", dataType: "text", isNullable: true }, { name: "role", dataType: "text", isNullable: true }, { name: "index_on_page", dataType: "integer", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -16663,7 +16630,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:27.406Z",
+        refreshedAt: "2026-05-18T17:13:54.910Z",
       },
       columns: [{ name: "view_name", dataType: "text", isNullable: false }, { name: "definition", dataType: "text", isNullable: true }, { name: "backed_up_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -16690,7 +16657,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:27.769Z",
+        refreshedAt: "2026-05-18T17:13:55.270Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "month", dataType: "text", isNullable: false }, { name: "section", dataType: "text", isNullable: false }, { name: "body", dataType: "text", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -16729,7 +16696,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 7,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:28.169Z",
+        refreshedAt: "2026-05-18T17:13:55.665Z",
       },
       columns: [{ name: "id", dataType: "character varying", isNullable: false }, { name: "messageId", dataType: "character varying", isNullable: false }, { name: "type", dataType: "character varying", isNullable: false }, { name: "createdAt", dataType: "timestamp without time zone", isNullable: false }, { name: "order", dataType: "integer", isNullable: false }, { name: "text_text", dataType: "text", isNullable: true }, { name: "reasoning_text", dataType: "text", isNullable: true }, { name: "file_mediaType", dataType: "character varying", isNullable: true }, { name: "file_filename", dataType: "character varying", isNullable: true }, { name: "file_url", dataType: "character varying", isNullable: true }, { name: "source_url_sourceId", dataType: "character varying", isNullable: true }, { name: "source_url_url", dataType: "character varying", isNullable: true }, { name: "source_url_title", dataType: "character varying", isNullable: true }, { name: "source_document_sourceId", dataType: "character varying", isNullable: true }, { name: "source_document_mediaType", dataType: "character varying", isNullable: true }, { name: "source_document_title", dataType: "character varying", isNullable: true }, { name: "source_document_filename", dataType: "character varying", isNullable: true }, { name: "tool_toolCallId", dataType: "character varying", isNullable: true }, { name: "tool_state", dataType: "character varying", isNullable: true }, { name: "tool_errorText", dataType: "character varying", isNullable: true }, { name: "tool_getWeatherInformation_input", dataType: "jsonb", isNullable: true }, { name: "tool_getWeatherInformation_output", dataType: "jsonb", isNullable: true }, { name: "tool_getLocation_input", dataType: "jsonb", isNullable: true }, { name: "tool_getLocation_output", dataType: "jsonb", isNullable: true }, { name: "data_weather_id", dataType: "character varying", isNullable: true }, { name: "data_weather_location", dataType: "character varying", isNullable: true }, { name: "data_weather_weather", dataType: "character varying", isNullable: true }, { name: "data_weather_temperature", dataType: "real", isNullable: true }, { name: "providerMetadata", dataType: "jsonb", isNullable: true }],
       references: {
@@ -16759,7 +16726,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:28.610Z",
+        refreshedAt: "2026-05-18T17:13:56.077Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "timesheet_date", dataType: "date", isNullable: false }, { name: "status", dataType: "text", isNullable: true }, { name: "foreman", dataType: "text", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "weather", dataType: "text", isNullable: true }, { name: "notes", dataType: "text", isNullable: true }, { name: "approved_by", dataType: "uuid", isNullable: true }, { name: "approved_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_by", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -16786,7 +16753,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 40,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:28.975Z",
+        refreshedAt: "2026-05-18T17:13:56.545Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "tool_id", dataType: "integer", isNullable: false }, { name: "category", dataType: "text", isNullable: false }, { name: "feature_key", dataType: "text", isNullable: false }, { name: "feature_name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -16815,7 +16782,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 31,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:29.375Z",
+        refreshedAt: "2026-05-18T17:13:56.920Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "tool_id", dataType: "integer", isNullable: false }, { name: "form_name", dataType: "text", isNullable: false }, { name: "field_name", dataType: "text", isNullable: false }, { name: "field_type", dataType: "text", isNullable: false }, { name: "required", dataType: "boolean", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -16839,12 +16806,12 @@ export const DB_INVENTORY: DbInventory = {
       relatedTables: [],
       notesForAi: null,
       liveStats: {
-        approxRows: 37023,
+        approxRows: 37028,
         totalSize: "294 MB",
         lastAutoanalyze: "2026-05-18T11:13:34.375Z",
-        nLiveTup: 37023,
-        nDeadTup: 2372,
-        refreshedAt: "2026-05-18T16:30:29.733Z",
+        nLiveTup: 37028,
+        nDeadTup: 2442,
+        refreshedAt: "2026-05-18T17:13:57.303Z",
       },
       columns: [{ name: "id", dataType: "text", isNullable: false }, { name: "app_document_id", dataType: "text", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "source", dataType: "text", isNullable: true }, { name: "source_system", dataType: "text", isNullable: true }, { name: "source_item_id", dataType: "text", isNullable: true }, { name: "fireflies_id", dataType: "text", isNullable: true }, { name: "title", dataType: "text", isNullable: true }, { name: "type", dataType: "text", isNullable: true }, { name: "category", dataType: "text", isNullable: true }, { name: "source_web_url", dataType: "text", isNullable: true }, { name: "url", dataType: "text", isNullable: true }, { name: "storage_bucket", dataType: "text", isNullable: true }, { name: "storage_path", dataType: "text", isNullable: true }, { name: "file_name", dataType: "text", isNullable: true }, { name: "content", dataType: "text", isNullable: true }, { name: "raw_text", dataType: "text", isNullable: true }, { name: "content_hash", dataType: "text", isNullable: true }, { name: "content_length", dataType: "integer", isNullable: true }, { name: "summary", dataType: "text", isNullable: true }, { name: "overview", dataType: "text", isNullable: true }, { name: "summary_embedding", dataType: "USER-DEFINED", isNullable: true }, { name: "parsing_status", dataType: "text", isNullable: true }, { name: "embedding_status", dataType: "text", isNullable: true }, { name: "processing_metadata", dataType: "jsonb", isNullable: false }, { name: "source_metadata", dataType: "jsonb", isNullable: false }, { name: "last_synced_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_content_loaded_at", dataType: "timestamp with time zone", isNullable: true }, { name: "last_indexed_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }, { name: "document_type", dataType: "text", isNullable: true }],
       references: {
@@ -16890,7 +16857,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:30.670Z",
+        refreshedAt: "2026-05-18T17:13:57.946Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "command_key", dataType: "text", isNullable: false }, { name: "task_ids", dataType: "ARRAY", isNullable: false }, { name: "payload", dataType: "jsonb", isNullable: true }, { name: "executed_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -16917,7 +16884,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:31.116Z",
+        refreshedAt: "2026-05-18T17:13:58.299Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "parent_task_id", dataType: "uuid", isNullable: true }, { name: "child_task_id", dataType: "uuid", isNullable: true }, { name: "sort_order", dataType: "integer", isNullable: false }],
       references: {
@@ -16944,7 +16911,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:31.503Z",
+        refreshedAt: "2026-05-18T17:13:58.657Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "bigint", isNullable: true }, { name: "log_date", dataType: "date", isNullable: false }, { name: "weather_conditions", dataType: "jsonb", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -16983,7 +16950,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:31.918Z",
+        refreshedAt: "2026-05-18T17:13:59.032Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "observation_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "parent_id", dataType: "uuid", isNullable: true }, { name: "author_id", dataType: "uuid", isNullable: false }, { name: "content", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -17010,7 +16977,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:32.318Z",
+        refreshedAt: "2026-05-18T17:13:59.383Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "observation_id", dataType: "uuid", isNullable: false }, { name: "field_name", dataType: "text", isNullable: false }, { name: "old_value", dataType: "text", isNullable: true }, { name: "new_value", dataType: "text", isNullable: true }, { name: "changed_by", dataType: "uuid", isNullable: true }, { name: "change_type", dataType: "text", isNullable: false }, { name: "changed_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -17037,7 +17004,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 12,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:32.726Z",
+        refreshedAt: "2026-05-18T17:13:59.770Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "name", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: false }, { name: "icon", dataType: "text", isNullable: true }, { name: "is_default", dataType: "boolean", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -17066,7 +17033,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:33.121Z",
+        refreshedAt: "2026-05-18T17:14:00.157Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "number", dataType: "text", isNullable: false }, { name: "title", dataType: "text", isNullable: false }, { name: "type_id", dataType: "uuid", isNullable: true }, { name: "type_name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "location", dataType: "text", isNullable: true }, { name: "status", dataType: "text", isNullable: false }, { name: "priority", dataType: "text", isNullable: false }, { name: "assignee_company_id", dataType: "uuid", isNullable: true }, { name: "assignee_name", dataType: "text", isNullable: true }, { name: "due_date", dataType: "date", isNullable: true }, { name: "trade", dataType: "text", isNullable: true }, { name: "cost_code", dataType: "text", isNullable: true }, { name: "root_cause_category", dataType: "text", isNullable: true }, { name: "root_cause_description", dataType: "text", isNullable: true }, { name: "corrective_action", dataType: "text", isNullable: true }, { name: "preventive_action", dataType: "text", isNullable: true }, { name: "change_event_id", dataType: "uuid", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "updated_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }, { name: "deleted_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17100,7 +17067,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:33.521Z",
+        refreshedAt: "2026-05-18T17:14:00.528Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "observation_id", dataType: "uuid", isNullable: false }, { name: "project_photo_id", dataType: "bigint", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "link_type", dataType: "text", isNullable: false }, { name: "note", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -17134,7 +17101,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:33.917Z",
+        refreshedAt: "2026-05-18T17:14:00.933Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "section_number", dataType: "character varying", isNullable: false }, { name: "section_title", dataType: "character varying", isNullable: false }, { name: "division", dataType: "character varying", isNullable: true }, { name: "specification_type", dataType: "character varying", isNullable: true }, { name: "document_url", dataType: "text", isNullable: true }, { name: "content", dataType: "text", isNullable: true }, { name: "requirements", dataType: "jsonb", isNullable: true }, { name: "keywords", dataType: "ARRAY", isNullable: true }, { name: "ai_summary", dataType: "text", isNullable: true }, { name: "version", dataType: "character varying", isNullable: true }, { name: "status", dataType: "character varying", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17185,13 +17152,11 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:34.320Z",
+        refreshedAt: "2026-05-18T17:14:01.647Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: true }, { name: "response_id", dataType: "uuid", isNullable: true }, { name: "distribution_id", dataType: "uuid", isNullable: true }, { name: "file_name", dataType: "text", isNullable: false }, { name: "file_url", dataType: "text", isNullable: false }, { name: "file_size", dataType: "integer", isNullable: true }, { name: "content_type", dataType: "text", isNullable: true }, { name: "is_current", dataType: "boolean", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
-        writes: [
-          { filePath: "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/attachments/route.ts", lineNumber: 93, kind: "write", snippet: ".from(\"submittal_attachments\")" },
-        ],
+        writes: [],
         reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260516010000_wrap_auth_uid_in_rls_policies.sql", lineNumber: 2026, kind: "migration", snippet: "drop policy if exists \"submittal_attachments_access\" on public.submittal_attachments;" },
@@ -17218,7 +17183,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:34.722Z",
+        refreshedAt: "2026-05-18T17:14:02.017Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "distribution_id", dataType: "uuid", isNullable: false }, { name: "recipient_id", dataType: "uuid", isNullable: false }],
       references: {
@@ -17247,7 +17212,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:35.110Z",
+        refreshedAt: "2026-05-18T17:14:02.363Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "from_id", dataType: "uuid", isNullable: false }, { name: "message", dataType: "text", isNullable: true }, { name: "distributed_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17276,7 +17241,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:35.515Z",
+        refreshedAt: "2026-05-18T17:14:02.709Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "document_name", dataType: "character varying", isNullable: false }, { name: "document_type", dataType: "character varying", isNullable: true }, { name: "file_url", dataType: "text", isNullable: false }, { name: "file_size_bytes", dataType: "bigint", isNullable: true }, { name: "mime_type", dataType: "character varying", isNullable: true }, { name: "page_count", dataType: "integer", isNullable: true }, { name: "extracted_text", dataType: "text", isNullable: true }, { name: "ai_analysis", dataType: "jsonb", isNullable: true }, { name: "version", dataType: "integer", isNullable: true }, { name: "uploaded_at", dataType: "timestamp with time zone", isNullable: true }, { name: "uploaded_by", dataType: "uuid", isNullable: false }],
       references: {
@@ -17306,7 +17271,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:35.890Z",
+        refreshedAt: "2026-05-18T17:14:03.092Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "action", dataType: "character varying", isNullable: false }, { name: "actor_id", dataType: "uuid", isNullable: true }, { name: "actor_type", dataType: "character varying", isNullable: true }, { name: "description", dataType: "text", isNullable: true }, { name: "previous_status", dataType: "character varying", isNullable: true }, { name: "new_status", dataType: "character varying", isNullable: true }, { name: "changes", dataType: "jsonb", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "occurred_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17340,7 +17305,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:36.274Z",
+        refreshedAt: "2026-05-18T17:14:03.455Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "drawing_id", dataType: "uuid", isNullable: false }],
       references: {
@@ -17374,7 +17339,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:36.675Z",
+        refreshedAt: "2026-05-18T17:14:03.830Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "user_id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "submittal_id", dataType: "uuid", isNullable: true }, { name: "notification_type", dataType: "character varying", isNullable: false }, { name: "title", dataType: "character varying", isNullable: false }, { name: "message", dataType: "text", isNullable: true }, { name: "priority", dataType: "character varying", isNullable: true }, { name: "is_read", dataType: "boolean", isNullable: true }, { name: "delivery_methods", dataType: "ARRAY", isNullable: true }, { name: "scheduled_for", dataType: "timestamp with time zone", isNullable: true }, { name: "sent_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17404,7 +17369,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:37.057Z",
+        refreshedAt: "2026-05-18T17:14:04.193Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17441,7 +17406,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:37.425Z",
+        refreshedAt: "2026-05-18T17:14:04.576Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "project_id", dataType: "integer", isNullable: true }, { name: "metric_type", dataType: "character varying", isNullable: false }, { name: "metric_name", dataType: "character varying", isNullable: false }, { name: "value", dataType: "numeric", isNullable: true }, { name: "unit", dataType: "character varying", isNullable: true }, { name: "period_start", dataType: "timestamp with time zone", isNullable: true }, { name: "period_end", dataType: "timestamp with time zone", isNullable: true }, { name: "metadata", dataType: "jsonb", isNullable: true }, { name: "calculated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17468,7 +17433,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:37.837Z",
+        refreshedAt: "2026-05-18T17:14:04.933Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "workflow_step_id", dataType: "uuid", isNullable: true }, { name: "responder_id", dataType: "uuid", isNullable: false }, { name: "response_status", dataType: "text", isNullable: false }, { name: "comments", dataType: "text", isNullable: true }, { name: "responded_at", dataType: "timestamp with time zone", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17503,7 +17468,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 17,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:38.237Z",
+        refreshedAt: "2026-05-18T17:14:05.342Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "character varying", isNullable: false }, { name: "category", dataType: "character varying", isNullable: false }, { name: "description", dataType: "text", isNullable: true }, { name: "required_documents", dataType: "ARRAY", isNullable: true }, { name: "review_criteria", dataType: "jsonb", isNullable: true }, { name: "ai_analysis_config", dataType: "jsonb", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17534,7 +17499,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 4,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:38.649Z",
+        refreshedAt: "2026-05-18T17:14:05.719Z",
       },
       columns: [{ name: "id", dataType: "uuid", isNullable: false }, { name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "step_order", dataType: "integer", isNullable: false }, { name: "step_type", dataType: "text", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: true }],
       references: {
@@ -17574,7 +17539,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:39.055Z",
+        refreshedAt: "2026-05-18T17:14:06.080Z",
       },
       columns: [{ name: "change_order_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -17582,6 +17547,41 @@ export const DB_INVENTORY: DbInventory = {
         reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260523110000_create_document_junction_tables.sql", lineNumber: 103, kind: "migration", snippet: "on public.change_order_documents (document_metadata_id);" },
+        ],
+        unknown: [],
+      },
+    },
+    {
+      name: "commitment_change_order_documents",
+      db: "MAIN",
+      domain: "documents",
+      status: "live",
+      purpose: "Pattern C junction: commitment change orders ↔ document_metadata. Replaces cco_attachments writers.",
+      gotchas: null,
+      cleanupPriority: null,
+      owner: "core",
+      relatedTables: [],
+      notesForAi: null,
+      liveStats: {
+        approxRows: 0,
+        totalSize: "24 kB",
+        lastAutoanalyze: null,
+        nLiveTup: 0,
+        nDeadTup: 0,
+        refreshedAt: "2026-05-18T17:14:06.458Z",
+      },
+      columns: [{ name: "commitment_change_order_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
+      references: {
+        writes: [],
+        reads: [],
+        migrations: [
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 141, kind: "migration", snippet: "on public.commitment_change_order_documents (document_metadata_id);" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 145, kind: "migration", snippet: "drop policy if exists \"commitment_change_order_documents_select\" on public.commitment_change_order_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 150, kind: "migration", snippet: "drop policy if exists \"commitment_change_order_documents_insert\" on public.commitment_change_order_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 155, kind: "migration", snippet: "drop policy if exists \"commitment_change_order_documents_update\" on public.commitment_change_order_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 161, kind: "migration", snippet: "drop policy if exists \"commitment_change_order_documents_delete\" on public.commitment_change_order_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 331, kind: "migration", snippet: "insert into public.commitment_change_order_documents (" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 555, kind: "migration", snippet: "select count(*) into cco_count from public.commitment_change_order_documents;" },
         ],
         unknown: [],
       },
@@ -17603,7 +17603,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:39.459Z",
+        refreshedAt: "2026-05-18T17:14:06.851Z",
       },
       columns: [{ name: "company_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -17632,12 +17632,14 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 3,
         nDeadTup: 1,
-        refreshedAt: "2026-05-18T16:30:39.864Z",
+        refreshedAt: "2026-05-18T17:14:07.210Z",
       },
       columns: [{ name: "prime_contract_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
         writes: [],
-        reads: [],
+        reads: [
+          { filePath: "frontend/src/app/api/projects/[projectId]/contracts/route.ts", lineNumber: 102, kind: "read", snippet: ".from(\"prime_contract_documents\")" },
+        ],
         migrations: [
           { filePath: "supabase/migrations/20260523110000_create_document_junction_tables.sql", lineNumber: 66, kind: "migration", snippet: "on public.prime_contract_documents (document_metadata_id);" },
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 247, kind: "migration", snippet: "insert into public.prime_contract_documents (" },
@@ -17662,22 +17664,18 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:40.264Z",
+        refreshedAt: "2026-05-18T17:14:07.592Z",
       },
       columns: [{ name: "purchase_order_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
-        writes: [
-          { filePath: "frontend/src/app/api/document-picker/linked/route.ts", lineNumber: 176, kind: "write", snippet: ".from('purchase_order_documents')" },
-        ],
-        reads: [
-          { filePath: "frontend/src/app/api/document-picker/linked/route.ts", lineNumber: 59, kind: "read", snippet: ".from('purchase_order_documents')" },
-        ],
+        writes: [],
+        reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 231, kind: "migration", snippet: "insert into public.purchase_order_documents (" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17726, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 176, kind: \"write\", snippet: \".from('pur" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17729, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 59, kind: \"read\", snippet: \".from('purch" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17670, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 176, kind: \"write\", snippet: \".from('pur" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17673, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 59, kind: \"read\", snippet: \".from('purch" },
         ],
       },
     },
@@ -17698,7 +17696,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:40.634Z",
+        refreshedAt: "2026-05-18T17:14:07.999Z",
       },
       columns: [{ name: "rfi_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -17727,22 +17725,18 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 12,
         nDeadTup: 2,
-        refreshedAt: "2026-05-18T16:30:41.013Z",
+        refreshedAt: "2026-05-18T17:14:08.417Z",
       },
       columns: [{ name: "subcontract_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
-        writes: [
-          { filePath: "frontend/src/app/api/document-picker/linked/route.ts", lineNumber: 171, kind: "write", snippet: ".from('subcontract_documents')" },
-        ],
-        reads: [
-          { filePath: "frontend/src/app/api/document-picker/linked/route.ts", lineNumber: 55, kind: "read", snippet: ".from('subcontract_documents')" },
-        ],
+        writes: [],
+        reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql", lineNumber: 215, kind: "migration", snippet: "insert into public.subcontract_documents (" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17789, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 171, kind: \"write\", snippet: \".from('sub" },
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17792, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 55, kind: \"read\", snippet: \".from('subco" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17735, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 171, kind: \"write\", snippet: \".from('sub" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17738, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/linked/route.ts\", lineNumber: 55, kind: \"read\", snippet: \".from('subco" },
         ],
       },
     },
@@ -17763,7 +17757,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:41.375Z",
+        refreshedAt: "2026-05-18T17:14:08.808Z",
       },
       columns: [{ name: "owner_invoice_id", dataType: "bigint", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -17771,6 +17765,112 @@ export const DB_INVENTORY: DbInventory = {
         reads: [],
         migrations: [
           { filePath: "supabase/migrations/20260523110000_create_document_junction_tables.sql", lineNumber: 139, kind: "migration", snippet: "on public.owner_invoice_documents (document_metadata_id);" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 518, kind: "migration", snippet: "insert into public.owner_invoice_documents (" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 558, kind: "migration", snippet: "select count(*) into invoice_count from public.owner_invoice_documents;" },
+        ],
+        unknown: [],
+      },
+    },
+    {
+      name: "prime_contract_change_order_documents",
+      db: "MAIN",
+      domain: "documents",
+      status: "live",
+      purpose: "Pattern C junction: prime contract change orders ↔ document_metadata. Replaces pcco_attachments writers.",
+      gotchas: null,
+      cleanupPriority: null,
+      owner: "core",
+      relatedTables: [],
+      notesForAi: null,
+      liveStats: {
+        approxRows: 0,
+        totalSize: "24 kB",
+        lastAutoanalyze: null,
+        nLiveTup: 0,
+        nDeadTup: 0,
+        refreshedAt: "2026-05-18T17:14:09.198Z",
+      },
+      columns: [{ name: "prime_contract_change_order_id", dataType: "bigint", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
+      references: {
+        writes: [],
+        reads: [],
+        migrations: [
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 179, kind: "migration", snippet: "on public.prime_contract_change_order_documents (document_metadata_id);" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 183, kind: "migration", snippet: "drop policy if exists \"prime_contract_change_order_documents_select\" on public.prime_contract_change_order_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 188, kind: "migration", snippet: "drop policy if exists \"prime_contract_change_order_documents_insert\" on public.prime_contract_change_order_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 193, kind: "migration", snippet: "drop policy if exists \"prime_contract_change_order_documents_update\" on public.prime_contract_change_order_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 199, kind: "migration", snippet: "drop policy if exists \"prime_contract_change_order_documents_delete\" on public.prime_contract_change_order_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 392, kind: "migration", snippet: "insert into public.prime_contract_change_order_documents (" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 556, kind: "migration", snippet: "select count(*) into pcco_count from public.prime_contract_change_order_documents;" },
+        ],
+        unknown: [],
+      },
+    },
+    {
+      name: "prime_contract_pco_documents",
+      db: "MAIN",
+      domain: "documents",
+      status: "live",
+      purpose: "Pattern C junction: prime contract PCOs ↔ document_metadata. Replaces prime_contract_pco_attachments readers.",
+      gotchas: null,
+      cleanupPriority: null,
+      owner: "core",
+      relatedTables: [],
+      notesForAi: null,
+      liveStats: {
+        approxRows: 0,
+        totalSize: "24 kB",
+        lastAutoanalyze: null,
+        nLiveTup: 0,
+        nDeadTup: 0,
+        refreshedAt: "2026-05-18T17:14:09.568Z",
+      },
+      columns: [{ name: "pco_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
+      references: {
+        writes: [],
+        reads: [],
+        migrations: [
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 217, kind: "migration", snippet: "on public.prime_contract_pco_documents (document_metadata_id);" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 221, kind: "migration", snippet: "drop policy if exists \"prime_contract_pco_documents_select\" on public.prime_contract_pco_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 226, kind: "migration", snippet: "drop policy if exists \"prime_contract_pco_documents_insert\" on public.prime_contract_pco_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 231, kind: "migration", snippet: "drop policy if exists \"prime_contract_pco_documents_update\" on public.prime_contract_pco_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 237, kind: "migration", snippet: "drop policy if exists \"prime_contract_pco_documents_delete\" on public.prime_contract_pco_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 453, kind: "migration", snippet: "insert into public.prime_contract_pco_documents (" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 557, kind: "migration", snippet: "select count(*) into pco_count from public.prime_contract_pco_documents;" },
+        ],
+        unknown: [],
+      },
+    },
+    {
+      name: "subcontractor_invoice_documents",
+      db: "MAIN",
+      domain: "documents",
+      status: "live",
+      purpose: "Pattern C junction: subcontractor invoices ↔ document_metadata. Replaces subcontractor side of invoice_attachments.",
+      gotchas: null,
+      cleanupPriority: null,
+      owner: "core",
+      relatedTables: [],
+      notesForAi: null,
+      liveStats: {
+        approxRows: 0,
+        totalSize: "24 kB",
+        lastAutoanalyze: null,
+        nLiveTup: 0,
+        nDeadTup: 0,
+        refreshedAt: "2026-05-18T17:14:09.932Z",
+      },
+      columns: [{ name: "subcontractor_invoice_id", dataType: "bigint", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
+      references: {
+        writes: [],
+        reads: [],
+        migrations: [
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 255, kind: "migration", snippet: "on public.subcontractor_invoice_documents (document_metadata_id);" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 259, kind: "migration", snippet: "drop policy if exists \"subcontractor_invoice_documents_select\" on public.subcontractor_invoice_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 264, kind: "migration", snippet: "drop policy if exists \"subcontractor_invoice_documents_insert\" on public.subcontractor_invoice_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 269, kind: "migration", snippet: "drop policy if exists \"subcontractor_invoice_documents_update\" on public.subcontractor_invoice_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 275, kind: "migration", snippet: "drop policy if exists \"subcontractor_invoice_documents_delete\" on public.subcontractor_invoice_documents;" },
+          { filePath: "supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql", lineNumber: 533, kind: "migration", snippet: "insert into public.subcontractor_invoice_documents (" },
         ],
         unknown: [],
       },
@@ -17792,7 +17892,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:41.744Z",
+        refreshedAt: "2026-05-18T17:14:10.302Z",
       },
       columns: [{ name: "submittal_id", dataType: "uuid", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -17822,7 +17922,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 23,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:42.107Z",
+        refreshedAt: "2026-05-18T17:14:10.657Z",
       },
       columns: [{ name: "type_key", dataType: "text", isNullable: false }, { name: "display_name", dataType: "text", isNullable: false }, { name: "category", dataType: "text", isNullable: false }, { name: "applies_to", dataType: "ARRAY", isNullable: false }, { name: "required_metadata", dataType: "jsonb", isNullable: true }, { name: "source_system", dataType: "text", isNullable: true }, { name: "retention_days", dataType: "integer", isNullable: true }, { name: "is_active", dataType: "boolean", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -17837,7 +17937,7 @@ export const DB_INVENTORY: DbInventory = {
           { filePath: "supabase/migrations/20260520000000_create_document_type_taxonomy.sql", lineNumber: 32, kind: "migration", snippet: "on public.document_type_taxonomy for all" },
         ],
         unknown: [
-          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17882, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/types/route.ts\", lineNumber: 33, kind: \"read\", snippet: \".from('docume" },
+          { filePath: "frontend/src/components/dev-tools/db-inventory.generated.ts", lineNumber: 17831, kind: "unknown", snippet: "{ filePath: \"frontend/src/app/api/document-picker/types/route.ts\", lineNumber: 33, kind: \"read\", snippet: \".from('docume" },
         ],
       },
     },
@@ -17858,7 +17958,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 0,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:42.513Z",
+        refreshedAt: "2026-05-18T17:14:11.092Z",
       },
       columns: [{ name: "project_id", dataType: "integer", isNullable: false }, { name: "document_metadata_id", dataType: "text", isNullable: false }, { name: "document_type", dataType: "text", isNullable: true }, { name: "attached_at", dataType: "timestamp with time zone", isNullable: false }, { name: "attached_by", dataType: "uuid", isNullable: true }],
       references: {
@@ -17887,7 +17987,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:42.879Z",
+        refreshedAt: "2026-05-18T17:14:11.475Z",
       },
       columns: [{ name: "template_id", dataType: "uuid", isNullable: false }, { name: "name", dataType: "text", isNullable: false }, { name: "items", dataType: "jsonb", isNullable: false }, { name: "created_by", dataType: "uuid", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -17922,7 +18022,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 1,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:43.248Z",
+        refreshedAt: "2026-05-18T17:14:11.903Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "sub_id", dataType: "integer", isNullable: false }, { name: "scope_item_id", dataType: "integer", isNullable: true }, { name: "description", dataType: "text", isNullable: false }, { name: "amount", dataType: "numeric", isNullable: false }, { name: "is_excluded", dataType: "boolean", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -17961,7 +18061,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 2,
         nDeadTup: 0,
-        refreshedAt: "2026-05-18T16:30:43.610Z",
+        refreshedAt: "2026-05-18T17:14:12.338Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "sub_id", dataType: "integer", isNullable: false }, { name: "called_at", dataType: "timestamp with time zone", isNullable: false }, { name: "outcome", dataType: "text", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {
@@ -17997,7 +18097,7 @@ export const DB_INVENTORY: DbInventory = {
         lastAutoanalyze: null,
         nLiveTup: 30,
         nDeadTup: 17,
-        refreshedAt: "2026-05-18T16:30:43.984Z",
+        refreshedAt: "2026-05-18T17:14:12.720Z",
       },
       columns: [{ name: "id", dataType: "integer", isNullable: false }, { name: "estimate_id", dataType: "integer", isNullable: false }, { name: "division_code", dataType: "text", isNullable: false }, { name: "sort_order", dataType: "integer", isNullable: false }, { name: "description", dataType: "text", isNullable: false }, { name: "notes", dataType: "text", isNullable: true }, { name: "is_checked", dataType: "boolean", isNullable: false }, { name: "source", dataType: "text", isNullable: true }, { name: "created_at", dataType: "timestamp with time zone", isNullable: false }, { name: "updated_at", dataType: "timestamp with time zone", isNullable: false }],
       references: {

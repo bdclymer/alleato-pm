@@ -71,7 +71,7 @@
             "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/route.ts",
             "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download/route.ts"
           ],
-          "status": "backfilled_but_legacy_api_routes_still_present"
+          "status": "converted_in_batch_2"
         }
       ]
     },
@@ -100,7 +100,7 @@
       "component_surfaces": [
         "frontend/src/components/change-events/ChangeEventAttachmentsSection.tsx"
       ],
-      "status": "backfilled_but_legacy_api_routes_still_present"
+      "status": "converted_in_batch_2"
     },
     {
       "legacy_table": "submittal_attachments",
@@ -126,7 +126,7 @@
       "component_surfaces": [
         "frontend/src/hooks/use-submittals.ts"
       ],
-      "status": "backfilled_but_legacy_api_routes_still_present"
+      "status": "converted_in_batch_2"
     },
     {
       "legacy_table": "cco_attachments",
@@ -135,13 +135,13 @@
       "deterministic_id_prefix": "cco-att-",
       "known_live_count_2026_05_18": 0,
       "target_entity_type": "commitment_change_order",
-      "target_junction_table": "to_confirm",
-      "target_fk_column": "to_confirm",
+      "target_junction_table": "commitment_change_order_documents",
+      "target_fk_column": "commitment_change_order_id",
       "route_surfaces": [
         "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts",
         "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts"
       ],
-      "status": "pending_target_model_decision"
+      "status": "converted_in_batch_2"
     },
     {
       "legacy_table": "pcco_attachments",
@@ -150,13 +150,13 @@
       "deterministic_id_prefix": "pcco-att-",
       "known_live_count_2026_05_18": 0,
       "target_entity_type": "prime_contract_change_order",
-      "target_junction_table": "to_confirm",
-      "target_fk_column": "to_confirm",
+      "target_junction_table": "prime_contract_change_order_documents",
+      "target_fk_column": "prime_contract_change_order_id",
       "route_surfaces": [
         "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/route.ts",
         "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]/route.ts"
       ],
-      "status": "pending_target_model_decision"
+      "status": "converted_in_batch_2"
     },
     {
       "legacy_table": "prime_contract_pco_attachments",
@@ -170,7 +170,7 @@
       "route_surfaces": [
         "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts"
       ],
-      "status": "pending_junction_creation"
+      "status": "converted_in_batch_2"
     },
     {
       "legacy_table": "invoice_attachments",
@@ -189,7 +189,7 @@
         "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/route.ts",
         "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]/route.ts"
       ],
-      "status": "pending_route_conversion"
+      "status": "converted_in_batch_2"
     },
     {
       "legacy_table": "subcontract_attachments",
