@@ -7,7 +7,7 @@
 
 ## Current focus
 
-**Status:** Pattern C attachment consolidation — batch 2 route conversion in progress; shared registry + remaining junction migration applied.
+**Status:** Pattern C attachment consolidation — batch 2 shipped and browser-verified; legacy table drop/form audit remains.
 **Last updated:** 2026-05-18
 **Last worked on by:** Codex (Pattern C attachment migration — batch 2)
 
@@ -15,7 +15,7 @@
 
 Codex used `.codex/skills/pattern-c-attachment-migration/SKILL.md` to continue the consolidation instead of repeating per-route one-off logic.
 
-**Shipped in working tree:**
+**Shipped and pushed:**
 - Created/applied `supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql`.
 - New Pattern C junctions:
   - `commitment_change_order_documents`
@@ -43,12 +43,32 @@ Codex used `.codex/skills/pattern-c-attachment-migration/SKILL.md` to continue t
 - `npm run check:routes` passed.
 - `npm run db:migrations:verify-applied -- supabase/migrations/20260524020000_create_remaining_pattern_c_attachment_junctions.sql` passed.
 - Legacy table source grep is clean for app source after route conversion.
-- Full `tsc --noEmit` with default memory OOMed; rerun is in progress with `NODE_OPTIONS=--max-old-space-size=8192`.
+- High-memory typecheck / quality path completed during `npm run codex:finish` for the batch 2 code changes.
+- Browser-authenticated `agent-browser` verification passed upload -> list -> delete-link -> missing-after-delete for:
+  - change event attachments
+  - prime contract attachments
+  - owner invoice attachments
+  - submittal attachment upload + Pattern C linked list
+  - commitment change order attachments
+  - prime contract change order attachments
+- Evidence artifacts: `tests/agent-browser-runs/2026-05-18-pattern-c-attachments/` (ignored verification artifact folder).
+- Temporary verification uploads were removed from `project-files`, `document_metadata`, and the relevant junction tables.
+- Browser verification exposed and fixed an owner-invoice schema bug: ownership now resolves through `owner_invoices.prime_contract_id -> prime_contracts.project_id` because `owner_invoices` has no direct `project_id`.
+- A stale Next.js `.next` dev cache produced transient local 500s (`Cannot find module './vendor-chunks/...` / `Cannot read properties of undefined (reading 'call')`); clearing `.next` and restarting the frontend restored route execution.
 
 **Still pending before closeout:**
-- Resolve any TypeScript errors from the high-memory typecheck.
-- Run changed-file quality/finish flow with explicit task-owned file list because unrelated dirty files exist.
-- Perform browser/user-flow attachment verification if time allows; otherwise leave it as the next required validation before table drops.
+- Form audit: sweep the app for any remaining dual-pattern writer/reader mismatch.
+- Recreate `commitments_schema_gaps` without legacy attachment table dependency before dropping legacy tables.
+- Drop the legacy attachment tables only after final live reconciliation:
+  - `cco_attachments`
+  - `pcco_attachments`
+  - `prime_contract_pco_attachments`
+  - `invoice_attachments`
+  - `change_event_attachments`
+  - `submittal_attachments`
+  - `subcontract_attachments`
+  - `purchase_order_attachments`
+  - `attachments`
 
 ## Pattern C attachment migration system pass (2026-05-18)
 
