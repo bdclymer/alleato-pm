@@ -50,6 +50,10 @@ import { EmptyState } from "@/components/ds";
 import { getCostTypeLabel } from "@/constants/budget";
 import type { BudgetCode, ContractLineItem } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
+function getLineTotal(item: ContractLineItem) {
+  return (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+}
+
 export interface PrimeContractSovTabProps {
   formatCurrency: (value: number | null | undefined) => string;
   lineItemsLoading: boolean;
@@ -124,12 +128,59 @@ export function PrimeContractSovTab({
 
   const displayedSovTotal = displayedSovItems.reduce((sum, item) => {
     if (item.is_group_header) return sum;
-    return sum + (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+    return sum + getLineTotal(item);
   }, 0);
 
   const invoicesTotal = Number(invoicedAmount) || 0;
   const billedToDateRatio =
     displayedSovTotal > 0 ? Math.min(1, Math.max(0, invoicesTotal / displayedSovTotal)) : 0;
+
+  const sovRowsWithSubtotals = useMemo(() => {
+    const rows: Array<
+      | { type: "subtotal"; key: string; label: string; amount: number }
+      | { type: "item"; item: ContractLineItem }
+    > = [];
+    let runningTotal = 0;
+    let hasInsertedPreMarkupSubtotal = false;
+    let hasIncludedInsurance = false;
+    let hasInsertedFeeBasisSubtotal = false;
+
+    for (const item of displayedSovItems) {
+      const markupType = (item.markup_type || "").toLowerCase();
+      const isMarkup = !!markupType;
+
+      if (isMarkup && !hasInsertedPreMarkupSubtotal) {
+        rows.push({
+          type: "subtotal",
+          key: "subtotal-before-markup",
+          label: markupType === "insurance" ? "Subtotal before insurance" : "Subtotal before markup",
+          amount: runningTotal,
+        });
+        hasInsertedPreMarkupSubtotal = true;
+      }
+
+      if (markupType === "fee" && hasIncludedInsurance && !hasInsertedFeeBasisSubtotal) {
+        rows.push({
+          type: "subtotal",
+          key: "subtotal-before-fee",
+          label: "Subtotal before fee",
+          amount: runningTotal,
+        });
+        hasInsertedFeeBasisSubtotal = true;
+      }
+
+      rows.push({ type: "item", item });
+
+      if (!item.is_group_header) {
+        runningTotal += getLineTotal(item);
+      }
+      if (markupType === "insurance") {
+        hasIncludedInsurance = true;
+      }
+    }
+
+    return rows;
+  }, [displayedSovItems]);
 
   return (
     <div className="space-y-4 pb-20">
@@ -217,7 +268,36 @@ export function PrimeContractSovTab({
                     </InlineTableHeaderRow>
                   </InlineTableHeader>
                   <InlineTableBody>
-                    {displayedSovItems.map((item) => {
+                    {sovRowsWithSubtotals.map((row) => {
+                      if (row.type === "subtotal") {
+                        const subtotalBilled = row.amount * billedToDateRatio;
+                        return (
+                          <InlineTableRow
+                            key={row.key}
+                            className="border-y border-border bg-muted/20"
+                          >
+                            <InlineTableCell className="w-10 px-1 py-1" />
+                            <InlineTableCell
+                              colSpan={4}
+                              className="min-w-72 px-1 py-2 text-xs font-semibold text-muted-foreground"
+                            >
+                              {row.label}
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-40 px-1 py-2 text-xs font-semibold tabular-nums">
+                              {formatCurrency(row.amount)}
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-40 px-1 py-2 text-xs font-medium tabular-nums text-muted-foreground">
+                              {formatCurrency(subtotalBilled)}
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-40 px-1 py-2 text-xs font-semibold tabular-nums">
+                              {formatCurrency(row.amount - subtotalBilled)}
+                            </InlineTableCell>
+                            <InlineTableCell className="w-24 px-1 py-1" />
+                          </InlineTableRow>
+                        );
+                      }
+
+                      const item = row.item;
                       if (item.is_group_header) {
                         return (
                           <SortableSovRow
@@ -274,7 +354,7 @@ export function PrimeContractSovTab({
 
                       // Markup rows are read-only — render locked badge row, never editable
                       if (item.markup_type) {
-                        const markupTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                        const markupTotal = getLineTotal(item);
                         const markupBilled = markupTotal * billedToDateRatio;
                         return (
                           <InlineTableRow
@@ -310,8 +390,7 @@ export function PrimeContractSovTab({
                         );
                       }
 
-                      const lineTotal =
-                        (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                      const lineTotal = getLineTotal(item);
                       const lineBilledToDate = lineTotal * billedToDateRatio;
                       const lineAmountRemaining = lineTotal - lineBilledToDate;
                       const selectedBudgetCode = item.budget_code_id

@@ -66,6 +66,10 @@ import type {
   PrimeContractCO,
 } from "../types";
 
+function getLineTotal(item: ContractLineItem) {
+  return (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+}
+
 interface PrimeContractOverviewTabProps {
   contract: Contract;
   changeOrders: PrimeContractCO[];
@@ -183,7 +187,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
   const displayedSovTotal = displayedSovItems.reduce((sum, item) => {
     if (item.is_group_header) return sum;
-    return sum + (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+    return sum + getLineTotal(item);
   }, 0);
   const computedChangeOrderTotals = useMemo(() => {
     const totals = { approved: 0, pending: 0, draft: 0 };
@@ -250,7 +254,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     for (const item of displayedSovItems) {
       if (item.is_group_header) continue;
       const div = getDivCode(item);
-      const lineTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+      const lineTotal = getLineTotal(item);
       totals[div] = (totals[div] ?? 0) + lineTotal;
     }
     return totals;
@@ -260,17 +264,48 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   const viewModeRows = useMemo(() => {
     const rows: Array<
       | { type: "division"; code: string }
+      | { type: "subtotal"; key: string; label: string; amount: number; divCode: string }
       | { type: "item"; item: (typeof displayedSovItems)[number]; divCode: string }
     > = [];
     let lastDiv = "";
+    let runningTotal = 0;
+    let hasInsertedPreMarkupSubtotal = false;
+    let hasIncludedInsurance = false;
+    let hasInsertedFeeBasisSubtotal = false;
+
     for (const item of displayedSovItems) {
       if (item.is_group_header) continue;
       const divCode = getDivCode(item);
+      const markupType = (item.markup_type || "").toLowerCase();
       if (divCode !== lastDiv) {
         rows.push({ type: "division", code: divCode });
         lastDiv = divCode;
       }
+      if (markupType && !hasInsertedPreMarkupSubtotal) {
+        rows.push({
+          type: "subtotal",
+          key: "subtotal-before-markup",
+          label: markupType === "insurance" ? "Subtotal before insurance" : "Subtotal before markup",
+          amount: runningTotal,
+          divCode,
+        });
+        hasInsertedPreMarkupSubtotal = true;
+      }
+      if (markupType === "fee" && hasIncludedInsurance && !hasInsertedFeeBasisSubtotal) {
+        rows.push({
+          type: "subtotal",
+          key: "subtotal-before-fee",
+          label: "Subtotal before fee",
+          amount: runningTotal,
+          divCode,
+        });
+        hasInsertedFeeBasisSubtotal = true;
+      }
       rows.push({ type: "item", item, divCode });
+      runningTotal += getLineTotal(item);
+      if (markupType === "insurance") {
+        hasIncludedInsurance = true;
+      }
     }
     return rows;
    
@@ -881,12 +916,41 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       );
                     }
 
+                    if (row.type === "subtotal") {
+                      if (collapsedDivisions.has(row.divCode)) return null;
+                      const subtotalBilled = row.amount * billedToDateRatio;
+                      return (
+                        <tr
+                          key={row.key}
+                          className="border-y border-border bg-muted/20"
+                        >
+                          <td className="w-10 px-1 py-1" />
+                          <td
+                            colSpan={2}
+                            className="px-1 py-2 text-xs font-semibold text-muted-foreground"
+                          >
+                            {row.label}
+                          </td>
+                          <td className="w-40 px-1 py-2 text-right text-xs font-semibold tabular-nums">
+                            {formatCurrency(row.amount)}
+                          </td>
+                          <td className="w-40 px-1 py-2 text-right text-xs font-medium tabular-nums text-muted-foreground">
+                            {formatCurrency(subtotalBilled)}
+                          </td>
+                          <td className="w-40 px-1 py-2 text-right text-xs font-semibold tabular-nums">
+                            {formatCurrency(row.amount - subtotalBilled)}
+                          </td>
+                          <td className="w-24 px-1 py-1" />
+                        </tr>
+                      );
+                    }
+
                     const { item, divCode } = row;
                     if (collapsedDivisions.has(divCode)) return null;
 
                     // Markup rows are read-only — render a locked badge row
                     if (item.markup_type) {
-                      const markupTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                      const markupTotal = getLineTotal(item);
                       const markupBilled = markupTotal * billedToDateRatio;
                       return (
                         <tr key={item.id} className="border-b border-border/60 bg-muted/30">
@@ -919,7 +983,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     const displayBudgetCode = bc?.code || item.cost_code?.code || "--";
                     const displayBudgetDescription = bc?.description || item.cost_code?.name || "";
                     const displayCostType = bc?.costType ? getCostTypeLabel(bc.costType) : "";
-                    const lineTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                    const lineTotal = getLineTotal(item);
                     const lineBilledToDate = lineTotal * billedToDateRatio;
 
                     return (
