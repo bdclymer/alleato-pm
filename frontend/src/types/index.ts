@@ -20,7 +20,8 @@ export type PurchaseOrder =
   Database["public"]["Tables"]["purchase_orders"]["Row"];
 export type ChangeOrder = Database["public"]["Tables"]["prime_contract_change_orders"]["Row"];
 export type BudgetLine = Database["public"]["Tables"]["budget_lines"]["Row"];
-export type Document = Database["public"]["Tables"]["documents"]["Row"];
+// Legacy `documents` table dropped — file metadata lives in `document_metadata`.
+export type Document = Database["public"]["Tables"]["document_metadata"]["Row"];
 // TODO: These tables don't exist in current schema - need to create or update references
 // export type User = Database["public"]["Tables"]["users"]["Row"];
 export type User = any; // Placeholder until users table is created
@@ -65,7 +66,7 @@ export type PurchaseOrderInsert =
 export type ChangeOrderInsert =
   Database["public"]["Tables"]["prime_contract_change_orders"]["Insert"];
 export type DocumentInsert =
-  Database["public"]["Tables"]["documents"]["Insert"];
+  Database["public"]["Tables"]["document_metadata"]["Insert"];
 
 // Update Types (for updating records)
 export type ProjectUpdate = Database["public"]["Tables"]["projects"]["Update"];
@@ -74,7 +75,7 @@ export type SubcontractUpdate =
 export type PurchaseOrderUpdate =
   Database["public"]["Tables"]["purchase_orders"]["Update"];
 export type DocumentUpdate =
-  Database["public"]["Tables"]["documents"]["Update"];
+  Database["public"]["Tables"]["document_metadata"]["Update"];
 
 // Meeting data is stored in document_metadata table
 // Filter by type='meeting' or source='fireflies' for meeting records

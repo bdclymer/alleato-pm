@@ -33,7 +33,7 @@ const TABLE_ALLOWLIST = [
   "specifications",
   "drawings",
   "photos",
-  "documents",
+  "document_metadata",
   "project_transmittals",
   "project_emails",
   "companies",

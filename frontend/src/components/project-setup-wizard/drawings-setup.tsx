@@ -177,7 +177,7 @@ export function DrawingsSetup({
       setLoading(true);
 
       const { error } = await supabase
-        .from("documents")
+        .from("document_metadata")
         .delete()
         .eq("id", documentId);
 

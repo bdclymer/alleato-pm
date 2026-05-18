@@ -88,23 +88,13 @@ def _seed_nonfinancial_doc(client, project_id: int, token: str) -> str:
         }
     ).execute()
 
-    client.table("documents").insert(
-        {
-            "file_id": metadata_id,
-            "title": "Fallback Verification Fixture",
-            "content": content,
-            "source": "verification_script",
-            "project_id": project_id,
-            "project_ids": [project_id],
-            "metadata": {"token": token, "fixture": "financial_fallback"},
-        }
-    ).execute()
-
+    # Legacy `documents` table insert removed — the table was dropped. The
+    # `document_metadata` row above is the only fixture needed; the chat API
+    # fallback no longer reads from `documents`.
     return metadata_id
 
 
 def _cleanup_fixture(client, metadata_id: str) -> None:
-    client.table("documents").delete().eq("file_id", metadata_id).execute()
     client.table("document_metadata").delete().eq("id", metadata_id).execute()
 
 

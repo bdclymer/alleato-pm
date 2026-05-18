@@ -6773,57 +6773,6 @@ export type Database = {
         }
         Relationships: []
       }
-      chunks: {
-        Row: {
-          chunk_index: number
-          content: string
-          created_at: string | null
-          document_id: string
-          document_title: string | null
-          embedding: string | null
-          id: string
-          metadata: Json | null
-          token_count: number | null
-        }
-        Insert: {
-          chunk_index: number
-          content: string
-          created_at?: string | null
-          document_id: string
-          document_title?: string | null
-          embedding?: string | null
-          id?: string
-          metadata?: Json | null
-          token_count?: number | null
-        }
-        Update: {
-          chunk_index?: number
-          content?: string
-          created_at?: string | null
-          document_id?: string
-          document_title?: string | null
-          embedding?: string | null
-          id?: string
-          metadata?: Json | null
-          token_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chunks_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chunks_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents_ordered_view"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       collaboration_comments: {
         Row: {
           author_id: string
@@ -9787,45 +9736,6 @@ export type Database = {
           },
         ]
       }
-      document_chunks: {
-        Row: {
-          chunk_id: string
-          chunk_index: number
-          content_hash: string | null
-          created_at: string | null
-          document_id: string
-          embedding: unknown
-          metadata: Json | null
-          source_type: string | null
-          text: string
-          updated_at: string | null
-        }
-        Insert: {
-          chunk_id: string
-          chunk_index: number
-          content_hash?: string | null
-          created_at?: string | null
-          document_id: string
-          embedding?: unknown
-          metadata?: Json | null
-          source_type?: string | null
-          text: string
-          updated_at?: string | null
-        }
-        Update: {
-          chunk_id?: string
-          chunk_index?: number
-          content_hash?: string | null
-          created_at?: string | null
-          document_id?: string
-          embedding?: unknown
-          metadata?: Json | null
-          source_type?: string | null
-          text?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       document_executive_summaries: {
         Row: {
           budget_discussions: Json | null
@@ -10590,168 +10500,6 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "vw_friday_participants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      documents: {
-        Row: {
-          content: string
-          created_at: string | null
-          embedding: string | null
-          file_date: string | null
-          file_id: string
-          file_name: string | null
-          fireflies_id: string | null
-          id: string
-          metadata: Json | null
-          processing_status: string | null
-          project: string | null
-          project_id: number | null
-          project_ids: number[] | null
-          source: string | null
-          storage_object_id: string | null
-          title: string | null
-          updated_at: string | null
-          url: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          embedding?: string | null
-          file_date?: string | null
-          file_id: string
-          file_name?: string | null
-          fireflies_id?: string | null
-          id?: string
-          metadata?: Json | null
-          processing_status?: string | null
-          project?: string | null
-          project_id?: number | null
-          project_ids?: number[] | null
-          source?: string | null
-          storage_object_id?: string | null
-          title?: string | null
-          updated_at?: string | null
-          url?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          embedding?: string | null
-          file_date?: string | null
-          file_id?: string
-          file_name?: string | null
-          fireflies_id?: string | null
-          id?: string
-          metadata?: Json | null
-          processing_status?: string | null
-          project?: string | null
-          project_id?: number | null
-          project_ids?: number[] | null
-          source?: string | null
-          storage_object_id?: string | null
-          title?: string | null
-          updated_at?: string | null
-          url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documents_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_brandon_to_friday"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_emails"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_manual_only"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_meetings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_team_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_typed"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "vw_friday_participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -24749,36 +24497,6 @@ export type Database = {
           },
         ]
       }
-      rag_pipeline_state: {
-        Row: {
-          created_at: string | null
-          known_files: Json | null
-          last_check_time: string | null
-          last_run: string | null
-          pipeline_id: string
-          pipeline_type: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          known_files?: Json | null
-          last_check_time?: string | null
-          last_run?: string | null
-          pipeline_id: string
-          pipeline_type: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          known_files?: Json | null
-          last_check_time?: string | null
-          last_run?: string | null
-          pipeline_id?: string
-          pipeline_type?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       recurring_issue_evidence: {
         Row: {
           confidence: string
@@ -29929,20 +29647,6 @@ export type Database = {
             referencedRelation: "meeting_segments"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "tasks_source_chunk_id_fkey"
-            columns: ["source_chunk_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_source_chunk_id_fkey"
-            columns: ["source_chunk_id"]
-            isOneToOne: false
-            referencedRelation: "documents_ordered_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       team_chat_channels: {
@@ -33149,82 +32853,6 @@ export type Database = {
           },
         ]
       }
-      documents_ordered_view: {
-        Row: {
-          created_at: string | null
-          date: string | null
-          fireflies_id: string | null
-          id: string | null
-          project: string | null
-          project_id: number | null
-          title: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          date?: string | null
-          fireflies_id?: string | null
-          id?: string | null
-          project?: string | null
-          project_id?: number | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          date?: string | null
-          fireflies_id?: string | null
-          id?: string | null
-          project?: string | null
-          project_id?: number | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       drawing_areas_with_counts: {
         Row: {
           depth: number | null
@@ -33576,7 +33204,6 @@ export type Database = {
           name: string | null
           open_critical_items: number | null
           recent_documents_count: number | null
-          stage: string | null
           summary: string | null
           summary_updated_at: string | null
           total_insights_count: number | null
@@ -33592,7 +33219,6 @@ export type Database = {
           name?: string | null
           open_critical_items?: never
           recent_documents_count?: never
-          stage?: string | null
           summary?: string | null
           summary_updated_at?: string | null
           total_insights_count?: never
@@ -33608,7 +33234,6 @@ export type Database = {
           name?: string | null
           open_critical_items?: never
           recent_documents_count?: never
-          stage?: string | null
           summary?: string | null
           summary_updated_at?: string | null
           total_insights_count?: never
@@ -33741,6 +33366,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      project_timeline_events: {
+        Row: {
+          entity_id: string | null
+          kind: string | null
+          occurred_at: string | null
+          project_id: number | null
+          status: string | null
+          summary: string | null
+          title: string | null
+        }
+        Relationships: []
       }
       projects_with_counts: {
         Row: {
@@ -35141,79 +34778,6 @@ export type Database = {
           title: string
         }[]
       }
-      match_documents:
-        | {
-            Args: {
-              filter?: Json
-              match_count?: number
-              query_embedding: string
-            }
-            Returns: {
-              content: string
-              id: string
-              metadata: Json
-              similarity: number
-            }[]
-          }
-        | {
-            Args: {
-              filter_doc_type?: string
-              filter_metadata_ids?: string[]
-              filter_project_id?: number
-              match_count?: number
-              match_threshold?: number
-              query_embedding: string
-            }
-            Returns: {
-              chunk_index: number
-              content: string
-              doc_type: string
-              id: string
-              meeting_date: string
-              metadata_id: string
-              project_id: number
-              segment_id: string
-              similarity: number
-              tags: string[]
-            }[]
-          }
-      match_documents_enhanced: {
-        Args: {
-          category_filter?: string
-          date_after_filter?: string
-          match_count?: number
-          participants_filter?: string
-          project_filter?: string
-          query_embedding: string
-          year_filter?: number
-        }
-        Returns: {
-          content: string
-          id: string
-          metadata: Json
-          similarity: number
-        }[]
-      }
-      match_documents_full: {
-        Args: {
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          content: string
-          created_at: string
-          file_date: string
-          file_id: string
-          id: number
-          metadata: Json
-          project_id: number
-          project_ids: number[]
-          similarity: number
-          source: string
-          title: string
-        }[]
-      }
       match_files: {
         Args: { filter?: Json; match_count?: number; query_embedding: string }
         Returns: {
@@ -35369,20 +34933,6 @@ export type Database = {
           slug: string
         }[]
       }
-      match_recent_documents: {
-        Args: {
-          days_back?: number
-          match_count?: number
-          query_embedding: string
-        }
-        Returns: {
-          content: string
-          document_date: string
-          id: string
-          metadata: Json
-          similarity: number
-        }[]
-      }
       match_segments: {
         Args: {
           filter_metadata_ids?: string[]
@@ -35524,34 +35074,6 @@ export type Database = {
           orientation_type: string
           rack_row_depth: string
           relevance_score: number
-        }[]
-      }
-      search_by_category: {
-        Args: {
-          category: string
-          match_count?: number
-          query_embedding: string
-        }
-        Returns: {
-          content: string
-          id: string
-          meeting_category: string
-          metadata: Json
-          similarity: number
-        }[]
-      }
-      search_by_participants: {
-        Args: {
-          match_count?: number
-          participant_name: string
-          query_embedding: string
-        }
-        Returns: {
-          content: string
-          id: string
-          metadata: Json
-          participants: string
-          similarity: number
         }[]
       }
       search_conversation_memories:

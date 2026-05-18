@@ -87,20 +87,15 @@ def get_project_info(client, project_id: int) -> Optional[dict]:
 
 def get_meeting_transcripts(client, project_id: int, limit: int = 20) -> list:
     """Fetch meeting transcripts for a project."""
-    # Get document metadata - use 'content' field for transcript
+    # Pull transcript-bearing columns from document_metadata directly. `content`
+    # holds the full transcript; `raw_text` is the fallback for older rows.
     docs_result = client.table('document_metadata').select(
-        'id, title, date, summary, content, overview'
+        'id, title, date, summary, content, overview, raw_text'
     ).eq('project_id', project_id).order('date', desc=True).limit(limit).execute()
 
     return docs_result.data or []
 
 
-def get_document_content(client, document_id: str) -> Optional[str]:
-    """Fetch full document content from documents table."""
-    result = client.table('documents').select('content').eq('file_id', document_id).limit(1).execute()
-    if result.data:
-        return result.data[0].get('content', '')
-    return None
 
 
 def generate_summary_with_openai(project_name: str, transcripts: str) -> str:
@@ -178,10 +173,13 @@ async def main():
         title = meeting.get('title', 'Untitled Meeting')
         date = meeting.get('date', 'Unknown date')
 
-        # Try to get full content - prefer overview (condensed), fallback to content (full transcript)
-        content = meeting.get('overview', '') or meeting.get('content', '')
-        if not content:
-            content = get_document_content(supabase, meeting['id'])
+        # Prefer overview (condensed) → content (full transcript) → raw_text (legacy ingest).
+        content = (
+            meeting.get('overview')
+            or meeting.get('content')
+            or meeting.get('raw_text')
+            or ''
+        )
 
         if content:
             # Truncate very long transcripts

@@ -147,37 +147,6 @@ export async function findMarketingSourceCandidates(params: {
     }
   }
 
-  if (sourceEnabled(params.sourceTypes, "documents")) {
-    let query = supabase
-      .from("documents")
-      .select("id,title,file_name,file_date,created_at,project_id,project,content,url,source")
-      .order("created_at", { ascending: false, nullsFirst: false })
-      .limit(limit);
-    if (params.projectId != null) query = query.eq("project_id", params.projectId);
-    if (params.dateRange?.start) query = query.gte("created_at", params.dateRange.start);
-    if (params.dateRange?.end) query = query.lte("created_at", params.dateRange.end);
-    const { data, error } = await query;
-    if (error) throw dbError("findMarketingSourceCandidates.documents", error.message);
-
-    for (const row of data ?? []) {
-      const sourceTitle = nonEmpty(row.title) ?? nonEmpty(row.file_name) ?? "Document";
-      const summary = nonEmpty(row.content);
-      if (!summary) continue;
-      candidates.push({
-        sourceTable: "documents",
-        sourceId: row.id,
-        sourceTitle,
-        sourceDate: row.file_date ?? row.created_at ?? null,
-        sourceUrl: row.url ?? null,
-        projectId: row.project_id ?? null,
-        projectName: row.project ?? null,
-        summary: truncate(summary),
-        confidence: row.project_id ? "medium" : "low",
-        citationText: `${sourceTitle}${row.file_date ? ` (${row.file_date})` : ""}`,
-      });
-    }
-  }
-
   // Pipeline B: pull marketing-relevant source candidates from insight_cards.
   // We accept both the legacy "ai_insights" source-type key (kept for backwards
   // compatibility with callers) and the new "insight_cards" key.

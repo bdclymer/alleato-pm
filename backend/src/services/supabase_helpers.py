@@ -460,87 +460,51 @@ class SupabaseRagStore:
         response = query.order("created_at", desc=True).execute()
         return response.data or []
 
+    def _chunk_row_to_result(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        metadata = row.get("metadata") or {}
+        return {
+            "document_id": row.get("document_id"),
+            "chunk_index": row.get("chunk_index"),
+            "text": row.get("text") or row.get("chunk_context") or "",
+            "metadata": metadata,
+        }
+
     def search_chunks_by_keyword(
         self,
         keyword: Optional[str],
         project_id: Optional[int] = None,
         limit: int = 5,
     ) -> List[Dict[str, Any]]:
-        # Query the documents table which is populated by the backfill pipeline
-        query = self._client.table("documents").select("file_id", "content", "metadata", "project_ids", "created_at")
-
-        # Use project_ids array if available, fallback to metadata for backward compatibility
-        if project_id is not None and project_id > 0:
-            # Use PostgreSQL array contains operator via PostgREST filter syntax
-            query = query.filter("project_ids", "cs", f"{{{project_id}}}")
-
+        """ILIKE keyword search over `document_chunks.text` (AI Database)."""
+        query = (
+            self._rag_read_client.table("document_chunks")
+            .select("document_id, chunk_index, text, metadata, created_at")
+            .order("created_at", desc=True)
+            .limit(limit)
+        )
         if keyword:
-            query = query.ilike("content", f"%{keyword}%")
-        response = query.order("created_at", desc=True).limit(limit).execute()
-
-        # Transform to match expected format
-        results = []
-        for doc in (response.data or []):
-            results.append({
-                'document_id': doc.get('file_id'),
-                'text': doc.get('content', ''),
-                'metadata': doc.get('metadata', {})
-            })
-        return results
+            query = query.ilike("text", f"%{keyword}%")
+        if project_id is not None and project_id > 0:
+            query = query.eq("metadata->>project_id", str(project_id))
+        response = query.execute()
+        return [self._chunk_row_to_result(row) for row in (response.data or [])]
 
     def fetch_recent_chunks(self, project_id: Optional[int] = None, limit: int = 5) -> List[Dict[str, Any]]:
-        # Query the documents table which is populated by the backfill pipeline
-        # Get unique meetings by grouping chunks by file_id
-        query = self._client.table("documents").select("file_id", "title", "content", "file_date", "project_id", "project_ids").order("created_at", desc=True).limit(limit * 5)
-        # Only filter by project_id if it's a positive integer (not 0 or None)
-        # project_id=0 means "show all meetings" including those with null project_id
+        """Most-recent `document_chunks` rows (AI Database), optionally project-scoped."""
+        query = (
+            self._rag_read_client.table("document_chunks")
+            .select("document_id, chunk_index, text, metadata, created_at")
+            .order("created_at", desc=True)
+            .limit(limit)
+        )
         if project_id is not None and project_id > 0:
-            # Use project_ids array contains operator via PostgREST filter syntax
-            query = query.filter("project_ids", "cs", f"{{{project_id}}}")
+            query = query.eq("metadata->>project_id", str(project_id))
         response = query.execute()
-
-        # Group by file_id to get unique meetings
-        meetings_map = {}
-        for doc in (response.data or []):
-            file_id = doc.get('file_id')
-            if file_id not in meetings_map:
-                # Get metadata for this meeting
-                metadata_response = self._client.table("document_metadata").select("title", "date", "participants_array", "project_id").eq("id", file_id).limit(1).execute()
-                metadata_info = metadata_response.data[0] if metadata_response.data else {}
-
-                meetings_map[file_id] = {
-                    'document_id': file_id,
-                    'text': doc.get('content', ''),
-                    'metadata': {
-                        'title': metadata_info.get('title', doc.get('title', 'Untitled')),
-                        'date': metadata_info.get('date'),
-                        'participants': metadata_info.get('participants_array', []),
-                        'project_id': metadata_info.get('project_id')
-                    }
-                }
-
-        # Return up to limit meetings
-        return list(meetings_map.values())[:limit]
+        return [self._chunk_row_to_result(row) for row in (response.data or [])]
 
     def vector_search(self, query_embedding: List[float], limit: int = 5) -> List[Dict[str, Any]]:
-        try:
-            response = (
-                self._rag_client.rpc(
-                    "match_document_chunks",
-                    {
-                        "query_embedding": query_embedding,
-                        "match_count": limit,
-                        "match_threshold": 0.5,
-                    },
-                )
-                .execute()
-            )
-            data = response.data or []
-            if data:
-                return data
-        except Exception:
-            pass
-        return self.fetch_recent_chunks(limit=limit)
+        """Vector search over `document_chunks` via `search_document_chunks` RPC."""
+        return self.vector_search_documents(query_embedding=query_embedding, limit=limit)
 
     def vector_search_documents(
         self,
@@ -548,37 +512,16 @@ class SupabaseRagStore:
         limit: int = 5,
         project_id: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
-        """Vector search against the documents table embeddings."""
-        try:
-            filter_payload: Dict[str, Any] = {}
-            if project_id is not None:
-                filter_payload["project_id"] = project_id
-
-            response = (
-                self._client.rpc(
-                    "match_documents",
-                    {
-                        "query_embedding": query_embedding,
-                        "match_count": limit,
-                        "filter": filter_payload,
-                    },
-                )
-                .execute()
-            )
-            data = response.data or []
-            if data:
-                return [
-                    {
-                        "document_id": row.get("id"),
-                        "text": row.get("content", ""),
-                        "metadata": row.get("metadata", {}),
-                        "similarity": row.get("similarity"),
-                    }
-                    for row in data
-                ]
-        except Exception:
-            pass
-        return []
+        """Vector search against `document_chunks` (AI Database) via `search_document_chunks`."""
+        rpc_args: Dict[str, Any] = {
+            "query_embedding": query_embedding,
+            "match_count": limit,
+            "match_threshold": 0.25,
+        }
+        if project_id is not None and project_id > 0:
+            rpc_args["filter_project_id"] = project_id
+        response = self._rag_read_client.rpc("search_document_chunks", rpc_args).execute()
+        return [self._chunk_row_to_result(row) for row in (response.data or [])]
 
     def search_financial_rows(
         self,

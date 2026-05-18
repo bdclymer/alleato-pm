@@ -56,13 +56,14 @@ interface ProjectCoverage {
 }
 
 async function auditProject(projectId: number, projectName: string): Promise<ProjectCoverage> {
-  // Get file_ids for documents belonging to this project (for segment joins)
+  // Get metadata IDs for documents belonging to this project (for segment joins).
+  // `document_metadata.id` replaced the legacy `documents.file_id`.
   const { data: projectDocs } = await supabase
-    .from("documents")
-    .select("file_id")
-    .contains("project_ids", [projectId]);
+    .from("document_metadata")
+    .select("id")
+    .eq("project_id", projectId);
 
-  const fileIds = (projectDocs ?? []).map((d) => d.file_id).filter(Boolean);
+  const fileIds = (projectDocs ?? []).map((d) => d.id).filter(Boolean);
 
   const [
     meetingsResult,

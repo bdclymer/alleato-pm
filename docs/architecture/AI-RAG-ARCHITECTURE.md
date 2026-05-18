@@ -229,6 +229,18 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 
 **RPC impact:** The `search_document_chunks` RPC returns higher-quality results for ambiguous queries (e.g. "project budget" now returns the right project, not a random one) because the context prefix removes chunk-level ambiguity.
 
+### Legacy `documents` table — DROPPED 2026-05-18
+
+The pre-Pipeline-B `public.documents` table (PM APP) was dropped along with its
+dependent objects: `documents_access_audit`, `documents_ordered_view`, the
+`chunks` and `private.document_processing_queue` FK tables, and 6 RPCs
+(`match_documents` ×2, `match_documents_full`, `match_documents_enhanced`,
+`match_recent_documents`, `search_by_category`, `search_by_participants`).
+`project_health_dashboard` was recreated WITHOUT the dependency. Code consumers
+moved to `document_metadata` (raw metadata, PM APP) and `document_chunks` (RAG
+vectors, AI Database via `_rag_read_client.rpc('search_document_chunks', ...)`).
+Migration: `supabase/migrations/20260518120000_drop_legacy_documents_table.sql`.
+
 ### Secondary Embedding Table
 
 `conversation_memories.embedding` uses `vector(1536)` with `text-embedding-3-small`. This is the legacy short-term memory table — do not change its dimensions without a matching pgvector index migration. The `EMBEDDING` constants in `tool-utils.ts` are the source of truth.
