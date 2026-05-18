@@ -51,6 +51,7 @@ from src.services.agents.deep_project_intelligence_contracts import (
     DeepExecutiveIntelligenceRequest,
     DeepProjectIntelligenceRequest,
 )
+from src.services.agents.content_builder import ContentBuilderRequest, run_content_builder_agent
 from src.services.agents.research_agent import ResearchRequest, run_research_agent
 
 # Configure logging
@@ -1188,6 +1189,34 @@ async def run_deep_agent_executive_briefing(
         runtime=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "contract_spike"),
         model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.4-mini"),
     )
+    return response.model_dump(by_alias=True)
+
+
+@app.post(
+    "/api/intelligence/content-builder",
+    tags=["Intelligence"],
+    summary="Run Alleato Deep Agents content builder",
+)
+async def run_deep_agent_content_builder(
+    request: ContentBuilderRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Run the standalone content builder with packaged memory, skills, and subagents."""
+    if not _env_flag_enabled("DEEP_AGENTS_CONTENT_BUILDER_ENABLED"):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Deep Agents content builder is disabled. Set "
+                "DEEP_AGENTS_CONTENT_BUILDER_ENABLED=true to run the content builder."
+            ),
+        )
+
+    response = run_content_builder_agent(
+        request,
+        model=os.getenv("DEEP_AGENTS_CONTENT_BUILDER_MODEL", "openai:gpt-5.4-mini"),
+    )
+    if response.mode == "unavailable":
+        raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
     return response.model_dump(by_alias=True)
 
 

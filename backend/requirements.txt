@@ -26,6 +26,8 @@ langchain-community>=0.0.10
 langchain-openai>=0.3.0
 deepagents>=0.6.1
 cohere>=5.0.0
+google-genai>=1.0.0
+pillow>=12.2.0
 
 # Web scraping (for crawl4ai)
 crawl4ai>=0.1.0
