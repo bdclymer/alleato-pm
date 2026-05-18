@@ -185,7 +185,6 @@ async function discoverTablesByProbing(
     "permissions",
     "equipment",
     "vendors",
-    "subcontractors",
     "inspections",
     "permits",
     "specifications",

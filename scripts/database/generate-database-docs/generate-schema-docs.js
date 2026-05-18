@@ -65,7 +65,7 @@ const categories = {
     'notifications', 'emails'
   ],
   'Directory & Contacts': [
-    'clients', 'contacts', 'companies', 'subcontractors',
+    'clients', 'contacts', 'companies',
     'vendors', 'employees', 'users', 'app_users'
   ],
   'AI & Analysis': [

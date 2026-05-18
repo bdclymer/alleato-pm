@@ -107,7 +107,7 @@ const TOOL_TABLES: Record<string, string[]> = {
     "submittal_history",
   ],
   commitments_purchase_orders: ["purchase_orders", "purchase_orders_with_totals", "purchase_order_sov_items"],
-  directory: ["people", "companies", "project_companies", "vendors", "subcontractors"],
+  directory: ["people", "companies", "project_companies", "vendors"],
   "daily-log": ["daily_logs", "daily_log_notes", "daily_log_manpower", "daily_log_equipment"],
   photos: ["photos", "photo_albums", "photo_links", "project_photos"],
   documents: ["documents", "document_metadata", "document_chunks", "files", "attachments"],

@@ -5635,6 +5635,108 @@ export type Database = {
           },
         ]
       }
+      change_event_documents: {
+        Row: {
+          attached_at: string
+          attached_by: string | null
+          change_event_id: string
+          document_metadata_id: string
+          document_type: string | null
+        }
+        Insert: {
+          attached_at?: string
+          attached_by?: string | null
+          change_event_id: string
+          document_metadata_id: string
+          document_type?: string | null
+        }
+        Update: {
+          attached_at?: string
+          attached_by?: string | null
+          change_event_id?: string
+          document_metadata_id?: string
+          document_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_event_documents_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_documents_document_type_fkey"
+            columns: ["document_type"]
+            isOneToOne: false
+            referencedRelation: "document_type_taxonomy"
+            referencedColumns: ["type_key"]
+          },
+        ]
+      }
       change_event_history: {
         Row: {
           change_event_id: string
@@ -13148,7 +13250,6 @@ export type Database = {
           revised_amount: number | null
           start_date: string | null
           status: string | null
-          subcontractor_id: string | null
           title: string
           updated_at: string | null
         }
@@ -13167,7 +13268,6 @@ export type Database = {
           revised_amount?: number | null
           start_date?: string | null
           status?: string | null
-          subcontractor_id?: string | null
           title: string
           updated_at?: string | null
         }
@@ -13186,7 +13286,6 @@ export type Database = {
           revised_amount?: number | null
           start_date?: string | null
           status?: string | null
-          subcontractor_id?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -13238,20 +13337,6 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "financial_contracts_subcontractor_id_fkey"
-            columns: ["subcontractor_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "financial_contracts_subcontractor_id_fkey"
-            columns: ["subcontractor_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractors_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -27018,57 +27103,6 @@ export type Database = {
           },
         ]
       }
-      subcontractor_documents: {
-        Row: {
-          document_name: string
-          document_type: string
-          expiration_date: string | null
-          file_url: string | null
-          id: string
-          is_current: boolean | null
-          subcontractor_id: string | null
-          uploaded_at: string | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          document_name: string
-          document_type: string
-          expiration_date?: string | null
-          file_url?: string | null
-          id?: string
-          is_current?: boolean | null
-          subcontractor_id?: string | null
-          uploaded_at?: string | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          document_name?: string
-          document_type?: string
-          expiration_date?: string | null
-          file_url?: string | null
-          id?: string
-          is_current?: boolean | null
-          subcontractor_id?: string | null
-          uploaded_at?: string | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subcontractor_documents_subcontractor_id_fkey"
-            columns: ["subcontractor_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subcontractor_documents_subcontractor_id_fkey"
-            columns: ["subcontractor_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractors_summary"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       subcontractor_invoice_audit_log: {
         Row: {
           actor_email: string | null
@@ -27459,66 +27493,6 @@ export type Database = {
           },
         ]
       }
-      subcontractor_projects: {
-        Row: {
-          completion_date: string | null
-          created_at: string | null
-          id: string
-          notes: string | null
-          on_budget: boolean | null
-          on_time: boolean | null
-          project_name: string
-          project_rating: number | null
-          project_value: number | null
-          safety_incidents: number | null
-          start_date: string | null
-          subcontractor_id: string | null
-        }
-        Insert: {
-          completion_date?: string | null
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          on_budget?: boolean | null
-          on_time?: boolean | null
-          project_name: string
-          project_rating?: number | null
-          project_value?: number | null
-          safety_incidents?: number | null
-          start_date?: string | null
-          subcontractor_id?: string | null
-        }
-        Update: {
-          completion_date?: string | null
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          on_budget?: boolean | null
-          on_time?: boolean | null
-          project_name?: string
-          project_rating?: number | null
-          project_value?: number | null
-          safety_incidents?: number | null
-          start_date?: string | null
-          subcontractor_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subcontractor_projects_subcontractor_id_fkey"
-            columns: ["subcontractor_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subcontractor_projects_subcontractor_id_fkey"
-            columns: ["subcontractor_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractors_summary"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       subcontractor_sov_items: {
         Row: {
           amount: number
@@ -27688,222 +27662,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      subcontractors: {
-        Row: {
-          address_line_1: string | null
-          address_line_2: string | null
-          alleato_projects_completed: number | null
-          annual_revenue_range: string | null
-          asrs_experience_years: number | null
-          avg_project_rating: number | null
-          background_check_policy: boolean | null
-          bim_capabilities: boolean | null
-          bonding_capacity: number | null
-          cad_software_proficiency: string[] | null
-          city: string | null
-          company_name: string
-          company_type: string | null
-          concurrent_projects_capacity: number | null
-          country: string | null
-          created_at: string | null
-          created_by: string | null
-          credit_rating: string | null
-          dba_name: string | null
-          digital_collaboration_tools: string[] | null
-          drug_testing_program: boolean | null
-          emergency_contact_name: string | null
-          emergency_contact_phone: string | null
-          emergency_contact_relationship: string | null
-          employee_count: number | null
-          fm_global_certified: boolean | null
-          hourly_rates_range: string | null
-          id: string
-          insurance_general_liability: number | null
-          insurance_professional_liability: number | null
-          insurance_workers_comp: boolean | null
-          internal_notes: string | null
-          legal_business_name: string | null
-          license_expiration_date: string | null
-          markup_percentage: number | null
-          master_agreement_date: string | null
-          master_agreement_signed: boolean | null
-          max_project_size: string | null
-          nfpa_certifications: string[] | null
-          on_time_completion_rate: number | null
-          osha_training_current: boolean | null
-          postal_code: string | null
-          preferred_payment_terms: string | null
-          preferred_project_types: string[] | null
-          preferred_vendor: boolean | null
-          primary_contact_email: string | null
-          primary_contact_name: string
-          primary_contact_phone: string | null
-          primary_contact_title: string | null
-          project_management_software: string[] | null
-          quality_certifications: string[] | null
-          safety_incident_rate: number | null
-          secondary_contact_email: string | null
-          secondary_contact_name: string | null
-          secondary_contact_phone: string | null
-          service_areas: string[] | null
-          special_requirements: string | null
-          specialties: string[] | null
-          sprinkler_contractor_license: string | null
-          state_province: string | null
-          status: string | null
-          strengths: string[] | null
-          tax_id: string | null
-          tier_level: string | null
-          travel_radius_miles: number | null
-          updated_at: string | null
-          updated_by: string | null
-          weaknesses: string[] | null
-          years_in_business: number | null
-        }
-        Insert: {
-          address_line_1?: string | null
-          address_line_2?: string | null
-          alleato_projects_completed?: number | null
-          annual_revenue_range?: string | null
-          asrs_experience_years?: number | null
-          avg_project_rating?: number | null
-          background_check_policy?: boolean | null
-          bim_capabilities?: boolean | null
-          bonding_capacity?: number | null
-          cad_software_proficiency?: string[] | null
-          city?: string | null
-          company_name: string
-          company_type?: string | null
-          concurrent_projects_capacity?: number | null
-          country?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          credit_rating?: string | null
-          dba_name?: string | null
-          digital_collaboration_tools?: string[] | null
-          drug_testing_program?: boolean | null
-          emergency_contact_name?: string | null
-          emergency_contact_phone?: string | null
-          emergency_contact_relationship?: string | null
-          employee_count?: number | null
-          fm_global_certified?: boolean | null
-          hourly_rates_range?: string | null
-          id?: string
-          insurance_general_liability?: number | null
-          insurance_professional_liability?: number | null
-          insurance_workers_comp?: boolean | null
-          internal_notes?: string | null
-          legal_business_name?: string | null
-          license_expiration_date?: string | null
-          markup_percentage?: number | null
-          master_agreement_date?: string | null
-          master_agreement_signed?: boolean | null
-          max_project_size?: string | null
-          nfpa_certifications?: string[] | null
-          on_time_completion_rate?: number | null
-          osha_training_current?: boolean | null
-          postal_code?: string | null
-          preferred_payment_terms?: string | null
-          preferred_project_types?: string[] | null
-          preferred_vendor?: boolean | null
-          primary_contact_email?: string | null
-          primary_contact_name: string
-          primary_contact_phone?: string | null
-          primary_contact_title?: string | null
-          project_management_software?: string[] | null
-          quality_certifications?: string[] | null
-          safety_incident_rate?: number | null
-          secondary_contact_email?: string | null
-          secondary_contact_name?: string | null
-          secondary_contact_phone?: string | null
-          service_areas?: string[] | null
-          special_requirements?: string | null
-          specialties?: string[] | null
-          sprinkler_contractor_license?: string | null
-          state_province?: string | null
-          status?: string | null
-          strengths?: string[] | null
-          tax_id?: string | null
-          tier_level?: string | null
-          travel_radius_miles?: number | null
-          updated_at?: string | null
-          updated_by?: string | null
-          weaknesses?: string[] | null
-          years_in_business?: number | null
-        }
-        Update: {
-          address_line_1?: string | null
-          address_line_2?: string | null
-          alleato_projects_completed?: number | null
-          annual_revenue_range?: string | null
-          asrs_experience_years?: number | null
-          avg_project_rating?: number | null
-          background_check_policy?: boolean | null
-          bim_capabilities?: boolean | null
-          bonding_capacity?: number | null
-          cad_software_proficiency?: string[] | null
-          city?: string | null
-          company_name?: string
-          company_type?: string | null
-          concurrent_projects_capacity?: number | null
-          country?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          credit_rating?: string | null
-          dba_name?: string | null
-          digital_collaboration_tools?: string[] | null
-          drug_testing_program?: boolean | null
-          emergency_contact_name?: string | null
-          emergency_contact_phone?: string | null
-          emergency_contact_relationship?: string | null
-          employee_count?: number | null
-          fm_global_certified?: boolean | null
-          hourly_rates_range?: string | null
-          id?: string
-          insurance_general_liability?: number | null
-          insurance_professional_liability?: number | null
-          insurance_workers_comp?: boolean | null
-          internal_notes?: string | null
-          legal_business_name?: string | null
-          license_expiration_date?: string | null
-          markup_percentage?: number | null
-          master_agreement_date?: string | null
-          master_agreement_signed?: boolean | null
-          max_project_size?: string | null
-          nfpa_certifications?: string[] | null
-          on_time_completion_rate?: number | null
-          osha_training_current?: boolean | null
-          postal_code?: string | null
-          preferred_payment_terms?: string | null
-          preferred_project_types?: string[] | null
-          preferred_vendor?: boolean | null
-          primary_contact_email?: string | null
-          primary_contact_name?: string
-          primary_contact_phone?: string | null
-          primary_contact_title?: string | null
-          project_management_software?: string[] | null
-          quality_certifications?: string[] | null
-          safety_incident_rate?: number | null
-          secondary_contact_email?: string | null
-          secondary_contact_name?: string | null
-          secondary_contact_phone?: string | null
-          service_areas?: string[] | null
-          special_requirements?: string | null
-          specialties?: string[] | null
-          sprinkler_contractor_license?: string | null
-          state_province?: string | null
-          status?: string | null
-          strengths?: string[] | null
-          tax_id?: string | null
-          tier_level?: string | null
-          travel_radius_miles?: number | null
-          updated_at?: string | null
-          updated_by?: string | null
-          weaknesses?: string[] | null
-          years_in_business?: number | null
-        }
-        Relationships: []
       }
       subcontracts: {
         Row: {
@@ -33538,24 +33296,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      subcontractors_summary: {
-        Row: {
-          asrs_experience_years: number | null
-          avg_rating: number | null
-          company_name: string | null
-          fm_global_certified: boolean | null
-          id: string | null
-          on_time_percentage: number | null
-          primary_contact_email: string | null
-          primary_contact_name: string | null
-          service_areas: string[] | null
-          specialties: string[] | null
-          status: string | null
-          tier_level: string | null
-          total_projects: number | null
-        }
-        Relationships: []
       }
       subcontracts_with_totals: {
         Row: {

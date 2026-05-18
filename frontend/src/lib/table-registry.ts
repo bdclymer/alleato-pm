@@ -266,20 +266,6 @@ export const TABLE_REGISTRY = {
       imageColumn: "avatar_url",
     },
   },
-  subcontractors: {
-    label: "Subcontractors",
-    description: "Subcontractor companies",
-    primaryKey: "id",
-    defaultSort: { column: "name", direction: "asc" },
-    hiddenColumns: ["updated_at"],
-    searchColumns: ["name", "email", "phone"],
-    viewsEnabled: ["table", "list", "grid"],
-    permissions: { read: true, create: true, update: true, delete: true },
-    display: {
-      titleColumn: "name",
-      subtitleColumns: ["trade", "status"],
-    },
-  },
   subcontracts: {
     label: "Subcontracts",
     description: "Subcontract commitments",

@@ -133,8 +133,8 @@ function generateSchemaTask(features) {
         description: 'Link contracts to vendors and subcontractors',
         subtasks: [
           'Create `vendors` table if not exists',
-          'Create `subcontractors` table if not exists',
-          'Add foreign keys to prime_contracts',
+          'Use `companies` for subcontractor companies',
+          'Add company foreign keys to prime_contracts',
           'Support vendor contact information',
           'Track vendor insurance and certifications'
         ],

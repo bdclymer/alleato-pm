@@ -324,34 +324,6 @@ tables:
       - companies
       - permission_templates
 
-  - name: subcontractors
-    db: MAIN
-    domain: directory
-    owner: unknown
-    status: dead
-    purpose: "Superseded by companies (is_vendor=true) + project_companies. Drop candidate."
-    cleanupPriority: medium
-    relatedTables:
-      - companies
-
-  - name: subcontractor_documents
-    db: MAIN
-    domain: directory
-    owner: unknown
-    status: dead
-    purpose: "Superseded by document_metadata. Drop candidate."
-    cleanupPriority: medium
-    relatedTables: []
-
-  - name: subcontractor_projects
-    db: MAIN
-    domain: directory
-    owner: unknown
-    status: dead
-    purpose: "Superseded by project_companies. Drop candidate."
-    cleanupPriority: medium
-    relatedTables: []
-
   - name: vendor_contacts
     db: MAIN
     domain: directory

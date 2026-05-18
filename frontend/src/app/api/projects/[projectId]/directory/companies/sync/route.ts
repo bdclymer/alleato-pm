@@ -11,9 +11,9 @@ interface RouteParams {
 /**
  * POST /api/projects/[projectId]/directory/companies/sync
  *
- * Scans prime_contracts and financial_contracts for any company_id /
- * subcontractor_id values linked to this project, then upserts those
- * companies into project_companies if they are not already present.
+ * Scans prime_contracts and financial_contracts for any company_id values
+ * linked to this project, then upserts those companies into project_companies
+ * if they are not already present.
  *
  * Returns: { added: number, total: number }
  */
@@ -69,15 +69,14 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       if (row.contract_company_id) companyIds.add(row.contract_company_id);
     }
 
-    // financial_contracts (commitments) → company_id + subcontractor_id
+    // financial_contracts (commitments) -> company_id
     const { data: financialContracts } = await supabase
       .from("financial_contracts")
-      .select("company_id, subcontractor_id")
+      .select("company_id")
       .eq("project_id", projectIdNum);
 
     for (const row of financialContracts ?? []) {
       if (row.company_id) companyIds.add(row.company_id);
-      if (row.subcontractor_id) companyIds.add(row.subcontractor_id);
     }
 
     if (companyIds.size === 0) {
