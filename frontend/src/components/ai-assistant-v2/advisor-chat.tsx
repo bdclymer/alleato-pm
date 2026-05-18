@@ -2,8 +2,10 @@
 
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/client";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -14,8 +16,9 @@ type Message = {
   content?: unknown;
 };
 
-const API_URL =
-  process.env.NEXT_PUBLIC_LANGGRAPH_API_URL ?? "http://127.0.0.1:2024";
+const LANGGRAPH_API_ENV = process.env.NEXT_PUBLIC_LANGGRAPH_API_URL;
+const API_URL = LANGGRAPH_API_ENV ?? "http://127.0.0.1:2024";
+const USES_LOCAL_FALLBACK = !LANGGRAPH_API_ENV;
 const ASSISTANT_ID = "advisor";
 
 function renderContent(content: unknown): string {
@@ -41,6 +44,16 @@ function roleOf(msg: Message): string {
   return msg.type ?? msg.role ?? "assistant";
 }
 
+function violatesPmDataContract(content: unknown): boolean {
+  const text = renderContent(content).toLowerCase();
+  return (
+    text.includes("files mounted") ||
+    text.includes("local file") ||
+    text.includes("this workspace") ||
+    text.includes("workspace files")
+  );
+}
+
 export function AdvisorChat({ projectId }: { projectId?: number }) {
   const [input, setInput] = useState("");
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -64,11 +77,21 @@ export function AdvisorChat({ projectId }: { projectId?: number }) {
   });
 
   const messages: Message[] = stream.messages ?? [];
+  const latestAssistantContractFailure = [...messages]
+    .reverse()
+    .find((msg) => {
+      const role = roleOf(msg);
+      return (
+        role !== "human" &&
+        role !== "user" &&
+        violatesPmDataContract(msg.content)
+      );
+    });
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text || stream.isLoading) return;
+    if (!text || stream.isLoading || USES_LOCAL_FALLBACK) return;
     setInput("");
     stream.submit(
       { messages: [...messages, { type: "human", content: text }] },
@@ -107,6 +130,30 @@ export function AdvisorChat({ projectId }: { projectId?: number }) {
           New thread
         </Button>
       </header>
+
+      {USES_LOCAL_FALLBACK ? (
+        <InfoAlert variant="warning" role="status">
+          V2 is using the local fallback LangGraph server at {API_URL}. It is not
+          the production PM assistant and may be running from a separate local
+          checkout. Use{" "}
+          <Link href="/ai-assistant" className="font-medium underline">
+            AI Assistant
+          </Link>{" "}
+          for live PM answers until this service is explicitly configured.
+        </InfoAlert>
+      ) : null}
+
+      {latestAssistantContractFailure ? (
+        <InfoAlert variant="error" role="alert">
+          This v2 response failed the PM data contract because it answered from a
+          generic workspace/files assumption instead of using Alleato database or
+          source tools. Treat this thread as invalid and use{" "}
+          <Link href="/ai-assistant" className="font-medium underline">
+            AI Assistant
+          </Link>{" "}
+          while the LangGraph service is corrected.
+        </InfoAlert>
+      ) : null}
 
       <div className="flex-1 space-y-4 overflow-y-auto pr-2">
         {messages.length === 0 && (
@@ -147,12 +194,17 @@ export function AdvisorChat({ projectId }: { projectId?: number }) {
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask the advisor…"
+          placeholder={
+            USES_LOCAL_FALLBACK
+              ? "V2 is not configured for live PM answers"
+              : "Ask the advisor..."
+          }
+          disabled={USES_LOCAL_FALLBACK}
           className="flex-1"
         />
         <Button
           type="submit"
-          disabled={stream.isLoading || !input.trim()}
+          disabled={USES_LOCAL_FALLBACK || stream.isLoading || !input.trim()}
         >
           Send
         </Button>
