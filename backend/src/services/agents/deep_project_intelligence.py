@@ -24,6 +24,12 @@ from src.services.agents.deep_project_intelligence_contracts import (
     SourceCoverage,
     ToolTraceItem,
 )
+from src.services.agents.pm_advisor_tools import (
+    portfolio_overview,
+    project_briefing_snapshot,
+    project_budget_summary,
+    project_risk_snapshot,
+)
 
 
 REQUIRED_SOURCE_TYPES = (
@@ -840,12 +846,29 @@ def _run_deep_agents_runtime(
                 for source in sources
             )
 
+        def pm_budget_summary() -> str:
+            """Return PM budget and prime-contract financials for this project."""
+            return project_budget_summary(_store_client(store), request.project_id)
+
+        def pm_briefing_snapshot() -> str:
+            """Return the broad PM briefing snapshot for this project."""
+            return project_briefing_snapshot(_store_client(store), request.project_id)
+
+        def pm_risk_snapshot() -> str:
+            """Return structured risk, overdue, and chase-list context for this project."""
+            return project_risk_snapshot(_store_client(store), request.project_id)
+
         agent = create_agent(
             model=model,
-            tools=[source_coverage],
+            tools=[
+                source_coverage,
+                pm_budget_summary,
+                pm_briefing_snapshot,
+                pm_risk_snapshot,
+            ],
             system_prompt=(
                 "You are an Alleato project intelligence orchestrator. Use the "
-                "provided coverage and evidence as the only factual basis. "
+                "provided coverage, evidence, and PM database tools as the factual basis. "
                 "If sources are missing, say so plainly."
             ),
         )
@@ -894,12 +917,16 @@ def _run_deep_agents_executive_runtime(
                 for source in sources
             )
 
+        def pm_portfolio_overview() -> str:
+            """Return portfolio-level PM context across active projects."""
+            return portfolio_overview(_store_client(store), phase="Current", max_projects=25)
+
         agent = create_agent(
             model=model,
-            tools=[source_coverage],
+            tools=[source_coverage, pm_portfolio_overview],
             system_prompt=(
                 "You are an Alleato executive intelligence orchestrator. Use the "
-                "provided coverage and evidence as the only factual basis. "
+                "provided coverage, evidence, and PM database tools as the factual basis. "
                 "If sources are missing, stale, or failed, say so plainly. "
                 "Never claim an email, invite, task, or project mutation was completed."
             ),
