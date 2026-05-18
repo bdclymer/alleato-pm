@@ -143,6 +143,9 @@ async function main() {
   let endpointMode = null;
   let executiveEndpointState = "not_checked";
   let executiveEndpointMode = null;
+  let researchEndpointState = "not_checked";
+  let researchEndpointMode = null;
+  let researchSourceCount = 0;
   let toolInventory = null;
   if (!adminApiKey) {
     fail("ADMIN_API_KEY is required for the Deep Agents endpoint readiness probe.");
@@ -236,6 +239,37 @@ async function main() {
     } else {
       fail(`Deep Agents executive endpoint probe failed with HTTP ${executiveResponse.status}.`);
     }
+
+    const researchResponse = await fetch(`${backendUrl}/api/intelligence/research`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "x-admin-api-key": adminApiKey,
+      },
+      body: JSON.stringify({
+        userId: "deep-agents-nonprod-readiness",
+        sessionId: "deep-agents-nonprod-readiness-research",
+        question:
+          "In one short paragraph, confirm public web research is available and cite one public source URL.",
+        maxSearches: 1,
+      }),
+    });
+    const researchPayload = await researchResponse.json().catch(() => ({}));
+    researchEndpointMode = researchPayload.mode ?? null;
+    researchSourceCount = Array.isArray(researchPayload.sources) ? researchPayload.sources.length : 0;
+    if (
+      researchResponse.status === 503 &&
+      String(researchPayload.detail ?? "").includes("Deep Agents research is disabled")
+    ) {
+      researchEndpointState = "disabled";
+    } else if (researchResponse.ok && researchEndpointMode === "deep_agents") {
+      researchEndpointState = "deep_agents";
+    } else if (researchResponse.ok) {
+      researchEndpointState = researchEndpointMode ?? "enabled_unknown_mode";
+    } else {
+      fail(`Deep Agents research endpoint probe failed with HTTP ${researchResponse.status}.`);
+    }
   }
 
   if (expectEnabled && endpointState !== "deep_agents") {
@@ -245,6 +279,9 @@ async function main() {
     fail(
       `DEEP_AGENTS_EXPECT_ENABLED=true requires executive endpoint mode deep_agents; found ${executiveEndpointState}.`,
     );
+  }
+  if (expectEnabled && researchEndpointState !== "deep_agents") {
+    fail(`DEEP_AGENTS_EXPECT_ENABLED=true requires research endpoint mode deep_agents; found ${researchEndpointState}.`);
   }
 
   await verifyRenderApiServiceMapping();
@@ -261,6 +298,9 @@ async function main() {
     endpointMode,
     executiveEndpointState,
     executiveEndpointMode,
+    researchEndpointState,
+    researchEndpointMode,
+    researchSourceCount,
     toolInventory,
     expectEnabled,
     expectFrontendBridge,

@@ -1,16 +1,22 @@
 import {
   buildDeepAgentExecutiveEvidenceWidget,
+  buildDeepAgentResearchEvidenceWidget,
   buildDeepAgentSourceEvidenceWidget,
+  fetchDeepAgentResearch,
   fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
   formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentExecutiveBriefingContext,
   formatDeepAgentProjectDirectResponse,
   formatDeepAgentProjectStatusContext,
+  formatDeepAgentResearchDirectResponse,
   shouldUseDeepAgentExecutiveDirectResponse,
   shouldUseDeepAgentExecutiveBridge,
   shouldUseDeepAgentProjectDirectResponse,
   shouldUseDeepAgentProjectStatusBridge,
+  shouldUseDeepAgentResearchBridge,
+  shouldUseDeepAgentResearchDirectResponse,
+  type DeepResearchResponse,
   type DeepExecutiveIntelligenceResponse,
   type DeepProjectIntelligenceResponse,
 } from "../deep-agent-project-status";
@@ -132,6 +138,30 @@ const executivePacket: DeepExecutiveIntelligenceResponse = {
   mode: "deep_agents",
 };
 
+const researchPacket: DeepResearchResponse = {
+  answer:
+    "Public sources show the requirement is current. Use the city source at https://example.com/zoning for the cited detail.",
+  mode: "deep_agents",
+  sources: [
+    {
+      title: "City zoning source",
+      url: "https://example.com/zoning",
+      sourceType: "web",
+    },
+  ],
+  toolTrace: [
+    {
+      agent: "alleato-research-orchestrator",
+      tool: "deepagents_research_runtime",
+      status: "success",
+      durationMs: 42,
+      detail: "Deep Agents research runtime produced an answer.",
+    },
+  ],
+  skillsLoaded: ["web-research", "deep-agents-core"],
+  orchestrator: "alleato-research-orchestrator",
+};
+
 describe("Deep Agents project-status bridge", () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -218,6 +248,22 @@ describe("Deep Agents project-status bridge", () => {
       shouldUseDeepAgentExecutiveBridge({
         intent: "calendar_action",
       }),
+    ).toBe(false);
+  });
+
+  it("enables the research bridge for external research intents", () => {
+    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "true";
+
+    expect(
+      shouldUseDeepAgentResearchBridge({ intent: "external_research" }),
+    ).toBe(true);
+    expect(shouldUseDeepAgentResearchBridge({ intent: "latest_status" })).toBe(
+      false,
+    );
+
+    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "false";
+    expect(
+      shouldUseDeepAgentResearchBridge({ intent: "external_research" }),
     ).toBe(false);
   });
 
@@ -355,6 +401,58 @@ describe("Deep Agents project-status bridge", () => {
     );
   });
 
+  it("allows direct research responses only for successful Deep Agents runtime packets", () => {
+    expect(shouldUseDeepAgentResearchDirectResponse(researchPacket)).toBe(true);
+    expect(
+      shouldUseDeepAgentResearchDirectResponse({
+        ...researchPacket,
+        mode: "unavailable",
+      }),
+    ).toBe(false);
+    expect(
+      shouldUseDeepAgentResearchDirectResponse({
+        ...researchPacket,
+        toolTrace: [
+          {
+            agent: "alleato-research-orchestrator",
+            tool: "deepagents_research_runtime",
+            status: "failed",
+            durationMs: 42,
+            detail: "Runtime failed.",
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it("turns research sources into the existing source evidence widget", () => {
+    const widget = buildDeepAgentResearchEvidenceWidget(researchPacket);
+
+    expect(widget).toMatchObject({
+      type: "source_evidence_drawer",
+      id: "deep-agent-research-evidence",
+      title: "Research sources",
+      sources: [
+        {
+          id: "https://example.com/zoning",
+          title: "City zoning source",
+          sourceType: "knowledge",
+          href: "https://example.com/zoning",
+        },
+      ],
+    });
+  });
+
+  it("keeps uncited research responses source-gap aware", () => {
+    const content = formatDeepAgentResearchDirectResponse({
+      ...researchPacket,
+      sources: [],
+    });
+
+    expect(content).toContain("Public sources show");
+    expect(content).toContain("did not return parsed source URLs");
+  });
+
   it("posts the typed request to the backend Deep Agents endpoint", async () => {
     process.env.BACKEND_URL = "http://127.0.0.1:8000";
     process.env.ADMIN_API_KEY = "admin-test-key";
@@ -419,6 +517,44 @@ describe("Deep Agents project-status bridge", () => {
           sessionId: "session-1",
           question: "What business risks need attention?",
           mode: "business_briefing",
+        }),
+      }),
+    );
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get("X-Admin-Api-Key")).toBe("admin-test-key");
+    expect(headers.get("x-request-id")).toBe("session-1");
+  });
+
+  it("posts the typed request to the backend research endpoint", async () => {
+    process.env.BACKEND_URL = "http://127.0.0.1:8000";
+    process.env.ADMIN_API_KEY = "admin-test-key";
+    const fetchMock = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify(researchPacket), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    global.fetch = fetchMock;
+
+    const response = await fetchDeepAgentResearch({
+      userId: "user-1",
+      sessionId: "session-1",
+      question: "Research current zoning requirements and cite sources.",
+      projectId: 43,
+      maxSearches: 3,
+    });
+
+    expect(response.mode).toBe("deep_agents");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/intelligence/research",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          userId: "user-1",
+          sessionId: "session-1",
+          question: "Research current zoning requirements and cite sources.",
+          projectId: 43,
+          maxSearches: 3,
         }),
       }),
     );

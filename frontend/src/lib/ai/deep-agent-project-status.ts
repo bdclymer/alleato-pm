@@ -13,6 +13,7 @@ import type { AssistantIntent } from "@/lib/ai/intent-router";
 
 const WHERE = "ai-assistant.deep-agent-project-status";
 const EXECUTIVE_WHERE = "ai-assistant.deep-agent-executive-briefing";
+const RESEARCH_WHERE = "ai-assistant.deep-agent-research";
 
 const confidenceSchema = z.enum(["high", "medium", "low"]);
 
@@ -46,6 +47,12 @@ const toolTraceSchema = z.object({
   status: z.enum(["success", "failed", "skipped"]),
   durationMs: z.number(),
   detail: z.string().nullable().optional(),
+});
+
+const researchSourceSchema = z.object({
+  title: z.string(),
+  url: z.string().nullable().optional(),
+  sourceType: z.enum(["web", "alleato", "internal", "unknown"]),
 });
 
 export const deepProjectIntelligenceResponseSchema = z.object({
@@ -101,6 +108,17 @@ export type DeepExecutiveIntelligenceResponse = z.infer<
   typeof deepExecutiveIntelligenceResponseSchema
 >;
 
+export const deepResearchResponseSchema = z.object({
+  answer: z.string(),
+  mode: z.enum(["deep_agents", "unavailable"]),
+  sources: z.array(researchSourceSchema),
+  toolTrace: z.array(toolTraceSchema),
+  skillsLoaded: z.array(z.string()),
+  orchestrator: z.string(),
+});
+
+export type DeepResearchResponse = z.infer<typeof deepResearchResponseSchema>;
+
 export type DeepAgentProjectStatusRequest = {
   userId: string;
   projectId: number;
@@ -113,6 +131,15 @@ export type DeepAgentExecutiveBriefingRequest = {
   userId: string;
   sessionId?: string | null;
   question: string;
+  timeoutMs?: number;
+};
+
+export type DeepAgentResearchRequest = {
+  userId: string;
+  sessionId?: string | null;
+  question: string;
+  projectId?: number | null;
+  maxSearches?: number;
   timeoutMs?: number;
 };
 
@@ -163,6 +190,15 @@ export function shouldUseDeepAgentExecutiveBridge(params: {
     isDeepAgentProjectStatusBridgeEnabled() &&
     typeof projectId !== "number" &&
     DEEP_AGENT_EXECUTIVE_CONTEXT_INTENTS.has(params.intent)
+  );
+}
+
+export function shouldUseDeepAgentResearchBridge(params: {
+  intent: AssistantIntent;
+}): boolean {
+  return (
+    isDeepAgentProjectStatusBridgeEnabled() &&
+    params.intent === "external_research"
   );
 }
 
@@ -274,6 +310,40 @@ export async function fetchDeepAgentExecutiveBriefing(
 
   const json = await response.json();
   return deepExecutiveIntelligenceResponseSchema.parse(json);
+}
+
+export async function fetchDeepAgentResearch(
+  params: DeepAgentResearchRequest,
+): Promise<DeepResearchResponse> {
+  const headers = new Headers({
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Admin-Api-Key": getBackendAdminApiKey(),
+  });
+
+  const response = await fetchWithGuardrails(
+    `${getBackendUrl()}/api/intelligence/research`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        userId: params.userId,
+        sessionId: params.sessionId ?? undefined,
+        question: params.question,
+        projectId: params.projectId ?? undefined,
+        maxSearches: params.maxSearches ?? 5,
+      }),
+      requestId: params.sessionId ?? "deep-agent-research",
+      where: RESEARCH_WHERE,
+      dependency: "backend.deep-agent-research",
+      timeoutMs: params.timeoutMs ?? AI_CALL_POLICY.timeoutMs,
+      retries: 0,
+      backoffMs: AI_CALL_POLICY.backoffMs,
+    },
+  );
+
+  const json = await response.json();
+  return deepResearchResponseSchema.parse(json);
 }
 
 export function formatDeepAgentProjectStatusContext(
@@ -390,6 +460,20 @@ export function shouldUseDeepAgentProjectDirectResponse(
   );
 }
 
+export function shouldUseDeepAgentResearchDirectResponse(
+  packet: DeepResearchResponse,
+): boolean {
+  return (
+    packet.mode === "deep_agents" &&
+    packet.answer.trim().length >= 40 &&
+    packet.toolTrace.some(
+      (item) =>
+        item.tool === "deepagents_research_runtime" &&
+        item.status === "success",
+    )
+  );
+}
+
 export function formatDeepAgentProjectDirectResponse(
   packet: DeepProjectIntelligenceResponse,
 ): string {
@@ -441,6 +525,19 @@ export function formatDeepAgentExecutiveDirectResponse(
     answer,
     "",
     `Source coverage note: ${gapSummary}. I did not use unavailable or stale source categories as factual support.`,
+  ].join("\n");
+}
+
+export function formatDeepAgentResearchDirectResponse(
+  packet: DeepResearchResponse,
+): string {
+  const answer = packet.answer.trim();
+  if (packet.sources.length > 0) return answer;
+
+  return [
+    answer,
+    "",
+    "Source coverage note: the research backend did not return parsed source URLs. Treat uncited claims as lower confidence and ask for sources if you need audit-ready evidence.",
   ].join("\n");
 }
 
@@ -514,5 +611,25 @@ export function buildDeepAgentExecutiveEvidenceWidget(
         confidence: item.confidence,
       }),
     ),
+  };
+}
+
+export function buildDeepAgentResearchEvidenceWidget(
+  packet: DeepResearchResponse,
+): AssistantWidgetPayload | null {
+  if (packet.sources.length === 0) return null;
+
+  return {
+    type: "source_evidence_drawer",
+    id: "deep-agent-research-evidence",
+    title: "Research sources",
+    sources: packet.sources.slice(0, 8).map((source, index) => ({
+      id: source.url ?? `research-source-${index + 1}`,
+      title: source.title,
+      sourceType: "knowledge",
+      href: source.url ?? undefined,
+      snippet: source.sourceType === "web" ? "Public web source" : "Research source",
+      confidence: "medium",
+    })),
   };
 }

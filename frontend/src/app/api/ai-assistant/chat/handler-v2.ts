@@ -19,15 +19,20 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
 import {
   buildDeepAgentExecutiveEvidenceWidget,
+  buildDeepAgentResearchEvidenceWidget,
   buildDeepAgentSourceEvidenceWidget,
   fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
+  fetchDeepAgentResearch,
   formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentProjectDirectResponse,
+  formatDeepAgentResearchDirectResponse,
   shouldUseDeepAgentExecutiveBridge,
   shouldUseDeepAgentExecutiveDirectResponse,
   shouldUseDeepAgentProjectDirectResponse,
   shouldUseDeepAgentProjectStatusBridge,
+  shouldUseDeepAgentResearchBridge,
+  shouldUseDeepAgentResearchDirectResponse,
 } from "@/lib/ai/deep-agent-project-status";
 import {
   createWeeklyMarketingContentWorkflow,
@@ -698,6 +703,149 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           throw new Error(
             `Persisting the user message failed: ${error.message}`,
           );
+        }
+      }
+
+      if (
+        shouldUseDeepAgentResearchBridge({
+          intent: plan.intent,
+        })
+      ) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "backend-deep-agents",
+            message: "Checking Render Deep Agents research",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        try {
+          const packet = await fetchDeepAgentResearch({
+            userId: args.user.id,
+            sessionId: args.sessionId,
+            question: lastUserContent,
+            projectId: args.selectedProjectId ?? null,
+            maxSearches: 5,
+          });
+
+          if (shouldUseDeepAgentResearchDirectResponse(packet)) {
+            const content = formatDeepAgentResearchDirectResponse(packet);
+            const widget = buildDeepAgentResearchEvidenceWidget(packet);
+            const dataParts = widget
+              ? [
+                  {
+                    type: "data-assistant-widget",
+                    id: "assistant-widget-deep-agent-research",
+                    data: { widget },
+                  },
+                ]
+              : [];
+
+            dataParts.forEach((dataPart) => writer.write(dataPart as never));
+            writeTextResponse(writer, "strategist-deep-agent-research", content);
+
+            const { error: assistantError } = await args.supabase
+              .from("chat_history")
+              .insert({
+                session_id: args.sessionId,
+                user_id: args.user.id,
+                role: "assistant",
+                content,
+                metadata: {
+                  architecture: "render-backend-deep-agents-v1",
+                  model: process.env.DEEP_AGENTS_RESEARCH_MODEL ?? null,
+                  provider_path: "render-backend-ai-gateway",
+                  backend_deep_agent: {
+                    endpoint: "research",
+                    mode: packet.mode,
+                    orchestrator: packet.orchestrator,
+                    source_count: packet.sources.length,
+                    skills_loaded: packet.skillsLoaded,
+                  },
+                  retrieval_plan: {
+                    intent: plan.intent,
+                    reason: plan.reason,
+                    responseFormat: plan.responseFormat,
+                    sources: Object.keys(plan.sources),
+                  },
+                  tool_trace: packet.toolTrace.map((trace) => ({
+                    tool: trace.tool,
+                    agent: trace.agent,
+                    status: trace.status,
+                    durationMs: trace.durationMs,
+                    detail: trace.detail,
+                    input: {
+                      message: lastUserContent.slice(0, 240),
+                      selectedProjectId: args.selectedProjectId ?? null,
+                    },
+                    timestamp: new Date().toISOString(),
+                  })),
+                  data_parts: dataParts,
+                } as Json,
+              });
+
+            if (assistantError) {
+              throw new Error(
+                `Persisting the Deep Agents research response failed: ${assistantError.message}`,
+              );
+            }
+
+            const { error: conversationError } = await args.supabase
+              .from("conversations")
+              .update({ last_message_at: new Date().toISOString() })
+              .eq("session_id", args.sessionId)
+              .eq("user_id", args.user.id);
+
+            if (conversationError) {
+              throw new Error(
+                `Updating the Deep Agents research conversation failed: ${conversationError.message}`,
+              );
+            }
+
+            responseAlreadyPersisted = true;
+            writer.write({
+              type: "data-status",
+              id: "strategist-status",
+              data: {
+                stage: "complete",
+                message: "Render Deep Agents research answer returned",
+                status: "success",
+                timestamp: new Date().toISOString(),
+              },
+            } as never);
+            return;
+          }
+
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message:
+                "Render Deep Agents returned research context but not a direct answer; using local synthesis",
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          console.error("[handler-v2] Deep Agents research bridge failed", {
+            message: detail,
+            intent: plan.intent,
+          });
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message: `Render Deep Agents research bridge failed; falling back to local retrieval: ${detail}`,
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
         }
       }
 

@@ -73,6 +73,8 @@ describe("intent router", () => {
       "Branding question: What are the PUD requirements for Carmel, Indiana planned unit developments? Use web search and cite the sources you use.",
       "Search the web for current zoning requirements and cite sources.",
       "Use online sources to find the latest municipal ordinance requirements.",
+      "Research current market competitors for a construction project management AI and cite public sources.",
+      "Look up public vendor requirements for Carmel zoning and summarize the sources.",
     ];
 
     for (const prompt of prompts) {

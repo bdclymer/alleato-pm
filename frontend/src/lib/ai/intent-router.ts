@@ -67,6 +67,8 @@ const EXPLICIT_SOURCE_LOOKUP_PATTERNS = [
 
 const EXTERNAL_RESEARCH_PATTERNS = [
   /\b(web search|search the web|live web|internet|online sources?|external sources?)\b/i,
+  /\b(research|look up|compare|find)\b.{0,80}\b(public|web|online|market|competitors?|vendor|company|requirements?|regulations?|rules?|ordinance|zoning|code)\b/i,
+  /\b(public sources?|web sources?|online sources?)\b.{0,80}\b(say|show|indicate|confirm)\b/i,
   /\b(current|latest|up[- ]?to[- ]?date)\b.{0,80}\b(requirements?|regulations?|rules?|ordinance|zoning|code|market|competitors?)\b/i,
   /\b(PUD|planned unit development|zoning|ordinance|permit requirements?|municipal requirements?)\b/i,
 ];

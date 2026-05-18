@@ -4,6 +4,8 @@ import { z } from "zod";
 import {
   fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
+  type DeepExecutiveIntelligenceResponse,
+  type DeepProjectIntelligenceResponse,
 } from "@/lib/ai/deep-agent-project-status";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -65,7 +67,7 @@ export const POST = withApiGuardrails(WHERE, async ({ request }) => {
   const projectId =
     body.projectId ?? (await resolveProjectIdFromQuestion(question));
 
-  let packet: Awaited<ReturnType<typeof fetchDeepAgentProjectStatus>>;
+  let packet: DeepProjectIntelligenceResponse | DeepExecutiveIntelligenceResponse;
   try {
     packet =
       typeof projectId === "number"
