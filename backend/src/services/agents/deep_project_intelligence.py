@@ -830,6 +830,7 @@ def _run_deep_agents_runtime(
     sources: Sequence[SourceCoverage],
     evidence: Sequence[EvidenceItem],
     *,
+    store: Any,
     create_agent: Optional[Callable[..., Any]] = None,
     model: str = "openai:gpt-5.4-mini",
 ) -> tuple[Optional[str], ToolTraceItem]:
@@ -901,6 +902,7 @@ def _run_deep_agents_executive_runtime(
     sources: Sequence[SourceCoverage],
     evidence: Sequence[EvidenceItem],
     *,
+    store: Any,
     create_agent: Optional[Callable[..., Any]] = None,
     model: str = "openai:gpt-5.4-mini",
 ) -> tuple[Optional[str], ToolTraceItem]:
@@ -1025,6 +1027,7 @@ def build_project_status_contract_spike(
             project,
             sources,
             evidence,
+            store=store,
             create_agent=create_agent,
             model=model,
         )
@@ -1096,6 +1099,7 @@ def build_executive_briefing_contract_spike(
             organization,
             sources,
             evidence,
+            store=store,
             create_agent=create_agent,
             model=model,
         )
