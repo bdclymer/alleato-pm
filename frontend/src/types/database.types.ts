@@ -4026,82 +4026,6 @@ export type Database = {
           },
         ]
       }
-      attachments: {
-        Row: {
-          attached_to_id: string | null
-          attached_to_table: string | null
-          file_name: string | null
-          id: string
-          project_id: number | null
-          uploaded_at: string | null
-          uploaded_by: string | null
-          url: string | null
-        }
-        Insert: {
-          attached_to_id?: string | null
-          attached_to_table?: string | null
-          file_name?: string | null
-          id?: string
-          project_id?: number | null
-          uploaded_at?: string | null
-          uploaded_by?: string | null
-          url?: string | null
-        }
-        Update: {
-          attached_to_id?: string | null
-          attached_to_table?: string | null
-          file_name?: string | null
-          id?: string
-          project_id?: number | null
-          uploaded_at?: string | null
-          uploaded_by?: string | null
-          url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "attachments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "attachments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attachments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "attachments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attachments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attachments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       billing_invitations: {
         Row: {
           billing_period_id: string | null
@@ -5494,54 +5418,6 @@ export type Database = {
           },
         ]
       }
-      cco_attachments: {
-        Row: {
-          cco_id: string
-          file_name: string
-          file_path: string
-          file_size: number
-          id: string
-          mime_type: string
-          uploaded_at: string
-          uploaded_by: string | null
-        }
-        Insert: {
-          cco_id: string
-          file_name: string
-          file_path: string
-          file_size: number
-          id?: string
-          mime_type: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Update: {
-          cco_id?: string
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          id?: string
-          mime_type?: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cco_attachments_cco_id_fkey"
-            columns: ["cco_id"]
-            isOneToOne: false
-            referencedRelation: "commitment_change_orders_with_scope"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cco_attachments_cco_id_fkey"
-            columns: ["cco_id"]
-            isOneToOne: false
-            referencedRelation: "contract_change_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       change_event_approvals: {
         Row: {
           approval_status: string
@@ -5580,54 +5456,6 @@ export type Database = {
           },
           {
             foreignKeyName: "change_event_approvals_change_event_id_fkey"
-            columns: ["change_event_id"]
-            isOneToOne: false
-            referencedRelation: "change_events_summary"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      change_event_attachments: {
-        Row: {
-          change_event_id: string
-          file_name: string
-          file_path: string
-          file_size: number
-          id: string
-          mime_type: string
-          uploaded_at: string
-          uploaded_by: string | null
-        }
-        Insert: {
-          change_event_id: string
-          file_name: string
-          file_path: string
-          file_size: number
-          id?: string
-          mime_type: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Update: {
-          change_event_id?: string
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          id?: string
-          mime_type?: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "change_event_attachments_change_event_id_fkey"
-            columns: ["change_event_id"]
-            isOneToOne: false
-            referencedRelation: "change_events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "change_event_attachments_change_event_id_fkey"
             columns: ["change_event_id"]
             isOneToOne: false
             referencedRelation: "change_events_summary"
@@ -15492,57 +15320,6 @@ export type Database = {
           },
         ]
       }
-      invoice_attachments: {
-        Row: {
-          created_at: string
-          file_name: string
-          file_path: string
-          file_size: number | null
-          id: number
-          mime_type: string | null
-          owner_invoice_id: number | null
-          subcontractor_invoice_id: number | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          created_at?: string
-          file_name: string
-          file_path: string
-          file_size?: number | null
-          id?: number
-          mime_type?: string | null
-          owner_invoice_id?: number | null
-          subcontractor_invoice_id?: number | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          created_at?: string
-          file_name?: string
-          file_path?: string
-          file_size?: number | null
-          id?: number
-          mime_type?: string | null
-          owner_invoice_id?: number | null
-          subcontractor_invoice_id?: number | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoice_attachments_owner_invoice_id_fkey"
-            columns: ["owner_invoice_id"]
-            isOneToOne: false
-            referencedRelation: "owner_invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoice_attachments_subcontractor_invoice_id_fkey"
-            columns: ["subcontractor_invoice_id"]
-            isOneToOne: false
-            referencedRelation: "subcontractor_invoices"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       invoice_payments: {
         Row: {
           amount: number
@@ -18433,47 +18210,6 @@ export type Database = {
           },
         ]
       }
-      pcco_attachments: {
-        Row: {
-          file_name: string
-          file_path: string
-          file_size: number
-          id: string
-          mime_type: string
-          pcco_id: number
-          uploaded_at: string
-          uploaded_by: string | null
-        }
-        Insert: {
-          file_name: string
-          file_path: string
-          file_size: number
-          id?: string
-          mime_type: string
-          pcco_id: number
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Update: {
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          id?: string
-          mime_type?: string
-          pcco_id?: number
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pcco_attachments_pcco_id_fkey"
-            columns: ["pcco_id"]
-            isOneToOne: false
-            referencedRelation: "prime_contract_change_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pcco_line_items: {
         Row: {
           cost_code: string | null
@@ -20046,47 +19782,6 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      prime_contract_pco_attachments: {
-        Row: {
-          file_name: string
-          file_path: string
-          file_size: number
-          id: string
-          mime_type: string
-          pco_id: string
-          uploaded_at: string
-          uploaded_by: string | null
-        }
-        Insert: {
-          file_name: string
-          file_path: string
-          file_size: number
-          id?: string
-          mime_type: string
-          pco_id: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Update: {
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          id?: string
-          mime_type?: string
-          pco_id?: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prime_contract_pco_attachments_pco_id_fkey"
-            columns: ["pco_id"]
-            isOneToOne: false
-            referencedRelation: "prime_contract_pcos"
             referencedColumns: ["id"]
           },
         ]
@@ -24244,57 +23939,6 @@ export type Database = {
           },
         ]
       }
-      purchase_order_attachments: {
-        Row: {
-          created_at: string | null
-          file_name: string
-          file_size: number | null
-          file_type: string | null
-          id: string
-          purchase_order_id: string
-          storage_path: string
-          updated_at: string | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          file_name: string
-          file_size?: number | null
-          file_type?: string | null
-          id?: string
-          purchase_order_id: string
-          storage_path: string
-          updated_at?: string | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          file_name?: string
-          file_size?: number | null
-          file_type?: string | null
-          id?: string
-          purchase_order_id?: string
-          storage_path?: string
-          updated_at?: string | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "purchase_order_attachments_purchase_order_id_fkey"
-            columns: ["purchase_order_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "purchase_order_attachments_purchase_order_id_fkey"
-            columns: ["purchase_order_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_orders_with_totals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       purchase_order_documents: {
         Row: {
           attached_at: string
@@ -27173,54 +26817,6 @@ export type Database = {
           },
         ]
       }
-      subcontract_attachments: {
-        Row: {
-          file_name: string
-          file_size: number | null
-          file_type: string | null
-          id: string
-          storage_path: string
-          subcontract_id: string
-          uploaded_at: string | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          file_name: string
-          file_size?: number | null
-          file_type?: string | null
-          id?: string
-          storage_path: string
-          subcontract_id: string
-          uploaded_at?: string | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          file_name?: string
-          file_size?: number | null
-          file_type?: string | null
-          id?: string
-          storage_path?: string
-          subcontract_id?: string
-          uploaded_at?: string | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subcontract_attachments_subcontract_id_fkey"
-            columns: ["subcontract_id"]
-            isOneToOne: false
-            referencedRelation: "subcontracts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subcontract_attachments_subcontract_id_fkey"
-            columns: ["subcontract_id"]
-            isOneToOne: false
-            referencedRelation: "subcontracts_with_totals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       subcontract_documents: {
         Row: {
           attached_at: string
@@ -28282,70 +27878,6 @@ export type Database = {
           },
           {
             foreignKeyName: "submittal_analytics_events_submittal_id_fkey"
-            columns: ["submittal_id"]
-            isOneToOne: false
-            referencedRelation: "submittals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      submittal_attachments: {
-        Row: {
-          content_type: string | null
-          created_at: string | null
-          distribution_id: string | null
-          file_name: string
-          file_size: number | null
-          file_url: string
-          id: string
-          is_current: boolean | null
-          response_id: string | null
-          submittal_id: string | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          content_type?: string | null
-          created_at?: string | null
-          distribution_id?: string | null
-          file_name: string
-          file_size?: number | null
-          file_url: string
-          id?: string
-          is_current?: boolean | null
-          response_id?: string | null
-          submittal_id?: string | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          content_type?: string | null
-          created_at?: string | null
-          distribution_id?: string | null
-          file_name?: string
-          file_size?: number | null
-          file_url?: string
-          id?: string
-          is_current?: boolean | null
-          response_id?: string | null
-          submittal_id?: string | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "submittal_attachments_distribution_id_fkey"
-            columns: ["distribution_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_distributions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "submittal_attachments_response_id_fkey"
-            columns: ["response_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_responses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "submittal_attachments_submittal_id_fkey"
             columns: ["submittal_id"]
             isOneToOne: false
             referencedRelation: "submittals"

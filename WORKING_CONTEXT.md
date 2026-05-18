@@ -7,7 +7,7 @@
 
 ## Current focus
 
-**Status:** Pattern C attachment consolidation — batch 2 shipped, browser-verified, and form audit guardrailed; legacy table drop remains.
+**Status:** Pattern C attachment consolidation closed out; legacy PURT/entity attachment tables dropped after Pattern C reconciliation.
 **Last updated:** 2026-05-18
 **Last worked on by:** Codex (Pattern C attachment migration — batch 2)
 
@@ -63,10 +63,16 @@ Codex used `.codex/skills/pattern-c-attachment-migration/SKILL.md` to continue t
   - `npm run check:routes`
   - targeted `npx eslint ...` on touched files (0 errors; pre-existing design-system warnings only)
   - `cd frontend && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false`
-
-**Still pending before closeout:**
-- Recreate `commitments_schema_gaps` without legacy attachment table dependency before dropping legacy tables.
-- Drop the legacy attachment tables only after final live reconciliation:
+- Closeout migration `supabase/migrations/20260524030000_drop_legacy_pattern_c_attachment_tables.sql` applied and ledger-verified.
+- Live reconciliation before drop:
+  - `attachments`: 29 rows total; 15 entity-scoped rows already linked to Pattern C; 14 orphan rows preserved as project-level `document_metadata` + `project_documents_v2` links.
+  - `change_event_attachments`: 2/2 linked to `change_event_documents`.
+  - `submittal_attachments`: 1/1 linked to `submittal_doc_links`.
+  - Remaining legacy tables were empty.
+- Rebuilt legacy-dependent summaries before drop:
+  - `change_events_summary` materialized view now counts `change_event_documents`.
+  - `subcontracts_with_totals` view now counts `subcontract_documents`.
+- Dropped 9 legacy tables with `RESTRICT`:
   - `cco_attachments`
   - `pcco_attachments`
   - `prime_contract_pco_attachments`
@@ -76,6 +82,22 @@ Codex used `.codex/skills/pattern-c-attachment-migration/SKILL.md` to continue t
   - `subcontract_attachments`
   - `purchase_order_attachments`
   - `attachments`
+- Post-drop evidence:
+  - `legacy_table_remaining|0`
+  - `orphan_docs|14`
+  - `orphan_project_links|14`
+  - `change_events_summary_count|24`
+  - `subcontracts_with_totals_count|400`
+- Regenerated `frontend/src/types/database.types.ts`, `docs/architecture/TABLE-LIST.md`, and `frontend/src/components/dev-tools/db-inventory.generated.ts`; removed stale dropped-table entries from `docs/architecture/tables.yaml`.
+- Post-drop verification passed:
+  - `npm run db:migrations:verify-applied -- supabase/migrations/20260524030000_drop_legacy_pattern_c_attachment_tables.sql`
+  - `npm run db:inventory -- --check-only`
+  - `node scripts/audit-pattern-c-attachments.mjs`
+  - `cd frontend && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false`
+
+**Still pending after closeout:**
+- None for Pattern C PURT/entity attachment consolidation.
+- Optional future cleanup: update stale historical architecture/PRP prose that still references old attachment tables as past implementation details; leave migration files alone.
 
 ## Pattern C attachment migration system pass (2026-05-18)
 

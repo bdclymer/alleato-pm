@@ -1115,14 +1115,6 @@ tables:
     purpose: "Dormant prime contract PCO table."
     relatedTables: []
 
-  - name: prime_contract_pco_attachments
-    db: MAIN
-    domain: financial
-    owner: unknown
-    status: dormant
-    purpose: "Dormant prime contract PCO attachments."
-    relatedTables: []
-
   - name: prime_contract_sovs
     db: MAIN
     domain: financial
@@ -1139,28 +1131,12 @@ tables:
     purpose: "Dormant prime contract pay applications."
     relatedTables: []
 
-  - name: pcco_attachments
-    db: MAIN
-    domain: financial
-    owner: unknown
-    status: dormant
-    purpose: "Dormant PCCO attachments."
-    relatedTables: []
-
   - name: pcco_line_items
     db: MAIN
     domain: financial
     owner: unknown
     status: dormant
     purpose: "Dormant PCCO line items."
-    relatedTables: []
-
-  - name: cco_attachments
-    db: MAIN
-    domain: financial
-    owner: unknown
-    status: dormant
-    purpose: "Dormant CCO attachments."
     relatedTables: []
 
   - name: contract_billing_periods
@@ -1251,14 +1227,6 @@ tables:
     owner: unknown
     status: dormant
     purpose: "Dormant change event approval workflow."
-    relatedTables: []
-
-  - name: change_event_attachments
-    db: MAIN
-    domain: financial
-    owner: core
-    status: live-empty
-    purpose: "Writers exist for change event attachments but table never populated."
     relatedTables: []
 
   - name: change_event_documents
@@ -1376,14 +1344,6 @@ tables:
     purpose: "SOV items for purchase orders. 198 rows."
     relatedTables:
       - purchase_orders
-
-  - name: purchase_order_attachments
-    db: MAIN
-    domain: financial
-    owner: unknown
-    status: dormant
-    purpose: "Dormant PO attachments."
-    relatedTables: []
 
   # ─── Owner invoicing ─────────────────────────────────────
 
@@ -1543,14 +1503,6 @@ tables:
     relatedTables:
       - forecasting
 
-  - name: invoice_attachments
-    db: MAIN
-    domain: financial
-    owner: unknown
-    status: dormant
-    purpose: "Dormant invoice attachments."
-    relatedTables: []
-
   - name: invoice_payments
     db: MAIN
     domain: financial
@@ -1597,14 +1549,6 @@ tables:
     owner: unknown
     status: dormant
     purpose: "Dormant sub-job tracking."
-    relatedTables: []
-
-  - name: subcontract_attachments
-    db: MAIN
-    domain: financial
-    owner: unknown
-    status: dormant
-    purpose: "Dormant subcontract attachments."
     relatedTables: []
 
   - name: subcontractor_invoice_emails
@@ -2012,14 +1956,6 @@ tables:
     purpose: "Project-setup wizard file index. 2 rows. Parallel to legacy documents table. Storage buckets: drawings, specifications, schedules."
     relatedTables:
       - documents
-
-  - name: attachments
-    db: MAIN
-    domain: documents
-    owner: core
-    status: live-empty
-    purpose: "Generic attachments table. Routes fully wired but zero data."
-    relatedTables: []
 
   - name: photos
     db: MAIN
@@ -3565,15 +3501,6 @@ tables:
     relatedTables:
       - specification_section_revisions
       - specification_sections
-
-  - name: submittal_attachments
-    db: MAIN
-    domain: workflow
-    owner: unknown
-    status: dormant
-    purpose: "Dormant submittal attachment records."
-    relatedTables:
-      - submittals
 
   - name: submittal_distribution_recipients
     db: MAIN
