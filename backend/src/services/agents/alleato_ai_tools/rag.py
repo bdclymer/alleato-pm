@@ -22,7 +22,7 @@ from functools import lru_cache
 from typing import Any
 
 from langchain_core.tools import tool
-from langchain_openai import OpenAIEmbeddings
+from openai import OpenAI
 
 from src.services.supabase_helpers import get_rag_read_client
 from ._retry import with_db_retry
@@ -53,19 +53,23 @@ MEETING_SOURCE_TYPES = [
 
 
 @lru_cache(maxsize=1)
-def _embedder() -> OpenAIEmbeddings:
+def _openai_client() -> OpenAI:
     gateway_key = os.environ.get("AI_GATEWAY_API_KEY")
     if gateway_key:
-        return OpenAIEmbeddings(
-            model=_EMBEDDING_MODEL,
+        return OpenAI(
             api_key=gateway_key,
             base_url="https://ai-gateway.vercel.sh/v1",
         )
-    return OpenAIEmbeddings(model=_EMBEDDING_MODEL)
+    return OpenAI()
 
 
 def _embed_query(query: str) -> str:
-    vec = _embedder().embed_query(query)
+    response = _openai_client().embeddings.create(
+        model=_EMBEDDING_MODEL,
+        input=query[:8000],
+        dimensions=3072,
+    )
+    vec = response.data[0].embedding
     return json.dumps([float(x) for x in vec])
 
 

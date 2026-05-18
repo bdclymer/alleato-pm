@@ -118,12 +118,14 @@ def _openai_client() -> Any:
 def _score_batch_openai(query: str, docs: list[str]) -> list[float]:
     passages = "\n\n".join(f"[{i + 1}] {d}" for i, d in enumerate(docs))
     prompt = _OPENAI_PROMPT.format(query=query, passages=passages)
-    resp = _openai_client().chat.completions.create(
-        model=_OPENAI_RERANK_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        response_format={"type": "json_object"},
-    )
+    kwargs: dict[str, Any] = {
+        "model": _OPENAI_RERANK_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.0,
+    }
+    if not os.environ.get("AI_GATEWAY_API_KEY"):
+        kwargs["response_format"] = {"type": "json_object"}
+    resp = _openai_client().chat.completions.create(**kwargs)
     content = (resp.choices[0].message.content or "").strip()
     try:
         scores = json.loads(content)["scores"]
