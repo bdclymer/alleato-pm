@@ -323,10 +323,6 @@ function BudgetPageContent() {
   };
 
   const handleModificationClick = () => {
-    if (isLocked) {
-      toast.error("Budget is locked. Unlock to create modifications.");
-      return;
-    }
     setShowModificationModal(true);
   };
 

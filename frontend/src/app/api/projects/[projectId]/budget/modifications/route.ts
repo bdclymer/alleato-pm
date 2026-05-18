@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
+import type { Database } from "@/types/database.types";
 
 // Valid status transitions for the modification workflow
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -250,6 +251,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       approver: body.approver,
       modificationType: body.modificationType ?? body.modification_type,
       changeEventId: body.changeEventId ?? body.change_event_id,
+      transferLines: body.transferLines ?? body.transfer_lines,
     });
 
     if (!parsedPayload.success) {
@@ -262,11 +264,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    const { budgetItemId, amount, title, description, reason, modificationType, changeEventId } =
+    const { budgetItemId, amount, title, description, reason, modificationType, changeEventId, transferLines } =
       parsedPayload.data;
 
-    const parsedAmount = amount ? parseFloat(amount) : 0;
-    if (parsedAmount === 0 || Number.isNaN(parsedAmount)) {
+    const parsedAmount = amount ? Number.parseFloat(amount) : 0;
+    if (!transferLines?.length && (parsedAmount === 0 || Number.isNaN(parsedAmount))) {
       return NextResponse.json(
         { error: "Amount must be a non-zero number" },
         { status: 400 },
@@ -287,34 +289,48 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Verify budget line belongs to this project and get its details
-    const { data: budgetLine, error: lineError } = await supabase
+type BudgetLineForModification = {
+      id: string;
+      project_id: number;
+      cost_code_id: string;
+      cost_type_id: string;
+      sub_job_id: string | null;
+      original_amount: number | null;
+    };
+    type BudgetModLineInsert =
+      Database["public"]["Tables"]["budget_mod_lines"]["Insert"];
+
+    const transferLineIds = transferLines?.flatMap((line) => [
+      line.fromBudgetLineId,
+      line.toBudgetLineId,
+    ]) ?? [];
+    const budgetLineIds = Array.from(
+      new Set(transferLineIds.length ? transferLineIds : budgetItemId ? [budgetItemId] : []),
+    );
+
+    const { data: budgetLines, error: lineError } = await supabase
       .from("budget_lines")
       .select(
         "id, project_id, cost_code_id, cost_type_id, sub_job_id, original_amount",
       )
-      .eq("id", budgetItemId)
       .eq("project_id", projectIdNum)
-      .single();
+      .in("id", budgetLineIds);
 
-    if (lineError || !budgetLine) {
-      return NextResponse.json(
-        { error: "Budget line not found in this project" },
-        { status: 404 },
-      );
+    if (lineError) {
+      return apiErrorResponse(lineError);
     }
 
-    // Check if project budget is locked
-    const { data: project } = await supabase
-      .from("projects")
-      .select("budget_locked")
-      .eq("id", projectIdNum)
-      .single();
+    const budgetLinesById = new Map(
+      ((budgetLines ?? []) as BudgetLineForModification[]).map((line) => [
+        line.id,
+        line,
+      ]),
+    );
 
-    if (project?.budget_locked) {
+    if (budgetLinesById.size !== budgetLineIds.length) {
       return NextResponse.json(
-        { error: "Budget is locked. Unlock the budget to make modifications." },
-        { status: 403 },
+        { error: "One or more budget lines were not found in this project" },
+        { status: 404 },
       );
     }
 
@@ -335,14 +351,21 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       }
     }
 
-    // Create the parent budget_modifications record
+    const transferDescription =
+      transferLines
+        ?.map((line) => line.notes)
+        .find((note): note is string => Boolean(note))
+        ?? description
+        ?? reason
+        ?? null;
+
     const { data: modification, error: modError } = await supabase
       .from("budget_modifications")
       .insert({
         project_id: projectIdNum,
         number: nextNumber,
-        title: title || `Budget Modification ${nextNumber}`,
-        reason: reason || description || null,
+        title: title || (transferLines?.length ? `Budget Transfer ${nextNumber}` : `Budget Modification ${nextNumber}`),
+        reason: reason || transferDescription,
         status: "draft",
         effective_date: null,
         created_by: user.id,
@@ -360,20 +383,60 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Create the budget_mod_lines record linking modification to cost code
+    const modificationLineRows: BudgetModLineInsert[] = transferLines?.length
+      ? transferLines.flatMap((line) => {
+          const fromLine = budgetLinesById.get(line.fromBudgetLineId);
+          const toLine = budgetLinesById.get(line.toBudgetLineId);
+          const transferAmount = Math.abs(Number.parseFloat(line.amount));
+
+          if (!fromLine || !toLine) return [];
+
+          return [
+            {
+              budget_modification_id: modification.id,
+              project_id: projectIdNum,
+              cost_code_id: fromLine.cost_code_id,
+              cost_type_id: fromLine.cost_type_id,
+              sub_job_id: fromLine.sub_job_id,
+              amount: -transferAmount,
+              description: line.notes ?? null,
+              modification_type: "deduction",
+              change_event_id: changeEventId ?? null,
+            },
+            {
+              budget_modification_id: modification.id,
+              project_id: projectIdNum,
+              cost_code_id: toLine.cost_code_id,
+              cost_type_id: toLine.cost_type_id,
+              sub_job_id: toLine.sub_job_id,
+              amount: transferAmount,
+              description: line.notes ?? null,
+              modification_type: "addition",
+              change_event_id: changeEventId ?? null,
+            },
+          ];
+        })
+      : (() => {
+          const budgetLine = budgetItemId ? budgetLinesById.get(budgetItemId) : null;
+          if (!budgetLine) return [];
+          return [
+            {
+              budget_modification_id: modification.id,
+              project_id: projectIdNum,
+              cost_code_id: budgetLine.cost_code_id,
+              cost_type_id: budgetLine.cost_type_id,
+              sub_job_id: budgetLine.sub_job_id,
+              amount: parsedAmount,
+              description: description || null,
+              modification_type: modificationType ?? "addition",
+              change_event_id: changeEventId ?? null,
+            },
+          ];
+        })();
+
     const { error: lineInsertError } = await supabase
       .from("budget_mod_lines")
-      .insert({
-        budget_modification_id: modification.id,
-        project_id: projectIdNum,
-        cost_code_id: budgetLine.cost_code_id,
-        cost_type_id: budgetLine.cost_type_id,
-        sub_job_id: budgetLine.sub_job_id,
-        amount: parsedAmount,
-        description: description || null,
-        modification_type: modificationType ?? null,
-        change_event_id: changeEventId ?? null,
-      });
+      .insert(modificationLineRows);
 
     if (lineInsertError) {
       // Clean up the parent modification if line insert fails
@@ -397,7 +460,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         number: modification.number,
         title: modification.title,
         status: modification.status,
-        amount: parsedAmount,
+        amount: transferLines?.length
+          ? transferLines.reduce((sum, line) => sum + Math.abs(Number.parseFloat(line.amount)), 0)
+          : parsedAmount,
         createdAt: modification.created_at,
       },
       message: "Budget modification created as draft",

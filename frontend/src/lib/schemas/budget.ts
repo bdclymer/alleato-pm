@@ -33,16 +33,55 @@ export const BudgetLineItemsPayloadSchema = z.object({
     .min(1, "At least one line item is required"),
 });
 
-export const BudgetModificationPayloadSchema = z.object({
-  budgetItemId: z.string().uuid("budgetItemId must be a valid UUID"),
+const BudgetModificationTransferLineSchema = z.object({
+  fromBudgetLineId: z.string().uuid("fromBudgetLineId must be a valid UUID"),
+  toBudgetLineId: z.string().uuid("toBudgetLineId must be a valid UUID"),
   amount: amountString,
-  title: optionalString,
-  description: optionalString,
-  reason: optionalString,
-  approver: optionalString,
-  modificationType: z.enum(["addition", "deduction"]).optional().nullable(),
-  changeEventId: z.string().uuid().optional().nullable(),
+  notes: optionalString,
 });
+
+export const BudgetModificationPayloadSchema = z
+  .object({
+    budgetItemId: z.string().uuid("budgetItemId must be a valid UUID").optional(),
+    amount: amountString.optional(),
+    title: optionalString,
+    description: optionalString,
+    reason: optionalString,
+    approver: optionalString,
+    modificationType: z.enum(["addition", "deduction"]).optional().nullable(),
+    changeEventId: z.string().uuid().optional().nullable(),
+    transferLines: z.array(BudgetModificationTransferLineSchema).min(1).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.transferLines?.length) {
+      for (const [index, line] of value.transferLines.entries()) {
+        if (line.fromBudgetLineId === line.toBudgetLineId) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "From and To budget line items must be different",
+            path: ["transferLines", index, "toBudgetLineId"],
+          });
+        }
+      }
+      return;
+    }
+
+    if (!value.budgetItemId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "budgetItemId is required",
+        path: ["budgetItemId"],
+      });
+    }
+
+    if (!value.amount) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "amount is required",
+        path: ["amount"],
+      });
+    }
+  });
 
 // Schema for modification status actions (submit, approve, reject, void)
 export const BudgetModificationActionSchema = z.object({

@@ -142,28 +142,33 @@ export function BudgetPageHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onCreateClick}>
-              <FilePlus className="w-4 h-4 mr-2" />
-              Budget Line Item
-            </DropdownMenuItem>
+            {isLocked ? (
+              <DropdownMenuItem onClick={onModificationClick}>
+                <FileEdit className="w-4 h-4 mr-2" />
+                Add Budget Modification
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={onCreateClick}>
+                <FilePlus className="w-4 h-4 mr-2" />
+                Budget Line Item
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={onCreateSnapshot}>
               <Camera className="w-4 h-4 mr-2" />
               Snapshot
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onImport}>
-              <Upload className="w-4 h-4 mr-2" />
-              Import from File
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onImportFromContract}>
-              <FileSearch className="w-4 h-4 mr-2" />
-              Import from Prime Contract SOV
-            </DropdownMenuItem>
-            {isLocked && (
-              <DropdownMenuItem onClick={onModificationClick}>
-                <FileEdit className="w-4 h-4 mr-2" />
-                Budget Modification
-              </DropdownMenuItem>
+            {!isLocked && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onImport}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import from File
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onImportFromContract}>
+                  <FileSearch className="w-4 h-4 mr-2" />
+                  Import from Prime Contract SOV
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -252,28 +257,33 @@ export function BudgetPageHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onCreateClick}>
-              <FilePlus className="w-4 h-4 mr-2" />
-              Budget Line Item
-            </DropdownMenuItem>
+            {isLocked ? (
+              <DropdownMenuItem onClick={onModificationClick}>
+                <FileEdit className="w-4 h-4 mr-2" />
+                Add Budget Modification
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={onCreateClick}>
+                <FilePlus className="w-4 h-4 mr-2" />
+                Budget Line Item
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={onCreateSnapshot}>
               <Camera className="w-4 h-4 mr-2" />
               Snapshot
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onImport}>
-              <Upload className="w-4 h-4 mr-2" />
-              Import from File
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onImportFromContract}>
-              <FileSearch className="w-4 h-4 mr-2" />
-              Import from Prime Contract SOV
-            </DropdownMenuItem>
-            {isLocked && (
-              <DropdownMenuItem onClick={onModificationClick}>
-                <FileEdit className="w-4 h-4 mr-2" />
-                Budget Modification
-              </DropdownMenuItem>
+            {!isLocked && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onImport}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import from File
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onImportFromContract}>
+                  <FileSearch className="w-4 h-4 mr-2" />
+                  Import from Prime Contract SOV
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -420,7 +430,9 @@ export function BudgetPageHeader({
                       <li>
                         Changes can only be made through approved change orders
                       </li>
-                      <li>Budget modifications require unlock permission</li>
+                      <li>
+                        Budget changes must be made through budget modifications
+                      </li>
                     </ul>
                   </div>
                 </div>
