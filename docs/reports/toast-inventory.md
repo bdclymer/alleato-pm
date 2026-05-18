@@ -1,23 +1,23 @@
 # Toast Surface Inventory
 
-Generated: 2026-05-18T19:58:47.634Z
+Generated: 2026-05-18T21:08:10.046Z
 Mode: `all`
-Scanned files: 3068
+Scanned files: 3061
 
 ## Summary
 
-- Toast calls found: 1574
-- Files with toast calls: 292
-- Direct `sonner` toast imports: 283
-- Flagged toast calls: 1090
+- Toast calls found: 1543
+- Files with toast calls: 291
+- Direct `sonner` toast imports: 261
+- Flagged toast calls: 1063
 
 ## Calls By Type
 
 | Type | Count |
 | --- | --- |
-| error | 884 |
-| success | 616 |
-| info | 40 |
+| error | 859 |
+| success | 613 |
+| info | 37 |
 | warning | 18 |
 | loading | 7 |
 | promise | 5 |
@@ -28,27 +28,26 @@ Scanned files: 3068
 
 | Risk | Count |
 | --- | --- |
-| duplicate-risk | 869 |
-| generic-error | 563 |
-| dynamic-message | 418 |
+| duplicate-risk | 844 |
+| generic-error | 537 |
+| dynamic-message | 414 |
 | load-error | 70 |
-| placeholder | 10 |
+| placeholder | 8 |
 | success-no-context | 2 |
 
 ## Top Toast Files
 
 | File | Count |
 | --- | --- |
-| frontend/src/app/(main)/[projectId]/budget/page.tsx | 37 |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx | 36 |
+| frontend/src/app/(main)/[projectId]/budget/page.tsx | 36 |
 | frontend/src/hooks/use-submittals.ts | 30 |
 | frontend/src/app/(main)/[projectId]/schedule/page.tsx | 25 |
 | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx | 24 |
 | frontend/src/hooks/use-drawings.ts | 24 |
 | frontend/src/components/ai-assistant/chat-area.tsx | 23 |
 | frontend/src/app/(main)/directory/companies/[companyId]/page.tsx | 22 |
-| frontend/src/components/invoicing/SubcontractorInvoiceDetail.tsx | 21 |
 | frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx | 20 |
+| frontend/src/components/invoicing/SubcontractorInvoiceDetail.tsx | 20 |
 | frontend/src/app/(main)/[projectId]/directory/page.tsx | 19 |
 | frontend/src/hooks/use-pcos.ts | 18 |
 | frontend/src/components/direct-costs/DirectCostForm.tsx | 17 |
@@ -57,6 +56,7 @@ Scanned files: 3068
 | frontend/src/app/(admin)/feedback-inbox/page.tsx | 14 |
 | frontend/src/app/(admin)/user-management/page.tsx | 14 |
 | frontend/src/app/(main)/[projectId]/change-orders/prime/[primeCoId]/page.tsx | 14 |
+| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx | 14 |
 | frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx | 13 |
 | frontend/src/app/(main)/[projectId]/direct-costs/direct-costs-client.tsx | 13 |
 
@@ -120,8 +120,8 @@ Scanned files: 3068
 | frontend/src/app/(admin)/feedback-inbox/page.tsx:448 | error | Please select an image file. | app | duplicate-risk |
 | frontend/src/app/(admin)/feedback-inbox/page.tsx:452 | error | Image must be under 10MB. | app | duplicate-risk |
 | frontend/src/app/(admin)/feedback-inbox/page.tsx:757 | success | dynamic | app | dynamic-message |
-| frontend/src/app/(admin)/feedback-inbox/page.tsx:1991 | success | dynamic | app | dynamic-message |
-| frontend/src/app/(admin)/feedback-inbox/page.tsx:2017 | success | dynamic | app | dynamic-message |
+| frontend/src/app/(admin)/feedback-inbox/page.tsx:2007 | success | dynamic | app | dynamic-message |
+| frontend/src/app/(admin)/feedback-inbox/page.tsx:2033 | success | dynamic | app | dynamic-message |
 | frontend/src/app/(admin)/project-attribution/project-attribution-review-client.tsx:137 | error | Failed to load attribution candidates | app | generic-error, load-error, duplicate-risk |
 | frontend/src/app/(admin)/project-attribution/project-attribution-review-client.tsx:159 | error | Failed to load attribution rules | app | generic-error, load-error, duplicate-risk |
 | frontend/src/app/(admin)/project-attribution/project-attribution-review-client.tsx:200 | success | dynamic | app | dynamic-message |
@@ -158,10 +158,9 @@ Scanned files: 3068
 | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx:179 | error | Failed to load budget data | [projectId]/budget | generic-error, load-error, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx:274 | error | dynamic | [projectId]/budget | dynamic-message, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx:394 | error | dynamic | [projectId]/budget | dynamic-message, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/budget/page.tsx:265 | error | Failed to load budget | [projectId]/budget | generic-error, load-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/budget/page.tsx:301 | success | dynamic | [projectId]/budget | dynamic-message |
-| frontend/src/app/(main)/[projectId]/budget/page.tsx:317 | error | Budget is locked. Unlock to add new line items. | [projectId]/budget | duplicate-risk |
-| frontend/src/app/(main)/[projectId]/budget/page.tsx:331 | info | ERP integration coming soon | [projectId]/budget | placeholder |
+| frontend/src/app/(main)/[projectId]/budget/page.tsx:270 | error | Failed to load budget | [projectId]/budget | generic-error, load-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/budget/page.tsx:306 | success | dynamic | [projectId]/budget | dynamic-message |
+| frontend/src/app/(main)/[projectId]/budget/page.tsx:322 | error | Budget is locked. Unlock to add new line items. | [projectId]/budget | duplicate-risk |
 | frontend/src/app/(main)/[projectId]/budget/page.tsx:350 | error | Failed to lock budget | [projectId]/budget | generic-error, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/budget/page.tsx:382 | error | Failed to refresh data after unlock | [projectId]/budget | generic-error, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/budget/page.tsx:392 | error | Budget is locked. Unlock to import budget data. | [projectId]/budget | duplicate-risk |
@@ -315,32 +314,10 @@ Scanned files: 3068
 | frontend/src/app/(main)/[projectId]/emails/emails-client.tsx:318 | error | dynamic | [projectId]/emails | dynamic-message, generic-error, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/emails/emails-client.tsx:320 | success | dynamic | [projectId]/emails | dynamic-message |
 | frontend/src/app/(main)/[projectId]/estimates/[estimateId]/edit/page.tsx:127 | error | Failed to update estimate | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:743 | error | Templates could not be loaded. Try again. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:766 | success | dynamic | [projectId]/estimates | dynamic-message |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:771 | error | Template could not be saved. Try again. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:815 | success | dynamic | [projectId]/estimates | dynamic-message |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:818 | error | Template could not be loaded. Try again. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:845 | error | Estimate fields could not be saved. Try again. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:875 | error | General Conditions row could not be saved. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:900 | error | General Conditions row could not be added. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:915 | error | General Conditions row could not be deleted. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:933 | error | Detail row could not be saved. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:956 | error | Detail row could not be added. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:971 | error | Detail row could not be deleted. | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:989 | error | Failed to save | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:1009 | error | Failed to delete sub | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:1040 | error | Failed to add sub | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:1097 | error | Failed to update award | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:1156 | info | Import to Prime Contract SOV — coming soon | [projectId]/estimates | placeholder |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:1780 | error | Failed to log call | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:1848 | error | Failed to add scope item | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:1883 | error | Failed to delete scope item | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:1984 | error | Failed to add bid item | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:2003 | error | Failed to update bid item | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:2018 | error | Failed to delete bid item | [projectId]/estimates | generic-error, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:2096 | error | dynamic | [projectId]/estimates | dynamic-message, duplicate-risk |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:2759 | success | dynamic | [projectId]/estimates | dynamic-message |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:2764 | error | Failed to seed scope items | [projectId]/estimates | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:112 | error | dynamic | [projectId]/estimates | dynamic-message, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:797 | success | dynamic | [projectId]/estimates | dynamic-message |
+| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:846 | success | dynamic | [projectId]/estimates | dynamic-message |
+| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx:2933 | success | dynamic | [projectId]/estimates | dynamic-message |
 | frontend/src/app/(main)/[projectId]/estimates/estimates-client.tsx:130 | error | Failed to create estimate | [projectId]/estimates | generic-error, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/estimates/estimates-client.tsx:145 | error | Failed to delete estimate | [projectId]/estimates | generic-error, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/estimates/estimates-client.tsx:163 | success | dynamic | [projectId]/estimates | dynamic-message |
@@ -364,6 +341,29 @@ Scanned files: 3068
 | frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx:822 | error | Failed to save changes | [projectId]/invoicing | generic-error, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx:872 | error | Failed to submit invoice | [projectId]/invoicing | generic-error, duplicate-risk |
 | frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx:888 | error | Failed to request revision | [projectId]/invoicing | generic-error |
+| frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx:906 | error | Failed to approve invoice | [projectId]/invoicing | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx:922 | error | Failed to approve invoice as noted | [projectId]/invoicing | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx:944 | error | Failed to void invoice | [projectId]/invoicing | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx:965 | error | Failed to delete invoice | [projectId]/invoicing | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx:1003 | error | At least one recipient is required | [projectId]/invoicing | duplicate-risk |
+| frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx:168 | error | Failed to load commitments | [projectId]/invoicing | generic-error, load-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx:283 | error | Failed to load commitment data | [projectId]/invoicing | generic-error, load-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx:335 | error | No commitment selected | [projectId]/invoicing | duplicate-risk |
+| frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx:416 | success | dynamic | [projectId]/invoicing | dynamic-message |
+| frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx:423 | error | Failed to save invoice | [projectId]/invoicing | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/meetings/formatted-transcript.tsx:221 | error | Unable to save highlight note | [projectId]/meetings | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/meetings/formatted-transcript.tsx:228 | error | Unable to save highlight note | [projectId]/meetings | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/meetings/formatted-transcript.tsx:235 | error | No highlighted text selected. | [projectId]/meetings | duplicate-risk |
+| frontend/src/app/(main)/[projectId]/meetings/formatted-transcript.tsx:262 | error | dynamic | [projectId]/meetings | dynamic-message, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx:178 | error | Please enter a title for the PCO. | [projectId]/pcos | duplicate-risk |
+| frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx:83 | success | dynamic | [projectId]/pcos | dynamic-message |
+| frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx:91 | warning | dynamic | [projectId]/pcos | dynamic-message |
+| frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx:99 | error | Failed to convert PCO | [projectId]/pcos | generic-error, duplicate-risk |
+| frontend/src/app/(main)/[projectId]/pcos/new/page.tsx:144 | error | Please enter a title for the PCO. | [projectId]/pcos | duplicate-risk |
+| frontend/src/app/(main)/[projectId]/pcos/new/page.tsx:168 | error | Please enter a title for the PCO. | [projectId]/pcos | duplicate-risk |
+| frontend/src/app/(main)/[projectId]/pcos/new/page.tsx:172 | error | Add at least one change event to the PCO. | [projectId]/pcos | duplicate-risk |
+| frontend/src/app/(main)/[projectId]/pcos/new/page.tsx:176 | error | Add at least one line item to the PCO. | [projectId]/pcos | duplicate-risk |
+| frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/edit/page.tsx:168 | error | Failed to load prime contract PCO | [projectId]/prime-contract-pcos | generic-error, load-error, duplicate-risk |
 
 ## Direct Sonner Imports
 
@@ -373,13 +373,11 @@ Scanned files: 3068
 | frontend/src/app/(admin)/(procore)/support-articles/support-articles-client.tsx |
 | frontend/src/app/(admin)/admin/company-info/page.tsx |
 | frontend/src/app/(admin)/ai-learning-promotions/promotions-client.tsx |
-| frontend/src/app/(admin)/annotation-inbox/page.tsx |
 | frontend/src/app/(admin)/database-inventory/page.tsx |
 | frontend/src/app/(admin)/design-ideas/_sections/feedback.tsx |
 | frontend/src/app/(admin)/dev/table-generator/page.tsx |
 | frontend/src/app/(admin)/document-metadata/document-metadata-client.tsx |
 | frontend/src/app/(admin)/errors/app-errors-client.tsx |
-| frontend/src/app/(admin)/feedback-inbox/page.tsx |
 | frontend/src/app/(admin)/project-attribution/project-attribution-review-client.tsx |
 | frontend/src/app/(admin)/projects-table-demo/projects-table.tsx |
 | frontend/src/app/(admin)/task-training/TaskTrainingClient.tsx |
@@ -387,10 +385,8 @@ Scanned files: 3068
 | frontend/src/app/(admin)/test-cases/test-cases-table-client.tsx |
 | frontend/src/app/(admin)/testing/[tool]/page.tsx |
 | frontend/src/app/(admin)/testing/runs/[runId]/page.tsx |
-| frontend/src/app/(admin)/user-management/page.tsx |
 | frontend/src/app/(admin)/user-management/users/[personId]/page.tsx |
 | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx |
-| frontend/src/app/(main)/[projectId]/budget/page.tsx |
 | frontend/src/app/(main)/[projectId]/budget/setup/page.tsx |
 | frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx |
 | frontend/src/app/(main)/[projectId]/change-events/new/page.tsx |
@@ -412,8 +408,6 @@ Scanned files: 3068
 | frontend/src/app/(main)/[projectId]/daily-log/daily-log-client.tsx |
 | frontend/src/app/(main)/[projectId]/daily-log/new/page.tsx |
 | frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx |
-| frontend/src/app/(main)/[projectId]/direct-costs/direct-costs-client.tsx |
-| frontend/src/app/(main)/[projectId]/directory/page.tsx |
 | frontend/src/app/(main)/[projectId]/documents/documents-client.tsx |
 | frontend/src/app/(main)/[projectId]/drawings/[drawingId]/page.tsx |
 | frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx |
@@ -424,13 +418,11 @@ Scanned files: 3068
 | frontend/src/app/(main)/[projectId]/email-attachments/email-attachments-client.tsx |
 | frontend/src/app/(main)/[projectId]/emails/emails-client.tsx |
 | frontend/src/app/(main)/[projectId]/estimates/[estimateId]/edit/page.tsx |
-| frontend/src/app/(main)/[projectId]/estimates/[estimateId]/estimate-detail-client-v2.tsx |
 | frontend/src/app/(main)/[projectId]/estimates/estimates-client.tsx |
 | frontend/src/app/(main)/[projectId]/home/project-command-center.tsx |
 | frontend/src/app/(main)/[projectId]/home/project-home-client.tsx |
 | frontend/src/app/(main)/[projectId]/invoices/new/page.tsx |
 | frontend/src/app/(main)/[projectId]/invoices/page.tsx |
-| frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx |
 | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx |
 | frontend/src/app/(main)/[projectId]/meetings/formatted-transcript.tsx |
 | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
@@ -442,7 +434,6 @@ Scanned files: 3068
 | frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx |
 | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/components/PrimeContractEstimateImportModal.tsx |
 | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]/page.tsx |
-| frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx |
 | frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx |
 | frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx |
 | frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/progress-report-editor.tsx |
@@ -450,13 +441,11 @@ Scanned files: 3068
 | frontend/src/app/(main)/[projectId]/rfis/[rfiId]/rfi-header-actions.tsx |
 | frontend/src/app/(main)/[projectId]/rfis/rfis-client.tsx |
 | frontend/src/app/(main)/[projectId]/rfis/rfis-table.tsx |
-| frontend/src/app/(main)/[projectId]/schedule/page.tsx |
 | frontend/src/app/(main)/[projectId]/sov/page.tsx |
 | frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx |
 | frontend/src/app/(main)/[projectId]/specifications/page.tsx |
 | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
 | frontend/src/app/(main)/create-project/page.tsx |
-| frontend/src/app/(main)/directory/companies/[companyId]/page.tsx |
 | frontend/src/app/(main)/directory/companies/page.tsx |
 | frontend/src/app/(main)/directory/contacts/page.tsx |
 | frontend/src/app/(main)/directory/employees/page.tsx |
@@ -482,7 +471,6 @@ Scanned files: 3068
 | frontend/src/components/admin/table-explorer/DeleteConfirmation.tsx |
 | frontend/src/components/admin/table-explorer/RowActions.tsx |
 | frontend/src/components/ai-assistant/assistant-widget-renderer.tsx |
-| frontend/src/components/ai-assistant/chat-area.tsx |
 | frontend/src/components/ai-chat/artifact-actions.tsx |
 | frontend/src/components/ai-chat/document.tsx |
 | frontend/src/components/ai-chat/message-actions.tsx |
@@ -494,7 +482,6 @@ Scanned files: 3068
 | frontend/src/components/ai-intelligence/project-intelligence-cross-reference.tsx |
 | frontend/src/components/ai/TaskFeedbackButtons.tsx |
 | frontend/src/components/ask-alleato/tabs/FeedbackTab.tsx |
-| frontend/src/components/budget/BudgetLineItemCreatorModal.tsx |
 | frontend/src/components/budget/BudgetViewsManager.tsx |
 | frontend/src/components/budget/BudgetViewsModal.tsx |
 | frontend/src/components/budget/ImportBudgetModal.tsx |
@@ -525,7 +512,6 @@ Scanned files: 3068
 | frontend/src/components/dev-tools/enhanced-dev-panel.tsx |
 | frontend/src/components/dev-tools/test-runs-tab.tsx |
 | frontend/src/components/direct-costs/CreateDirectCostForm.tsx |
-| frontend/src/components/direct-costs/DirectCostForm.tsx |
 | frontend/src/components/direct-costs/DirectCostsImportDialog.tsx |
 | frontend/src/components/direct-costs/ExportDialog.tsx |
 | frontend/src/components/directory/CompanyEditDialog.tsx |
@@ -576,7 +562,6 @@ Scanned files: 3068
 | frontend/src/components/executive/executive-briefing-refresh-button.tsx |
 | frontend/src/components/header/header-user-menu.tsx |
 | frontend/src/components/header/procore-reference-panel.tsx |
-| frontend/src/components/invoicing/SubcontractorInvoiceDetail.tsx |
 | frontend/src/components/invoicing/subcontractor-detail-tabs/DetailTab.tsx |
 | frontend/src/components/invoicing/subcontractor-detail-tabs/GeneralTab.tsx |
 | frontend/src/components/invoicing/subcontractor-detail-tabs/RelatedItemsTab.tsx |
@@ -597,16 +582,13 @@ Scanned files: 3068
 | frontend/src/components/tables/employees-data-table.tsx |
 | frontend/src/components/tables/generic-editable-table.tsx |
 | frontend/src/components/tables/generic-table-factory.tsx |
-| frontend/src/components/tables/unified/unified-table-page.tsx |
 | frontend/src/components/templates/StandardFormPage.tsx |
 | frontend/src/features/database-inventory/db-inventory-detail-panel.tsx |
 | frontend/src/features/documents/documents-table-config.tsx |
 | frontend/src/features/knowledge/knowledge-base-page.tsx |
 | frontend/src/features/knowledge/knowledge-upload-dialog.tsx |
 | frontend/src/features/meetings/use-meetings-table.tsx |
-| frontend/src/features/product-board/board-item-dialog.tsx |
 | frontend/src/features/rfis/rfis-columns.tsx |
-| frontend/src/features/tasks/tasks-inbox.tsx |
 | frontend/src/hooks/use-all-companies.ts |
 | frontend/src/hooks/use-billing-periods.ts |
 | frontend/src/hooks/use-budget-data.ts |
@@ -620,7 +602,6 @@ Scanned files: 3068
 | frontend/src/hooks/use-drawing-pins.ts |
 | frontend/src/hooks/use-drawing-revisions.ts |
 | frontend/src/hooks/use-drawing-sets.ts |
-| frontend/src/hooks/use-drawings.ts |
 | frontend/src/hooks/use-emails.ts |
 | frontend/src/hooks/use-estimates.ts |
 | frontend/src/hooks/use-initiative-cards.ts |
@@ -631,7 +612,6 @@ Scanned files: 3068
 | frontend/src/hooks/use-meeting-prep.ts |
 | frontend/src/hooks/use-meetings.ts |
 | frontend/src/hooks/use-payment-applications.ts |
-| frontend/src/hooks/use-pcos.ts |
 | frontend/src/hooks/use-photo-albums.ts |
 | frontend/src/hooks/use-photos.ts |
 | frontend/src/hooks/use-prime-contracts.ts |
@@ -641,12 +621,10 @@ Scanned files: 3068
 | frontend/src/hooks/use-punch-items.ts |
 | frontend/src/hooks/use-rag-conversations.ts |
 | frontend/src/hooks/use-rfis.ts |
-| frontend/src/hooks/use-roadmap-items.ts |
 | frontend/src/hooks/use-specification-areas.ts |
 | frontend/src/hooks/use-specification-revisions.ts |
 | frontend/src/hooks/use-specifications.ts |
 | frontend/src/hooks/use-subcontractor-invoices.ts |
-| frontend/src/hooks/use-submittals.ts |
 | frontend/src/hooks/use-toast.ts |
 | frontend/src/hooks/use-transmittals.ts |
 | frontend/src/hooks/use-user-mutations.ts |
