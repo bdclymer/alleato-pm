@@ -134,6 +134,28 @@ def get_rag_read_client() -> Client:
     return get_supabase_client()
 
 
+def fetch_optional_row(
+    client: Client,
+    table_name: str,
+    select_columns: str,
+    eq_column: str,
+    eq_value: Any,
+) -> Dict[str, Any]:
+    """Fetch at most one row without treating zero rows as a Supabase error."""
+
+    response = (
+        client.table(table_name)
+        .select(select_columns)
+        .eq(eq_column, eq_value)
+        .limit(1)
+        .execute()
+    )
+    rows = response.data or []
+    if not rows:
+        return {}
+    return rows[0]
+
+
 # ── Storage upload throttle ────────────────────────────────────────────────────
 # Limits concurrent storage uploads to prevent burst-hammering Supabase's
 # storage service during large syncs. Free-tier projects have limited compute;

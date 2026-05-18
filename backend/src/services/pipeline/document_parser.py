@@ -16,9 +16,10 @@ import io
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, List, Optional
 
-from ..supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client
+from ..supabase_helpers import fetch_optional_row, get_rag_read_client, get_rag_write_client, get_supabase_client
 from .models import MeetingSegment
 from . import llm
 
@@ -30,6 +31,7 @@ MIN_EXTRACTED_CHARS = 50
 DOC_SEGMENT_WINDOW_LINES = int(os.getenv("DOC_SEGMENT_WINDOW_LINES", "260"))
 DOC_SEGMENT_WINDOW_OVERLAP = int(os.getenv("DOC_SEGMENT_WINDOW_OVERLAP", "40"))
 DOC_SUMMARY_MAX_CHARS = int(os.getenv("DOC_SUMMARY_MAX_CHARS", "12000"))
+DOC_SEGMENT_USE_LLM = (os.getenv("DOC_SEGMENT_USE_LLM", "true").strip().lower() not in {"0", "false", "no", "off"})
 
 
 # ---------------------------------------------------------------------------
@@ -122,10 +124,31 @@ def detect_and_extract(
 # Document segmentation via LLM
 # ---------------------------------------------------------------------------
 
+def _fallback_window_segment(numbered_content: str, title: str) -> List[Dict[str, Any]]:
+    """Return one deterministic segment for a content window."""
+    indexes = [int(match) for match in re.findall(r"^\[(\d+)\]", numbered_content, re.MULTILINE)]
+    if not indexes:
+        return []
+    return [
+        {
+            "title": title,
+            "start_index": min(indexes),
+            "end_index": max(indexes),
+            "summary": f"Deterministic segment for {title}.",
+            "decisions": [],
+            "risks": [],
+            "tasks": [],
+        }
+    ]
+
+
 def _segment_document_window(
     numbered_content: str, title: str
 ) -> List[Dict[str, Any]]:
     """Segment one numbered content window."""
+    if not DOC_SEGMENT_USE_LLM:
+        return _fallback_window_segment(numbered_content, title)
+
     prompt = f"""Analyze this document and identify distinct semantic sections.
 
 Document: {title}
@@ -166,7 +189,7 @@ Guidelines:
             "[DocParser] LLM returned empty segmentation response for %s; using fallback segment",
             title,
         )
-        return []
+        return _fallback_window_segment(numbered_content, title)
 
     try:
         parsed = json.loads(raw)
@@ -176,14 +199,14 @@ Guidelines:
             title,
             exc,
         )
-        return []
+        return _fallback_window_segment(numbered_content, title)
     segments = parsed.get("segments", [])
     if not isinstance(segments, list):
         logger.warning(
             "[DocParser] Segmentation response for %s did not include a segments array; using fallback segment",
             title,
         )
-        return []
+        return _fallback_window_segment(numbered_content, title)
     return segments
 
 
@@ -315,7 +338,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,updated_at,summary,overview,status,fireflies_id,participants,participants_array,storage_bucket,file_path,file_name,url,source_web_url,source_metadata")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,storage_bucket,file_path,file_name,url,source_web_url,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -329,15 +352,12 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     logger.info("[DocParser] Processing: %s (%s) [%s]", title, metadata_id, category)
 
     # 2. Get text content — either from stored content or from file storage
-    rag_metadata = (
-        get_rag_read_client()
-        .table("rag_document_metadata")
-        .select("content,raw_text")
-        .eq("id", metadata_id)
-        .single()
-        .execute()
-        .data
-        or {}
+    rag_metadata = fetch_optional_row(
+        get_rag_read_client(),
+        "rag_document_metadata",
+        "content,raw_text",
+        "id",
+        metadata_id,
     )
     content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
     file_bytes: Optional[bytes] = None

@@ -15,7 +15,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from ..supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client
+from ..supabase_helpers import fetch_optional_row, get_rag_read_client, get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import DocumentChunk, MeetingSegment, TranscriptLine
 from . import llm
@@ -55,6 +55,8 @@ def _split_sentences(text: str) -> List[str]:
 def _chunk_segment(
     segment: MeetingSegment,
     all_lines: List[TranscriptLine],
+    *,
+    doc_type: str = "chunk",
 ) -> List[DocumentChunk]:
     """Split a segment's transcript lines into overlapping chunks."""
     segment_lines = [
@@ -80,7 +82,7 @@ def _chunk_segment(
                     content=chunk_text,
                     chunk_index=chunk_index,
                     segment_index=segment.segment_index,
-                    doc_type="chunk",
+                    doc_type=doc_type,
                     content_hash=_hash_content(chunk_text),
                 )
             )
@@ -107,7 +109,7 @@ def _chunk_segment(
                 content=chunk_text,
                 chunk_index=chunk_index,
                 segment_index=segment.segment_index,
-                doc_type="chunk",
+                doc_type=doc_type,
                 content_hash=_hash_content(chunk_text),
             )
         )
@@ -230,7 +232,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,updated_at,summary,overview,status,fireflies_id,participants,participants_array,source_metadata")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -239,15 +241,12 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     if not metadata:
         raise ValueError(f"document_metadata not found: {metadata_id}")
 
-    rag_metadata = (
-        get_rag_read_client()
-        .table("rag_document_metadata")
-        .select("content,raw_text,summary,overview")
-        .eq("id", metadata_id)
-        .single()
-        .execute()
-        .data
-        or {}
+    rag_metadata = fetch_optional_row(
+        get_rag_read_client(),
+        "rag_document_metadata",
+        "content,raw_text,summary,overview",
+        "id",
+        metadata_id,
     )
     content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
     meeting_summary = rag_metadata.get("summary") or rag_metadata.get("overview") or metadata.get("summary") or metadata.get("overview") or ""
@@ -288,6 +287,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     # 4. Parse content to get indexed transcript lines for chunking
     transcript_lines: List[TranscriptLine] = []
     parsed = None  # Hoisted so section chunking can reuse it
+    content_is_generic_document = False
     if content:
         try:
             parsed = _parser.parse_markdown(content)
@@ -302,11 +302,29 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
             ]
         except Exception as exc:
             logger.warning("[Embedder] Failed to parse content: %s", exc)
+        if not transcript_lines:
+            content_is_generic_document = True
+            transcript_lines = [
+                TranscriptLine(
+                    index=i,
+                    timestamp="",
+                    speaker="Document",
+                    text=line,
+                )
+                for i, line in enumerate(content.splitlines())
+                if line.strip()
+            ]
 
     # 5. Create all chunks
     all_chunks: List[DocumentChunk] = []
     for seg in segments:
-        all_chunks.extend(_chunk_segment(seg, transcript_lines))
+        all_chunks.extend(
+            _chunk_segment(
+                seg,
+                transcript_lines,
+                doc_type="document_chunk" if content_is_generic_document else "chunk",
+            )
+        )
 
     # Add meeting-level summary chunk
     if meeting_summary:
@@ -421,6 +439,7 @@ def _doc_type_to_source_type(doc_type: str) -> str:
     """Map pipeline doc_type to document_chunks.source_type."""
     mapping = {
         "chunk": "meeting_transcript",
+        "document_chunk": "document",
         "meeting_summary": "meeting_summary",
         "segment_summary": "meeting_segment_summary",
         "notes_topic": "meeting_notes",

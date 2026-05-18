@@ -263,7 +263,7 @@ def run_financial_parser(metadata_id: str) -> Dict[str, Any]:
 
     resp = (
         client.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,updated_at,summary,overview,status,storage_bucket,file_path,file_name,url,source_web_url,source_metadata")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,storage_bucket,file_path,file_name,url,source_web_url,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()

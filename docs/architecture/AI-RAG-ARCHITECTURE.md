@@ -119,9 +119,9 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | `frontend/src/lib/ai/services/conversation-memory.ts` | Post-response fact extraction and storage to `conversation_memories`. |
 | `backend/src/services/pipeline/orchestrator.py` | Routes ingestion jobs by document type (meeting → parser.py, PDF/DOCX → document_parser.py, CSV/XLSX → financial_parser.py). |
 | `backend/src/services/pipeline/parser.py` | Stage 1A: Fireflies meeting markdown → segments, decisions, risks, tasks. |
-| `backend/src/services/pipeline/document_parser.py` | Stage 1B: PDF/DOCX text extraction → LLM segmentation → meeting_segments. |
+| `backend/src/services/pipeline/document_parser.py` | Stage 1B: PDF/DOCX/text extraction → meeting_segments. LLM segmentation is the default, but `DOC_SEGMENT_USE_LLM=false` uses deterministic line-window segments for table-heavy technical documents. |
 | `backend/src/services/pipeline/financial_parser.py` | Stage 1C: CSV/XLSX → document_rows with text summaries for embedding. |
-| `backend/src/services/pipeline/embedder.py` | Stage 2: Chunking (3000 char target, 500 overlap) + embedding via text-embedding-3-small. |
+| `backend/src/services/pipeline/embedder.py` | Stage 2: Chunking (3000 char target, 500 overlap) + embedding via text-embedding-3-small. Generic documents that do not parse as meeting transcripts fall back to source line chunks and write `document_chunks.source_type='document'`. |
 | `backend/src/services/pipeline/extractor.py` | Stage 3: Normalizes and upserts decisions, risks, tasks, opportunities. |
 | `backend/src/services/pipeline/digest.py` | Stage 4: Daily digest generation (non-blocking). |
 | `backend/src/services/pipeline/llm.py` | Backend LLM/embedding client. Current defaults: chat=gpt-4o-mini, embeddings=text-embedding-3-small. |
@@ -374,12 +374,21 @@ Source
 → POST /api/pipeline/process (backend FastAPI)
 → pipeline/orchestrator.py routes by document type:
     Meeting → parser.py (Stage 1A)
-    PDF/DOCX/TXT → document_parser.py (Stage 1B)
+    PDF/DOCX/TXT/MD → document_parser.py (Stage 1B)
     CSV/XLSX → financial_parser.py (Stage 1C)
 → embedder.py (Stage 2): chunk (3000 char, 500 overlap) + embed → document_chunks
 → extractor.py (Stage 3): upsert decisions, risks, tasks, opportunities
 → digest.py (Stage 4, non-blocking)
 ```
+
+Stage 1B must tolerate first-time uploads that do not yet have a `rag_document_metadata`
+row. The parser reads optional RAG metadata when present, otherwise downloads the
+stored source file from Supabase Storage and writes extracted text into
+`rag_document_metadata`. For table-heavy PDFs, extract to structured Markdown first
+and run with `DOC_SEGMENT_USE_LLM=false`; this produces deterministic line-window
+segments and prevents invalid LLM JSON from collapsing a long technical document into
+one summary-only segment. The embedder must then chunk generic document lines directly
+and store those chunks with `source_type='document'`.
 
 ### Embedding in the Pipeline
 

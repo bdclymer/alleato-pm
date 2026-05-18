@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
-from ..supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client
+from ..supabase_helpers import fetch_optional_row, get_rag_read_client, get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import MeetingSegment, TranscriptLine
 from . import llm
@@ -171,7 +171,7 @@ def run_parser(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,updated_at,summary,overview,status,fireflies_id,participants,participants_array,source_metadata")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -180,15 +180,12 @@ def run_parser(metadata_id: str) -> Dict[str, Any]:
     if not metadata:
         raise ValueError(f"document_metadata not found: {metadata_id}")
 
-    rag_metadata = (
-        get_rag_read_client()
-        .table("rag_document_metadata")
-        .select("content,raw_text")
-        .eq("id", metadata_id)
-        .single()
-        .execute()
-        .data
-        or {}
+    rag_metadata = fetch_optional_row(
+        get_rag_read_client(),
+        "rag_document_metadata",
+        "content,raw_text",
+        "id",
+        metadata_id,
     )
     content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
     if not content:
