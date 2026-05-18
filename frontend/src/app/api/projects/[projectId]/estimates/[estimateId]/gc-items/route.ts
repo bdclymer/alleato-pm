@@ -120,6 +120,10 @@ export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>
         sort_order: item.sort_order ?? idx + 1,
       }));
 
+      if (rows.length === 0) {
+        return NextResponse.json([], { status: 201 });
+      }
+
       const { data, error } = await supabase
         .from("estimate_gc_items")
         .insert(rows)

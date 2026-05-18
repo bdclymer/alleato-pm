@@ -66,6 +66,44 @@ export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>
     }
 
     const body = await request.json();
+
+    if (Array.isArray(body.items)) {
+      const rows = body.items.map((item: Record<string, unknown>, idx: number) => ({
+        estimate_id: estimateIdNum,
+        division_code: item.division_code ?? "02",
+        division_name: item.division_name ?? "",
+        cost_code: item.cost_code ?? null,
+        cost_type: item.cost_type ?? null,
+        cost_code_name: item.cost_code_name ?? null,
+        work_description: item.work_description ?? null,
+        estimated_amount: item.estimated_amount ?? 0,
+        sub_name: item.sub_name ?? null,
+        sort_order: item.sort_order ?? idx + 1,
+      }));
+
+      if (rows.length === 0) {
+        return NextResponse.json([], { status: 201 });
+      }
+
+      const { data, error } = await supabase
+        .from("estimate_detail_items")
+        .insert(rows)
+        .select()
+        .order("division_code", { ascending: true })
+        .order("sort_order", { ascending: true });
+
+      if (error) {
+        throw new GuardrailError({
+          code: "DB_ERROR",
+          where: "detail-items#POST",
+          message: error.message,
+          cause: error,
+        });
+      }
+
+      return NextResponse.json(data ?? [], { status: 201 });
+    }
+
     const {
       division_code,
       division_name,

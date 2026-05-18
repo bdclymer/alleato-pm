@@ -28,6 +28,10 @@ import {
   EstimateTypes,
   calculateLineItemCosts,
 } from "@/lib/schemas/estimates";
+import {
+  buildEstimateV2DetailStarterRows,
+  buildEstimateV2GcStarterRows,
+} from "@/lib/estimates/template";
 
 type CompanyEstimateQueryRow = Pick<
   EstimateRow,
@@ -303,6 +307,7 @@ export class EstimateService {
       location: data.location ?? null,
       estimator: data.estimator ?? null,
       project_duration_weeks: data.project_duration_weeks ?? null,
+      project_duration_months: data.project_duration_months ?? null,
       contingency_amount: data.contingency_amount ?? 0,
       insurance_rate: data.insurance_rate ?? 0.0125,
       fee_rate: data.fee_rate ?? 0.1,
@@ -321,10 +326,45 @@ export class EstimateService {
 
     if (error) throw new Error(`Failed to create estimate: ${error.message}`);
 
-    // V1 template line items removed — V2 uses estimate_gc_items + estimate_detail_items,
-    // populated by the editor UI rather than seeded on create.
+    const estimateRow = estimate as EstimateRow;
 
-    return estimate as EstimateRow;
+    const [gcSeed, detailSeed] = await Promise.all([
+      this.supabase
+        .from("estimate_gc_items")
+        .insert(buildEstimateV2GcStarterRows(estimateRow.estimate_id)),
+      this.supabase
+        .from("estimate_detail_items")
+        .insert(buildEstimateV2DetailStarterRows(estimateRow.estimate_id)),
+    ]);
+
+    if (gcSeed.error || detailSeed.error) {
+      await Promise.allSettled([
+        this.supabase
+          .from("estimate_gc_items")
+          .delete()
+          .eq("estimate_id", estimateRow.estimate_id),
+        this.supabase
+          .from("estimate_detail_items")
+          .delete()
+          .eq("estimate_id", estimateRow.estimate_id),
+        this.supabase
+          .from("estimates")
+          .delete()
+          .eq("estimate_id", estimateRow.estimate_id),
+      ]);
+
+      if (gcSeed.error) {
+        throw new Error(
+          `Failed to seed estimate GC starter rows: ${gcSeed.error.message}`
+        );
+      }
+
+      throw new Error(
+        `Failed to seed estimate detail starter rows: ${detailSeed.error?.message ?? "Unknown error"}`
+      );
+    }
+
+    return estimateRow;
   }
 
   async update(

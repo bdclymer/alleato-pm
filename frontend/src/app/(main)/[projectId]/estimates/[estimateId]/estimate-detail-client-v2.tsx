@@ -73,87 +73,6 @@ interface EstimateDetailClientV2Props {
 // Constants
 // ---------------------------------------------------------------------------
 
-const GC_TEMPLATE: Array<{
-  cost_code: string;
-  description: string;
-  cost_type: string;
-  qty_basis: string;
-  rate: number;
-  allocation: number;
-}> = [
-  { cost_code: "01-3120", description: "Vice President", cost_type: "Revenue", qty_basis: "weeks", rate: 7031, allocation: 0.15 },
-  { cost_code: "01-3126", description: "Pre-construction", cost_type: "Revenue", qty_basis: "weeks", rate: 3796, allocation: 0.20 },
-  { cost_code: "01-3127", description: "Sr. Project Manager", cost_type: "Labor", qty_basis: "weeks", rate: 4218, allocation: 0.25 },
-  { cost_code: "01-3128", description: "Project Manager", cost_type: "Labor", qty_basis: "weeks", rate: 3515, allocation: 1.00 },
-  { cost_code: "01-3129", description: "Asst. Project Manager", cost_type: "Labor", qty_basis: "weeks", rate: 2812, allocation: 0 },
-  { cost_code: "01-3130", description: "Project Engineer", cost_type: "Labor", qty_basis: "weeks", rate: 2531, allocation: 0 },
-  { cost_code: "01-3131", description: "Field Engineer", cost_type: "Labor", qty_basis: "weeks", rate: 2250, allocation: 0 },
-  { cost_code: "01-3132", description: "Intern", cost_type: "Labor", qty_basis: "weeks", rate: 1350, allocation: 0 },
-  { cost_code: "01-3142", description: "General Superintendent", cost_type: "Labor", qty_basis: "weeks", rate: 6328, allocation: 0 },
-  { cost_code: "01-3143", description: "Sr. Superintendent", cost_type: "Labor", qty_basis: "weeks", rate: 4218, allocation: 0 },
-  { cost_code: "01-3144", description: "Superintendent", cost_type: "Labor", qty_basis: "weeks", rate: 3515, allocation: 1.00 },
-  { cost_code: "01-3145", description: "Asst. Superintendent", cost_type: "Labor", qty_basis: "weeks", rate: 2812, allocation: 0 },
-  { cost_code: "01-3223", description: "Construction Layout", cost_type: "Expense", qty_basis: "months", rate: 150, allocation: 1 },
-  { cost_code: "01-3236", description: "Aerial & Periodic Drones", cost_type: "Expense", qty_basis: "months", rate: 350, allocation: 0.25 },
-  { cost_code: "01-3238", description: "Jobsite Security", cost_type: "Expense", qty_basis: "ls", rate: 500, allocation: 1 },
-  { cost_code: "01-3245", description: "Office Supplies", cost_type: "Expense", qty_basis: "months", rate: 500, allocation: 1 },
-  { cost_code: "01-3247", description: "Printing & Copying", cost_type: "Expense", qty_basis: "months", rate: 500, allocation: 1 },
-  { cost_code: "01-3249", description: "Postage & Courier", cost_type: "Expense", qty_basis: "months", rate: 750, allocation: 1 },
-  { cost_code: "01-3329", description: "LEED Documentation", cost_type: "Expense", qty_basis: "months", rate: 650, allocation: 0 },
-  { cost_code: "01-3514", description: "Legal Fees", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-4123", description: "Fees", cost_type: "Expense", qty_basis: "sf", rate: 1.25, allocation: 0 },
-  { cost_code: "01-4124", description: "Sanitary Fees", cost_type: "Expense", qty_basis: "sf", rate: 1.25, allocation: 0 },
-  { cost_code: "01-4126", description: "Permit Requirements", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 1 },
-  { cost_code: "01-4523", description: "Testing and Inspections", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-4533", description: "Municipality Inspections", cost_type: "Expense", qty_basis: "ea", rate: 0, allocation: 0 },
-  { cost_code: "01-4613", description: "Winter Conditions", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-5113", description: "Temporary Electric", cost_type: "Expense", qty_basis: "months", rate: 500, allocation: 1 },
-  { cost_code: "01-5116", description: "Temporary Fire Protection", cost_type: "Expense", qty_basis: "months", rate: 0, allocation: 0 },
-  { cost_code: "01-5119", description: "Temporary Fuel", cost_type: "Expense", qty_basis: "weeks", rate: 150, allocation: 1 },
-  { cost_code: "01-5123", description: "Temporary HVAC", cost_type: "Expense", qty_basis: "months", rate: 0, allocation: 0 },
-  { cost_code: "01-5126", description: "Temporary Lighting", cost_type: "Expense", qty_basis: "ls", rate: 5000, allocation: 1 },
-  { cost_code: "01-5129", description: "Temporary Gas", cost_type: "Expense", qty_basis: "months", rate: 0, allocation: 0 },
-  { cost_code: "01-5133", description: "Temporary Internet/Telecomm", cost_type: "Expense", qty_basis: "months", rate: 250, allocation: 1 },
-  { cost_code: "01-5136", description: "Temporary Water", cost_type: "Expense", qty_basis: "months", rate: 0, allocation: 0 },
-  { cost_code: "01-5213", description: "Field Offices", cost_type: "Expense", qty_basis: "months", rate: 1200, allocation: 0.15 },
-  { cost_code: "01-5214", description: "Temporary Storage", cost_type: "Expense", qty_basis: "months", rate: 1000, allocation: 0 },
-  { cost_code: "01-5216", description: "First Aid / Safety Supplies", cost_type: "Expense", qty_basis: "months", rate: 350, allocation: 1 },
-  { cost_code: "01-5217", description: "Safety Inspections", cost_type: "Expense", qty_basis: "months", rate: 450, allocation: 0 },
-  { cost_code: "01-5219", description: "Temporary Toilets", cost_type: "Expense", qty_basis: "months", rate: 350, allocation: 1 },
-  { cost_code: "01-5419", description: "Temporary Cranes", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-5423", description: "Temp Scaffolding & Platforms", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-5513", description: "Temporary Access Roads", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-5519", description: "Temporary Parking Areas", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-5623", description: "Temporary Barricades", cost_type: "Expense", qty_basis: "ls", rate: 500, allocation: 1 },
-  { cost_code: "01-5626", description: "Temporary Fencing", cost_type: "Expense", qty_basis: "lf", rate: 0, allocation: 0 },
-  { cost_code: "01-5639", description: "Temp Tree & Plant Protection", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-5713", description: "Temp Erosion and Sediment", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-5813", description: "Temporary Project Signage", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-6113", description: "Software Licensing", cost_type: "Expense", qty_basis: "months", rate: 1000, allocation: 0.25 },
-  { cost_code: "01-6115", description: "Performance and Payment Bonds", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-6119", description: "Maintenance Bond", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-6500", description: "Travel", cost_type: "Expense", qty_basis: "months", rate: 4000, allocation: 0 },
-  { cost_code: "01-6502", description: "Truck Allowance", cost_type: "Expense", qty_basis: "months", rate: 750, allocation: 0 },
-  { cost_code: "01-6503", description: "Truck Fuel", cost_type: "Expense", qty_basis: "months", rate: 300, allocation: 0 },
-  { cost_code: "01-6504", description: "Recruitment", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-6505", description: "Marketing", cost_type: "Expense", qty_basis: "months", rate: 250, allocation: 0 },
-  { cost_code: "01-7123", description: "Construction Surveying", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-7329", description: "Cutting and Patching", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-7333", description: "Misc Small Tools", cost_type: "Expense", qty_basis: "months", rate: 1000, allocation: 0 },
-  { cost_code: "01-7336", description: "Equipment Rental", cost_type: "Expense", qty_basis: "months", rate: 500, allocation: 0 },
-  { cost_code: "01-7413", description: "Progress Cleaning", cost_type: "Expense", qty_basis: "months", rate: 1000, allocation: 1 },
-  { cost_code: "01-7416", description: "Site Maintenance", cost_type: "Expense", qty_basis: "months", rate: 0, allocation: 0 },
-  { cost_code: "01-7419", description: "Dumpsters", cost_type: "Expense", qty_basis: "ea", rate: 750, allocation: 1 },
-  { cost_code: "01-7423", description: "Final Cleaning", cost_type: "Subcontract", qty_basis: "sf", rate: 0.75, allocation: 0 },
-  { cost_code: "01-7425", description: "General Labor", cost_type: "Expense", qty_basis: "months", rate: 1000, allocation: 0 },
-  { cost_code: "01-7433", description: "Window Washing", cost_type: "Subcontract", qty_basis: "sf", rate: 0, allocation: 0 },
-  { cost_code: "01-7823", description: "Operation and Maintenance Data", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-7836", description: "Warranties", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-7841", description: "Project Final Photos", cost_type: "Expense", qty_basis: "ls", rate: 500, allocation: 0 },
-  { cost_code: "01-8113", description: "Sust Design Reqmts/LEED Reqmts", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-  { cost_code: "01-9119", description: "Facility Commissioning", cost_type: "Expense", qty_basis: "ls", rate: 0, allocation: 0 },
-];
-
 const ALL_DIVISIONS: Array<{ code: string; name: string }> = [
   { code: "02", name: "Existing Conditions" },
   { code: "03", name: "Concrete" },
@@ -718,7 +637,6 @@ export function EstimateDetailClientV2({
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("summary");
   const [gcItems, setGcItems] = React.useState<GcItem[]>(initialGcItems);
-  const templateLoaded = React.useRef(false);
   const [detailItems, setDetailItems] = React.useState<DetailItem[]>(initialDetailItems);
   const [sublistSubs, setSublistSubs] = React.useState<SublistSub[]>(initialSublistSubs);
   const creatingSublistDivisionsRef = React.useRef(new Set<string>());
@@ -760,8 +678,9 @@ export function EstimateDetailClientV2({
     try {
       const data = await apiFetch<GcTemplate[]>("/api/estimates/gc-templates");
       setTemplates(Array.isArray(data) ? data : []);
-    } catch {
-      toast.error("Failed to load templates");
+    } catch (error) {
+      console.error("Failed to fetch estimate GC templates", error);
+      toast.error("Templates could not be loaded. Try again.");
     } finally {
       setTemplatesLoading(false);
     }
@@ -787,8 +706,9 @@ export function EstimateDetailClientV2({
       toast.success(`Template "${templateName.trim()}" saved`);
       setShowCreateTemplate(false);
       setTemplateName("");
-    } catch {
-      toast.error("Failed to save template");
+    } catch (error) {
+      console.error("Failed to create estimate GC template", error);
+      toast.error("Template could not be saved. Try again.");
     } finally {
       setIsSavingTemplate(false);
     }
@@ -862,7 +782,7 @@ export function EstimateDetailClientV2({
         setIsDirty(true);
       } catch (err) {
         console.error("Failed to save estimate fields", err);
-        toast.error("Failed to save");
+        toast.error("Estimate fields could not be saved. Try again.");
       }
     },
     [projectId, estimate.estimate_id]
@@ -891,7 +811,8 @@ export function EstimateDetailClientV2({
       setGcItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
       setIsDirty(true);
     } catch (err) {
-      toast.error("Failed to save");
+      console.error("Failed to save estimate GC row", err);
+      toast.error("General Conditions row could not be saved.");
     }
   };
 
@@ -915,7 +836,8 @@ export function EstimateDetailClientV2({
       );
       setGcItems((prev) => [...prev, created]);
     } catch (err) {
-      toast.error("Failed to add row");
+      console.error("Failed to add estimate GC row", err);
+      toast.error("General Conditions row could not be added.");
     }
   };
 
@@ -928,69 +850,11 @@ export function EstimateDetailClientV2({
         { method: "DELETE" }
       );
     } catch (err) {
+      console.error("Failed to delete estimate GC row", err);
       setGcItems(prev);
-      toast.error("Failed to delete");
+      toast.error("General Conditions row could not be deleted.");
     }
   };
-
-  const loadGcTemplate = React.useCallback(async () => {
-    try {
-      const items = await insertGcTemplateItems(GC_TEMPLATE);
-      setGcItems(items);
-    } catch (err) {
-      console.error("Failed to auto-load estimate GC template", err);
-      toast.error("General Conditions template could not be loaded. Try Actions > Load Template.");
-    }
-  }, [insertGcTemplateItems]);
-
-  // Auto-load GC template on first render if no GC items exist yet
-  React.useEffect(() => {
-    if (initialGcItems.length === 0 && !templateLoaded.current) {
-      templateLoaded.current = true;
-      void loadGcTemplate();
-    }
-  }, [initialGcItems.length, loadGcTemplate]);
-
-  const detailTemplateLoaded = React.useRef(false);
-
-  const loadDetailTemplate = React.useCallback(async () => {
-    try {
-      let sortOrder = 0;
-      const created = await Promise.all(
-        DETAIL_DIVISIONS.flatMap((div) =>
-          div.rows.map((row) => {
-            sortOrder += 1;
-            return apiFetch<DetailItem>(
-              `/api/projects/${projectId}/estimates/${estimate.estimate_id}/detail-items`,
-              {
-                method: "POST",
-                body: JSON.stringify({
-                  division_code: div.division_code,
-                  division_name: div.division_header.replace(/^\d+-\d+\s+/, ""),
-                  cost_code: row.cost_code,
-                  cost_type: row.cost_type || null,
-                  cost_code_name: row.name,
-                  estimated_amount: 0,
-                  sort_order: sortOrder,
-                }),
-              }
-            );
-          })
-        )
-      );
-      setDetailItems(created);
-    } catch (err) {
-      toast.error("Failed to load detail template");
-    }
-  }, [projectId, estimate.estimate_id]);
-
-  // Auto-load detail template if no detail items exist yet
-  React.useEffect(() => {
-    if (initialDetailItems.length === 0 && !detailTemplateLoaded.current) {
-      detailTemplateLoaded.current = true;
-      void loadDetailTemplate();
-    }
-  }, [initialDetailItems.length, loadDetailTemplate]);
 
   // ---------------------------------------------------------------------------
   // Detail items handlers
@@ -1005,7 +869,8 @@ export function EstimateDetailClientV2({
       setDetailItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
       setIsDirty(true);
     } catch (err) {
-      toast.error("Failed to save");
+      console.error("Failed to save estimate detail row", err);
+      toast.error("Detail row could not be saved.");
     }
   };
 
@@ -1027,7 +892,8 @@ export function EstimateDetailClientV2({
       );
       setDetailItems((prev) => [...prev, created]);
     } catch (err) {
-      toast.error("Failed to add row");
+      console.error("Failed to add estimate detail row", err);
+      toast.error("Detail row could not be added.");
     }
   };
 
@@ -1040,8 +906,9 @@ export function EstimateDetailClientV2({
         { method: "DELETE" }
       );
     } catch (err) {
+      console.error("Failed to delete estimate detail row", err);
       setDetailItems(prev);
-      toast.error("Failed to delete");
+      toast.error("Detail row could not be deleted.");
     }
   };
 
