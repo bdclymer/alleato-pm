@@ -370,12 +370,13 @@ function getBudgetLineLabel(lineItem: BudgetLineItem) {
 function createSafeClickHandler(
   isLocked: boolean,
   action: string,
-  originalHandler?: () => void
+  originalHandler?: () => void,
+  options: { allowWhenLocked?: boolean } = {},
 ): (() => void) | undefined {
   if (!originalHandler) return undefined;
 
   return () => {
-    if (isLocked) {
+    if (isLocked && !options.allowWhenLocked) {
       toast.error(`Budget is locked. Unlock to ${action}.`);
       return;
     }
@@ -747,7 +748,8 @@ export function BudgetTable({
               "view budget modifications",
               onBudgetModificationsClick
                 ? () => onBudgetModificationsClick(row.original)
-                : undefined
+                : undefined,
+              { allowWhenLocked: true },
             )}
             editable={true}
           />
@@ -772,7 +774,8 @@ export function BudgetTable({
               "view approved change orders",
               onApprovedCOsClick
                 ? () => onApprovedCOsClick(row.original)
-                : undefined
+                : undefined,
+              { allowWhenLocked: true },
             )}
             editable={true}
           />
@@ -822,7 +825,8 @@ export function BudgetTable({
               "view pending changes",
               onPendingChangesClick
                 ? () => onPendingChangesClick(row.original)
-                : undefined
+                : undefined,
+              { allowWhenLocked: true },
             )}
             editable={true}
           />
@@ -872,7 +876,8 @@ export function BudgetTable({
               "view committed costs",
               onCommittedCostsClick
                 ? () => onCommittedCostsClick(row.original)
-                : undefined
+                : undefined,
+              { allowWhenLocked: true },
             )}
             editable={true}
           />
@@ -900,7 +905,8 @@ export function BudgetTable({
               "view cost details",
               onJobToDateCostDetailClick
                 ? () => onJobToDateCostDetailClick(row.original)
-                : undefined
+                : undefined,
+              { allowWhenLocked: true },
             )}
             editable={true}
           />
@@ -925,7 +931,8 @@ export function BudgetTable({
               "view direct costs",
               onDirectCostsClick
                 ? () => onDirectCostsClick(row.original)
-                : undefined
+                : undefined,
+              { allowWhenLocked: true },
             )}
             editable={true}
           />
@@ -953,7 +960,8 @@ export function BudgetTable({
               "view pending cost changes",
               onPendingCostChangesClick
                 ? () => onPendingCostChangesClick(row.original)
-                : undefined
+                : undefined,
+              { allowWhenLocked: true },
             )}
             editable={true}
           />
