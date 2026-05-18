@@ -1742,8 +1742,8 @@ function SubListTab({
         `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/call-logs`
       );
       setCallLogsBySubId((prev) => ({ ...prev, [subId]: logs ?? [] }));
-    } catch {
-      // silently ignore
+    } catch (error) {
+      console.error("Failed to load estimate sub call logs", error);
     }
   }, [projectId, estimateId]);
 
@@ -1770,7 +1770,8 @@ function SubListTab({
       setCallLogOutcome("");
       setCallLogNotes("");
       toast.success("Call logged");
-    } catch {
+    } catch (error) {
+      console.error("Failed to log estimate sub call", error);
       toast.error("Failed to log call");
     } finally {
       setCallLogSubmitting(false);
@@ -1788,8 +1789,8 @@ function SubListTab({
         `/api/projects/${projectId}/estimates/${estimateId}/scope-items?division_code=${divCode}`
       );
       setScopeItemsByDiv((prev) => ({ ...prev, [divCode]: items ?? [] }));
-    } catch {
-      // silently ignore
+    } catch (error) {
+      console.error("Failed to load estimate scope items", error);
     }
   }, [projectId, estimateId]);
 
@@ -1804,7 +1805,9 @@ function SubListTab({
         `/api/estimates/benchmark?division_code=${divCode}`
       );
       if (data) setBenchmarkCache((prev) => ({ ...prev, [divCode]: data }));
-    } catch { /* silently ignore */ }
+    } catch (error) {
+      console.error("Failed to load estimate benchmark", error);
+    }
   }, [benchmarkCache]);
 
   const toggleScopeDiv = React.useCallback((divCode: string) => {
@@ -3100,8 +3103,8 @@ function SubListTab({
 // ---------------------------------------------------------------------------
 
 const ALLEATO_CONTACTS = [
-  { name: "Brandon Clymer", title: "VP of Construction", email: "bclymer@alleatogroup.com", phone: "" },
-  { name: "Jesse Orosco", title: "Senior Project Manager", email: "jorosco@alleatogroup.com", phone: "" },
+  { name: "Brandon Clymer", title: "CEO", email: "bclymer@alleatogroup.com", phone: "317.760.0088" },
+  { name: "Jesse Dawson", title: "Vice President", email: "jdawson@alleatogroup.com", phone: "502.612.2089" },
 ] as const;
 
 function buildPrintHTML(opts: {
@@ -3151,7 +3154,7 @@ function buildPrintHTML(opts: {
 </style></head><body>
 <div class="header">
   <div><div class="logo">ALLEATO</div><div style="font-size:10px;color:#6b7280;margin-top:4px;">Alleato Group LLC</div></div>
-  <div class="contacts">${ALLEATO_CONTACTS.map((c) => `<div class="contact-block"><div class="contact-name">${c.name}</div><div>${c.title}</div><div>${c.email}</div></div>`).join("")}</div>
+  <div class="contacts">${ALLEATO_CONTACTS.map((c) => `<div class="contact-block"><div class="contact-name">${c.name}</div><div>${c.title}</div><div>${c.email}</div><div>${c.phone}</div></div>`).join("")}</div>
 </div>
 <div class="project-bar">
   <div><span>Project: </span><strong>${opts.projectName}</strong></div>
@@ -3245,6 +3248,7 @@ function SummaryTab({
                 <p className="font-semibold text-foreground">{c.name}</p>
                 <p className="text-muted-foreground">{c.title}</p>
                 <p className="text-muted-foreground">{c.email}</p>
+                <p className="text-muted-foreground">{c.phone}</p>
               </div>
             ))}
           </div>
