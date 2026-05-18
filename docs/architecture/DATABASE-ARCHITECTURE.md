@@ -1,6 +1,6 @@
 # Database Architecture: MAIN vs RAG
 
-> **Authoritative reference, verified 2026-05-15.** Read this BEFORE writing any migration, AI tool, or sync job that touches documents, embeddings, or intelligence. Past sessions skipped this step and produced reckless work.
+> **Authoritative reference, verified 2026-05-17.** Read this BEFORE writing any migration, AI tool, or sync job that touches documents, embeddings, or intelligence. Past sessions skipped this step and produced reckless work.
 
 ## 1. TL;DR
 
@@ -286,18 +286,21 @@ create table commitment_documents (
 
 RLS inherits from parent entity access via a `user_can_access_entity()` helper (read access to the commitment = read access to every doc in `commitment_documents` for that commitment).
 
-**Status as of 2026-05-15:**
+**Status as of 2026-05-17 (all complete):**
 
 | Junction table | State |
 |---|---|
-| `submittal_documents` | Live |
-| `project_documents` | Live (pre-Pattern C) |
-| `commitment_documents` | Planned — Phase 4 Day 3 |
-| `prime_contract_documents` | Planned — Phase 4 Day 3 |
-| `change_order_documents` | Planned — Phase 4 Day 3 |
-| `owner_invoice_documents` / `invoice_documents` | Planned — Phase 4 Day 4 |
-| `company_documents` | Planned — Phase 4 Day 4 |
-| `rfi_documents` | Planned — Phase 4 Day 4 |
+| `subcontract_documents` | ✅ Live |
+| `purchase_order_documents` | ✅ Live |
+| `submittal_doc_links` | ✅ Live (named to avoid conflict with pre-existing `submittal_documents` file-storage table) |
+| `project_documents_v2` | ✅ Live (named to avoid conflict with pre-existing `project_documents` file-storage table) |
+| `prime_contract_documents` | ✅ Live |
+| `change_order_documents` | ✅ Live |
+| `owner_invoice_documents` | ✅ Live |
+| `company_documents` | ✅ Live |
+| `rfi_documents` | ✅ Live |
+
+> **Note:** `commitments` is a UNION ALL view over `subcontracts` + `purchase_orders` — FK constraints cannot reference views, so commitment documents use two tables: `subcontract_documents` and `purchase_order_documents`.
 
 ### 12.6 Drawings: hybrid (file + revision history)
 
@@ -310,23 +313,23 @@ drawing_revisions.document_metadata_id  →  document_metadata.id   (per revisio
 
 ### 12.7 Migration sequence
 
-1. **Taxonomy** — create + seed (Day 1, applied)
-2. **Column on `document_metadata`** — add `document_type` FK + indexes (Day 2, applied)
-3. **Backfill `document_type`** from `category` + path patterns (Day 2, applied)
-4. **Junction tables per entity** — `commitment_documents`, etc. (Day 3–4, in progress)
-5. **Drawings hybrid** — `drawings.document_metadata_id` already exists; `drawing_revisions` is the history table (in place)
-6. **Frontend file picker** — `<DocumentPicker entity="commitment" entityId={id} />` reads taxonomy filtered by `applies_to @> array[entity]` (Day 5)
-7. **Embedding pipeline extension** — `embed_pending_graph_documents()` already embeds anything in `document_metadata`; once junctions exist, the `findProjectDocuments` AI tool gains a `document_type` enum (Day 5–6)
-8. **Phase 9 LLM categorization** of the 6,567 remaining generic rows (Phase 9, follow-up)
+1. **Taxonomy** — create + seed ✅ (migration `20260520000000` + `20260520010000`)
+2. **Column on `document_metadata`** — add `document_type` FK + indexes ✅ (migration `20260520020000`)
+3. **Backfill `document_type`** from `category` + path patterns ✅ (migration `20260520030000`)
+4. **Junction tables per entity** ✅ (migration `20260523110000` — all 9 junction tables live)
+5. **Drawings hybrid** ✅ (migrations `20260523120000` — `drawings.document_metadata_id` + `drawing_revisions.document_metadata_id`)
+6. **Frontend file picker** ✅ `<DocumentPicker>` + `<LinkedDocumentsList>` in `frontend/src/components/ds/document-picker.tsx`; wired to Commitments detail page `AttachmentsTab`
+7. **Embedding pipeline extension** ✅ `embed_pending_attachment_documents()` in `ocr_worker.py`; hooked into `run_graph_sync()`
+8. **Phase 9 LLM categorization** ⬜ ~17% of rows still generic; use gpt-4.1-nano in batches of 100
 
 ### 12.8 Pattern C readers
 
 - AI assistant: `findProjectDocuments({ project_id, document_type })` filters by taxonomy
-- Each entity detail page: junction join → `document_metadata` for the file list
-- Owner briefing builder: joins `insight_card_evidence.source_document_id` → `document_metadata` and can now resolve to taxonomy type for richer rendering
+- Each entity detail page: junction join → `document_metadata` for the file list; `<DocumentPicker>` component handles attachment
+- Owner briefing builder: joins `insight_card_evidence.source_document_id` → `document_metadata` and can resolve to taxonomy type for richer rendering
 
-### 12.9 Status summary
+### 12.9 Status summary (as of 2026-05-17)
 
-- **Landed (Phase 4 Day 1–2):** taxonomy, column, backfill of 82% of rows
-- **In progress (Day 3–6):** entity junction tables, frontend picker, embedding integration
-- **Deferred (Phase 9):** LLM categorization of remaining 6,567 generic rows
+- **Landed:** taxonomy, column, path-based backfill (82% → ~83%), all 9 junction tables, drawings hybrid FKs, frontend picker, embedding extension, `email_attachments` legacy backfill (471 rows promoted)
+- **Running:** 30-day `documents` table soak audit — drop eligible **2026-06-17** if `documents_access_audit` shows zero rows
+- **Deferred:** LLM categorization of remaining ~17% generic rows; per-entity legacy attachment tables (`cco_attachments`, `invoice_attachments`, etc.) migration deferred until after soak drop

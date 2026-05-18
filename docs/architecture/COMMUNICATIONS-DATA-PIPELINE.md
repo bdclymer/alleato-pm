@@ -168,7 +168,7 @@ Microsoft 365
 
 **Entry point:** `run_graph_sync()` in `backend/src/services/integrations/microsoft_graph/sync.py`
 
-**Triggered by:** Render cron job `alleato-graph-sync` every 30 minutes (`*/30 * * * *`). Can also be triggered manually via the `/api/graph/sync` endpoint.
+**Triggered by:** Render cron job `alleato-graph-sync` every 2 hours (`20 */2 * * *`). Can also be triggered manually via the `/api/graph/sync` endpoint. Teams channel and DM syncs run on separate faster cadences (`:10` and `:40` each hour) to keep messaging content fresher than files.
 
 **Execution sequence (strictly serial within each phase):**
 
@@ -210,6 +210,19 @@ Microsoft 365
    - Runs embed_graph_document() on each
    - Writes chunks to document_chunks
    - Updates document_metadata.status → 'embedded'
+   Also: embed_pending_attachment_documents(supabase, limit=20)
+   - Promotes legacy email_attachment rows with raw_text to document_metadata
+   - Embeds them after promotion (capped 20/run)
+
+5.5. Azure OCR phase (added 2026-05-17)
+   OCRWorker.process_batch(supabase, graph_client, limit=20)
+   - Queries document_metadata for status='no_text' (scanned PDFs from OneDrive)
+   - Downloads each file via Microsoft Graph
+   - Sends to Azure Document Intelligence (prebuilt-read model, 20-page cap)
+   - Full text → status='raw_ingested' (picked up by next embed phase)
+   - Hit page cap → status='ocr_partial' (embedded but flagged in UI)
+   - Activation: requires AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT + AZURE_DOCUMENT_INTELLIGENCE_KEY env vars
+   - Worker: backend/src/services/integrations/microsoft_graph/ocr_worker.py
 
 6. Teams compiler phase (run_teams_compiler=True, default)
    run_compiler_batch(supabase, batch_size=25)
@@ -233,6 +246,28 @@ Microsoft 365
 | `ONEDRIVE_SYNC_FOLDERS` | `/Projects` | Comma-separated folder paths |
 | `SHAREPOINT_SYNC_FOLDERS` | (empty) | Format: `hostname/site:folder_path` |
 | `OUTLOOK_SYNC_SINCE` | (none) | Initial full-sync start date, e.g. `2024-01-01` |
+| `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT` | (none) | Azure DI endpoint URL — required for OCR step |
+| `AZURE_DOCUMENT_INTELLIGENCE_KEY` | (none) | Azure DI API key — required for OCR step |
+| `GRAPH_DELTA_MAX_PAGES` | `20` | Max delta query pages per OneDrive sync run (raised from 5) |
+| `GRAPH_DELTA_MAX_ITEMS` | `3000` | Max items per OneDrive sync run (raised from 500) |
+
+**Full Render cron schedule (from `render.yaml`):**
+
+| Cron name | Schedule | Purpose |
+|-----------|----------|---------|
+| `alleato-teams-channel-sync` | `:10` every hour | Teams channel messages only |
+| `alleato-source-sync-health` | every 30 min | Source sync health monitoring |
+| `alleato-teams-dm-sync` | `:40` every hour | Teams DM conversations only |
+| `alleato-graph-sync` | `:20` every 2h | Outlook + OneDrive + embed + OCR + promotions |
+| `alleato-acumatica-financial-sync` | `0 */2 * * *` | Acumatica ERP data sync |
+| `alleato-daily-recap` | 9:30 UTC daily | AI project recap from transcripts |
+| `alleato-task-extraction` | 7:00 UTC daily | Extract action items |
+| `alleato-rag-health` | 12:15 UTC daily | RAG health check + Slack alert |
+| `alleato-source-rag-health` | every 4h | RAG source health check |
+| `alleato-packet-refresh-periodic` | 2,9,15,21 UTC | Intelligence packet refresh |
+| `alleato-domain-packet-compiler` | 2:30,9:30,15:30,21:30 UTC | Domain-level synthesis |
+| `alleato-executive-daily-brief-morning` | 11:00,12:00 UTC weekdays | CEO briefing (morning) |
+| `alleato-executive-daily-brief-evening` | 22:30,23:30 UTC weekdays | CEO briefing (evening) |
 
 ---
 

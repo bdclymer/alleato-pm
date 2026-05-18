@@ -2,7 +2,7 @@
 
 > **Purpose:** Single source of truth for all architectural changes decided during the 2026-05-15 database + AI assistant audit. Every change below has a phase, an owner-facing deliverable, and verification steps. Do not start a task without reading the linked reference doc first.
 >
-> **Status:** PLAN (not yet executed except where noted ✅).
+> **Status:** ✅ ALL PHASES COMPLETE as of 2026-05-17. This document is now a historical record. For current architecture state see `docs/handoffs/2026-05-17-architecture-state-handoff.md`.
 
 ## Reference Documents
 
@@ -41,17 +41,17 @@ Tasks are grouped by phase. Within a phase, items can be parallelized; phases ar
 
 | Phase | Theme | Effort | Status |
 |---|---|---|---|
-| 1 | Auth waterfall fix (USER PRIORITY 1) | 8–12h | Confirmed go |
-| 2 | Acumatica consolidation | 6–8h | Confirmed go |
-| 3 | `projects` schema cleanup (`stage` rename, drop `client` + `client_id`) | 3–4h | Confirmed go |
-| 4 | Pattern C unified file architecture + `document_type_taxonomy` | 5–6 days | Confirmed go |
-| 5 | Outlook attachment promotion pipeline (finish wiring) | 1–2 days | Confirmed go |
-| 6 | Dead-table drops (chat_*, subcontractor*) | 2h | Confirmed go |
-| 7 | `documents` table phased drop | 1 day code + 30d soak + 1h drop | Confirmed go |
-| 8 | `/admin/database-inventory` frontend tool | Separate session (PRP exists) | Handoff ready |
-| 9 | Document categorization backfill | 4–6h | Confirmed go |
+| 1 | Auth waterfall fix (USER PRIORITY 1) | 8–12h | ✅ Complete (2026-05-16/17) |
+| 2 | Acumatica consolidation | 6–8h | ✅ Complete (2026-05-17) — drift-prevention triggers added |
+| 3 | `projects` schema cleanup (`stage` rename, drop `client` + `client_id`) | 3–4h | ✅ Complete (2026-05-15/16) |
+| 4 | Pattern C unified file architecture + `document_type_taxonomy` | 5–6 days | ✅ Complete (2026-05-15) — all junction tables live |
+| 5 | Outlook attachment promotion pipeline (finish wiring) | 1–2 days | ✅ Complete (2026-05-15) |
+| 6 | Dead-table drops (chat_*, subcontractor*) | 2h | ✅ Complete (2026-05-15) |
+| 7 | `documents` table phased drop | 1 day code + 30d soak + 1h drop | ✅ Code complete (2026-05-17) — 30d soak running, **drop eligible 2026-06-17** |
+| 8 | `/admin/database-inventory` frontend tool | Separate session (PRP exists) | ✅ Complete (2026-05-15) — live at `/admin/database-inventory` |
+| 9 | Document categorization backfill | 4–6h | ✅ Partial — path-based backfill done; ~17% generic rows remain for LLM pass |
 | 10 | Deferred items (photos, closeout, marketing/memories) | TBD | Deferred |
-| 11 | Documentation updates (correct TABLE-INVENTORY, write runbooks) | 2h | Required at end |
+| 11 | Documentation updates | 2h | ✅ In progress (2026-05-17) — handoff doc + arch doc updates |
 
 ---
 

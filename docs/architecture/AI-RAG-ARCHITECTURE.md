@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-05-07
+Last verified: 2026-05-17
 
 ---
 
@@ -58,8 +58,8 @@ Supabase (PostgreSQL + pgvector)
 
 | Phase | Name | Status | What's Built |
 |-------|------|--------|--------------|
-| 1 | Data Foundation | **Complete** | RAG assistant, 28 tools, C-Suite architecture (Strategist + CFO live), document ingestion pipeline (PDF/DOCX), Acumatica ERP integration (7 tools), company knowledge base, vector embeddings (24K+ chunks), chat persistence, guardrails, daily digest |
-| 2 | Proactive Intelligence | Not started | Automated insight generation (budget alerts, schedule risk, vendor risk), morning briefing, smart notifications, dashboard AI cards |
+| 1 | Data Foundation | **Complete** | RAG assistant, 28+ tools, C-Suite architecture (Strategist + CFO live), document ingestion pipeline (PDF/DOCX + Azure OCR for scanned PDFs), Acumatica ERP integration (9 tools), company knowledge base, vector embeddings (109K+ chunks in AI Database), chat persistence, guardrails, daily digest, intelligence packet compiler, contextual retrieval pilot (added 2026-05-17) |
+| 2 | Proactive Intelligence | **In progress** | Intelligence packets (86 per project, cron-refreshed), executive daily briefing (cron-delivered), insight cards (6,900+ rows), packet card feedback, deep-agents bridge (gated behind feature flag) |
 | 3 | Workflow Automation | Not started | Auto-classify documents on upload, AI-generated status reports, smart form templates (pre-fill RFIs, change order descriptions) |
 | 4 | Strategic Advisory | Not started | Project completion probability models, budget overrun prediction, cross-project pattern recognition, competitive benchmarking |
 
@@ -215,6 +215,19 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 | `search_document_chunks_by_category` | Filtered variant — same as above with mandatory category. |
 | `search_all_knowledge` | Searches structured intelligence tables: decisions, risks, opportunities, ai_insights. |
 | `search_knowledge_base` | Searches `company_knowledge` table only. |
+
+### Contextual Retrieval Pilot (added 2026-05-17)
+
+`document_chunks` now carries two additional columns for the Anthropic Contextual Retrieval technique:
+
+| Column | Purpose |
+|--------|---------|
+| `contextual_prefix` | LLM-generated context sentence prepended to each chunk before embedding to reduce ambiguity |
+| `is_contextualized` | bool flag — `true` once the chunk has been through the context enrichment step |
+
+**Backfill:** `POST /admin/documents/contextual-backfill` triggers the enrichment pipeline. Batch size capped at 128 per run (raised from earlier default). Template-only fast path skips LLM for simple short chunks.
+
+**RPC impact:** The `search_document_chunks` RPC returns higher-quality results for ambiguous queries (e.g. "project budget" now returns the right project, not a random one) because the context prefix removes chunk-level ambiguity.
 
 ### Secondary Embedding Table
 
