@@ -66,7 +66,7 @@
   - [x] `subcontract_attachments` → `subcontract_documents`
   - [x] `pcco_attachments` → `prime_contract_change_order_documents`
   - [x] `prime_contract_pco_attachments` → `prime_contract_pco_documents`
-  - [ ] Drop legacy attachment tables after browser verification and final row reconciliation
+  - [x] Drop legacy attachment tables after browser verification and final row reconciliation (`20260524030000_drop_legacy_pattern_c_attachment_tables.sql`)
 
 ## Phase 5 — Outlook Attachment Promotion Pipeline
 
@@ -108,7 +108,7 @@
 - [ ] Closeout document workflow
 - [ ] Marketing vertical cleanup
 - [ ] `memories` tables review
-- [ ] Per-entity `*_attachments` drop (post Phase 4 migration + soak)
+- [x] Per-entity `*_attachments` drop (completed with Pattern C closeout migration `20260524030000`)
 
 ## Phase 11 — Documentation Updates
 

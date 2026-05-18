@@ -376,9 +376,17 @@ Build a reusable `<DocumentPicker entity="commitment" entityId={id} />` that:
 - Upload writes to `document_metadata` with `document_type` set
 - Junction row inserted on save
 
-### 5.7 ⏳ Migrate existing attachments — DEFERRED (after 2026-06-17 soak period)
+### 5.7 ✅ Migrate existing attachments (Done 2026-05-18 — Pattern C closeout)
 
-For each existing per-entity attachment table (`commitment_attachments`, `change_order_attachments`, etc.), migrate rows into `document_metadata` + the new junction. Keep old table as read-only for 30 days, then drop.
+Legacy PURT/entity attachment rows were migrated into `document_metadata` plus entity-specific Pattern C junctions, then reconciled and dropped after browser verification. Closeout migration: `supabase/migrations/20260524030000_drop_legacy_pattern_c_attachment_tables.sql`.
+
+Closeout details:
+
+- `attachments`: 29 rows reconciled; 15 entity-scoped rows already linked to Pattern C and 14 NULL-entity orphan/test uploads preserved as project-level `document_metadata` + `project_documents_v2` links.
+- `change_event_attachments`: 2/2 rows linked to `change_event_documents`.
+- `submittal_attachments`: 1/1 row linked to `submittal_doc_links`.
+- Empty legacy tables dropped after code-reference audit: `cco_attachments`, `pcco_attachments`, `prime_contract_pco_attachments`, `invoice_attachments`, `subcontract_attachments`, `purchase_order_attachments`.
+- Guardrail: `scripts/audit-pattern-c-attachments.mjs` now fails on direct legacy table access, embedded legacy relation selects, or generated Database type usage for the retired tables.
 
 ### 5.8 ✅ Embedding for new types (Done 2026-05-15 — `embed_pending_graph_documents` extended)
 
@@ -533,7 +541,7 @@ After Phase 1–9 changes ship, patch the architecture docs:
 | Item | Status | When / Action |
 |------|--------|--------------|
 | **documents table hard drop** (§8.3) | ⏳ Time-gated | 2026-06-17 — `select count(*) from documents_access_audit where accessed_at > '2026-05-17'`; if zero, drop both tables |
-| **Per-entity attachment tables → document_metadata** (§5.7) | ⏳ Deferred | After 2026-06-17 soak — `cco_attachments`, `invoice_attachments`, `submittal_attachments`, `change_event_attachments`, `purchase_order_attachments`, `subcontract_attachments`, `pcco_attachments`, `prime_contract_pco_attachments` |
+| **Per-entity attachment tables → document_metadata** (§5.7) | ✅ Done | Browser-verified and reconciled; legacy PURT/entity attachment tables dropped by `20260524030000_drop_legacy_pattern_c_attachment_tables.sql` |
 | **LLM categorization backfill** (§10.2) | ⏳ Outstanding | 6,567 rows with generic `category` remain. No script written yet. Use gpt-4.1-nano, batch 100 |
 | **TABLE-INVENTORY.md updates** (§11 item 1) | ✅ Done | Pattern C tables, row counts, and dropped tables all reflected — verified 2026-05-18 |
 | **AUTH-MIGRATION-RUNBOOK.md** (§11 item 5) | ✅ Done | `docs/deployment/AUTH-MIGRATION-RUNBOOK.md` exists — verified 2026-05-18 |
@@ -554,7 +562,7 @@ These were flagged for deferral. **Do not start without explicit user go-ahead.*
 | Closeout document workflow | Roll into the commitments workflow pass; not standalone. |
 | Marketing vertical cleanup | User wants to review personally. |
 | `memories` tables | User wants to review personally. |
-| `*_attachments` per-entity tables (commitment_attachments, etc.) drop | Wait until Phase 4 (Pattern C) is fully migrated + soak period. |
+| `*_attachments` per-entity tables (commitment_attachments, etc.) drop | Completed 2026-05-18 by Pattern C closeout migration `20260524030000`; keep migration files and historical PRPs as history only. |
 
 ---
 
@@ -584,5 +592,4 @@ Added to memory at `~/.claude/projects/.../memory/feedback_verify_before_recomme
 - **Run LLM categorization backfill:** §10.2 — gpt-4.1-nano, batch 100
 - **Update TABLE-INVENTORY.md:** §11 item 1
 - **Write AUTH-MIGRATION-RUNBOOK.md:** §11 item 5
-- **Migrate per-entity attachment tables:** §5.7 — after 2026-06-17
 - **About to drop a table:** Re-read §0, §8, and the memory feedback files. If still in doubt, ask.

@@ -2,6 +2,26 @@
   "purpose": "Execution manifest for migrating legacy PURT/entity attachment tables to Pattern C document_metadata plus junction tables.",
   "last_verified_at": "2026-05-18",
   "source_of_truth_skill": ".codex/skills/pattern-c-attachment-migration/SKILL.md",
+  "closeout": {
+    "status": "complete",
+    "drop_migration": "supabase/migrations/20260524030000_drop_legacy_pattern_c_attachment_tables.sql",
+    "verified_checks": [
+      "npm run db:migrations:verify-applied -- supabase/migrations/20260524030000_drop_legacy_pattern_c_attachment_tables.sql",
+      "npm run db:inventory -- --check-only",
+      "node scripts/audit-pattern-c-attachments.mjs"
+    ],
+    "dropped_legacy_tables": [
+      "attachments",
+      "cco_attachments",
+      "pcco_attachments",
+      "prime_contract_pco_attachments",
+      "invoice_attachments",
+      "change_event_attachments",
+      "submittal_attachments",
+      "subcontract_attachments",
+      "purchase_order_attachments"
+    ]
+  },
   "global_guards": [
     "Run live counts before each migration slice; do not trust stale docs.",
     "Backfill document_metadata before inserting junction rows.",
@@ -31,7 +51,7 @@
         "purchase_order_documents": 1,
         "prime_contract_documents": 3
       },
-      "known_unmigrated_note": "Rows with NULL attached_to_table were left as storage orphans/test uploads.",
+      "known_unmigrated_note": "Rows with NULL attached_to_table were preserved as project-level document_metadata + project_documents_v2 links during closeout.",
       "targets": [
         {
           "legacy_entity_value": "commitments",
@@ -52,7 +72,7 @@
             "frontend/src/app/(main)/[projectId]/commitments/new/page.tsx",
             "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx"
           ],
-          "status": "converted_in_batch_1"
+          "status": "converted_and_legacy_table_dropped"
         },
         {
           "legacy_entity_value": "prime_contracts",
@@ -71,7 +91,7 @@
             "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/route.ts",
             "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download/route.ts"
           ],
-          "status": "converted_in_batch_2"
+          "status": "converted_and_legacy_table_dropped"
         }
       ]
     },
@@ -100,7 +120,7 @@
       "component_surfaces": [
         "frontend/src/components/change-events/ChangeEventAttachmentsSection.tsx"
       ],
-      "status": "converted_in_batch_2"
+      "status": "converted_and_legacy_table_dropped"
     },
     {
       "legacy_table": "submittal_attachments",
@@ -126,7 +146,7 @@
       "component_surfaces": [
         "frontend/src/hooks/use-submittals.ts"
       ],
-      "status": "converted_in_batch_2"
+      "status": "converted_and_legacy_table_dropped"
     },
     {
       "legacy_table": "cco_attachments",
@@ -141,7 +161,7 @@
         "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts",
         "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts"
       ],
-      "status": "converted_in_batch_2"
+      "status": "converted_and_legacy_table_dropped"
     },
     {
       "legacy_table": "pcco_attachments",
@@ -156,7 +176,7 @@
         "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/route.ts",
         "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]/route.ts"
       ],
-      "status": "converted_in_batch_2"
+      "status": "converted_and_legacy_table_dropped"
     },
     {
       "legacy_table": "prime_contract_pco_attachments",
@@ -170,7 +190,7 @@
       "route_surfaces": [
         "frontend/src/app/api/projects/[projectId]/prime-contract-pcos/[pcoId]/route.ts"
       ],
-      "status": "converted_in_batch_2"
+      "status": "converted_and_legacy_table_dropped"
     },
     {
       "legacy_table": "invoice_attachments",
@@ -189,7 +209,7 @@
         "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/route.ts",
         "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]/route.ts"
       ],
-      "status": "converted_in_batch_2"
+      "status": "converted_and_legacy_table_dropped"
     },
     {
       "legacy_table": "subcontract_attachments",
@@ -200,7 +220,7 @@
       "target_entity_type": "subcontract",
       "target_junction_table": "subcontract_documents",
       "target_fk_column": "subcontract_id",
-      "status": "pending_drop_after_view_rewrite"
+      "status": "legacy_table_dropped_after_view_rewrite"
     },
     {
       "legacy_table": "purchase_order_attachments",
@@ -211,7 +231,7 @@
       "target_entity_type": "purchase_order",
       "target_junction_table": "purchase_order_documents",
       "target_fk_column": "purchase_order_id",
-      "status": "pending_drop_after_reference_check"
+      "status": "legacy_table_dropped_after_reference_check"
     }
   ]
 }

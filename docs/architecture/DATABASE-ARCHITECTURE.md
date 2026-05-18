@@ -330,6 +330,6 @@ drawing_revisions.document_metadata_id  →  document_metadata.id   (per revisio
 
 ### 12.9 Status summary (as of 2026-05-18)
 
-- **Landed:** taxonomy, column, path-based backfill (82% → ~83%), Pattern C junction tables, drawings hybrid FKs, frontend picker, embedding extension, `email_attachments` legacy backfill (471 rows promoted), and per-entity attachment route conversion to Pattern C
+- **Landed:** taxonomy, column, path-based backfill (82% → ~83%), Pattern C junction tables, drawings hybrid FKs, frontend picker, embedding extension, `email_attachments` legacy backfill (471 rows promoted), per-entity attachment route conversion to Pattern C, and legacy PURT/entity attachment table drop after reconciliation (`20260524030000`)
 - **Running:** 30-day `documents` table soak audit — drop eligible **2026-06-17** if `documents_access_audit` shows zero rows
-- **Deferred:** LLM categorization of remaining ~17% generic rows; legacy attachment table drops are pending final browser verification and row reconciliation
+- **Deferred:** LLM categorization of remaining ~17% generic rows
