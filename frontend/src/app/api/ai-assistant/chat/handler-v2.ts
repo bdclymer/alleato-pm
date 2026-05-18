@@ -28,6 +28,7 @@ import {
   isAiAssistantModelId,
 } from "@/lib/ai/assistant-models";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import type { Json } from "@/types/database.types";
 
 type HandlerArgs = {
   user: { id: string };
@@ -52,6 +53,40 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .filter((p) => (p as { type?: string }).type === "text")
     .map((p) => ((p as { text?: string }).text ?? ""))
     .join(" ");
+}
+
+function toJsonValue(value: unknown): Json | undefined {
+  if (value === null) return null;
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map(toJsonValue)
+      .filter((item): item is Json => item !== undefined);
+  }
+  if (value && typeof value === "object") {
+    const objectValue: { [key: string]: Json | undefined } = {};
+    Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+      objectValue[key] = toJsonValue(item);
+    });
+    return objectValue;
+  }
+  return undefined;
+}
+
+function extractPersistableDataParts(message: UIMessage): Json[] {
+  return message.parts
+    .filter((part) => {
+      const type = (part as { type?: string }).type;
+      return typeof type === "string" && type.startsWith("data-");
+    })
+    .map(toJsonValue)
+    .filter((part): part is Json => part !== undefined);
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -367,6 +402,17 @@ function writeTextResponse(
 async function runChatV2(args: HandlerArgs): Promise<Response> {
   const lastUserMessage = [...args.messages].reverse().find((m) => m.role === "user");
   const lastUserContent = lastUserMessage ? extractTextFromParts(lastUserMessage.parts) : "";
+  let responseAlreadyPersisted = false;
+  let finishMetadata: {
+    finishReason?: string;
+    usage?: {
+      inputTokens?: number;
+      outputTokens?: number;
+      totalTokens?: number;
+    };
+    toolCallNames: string[];
+    stepCount: number;
+  } | null = null;
 
   const plan = planRetrieval({
     message: lastUserContent,
@@ -449,6 +495,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             .update({ last_message_at: new Date().toISOString() })
             .eq("session_id", args.sessionId)
             .eq("user_id", args.user.id);
+          responseAlreadyPersisted = true;
 
           writer.write({
             type: "data-status",
@@ -494,6 +541,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               ],
             },
           });
+          responseAlreadyPersisted = true;
         }
         return;
       }
@@ -560,6 +608,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           .update({ last_message_at: new Date().toISOString() })
           .eq("session_id", args.sessionId)
           .eq("user_id", args.user.id);
+        responseAlreadyPersisted = true;
 
         writer.write({
           type: "data-status",
@@ -572,6 +621,23 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           },
         } as never);
         return;
+      }
+
+      if (lastUserContent.trim()) {
+        const { error } = await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "user",
+          content: lastUserContent,
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            client_message_id: lastUserMessage?.id ?? null,
+          },
+        });
+
+        if (error) {
+          throw new Error(`Persisting the user message failed: ${error.message}`);
+        }
       }
 
       // Run base system prompt assembly (memory load + project context)
@@ -628,12 +694,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       const modelMessages = await convertToModelMessages(args.messages);
-      const lastUserMessage = modelMessages.findLast((m) => m.role === "user");
-      const inputText = lastUserMessage
-        ? (lastUserMessage.content as { text?: string }[] | string | undefined)
-          && typeof lastUserMessage.content === "string"
-          ? lastUserMessage.content
-          : (lastUserMessage.content as { type: string; text?: string }[])
+      const lastModelUserMessage = modelMessages.findLast((m) => m.role === "user");
+      const inputText = lastModelUserMessage
+        ? (lastModelUserMessage.content as { text?: string }[] | string | undefined)
+          && typeof lastModelUserMessage.content === "string"
+          ? lastModelUserMessage.content
+          : (lastModelUserMessage.content as { type: string; text?: string }[])
               ?.filter((p) => p.type === "text")
               .map((p) => p.text ?? "")
               .join(" ") ?? ""
@@ -662,6 +728,16 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             steps?.flatMap((s) => (s.toolCalls ?? []).map((c) => c.toolName)) ??
             toolCalls?.map((c) => c.toolName) ??
             [];
+          finishMetadata = {
+            finishReason,
+            usage: {
+              inputTokens: totalUsage.inputTokens,
+              outputTokens: totalUsage.outputTokens,
+              totalTokens: totalUsage.totalTokens,
+            },
+            toolCallNames,
+            stepCount: steps?.length ?? toolCallNames.length,
+          };
           console.log("[handler-v2] streamText onFinish", {
             finishReason,
             totalUsage,
@@ -699,6 +775,67 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       });
 
       writer.merge(result.toUIMessageStream({ originalMessages: args.messages }));
+    },
+    onFinish: async ({ responseMessage, finishReason }) => {
+      if (responseAlreadyPersisted) return;
+
+      const assistantText = extractTextFromParts(responseMessage.parts);
+      const assistantContent = assistantText.trim()
+        ? assistantText
+        : "The assistant could not get a usable response from the AI provider. This usually means the provider account is out of credits, over quota, or blocked by billing. I saved your question so it is not lost; after the provider billing issue is fixed, retry this message or choose a different model.";
+
+      const dataParts = extractPersistableDataParts(responseMessage);
+      const metadata: Record<string, unknown> = {
+        architecture: "retrieval-planner-v2",
+        response_message_id: responseMessage.id,
+        model: args.activeModel,
+        provider_path: "ai-gateway",
+        finish_reason: finishMetadata?.finishReason ?? finishReason ?? null,
+        empty_model_response: !assistantText.trim(),
+        usage: finishMetadata?.usage ?? null,
+        tool_trace:
+          finishMetadata?.toolCallNames.map((tool) => ({
+            tool,
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            timestamp: new Date().toISOString(),
+          })) ?? [],
+        retrieval_plan: {
+          intent: plan.intent,
+          reason: plan.reason,
+          responseFormat: plan.responseFormat,
+          sources: Object.keys(plan.sources),
+        },
+        step_count: finishMetadata?.stepCount ?? null,
+      };
+
+      if (dataParts.length > 0) {
+        metadata.data_parts = dataParts;
+      }
+
+      const { error } = await args.supabase.from("chat_history").insert({
+        session_id: args.sessionId,
+        user_id: args.user.id,
+        role: "assistant",
+        content: assistantContent,
+        metadata: metadata as Json,
+      });
+
+      if (error) {
+        throw new Error(`Persisting the assistant response failed: ${error.message}`);
+      }
+
+      const { error: conversationError } = await args.supabase
+        .from("conversations")
+        .update({ last_message_at: new Date().toISOString() })
+        .eq("session_id", args.sessionId)
+        .eq("user_id", args.user.id);
+
+      if (conversationError) {
+        throw new Error(`Updating the assistant conversation failed: ${conversationError.message}`);
+      }
     },
   });
 

@@ -203,6 +203,7 @@ function ChatWithSession({
   responseQualityByMessageId,
   traceDiagnosticsByMessageId,
   isLoadingMessages,
+  loadMessagesError,
   pendingFirstMessage,
   pendingFirstFiles,
   councilMode,
@@ -224,6 +225,7 @@ function ChatWithSession({
   responseQualityByMessageId: Record<string, ResponseQuality>;
   traceDiagnosticsByMessageId: Record<string, AssistantTraceDiagnostics>;
   isLoadingMessages: boolean;
+  loadMessagesError: string | null;
   pendingFirstMessage: string | null;
   pendingFirstFiles?: FileUIPart[];
   councilMode: boolean;
@@ -352,7 +354,7 @@ function ChatWithSession({
       responseQualityByMessageId={responseQualityByMessageId}
       traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
       liveStatus={liveStatus}
-      chatError={error ? formatChatError(error) : null}
+      chatError={error ? formatChatError(error) : loadMessagesError}
       isLoadingMessages={isLoadingMessages}
       isStreaming={isStreaming}
       input={input}
@@ -401,6 +403,7 @@ export function RagChatPage() {
     Record<string, AssistantTraceDiagnostics>
   >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [loadMessagesError, setLoadMessagesError] = useState<string | null>(null);
   const [noSessionInput, setNoSessionInput] = useState("");
   // Optimistic user message shown while a new conversation is being created
   const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
@@ -424,6 +427,7 @@ export function RagChatPage() {
 
   const loadSessionMessages = useCallback(async (sessionId: string) => {
     setIsLoadingMessages(true);
+    setLoadMessagesError(null);
     try {
       const data = await apiFetch<{ messages?: ChatHistoryMessage[] }>(
         `/api/ai-assistant/messages/${sessionId}`,
@@ -436,13 +440,18 @@ export function RagChatPage() {
       setMemoryUsageByMessageId(extractMemoryUsage(historyMessages));
       setResponseQualityByMessageId(extractResponseQuality(historyMessages));
       setTraceDiagnosticsByMessageId(extractTraceDiagnostics(historyMessages));
-    } catch {
+    } catch (error) {
       setInitialMessages([]);
       setToolTracesByMessageId({});
       setSourcesByMessageId({});
       setMemoryUsageByMessageId({});
       setResponseQualityByMessageId({});
       setTraceDiagnosticsByMessageId({});
+      setLoadMessagesError(
+        error instanceof Error
+          ? `Conversation history could not be loaded: ${error.message}`
+          : "Conversation history could not be loaded.",
+      );
     } finally {
       setIsLoadingMessages(false);
     }
@@ -458,6 +467,7 @@ export function RagChatPage() {
       setMemoryUsageByMessageId({});
       setResponseQualityByMessageId({});
       setTraceDiagnosticsByMessageId({});
+      setLoadMessagesError(null);
       return;
     }
     // Skip fetching for a session we just created and haven't sent to yet.
@@ -502,6 +512,7 @@ export function RagChatPage() {
     if (createConversation.isPending) return;
 
     setInitialMessages([]);
+    setLoadMessagesError(null);
     setPendingFirstMessage(null);
     setPendingFirstFiles(undefined);
     setPendingSessionId(null);
@@ -603,6 +614,7 @@ export function RagChatPage() {
             responseQualityByMessageId={responseQualityByMessageId}
             traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
             isLoadingMessages={isLoadingMessages}
+            loadMessagesError={loadMessagesError}
             pendingFirstMessage={pendingFirstMessage}
             pendingFirstFiles={pendingFirstFiles}
             councilMode={councilMode}
@@ -630,6 +642,7 @@ export function RagChatPage() {
             responseQualityByMessageId={{}}
             traceDiagnosticsByMessageId={{}}
             liveStatus={null}
+            chatError={loadMessagesError}
             isLoadingMessages={false}
             isStreaming={createConversation.isPending}
             input={noSessionInput}
