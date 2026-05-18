@@ -21,6 +21,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
 import { createClient } from "@/lib/supabase/server";
 import { activateBudgetCodes, BudgetCodeActivationError, type BudgetCodeActivationRow } from "@/lib/estimates/activate-budget-codes";
+import { getBudgetLineAmountPolicy } from "@/lib/budget/new-line-amount-policy";
 import type { Database } from "@/types/database.types";
 
 const WHERE = "projects/[projectId]/budget/seed-from-estimate#POST";
@@ -76,6 +77,23 @@ export const POST = withApiGuardrails<{ projectId: string }>(WHERE, async ({ req
   } = await supabase.auth.getUser();
   if (authError || !user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
+  }
+
+  // Post-execution amount lock: seeding from an estimate would write non-zero
+  // amounts onto budget_lines, which violates the rule that budget amounts
+  // can only come from the executed prime contract. Block the entire seed
+  // operation when the lock is active. Controlled by
+  // NEXT_PUBLIC_LOCK_NEW_BUDGET_LINE_AMOUNTS_AFTER_CONTRACT_EXECUTION.
+  const amountPolicy = await getBudgetLineAmountPolicy(supabase, projectId);
+  if (amountPolicy.requireZeroAmount) {
+    return NextResponse.json(
+      {
+        error:
+          "Budget amounts are locked after prime contract execution. Seeding the budget from an estimate is not allowed; budget changes flow through change orders.",
+        code: "BUDGET_AMOUNT_LOCKED",
+      },
+      { status: 422 },
+    );
   }
 
   // 1. Validate estimate

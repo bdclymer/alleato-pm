@@ -123,20 +123,29 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     }
   }
 
+  const inFlight = useMemo(
+    () => items.filter((i) => i.board_status === "planned" || i.board_status === "in_progress").length,
+    [items],
+  );
+  const shipped = useMemo(
+    () => items.filter((i) => i.board_status === "shipped").length,
+    [items],
+  );
+
   const viewToggle = (
-    <div className="inline-flex shrink-0 items-center rounded-lg bg-muted p-0.5">
+    <div className="inline-flex shrink-0 items-center rounded-md bg-muted p-0.5">
       <Button
         variant="ghost"
         size="sm"
         onClick={() => setViewMode("board")}
         className={cn(
-          "h-7 gap-1.5 px-2.5 text-xs",
+          "h-6 gap-1.5 px-2 text-[11px] font-medium",
           viewMode === "board"
             ? "bg-background text-foreground shadow-xs"
             : "text-muted-foreground hover:text-foreground",
         )}
       >
-        <LayoutGrid className="h-3.5 w-3.5" />
+        <LayoutGrid className="h-3 w-3" />
         Board
       </Button>
       <Button
@@ -144,13 +153,13 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
         size="sm"
         onClick={() => setViewMode("table")}
         className={cn(
-          "h-7 gap-1.5 px-2.5 text-xs",
+          "h-6 gap-1.5 px-2 text-[11px] font-medium",
           viewMode === "table"
             ? "bg-background text-foreground shadow-xs"
             : "text-muted-foreground hover:text-foreground",
         )}
       >
-        <Table2 className="h-3.5 w-3.5" />
+        <Table2 className="h-3 w-3" />
         Table
       </Button>
     </div>
@@ -159,6 +168,11 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2">
       {viewToggle}
+      <span className="hidden text-[11px] text-muted-foreground/60 sm:inline-flex items-center gap-3 pl-2">
+        <span><span className="font-medium text-foreground/80 tabular-nums">{inFlight}</span> in motion</span>
+        <span className="text-muted-foreground/30" aria-hidden>·</span>
+        <span><span className="font-medium text-foreground/80 tabular-nums">{shipped}</span> shipped</span>
+      </span>
       <div className="flex-1" />
       <ExpandableSearch
         value={filters.search ?? ""}
@@ -194,7 +208,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     return (
       <div className="flex flex-col gap-4">
         {toolbar}
-        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-4 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
+        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-3 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
           {BOARD_STATUSES.map((status) => (
             <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
           ))}
@@ -228,7 +242,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-4 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
+        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-3 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
           {BOARD_STATUSES.map((status) => (
             <BoardColumn
               key={status}

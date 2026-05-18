@@ -68,8 +68,8 @@ import {
   ScheduleTaskUpdate,
   TaskStatus,
 } from "@/types/scheduling";
-import { toast } from "sonner";
 import { useScheduleTasks } from "@/hooks/use-schedule-tasks";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================

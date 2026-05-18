@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, useId } from "react";
 import Image from "next/image";
 import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
 import {
-  AlertTriangle, Zap, Minus, Link2, Plus, Send, X, Check,
+  AlertTriangle, Zap, Minus, Link2, Plus, X, Check,
   ArrowUpRight, ThumbsUp, Trash2, UserCircle, ImageIcon, Paperclip, Loader2,
   Square, SquareCheckBig, MoreVertical,
 } from "lucide-react";
@@ -22,8 +22,8 @@ import {
   MorphingDialogDescription,
   MorphingDialogClose,
 } from "@/components/motion/morphing-dialog";
-import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { createClient } from "@/lib/supabase/client";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
 import {
@@ -612,76 +612,111 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             <div className="mt-6 border-t border-border/50 pt-5">
               <SectionLabel>Activity · {comments.length}</SectionLabel>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <AnimatePresence initial={false}>
                   {comments.map((c) => (
-                    <motion.div key={c.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex gap-3">
+                    <motion.div
+                      key={c.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="group flex gap-3"
+                    >
                       <Avatar name={c.user_profiles?.full_name ?? null} email={c.user_profiles?.email ?? "?"} />
-                      <div className="flex-1">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-2">
-                          <span className="text-xs font-medium text-foreground">
+                          <span className="text-[13px] font-medium text-foreground">
                             {c.user_profiles?.full_name ?? c.user_profiles?.email ?? "User"}
                           </span>
-                          <span className="text-[11px] text-muted-foreground">
+                          <span className="text-[11px] text-muted-foreground/60">
                             {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="mt-0.5 text-sm leading-relaxed text-foreground/80">{c.body}</p>
+                        <p className="mt-0.5 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground/85">
+                          {c.body}
+                        </p>
                         {c.screenshot_url && (
                           <img
                             src={c.screenshot_url}
                             alt="Attached screenshot"
-                            className="mt-2 max-h-64 rounded-lg object-cover ring-1 ring-border"
+                            className="mt-2 max-h-64 rounded-lg object-cover ring-1 ring-border/60"
                           />
                         )}
                       </div>
                     </motion.div>
                   ))}
                 </AnimatePresence>
-                {comments.length === 0 && <p className="text-sm text-muted-foreground/40">No activity yet.</p>}
+                {comments.length === 0 && (
+                  <p className="text-[13px] text-muted-foreground/40">No activity yet.</p>
+                )}
               </div>
 
-              {/* Comment input */}
-              <div className="mt-5 space-y-2">
+              {/* Comment composer — borderless until focus, actions inside chrome */}
+              <div
+                className={cn(
+                  "mt-6 rounded-xl bg-muted/40 transition-all",
+                  "ring-1 ring-transparent focus-within:bg-background focus-within:ring-border focus-within:shadow-sm",
+                )}
+              >
                 <Textarea
                   id={`${uid}-comment`}
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePostComment(); }}
-                  placeholder="Write a comment… (⌘↵ to send)"
+                  placeholder="Leave a comment"
                   rows={2}
-                  className="resize-none text-sm"
+                  className="min-h-11 resize-none border-0 bg-transparent px-3.5 pt-3 pb-0 text-[13px] leading-relaxed shadow-none placeholder:text-muted-foreground/50 focus-visible:ring-0"
                 />
+
                 {commentImageUrl && (
-                  <div className="relative inline-block">
-                    <Image src={commentImageUrl} alt="Attached" width={400} height={128} sizes="400px" className="max-h-32 w-auto rounded-lg object-cover ring-1 ring-border" />
-                    <Button
-                      variant="ghost" size="icon"
-                      onClick={() => setCommentImageUrl(null)}
-                      className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background shadow-xs ring-1 ring-border hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
+                  <div className="px-3.5 pb-2">
+                    <div className="relative inline-block">
+                      <Image
+                        src={commentImageUrl}
+                        alt="Attached"
+                        width={400}
+                        height={128}
+                        sizes="400px"
+                        className="max-h-32 w-auto rounded-lg object-cover ring-1 ring-border"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setCommentImageUrl(null)}
+                        className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background shadow-xs ring-1 ring-border hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 )}
+
                 <Input ref={commentFileRef} type="file" accept="image/*" className="hidden" onChange={handleCommentImageUpload} />
-                <div className="flex items-center gap-1.5">
+
+                <div className="flex items-center gap-1 px-1.5 pb-1.5 pt-1">
                   <Button
-                    variant="ghost" size="icon" disabled={commentImageUploading}
+                    variant="ghost"
+                    size="icon"
+                    disabled={commentImageUploading}
                     onClick={() => commentFileRef.current?.click()}
-                    className="h-7 w-7 text-muted-foreground" title="Attach image"
+                    className="h-7 w-7 text-muted-foreground/60 hover:bg-background hover:text-foreground"
+                    title="Attach image"
                   >
-                    {commentImageUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Paperclip className="h-3.5 w-3.5" />}
+                    {commentImageUploading
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <Paperclip className="h-3.5 w-3.5" />}
                   </Button>
                   <div className="flex-1" />
+                  <kbd className="hidden select-none rounded border border-border/60 bg-background/60 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground/60 sm:inline-block">
+                    ⌘↵
+                  </kbd>
                   <Button
                     size="sm"
                     disabled={(!commentText.trim() && !commentImageUrl) || addComment.isPending}
                     onClick={handlePostComment}
-                    className="gap-1.5"
+                    className="h-7 px-3 text-xs font-medium"
                   >
-                    <Send className="h-3.5 w-3.5" />
-                    Post
+                    {addComment.isPending ? "Posting…" : "Comment"}
                   </Button>
                 </div>
               </div>

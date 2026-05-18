@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
-import { Zap, AlertTriangle, Minus, MessageSquare, Clock, ExternalLink } from "lucide-react";
+import { MessageSquare, Clock, ExternalLink } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
@@ -21,9 +21,9 @@ import { DEFAULT_CARD_VIEW_SETTINGS } from "./card-view-settings";
 type BoardItemWithMeta = BoardItem;
 
 const severityConfig = {
-  high: { icon: <AlertTriangle className="h-3 w-3" />, className: "text-destructive" },
-  medium: { icon: <Zap className="h-3 w-3" />, className: "text-yellow-500" },
-  low: { icon: <Minus className="h-3 w-3" />, className: "text-muted-foreground" },
+  high: { dot: "bg-destructive" },
+  medium: { dot: "bg-amber-500" },
+  low: { dot: "bg-muted-foreground/40" },
 };
 
 function DueDateChip({ dateStr }: { dateStr: string }) {
@@ -106,22 +106,24 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
           <MorphingDialogTrigger
             {...(!readonly ? attributes : {})}
             {...(!readonly ? listeners : {})}
-            style={{ borderRadius: "8px" }}
+            style={{ borderRadius: "10px" }}
             className={cn(
-              "block w-full overflow-hidden border border-border/60 bg-background text-left select-none",
-              "shadow-xs transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-sm",
+              "group relative block w-full overflow-hidden bg-background text-left select-none",
+              "shadow-[0_1px_0_0_rgb(0_0_0_/_0.04),0_1px_2px_0_rgb(0_0_0_/_0.04)] ring-1 ring-border/60",
+              "transition-all duration-200 hover:ring-border hover:shadow-[0_1px_0_0_rgb(0_0_0_/_0.06),0_4px_12px_-4px_rgb(0_0_0_/_0.08)]",
               !readonly && "cursor-pointer"
             )}
           >
             {/* Cover image */}
             {settings.showCover && item.screenshot_url && (
-              <div className="h-28 w-full overflow-hidden border-b border-border/50 bg-muted/40">
+              <div className="relative h-24 w-full overflow-hidden bg-muted/40">
                 <img
                   src={item.screenshot_url}
-                  alt="Card cover"
+                  alt=""
                   className="h-full w-full object-cover"
                   draggable={false}
                 />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-b from-transparent to-background/70" />
               </div>
             )}
 
@@ -149,7 +151,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="mt-2 inline-flex items-center gap-1 rounded-md bg-primary/8 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/15 transition-colors max-w-full"
+                  className="mt-2 inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
                 >
                   <ExternalLink className="h-2.5 w-2.5 shrink-0" />
                   <span className="truncate">{primaryLink.label}</span>
@@ -158,8 +160,8 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
 
               {/* Source */}
               {item.page_title && item.page_title !== "Product Board" && (
-                <p className="mt-1 text-[11px] text-muted-foreground/60 truncate">
-                  {item.page_title}
+                <p className="mt-1 truncate text-[11px] text-muted-foreground/50">
+                  from {item.page_title}
                 </p>
               )}
 
@@ -169,9 +171,11 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
                   <div className="flex flex-wrap items-center gap-1.5">
                     {settings.showDueDate && dueDate && <DueDateChip dateStr={dueDate} />}
                     {settings.showSeverity && severity && (
-                      <span className={cn("flex items-center", severity.className)}>
-                        {severity.icon}
-                      </span>
+                      <span
+                        className={cn("h-1.5 w-1.5 rounded-full", severity.dot)}
+                        title={`Priority: ${item.severity}`}
+                        aria-label={`Priority ${item.severity}`}
+                      />
                     )}
                   </div>
                   <div className="flex items-center gap-2">

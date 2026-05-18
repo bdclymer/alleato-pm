@@ -116,7 +116,7 @@ import {
   VolumeXIcon,
 } from "lucide-react";
 import type { DynamicToolUIPart, FileUIPart } from "ai";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { WelcomeScreen } from "./welcome-screen";
 import {
   TracePanel,

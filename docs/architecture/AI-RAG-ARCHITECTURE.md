@@ -35,6 +35,10 @@ Chat Handler v2 — frontend/src/app/api/ai-assistant/chat/handler-v2.ts
     ├──[executive briefing without selected project]─────────► Render backend
     │                                                          /api/intelligence/deep-agent/executive-briefing
     │
+    ├──[/ai-assistant-v2 fallback when LangGraph URL is unset]► Next API route
+    │                                                          /api/ai-assistant-v2/deep-agent
+    │                                                          (resolves project names, then calls Render Deep Agents)
+    │
     ▼
 Orchestrator — frontend/src/lib/ai/orchestrator.ts
     │  (Strategist system prompt + routing)
@@ -83,7 +87,9 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 |------|---------|
 | `frontend/src/app/api/ai-assistant/chat/route.ts` | Primary chat API route. All user messages enter here. Calls orchestrator, streams response, persists to `chat_history`. |
 | `frontend/src/app/api/ai-assistant/chat/handler-v2.ts` | Current `/ai-assistant` server handler. Plans retrieval, persists chat history, and, when `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, direct-returns successful Render Deep Agents project/executive packets before falling back to local AI SDK synthesis. |
-| `frontend/src/lib/ai/deep-agent-project-status.ts` | Typed server-side bridge to Render backend Deep Agents endpoints. Owns env gating, request schemas, source-evidence widgets, and direct-response eligibility for project/executive packets. |
+| `frontend/src/app/api/ai-assistant-v2/deep-agent/route.ts` | `/ai-assistant-v2` fallback route when no LangGraph URL is configured. Authenticates the user, resolves project names from the prompt when no project ID is supplied, calls the Render Deep Agents project/executive endpoints, and returns packet metadata to the v2 UI. |
+| `frontend/src/components/ai-assistant-v2/advisor-chat.tsx` | `/ai-assistant-v2` client surface. Uses the LangGraph SDK only when `NEXT_PUBLIC_LANGGRAPH_API_URL` is configured; otherwise submits through the Render Deep Agents fallback route and displays mode, confidence, source count, and tool-call count. |
+| `frontend/src/lib/ai/deep-agent-project-status.ts` | Typed server-side bridge to Render backend Deep Agents endpoints. Owns env gating, request schemas, source-evidence widgets, optional route-level timeout overrides, and direct-response eligibility for project/executive packets. |
 | `backend/src/services/agents/alleato_ai_tools/` | Backend-local port of the standalone `alleato-ai` Deep Agents tools: resolvers, SQL schema/query, RAG/meeting/email/Teams search, recent activity, Acumatica reads, draft-preview actions, prompts, and domain subagent definitions. |
 | `backend/src/services/agents/deep_project_intelligence.py` | Render Deep Agents runtime. The narrow PM tools are always present; the standalone registry is enabled by `DEEP_AGENTS_STANDALONE_TOOLS_ENABLED`, with separate SQL, Acumatica, draft-action, and subagent gates. |
 | `frontend/src/lib/ai/orchestrator.ts` | Registers the agent registry, constructs Strategist tool set, executes sub-agent calls via `ToolLoopAgent`. Adding a new agent: add config here + add `consultXxx` tool + add name to `agents/types.ts`. |

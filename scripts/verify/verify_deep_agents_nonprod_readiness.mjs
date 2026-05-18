@@ -48,8 +48,8 @@ function verifyManifest(manifestPath) {
   }
 
   const expected = {
-    DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED: false,
-    DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME: "contract_spike",
+    DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED: true,
+    DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME: "deep_agents",
     DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL: "gpt-5.4-mini",
   };
 

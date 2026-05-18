@@ -92,6 +92,7 @@ export function BudgetPageHeader({
   onConfigureBudgetViews,
 }: BudgetPageHeaderProps) {
   const [showLockDialog, setShowLockDialog] = React.useState(false);
+  const canSyncToErp = Boolean(onResendToERP);
 
   const handleLockConfirm = () => {
     onLockBudget?.();
@@ -230,7 +231,15 @@ export function BudgetPageHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={onResendToERP}>
+            <DropdownMenuItem
+              onClick={onResendToERP}
+              disabled={!canSyncToErp}
+              title={
+                canSyncToErp
+                  ? undefined
+                  : "ERP sync is not configured for this budget yet."
+              }
+            >
               <RefreshCw className="w-4 h-4 mr-2" />
               Sync to ERP
             </DropdownMenuItem>
@@ -344,6 +353,12 @@ export function BudgetPageHeader({
               size="icon"
               className="text-foreground hover:bg-muted hover:text-foreground"
               onClick={onResendToERP}
+              disabled={!canSyncToErp}
+              title={
+                canSyncToErp
+                  ? undefined
+                  : "ERP sync is not configured for this budget yet."
+              }
               aria-label="Sync to ERP"
             >
               <RefreshCw />

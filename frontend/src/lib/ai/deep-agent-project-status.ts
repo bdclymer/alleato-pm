@@ -106,12 +106,14 @@ export type DeepAgentProjectStatusRequest = {
   projectId: number;
   sessionId?: string | null;
   question: string;
+  timeoutMs?: number;
 };
 
 export type DeepAgentExecutiveBriefingRequest = {
   userId: string;
   sessionId?: string | null;
   question: string;
+  timeoutMs?: number;
 };
 
 const DEEP_AGENT_PROJECT_CONTEXT_INTENTS = new Set<AssistantIntent>([
@@ -231,7 +233,7 @@ export async function fetchDeepAgentProjectStatus(
         params.sessionId ?? `deep-agent-project-status-${params.projectId}`,
       where: WHERE,
       dependency: "backend.deep-agent-project-status",
-      timeoutMs: AI_CALL_POLICY.timeoutMs,
+      timeoutMs: params.timeoutMs ?? AI_CALL_POLICY.timeoutMs,
       retries: 0,
       backoffMs: AI_CALL_POLICY.backoffMs,
     },
@@ -264,7 +266,7 @@ export async function fetchDeepAgentExecutiveBriefing(
       requestId: params.sessionId ?? "deep-agent-executive-briefing",
       where: EXECUTIVE_WHERE,
       dependency: "backend.deep-agent-executive-briefing",
-      timeoutMs: AI_CALL_POLICY.timeoutMs,
+      timeoutMs: params.timeoutMs ?? AI_CALL_POLICY.timeoutMs,
       retries: 0,
       backoffMs: AI_CALL_POLICY.backoffMs,
     },

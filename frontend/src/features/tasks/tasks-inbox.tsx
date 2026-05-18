@@ -24,7 +24,6 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
 import { format } from "date-fns";
 
 import {
@@ -64,6 +63,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { getErrorDetail } from "@/lib/format-error";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -1502,10 +1502,29 @@ export function TasksInbox({
   const [users, setUsers] = useState<UserOption[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [splitViewHeight, setSplitViewHeight] = useState<number | null>(null);
 
   const listPanelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { leftPct, handleMouseDown } = useResizablePanel(containerRef);
+
+  const syncSplitViewHeight = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const top = containerRef.current?.getBoundingClientRect().top;
+    if (top == null) return;
+
+    const nextHeight = Math.max(window.innerHeight - top, 320);
+    setSplitViewHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+  }, []);
+
+  const setSplitViewContainer = useCallback((node: HTMLDivElement | null) => {
+    containerRef.current = node;
+    if (!node || typeof window === "undefined") return;
+
+    const nextHeight = Math.max(window.innerHeight - node.getBoundingClientRect().top, 320);
+    setSplitViewHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+  }, []);
 
   const tableState = useUnifiedTableState({
     entityKey: isProjectScoped ? `project-tasks-${projectId}` : "tasks",
@@ -1544,6 +1563,15 @@ export function TasksInbox({
     tableState.setCurrentView("card");
     tableState.setSearchParams({ view: "card" });
   }, [isMobileViewport, rawView, tableState]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    syncSplitViewHeight();
+    window.addEventListener("resize", syncSplitViewHeight);
+
+    return () => window.removeEventListener("resize", syncSplitViewHeight);
+  }, [filter, scope, selectedTaskIds.length, syncSplitViewHeight, tableState.currentView]);
 
   useEffect(() => {
     if (!rawTaskId) return;
@@ -2213,9 +2241,10 @@ export function TasksInbox({
             list: (item) => renderTasksList(item, handleOpenSource),
             split: () => (
               <div
-                ref={containerRef}
+                ref={setSplitViewContainer}
                 data-task-split-view
                 className="flex min-h-0 flex-1 overflow-hidden border-t border-border/40"
+                style={splitViewHeight ? { height: `${splitViewHeight}px` } : undefined}
               >
                 {/* Left: task list */}
                 <div
@@ -2399,31 +2428,33 @@ export function TasksInbox({
                 {/* Right: detail panel (desktop) */}
                 <div
                   data-task-detail-panel
-                  className="hidden h-full min-w-0 flex-1 overflow-y-auto overscroll-contain lg:block"
+                  className="hidden min-h-0 min-w-0 flex-1 lg:flex lg:flex-col"
                 >
-                  {!selectedWithContext ? (
-                    <EmptyDetail
-                      total={total}
-                      openCount={openCount}
-                      doneCount={doneCount}
-                      loading={loading}
-                      scope={scope}
-                      isProjectScoped={isProjectScoped}
-                    />
-                  ) : (
-                    <TaskDetail
-                      task={selectedWithContext}
-                      updatingId={updatingId}
-                      deletingId={deletingId}
-                      onUpdateStatus={updateStatus}
-                      onUpdateTask={updateTask}
-                      onDelete={deleteItem}
-                      projects={projects}
-                      projectsLoading={projectsLoading}
-                      users={users}
-                      usersLoading={usersLoading}
-                    />
-                  )}
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                    {!selectedWithContext ? (
+                      <EmptyDetail
+                        total={total}
+                        openCount={openCount}
+                        doneCount={doneCount}
+                        loading={loading}
+                        scope={scope}
+                        isProjectScoped={isProjectScoped}
+                      />
+                    ) : (
+                      <TaskDetail
+                        task={selectedWithContext}
+                        updatingId={updatingId}
+                        deletingId={deletingId}
+                        onUpdateStatus={updateStatus}
+                        onUpdateTask={updateTask}
+                        onDelete={deleteItem}
+                        projects={projects}
+                        projectsLoading={projectsLoading}
+                        users={users}
+                        usersLoading={usersLoading}
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Mobile: full-screen detail */}

@@ -9,6 +9,10 @@ import {
   BudgetFetchError,
   computeBudgetGrandTotals,
 } from "@/lib/budget/compute-grand-totals";
+import {
+  getBudgetLineAmountPolicy,
+  isEffectivelyZero,
+} from "@/lib/budget/new-line-amount-policy";
 
 
 // GET /api/projects/[id]/budget - Fetch budget data for a project
@@ -94,6 +98,31 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }));
 
     const supabase = await createClient();
+
+    // Post-execution amount lock: when a prime contract is executed, new
+    // budget lines must be created at $0.00. Budget changes flow through
+    // change orders. Controlled by NEXT_PUBLIC_LOCK_NEW_BUDGET_LINE_AMOUNTS_AFTER_CONTRACT_EXECUTION.
+    const amountPolicy = await getBudgetLineAmountPolicy(
+      supabase,
+      projectIdNum,
+    );
+    if (amountPolicy.requireZeroAmount) {
+      const violatingIndex = normalizedLineItems.findIndex(
+        (item) => !isEffectivelyZero(item.amount),
+      );
+      if (violatingIndex !== -1) {
+        return NextResponse.json(
+          {
+            error:
+              "Budget amounts are locked after prime contract execution. New line items must be added at $0.00; budget changes flow through change orders.",
+            code: "BUDGET_AMOUNT_LOCKED",
+            violatingLineIndex: violatingIndex,
+          },
+          { status: 422 },
+        );
+      }
+    }
+
     const runtimeSettingsClient = supabase as unknown as {
       from: (table: "project_budget_settings") => {
         select: (query: string) => {

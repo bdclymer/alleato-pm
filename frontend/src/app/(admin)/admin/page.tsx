@@ -95,13 +95,6 @@ const sections: AdminMenuSection[] = [
         icon: Building2,
       },
       {
-        label: "Admin Roadmap",
-        href: "/admin/roadmap",
-        route: "/admin/roadmap",
-        description: "Roadmap items, internal priorities, and product planning.",
-        icon: ListChecks,
-      },
-      {
         label: "Product Board",
         href: "/product-board",
         route: "/product-board",

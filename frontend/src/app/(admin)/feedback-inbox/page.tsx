@@ -28,7 +28,7 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast/app-toast";
 
 import { EmptyState, ErrorState } from "@/components/ds";
 import { PageShell } from "@/components/layout";

@@ -19,7 +19,7 @@ import {
   Upload,
 } from "lucide-react";
 
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { ContentSectionStack, PageShell, PageTabs, SectionRuleHeading } from "@/components/layout";

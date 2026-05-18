@@ -25,7 +25,6 @@ import {
   LayoutDashboard,
   Lock,
   Mail,
-  Map,
   MessageCircle,
   Package,
   Receipt,
@@ -629,14 +628,6 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Source sync, task, packet, and daily brief readiness",
-    adminOnly: true,
-  },
-  {
-    name: "Roadmap",
-    path: "/admin/roadmap",
-    requiresProject: false,
-    icon: Map,
-    description: "Product roadmap and upcoming features",
     adminOnly: true,
   },
   {

@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 import {
   ArrowLeft,
   ChevronDown,
@@ -68,6 +67,7 @@ import {
   useDeleteSubcontractorInvoice,
 } from "@/hooks/use-subcontractor-invoices";
 import { apiFetch } from "@/lib/api-client";
+import { appToast as toast } from "@/lib/toast/app-toast";
 
 async function patchStatus(
   projectId: string,
@@ -299,10 +299,6 @@ export function SubcontractorInvoiceDetail({
     }
   }
 
-  async function handleEmailContract() {
-    toast.info("Email Contract — wires to commitment email flow (pending)");
-  }
-
   async function handleCreateInvoice() {
     router.push(
       `/${projectId}/invoicing/subcontractor/new?contract=${invoice?.subcontract_id ?? invoice?.purchase_order_id ?? ""}`,
@@ -499,7 +495,10 @@ export function SubcontractorInvoiceDetail({
               <DropdownMenuItem onClick={handleCreateInvoice}>
                 <FilePlus2 className="h-4 w-4 mr-2" /> Create Invoice
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleEmailContract}>
+              <DropdownMenuItem
+                disabled
+                title="Contract email is sent from the commitment email workflow."
+              >
                 <Mail className="h-4 w-4 mr-2" /> Email Contract
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleEmailInvoice}>

@@ -3,9 +3,9 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer, type PageContainerProps } from "@/components/layout/PageContainer";
@@ -1053,7 +1053,10 @@ export function UnifiedTablePage<T>({
         }
         setInlineEdits((prev) => ({ ...prev, [cellKey]: nextValue }));
       } catch (error) {
-        toast.error("Failed to update cell value");
+        toast.error("Cell update issue", {
+          id: "unified-table-cell-update",
+          description: "The edited cell was restored because the save request did not complete.",
+        });
       } finally {
         setEditingCell(null);
         setEditingValue("");
@@ -1947,15 +1950,19 @@ export function UnifiedTablePage<T>({
       {showTable && canRenderSplitView && (() => {
         const SplitView = views?.split;
         if (!SplitView) return null;
-        return SplitView({
-          items: rowOrderedItems,
-          getRowId: table.getRowId,
-          activeRowId: table.activeRowId,
-          selectedIds,
-          onSelectRow: selection ? handleSelectRow : undefined,
-          onSelectAll: selection ? handleSelectAll : undefined,
-          onRowClick: table.onRowClick,
-        });
+        return (
+          <div className="flex flex-1 min-h-0">
+            {SplitView({
+              items: rowOrderedItems,
+              getRowId: table.getRowId,
+              activeRowId: table.activeRowId,
+              selectedIds,
+              onSelectRow: selection ? handleSelectRow : undefined,
+              onSelectAll: selection ? handleSelectAll : undefined,
+              onRowClick: table.onRowClick,
+            })}
+          </div>
+        );
       })()}
 
       {(() => {

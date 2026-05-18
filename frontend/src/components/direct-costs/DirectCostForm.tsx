@@ -58,7 +58,7 @@ import {
   AlertCircle,
   Wand2,
 } from 'lucide-react'
-import { toast } from 'sonner'
+import { appToast as toast } from '@/lib/toast/app-toast'
 
 // =============================================================================
 // INTERFACES

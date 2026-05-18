@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
 import { mapDrawingLogRow } from "@/types/drawings.types";
 import type { DrawingLogViewRow } from "@/types/drawings.types";

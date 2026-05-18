@@ -15,17 +15,24 @@ import type { CardViewSettings } from "./card-view-settings";
 import { DEFAULT_CARD_VIEW_SETTINGS } from "./card-view-settings";
 
 const COLUMN_BG: Record<BoardStatus, string> = {
-  submitted: "bg-muted/35",
-  planned: "bg-muted/35",
-  in_progress: "bg-muted/35",
-  shipped: "bg-muted/35",
+  submitted: "bg-muted/40",
+  planned: "bg-muted/40",
+  in_progress: "bg-muted/40",
+  shipped: "bg-muted/40",
 };
 
 const COUNT_PILL: Record<BoardStatus, string> = {
-  submitted: "bg-muted text-muted-foreground",
+  submitted: "bg-background text-muted-foreground ring-1 ring-inset ring-border",
   planned: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
   in_progress: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
   shipped: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+};
+
+const STAGE_DOT: Record<BoardStatus, string> = {
+  submitted: "bg-muted-foreground/40",
+  planned: "bg-violet-500 dark:bg-violet-400",
+  in_progress: "bg-amber-500 dark:bg-amber-400",
+  shipped: "bg-emerald-500 dark:bg-emerald-400",
 };
 
 // ── Inline card creator ───────────────────────────────────────────────────────
@@ -62,9 +69,9 @@ function InlineCardCreator({ status, onDone }: { status: BoardStatus; onDone?: (
         variant="ghost"
         size="sm"
         onClick={open}
-        className="mt-1 w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+        className="mt-1 h-8 w-full justify-start gap-1.5 px-2 text-xs font-medium text-muted-foreground/70 hover:bg-background/60 hover:text-foreground"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-3.5 w-3.5" />
         Add a card
       </Button>
     );
@@ -120,8 +127,11 @@ export function BoardColumn({ status, label, items, allItems, readonly, cardSett
     <div className="flex min-w-0 flex-col gap-0">
       {/* Column header */}
       <div className="flex items-center justify-between px-1 pb-2">
-        <span className="text-sm font-semibold text-foreground">{label}</span>
-        <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium tabular-nums", COUNT_PILL[status])}>
+        <div className="flex items-center gap-2">
+          <span className={cn("h-1.5 w-1.5 rounded-full", STAGE_DOT[status])} aria-hidden />
+          <span className="text-[13px] font-semibold uppercase tracking-wide text-foreground/80">{label}</span>
+        </div>
+        <span className={cn("rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums leading-none min-w-[1.25rem] text-center", COUNT_PILL[status])}>
           {items.length}
         </span>
       </div>
@@ -130,7 +140,7 @@ export function BoardColumn({ status, label, items, allItems, readonly, cardSett
       <div
         ref={setNodeRef}
         className={cn(
-          "flex min-h-[18rem] flex-col gap-2 rounded-lg p-2 transition-colors duration-150",
+          "flex min-h-[18rem] flex-col gap-2 rounded-xl p-2 transition-colors duration-150",
           COLUMN_BG[status],
           isOver && "ring-2 ring-primary/40 ring-offset-1"
         )}

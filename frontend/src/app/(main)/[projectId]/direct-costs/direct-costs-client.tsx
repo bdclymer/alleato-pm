@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Plus, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { apiFetchRaw } from "@/lib/api-client";

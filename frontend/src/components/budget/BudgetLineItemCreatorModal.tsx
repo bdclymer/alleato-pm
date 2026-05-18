@@ -41,9 +41,10 @@ import {
   ModalFooter,
 } from "@/components/budget/modals/BaseModal";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 
 interface BudgetCode {
   id: string;
@@ -80,6 +81,12 @@ interface BudgetLineItemCreatorModalProps {
   onClose: () => void;
   onCreate: (data: InlineLineItemData[]) => Promise<void>;
   isLocked?: boolean;
+  /**
+   * When true, new lines are forced to $0.00. Quantity and unit cost inputs
+   * are disabled. Used after a prime contract is executed — budget amounts
+   * can only change through change orders.
+   */
+  requireZeroAmount?: boolean;
 }
 
 export function BudgetLineItemCreatorModal({
@@ -88,6 +95,7 @@ export function BudgetLineItemCreatorModal({
   onClose,
   onCreate,
   isLocked = false,
+  requireZeroAmount = false,
 }: BudgetLineItemCreatorModalProps) {
   const [rows, setRows] = React.useState<InlineLineItemData[]>([
     {
@@ -477,6 +485,10 @@ export function BudgetLineItemCreatorModal({
         return;
       }
 
+      // When amounts are locked, quantity/unit cost are forced to zero
+      // and the validations below don't apply — every line ships at $0.00.
+      if (requireZeroAmount) continue;
+
       if ((parseFloat(row.qty) || 0) < 1) {
         toast.error(`Quantity must be at least 1${rowSuffix}`);
         return;
@@ -488,9 +500,20 @@ export function BudgetLineItemCreatorModal({
       }
     }
 
+    // Belt-and-suspenders: force every row to $0.00 when the lock is on,
+    // even if state somehow drifted. The server also enforces this.
+    const rowsToSubmit = requireZeroAmount
+      ? rows.map((row) => ({
+          ...row,
+          qty: row.qty || "1",
+          unitCost: "0",
+          amount: "0.00",
+        }))
+      : rows;
+
     setIsCreating(true);
     try {
-      await onCreate(rows);
+      await onCreate(rowsToSubmit);
       // Reset after successful creation
       setRows([
         {
@@ -579,6 +602,18 @@ export function BudgetLineItemCreatorModal({
         size="xl"
       >
         <ModalBody className="min-h-0 px-6 pb-4">
+          {requireZeroAmount && (
+            <div className="mb-4">
+              <InfoAlert variant="warning">
+                <p className="font-medium">Budget amounts are locked</p>
+                <p className="mt-0.5">
+                  The prime contract has been executed. New line items can be
+                  added, but they must be created at $0.00. Budget changes
+                  must flow through change orders.
+                </p>
+              </InfoAlert>
+            </div>
+          )}
           {/* Smart Copy UOM Toggle */}
           <div className="mb-4 flex gap-4 text-xs">
             <label className="flex cursor-pointer items-center gap-2 text-muted-foreground">
@@ -711,13 +746,13 @@ export function BudgetLineItemCreatorModal({
                           decimals={0}
                           aria-label={`Quantity for line item ${index + 1}`}
                           data-testid={`budget-qty-input-${index}`}
-                          value={row.qty}
+                          value={requireZeroAmount ? "" : row.qty}
                           onChange={(e) =>
                             handleRowChange(index, "qty", e.target.value)
                           }
-                          placeholder="1"
+                          placeholder={requireZeroAmount ? "—" : "1"}
                           className="h-8 bg-muted/30 border-border/60 text-center"
-                          disabled={isCreating}
+                          disabled={isCreating || requireZeroAmount}
                           clearZeroOnFocus={true}
                         />
                       </td>
@@ -754,9 +789,11 @@ export function BudgetLineItemCreatorModal({
                           label="Unit cost"
                           data-testid={`budget-unit-cost-input-${index}`}
                           value={
-                            row.unitCost
-                              ? parseFloat(String(row.unitCost))
-                              : undefined
+                            requireZeroAmount
+                              ? 0
+                              : row.unitCost
+                                ? parseFloat(String(row.unitCost))
+                                : undefined
                           }
                           onChange={(val) =>
                             handleRowChange(
@@ -768,20 +805,19 @@ export function BudgetLineItemCreatorModal({
                           inline
                           showCurrency={false}
                           className="h-8 bg-muted/30 border-border/60"
-                          disabled={isCreating}
+                          disabled={isCreating || requireZeroAmount}
                         />
                       </td>
 
                       <td className="py-2 pr-2 align-top pt-3 w-36">
                         <div className="h-8 flex items-center justify-end px-3 tabular-nums font-medium text-foreground pointer-events-none select-none">
                           $
-                          {parseFloat(row.amount || "0").toLocaleString(
-                            "en-US",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          )}
+                          {parseFloat(
+                            requireZeroAmount ? "0" : row.amount || "0",
+                          ).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </div>
                         {negativeAmountRows.has(index) && (
                           <p className="mt-1 flex items-center gap-1 text-xs text-warning">

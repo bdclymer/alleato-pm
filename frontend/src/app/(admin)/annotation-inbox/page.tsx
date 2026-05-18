@@ -25,7 +25,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, ExternalLink, Plus, RefreshCw, Send, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { apiFetch, ApiError } from "@/lib/api-client";
 
 type AgentTarget = "codex" | "claude_code";

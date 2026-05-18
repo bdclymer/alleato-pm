@@ -4,7 +4,6 @@ import * as React from "react";
 import { Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
 
 import {
   BudgetPageHeader,
@@ -55,12 +54,14 @@ import {
   formatBudgetUpdateError,
   updateBudgetLineItem,
 } from "@/lib/budget/update-budget-line-item";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import {
   apiFetch,
   apiFetchBlob,
   summarizeBulkResults,
 } from "@/lib/api-client";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useBudgetNewLinePolicy } from "@/hooks/use-budget-new-line-policy";
 import {
   applyQuickFilter,
   loadQuickFilterPreference,
@@ -204,6 +205,10 @@ function BudgetPageContent() {
   const [lockedAt, setLockedAt] = React.useState<string | null>(null);
   const [lockedBy, setLockedBy] = React.useState<string | null>(null);
 
+  // Post-execution amount lock: when the prime contract is executed and the
+  // feature flag is on, new budget lines must be created at $0.00.
+  const newLinePolicy = useBudgetNewLinePolicy(projectId);
+
   // Fetch available budget views for the view switcher
   const fetchBudgetViews = React.useCallback(async () => {
     if (!projectId) return;
@@ -324,11 +329,6 @@ function BudgetPageContent() {
 
   const handleModificationClick = () => {
     setShowModificationModal(true);
-  };
-
-  const handleResendToERP = () => {
-    // TODO: Implement ERP integration
-    toast.info("ERP integration coming soon");
   };
 
   const handleLockBudget = async () => {
@@ -1016,7 +1016,6 @@ function BudgetPageContent() {
           onCreateClick={handleCreateClick}
           onCreateSnapshot={handleCreateSnapshot}
           onModificationClick={handleModificationClick}
-          onResendToERP={handleResendToERP}
           onLockBudget={handleLockBudget}
           onUnlockBudget={handleUnlockBudget}
           onImport={handleImport}
@@ -1176,6 +1175,7 @@ function BudgetPageContent() {
         onClose={() => setShowInlineCreate(false)}
         onCreate={handleInlineCreateMultipleLineItems}
         isLocked={isLocked}
+        requireZeroAmount={newLinePolicy.requireZeroAmount}
       />
 
       {/* Edit Original Budget Modal */}

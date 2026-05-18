@@ -13,7 +13,7 @@ import {
   Plus,
   UserPlus,
 } from "lucide-react";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";

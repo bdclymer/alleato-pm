@@ -3,9 +3,9 @@
 import * as React from "react";
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ExternalLink, Loader2, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 import { PageShell, PageTabs } from "@/components/layout";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { createClient } from "@/lib/supabase/client";
 import { SeedBudgetFromEstimateModal } from "@/components/domain/estimates/SeedBudgetFromEstimateModal";
 import { ExpandableSearch } from "@/components/tables/unified/expandable-search";
@@ -100,6 +101,20 @@ const ALL_DIVISIONS: Array<{ code: string; name: string }> = [
   { code: "34", name: "Transportation" },
   { code: "50", name: "Design" },
 ];
+
+function getEstimateErrorDescription(error: unknown) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  return "The request did not complete. Check the browser console or API response for details.";
+}
+
+function showEstimateError(title: string, error: unknown, id: string) {
+  toast.error(title, {
+    id,
+    description: getEstimateErrorDescription(error),
+  });
+}
 
 /** Maps CSI division codes → trade keywords to match against company vendor_class / type */
 const CSI_DIVISION_TRADES: Record<string, string[]> = {
@@ -464,6 +479,13 @@ type BidPursuitStatusKey =
   | "ready_to_award"
   | "awarded";
 
+type SubScopeCoverage = {
+  requiredCount: number;
+  coveredCount: number;
+  uncoveredCount: number;
+  percent: number;
+};
+
 type BidPursuitStatus = {
   key: BidPursuitStatusKey;
   label: string;
@@ -472,10 +494,11 @@ type BidPursuitStatus = {
   priority: number;
 };
 
-function getBidPursuitStatus(sub: SublistSub): BidPursuitStatus {
+function getBidPursuitStatus(sub: SublistSub, scopeCoverage?: SubScopeCoverage | null): BidPursuitStatus {
   const hasCompany = Boolean(sub.company?.trim() || sub.company_id);
   const hasReachableContact = Boolean(sub.email?.trim() || sub.cell?.trim());
   const hasBid = isYes(sub.bid_received) || (sub.price ?? 0) > 0;
+  const hasScopeGap = Boolean(scopeCoverage && scopeCoverage.requiredCount > 0 && scopeCoverage.uncoveredCount > 0);
 
   if (sub.is_awarded) {
     return { key: "awarded", label: "Awarded", nextAction: "Flow bid or start contract", tone: "success", priority: 7 };
@@ -487,6 +510,15 @@ function getBidPursuitStatus(sub: SublistSub): BidPursuitStatus {
     return { key: "needs_contact", label: "Needs contact", nextAction: "Add email or phone", tone: "warning", priority: 1 };
   }
   if (hasBid) {
+    if (hasScopeGap) {
+      return {
+        key: "bid_received",
+        label: "Scope gaps",
+        nextAction: `Map ${scopeCoverage!.uncoveredCount} uncovered scope item${scopeCoverage!.uncoveredCount !== 1 ? "s" : ""}`,
+        tone: "warning",
+        priority: 5,
+      };
+    }
     return { key: "ready_to_award", label: "Ready to award", nextAction: "Level bid or award", tone: "success", priority: 5 };
   }
   if (sub.bid_received === "No" || sub.intend_to_submit === "No") {
@@ -740,7 +772,7 @@ export function EstimateDetailClientV2({
       setTemplates(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch estimate GC templates", error);
-      toast.error("Templates could not be loaded. Try again.");
+      showEstimateError("Template list unavailable", error, "estimate-gc-templates-load");
     } finally {
       setTemplatesLoading(false);
     }
@@ -768,7 +800,7 @@ export function EstimateDetailClientV2({
       setTemplateName("");
     } catch (error) {
       console.error("Failed to create estimate GC template", error);
-      toast.error("Template could not be saved. Try again.");
+      showEstimateError("Template save issue", error, "estimate-gc-template-save");
     } finally {
       setIsSavingTemplate(false);
     }
@@ -815,7 +847,7 @@ export function EstimateDetailClientV2({
       toast.success(`Loaded template "${pendingTemplate.name}"`);
     } catch (error) {
       console.error("Failed to load estimate GC template", error);
-      toast.error("Template could not be loaded. Try again.");
+      showEstimateError("Template load issue", error, "estimate-gc-template-load");
     } finally {
       setIsLoadingTemplate(false);
       setShowLoadConfirm(false);
@@ -842,7 +874,7 @@ export function EstimateDetailClientV2({
         setIsDirty(true);
       } catch (err) {
         console.error("Failed to save estimate fields", err);
-        toast.error("Estimate fields could not be saved. Try again.");
+        showEstimateError("Estimate field save issue", err, "estimate-fields-save");
       }
     },
     [projectId, estimate.estimate_id]
@@ -872,7 +904,7 @@ export function EstimateDetailClientV2({
       setIsDirty(true);
     } catch (err) {
       console.error("Failed to save estimate GC row", err);
-      toast.error("General Conditions row could not be saved.");
+      showEstimateError("General Conditions row save issue", err, `estimate-gc-row-save-${id}`);
     }
   };
 
@@ -897,7 +929,7 @@ export function EstimateDetailClientV2({
       setGcItems((prev) => [...prev, created]);
     } catch (err) {
       console.error("Failed to add estimate GC row", err);
-      toast.error("General Conditions row could not be added.");
+      showEstimateError("General Conditions row add issue", err, "estimate-gc-row-add");
     }
   };
 
@@ -912,7 +944,7 @@ export function EstimateDetailClientV2({
     } catch (err) {
       console.error("Failed to delete estimate GC row", err);
       setGcItems(prev);
-      toast.error("General Conditions row could not be deleted.");
+      showEstimateError("General Conditions row delete issue", err, `estimate-gc-row-delete-${id}`);
     }
   };
 
@@ -930,7 +962,7 @@ export function EstimateDetailClientV2({
       setIsDirty(true);
     } catch (err) {
       console.error("Failed to save estimate detail row", err);
-      toast.error("Detail row could not be saved.");
+      showEstimateError("Detail row save issue", err, `estimate-detail-row-save-${id}`);
     }
   };
 
@@ -953,7 +985,7 @@ export function EstimateDetailClientV2({
       setDetailItems((prev) => [...prev, created]);
     } catch (err) {
       console.error("Failed to add estimate detail row", err);
-      toast.error("Detail row could not be added.");
+      showEstimateError("Detail row add issue", err, `estimate-detail-row-add-${divCode}`);
     }
   };
 
@@ -968,7 +1000,7 @@ export function EstimateDetailClientV2({
     } catch (err) {
       console.error("Failed to delete estimate detail row", err);
       setDetailItems(prev);
-      toast.error("Detail row could not be deleted.");
+      showEstimateError("Detail row delete issue", err, `estimate-detail-row-delete-${id}`);
     }
   };
 
@@ -986,7 +1018,7 @@ export function EstimateDetailClientV2({
       setIsDirty(true);
     } catch (err) {
       console.error("Failed to save estimate sublist sub", err);
-      toast.error("Failed to save");
+      showEstimateError("Sublist row save issue", err, `estimate-sublist-row-save-${id}`);
     }
   };
 
@@ -1006,7 +1038,7 @@ export function EstimateDetailClientV2({
         return true;
       } catch (error) {
         console.error("Failed to delete estimate sublist sub", error);
-        toast.error("Failed to delete sub");
+        showEstimateError("Sublist row delete issue", error, `estimate-sublist-row-delete-${sub.id}`);
         return false;
       }
     },
@@ -1037,7 +1069,7 @@ export function EstimateDetailClientV2({
         return created;
       } catch (error) {
         console.error("Failed to create estimate sublist row", error);
-        toast.error("Failed to add sub");
+        showEstimateError("Sublist row add issue", error, `estimate-sublist-row-add-${divCode}`);
         return null;
       } finally {
         creatingSublistDivisionsRef.current.delete(divCode);
@@ -1093,8 +1125,9 @@ export function EstimateDetailClientV2({
             toast.success("Sub awarded");
           }
         }
-      } catch {
-        toast.error("Failed to update award");
+      } catch (error) {
+        console.error("Failed to update estimate award", error);
+        showEstimateError("Award update issue", error, `estimate-award-update-${subId}`);
       }
     },
     [projectId, estimate.estimate_id, sublistSubs, router]
@@ -1152,9 +1185,7 @@ export function EstimateDetailClientV2({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuItem
-          onClick={() => toast.info("Import to Prime Contract SOV — coming soon")}
-        >
+        <DropdownMenuItem disabled title="Prime Contract SOV import is not available yet.">
           Import to Prime Contract SOV
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -1701,12 +1732,15 @@ function SubListTab({
   const [filterBid, setFilterBid] = React.useState("all");
   const [filterPursuit, setFilterPursuit] = React.useState<"all" | BidPursuitStatusKey>("all");
   const [sortConfig, setSortConfig] = React.useState<{ col: keyof SublistSub; dir: "asc" | "desc" } | null>(null);
+  const [focusedSubId, setFocusedSubId] = React.useState<number | null>(null);
+  const [pendingScopeFocusSubId, setPendingScopeFocusSubId] = React.useState<number | null>(null);
   const [companies, setCompanies] = React.useState<Company[]>([]);
   const [companySearch, setCompanySearch] = React.useState("");
   const [openComboboxId, setOpenComboboxId] = React.useState<number | null>(null);
   const [openComboboxDivision, setOpenComboboxDivision] = React.useState<string>("");
   const addingSubDivisionsRef = React.useRef(new Set<string>());
   const [addingSubDivisions, setAddingSubDivisions] = React.useState<Set<string>>(() => new Set());
+  const subRowRefs = React.useRef<Record<number, HTMLTableRowElement | null>>({});
 
   const setDivisionAdding = React.useCallback((divCode: string, isAdding: boolean) => {
     setAddingSubDivisions((prev) => {
@@ -1777,7 +1811,7 @@ function SubListTab({
       toast.success("Call logged");
     } catch (error) {
       console.error("Failed to log estimate sub call", error);
-      toast.error("Failed to log call");
+      showEstimateError("Call log save issue", error, `estimate-call-log-save-${subId}`);
     } finally {
       setCallLogSubmitting(false);
     }
@@ -1798,6 +1832,21 @@ function SubListTab({
       console.error("Failed to load estimate scope items", error);
     }
   }, [projectId, estimateId]);
+
+  React.useEffect(() => {
+    const divisionsNeedingScope = Array.from(
+      new Set(
+        sublistSubs
+          .filter((sub) => Boolean(sub.company?.trim() || sub.email?.trim() || sub.cell?.trim() || (sub.price ?? 0) > 0))
+          .map((sub) => sub.division_code)
+          .filter((divCode) => scopeItemsByDiv[divCode] === undefined)
+      )
+    );
+
+    divisionsNeedingScope.forEach((divCode) => {
+      void loadScopeItems(divCode);
+    });
+  }, [sublistSubs, scopeItemsByDiv, loadScopeItems]);
 
   // Division benchmark cache (5.3) — must be before toggleScopeDiv to avoid TDZ
   const [benchmarkCache, setBenchmarkCache] = React.useState<Record<string, { count: number; min: number | null; max: number | null; avg: number | null; source: string }>>({});
@@ -1844,8 +1893,9 @@ function SubListTab({
         setScopeItemsByDiv((prev) => ({ ...prev, [divCode]: [...(prev[divCode] ?? []), item] }));
         setNewScopeDesc((prev) => ({ ...prev, [divCode]: "" }));
       }
-    } catch {
-      toast.error("Failed to add scope item");
+    } catch (error) {
+      console.error("Failed to add estimate scope item", error);
+      showEstimateError("Scope item add issue", error, `estimate-scope-item-add-${divCode}`);
     }
   }, [projectId, estimateId, newScopeDesc, scopeItemsByDiv]);
 
@@ -1879,8 +1929,9 @@ function SubListTab({
         `/api/projects/${projectId}/estimates/${estimateId}/scope-items/${itemId}`,
         { method: "DELETE" }
       );
-    } catch {
-      toast.error("Failed to delete scope item");
+    } catch (error) {
+      console.error("Failed to delete estimate scope item", error);
+      showEstimateError("Scope item delete issue", error, `estimate-scope-item-delete-${itemId}`);
       void loadScopeItems(divCode);
     }
   }, [projectId, estimateId, loadScopeItems]);
@@ -1980,8 +2031,9 @@ function SubListTab({
           .reduce((s, b) => s + Number(b.amount), 0);
         void onPatchSub(subId, { price: newTotal });
       }
-    } catch {
-      toast.error("Failed to add bid item");
+    } catch (error) {
+      console.error("Failed to add estimate bid item", error);
+      showEstimateError("Bid item add issue", error, `estimate-bid-item-add-${subId}`);
     }
   }, [projectId, estimateId, newBidDesc, newBidAmount, newBidScopeItemId, bidItemsBySubId, onPatchSub]);
 
@@ -1999,8 +2051,9 @@ function SubListTab({
       const updatedItems = (bidItemsBySubId[subId] ?? []).map((b) => b.id === itemId ? { ...b, ...fields } : b);
       const total = updatedItems.filter((b) => !b.is_excluded).reduce((s, b) => s + Number(b.amount), 0);
       void onPatchSub(subId, { price: total });
-    } catch {
-      toast.error("Failed to update bid item");
+    } catch (error) {
+      console.error("Failed to update estimate bid item", error);
+      showEstimateError("Bid item update issue", error, `estimate-bid-item-update-${itemId}`);
     }
   }, [projectId, estimateId, bidItemsBySubId, onPatchSub]);
 
@@ -2014,8 +2067,9 @@ function SubListTab({
       );
       const total = remaining.filter((b) => !b.is_excluded).reduce((s, b) => s + Number(b.amount), 0);
       void onPatchSub(subId, { price: total });
-    } catch {
-      toast.error("Failed to delete bid item");
+    } catch (error) {
+      console.error("Failed to delete estimate bid item", error);
+      showEstimateError("Bid item delete issue", error, `estimate-bid-item-delete-${itemId}`);
       void loadBidItems(subId);
     }
   }, [projectId, estimateId, bidItemsBySubId, onPatchSub, loadBidItems]);
@@ -2093,7 +2147,8 @@ function SubListTab({
         setBidInviteMessage("");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send bid invitation");
+      console.error("Failed to send estimate bid invitation", err);
+      showEstimateError("Bid invitation issue", err, `estimate-bid-invitation-${bidInviteSubId}`);
     } finally {
       setBidInviteSending(false);
     }
@@ -2146,6 +2201,45 @@ function SubListTab({
     return nameMatches.slice(0, 50);
   }, [companies, companySearch, openComboboxDivision]);
 
+  const getSubScopeCoverage = React.useCallback((sub: SublistSub): SubScopeCoverage | null => {
+    const requiredScopeItems = (scopeItemsByDiv[sub.division_code] ?? []).filter((item) => item.is_checked);
+    if (requiredScopeItems.length === 0) return null;
+
+    const coveredScopeIds = new Set(
+      (bidItemsBySubId[sub.id] ?? [])
+        .filter((item) => !item.is_excluded && item.scope_item_id)
+        .map((item) => item.scope_item_id as number)
+    );
+
+    const coveredCount = requiredScopeItems.filter((item) => coveredScopeIds.has(item.id)).length;
+    const uncoveredCount = requiredScopeItems.length - coveredCount;
+
+    return {
+      requiredCount: requiredScopeItems.length,
+      coveredCount,
+      uncoveredCount,
+      percent: requiredScopeItems.length > 0 ? Math.round((coveredCount / requiredScopeItems.length) * 100) : 0,
+    };
+  }, [bidItemsBySubId, scopeItemsByDiv]);
+
+  const getUncoveredScopeItems = React.useCallback((sub: SublistSub) => {
+    const requiredScopeItems = (scopeItemsByDiv[sub.division_code] ?? []).filter((item) => item.is_checked);
+    if (requiredScopeItems.length === 0) return [];
+
+    const coveredScopeIds = new Set(
+      (bidItemsBySubId[sub.id] ?? [])
+        .filter((item) => !item.is_excluded && item.scope_item_id)
+        .map((item) => item.scope_item_id as number)
+    );
+
+    return requiredScopeItems.filter((item) => !coveredScopeIds.has(item.id));
+  }, [bidItemsBySubId, scopeItemsByDiv]);
+
+  const getSubPursuitStatus = React.useCallback(
+    (sub: SublistSub) => getBidPursuitStatus(sub, getSubScopeCoverage(sub)),
+    [getSubScopeCoverage],
+  );
+
   const selectCompany = React.useCallback(
     async (sub: SublistSub, company: Company) => {
       setOpenComboboxId(null);
@@ -2156,6 +2250,23 @@ function SubListTab({
         contact_name: company.contact_name ?? sub.contact_name,
         email: company.contact_email ?? sub.email,
         cell: company.contact_phone ?? sub.cell,
+      });
+    },
+    [onPatchSub],
+  );
+
+  const commitManualCompany = React.useCallback(
+    async (sub: SublistSub, rawValue: string) => {
+      const trimmed = rawValue.trim();
+      const currentCompany = sub.company?.trim() ?? "";
+      const keepCompanyId = Boolean(sub.company_id && trimmed && trimmed === currentCompany);
+
+      setOpenComboboxId(null);
+      setCompanySearch("");
+
+      await onPatchSub(sub.id, {
+        company: trimmed || null,
+        company_id: keepCompanyId ? sub.company_id : null,
       });
     },
     [onPatchSub],
@@ -2186,7 +2297,7 @@ function SubListTab({
     }
     if (filterIntend !== "all") rows = rows.filter((r) => r.intend_to_submit === filterIntend);
     if (filterBid !== "all") rows = rows.filter((r) => r.bid_received === filterBid);
-    if (filterPursuit !== "all") rows = rows.filter((r) => getBidPursuitStatus(r).key === filterPursuit);
+    if (filterPursuit !== "all") rows = rows.filter((r) => getSubPursuitStatus(r).key === filterPursuit);
     if (sortConfig) {
       rows.sort((a, b) => {
         const av =
@@ -2203,7 +2314,13 @@ function SubListTab({
       });
     }
     return rows;
-  }, [sublistSubs, searchQuery, filterIntend, filterBid, filterPursuit, sortConfig]);
+  }, [sublistSubs, searchQuery, filterIntend, filterBid, filterPursuit, sortConfig, getSubPursuitStatus]);
+
+  const exactCompanyMatch = React.useMemo(() => {
+    const q = companySearch.trim().toLowerCase();
+    if (!q) return null;
+    return filteredCompanies.find((company) => company.name.trim().toLowerCase() === q) ?? null;
+  }, [filteredCompanies, companySearch]);
 
   const visibleDivisions = React.useMemo(
     () =>
@@ -2247,7 +2364,7 @@ function SubListTab({
     const noBid = activeDivisions.filter((div) => div.hasEstimateScope && div.rows.length > 0 && div.bidCount === 0);
     const readyToAward = activeDivisions.filter((div) => div.bidCount > 0 && !div.awarded);
     const overBudget = activeDivisions.filter((div) => div.budget > 0 && div.lowestBid !== null && div.lowestBid > div.budget);
-    const followUpRows = sublistSubs.filter((sub) => getBidPursuitStatus(sub).key === "follow_up");
+    const followUpRows = sublistSubs.filter((sub) => getSubPursuitStatus(sub).key === "follow_up");
     const emptyRows = activeDivisions.reduce((sum, div) => sum + div.emptyRowCount, 0);
     const missingContacts = activeDivisions.reduce((sum, div) => sum + div.missingContactCount, 0);
     const awardedCount = activeDivisions.filter((div) => div.awarded).length;
@@ -2306,14 +2423,14 @@ function SubListTab({
       bidCoveragePercent,
       attentionItems,
     };
-  }, [detailTotalsByDiv, sublistSubs]);
+  }, [detailTotalsByDiv, sublistSubs, getSubPursuitStatus]);
 
   const focusQueue = React.useMemo(
     () =>
       sublistSubs
         .map((sub) => ({
           sub,
-          status: getBidPursuitStatus(sub),
+          status: getSubPursuitStatus(sub),
         }))
         .filter(({ status }) => status.key !== "awarded" && status.key !== "invited")
         .sort((a, b) => {
@@ -2322,11 +2439,39 @@ function SubListTab({
           return (a.sub.position ?? 0) - (b.sub.position ?? 0);
         })
         .slice(0, 5),
-    [sublistSubs],
+    [sublistSubs, getSubPursuitStatus],
   );
 
+  const focusSubRow = React.useCallback((subId: number) => {
+    setFocusedSubId(subId);
+    const row = subRowRefs.current[subId];
+    row?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
+
+  React.useEffect(() => {
+    if (focusedSubId === null) return;
+    const timeout = window.setTimeout(() => setFocusedSubId((current) => (current === focusedSubId ? null : current)), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [focusedSubId]);
+
+  React.useEffect(() => {
+    if (pendingScopeFocusSubId === null || !expandedBidSubIds.has(pendingScopeFocusSubId)) return;
+
+    const timeout = window.setTimeout(() => {
+      const unmappedSelect = document.querySelector<HTMLElement>(`[data-scope-map-select="${pendingScopeFocusSubId}"]`);
+      const addItemInput = document.querySelector<HTMLInputElement>(`[data-bid-item-desc-input="${pendingScopeFocusSubId}"]`);
+      const target = unmappedSelect ?? addItemInput;
+      target?.focus();
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setPendingScopeFocusSubId((current) => (current === pendingScopeFocusSubId ? null : current));
+    }, 180);
+
+    return () => window.clearTimeout(timeout);
+  }, [expandedBidSubIds, pendingScopeFocusSubId]);
+
   const runPrimaryAction = React.useCallback(async (sub: SublistSub) => {
-    const status = getBidPursuitStatus(sub);
+    focusSubRow(sub.id);
+    const status = getSubPursuitStatus(sub);
 
     if (status.key === "empty" || status.key === "needs_contact") {
       setOpenComboboxDivision(sub.division_code);
@@ -2354,6 +2499,14 @@ function SubListTab({
       return;
     }
 
+    if (status.key === "bid_received") {
+      setPendingScopeFocusSubId(sub.id);
+      if (!expandedBidSubIds.has(sub.id)) {
+        toggleBidExpand(sub.id);
+      }
+      return;
+    }
+
     if (status.key === "ready_to_award") {
       if (!expandedBidSubIds.has(sub.id)) toggleBidExpand(sub.id);
       return;
@@ -2365,10 +2518,10 @@ function SubListTab({
         { method: "POST" }
       ).then(() => toast.success("Bid flowed into estimate"));
     }
-  }, [estimateId, expandedBidSubIds, handleEnsureRows, openCallLog, projectId, toggleBidExpand]);
+  }, [estimateId, expandedBidSubIds, focusSubRow, getSubPursuitStatus, handleEnsureRows, openCallLog, projectId, toggleBidExpand]);
 
   const getPrimaryActionLabel = React.useCallback((sub: SublistSub) => {
-    switch (getBidPursuitStatus(sub).key) {
+    switch (getSubPursuitStatus(sub).key) {
       case "empty":
         return "Pick company";
       case "needs_contact":
@@ -2379,6 +2532,8 @@ function SubListTab({
         return "Log call";
       case "declined":
         return "Add bidder";
+      case "bid_received":
+        return "Map scope";
       case "ready_to_award":
         return "Review bid";
       case "awarded":
@@ -2386,7 +2541,7 @@ function SubListTab({
       default:
         return null;
     }
-  }, []);
+  }, [getSubPursuitStatus]);
 
   const SortTh = ({
     col,
@@ -2483,10 +2638,13 @@ function SubListTab({
             ))}
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
-            <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
+          <InfoAlert
+            variant="success"
+            icon={<CheckCircle2 className="h-3.5 w-3.5 shrink-0" />}
+            className="py-2 text-xs"
+          >
             Bid coverage has no immediate attention flags.
-          </div>
+          </InfoAlert>
         )}
 
         {focusQueue.length > 0 ? (
@@ -2510,7 +2668,11 @@ function SubListTab({
             </div>
             <div className="divide-y divide-border">
               {focusQueue.map(({ sub, status }) => (
-                <div key={sub.id} className="flex items-center gap-3 px-3 py-2">
+                <div
+                  key={sub.id}
+                  className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-accent/40"
+                  onClick={() => focusSubRow(sub.id)}
+                >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-mono text-[10px] text-muted-foreground">{sub.division_code}</span>
@@ -2630,6 +2792,9 @@ function SubListTab({
               const isAddingSub = addingSubDivisions.has(div.code);
               const intendCount = divRows.filter((r) => r.intend_to_submit === "Yes").length;
               const bidCount = divRows.filter((r) => r.bid_received === "Yes").length;
+              const scopeGapCount = divRows.filter((r) => getSubPursuitStatus(r).key === "bid_received").length;
+              const readyCount = divRows.filter((r) => getSubPursuitStatus(r).key === "ready_to_award").length;
+              const requiredScopeCount = (scopeItemsByDiv[div.code] ?? []).filter((item) => item.is_checked).length;
               const lowestBid = divRows.reduce<number | null>(
                 (min, r) => (r.price && r.price > 0 ? (min === null || r.price < min ? r.price : min) : min),
                 null,
@@ -2668,6 +2833,16 @@ function SubListTab({
                             {bidCount} bid{bidCount !== 1 ? "s" : ""} received
                           </span>
                         )}
+                        {scopeGapCount > 0 && (
+                          <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-[10px] font-medium text-status-warning">
+                            {scopeGapCount} scope gap{scopeGapCount !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                        {readyCount > 0 && (
+                          <span className="rounded-full bg-status-success/10 px-2 py-0.5 text-[10px] font-medium text-status-success">
+                            {readyCount} ready
+                          </span>
+                        )}
                         {awardedSub && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-status-warning/10 px-2 py-0.5 text-[10px] font-medium text-status-warning">
                             <CheckCircle2 className="h-3 w-3" />
@@ -2695,6 +2870,9 @@ function SubListTab({
                               </span>
                             );
                           })()}
+                          {requiredScopeCount > 0 && (
+                            <span>{requiredScopeCount} required scope item{requiredScopeCount !== 1 ? "s" : ""}</span>
+                          )}
                         </span>
                         <Button
                           variant="ghost"
@@ -2760,8 +2938,9 @@ function SubListTab({
                                   } else {
                                     toast.info("No new items to seed from estimate");
                                   }
-                                } catch {
-                                  toast.error("Failed to seed scope items");
+                                } catch (error) {
+                                  console.error("Failed to seed estimate scope items", error);
+                                  showEstimateError("Scope seed issue", error, `estimate-scope-seed-${div.code}`);
                                 }
                               }}
                             >
@@ -2888,11 +3067,19 @@ function SubListTab({
 
                   {/* Sub rows */}
                   {divRows.map((sub, idx) => {
-                    const pursuitStatus = getBidPursuitStatus(sub);
+                    const pursuitStatus = getSubPursuitStatus(sub);
+                    const scopeCoverage = getSubScopeCoverage(sub);
                     return (
                     <React.Fragment key={sub.id}>
                     <tr
-                      className={`border-b border-border/30 transition-colors hover:bg-muted/30 ${sub.is_awarded ? "bg-status-warning/5" : ""}`}
+                      ref={(node) => { subRowRefs.current[sub.id] = node; }}
+                      className={`border-b border-border/30 transition-colors hover:bg-muted/30 ${
+                        focusedSubId === sub.id
+                          ? "bg-primary/5 ring-1 ring-inset ring-primary/30"
+                          : sub.is_awarded
+                            ? "bg-status-warning/5"
+                            : ""
+                      }`}
                     >
                       <td className="w-6 py-1.5 pl-2 pr-1 text-right align-middle text-muted-foreground">
                         <span className="font-mono text-[10px] tabular-nums">
@@ -2922,10 +3109,38 @@ function SubListTab({
                                   value={companySearch}
                                   onChange={(e) => setCompanySearch(e.target.value)}
                                   className="h-7 text-xs"
-                                  onKeyDown={(e) => { if (e.key === "Escape") { setOpenComboboxId(null); setCompanySearch(""); } }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Escape") {
+                                      setOpenComboboxId(null);
+                                      setCompanySearch("");
+                                      return;
+                                    }
+
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      const trimmed = companySearch.trim();
+                                      if (!trimmed) return;
+                                      if (exactCompanyMatch) {
+                                        void selectCompany(sub, exactCompanyMatch);
+                                        return;
+                                      }
+                                      void commitManualCompany(sub, trimmed);
+                                    }
+                                  }}
                                 />
                               </div>
                               <div className="max-h-48 overflow-y-auto">
+                                {companySearch.trim() && !exactCompanyMatch ? (
+                                  <Button
+                                    variant="ghost"
+                                    type="button"
+                                    className="flex h-auto w-full flex-col items-start gap-0.5 rounded-none border-b border-border px-3 py-2 text-left text-xs"
+                                    onClick={() => void commitManualCompany(sub, companySearch)}
+                                  >
+                                    <span className="font-medium text-foreground">Use "{companySearch.trim()}"</span>
+                                    <span className="text-[10px] text-muted-foreground">Save as a manual bidder name without linking a directory company.</span>
+                                  </Button>
+                                ) : null}
                                 {filteredCompanies.length === 0 ? (
                                   <p className="px-3 py-4 text-center text-xs text-muted-foreground">No companies found</p>
                                 ) : (
@@ -2957,11 +3172,12 @@ function SubListTab({
                           ) : null}
                           <InlineText
                             value={sub.company ?? ""}
-                            onChange={(v) => void onPatchSub(sub.id, { company: v || null, company_id: v ? sub.company_id : null })}
+                            onChange={(v) => void commitManualCompany(sub, v)}
                             placeholder="Company name"
                             onFocus={() => {
                               setOpenComboboxId(sub.id);
                               setOpenComboboxDivision(sub.division_code);
+                              setCompanySearch(sub.company ?? "");
                               if (sub.company_id && !bidHistoryCache[sub.company_id]) void loadBidHistory(sub.company_id);
                             }}
                             onBlur={(event) => {
@@ -3005,6 +3221,11 @@ function SubListTab({
                           <div className="text-[10px] leading-tight text-muted-foreground">
                             {pursuitStatus.nextAction}
                           </div>
+                          {scopeCoverage && (
+                            <div className="text-[10px] leading-tight text-muted-foreground">
+                              Scope coverage {scopeCoverage.coveredCount}/{scopeCoverage.requiredCount}
+                            </div>
+                          )}
                           {getPrimaryActionLabel(sub) ? (
                             <Button
                               variant="ghost"
@@ -3243,9 +3464,30 @@ function SubListTab({
 	                            </p>
 	                            {(() => {
 	                              const divisionScopeItems = scopeItemsByDiv[sub.division_code] ?? [];
+                                const uncoveredScopeItems = getUncoveredScopeItems(sub);
+                                const firstUnmappedIncludedBidItem = (bidItemsBySubId[sub.id] ?? []).find(
+                                  (item) => !item.is_excluded && !item.scope_item_id
+                                );
 	                              const scopeLabelById = new Map(divisionScopeItems.map((item) => [item.id, item.description]));
 	                              return (
 	                              <>
+                              {uncoveredScopeItems.length > 0 && (
+                                <div className="mb-2 rounded-md border border-status-warning/30 bg-status-warning/5 px-3 py-2">
+                                  <div className="text-[10px] font-medium uppercase tracking-wide text-status-warning">Scope gaps</div>
+                                  <div className="mt-1 text-xs text-foreground">
+                                    {uncoveredScopeItems.length} required scope item{uncoveredScopeItems.length !== 1 ? "s are" : " is"} still uncovered for this bidder.
+                                  </div>
+                                  <div className="mt-1 text-[10px] text-muted-foreground">
+                                    {uncoveredScopeItems.slice(0, 3).map((item) => item.description).join(" • ")}
+                                    {uncoveredScopeItems.length > 3 ? ` • +${uncoveredScopeItems.length - 3} more` : ""}
+                                  </div>
+                                  <div className="mt-1 text-[10px] text-muted-foreground">
+                                    {firstUnmappedIncludedBidItem
+                                      ? "Start by mapping the first unmapped bid line item below."
+                                      : "Add a bid line item and map it to one of the uncovered scope items below."}
+                                  </div>
+                                </div>
+                              )}
 	                            <div className="mb-2 space-y-1">
 	                              {(bidItemsBySubId[sub.id] ?? []).length === 0 ? (
 	                                <p className="text-xs text-muted-foreground">No line items. Add items below or enter lump sum in the price field.</p>
@@ -3273,7 +3515,10 @@ function SubListTab({
 	                                        value={item.scope_item_id ? String(item.scope_item_id) : "none"}
 	                                        onValueChange={(value) => void patchBidItem(sub.id, item.id, { scope_item_id: value === "none" ? null : Number(value) })}
 	                                      >
-	                                        <SelectTrigger className="h-7 w-44 shrink-0 text-xs">
+	                                        <SelectTrigger
+                                            className="h-7 w-44 shrink-0 text-xs"
+                                            data-scope-map-select={!item.scope_item_id && !item.is_excluded ? String(sub.id) : undefined}
+                                          >
 	                                          <SelectValue placeholder="Scope" />
 	                                        </SelectTrigger>
 	                                        <SelectContent>
@@ -3315,6 +3560,7 @@ function SubListTab({
 	                                value={newBidDesc[sub.id] ?? ""}
 	                                onChange={(e) => setNewBidDesc((prev) => ({ ...prev, [sub.id]: e.target.value }))}
 	                                className="h-7 flex-1 text-xs"
+                                  data-bid-item-desc-input={sub.id}
 	                              />
 	                              <Select
 	                                value={newBidScopeItemId[sub.id] ?? "none"}
@@ -3415,6 +3661,7 @@ function SubListTab({
                   <th className="py-2 pl-4 font-medium">Division</th>
                   <th className="px-3 py-2 text-right font-medium">Est. Budget</th>
                   <th className="px-3 py-2 text-right font-medium">Bids</th>
+                  <th className="px-3 py-2 font-medium">Scope</th>
                   <th className="px-3 py-2 text-right font-medium">Low Bid</th>
                   <th className="px-3 py-2 text-right font-medium">Avg Bid</th>
                   <th className="px-3 py-2 text-right font-medium">Δ Budget</th>
@@ -3430,6 +3677,13 @@ function SubListTab({
                   const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
                   const delta = budget > 0 ? low - budget : null;
                   const awarded = sublistSubs.find((s) => s.division_code === div.code && s.is_awarded);
+                  const requiredScopeCount = (scopeItemsByDiv[div.code] ?? []).filter((item) => item.is_checked).length;
+                  const gapCount = rows.filter((row) => getSubPursuitStatus(row).key === "bid_received").length;
+                  const readyCount = rows.filter((row) => getSubPursuitStatus(row).key === "ready_to_award").length;
+                  const bestCoverage = rows.reduce((best, row) => {
+                    const coverage = getSubScopeCoverage(row);
+                    return coverage ? Math.max(best, coverage.percent) : best;
+                  }, 0);
                   return (
                     <tr key={div.code} className="border-b border-border/20 hover:bg-muted/20">
                       <td className="py-2 pl-4 font-medium text-foreground">{div.code} – {div.name}</td>
@@ -3437,6 +3691,14 @@ function SubListTab({
                         {budget > 0 ? formatCurrencyFull(budget) : "—"}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">{rows.length}</td>
+                      <td className="px-3 py-2 text-[10px] text-muted-foreground">
+                        {requiredScopeCount > 0 ? (
+                          <span className="inline-flex flex-col">
+                            <span>{readyCount} ready · {gapCount} gaps</span>
+                            <span>Best {bestCoverage}% of {requiredScopeCount}</span>
+                          </span>
+                        ) : "—"}
+                      </td>
                       <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
                         {formatCurrencyFull(low)}
                       </td>

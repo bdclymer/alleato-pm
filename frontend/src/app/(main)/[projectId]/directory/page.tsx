@@ -81,7 +81,7 @@ import {
   GRANULAR_FLAG_LABELS,
 } from "@/lib/permissions-shared";
 import { Check, ShieldCheck, UserPlus } from "lucide-react";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import type { PersonWithDetails } from "@/services/directoryService";
 
 // ─── Types ───────────────────────────────────────────────────────

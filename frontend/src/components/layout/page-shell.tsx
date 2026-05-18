@@ -189,9 +189,15 @@ export function PageShell({
   // pages that render ProjectPageHeader outside of PageContainer.
   if (variant === "table") {
     return (
-      <PageContainer maxWidth={config.containerMaxWidth} padding={false} className={cn(gutterCls, "pb-4", className)}>
+      <PageContainer
+        maxWidth={config.containerMaxWidth}
+        padding={false}
+        className={cn(gutterCls, "pb-4", fillHeight && "flex flex-col min-h-0", className)}
+      >
         {header}
-        <div className={cn("min-w-0 pt-2 pb-12", contentClassName)}>{children}</div>
+        <div className={cn("min-w-0 pt-2 pb-12", fillHeight && "flex flex-1 flex-col min-h-0", contentClassName)}>
+          {children}
+        </div>
       </PageContainer>
     );
   }
