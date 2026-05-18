@@ -776,7 +776,7 @@ export default function ProjectContractDetailPage() {
 
   if (loading) {
     return (
-      <PageShell variant="detailWide" title="Prime Contract" description="Loading contract details...">
+      <PageShell variant="detailXWide" title="Prime Contract" description="Loading contract details...">
         <Skeleton className="h-96" />
       </PageShell>
     );
@@ -784,7 +784,7 @@ export default function ProjectContractDetailPage() {
 
   if (error || !contract) {
     return (
-      <PageShell variant="detailWide" title="Prime Contract" description="Unable to load contract" onBack={handleBack}>
+      <PageShell variant="detailXWide" title="Prime Contract" description="Unable to load contract" onBack={handleBack}>
         <Card className="p-[var(--card-padding)]">
           <div className="flex items-center gap-4 text-destructive">
             <AlertCircle className="h-5 w-5" />
@@ -833,7 +833,7 @@ export default function ProjectContractDetailPage() {
 
   return (
     <PageShell
-      variant="detailWide"
+      variant="detailXWide"
       eyebrow={
         <span className="inline-flex items-center gap-2">
           {contract.contract_number ? `#${contract.contract_number}` : `#${contract.id.slice(0, 8)}`}

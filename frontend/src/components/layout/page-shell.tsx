@@ -25,6 +25,7 @@ import { PageHeader } from "./page-header-unified";
 //   form      — max-w-5xl centered, space-y-8. Use for create/edit forms. Includes optional back button.
 //   detail    — max-w-6xl centered. Use for record detail pages (tabs, line items).
 //   detailWide — max-w-screen-2xl centered. Use when detail pages need more canvas without going full dashboard width.
+//   detailXWide — max-w-[1800px] centered. Use for detail pages with wide tables (e.g. schedule of values) that need more horizontal room than detailWide but shouldn't span the full viewport.
 //   content   — max-w-4xl centered. Use for document/settings/read-heavy pages.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ export type PageShellVariant =
   | "form"
   | "detail"
   | "detailWide"
+  | "detailXWide"
   | "content";
 
 export interface PageShellProps {
@@ -76,6 +78,7 @@ const variantConfig: Record<
   form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-5xl",  spacing: "space-y-8" },
   detail:    { containerMaxWidth: "full", contentMaxWidth: "max-w-6xl",  spacing: "space-y-6" },
   detailWide:{ containerMaxWidth: "full", contentMaxWidth: "max-w-screen-2xl",  spacing: "space-y-6" },
+  detailXWide:{ containerMaxWidth: "full", contentMaxWidth: "max-w-[1800px]",  spacing: "space-y-6" },
   content:   { containerMaxWidth: "full", contentMaxWidth: "max-w-4xl",  spacing: "space-y-8" },
 };
 
