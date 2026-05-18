@@ -668,9 +668,9 @@ export function BudgetTable({
           </div>
         );
       },
-      size: 32,
-      minSize: 32,
-      maxSize: 32,
+      size: 44,
+      minSize: 44,
+      maxSize: 44,
       enableResizing: false,
     },
     {
@@ -1600,7 +1600,7 @@ export function BudgetTable({
                         className={cn(
                           "relative bg-background py-2 text-left text-xs font-semibold text-foreground capitalize tracking-normal",
                           header.column.id === "select"
-                            ? "pl-2 pr-1"
+                            ? "pl-3 pr-2"
                             : "px-1.5",
                         )}
                         style={getColumnSizeStyle(header.column.id)}
@@ -1659,7 +1659,7 @@ export function BudgetTable({
                             className={cn(
                               "py-2 text-sm",
                               cell.column.id === "select"
-                                ? "pl-2 pr-1"
+                                ? "pl-3 pr-2"
                                 : "px-1.5",
                               row.depth > 0 && "text-foreground",
                               isDataColumn && "group/cell",
