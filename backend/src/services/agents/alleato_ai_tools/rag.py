@@ -15,17 +15,16 @@ losing hits to post-filtering we over-fetch (3× `match_count`) and truncate.
 
 from __future__ import annotations
 
+import json
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Any
 
 from langchain_core.tools import tool
 from langchain_openai import OpenAIEmbeddings
-from sqlalchemy import create_engine, text
-from sqlalchemy.engine import Engine
-from sqlalchemy.pool import NullPool
 
+from src.services.supabase_helpers import get_rag_read_client
 from ._retry import with_db_retry
 
 _EMBEDDING_MODEL = "text-embedding-3-large"
@@ -54,23 +53,6 @@ MEETING_SOURCE_TYPES = [
 
 
 @lru_cache(maxsize=1)
-def _engine() -> Engine:
-    url = os.environ.get("RAG_DATABASE_URL") or os.environ.get("RAG_SUPABASE_DB_URL")
-    if not url:
-        raise RuntimeError("RAG_DATABASE_URL or RAG_SUPABASE_DB_URL is not set")
-    # NullPool: each call gets a fresh connection that closes on release. Supabase's
-    # pgbouncer pooler does the actual pooling on the server side. With SQLAlchemy
-    # pooling layered on top, parallel sub-agents exhaust the client-side pool
-    # (pool_size + max_overflow) before pgbouncer is ever consulted, causing
-    # ECHECKOUTTIMEOUT and auth-timeout cascades during eval runs.
-    return create_engine(
-        url,
-        poolclass=NullPool,
-        connect_args={"connect_timeout": 10, "application_name": "alleato-ai-rag"},
-    )
-
-
-@lru_cache(maxsize=1)
 def _embedder() -> OpenAIEmbeddings:
     gateway_key = os.environ.get("AI_GATEWAY_API_KEY")
     if gateway_key:
@@ -84,7 +66,7 @@ def _embedder() -> OpenAIEmbeddings:
 
 def _embed_query(query: str) -> str:
     vec = _embedder().embed_query(query)
-    return "[" + ",".join(repr(float(x)) for x in vec) + "]"
+    return json.dumps([float(x) for x in vec])
 
 
 def _parse_iso_date(s: str | None) -> datetime | None:
@@ -203,36 +185,20 @@ def retrieve(
     else:
         fetch_count = max_results * _OVERFETCH_MULTIPLIER
 
-    sql = text(
-        f"""
-        SELECT chunk_id, document_id, chunk_index, chunk_text, source_type,
-               similarity, doc_title, doc_category, doc_source, doc_date,
-               doc_project_id, doc_metadata, doc_created_at
-        FROM {rpc_name}(
-            CAST(:embedding AS halfvec),
-            CAST(:source_types AS text[]),
-            CAST(:project_id AS bigint),
-            CAST(:match_count AS integer),
-            CAST(:match_threshold AS double precision)
-        )
-        """
-    )
-
     @with_db_retry
     def _run() -> list[dict[str, Any]]:
-        eng = _engine()
-        with eng.connect() as conn:
-            result = conn.execute(
-                sql,
-                {
-                    "embedding": embedding,
-                    "source_types": source_types,
-                    "project_id": pid,
-                    "match_count": fetch_count,
-                    "match_threshold": _MATCH_THRESHOLD,
-                },
-            )
-            return [dict(r._mapping) for r in result]
+        client = get_rag_read_client()
+        response = client.rpc(
+            rpc_name,
+            {
+                "query_embedding": embedding,
+                "filter_source_types": source_types,
+                "filter_project_id": pid,
+                "match_count": fetch_count,
+                "match_threshold": _MATCH_THRESHOLD,
+            },
+        ).execute()
+        return list(response.data or [])
 
     rows = _run()
 
@@ -370,52 +336,67 @@ def list_recent_meetings(
     # Prefer summary chunks (richest content) over transcript chunks when both
     # exist for a meeting. Within source_type, pick the lowest chunk_index so we
     # get the opening of the transcript when no summary is available.
-    project_clause = "AND (metadata->>'project_id') = :project_id" if pid is not None else ""
-    order_sql = text(
-        f"""
-        SELECT * FROM (
-            SELECT DISTINCT ON (document_id)
-                document_id,
-                metadata->>'title' AS title,
-                metadata->>'project_id' AS project_id,
-                source_type,
-                text AS summary,
-                created_at AS ingested_at
-            FROM document_chunks
-            WHERE source_type IN (
-                    'meeting_summary',
-                    'meeting_segment_summary',
-                    'meeting_section',
-                    'meeting_transcript'
-                  )
-              {project_clause}
-              AND created_at >= NOW() - (:days_back || ' days')::interval
-            ORDER BY document_id,
-                     CASE source_type
-                       WHEN 'meeting_summary' THEN 1
-                       WHEN 'meeting_segment_summary' THEN 2
-                       WHEN 'meeting_section' THEN 3
-                       WHEN 'meeting_transcript' THEN 4
-                       ELSE 5
-                     END,
-                     chunk_index ASC
-        ) sub
-        ORDER BY ingested_at DESC
-        LIMIT :max_results
-        """
-    )
-
-    params: dict[str, Any] = {"days_back": days_back, "max_results": max_results}
-    if pid is not None:
-        params["project_id"] = str(pid)
-
     @with_db_retry
     def _run() -> list[dict[str, Any]]:
-        eng = _engine()
-        with eng.connect() as conn:
-            return [dict(r) for r in conn.execute(order_sql, params).mappings().all()]
+        since = datetime.now(timezone.utc) - timedelta(days=days_back)
+        query = (
+            get_rag_read_client()
+            .table("document_chunks")
+            .select("document_id, chunk_index, text, metadata, source_type, created_at")
+            .in_(
+                "source_type",
+                [
+                    "meeting_summary",
+                    "meeting_segment_summary",
+                    "meeting_section",
+                    "meeting_transcript",
+                ],
+            )
+            .gte("created_at", since.isoformat())
+            .order("created_at", desc=True)
+            .order("chunk_index", desc=False)
+            .limit(max_results * 4)
+        )
+        if pid is not None:
+            query = query.eq("metadata->>project_id", str(pid))
+        response = query.execute()
+        return list(response.data or [])
 
-    rows = _run()
+    raw_rows = _run()
+    rows_by_document: dict[str, dict[str, Any]] = {}
+    source_rank = {
+        "meeting_summary": 1,
+        "meeting_segment_summary": 2,
+        "meeting_section": 3,
+        "meeting_transcript": 4,
+    }
+    for raw in raw_rows:
+        document_id = str(raw.get("document_id") or "")
+        if not document_id:
+            continue
+        metadata = raw.get("metadata") if isinstance(raw.get("metadata"), dict) else {}
+        row = {
+            "document_id": document_id,
+            "title": metadata.get("title"),
+            "project_id": metadata.get("project_id"),
+            "source_type": raw.get("source_type"),
+            "summary": raw.get("text"),
+            "ingested_at": _parse_iso_date(raw.get("created_at")),
+            "_rank": source_rank.get(str(raw.get("source_type")), 99),
+            "_chunk_index": raw.get("chunk_index") or 0,
+        }
+        previous = rows_by_document.get(document_id)
+        if previous is None or (row["_rank"], row["_chunk_index"]) < (
+            previous["_rank"],
+            previous["_chunk_index"],
+        ):
+            rows_by_document[document_id] = row
+
+    rows = sorted(
+        rows_by_document.values(),
+        key=lambda item: item["ingested_at"] or datetime.min,
+        reverse=True,
+    )[:max_results]
 
     if not rows:
         scope = f"for project {pid}" if pid is not None else "across the portfolio"
@@ -439,7 +420,8 @@ def list_recent_meetings(
     lines: list[str] = []
     for i, r in enumerate(rows, start=1):
         title = r["title"] or "(untitled)"
-        when = r["ingested_at"].date().isoformat() if r["ingested_at"] else ""
+        ingested_at = r.get("ingested_at")
+        when = ingested_at.date().isoformat() if isinstance(ingested_at, datetime) else ""
         header = f"**{i}. {title}** — _{r['source_type']}_ · ingested {when}"
         raw_pid = r.get("project_id")
         if pid is None and raw_pid:
