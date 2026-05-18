@@ -2222,24 +2222,6 @@ function SubListTab({
         : ALL_DIVISIONS,
     [filteredSubs, hasActiveFilter],
   );
-  const sublistMetrics = React.useMemo(() => {
-    const bids = sublistSubs.filter((sub) => sub.bid_received === "Yes");
-    const bidTotal = bids.reduce((sum, sub) => sum + (sub.price ?? 0), 0);
-    const divisionsWithCoverage = new Set(
-      sublistSubs
-        .filter((sub) => sub.company || sub.price || sub.bid_received === "Yes")
-        .map((sub) => sub.division_code),
-    ).size;
-
-    return {
-      divisionsWithCoverage,
-      totalSubs: sublistSubs.length,
-      intending: sublistSubs.filter((sub) => sub.intend_to_submit === "Yes").length,
-      bidsReceived: bids.length,
-      awarded: sublistSubs.filter((sub) => sub.is_awarded).length,
-      bidTotal,
-    };
-  }, [sublistSubs]);
 
   const SortTh = ({
     col,
@@ -2271,26 +2253,6 @@ function SubListTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
-        {[
-          { label: "Divisions", value: `${sublistMetrics.divisionsWithCoverage}/${ALL_DIVISIONS.length}` },
-          { label: "Subs", value: sublistMetrics.totalSubs },
-          { label: "Intending", value: sublistMetrics.intending },
-          { label: "Bids", value: sublistMetrics.bidsReceived },
-          { label: "Awarded", value: sublistMetrics.awarded },
-          { label: "Bid total", value: formatCurrency(sublistMetrics.bidTotal) },
-        ].map((metric) => (
-          <div key={metric.label} className="space-y-1 border-b border-border/50 pb-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {metric.label}
-            </div>
-            <div className="text-base font-semibold tabular-nums text-foreground">
-              {metric.value}
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Toolbar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative min-w-0 flex-1 md:max-w-sm">
