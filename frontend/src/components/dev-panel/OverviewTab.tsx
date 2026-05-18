@@ -33,7 +33,7 @@ const TOOL_TABLES: Record<string, string[]> = {
     "change_event_rfqs",
     "change_event_rfq_responses",
     "change_event_approvals",
-    "change_event_attachments",
+    "change_event_documents",
     "change_event_history",
     "change_events_summary",
   ],
@@ -99,7 +99,7 @@ const TOOL_TABLES: Record<string, string[]> = {
   ],
   submittals: [
     "submittals",
-    "submittal_attachments",
+    "submittal_doc_links",
     "submittal_workflow_steps",
     "submittal_distributions",
     "submittal_packages",
@@ -110,7 +110,7 @@ const TOOL_TABLES: Record<string, string[]> = {
   directory: ["people", "companies", "project_companies", "vendors"],
   "daily-log": ["daily_logs", "daily_log_notes", "daily_log_manpower", "daily_log_equipment"],
   photos: ["photos", "photo_albums", "photo_links", "project_photos"],
-  documents: ["documents", "document_metadata", "document_chunks", "files", "attachments"],
+  documents: ["documents", "document_metadata", "document_chunks", "files", "project_documents_v2"],
   punch_list: ["punch_items", "punch_item_templates", "punch_item_template_categories", "observation_types"],
   specifications: [
     "specifications",

@@ -17,11 +17,24 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
+import { ApiError, apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
-import type { Database } from "@/types/database.types";
 
-type ChangeEventAttachment = Database["public"]["Tables"]["change_event_attachments"]["Row"];
+type ChangeEventAttachment = {
+  id: string;
+  fileName: string | null;
+  filePath: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  uploadedAt: string;
+  downloadUrl: string | null;
+};
+
+type AttachmentsResponse = {
+  data?: ChangeEventAttachment[];
+};
 
 interface ChangeEventAttachmentsSectionProps {
   changeEventId: string;
@@ -41,20 +54,17 @@ export function ChangeEventAttachmentsSection({
   // Fetch attachments
   const fetchAttachments = useCallback(async () => {
     try {
-      const response = await fetch(
+      const data = await apiFetch<AttachmentsResponse | ChangeEventAttachment[]>(
         `/api/projects/${projectId}/change-events/${changeEventId}/attachments`
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        setAttachments(data.data || data || []);
-      } else if (response.status === 404) {
-        setAttachments([]);
-      } else {
-        throw new Error("Failed to load attachments");
-      }
+      setAttachments(Array.isArray(data) ? data : data.data ?? []);
     } catch (error) {
-      toast.error("Failed to load attachments");
+      if (error instanceof ApiError && error.status === 404) {
+        setAttachments([]);
+        return;
+      }
+      console.error("Failed to load change event attachments", error);
+      toast.error("Attachments could not be loaded. Try refreshing the page.");
     } finally {
       setIsLoading(false);
     }
@@ -71,30 +81,26 @@ export function ChangeEventAttachmentsSection({
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append("files", file);
-      });
+      await Promise.all(
+        files.map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
 
-      const response = await fetch(
-        `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
-        {
-          method: "POST",
-          body: formData,
-        }
+          return apiFetch(
+            `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+        }),
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to upload files");
-      }
-
-      await response.json();
       toast.success(`${files.length} file(s) uploaded successfully`);
 
       // Refresh attachments list
       await fetchAttachments();
     } catch (error) {
-      toast.error("Failed to upload files");
+      handleFormError(error, { entity: "attachment", action: "create" });
     } finally {
       setIsUploading(false);
     }
@@ -106,23 +112,19 @@ export function ChangeEventAttachmentsSection({
     setDeleteId(null);
 
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/change-events/${changeEventId}/attachments/${attachmentId}`,
         {
           method: "DELETE",
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to delete attachment");
-      }
-
       toast.success("Attachment deleted successfully");
 
       // Remove from local state
       setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
     } catch (error) {
-      toast.error("Failed to delete attachment");
+      handleFormError(error, { entity: "attachment", action: "delete" });
     } finally {
       setDeletingIds((prev) => {
         const next = new Set(prev);
@@ -136,7 +138,11 @@ export function ChangeEventAttachmentsSection({
   const handleDownload = async (attachment: ChangeEventAttachment) => {
     try {
       // Open file in new tab (Supabase storage URLs are public)
-      window.open(attachment.file_path, "_blank");
+      const downloadUrl = attachment.downloadUrl ?? attachment.filePath;
+      if (!downloadUrl) {
+        throw new Error("Attachment has no download URL");
+      }
+      window.open(downloadUrl, "_blank");
     } catch (error) {
       toast.error("Failed to download file");
     }
@@ -158,7 +164,8 @@ export function ChangeEventAttachmentsSection({
     disabled: isUploading,
   });
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number | null) => {
+    if (bytes == null) return "Unknown size";
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -245,11 +252,11 @@ export function ChangeEventAttachmentsSection({
                     <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <Text className="truncate" size="sm" weight="medium">
-                        {attachment.file_name}
+                        {attachment.fileName ?? "Attachment"}
                       </Text>
                       <Text variant="muted" size="xs">
-                        {formatFileSize(attachment.file_size)} •{" "}
-                        Uploaded {formatDate(attachment.uploaded_at)}
+                        {formatFileSize(attachment.fileSize)} •{" "}
+                        Uploaded {formatDate(attachment.uploadedAt)}
                       </Text>
                     </div>
                   </div>

@@ -29,7 +29,7 @@ import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-r
 /** Structured error from our API routes (see lib/api-error.ts) */
 export interface ApiErrorBody {
   error?: string;
-  details?: string | Array<{ field?: string; path?: string; message?: string }>;
+  details?: unknown;
   message?: string;
   error_code?: string;
   error_message?: string;
@@ -80,6 +80,38 @@ function stringifyErrorDetails(details: ApiErrorBody["details"]): string | undef
       .join("; ");
 
     return joined || undefined;
+  }
+
+  if (details && typeof details === "object") {
+    const objectDetails = details as Record<string, unknown>;
+    const fieldErrors = objectDetails.fieldErrors;
+    if (fieldErrors && typeof fieldErrors === "object") {
+      const joined = Object.entries(fieldErrors as Record<string, unknown>)
+        .flatMap(([field, messages]) => {
+          if (Array.isArray(messages)) {
+            return messages
+              .filter((message): message is string => typeof message === "string")
+              .map((message) => `${field}: ${message}`);
+          }
+          return typeof messages === "string" ? [`${field}: ${messages}`] : [];
+        })
+        .join("; ");
+      if (joined) return joined;
+    }
+
+    const formErrors = objectDetails.formErrors;
+    if (Array.isArray(formErrors)) {
+      const joined = formErrors
+        .filter((message): message is string => typeof message === "string")
+        .join("; ");
+      if (joined) return joined;
+    }
+
+    try {
+      return JSON.stringify(details);
+    } catch {
+      return undefined;
+    }
   }
 
   return undefined;

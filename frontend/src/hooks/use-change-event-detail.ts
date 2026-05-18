@@ -396,14 +396,16 @@ export function useChangeEventDetail(
         }
 
         if (data.attachments && data.attachments.length > 0) {
-          const formData = new FormData();
-          for (const file of data.attachments) {
-            formData.append("files", file);
-          }
-          await apiFetch(`${baseUrl(projectId, changeEventId)}/attachments`, {
-            method: "POST",
-            body: formData,
-          });
+          await Promise.all(
+            data.attachments.map((file) => {
+              const formData = new FormData();
+              formData.append("file", file);
+              return apiFetch(`${baseUrl(projectId, changeEventId)}/attachments`, {
+                method: "POST",
+                body: formData,
+              });
+            }),
+          );
         }
 
         await fetchChangeEventDetails();

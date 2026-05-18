@@ -453,6 +453,66 @@ function isYes(value: string | null): boolean {
   return value === "Yes";
 }
 
+type BidPursuitStatusKey =
+  | "empty"
+  | "needs_contact"
+  | "not_invited"
+  | "invited"
+  | "follow_up"
+  | "declined"
+  | "bid_received"
+  | "ready_to_award"
+  | "awarded";
+
+type BidPursuitStatus = {
+  key: BidPursuitStatusKey;
+  label: string;
+  nextAction: string;
+  tone: "muted" | "warning" | "success" | "destructive";
+  priority: number;
+};
+
+function getBidPursuitStatus(sub: SublistSub): BidPursuitStatus {
+  const hasCompany = Boolean(sub.company?.trim() || sub.company_id);
+  const hasReachableContact = Boolean(sub.email?.trim() || sub.cell?.trim());
+  const hasBid = isYes(sub.bid_received) || (sub.price ?? 0) > 0;
+
+  if (sub.is_awarded) {
+    return { key: "awarded", label: "Awarded", nextAction: "Flow bid or start contract", tone: "success", priority: 7 };
+  }
+  if (!hasCompany) {
+    return { key: "empty", label: "Needs bidder", nextAction: "Select a company", tone: "warning", priority: 0 };
+  }
+  if (!hasReachableContact) {
+    return { key: "needs_contact", label: "Needs contact", nextAction: "Add email or phone", tone: "warning", priority: 1 };
+  }
+  if (hasBid) {
+    return { key: "ready_to_award", label: "Ready to award", nextAction: "Level bid or award", tone: "success", priority: 5 };
+  }
+  if (sub.bid_received === "No" || sub.intend_to_submit === "No") {
+    return { key: "declined", label: "No bid", nextAction: "Add another bidder", tone: "muted", priority: 4 };
+  }
+  if (sub.phone_follow_up === "Voicemail" || sub.phone_follow_up === "No") {
+    return { key: "follow_up", label: "Follow up", nextAction: "Call or resend invite", tone: "warning", priority: 3 };
+  }
+  if (isYes(sub.email_sent)) {
+    return { key: "invited", label: "Invited", nextAction: "Confirm intent", tone: "muted", priority: 6 };
+  }
+
+  return { key: "not_invited", label: "Not invited", nextAction: "Create invite draft", tone: "warning", priority: 2 };
+}
+
+const PURSUIT_STATUS_OPTIONS: Array<{ value: "all" | BidPursuitStatusKey; label: string }> = [
+  { value: "all", label: "All statuses" },
+  { value: "not_invited", label: "Not invited" },
+  { value: "follow_up", label: "Follow up" },
+  { value: "ready_to_award", label: "Ready to award" },
+  { value: "needs_contact", label: "Needs contact" },
+  { value: "empty", label: "Needs bidder" },
+  { value: "declined", label: "No bid" },
+  { value: "awarded", label: "Awarded" },
+];
+
 // ---------------------------------------------------------------------------
 // Inline input components
 // ---------------------------------------------------------------------------
@@ -1639,6 +1699,7 @@ function SubListTab({
   const [searchQuery, setSearchQuery] = React.useState("");
   const [filterIntend, setFilterIntend] = React.useState("all");
   const [filterBid, setFilterBid] = React.useState("all");
+  const [filterPursuit, setFilterPursuit] = React.useState<"all" | BidPursuitStatusKey>("all");
   const [sortConfig, setSortConfig] = React.useState<{ col: keyof SublistSub; dir: "asc" | "desc" } | null>(null);
   const [companies, setCompanies] = React.useState<Company[]>([]);
   const [companySearch, setCompanySearch] = React.useState("");
@@ -2100,7 +2161,7 @@ function SubListTab({
     [onPatchSub],
   );
 
-  const hasActiveFilter = Boolean(searchQuery || filterIntend !== "all" || filterBid !== "all" || sortConfig);
+  const hasActiveFilter = Boolean(searchQuery || filterIntend !== "all" || filterBid !== "all" || filterPursuit !== "all" || sortConfig);
 
   const toggleSort = (col: keyof SublistSub) => {
     setSortConfig((prev) =>
@@ -2125,6 +2186,7 @@ function SubListTab({
     }
     if (filterIntend !== "all") rows = rows.filter((r) => r.intend_to_submit === filterIntend);
     if (filterBid !== "all") rows = rows.filter((r) => r.bid_received === filterBid);
+    if (filterPursuit !== "all") rows = rows.filter((r) => getBidPursuitStatus(r).key === filterPursuit);
     if (sortConfig) {
       rows.sort((a, b) => {
         const av =
@@ -2141,7 +2203,7 @@ function SubListTab({
       });
     }
     return rows;
-  }, [sublistSubs, searchQuery, filterIntend, filterBid, sortConfig]);
+  }, [sublistSubs, searchQuery, filterIntend, filterBid, filterPursuit, sortConfig]);
 
   const visibleDivisions = React.useMemo(
     () =>
@@ -2185,6 +2247,7 @@ function SubListTab({
     const noBid = activeDivisions.filter((div) => div.hasEstimateScope && div.rows.length > 0 && div.bidCount === 0);
     const readyToAward = activeDivisions.filter((div) => div.bidCount > 0 && !div.awarded);
     const overBudget = activeDivisions.filter((div) => div.budget > 0 && div.lowestBid !== null && div.lowestBid > div.budget);
+    const followUpRows = sublistSubs.filter((sub) => getBidPursuitStatus(sub).key === "follow_up");
     const emptyRows = activeDivisions.reduce((sum, div) => sum + div.emptyRowCount, 0);
     const missingContacts = activeDivisions.reduce((sum, div) => sum + div.missingContactCount, 0);
     const awardedCount = activeDivisions.filter((div) => div.awarded).length;
@@ -2213,6 +2276,11 @@ function SubListTab({
         label: `Division ${div.code} has sub rows but no bid price received.`,
         tone: "warning" as const,
       })),
+      ...followUpRows.slice(0, 3).map((sub) => ({
+        key: `follow-up-${sub.id}`,
+        label: `${sub.company ?? `Division ${sub.division_code} bidder`} needs follow-up before bid coverage is reliable.`,
+        tone: "warning" as const,
+      })),
       ...overBudget.slice(0, 3).map((div) => ({
         key: `over-budget-${div.code}`,
         label: `Division ${div.code} low bid is ${formatCurrencyFull((div.lowestBid ?? 0) - div.budget)} over estimate.`,
@@ -2229,6 +2297,7 @@ function SubListTab({
       activeDivisions,
       uncoveredCount: uncovered.length,
       noBidCount: noBid.length,
+      followUpCount: followUpRows.length,
       readyToAwardCount: readyToAward.length,
       overBudgetCount: overBudget.length,
       emptyRows,
@@ -2238,6 +2307,86 @@ function SubListTab({
       attentionItems,
     };
   }, [detailTotalsByDiv, sublistSubs]);
+
+  const focusQueue = React.useMemo(
+    () =>
+      sublistSubs
+        .map((sub) => ({
+          sub,
+          status: getBidPursuitStatus(sub),
+        }))
+        .filter(({ status }) => status.key !== "awarded" && status.key !== "invited")
+        .sort((a, b) => {
+          if (a.status.priority !== b.status.priority) return a.status.priority - b.status.priority;
+          if (a.sub.division_code !== b.sub.division_code) return a.sub.division_code.localeCompare(b.sub.division_code);
+          return (a.sub.position ?? 0) - (b.sub.position ?? 0);
+        })
+        .slice(0, 5),
+    [sublistSubs],
+  );
+
+  const runPrimaryAction = React.useCallback(async (sub: SublistSub) => {
+    const status = getBidPursuitStatus(sub);
+
+    if (status.key === "empty" || status.key === "needs_contact") {
+      setOpenComboboxDivision(sub.division_code);
+      setOpenComboboxId(sub.id);
+      setCompanySearch("");
+      return;
+    }
+
+    if (status.key === "not_invited") {
+      if (sub.email?.trim()) {
+        setBidInviteSubId(sub.id);
+      } else {
+        openCallLog(sub.id);
+      }
+      return;
+    }
+
+    if (status.key === "follow_up") {
+      openCallLog(sub.id);
+      return;
+    }
+
+    if (status.key === "declined") {
+      await handleEnsureRows(sub.division_code, sub.division_name);
+      return;
+    }
+
+    if (status.key === "ready_to_award") {
+      if (!expandedBidSubIds.has(sub.id)) toggleBidExpand(sub.id);
+      return;
+    }
+
+    if (status.key === "awarded" && sub.price && sub.price > 0) {
+      void apiFetch(
+        `/api/projects/${projectId}/estimates/${estimateId}/sublist/${sub.id}/use-bid`,
+        { method: "POST" }
+      ).then(() => toast.success("Bid flowed into estimate"));
+    }
+  }, [estimateId, expandedBidSubIds, handleEnsureRows, openCallLog, projectId, toggleBidExpand]);
+
+  const getPrimaryActionLabel = React.useCallback((sub: SublistSub) => {
+    switch (getBidPursuitStatus(sub).key) {
+      case "empty":
+        return "Pick company";
+      case "needs_contact":
+        return "Fix contact";
+      case "not_invited":
+        return sub.email?.trim() ? "Create invite" : "Log call";
+      case "follow_up":
+        return "Log call";
+      case "declined":
+        return "Add bidder";
+      case "ready_to_award":
+        return "Review bid";
+      case "awarded":
+        return sub.price && sub.price > 0 ? "Use bid" : null;
+      default:
+        return null;
+    }
+  }, []);
 
   const SortTh = ({
     col,
@@ -2292,7 +2441,9 @@ function SubListTab({
             <div className={`mt-1 text-lg font-semibold tabular-nums ${coverage.noBidCount > 0 ? "text-status-warning" : "text-foreground"}`}>
               {coverage.noBidCount}
             </div>
-            <div className="text-xs text-muted-foreground">covered divisions still waiting</div>
+            <div className="text-xs text-muted-foreground">
+              {coverage.followUpCount > 0 ? `${coverage.followUpCount} follow-up${coverage.followUpCount !== 1 ? "s" : ""} due` : "covered divisions still waiting"}
+            </div>
           </div>
           <div className="rounded-md border border-border bg-background px-3 py-2.5">
             <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Ready to award</div>
@@ -2337,6 +2488,54 @@ function SubListTab({
             Bid coverage has no immediate attention flags.
           </div>
         )}
+
+        {focusQueue.length > 0 ? (
+          <div className="rounded-md border border-border bg-background">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <div>
+                <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Action Queue</div>
+                <div className="text-xs text-muted-foreground">Highest-friction bidders that need estimator action next.</div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant={filterPursuit === "not_invited" ? "default" : "ghost"} size="sm" className="h-7 px-2 text-[10px]" onClick={() => setFilterPursuit("not_invited")}>
+                  Not invited
+                </Button>
+                <Button variant={filterPursuit === "follow_up" ? "default" : "ghost"} size="sm" className="h-7 px-2 text-[10px]" onClick={() => setFilterPursuit("follow_up")}>
+                  Follow up
+                </Button>
+                <Button variant={filterPursuit === "ready_to_award" ? "default" : "ghost"} size="sm" className="h-7 px-2 text-[10px]" onClick={() => setFilterPursuit("ready_to_award")}>
+                  Ready to award
+                </Button>
+              </div>
+            </div>
+            <div className="divide-y divide-border">
+              {focusQueue.map(({ sub, status }) => (
+                <div key={sub.id} className="flex items-center gap-3 px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-mono text-[10px] text-muted-foreground">{sub.division_code}</span>
+                      <span className="font-medium text-foreground">{sub.company?.trim() || "Unassigned bidder"}</span>
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{status.label}</span>
+                    </div>
+                    <div className="truncate text-[10px] text-muted-foreground">
+                      {sub.division_name} · {status.nextAction}
+                    </div>
+                  </div>
+                  {getPrimaryActionLabel(sub) ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 shrink-0 px-2 text-[10px]"
+                      onClick={() => void runPrimaryAction(sub)}
+                    >
+                      {getPrimaryActionLabel(sub)}
+                    </Button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {/* Toolbar */}
@@ -2370,6 +2569,18 @@ function SubListTab({
               <SelectItem value="No" className="text-xs">No bid yet</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filterPursuit} onValueChange={(value) => setFilterPursuit(value as "all" | BidPursuitStatusKey)}>
+            <SelectTrigger className="h-9 w-40 text-sm">
+              <SelectValue placeholder="Pursuit status" />
+            </SelectTrigger>
+            <SelectContent>
+              {PURSUIT_STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="text-xs">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {hasActiveFilter && (
             <Button
               variant="ghost"
@@ -2379,6 +2590,7 @@ function SubListTab({
                 setSearchQuery("");
                 setFilterIntend("all");
                 setFilterBid("all");
+                setFilterPursuit("all");
                 setSortConfig(null);
               }}
             >
@@ -2399,6 +2611,7 @@ function SubListTab({
             <tr className="border-b border-border bg-muted/30 text-left text-muted-foreground">
               <th className="w-10 py-2.5 pl-4 pr-2 font-medium">#</th>
               <SortTh col="company" label="Company" />
+              <th className="w-36 px-2 py-2.5 text-left text-xs font-medium text-muted-foreground">Status</th>
               <SortTh col="intend_to_submit" label="Intend?" className="w-24" />
               <th className="w-28 px-2 py-2.5 text-left text-xs font-medium text-muted-foreground">Bid Invite</th>
               <th className="w-28 px-2 py-2.5 text-left text-xs font-medium text-muted-foreground">Last Call</th>
@@ -2429,13 +2642,13 @@ function SubListTab({
                 <React.Fragment key={div.code}>
                   {visIdx > 0 && (
                     <tr aria-hidden="true">
-                      <td colSpan={12} className="h-3 bg-background p-0" />
+                      <td colSpan={13} className="h-3 bg-background p-0" />
                     </tr>
                   )}
 
                   {/* Division group header */}
                   <tr className="border-y border-border bg-muted/50">
-                    <td colSpan={12} className="px-4 py-3">
+                    <td colSpan={13} className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="mr-2 flex min-w-56 items-center gap-2">
                           <span className="font-mono text-[11px] font-semibold tabular-nums text-muted-foreground">
@@ -2519,9 +2732,9 @@ function SubListTab({
                   </tr>
 
                   {/* Scope Package (collapsible) */}
-                  {expandedScopeDivs.has(div.code) && (
+                      {expandedScopeDivs.has(div.code) && (
                     <tr>
-                      <td colSpan={12} className="bg-muted/10 px-6 py-3">
+                      <td colSpan={13} className="bg-muted/10 px-6 py-3">
                         <div className="max-w-2xl">
                           <div className="mb-2 flex items-center justify-between">
                             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -2608,7 +2821,7 @@ function SubListTab({
                   {/* Smart suggestions panel (5.2) */}
                   {expandedSuggestions.has(div.code) && (
                     <tr>
-                      <td colSpan={12} className="bg-muted/20 px-6 py-3">
+                      <td colSpan={13} className="bg-muted/20 px-6 py-3">
                         <div className="max-w-2xl">
                           <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                             Suggested Subs — Division {div.code}
@@ -2674,7 +2887,9 @@ function SubListTab({
                   )}
 
                   {/* Sub rows */}
-                  {divRows.map((sub, idx) => (
+                  {divRows.map((sub, idx) => {
+                    const pursuitStatus = getBidPursuitStatus(sub);
+                    return (
                     <React.Fragment key={sub.id}>
                     <tr
                       className={`border-b border-border/30 transition-colors hover:bg-muted/30 ${sub.is_awarded ? "bg-status-warning/5" : ""}`}
@@ -2769,6 +2984,38 @@ function SubListTab({
                               </span>
                             );
                           })()}
+                        </div>
+                      </td>
+
+                      <td className="w-36 px-2 py-1 align-middle">
+                        <div className="space-y-0.5">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                              pursuitStatus.tone === "success"
+                                ? "bg-status-success/10 text-status-success"
+                                : pursuitStatus.tone === "destructive"
+                                  ? "bg-destructive/10 text-destructive"
+                                  : pursuitStatus.tone === "warning"
+                                    ? "bg-status-warning/10 text-status-warning"
+                                    : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {pursuitStatus.label}
+                          </span>
+                          <div className="text-[10px] leading-tight text-muted-foreground">
+                            {pursuitStatus.nextAction}
+                          </div>
+                          {getPrimaryActionLabel(sub) ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              type="button"
+                              className="h-5 px-0 text-[10px] text-primary hover:text-primary"
+                              onClick={() => void runPrimaryAction(sub)}
+                            >
+                              {getPrimaryActionLabel(sub)}
+                            </Button>
+                          ) : null}
                         </div>
                       </td>
 
@@ -2989,7 +3236,7 @@ function SubListTab({
                     {/* Bid detail panel */}
 	                    {expandedBidSubIds.has(sub.id) && (
 	                      <tr>
-	                        <td colSpan={12} className="bg-muted/10 px-8 py-3">
+	                        <td colSpan={13} className="bg-muted/10 px-8 py-3">
 	                          <div className="max-w-3xl">
 	                            <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
 	                              Bid Line Items — {sub.company ?? "Sub"}
@@ -3114,7 +3361,8 @@ function SubListTab({
 	                      </tr>
                     )}
                     </React.Fragment>
-                  ))}
+                  );
+                  })}
 
                 </React.Fragment>
               );
@@ -3123,7 +3371,7 @@ function SubListTab({
             {/* Empty state when all filtered out */}
             {visibleDivisions.length === 0 && (
               <tr>
-                <td colSpan={12} className="py-12 text-center">
+                <td colSpan={13} className="py-12 text-center">
                   <div className="space-y-2">
                     <div className="text-sm font-medium text-foreground">No subs match the current filters</div>
                     <Button
@@ -3134,6 +3382,7 @@ function SubListTab({
                         setSearchQuery("");
                         setFilterIntend("all");
                         setFilterBid("all");
+                        setFilterPursuit("all");
                         setSortConfig(null);
                       }}
                     >

@@ -2,6 +2,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { SubmittalDetailClient } from "@/features/submittals/submittal-detail-client";
 import type { SubmittalDetail } from "@/hooks/use-submittals";
+import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -39,16 +40,6 @@ export default async function SubmittalDetailPage({ params }: Props) {
          distributed_at,
          submittal_distribution_recipients(id, recipient_id)
        ),
-       submittal_attachments(
-         id,
-         file_name,
-         file_url,
-         file_size,
-         content_type,
-         is_current,
-         uploaded_by,
-         created_at
-       ),
        submittal_linked_drawings(
          id,
          drawing_id
@@ -69,9 +60,27 @@ export default async function SubmittalDetailPage({ params }: Props) {
   if (error || !submittal) {
     notFound();
   }
+
+  const attachments = await listLinkedPatternCDocuments({
+    supabase,
+    serviceClient: supabase,
+    entityType: "submittal",
+    entityId: submittalId,
+  });
+
   const submittalDetail: SubmittalDetail = {
     ...(submittal as Omit<SubmittalDetail, "responsible_contractor">),
     responsible_contractor: null,
+    attachments: attachments.map((attachment) => ({
+      id: attachment.document_metadata_id,
+      file_name: attachment.file_name ?? attachment.title ?? "Attachment",
+      file_url: attachment.download_url ?? "",
+      file_size: attachment.source_size,
+      content_type: attachment.mime_type,
+      is_current: true,
+      uploaded_by: null,
+      created_at: attachment.attached_at,
+    })),
   };
 
   return (

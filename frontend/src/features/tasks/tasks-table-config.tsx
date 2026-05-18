@@ -459,7 +459,7 @@ export function renderTasksCard(
         <p className="max-w-64 truncate text-sm font-medium">{item.title || item.description || "Untitled Task"}</p>
       </div>
       {item.project_name && (
-        <p className="max-w-60 truncate text-xs text-muted-foreground/70">{item.project_name}</p>
+        <p className="max-w-60 truncate text-sm text-muted-foreground">{item.project_name}</p>
       )}
       <div className="flex w-full items-center justify-between gap-3 pt-2">
         <TableTagBadge
@@ -492,7 +492,7 @@ export function renderTasksList(
           <span className="max-w-64 truncate text-sm font-medium">{item.title || item.description || "Untitled Task"}</span>
         </div>
         {item.project_name && (
-          <span className="max-w-56 truncate text-xs text-muted-foreground/70">{item.project_name}</span>
+          <span className="max-w-56 truncate text-sm text-muted-foreground">{item.project_name}</span>
         )}
       </div>
       <div className="flex items-center gap-2">

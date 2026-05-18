@@ -192,7 +192,7 @@ async function discoverTablesByProbing(
     "milestones",
     "profiles",
     "project_members",
-    "attachments",
+    "document_metadata",
     "comments",
     "tags",
     "cost_codes",

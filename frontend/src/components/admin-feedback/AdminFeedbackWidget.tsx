@@ -28,6 +28,8 @@ import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apiFetch } from "@/lib/api-client";
+import { getErrorDetail } from "@/lib/format-error";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -237,7 +239,20 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         }
       };
       reader.onerror = () => {
-        toast.error("Failed to read image file.");
+        const error = reader.error ?? new Error("The browser could not read the selected image file.");
+        reportNonCriticalFailure({
+          area: "admin-feedback-widget",
+          operation: "read-uploaded-screenshot",
+          error,
+          userVisibleFallback: "The selected feedback screenshot could not be read.",
+          metadata: {
+            fileName: file.name,
+            fileSize: file.size,
+          },
+        });
+        toast.error("Could not read image file", {
+          description: getErrorDetail(error),
+        });
       };
       reader.readAsDataURL(file);
 
@@ -352,7 +367,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       const target = getBestComposerTarget();
 
       if (!(target instanceof HTMLElement)) {
-        toast.error("Unable to find page context for feedback.");
+        toast.error("Could not find page context", {
+          description: "Select a visible page element and try again.",
+        });
         return;
       }
 
@@ -409,8 +426,20 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       .then((dataUrl) => {
         setScreenshotDataUrl(dataUrl);
       })
-      .catch(() => {
-        toast.error("Unable to capture screenshot for this selection.");
+      .catch((error) => {
+        reportNonCriticalFailure({
+          area: "admin-feedback-widget",
+          operation: "capture-selection-screenshot",
+          error,
+          userVisibleFallback: "Feedback screenshot capture failed.",
+          metadata: {
+            pagePath,
+            selectedTargetId: selectedTarget?.targetId ?? null,
+          },
+        });
+        toast.error("Could not capture screenshot", {
+          description: getErrorDetail(error),
+        });
       })
       .finally(() => {
         setIsCapturingScreenshot(false);
@@ -499,9 +528,21 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
 
         resetComposer();
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Feedback submission failed";
-        toast.error(message);
+        const description = getErrorDetail(error);
+        reportNonCriticalFailure({
+          area: "admin-feedback-widget",
+          operation: "submit-feedback",
+          error,
+          userVisibleFallback: "Feedback submission failed.",
+          metadata: {
+            pagePath,
+            selectedTargetId: selectedTarget.targetId,
+            feedbackType: form.feedbackType,
+            priority:
+              form.feedbackType === "Issue" ? form.priority : undefined,
+          },
+        });
+        toast.error("Could not submit feedback", { description });
       } finally {
         setIsSubmitting(false);
       }

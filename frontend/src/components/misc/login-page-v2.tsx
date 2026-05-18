@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/api-client";
 import { createAuthClient } from "@/lib/supabase/client-auth";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
 import { toast } from "sonner";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,11 +23,13 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(null);
 
     try {
       const supabase = createAuthClient();
@@ -36,7 +39,9 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
       });
 
       if (error) {
-        toast.error("Invalid email or password");
+        const message = "Invalid email or password. Check the test credentials or refresh the saved auth state.";
+        setErrorMessage(message);
+        toast.error("Sign in failed", { description: message });
         return;
       }
 
@@ -65,7 +70,12 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
         }
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "An unexpected error occurred while signing in.";
+      setErrorMessage(message);
+      toast.error("Sign in failed", { description: message });
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -163,6 +173,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
               onSubmit={handleSubmit}
               className="space-y-5"
               data-dev-autofill-disabled="true"
+              aria-describedby={errorMessage ? "login-error" : undefined}
             >
               {/* Email */}
               <div className="space-y-1.5">
@@ -210,6 +221,12 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                   className="h-11 bg-background text-foreground placeholder:text-muted-foreground/40 focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50"
                 />
               </div>
+
+              {errorMessage ? (
+                <InfoAlert id="login-error" role="alert" variant="error">
+                  {errorMessage}
+                </InfoAlert>
+              ) : null}
 
               {/* Submit */}
               <div className="pt-1">

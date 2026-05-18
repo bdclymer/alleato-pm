@@ -28,7 +28,7 @@
  *
  * Relations:
  * - change_event_line_items (one-to-many)
- * - change_event_attachments (one-to-many)
+ * - change_event_documents + document_metadata (Pattern C attachments)
  * - change_event_history (one-to-many)
  */
 

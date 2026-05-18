@@ -9,6 +9,8 @@ interface InfoAlertProps {
   variant?: InfoAlertVariant;
   icon?: React.ReactNode;
   className?: string;
+  id?: string;
+  role?: "note" | "alert" | "status";
 }
 
 const variantStyles: Record<InfoAlertVariant, string> = {
@@ -25,10 +27,18 @@ const defaultIcons: Record<InfoAlertVariant, React.ReactNode> = {
   error:   <AlertCircle className="h-4 w-4 shrink-0 mt-px" />,
 };
 
-export function InfoAlert({ children, variant = "info", icon, className }: InfoAlertProps) {
+export function InfoAlert({
+  children,
+  variant = "info",
+  icon,
+  className,
+  id,
+  role = "note",
+}: InfoAlertProps) {
   return (
     <div
-      role="note"
+      id={id}
+      role={role}
       className={cn(
         "flex items-start gap-2.5 rounded-md border px-3.5 py-3 text-sm",
         variantStyles[variant],

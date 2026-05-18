@@ -40,6 +40,11 @@ const addedLineMatchers = [
     re: /silent|silently|best-effort|best effort|fail silently/i,
     message: "Do not add silent/best-effort failure paths. Report, throw, or show a degraded state.",
   },
+  {
+    name: "generic toast error",
+    re: /toast\.error\(\s*["'`](?:Failed|Unable|Error)(?:\s+to|\s+\w+)?[^"'`]*["'`]\s*\)/,
+    message: "Do not add generic error toasts. Include the caught error detail and structured reporting.",
+  },
 ];
 
 function run(cmd) {

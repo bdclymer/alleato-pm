@@ -61,16 +61,7 @@ export interface SubmittalDetail extends SubmittalSummary {
       recipient_id: string;
     }>;
   }>;
-  submittal_attachments: Array<{
-    id: string;
-    file_name: string;
-    file_url: string;
-    file_size: number | null;
-    content_type: string | null;
-    is_current: boolean | null;
-    uploaded_by: string | null;
-    created_at: string | null;
-  }>;
+  attachments: SubmittalAttachment[];
   submittal_linked_drawings: Array<{
     id: string;
     drawing_id: string;
@@ -84,6 +75,17 @@ export interface SubmittalDetail extends SubmittalSummary {
     occurred_at: string | null;
   }>;
 }
+
+export type SubmittalAttachment = {
+    id: string;
+    file_name: string;
+    file_url: string;
+    file_size: number | null;
+    content_type: string | null;
+    is_current: boolean | null;
+    uploaded_by: string | null;
+    created_at: string | null;
+};
 
 export interface CreateSubmittalInput {
   title: string;
@@ -251,10 +253,10 @@ export function useDuplicateSubmittal(projectId: number) {
 export function useUploadSubmittalAttachment(projectId: number, submittalId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (file: File): Promise<SubmittalDetail["submittal_attachments"][number]> => {
+    mutationFn: (file: File): Promise<SubmittalAttachment> => {
       const formData = new FormData();
       formData.append("file", file);
-      return apiFetch<SubmittalDetail["submittal_attachments"][number]>(
+      return apiFetch<SubmittalAttachment>(
         `/api/projects/${projectId}/submittals/${submittalId}/attachments`,
         {
           method: "POST",

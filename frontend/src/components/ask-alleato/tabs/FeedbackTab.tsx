@@ -9,6 +9,8 @@ import { apiFetch } from "@/lib/api-client";
 import { ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE, feedbackTargetProps } from "@/lib/admin-feedback/constants";
 import { buildFeedbackTargetSnapshot, type FeedbackTargetSnapshot } from "@/lib/admin-feedback/targeting";
 import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
+import { getErrorDetail } from "@/lib/format-error";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   ASK_ALLEATO_FEEDBACK_PLACEHOLDER,
   ASK_ALLEATO_FEEDBACK_TAGS,
@@ -60,8 +62,15 @@ export function FeedbackTab({
       setTarget(buildFeedbackTargetSnapshot(targetElement));
       setScreenshotDataUrl(await captureTargetScreenshot(targetElement));
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Screenshot capture failed";
-      toast.error(message);
+      const description = getErrorDetail(error);
+      reportNonCriticalFailure({
+        area: "ask-alleato-feedback",
+        operation: "capture-screenshot",
+        error,
+        userVisibleFallback: "Feedback screenshot capture failed.",
+        metadata: { pagePath },
+      });
+      toast.error("Could not capture screenshot", { description });
     } finally {
       setIsCapturing(false);
     }
@@ -119,8 +128,19 @@ export function FeedbackTab({
         onSubmitted?.();
       }, 1600);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Feedback submission failed";
-      toast.error(message);
+      const description = getErrorDetail(error);
+      reportNonCriticalFailure({
+        area: "ask-alleato-feedback",
+        operation: "submit-feedback",
+        error,
+        userVisibleFallback: "Feedback submission failed.",
+        metadata: {
+          pagePath,
+          tag,
+          targetId: feedbackTarget.targetId,
+        },
+      });
+      toast.error("Could not submit feedback", { description });
     } finally {
       setIsSubmitting(false);
     }

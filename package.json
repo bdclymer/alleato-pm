@@ -33,6 +33,8 @@
     "db:types:check": "node scripts/check-db-types-current.mjs",
     "guardrails:db-type-overrides": "node scripts/audits/check-no-manual-db-type-overrides.mjs",
     "audit:silent-fallbacks": "node scripts/audits/audit-silent-fallback-debt.mjs",
+    "audit:toasts": "node scripts/audit-toast-surface.mjs",
+    "guardrails:toasts:changed": "node scripts/audit-toast-surface.mjs --changed --fail-on-debt",
     "db:audit": "cd frontend && npm run audit:db && npm run audit:db:mappers && npm run audit:db:fk-types && npm run audit:db:ambiguous-embeds",
     "db:push": "supabase db push && npm run db:types",
     "db:migrations:verify-applied": "node scripts/ops/check-supabase-migration-ledger.mjs",

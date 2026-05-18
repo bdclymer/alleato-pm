@@ -5,6 +5,7 @@
  * 1. The Card Trap — bg-card + border border-border + rounded on the same element
  * 2. bg-white — should always be bg-card or bg-background
  * 3. Raw <button elements — should always use <Button from @/components/ui/button
+ * 4. Interactive brand borders — hover/focus/active borders should stay neutral
  *
  * These are the patterns that make the app look inconsistent and are
  * nearly impossible to prevent manually across a large codebase.
@@ -28,12 +29,27 @@ module.exports = {
       rawButton:
         'Raw <button> element detected. Always use <Button> from "@/components/ui/button". ' +
         'Raw buttons skip the design system\'s focus, hover, and disabled states.',
+      interactiveBrandBorder:
+        'Interactive brand-colored borders are not allowed. Hover, focus, active, and open states must keep neutral border tokens; use text, background, opacity, or icon weight for state.',
     },
     schema: [],
   },
 
   create(context) {
     const filename = context.getFilename();
+    const interactiveBorderStates = new Set([
+      'hover',
+      'focus',
+      'focus-visible',
+      'focus-within',
+      'active',
+      'group-hover',
+      'group-focus',
+      'group-focus-visible',
+      'group-active',
+      'data-[state=open]',
+    ]);
+    const brandBorderPattern = /^border-(primary|brand|ring|orange|amber)(\/\d+)?$/;
 
     // Skip non-component files
     if (
@@ -66,6 +82,17 @@ module.exports = {
       return '';
     }
 
+    function hasInteractiveBrandBorder(classes) {
+      return classes.split(/\s+/).some(className => {
+        const parts = className.split(':');
+        const utility = parts.at(-1);
+        if (!utility || !brandBorderPattern.test(utility)) {
+          return false;
+        }
+        return parts.slice(0, -1).some(part => interactiveBorderStates.has(part));
+      });
+    }
+
     return {
       // Check className attributes for card trap and bg-white
       JSXAttribute(node) {
@@ -86,6 +113,10 @@ module.exports = {
 
         if (hasBgCard && hasBorder && hasRounded) {
           context.report({ node, messageId: 'cardTrap' });
+        }
+
+        if (hasInteractiveBrandBorder(classes)) {
+          context.report({ node, messageId: 'interactiveBrandBorder' });
         }
       },
 

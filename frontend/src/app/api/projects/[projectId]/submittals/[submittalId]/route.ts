@@ -5,7 +5,9 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
+import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 interface RouteParams {
   params: Promise<{ projectId: string; submittalId: string }>;
@@ -47,6 +49,7 @@ export const GET = withApiGuardrails(
   
     const { projectId, submittalId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     const { data, error } = await supabase
       .from("submittals")
@@ -73,16 +76,6 @@ export const GET = withApiGuardrails(
            distributed_at,
            submittal_distribution_recipients(id, recipient_id)
          ),
-         submittal_attachments(
-           id,
-           file_name,
-           file_url,
-           file_size,
-           content_type,
-           is_current,
-           uploaded_by,
-           created_at
-         ),
          submittal_linked_drawings(
            id,
            drawing_id
@@ -108,6 +101,13 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Submittal not found" }, { status: 404 });
     }
 
+    const attachments = await listLinkedPatternCDocuments({
+      supabase,
+      serviceClient,
+      entityType: "submittal",
+      entityId: submittalId,
+    });
+
     // Resolve responsible_contractor name via secondary lookup (no FK exists)
     let responsible_contractor: { id: string; name: string } | null = null;
     if (data.responsible_contractor_id) {
@@ -121,7 +121,20 @@ export const GET = withApiGuardrails(
       }
     }
 
-    return NextResponse.json({ ...data, responsible_contractor });
+    return NextResponse.json({
+      ...data,
+      responsible_contractor,
+      attachments: attachments.map((attachment) => ({
+        id: attachment.document_metadata_id,
+        file_name: attachment.file_name ?? attachment.title ?? "Attachment",
+        file_url: attachment.download_url,
+        file_size: attachment.source_size,
+        content_type: attachment.mime_type,
+        is_current: true,
+        uploaded_by: null,
+        created_at: attachment.attached_at,
+      })),
+    });
     },
 );
 

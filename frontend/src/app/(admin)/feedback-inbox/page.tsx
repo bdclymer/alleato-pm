@@ -39,6 +39,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { displayAdminFeedbackTitle } from "@/lib/admin-feedback/title";
+import { getErrorDetail } from "@/lib/format-error";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { useConfirm } from "@/hooks/use-confirm";
 
 // ---------------------------------------------------------------------------
@@ -90,6 +92,30 @@ type FeedbackComment = {
   updated_at: string;
   author: UserProfile;
 };
+
+function notifyFeedbackInboxFailure({
+  operation,
+  title,
+  fallback,
+  error,
+  metadata,
+}: {
+  operation: string;
+  title: string;
+  fallback: string;
+  error: unknown;
+  metadata?: Record<string, string | number | boolean | null | undefined>;
+}) {
+  const description = getErrorDetail(error);
+  reportNonCriticalFailure({
+    area: "feedback-inbox",
+    operation,
+    error,
+    userVisibleFallback: fallback,
+    metadata,
+  });
+  toast.error(title, { description });
+}
 
 type GitHubComment = {
   id: number;
@@ -267,8 +293,13 @@ function getSavedPanelWidth(): number {
       const w = parseInt(saved, 10);
       if (w >= PANEL_MIN_WIDTH && w <= PANEL_MAX_WIDTH) return w;
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "feedback-inbox",
+      operation: "load-saved-panel-width",
+      error,
+      userVisibleFallback: "Feedback inbox panel width reset to the default.",
+    });
   }
   return PANEL_DEFAULT_WIDTH;
 }
@@ -427,7 +458,19 @@ function CommentInput({
         setScreenshotDataUrl(reader.result);
       }
     };
-    reader.onerror = () => toast.error("Failed to read image file.");
+    reader.onerror = () => {
+      const error = reader.error ?? new Error("The browser could not read the selected image file.");
+      notifyFeedbackInboxFailure({
+        operation: "read-comment-screenshot",
+        title: "Could not read image file",
+        fallback: "The selected feedback comment screenshot could not be read.",
+        error,
+        metadata: {
+          fileName: file.name,
+          fileSize: file.size,
+        },
+      });
+    };
     reader.readAsDataURL(file);
     e.target.value = "";
   }
@@ -645,8 +688,14 @@ function CommentsSection({
         `/api/admin/feedback/comments?feedbackItemId=${feedbackItemId}`,
       );
       setComments(data.comments ?? []);
-    } catch {
-      // silent
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: "load-comments",
+        title: "Could not load comments",
+        fallback: "Feedback comments could not be loaded.",
+        error: err,
+        metadata: { feedbackItemId },
+      });
     } finally {
       setLoading(false);
     }
@@ -661,10 +710,16 @@ function CommentsSection({
         ? data
         : data.users ?? data.data ?? [];
       setUsers(userList);
-    } catch {
-      // silent
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: "load-comment-users",
+        title: "Could not load mention users",
+        fallback: "Mention user options could not be loaded.",
+        error: err,
+        metadata: { feedbackItemId },
+      });
     }
-  }, []);
+  }, [feedbackItemId]);
 
   useEffect(() => {
     setLoading(true);
@@ -702,7 +757,17 @@ function CommentsSection({
         toast.success(`Comment added and ${mentions.length} user${mentions.length > 1 ? "s" : ""} notified`);
       }
     } catch (err) {
-      toast.error("Failed to add comment");
+      notifyFeedbackInboxFailure({
+        operation: "add-comment",
+        title: "Could not add comment",
+        fallback: "The feedback comment could not be saved.",
+        error: err,
+        metadata: {
+          feedbackItemId,
+          mentionCount: mentions.length,
+          hasScreenshot: Boolean(screenshotDataUrl),
+        },
+      });
     } finally {
       setSubmitting(false);
     }
@@ -1133,8 +1198,14 @@ function useResizablePanel() {
       // Persist to localStorage
       try {
         localStorage.setItem(PANEL_STORAGE_KEY, String(panelWidth));
-      } catch {
-        // ignore
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "feedback-inbox",
+          operation: "save-panel-width",
+          error,
+          userVisibleFallback: "Feedback inbox panel width was not saved locally.",
+          metadata: { panelWidth },
+        });
       }
     }
 
@@ -1194,6 +1265,14 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
 
         if (toolsResult.status === "fulfilled") {
           setTools(toolsResult.value.tools ?? []);
+        } else {
+          reportNonCriticalFailure({
+            area: "feedback-inbox",
+            operation: "load-feedback-tools",
+            error: toolsResult.reason,
+            userVisibleFallback: "Tool assignment options could not be loaded.",
+            metadata: { feedbackId: item.id },
+          });
         }
 
         if (matchResult.status === "fulfilled") {
@@ -1202,9 +1281,23 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
             setAssignedToolId(data.match.id);
             setContext(data.context ?? null);
           }
+        } else {
+          reportNonCriticalFailure({
+            area: "feedback-inbox",
+            operation: "match-feedback-tool",
+            error: matchResult.reason,
+            userVisibleFallback: "Feedback tool auto-match could not be loaded.",
+            metadata: { feedbackId: item.id },
+          });
         }
-      } catch {
-        // Non-fatal
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "feedback-inbox",
+          operation: "initialize-tool-context",
+          error,
+          userVisibleFallback: "Tool context could not be initialized.",
+          metadata: { feedbackId: item.id },
+        });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -1241,12 +1334,24 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
           `/api/admin/feedback/tools?action=resolve&toolId=${toolId}`,
         );
         setContext(data.context ?? null);
-      } catch {
-        // Non-fatal — assignment succeeded even if context load failed
+      } catch (err) {
+        reportNonCriticalFailure({
+          area: "feedback-inbox",
+          operation: "load-assigned-tool-context",
+          error: err,
+          userVisibleFallback: "Tool assignment saved, but context could not be loaded.",
+          metadata: { feedbackId: item.id, toolId },
+        });
       }
       toast.success("Tool assigned");
     } catch (err) {
-      toast.error("Failed to assign tool");
+      notifyFeedbackInboxFailure({
+        operation: "assign-tool",
+        title: "Could not assign tool",
+        fallback: "The feedback tool assignment could not be saved.",
+        error: err,
+        metadata: { feedbackId: item.id, toolId },
+      });
     } finally {
       setLoading(false);
     }
@@ -1270,8 +1375,14 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
             `/api/admin/feedback/tools?action=resolve&toolId=${newToolId}`,
           );
           setContext(ctxData.context ?? null);
-        } catch {
-          // Non-fatal
+        } catch (err) {
+          reportNonCriticalFailure({
+            area: "feedback-inbox",
+            operation: "load-auto-matched-tool-context",
+            error: err,
+            userVisibleFallback: "Tool auto-match saved, but context could not be loaded.",
+            metadata: { feedbackId: item.id, toolId: newToolId },
+          });
         }
         toast.success("Tool auto-matched");
       } else {
@@ -1279,7 +1390,13 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
         toast("No matching tool found", { description: "Assign one manually." });
       }
     } catch (err) {
-      toast.error("Auto-match failed");
+      notifyFeedbackInboxFailure({
+        operation: "auto-match-tool",
+        title: "Could not auto-match tool",
+        fallback: "The feedback tool could not be auto-matched.",
+        error: err,
+        metadata: { feedbackId: item.id },
+      });
     } finally {
       setLoading(false);
     }
@@ -1298,8 +1415,15 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
       });
       toast.success("Procore crawl complete", { description: `Manifest saved for ${slug}` });
     } catch (err) {
-      toast.error("Crawl failed", {
-        description: err instanceof Error ? err.message : "Unknown error",
+      notifyFeedbackInboxFailure({
+        operation: "crawl-tool-context",
+        title: "Could not crawl Procore context",
+        fallback: "The Procore context crawl failed.",
+        error: err,
+        metadata: {
+          feedbackId: item.id,
+          toolSlug: slug,
+        },
       });
     } finally {
       setCrawling(false);
@@ -1772,7 +1896,13 @@ export default function FeedbackInboxPage() {
       setItems(data.items ?? []);
       setTotal(data.total ?? 0);
     } catch (err) {
-      toast.error("Failed to load feedback items");
+      notifyFeedbackInboxFailure({
+        operation: "load-feedback-items",
+        title: "Could not load feedback items",
+        fallback: "The feedback inbox list could not be loaded.",
+        error: err,
+        metadata: { filter },
+      });
     } finally {
       setLoading(false);
     }
@@ -1877,7 +2007,13 @@ export default function FeedbackInboxPage() {
       toast.success(`Marked as ${statusLabel}`);
       fetchItems();
     } catch (err) {
-      toast.error("Failed to update status");
+      notifyFeedbackInboxFailure({
+        operation: "update-feedback-status",
+        title: "Could not update status",
+        fallback: "The feedback item status could not be updated.",
+        error: err,
+        metadata: { feedbackId: id, status },
+      });
     } finally {
       setUpdatingId(null);
     }
@@ -1899,7 +2035,13 @@ export default function FeedbackInboxPage() {
       );
       fetchItems();
     } catch (err) {
-      toast.error("Failed to send to GitHub");
+      notifyFeedbackInboxFailure({
+        operation: "send-feedback-to-github",
+        title: "Could not send to GitHub",
+        fallback: "The feedback item could not be sent to GitHub.",
+        error: err,
+        metadata: { feedbackId: id },
+      });
     } finally {
       setSendingToGitHub(false);
     }
@@ -1920,7 +2062,13 @@ export default function FeedbackInboxPage() {
       }
       fetchItems();
     } catch (err) {
-      toast.error("Failed to delete feedback item");
+      notifyFeedbackInboxFailure({
+        operation: "delete-feedback-item",
+        title: "Could not delete feedback item",
+        fallback: "The feedback item could not be deleted.",
+        error: err,
+        metadata: { feedbackId: id },
+      });
     } finally {
       setDeletingId(null);
     }

@@ -2,15 +2,25 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { test as setup } from "@playwright/test";
+import dotenv from "dotenv";
 
 import { createSupabaseAdminClient, createSupabaseClient } from "./helpers/supabase";
 
 const authFile = path.join(__dirname, ".auth/user.json");
 
+for (const envPath of [
+  path.join(__dirname, "../../.env"),
+  path.join(__dirname, "../.env.local"),
+  path.join(__dirname, "../.env"),
+]) {
+  dotenv.config({ path: envPath, override: false });
+}
+
 // Use env vars with fallback to hardcoded test creds
 const TEST_EMAIL = process.env.TEST_USER_1 ?? "test1@mail.com";
 const TEST_PASSWORD = process.env.TEST_PASSWORD_1 ?? "test12026!!!";
 const AUTH_SETUP_TIMEOUT_MS = 30_000;
+const AUTH_VERIFY_TIMEOUT_MS = 20_000;
 
 /**
  * Extract Supabase project ref from the URL.
@@ -90,12 +100,36 @@ async function withAuthSetupTimeout<T>(
   }
 }
 
+async function verifySavedAuthState(
+  page: Parameters<typeof setup>[1]["page"],
+  baseUrl: string,
+) {
+  await page.goto(`${baseUrl}/tasks`, {
+    waitUntil: "domcontentloaded",
+    timeout: AUTH_VERIFY_TIMEOUT_MS,
+  });
+
+  const currentUrl = new URL(page.url());
+  if (currentUrl.pathname.startsWith("/auth/login")) {
+    throw new Error(
+      [
+        "Auth setup saved a session, but protected route verification still redirected to login.",
+        `Route: ${currentUrl.pathname}${currentUrl.search}`,
+        "Cause: the generated Supabase auth cookie was not accepted by the local app.",
+        "Detection gap: prior auth setup trusted the storage-state file without opening a protected route.",
+        "Prevention: auth setup now verifies /tasks immediately after writing frontend/tests/.auth/user.json.",
+      ].join(" "),
+    );
+  }
+}
+
 setup("authenticate", async ({ page, baseURL }) => {
   const url = baseURL ?? "http://localhost:3000";
 
   // Fast path: reuse existing valid session without any API calls
   if (hasValidExistingSession()) {
-    console.log("Existing auth session is still valid — skipping re-authentication");
+    console.log("Existing auth session is still valid; verifying protected route access");
+    await verifySavedAuthState(page, url);
     return;
   }
 
@@ -118,6 +152,18 @@ setup("authenticate", async ({ page, baseURL }) => {
     });
     if (error) {
       throw new Error(`Auth setup failed creating test user: ${error.message}`);
+    }
+  } else {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(
+      existingUser.id,
+      {
+        password: TEST_PASSWORD,
+        email_confirm: true,
+      },
+    );
+
+    if (error) {
+      throw new Error(`Auth setup failed updating test user password: ${error.message}`);
     }
   }
 
@@ -175,6 +221,7 @@ setup("authenticate", async ({ page, baseURL }) => {
   // Save the auth state for subsequent test runs.
   // Cookies set via addCookies are captured by storageState without needing a navigation.
   await page.context().storageState({ path: authFile });
+  await verifySavedAuthState(page, url);
   console.log(`Auth setup complete — session saved for ${TEST_EMAIL}`);
 });
 

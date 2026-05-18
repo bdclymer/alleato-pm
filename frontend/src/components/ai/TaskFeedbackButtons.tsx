@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getErrorDetail } from "@/lib/format-error";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { cn } from "@/lib/utils";
 
 interface TaskFeedbackButtonsProps {
@@ -60,6 +62,25 @@ export function TaskFeedbackButtons({
     useState<TaskFeedbackReasonCategory | null>(null);
   const [badReason, setBadReason] = useState("");
 
+  const handleFeedbackFailure = (
+    error: unknown,
+    submittedSignal: "good" | "bad",
+  ) => {
+    const description = getErrorDetail(error);
+    reportNonCriticalFailure({
+      area: "task-feedback",
+      operation: "record-task-feedback",
+      error,
+      userVisibleFallback: "Task feedback could not be recorded.",
+      metadata: {
+        taskId,
+        projectId,
+        signal: submittedSignal,
+      },
+    });
+    toast.error("Could not record task feedback", { description });
+  };
+
   if (signal !== null) {
     return (
       <span className={cn("text-xs text-muted-foreground", className)}>
@@ -73,7 +94,7 @@ export function TaskFeedbackButtons({
     try {
       await submitFeedback("good");
     } catch (err) {
-      toast.error("Failed to record feedback");
+      handleFeedbackFailure(err, "good");
     }
   };
 
@@ -95,7 +116,7 @@ export function TaskFeedbackButtons({
         onTrivial();
       }
     } catch (err) {
-      toast.error("Failed to record feedback");
+      handleFeedbackFailure(err, "bad");
     }
     setBadReasonCategory(null);
     setBadReason("");

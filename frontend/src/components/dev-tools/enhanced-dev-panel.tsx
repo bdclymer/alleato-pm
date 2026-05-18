@@ -20,6 +20,7 @@ import {
   Terminal,
   Table2,
   Link as LinkIcon,
+  Bell,
 } from "lucide-react"
 import {
   Sheet,
@@ -42,6 +43,11 @@ import { toast } from "sonner"
 import { DeveloperFormConfigPanel } from "@/components/project/developer-form-config-panel"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageSchemaTab } from "./page-schema-tab"
+import {
+  clearAppToastLog,
+  subscribeToAppToastLog,
+  type AlleatoToastLogEntry,
+} from "@/lib/toast/app-toast"
 
 interface HealthCheck {
   name: string
@@ -187,6 +193,7 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
   const [columnMappings, setColumnMappings] = useState<ColumnMappingRow[]>([])
   const [detectedTableName, setDetectedTableName] = useState<string>("Unknown")
   const [detectedPrimaryId, setDetectedPrimaryId] = useState<string>("N/A")
+  const [toastLog, setToastLog] = useState<AlleatoToastLogEntry[]>([])
   const params = useParams()!
   const pathname = usePathname()!
   const supabase = createClient()
@@ -232,6 +239,8 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [variant, isFooterOpen])
+
+  useEffect(() => subscribeToAppToastLog(setToastLog), [])
 
   useEffect(() => {
     const paramsEntries = Object.entries(params ?? {})
@@ -480,15 +489,24 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
     routeSegments.some((segment) => insight.match === segment),
   )
   const errorCount = consoleErrors.filter(e => e.type === "error").length
+  const toastRiskCount = toastLog.filter((entry) => entry.riskLabels.length > 0).length
 
   // Only show in development
   if (process.env.NODE_ENV !== "development") return null
 
   const panelContent = (
     <Tabs defaultValue="schema" className="mt-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="schema">Schema</TabsTrigger>
             <TabsTrigger value="column-map">Column Map</TabsTrigger>
+            <TabsTrigger value="toasts">
+              Toasts
+              {toastLog.length > 0 && (
+                <span className="ml-1 text-[10px] text-muted-foreground">
+                  {toastLog.length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="database">Database</TabsTrigger>
             <TabsTrigger value="errors">Errors</TabsTrigger>
@@ -538,6 +556,124 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
                       <TableRow>
                         <TableCell colSpan={3} className="text-sm text-muted-foreground">
                           No visible table headers detected yet for this page.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
+            {/* TOASTS TAB */}
+            <TabsContent value="toasts" className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="flex items-center gap-2 font-semibold">
+                    <Bell className="h-4 w-4" />
+                    Toast Session Log
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Captures Sonner toasts emitted during this browser session.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAppToastLog}
+                  disabled={toastLog.length === 0}
+                >
+                  Clear
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-md border border-border bg-muted/40 p-3">
+                  <div className="text-xs text-muted-foreground">Session Toasts</div>
+                  <div className="mt-1 text-lg font-semibold text-foreground">{toastLog.length}</div>
+                </div>
+                <div className="rounded-md border border-border bg-muted/40 p-3">
+                  <div className="text-xs text-muted-foreground">Repeated Toasts</div>
+                  <div className="mt-1 text-lg font-semibold text-foreground">
+                    {toastLog.filter((entry) => entry.count > 1).length}
+                  </div>
+                </div>
+                <div className="rounded-md border border-border bg-muted/40 p-3">
+                  <div className="text-xs text-muted-foreground">Flagged Copy</div>
+                  <div className="mt-1 text-lg font-semibold text-foreground">{toastRiskCount}</div>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Message</TableHead>
+                      <TableHead>Route</TableHead>
+                      <TableHead>Count</TableHead>
+                      <TableHead>Last Seen</TableHead>
+                      <TableHead>Flags</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {toastLog.length > 0 ? (
+                      toastLog.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="align-top">
+                            <Badge
+                              variant={
+                                entry.type === "error"
+                                  ? "destructive"
+                                  : entry.type === "warning"
+                                    ? "warning"
+                                    : entry.type === "success"
+                                      ? "success"
+                                      : "outline"
+                              }
+                              className="capitalize"
+                            >
+                              {entry.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-sm align-top whitespace-normal">
+                            <div className="font-medium text-foreground">{entry.message}</div>
+                            {entry.description && (
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {entry.description}
+                              </div>
+                            )}
+                            {entry.toastId && (
+                              <div className="mt-1 font-mono text-[10px] text-muted-foreground">
+                                id: {entry.toastId}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="max-w-xs align-top font-mono text-xs whitespace-normal">
+                            {entry.route}
+                          </TableCell>
+                          <TableCell className="align-top">{entry.count}</TableCell>
+                          <TableCell className="align-top text-xs text-muted-foreground">
+                            {new Date(entry.lastSeenAt).toLocaleTimeString()}
+                          </TableCell>
+                          <TableCell className="align-top">
+                            {entry.riskLabels.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {entry.riskLabels.map((label) => (
+                                  <Badge key={label} variant="warning" className="text-[10px]">
+                                    {label}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">None</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                          No toasts logged yet. Trigger a workflow action and return here to inspect the copy.
                         </TableCell>
                       </TableRow>
                     )}

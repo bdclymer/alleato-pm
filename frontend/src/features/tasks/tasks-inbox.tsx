@@ -64,6 +64,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { getErrorDetail } from "@/lib/format-error";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
@@ -125,6 +126,30 @@ type UserOption = {
   full_name?: string | null;
   person_id?: string | null;
 };
+
+function notifyTasksFailure({
+  operation,
+  title,
+  fallback,
+  error,
+  metadata,
+}: {
+  operation: string;
+  title: string;
+  fallback: string;
+  error: unknown;
+  metadata?: Record<string, string | number | boolean | null | undefined>;
+}) {
+  const description = getErrorDetail(error);
+  reportNonCriticalFailure({
+    area: "tasks-table",
+    operation,
+    error,
+    userVisibleFallback: fallback,
+    metadata,
+  });
+  toast.error(title, { description });
+}
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -202,9 +227,9 @@ function formatShortDate(value: string | null): string {
   return format(date, "MMM d, yyyy");
 }
 
-const TASK_LIST_MIN_WIDTH = "88rem";
+const TASK_LIST_MIN_WIDTH = "69.5rem";
 const TASK_LIST_GRID_TEMPLATE =
-  "44px minmax(20rem, 1.7fr) minmax(12rem, 0.9fr) minmax(9rem, 0.75fr) minmax(8rem, 0.65fr) minmax(7rem, 0.55fr) minmax(7rem, 0.55fr) minmax(8rem, 0.65fr) minmax(7rem, 0.5fr)";
+  "44px minmax(18rem, 1.7fr) minmax(10rem, 0.9fr) minmax(8rem, 0.75fr) minmax(7rem, 0.65fr) minmax(6.5rem, 0.55fr) minmax(6.5rem, 0.55fr) minmax(7rem, 0.65fr) minmax(6.5rem, 0.5fr)";
 const TASK_LIST_PINNED_TASK_LEFT = "44px";
 // Ghost-style controls: no border, just text + chevron; bg appears on hover/open
 const GHOST_SELECT_CLASS =
@@ -712,7 +737,7 @@ function TaskListItem({
   const projectLabel = taskProjectLabel(item, projects);
   const pinnedCellClassName = isSelected
     ? "bg-accent"
-    : "bg-background group-hover:bg-neutral-100";
+    : "bg-background group-hover:bg-muted/50";
 
   return (
     <SwipeableListRow onEdit={onClick} onDelete={onDelete}>
@@ -731,7 +756,7 @@ function TaskListItem({
         "group grid cursor-pointer items-center border-b border-border/30 text-sm transition-colors",
         isSelected
           ? "bg-accent"
-          : "hover:bg-neutral-100",
+          : "hover:bg-muted/50",
       )}
       style={{
         gridTemplateColumns: TASK_LIST_GRID_TEMPLATE,
@@ -761,7 +786,7 @@ function TaskListItem({
         <div className="min-w-0 flex-1 overflow-hidden">
           <p
             className={cn(
-              "line-clamp-2 min-w-0 text-xs leading-snug",
+              "line-clamp-2 min-w-0 text-sm leading-snug",
               isSelected ? "font-medium text-foreground" : "text-foreground/90",
               isDone && "text-muted-foreground line-through decoration-muted-foreground/40",
             )}
@@ -770,25 +795,25 @@ function TaskListItem({
           </p>
         </div>
       </div>
-      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={projectLabel}>
+      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={projectLabel}>
         {projectLabel}
       </div>
-      <div className="min-w-0 truncate px-2 text-xs text-foreground" title={assignedTo}>
+      <div className="min-w-0 truncate px-2 text-sm text-foreground" title={assignedTo}>
         {assignedTo}
       </div>
-      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={sourceLabel}>
+      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={sourceLabel}>
         {sourceLabel || "—"}
       </div>
-      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={sourceDate}>
+      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={sourceDate}>
         {sourceDate}
       </div>
-      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={assignedDate}>
+      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={assignedDate}>
         {assignedDate}
       </div>
-      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={assignedBy}>
+      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={assignedBy}>
         {assignedBy}
       </div>
-      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={priorityLabel}>
+      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={priorityLabel}>
         <span className="inline-flex min-w-0 items-center gap-1.5">
           {priorityMeta && <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", priorityMeta.dot)} />}
           <span className="truncate">{priorityLabel}</span>
@@ -1288,7 +1313,7 @@ function TaskDetail({
                   aria-label="Task due date"
                 />
                 {task.due_date && overdue && ds !== "done" && (
-                  <span className="text-xs font-medium text-red-500">overdue</span>
+                  <span className="text-sm font-medium text-destructive">Overdue</span>
                 )}
               </div>
             </TaskDetailRow>
@@ -1425,7 +1450,7 @@ interface TasksInboxProps {
   projectId?: string | null;
   projectName?: string | null;
   defaultScope?: Scope;
-  defaultView?: "table" | "split";
+  defaultView?: "table" | "card" | "split";
   showTabs?: boolean;
 }
 
@@ -1448,6 +1473,7 @@ export function TasksInbox({
 
   const rawScope = searchParams.get("scope");
   const rawTaskId = searchParams.get("task");
+  const rawView = searchParams.get("view");
   const initialScope: Scope =
     rawScope === "all" || rawScope === "mine"
       ? rawScope
@@ -1475,6 +1501,7 @@ export function TasksInbox({
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const listPanelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1487,7 +1514,7 @@ export function TasksInbox({
     router,
     defaults: {
       view: defaultView,
-      allowedViews: ["table", "split"],
+      allowedViews: ["table", "card", "split"],
       page: 1,
       perPage: 25,
       search: "",
@@ -1497,6 +1524,26 @@ export function TasksInbox({
       filters: EMPTY_FILTERS,
     },
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const syncViewport = () => setIsMobileViewport(mediaQuery.matches);
+
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+
+    return () => mediaQuery.removeEventListener("change", syncViewport);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileViewport || rawView) return;
+    if (tableState.currentView === "card") return;
+
+    tableState.setCurrentView("card");
+    tableState.setSearchParams({ view: "card" });
+  }, [isMobileViewport, rawView, tableState]);
 
   useEffect(() => {
     if (!rawTaskId) return;
@@ -1553,7 +1600,13 @@ export function TasksInbox({
       setItems(data.data ?? []);
       setTotal((data.data ?? []).length);
     } catch (err) {
-      toast.error("Failed to load tasks");
+      notifyTasksFailure({
+        operation: "load-tasks",
+        title: "Could not load tasks",
+        fallback: "The task list could not be loaded.",
+        error: err,
+        metadata: { projectId: projectId ?? null, scope },
+      });
     } finally {
       setLoading(false);
     }
@@ -1572,7 +1625,15 @@ export function TasksInbox({
         });
         if (!cancelled) setProjects(result.data ?? []);
       } catch (err) {
-        if (!cancelled) toast.error("Failed to load projects");
+        if (!cancelled) {
+          notifyTasksFailure({
+            operation: "load-project-options",
+            title: "Could not load project options",
+            fallback: "Project options could not be loaded for the task filters.",
+            error: err,
+            metadata: { scope },
+          });
+        }
       } finally {
         if (!cancelled) setProjectsLoading(false);
       }
@@ -1593,7 +1654,15 @@ export function TasksInbox({
         });
         if (!cancelled) setUsers(result.users ?? []);
       } catch (err) {
-        if (!cancelled) toast.error("Failed to load users");
+        if (!cancelled) {
+          notifyTasksFailure({
+            operation: "load-user-options",
+            title: "Could not load assignee options",
+            fallback: "Assignee options could not be loaded for task editing.",
+            error: err,
+            metadata: { scope },
+          });
+        }
       } finally {
         if (!cancelled) setUsersLoading(false);
       }
@@ -1787,7 +1856,16 @@ export function TasksInbox({
       setItems((prev) => prev.map((t) => (t.id === id ? { ...t, ...localPatch } : t)));
       return true;
     } catch (err) {
-      toast.error("Failed to update task");
+      notifyTasksFailure({
+        operation: "update-task",
+        title: "Could not update task",
+        fallback: "The task update did not save.",
+        error: err,
+        metadata: {
+          taskId: id,
+          fields: Object.keys(patch).join(","),
+        },
+      });
       return false;
     } finally {
       setUpdatingId(null);
@@ -1880,7 +1958,16 @@ export function TasksInbox({
       setBulkAssigneeUserId("__no_change__");
       toast.success(`Updated ${selectedTaskIds.length} selected task${selectedTaskIds.length === 1 ? "" : "s"}`);
     } catch (err) {
-      toast.error("Failed to update selected tasks");
+      notifyTasksFailure({
+        operation: "bulk-update-tasks",
+        title: "Could not update selected tasks",
+        fallback: "The selected task updates did not save.",
+        error: err,
+        metadata: {
+          selectedCount: selectedTaskIds.length,
+          fields: Object.keys(payload).filter((key) => key !== "task_ids").join(","),
+        },
+      });
     } finally {
       setBulkUpdating(false);
     }
@@ -1899,7 +1986,13 @@ export function TasksInbox({
       setItems((prev) => prev.filter((t) => t.id !== id));
       setTotal((prev) => prev - 1);
     } catch (err) {
-      toast.error("Failed to delete task");
+      notifyTasksFailure({
+        operation: "delete-task",
+        title: "Could not delete task",
+        fallback: "The task could not be deleted.",
+        error: err,
+        metadata: { taskId: id },
+      });
     } finally {
       setDeletingId(null);
     }
@@ -1925,7 +2018,13 @@ export function TasksInbox({
       setSelectedTaskIds([]);
       toast.success(`Deleted ${selectedSet.size} selected task${selectedSet.size === 1 ? "" : "s"}`);
     } catch (err) {
-      toast.error("Failed to delete selected tasks");
+      notifyTasksFailure({
+        operation: "bulk-delete-tasks",
+        title: "Could not delete selected tasks",
+        fallback: "The selected tasks could not be deleted.",
+        error: err,
+        metadata: { selectedCount: selectedTaskIds.length },
+      });
     } finally {
       setBulkDeleting(false);
       setBulkDeleteDialogOpen(false);
@@ -2078,7 +2177,7 @@ export function TasksInbox({
               tableState.setCurrentView(view);
               tableState.setSearchParams({ view });
             },
-            enabledViews: ["table", "split"],
+            enabledViews: ["table", "card", "split"],
             filters,
             activeFilters: tableState.activeFilters,
             onFilterChange: handleFilterChange,
