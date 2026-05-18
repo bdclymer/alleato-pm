@@ -96,6 +96,7 @@
     "rag:verify:response-contract": "node scripts/verify/verify_ai_assistant_response_contract.mjs",
     "rag:verify:source-specific": "node scripts/verify/verify_ai_source_specific_rag_contract.mjs",
     "rag:verify:metadata-boundary": "node scripts/verify/verify_rag_document_metadata_boundary.mjs",
+    "rag:verify:client-boundary": "node scripts/verify/verify_rag_client_boundary.mjs",
     "rag:verify:deep-agents-nonprod": "node scripts/verify/verify_deep_agents_nonprod_readiness.mjs",
     "rag:repair:intelligence-current-packets": "node scripts/verify/repair_ai_intelligence_current_packet_links.mjs",
     "rag:verify:intelligence-compiler": "node scripts/verify/verify_ai_intelligence_compiler_health.mjs",

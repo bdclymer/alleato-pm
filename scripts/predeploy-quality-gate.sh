@@ -62,6 +62,9 @@ npm run db:types:check
 echo "2m) Manual DB type override gate"
 npm run guardrails:db-type-overrides
 
+echo "2n) RAG client boundary gate"
+npm run rag:verify:client-boundary
+
 echo "3) Frontend lint + typecheck + build"
 cd frontend
 npm run quality:build-routes

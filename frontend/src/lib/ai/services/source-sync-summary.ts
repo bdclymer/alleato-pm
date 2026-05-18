@@ -7,20 +7,20 @@ import type { SourceSyncStatus } from "@/app/api/admin/source-sync/_contracts";
 import {
   createRagServiceClient,
 } from "@/lib/supabase/service";
-import type { Database, Json } from "@/types/database.types";
+import type { Database as RagDatabase, Json } from "@/types/rag-database.types";
 
 const MAX_ALERT_SOURCES = 6;
 const MAX_STUCK_ITEM_SOURCES = 4;
 const MAX_RUN_SOURCES = 4;
 const MAX_SOURCE_HEALTH_SOURCES = 5;
 
-type SourceSyncRunInsert = Database["public"]["Tables"]["source_sync_runs"]["Insert"];
+type SourceSyncRunInsert = RagDatabase["public"]["Tables"]["source_sync_runs"]["Insert"];
 type SourceSyncRunSnapshotRow = Pick<
-  Database["public"]["Tables"]["source_sync_runs"]["Row"],
+  RagDatabase["public"]["Tables"]["source_sync_runs"]["Row"],
   "id" | "finished_at" | "items_seen"
 >;
 type SourceSyncRunSnapshotListRow = Pick<
-  Database["public"]["Tables"]["source_sync_runs"]["Row"],
+  RagDatabase["public"]["Tables"]["source_sync_runs"]["Row"],
   "id" | "finished_at" | "started_at" | "items_seen" | "metadata"
 >;
 

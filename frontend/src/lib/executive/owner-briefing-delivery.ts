@@ -10,8 +10,8 @@
  *   4. Audit the send in `source_sync_runs`.
  */
 
-import { createServiceClient } from "@/lib/supabase/service";
-import type { Json } from "@/types/database.types";
+import { createRagServiceClient } from "@/lib/supabase/service";
+import type { Json } from "@/types/rag-database.types";
 import {
   buildOwnerBriefingData,
   type OwnerBriefingData,
@@ -78,7 +78,7 @@ export async function sendOwnerBriefingToTeams(input: {
     };
   }
 
-  const auditClient = createServiceClient();
+  const auditClient = createRagServiceClient();
   const runStartedAt = new Date().toISOString();
   const runMetadata = {
     recipients: recipients.map((r) => ({ id: r.supabaseUserId, email: r.email })),

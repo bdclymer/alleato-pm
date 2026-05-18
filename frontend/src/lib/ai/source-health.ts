@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { createRagServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
+import type { Database as RagDatabase } from "@/types/rag-database.types";
 
 type SourceHealthRow =
-  Database["public"]["Tables"]["source_sync_health_snapshots"]["Row"];
+  RagDatabase["public"]["Tables"]["source_sync_health_snapshots"]["Row"];
 type SourceHealthSnapshotQueryRow = Pick<
   SourceHealthRow,
   | "source"
@@ -161,8 +163,9 @@ export async function loadAssistantSourceHealthContext(params: {
 }): Promise<AssistantSourceHealthContext> {
   const now = new Date();
   const generatedAt = now.toISOString();
+  const ragSupabase = createRagServiceClient();
   const [sourceResult, subscriptionResult] = await Promise.all([
-    params.supabase
+    ragSupabase
       .from("source_sync_health_snapshots")
       .select(
         "source,resource_id,resource_name,status,last_sync_at,last_success_at,last_error_at,last_error_message,stale_minutes,unembedded_count,uncompiled_count,updated_at",
