@@ -65,9 +65,10 @@ def _today_iso() -> str:
 
 
 def _project_header(project: dict[str, Any]) -> str:
+    project_name = project.get("name") or f"Project {project.get('id')}"
     return "\n".join(
         [
-            f"# {project.get('name') or f'Project {project.get('id')}'}",
+            f"# {project_name}",
             "",
             (
                 f"Phase: {_clean(project.get('phase')) or 'n/a'} | "
