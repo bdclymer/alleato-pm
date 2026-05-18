@@ -59,7 +59,10 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
+import { ExpandableSearch } from "./expandable-search";
 import { TableCountIndicator } from "./table-primitives";
+
+export { ExpandableSearch };
 
 export type ViewMode = "table" | "card" | "list" | "split";
 export type TableDensity = "compact" | "default" | "comfortable";
@@ -140,82 +143,6 @@ export interface TableToolbarProps {
   /** @deprecated Use `features.bulkDelete` instead */
   enableBulkDelete?: boolean;
   className?: string;
-}
-
-export function ExpandableSearch({
-  value,
-  onChange,
-  placeholder = "Search...",
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}): ReactElement {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isExpanded && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isExpanded]);
-
-  useEffect(() => {
-    if (value) setIsExpanded(true);
-  }, [value]);
-
-  return (
-    <div className="relative flex items-center">
-      {!isExpanded ? (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setIsExpanded(true)}
-                aria-label="Search"
-              >
-                <Search />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Search</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ) : (
-        <div className="relative flex items-center animate-in slide-in-from-left-2 duration-200">
-          <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            ref={inputRef}
-            type="text"
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            onBlur={() => {
-              if (!value) setIsExpanded(false);
-            }}
-            placeholder={placeholder}
-            className="h-8 w-50 pl-8 pr-8 text-sm"
-            aria-label="Search table"
-          />
-          {value && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 h-8 w-8"
-              onClick={() => {
-                onChange("");
-                inputRef.current?.focus();
-              }}
-              aria-label="Clear search"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function ViewSwitcher({

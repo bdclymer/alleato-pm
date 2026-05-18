@@ -39,6 +39,7 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { SeedBudgetFromEstimateModal } from "@/components/domain/estimates/SeedBudgetFromEstimateModal";
+import { ExpandableSearch } from "@/components/tables/unified/expandable-search";
 import type { Database } from "@/types/database.types";
 import type {
   EstimateAllowanceRow,
@@ -2255,14 +2256,12 @@ function SubListTab({
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
-        <div className="relative min-w-0 flex-1 md:max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search company or contact..."
+        <div className="flex items-center">
+          <ExpandableSearch
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 pl-8 text-sm"
+            onChange={setSearchQuery}
+            placeholder="Search company or contact..."
+            ariaLabel="Search sublist"
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
