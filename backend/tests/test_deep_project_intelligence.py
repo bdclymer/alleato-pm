@@ -7,6 +7,7 @@ from src.services.agents.deep_project_intelligence import (
     REQUIRED_SOURCE_TYPES,
     build_executive_briefing_contract_spike,
     build_project_status_contract_spike,
+    deep_agents_runtime_inventory,
     deep_agents_runtime_subagent_names,
     deep_agents_runtime_tool_names,
     _openai_model_name,
@@ -339,6 +340,26 @@ def test_deep_agents_runtime_tool_inventory_matches_full_standalone_surface(monk
         "risk-analyst",
         "communications-analyst",
     }
+
+
+def test_deep_agents_runtime_inventory_reports_effective_surface(monkeypatch):
+    monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "deep_agents")
+    monkeypatch.setenv("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_SQL_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_DRAFT_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_SUBAGENTS_ENABLED", "true")
+
+    inventory = deep_agents_runtime_inventory()
+
+    assert inventory["status"] == "active"
+    assert inventory["toolCount"] == 33
+    assert inventory["subagentCount"] == 4
+    assert "query_db" in inventory["tools"]
+    assert "draft_rfi" in inventory["tools"]
+    assert "financial-analyst" in inventory["subagents"]
+    assert "DbMemoryMiddleware" in inventory["knownMissing"]
 
 
 def test_deep_agents_runtime_invokes_installed_graph_with_bindable_model(monkeypatch):
@@ -686,6 +707,36 @@ def test_deep_agent_executive_endpoint_returns_contract_packet(client, mock_supa
     assert data["sourcesChecked"][0]["status"] == "missing"
     assert data["toolTrace"][0]["tool"] == "source_client"
     assert data["recommendedActions"][0]["ownerRole"] == "Operations"
+
+
+def test_deep_agent_tool_inventory_endpoint_reports_active_tools(client, monkeypatch):
+    monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "deep_agents")
+    monkeypatch.setenv("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_SQL_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_DRAFT_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_SUBAGENTS_ENABLED", "true")
+    path = "/api/intelligence/deep-agent/tool-inventory"
+    _override_deep_agent_auth(client.app, path)
+
+    try:
+        response = client.get(path)
+    finally:
+        _clear_overrides(client.app, path)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "active"
+    assert data["toolCount"] == 33
+    assert "resolve_project_by_name" in data["tools"]
+    assert "acumatica_vendor_spend" in data["tools"]
+    assert data["subagents"] == [
+        "financial-analyst",
+        "schedule-analyst",
+        "risk-analyst",
+        "communications-analyst",
+    ]
 
 
 def test_deep_agent_endpoint_returns_404_for_missing_project(client, mock_supabase_store, monkeypatch):

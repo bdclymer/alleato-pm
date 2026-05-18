@@ -143,9 +143,44 @@ async function main() {
   let endpointMode = null;
   let executiveEndpointState = "not_checked";
   let executiveEndpointMode = null;
+  let toolInventory = null;
   if (!adminApiKey) {
     fail("ADMIN_API_KEY is required for the Deep Agents endpoint readiness probe.");
   } else {
+    const inventoryResponse = await fetch(`${backendUrl}/api/intelligence/deep-agent/tool-inventory`, {
+      headers: {
+        accept: "application/json",
+        "x-admin-api-key": adminApiKey,
+      },
+    });
+    const inventoryPayload = await inventoryResponse.json().catch(() => ({}));
+    if (!inventoryResponse.ok) {
+      fail(`Deep Agents tool inventory probe failed with HTTP ${inventoryResponse.status}.`);
+    }
+    toolInventory = {
+      status: inventoryPayload.status ?? null,
+      runtime: inventoryPayload.runtime ?? null,
+      toolCount: inventoryPayload.toolCount ?? 0,
+      subagentCount: inventoryPayload.subagentCount ?? 0,
+      tools: Array.isArray(inventoryPayload.tools) ? inventoryPayload.tools : [],
+      subagents: Array.isArray(inventoryPayload.subagents) ? inventoryPayload.subagents : [],
+      knownMissing: Array.isArray(inventoryPayload.knownMissing) ? inventoryPayload.knownMissing : [],
+    };
+    const requiredTools = [
+      "resolve_project_by_name",
+      "query_db",
+      "search_unstructured",
+      "draft_rfi",
+      "acumatica_vendor_spend",
+    ];
+    const missingTools = requiredTools.filter((tool) => !toolInventory.tools.includes(tool));
+    if (expectEnabled && missingTools.length > 0) {
+      fail(`Deep Agents enabled check is missing required standalone tools: ${missingTools.join(", ")}.`);
+    }
+    if (expectEnabled && toolInventory.subagentCount < 4) {
+      fail(`Deep Agents enabled check requires 4 subagents; found ${toolInventory.subagentCount}.`);
+    }
+
     const response = await fetch(`${backendUrl}/api/intelligence/deep-agent/project-status`, {
       method: "POST",
       headers: {
@@ -226,6 +261,7 @@ async function main() {
     endpointMode,
     executiveEndpointState,
     executiveEndpointMode,
+    toolInventory,
     expectEnabled,
     expectFrontendBridge,
     warnings,

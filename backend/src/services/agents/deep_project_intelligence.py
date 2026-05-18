@@ -28,6 +28,7 @@ from src.services.agents.alleato_ai_tools import (
     DRAFT_ACTION_TOOLS,
     EXTERNAL_ACCOUNTING_TOOLS,
     READ_ONLY_PM_TOOLS,
+    RESOLVERS,
     SQL_TOOLS,
 )
 from src.services.agents.alleato_ai_tools.prompts import ORCHESTRATOR_PROMPT
@@ -103,6 +104,77 @@ def deep_agents_runtime_tool_names() -> tuple[str, ...]:
 
 def deep_agents_runtime_subagent_names() -> tuple[str, ...]:
     return tuple(subagent["name"] for subagent in _runtime_subagents())
+
+
+def _tool_names(tools: Sequence[Any]) -> list[str]:
+    return [getattr(tool, "name", getattr(tool, "__name__", "")) for tool in tools]
+
+
+def deep_agents_runtime_inventory() -> dict[str, Any]:
+    """Return the effective Deep Agents runtime surface without leaking secrets."""
+    flags = {
+        "projectIntelligenceEnabled": _env_flag("DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED"),
+        "standaloneToolsEnabled": _env_flag("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED"),
+        "sqlToolsEnabled": _env_flag("DEEP_AGENTS_SQL_TOOLS_ENABLED"),
+        "acumaticaToolsEnabled": _env_flag("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED"),
+        "draftToolsEnabled": _env_flag("DEEP_AGENTS_DRAFT_TOOLS_ENABLED"),
+        "subagentsEnabled": _env_flag("DEEP_AGENTS_SUBAGENTS_ENABLED"),
+    }
+    runtime = os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", CONTRACT_SPIKE_MODE)
+    groups = [
+        {
+            "name": "resolvers",
+            "enabled": flags["standaloneToolsEnabled"],
+            "tools": _tool_names(RESOLVERS) if flags["standaloneToolsEnabled"] else [],
+        },
+        {
+            "name": "readOnlyPm",
+            "enabled": flags["standaloneToolsEnabled"],
+            "tools": _tool_names(READ_ONLY_PM_TOOLS) if flags["standaloneToolsEnabled"] else [],
+        },
+        {
+            "name": "sql",
+            "enabled": flags["standaloneToolsEnabled"] and flags["sqlToolsEnabled"],
+            "tools": _tool_names(SQL_TOOLS)
+            if flags["standaloneToolsEnabled"] and flags["sqlToolsEnabled"]
+            else [],
+        },
+        {
+            "name": "draftActions",
+            "enabled": flags["standaloneToolsEnabled"] and flags["draftToolsEnabled"],
+            "tools": _tool_names(DRAFT_ACTION_TOOLS)
+            if flags["standaloneToolsEnabled"] and flags["draftToolsEnabled"]
+            else [],
+        },
+        {
+            "name": "externalAccounting",
+            "enabled": flags["standaloneToolsEnabled"] and flags["acumaticaToolsEnabled"],
+            "tools": _tool_names(EXTERNAL_ACCOUNTING_TOOLS)
+            if flags["standaloneToolsEnabled"] and flags["acumaticaToolsEnabled"]
+            else [],
+        },
+    ]
+    active_tools = list(deep_agents_runtime_tool_names())
+    active_subagents = list(deep_agents_runtime_subagent_names())
+    return {
+        "status": "active"
+        if flags["projectIntelligenceEnabled"] and runtime == DEEP_AGENT_RUNTIME_MODE
+        else "configured_but_not_runtime_active",
+        "runtime": runtime,
+        "model": os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.4-mini"),
+        "flags": flags,
+        "toolCount": len(active_tools),
+        "tools": active_tools,
+        "groups": groups,
+        "subagentCount": len(active_subagents),
+        "subagents": active_subagents,
+        "knownMissing": [
+            "FilesystemBackend",
+            "DbMemoryMiddleware",
+            "skills directory runtime loading",
+            "runtime AGENTS.md injection",
+        ],
+    }
 
 
 class _SourceProbe:

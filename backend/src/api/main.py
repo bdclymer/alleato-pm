@@ -45,6 +45,7 @@ from src.api.admin_endpoints import require_admin_api_key
 from src.services.agents.deep_project_intelligence import (
     build_executive_briefing_contract_spike,
     build_project_status_contract_spike,
+    deep_agents_runtime_inventory,
 )
 from src.services.agents.deep_project_intelligence_contracts import (
     DeepExecutiveIntelligenceRequest,
@@ -1145,6 +1146,18 @@ async def run_deep_agent_project_status(
     ):
         raise HTTPException(status_code=404, detail=response.answer)
     return response.model_dump(by_alias=True)
+
+
+@app.get(
+    "/api/intelligence/deep-agent/tool-inventory",
+    tags=["Intelligence"],
+    summary="Show the active Render Deep Agents tool inventory",
+)
+async def get_deep_agent_tool_inventory(
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Return the effective Deep Agents runtime surface for deployment checks."""
+    return deep_agents_runtime_inventory()
 
 
 @app.post(
