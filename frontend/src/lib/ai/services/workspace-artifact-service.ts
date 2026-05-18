@@ -90,14 +90,6 @@ export function extractPreview(content: Record<string, unknown>): string {
   return "";
 }
 
-/** Build the text to embed: "type: title\n<first 4000 chars of content JSON>" */
-function buildEmbedText(
-  artifactType: ArtifactType,
-  title: string,
-  content: Record<string, unknown>,
-): string {
-  return `${artifactType}: ${title}\n${JSON.stringify(content).substring(0, 4000)}`;
-}
 
 // The SELECT columns used everywhere — omits the large embedding vector.
 const SELECT_COLS =
@@ -124,17 +116,9 @@ export async function createArtifact(
 ): Promise<{ id: string } | { error: string }> {
   const supabase = createServiceClient();
 
-  let embeddingJson: string | null = null;
-  try {
-    const vec = await embed(buildEmbedText(params.artifactType, params.title, params.content));
-    embeddingJson = JSON.stringify(vec);
-  } catch (e) {
-    console.warn(
-      "[workspace-artifact-service] Embedding failed — saving without vector:",
-      e instanceof Error ? e.message : e,
-    );
-  }
-
+  // DO NOT write embedding to workspace_artifacts in PM APP.
+  // HNSW index on this column causes OOM under concurrent inserts (same pattern
+  // as document_metadata.summary_embedding and ai_memories.embedding crashes).
   const row: WorkspaceArtifactInsert = {
     user_id: params.userId,
     artifact_type: params.artifactType,
@@ -145,7 +129,6 @@ export async function createArtifact(
     session_id: params.sessionId ?? null,
     tags: params.tags ?? [],
     status: params.status ?? "draft",
-    ...(embeddingJson !== null ? { embedding: embeddingJson } : {}),
   };
 
   const { data, error } = await supabase
@@ -204,24 +187,7 @@ export async function updateArtifact(
   if (params.sessionId !== undefined) updates.session_id = params.sessionId;
   if (params.tags !== undefined) updates.tags = params.tags;
 
-  // Re-embed if content or title changed
-  const contentChanged = params.content !== undefined;
-  const titleChanged = params.title !== undefined;
-  if (contentChanged || titleChanged) {
-    const newTitle = (params.title ?? current.title) as string;
-    const newContent = (params.content ?? current.content) as Record<string, unknown>;
-    const artifactType = current.artifact_type as ArtifactType;
-
-    try {
-      const vec = await embed(buildEmbedText(artifactType, newTitle, newContent));
-      updates.embedding = JSON.stringify(vec);
-    } catch (e) {
-      console.warn(
-        "[workspace-artifact-service] Re-embed failed — keeping previous vector:",
-        e instanceof Error ? e.message : e,
-      );
-    }
-  }
+  // No re-embedding on update — embedding column is blocked in PM APP (OOM fix).
 
   const { error: updateError } = await supabase
     .from("workspace_artifacts")

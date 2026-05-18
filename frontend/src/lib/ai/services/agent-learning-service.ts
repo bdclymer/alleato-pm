@@ -173,20 +173,6 @@ function extractKeywords(text: string, limit = 8) {
   return [...new Set(words)].slice(0, limit);
 }
 
-function buildEmbeddingText(input: UpsertAgentLearningInput) {
-  return [
-    input.title,
-    input.problemSignature,
-    input.symptoms,
-    input.rootCause ?? "",
-    input.fixPattern ?? "",
-    input.preventionPrompt,
-    ...(input.scopeTags ?? []),
-  ]
-    .filter(Boolean)
-    .join("\n\n")
-    .slice(0, 8000);
-}
 
 async function embedLearning(text: string) {
   try {
@@ -324,8 +310,8 @@ export async function upsertAgentLearning(input: UpsertAgentLearningInput) {
   const evidence = Array.isArray(existing?.evidence)
     ? [...existing.evidence, input.evidence ?? {}].slice(-10)
     : [input.evidence ?? {}];
-  const embedding = await embedLearning(buildEmbeddingText(input));
-
+  // DO NOT write embedding to agent_learnings in PM APP.
+  // HNSW index (m=32, ef_construction=200) causes OOM under concurrent upserts.
   const payload = {
     learning_key: learningKey,
     title: input.title,
@@ -345,7 +331,6 @@ export async function upsertAgentLearning(input: UpsertAgentLearningInput) {
     evidence,
     last_seen_at: new Date().toISOString(),
     ...(nextStatus === "active" ? { activated_at: new Date().toISOString() } : {}),
-    ...(embedding ? { embedding: JSON.stringify(embedding) } : {}),
   };
 
   const { data, error } = await supabase
