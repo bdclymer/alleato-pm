@@ -173,13 +173,11 @@ export function ContractForm({
             onUpdateFormData={updateFormData}
           />
 
-          {mode === "create" ? (
-            <FinancialMarkupFormSection
-              markups={markups}
-              budgetCodes={budgetCodes}
-              onChange={setMarkups}
-            />
-          ) : null}
+          <FinancialMarkupFormSection
+            markups={markups}
+            budgetCodes={budgetCodes}
+            onChange={setMarkups}
+          />
 
           <PrimeContractSovSection
             projectId={projectId}

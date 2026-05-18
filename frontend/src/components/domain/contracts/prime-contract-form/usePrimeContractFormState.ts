@@ -11,7 +11,12 @@ import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { createClient } from "@/lib/supabase/client";
 import type { EstimateWorkbookImportRow } from "@/lib/prime-contracts/estimate-workbook-sov";
 
-import type { BudgetCode, ContractFormData, MarkupFormItem, SOVLineItem } from "./types";
+import type {
+  BudgetCode,
+  ContractFormData,
+  MarkupFormItem,
+  SOVLineItem,
+} from "./types";
 
 const DEFAULT_MARKUPS: MarkupFormItem[] = [
   {
@@ -59,6 +64,7 @@ export function usePrimeContractFormState({
     File[]
   >([]);
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
+  const budgetCodesRef = React.useRef<BudgetCode[]>([]);
   const [loadingBudgetCodes, setLoadingBudgetCodes] = React.useState(true);
   const [openBudgetCodePopover, setOpenBudgetCodePopover] = React.useState<
     string | null
@@ -97,7 +103,11 @@ export function usePrimeContractFormState({
   >({});
   const [showImportFromBudget, setShowImportFromBudget] = React.useState(false);
   const [markups, setMarkups] = React.useState<MarkupFormItem[]>(
-    mode === "create" ? DEFAULT_MARKUPS : [],
+    initialData?.markups ?? (mode === "create" ? DEFAULT_MARKUPS : []),
+  );
+  const initialMarkupsKey = React.useMemo(
+    () => JSON.stringify(initialData?.markups ?? null),
+    [initialData?.markups],
   );
   const [selectedSovItems, setSelectedSovItems] = React.useState<Set<string>>(
     new Set(),
@@ -155,6 +165,14 @@ export function usePrimeContractFormState({
   }, [formData.contractCompanyId, formData.ownerCompanyId]);
 
   React.useEffect(() => {
+    const nextMarkups = JSON.parse(initialMarkupsKey) as
+      | MarkupFormItem[]
+      | null;
+    if (!nextMarkups) return;
+    setMarkups(nextMarkups);
+  }, [initialMarkupsKey]);
+
+  React.useEffect(() => {
     if (mode !== "create" || initialData?.number) return;
 
     const fetchNextContractNumber = async () => {
@@ -189,17 +207,22 @@ export function usePrimeContractFormState({
   }, [mode, projectId, initialData?.number]);
 
   const fetchBudgetCodes = React.useCallback(async () => {
-    if (!projectId) return;
+    if (!projectId) return [];
     try {
       setLoadingBudgetCodes(true);
       const { budgetCodes } = await apiFetchWithTransientRouteRetry<{
         budgetCodes: BudgetCode[];
       }>(`/api/projects/${projectId}/budget-codes`);
-      setBudgetCodes(budgetCodes || []);
+      const nextBudgetCodes = budgetCodes || [];
+      budgetCodesRef.current = nextBudgetCodes;
+      setBudgetCodes(nextBudgetCodes);
+      return nextBudgetCodes;
     } catch (error) {
       console.error("[ContractForm] Failed to load budget codes:", error);
       toast.error("Failed to load budget codes");
+      budgetCodesRef.current = [];
       setBudgetCodes([]);
+      return [];
     } finally {
       setLoadingBudgetCodes(false);
     }
@@ -261,8 +284,10 @@ export function usePrimeContractFormState({
     setMarkups((prev) =>
       prev.map((m) => {
         if (m.maps_to !== "all") return m;
-        if (m.markup_type === "fee" && feeCode) return { ...m, maps_to: feeCode.id };
-        if (m.markup_type === "insurance" && insuranceCode) return { ...m, maps_to: insuranceCode.id };
+        if (m.markup_type === "fee" && feeCode)
+          return { ...m, maps_to: feeCode.id };
+        if (m.markup_type === "insurance" && insuranceCode)
+          return { ...m, maps_to: insuranceCode.id };
         return m;
       }),
     );
@@ -271,9 +296,7 @@ export function usePrimeContractFormState({
   // Compute markup-driven SOV items from the current base SOV totals
   const computedMarkupSovItems = React.useMemo((): SOVLineItem[] => {
     if (markups.length === 0) return [];
-    const baseItems = (formData.sovItems || []).filter(
-      (item) => !item.isGroup,
-    );
+    const baseItems = (formData.sovItems || []).filter((item) => !item.isGroup);
     const baseTotal = baseItems.reduce((sum, item) => {
       if (formData.accountingMethod === "unit_quantity") {
         return sum + (item.quantity ?? 0) * (item.unitCost ?? 0);
@@ -294,7 +317,9 @@ export function usePrimeContractFormState({
         const label =
           m.markup_type.charAt(0).toUpperCase() + m.markup_type.slice(1);
         const budgetCode =
-          m.maps_to !== "all" ? budgetCodes.find((c) => c.id === m.maps_to) : undefined;
+          m.maps_to !== "all"
+            ? budgetCodes.find((c) => c.id === m.maps_to)
+            : undefined;
         return {
           id: `sov-markup-${m.id}`,
           isMarkup: true,
@@ -380,15 +405,18 @@ export function usePrimeContractFormState({
       const submitData: ContractFormData = {
         ...(formData as ContractFormData),
         // Include markup SOV items at the end of the SOV for line-item creation
-        sovItems: [
-          ...(formData.sovItems || []),
-          ...computedMarkupSovItems,
-        ],
+        sovItems: [...(formData.sovItems || []), ...computedMarkupSovItems],
         markups,
       };
       await onSubmit(submitData, pendingAttachmentFiles);
     },
-    [formData, computedMarkupSovItems, markups, onSubmit, pendingAttachmentFiles],
+    [
+      formData,
+      computedMarkupSovItems,
+      markups,
+      onSubmit,
+      pendingAttachmentFiles,
+    ],
   );
 
   const updateFormData = React.useCallback(
@@ -486,7 +514,11 @@ export function usePrimeContractFormState({
         },
       );
 
-      setBudgetCodes((prev) => [...prev, budgetCode]);
+      setBudgetCodes((prev) => {
+        const next = [...prev, budgetCode];
+        budgetCodesRef.current = next;
+        return next;
+      });
 
       setFormData((prev) => {
         const items = prev.sovItems || [];
@@ -755,16 +787,17 @@ export function usePrimeContractFormState({
     (rows: EstimateWorkbookImportRow[]) => {
       if (rows.length === 0) return;
 
+      const activeBudgetCodes = budgetCodesRef.current;
       let unmappedCount = 0;
       const mapped: SOVLineItem[] = rows.map((row, index) => {
         const matchingCode =
-          budgetCodes.find(
+          activeBudgetCodes.find(
             (code) =>
               (code.legacyCostCodeId === row.costCode ||
                 code.code === row.costCode) &&
               (row.costTypeCode ? code.costType === row.costTypeCode : true),
           ) ??
-          budgetCodes.find(
+          activeBudgetCodes.find(
             (code) =>
               code.legacyCostCodeId === row.costCode ||
               code.code === row.costCode,
@@ -809,7 +842,7 @@ export function usePrimeContractFormState({
         );
       }
     },
-    [budgetCodes],
+    [],
   );
 
   const handleAttachmentListChange = React.useCallback(

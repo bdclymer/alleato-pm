@@ -67,6 +67,7 @@ import {
 } from "@/components/domain/contracts/prime-contract-detail";
 
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
+import type { MarkupFormItem } from "@/components/domain/contracts/prime-contract-form/types";
 import type {
   BudgetCode,
   ChangeOrderFormState,
@@ -114,6 +115,19 @@ const normalizeVerticalMarkupRows = (rows: VerticalMarkup[]): VerticalMarkup[] =
     compound: Boolean(row.compound),
     calculation_order: Number.isFinite(Number(row.calculation_order)) ? Number(row.calculation_order) : 0,
   }));
+
+const toMarkupFormItems = (rows: VerticalMarkup[]): MarkupFormItem[] =>
+  normalizeVerticalMarkupRows(rows)
+    .sort((a, b) => a.calculation_order - b.calculation_order)
+    .map((row) => ({
+      id: row.id,
+      markup_type: row.markup_type,
+      percentage: row.percentage,
+      compound: row.compound,
+      calculation_order: row.calculation_order,
+      display_in: "horizontal",
+      maps_to: row.maps_to_budget_code_id ?? "all",
+    }));
 
 const parseBulletList = (value: string | null | undefined): string[] => {
   if (!value) return [];
@@ -223,6 +237,7 @@ export default function ProjectContractDetailPage() {
   const [verticalMarkups, setVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [savedVerticalMarkups, setSavedVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [markupsLoading, setMarkupsLoading] = useState(false);
+  const [markupsLoaded, setMarkupsLoaded] = useState(false);
 
   // ── Advanced settings ───────────────────────────────────────────────────
   const [advancedSettings, setAdvancedSettings] = useState<PrimeContractSettings | null>(null);
@@ -380,6 +395,7 @@ export default function ProjectContractDetailPage() {
     const fetchVerticalMarkups = async () => {
       try {
         setMarkupsLoading(true);
+        setMarkupsLoaded(false);
         const response = await fetchWithTransientRouteRetry(
           `/api/projects/${projectId}/vertical-markup`,
         );
@@ -392,6 +408,7 @@ export default function ProjectContractDetailPage() {
         console.error("Failed to load data:", err);
       } finally {
         setMarkupsLoading(false);
+        setMarkupsLoaded(true);
       }
     };
     fetchVerticalMarkups();
@@ -679,10 +696,65 @@ export default function ProjectContractDetailPage() {
 
   // ── Inline edit submit ──────────────────────────────────────────────────
 
+  const syncProjectMarkupsFromEdit = async (markups: MarkupFormItem[]) => {
+    const sorted = [...markups].sort((a, b) => a.calculation_order - b.calculation_order);
+    const savedIds = new Set(savedVerticalMarkups.map((markup) => markup.id));
+    const submittedSavedIds = new Set(
+      sorted.filter((markup) => savedIds.has(markup.id)).map((markup) => markup.id),
+    );
+
+    for (const markup of savedVerticalMarkups) {
+      if (submittedSavedIds.has(markup.id)) continue;
+      await apiFetch(`/api/projects/${projectId}/vertical-markup?markupId=${markup.id}`, {
+        method: "DELETE",
+      });
+    }
+
+    const existingMarkups = sorted
+      .filter((markup) => savedIds.has(markup.id))
+      .map((markup, index) => ({
+        id: markup.id,
+        markup_type: markup.markup_type.trim(),
+        percentage: Number(markup.percentage),
+        compound: Boolean(markup.compound),
+        calculation_order: index + 1,
+      }));
+
+    if (existingMarkups.length > 0) {
+      await apiFetch(`/api/projects/${projectId}/vertical-markup`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markups: existingMarkups }),
+      });
+    }
+
+    for (const [index, markup] of sorted.entries()) {
+      if (savedIds.has(markup.id)) continue;
+      await apiFetch(`/api/projects/${projectId}/vertical-markup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          markup_type: markup.markup_type.trim(),
+          percentage: Number(markup.percentage),
+          compound: Boolean(markup.compound),
+          calculation_order: index + 1,
+        }),
+      });
+    }
+
+    const refreshed = await apiFetch<{ markups?: VerticalMarkup[] }>(
+      `/api/projects/${projectId}/vertical-markup`,
+    );
+    const refreshedMarkups = normalizeVerticalMarkupRows(refreshed.markups || []);
+    setVerticalMarkups(refreshedMarkups);
+    setSavedVerticalMarkups(refreshedMarkups);
+  };
+
   const handleInlineEditSubmit = async (data: ContractFormData) => {
     if (!contract) { toast.error("Contract data is not loaded"); return; }
     setIsSavingEdit(true);
     try {
+      await syncProjectMarkupsFromEdit(data.markups || []);
       const sovItems = (data.sovItems || []).filter((item) => !item.isGroup);
       const sovTotal = sovItems.reduce((sum, item) => sum + (data.accountingMethod === "unit_quantity" ? (item.quantity ?? 0) * (item.unitCost ?? 0) : item.amount || 0), 0);
       await apiFetch(`/api/projects/${projectId}/contracts/${contractId}`, {
@@ -703,12 +775,34 @@ export default function ProjectContractDetailPage() {
         `/api/projects/${projectId}/budget-codes`,
       ).catch(() => ({ budgetCodes: [] }));
       const budgetCodeIdToCostCode = new Map<string, string | null>((budgetCodesPayload.budgetCodes || []).map((code: { id: string; legacyCostCodeId?: string | null }) => [code.id, code.legacyCostCodeId ?? null]));
+      const existingMarkupLineItemsByType = new Map(
+        lineItems
+          .filter((item) => item.markup_type)
+          .map((item) => [item.markup_type as string, item]),
+      );
       const itemsToPersist = sovItems.map((item, index) => {
         const budgetCodeId = item.budgetCodeId || "";
-        const costCodeId = budgetCodeIdToCostCode.get(budgetCodeId) ?? existingCostCodeByLineId.get(item.id) ?? null;
-        const quantity = data.accountingMethod === "unit_quantity" ? item.quantity ?? 0 : 1;
-        const unitCost = data.accountingMethod === "unit_quantity" ? item.unitCost ?? 0 : item.amount || 0;
-        return { id: item.id, line_number: index + 1, description: item.description || `Line ${index + 1}`, cost_code_id: costCodeId, budget_code_id: budgetCodeId || null, quantity, unit_cost: unitCost, unit_of_measure: item.unitOfMeasure || null };
+        const existingMarkupLineItem =
+          item.isMarkup && item.markupType
+            ? existingMarkupLineItemsByType.get(item.markupType)
+            : undefined;
+        const itemId = existingMarkupLineItem?.id ?? item.id;
+        const costCodeId = item.isMarkup
+          ? null
+          : budgetCodeIdToCostCode.get(budgetCodeId) ?? existingCostCodeByLineId.get(item.id) ?? null;
+        const quantity = data.accountingMethod === "unit_quantity" && !item.isMarkup ? item.quantity ?? 0 : 1;
+        const unitCost = data.accountingMethod === "unit_quantity" && !item.isMarkup ? item.unitCost ?? 0 : item.amount || 0;
+        return {
+          id: itemId,
+          line_number: index + 1,
+          description: item.description || `Line ${index + 1}`,
+          cost_code_id: costCodeId,
+          budget_code_id: budgetCodeId || null,
+          quantity,
+          unit_cost: unitCost,
+          unit_of_measure: item.unitOfMeasure || null,
+          markup_type: item.isMarkup ? (item.markupType ?? null) : null,
+        };
       });
       const existingIds = new Set(lineItems.map((item) => item.id));
       const incomingIds = new Set(itemsToPersist.map((item) => item.id));
@@ -727,6 +821,7 @@ export default function ProjectContractDetailPage() {
               quantity: item.quantity,
               unit_cost: item.unit_cost,
               unit_of_measure: item.unit_of_measure,
+              markup_type: item.markup_type,
             }),
           });
         } catch (error) {
@@ -756,6 +851,7 @@ export default function ProjectContractDetailPage() {
               quantity: item.quantity,
               unit_cost: item.unit_cost,
               unit_of_measure: item.unit_of_measure,
+              markup_type: item.markup_type,
             }),
           });
         } catch (error) {
@@ -800,7 +896,21 @@ export default function ProjectContractDetailPage() {
   }
 
   if (isEditing) {
-    const sovItems = lineItems.map((item) => {
+    if (!markupsLoaded) {
+      return (
+        <PageShell
+          variant="form"
+          title={`Edit: ${contract.contract_number || contract.title}`}
+          description="Loading financial markup before editing..."
+          onBack={() => setIsEditing(false)}
+          backLabel="Cancel Edit"
+        >
+          <Skeleton className="h-96" />
+        </PageShell>
+      );
+    }
+
+    const sovItems = lineItems.filter((item) => !item.markup_type).map((item) => {
       const matchingBudgetCode = item.budget_code_id ? budgetCodes.find((c) => c.id === item.budget_code_id) : undefined;
       return {
         id: item.id, budgetCodeId: item.budget_code_id || "", budgetCodeLabel: matchingBudgetCode?.fullLabel ?? (item.cost_code ? `${item.cost_code.code} ${item.cost_code.name}` : undefined),
@@ -822,9 +932,10 @@ export default function ProjectContractDetailPage() {
       allowedUsers: (contract as { allowed_user_ids?: string[] }).allowed_user_ids ?? [],
       allowedUsersCanSeeSov: (contract as { allow_sov_view?: boolean }).allow_sov_view ?? false,
       inclusions: contract.inclusions || "", exclusions: contract.exclusions || "", sovItems,
+      markups: toMarkupFormItems(verticalMarkups),
     };
     return (
-      <PageShell variant="form" title={`Edit: ${contract.contract_number || contract.title}`} description="Update contract details and SOV line items" onBack={() => setIsEditing(false)} backLabel="Cancel Edit"
+      <PageShell variant="form" title={`Edit: ${contract.contract_number || contract.title}`} description="Update contract details, financial markup, and SOV line items" onBack={() => setIsEditing(false)} backLabel="Cancel Edit"
         actions={<Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>Cancel Edit</Button>}>
         <ContractForm initialData={initialData} onSubmit={handleInlineEditSubmit} onCancel={() => setIsEditing(false)} isSubmitting={isSavingEdit} mode="edit" projectId={projectId} />
       </PageShell>
