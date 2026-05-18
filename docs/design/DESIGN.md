@@ -1,17 +1,17 @@
 # Alleato Design System
 
 > **The single source of truth.** Read this before building any page or component.
-> Style: Superhuman meets Linear — minimal, high information density, premium feel.
+> Style: Superhuman meets Linear. Minimal, high information density, premium feel.
 >
 > **Sub-references (read when linked):**
-> - [tokens.md](./tokens.md) — full token tables with dark mode hex values, animation tokens
-> - [UI_GUIDE.md](./UI_GUIDE.md) — exact copy-paste Tailwind class combos, Card Trap JSX
-> - [DESIGN-PRINCIPLES.md](./DESIGN-PRINCIPLES.md) — philosophy in depth, tonal elevation diagram
-> - [patterns.md](./patterns.md) — loading, error, empty state code patterns
-> - [premium-patterns.md](./premium-patterns.md) — 6 hierarchy techniques with CSS/JSX
-> - [forms/form-page-archetype.md](./forms/form-page-archetype.md) — three-tier form system (READ BEFORE ANY FORM)
-> - [forms/FORM-SYSTEM.md](./forms/FORM-SYSTEM.md) — RHF + Zod 4-layer implementation
-> - [tables/table-system.md](./tables/table-system.md) — UnifiedTablePage full spec, cell types, checklist
+> - [tokens.md](./tokens.md): full token tables with dark mode hex values, animation tokens
+> - [UI_GUIDE.md](./UI_GUIDE.md): exact copy-paste Tailwind class combos, Card Trap JSX
+> - [DESIGN-PRINCIPLES.md](./DESIGN-PRINCIPLES.md): philosophy in depth, tonal elevation diagram
+> - [patterns.md](./patterns.md): loading, error, empty state code patterns
+> - [premium-patterns.md](./premium-patterns.md): 6 hierarchy techniques with CSS/JSX
+> - [forms/form-page-archetype.md](./forms/form-page-archetype.md): three-tier form system (READ BEFORE ANY FORM)
+> - [forms/FORM-SYSTEM.md](./forms/FORM-SYSTEM.md): RHF + Zod 4-layer implementation
+> - [tables/table-system.md](./tables/table-system.md): UnifiedTablePage full spec, cell types, checklist
 
 ---
 
@@ -53,8 +53,8 @@ import { PageShell } from "@/components/layout";
 
 | Variant | Max width | Padding | Use for |
 |---------|-----------|---------|---------|
-| `dashboard` | full | standard | Home/overview — KPI cards, charts, summaries |
-| `table` | full | tight | Data tables — UnifiedTablePage goes inside |
+| `dashboard` | full | standard | Home/overview, KPI cards, charts, summaries |
+| `table` | full | tight | Data tables, UnifiedTablePage goes inside |
 | `form` | max-w-5xl | standard | Create/edit forms |
 | `detail` | max-w-6xl | standard | Record detail pages with tabs |
 | `content` | max-w-4xl | standard | Settings, documents, read-heavy pages |
@@ -65,7 +65,7 @@ import { PageShell } from "@/components/layout";
 variant:           PageShellVariant   // Required
 title:             string             // Required
 titleContent?:     ReactNode          // Override title with custom element
-actions?:          ReactNode          // Buttons in header right side — PRIMARY ACTION ONLY
+actions?:          ReactNode          // Buttons in header right side (PRIMARY ACTION ONLY)
 statusBadge?:      ReactNode          // Status pill next to title (detail variant)
 onBack?:           () => void         // Adds back arrow
 backLabel?:        string             // Default: "Back"
@@ -76,7 +76,7 @@ className?:        string
 contentClassName?: string
 ```
 
-**`actions` rule — critical:** The `actions` prop holds ONE thing only: the primary create/add button. Export, import, settings, column toggles, and bulk actions NEVER go in `actions`. They belong in the `UnifiedTablePage` toolbar.
+**`actions` rule (critical):** The `actions` prop holds ONE thing only: the primary create/add button. Export, import, settings, column toggles, and bulk actions NEVER go in `actions`. They belong in the `UnifiedTablePage` toolbar.
 
 ---
 
@@ -86,11 +86,12 @@ contentClassName?: string
 
 ```css
 /* Backgrounds */
-bg-background        /* Page background (#FFFFFF light / #151518 dark) */
+bg-background        /* Page background (#FBFAF8 light / #151518 dark) */
 bg-card              /* Card/surface (#FFFFFF light / #1F1F24 dark) */
 bg-muted             /* Subtle section background (#F4F2F0 light / #272730 dark) */
 bg-muted/50          /* Very subtle tint */
 bg-accent            /* Hover/interactive (#EDEDFA light / #2C2C35 dark) */
+/* Page surface carries a 2% warm tint toward the brand hue so bg-card (true white) lifts cleanly from it. Never use pure #FFFFFF for the page background. */
 
 /* Text */
 text-foreground       /* Primary text */
@@ -105,12 +106,12 @@ border-border/50      /* Subtle border */
 bg-primary            /* Primary button background (#DB802D light / #F59A43 dark) */
 text-primary-foreground /* White text on primary buttons */
 
-/* Status — ONLY for status display, never decoration */
-bg-green-50 text-green-600    /* Active / Approved */
-bg-yellow-50 text-yellow-600  /* Pending / Draft */
-bg-red-50 text-red-600        /* Error / Rejected / Overdue */
-bg-blue-50 text-blue-600      /* Info / In Progress */
-bg-gray-100 text-gray-600     /* Inactive / Archived */
+/* Status — applied via StatusBadge / StatusDot / StatusText only */
+bg-success-subtle text-success    /* Active / Approved */
+bg-warning-subtle text-warning    /* Pending / Draft */
+bg-danger-subtle text-danger      /* Error / Rejected / Overdue */
+bg-info-subtle text-info          /* Info / In Progress */
+bg-neutral-subtle text-neutral    /* Inactive / Archived */
 ```
 
 **ESLint ERRORS (blocks build):** `design-system/no-hardcoded-colors`, `design-system/no-arbitrary-spacing`, `design-system/require-semantic-colors`
@@ -127,7 +128,7 @@ bg-gray-100 text-gray-600     /* Inactive / Archived */
 | `text-orange-500`, `text-brand` | `text-primary` |
 | `bg-blue-500` | `bg-primary` |
 | `ring-blue-500` | `ring-primary` |
-| `bg-emerald-50 border-emerald-200` | `bg-green-50 text-green-600` via `StatusBadge` |
+| `bg-green-*`, `bg-emerald-*` for status | `<StatusBadge status={value} />` (never raw classes) |
 
 ### Dynamic class construction is BANNED
 
@@ -168,10 +169,10 @@ Every section on screen must use at least 3 of these 4 tiers. If your component 
 
 | Tier | Classes | Use for |
 |------|---------|---------|
-| 1 — Eyebrow | `text-[11px] font-semibold uppercase tracking-wider text-muted-foreground` | Section labels, KPI labels, table column headers |
-| 2 — Heading | `text-lg font-semibold tracking-tight text-foreground` | Section titles, primary data values |
-| 3 — Body | `text-sm text-muted-foreground` | Descriptions, supporting text, table cells |
-| 4 — Meta | `text-xs text-muted-foreground/60` | Timestamps, "last updated", footnotes |
+| 1. Eyebrow | `text-[11px] font-semibold uppercase tracking-wider text-muted-foreground` | Section labels, KPI labels, table column headers |
+| 2. Heading | `text-lg font-semibold tracking-tight text-foreground` | Section titles, primary data values |
+| 3. Body | `text-sm text-muted-foreground` | Descriptions, supporting text, table cells |
+| 4. Meta | `text-xs text-muted-foreground/60` | Timestamps, "last updated", footnotes |
 
 ### Context-specific sizes
 
@@ -199,13 +200,13 @@ h1, h2, h3 { letter-spacing: -0.01em; }
 - Body text / descriptions: `leading-relaxed` (1.625) or `leading-normal` (1.5)
 - Headings / titles: `leading-tight` (1.25)
 - Table cells: `leading-normal` (1.5)
-- Never remove line-height on multi-line text — tightening `leading` kills readability
+- Never remove line-height on multi-line text. Tightening `leading` kills readability.
 
 ### Color contrast (WCAG AA minimum)
 
 - Normal text: 4.5:1 contrast ratio against background
 - Large text (18px+) / bold text (14px+ bold): 3:1
-- The semantic tokens (`text-foreground` on `bg-background`, `text-muted-foreground` on `bg-card`) already satisfy this — only check manually when using non-standard combinations
+- The semantic tokens (`text-foreground` on `bg-background`, `text-muted-foreground` on `bg-card`) already satisfy this. Only check manually when using non-standard combinations.
 
 ### Banned
 
@@ -239,15 +240,15 @@ Use Tailwind defaults on the 8px grid. No arbitrary values. Prefer multiples of 
 | Page type | Internal card padding | Section gap | Usage |
 |-----------|----------------------|-------------|-------|
 | Dashboard | `p-6` (24px) | `gap-8` | KPI widgets, summary cards |
-| Table | `p-4` (16px) | `gap-4` | Toolbar + table — tight to maximize data |
+| Table | `p-4` (16px) | `gap-4` | Toolbar + table, tight to maximize data |
 | Form | `p-6` (24px) | `gap-6` | Between form fields; `gap-8` between sections |
-| Content | `p-8` (32px) | `gap-8` | Documents, settings — generous rhythm |
+| Content | `p-8` (32px) | `gap-8` | Documents, settings, generous rhythm |
 
 ### Table row density options
 
 | Density | Row height | Cell padding | When |
 |---------|-----------|--------------|------|
-| standard | 53px | `px-3 py-3` | Default — most pages |
+| standard | 53px | `px-3 py-3` | Default for most pages |
 | compact | 40px | `px-3 py-2` | High-density tables, log views |
 | comfortable | 64px | `px-3 py-4` | Detail-heavy rows |
 
@@ -275,7 +276,7 @@ p-5, p-7, p-9, p-10, p-11        → not on 8px grid
 
 ## 5. Shadows
 
-Only two allowed values. Most elements have NO shadow — tonal elevation does the work.
+Only two allowed values. Most elements have NO shadow; tonal elevation does the work.
 
 ```
 shadow-xs   /* Form inputs, select triggers — very subtle lift */
@@ -328,7 +329,7 @@ Accordion, activity, navigation, and side-list layouts should look like structur
 - The chat message input field (and nothing else in chat UI)
 
 ### Do NOT use borders for:
-- Cards (use tonal elevation: `bg-card` on `bg-background` — the 3% lightness difference IS the separator)
+- Cards (use tonal elevation: `bg-card` on `bg-background`. The 3% lightness difference IS the separator.)
 - Page sections (use spacing instead)
 - Decorative containers
 - Full-page experimental tools, onboarding pages, avatar pages, or AI pages
@@ -367,10 +368,19 @@ In dark mode, closer surfaces are lighter (mimics light from above):
 
 | Token | Duration | Easing | Use for |
 |-------|----------|--------|---------|
-| instant | 0ms | — | Keyboard nav highlights, active states |
+| instant | 0ms | none | Keyboard nav highlights, active states |
 | fast | 100ms | `ease-out` | Hover states, focus rings, micro-interactions |
 | normal | 150ms | `ease-out` | Panel open/close, row slide, most transitions |
-| spring | 200ms | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Command palette, modal entrance, toasts |
+| ease-out-quart | 200ms | `cubic-bezier(0.22, 1, 0.36, 1)` | Command palette, modal entrance, toasts |
+| ease-out-expo | 300ms | `cubic-bezier(0.16, 1, 0.3, 1)` | Slideovers, page transitions |
+
+No bounce, no elastic. Easing curves never overshoot past 1.
+
+### What you may animate
+
+- `transform` (translate, scale, rotate) and `opacity` only.
+- Never `width`, `height`, `top`, `left`, `margin`, `padding`, or any property that triggers layout. They cause jank on busy table pages.
+- Color, background, and border transitions are acceptable at 100–150ms but should never block input.
 
 ### Performance targets
 
@@ -385,7 +395,7 @@ In dark mode, closer surfaces are lighter (mimics light from above):
 
 ### Optimistic UI pattern
 
-Every mutation follows this pattern — no spinners for common actions:
+Every mutation follows this pattern. No spinners for common actions:
 
 ```typescript
 async function updateStatus(id: string, newStatus: string) {
@@ -420,6 +430,43 @@ toast("Change order marked as approved", {
   duration: 5000,
 });
 ```
+
+### Reduced motion
+
+Honor `prefers-reduced-motion: reduce` for every animation. PRODUCT.md commits to it; the implementation lives here.
+
+```css
+/* In globals.css */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+For JS-driven motion (Framer Motion), use the built-in hook:
+
+```tsx
+import { useReducedMotion } from "framer-motion";
+
+function FadeIn({ children }: { children: ReactNode }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: reduce ? 0 : 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reduce ? 0 : 0.15 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+```
+
+State-change feedback (focus rings, active states, undo toast appearance) is always allowed; it carries information, not decoration. Only suppress motion that is purely aesthetic.
 
 ---
 
@@ -473,16 +520,18 @@ import { DataTable } from "@/components/ds";
 />
 ```
 
-For full-featured pages with search/filter/bulk actions, use `UnifiedTablePage` — see [tables/table-system.md](./tables/table-system.md).
+For full-featured pages with search/filter/bulk actions, use `UnifiedTablePage`. See [tables/table-system.md](./tables/table-system.md).
 
 ### Table Row States
 
 ```
-Focused row (keyboard):  2px left accent border (--primary) + bg-accent/5
-Hovered row:             bg-muted (2–3% shift — subtle)
-Selected row:            bg-accent/10 + left checkmark visible
+Focused row (keyboard):  bg-accent + 1px border-l border-primary (hairline, not stripe)
+Hovered row:             bg-muted/50 (2–3% shift — subtle)
+Selected row:            bg-accent + leading checkmark in selection column
 Default:                 bg-card, text-foreground / text-muted-foreground
 ```
+
+The focus indicator is the row tint, not the border. Hairline left border is supplementary, not the primary signal. Never use 2px+ side stripes; they read as decoration.
 
 ### Empty States
 
@@ -508,7 +557,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ds";
 </Card>
 ```
 
-Shadow: `shadow-xs` only on card. `shadow-sm` only when floating. **No border on card** — use `bg-card` on `bg-background` for separation.
+Shadow: `shadow-xs` only on card. `shadow-sm` only when floating. **No border on card.** Use `bg-card` on `bg-background` for separation.
 
 ### Section Headers
 
@@ -544,7 +593,7 @@ import { Input, Textarea, Select, Checkbox, Label } from "@/components/ds";
 </div>
 ```
 
-**Radix Select gotcha:** `<Select>` does NOT allow empty string values. For optional selects, use `placeholder` on `SelectValue` — do NOT add a "None" `SelectItem`.
+**Radix Select gotcha:** `<Select>` does NOT allow empty string values. For optional selects, use `placeholder` on `SelectValue`. Do NOT add a "None" `SelectItem`.
 
 ### Overlays
 
@@ -567,16 +616,18 @@ import { Slideover } from "@/components/ui/unified-slideover";
 
 | Component | When to use | Size |
 |-----------|-------------|------|
-| `Modal` (`unified-modal`) | **Default for all new dialogs.** Forms, confirmations, detail previews. | `xs` / `sm` / `md` / `lg` / `xl` / `2xl` / `3xl` / `4xl` / `5xl` / `full` |
-| `Slideover` (`unified-slideover`) | Detail panels, side-by-side workflows, filters that stay open while the table is visible. | `xs` / `sm` / `md` / `lg` / `xl` / `full`, sides: `right` (default) / `left` / `top` / `bottom` |
-| `Dialog` (base shadcn) | Simple Yes/No confirmations (destructive actions). Keep content under 3 lines. | Fixed `max-w-md` |
-| `Sheet` (base shadcn) | Legacy use only. Prefer `Slideover` for new panels. | Fixed sizes |
+| **Page form** (`PageShell variant="form"`) | **Default for create/edit.** Multi-section forms, anything 8+ fields, anything with line items. The operator sees the full task. | n/a |
+| **Inline editing** (click-to-edit cell, expandable row) | **Default for single-field updates.** Status changes, name renames, quick attribute edits on detail pages. | n/a |
+| `Slideover` (`unified-slideover`) | Detail panels and side-by-side workflows where the user references the table while editing. Filters that stay open. | `xs` / `sm` / `md` / `lg` / `xl` / `full` |
+| `Modal` (`unified-modal`) | Create-from-context (creating a sub-record without leaving the parent), short forms (< 8 fields), focused confirmations with structure. | `xs` / `sm` / `md` / `lg` / `xl` |
+| `Dialog` (base shadcn) | Destructive Yes/No confirmations only. Heading + one sentence + Cancel/Confirm. | Fixed `max-w-md` |
+| `Sheet` (base shadcn) | Legacy. Do not use for new code. Prefer `Slideover`. | n/a |
 
 **Rules:**
-- Use `Modal` with `size="lg"` or `size="xl"` for create/edit forms, not `Sheet`
-- Use `Slideover` when the user needs to reference the background content while the panel is open
-- `Dialog` should contain only a heading, short description, Cancel + Confirm buttons — no forms
-- On mobile, `Modal` and `Slideover` automatically go full-screen — no extra handling needed
+- A create/edit form that the user spends > 30 seconds on belongs on a page, not in a modal.
+- Modal is the answer only when you can prove the user must NOT lose context with the page behind it.
+- Inline editing (Linear / Notion pattern) is preferred for any single-attribute change. No "Edit" button, modal, save dance for a field rename.
+- Destructive confirmations: prefer an undo toast (§8) over a confirmation modal. Confirmation is the right answer only when undo is impossible (hard delete, money movement).
 
 ```tsx
 {/* Create/edit form — use Modal */}
@@ -677,15 +728,15 @@ import { UnifiedTablePage } from "@/components/tables/unified";
 />
 ```
 
-**Header `actions` rule — critical:** ONE thing only — the primary create/add button. Export, import, column toggles, and secondary actions NEVER go in header `actions`. They belong in `toolbar`.
+**Header `actions` rule (critical):** ONE thing only, the primary create/add button. Export, import, column toggles, and secondary actions NEVER go in header `actions`. They belong in `toolbar`.
 
 ### Reference implementations
 
-- `commitments/page.tsx` — tabs, footer totals, row selection
-- `change-events/page.tsx` — tabs, bulk delete, export
-- `invoicing/page.tsx` — KpiRow as topContent
-- `rfis/rfis-client.tsx` — standard implementation
-- `direct-costs/cost-code-hierarchy-view.tsx` — hierarchical rows
+- `commitments/page.tsx`: tabs, footer totals, row selection
+- `change-events/page.tsx`: tabs, bulk delete, export
+- `invoicing/page.tsx`: KpiRow as topContent
+- `rfis/rfis-client.tsx`: standard implementation
+- `direct-costs/cost-code-hierarchy-view.tsx`: hierarchical rows
 
 ---
 
@@ -714,15 +765,15 @@ Creation vs. edit?
 
 | Tier | Fields | Width | Layout | Action bar |
 |------|--------|-------|--------|------------|
-| 1 — Simple | < 8 | 672px (`FormContainer maxWidth="md"`) | Single column | `border-t` at bottom |
-| 2 — Standard | 8–20 | 896px (`FormContainer maxWidth="lg"`) | 1–2 columns | Sticky bottom bar |
-| 3 — Complex | 20+ | 896px content + 192px sidebar TOC | 2–3 columns | Sticky top bar |
+| 1. Simple | < 8 | 672px (`FormContainer maxWidth="md"`) | Single column | `border-t` at bottom |
+| 2. Standard | 8–20 | 896px (`FormContainer maxWidth="lg"`) | 1–2 columns | Sticky bottom bar |
+| 3. Complex | 20+ | 896px content + 192px sidebar TOC | 2–3 columns | Sticky top bar |
 
 ### Line items pattern
 
 For editable line-item tables in forms (SOV, cost tables, invoice line items):
 - Container: subtle bordered shell with muted table backdrop
-- Header: `text-[11px] font-normal text-muted-foreground` — compact label typography
+- Header: `text-[11px] font-normal text-muted-foreground` for compact label typography
 - Rows: compact vertical rhythm, consistent input heights
 - Totals: dedicated footer row, right-aligned currency values
 - Actions: "Add Line Item" button BELOW the table
@@ -732,13 +783,13 @@ See [forms/FORM-SYSTEM.md](./forms/FORM-SYSTEM.md) for RHF + Zod implementation.
 
 ### Form rules
 
-1. **Labels above inputs** — never beside them on narrow screens
+1. **Labels above inputs.** Never beside them on narrow screens.
 2. **Required fields** marked with red asterisk (FormField handles this)
 3. **Error messages** below the field in red (FormField handles this)
 4. **Hint text** below the field in muted (FormField handles this)
 5. **Placeholder text** should be example values, not instructions ("$10,000" not "Enter amount")
-6. **Select defaults** — use a placeholder like "Select type..." not a pre-selected value
-7. **Never wrap individual form fields in cards** — let FormSection provide grouping
+6. **Select defaults.** Use a placeholder like "Select type..." not a pre-selected value.
+7. **Never wrap individual form fields in cards.** Let FormSection provide grouping.
 8. **Date fields** use native date input or a date picker component, never a text input
 
 ---
@@ -870,7 +921,7 @@ A `<Card>` is NOT justified for:
 
 ---
 
-## 14a. MetricCard vs KpiBlock — When to Use Each
+## 14a. MetricCard vs KpiBlock: When to Use Each
 
 Two components display KPIs. They serve different contexts:
 
@@ -906,11 +957,11 @@ Two components display KPIs. They serve different contexts:
 
 ---
 
-## 14b. SectionCard — Collapsible Section Pattern
+## 14b. SectionCard: Collapsible Section Pattern
 
 Use `SectionCard` for collapsible grouped content on detail/dashboard pages (e.g., project home sections like "Prime Contracts", "Team", "Recent Activity").
 
-**Do NOT use** `SectionCard` inside form pages — use `FormSection` there instead.
+**Do NOT use** `SectionCard` inside form pages. Use `FormSection` there instead.
 
 ```tsx
 import { SectionCard } from "@/components/ui/section-card";
@@ -947,19 +998,28 @@ import { SectionCard } from "@/components/ui/section-card";
 ```
 
 **SectionCard props:**
-- `title` — eyebrow-style heading (uppercase, brand color by default)
-- `addHref` / `onAdd` — shows `+` icon button in header
-- `viewAllHref` — shows "View All" link in header
-- `defaultOpen` / `open` / `onOpenChange` — collapse control
-- `hideCollapse` — removes the chevron toggle
-- `headerActions` — replaces default add/view-all with custom content
-- `brandTitle` — use brand color for title (default `true`)
+- `title`: eyebrow-style heading (uppercase, brand color by default)
+- `addHref` / `onAdd`: shows `+` icon button in header
+- `viewAllHref`: shows "View All" link in header
+- `defaultOpen` / `open` / `onOpenChange`: collapse control
+- `hideCollapse`: removes the chevron toggle
+- `headerActions`: replaces default add/view-all with custom content
+- `brandTitle`: use brand color for title (default `true`)
 
 **SectionCard.Badge variants:** `default` | `brand` | `success` | `warning` | `error`
 
 ---
 
 ## 15. Anti-Patterns (rejected in review)
+
+### Visual anti-references
+
+Patterns and products the design explicitly rejects. If a screen could be mistaken for any of these, it has failed:
+
+- **Procore.** Cluttered enterprise SaaS: gray-on-gray toolbars, dense chrome, dated forms, modal-heavy workflows. Every choice should be a quiet rejection of how Procore feels.
+- **Generic admin templates** (Material Dashboard, TailAdmin, Bootstrap admin). Bland card grids, identical KPI boxes, "Welcome back" greetings.
+- **Consumer-friendly / playful.** Bright illustrations, gamification, mascots, cartoon empty states. Personality comes from precision, not whimsy.
+- **Heavy chrome / skeuomorphic.** Drop shadows beyond `shadow-sm`, decorative gradients, glassmorphism, bevels, trend-chasing visual flourishes.
 
 | Never do this | Do this instead |
 |---|---|
@@ -975,14 +1035,14 @@ import { SectionCard } from "@/components/ui/section-card";
 | Creating custom `MyButton.tsx` | Use `<Button>` from ds |
 | `bg-orange-500` for brand | `bg-primary` |
 | Dynamic class construction `className={\`text-${color}-600\`}` | Static color map object |
-| `import { DataTablePage }` | Deprecated — use `UnifiedTablePage` |
+| `import { DataTablePage }` | Deprecated. Use `UnifiedTablePage` |
 | `import { GenericDataTable }` | Deprecated |
 | `import { TableLayout }` | Deprecated |
 | `import { AppShell }` from `@/components/layouts` | Deprecated |
 | Accordion for primary line-items table | Always-visible table |
 | Bot icon (`Bot` from lucide) in chat UI | Brand initial "A" in a circle |
 | `<User>` icon for user messages | Styled bubble or initials |
-| Borders around chat content sections | No border — render text directly |
+| Borders around chat content sections | No border. Render text directly |
 | Using `Sheet` for new create/edit forms | Use `Modal` with appropriate `size` prop |
 | Using `Dialog` for a form with many fields | Use `Modal size="xl"` instead |
 | Plain `<input type="number">` for financial fields | Use `NumberInput` (formats, selects on focus) |
@@ -994,6 +1054,37 @@ import { SectionCard } from "@/components/ui/section-card";
 | Non-functional buttons/controls | Remove them entirely |
 | Raw `<h2>`, `<h3>` tags | `SectionHeader` or appropriate component |
 | `text-xs` for body content | `text-sm` minimum for readable text |
+
+---
+
+## 15a. Voice & Copy
+
+The voice inside the app is operator-to-operator. No marketing register, ever.
+
+**Banned in user-facing strings:**
+- Em dashes (` — `). Use commas, colons, parentheses, or periods.
+- Exclamation points outside of error/success toasts that genuinely warrant urgency.
+- "Welcome back!" / "Great job!" / "You're all set!". Consumer-app warmth has no home here.
+- Restated headings ("Settings: Manage your settings"). Every word earns its place.
+- Sentences that start with "Let's" or "Hey there".
+
+**Length budgets:**
+
+| Surface | Max length |
+|---------|-----------|
+| Button label | 3 words |
+| Toast (success) | 60 chars |
+| Toast (error) | One full sentence |
+| Empty state title | 6 words |
+| Empty state description | One sentence, < 100 chars |
+| Tooltip | 80 chars |
+
+**Tone:**
+
+- Direct. "Save" not "Click here to save your changes".
+- Confident. The tool knows what it is.
+- Specific. "3 line items updated" beats "Changes saved".
+- Quiet on success. Loud only on failure.
 
 ---
 
@@ -1153,7 +1244,7 @@ Tables MUST switch to a card layout on mobile. `UnifiedTablePage` handles this v
 4. **Bottom-anchored actions:** Primary action buttons should be easily reachable (near bottom of viewport)
 5. **Collapsible sections:** Long detail pages should use collapsible sections on mobile
 6. **Font sizes:** Never smaller than 12px on mobile. Body text should be 14px minimum
-7. **Padding:** Use `px-4` on mobile (not `px-2` — too cramped; not `px-6` — wastes space)
+7. **Padding:** Use `px-4` on mobile (not `px-2`, too cramped; not `px-6`, wastes space)
 8. **Modals on mobile:** Use full-screen sheets (`Sheet`) instead of centered dialogs on small screens
 9. **Toolbars:** Search and filters should collapse into a filter sheet/dropdown on mobile
 
@@ -1190,7 +1281,7 @@ function MyPage() {
 | `vw`/`vh` | Full-bleed hero sections, viewport-height panels | Body text, spacing |
 | `ch` | Text content max-width (`max-w-[65ch]`) | Anything non-text |
 
-**NEVER use `px` for font sizes or spacing** — it ignores the user's browser font-size preference.
+**NEVER use `px` for font sizes or spacing.** It ignores the user's browser font-size preference.
 
 ### Overflow-safe responsive grids
 
@@ -1212,7 +1303,7 @@ font-size: clamp(1.25rem, 1rem + 1.5vw, 2rem); /* 20px → 32px */
 font-size: clamp(1rem, 0.9rem + 0.5vw, 1.125rem); /* 16px → 18px */
 ```
 
-**Do not apply clamp to body text** — `text-sm` / `text-base` are intentionally fixed for readability predictability.
+**Do not apply clamp to body text.** `text-sm` / `text-base` are intentionally fixed for readability predictability.
 
 ### Test viewports (required)
 
@@ -1329,11 +1420,11 @@ Need avatars?
 - `design-system/require-semantic-colors`
 
 **Claude Code design commands:**
-- `/design:design-check` — validate a single file
-- `/design:design-audit` — audit the full codebase
-- `/design:design-fix-loop` — autonomous fix loop
-- `/design:design-verify` — verify fixes still hold
-- `/design:design-report` — generate compliance report
+- `/design:design-check`: validate a single file
+- `/design:design-audit`: audit the full codebase
+- `/design:design-fix-loop`: autonomous fix loop
+- `/design:design-verify`: verify fixes still hold
+- `/design:design-report`: generate compliance report
 
 **Before merging any PR that touches UI:**
 1. Run `cd frontend && npm run quality`

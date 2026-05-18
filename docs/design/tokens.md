@@ -12,7 +12,7 @@ All styling uses these tokens. **No hex codes. No arbitrary values. No hardcoded
 
 | Token | Usage | Light | Dark |
 |-------|-------|-------|------|
-| `bg-background` | Page background | #FFFFFF (white) | #151518 |
+| `bg-background` | Page background | #FBFAF8 (warm paper) | #151518 |
 | `bg-card` | Card surfaces, elevated content | #FFFFFF (true white) | #1F1F24 |
 | `bg-muted` | Subtle background (hover, zebra rows) | #F4F2F0 | #272730 |
 | `bg-muted/30` | Very subtle tint | — | — |
@@ -58,6 +58,23 @@ Use these for status indicators, badges, and alerts. **Use `StatusBadge` compone
 | `text-yellow-600` / `bg-yellow-50` | Warning, pending, draft |
 | `text-red-600` / `bg-red-50` | Error, rejected, overdue |
 | `text-blue-600` / `bg-blue-50` | Info, in progress |
+
+### Status tokens (semantic — use these going forward)
+
+Status colors are NEVER used directly. Always via `<StatusBadge>`, `<StatusDot>`, or `<StatusText>`.
+
+| Token | Light value | Dark value |
+|---|---|---|
+| `success` | `#16A34A` | `#22C55E` |
+| `success-subtle` | `#F0FDF4` | `#14532D` |
+| `warning` | `#CA8A04` | `#EAB308` |
+| `warning-subtle` | `#FEFCE8` | `#422006` |
+| `danger` | `#DC2626` | `#EF4444` |
+| `danger-subtle` | `#FEF2F2` | `#450A0A` |
+| `info` | `#2563EB` | `#3B82F6` |
+| `info-subtle` | `#EFF6FF` | `#172554` |
+| `neutral` | `#525252` | `#A3A3A3` |
+| `neutral-subtle` | `#F5F5F5` | `#262626` |
 
 ### Banned Color Patterns
 
@@ -194,8 +211,8 @@ ring-* with glow effects                             → not our aesthetic
 
 | Token | Curve | Usage |
 |-------|-------|-------|
-| `ease-out-expo` | `cubic-bezier(0.16, 1, 0.3, 1)` | Smooth deceleration (panels, menus) |
-| `ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Slight overshoot (command palette, toasts) |
+| `ease-out-expo` | `cubic-bezier(0.16, 1, 0.3, 1)` | Smooth deceleration (panels, menus, slideovers) |
+| `ease-out-quart` | `cubic-bezier(0.22, 1, 0.36, 1)` | Command palette, modal entrance, toasts (no overshoot) |
 
 ### Keyframe Animations
 
@@ -318,7 +335,7 @@ These are defined in `globals.css` — never use the raw values, always use the 
 |-------|-------------|-----------------|-------------|
 | `primary` | `--primary` | `29 71% 52%` | Alleato brand orange (#DB802D) |
 | `ring` | `--ring` | `29 71% 52%` | Matches primary (#DB802D) |
-| `background` | `--background` | `0 0% 100%` | White (#FFFFFF) |
+| `background` | `--background` | `30 20% 98%` | Warm paper (#FBFAF8) |
 | `card` | `--card` | `0 0% 100%` | True white (#FFFFFF) |
 | `muted` | `--muted` | `30 18% 95%` | Warm neutral (#F4F2F0) |
 | `accent` | `--accent` | `29 84% 95%` | Subtle orange tint (#FDF2E8) |
