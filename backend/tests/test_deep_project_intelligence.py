@@ -363,6 +363,12 @@ def test_deep_agents_runtime_inventory_reports_effective_surface(monkeypatch):
     assert "financial-analyst" in inventory["subagents"]
     assert inventory["memory"]["enabled"] is True
     assert inventory["memory"]["middleware"] == "DbMemoryMiddleware"
+    assert set(inventory["memory"]["tools"]) == {
+        "recall_user_memory",
+        "recall_project_memory",
+        "recall_team_memory",
+        "propose_memory_candidate",
+    }
     assert inventory["memory"]["databaseUrlConfigured"] is True
     assert "DbMemoryMiddleware" not in inventory["knownMissing"]
 

@@ -200,6 +200,13 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
     active_tools = list(deep_agents_runtime_tool_names())
     active_subagents = list(deep_agents_runtime_subagent_names())
     memory_middleware = _runtime_memory_middleware()
+    memory_tool_names: list[str] = []
+    if memory_middleware:
+        from src.services.agents.memory import build_memory_tools
+
+        memory_tool_names = _tool_names(
+            build_memory_tools(user_id="inventory", project_id=1, candidate_sink=[]),
+        )
     known_missing = [
         "FilesystemBackend",
         "skills directory runtime loading",
@@ -222,6 +229,7 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         "memory": {
             "enabled": bool(memory_middleware),
             "middleware": "DbMemoryMiddleware" if memory_middleware else None,
+            "tools": memory_tool_names,
             "databaseUrlConfigured": bool(os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")),
         },
         "knownMissing": known_missing,
