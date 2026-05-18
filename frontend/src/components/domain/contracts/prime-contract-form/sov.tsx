@@ -52,6 +52,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -162,14 +167,14 @@ export function PrimeContractSovSection({
         title="Schedule of Values"
         description="Build line items that define contract value and billing progress."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
             <Button
               type="button"
               variant="link"
-              size="sm"
+              size="xs"
               data-testid="sov-accounting-toggle"
               onClick={onToggleSovAccountingMethod}
-              className="h-8 px-0"
+              className="h-7 px-0 text-xs"
             >
               {isUnitQuantityMode ? "Use Amount" : "Use Quantity × Unit Cost"}
             </Button>
@@ -338,15 +343,28 @@ export function PrimeContractSovSection({
                 ) : item.isMarkup ? (
                   <InlineTableRow
                     key={item.id}
+                    type="markup"
                     data-testid={`sov-markup-${index}`}
-                    className="bg-muted/30"
                   >
                     <InlineTableCell>
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            tabIndex={0}
+                            className="inline-flex size-7 items-center justify-center rounded-md bg-background/70 text-muted-foreground"
+                            aria-label="Markup line item"
+                          >
+                            <Lock className="h-3.5 w-3.5" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Edit in Financial Markup above.
+                        </TooltipContent>
+                      </Tooltip>
                     </InlineTableCell>
                     <InlineTableCell>
                       {item.budgetCodeLabel ? (
-                        <span className="text-sm text-foreground">
+                        <span className="text-sm font-medium text-muted-foreground">
                           {item.budgetCodeLabel}
                         </span>
                       ) : (
@@ -358,7 +376,7 @@ export function PrimeContractSovSection({
                       )}
                     </InlineTableCell>
                     <InlineTableCell>
-                      <span className="text-sm text-foreground">
+                      <span className="text-sm text-muted-foreground">
                         {item.description}
                       </span>
                     </InlineTableCell>
@@ -369,7 +387,7 @@ export function PrimeContractSovSection({
                       </>
                     ) : null}
                     <InlineTableCell>
-                      <span className="block h-10 text-right text-sm leading-10 text-foreground tabular-nums">
+                      <span className="block h-10 text-right text-sm leading-10 text-muted-foreground tabular-nums">
                         $
                         {(item.amount || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 2,

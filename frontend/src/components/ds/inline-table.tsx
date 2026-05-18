@@ -205,7 +205,7 @@ export function InlineTableRow({
         type === "group"
           ? "bg-muted/40"
           : type === "markup"
-            ? ""
+            ? "border-l-2 border-l-primary/40 bg-muted/25 text-muted-foreground"
             : "group transition-colors hover:bg-muted/30",
         className,
       )}
