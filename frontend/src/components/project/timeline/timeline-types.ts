@@ -1,3 +1,17 @@
+export const KIND_LABEL: Record<string, string> = {
+  project_created:          'Project Created',
+  project_start:            'Construction Start',
+  meeting:                  'Meeting',
+  rfi:                      'RFI',
+  submittal:                'Submittal',
+  commitment:               'Commitment',
+  commitment_executed:      'Commitment Executed',
+  change_event:             'Change Event',
+  change_order:             'Change Order',
+  prime_contract:           'Contract Created',
+  prime_contract_executed:  'Contract Executed',
+};
+
 export const TIMELINE_EVENT_KINDS = [
   'project_created',
   'project_start',
