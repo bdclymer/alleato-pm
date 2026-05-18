@@ -1892,7 +1892,9 @@ function SubListTab({
         `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/bid-items`
       );
       setBidItemsBySubId((prev) => ({ ...prev, [subId]: items ?? [] }));
-    } catch { /* silently ignore */ }
+    } catch (error) {
+      console.error("Failed to load sublist bid items", error);
+    }
   }, [projectId, estimateId]);
 
   const toggleBidExpand = React.useCallback((subId: number) => {
@@ -1985,7 +1987,9 @@ function SubListTab({
     try {
       const data = await apiFetch<SuggestedCompany[]>(`/api/estimates/suggest-subs?${qs.toString()}`);
       if (data) setSuggestionsCache((prev) => ({ ...prev, [divCode]: data }));
-    } catch { /* silently ignore */ }
+    } catch (error) {
+      console.error("Failed to load suggested companies", error);
+    }
   }, []);
 
   const toggleSuggestions = React.useCallback((divCode: string, excludeIds: string[]) => {
@@ -2055,7 +2059,9 @@ function SubListTab({
         `/api/companies/${companyId}/bid-history`
       );
       if (data) setBidHistoryCache((prev) => ({ ...prev, [companyId]: data }));
-    } catch { /* silently ignore */ }
+    } catch (error) {
+      console.error("Failed to load company bid history", error);
+    }
   }, [bidHistoryCache]);
 
   // Load companies once on mount
@@ -2525,7 +2531,17 @@ function SubListTab({
                       <td className="px-2 py-1">
                         <div className="relative">
                           {openComboboxId === sub.id ? (
-                            <div className="absolute left-0 top-0 z-50 w-72 rounded-md border border-border bg-popover shadow-sm">
+                            <div
+                              className="absolute left-0 top-0 z-50 w-72 rounded-md border border-border bg-popover shadow-sm"
+                              data-sublist-company-picker-id={sub.id}
+                              onBlur={(event) => {
+                                const nextTarget = event.relatedTarget as HTMLElement | null;
+                                if (nextTarget?.closest(`[data-sublist-company-picker-id="${sub.id}"]`)) {
+                                  return;
+                                }
+                                setOpenComboboxId((prev) => prev === sub.id ? null : prev);
+                              }}
+                            >
                               <div className="border-b border-border p-2">
                                 <Input
                                   autoFocus
@@ -2575,7 +2591,13 @@ function SubListTab({
                               setOpenComboboxDivision(sub.division_code);
                               if (sub.company_id && !bidHistoryCache[sub.company_id]) void loadBidHistory(sub.company_id);
                             }}
-                            onBlur={() => setTimeout(() => setOpenComboboxId((prev) => prev === sub.id ? null : prev), 150)}
+                            onBlur={(event) => {
+                              const nextTarget = event.relatedTarget as HTMLElement | null;
+                              if (nextTarget?.closest(`[data-sublist-company-picker-id="${sub.id}"]`)) {
+                                return;
+                              }
+                              setTimeout(() => setOpenComboboxId((prev) => prev === sub.id ? null : prev), 150);
+                            }}
                           />
                           {sub.company_id && (() => {
                             const history = bidHistoryCache[sub.company_id];
