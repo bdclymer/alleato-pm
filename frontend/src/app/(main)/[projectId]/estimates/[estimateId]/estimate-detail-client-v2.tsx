@@ -786,6 +786,24 @@ export function EstimateDetailClientV2({
     setShowLoadConfirm(true);
   };
 
+  const insertGcTemplateItems = React.useCallback(
+    async (templateItems: GcTemplateItem[]): Promise<GcItem[]> => {
+      return apiFetch<GcItem[]>(
+        `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            items: templateItems.map((item, idx) => ({
+              ...item,
+              sort_order: item.sort_order ?? idx + 1,
+            })),
+          }),
+        }
+      );
+    },
+    [projectId, estimate.estimate_id]
+  );
+
   const handleConfirmLoadTemplate = async () => {
     if (!pendingTemplate) return;
     setIsLoadingTemplate(true);
@@ -799,28 +817,12 @@ export function EstimateDetailClientV2({
       const templateList = Array.isArray(allTemplates) ? allTemplates : [];
       const full = templateList.find((t) => t.template_id === pendingTemplate.template_id);
       const templateItems: GcTemplateItem[] = (full as unknown as { items: GcTemplateItem[] } | undefined)?.items ?? [];
-      // Insert in batches of 10 to avoid connection pool exhaustion
-      const BATCH = 10;
-      const created: GcItem[] = [];
-      for (let i = 0; i < templateItems.length; i += BATCH) {
-        const batch = templateItems.slice(i, i + BATCH);
-        const results = await Promise.all(
-          batch.map((item, batchIdx) =>
-            apiFetch<GcItem>(
-              `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
-              {
-                method: "POST",
-                body: JSON.stringify({ ...item, sort_order: item.sort_order ?? i + batchIdx + 1 }),
-              }
-            )
-          )
-        );
-        created.push(...results);
-      }
+      const created = await insertGcTemplateItems(templateItems);
       setGcItems(created);
       toast.success(`Loaded template "${pendingTemplate.name}"`);
-    } catch {
-      toast.error("Failed to load template");
+    } catch (error) {
+      console.error("Failed to load estimate GC template", error);
+      toast.error("Template could not be loaded. Try again.");
     } finally {
       setIsLoadingTemplate(false);
       setShowLoadConfirm(false);
@@ -920,22 +922,13 @@ export function EstimateDetailClientV2({
 
   const loadGcTemplate = React.useCallback(async () => {
     try {
-      const items = await Promise.all(
-        GC_TEMPLATE.map((t, idx) =>
-          apiFetch<GcItem>(
-            `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
-            {
-              method: "POST",
-              body: JSON.stringify({ ...t, sort_order: idx + 1 }),
-            }
-          )
-        )
-      );
+      const items = await insertGcTemplateItems(GC_TEMPLATE);
       setGcItems(items);
     } catch (err) {
-      toast.error("Failed to load template");
+      console.error("Failed to auto-load estimate GC template", err);
+      toast.error("General Conditions template could not be loaded. Try Actions > Load Template.");
     }
-  }, [projectId, estimate.estimate_id]);
+  }, [insertGcTemplateItems]);
 
   // Auto-load GC template on first render if no GC items exist yet
   React.useEffect(() => {
