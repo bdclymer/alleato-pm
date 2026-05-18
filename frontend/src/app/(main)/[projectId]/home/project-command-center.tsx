@@ -113,14 +113,6 @@ type LazyHomeTabStatus = {
   error: string | null;
 };
 
-const BudgetBarChart = dynamic(
-  () => import("./budget-bar-chart").then((mod) => mod.BudgetBarChart),
-  {
-    ssr: false,
-    loading: () => <div className="h-32 w-full animate-pulse rounded-md bg-muted/40" />,
-  },
-);
-
 const EditProjectSidebar = dynamic(
   () => import("@/components/project/edit-project-sidebar").then((mod) => mod.EditProjectSidebar),
   { ssr: false },
@@ -219,11 +211,6 @@ function fmtFull(value: number | null | undefined): string {
   }).format(value);
 }
 
-function pct(numerator: number, denominator: number): number {
-  if (!denominator) return 0;
-  return Math.min(100, Math.round((numerator / denominator) * 100));
-}
-
 function initials(value: string | null | undefined): string {
   const normalized = (value ?? "").trim();
   if (!normalized) return "TM";
@@ -255,121 +242,6 @@ function formatMonthDay(value: string | null | undefined): string | null {
 function isClosedStatus(status: string | null | undefined): boolean {
   return ["approved", "cancelled", "closed", "complete", "completed", "done", "paid", "rejected", "void"].includes(
     (status ?? "").toLowerCase(),
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   FinancialMetricCell — one cell in the compact financial strip
-───────────────────────────────────────────────────────────── */
-
-function FinancialMetricCell({
-  label,
-  href,
-  children,
-}: {
-  label: string;
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="group relative px-4 py-3.5">
-      <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
-          {label}
-        </span>
-        <Link
-          href={href}
-          prefetch={false}
-          className="flex items-center gap-0.5 text-[10px] text-primary opacity-0 transition-opacity group-hover:opacity-100"
-        >
-          View <ChevronRight className="h-2.5 w-2.5" />
-        </Link>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   ProjectHomeNav — left sidebar navigation
-───────────────────────────────────────────────────────────── */
-
-const NAV_GROUPS = [
-  {
-    label: "Finance",
-    items: [
-      { label: "Budget", path: "budget" },
-      { label: "Prime Contract", path: "prime-contracts" },
-      { label: "Commitments", path: "commitments" },
-      { label: "Invoicing", path: "invoicing" },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { label: "Drawings", path: "drawings" },
-      { label: "Submittals", path: "submittals" },
-      { label: "RFIs", path: "rfis" },
-      { label: "Documents", path: "documents" },
-      { label: "Daily Logs", path: "daily-log" },
-    ],
-  },
-  {
-    label: "Change Workflow",
-    items: [
-      { label: "Change Events", path: "change-events" },
-      { label: "Change Orders", path: "change-orders" },
-    ],
-  },
-] as const;
-
-function ProjectHomeNav({
-  projectId,
-  project,
-}: {
-  projectId: string;
-  project: Project;
-}) {
-  const jobNumber =
-    (project as Record<string, unknown>)["job number"] as string | undefined ??
-    (project as Record<string, unknown>).project_number as string | undefined;
-
-  return (
-    <nav
-      className="sticky top-0 self-start h-screen shrink-0 overflow-y-auto border-r border-border bg-card/60"
-      style={{ width: "196px" }}
-    >
-      <div className="px-4 py-5 border-b border-border">
-        {jobNumber && (
-          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            {jobNumber}
-          </p>
-        )}
-        <p className="text-sm font-semibold leading-snug text-foreground line-clamp-2">
-          {project.name ?? "Untitled Project"}
-        </p>
-      </div>
-
-      <div className="py-3">
-        {NAV_GROUPS.map((group) => (
-          <div key={group.label} className="mb-4">
-            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">
-              {group.label}
-            </p>
-            {group.items.map((item) => (
-              <Link
-                key={item.path}
-                href={`/${projectId}/${item.path}`}
-                prefetch={false}
-                className="flex items-center px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        ))}
-      </div>
-    </nav>
   );
 }
 
@@ -880,11 +752,7 @@ export function ProjectCommandCenter({
   meetings = [],
   changeOrders,
   rfis,
-  commitments,
-  commitmentTotal = 0,
   contracts,
-  contractLineItems = [],
-  changeEvents = [],
   homeAlerts,
   pendingSsovReviews = [],
   team,
@@ -892,7 +760,6 @@ export function ProjectCommandCenter({
   schedule,
   submittals = [],
   dailyLogs = [],
-  ownerInvoices = [],
   projectDocuments = [],
   budgetGrandTotals,
 }: ProjectCommandCenterProps) {
@@ -959,7 +826,7 @@ export function ProjectCommandCenter({
     },
     [lazyTabStatus, projectId],
   );
-  const { grandTotals, loading: budgetLoading } = useBudgetData(projectId, {
+  const { grandTotals } = useBudgetData(projectId, {
     enabled: !budgetGrandTotals,
     initialGrandTotals: budgetGrandTotals,
     showErrorToast: false,
@@ -967,25 +834,12 @@ export function ProjectCommandCenter({
 
   /* ── Budget ─────────────────────────────────────────── */
   const revisedBudget = grandTotals.revisedBudget || grandTotals.originalBudgetAmount;
-  const costToDate = grandTotals.jobToDateCostDetail;
   const ecac = grandTotals.estimatedCostAtCompletion;
   const variance = grandTotals.projectedOverUnder;
   const homeMeetings = lazyTabData.meetings;
   const homeDocuments = lazyTabData.projectDocuments;
   const homeDailyLogs = lazyTabData.dailyLogs;
   const homeSubmittals = lazyTabData.submittals;
-  const primeContractValue = React.useMemo(
-    () => contractLineItems.reduce((sum, li) => sum + (li.total_cost ?? 0), 0),
-    [contractLineItems],
-  );
-
-  /* ── Work Completed ──────────────────────────────────── */
-  const totalBilled = React.useMemo(
-    () => ownerInvoices.reduce((sum, inv) => sum + (inv.gross_amount ?? 0), 0),
-    [ownerInvoices],
-  );
-  const contractBase = primeContractValue || revisedBudget;
-  const billedPct = contractBase > 0 ? pct(totalBilled, contractBase) : pct(costToDate, revisedBudget);
 
   /* ── Open items ──────────────────────────────────────── */
   const rfisOpen = React.useMemo(
@@ -1264,12 +1118,9 @@ export function ProjectCommandCenter({
     <>
       {showRealtimeCursors ? <RealtimeCursors roomName={roomName} username={currentUserName} /> : null}
 
-      <div className="flex min-h-full">
-        {/* ── Left project navigation ───────────────────── */}
-        <ProjectHomeNav projectId={projectId} project={project} />
-
+      <div className="min-h-full">
         {/* ── Main content ─────────────────────────────── */}
-        <div className="flex-1 min-w-0 px-6 py-6 space-y-7">
+        <div className="min-w-0 py-6 space-y-7">
 
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
@@ -1300,105 +1151,6 @@ export function ProjectCommandCenter({
 
           {/* Alerts */}
           {alerts.length > 0 && <AlertsBand alerts={alerts} />}
-
-          {/* Financial snapshot */}
-          <div className="space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
-              Financial Snapshot
-            </p>
-            <div className="overflow-hidden rounded-lg bg-muted/30">
-              <div className="grid grid-cols-2 divide-x divide-y divide-border lg:grid-cols-4 lg:divide-y-0">
-                <FinancialMetricCell label="Budget" href={`/${projectId}/budget`}>
-                  {budgetLoading ? (
-                    <div className="h-7 animate-pulse rounded bg-muted/40" />
-                  ) : revisedBudget > 0 ? (
-                    <>
-                      <p className="text-[17px] font-semibold tabular-nums leading-snug text-foreground">
-                        {fmtCompact(revisedBudget)}
-                      </p>
-                      <p className={cn(
-                        "mt-1 text-[11px] font-medium",
-                        variance > 0 ? "text-status-success" : variance < 0 ? "text-destructive" : "text-muted-foreground",
-                      )}>
-                        {variance > 0
-                          ? `▲ ${fmtCompact(Math.abs(variance))} under`
-                          : variance < 0
-                          ? `▼ ${fmtCompact(Math.abs(variance))} over`
-                          : "On budget"}
-                      </p>
-                    </>
-                  ) : (
-                    <Link href={`/${projectId}/budget`} prefetch={false} className="text-xs text-primary hover:underline">
-                      Set up budget →
-                    </Link>
-                  )}
-                </FinancialMetricCell>
-
-                <FinancialMetricCell label="Prime Contract" href={`/${projectId}/prime-contracts`}>
-                  <p className="text-[17px] font-semibold tabular-nums leading-snug text-foreground">
-                    {fmtCompact(primeContractValue || null)}
-                  </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {contracts.length > 0
-                      ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
-                      : "No contract yet"}
-                  </p>
-                  {primeContractValue > 0 && (
-                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${pct(totalBilled, primeContractValue)}%` }}
-                      />
-                    </div>
-                  )}
-                </FinancialMetricCell>
-
-                <FinancialMetricCell label="Commitments" href={`/${projectId}/commitments`}>
-                  <p className="text-[17px] font-semibold tabular-nums leading-snug text-foreground">
-                    {fmtCompact(commitmentTotal || null)}
-                  </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {commitments.length > 0 ? `${commitments.length} total` : "No buyout yet"}
-                  </p>
-                  {commitments.length > 0 && (
-                    <div className="mt-1 flex gap-2">
-                      {commitments.filter((c) => c.type === "subcontract").length > 0 && (
-                        <span className="text-[11px] text-muted-foreground">
-                          {commitments.filter((c) => c.type === "subcontract").length} sub
-                        </span>
-                      )}
-                      {commitments.filter((c) => c.type === "purchase_order").length > 0 && (
-                        <span className="text-[11px] text-muted-foreground">
-                          {commitments.filter((c) => c.type === "purchase_order").length} PO
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </FinancialMetricCell>
-
-                <FinancialMetricCell label="Work Completed" href={`/${projectId}/prime-contracts`}>
-                  <p className="text-[17px] font-semibold tabular-nums leading-snug text-foreground">
-                    {billedPct}%
-                  </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">Billed to date</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {totalBilled > 0
-                      ? fmtCompact(totalBilled)
-                      : ownerInvoices.length === 0
-                      ? "No invoices yet"
-                      : "—"}
-                  </p>
-                </FinancialMetricCell>
-              </div>
-            </div>
-
-            {!budgetLoading && revisedBudget > 0 && (
-              <div className="rounded-lg bg-card p-5">
-                <p className="mb-3 text-xs font-medium text-muted-foreground">Budget vs. Cost Breakdown</p>
-                <BudgetBarChart budget={revisedBudget} costToDate={costToDate} ecac={ecac} />
-              </div>
-            )}
-          </div>
 
           {/* Project Details + Team 2-up */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
