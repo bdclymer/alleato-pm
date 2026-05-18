@@ -179,7 +179,7 @@ export const EstimateCreateSchema = z.object({
   estimator: optionalString,
   project_duration_weeks: z.preprocess(
     (val) => (val === "" || val === 0 || (typeof val === "number" && Number.isNaN(val)) ? null : val),
-    z.coerce.number().int().positive().nullable().optional()
+    z.coerce.number().positive().nullable().optional()
   ),
   project_duration_months: z.preprocess(
     (val) => (val === "" || val === 0 || (typeof val === "number" && Number.isNaN(val)) ? null : val),
