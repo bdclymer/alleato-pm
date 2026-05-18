@@ -44,9 +44,8 @@ function localParts(now: Date, timezone: string) {
   }).formatToParts(now);
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((part) => part.type === type)?.value ?? "";
-  const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(
-    get("weekday"),
-  ) + 1;
+  const weekday =
+    ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(get("weekday")) + 1;
   return { time: `${get("hour")}:${get("minute")}`, weekday };
 }
 
@@ -80,7 +79,11 @@ function supabaseRestConfig() {
   return { restUrl: `${url.replace(/\/+$/, "")}/rest/v1`, key };
 }
 
-async function supabaseRestFetch<T>(path: string, init: RequestInit, timeoutMs = 30_000): Promise<T> {
+async function supabaseRestFetch<T>(
+  path: string,
+  init: RequestInit,
+  timeoutMs = 30_000,
+): Promise<T> {
   const { restUrl, key } = supabaseRestConfig();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -96,7 +99,8 @@ async function supabaseRestFetch<T>(path: string, init: RequestInit, timeoutMs =
       },
     });
     const text = await response.text();
-    if (!response.ok) throw new Error(`Supabase REST ${response.status}: ${text.slice(0, 1000)}`);
+    if (!response.ok)
+      throw new Error(`Supabase REST ${response.status}: ${text.slice(0, 1000)}`);
     return (text ? JSON.parse(text) : null) as T;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
@@ -111,7 +115,8 @@ async function supabaseRestFetch<T>(path: string, init: RequestInit, timeoutMs =
 async function createRun(startedAt: string): Promise<{ id?: string }> {
   const payload = {
     source: "executive_daily_brief",
-    resource_id: process.env.EXECUTIVE_DAILY_BRIEF_RESOURCE_ID ?? "scheduled_executive_daily_brief",
+    resource_id:
+      process.env.EXECUTIVE_DAILY_BRIEF_RESOURCE_ID ?? "scheduled_executive_daily_brief",
     resource_name: "Executive Daily Brief",
     stage: "generate_and_send",
     status: "running" satisfies RunStatus,
@@ -123,7 +128,8 @@ async function createRun(startedAt: string): Promise<{ id?: string }> {
     items_skipped: 0,
     items_failed: 0,
     metadata: {
-      trigger: cliArg("--trigger") ?? process.env.EXECUTIVE_DAILY_BRIEF_TRIGGER ?? "render_cron",
+      trigger:
+        cliArg("--trigger") ?? process.env.EXECUTIVE_DAILY_BRIEF_TRIGGER ?? "render_cron",
       schedule: process.env.EXECUTIVE_DAILY_BRIEF_SCHEDULE ?? null,
       targetTimezone: process.env.EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE ?? null,
       targetLocalTime: process.env.EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME ?? null,
@@ -142,7 +148,10 @@ async function updateRun(runId: string | undefined, payload: SourceSyncRunUpdate
   try {
     await supabaseRestFetch<unknown>(
       `/source_sync_runs?id=eq.${encodeURIComponent(runId)}`,
-      { method: "PATCH", body: JSON.stringify({ ...payload, finished_at: new Date().toISOString() }) },
+      {
+        method: "PATCH",
+        body: JSON.stringify({ ...payload, finished_at: new Date().toISOString() }),
+      },
     );
   } catch (error) {
     console.warn("[executive-daily-brief] Failed to update run row", {
@@ -152,13 +161,51 @@ async function updateRun(runId: string | undefined, payload: SourceSyncRunUpdate
   }
 }
 
+function frontendBaseUrl(): string {
+  const configured =
+    process.env.EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL;
+  if (!configured)
+    throw new Error("EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL is required.");
+  return configured.replace(/\/+$/, "");
+}
+
+async function deliverBriefing(): Promise<unknown> {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) throw new Error("CRON_SECRET is required.");
+
+  const response = await fetch(
+    `${frontendBaseUrl()}/api/executive/daily-brief/send-teams`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${cronSecret}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({}),
+    },
+  );
+  const text = await response.text();
+  let parsed: unknown = text;
+  try { if (text) parsed = JSON.parse(text); } catch { /* keep raw */ }
+  if (!response.ok) {
+    throw new Error(
+      `Delivery failed ${response.status}: ${
+        typeof parsed === "string" ? parsed.slice(0, 1000) : JSON.stringify(parsed)
+      }`,
+    );
+  }
+  return parsed;
+}
+
 async function main() {
   const nowArg = cliArg("--now");
-  const now = nowArg ? new Date(nowArg) : new Date();
-  const schedule = localScheduleDecision(now);
+  const schedule = localScheduleDecision(nowArg ? new Date(nowArg) : new Date());
 
   if (!schedule.shouldRun) {
-    console.log(JSON.stringify({ ok: true, skipped: true, reason: "outside_target_local_schedule", schedule }, null, 2));
+    console.log(
+      JSON.stringify({ ok: true, skipped: true, reason: "outside_target_local_schedule", schedule }, null, 2),
+    );
     return;
   }
 
@@ -167,49 +214,27 @@ async function main() {
   const startMs = Date.now();
 
   try {
-    const { sendOwnerBriefingToTeams } = await import(
-      "../src/lib/executive/owner-briefing-delivery"
-    );
-
-    const result = await sendOwnerBriefingToTeams({ now });
-
-    if (!result.ok) {
-      throw new Error(`Owner briefing failed (${result.status}): ${result.reason}`);
-    }
+    const result = await deliverBriefing();
 
     await updateRun(run.id, {
       status: "succeeded" satisfies RunStatus,
-      items_seen: result.decisionsNeeded + result.actionsRequired,
-      items_synced: result.recipients.filter((r) => r.sent).length,
-      items_created: 0,
-      items_updated: result.recipients.filter((r) => r.sent).length,
-      items_failed: result.recipients.filter((r) => !r.sent).length,
-      metadata: {
-        sentAt: result.sentAt,
-        decisionsNeeded: result.decisionsNeeded,
-        actionsRequired: result.actionsRequired,
-        projectsShown: result.projectsShown,
-        recipients: result.recipients,
-        durationMs: Date.now() - startMs,
-      },
+      items_synced: 1,
+      items_updated: 1,
+      metadata: { deliveryResult: result, durationMs: Date.now() - startMs },
     });
 
-    console.log(JSON.stringify({
-      ok: true,
-      sentAt: result.sentAt,
-      decisionsNeeded: result.decisionsNeeded,
-      actionsRequired: result.actionsRequired,
-      projectsShown: result.projectsShown,
-      recipients: result.recipients,
-      durationMs: Date.now() - startMs,
-    }, null, 2));
+    console.log(
+      JSON.stringify({ ok: true, result, durationMs: Date.now() - startMs }, null, 2),
+    );
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = (error instanceof Error ? error.message : String(error))
+      .replace(/\s+/g, " ")
+      .slice(0, 1800);
     await updateRun(run.id, {
       status: "failed" satisfies RunStatus,
       items_failed: 1,
       error_code: "EXECUTIVE_DAILY_BRIEF_FAILED",
-      error_message: message.replace(/\s+/g, " ").slice(0, 1800),
+      error_message: message,
       metadata: { durationMs: Date.now() - startMs },
     });
     console.error("[executive-daily-brief] failed:", message);
