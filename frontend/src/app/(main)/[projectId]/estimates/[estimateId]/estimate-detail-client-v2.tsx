@@ -496,6 +496,13 @@ function formatCurrencyFull(value: number): string {
   }).format(value);
 }
 
+function formatCostCodeDisplay(value: string | null): string {
+  const trimmed = value?.trim() ?? "";
+  if (!/^\d+(\.\d+)?$/.test(trimmed)) return trimmed;
+
+  return String(Math.round(Number(trimmed)));
+}
+
 const WEEKS_PER_MONTH = 4.334;
 
 function calculateDurationWeeks(months: number): number {
@@ -1631,7 +1638,7 @@ function DetailsTab({
                   <tr key={item.id} className="group border-b border-border/20 hover:bg-muted/20">
                     <td className="py-1 pl-4 pr-2">
                       <span className="inline-flex h-7 w-22 items-center px-2 text-xs tabular-nums text-foreground">
-                        {item.cost_code ?? ""}
+                        {formatCostCodeDisplay(item.cost_code)}
                       </span>
                     </td>
                     <td className="px-2 py-1">
