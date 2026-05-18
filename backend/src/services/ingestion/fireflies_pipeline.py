@@ -1932,7 +1932,6 @@ class FirefliesIngestionPipeline:
         if not memories:
             return
 
-        # Embed all memories in one batch
         valid = [
             m for m in memories
             if isinstance(m, dict)
@@ -1943,9 +1942,6 @@ class FirefliesIngestionPipeline:
         if not valid:
             return
 
-        texts = [m["content"][:500] for m in valid]
-        embeddings = EmbeddingGenerator().embed(texts)
-
         supabase_url = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
         supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
         if not supabase_url or not supabase_key:
@@ -1954,15 +1950,14 @@ class FirefliesIngestionPipeline:
 
         import urllib.request
 
-        for mem, embedding in zip(valid, embeddings):
-            # Use a deterministic system user_id for team memories (nil UUID)
-            # Team memories have visibility='team' so they're shared across all users.
-            # We use the Supabase service role key for direct insert.
+        for mem in valid:
+            # DO NOT write embedding here. ai_memories.embedding has an HNSW index in
+            # PM APP that OOMs the database under concurrent inserts (m=32, ef=200).
+            # Vector search for memories goes through document_chunks in the AI Database.
             payload = json.dumps({
-                "user_id": "00000000-0000-0000-0000-000000000001",  # system/team user
+                "user_id": "00000000-0000-0000-0000-000000000001",
                 "type": mem["type"],
                 "content": mem["content"].strip(),
-                "embedding": json.dumps(embedding),
                 "project_id": project_id,
                 "meeting_id": document_id,
                 "confidence": float(mem.get("confidence", 0.85)),
