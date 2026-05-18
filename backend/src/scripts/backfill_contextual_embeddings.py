@@ -71,8 +71,8 @@ from src.services.pipeline.contextualize import (  # noqa: E402
 )
 from src.services.pipeline.llm import batch_embed  # noqa: E402
 
-EMBED_BATCH_SIZE = 32
-UPDATE_BATCH_SIZE = 32
+EMBED_BATCH_SIZE = 128  # OpenAI accepts up to 2048; 128 keeps batch latency reasonable
+UPDATE_BATCH_SIZE = 128
 MAX_DOC_CHARS_FOR_LLM = 120_000  # cap document text passed to gpt-4.1-nano
 
 
@@ -231,6 +231,68 @@ def _group_by_document(rows: list[dict]) -> list[list[dict]]:
     return list(groups.values())
 
 
+def _backfill_template_only(conn, rows: list[dict], stats: dict) -> None:
+    """Fast path for template-only mode: batch chunks across documents.
+
+    The per-document loop in `backfill()` exists so OpenAI prompt caching can
+    work for `--with-llm`. Without LLM there's no benefit to per-doc grouping
+    and a lot of overhead — most docs have 1-3 chunks, so per-doc means one
+    API round trip per few chunks. This batches up to EMBED_BATCH_SIZE chunks
+    across documents per embedding call, which is 30-100× faster.
+    """
+    total = len(rows)
+    for batch_start in range(0, total, EMBED_BATCH_SIZE):
+        batch_rows = rows[batch_start : batch_start + EMBED_BATCH_SIZE]
+        update_rows: list[tuple[str, list[float], str]] = []
+        texts: list[str] = []
+        for chunk in batch_rows:
+            template_header = _template_header_for_chunk(chunk)
+            contextualized_text = build_contextualized_text(
+                chunk_text=chunk["text"] or "",
+                template_header=template_header,
+                llm_context=None,
+            )
+            texts.append(contextualized_text)
+            # update tuple is filled in after we get the embeddings
+            update_rows.append((template_header, None, chunk["chunk_id"]))  # type: ignore[arg-type]
+
+        try:
+            embeddings = batch_embed(texts)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Embedding batch failed: %s", exc)
+            stats["errors"] += len(batch_rows)
+            continue
+
+        # Replace the None placeholders with actual embeddings.
+        update_rows = [
+            (header, emb, chunk_id)
+            for (header, _placeholder, chunk_id), emb in zip(
+                update_rows, embeddings, strict=True
+            )
+        ]
+
+        with conn.cursor() as cur:
+            psycopg2.extras.execute_batch(
+                cur,
+                "UPDATE public.document_chunks SET "
+                "chunk_context=%s, embedding_contextual=%s::halfvec, "
+                "contextualized_at=NOW() WHERE chunk_id=%s",
+                update_rows,
+                page_size=UPDATE_BATCH_SIZE,
+            )
+        conn.commit()
+
+        stats["processed"] += len(batch_rows)
+        stats["updated"] += len(update_rows)
+
+        if batch_start // EMBED_BATCH_SIZE % 10 == 0:
+            pct = 100.0 * stats["processed"] / total
+            logger.info(
+                "Progress: %d / %d (%.1f%%) errors=%d",
+                stats["processed"], total, pct, stats["errors"],
+            )
+
+
 def backfill(args) -> dict:
     stats = {
         "candidates": 0,
@@ -275,7 +337,14 @@ def backfill(args) -> dict:
                         len(rows), len({r['document_id'] for r in rows}))
             return stats
 
-        # Process document-by-document so prompt caching helps for --with-llm.
+        # Fast path: template-only with no LLM. Batch chunks across documents
+        # so we don't pay an API round trip for every small doc.
+        if not args.with_llm:
+            _backfill_template_only(conn, rows, stats)
+            return stats
+
+        # LLM path: process document-by-document so OpenAI's automatic prompt
+        # cache stays warm across all chunks of a single document.
         for doc_chunks in _group_by_document(rows):
             doc_id = doc_chunks[0]["document_id"]
             use_llm = args.with_llm and any(
