@@ -50,17 +50,18 @@ async def compile_daily_log(log_path: Path, state: dict) -> float:
     wiki_index = read_wiki_index()
 
     # Read existing articles for context
+    # Pass only article slugs + first line of each article (not full bodies)
+    # — the index already has summaries; full bodies balloon context and cost
     existing_articles_context = ""
     existing = {}
     for article_path in list_wiki_articles():
         rel = article_path.relative_to(KNOWLEDGE_DIR)
-        existing[str(rel)] = article_path.read_text(encoding="utf-8")
+        first_line = article_path.read_text(encoding="utf-8").splitlines()[0] if article_path.stat().st_size else ""
+        existing[str(rel)] = first_line
 
     if existing:
-        parts = []
-        for rel_path, content in existing.items():
-            parts.append(f"### {rel_path}\n```markdown\n{content}\n```")
-        existing_articles_context = "\n\n".join(parts)
+        parts = [f"- {rel}: {first_line}" for rel, first_line in existing.items()]
+        existing_articles_context = "\n".join(parts)
 
     timestamp = now_iso()
 
@@ -133,10 +134,11 @@ Read the daily log above and compile it into wiki articles following the schema 
             prompt=prompt,
             options=ClaudeAgentOptions(
                 cwd=str(ROOT_DIR),
+                model="claude-haiku-4-5-20251001",
                 system_prompt={"type": "preset", "preset": "claude_code"},
                 allowed_tools=["Read", "Write", "Edit", "Glob", "Grep"],
                 permission_mode="acceptEdits",
-                max_turns=30,
+                max_turns=10,
             ),
         ):
             if isinstance(message, AssistantMessage):

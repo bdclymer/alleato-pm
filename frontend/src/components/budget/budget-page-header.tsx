@@ -14,6 +14,7 @@ import {
   Camera,
   FilePlus,
   FileEdit,
+  FileSearch,
   BarChart2,
   FileText,
   Activity,
@@ -58,6 +59,7 @@ interface BudgetPageHeaderProps {
   onLockBudget?: () => void;
   onUnlockBudget?: () => void;
   onImport?: () => void;
+  onImportFromContract?: () => void;
   onExport?: (format: string) => void;
   onOpenBuyoutSummaryReport?: () => void;
   onOpenLegacyBudgetDetailReport?: () => void;
@@ -78,6 +80,7 @@ export function BudgetPageHeader({
   onResendToERP,
   onLockBudget,
   onUnlockBudget,
+  onImportFromContract,
   onImport,
   onExport,
   onOpenBuyoutSummaryReport,
@@ -150,7 +153,11 @@ export function BudgetPageHeader({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onImport}>
               <Upload className="w-4 h-4 mr-2" />
-              Import
+              Import from File
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onImportFromContract}>
+              <FileSearch className="w-4 h-4 mr-2" />
+              Import from Prime Contract SOV
             </DropdownMenuItem>
             {isLocked && (
               <DropdownMenuItem onClick={onModificationClick}>
@@ -256,7 +263,11 @@ export function BudgetPageHeader({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onImport}>
               <Upload className="w-4 h-4 mr-2" />
-              Import
+              Import from File
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onImportFromContract}>
+              <FileSearch className="w-4 h-4 mr-2" />
+              Import from Prime Contract SOV
             </DropdownMenuItem>
             {isLocked && (
               <DropdownMenuItem onClick={onModificationClick}>

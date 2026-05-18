@@ -197,7 +197,7 @@ export function PrimeContractFinancialMarkupTab({
           compound: Boolean(row.compound),
           maps_to_budget_code_id:
             mapsToById[row.id] ?? row.maps_to_budget_code_id ?? "all",
-          display_in: displayById[row.id] ?? "horizontal",
+          display_in: displayById[row.id] ?? "vertical",
         }));
     return (
       JSON.stringify(normalize(verticalMarkups, markupMapsToById, markupDisplayById)) !==
@@ -632,7 +632,7 @@ export function PrimeContractFinancialMarkupTab({
             <div className="space-y-3 md:hidden">
               {sortedMarkups.map((markup, index) => {
                 const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
-                const displayIn = markupDisplayById[markup.id] ?? "horizontal";
+                const displayIn = markupDisplayById[markup.id] ?? "vertical";
                 const mapsTo = markupMapsToById[markup.id] ?? "all";
                 const mapsToLabel =
                   mapsTo === "all"
@@ -691,7 +691,7 @@ export function PrimeContractFinancialMarkupTab({
                 <InlineTableBody>
                   {sortedMarkups.map((markup, index) => {
                     const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
-                    const displayIn = markupDisplayById[markup.id] ?? "horizontal";
+                    const displayIn = markupDisplayById[markup.id] ?? "vertical";
                     const mapsTo = markupMapsToById[markup.id] ?? "all";
                     const mapsToLabel =
                       mapsTo === "all"

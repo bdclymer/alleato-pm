@@ -51,6 +51,7 @@ import {
   paymentApplicationKeys,
 } from "@/hooks/use-payment-applications";
 
+import { EmailsClient } from "../../emails/emails-client";
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
 import { PrimeContractEstimateImportModal } from "./components/PrimeContractEstimateImportModal";
@@ -60,7 +61,6 @@ import {
   PrimeContractChangeEventsTab,
   PrimeContractChangeOrdersTab,
   PrimeContractPcosSection,
-  PrimeContractCommitmentsTab,
   PrimeContractInvoicesTab,
   PrimeContractPaymentsTab,
   PrimeContractFinancialMarkupTab,
@@ -983,7 +983,6 @@ export default function ProjectContractDetailPage() {
           { label: "General", href: "overview", isActive: activeTab === "overview" },
           { label: "SOV", href: "schedule-of-values", isActive: activeTab === "schedule-of-values", count: lineItems.length || undefined },
           { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrders.length || undefined },
-          { label: "Commitments", href: "commitments", isActive: activeTab === "commitments" },
           { label: "Invoices", href: "invoices", isActive: activeTab === "invoices", count: paymentApplications.length || undefined },
           { label: "Payments Received", href: "payments", isActive: activeTab === "payments", count: payments.length || undefined },
           { label: "Related Items", href: "related-items", isActive: activeTab === "related-items" },
@@ -1058,14 +1057,6 @@ export default function ProjectContractDetailPage() {
           </ContentSectionStack>
         )}
 
-        {activeTab === "commitments" && (
-          <PrimeContractCommitmentsTab
-            projectId={projectId}
-            contractId={contractId}
-          />
-        )}
-
-
         {activeTab === "invoices" && (
           <PrimeContractInvoicesTab
             projectId={projectId} contractId={contractId} contract={contract} paymentApplications={paymentApplications}
@@ -1092,25 +1083,7 @@ export default function ProjectContractDetailPage() {
         )}
 
         {activeTab === "emails" && (
-          <div>
-            <SectionRuleHeading label="Emails" />
-            <EmptyState
-              icon={<Mail />}
-              title="No emails yet"
-              description="Emails sent or received related to this contract will appear here."
-              action={
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setDocumentDialogTab("email");
-                    setIsDocumentDialogOpen(true);
-                  }}
-                >
-                  Send Email
-                </Button>
-              }
-            />
-          </div>
+          <EmailsClient projectId={Number(projectId)} embedded />
         )}
 
         {activeTab === "history" && (

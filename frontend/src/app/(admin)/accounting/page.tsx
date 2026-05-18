@@ -9,12 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   RefreshCw,
-  TrendingUp,
-  TrendingDown,
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
-  ExternalLink,
   ClipboardList,
   ScrollText,
   FolderKanban,
@@ -29,6 +26,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  PieChart,
+  Pie,
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
@@ -137,36 +136,41 @@ function agingToArray(
 }
 
 // ---------------------------------------------------------------------------
-// Aging bar chart (inline — no card wrapper)
+// Aging Donut Chart
 // ---------------------------------------------------------------------------
 
-function AgingSection({
+const AGING_COLORS = [
+  "hsl(var(--primary) / 0.65)",
+  "#F59E0B",
+  "#F97316",
+  "hsl(var(--destructive))",
+];
+
+function AgingDonutChart({
   title,
-  buckets,
-  icon,
+  aging,
   href,
-  iconColorClass,
 }: {
   title: string;
-  buckets: Array<{ label: string; count: number; amount: number }>;
-  icon: React.ReactNode;
+  aging: AgingResult;
   href?: string;
-  iconColorClass?: string;
 }) {
-  const maxAmount = Math.max(...buckets.map((b) => b.amount), 1);
+  const buckets = agingToArray(aging);
+  const chartData = buckets.map((b) => ({
+    name: b.label,
+    value: b.amount,
+    count: b.count,
+  }));
+  const total = aging.totalOutstanding;
+  const overdueAmount =
+    aging.days31to60.total + aging.days61to90.total + aging.days90plus.total;
+  const overduePercent =
+    total > 0 ? Math.round((overdueAmount / total) * 100) : 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div
-          className={cn(
-            "flex items-center gap-2 text-sm font-semibold",
-            iconColorClass ?? "text-foreground",
-          )}
-        >
-          {icon}
-          {title}
-        </div>
+        <p className="text-xs font-semibold text-foreground">{title}</p>
         {href && (
           <Link
             href={href}
@@ -176,37 +180,154 @@ function AgingSection({
           </Link>
         )}
       </div>
-      <div className="space-y-3">
-        {buckets.map((bucket) => (
-          <div key={bucket.label} className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{bucket.label}</span>
-              <span className="tabular-nums font-medium text-foreground">
-                {formatCurrencyFull(bucket.amount)}
-                <span className="ml-1.5 text-muted-foreground font-normal">
-                  ({bucket.count})
-                </span>
-              </span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-700",
-                  bucket.label === "Current"
-                    ? "bg-primary/50"
-                    : bucket.label === "31–60 Days"
-                      ? "bg-amber-400"
-                      : bucket.label === "61–90 Days"
-                        ? "bg-orange-500"
-                        : "bg-destructive",
-                )}
-                style={{
-                  width: `${Math.max(2, (bucket.amount / maxAmount) * 100)}%`,
-                }}
-              />
-            </div>
+
+      <div className="relative">
+        <ResponsiveContainer width="100%" height={180}>
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={56}
+              outerRadius={76}
+              paddingAngle={2}
+              dataKey="value"
+              strokeWidth={0}
+            >
+              {chartData.map((_, index) => (
+                <Cell key={index} fill={AGING_COLORS[index]} />
+              ))}
+            </Pie>
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0]?.payload as {
+                  name: string;
+                  value: number;
+                  count: number;
+                };
+                return (
+                  <div className="rounded-lg bg-popover border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1">
+                    <div className="font-semibold text-foreground">{d.name}</div>
+                    <div className="tabular-nums text-foreground">
+                      {formatCurrencyFull(d.value)}
+                    </div>
+                    <div className="text-muted-foreground">{d.count} invoices</div>
+                  </div>
+                );
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-base font-bold tabular-nums text-foreground">
+            {formatCurrency(total)}
+          </span>
+          {overduePercent > 0 && (
+            <span className="text-[10px] font-medium text-destructive">
+              {overduePercent}% overdue
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        {buckets.map((bucket, index) => (
+          <div key={bucket.label} className="flex items-center gap-1.5 text-[10px] min-w-0">
+            <div
+              className="h-2 w-2 shrink-0 rounded-sm"
+              style={{ background: AGING_COLORS[index] }}
+            />
+            <span className="text-muted-foreground truncate">{bucket.label}</span>
+            <span className="ml-auto tabular-nums font-medium text-foreground">
+              {formatCurrency(bucket.amount)}
+            </span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cash Flow Bar — received vs paid this month
+// ---------------------------------------------------------------------------
+
+function CashFlowBar({
+  received,
+  paid,
+}: {
+  received: number;
+  paid: number;
+}) {
+  const data = [
+    { name: "Received", value: received },
+    { name: "Paid Out", value: paid },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold text-foreground">Cash Flow — This Month</p>
+      <ResponsiveContainer width="100%" height={164}>
+        <BarChart
+          data={data}
+          margin={{ top: 4, right: 4, bottom: 4, left: 4 }}
+          barCategoryGap="35%"
+        >
+          <CartesianGrid
+            vertical={false}
+            strokeDasharray="3 3"
+            className="stroke-border/30"
+          />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tickFormatter={formatCurrency}
+            tick={{ fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            width={50}
+          />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              return (
+                <div className="rounded-lg bg-popover border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1">
+                  <div className="font-medium text-foreground">
+                    {payload[0]?.payload?.name as string}
+                  </div>
+                  <div className="tabular-nums font-semibold text-foreground">
+                    {formatCurrencyFull(payload[0]?.value as number)}
+                  </div>
+                </div>
+              );
+            }}
+          />
+          <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={52}>
+            <Cell fill="#10B981" />
+            <Cell fill="hsl(var(--primary) / 0.7)" />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+      <div className="flex items-center justify-between text-[10px]">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-sm bg-status-success" />
+          <span className="text-muted-foreground">Received</span>
+          <span className="tabular-nums font-semibold text-foreground ml-1">
+            {formatCurrency(received)}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-sm bg-primary/70" />
+          <span className="text-muted-foreground">Paid Out</span>
+          <span className="tabular-nums font-semibold text-foreground ml-1">
+            {formatCurrency(paid)}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -266,7 +387,7 @@ function ActivityRow({
 }
 
 // ---------------------------------------------------------------------------
-// AR by project horizontal bar chart
+// AR by Project horizontal bar chart
 // ---------------------------------------------------------------------------
 
 const BAR_COLORS = [
@@ -349,7 +470,11 @@ function ArByProjectChart({ projects }: { projects: ProjectRevenue[] }) {
               cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
-                const d = payload[0].payload;
+                const d = payload[0]?.payload as {
+                  fullName: string;
+                  customer: string | null;
+                  outstanding: number;
+                };
                 return (
                   <div className="rounded-lg bg-popover border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1">
                     <div className="font-medium text-foreground">{d.fullName}</div>
@@ -376,76 +501,134 @@ function ArByProjectChart({ projects }: { projects: ProjectRevenue[] }) {
 }
 
 // ---------------------------------------------------------------------------
-// Revenue table
+// Revenue Bar Chart — grouped bars per project (replaces table)
 // ---------------------------------------------------------------------------
 
-function RevenueTable({ projects }: { projects: ProjectRevenue[] }) {
+const REVENUE_COLORS = {
+  invoiced: "hsl(var(--primary) / 0.75)",
+  collected: "#10B981",
+  outstanding: "#F59E0B",
+};
+
+function RevenueBarChart({ projects }: { projects: ProjectRevenue[] }) {
   if (projects.length === 0) {
     return (
       <p className="text-xs text-muted-foreground">No project data available</p>
     );
   }
 
+  const data = projects.slice(0, 10).map((p) => ({
+    name: p.projectCode,
+    fullName: p.description ?? p.projectCode,
+    customer: p.customer,
+    invoiced: p.totalInvoiced,
+    collected: p.totalCollected,
+    outstanding: p.outstandingBalance,
+  }));
+
   return (
-    <div className="overflow-x-auto -mx-1">
-      <table className="w-full text-xs min-w-max">
-        <thead>
-          <tr className="border-b border-border/50">
-            <th className="pb-2 pt-0 text-left font-medium text-muted-foreground pr-4">
-              Project
-            </th>
-            <th className="pb-2 pt-0 text-left font-medium text-muted-foreground pr-4">
-              Customer
-            </th>
-            <th className="pb-2 pt-0 text-right font-medium text-muted-foreground pr-4">
-              Invoiced
-            </th>
-            <th className="pb-2 pt-0 text-right font-medium text-muted-foreground pr-4">
-              Collected
-            </th>
-            <th className="pb-2 pt-0 text-right font-medium text-muted-foreground">
-              Outstanding
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {projects.map((p) => (
-            <tr
-              key={p.projectCode}
-              className="border-b border-border/30 hover:bg-muted/30 transition-colors"
-            >
-              <td className="py-2 pr-4">
-                <div className="font-medium text-foreground">{p.projectCode}</div>
-                {p.description && (
-                  <div className="text-muted-foreground truncate max-w-48">
-                    {p.description}
-                  </div>
-                )}
-              </td>
-              <td className="py-2 pr-4 text-muted-foreground">
-                {p.customer ?? "—"}
-              </td>
-              <td className="py-2 pr-4 text-right tabular-nums font-medium text-foreground">
-                {formatCurrencyFull(p.totalInvoiced)}
-              </td>
-              <td className="py-2 pr-4 text-right tabular-nums text-status-success">
-                {formatCurrencyFull(p.totalCollected)}
-              </td>
-              <td className="py-2 text-right tabular-nums">
-                <span
-                  className={cn(
-                    p.outstandingBalance > 0
-                      ? "text-status-warning"
-                      : "text-muted-foreground",
+    <div className="space-y-3">
+      <div className="flex items-center gap-5">
+        {(["invoiced", "collected", "outstanding"] as const).map((key) => (
+          <div key={key} className="flex items-center gap-1.5 text-xs">
+            <div
+              className="h-2 w-2 rounded-sm"
+              style={{ background: REVENUE_COLORS[key] }}
+            />
+            <span className="text-muted-foreground capitalize">{key}</span>
+          </div>
+        ))}
+      </div>
+      <ResponsiveContainer width="100%" height={260}>
+        <BarChart
+          data={data}
+          margin={{ top: 4, right: 4, bottom: 32, left: 0 }}
+          barCategoryGap="28%"
+          barGap={2}
+        >
+          <CartesianGrid
+            vertical={false}
+            strokeDasharray="3 3"
+            className="stroke-border/30"
+          />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            angle={-35}
+            textAnchor="end"
+            interval={0}
+          />
+          <YAxis
+            tickFormatter={formatCurrency}
+            tick={{ fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            width={52}
+          />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              const d = payload[0]?.payload as {
+                fullName: string;
+                customer: string | null;
+                invoiced: number;
+                collected: number;
+                outstanding: number;
+              };
+              return (
+                <div className="rounded-lg bg-popover border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1.5">
+                  <div className="font-semibold text-foreground">{d.fullName}</div>
+                  {d.customer && (
+                    <div className="text-muted-foreground">{d.customer}</div>
                   )}
-                >
-                  {formatCurrencyFull(p.outstandingBalance)}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                  {payload.map((p) => (
+                    <div
+                      key={p.dataKey as string}
+                      className="flex items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <div
+                          className="h-2 w-2 rounded-sm"
+                          style={{ background: p.color }}
+                        />
+                        <span className="text-muted-foreground capitalize">
+                          {p.name}
+                        </span>
+                      </div>
+                      <span className="tabular-nums font-medium text-foreground">
+                        {formatCurrencyFull(p.value as number)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            }}
+          />
+          <Bar
+            dataKey="invoiced"
+            name="Invoiced"
+            fill={REVENUE_COLORS.invoiced}
+            radius={[3, 3, 0, 0]}
+            maxBarSize={10}
+          />
+          <Bar
+            dataKey="collected"
+            name="Collected"
+            fill={REVENUE_COLORS.collected}
+            radius={[3, 3, 0, 0]}
+            maxBarSize={10}
+          />
+          <Bar
+            dataKey="outstanding"
+            name="Outstanding"
+            fill={REVENUE_COLORS.outstanding}
+            radius={[3, 3, 0, 0]}
+            maxBarSize={10}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -501,7 +684,7 @@ function ReportCard({
 }
 
 // ---------------------------------------------------------------------------
-// Section wrapper — no border/card, just spacing + label
+// Section wrapper
 // ---------------------------------------------------------------------------
 
 function Section({
@@ -705,7 +888,7 @@ export default function AccountingDashboardPage() {
             icon={<FolderKanban className="h-5 w-5 text-status-warning" />}
             title="Projects"
             description="All Acumatica projects with income, expenses, assets, and current status."
-            meta={`Synced from Acumatica`}
+            meta="Synced from Acumatica"
             accentClass="bg-amber-500/10"
           />
         </div>
@@ -726,29 +909,27 @@ export default function AccountingDashboardPage() {
         <ArByProjectChart projects={arByProject} />
       </Section>
 
-      {/* ── Aging analysis — side by side ── */}
-      <Section title="Aging Analysis">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <AgingSection
+      {/* ── Financial Position — 3 charts: AR aging | cash flow | AP aging ── */}
+      <Section title="Financial Position">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <AgingDonutChart
             title="Accounts Receivable"
-            buckets={agingToArray(arAging)}
-            icon={<TrendingUp className="h-4 w-4" />}
+            aging={arAging}
             href="/accounting/invoices"
-            iconColorClass="text-emerald-600"
           />
-          <div className="md:border-l md:border-border/40 md:pl-8">
-            <AgingSection
-              title="Accounts Payable"
-              buckets={agingToArray(apAging)}
-              icon={<TrendingDown className="h-4 w-4" />}
-              href="/accounting/bills"
-              iconColorClass="text-blue-600"
-            />
-          </div>
+          <CashFlowBar
+            received={cashPosition.paymentsReceivedThisMonth}
+            paid={cashPosition.checksIssuedThisMonth}
+          />
+          <AgingDonutChart
+            title="Accounts Payable"
+            aging={apAging}
+            href="/accounting/bills"
+          />
         </div>
       </Section>
 
-      {/* ── Revenue by Project ── */}
+      {/* ── Revenue by Project — grouped bar chart ── */}
       <Section
         title="Revenue by Project"
         action={
@@ -765,7 +946,7 @@ export default function AccountingDashboardPage() {
           </div>
         }
       >
-        <RevenueTable projects={revenueByProject} />
+        <RevenueBarChart projects={revenueByProject} />
       </Section>
 
       {/* ── Recent Activity ── */}

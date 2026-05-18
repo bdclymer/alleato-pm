@@ -42,7 +42,7 @@ describe("/api/projects/[projectId]/contracts/settings", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       project_id: 42,
-      co_tier_count: 1,
+      co_tier_count: 2,
       allow_standard_users_create_pcco: false,
       allow_standard_users_create_pco: false,
       sov_always_editable: false,
