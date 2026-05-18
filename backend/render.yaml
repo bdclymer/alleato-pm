@@ -318,9 +318,9 @@ services:
       - key: USE_UNIFIED_AGENT
         value: true
       - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED
-        value: false
+        value: true
       - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME
-        value: contract_spike
+        value: deep_agents
       - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL
         value: gpt-5.4-mini
       - key: CORS_ORIGINS
