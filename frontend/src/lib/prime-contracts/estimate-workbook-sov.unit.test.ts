@@ -109,7 +109,7 @@ describe("parseAlleatoEstimateWorkbook", () => {
     expect(preview.skippedRows).toBe(2);
   });
 
-  it("imports the 55-0100 contingency row as contract revenue when cost type is blank", () => {
+  it("requires a cost type for 55-0100 contingency rows", () => {
     const workbook = XLSX.utils.book_new();
 
     XLSX.utils.book_append_sheet(
@@ -138,16 +138,15 @@ describe("parseAlleatoEstimateWorkbook", () => {
 
     const preview = parseAlleatoEstimateWorkbook(workbook);
 
-    expect(preview.warnings).toEqual([]);
     expect(preview.rows).toHaveLength(1);
     expect(preview.rows[0]).toMatchObject({
       costCode: "55-0100",
-      costTypeCode: "R",
+      costTypeCode: "",
       description: "Contingency",
       workDescription: "5%",
       budgetAmount: 20465.1,
-      includeInOwnerSov: true,
-      includeInPrimeContract: true,
+      includeInOwnerSov: false,
+      includeInPrimeContract: false,
     });
   });
 });
