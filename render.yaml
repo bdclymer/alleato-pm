@@ -481,5 +481,15 @@ services:
         value: deep_agents
       - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL
         value: gpt-5.4-mini
+      - key: DEEP_AGENTS_STANDALONE_TOOLS_ENABLED
+        value: true
+      - key: DEEP_AGENTS_SQL_TOOLS_ENABLED
+        value: true
+      - key: DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED
+        value: true
+      - key: DEEP_AGENTS_DRAFT_TOOLS_ENABLED
+        value: true
+      - key: DEEP_AGENTS_SUBAGENTS_ENABLED
+        value: true
       - key: CORS_ORIGINS
         value: https://alleato-procore.vercel.app,https://www.alleato-procore.vercel.app,https://alleato-backend-rbnj.onrender.com

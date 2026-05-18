@@ -7,6 +7,8 @@ from src.services.agents.deep_project_intelligence import (
     REQUIRED_SOURCE_TYPES,
     build_executive_briefing_contract_spike,
     build_project_status_contract_spike,
+    deep_agents_runtime_subagent_names,
+    deep_agents_runtime_tool_names,
     _openai_model_name,
     _resolve_deep_agents_model,
 )
@@ -232,8 +234,14 @@ def test_deep_agents_runtime_can_synthesize_behind_contract():
 
     def create_agent(**kwargs):
         assert kwargs["model"] == "openai:gpt-5.4-mini"
-        assert kwargs["tools"]
-        assert "system_prompt" in kwargs
+        tool_names = [getattr(tool, "name", getattr(tool, "__name__", "")) for tool in kwargs["tools"]]
+        assert "source_coverage" in tool_names
+        assert "pm_budget_summary" in tool_names
+        assert "resolve_project_by_name" not in tool_names
+        assert "query_db" not in tool_names
+        assert "draft_rfi" not in tool_names
+        assert kwargs["subagents"] == []
+        assert "Resolve entities first" in kwargs["system_prompt"]
         return _Agent()
 
     response = build_project_status_contract_spike(
@@ -250,6 +258,87 @@ def test_deep_agents_runtime_can_synthesize_behind_contract():
     assert response.answer == "Runtime synthesis from Deep Agents."
     assert response.tool_trace[-1].tool == "deepagents_runtime"
     assert response.tool_trace[-1].status == "success"
+
+
+def test_deep_agents_runtime_tool_inventory_is_gated(monkeypatch):
+    monkeypatch.delenv("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED", raising=False)
+    assert deep_agents_runtime_tool_names() == ()
+    assert deep_agents_runtime_subagent_names() == ()
+
+    monkeypatch.setenv("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED", "true")
+    read_only_expected = {
+        "resolve_project_by_name",
+        "resolve_vendor_by_name",
+        "resolve_contract",
+        "resolve_cost_code",
+        "project_briefing_snapshot",
+        "project_budget_summary",
+        "project_risk_snapshot",
+        "portfolio_overview",
+        "list_recent_meetings",
+        "recent_activity",
+        "search_meeting_transcripts",
+        "search_unstructured",
+        "search_emails",
+        "search_teams_messages",
+        "think_tool",
+    }
+
+    assert set(deep_agents_runtime_tool_names()) == read_only_expected
+    assert "query_db" not in deep_agents_runtime_tool_names()
+    assert "draft_rfi" not in deep_agents_runtime_tool_names()
+    assert "acumatica_project_budget" not in deep_agents_runtime_tool_names()
+
+
+def test_deep_agents_runtime_tool_inventory_matches_full_standalone_surface(monkeypatch):
+    monkeypatch.setenv("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_SQL_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_DRAFT_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_SUBAGENTS_ENABLED", "true")
+    expected_tools = {
+        "resolve_project_by_name",
+        "resolve_vendor_by_name",
+        "resolve_contract",
+        "resolve_cost_code",
+        "project_briefing_snapshot",
+        "project_budget_summary",
+        "project_risk_snapshot",
+        "portfolio_overview",
+        "describe_schema",
+        "query_db",
+        "list_recent_meetings",
+        "recent_activity",
+        "search_meeting_transcripts",
+        "search_unstructured",
+        "search_emails",
+        "search_teams_messages",
+        "think_tool",
+        "draft_email",
+        "draft_teams_message",
+        "draft_rfi",
+        "draft_commitment",
+        "draft_change_event",
+        "draft_task",
+        "acumatica_ap_aging",
+        "acumatica_ar_aging",
+        "acumatica_cash_position",
+        "acumatica_project_budget",
+        "acumatica_project_list",
+        "acumatica_project_pnl",
+        "acumatica_purchase_orders",
+        "acumatica_recent_bills",
+        "acumatica_recent_invoices",
+        "acumatica_vendor_spend",
+    }
+
+    assert set(deep_agents_runtime_tool_names()) == expected_tools
+    assert set(deep_agents_runtime_subagent_names()) == {
+        "financial-analyst",
+        "schedule-analyst",
+        "risk-analyst",
+        "communications-analyst",
+    }
 
 
 def test_deep_agents_runtime_invokes_installed_graph_with_bindable_model(monkeypatch):

@@ -1,0 +1,493 @@
+"""Retrieval over the unstructured corpus (meeting transcripts, emails, Teams, docs).
+
+Connects to the AI Database (Supabase project `fqcvmfqldlewvbsuxdvz`) via the
+`RAG_DATABASE_URL` environment variable and queries the existing
+`search_document_chunks` RPC (pgvector cosine similarity over halfvec embeddings).
+
+The corpus was embedded by alleato-pm's Microsoft Graph sync using OpenAI
+`text-embedding-3-large` (3072 dims). We embed the user query with the same model
+and pass it to the RPC.
+
+The RPC natively accepts only `source_types` and `project_id` filters. Date range
+and `version_status` filters are applied in-process after the RPC returns; to avoid
+losing hits to post-filtering we over-fetch (3× `match_count`) and truncate.
+"""
+
+from __future__ import annotations
+
+import os
+from datetime import date, datetime
+from functools import lru_cache
+from typing import Any
+
+from langchain_core.tools import tool
+from langchain_openai import OpenAIEmbeddings
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
+from sqlalchemy.pool import NullPool
+
+from ._retry import with_db_retry
+
+_EMBEDDING_MODEL = "text-embedding-3-large"
+_MATCH_THRESHOLD = 0.3
+_OVERFETCH_MULTIPLIER = 3
+_RERANK_CANDIDATE_FLOOR = 30
+
+# Embedding-variant selection — flips between the legacy vector and the contextual
+# vector once alleato-pm finishes the Contextual Retrieval backfill (see
+# docs/contextual-retrieval-handoff.md). Both RPCs share an identical signature
+# so this is a one-line swap.
+_RPC_BY_VARIANT = {
+    "baseline": "search_document_chunks",
+    "contextual": "search_document_chunks_contextual",
+}
+_DEFAULT_VARIANT = "baseline"
+
+MEETING_SOURCE_TYPES = [
+    "meeting_transcript",
+    "meeting_summary",
+    "meeting_segment_summary",
+    "meeting_section",
+    "meeting_summary_embed",
+    "meeting_notes",
+]
+
+
+@lru_cache(maxsize=1)
+def _engine() -> Engine:
+    url = os.environ.get("RAG_DATABASE_URL") or os.environ.get("RAG_SUPABASE_DB_URL")
+    if not url:
+        raise RuntimeError("RAG_DATABASE_URL or RAG_SUPABASE_DB_URL is not set")
+    # NullPool: each call gets a fresh connection that closes on release. Supabase's
+    # pgbouncer pooler does the actual pooling on the server side. With SQLAlchemy
+    # pooling layered on top, parallel sub-agents exhaust the client-side pool
+    # (pool_size + max_overflow) before pgbouncer is ever consulted, causing
+    # ECHECKOUTTIMEOUT and auth-timeout cascades during eval runs.
+    return create_engine(
+        url,
+        poolclass=NullPool,
+        connect_args={"connect_timeout": 10, "application_name": "alleato-ai-rag"},
+    )
+
+
+@lru_cache(maxsize=1)
+def _embedder() -> OpenAIEmbeddings:
+    gateway_key = os.environ.get("AI_GATEWAY_API_KEY")
+    if gateway_key:
+        return OpenAIEmbeddings(
+            model=_EMBEDDING_MODEL,
+            api_key=gateway_key,
+            base_url="https://ai-gateway.vercel.sh/v1",
+        )
+    return OpenAIEmbeddings(model=_EMBEDDING_MODEL)
+
+
+def _embed_query(query: str) -> str:
+    vec = _embedder().embed_query(query)
+    return "[" + ",".join(repr(float(x)) for x in vec) + "]"
+
+
+def _parse_iso_date(s: str | None) -> datetime | None:
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        try:
+            return datetime.combine(date.fromisoformat(s), datetime.min.time())
+        except ValueError:
+            return None
+
+
+def _coerce_project_id(project_id: str | int | None) -> int | None:
+    if project_id is None or project_id == "":
+        return None
+    try:
+        return int(project_id)
+    except (TypeError, ValueError):
+        return None
+
+
+def _excerpt(s: str | None, limit: int = 400) -> str:
+    if not s:
+        return ""
+    s = " ".join(s.split())
+    return s if len(s) <= limit else s[: limit - 1] + "…"
+
+
+def _format_results(rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return "_(no matching passages)_"
+    lines: list[str] = []
+    for i, r in enumerate(rows, start=1):
+        title = r.get("doc_title") or r.get("document_id") or "(untitled)"
+        src = r.get("source_type") or "?"
+        d = r.get("doc_date")
+        when = ""
+        if isinstance(d, datetime):
+            when = d.date().isoformat()
+        elif isinstance(d, date):
+            when = d.isoformat()
+        elif d:
+            when = str(d)[:10]
+        sim = r.get("similarity")
+        sim_str = f" · sim={sim:.2f}" if isinstance(sim, (int, float)) else ""
+        header = f"**{i}. {title}** — _{src}_"
+        if when:
+            header += f" · {when}"
+        header += sim_str
+        lines.append(header)
+        lines.append(f"> {_excerpt(r.get('chunk_text'))}")
+        lines.append("")
+    return "\n".join(lines).rstrip()
+
+
+def _resolve_variant(variant: str | None) -> str:
+    if variant is None:
+        variant = os.environ.get("RAG_EMBEDDING_VARIANT", _DEFAULT_VARIANT)
+    if variant not in _RPC_BY_VARIANT:
+        raise ValueError(
+            f"unknown embedding variant {variant!r}; expected one of {list(_RPC_BY_VARIANT)}"
+        )
+    return variant
+
+
+def retrieve(
+    query: str,
+    source_types: list[str] | None = None,
+    project_id: str | int | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    version_status: str | None = None,
+    max_results: int = 8,
+    rerank: bool | None = None,
+    variant: str | None = None,
+) -> list[dict[str, Any]]:
+    """Retrieve ranked chunks. Returns raw rows so callers (tools, evals) can format as needed.
+
+    Args:
+        query: Natural language query.
+        source_types: Optional filter list passed to the RPC.
+        project_id: Optional project filter (coerced to bigint).
+        date_from, date_to: ISO dates; applied in-process after the RPC.
+        version_status: Match `doc_metadata->>'version_status'`; applied in-process.
+        max_results: Final result count returned.
+        rerank: Force rerank on/off. If None, enabled when COHERE_API_KEY is set.
+        variant: Embedding variant — "baseline" (raw-text embedding) or "contextual"
+            (Anthropic Contextual Retrieval, see docs/contextual-retrieval-handoff.md).
+            If None, reads `RAG_EMBEDDING_VARIANT` env var, defaulting to "baseline".
+
+    Returns:
+        Ordered list of result dicts (most relevant first). Each row includes
+        `similarity` (vector cosine sim) and, when reranked, `rerank_score`.
+
+    Raises:
+        ValueError on bad input. SQLAlchemy errors propagate.
+    """
+    if not query or not query.strip():
+        raise ValueError("empty query")
+    if max_results <= 0:
+        raise ValueError("max_results must be positive")
+
+    rpc_name = _RPC_BY_VARIANT[_resolve_variant(variant)]
+    embedding = _embed_query(query)
+    pid = _coerce_project_id(project_id)
+    df = _parse_iso_date(date_from)
+    dt = _parse_iso_date(date_to)
+
+    do_rerank = rerank if rerank is not None else bool(
+        os.environ.get("COHERE_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    )
+    if do_rerank:
+        fetch_count = max(max_results * _OVERFETCH_MULTIPLIER, _RERANK_CANDIDATE_FLOOR)
+    else:
+        fetch_count = max_results * _OVERFETCH_MULTIPLIER
+
+    sql = text(
+        f"""
+        SELECT chunk_id, document_id, chunk_index, chunk_text, source_type,
+               similarity, doc_title, doc_category, doc_source, doc_date,
+               doc_project_id, doc_metadata, doc_created_at
+        FROM {rpc_name}(
+            CAST(:embedding AS halfvec),
+            CAST(:source_types AS text[]),
+            CAST(:project_id AS bigint),
+            CAST(:match_count AS integer),
+            CAST(:match_threshold AS double precision)
+        )
+        """
+    )
+
+    @with_db_retry
+    def _run() -> list[dict[str, Any]]:
+        eng = _engine()
+        with eng.connect() as conn:
+            result = conn.execute(
+                sql,
+                {
+                    "embedding": embedding,
+                    "source_types": source_types,
+                    "project_id": pid,
+                    "match_count": fetch_count,
+                    "match_threshold": _MATCH_THRESHOLD,
+                },
+            )
+            return [dict(r._mapping) for r in result]
+
+    rows = _run()
+
+    def keep(row: dict[str, Any]) -> bool:
+        d = row.get("doc_date")
+        if isinstance(d, datetime):
+            d_naive = d.replace(tzinfo=None)
+        elif isinstance(d, date):
+            d_naive = datetime.combine(d, datetime.min.time())
+        else:
+            d_naive = None
+        if df and (d_naive is None or d_naive < df.replace(tzinfo=None)):
+            return False
+        if dt and (d_naive is None or d_naive > dt.replace(tzinfo=None)):
+            return False
+        if version_status:
+            md = row.get("doc_metadata") or {}
+            if isinstance(md, dict):
+                if (md.get("version_status") or "").lower() != version_status.lower():
+                    return False
+            else:
+                return False
+        return True
+
+    filtered = [r for r in rows if keep(r)]
+
+    if do_rerank and filtered:
+        from .rerank import rerank_results
+
+        filtered = rerank_results(query, filtered, top_n=max_results)
+    else:
+        filtered = filtered[:max_results]
+
+    return filtered
+
+
+def _search(
+    query: str,
+    source_types: list[str] | None,
+    project_id: str | int | None,
+    date_from: str | None,
+    date_to: str | None,
+    version_status: str | None,
+    max_results: int,
+) -> str:
+    try:
+        rows = retrieve(
+            query=query,
+            source_types=source_types,
+            project_id=project_id,
+            date_from=date_from,
+            date_to=date_to,
+            version_status=version_status,
+            max_results=max_results,
+        )
+    except ValueError as exc:
+        return f"Error: {exc}."
+    except Exception as exc:  # noqa: BLE001
+        return f"Error executing retrieval: {exc}"
+    return _format_results(rows)
+
+
+@tool
+def search_meeting_transcripts(
+    query: str,
+    project_id: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    max_results: int = 8,
+) -> str:
+    """Search across meeting transcripts and meeting summaries.
+
+    Use this when the question is about what was discussed, decided, or raised in
+    meetings. Backed by pgvector cosine similarity over the embedded corpus.
+
+    Args:
+        query: Natural language search query.
+        project_id: Optional — restrict to a project (numeric ID).
+        date_from: Optional ISO date — restrict to meetings on/after this date.
+        date_to: Optional ISO date — restrict to meetings on/before this date.
+        max_results: Max passages to return (default 8).
+
+    Returns:
+        Markdown list of ranked passages: title, source, date, excerpt.
+    """
+    return _search(
+        query=query,
+        source_types=MEETING_SOURCE_TYPES,
+        project_id=project_id,
+        date_from=date_from,
+        date_to=date_to,
+        version_status=None,
+        max_results=max_results,
+    )
+
+
+@tool
+def list_recent_meetings(
+    project_id: str | None = None,
+    days_back: int = 30,
+    max_results: int = 10,
+) -> str:
+    """List the most recently ingested meetings, ordered by ingestion date.
+
+    Use this instead of `search_meeting_transcripts` when the question is about what
+    is happening *right now* — "this week", "recent OACs", "latest update",
+    "what happened last week" — whether portfolio-wide or for a single project.
+    Vector search ranks by topical similarity, not recency, and the upstream
+    ingestion reuses one `file_date` across every occurrence of a recurring
+    meeting series, so date-filtered semantic search misses the freshest
+    content. This tool pulls by ingestion date (`created_at`) directly,
+    bypassing both issues.
+
+    Args:
+        project_id: Optional — numeric project ID. Omit to list recent meetings
+            across the entire portfolio (use this for questions like "what
+            meetings happened last week" with no project named).
+        days_back: Look back this many days from today (default 30).
+        max_results: Max meetings to return (default 10).
+
+    Returns:
+        Markdown list of recent meetings: title, ingestion date, project ID
+        (when portfolio-wide), and summary excerpt. One row per meeting
+        occurrence (deduped by document_id).
+    """
+    if days_back <= 0 or max_results <= 0:
+        return "Error: days_back and max_results must be positive."
+
+    pid: int | None = None
+    if project_id not in (None, ""):
+        pid = _coerce_project_id(project_id)
+        if pid is None:
+            return "Error: project_id must be numeric when provided."
+
+    # Prefer summary chunks (richest content) over transcript chunks when both
+    # exist for a meeting. Within source_type, pick the lowest chunk_index so we
+    # get the opening of the transcript when no summary is available.
+    project_clause = "AND (metadata->>'project_id') = :project_id" if pid is not None else ""
+    order_sql = text(
+        f"""
+        SELECT * FROM (
+            SELECT DISTINCT ON (document_id)
+                document_id,
+                metadata->>'title' AS title,
+                metadata->>'project_id' AS project_id,
+                source_type,
+                text AS summary,
+                created_at AS ingested_at
+            FROM document_chunks
+            WHERE source_type IN (
+                    'meeting_summary',
+                    'meeting_segment_summary',
+                    'meeting_section',
+                    'meeting_transcript'
+                  )
+              {project_clause}
+              AND created_at >= NOW() - (:days_back || ' days')::interval
+            ORDER BY document_id,
+                     CASE source_type
+                       WHEN 'meeting_summary' THEN 1
+                       WHEN 'meeting_segment_summary' THEN 2
+                       WHEN 'meeting_section' THEN 3
+                       WHEN 'meeting_transcript' THEN 4
+                       ELSE 5
+                     END,
+                     chunk_index ASC
+        ) sub
+        ORDER BY ingested_at DESC
+        LIMIT :max_results
+        """
+    )
+
+    params: dict[str, Any] = {"days_back": days_back, "max_results": max_results}
+    if pid is not None:
+        params["project_id"] = str(pid)
+
+    @with_db_retry
+    def _run() -> list[dict[str, Any]]:
+        eng = _engine()
+        with eng.connect() as conn:
+            return [dict(r) for r in conn.execute(order_sql, params).mappings().all()]
+
+    rows = _run()
+
+    if not rows:
+        scope = f"for project {pid}" if pid is not None else "across the portfolio"
+        return f"_(no meetings ingested in the last {days_back} days {scope})_"
+
+    # Resolve project IDs → names so the output cites "Vermilion Rise" instead of
+    # "project 869". Lookup is best-effort: if it fails, fall back to the ID.
+    from .db import get_project_names
+
+    referenced: set[int] = set()
+    for r in rows:
+        raw = r.get("project_id")
+        if raw is None or raw == "":
+            continue
+        try:
+            referenced.add(int(raw))
+        except (TypeError, ValueError):
+            pass
+    project_names = get_project_names(list(referenced)) if referenced else {}
+
+    lines: list[str] = []
+    for i, r in enumerate(rows, start=1):
+        title = r["title"] or "(untitled)"
+        when = r["ingested_at"].date().isoformat() if r["ingested_at"] else ""
+        header = f"**{i}. {title}** — _{r['source_type']}_ · ingested {when}"
+        raw_pid = r.get("project_id")
+        if pid is None and raw_pid:
+            name = None
+            try:
+                name = project_names.get(int(raw_pid))
+            except (TypeError, ValueError):
+                pass
+            header += f" · {name}" if name else f" · project {raw_pid}"
+        lines.append(header)
+        lines.append(f"> {_excerpt(r['summary'], limit=500)}")
+        lines.append("")
+    return "\n".join(lines).rstrip()
+
+
+@tool
+def search_unstructured(
+    query: str,
+    source_types: list[str] | None = None,
+    project_id: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    version_status: str | None = None,
+    max_results: int = 8,
+) -> str:
+    """Search across the full unstructured corpus: emails, Teams, OneDrive docs, meetings.
+
+    Args:
+        query: Natural language search query.
+        source_types: Optional filter. Common values: "email", "teams_dm",
+            "teams_channel", "onedrive_document", "document", "meeting_transcript",
+            "meeting_summary", "meeting_segment_summary", "meeting_section",
+            "meeting_notes". Omit to search everything.
+        project_id: Optional — restrict to a project (numeric ID).
+        date_from: Optional ISO date — on/after.
+        date_to: Optional ISO date — on/before.
+        version_status: Optional — match `doc_metadata->>'version_status'`.
+        max_results: Max passages to return (default 8).
+
+    Returns:
+        Markdown list of ranked passages: title, source, date, excerpt.
+    """
+    return _search(
+        query=query,
+        source_types=source_types,
+        project_id=project_id,
+        date_from=date_from,
+        date_to=date_to,
+        version_status=version_status,
+        max_results=max_results,
+    )

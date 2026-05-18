@@ -24,6 +24,14 @@ from src.services.agents.deep_project_intelligence_contracts import (
     SourceCoverage,
     ToolTraceItem,
 )
+from src.services.agents.alleato_ai_tools import (
+    DRAFT_ACTION_TOOLS,
+    EXTERNAL_ACCOUNTING_TOOLS,
+    READ_ONLY_PM_TOOLS,
+    SQL_TOOLS,
+)
+from src.services.agents.alleato_ai_tools.prompts import ORCHESTRATOR_PROMPT
+from src.services.agents.alleato_ai_tools.subagents import ALL_SUBAGENTS
 from src.services.agents.pm_advisor_tools import (
     portfolio_overview,
     project_briefing_snapshot,
@@ -59,6 +67,42 @@ REQUIRED_EXECUTIVE_SOURCE_TYPES = (
 DEEP_AGENT_RUNTIME_MODE = "deep_agents"
 CONTRACT_SPIKE_MODE = "contract_spike"
 AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
+
+
+def _env_flag(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() == "true"
+
+
+def _standalone_tools_enabled() -> bool:
+    return _env_flag("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED")
+
+
+def _runtime_tools() -> list[Any]:
+    if not _standalone_tools_enabled():
+        return []
+
+    tools: list[Any] = list(READ_ONLY_PM_TOOLS)
+    if _env_flag("DEEP_AGENTS_SQL_TOOLS_ENABLED"):
+        tools.extend(SQL_TOOLS)
+    if _env_flag("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED"):
+        tools.extend(EXTERNAL_ACCOUNTING_TOOLS)
+    if _env_flag("DEEP_AGENTS_DRAFT_TOOLS_ENABLED"):
+        tools.extend(DRAFT_ACTION_TOOLS)
+    return tools
+
+
+def _runtime_subagents() -> list[dict[str, Any]]:
+    if not (_standalone_tools_enabled() and _env_flag("DEEP_AGENTS_SUBAGENTS_ENABLED")):
+        return []
+    return list(ALL_SUBAGENTS)
+
+
+def deep_agents_runtime_tool_names() -> tuple[str, ...]:
+    return tuple(getattr(tool, "name", getattr(tool, "__name__", "")) for tool in _runtime_tools())
+
+
+def deep_agents_runtime_subagent_names() -> tuple[str, ...]:
+    return tuple(subagent["name"] for subagent in _runtime_subagents())
 
 
 class _SourceProbe:
@@ -866,12 +910,18 @@ def _run_deep_agents_runtime(
                 pm_budget_summary,
                 pm_briefing_snapshot,
                 pm_risk_snapshot,
+                *_runtime_tools(),
             ],
             system_prompt=(
-                "You are an Alleato project intelligence orchestrator. Use the "
-                "provided coverage, evidence, and PM database tools as the factual basis. "
+                f"{ORCHESTRATOR_PROMPT}\n\n"
+                "Backend runtime scope: you are answering inside the Render FastAPI backend. "
+                "Use source_coverage plus the enabled Alleato PM, resolver, RAG/search, "
+                "recent-activity, SQL, Acumatica, draft-preview, and subagent tools as needed. "
+                "Draft tools, if enabled, only produce approval previews; never imply that a "
+                "write, email, Teams post, RFI, commitment, change event, or task was actually executed. "
                 "If sources are missing, say so plainly."
             ),
+            subagents=_runtime_subagents(),
         )
         result = agent.invoke(
             {"messages": [{"role": "user", "content": _deep_agent_prompt(request, project, sources, evidence)}]}
@@ -925,13 +975,17 @@ def _run_deep_agents_executive_runtime(
 
         agent = create_agent(
             model=model,
-            tools=[source_coverage, pm_portfolio_overview],
+            tools=[source_coverage, pm_portfolio_overview, *_runtime_tools()],
             system_prompt=(
-                "You are an Alleato executive intelligence orchestrator. Use the "
-                "provided coverage, evidence, and PM database tools as the factual basis. "
+                f"{ORCHESTRATOR_PROMPT}\n\n"
+                "Backend runtime scope: you are answering inside the Render FastAPI backend. "
+                "Use source_coverage plus the enabled Alleato PM, resolver, RAG/search, "
+                "recent-activity, SQL, Acumatica, draft-preview, and subagent tools as needed. "
                 "If sources are missing, stale, or failed, say so plainly. "
-                "Never claim an email, invite, task, or project mutation was completed."
+                "Draft tools, if enabled, only produce approval previews; never imply that an email, invite, "
+                "task, project mutation, Teams post, RFI, commitment, or change event was completed."
             ),
+            subagents=_runtime_subagents(),
         )
         result = agent.invoke(
             {"messages": [{"role": "user", "content": _deep_agent_executive_prompt(request, organization, sources, evidence)}]}
