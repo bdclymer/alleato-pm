@@ -128,22 +128,28 @@ export default function NewCommitmentPage() {
   ) => {
     if (!files.length) return;
 
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append("file", file);
-      const uploadResponse = await apiFetchRaw(
-        `/api/commitments/${commitmentId}/attachments`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
+    await Promise.all(
+      files.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("entityType", "commitment");
+        formData.append("entityId", commitmentId);
+        formData.append("projectId", String(projectId));
 
-      if (!uploadResponse.ok) {
-        const uploadError = await parseApiError(uploadResponse);
-        throw new Error(uploadError.error || "Failed to upload attachment");
-      }
-    }
+        const uploadResponse = await apiFetchRaw(
+          `/api/document-picker/upload`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+
+        if (!uploadResponse.ok) {
+          const uploadError = await parseApiError(uploadResponse);
+          throw new Error(uploadError.error || "Failed to upload attachment");
+        }
+      }),
+    );
   };
 
   const handleSubmitSubcontract = async (

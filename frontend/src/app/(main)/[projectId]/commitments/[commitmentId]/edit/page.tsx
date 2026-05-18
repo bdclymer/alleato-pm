@@ -48,11 +48,23 @@ export default function EditCommitmentPage() {
     const fetchAttachments = async () => {
       try {
         setAttachmentsLoading(true);
-        const payload = await apiFetch<{ data?: CommitmentAttachment[] }>(
-          `/api/commitments/${commitmentId}/attachments`,
+        const linked = await apiFetch<
+          Array<{
+            document_metadata_id: string;
+            title: string | null;
+            file_name: string | null;
+            source_size: number | null;
+          }>
+        >(
+          `/api/document-picker/linked?entityType=commitment&entityId=${encodeURIComponent(commitmentId)}`,
         ).catch(() => null);
         if (isMounted) {
-          setAttachments(payload?.data || []);
+          setAttachments(
+            (linked ?? []).map((doc) => ({
+              fileName: doc.title ?? doc.file_name ?? "Attachment",
+              fileSize: doc.source_size ?? 0,
+            })),
+          );
         }
       } catch {
         if (isMounted) setAttachments([]);
@@ -197,17 +209,19 @@ export default function EditCommitmentPage() {
   ) => {
     if (!files.length) return;
 
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append("file", file);
-      await apiFetch(
-        `/api/commitments/${targetCommitmentId}/attachments`,
-        {
+    await Promise.all(
+      files.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("entityType", "commitment");
+        formData.append("entityId", targetCommitmentId);
+        formData.append("projectId", String(projectId));
+        await apiFetch(`/api/document-picker/upload`, {
           method: "POST",
           body: formData,
-        },
-      );
-    }
+        });
+      }),
+    );
   };
 
   const handleSubmitSubcontract = async (
