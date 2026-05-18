@@ -83,6 +83,12 @@ function pushCodeWarnings(
   }
 }
 
+function isStructuralRowLabel(costCode: string, costType: string): boolean {
+  const label = costCode.trim().toLowerCase().replace(/[\s_-]+/g, "");
+  if (label === "total" || label === "subtotal") return true;
+  return !costType && !COST_CODE_PATTERN.test(costCode);
+}
+
 function parseGeneralConditions(workbook: WorkBook): {
   rows: EstimateWorkbookImportRow[];
   skippedRows: number;
@@ -108,7 +114,7 @@ function parseGeneralConditions(workbook: WorkBook): {
       continue;
     }
 
-    if (!costCode || costCode.toLowerCase() === "total") {
+    if (!costCode || isStructuralRowLabel(costCode, costType)) {
       skippedRows += 1;
       continue;
     }
@@ -173,7 +179,7 @@ function parseDetails(workbook: WorkBook): {
 
     if (
       !costCode ||
-      costCode.toLowerCase() === "total" ||
+      isStructuralRowLabel(costCode, costType) ||
       costCode.endsWith("-0000")
     ) {
       skippedRows += 1;

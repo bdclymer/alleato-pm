@@ -72,4 +72,40 @@ describe("parseAlleatoEstimateWorkbook", () => {
       'General Conditions row 4: Cost type "Not A Type" is not importable.',
     ]);
   });
+
+  it("skips subtotal and section-label rows instead of warning about cost-code format", () => {
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ["Alleato Prime Contract SOV Import Template"],
+        ["Fill rows below. Keep sheet names and column order unchanged."],
+        ["Cost Code", "Description", "Cost Type", "Budget Amount"],
+      ]),
+      "General Conditions",
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        [
+          "Cost Code",
+          "Cost Type",
+          "Description",
+          "Work Description",
+          "Budget Amount",
+        ],
+        ["01-6113", "Expense", "Software Licensing", "", 1500],
+        ["Subtotal", "", "", "", 1500],
+        ["Insurance", "", "", "", 0],
+      ]),
+      "Details",
+    );
+
+    const preview = parseAlleatoEstimateWorkbook(workbook);
+
+    expect(preview.warnings).toEqual([]);
+    expect(preview.rows.map((row) => row.costCode)).toEqual(["01-6113"]);
+    expect(preview.skippedRows).toBe(2);
+  });
 });
