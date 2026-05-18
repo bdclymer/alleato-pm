@@ -1,8 +1,14 @@
 import { z } from "zod";
 
-import { AI_CALL_POLICY, fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
+import {
+  AI_CALL_POLICY,
+  fetchWithGuardrails,
+} from "@/lib/fetch-with-guardrails";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import type { AssistantWidgetPayload, SourceEvidenceItem } from "@/lib/ai/assistant-widgets";
+import type {
+  AssistantWidgetPayload,
+  SourceEvidenceItem,
+} from "@/lib/ai/assistant-widgets";
 import type { AssistantIntent } from "@/lib/ai/intent-router";
 
 const WHERE = "ai-assistant.deep-agent-project-status";
@@ -221,7 +227,8 @@ export async function fetchDeepAgentProjectStatus(
         question: params.question,
         mode: "project_status_risk",
       }),
-      requestId: params.sessionId ?? `deep-agent-project-status-${params.projectId}`,
+      requestId:
+        params.sessionId ?? `deep-agent-project-status-${params.projectId}`,
       where: WHERE,
       dependency: "backend.deep-agent-project-status",
       timeoutMs: AI_CALL_POLICY.timeoutMs,
@@ -271,7 +278,9 @@ export function formatDeepAgentProjectStatusContext(
   packet: DeepProjectIntelligenceResponse,
 ): string {
   const sourceLines = packet.sourcesChecked.map((source) => {
-    const latest = source.latestSourceAt ? ` latest=${source.latestSourceAt}` : "";
+    const latest = source.latestSourceAt
+      ? ` latest=${source.latestSourceAt}`
+      : "";
     return `- ${source.sourceType}: ${source.status}, records=${source.recordCount}.${latest} ${source.notes}`;
   });
   const evidenceLines = packet.evidence.slice(0, 8).map((item) => {
@@ -296,10 +305,14 @@ export function formatDeepAgentProjectStatusContext(
     ...sourceLines,
     "",
     "Evidence:",
-    ...(evidenceLines.length > 0 ? evidenceLines : ["- No evidence rows were returned."]),
+    ...(evidenceLines.length > 0
+      ? evidenceLines
+      : ["- No evidence rows were returned."]),
     "",
     "Recommended actions:",
-    ...(actionLines.length > 0 ? actionLines : ["- No recommended actions were returned."]),
+    ...(actionLines.length > 0
+      ? actionLines
+      : ["- No recommended actions were returned."]),
     "",
     "Use this packet as checked backend context. Do not claim missing or failed source categories were available.",
   ].join("\n");
@@ -309,7 +322,9 @@ export function formatDeepAgentExecutiveBriefingContext(
   packet: DeepExecutiveIntelligenceResponse,
 ): string {
   const sourceLines = packet.sourcesChecked.map((source) => {
-    const latest = source.latestSourceAt ? ` latest=${source.latestSourceAt}` : "";
+    const latest = source.latestSourceAt
+      ? ` latest=${source.latestSourceAt}`
+      : "";
     return `- ${source.sourceType}: ${source.status}, records=${source.recordCount}.${latest} ${source.notes}`;
   });
   const evidenceLines = packet.evidence.slice(0, 10).map((item) => {
@@ -334,10 +349,14 @@ export function formatDeepAgentExecutiveBriefingContext(
     ...sourceLines,
     "",
     "Evidence:",
-    ...(evidenceLines.length > 0 ? evidenceLines : ["- No evidence rows were returned."]),
+    ...(evidenceLines.length > 0
+      ? evidenceLines
+      : ["- No evidence rows were returned."]),
     "",
     "Recommended actions:",
-    ...(actionLines.length > 0 ? actionLines : ["- No recommended actions were returned."]),
+    ...(actionLines.length > 0
+      ? actionLines
+      : ["- No recommended actions were returned."]),
     "",
     "Use this packet as checked business-wide backend context.",
     "Do not claim missing or failed source categories were available.",
@@ -357,12 +376,54 @@ export function shouldUseDeepAgentExecutiveDirectResponse(
   );
 }
 
+export function shouldUseDeepAgentProjectDirectResponse(
+  packet: DeepProjectIntelligenceResponse,
+): boolean {
+  return (
+    packet.mode === "deep_agents" &&
+    packet.answer.trim().length >= 80 &&
+    packet.toolTrace.some(
+      (item) => item.tool === "deepagents_runtime" && item.status === "success",
+    )
+  );
+}
+
+export function formatDeepAgentProjectDirectResponse(
+  packet: DeepProjectIntelligenceResponse,
+): string {
+  const answer = packet.answer.trim();
+  const sourceGaps = packet.sourcesChecked.filter(
+    (source) =>
+      source.status === "missing" ||
+      source.status === "failed" ||
+      source.status === "stale",
+  );
+
+  if (sourceGaps.length === 0) {
+    return answer;
+  }
+
+  const gapSummary = sourceGaps
+    .slice(0, 4)
+    .map((source) => `${source.sourceType}: ${source.status}`)
+    .join("; ");
+
+  return [
+    answer,
+    "",
+    `Source coverage note: ${gapSummary}. I did not use unavailable or stale source categories as factual support.`,
+  ].join("\n");
+}
+
 export function formatDeepAgentExecutiveDirectResponse(
   packet: DeepExecutiveIntelligenceResponse,
 ): string {
   const answer = packet.answer.trim();
   const sourceGaps = packet.sourcesChecked.filter(
-    (source) => source.status === "missing" || source.status === "failed" || source.status === "stale",
+    (source) =>
+      source.status === "missing" ||
+      source.status === "failed" ||
+      source.status === "stale",
   );
 
   if (sourceGaps.length === 0) {
@@ -419,14 +480,16 @@ export function buildDeepAgentSourceEvidenceWidget(
     type: "source_evidence_drawer",
     id: "deep-agent-project-status-evidence",
     title: `${packet.project.name} source coverage`,
-    sources: packet.evidence.slice(0, 8).map((item): SourceEvidenceItem => ({
-      id: item.sourceId,
-      title: item.title,
-      sourceType: mapSourceType(item.sourceType),
-      date: item.occurredAt ?? undefined,
-      snippet: item.excerpt,
-      confidence: item.confidence,
-    })),
+    sources: packet.evidence.slice(0, 8).map(
+      (item): SourceEvidenceItem => ({
+        id: item.sourceId,
+        title: item.title,
+        sourceType: mapSourceType(item.sourceType),
+        date: item.occurredAt ?? undefined,
+        snippet: item.excerpt,
+        confidence: item.confidence,
+      }),
+    ),
   };
 }
 
@@ -439,13 +502,15 @@ export function buildDeepAgentExecutiveEvidenceWidget(
     type: "source_evidence_drawer",
     id: "deep-agent-executive-briefing-evidence",
     title: `${packet.organization.name} source coverage`,
-    sources: packet.evidence.slice(0, 10).map((item): SourceEvidenceItem => ({
-      id: item.sourceId,
-      title: item.title,
-      sourceType: mapSourceType(item.sourceType),
-      date: item.occurredAt ?? undefined,
-      snippet: item.excerpt,
-      confidence: item.confidence,
-    })),
+    sources: packet.evidence.slice(0, 10).map(
+      (item): SourceEvidenceItem => ({
+        id: item.sourceId,
+        title: item.title,
+        sourceType: mapSourceType(item.sourceType),
+        date: item.occurredAt ?? undefined,
+        snippet: item.excerpt,
+        confidence: item.confidence,
+      }),
+    ),
   };
 }

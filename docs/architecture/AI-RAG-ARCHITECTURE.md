@@ -26,6 +26,16 @@ Chat UI — frontend/src/app/(chat)/ai-assistant/
 Chat API Route — frontend/src/app/api/ai-assistant/chat/route.ts
     │
     ▼
+Chat Handler v2 — frontend/src/app/api/ai-assistant/chat/handler-v2.ts
+    │  (read-heavy project/executive prompts can direct-return Render Deep Agents)
+    │
+    ├──[project status / budget / risk + selected project]──► Render backend
+    │                                                          /api/intelligence/deep-agent/project-status
+    │
+    ├──[executive briefing without selected project]─────────► Render backend
+    │                                                          /api/intelligence/deep-agent/executive-briefing
+    │
+    ▼
 Orchestrator — frontend/src/lib/ai/orchestrator.ts
     │  (Strategist system prompt + routing)
     │
@@ -59,7 +69,7 @@ Supabase (PostgreSQL + pgvector)
 | Phase | Name | Status | What's Built |
 |-------|------|--------|--------------|
 | 1 | Data Foundation | **Complete** | RAG assistant, 28+ tools, C-Suite architecture (Strategist + CFO live), document ingestion pipeline (PDF/DOCX + Azure OCR for scanned PDFs), Acumatica ERP integration (9 tools), company knowledge base, vector embeddings (109K+ chunks in AI Database), chat persistence, guardrails, daily digest, intelligence packet compiler, contextual retrieval pilot (added 2026-05-17) |
-| 2 | Proactive Intelligence | **In progress** | Intelligence packets (86 per project, cron-refreshed), executive daily briefing (cron-delivered), insight cards (6,900+ rows), packet card feedback, deep-agents bridge (gated behind feature flag) |
+| 2 | Proactive Intelligence | **In progress** | Intelligence packets (86 per project, cron-refreshed), executive daily briefing (cron-delivered), insight cards (6,900+ rows), packet card feedback, Render-backed Deep Agents bridge for read-heavy project/executive AI assistant answers |
 | 3 | Workflow Automation | Not started | Auto-classify documents on upload, AI-generated status reports, smart form templates (pre-fill RFIs, change order descriptions) |
 | 4 | Strategic Advisory | Not started | Project completion probability models, budget overrun prediction, cross-project pattern recognition, competitive benchmarking |
 
@@ -72,6 +82,8 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | File | Purpose |
 |------|---------|
 | `frontend/src/app/api/ai-assistant/chat/route.ts` | Primary chat API route. All user messages enter here. Calls orchestrator, streams response, persists to `chat_history`. |
+| `frontend/src/app/api/ai-assistant/chat/handler-v2.ts` | Current `/ai-assistant` server handler. Plans retrieval, persists chat history, and, when `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, direct-returns successful Render Deep Agents project/executive packets before falling back to local AI SDK synthesis. |
+| `frontend/src/lib/ai/deep-agent-project-status.ts` | Typed server-side bridge to Render backend Deep Agents endpoints. Owns env gating, request schemas, source-evidence widgets, and direct-response eligibility for project/executive packets. |
 | `frontend/src/lib/ai/orchestrator.ts` | Registers the agent registry, constructs Strategist tool set, executes sub-agent calls via `ToolLoopAgent`. Adding a new agent: add config here + add `consultXxx` tool + add name to `agents/types.ts`. |
 | `frontend/src/lib/ai/agents/strategist.ts` | Strategist system prompt — routing rules, synthesis instructions, which tool to call for which question. |
 | `frontend/src/lib/ai/agents/cfo.ts` | CFO system prompt — financial expertise, personality, CFO-specific tool usage instructions. |

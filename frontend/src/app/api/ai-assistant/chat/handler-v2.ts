@@ -18,6 +18,18 @@ import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { getLanguageModel } from "@/lib/ai/providers";
 import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
 import {
+  buildDeepAgentExecutiveEvidenceWidget,
+  buildDeepAgentSourceEvidenceWidget,
+  fetchDeepAgentExecutiveBriefing,
+  fetchDeepAgentProjectStatus,
+  formatDeepAgentExecutiveDirectResponse,
+  formatDeepAgentProjectDirectResponse,
+  shouldUseDeepAgentExecutiveBridge,
+  shouldUseDeepAgentExecutiveDirectResponse,
+  shouldUseDeepAgentProjectDirectResponse,
+  shouldUseDeepAgentProjectStatusBridge,
+} from "@/lib/ai/deep-agent-project-status";
+import {
   createWeeklyMarketingContentWorkflow,
   type CmoWeeklyContentWorkflowResult,
 } from "@/lib/ai/services/marketing-service";
@@ -51,7 +63,7 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
   if (!Array.isArray(parts)) return "";
   return parts
     .filter((p) => (p as { type?: string }).type === "text")
-    .map((p) => ((p as { text?: string }).text ?? ""))
+    .map((p) => (p as { text?: string }).text ?? "")
     .join(" ");
 }
 
@@ -126,7 +138,9 @@ function isCmoWeeklyContentWorkflowRequest(message: string): boolean {
 
 function isGeneratedTasksTodayRequest(message: string): boolean {
   const normalized = message.toLowerCase();
-  const mentionsTasks = /\b(tasks?|to-?dos?|action items?|follow-?ups?)\b/.test(normalized);
+  const mentionsTasks = /\b(tasks?|to-?dos?|action items?|follow-?ups?)\b/.test(
+    normalized,
+  );
   const asksGenerated =
     /\b(generated|created|added|made|logged|entered)\b/.test(normalized) ||
     normalized.includes("new tasks");
@@ -141,7 +155,8 @@ function getEasternDateString(date = new Date()): string {
     month: "2-digit",
     day: "2-digit",
   }).formatToParts(date);
-  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
@@ -151,7 +166,8 @@ function getEasternOffset(date: Date): string {
     timeZoneName: "shortOffset",
     hour: "2-digit",
   }).formatToParts(date);
-  const value = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT-05";
+  const value =
+    parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT-05";
   const match = value.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
   if (!match) return "-05:00";
   const sign = match[1];
@@ -209,7 +225,9 @@ function formatShortDate(value?: string | null): string | null {
   }).format(date);
 }
 
-function buildTaskHref(item: Pick<GeneratedTaskSummaryItem, "id" | "projectId">): string {
+function buildTaskHref(
+  item: Pick<GeneratedTaskSummaryItem, "id" | "projectId">,
+): string {
   const base = item.projectId ? `/${item.projectId}/tasks` : "/tasks";
   return `${base}?task=${encodeURIComponent(item.id)}`;
 }
@@ -244,7 +262,8 @@ function createGeneratedTasksTodayAnswer(params: {
       projectId,
       projectName: asString(project.name),
       sourceTitle: asString(metadata.title) ?? asString(row.file_name),
-      sourceSystem: asString(row.source_system) ?? asString(metadata.source_system),
+      sourceSystem:
+        asString(row.source_system) ?? asString(metadata.source_system),
       sourceDate:
         asString(metadata.date) ??
         asString(metadata.captured_at) ??
@@ -265,12 +284,18 @@ function createGeneratedTasksTodayAnswer(params: {
   if (allItems.length === 0) {
     lines.push("No task rows were created today in the Tasks table.");
   } else {
-    lines.push(`Found ${allItems.length} task${allItems.length === 1 ? "" : "s"} generated today.`);
+    lines.push(
+      `Found ${allItems.length} task${allItems.length === 1 ? "" : "s"} generated today.`,
+    );
     lines.push(
       ...allItems.slice(0, 12).map((item) => {
         const owner = item.assigneeName ? ` | Owner: ${item.assigneeName}` : "";
-        const project = item.projectName ? ` | Project: ${item.projectName}` : "";
-        const due = item.dueDate ? ` | Due: ${formatShortDate(item.dueDate)}` : "";
+        const project = item.projectName
+          ? ` | Project: ${item.projectName}`
+          : "";
+        const due = item.dueDate
+          ? ` | Due: ${formatShortDate(item.dueDate)}`
+          : "";
         const source = item.sourceTitle ? ` | Source: ${item.sourceTitle}` : "";
         return `- **${item.title}**${project}${owner}${due}${source}`;
       }),
@@ -314,7 +339,8 @@ async function loadGeneratedTasksTodayAnswer(params: {
   const range = easternDayRange();
   let query = params.supabase
     .from("tasks")
-    .select(`
+    .select(
+      `
       id,
       title,
       description,
@@ -337,7 +363,8 @@ async function loadGeneratedTasksTodayAnswer(params: {
         created_at,
         project_id
       )
-    `)
+    `,
+    )
     .gte("created_at", range.startIso)
     .lt("created_at", range.endIso)
     .order("created_at", { ascending: false })
@@ -390,7 +417,9 @@ function formatCmoWeeklyContentWorkflowResponse(
 }
 
 function writeTextResponse(
-  writer: Parameters<Parameters<typeof createUIMessageStream>[0]["execute"]>[0]["writer"],
+  writer: Parameters<
+    Parameters<typeof createUIMessageStream>[0]["execute"]
+  >[0]["writer"],
   id: string,
   content: string,
 ) {
@@ -399,9 +428,27 @@ function writeTextResponse(
   writer.write({ type: "text-end", id });
 }
 
+function summarizeDeepAgentSourceCoverage(
+  sourcesChecked: Array<{
+    sourceType: string;
+    status: string;
+    recordCount: number;
+  }>,
+): Record<string, unknown>[] {
+  return sourcesChecked.map((source) => ({
+    sourceType: source.sourceType,
+    status: source.status,
+    recordCount: source.recordCount,
+  }));
+}
+
 async function runChatV2(args: HandlerArgs): Promise<Response> {
-  const lastUserMessage = [...args.messages].reverse().find((m) => m.role === "user");
-  const lastUserContent = lastUserMessage ? extractTextFromParts(lastUserMessage.parts) : "";
+  const lastUserMessage = [...args.messages]
+    .reverse()
+    .find((m) => m.role === "user");
+  const lastUserContent = lastUserMessage
+    ? extractTextFromParts(lastUserMessage.parts)
+    : "";
   let responseAlreadyPersisted = false;
   let finishMetadata: {
     finishReason?: string;
@@ -466,7 +513,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             data: { widget: answer.widget },
           };
           writer.write(dataPart as never);
-          writeTextResponse(writer, "strategist-generated-tasks-today-v2", answer.content);
+          writeTextResponse(
+            writer,
+            "strategist-generated-tasks-today-v2",
+            answer.content,
+          );
 
           await args.supabase.from("chat_history").insert({
             session_id: args.sessionId,
@@ -510,7 +561,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
           const content = `I tried to check the Tasks page source of truth, but the task-table lookup failed: ${detail}`;
-          writeTextResponse(writer, "strategist-generated-tasks-today-error-v2", content);
+          writeTextResponse(
+            writer,
+            "strategist-generated-tasks-today-error-v2",
+            content,
+          );
           writer.write({
             type: "data-status",
             id: "strategist-status",
@@ -592,8 +647,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 output: {
                   weekStartDate: workflowResult.weekStartDate,
                   sourceCandidateCount: workflowResult.sourceCandidates.length,
-                  intelligenceItemIds: workflowResult.intelligenceItems.map((item) => item.id),
-                  calendarItemIds: workflowResult.calendarItems.map((item) => item.id),
+                  intelligenceItemIds: workflowResult.intelligenceItems.map(
+                    (item) => item.id,
+                  ),
+                  calendarItemIds: workflowResult.calendarItems.map(
+                    (item) => item.id,
+                  ),
                   assetIds: workflowResult.assets.map((asset) => asset.id),
                   reviewHref: workflowResult.reviewHref,
                 },
@@ -636,7 +695,316 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         });
 
         if (error) {
-          throw new Error(`Persisting the user message failed: ${error.message}`);
+          throw new Error(
+            `Persisting the user message failed: ${error.message}`,
+          );
+        }
+      }
+
+      if (
+        shouldUseDeepAgentProjectStatusBridge({
+          intent: plan.intent,
+          selectedProjectId: args.selectedProjectId ?? null,
+        }) &&
+        typeof args.selectedProjectId === "number"
+      ) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "backend-deep-agents",
+            message: "Checking Render Deep Agents project intelligence",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        try {
+          const packet = await fetchDeepAgentProjectStatus({
+            userId: args.user.id,
+            projectId: args.selectedProjectId,
+            sessionId: args.sessionId,
+            question: lastUserContent,
+          });
+
+          if (shouldUseDeepAgentProjectDirectResponse(packet)) {
+            const content = formatDeepAgentProjectDirectResponse(packet);
+            const widget = buildDeepAgentSourceEvidenceWidget(packet);
+            const dataParts = widget
+              ? [
+                  {
+                    type: "data-assistant-widget",
+                    id: "assistant-widget-deep-agent-project-status",
+                    data: { widget },
+                  },
+                ]
+              : [];
+
+            dataParts.forEach((dataPart) => writer.write(dataPart as never));
+            writeTextResponse(
+              writer,
+              "strategist-deep-agent-project-status",
+              content,
+            );
+
+            const { error: assistantError } = await args.supabase
+              .from("chat_history")
+              .insert({
+                session_id: args.sessionId,
+                user_id: args.user.id,
+                role: "assistant",
+                content,
+                metadata: {
+                  architecture: "render-backend-deep-agents-v1",
+                  model:
+                    process.env.DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL ?? null,
+                  provider_path: "render-backend-ai-gateway",
+                  backend_deep_agent: {
+                    endpoint: "project-status",
+                    mode: packet.mode,
+                    orchestrator: packet.orchestrator,
+                    confidence: packet.confidence,
+                    project: packet.project,
+                    source_coverage: summarizeDeepAgentSourceCoverage(
+                      packet.sourcesChecked,
+                    ),
+                    recommended_action_count: packet.recommendedActions.length,
+                    evidence_count: packet.evidence.length,
+                  },
+                  retrieval_plan: {
+                    intent: plan.intent,
+                    reason: plan.reason,
+                    responseFormat: plan.responseFormat,
+                    sources: Object.keys(plan.sources),
+                  },
+                  tool_trace: packet.toolTrace.map((trace) => ({
+                    tool: trace.tool,
+                    agent: trace.agent,
+                    status: trace.status,
+                    durationMs: trace.durationMs,
+                    detail: trace.detail,
+                    input: {
+                      message: lastUserContent.slice(0, 240),
+                      selectedProjectId: args.selectedProjectId,
+                    },
+                    timestamp: new Date().toISOString(),
+                  })),
+                  data_parts: dataParts,
+                } as Json,
+              });
+
+            if (assistantError) {
+              throw new Error(
+                `Persisting the Deep Agents project response failed: ${assistantError.message}`,
+              );
+            }
+
+            const { error: conversationError } = await args.supabase
+              .from("conversations")
+              .update({ last_message_at: new Date().toISOString() })
+              .eq("session_id", args.sessionId)
+              .eq("user_id", args.user.id);
+
+            if (conversationError) {
+              throw new Error(
+                `Updating the Deep Agents project conversation failed: ${conversationError.message}`,
+              );
+            }
+
+            responseAlreadyPersisted = true;
+            writer.write({
+              type: "data-status",
+              id: "strategist-status",
+              data: {
+                stage: "complete",
+                message: "Render Deep Agents project answer returned",
+                status: "success",
+                timestamp: new Date().toISOString(),
+              },
+            } as never);
+            return;
+          }
+
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message:
+                "Render Deep Agents returned context but not a direct answer; using local synthesis",
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          console.error("[handler-v2] Deep Agents project bridge failed", {
+            message: detail,
+            selectedProjectId: args.selectedProjectId,
+            intent: plan.intent,
+          });
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message: `Render Deep Agents project bridge failed; falling back to local retrieval: ${detail}`,
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        }
+      }
+
+      if (
+        shouldUseDeepAgentExecutiveBridge({
+          intent: plan.intent,
+          selectedProjectId: args.selectedProjectId ?? null,
+        })
+      ) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "backend-deep-agents",
+            message: "Checking Render Deep Agents executive briefing",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        try {
+          const packet = await fetchDeepAgentExecutiveBriefing({
+            userId: args.user.id,
+            sessionId: args.sessionId,
+            question: lastUserContent,
+          });
+
+          if (shouldUseDeepAgentExecutiveDirectResponse(packet)) {
+            const content = formatDeepAgentExecutiveDirectResponse(packet);
+            const widget = buildDeepAgentExecutiveEvidenceWidget(packet);
+            const dataParts = widget
+              ? [
+                  {
+                    type: "data-assistant-widget",
+                    id: "assistant-widget-deep-agent-executive-briefing",
+                    data: { widget },
+                  },
+                ]
+              : [];
+
+            dataParts.forEach((dataPart) => writer.write(dataPart as never));
+            writeTextResponse(
+              writer,
+              "strategist-deep-agent-executive-briefing",
+              content,
+            );
+
+            const { error: assistantError } = await args.supabase
+              .from("chat_history")
+              .insert({
+                session_id: args.sessionId,
+                user_id: args.user.id,
+                role: "assistant",
+                content,
+                metadata: {
+                  architecture: "render-backend-deep-agents-v1",
+                  model:
+                    process.env.DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL ?? null,
+                  provider_path: "render-backend-ai-gateway",
+                  backend_deep_agent: {
+                    endpoint: "executive-briefing",
+                    mode: packet.mode,
+                    orchestrator: packet.orchestrator,
+                    confidence: packet.confidence,
+                    organization: packet.organization,
+                    source_coverage: summarizeDeepAgentSourceCoverage(
+                      packet.sourcesChecked,
+                    ),
+                    recommended_action_count: packet.recommendedActions.length,
+                    evidence_count: packet.evidence.length,
+                  },
+                  retrieval_plan: {
+                    intent: plan.intent,
+                    reason: plan.reason,
+                    responseFormat: plan.responseFormat,
+                    sources: Object.keys(plan.sources),
+                  },
+                  tool_trace: packet.toolTrace.map((trace) => ({
+                    tool: trace.tool,
+                    agent: trace.agent,
+                    status: trace.status,
+                    durationMs: trace.durationMs,
+                    detail: trace.detail,
+                    input: {
+                      message: lastUserContent.slice(0, 240),
+                      selectedProjectId: args.selectedProjectId ?? null,
+                    },
+                    timestamp: new Date().toISOString(),
+                  })),
+                  data_parts: dataParts,
+                } as Json,
+              });
+
+            if (assistantError) {
+              throw new Error(
+                `Persisting the Deep Agents executive response failed: ${assistantError.message}`,
+              );
+            }
+
+            const { error: conversationError } = await args.supabase
+              .from("conversations")
+              .update({ last_message_at: new Date().toISOString() })
+              .eq("session_id", args.sessionId)
+              .eq("user_id", args.user.id);
+
+            if (conversationError) {
+              throw new Error(
+                `Updating the Deep Agents executive conversation failed: ${conversationError.message}`,
+              );
+            }
+
+            responseAlreadyPersisted = true;
+            writer.write({
+              type: "data-status",
+              id: "strategist-status",
+              data: {
+                stage: "complete",
+                message: "Render Deep Agents executive answer returned",
+                status: "success",
+                timestamp: new Date().toISOString(),
+              },
+            } as never);
+            return;
+          }
+
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message:
+                "Render Deep Agents returned executive context but not a direct answer; using local synthesis",
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          console.error("[handler-v2] Deep Agents executive bridge failed", {
+            message: detail,
+            intent: plan.intent,
+          });
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message: `Render Deep Agents executive bridge failed; falling back to local retrieval: ${detail}`,
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
         }
       }
 
@@ -669,7 +1037,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         },
       } as never);
 
-      const systemPrompt = assembleSystemPromptFromContext(plan, retrievalCtx, baseSystemPrompt);
+      const systemPrompt = assembleSystemPromptFromContext(
+        plan,
+        retrievalCtx,
+        baseSystemPrompt,
+      );
 
       const tools = createStrategistTools(args.user.id, {
         pinnedProjectId: args.selectedProjectId,
@@ -694,15 +1066,19 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       const modelMessages = await convertToModelMessages(args.messages);
-      const lastModelUserMessage = modelMessages.findLast((m) => m.role === "user");
+      const lastModelUserMessage = modelMessages.findLast(
+        (m) => m.role === "user",
+      );
       const inputText = lastModelUserMessage
-        ? (lastModelUserMessage.content as { text?: string }[] | string | undefined)
-          && typeof lastModelUserMessage.content === "string"
+        ? (lastModelUserMessage.content as
+            | { text?: string }[]
+            | string
+            | undefined) && typeof lastModelUserMessage.content === "string"
           ? lastModelUserMessage.content
-          : (lastModelUserMessage.content as { type: string; text?: string }[])
+          : ((lastModelUserMessage.content as { type: string; text?: string }[])
               ?.filter((p) => p.type === "text")
               .map((p) => p.text ?? "")
-              .join(" ") ?? ""
+              .join(" ") ?? "")
         : "";
 
       const result = streamText({
@@ -719,7 +1095,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         onError: ({ error }) => {
           console.error("[handler-v2] streamText onError", {
             message: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack?.split("\n").slice(0, 5).join("\n") : undefined,
+            stack:
+              error instanceof Error
+                ? error.stack?.split("\n").slice(0, 5).join("\n")
+                : undefined,
           });
         },
         onFinish: ({ finishReason, totalUsage, text, toolCalls, steps }) => {
@@ -746,35 +1125,41 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             tool_calls: toolCallNames,
             step_count: steps?.length ?? 0,
           });
-          waitUntil(traceChatCompletion({
-            userId: args.user.id,
-            sessionId: args.sessionId,
-            modelId: args.activeModel,
-            input: inputText,
-            output: text ?? "",
-            usage: {
-              inputTokens: totalUsage.inputTokens,
-              outputTokens: totalUsage.outputTokens,
-            },
-            toolCallNames,
-            stepCount: steps?.length ?? toolCallNames.length,
-            intent: plan.intent,
-            metadata: {
-              planReason: plan.reason,
-              responseFormat: plan.responseFormat,
-              retrievalSources: Object.keys(plan.sources),
-              retrievalWarnings: retrievalCtx.warnings.map((w) => `${w.source}: ${w.message}`),
-              retrievalDurationsMs: retrievalCtx.durationsMs,
-              hasIntelligencePacket: Boolean(retrievalCtx.intelligencePacket),
-              hasProjectSnapshot: Boolean(retrievalCtx.projectSnapshot),
-              hasSemanticResults: Boolean(retrievalCtx.semanticVectorResults),
-              selectedProjectId: args.selectedProjectId ?? null,
-            },
-          }));
+          waitUntil(
+            traceChatCompletion({
+              userId: args.user.id,
+              sessionId: args.sessionId,
+              modelId: args.activeModel,
+              input: inputText,
+              output: text ?? "",
+              usage: {
+                inputTokens: totalUsage.inputTokens,
+                outputTokens: totalUsage.outputTokens,
+              },
+              toolCallNames,
+              stepCount: steps?.length ?? toolCallNames.length,
+              intent: plan.intent,
+              metadata: {
+                planReason: plan.reason,
+                responseFormat: plan.responseFormat,
+                retrievalSources: Object.keys(plan.sources),
+                retrievalWarnings: retrievalCtx.warnings.map(
+                  (w) => `${w.source}: ${w.message}`,
+                ),
+                retrievalDurationsMs: retrievalCtx.durationsMs,
+                hasIntelligencePacket: Boolean(retrievalCtx.intelligencePacket),
+                hasProjectSnapshot: Boolean(retrievalCtx.projectSnapshot),
+                hasSemanticResults: Boolean(retrievalCtx.semanticVectorResults),
+                selectedProjectId: args.selectedProjectId ?? null,
+              },
+            }),
+          );
         },
       });
 
-      writer.merge(result.toUIMessageStream({ originalMessages: args.messages }));
+      writer.merge(
+        result.toUIMessageStream({ originalMessages: args.messages }),
+      );
     },
     onFinish: async ({ responseMessage, finishReason }) => {
       if (responseAlreadyPersisted) return;
@@ -824,7 +1209,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       });
 
       if (error) {
-        throw new Error(`Persisting the assistant response failed: ${error.message}`);
+        throw new Error(
+          `Persisting the assistant response failed: ${error.message}`,
+        );
       }
 
       const { error: conversationError } = await args.supabase
@@ -834,7 +1221,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         .eq("user_id", args.user.id);
 
       if (conversationError) {
-        throw new Error(`Updating the assistant conversation failed: ${conversationError.message}`);
+        throw new Error(
+          `Updating the assistant conversation failed: ${conversationError.message}`,
+        );
       }
     },
   });
@@ -842,7 +1231,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
   return createUIMessageStreamResponse({ stream });
 }
 
-export async function handleChatV2({ request }: { request: Request }): Promise<Response> {
+export async function handleChatV2({
+  request,
+}: {
+  request: Request;
+}): Promise<Response> {
   const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({
@@ -854,7 +1247,12 @@ export async function handleChatV2({ request }: { request: Request }): Promise<R
   }
 
   const body = await request.json();
-  const { id: sessionId, messages, selectedProjectId, selectedModel } = body as {
+  const {
+    id: sessionId,
+    messages,
+    selectedProjectId,
+    selectedModel,
+  } = body as {
     id: string;
     messages: UIMessage[];
     selectedProjectId?: number;
@@ -862,7 +1260,9 @@ export async function handleChatV2({ request }: { request: Request }): Promise<R
   };
 
   if (!sessionId || !messages?.length) {
-    return new Response("session id and messages are required", { status: 400 });
+    return new Response("session id and messages are required", {
+      status: 400,
+    });
   }
 
   const activeModel = isAiAssistantModelId(selectedModel)

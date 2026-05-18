@@ -5,9 +5,11 @@ import {
   fetchDeepAgentProjectStatus,
   formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentExecutiveBriefingContext,
+  formatDeepAgentProjectDirectResponse,
   formatDeepAgentProjectStatusContext,
   shouldUseDeepAgentExecutiveDirectResponse,
   shouldUseDeepAgentExecutiveBridge,
+  shouldUseDeepAgentProjectDirectResponse,
   shouldUseDeepAgentProjectStatusBridge,
   type DeepExecutiveIntelligenceResponse,
   type DeepProjectIntelligenceResponse,
@@ -16,7 +18,8 @@ import {
 const originalEnv = process.env;
 
 const packet: DeepProjectIntelligenceResponse = {
-  answer: "Owner decisions are pending and schedule source coverage is missing.",
+  answer:
+    "Owner decisions are pending and schedule source coverage is missing.",
   confidence: "medium",
   intent: "project_status_risk",
   project: {
@@ -63,7 +66,8 @@ const packet: DeepProjectIntelligenceResponse = {
       tool: "deepagents_runtime",
       status: "success",
       durationMs: 42,
-      detail: "Deep Agents runtime produced a synthesis from checked source coverage.",
+      detail:
+        "Deep Agents runtime produced a synthesis from checked source coverage.",
     },
   ],
   memoryCandidates: [],
@@ -119,7 +123,8 @@ const executivePacket: DeepExecutiveIntelligenceResponse = {
       tool: "deepagents_runtime",
       status: "success",
       durationMs: 42,
-      detail: "Deep Agents runtime produced an executive synthesis from checked source coverage.",
+      detail:
+        "Deep Agents runtime produced an executive synthesis from checked source coverage.",
     },
   ],
   memoryCandidates: [],
@@ -222,7 +227,9 @@ describe("Deep Agents project-status bridge", () => {
     expect(context).toContain("Backend Deep Agents Project Status Packet");
     expect(context).toContain("Mode: deep_agents");
     expect(context).toContain("- schedule: missing, records=0.");
-    expect(context).toContain("Do not claim missing or failed source categories were available.");
+    expect(context).toContain(
+      "Do not claim missing or failed source categories were available.",
+    );
   });
 
   it("turns backend packet evidence into an existing source evidence widget", () => {
@@ -250,7 +257,9 @@ describe("Deep Agents project-status bridge", () => {
     expect(context).toContain("Backend Deep Agents Executive Briefing Packet");
     expect(context).toContain("Mode: deep_agents");
     expect(context).toContain("- emails: missing, records=0.");
-    expect(context).toContain("Do not claim email, calendar, task, or project writes were completed");
+    expect(context).toContain(
+      "Do not claim email, calendar, task, or project writes were completed",
+    );
   });
 
   it("turns executive backend packet evidence into an existing source evidence widget", () => {
@@ -273,7 +282,9 @@ describe("Deep Agents project-status bridge", () => {
   });
 
   it("allows direct executive responses only for successful Deep Agents runtime packets", () => {
-    expect(shouldUseDeepAgentExecutiveDirectResponse(executivePacket)).toBe(true);
+    expect(shouldUseDeepAgentExecutiveDirectResponse(executivePacket)).toBe(
+      true,
+    );
 
     expect(
       shouldUseDeepAgentExecutiveDirectResponse({
@@ -303,7 +314,45 @@ describe("Deep Agents project-status bridge", () => {
 
     expect(content).toContain("The business has two urgent follow-ups");
     expect(content).toContain("Source coverage note: emails: missing");
-    expect(content).toContain("I did not use unavailable or stale source categories");
+    expect(content).toContain(
+      "I did not use unavailable or stale source categories",
+    );
+  });
+
+  it("allows direct project responses only for successful Deep Agents runtime packets", () => {
+    expect(shouldUseDeepAgentProjectDirectResponse(packet)).toBe(false);
+    expect(
+      shouldUseDeepAgentProjectDirectResponse({
+        ...packet,
+        answer:
+          "Westfield Collective has checked project intelligence, a current budget position, and a missing schedule source. Use the checked packet and budget summary for the answer.",
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldUseDeepAgentProjectDirectResponse({
+        ...packet,
+        answer:
+          "Westfield Collective has checked project intelligence, a current budget position, and a missing schedule source. Use the checked packet and budget summary for the answer.",
+        mode: "contract_spike",
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps direct project responses source-gap aware", () => {
+    const content = formatDeepAgentProjectDirectResponse({
+      ...packet,
+      answer:
+        "Westfield Collective has checked project intelligence, a current budget position, and a missing schedule source. Use the checked packet and budget summary for the answer.",
+    });
+
+    expect(content).toContain(
+      "Westfield Collective has checked project intelligence",
+    );
+    expect(content).toContain("Source coverage note: schedule: missing");
+    expect(content).toContain(
+      "I did not use unavailable or stale source categories",
+    );
   });
 
   it("posts the typed request to the backend Deep Agents endpoint", async () => {
