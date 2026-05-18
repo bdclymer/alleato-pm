@@ -96,33 +96,28 @@ export async function writeMemory(
   const supabase = createServiceClient();
 
   try {
-    const embeddingVec = await embed(params.content);
-    const embeddingJson = JSON.stringify(embeddingVec);
-
-    // --- Deduplication ---
-    const { data: dupRows, error: dupError } = await supabase.rpc("find_duplicate_memory", {
-      query_embedding: embeddingJson,
-      p_user_id: params.userId,
-      p_type: params.type,
-      similarity_threshold: 0.88,
-    });
-
-    if (dupError) {
-      return { error: `Duplicate memory check failed: ${dupError.message}` };
-    }
+    // DO NOT write embedding to ai_memories in PM APP.
+    // The HNSW index on ai_memories.embedding (m=32, ef_construction=200) causes
+    // OOM crash loops under concurrent inserts. Embeddings for memory search belong
+    // in the AI Database (fqcvmfqldlewvbsuxdvz) via document_chunks.
+    //
+    // Deduplication falls back to exact content match (no vector RPC).
+    const { data: dupRows } = await supabase
+      .from("ai_memories")
+      .select("id, importance")
+      .eq("user_id", params.userId)
+      .eq("type", params.type)
+      .eq("content", params.content.trim())
+      .limit(1);
 
     if (dupRows && dupRows.length > 0) {
-      const dup = dupRows[0] as { id: string };
+      const dup = dupRows[0] as { id: string; importance: number };
       const { error: updateError } = await supabase
         .from("ai_memories")
         .update({
           content: params.content,
-          embedding: embeddingJson,
           confidence: params.confidence ?? 0.9,
-          importance: Math.max(
-            (dupRows[0] as { importance: number }).importance,
-            params.importance ?? 0.5,
-          ),
+          importance: Math.max(dup.importance, params.importance ?? 0.5),
           last_accessed_at: new Date().toISOString(),
         })
         .eq("id", dup.id);
@@ -161,7 +156,6 @@ export async function writeMemory(
         user_id: params.userId,
         type: params.type,
         content: params.content,
-        embedding: embeddingJson,
         project_id: safeProjectId,
         meeting_id: params.meetingId ?? null,
         confidence: params.confidence ?? 0.9,
@@ -417,13 +411,11 @@ export async function updateMemoryContent(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createServiceClient();
 
-  const embeddingVec = await embed(content);
-
+  // No embedding write — see writeMemory comment above.
   const { error } = await supabase
     .from("ai_memories")
     .update({
       content,
-      embedding: JSON.stringify(embeddingVec),
       ...(importance !== undefined ? { importance } : {}),
     })
     .eq("id", memoryId)
