@@ -72,7 +72,8 @@ export const POST = withApiGuardrails<{
   const isExcel =
     file.name.endsWith(".xlsx") ||
     file.name.endsWith(".xlsm") ||
-    file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+    file.type ===
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
     file.type === "application/vnd.ms-excel";
 
   if (!isExcel) {
@@ -97,10 +98,11 @@ export const POST = withApiGuardrails<{
   }
 
   const preview = parseAlleatoEstimateWorkbook(workbook);
-  const { data: existingLineItems, error: existingLineItemsError } = await supabase
-    .from("contract_line_items")
-    .select("cost_code_id")
-    .eq("contract_id", params.contractId);
+  const { data: existingLineItems, error: existingLineItemsError } =
+    await supabase
+      .from("contract_line_items")
+      .select("cost_code_id, budget_code_id")
+      .eq("contract_id", params.contractId);
 
   if (existingLineItemsError) {
     throw new GuardrailError({
@@ -111,15 +113,23 @@ export const POST = withApiGuardrails<{
     });
   }
 
-  const existingCostCodeIds = new Set(
+  const existingBudgetCodeIds = new Set(
     (existingLineItems ?? [])
+      .map((item) => item.budget_code_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const existingUnmappedCostCodeIds = new Set(
+    (existingLineItems ?? [])
+      .filter((item) => !item.budget_code_id)
       .map((item) => item.cost_code_id)
       .filter((id): id is string => Boolean(id)),
   );
 
   const importableRows = preview.rows.filter((row) => row.includeInOwnerSov);
   const rowCostCodes = [...new Set(importableRows.map((row) => row.costCode))];
-  const rowCostTypeCodes = [...new Set(importableRows.map((row) => row.costTypeCode).filter(Boolean))];
+  const rowCostTypeCodes = [
+    ...new Set(importableRows.map((row) => row.costTypeCode).filter(Boolean)),
+  ];
 
   const { data: costTypes, error: costTypesError } = await supabase
     .from("cost_code_types")
@@ -139,11 +149,12 @@ export const POST = withApiGuardrails<{
     (costTypes ?? []).map((costType) => [costType.code, costType.id]),
   );
 
-  const { data: projectBudgetCodes, error: projectBudgetCodesError } = await supabase
-    .from("project_budget_codes")
-    .select("id, cost_code_id, cost_type_id, is_active")
-    .eq("project_id", numericProjectId)
-    .in("cost_code_id", rowCostCodes);
+  const { data: projectBudgetCodes, error: projectBudgetCodesError } =
+    await supabase
+      .from("project_budget_codes")
+      .select("id, cost_code_id, cost_type_id, is_active")
+      .eq("project_id", numericProjectId)
+      .in("cost_code_id", rowCostCodes);
 
   if (projectBudgetCodesError) {
     throw new GuardrailError({
@@ -164,21 +175,26 @@ export const POST = withApiGuardrails<{
     }
   }
 
-  const rows = preview.rows.map((row) => ({
-    ...row,
-    costTypeId: costTypeIdByCode.get(row.costTypeCode) ?? null,
-    budgetCodeId: activeBudgetCodeByCostCodeAndType.get(
-      `${row.costCode}|${costTypeIdByCode.get(row.costTypeCode) ?? ""}`,
-    ) ?? null,
-    alreadyInSov: existingCostCodeIds.has(row.costCode),
-    hasBudgetCodeMapping: activeBudgetCodeByCostCodeAndType.has(
-      `${row.costCode}|${costTypeIdByCode.get(row.costTypeCode) ?? ""}`,
-    ),
-    selectedByDefault:
-      row.includeInOwnerSov &&
-      !existingCostCodeIds.has(row.costCode) &&
-      row.warnings.length === 0,
-  }));
+  const rows = preview.rows.map((row) => {
+    const costTypeId = costTypeIdByCode.get(row.costTypeCode) ?? null;
+    const budgetCodeId =
+      activeBudgetCodeByCostCodeAndType.get(
+        `${row.costCode}|${costTypeId ?? ""}`,
+      ) ?? null;
+    const alreadyInSov = budgetCodeId
+      ? existingBudgetCodeIds.has(budgetCodeId)
+      : existingUnmappedCostCodeIds.has(row.costCode);
+
+    return {
+      ...row,
+      costTypeId,
+      budgetCodeId,
+      alreadyInSov,
+      hasBudgetCodeMapping: Boolean(budgetCodeId),
+      selectedByDefault:
+        row.includeInOwnerSov && !alreadyInSov && row.warnings.length === 0,
+    };
+  });
 
   return NextResponse.json({
     ...preview,

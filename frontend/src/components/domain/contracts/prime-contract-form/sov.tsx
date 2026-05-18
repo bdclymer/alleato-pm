@@ -147,7 +147,7 @@ export function PrimeContractSovSection({
   onHandleImportEstimateWorkbookSuccess: (
     rows: EstimateWorkbookImportRow[],
   ) => void;
-  onBudgetCodesActivated?: () => Promise<void>;
+  onBudgetCodesActivated?: () => Promise<BudgetCode[]>;
 }) {
   const sovSubtotal = (formData.sovItems || [])
     .filter((item) => !item.isMarkup && !item.isGroup)
@@ -159,7 +159,9 @@ export function PrimeContractSovSection({
           : item.amount || 0),
       0,
     );
-  const hasMarkupItems = (formData.sovItems || []).some((item) => item.isMarkup);
+  const hasMarkupItems = (formData.sovItems || []).some(
+    (item) => item.isMarkup,
+  );
 
   return (
     <>
@@ -293,10 +295,18 @@ export function PrimeContractSovSection({
                           })}
                         </span>
                       </InlineTableCell>
-                      <InlineTableCell align="right" numeric className="py-2 text-xs text-muted-foreground">
+                      <InlineTableCell
+                        align="right"
+                        numeric
+                        className="py-2 text-xs text-muted-foreground"
+                      >
                         $0.00
                       </InlineTableCell>
-                      <InlineTableCell align="right" numeric className="py-2 text-xs">
+                      <InlineTableCell
+                        align="right"
+                        numeric
+                        className="py-2 text-xs"
+                      >
                         $
                         {sovSubtotal.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
@@ -751,28 +761,35 @@ function EstimateWorkbookImportModal({
   budgetCodes: BudgetCode[];
   existingSovItems: SOVLineItem[];
   onImportRows: (rows: EstimateWorkbookImportRow[]) => void;
-  onBudgetCodesActivated?: () => Promise<void>;
+  onBudgetCodesActivated?: () => Promise<BudgetCode[]>;
 }) {
   const [file, setFile] = React.useState<File | null>(null);
   const [rows, setRows] = React.useState<EstimateWorkbookImportRow[]>([]);
   const [selectedRows, setSelectedRows] = React.useState<Set<string>>(
     new Set(),
   );
+  const [resolvedBudgetCodes, setResolvedBudgetCodes] =
+    React.useState<BudgetCode[]>(budgetCodes);
   const [warnings, setWarnings] = React.useState<string[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [isParsing, setIsParsing] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
+    setResolvedBudgetCodes(budgetCodes);
+  }, [budgetCodes]);
+
+  React.useEffect(() => {
     if (!open) {
       setFile(null);
       setRows([]);
       setSelectedRows(new Set());
+      setResolvedBudgetCodes(budgetCodes);
       setWarnings([]);
       setError(null);
       setIsParsing(false);
     }
-  }, [open]);
+  }, [budgetCodes, open]);
 
   const existingBudgetCodeIds = React.useMemo(
     () =>
@@ -787,14 +804,14 @@ function EstimateWorkbookImportModal({
   const selectableRows = React.useMemo(
     () =>
       rows.filter((row) => {
-        const budgetCode = resolveEstimateBudgetCode(row, budgetCodes);
+        const budgetCode = resolveEstimateBudgetCode(row, resolvedBudgetCodes);
         return (
           row.includeInOwnerSov &&
           row.warnings.length === 0 &&
           !existingBudgetCodeIds.has(budgetCode?.id ?? "")
         );
       }),
-    [budgetCodes, existingBudgetCodeIds, rows],
+    [existingBudgetCodeIds, resolvedBudgetCodes, rows],
   );
 
   const selectedImportRows = React.useMemo(
@@ -841,8 +858,11 @@ function EstimateWorkbookImportModal({
       // The activate endpoint rejects cost codes that don't exist in the system —
       // those rows will stay as "Needs budget code" in the preview table.
       const rowsMissingCodes = ownerRows.filter(
-        (row) => row.warnings.length === 0 && !(row as { hasBudgetCodeMapping?: boolean }).hasBudgetCodeMapping,
+        (row) =>
+          row.warnings.length === 0 &&
+          !(row as { hasBudgetCodeMapping?: boolean }).hasBudgetCodeMapping,
       );
+      let nextBudgetCodes = resolvedBudgetCodes;
       if (rowsMissingCodes.length > 0 && onBudgetCodesActivated) {
         try {
           await apiFetch(`/api/projects/${projectId}/budget-codes/activate`, {
@@ -856,7 +876,8 @@ function EstimateWorkbookImportModal({
             }),
           });
           // Refresh parent's budget codes so mapping in handleImportEstimateWorkbookSuccess succeeds
-          await onBudgetCodesActivated();
+          nextBudgetCodes = await onBudgetCodesActivated();
+          setResolvedBudgetCodes(nextBudgetCodes);
         } catch (activateError) {
           // Surface the error (e.g. unknown cost code typo in template) as a warning
           // but still show the preview so the user can see which rows are affected
@@ -875,7 +896,10 @@ function EstimateWorkbookImportModal({
         new Set(
           ownerRows
             .filter((row) => {
-              const budgetCode = resolveEstimateBudgetCode(row, budgetCodes);
+              const budgetCode = resolveEstimateBudgetCode(
+                row,
+                nextBudgetCodes,
+              );
               return row.warnings.length === 0 && Boolean(budgetCode);
             })
             .map((row) => getEstimateRowKey(row)),
@@ -1068,7 +1092,7 @@ function EstimateWorkbookImportModal({
                       const key = getEstimateRowKey(row);
                       const budgetCode = resolveEstimateBudgetCode(
                         row,
-                        budgetCodes,
+                        resolvedBudgetCodes,
                       );
                       const alreadyInForm = existingBudgetCodeIds.has(
                         budgetCode?.id ?? "",
