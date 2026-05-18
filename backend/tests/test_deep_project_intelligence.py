@@ -591,6 +591,10 @@ def test_deep_agents_runtime_attaches_memory_middleware(monkeypatch):
         def invoke(self, payload, config=None):
             captured["payload"] = payload
             captured["config"] = config
+            tools = {tool.name: tool for tool in captured["kwargs"]["tools"] if hasattr(tool, "name")}
+            tools["propose_memory_candidate"].invoke(
+                {"scope": "project", "fact": "Owner wants Division 9 cost code detail."}
+            )
             return {"messages": [{"role": "assistant", "content": "Runtime synthesis with memory."}]}
 
     def create_agent(**kwargs):
@@ -608,10 +612,16 @@ def test_deep_agents_runtime_attaches_memory_middleware(monkeypatch):
     assert response.mode == "deep_agents"
     assert kwargs["middleware"]
     assert kwargs["middleware"][0].__class__.__name__ == "DbMemoryMiddleware"
+    tool_names = [getattr(tool, "name", getattr(tool, "__name__", "")) for tool in kwargs["tools"]]
+    assert "recall_user_memory" in tool_names
+    assert "recall_project_memory" in tool_names
+    assert "propose_memory_candidate" in tool_names
     assert captured["config"]["configurable"]["thread_id"] == "session-1"
     assert captured["config"]["configurable"]["user_id"] == "user-1"
     assert captured["config"]["configurable"]["project_id"] == 43
     assert "durable memory" in response.tool_trace[-1].detail
+    assert response.memory_candidates[0].fact == "Owner wants Division 9 cost code detail."
+    assert response.memory_candidates[0].requires_approval is True
 
 
 def test_contract_spike_fails_loudly_when_project_is_missing():

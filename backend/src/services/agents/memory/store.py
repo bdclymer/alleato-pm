@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 USER_MEMORY_LIMIT = 30
 PROJECT_MEMORY_LIMIT = 40
 HIGH_VALUE_TYPES = ("preference", "lesson", "commitment", "context")
+SEARCHABLE_TYPES = ("fact", "preference", "lesson", "commitment", "context")
 
 
 @lru_cache(maxsize=1)
@@ -52,6 +53,20 @@ class ProjectMemory:
 
     def __bool__(self) -> bool:
         return bool(self.entries)
+
+
+@dataclass
+class MemoryEntry:
+    id: str
+    memory_type: str
+    content: str
+    project_id: int | None
+    source: str | None
+    visibility: str | None
+    created_at: str | None
+    importance: float
+    confidence: float
+    score: float = 0.0
 
 
 def load_user_memory(user_id: str) -> UserMemory | None:
@@ -204,3 +219,154 @@ def build_memory_block(
     if project_memory and project_memory.raw_markdown:
         parts.append(project_memory.raw_markdown)
     return "\n\n".join(parts)
+
+
+def recall_user_memories(
+    user_id: str,
+    query: str = "",
+    *,
+    project_id: int | str | None = None,
+    memory_type: str | None = None,
+    limit: int = 8,
+) -> list[MemoryEntry]:
+    """Recall user-private memories, optionally scoped by project and query."""
+    if not user_id:
+        return []
+
+    clauses = [
+        "user_id = :uid",
+        "is_active = TRUE",
+        "(expires_at IS NULL OR expires_at > NOW())",
+    ]
+    params: dict[str, object] = {
+        "uid": user_id,
+        "types": tuple(SEARCHABLE_TYPES),
+        "limit": max(limit * 8, 25),
+    }
+    clauses.append("type IN :types")
+    if memory_type:
+        clauses.append("type = :memory_type")
+        params["memory_type"] = memory_type
+    if project_id is not None:
+        try:
+            params["pid"] = int(project_id)
+            clauses.append("(project_id IS NULL OR project_id = :pid)")
+        except (TypeError, ValueError):
+            pass
+
+    return _query_and_rank_memories(clauses, params, query, limit)
+
+
+def recall_project_memories(
+    project_id: int | str,
+    query: str = "",
+    *,
+    limit: int = 8,
+) -> list[MemoryEntry]:
+    """Recall active project-scoped memories."""
+    try:
+        pid = int(project_id)
+    except (TypeError, ValueError):
+        return []
+
+    clauses = [
+        "project_id = :pid",
+        "is_active = TRUE",
+        "(expires_at IS NULL OR expires_at > NOW())",
+        "type IN :types",
+    ]
+    params: dict[str, object] = {
+        "pid": pid,
+        "types": tuple(SEARCHABLE_TYPES),
+        "limit": max(limit * 8, 25),
+    }
+    return _query_and_rank_memories(clauses, params, query, limit)
+
+
+def recall_team_memories(query: str = "", *, limit: int = 6) -> list[MemoryEntry]:
+    """Recall team-visible memories without requiring a specific user."""
+    clauses = [
+        "visibility = 'team'",
+        "is_active = TRUE",
+        "(expires_at IS NULL OR expires_at > NOW())",
+        "type IN :types",
+    ]
+    params: dict[str, object] = {
+        "types": tuple(SEARCHABLE_TYPES),
+        "limit": max(limit * 8, 25),
+    }
+    return _query_and_rank_memories(clauses, params, query, limit)
+
+
+def _query_and_rank_memories(
+    clauses: list[str],
+    params: dict[str, object],
+    query: str,
+    limit: int,
+) -> list[MemoryEntry]:
+    try:
+        engine = _memory_engine()
+        sql = text(
+            f"""
+            SELECT
+              id::text,
+              type,
+              content,
+              project_id,
+              source,
+              visibility,
+              created_at::text,
+              COALESCE(importance, 0.5) AS importance,
+              COALESCE(confidence, 0.9) AS confidence
+            FROM ai_memories
+            WHERE {" AND ".join(clauses)}
+            ORDER BY importance DESC NULLS LAST, created_at DESC
+            LIMIT :limit
+            """
+        ).bindparams(bindparam("types", expanding=True))
+        with engine.connect() as conn:
+            rows = conn.execute(sql, params).fetchall()
+    except Exception:
+        logger.warning("Failed to recall Deep Agents memory", exc_info=True)
+        return []
+
+    entries = [
+        MemoryEntry(
+            id=str(row[0]),
+            memory_type=str(row[1]),
+            content=str(row[2]),
+            project_id=int(row[3]) if row[3] is not None else None,
+            source=str(row[4]) if row[4] is not None else None,
+            visibility=str(row[5]) if row[5] is not None else None,
+            created_at=str(row[6]) if row[6] is not None else None,
+            importance=float(row[7] or 0.5),
+            confidence=float(row[8] or 0.9),
+        )
+        for row in rows
+    ]
+    return _rank_memories(entries, query, limit)
+
+
+def _rank_memories(entries: list[MemoryEntry], query: str, limit: int) -> list[MemoryEntry]:
+    terms = [term for term in query.lower().split() if len(term) >= 3]
+    for entry in entries:
+        haystack = entry.content.lower()
+        term_hits = sum(1 for term in terms if term in haystack)
+        exact_bonus = 2.0 if query and query.lower() in haystack else 0.0
+        entry.score = (entry.importance * 2.0) + (entry.confidence * 0.5) + term_hits + exact_bonus
+    return sorted(entries, key=lambda item: item.score, reverse=True)[: max(1, min(limit, 20))]
+
+
+def format_memory_entries(entries: list[MemoryEntry]) -> str:
+    if not entries:
+        return "No matching durable memories found."
+
+    lines = ["# Durable Memory Recall", ""]
+    for entry in entries:
+        project = f", project={entry.project_id}" if entry.project_id is not None else ""
+        visibility = f", visibility={entry.visibility}" if entry.visibility else ""
+        lines.append(
+            f"- [{entry.memory_type}] {entry.content} "
+            f"(id={entry.id}{project}{visibility}, score={entry.score:.2f})"
+        )
+    return "\n".join(lines)

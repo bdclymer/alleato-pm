@@ -20,6 +20,7 @@ from src.services.agents.deep_project_intelligence_contracts import (
     EvidenceItem,
     DeepProjectIntelligenceRequest,
     DeepProjectIntelligenceResponse,
+    MemoryCandidate,
     RecommendedAction,
     SourceCoverage,
     ToolTraceItem,
@@ -997,6 +998,7 @@ def _run_deep_agents_runtime(
     evidence: Sequence[EvidenceItem],
     *,
     store: Any,
+    memory_candidates: list[MemoryCandidate],
     create_agent: Optional[Callable[..., Any]] = None,
     model: str = "openai:gpt-5.4-mini",
 ) -> tuple[Optional[str], ToolTraceItem]:
@@ -1026,6 +1028,15 @@ def _run_deep_agents_runtime(
             return project_risk_snapshot(_store_client(store), request.project_id)
 
         memory_middleware = _runtime_memory_middleware()
+        memory_tools: list[Any] = []
+        if memory_middleware:
+            from src.services.agents.memory import build_memory_tools
+
+            memory_tools = build_memory_tools(
+                user_id=request.user_id,
+                project_id=request.project_id,
+                candidate_sink=memory_candidates,
+            )
         agent = create_agent(
             model=model,
             tools=[
@@ -1033,6 +1044,7 @@ def _run_deep_agents_runtime(
                 pm_budget_summary,
                 pm_briefing_snapshot,
                 pm_risk_snapshot,
+                *memory_tools,
                 *_runtime_tools(),
             ],
             system_prompt=(
@@ -1040,6 +1052,9 @@ def _run_deep_agents_runtime(
                 "Backend runtime scope: you are answering inside the Render FastAPI backend. "
                 "Use source_coverage plus the enabled Alleato PM, resolver, RAG/search, "
                 "recent-activity, SQL, Acumatica, draft-preview, and subagent tools as needed. "
+                "Use recall_user_memory, recall_project_memory, or recall_team_memory when a question may depend "
+                "on prior preferences, project history, commitments, or lessons. Use propose_memory_candidate "
+                "only for stable facts that should be reviewed for future memory; it does not write to the database. "
                 "Draft tools, if enabled, only produce approval previews; never imply that a "
                 "write, email, Teams post, RFI, commitment, change event, or task was actually executed. "
                 "If sources are missing, say so plainly."
@@ -1082,6 +1097,7 @@ def _run_deep_agents_executive_runtime(
     evidence: Sequence[EvidenceItem],
     *,
     store: Any,
+    memory_candidates: list[MemoryCandidate],
     create_agent: Optional[Callable[..., Any]] = None,
     model: str = "openai:gpt-5.4-mini",
 ) -> tuple[Optional[str], ToolTraceItem]:
@@ -1103,14 +1119,25 @@ def _run_deep_agents_executive_runtime(
             return portfolio_overview(_store_client(store), phase="Current", max_projects=25)
 
         memory_middleware = _runtime_memory_middleware()
+        memory_tools: list[Any] = []
+        if memory_middleware:
+            from src.services.agents.memory import build_memory_tools
+
+            memory_tools = build_memory_tools(
+                user_id=request.user_id,
+                candidate_sink=memory_candidates,
+            )
         agent = create_agent(
             model=model,
-            tools=[source_coverage, pm_portfolio_overview, *_runtime_tools()],
+            tools=[source_coverage, pm_portfolio_overview, *memory_tools, *_runtime_tools()],
             system_prompt=(
                 f"{ORCHESTRATOR_PROMPT}\n\n"
                 "Backend runtime scope: you are answering inside the Render FastAPI backend. "
                 "Use source_coverage plus the enabled Alleato PM, resolver, RAG/search, "
                 "recent-activity, SQL, Acumatica, draft-preview, and subagent tools as needed. "
+                "Use recall_user_memory or recall_team_memory when business-wide context may depend on prior "
+                "preferences, lessons, or organizational commitments. Use propose_memory_candidate only for "
+                "stable facts that should be reviewed for future memory; it does not write to the database. "
                 "If sources are missing, stale, or failed, say so plainly. "
                 "Draft tools, if enabled, only produce approval previews; never imply that an email, invite, "
                 "task, project mutation, Teams post, RFI, commitment, or change event was completed."
@@ -1209,6 +1236,7 @@ def build_project_status_contract_spike(
     confidence = "medium" if checked_count and failed_count == 0 else "low"
     runtime_answer: Optional[str] = None
     runtime_trace: Optional[ToolTraceItem] = None
+    memory_candidates: list[MemoryCandidate] = []
     mode = CONTRACT_SPIKE_MODE
 
     if runtime == DEEP_AGENT_RUNTIME_MODE:
@@ -1218,6 +1246,7 @@ def build_project_status_contract_spike(
             sources,
             evidence,
             store=store,
+            memory_candidates=memory_candidates,
             create_agent=create_agent,
             model=model,
         )
@@ -1257,7 +1286,7 @@ def build_project_status_contract_spike(
         evidence=evidence,
         recommendedActions=_recommended_actions(sources),
         toolTrace=trace,
-        memoryCandidates=[],
+        memoryCandidates=memory_candidates,
         orchestrator="deep-agents-project-intelligence",
         mode=mode,
     )
@@ -1281,6 +1310,7 @@ def build_executive_briefing_contract_spike(
     confidence = "medium" if checked_count and failed_count == 0 else "low"
     runtime_answer: Optional[str] = None
     runtime_trace: Optional[ToolTraceItem] = None
+    memory_candidates: list[MemoryCandidate] = []
     mode = CONTRACT_SPIKE_MODE
 
     if runtime == DEEP_AGENT_RUNTIME_MODE:
@@ -1290,6 +1320,7 @@ def build_executive_briefing_contract_spike(
             sources,
             evidence,
             store=store,
+            memory_candidates=memory_candidates,
             create_agent=create_agent,
             model=model,
         )
@@ -1320,7 +1351,7 @@ def build_executive_briefing_contract_spike(
         evidence=evidence,
         recommendedActions=_recommended_executive_actions(sources),
         toolTrace=trace,
-        memoryCandidates=[],
+        memoryCandidates=memory_candidates,
         orchestrator="deep-agents-executive-intelligence",
         mode=mode,
     )

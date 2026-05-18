@@ -108,6 +108,10 @@ def test_run_research_agent_attaches_memory_middleware_when_enabled(monkeypatch)
     assert response.mode == "deep_agents"
     assert captured["middleware"]
     assert captured["middleware"][0].__class__.__name__ == "DbMemoryMiddleware"
+    tool_names = [getattr(tool, "name", getattr(tool, "__name__", "")) for tool in captured["tools"]]
+    assert "recall_user_memory" in tool_names
+    assert "recall_project_memory" in tool_names
+    assert "propose_memory_candidate" in tool_names
     assert "durable memory" in response.tool_trace[0].detail
 
 

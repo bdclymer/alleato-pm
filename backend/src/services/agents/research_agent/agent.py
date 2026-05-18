@@ -217,6 +217,12 @@ def run_research_agent(
 
         middleware = _memory_middleware()
         if middleware:
+            from src.services.agents.memory import build_memory_tools
+
+            kwargs["tools"] = [
+                *kwargs["tools"],
+                *build_memory_tools(user_id=request.user_id, project_id=request.project_id),
+            ]
             kwargs["middleware"] = middleware
 
         agent = create_agent(**kwargs)
