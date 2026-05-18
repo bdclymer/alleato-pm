@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, ChevronDown, ChevronRight, ExternalLink, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -495,11 +495,16 @@ function formatCurrencyFull(value: number): string {
   }).format(value);
 }
 
+const WEEKS_PER_MONTH = 4.334;
+
+function calculateDurationWeeks(months: number): number {
+  return Number((Math.max(months, 0) * WEEKS_PER_MONTH).toFixed(3));
+}
+
 function getEffectiveQty(item: GcItem, durationMonths: number, durationWeeks: number): number {
   if (item.qty_basis === "weeks") return durationWeeks;
   if (item.qty_basis === "months") {
-    // Auto-derive months from weeks when months isn't explicitly set
-    return durationMonths > 0 ? durationMonths : Math.ceil(durationWeeks / 4.334);
+    return durationMonths > 0 ? durationMonths : Math.ceil(durationWeeks / WEEKS_PER_MONTH);
   }
   return item.qty || 1;
 }
@@ -510,9 +515,6 @@ function computeGcTotal(items: GcItem[], durationMonths: number, durationWeeks: 
     return sum + qty * (item.rate ?? 0) * (item.allocation ?? 0);
   }, 0);
 }
-
-/** Variance threshold in weeks before a warning appears */
-const WEEKS_VARIANCE_THRESHOLD = 2;
 
 function computeDetailDivisionTotal(items: DetailItem[], divCode: string): number {
   return items
@@ -619,29 +621,41 @@ function DurationField({
   value,
   onChange,
   unit,
+  readOnly = false,
+  title,
 }: {
   value: number;
   onChange: (v: number) => void;
   unit: string;
+  readOnly?: boolean;
+  title?: string;
 }) {
   const [local, setLocal] = React.useState(String(value));
   React.useEffect(() => { setLocal(String(value)); }, [value]);
   const commit = () => {
+    if (readOnly) return;
     const parsed = parseFloat(local);
     if (!Number.isNaN(parsed)) onChange(parsed);
     else setLocal(String(value));
   };
   return (
-    <div className="flex h-8 items-center rounded-md border border-border bg-background text-xs transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/30">
+    <div
+      className={`flex h-8 items-center rounded-md border border-border text-xs transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/30 ${readOnly ? "bg-muted/30 text-muted-foreground" : "bg-background"}`}
+      title={title}
+    >
       <Input
         type="number"
         step="0.5"
         min="0"
         value={local}
-        onChange={(e) => setLocal(e.target.value)}
+        readOnly={readOnly}
+        aria-readonly={readOnly || undefined}
+        onChange={(e) => {
+          if (!readOnly) setLocal(e.target.value);
+        }}
         onBlur={commit}
         onKeyDown={(e) => e.key === "Enter" && commit()}
-        className="h-auto w-14 border-0 bg-transparent pl-3 pr-1 text-right text-xs tabular-nums shadow-none outline-none ring-0 focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="h-auto w-16 border-0 bg-transparent pl-3 pr-1 text-right text-xs tabular-nums shadow-none outline-none ring-0 focus-visible:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
       <span className="pr-2.5 text-muted-foreground">{unit}</span>
     </div>
@@ -697,11 +711,12 @@ export function EstimateDetailClientV2({
   const [sublistSubs, setSublistSubs] = React.useState<SublistSub[]>(initialSublistSubs);
 
   // Estimate-level editable fields
+  const initialDurationMonths = estimate.project_duration_months ?? 0;
   const [durationMonths, setDurationMonths] = React.useState<number>(
-    estimate.project_duration_months ?? 0
+    initialDurationMonths
   );
   const [durationWeeks, setDurationWeeks] = React.useState<number>(
-    (estimate as unknown as { project_duration_weeks?: number }).project_duration_weeks ?? 0
+    calculateDurationWeeks(initialDurationMonths)
   );
   const [contingencyAmount, setContingencyAmount] = React.useState<number>(
     estimate.contingency_amount ?? 0
@@ -831,6 +846,7 @@ export function EstimateDetailClientV2({
         });
         setIsDirty(true);
       } catch (err) {
+        console.error("Failed to save estimate fields", err);
         toast.error("Failed to save");
       }
     },
@@ -838,13 +854,13 @@ export function EstimateDetailClientV2({
   );
 
   const handleDurationMonthsBlur = (val: number) => {
+    const weeks = calculateDurationWeeks(val);
     setDurationMonths(val);
-    void patchEstimate({ project_duration_months: val });
-  };
-
-  const handleDurationWeeksBlur = (val: number) => {
-    setDurationWeeks(val);
-    void patchEstimate({ project_duration_weeks: val });
+    setDurationWeeks(weeks);
+    void patchEstimate({
+      project_duration_months: val,
+      project_duration_weeks: weeks,
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -1169,12 +1185,6 @@ export function EstimateDetailClientV2({
   // Render
   // ---------------------------------------------------------------------------
 
-  const expectedWeeks = Math.round(durationMonths * 4.334 * 10) / 10;
-  const weeksVariance = durationMonths > 0 && durationWeeks > 0
-    ? Math.abs(durationWeeks - expectedWeeks)
-    : 0;
-  const showVarianceWarning = weeksVariance > WEEKS_VARIANCE_THRESHOLD;
-
   const handleExportPDF = () => {
     const html = buildPrintHTML({
       estimate, projectName, gcItems, detailItems,
@@ -1338,13 +1348,13 @@ export function EstimateDetailClientV2({
         {activeTab === "gc" && (
           <div className="mb-2 flex shrink-0 items-center gap-2 md:mb-3">
             <DurationField value={durationMonths} onChange={handleDurationMonthsBlur} unit="mo" />
-            <DurationField value={durationWeeks}  onChange={handleDurationWeeksBlur}  unit="wk" />
-            {showVarianceWarning && (
-              <div className="flex items-center gap-1 rounded-md bg-status-warning/10 px-2 py-1 text-[11px] font-medium text-status-warning">
-                <AlertTriangle className="h-3 w-3 shrink-0" />
-                <span>{Math.round(weeksVariance * 10) / 10} wk variance</span>
-              </div>
-            )}
+            <DurationField
+              value={durationWeeks}
+              onChange={() => undefined}
+              unit="wk"
+              readOnly
+              title="Calculated from months x 4.334"
+            />
           </div>
         )}
       </div>
