@@ -51,6 +51,7 @@ from src.services.agents.deep_project_intelligence_contracts import (
     DeepExecutiveIntelligenceRequest,
     DeepProjectIntelligenceRequest,
 )
+from src.services.agents.research_agent import ResearchRequest, run_research_agent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1187,6 +1188,34 @@ async def run_deep_agent_executive_briefing(
         runtime=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "contract_spike"),
         model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.4-mini"),
     )
+    return response.model_dump(by_alias=True)
+
+
+@app.post(
+    "/api/intelligence/research",
+    tags=["Intelligence"],
+    summary="Run Alleato Deep Agents research",
+)
+async def run_deep_agent_research(
+    request: ResearchRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Run the standalone research agent with web and Alleato read-only tools."""
+    if not _env_flag_enabled("DEEP_AGENTS_RESEARCH_ENABLED"):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Deep Agents research is disabled. Set "
+                "DEEP_AGENTS_RESEARCH_ENABLED=true to run the research agent."
+            ),
+        )
+
+    response = run_research_agent(
+        request,
+        model=os.getenv("DEEP_AGENTS_RESEARCH_MODEL", "openai:gpt-5.4-mini"),
+    )
+    if response.mode == "unavailable":
+        raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
     return response.model_dump(by_alias=True)
 
 

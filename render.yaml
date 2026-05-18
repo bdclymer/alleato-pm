@@ -459,6 +459,10 @@ services:
         value: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -480,6 +484,10 @@ services:
       - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME
         value: deep_agents
       - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL
+        value: gpt-5.4-mini
+      - key: DEEP_AGENTS_RESEARCH_ENABLED
+        value: true
+      - key: DEEP_AGENTS_RESEARCH_MODEL
         value: gpt-5.4-mini
       - key: DEEP_AGENTS_STANDALONE_TOOLS_ENABLED
         value: true
