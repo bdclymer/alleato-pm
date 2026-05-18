@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import type { Database as RagDatabase } from "@/types/rag-database.types";
 
@@ -10,7 +11,7 @@ import type { Database as RagDatabase } from "@/types/rag-database.types";
  *
  * ⚠️ NEVER expose this client or service role key to the client-side ⚠️
  */
-export function createServiceClient() {
+export function createServiceClient(): SupabaseClient<Database> {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const supabaseServiceKey =
@@ -51,7 +52,7 @@ export function isRagDatabaseWritesEnabled() {
   );
 }
 
-export function createRagServiceClient() {
+export function createRagServiceClient(): SupabaseClient<RagDatabase> {
   const supabaseUrl = process.env.RAG_SUPABASE_URL;
   const supabaseServiceKey =
     process.env.RAG_SUPABASE_SERVICE_ROLE_KEY ??
