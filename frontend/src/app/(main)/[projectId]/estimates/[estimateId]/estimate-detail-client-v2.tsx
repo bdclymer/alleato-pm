@@ -1173,7 +1173,7 @@ export function EstimateDetailClientV2({
       )}
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button size="sm" className="gap-1.5">
           Actions
           <ChevronDown className="h-3.5 w-3.5" />
         </Button>

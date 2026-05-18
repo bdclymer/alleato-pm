@@ -478,7 +478,7 @@ export function SubcontractorInvoiceDetail({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline">
+              <Button size="sm">
                 Actions <ChevronDown className="h-4 w-4 ml-1" />
               </Button>
             </DropdownMenuTrigger>
