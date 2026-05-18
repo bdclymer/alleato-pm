@@ -36,9 +36,8 @@ import {
 import { useHeaderNav } from "./use-header-nav";
 import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
-import { CommentsSidebar } from "./comments-sidebar";
+import { CommentsSidebarButton } from "./comments-sidebar-button";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
-import { LiveAvatarStack } from "./live-avatar-stack";
 import {
   feedbackTargetProps,
 } from "@/lib/admin-feedback/constants";
@@ -314,9 +313,6 @@ export function SiteHeader() {
             isAppAdmin={isAppAdmin}
             userType={userType}
           />
-          <React.Suspense fallback={null}>
-            <LiveAvatarStack />
-          </React.Suspense>
           <AiChatButton />
           <Link
             href="/feedback-inbox"
@@ -325,9 +321,7 @@ export function SiteHeader() {
           >
             <Inbox className="h-4 w-4" />
           </Link>
-          <React.Suspense fallback={null}>
-            <CommentsSidebar />
-          </React.Suspense>
+          <CommentsSidebarButton />
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>

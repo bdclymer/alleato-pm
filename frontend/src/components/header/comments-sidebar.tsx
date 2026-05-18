@@ -4,7 +4,6 @@ import * as React from "react";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
 import { MessageSquare, X } from "lucide-react";
-import { useParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { EntityComments } from "@/components/comments/entity-comments";
 import {
@@ -13,6 +12,8 @@ import {
 import { getRoomId, type CommentableEntityType } from "@/lib/liveblocks/rooms";
 import { useCommentsSidebarStore } from "@/lib/stores/comments-sidebar-store";
 import { cn } from "@/lib/utils";
+import { useEntityContext } from "./use-entity-context";
+export { openCommentsSidebar } from "./comments-sidebar-button";
 
 // ── Error boundary ──────────────────────────────────────────────────────────
 
@@ -44,15 +45,6 @@ class CommentsErrorBoundary extends React.Component<
   }
 }
 
-// ── Derive entity context from URL ──────────────────────────────────────────
-
-interface EntityContext {
-  entityType: CommentableEntityType;
-  entityId: string;
-  label: string;
-  projectId?: number;
-}
-
 const INITIAL_STORAGE = {
   meta: new LiveObject({ title: "" }),
   properties: new LiveObject({
@@ -63,127 +55,6 @@ const INITIAL_STORAGE = {
   labels: new LiveList<string>([]),
   links: new LiveList<string>([]),
 };
-
-/** Build a stable entity context for non-project routes so comments stay available. */
-function getPageEntityContext(pathname: string): EntityContext {
-  const normalizedPath = pathname === "/" ? "home" : pathname.slice(1);
-  const routeSlug = normalizedPath.replace(/[^a-zA-Z0-9/_-]/g, "").replace(/\//g, "-");
-
-  return {
-    entityType: "correspondence",
-    entityId: `page-${routeSlug || "home"}`,
-    label: pathname === "/" ? "Workspace" : pathname,
-  };
-}
-
-/**
- * Map the current URL path to an entity context for Supabase collaboration.
- * Detail pages (e.g. /43/rfis/123) -> entity-level room.
- * List pages (e.g. /43/budget) -> project-tool-level room.
- */
-export function useEntityContext(): EntityContext | null {
-  const params = useParams()! ?? {};
-  const pathname = usePathname()! ?? "";
-
-  return React.useMemo(() => {
-    // Project-scoped routes
-    const projectId = params.projectId as string | undefined;
-    if (!projectId) return getPageEntityContext(pathname);
-    const numericProjectId = Number.parseInt(projectId, 10);
-
-    const segments = pathname.split("/").filter(Boolean);
-    const projectIndex = segments.indexOf(projectId);
-    if (projectIndex === -1) return null;
-
-    const toolSegment = segments[projectIndex + 1];
-    if (!toolSegment) return null;
-
-    const detailId = segments[projectIndex + 2];
-    const isDetailPage =
-      detailId &&
-      detailId !== "new" &&
-      detailId !== "settings" &&
-      detailId !== "configure" &&
-      detailId !== "setup" &&
-      detailId !== "all" &&
-      detailId !== "recycle-bin";
-
-    const toolMap: Record<string, { entityType: CommentableEntityType; label: string }> = {
-      budget: { entityType: "budget", label: "Budget" },
-      schedule: { entityType: "schedule", label: "Schedule" },
-      rfis: { entityType: "rfi", label: "RFI" },
-      submittals: { entityType: "submittal", label: "Submittal" },
-      "change-events": { entityType: "change-event", label: "Change Event" },
-      "change-orders": { entityType: "change-order", label: "Change Order" },
-      commitments: { entityType: "commitment", label: "Commitment" },
-      "direct-costs": { entityType: "direct-cost", label: "Direct Cost" },
-      "punch-list": { entityType: "punch-item", label: "Punch List" },
-      "daily-log": { entityType: "daily-log", label: "Daily Log" },
-      meetings: { entityType: "meeting", label: "Meeting" },
-      drawings: { entityType: "drawing", label: "Drawings" },
-      specifications: { entityType: "specification", label: "Specifications" },
-    };
-
-    const mapping = toolMap[toolSegment];
-    if (!mapping) return getPageEntityContext(pathname);
-
-    if (isDetailPage) {
-      return {
-        entityType: mapping.entityType,
-        entityId: detailId,
-        label: `${mapping.label} #${detailId}`,
-        projectId: Number.isFinite(numericProjectId) ? numericProjectId : undefined,
-      };
-    }
-
-    return {
-      entityType: mapping.entityType,
-      entityId: `project-${projectId}`,
-      label: mapping.label,
-      projectId: Number.isFinite(numericProjectId) ? numericProjectId : undefined,
-    };
-  }, [params, pathname]);
-}
-
-// ── Programmatic open helper ─────────────────────────────────────────────────
-
-/** Open the comments sidebar from anywhere in the app */
-export function openCommentsSidebar() {
-  window.dispatchEvent(new CustomEvent("open-comments-sidebar"));
-}
-
-// ── Header button ────────────────────────────────────────────────────────────
-
-export function CommentsSidebar() {
-  const toggle = useCommentsSidebarStore((s) => s.toggle);
-  const open = useCommentsSidebarStore((s) => s.open);
-  const setOpen = useCommentsSidebarStore((s) => s.setOpen);
-
-  // Listen for external open requests (e.g. from budget header chat button)
-  React.useEffect(() => {
-    const handler = () => setOpen(true);
-    window.addEventListener("open-comments-sidebar", handler);
-    return () => window.removeEventListener("open-comments-sidebar", handler);
-  }, [setOpen]);
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn(
-        "relative h-8 w-8 p-0 transition-colors",
-        open
-          ? "bg-primary/10 text-primary hover:bg-primary/20"
-          : "text-muted-foreground hover:text-foreground",
-      )}
-      aria-label="Comments"
-      aria-pressed={open}
-      onClick={toggle}
-    >
-      <MessageSquare className="h-4 w-4" />
-    </Button>
-  );
-}
 
 // ── Push panel (lives in layout, pushes content) ─────────────────────────────
 

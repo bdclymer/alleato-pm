@@ -4,7 +4,7 @@ import * as React from "react";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
-import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
+import { DeferredCommentsSidebarPanel } from "@/components/header/deferred-comments-sidebar-panel";
 import { SiteFooter } from "@/components/layout/site-footer";
 
 export default function TablesLayout({
@@ -24,9 +24,7 @@ export default function TablesLayout({
             </main>
             <SiteFooter />
           </div>
-          <React.Suspense fallback={null}>
-            <CommentsSidebarPanel />
-          </React.Suspense>
+          <DeferredCommentsSidebarPanel />
         </div>
       </SidebarInset>
     </SidebarProvider>

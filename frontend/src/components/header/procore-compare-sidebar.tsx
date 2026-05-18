@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEntityContext } from "./comments-sidebar";
+import { useEntityContext } from "./use-entity-context";
 
 type ArtifactSource = "procore" | "design";
 

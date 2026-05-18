@@ -5,7 +5,7 @@ import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useRealtimeCursors } from "@/hooks/use-realtime-cursors";
 import { useLiveCursorsEnabled } from "@/hooks/use-live-cursors-enabled";
 import { getRoomId } from "@/lib/liveblocks/rooms";
-import { useEntityContext } from "@/components/header/comments-sidebar";
+import { useEntityContext } from "@/components/header/use-entity-context";
 
 const THROTTLE_MS = 50;
 

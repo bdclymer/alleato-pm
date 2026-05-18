@@ -8,6 +8,7 @@ import { CreateProjectDevConfigProvider } from "@/components/project/create-proj
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { DeferredCommentsSidebarPanel } from "@/components/header/deferred-comments-sidebar-panel";
 import { useProject } from "@/contexts/project-context";
 import { useDeferredMount } from "@/hooks/use-deferred-mount";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
@@ -19,16 +20,8 @@ const AiChatSidebarPanel = dynamic(
   () => import("@/components/ai-assistant/ai-chat-sidebar").then((mod) => mod.AiChatSidebarPanel),
   { ssr: false },
 );
-const CommentsSidebarPanel = dynamic(
-  () => import("@/components/header/comments-sidebar").then((mod) => mod.CommentsSidebarPanel),
-  { ssr: false },
-);
 const GlobalAiWidget = dynamic(
   () => import("@/components/ai-assistant/global-ai-widget").then((mod) => mod.GlobalAiWidget),
-  { ssr: false },
-);
-const LiveCursors = dynamic(
-  () => import("@/components/live-cursors/LiveCursors").then((mod) => mod.LiveCursors),
   { ssr: false },
 );
 const ProcoreReferencePanel = dynamic(
@@ -56,7 +49,6 @@ function Overlays() {
   return (
     <React.Suspense fallback={null}>
       <div className="contents">
-        <LiveCursors />
         <WelcomeOnboarding
           deferAutoOpen={isLoading}
           suppressAutoOpen={isSubcontractor}
@@ -135,11 +127,7 @@ export default function MainLayout({
                 <ProcoreReferencePanel key="procore-reference-panel" />
               )}
             </div>
-            {shouldMountDeferredPanels && (
-              <React.Suspense fallback={null}>
-                <CommentsSidebarPanel key="comments-sidebar-panel" />
-              </React.Suspense>
-            )}
+            <DeferredCommentsSidebarPanel key="comments-sidebar-panel" />
           </div>
         </CreateProjectDevConfigProvider>
         <Overlays key="floating-overlays" />

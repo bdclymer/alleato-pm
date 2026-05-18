@@ -1,26 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { lazy, Suspense } from "react";
-import { usePathname } from "next/navigation";
 
-const LiveblocksAppProvider = lazy(() =>
-  import("@/components/providers/liveblocks-app-provider").then((mod) => ({
-    default: mod.LiveblocksAppProvider,
-  }))
-);
-
-/** Provides route-aware client contexts without loading app-only providers on public auth routes. */
+/**
+ * Route-aware client provider slot.
+ *
+ * `LiveblocksAppProvider` used to be mounted here at the app root, which
+ * shipped the Liveblocks runtime to every authenticated page. It is now
+ * scoped to the specific routes that need realtime (budget, drawings
+ * viewer, spreadsheet demo) via per-segment layouts.
+ */
 export function Providers({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-
-  if (pathname?.startsWith("/auth")) {
-    return <>{children}</>;
-  }
-
-  return (
-    <Suspense fallback={children}>
-      <LiveblocksAppProvider>{children}</LiveblocksAppProvider>
-    </Suspense>
-  );
+  return <>{children}</>;
 }

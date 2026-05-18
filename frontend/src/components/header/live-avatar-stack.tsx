@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { useRealtimePresenceRoom } from "@/hooks/use-realtime-presence-room";
 import { getRoomId } from "@/lib/liveblocks/rooms";
-import { useEntityContext } from "./comments-sidebar";
+import { useEntityContext } from "./use-entity-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MAX_VISIBLE = 3;
