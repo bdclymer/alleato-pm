@@ -117,9 +117,9 @@ function parseGeneralConditions(workbook: WorkBook): {
     const rowWarnings: string[] = [];
     pushCodeWarnings(rowWarnings, sheetName, rowNumber, costCode);
 
-    if (!costTypeCode) {
+    if (!costTypeCode && costType) {
       rowWarnings.push(
-        `${buildWarningPrefix(sheetName, rowNumber)}: Cost type "${costType || "(blank)"}" is not importable.`,
+        `${buildWarningPrefix(sheetName, rowNumber)}: Cost type "${costType}" is not importable.`,
       );
     }
 
@@ -189,9 +189,9 @@ function parseDetails(workbook: WorkBook): {
     const rowWarnings: string[] = [];
     pushCodeWarnings(rowWarnings, sheetName, rowNumber, costCode);
 
-    if (!costTypeCode) {
+    if (!costTypeCode && costType) {
       rowWarnings.push(
-        `${buildWarningPrefix(sheetName, rowNumber)}: Cost type "${costType || "(blank)"}" is not importable.`,
+        `${buildWarningPrefix(sheetName, rowNumber)}: Cost type "${costType}" is not importable.`,
       );
     }
 
