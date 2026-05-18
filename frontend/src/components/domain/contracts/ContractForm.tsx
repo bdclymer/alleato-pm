@@ -141,7 +141,7 @@ export function ContractForm({
       data-testid="prime-contract-form"
       data-dev-autofill-disabled
     >
-      <FormLayoutProvider layout="stacked">
+      <FormLayoutProvider layout="horizontal">
         <div className="flex flex-col gap-16">
           <PrimeContractGeneralInfoSection
             formData={formData}
