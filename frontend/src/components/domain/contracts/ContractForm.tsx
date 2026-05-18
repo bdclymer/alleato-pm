@@ -85,7 +85,6 @@ export function ContractForm({
     groupedCostCodes,
     showImportFromBudget,
     showImportEstimateWorkbook,
-    sovActionMenuKey,
     companyOptions,
     companiesLoading,
     userOptions,
@@ -105,7 +104,6 @@ export function ContractForm({
     handleCreateBudgetCode,
     handleBudgetCodeSelect,
     addSOVLine,
-    addSOVGroup,
     updateSOVLine,
     removeSOVLine,
     selectedSovItems,
@@ -125,7 +123,6 @@ export function ContractForm({
     setShowImportFromBudget,
     setShowImportEstimateWorkbook,
     fetchBudgetCodes,
-    setSovActionMenuKey,
     setShowAddCompany,
     setNewCompanyName,
     markups,
@@ -192,14 +189,12 @@ export function ContractForm({
             filteredBudgetCodes={filteredBudgetCodes}
             openBudgetCodePopover={openBudgetCodePopover}
             budgetCodeSearchQuery={budgetCodeSearchQuery}
-            sovActionMenuKey={sovActionMenuKey}
             showImportFromBudget={showImportFromBudget}
             showImportEstimateWorkbook={showImportEstimateWorkbook}
             sovColumnCount={sovColumnCount}
             isUnitQuantityMode={isUnitQuantityMode}
             sovTotals={sovTotals}
             onBudgetCodeSearchQueryChange={setBudgetCodeSearchQuery}
-            onSovActionMenuKeyChange={setSovActionMenuKey}
             onOpenBudgetCodePopoverChange={setOpenBudgetCodePopover}
             onShowImportFromBudgetChange={setShowImportFromBudget}
             onShowImportEstimateWorkbookChange={setShowImportEstimateWorkbook}
@@ -207,7 +202,6 @@ export function ContractForm({
               setShowCreateBudgetCodeModal(true)
             }
             onToggleSovAccountingMethod={toggleSovAccountingMethod}
-            onAddSovGroup={addSOVGroup}
             onAddSovLine={addSOVLine}
             onUpdateSovLine={updateSOVLine}
             onRemoveSovLine={removeSOVLine}

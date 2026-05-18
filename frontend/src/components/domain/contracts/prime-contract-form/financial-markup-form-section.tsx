@@ -274,7 +274,6 @@ export function FinancialMarkupFormSection({
       actions={
         <Button
           type="button"
-          variant="outline"
           size="sm"
           onClick={addMarkup}
           disabled={markups.length >= ALLOWED_MARKUP_TYPES.length}

@@ -96,7 +96,6 @@ export function usePrimeContractFormState({
     >
   >({});
   const [showImportFromBudget, setShowImportFromBudget] = React.useState(false);
-  const [sovActionMenuKey, setSovActionMenuKey] = React.useState(0);
   const [markups, setMarkups] = React.useState<MarkupFormItem[]>(
     mode === "create" ? DEFAULT_MARKUPS : [],
   );
@@ -239,8 +238,15 @@ export function usePrimeContractFormState({
           );
         }
         // If no existing markups, DEFAULT_MARKUPS (set in useState) are kept
-      } catch {
-        // Non-critical — keep defaults on fetch failure
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "prime-contract-create",
+          operation: "load-existing-markups",
+          error,
+          userVisibleFallback:
+            "Financial markup defaults remain available when saved project markups cannot be loaded.",
+          metadata: { projectId },
+        });
       }
     };
     void fetchExistingMarkups();
@@ -889,7 +895,6 @@ export function usePrimeContractFormState({
     groupedCostCodes,
     showImportFromBudget,
     showImportEstimateWorkbook,
-    sovActionMenuKey,
     companyOptions,
     companiesLoading,
     userOptions,
@@ -929,7 +934,6 @@ export function usePrimeContractFormState({
     setShowImportFromBudget,
     setShowImportEstimateWorkbook,
     fetchBudgetCodes,
-    setSovActionMenuKey,
     setShowAddCompany,
     setNewCompanyName,
     markups,

@@ -85,20 +85,17 @@ export function PrimeContractSovSection({
   filteredBudgetCodes,
   openBudgetCodePopover,
   budgetCodeSearchQuery,
-  sovActionMenuKey,
   showImportFromBudget,
   showImportEstimateWorkbook,
   sovColumnCount,
   isUnitQuantityMode,
   sovTotals,
   onBudgetCodeSearchQueryChange,
-  onSovActionMenuKeyChange,
   onOpenBudgetCodePopoverChange,
   onShowImportFromBudgetChange,
   onShowImportEstimateWorkbookChange,
   onShowCreateBudgetCodeModal,
   onToggleSovAccountingMethod,
-  onAddSovGroup,
   onAddSovLine,
   onUpdateSovLine,
   onRemoveSovLine,
@@ -118,7 +115,6 @@ export function PrimeContractSovSection({
   filteredBudgetCodes: BudgetCode[];
   openBudgetCodePopover: string | null;
   budgetCodeSearchQuery: string;
-  sovActionMenuKey: number;
   showImportFromBudget: boolean;
   showImportEstimateWorkbook: boolean;
   sovColumnCount: number;
@@ -129,13 +125,11 @@ export function PrimeContractSovSection({
     amountRemaining: number;
   };
   onBudgetCodeSearchQueryChange: (value: string) => void;
-  onSovActionMenuKeyChange: (updater: (prev: number) => number) => void;
   onOpenBudgetCodePopoverChange: (value: string | null) => void;
   onShowImportFromBudgetChange: (open: boolean) => void;
   onShowImportEstimateWorkbookChange: (open: boolean) => void;
   onShowCreateBudgetCodeModal: () => void;
   onToggleSovAccountingMethod: () => void;
-  onAddSovGroup: () => void;
   onAddSovLine: () => void;
   onUpdateSovLine: (id: string, updates: Partial<SOVLineItem>) => void;
   onRemoveSovLine: (id: string) => void;
@@ -171,37 +165,21 @@ export function PrimeContractSovSection({
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="link"
               size="sm"
               data-testid="sov-accounting-toggle"
               onClick={onToggleSovAccountingMethod}
+              className="h-8 px-0"
             >
               {isUnitQuantityMode ? "Use Amount" : "Use Quantity × Unit Cost"}
             </Button>
-            <Select
-              key={sovActionMenuKey}
-              onValueChange={(value) => {
-                if (value === "add_group") onAddSovGroup();
-                if (value === "import_budget")
-                  onShowImportFromBudgetChange(true);
-                if (value === "import_estimate")
-                  onShowImportEstimateWorkbookChange(true);
-                onSovActionMenuKeyChange((prev) => prev + 1);
-              }}
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => onShowImportEstimateWorkbookChange(true)}
             >
-              <SelectTrigger className="h-8 w-36 border-border bg-muted">
-                <SelectValue placeholder="Actions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="add_group">Add Group</SelectItem>
-                <SelectItem value="import_budget">
-                  Import from Budget
-                </SelectItem>
-                <SelectItem value="import_estimate">
-                  Import Excel SOV
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              Import from Estimate
+            </Button>
           </div>
         }
       >
