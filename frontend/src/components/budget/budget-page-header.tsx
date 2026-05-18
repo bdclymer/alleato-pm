@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/layout/page-header-unified";
+import { cn } from "@/lib/utils";
 
 interface BudgetPageHeaderProps {
   title?: string;
@@ -97,6 +98,47 @@ export function BudgetPageHeader({
     setShowLockDialog(false);
   };
 
+  const lockStateClassName = isLocked
+    ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+    : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800";
+  const LockStateIcon = isLocked ? Lock : Unlock;
+  const lockStateLabel = isLocked ? "Locked" : "Unlocked";
+  const lockActionLabel = isLocked
+    ? "Budget locked. Click to unlock budget."
+    : "Budget unlocked. Click to lock budget.";
+
+  const renderSnapshotButton = () => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="text-foreground hover:bg-muted hover:text-foreground"
+          onClick={onCreateSnapshot}
+          aria-label="Create budget snapshot"
+        >
+          <Camera />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>Create a budget snapshot</TooltipContent>
+    </Tooltip>
+  );
+
+  const lockStateButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={isLocked ? onUnlockBudget : () => setShowLockDialog(true)}
+      className={lockStateClassName}
+      aria-label={lockActionLabel}
+    >
+      <LockStateIcon />
+      <span className="hidden lg:inline">{lockStateLabel}</span>
+      <span className="lg:hidden">{lockStateLabel}</span>
+    </Button>
+  );
+
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -111,12 +153,18 @@ export function BudgetPageHeader({
   const titleContent = (
     <div className="flex items-center gap-2">
       <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">{title}</h1>
-      {isLocked && (
-        <Badge variant="secondary" className="flex items-center gap-1">
-          <Lock className="w-3 h-3" />
-          Locked
-        </Badge>
-      )}
+      <Badge
+        variant="outline"
+        className={cn(
+          "flex items-center gap-1 border px-2 py-0.5",
+          isLocked
+            ? "border-red-200 bg-red-50 text-red-700"
+            : "border-green-200 bg-green-50 text-green-700",
+        )}
+      >
+        <LockStateIcon className="w-3 h-3" />
+        {lockStateLabel}
+      </Badge>
     </div>
   );
 
@@ -129,54 +177,55 @@ export function BudgetPageHeader({
     <div className="flex w-full gap-2 min-w-0">
       {/* Mobile: Show primary actions and bundle others in dropdown */}
       <div className="flex flex-wrap gap-2 sm:hidden w-full">
-        {/* Create Dropdown - Always visible */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90 text-white flex-1 min-w-[100px]"
-            >
-              <Plus />
-              Create
-              <ChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isLocked ? (
-              <DropdownMenuItem onClick={onModificationClick}>
-                <FileEdit className="w-4 h-4 mr-2" />
-                Add Budget Modification
-              </DropdownMenuItem>
-            ) : (
+        {isLocked ? (
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
+            onClick={onModificationClick}
+          >
+            <FileEdit />
+            Add Budget Modification
+          </Button>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
+              >
+                <Plus />
+                Create
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onCreateClick}>
                 <FilePlus className="w-4 h-4 mr-2" />
                 Budget Line Item
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={onCreateSnapshot}>
-              <Camera className="w-4 h-4 mr-2" />
-              Snapshot
-            </DropdownMenuItem>
-            {!isLocked && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onImport}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Import from File
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onImportFromContract}>
-                  <FileSearch className="w-4 h-4 mr-2" />
-                  Import from Prime Contract SOV
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem onClick={onImport}>
+                <Upload className="w-4 h-4 mr-2" />
+                Import from File
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onImportFromContract}>
+                <FileSearch className="w-4 h-4 mr-2" />
+                Import from Prime Contract SOV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
+        {renderSnapshotButton()}
 
         {/* More Actions Dropdown for Mobile — icon-only trigger, no border */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="More actions">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="More actions"
+              className="shrink-0"
+            >
               <MoreVertical />
             </Button>
           </DropdownMenuTrigger>
@@ -186,14 +235,14 @@ export function BudgetPageHeader({
               Sync to ERP
             </DropdownMenuItem>
             {isLocked ? (
-              <DropdownMenuItem onClick={onUnlockBudget}>
-                <Unlock className="w-4 h-4 mr-2" />
-                Unlock Budget
+              <DropdownMenuItem onClick={onUnlockBudget} className="text-red-700">
+                <Lock className="w-4 h-4 mr-2" />
+                Budget Locked
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => setShowLockDialog(true)}>
-                <Lock className="w-4 h-4 mr-2" />
-                Lock Budget
+              <DropdownMenuItem onClick={() => setShowLockDialog(true)} className="text-green-700">
+                <Unlock className="w-4 h-4 mr-2" />
+                Budget Unlocked
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
@@ -244,72 +293,48 @@ export function BudgetPageHeader({
 
       {/* Desktop: Show all buttons */}
       <div className="hidden sm:flex gap-2 flex-wrap justify-end items-center">
-        {/* Create Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90 text-white"
-            >
-              <Plus />
-              Create
-              <ChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isLocked ? (
-              <DropdownMenuItem onClick={onModificationClick}>
-                <FileEdit className="w-4 h-4 mr-2" />
-                Add Budget Modification
-              </DropdownMenuItem>
-            ) : (
+        {isLocked ? (
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={onModificationClick}
+          >
+            <FileEdit />
+            Add Budget Modification
+          </Button>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Plus />
+                Create
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onCreateClick}>
                 <FilePlus className="w-4 h-4 mr-2" />
                 Budget Line Item
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={onCreateSnapshot}>
-              <Camera className="w-4 h-4 mr-2" />
-              Snapshot
-            </DropdownMenuItem>
-            {!isLocked && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onImport}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Import from File
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onImportFromContract}>
-                  <FileSearch className="w-4 h-4 mr-2" />
-                  Import from Prime Contract SOV
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Lock/Unlock Budget Button */}
-        {isLocked ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onUnlockBudget}
-          >
-            <Unlock />
-            <span className="hidden lg:inline">Unlock Budget</span>
-            <span className="lg:hidden">Unlock</span>
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowLockDialog(true)}
-          >
-            <Lock />
-            <span className="hidden lg:inline">Lock Budget</span>
-            <span className="lg:hidden">Lock</span>
-          </Button>
+              <DropdownMenuItem onClick={onImport}>
+                <Upload className="w-4 h-4 mr-2" />
+                Import from File
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onImportFromContract}>
+                <FileSearch className="w-4 h-4 mr-2" />
+                Import from Prime Contract SOV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
+
+        {renderSnapshotButton()}
+
+        {/* Lock/Unlock Budget State Button */}
+        {lockStateButton}
 
         {/* Sync + Export */}
         <Tooltip>
