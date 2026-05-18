@@ -35,42 +35,6 @@ interface ProjectSelectorProps {
   onViewAll: () => void;
 }
 
-/** Deterministic pastel color from a string (project name initial) */
-function projectColor(name: string | null | undefined): string {
-  const colors = [
-    "bg-sky-100 text-sky-700",
-    "bg-violet-100 text-violet-700",
-    "bg-emerald-100 text-emerald-700",
-    "bg-amber-100 text-amber-700",
-    "bg-rose-100 text-rose-700",
-    "bg-teal-100 text-teal-700",
-    "bg-indigo-100 text-indigo-700",
-    "bg-orange-100 text-orange-700",
-  ];
-  if (!name) return colors[0];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) & 0xffff;
-  }
-  return colors[hash % colors.length];
-}
-
-function ProjectAvatar({ name, size = "md" }: { name: string | null | undefined; size?: "sm" | "md" }) {
-  const colorClass = projectColor(name);
-  const initial = name ? name.charAt(0).toUpperCase() : "?";
-  return (
-    <span
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-md font-semibold",
-        size === "sm" ? "h-5 w-5 text-[10px]" : "h-7 w-7 text-xs",
-        colorClass
-      )}
-    >
-      {initial}
-    </span>
-  );
-}
-
 export function ProjectSelector({
   projectId,
   currentProject,
@@ -116,11 +80,12 @@ export function ProjectSelector({
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="w-[min(340px,calc(100vw-1rem))] p-0 bg-muted border border-border shadow-sm sm:w-[340px]"
+        className="border border-border p-0 shadow-sm"
+        style={{ width: "min(340px, calc(100vw - 1rem))" }}
       >
         {/* Panel header */}
-        <div className="border-b border-border/50 px-4 py-2.5">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+        <div className="border-b border-border/50 px-5 py-2.5">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             Switch Project
           </span>
         </div>
@@ -146,7 +111,7 @@ export function ProjectSelector({
                 <CommandEmpty className="py-8 text-center text-sm text-muted-foreground">
                   No projects found
                 </CommandEmpty>
-                <CommandGroup>
+                <CommandGroup className="p-2">
                   {projects.map((project) => {
                     const isSelected = project.id === projectId;
                     return (
@@ -158,30 +123,31 @@ export function ProjectSelector({
                           setOpen(false);
                         }}
                         className={cn(
-                          "flex cursor-pointer items-center gap-3 px-4 py-2.5",
-                          isSelected && "bg-primary/5"
+                          "group flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
+                          isSelected
+                            ? "bg-muted text-foreground"
+                            : "text-foreground/75 hover:bg-muted hover:text-foreground",
                         )}
                       >
-                        <ProjectAvatar name={project.name} />
                         <div className="min-w-0 flex-1">
                           <div
                             className={cn(
-                              "truncate text-sm font-medium",
-                              isSelected ? "text-primary" : "text-foreground"
+                              "truncate text-[13px]",
+                              isSelected ? "font-semibold" : "font-normal",
                             )}
                           >
                             {project.name ?? "Unnamed Project"}
                           </div>
                           {project["job number"] && (
-                            <div className="truncate text-xs text-muted-foreground">
+                            <div className="truncate text-[11px] text-muted-foreground">
                               {project["job number"]}
                             </div>
                           )}
                         </div>
                         <Check
                           className={cn(
-                            "h-4 w-4 shrink-0 text-primary",
-                            isSelected ? "opacity-100" : "opacity-0"
+                            "h-3.5 w-3.5 shrink-0 text-foreground",
+                            isSelected ? "opacity-100" : "opacity-0",
                           )}
                           strokeWidth={2}
                         />
@@ -203,10 +169,10 @@ export function ProjectSelector({
               onViewAll();
               setOpen(false);
             }}
-            className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            className="flex w-full items-center justify-between px-5 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             View all projects
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </PopoverContent>

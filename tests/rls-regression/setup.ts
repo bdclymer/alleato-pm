@@ -1,7 +1,7 @@
 /**
  * RLS Regression Test - User Setup
  *
- * Creates 4 test personas in the AI APP Supabase project (lgveqfnpkxvzbnnwuled).
+ * Creates 4 test personas in the PM APP Supabase project (lgveqfnpkxvzbnnwuled).
  * Idempotent: if a user already exists, reuses them.
  *
  * Outputs user IDs on success. Passwords are written to .env.local (gitignored).

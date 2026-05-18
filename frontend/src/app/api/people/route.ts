@@ -40,7 +40,7 @@ export const GET = withApiGuardrails(
         phone_business,
         person_type,
         status,
-        company:companies(id, name)
+        company:companies!people_company_id_fkey(id, name)
       `, { count: 'exact' });
 
     // Apply type filter
@@ -147,7 +147,7 @@ export const POST = withApiGuardrails(
         phone_business,
         person_type,
         status,
-        company:companies(id, name)
+        company:companies!people_company_id_fkey(id, name)
       `)
       .single();
 

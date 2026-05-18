@@ -933,8 +933,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
           data?: { contract_number?: unknown; title?: unknown };
         }>(`/api/commitments/${commitmentId}`);
         const record = json?.data;
+        const titlePart = typeof record?.title === "string" && record.title.length > 0 ? record.title : null;
         const number = typeof record?.contract_number === "string" && record.contract_number.length > 0 && !/^[0-9a-f-]{36}$/i.test(record.contract_number) ? record.contract_number : null;
-        const title = number ?? (typeof record?.title === "string" && record.title.length > 0 ? record.title : null);
+        const title = titlePart ?? number;
 
         if (isActive) {
           if (title) {

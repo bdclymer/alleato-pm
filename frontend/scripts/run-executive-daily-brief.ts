@@ -199,6 +199,16 @@ async function deliverBriefing(): Promise<unknown> {
 }
 
 async function main() {
+  // Kill switch: deactivated 2026-05-18 at user request. Default OFF.
+  // Set EXECUTIVE_DAILY_BRIEF_ENABLED=true on the runtime to re-enable.
+  const enabled = (process.env.EXECUTIVE_DAILY_BRIEF_ENABLED ?? "false").toLowerCase() === "true";
+  if (!enabled) {
+    console.log(
+      JSON.stringify({ ok: true, skipped: true, reason: "executive_daily_brief_disabled" }, null, 2),
+    );
+    return;
+  }
+
   const nowArg = cliArg("--now");
   const schedule = localScheduleDecision(nowArg ? new Date(nowArg) : new Date());
 
@@ -220,7 +230,7 @@ async function main() {
       status: "succeeded" satisfies RunStatus,
       items_synced: 1,
       items_updated: 1,
-      metadata: { deliveryResult: result, durationMs: Date.now() - startMs },
+      metadata: { deliveryResult: result as string, durationMs: Date.now() - startMs },
     });
 
     console.log(

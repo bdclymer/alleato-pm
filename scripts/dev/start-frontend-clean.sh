@@ -3,73 +3,65 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FRONTEND_DIR="$REPO_ROOT/frontend"
+PORT="${PORT:-3001}"
 PID_FILE="/tmp/alleato-next-dev.pid"
-NEXT_MATCH="next dev"
 
-is_matching_next_pid() {
+is_alleato_next_pid() {
   local pid="$1"
   local cmd
   cmd="$(ps -p "$pid" -o command= 2>/dev/null || true)"
-  [[ -n "$cmd" ]] && [[ "$cmd" == *"$NEXT_MATCH"* ]]
+  [[ -n "$cmd" ]] && [[ "$cmd" == *"next dev"* ]] && \
+    ps -p "$pid" -o command= 2>/dev/null | grep -q "alleato-pm"
 }
 
 is_server_healthy() {
-  curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://localhost:3000 2>/dev/null | grep -qE "^[23]"
+  curl -s -o /dev/null -w "%{http_code}" --max-time 3 "http://localhost:${PORT}" 2>/dev/null | grep -qE "^[23]"
 }
 
 # If a managed process is already running and the server is healthy, do nothing.
 if [[ -f "$PID_FILE" ]]; then
   managed_pid="$(cat "$PID_FILE" 2>/dev/null || true)"
-  if [[ -n "${managed_pid:-}" ]] && is_matching_next_pid "$managed_pid"; then
+  if [[ -n "${managed_pid:-}" ]] && is_alleato_next_pid "$managed_pid"; then
     if is_server_healthy; then
-      echo "[frontend-dev] Server already running (PID $managed_pid) and healthy at http://localhost:3000 — following existing process."
-      # Keep this process alive as long as the server lives (preview_start expects a long-running process)
+      echo "[frontend-dev] Server already running (PID $managed_pid) and healthy at http://localhost:${PORT} — following existing process."
       while kill -0 "$managed_pid" 2>/dev/null; do sleep 1; done
       exit 0
     fi
-    # Server process exists but isn't responding — kill and restart
     echo "[frontend-dev] Server PID $managed_pid is not responding — restarting."
     kill "$managed_pid" 2>/dev/null || true
     for _ in {1..20}; do
-      if ! ps -p "$managed_pid" >/dev/null 2>&1; then
-        break
-      fi
+      if ! ps -p "$managed_pid" >/dev/null 2>&1; then break; fi
       sleep 0.25
     done
   fi
   rm -f "$PID_FILE"
 fi
 
-# Auto-kill any unmanaged Next dev processes before starting.
-other_next_pids="$(pgrep -f "$NEXT_MATCH" || true)"
-if [[ -n "${other_next_pids:-}" ]]; then
-  # Check if any of these are actually healthy
+# Kill any existing alleato-pm Next dev processes on our port.
+alleato_pids="$(pgrep -f "alleato-pm.*next dev" 2>/dev/null || true)"
+if [[ -n "${alleato_pids:-}" ]]; then
   if is_server_healthy; then
-    echo "[frontend-dev] Found healthy Next dev server (unmanaged) — adopting it rather than restarting."
-    first_pid="$(echo "$other_next_pids" | head -1)"
+    echo "[frontend-dev] Found healthy alleato-pm server — adopting."
+    first_pid="$(echo "$alleato_pids" | head -1)"
     echo "$first_pid" > "$PID_FILE"
-    # Keep this process alive as long as the server lives (preview_start expects a long-running process)
     while kill -0 "$first_pid" 2>/dev/null; do sleep 1; done
     exit 0
   fi
-  echo "[frontend-dev] Found existing Next dev process(es) not managed by this script — killing them:"
+  echo "[frontend-dev] Found stale alleato-pm Next dev processes — killing:"
   while IFS= read -r pid; do
     [[ -z "$pid" ]] && continue
-    ps -p "$pid" -o pid=,command=
+    ps -p "$pid" -o pid=,command= 2>/dev/null || true
     kill "$pid" 2>/dev/null || true
-  done <<< "$other_next_pids"
-  # Wait up to 5s for them to exit
+  done <<< "$alleato_pids"
   for _ in {1..20}; do
-    remaining="$(pgrep -f "$NEXT_MATCH" || true)"
+    remaining="$(pgrep -f "alleato-pm.*next dev" 2>/dev/null || true)"
     [[ -z "${remaining:-}" ]] && break
     sleep 0.25
   done
-  echo "[frontend-dev] Cleared. Starting fresh."
 fi
 
 cd "$FRONTEND_DIR"
 rm -rf .next
 echo "$$" > "$PID_FILE"
-# Cap Node.js heap at 6GB; --experimental-vm-modules reduces per-module overhead
 export NODE_OPTIONS='--max-old-space-size=6144'
-exec npx next dev
+exec npx next dev --port "$PORT"

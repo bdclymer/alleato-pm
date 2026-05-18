@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   Building2,
   MoreHorizontal,
@@ -15,6 +15,7 @@ import {
   Search,
   SlidersHorizontal,
   X,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   Button,
@@ -61,7 +62,10 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { useProjectVendors } from "@/hooks/use-project-vendors";
-import { useProjectCompanies } from "@/hooks/use-project-companies";
+import {
+  useProjectCompanies,
+  useUpdateProjectCompany,
+} from "@/hooks/use-project-companies";
 import { usePermissionTemplates } from "@/hooks/use-permissions";
 import { createClient } from "@/lib/supabase/client";
 import { apiFetch, ApiError } from "@/lib/api-client";
@@ -76,7 +80,7 @@ import {
   ALL_MODULES,
   GRANULAR_FLAG_LABELS,
 } from "@/lib/permissions-shared";
-import { Check, ShieldCheck } from "lucide-react";
+import { Check, ShieldCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import type { PersonWithDetails } from "@/services/directoryService";
 
@@ -804,7 +808,21 @@ function ProjectTeamSection({
       id: "actions",
       header: "",
       cell: ({ row }) => {
-        const { role } = row.original;
+        const { role, member } = row.original;
+        const handleRemoveOne = async () => {
+          if (!member) return;
+          try {
+            await updateRoleMembers(
+              role.id,
+              role.members
+                .filter((m) => m.person_id !== member.person_id)
+                .map((m) => m.person_id),
+            );
+            toast.success("Removed from role");
+          } catch {
+            toast.error("Failed to remove from role");
+          }
+        };
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -814,9 +832,15 @@ function ProjectTeamSection({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setAssignDialog({ open: true, role })}>
-                <Pencil className="mr-2 h-3.5 w-3.5" />
-                {row.original.member ? "Edit assignment" : "Assign someone"}
+                <UserPlus className="mr-2 h-3.5 w-3.5" />
+                {member ? "Add another person" : "Assign someone"}
               </DropdownMenuItem>
+              {member && (
+                <DropdownMenuItem onClick={() => void handleRemoveOne()}>
+                  <UserX className="mr-2 h-3.5 w-3.5" />
+                  Remove this person
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteRole(role)}>
                 <Trash2 className="mr-2 h-3.5 w-3.5" />Delete role
               </DropdownMenuItem>
@@ -1478,11 +1502,154 @@ function VendorsSection({
 
 // ─── Companies Section ──────────────────────────────────────────
 
+type SubcontractorContact = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone_business: string | null;
+  phone_mobile: string | null;
+};
+
+function contactDisplayName(c: SubcontractorContact | null): string {
+  if (!c) return "";
+  const name = [c.first_name, c.last_name].filter(Boolean).join(" ").trim();
+  return name || c.email || "";
+}
+
+function ContactPickerCell({
+  projectId,
+  companyId,
+  projectCompanyId,
+  companyName,
+  currentContactId,
+  currentContactName,
+  onChanged,
+}: {
+  projectId: string;
+  companyId: string;
+  projectCompanyId: string;
+  companyName: string;
+  currentContactId: string | null;
+  currentContactName: string;
+  onChanged: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [people, setPeople] = React.useState<SubcontractorContact[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const router = useRouter();
+  const updateMutation = useUpdateProjectCompany(projectId);
+
+  React.useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    const supabase = createClient();
+    supabase
+      .from("people")
+      .select("id, first_name, last_name, email, phone_business, phone_mobile")
+      .eq("company_id", companyId)
+      .order("first_name", { ascending: true })
+      .then(({ data }) => {
+        setPeople((data ?? []) as SubcontractorContact[]);
+        setLoading(false);
+      });
+  }, [open, companyId]);
+
+  const handleSelect = async (personId: string) => {
+    setOpen(false);
+    try {
+      await updateMutation.mutateAsync({
+        companyId: projectCompanyId,
+        data: { primary_contact_id: personId },
+      });
+      toast.success("Contact updated");
+      onChanged();
+    } catch {
+      toast.error("Failed to update contact");
+    }
+  };
+
+  return (
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            className="group flex h-8 -ml-2 items-center gap-1.5 px-2 text-sm font-normal text-foreground"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {currentContactName ? (
+              <span>{currentContactName}</span>
+            ) : (
+              <span className="text-primary underline-offset-2 group-hover:underline">
+                Set contact
+              </span>
+            )}
+            <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-0" align="start" onClick={(e) => e.stopPropagation()}>
+          <Command>
+            <CommandInput placeholder="Search contacts..." />
+            <CommandList className="max-h-64">
+              <CommandEmpty>
+                {loading ? "Loading..." : "No contacts at this company."}
+              </CommandEmpty>
+              {people.length > 0 && (
+                <CommandGroup heading="Assigned to this company">
+                  {people.map((p) => (
+                    <CommandItem
+                      key={p.id}
+                      value={`${p.first_name ?? ""} ${p.last_name ?? ""} ${p.email ?? ""}`}
+                      onSelect={() => void handleSelect(p.id)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4 shrink-0",
+                          currentContactId === p.id ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      <div className="min-w-0 flex flex-col">
+                        <span className="truncate text-sm">
+                          {contactDisplayName(p) || "Unnamed"}
+                        </span>
+                        {p.email && (
+                          <span className="truncate text-xs text-muted-foreground">
+                            {p.email}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              <CommandGroup>
+                <CommandItem
+                  value="__manage_company_contacts__"
+                  onSelect={() => {
+                    setOpen(false);
+                    router.push(`/directory/companies/${companyId}`);
+                  }}
+                >
+                  <UserPlus className="mr-2 h-4 w-4 shrink-0" />
+                  Manage contacts for {companyName}
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </>
+  );
+}
+
 function CompaniesSection({
   projectId,
   companies,
   isLoading,
   error,
+  ownerCompanyId,
   onAssignClick,
   onRefetch,
 }: {
@@ -1490,11 +1657,16 @@ function CompaniesSection({
   companies: Array<{
     id: string;
     company_id: string;
-    company?: { name: string | null } | null;
+    company?:
+      | { name: string | null; vendor_class?: string | null }
+      | null;
     user_count?: number | null;
+    primary_contact_id?: string | null;
+    primary_contact?: SubcontractorContact | null;
   }>;
   isLoading: boolean;
   error: Error | null;
+  ownerCompanyId: string | null;
   onAssignClick: () => void;
   onRefetch: () => void;
 }) {
@@ -1532,31 +1704,63 @@ function CompaniesSection({
     }
   };
 
-  const companyRows = React.useMemo(
+  type SubcontractorRow = {
+    id: string;
+    projectCompanyId: string;
+    name: string;
+    contact: SubcontractorContact | null;
+    typeLabel: string;
+  };
+
+  const companyRows = React.useMemo<SubcontractorRow[]>(
     () =>
       companies
-        .map((projectCompany) => ({
-          id: projectCompany.company_id,
-          name: projectCompany.company?.name || "Untitled Company",
-          memberCount: projectCompany.user_count || 0,
-        }))
+        .map((projectCompany) => {
+          const vendorClass = projectCompany.company?.vendor_class ?? null;
+          const isOwner =
+            ownerCompanyId !== null && projectCompany.company_id === ownerCompanyId;
+          const typeLabel = isOwner
+            ? "Owner"
+            : vendorClass === "SUB"
+              ? "Subcontractor"
+              : vendorClass || "—";
+          return {
+            id: projectCompany.company_id,
+            projectCompanyId: projectCompany.id,
+            name: projectCompany.company?.name || "Untitled Company",
+            contact: (projectCompany.primary_contact ?? null) as SubcontractorContact | null,
+            typeLabel,
+          };
+        })
         .sort((a, b) => a.name.localeCompare(b.name)),
-    [companies],
+    [companies, ownerCompanyId],
   );
 
   const filteredRows = React.useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     if (!q) return companyRows;
-    return companyRows.filter((c) => c.name.toLowerCase().includes(q));
+    return companyRows.filter((c) => {
+      const contactStr = contactDisplayName(c.contact).toLowerCase();
+      const email = (c.contact?.email ?? "").toLowerCase();
+      return (
+        c.name.toLowerCase().includes(q) ||
+        contactStr.includes(q) ||
+        email.includes(q)
+      );
+    });
   }, [companyRows, deferredSearch]);
 
-  const companiesColumns = React.useMemo<ColumnDef<{ id: string; name: string; memberCount: number }>[]>(
+  const companiesColumns = React.useMemo<ColumnDef<SubcontractorRow>[]>(
     () => [
       {
         id: "name",
-        header: "Company",
+        header: "Company Name",
         cell: ({ row }) => (
-          <Link href={`/directory/companies/${row.original.id}`} className="flex items-center gap-3">
+          <Link
+            href={`/directory/companies/${row.original.id}`}
+            className="flex items-center gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
               <Building2 className="h-3.5 w-3.5 text-primary" />
             </div>
@@ -1567,17 +1771,68 @@ function CompaniesSection({
         ),
       },
       {
-        id: "memberCount",
-        header: "Members",
+        id: "type",
+        header: "Type",
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.memberCount} {row.original.memberCount === 1 ? "member" : "members"}
+            {row.original.typeLabel}
+          </span>
+        ),
+      },
+      {
+        id: "contact",
+        header: "Contact Name",
+        cell: ({ row }) => (
+          <ContactPickerCell
+            projectId={projectId}
+            companyId={row.original.id}
+            projectCompanyId={row.original.projectCompanyId}
+            companyName={row.original.name}
+            currentContactId={row.original.contact?.id ?? null}
+            currentContactName={contactDisplayName(row.original.contact)}
+            onChanged={onRefetch}
+          />
+        ),
+      },
+      {
+        id: "email",
+        header: "Email",
+        cell: ({ row }) => {
+          const email = row.original.contact?.email;
+          return email ? (
+            <a
+              href={`mailto:${email}`}
+              className="text-sm text-muted-foreground hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {email}
+            </a>
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
+          );
+        },
+      },
+      {
+        id: "phone",
+        header: "Phone",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {row.original.contact?.phone_business || "—"}
+          </span>
+        ),
+      },
+      {
+        id: "phone_mobile",
+        header: "Cell Phone",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {row.original.contact?.phone_mobile || "—"}
           </span>
         ),
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "",
         cell: ({ row }) => {
           const company = row.original;
           return (
@@ -1594,7 +1849,7 @@ function CompaniesSection({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem asChild>
-                  <Link href={`/directory/companies/${company.id}`}>
+                  <Link href={`/directory/companies/${company.id}?edit=1`}>
                     <Pencil className="mr-2 h-3.5 w-3.5" />Edit
                   </Link>
                 </DropdownMenuItem>
@@ -1612,7 +1867,7 @@ function CompaniesSection({
         },
       },
     ],
-    [removingCompanyId, projectId],
+    [removingCompanyId, projectId, onRefetch],
   );
 
   return (
@@ -1647,7 +1902,6 @@ function CompaniesSection({
             data={filteredRows}
             showToolbar={false}
             showPagination={filteredRows.length > 10}
-            onRowClick={(row) => { window.location.href = `/directory/companies/${row.id}`; }}
           />
         )}
       </div>
@@ -1663,6 +1917,7 @@ export default function ProjectDirectoryPage() {
   const projectId = params.projectId as string;
 
   const [clientName, setClientName] = React.useState<string | null>(null);
+  const [ownerCompanyId, setOwnerCompanyId] = React.useState<string | null>(null);
   React.useEffect(() => {
     if (!projectId) return;
     const supabase = createClient();
@@ -1677,8 +1932,24 @@ export default function ProjectDirectoryPage() {
       });
   }, [projectId]);
 
-  const { users: members, refetch: refetchMembers } = useProjectUsers(projectId, { type: "all" });
-  const [addMemberOpen, setAddMemberOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (!projectId) return;
+    const supabase = createClient();
+    supabase
+      .from("prime_contracts")
+      .select("contract_company_id")
+      .eq("project_id", parseInt(projectId, 10))
+      .not("contract_company_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        setOwnerCompanyId(
+          (data as { contract_company_id?: string | null } | null)?.contract_company_id ?? null,
+        );
+      });
+  }, [projectId]);
+
   const [addCompanyOpen, setAddCompanyOpen] = React.useState(false);
   const [addVendorOpen, setAddVendorOpen] = React.useState(false);
   const [manageRolesOpen, setManageRolesOpen] = React.useState(false);
@@ -1750,26 +2021,12 @@ export default function ProjectDirectoryPage() {
           companies={projectCompanies}
           isLoading={companiesLoading}
           error={companiesError}
+          ownerCompanyId={ownerCompanyId}
           onAssignClick={() => setAddCompanyOpen(true)}
           onRefetch={() => { void refetchCompanies(); }}
         />
       </section>
 
-      {/* Section 3: All Project Members */}
-      <section>
-        <ExternalMembersSection
-          projectId={projectId}
-          onAddClick={() => setAddMemberOpen(true)}
-          onRefetch={refetchMembers}
-        />
-      </section>
-
-      <AddMemberDialog
-        open={addMemberOpen}
-        onOpenChange={setAddMemberOpen}
-        projectId={projectId}
-        onSuccess={refetchMembers}
-      />
       <AssignExistingCompanyDialog
         open={addCompanyOpen}
         onOpenChange={setAddCompanyOpen}

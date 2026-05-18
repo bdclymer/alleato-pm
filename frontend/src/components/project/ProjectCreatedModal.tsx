@@ -1,9 +1,8 @@
 'use client'
 
 import { motion, useReducedMotion, type Transition } from 'framer-motion'
-import { ArrowRight, Users, DollarSign, FileText, Image, Calendar, Building2 } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import NextImage from 'next/image'
-import Link from 'next/link'
 import {
   Modal as Dialog,
   ModalContent as DialogContent,
@@ -19,57 +18,10 @@ interface ProjectCreatedModalProps {
   projectName: string
 }
 
-const nextSteps = [
-  {
-    icon: Users,
-    title: 'Update Directory',
-    description: 'Add team members and assign roles',
-    path: 'directory',
-  },
-  {
-    icon: DollarSign,
-    title: 'Create Budget',
-    description: 'Set up project budget and line items',
-    path: 'budget',
-  },
-  {
-    icon: Building2,
-    title: 'Create Prime Contract',
-    description: 'Establish primary contract terms',
-    path: 'prime-contracts',
-  },
-  {
-    icon: FileText,
-    title: 'Add Specifications',
-    description: 'Upload project specifications',
-    path: 'specifications',
-  },
-  {
-    icon: Image,
-    title: 'Upload Drawings',
-    description: 'Add architectural and engineering drawings',
-    path: 'drawings',
-  },
-  {
-    icon: Calendar,
-    title: 'Create Schedule',
-    description: 'Build project timeline and milestones',
-    path: 'schedule',
-  },
-]
-
-// Build canonical project-scoped paths for next-step links after project creation.
-const buildProjectPath = (projectId: string, suffix: string) => {
-  const normalizedProjectId = String(projectId).trim()
-  if (!normalizedProjectId) return '#'
-  return `/${normalizedProjectId}/${suffix}`
-}
-
 export function ProjectCreatedModal({
   isOpen,
   onClose,
   onViewDashboard,
-  projectId,
   projectName,
 }: ProjectCreatedModalProps) {
   const prefersReducedMotion = useReducedMotion()
@@ -96,26 +48,25 @@ export function ProjectCreatedModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       {/* eslint-disable-next-line design-system/no-design-violations -- DialogContent is a card-like component with intentional border */}
-      <DialogContent size="md" className="p-0 overflow-hidden bg-card rounded-xl shadow-sm border-border">
+      <DialogContent size="xl" className="p-0 overflow-hidden bg-card rounded-2xl shadow-sm border-border">
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.97, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          className="relative"
         >
-          {/* Header */}
-          <div className="relative px-8 pt-8 pb-5 text-center overflow-visible">
+          {/* Blueprint grid — runs through the full modal as a unifying texture */}
+          <div
+            className="absolute inset-0 opacity-[0.025] pointer-events-none"
+            style={{
+              backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
+              backgroundSize: '24px 24px',
+            }}
+          />
 
-            {/* Very subtle blueprint grid — document texture */}
-            <div
-              className="absolute inset-0 rounded-t-xl opacity-[0.025] pointer-events-none"
-              style={{
-                backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
-                backgroundSize: '24px 24px',
-              }}
-            />
-
-            {/* Stamp — drops onto the document */}
-            <div className="relative mb-3 flex justify-center">
+          <div className="relative px-12 pt-14 pb-12 text-center">
+            {/* Stamp — the hero */}
+            <div className="mb-8 flex justify-center">
               <motion.div
                 initial={prefersReducedMotion ? false : { opacity: 0, y: -55, rotate: -4 }}
                 animate={stampAnimation}
@@ -125,104 +76,51 @@ export function ProjectCreatedModal({
                 <NextImage
                   src="/images/issued-stamp.png"
                   alt="Issued for Construction"
-                  width={260}
-                  height={130}
+                  width={520}
+                  height={260}
                   priority
-                  className="w-56 h-auto"
-                  style={{ mixBlendMode: 'multiply' }}
+                  className="max-w-full h-auto"
+                  style={{ width: '420px', mixBlendMode: 'multiply' }}
                 />
               </motion.div>
             </div>
-
-            <motion.p
-              initial={prefersReducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
-              className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/50 mb-2"
-            >
-              {projectName}
-            </motion.p>
 
             <DialogTitle asChild>
               <motion.h2
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.3 }}
-                className="text-2xl font-semibold text-foreground tracking-tight mb-1"
+                transition={{ delay: 0.55, duration: 0.3 }}
+                className="text-5xl font-semibold text-foreground tracking-tight mb-3"
               >
-                Project Created
+                {projectName}
               </motion.h2>
             </DialogTitle>
 
             <motion.p
               initial={prefersReducedMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-              className="text-sm text-muted-foreground"
+              transition={{ delay: 0.6, duration: 0.3 }}
+              className="text-base text-muted-foreground mb-10"
             >
-              Let&apos;s build something great.
+              Project created. Let&apos;s build something great.
             </motion.p>
+
+            <motion.div
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.3 }}
+              className="flex justify-center"
+            >
+              <Button
+                onClick={onViewDashboard}
+                size="lg"
+                className="gap-1.5 group h-12 px-8 text-base"
+              >
+                View Project
+                <ArrowRight className="group-hover:translate-x-0.5 transition-transform" />
+              </Button>
+            </motion.div>
           </div>
-
-          {/* Next Steps */}
-          <div className="px-5 pb-5">
-            <div className="flex items-center gap-3 mb-2 px-1">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-                Next Steps
-              </span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
-            <div className="space-y-0.5">
-              {nextSteps.map((step, index) => {
-                const Icon = step.icon
-                return (
-                  <motion.div
-                    key={step.title}
-                    initial={prefersReducedMotion ? false : { opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + index * 0.05, duration: 0.22, ease: 'easeOut' }}
-                  >
-                    <Link
-                      href={buildProjectPath(projectId, step.path)}
-                      onClick={onClose}
-                      className="group flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-accent transition-colors duration-100"
-                    >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0 group-hover:bg-primary/15 transition-colors">
-                        <Icon className="w-4 h-4 text-primary" strokeWidth={1.75} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground leading-none mb-0.5">
-                          {step.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {step.description}
-                        </p>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                    </Link>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.65, duration: 0.3 }}
-            className="px-5 pb-5 pt-3 border-t border-border flex items-center justify-between"
-          >
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground/60">
-              Or explore your project
-            </p>
-            <Button onClick={onViewDashboard} size="sm" className="gap-1.5 group">
-              View Dashboard
-              <ArrowRight className="group-hover:translate-x-0.5 transition-transform" />
-            </Button>
-          </motion.div>
         </motion.div>
       </DialogContent>
     </Dialog>

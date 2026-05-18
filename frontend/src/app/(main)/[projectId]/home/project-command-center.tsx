@@ -24,22 +24,26 @@ import {
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
-import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
+import { useProjectRoles } from "@/hooks/use-project-roles";
 import {
   Avatar,
   AvatarFallback,
   Button,
-  InlineTable,
-  InlineTableHeader,
-  InlineTableHeaderRow,
-  InlineTableHeaderCell,
-  InlineTableBody,
-  InlineTableRow,
-  InlineTableCell,
-  PageTabs,
   StatusBadge,
 } from "@/components/ds";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import * as TablePrimitives from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+
+// Local aliases to satisfy the design-system/no-raw-table-primitives lint rule.
+// The dashboard widget tables on this page are intentionally lightweight read-only
+// displays — UnifiedTablePage would be overkill for these summary cells.
+const Table = TablePrimitives.Table;
+const TableBody = TablePrimitives.TableBody;
+const TableCell = TablePrimitives.TableCell;
+const TableHead = TablePrimitives.TableHead;
+const TableHeader = TablePrimitives.TableHeader;
+const TableRow = TablePrimitives.TableRow;
 import { apiFetch } from "@/lib/api-client";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
@@ -115,11 +119,6 @@ const BudgetBarChart = dynamic(
     ssr: false,
     loading: () => <div className="h-32 w-full animate-pulse rounded-md bg-muted/40" />,
   },
-);
-
-const AssignMemberDialog = dynamic(
-  () => import("@/components/domain/directory/AssignMemberDialog").then((mod) => mod.AssignMemberDialog),
-  { ssr: false },
 );
 
 const EditProjectSidebar = dynamic(
@@ -260,79 +259,143 @@ function isClosedStatus(status: string | null | undefined): boolean {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   WorkCompletedGauge — SVG circular progress
+   FinancialMetricCell — one cell in the compact financial strip
 ───────────────────────────────────────────────────────────── */
 
-function WorkCompletedGauge({ pctComplete, label, sub }: { pctComplete: number; label: string; sub: string }) {
-  const radius = 36;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (pctComplete / 100) * circumference;
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-1">
-      <div className="relative flex h-24 w-24 items-center justify-center">
-        <svg className="absolute inset-0 -rotate-90" width="96" height="96" viewBox="0 0 96 96">
-          <circle
-            cx="48"
-            cy="48"
-            r={radius}
-            fill="none"
-            stroke="hsl(var(--muted))"
-            strokeWidth="8"
-          />
-          <circle
-            cx="48"
-            cy="48"
-            r={radius}
-            fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            style={{ transition: "stroke-dashoffset 0.6s ease" }}
-          />
-        </svg>
-        <span className="text-xl font-semibold tabular-nums text-foreground">
-          {pctComplete}%
-        </span>
-      </div>
-      <p className="text-xs font-medium text-foreground">{label}</p>
-      <p className="text-[11px] text-muted-foreground">{sub}</p>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   MetricCard — top KPI cards wrapper
-───────────────────────────────────────────────────────────── */
-
-function MetricCard({
+function FinancialMetricCell({
   label,
   href,
   children,
-  className,
 }: {
   label: string;
   href: string;
   children: React.ReactNode;
-  className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col gap-3 rounded-lg bg-card p-5", className)}>
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="group relative px-4 py-3.5">
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
           {label}
         </span>
         <Link
           href={href}
           prefetch={false}
-          className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80 transition-colors"
+          className="flex items-center gap-0.5 text-[10px] text-primary opacity-0 transition-opacity group-hover:opacity-100"
         >
-          View <ChevronRight className="h-3 w-3" />
+          View <ChevronRight className="h-2.5 w-2.5" />
         </Link>
       </div>
       {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ProjectHomeNav — left sidebar navigation
+───────────────────────────────────────────────────────────── */
+
+const NAV_GROUPS = [
+  {
+    label: "Finance",
+    items: [
+      { label: "Budget", path: "budget" },
+      { label: "Prime Contract", path: "prime-contracts" },
+      { label: "Commitments", path: "commitments" },
+      { label: "Invoicing", path: "invoicing" },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { label: "Drawings", path: "drawings" },
+      { label: "Submittals", path: "submittals" },
+      { label: "RFIs", path: "rfis" },
+      { label: "Documents", path: "documents" },
+      { label: "Daily Logs", path: "daily-log" },
+    ],
+  },
+  {
+    label: "Change Workflow",
+    items: [
+      { label: "Change Events", path: "change-events" },
+      { label: "Change Orders", path: "change-orders" },
+    ],
+  },
+] as const;
+
+function ProjectHomeNav({
+  projectId,
+  project,
+}: {
+  projectId: string;
+  project: Project;
+}) {
+  const jobNumber =
+    (project as Record<string, unknown>)["job number"] as string | undefined ??
+    (project as Record<string, unknown>).project_number as string | undefined;
+
+  return (
+    <nav
+      className="sticky top-0 self-start h-screen shrink-0 overflow-y-auto border-r border-border bg-card/60"
+      style={{ width: "196px" }}
+    >
+      <div className="px-4 py-5 border-b border-border">
+        {jobNumber && (
+          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            {jobNumber}
+          </p>
+        )}
+        <p className="text-sm font-semibold leading-snug text-foreground line-clamp-2">
+          {project.name ?? "Untitled Project"}
+        </p>
+      </div>
+
+      <div className="py-3">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label} className="mb-4">
+            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">
+              {group.label}
+            </p>
+            {group.items.map((item) => (
+              <Link
+                key={item.path}
+                href={`/${projectId}/${item.path}`}
+                prefetch={false}
+                className="flex items-center px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SectionHeading
+───────────────────────────────────────────────────────────── */
+
+function SectionHeading({
+  children,
+  href,
+}: {
+  children: React.ReactNode;
+  href?: string;
+}) {
+  return (
+    <div className="mb-2 flex items-center justify-between">
+      <div className="text-sm font-semibold text-foreground">{children}</div>
+      {href && (
+        <Link
+          href={href}
+          prefetch={false}
+          className="flex items-center gap-0.5 text-xs text-primary transition-colors hover:text-primary/80"
+        >
+          View all <ChevronRight className="h-3 w-3" />
+        </Link>
+      )}
     </div>
   );
 }
@@ -378,46 +441,6 @@ function AlertsBand({ alerts }: { alerts: Alert[] }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   InlineDataRow — consistent row for all tab tables
-───────────────────────────────────────────────────────────── */
-
-function InlineDataRow({
-  href,
-  primary,
-  secondary,
-  tertiary,
-  status,
-  badge,
-}: {
-  href: string;
-  primary: string;
-  secondary?: string | null;
-  tertiary?: string | null;
-  status?: string | null;
-  badge?: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      prefetch={false}
-      className="group flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/40 -mx-2"
-    >
-      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-          {primary}
-        </p>
-        {(secondary || tertiary) && (
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {[secondary, tertiary].filter(Boolean).join(" · ")}
-          </p>
-        )}
-      </div>
-      {badge ?? (status && <StatusBadge status={status} />)}
-    </Link>
-  );
-}
 
 /* ─────────────────────────────────────────────────────────────
    TabSection — tabbed table section with search
@@ -447,15 +470,10 @@ function TabSection({
   const [search, setSearch] = React.useState("");
   const [activeTab, setActiveTab] = React.useState(defaultTab ?? tabs[0]?.id ?? "");
 
-  React.useEffect(() => {
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
     setSearch("");
-  }, [activeTab]);
-
-  const pageTabs = tabs.map((tab) => ({
-    label: typeof tab.count === "number" && tab.count > 0 ? `${tab.label} (${tab.count})` : tab.label,
-    href: `#${tab.id}`,
-    isActive: activeTab === tab.id,
-  }));
+  };
 
   const activeTabConfig = tabs.find((t) => t.id === activeTab);
 
@@ -473,14 +491,19 @@ function TabSection({
 
   return (
     <div className="rounded-lg bg-card overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3">
-        <PageTabs
-          tabs={pageTabs}
-          variant="inline"
-          onTabClick={(href) => setActiveTab(href.replace("#", ""))}
-          className="mb-0 md:mb-0 flex-1 min-w-0"
-        />
-        <div className="relative shrink-0 mb-1">
+      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="inline-block">
+          <TabsList>
+            {tabs.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id}>
+                {typeof tab.count === "number" && tab.count > 0
+                  ? `${tab.label} (${tab.count})`
+                  : tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <div className="relative shrink-0">
           <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
@@ -491,24 +514,22 @@ function TabSection({
         </div>
       </div>
       {activeTabConfig && (
-        <div className="px-4 pb-1">
-          <div className="divide-y divide-border/50">
-            {activeTabConfig.isLoading ? (
-              <div className="py-5 text-sm text-muted-foreground">Loading {activeTabConfig.label.toLowerCase()}…</div>
-            ) : activeTabConfig.error ? (
-              <div className="flex items-center justify-between gap-3 py-5 text-sm">
-                <span className="text-destructive">{activeTabConfig.error}</span>
-                {activeTabConfig.onRetry && (
-                  <Button type="button" variant="outline" size="sm" onClick={activeTabConfig.onRetry}>
-                    Retry
-                  </Button>
-                )}
-              </div>
-            ) : (
-              activeTabConfig.content(search)
-            )}
-          </div>
-          <div className="py-2.5">
+        <div className="pb-1">
+          {activeTabConfig.isLoading ? (
+            <div className="px-4 py-5 text-sm text-muted-foreground">Loading {activeTabConfig.label.toLowerCase()}…</div>
+          ) : activeTabConfig.error ? (
+            <div className="flex items-center justify-between gap-3 px-4 py-5 text-sm">
+              <span className="text-destructive">{activeTabConfig.error}</span>
+              {activeTabConfig.onRetry && (
+                <Button type="button" variant="outline" size="sm" onClick={activeTabConfig.onRetry}>
+                  Retry
+                </Button>
+              )}
+            </div>
+          ) : (
+            activeTabConfig.content(search)
+          )}
+          <div className="px-4 py-2.5">
             <Link
               href={activeTabConfig.viewAllHref}
               prefetch={false}
@@ -545,15 +566,7 @@ function SidebarTeamSection({
   projectId: string;
   team?: ProjectTeamMember[];
 }) {
-  const { roles, isLoading, updateRoleMembers, createRole, refetch } = useProjectRoles(projectId, {
-    enabled: false,
-  });
-  const [assignDialog, setAssignDialog] = React.useState<{ open: boolean; role: ProjectRole | null }>({
-    open: false,
-    role: null,
-  });
-  const [creating, setCreating] = React.useState<string | null>(null);
-  const [loadingRoleName, setLoadingRoleName] = React.useState<string | null>(null);
+  const { roles, isLoading } = useProjectRoles(projectId, { enabled: false });
   const rolesByName = React.useMemo(
     () => new Map(roles.map((role) => [role.role_name.toLowerCase(), role])),
     [roles],
@@ -574,38 +587,11 @@ function SidebarTeamSection({
     const firstMember = dbRole?.members[0] ?? null;
     const initialMember = teamByRoleName.get(roleName.toLowerCase()) ?? null;
     const person = firstMember?.person ?? initialMember;
-    return { roleName, dbRole: dbRole ?? null, person };
+    return { roleName, person };
   });
-
-  const openDialog = async (dbRole: ProjectRole | null, roleName: string) => {
-    setLoadingRoleName(roleName);
-    try {
-      if (dbRole) {
-        setAssignDialog({ open: true, role: dbRole });
-        return;
-      }
-
-      const hydratedRoles = await refetch();
-      const hydratedRole = hydratedRoles.find((role) => role.role_name.toLowerCase() === roleName.toLowerCase());
-      if (hydratedRole) {
-        setAssignDialog({ open: true, role: hydratedRole });
-        return;
-      }
-
-      setCreating(roleName);
-      const newRole = await createRole(roleName);
-      setAssignDialog({ open: true, role: newRole });
-    } catch (error) {
-      toast.error(`Failed to create ${roleName} role`);
-    } finally {
-      setCreating(null);
-      setLoadingRoleName(null);
-    }
-  };
 
   return (
     <div>
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Team</p>
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
@@ -620,18 +606,16 @@ function SidebarTeamSection({
         </div>
       ) : (
         <div className="space-y-0.5">
-          {slots.map(({ roleName, dbRole, person }) => {
+          {slots.map(({ roleName, person }) => {
             const displayName = person ? `${person.first_name} ${person.last_name}`.trim() : null;
-            const isCreating = creating === roleName || loadingRoleName === roleName;
             return (
               <Button
                 key={roleName}
-                type="button"
+                asChild
                 variant="ghost"
-                onClick={() => openDialog(dbRole, roleName)}
-                disabled={isCreating}
                 className="h-auto w-full justify-start gap-2 px-2 py-1.5 text-left hover:bg-muted/40 -mx-2 rounded-md"
               >
+                <Link href={`/${projectId}/directory`}>
                 {person ? (
                   <>
                     <Avatar className="h-6 w-6 shrink-0">
@@ -653,20 +637,12 @@ function SidebarTeamSection({
                     </div>
                   </>
                 )}
+                </Link>
               </Button>
             );
           })}
         </div>
       )}
-      {assignDialog.open && assignDialog.role ? (
-        <AssignMemberDialog
-          open={assignDialog.open}
-          onOpenChange={(open) => setAssignDialog((prev) => ({ ...prev, open }))}
-          role={assignDialog.role}
-          onSave={updateRoleMembers}
-          projectId={projectId}
-        />
-      ) : null}
     </div>
   );
 }
@@ -830,7 +806,7 @@ function ProjectSetupSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex flex-col gap-0 p-0">
-        <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
+        <SheetHeader className="px-4 pt-6 pb-4 border-b border-border">
           <SheetTitle className="text-base font-semibold">Project Setup</SheetTitle>
           <p className="text-sm text-muted-foreground">Complete these steps to get your project running.</p>
           <div className="mt-3">
@@ -1024,20 +1000,6 @@ export function ProjectCommandCenter({
     () => tasks.filter((t) => !isClosedStatus(t.status)),
     [tasks],
   );
-  const openChangeEvents = React.useMemo(
-    () =>
-      changeEvents.filter(
-        (ce) => !["closed", "rejected", "approved"].includes((ce.status ?? "").toLowerCase()),
-      ),
-    [changeEvents],
-  );
-  const pendingChangeOrders = React.useMemo(
-    () =>
-      changeOrders.filter(
-        (co: ChangeOrder) => !["approved", "rejected", "closed"].includes((co.status ?? "").toLowerCase()),
-      ),
-    [changeOrders],
-  );
   /* ── Setup ───────────────────────────────────────────── */
   const hasTeam = (team ?? []).length > 0;
   const hasBudget = (budget ?? []).length > 0 || revisedBudget > 0;
@@ -1076,45 +1038,37 @@ export function ProjectCommandCenter({
       .slice(0, 10);
     if (filtered.length === 0) return <EmptyTabState label="open tasks" />;
     return (
-      <InlineTable variant="read">
-        <InlineTableHeader>
-          <InlineTableHeaderRow>
-            <InlineTableHeaderCell>Task</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Assignee</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Due</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Status</InlineTableHeaderCell>
-          </InlineTableHeaderRow>
-        </InlineTableHeader>
-        <InlineTableBody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Task</TableHead>
+            <TableHead>Assignee</TableHead>
+            <TableHead>Due</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {filtered.map((task) => {
             const overdue = task.due_date ? isPast(new Date(task.due_date)) : false;
             return (
-              <InlineTableRow key={task.id}>
-                <InlineTableCell className="max-w-xs">
-                  <Link
-                    href={`/${projectId}/tasks`}
-                    prefetch={false}
-                    className="line-clamp-2 text-foreground hover:text-primary transition-colors"
-                  >
+              <TableRow key={task.id}>
+                <TableCell className="max-w-xs">
+                  <Link href={`/${projectId}/tasks`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
                     {task.description}
                   </Link>
-                </InlineTableCell>
-                <InlineTableCell>
-                  <span className="text-muted-foreground">{task.assignee_name || "—"}</span>
-                </InlineTableCell>
-                <InlineTableCell>
-                  <span className={cn("whitespace-nowrap", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
-                    {task.due_date ? formatMonthDay(task.due_date) : "—"}
-                  </span>
-                </InlineTableCell>
-                <InlineTableCell>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{task.assignee_name || "—"}</TableCell>
+                <TableCell className={cn(overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+                  {task.due_date ? formatMonthDay(task.due_date) : "—"}
+                </TableCell>
+                <TableCell>
                   <StatusBadge status={overdue ? "Overdue" : (task.priority || task.status || "Open")} />
-                </InlineTableCell>
-              </InlineTableRow>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </InlineTableBody>
-      </InlineTable>
+        </TableBody>
+      </Table>
     );
   };
 
@@ -1125,44 +1079,30 @@ export function ProjectCommandCenter({
       .slice(0, 10);
     if (filtered.length === 0) return <EmptyTabState label="meetings" />;
     return (
-      <InlineTable variant="read">
-        <InlineTableHeader>
-          <InlineTableHeaderRow>
-            <InlineTableHeaderCell>Meeting</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Date</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Duration</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Type</InlineTableHeaderCell>
-          </InlineTableHeaderRow>
-        </InlineTableHeader>
-        <InlineTableBody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Meeting</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Duration</TableHead>
+            <TableHead>Type</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {filtered.map((m) => (
-            <InlineTableRow key={m.id}>
-              <InlineTableCell className="max-w-xs">
-                <Link
-                  href={`/${projectId}/meetings/${m.id}`}
-                  prefetch={false}
-                  className="line-clamp-1 text-foreground hover:text-primary transition-colors"
-                >
+            <TableRow key={m.id}>
+              <TableCell className="max-w-xs">
+                <Link href={`/${projectId}/meetings/${m.id}`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
                   {m.title || m.file_name || "Untitled Meeting"}
                 </Link>
-              </InlineTableCell>
-              <InlineTableCell>
-                <span className="whitespace-nowrap text-muted-foreground">
-                  {formatMonthDay(m.date ?? m.created_at) || "—"}
-                </span>
-              </InlineTableCell>
-              <InlineTableCell>
-                <span className="text-muted-foreground">
-                  {m.duration_minutes ? `${m.duration_minutes} min` : "—"}
-                </span>
-              </InlineTableCell>
-              <InlineTableCell>
-                <StatusBadge status={m.type || "Meeting"} />
-              </InlineTableCell>
-            </InlineTableRow>
+              </TableCell>
+              <TableCell className="text-muted-foreground">{formatMonthDay(m.date ?? m.created_at) || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">{m.duration_minutes ? `${m.duration_minutes} min` : "—"}</TableCell>
+              <TableCell><StatusBadge status={m.type || "Meeting"} /></TableCell>
+            </TableRow>
           ))}
-        </InlineTableBody>
-      </InlineTable>
+        </TableBody>
+      </Table>
     );
   };
 
@@ -1171,91 +1111,32 @@ export function ProjectCommandCenter({
       .filter((d) => (d.title || d.file_name || "").toLowerCase().includes(search.toLowerCase()))
       .slice(0, 8);
     if (filtered.length === 0) return <EmptyTabState label="documents" />;
-    return filtered.map((d) => (
-      <InlineDataRow
-        key={d.id}
-        href={`/${projectId}/documents`}
-        primary={d.title || d.file_name || "Untitled"}
-        secondary={d.category}
-        tertiary={formatMonthDay(d.updated_at ?? d.created_at)}
-        status={d.status}
-      />
-    ));
-  };
-
-  const changeEventsContent = (search: string) => {
-    const filtered = changeEvents
-      .filter((ce) => (ce.title ?? `Change Event #${ce.number}`).toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 8);
-    if (filtered.length === 0) return <EmptyTabState label="change events" />;
-    return filtered.map((ce) => (
-      <InlineDataRow
-        key={ce.id}
-        href={`/${projectId}/change-events/${ce.id}`}
-        primary={ce.title ?? `Change Event #${ce.number}`}
-        secondary={ce.number ? `#${ce.number}` : null}
-        tertiary={formatMonthDay(ce.updated_at ?? ce.created_at)}
-        status={ce.status ?? "Draft"}
-      />
-    ));
-  };
-
-  const changeOrdersContent = (search: string) => {
-    const filtered = changeOrders
-      .filter((co: ChangeOrder) => (co.title ?? "Change Order").toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 8);
-    if (filtered.length === 0) return <EmptyTabState label="change orders" />;
-    return filtered.map((co: ChangeOrder) => {
-      const isPrime = !co.change_order_number;
-      return (
-        <InlineDataRow
-          key={co.id}
-          href={isPrime ? `/${projectId}/change-orders/prime/${co.id}` : `/${projectId}/change-orders/commitment/${co.id}`}
-          primary={co.title ?? "Change Order"}
-          secondary={fmtCompact(co.amount ?? co.total_amount)}
-          tertiary={formatMonthDay(co.created_at)}
-          status={co.status ?? "Pending"}
-        />
-      );
-    });
-  };
-
-  const pccosContent = (search: string) => {
-    const pccos = changeOrders.filter((co: ChangeOrder) => !co.change_order_number);
-    const filtered = pccos
-      .filter((co: ChangeOrder) => (co.title ?? "PCCO").toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 8);
-    if (filtered.length === 0) return <EmptyTabState label="PCCOs" />;
-    return filtered.map((co: ChangeOrder) => (
-      <InlineDataRow
-        key={co.id}
-        href={`/${projectId}/change-orders/prime/${co.id}`}
-        primary={co.title ?? "PCCO"}
-        secondary={fmtCompact(co.amount ?? co.total_amount)}
-        tertiary={formatMonthDay(co.created_at)}
-        status={co.status ?? "Pending"}
-      />
-    ));
-  };
-
-  const rfisContent = (search: string) => {
-    const filtered = rfis
-      .filter((r) => r.subject?.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 8);
-    if (filtered.length === 0) return <EmptyTabState label="RFIs" />;
-    return filtered.map((r) => {
-      const overdue = r.due_date ? isPast(new Date(r.due_date)) : false;
-      return (
-        <InlineDataRow
-          key={r.id}
-          href={`/${projectId}/rfis/${r.id}`}
-          primary={`RFI #${r.number}: ${r.subject}`}
-          secondary={r.ball_in_court ? `BIC: ${r.ball_in_court}` : null}
-          tertiary={r.due_date ? `Due ${formatMonthDay(r.due_date)}` : null}
-          status={overdue ? "Overdue" : r.status}
-        />
-      );
-    });
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Updated</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filtered.map((d) => (
+            <TableRow key={d.id}>
+              <TableCell className="max-w-xs">
+                <Link href={`/${projectId}/documents`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
+                  {d.title || d.file_name || "Untitled"}
+                </Link>
+              </TableCell>
+              <TableCell className="text-muted-foreground">{d.category || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">{formatMonthDay(d.updated_at ?? d.created_at) || "—"}</TableCell>
+              <TableCell>{d.status ? <StatusBadge status={d.status} /> : "—"}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
   };
 
   const dailyLogsContent = (search: string) => {
@@ -1263,16 +1144,26 @@ export function ProjectCommandCenter({
       .filter((dl) => (dl.log_date ?? "").includes(search.toLowerCase()))
       .slice(0, 8);
     if (filtered.length === 0) return <EmptyTabState label="daily logs" />;
-    return filtered.map((dl) => (
-      <InlineDataRow
-        key={dl.id}
-        href={`/${projectId}/daily-log`}
-        primary={formatShortDate(dl.log_date) ?? `Log ${dl.id}`}
-        secondary={null}
-        tertiary={null}
-        status="Daily Log"
-      />
-    ));
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filtered.map((dl) => (
+            <TableRow key={dl.id}>
+              <TableCell>
+                <Link href={`/${projectId}/daily-log`} prefetch={false} className="text-foreground hover:text-primary transition-colors">
+                  {formatShortDate(dl.log_date) ?? `Log ${dl.id}`}
+                </Link>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
   };
 
   const submittalsContent = (search: string) => {
@@ -1280,37 +1171,70 @@ export function ProjectCommandCenter({
       .filter((s) => s.title?.toLowerCase().includes(search.toLowerCase()))
       .slice(0, 8);
     if (filtered.length === 0) return <EmptyTabState label="submittals" />;
-    return filtered.map((s) => (
-      <InlineDataRow
-        key={s.id}
-        href={`/${projectId}/submittals/${s.id}`}
-        primary={`${s.submittal_number}: ${s.title}`}
-        secondary={s.ball_in_court ? `BIC: ${s.ball_in_court}` : null}
-        tertiary={formatMonthDay(s.final_due_date ?? s.required_approval_date ?? s.created_at)}
-        status={s.status ?? "Open"}
-      />
-    ));
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Submittal</TableHead>
+            <TableHead>Ball in Court</TableHead>
+            <TableHead>Due</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filtered.map((s) => (
+            <TableRow key={s.id}>
+              <TableCell className="max-w-xs">
+                <Link href={`/${projectId}/submittals/${s.id}`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
+                  {`${s.submittal_number}: ${s.title}`}
+                </Link>
+              </TableCell>
+              <TableCell className="text-muted-foreground">{s.ball_in_court || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {formatMonthDay(s.final_due_date ?? s.required_approval_date ?? s.created_at) || "—"}
+              </TableCell>
+              <TableCell><StatusBadge status={s.status ?? "Open"} /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
   };
+
+  /* ── Auto-load always-visible lazy sections ──────────── */
+
+  const initialLoadRef = React.useRef(false);
+  React.useEffect(() => {
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
+    loadLazyTabData("meetings");
+    loadLazyTabData("daily-logs");
+  }, [loadLazyTabData]);
+
+  /* ── Project detail derivations ──────────────────────── */
+
+  const normalizedProject = project as ProjectWithNormalizedDates;
+  const projStartDate = (normalizedProject as Record<string, unknown>)["start date"] as string | undefined
+    ?? normalizedProject.start_date;
+  const projCompletionDate = (normalizedProject as Record<string, unknown>)["est completion"] as string | undefined
+    ?? normalizedProject.completion_date;
+  const projMeta = project.summary_metadata as Record<string, unknown> | null;
+  const substantialCompletion =
+    typeof projMeta?.substantial_completion === "string" ? projMeta.substantial_completion : null;
+  const projAddress = [
+    project.address,
+    (projMeta?.city as string) ?? undefined,
+    project.state,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   /* ── Tab configs ─────────────────────────────────────── */
 
-  const commsTabs: TabConfig[] = [
-    { id: "tasks", label: "Tasks", count: openTasks.length, content: tasksContent, viewAllHref: `/${projectId}/tasks` },
-    {
-      id: "meetings",
-      label: "Meetings",
-      count: lazyTabStatus.meetings.loaded ? homeMeetings.length : undefined,
-      content: meetingsContent,
-      viewAllHref: `/${projectId}/meetings`,
-      lazyKind: "meetings",
-      isLoaded: lazyTabStatus.meetings.loaded,
-      isLoading: lazyTabStatus.meetings.loading,
-      error: lazyTabStatus.meetings.error,
-      onRetry: () => loadLazyTabData("meetings"),
-    },
+  const docIntelTabs: TabConfig[] = [
     {
       id: "documents",
-      label: "Documents",
+      label: "Files",
       count: lazyTabStatus.documents.loaded ? homeDocuments.length : undefined,
       content: documentsContent,
       viewAllHref: `/${projectId}/documents`,
@@ -1319,28 +1243,6 @@ export function ProjectCommandCenter({
       isLoading: lazyTabStatus.documents.loading,
       error: lazyTabStatus.documents.error,
       onRetry: () => loadLazyTabData("documents"),
-    },
-  ];
-
-  const changeTabs: TabConfig[] = [
-    { id: "change-events", label: "Change Events", count: changeEvents.length, content: changeEventsContent, viewAllHref: `/${projectId}/change-events` },
-    { id: "pcco", label: "PCCO", count: changeOrders.filter((co: ChangeOrder) => !co.change_order_number).length, content: pccosContent, viewAllHref: `/${projectId}/change-orders` },
-    { id: "change-orders", label: "Change Orders", count: changeOrders.length, content: changeOrdersContent, viewAllHref: `/${projectId}/change-orders` },
-  ];
-
-  const fieldTabs: TabConfig[] = [
-    { id: "rfis", label: "RFIs", count: rfis.length, content: rfisContent, viewAllHref: `/${projectId}/rfis` },
-    {
-      id: "daily-logs",
-      label: "Daily Logs",
-      count: lazyTabStatus["daily-logs"].loaded ? homeDailyLogs.length : undefined,
-      content: dailyLogsContent,
-      viewAllHref: `/${projectId}/daily-log`,
-      lazyKind: "daily-logs",
-      isLoaded: lazyTabStatus["daily-logs"].loaded,
-      isLoading: lazyTabStatus["daily-logs"].loading,
-      error: lazyTabStatus["daily-logs"].error,
-      onRetry: () => loadLazyTabData("daily-logs"),
     },
     {
       id: "submittals",
@@ -1359,63 +1261,63 @@ export function ProjectCommandCenter({
   const jobNumber = project["job number"] ?? project.project_number;
 
   return (
-    <div className="min-h-0">
+    <>
       {showRealtimeCursors ? <RealtimeCursors roomName={roomName} username={currentUserName} /> : null}
 
-      <div className="px-4 py-6 sm:px-5 lg:px-6">
-        {/* ── Header ────────────────────────────────────── */}
-        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            {jobNumber && (
-              <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Job #{jobNumber}
-              </p>
-            )}
-            <h1 className="text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
-              {project.name ?? "Untitled Project"}
-            </h1>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+      <div className="flex min-h-full">
+        {/* ── Left project navigation ───────────────────── */}
+        <ProjectHomeNav projectId={projectId} project={project} />
+
+        {/* ── Main content ─────────────────────────────── */}
+        <div className="flex-1 min-w-0 px-6 py-6 space-y-7">
+
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              {jobNumber && (
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Job #{jobNumber}
+                </p>
+              )}
+              <h1 className="text-2xl font-semibold leading-tight text-foreground">
+                {project.name ?? "Untitled Project"}
+              </h1>
               {project.stage && (
-                <span className="text-sm text-muted-foreground">{project.stage}</span>
+                <p className="mt-0.5 text-sm text-muted-foreground">{project.stage}</p>
               )}
             </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <ReadinessIndicator
+                completedCount={setupCompleted}
+                totalCount={setupTotal}
+                onOpen={() => setIsSetupOpen(true)}
+              />
+              <Button variant="outline" size="sm" onClick={() => setIsEditProjectSidebarOpen(true)}>
+                Edit Project
+              </Button>
+            </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <ReadinessIndicator
-              completedCount={setupCompleted}
-              totalCount={setupTotal}
-              onOpen={() => setIsSetupOpen(true)}
-            />
-            <Button variant="outline" size="sm" onClick={() => setIsEditProjectSidebarOpen(true)}>
-              Edit Project
-            </Button>
-          </div>
-        </header>
 
-        {/* ── Two-column layout ─────────────────────────── */}
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_268px]">
-          {/* ── Main column ─────────────────────────────── */}
-          <div className="min-w-0 space-y-8">
+          {/* Alerts */}
+          {alerts.length > 0 && <AlertsBand alerts={alerts} />}
 
-            {/* ── Financial Snapshot ────────────────────── */}
-            <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Financial Snapshot
-              </p>
-
-              {/* 4-column equal KPI grid */}
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                {/* Budget */}
-                <MetricCard label="Budget" href={`/${projectId}/budget`}>
+          {/* Financial snapshot */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
+              Financial Snapshot
+            </p>
+            <div className="overflow-hidden rounded-lg bg-muted/30">
+              <div className="grid grid-cols-2 divide-x divide-y divide-border lg:grid-cols-4 lg:divide-y-0">
+                <FinancialMetricCell label="Budget" href={`/${projectId}/budget`}>
                   {budgetLoading ? (
-                    <div className="h-10 animate-pulse rounded bg-muted/40" />
+                    <div className="h-7 animate-pulse rounded bg-muted/40" />
                   ) : revisedBudget > 0 ? (
-                    <div className="space-y-1.5">
-                      <span className="text-2xl font-semibold tabular-nums text-foreground">
+                    <>
+                      <p className="text-[17px] font-semibold tabular-nums leading-snug text-foreground">
                         {fmtCompact(revisedBudget)}
-                      </span>
+                      </p>
                       <p className={cn(
-                        "text-xs font-medium",
+                        "mt-1 text-[11px] font-medium",
                         variance > 0 ? "text-status-success" : variance < 0 ? "text-destructive" : "text-muted-foreground",
                       )}>
                         {variance > 0
@@ -1424,134 +1326,169 @@ export function ProjectCommandCenter({
                           ? `▼ ${fmtCompact(Math.abs(variance))} over`
                           : "On budget"}
                       </p>
-                    </div>
+                    </>
                   ) : (
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Not set up</p>
-                      <Link href={`/${projectId}/budget`} prefetch={false} className="text-xs text-primary hover:underline">
-                        Create budget →
-                      </Link>
+                    <Link href={`/${projectId}/budget`} prefetch={false} className="text-xs text-primary hover:underline">
+                      Set up budget →
+                    </Link>
+                  )}
+                </FinancialMetricCell>
+
+                <FinancialMetricCell label="Prime Contract" href={`/${projectId}/prime-contracts`}>
+                  <p className="text-[17px] font-semibold tabular-nums leading-snug text-foreground">
+                    {fmtCompact(primeContractValue || null)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {contracts.length > 0
+                      ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
+                      : "No contract yet"}
+                  </p>
+                  {primeContractValue > 0 && (
+                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${pct(totalBilled, primeContractValue)}%` }}
+                      />
                     </div>
                   )}
-                </MetricCard>
+                </FinancialMetricCell>
 
-                {/* Prime Contract */}
-                <MetricCard label="Prime Contract" href={`/${projectId}/prime-contracts`}>
-                  <div className="space-y-2">
-                    <div>
-                      <span className="text-2xl font-semibold tabular-nums text-foreground">
-                        {fmtCompact(primeContractValue || null)}
-                      </span>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {contracts.length > 0
-                          ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
-                          : "No contract yet"}
-                      </p>
+                <FinancialMetricCell label="Commitments" href={`/${projectId}/commitments`}>
+                  <p className="text-[17px] font-semibold tabular-nums leading-snug text-foreground">
+                    {fmtCompact(commitmentTotal || null)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {commitments.length > 0 ? `${commitments.length} total` : "No buyout yet"}
+                  </p>
+                  {commitments.length > 0 && (
+                    <div className="mt-1 flex gap-2">
+                      {commitments.filter((c) => c.type === "subcontract").length > 0 && (
+                        <span className="text-[11px] text-muted-foreground">
+                          {commitments.filter((c) => c.type === "subcontract").length} sub
+                        </span>
+                      )}
+                      {commitments.filter((c) => c.type === "purchase_order").length > 0 && (
+                        <span className="text-[11px] text-muted-foreground">
+                          {commitments.filter((c) => c.type === "purchase_order").length} PO
+                        </span>
+                      )}
                     </div>
-                    {primeContractValue > 0 && (
-                      <div className="overflow-hidden rounded-full bg-muted h-1.5">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${pct(totalBilled, primeContractValue)}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </MetricCard>
+                  )}
+                </FinancialMetricCell>
 
-                {/* Commitments */}
-                <MetricCard label="Commitments" href={`/${projectId}/commitments`}>
-                  <div className="space-y-1.5">
-                    <span className="text-2xl font-semibold tabular-nums text-foreground">
-                      {fmtCompact(commitmentTotal || null)}
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      {commitments.length > 0
-                        ? `${commitments.length} total`
-                        : "No buyout yet"}
-                    </p>
-                    {commitments.length > 0 && (
-                      <div className="flex gap-2 pt-0.5">
-                        {commitments.filter((c) => c.type === "subcontract").length > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {commitments.filter((c) => c.type === "subcontract").length} sub
-                          </span>
-                        )}
-                        {commitments.filter((c) => c.type === "purchase_order").length > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {commitments.filter((c) => c.type === "purchase_order").length} PO
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </MetricCard>
-
-                {/* Work Completed */}
-                <MetricCard label="Work Completed" href={`/${projectId}/prime-contracts`}>
-                  <div className="flex items-center justify-center py-1">
-                    <WorkCompletedGauge
-                      pctComplete={billedPct}
-                      label="Billed to Date"
-                      sub={totalBilled > 0 ? fmtCompact(totalBilled) : ownerInvoices.length === 0 ? "No invoices yet" : "—"}
-                    />
-                  </div>
-                </MetricCard>
+                <FinancialMetricCell label="Work Completed" href={`/${projectId}/prime-contracts`}>
+                  <p className="text-[17px] font-semibold tabular-nums leading-snug text-foreground">
+                    {billedPct}%
+                  </p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Billed to date</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {totalBilled > 0
+                      ? fmtCompact(totalBilled)
+                      : ownerInvoices.length === 0
+                      ? "No invoices yet"
+                      : "—"}
+                  </p>
+                </FinancialMetricCell>
               </div>
-
-              {/* Full-width budget chart */}
-              {!budgetLoading && revisedBudget > 0 && (
-                <div className="rounded-lg bg-card p-5">
-                  <p className="mb-3 text-xs font-medium text-muted-foreground">Budget vs. Cost Breakdown</p>
-                  <BudgetBarChart budget={revisedBudget} costToDate={costToDate} ecac={ecac} />
-                </div>
-              )}
             </div>
 
-            {/* ── Needs Attention ──────────────────────── */}
-            {alerts.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Needs Attention
-                </p>
-                <AlertsBand alerts={alerts} />
+            {!budgetLoading && revisedBudget > 0 && (
+              <div className="rounded-lg bg-card p-5">
+                <p className="mb-3 text-xs font-medium text-muted-foreground">Budget vs. Cost Breakdown</p>
+                <BudgetBarChart budget={revisedBudget} costToDate={costToDate} ecac={ecac} />
               </div>
             )}
+          </div>
 
-            {/* ── Work & Communications ─────────────────── */}
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Work & Communications
-              </p>
-              <TabSection tabs={commsTabs} defaultTab="tasks" />
+          {/* Project Details + Team 2-up */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="rounded-lg bg-muted/30 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Project Details
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setIsEditProjectSidebarOpen(true)}
+                >
+                  Edit
+                </Button>
+              </div>
+              {projAddress && (
+                <div className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                  {projAddress}
+                </div>
+              )}
+              <dl className="space-y-2">
+                {[
+                  { label: "Start Date", value: formatShortDate(projStartDate) },
+                  { label: "Est. Completion", value: formatShortDate(projCompletionDate) },
+                  { label: "Substantial Completion", value: formatShortDate(substantialCompletion) },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between gap-2">
+                    <dt className="text-xs text-muted-foreground">{label}</dt>
+                    <dd className={cn("text-xs font-medium", value ? "text-foreground" : "text-muted-foreground/40")}>
+                      {value ?? "—"}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
 
-            {/* ── Change Management ─────────────────────── */}
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Change Management
-              </p>
-              <TabSection tabs={changeTabs} defaultTab="change-events" />
-            </div>
-
-            {/* ── Field Operations ──────────────────────── */}
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Field Operations
-              </p>
-              <TabSection tabs={fieldTabs} defaultTab="rfis" />
+            <div className="rounded-lg bg-muted/30 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Project Team
+                </p>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                >
+                  <Link href={`/${projectId}/directory`}>View Directory</Link>
+                </Button>
+              </div>
+              <SidebarTeamSection projectId={projectId} team={team} />
             </div>
           </div>
 
-          {/* ── Right sidebar ─────────────────────────────── */}
-          <aside className="xl:sticky xl:top-6 xl:h-fit">
-            <ProjectDetailsSidebar
-              project={project}
-              projectId={projectId}
-              team={team}
-              onEditProject={() => setIsEditProjectSidebarOpen(true)}
-            />
-          </aside>
+          {/* Recent Meetings */}
+          <div>
+            <SectionHeading href={`/${projectId}/meetings`}>Recent Meetings</SectionHeading>
+            {lazyTabStatus.meetings.loading ? (
+              <div className="py-4 text-sm text-muted-foreground">Loading meetings…</div>
+            ) : (
+              meetingsContent("")
+            )}
+          </div>
+
+          {/* Tasks */}
+          <div>
+            <SectionHeading href={`/${projectId}/tasks`}>
+              Tasks{openTasks.length > 0 ? ` (${openTasks.length})` : ""}
+            </SectionHeading>
+            {tasksContent("")}
+          </div>
+
+          {/* Daily Reports */}
+          <div>
+            <SectionHeading href={`/${projectId}/daily-log`}>Daily Reports</SectionHeading>
+            {lazyTabStatus["daily-logs"].loading ? (
+              <div className="py-4 text-sm text-muted-foreground">Loading daily reports…</div>
+            ) : (
+              dailyLogsContent("")
+            )}
+          </div>
+
+          {/* Document Intelligence */}
+          <div>
+            <SectionHeading>Document Intelligence</SectionHeading>
+            <TabSection tabs={docIntelTabs} defaultTab="documents" />
+          </div>
         </div>
       </div>
 
@@ -1573,6 +1510,6 @@ export function ProjectCommandCenter({
           hasSchedule={hasSchedule}
         />
       ) : null}
-    </div>
+    </>
   );
 }

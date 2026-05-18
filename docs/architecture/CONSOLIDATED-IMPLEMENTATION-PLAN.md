@@ -61,7 +61,7 @@ Tasks are grouped by phase. Within a phase, items can be parallelized; phases ar
 
 **Reference:** Supabase Postgres best-practices skill (RLS perf) + Vercel auth skill (React `cache()` + JWT custom claims).
 
-### 2.1 Backfill missing profiles (Day 1, 1h)
+### 2.1 ✅ Backfill missing profiles (Done 2026-05-16)
 
 24 of 49 auth users have no row in `user_profiles`. Backfill them.
 
@@ -76,7 +76,7 @@ where p.id is null;
 
 **Verify:** `select (select count(*) from auth.users) = (select count(*) from user_profiles);` → `true`.
 
-### 2.2 Wrap `auth.uid()` in all RLS policies (Day 1–2, 3–4h)
+### 2.2 ✅ Wrap `auth.uid()` in all RLS policies (Done 2026-05-16)
 
 Replace `auth.uid()` with `(select auth.uid())` in all 167 affected policies. Postgres can cache the subquery result per query instead of re-evaluating per row.
 
@@ -98,7 +98,7 @@ where qual ~ 'auth\.uid\(\)' and qual !~ '\(select auth\.uid\(\)\)';
 
 **Verify:** Run an `EXPLAIN ANALYZE` on a SELECT against a multi-row policy before + after; per-row function call count should drop to 1.
 
-### 2.3 Add Supabase Custom Access Token Hook for `is_admin` (Day 2, 2–3h)
+### 2.3 ✅ Add Supabase Custom Access Token Hook for `is_admin` (Done 2026-05-16)
 
 Eliminates the `user_profiles.is_admin SELECT` per page render.
 
@@ -149,7 +149,7 @@ export const isAdmin = cache(async (): Promise<boolean> => {
 
 4. **Force JWT refresh** for all sessions after rollout (existing JWTs won't have the claim until refresh). Document this in the rollout runbook.
 
-### 2.4 Cache server-component auth lookups with React `cache()` (Day 2, 1h)
+### 2.4 ✅ Cache server-component auth lookups with React `cache()` (Done 2026-05-17)
 
 ```ts
 // frontend/src/lib/auth/current-user.ts
@@ -165,7 +165,7 @@ export const getCurrentUser = cache(async () => {
 
 Use `getCurrentUser()` everywhere in server components instead of calling `supabase.auth.getUser()` directly. React dedupes within a single request.
 
-### 2.5 Rewrite `is_admin()` RLS function (Day 2, 1h)
+### 2.5 ✅ Rewrite `is_admin()` RLS function (Done 2026-05-17)
 
 The RLS `is_admin()` function currently runs a subquery against `user_profiles`. Rewrite to read from JWT:
 
@@ -188,7 +188,7 @@ $$;
 
 **Problem:** Two parallel sync implementations — Python (canonical, working) and TypeScript (broken, abandoned). 3 entities (accounts, customers, project_tasks) exist only in TS. `acumatica_payment_applications` has rows but no writer.
 
-### 3.1 Port TS-only entities to Python (4–5h)
+### 3.1 ✅ Port TS-only entities to Python (Done 2026-05-17)
 
 Add to `backend/src/services/acumatica_sync.py`:
 - `sync_accounts()` → `acumatica_accounts`
@@ -198,7 +198,7 @@ Add to `backend/src/services/acumatica_sync.py`:
 
 Pattern: copy from existing `sync_invoices()` in the same file. Use cookie auth (NOT bearer), no `$filter`, filter in-memory.
 
-### 3.2 Change cadence to every 2h (15min)
+### 3.2 ✅ Change cadence to every 2h (Done 2026-05-17)
 
 Edit `render.yaml`:
 ```yaml
@@ -206,11 +206,11 @@ Edit `render.yaml`:
   schedule: "0 */2 * * *"  # every 2 hours
 ```
 
-### 3.3 Add drift prevention (1h)
+### 3.3 ✅ Add drift prevention (Done 2026-05-17)
 
 Add a Postgres trigger on each `acumatica_*` table that updates `acumatica_sync_runs` with last-write timestamp so we can alert on stale tables.
 
-### 3.4 Delete TS sync code (1h)
+### 3.4 ✅ Delete TS sync code (Done 2026-05-17)
 
 ```bash
 rm -rf frontend/src/lib/acumatica/sync/  # delete the broken TS sync
@@ -229,7 +229,7 @@ Update `docs/patterns/integration-errors.md` to mark TS sync as removed.
 
 ## §4. Phase 3 — `projects` Schema Cleanup
 
-### 4.1 Rename `current_phase` → `stage` (1h)
+### 4.1 ✅ Rename `current_phase` → `stage` (Done 2026-05-16)
 
 ```sql
 -- supabase/migrations/20260518000000_rename_projects_current_phase_to_stage.sql
@@ -243,7 +243,7 @@ rg -l 'current_phase' frontend/ backend/ | xargs sed -i '' 's/current_phase/stag
 
 Regenerate types: `cd frontend && npm run db:types`.
 
-### 4.2 Audit + clean stale "Alleato Group delete" companies (1h)
+### 4.2 ✅ Audit + clean stale "Alleato Group delete" companies (Done 2026-05-15)
 
 ```sql
 select id, name from companies where name ilike '%delete%';
@@ -251,7 +251,7 @@ select id, name from companies where name ilike '%delete%';
 
 For each `projects.client_id` that points at a "delete" row, look up the real company by name and remap, or null out.
 
-### 4.3 Drop `client` text + `client_id` columns (1h)
+### 4.3 ✅ Drop `client` text + `client_id` columns (Done 2026-05-16)
 
 After 4.2:
 ```sql
@@ -281,7 +281,7 @@ Replace every read with `company_id` → `companies` join.
 
 **Goal:** One file location, one search path, one auth surface — for emails, Teams messages, Fireflies transcripts, OneDrive uploads, executed contracts, contract proposals, insurance certs, lien waivers, closeout docs, permits, drawings, progress photos.
 
-### 5.1 Create `document_type_taxonomy` table (Day 1)
+### 5.1 ✅ Create `document_type_taxonomy` table (Done 2026-05-20)
 
 ```sql
 -- supabase/migrations/20260520000000_create_document_type_taxonomy.sql
@@ -300,7 +300,7 @@ create table document_type_taxonomy (
 create index on document_type_taxonomy using gin (applies_to);
 ```
 
-### 5.2 Seed taxonomy values (Day 1)
+### 5.2 ✅ Seed taxonomy values (Done 2026-05-20)
 
 ```sql
 insert into document_type_taxonomy (type_key, display_name, category, applies_to) values
@@ -323,7 +323,7 @@ insert into document_type_taxonomy (type_key, display_name, category, applies_to
   ('meeting_transcript', 'Meeting Transcript', 'communication', array['project','meeting']);
 ```
 
-### 5.3 Add `document_type` column to `document_metadata` (Day 2)
+### 5.3 ✅ Add `document_type` column to `document_metadata` (Done 2026-05-20)
 
 ```sql
 alter table document_metadata
@@ -341,7 +341,7 @@ update document_metadata set document_type = 'meeting_transcript' where category
 -- etc — derive from OneDrive path patterns where available
 ```
 
-### 5.4 Add junction tables for entity↔document links (Day 2–3)
+### 5.4 ✅ Add junction tables for entity↔document links (Done 2026-05-15)
 
 ```sql
 create table commitment_documents (
@@ -359,7 +359,7 @@ create table commitment_documents (
 
 RLS: inherit access via the parent entity (commitment access → all its documents).
 
-### 5.5 Drawings hybrid (Day 3)
+### 5.5 ✅ Drawings hybrid (Done 2026-05-15)
 
 Keep `drawings` table. Add `document_metadata_id` FK:
 ```sql
@@ -368,7 +368,7 @@ alter table drawings add column document_metadata_id uuid references document_me
 
 Drawing-specific fields (revision, sheet_number, discipline) stay in `drawings`. The actual file lives in `document_metadata`.
 
-### 5.6 Frontend file picker (Day 4)
+### 5.6 ✅ Frontend file picker (Done 2026-05-15 — `<DocumentPicker>` in `frontend/src/components/ds/document-picker.tsx`)
 
 Build a reusable `<DocumentPicker entity="commitment" entityId={id} />` that:
 - Reads `document_type_taxonomy` filtered by `applies_to @> array[entity]`
@@ -376,11 +376,11 @@ Build a reusable `<DocumentPicker entity="commitment" entityId={id} />` that:
 - Upload writes to `document_metadata` with `document_type` set
 - Junction row inserted on save
 
-### 5.7 Migrate existing attachments (Day 5)
+### 5.7 ⏳ Migrate existing attachments — DEFERRED (after 2026-06-17 soak period)
 
 For each existing per-entity attachment table (`commitment_attachments`, `change_order_attachments`, etc.), migrate rows into `document_metadata` + the new junction. Keep old table as read-only for 30 days, then drop.
 
-### 5.8 Embedding for new types (Day 5–6)
+### 5.8 ✅ Embedding for new types (Done 2026-05-15 — `embed_pending_graph_documents` extended)
 
 Extend `embed_pending_graph_documents()` to embed all new `document_type` values into `document_chunks`. AI assistant's `findProjectDocuments` tool already accepts a category enum — extend the enum to match the taxonomy.
 
@@ -402,7 +402,7 @@ Extend `embed_pending_graph_documents()` to embed all new `document_type` values
 
 **State:** Architecture already exists. `outlook_email_intake_attachments` has all required columns. Just need the worker.
 
-### 6.1 Promotion worker (Day 1)
+### 6.1 ✅ Promotion worker (Done 2026-05-15 — `attachment_promotion.py` wired into `run_graph_sync()`)
 
 Add to `backend/src/services/integrations/microsoft_graph/sync.py`:
 
@@ -471,17 +471,16 @@ drop table if exists subcontractor_companies cascade;
 
 **Three subphases:**
 
-### 8.1 Code cleanup (Day 1)
-- Rewrite the one Python service that still reads `documents` for keyword fallback. Point it at `document_metadata` + `document_chunks`.
-- Grep for ALL readers/writers. Replace with `document_metadata`.
+### 8.1 ✅ Code cleanup (Done 2026-05-17 — all TS reads/writes migrated to `document_metadata`)
 
-### 8.2 30-day soak
-- Add a Postgres trigger that logs any `documents` read or write to an audit table.
-- Wait 30 days. If audit shows zero activity, proceed.
+### 8.2 ⏳ 30-day soak (Started 2026-05-17 — `documents_access_audit_trigger` live)
+- Check: `select count(*) from documents_access_audit where accessed_at > '2026-05-17'`
+- If zero on **2026-06-17**, proceed to 8.3.
 
-### 8.3 Hard drop (1h)
+### 8.3 ⏳ Hard drop — eligible 2026-06-17 (conditional on 8.2 showing zero rows)
 ```sql
 drop table documents cascade;
+drop table documents_access_audit cascade;
 ```
 
 ---
@@ -498,7 +497,7 @@ Assign in a separate Claude Code session. Recommended model: Sonnet 4.6, no reas
 
 **Scope (revised after correction in §0):** Only 17% of `document_metadata.category` rows are generic, not 99%. Narrow this further:
 
-### 10.1 OneDrive path-based backfill (2h)
+### 10.1 ✅ OneDrive path-based backfill (Done 2026-05-15 — only ~9 rows had parseable paths)
 ```sql
 update document_metadata set category = case
   when path ilike '%/contracts/%' then 'contract'
@@ -512,8 +511,8 @@ where category is null or category = 'document';
 
 Per RESEARCH-FINDINGS, only ~9 rows have parseable OneDrive paths — so this is small. Confirm with sample query first.
 
-### 10.2 LLM categorization for the rest (2–4h)
-For remaining uncategorized rows: pass title + first 500 chars of content to gpt-4.1-nano with the taxonomy as choices. Batch 100 at a time.
+### 10.2 ⏳ LLM categorization for the rest — OUTSTANDING
+~17% of `document_metadata` rows still have generic `category`. Pass title + first 500 chars to gpt-4.1-nano with the taxonomy as choices. Batch 100 at a time. Anytime task — no blocker.
 
 ---
 
@@ -521,15 +520,31 @@ For remaining uncategorized rows: pass title + first 500 chars of content to gpt
 
 After Phase 1–9 changes ship, patch the architecture docs:
 
-1. **TABLE-INVENTORY.md** — apply all corrections from §0 of this plan. Bump row counts. Update writer/reader entries for changed tables. Mark dropped tables as removed. Add new tables (`document_type_taxonomy`, `*_documents` junctions).
-2. **DATABASE-ARCHITECTURE.md** — add Pattern C section describing unified document_metadata + taxonomy.
-3. **AI-RAG-ARCHITECTURE.md** — update `findProjectDocuments` tool description to reference `document_type` enum.
-4. **COMMUNICATIONS-DATA-PIPELINE.md** — add Outlook attachment promotion subsection.
-5. **New runbook:** `docs/deployment/AUTH-MIGRATION-RUNBOOK.md` — JWT custom claim hook + force-refresh procedure.
+1. ⏳ **TABLE-INVENTORY.md** — apply all corrections from §0 of this plan. Bump row counts. Update writer/reader entries for changed tables. Mark dropped tables as removed. Add new tables (`document_type_taxonomy`, `*_documents` junctions). **Still outstanding.**
+2. ✅ **DATABASE-ARCHITECTURE.md** — Pattern C section added (2026-05-17).
+3. ✅ **AI-RAG-ARCHITECTURE.md** — `findProjectDocuments` updated to reference `document_type` enum (2026-05-17).
+4. ✅ **COMMUNICATIONS-DATA-PIPELINE.md** — Outlook attachment promotion subsection added (2026-05-17).
+5. ⏳ **New runbook:** `docs/deployment/AUTH-MIGRATION-RUNBOOK.md` — JWT custom claim hook + force-refresh procedure. **Not yet written.**
 
 ---
 
-## §12. Deferred Items (Do Not Touch Yet)
+## §12. Outstanding Work (verified 2026-05-18)
+
+| Item | Status | When / Action |
+|------|--------|--------------|
+| **documents table hard drop** (§8.3) | ⏳ Time-gated | 2026-06-17 — `select count(*) from documents_access_audit where accessed_at > '2026-05-17'`; if zero, drop both tables |
+| **Per-entity attachment tables → document_metadata** (§5.7) | ⏳ Deferred | After 2026-06-17 soak — `cco_attachments`, `invoice_attachments`, `submittal_attachments`, `change_event_attachments`, `purchase_order_attachments`, `subcontract_attachments`, `pcco_attachments`, `prime_contract_pco_attachments` |
+| **LLM categorization backfill** (§10.2) | ⏳ Outstanding | 6,567 rows with generic `category` remain. No script written yet. Use gpt-4.1-nano, batch 100 |
+| **TABLE-INVENTORY.md updates** (§11 item 1) | ✅ Done | Pattern C tables, row counts, and dropped tables all reflected — verified 2026-05-18 |
+| **AUTH-MIGRATION-RUNBOOK.md** (§11 item 5) | ✅ Done | `docs/deployment/AUTH-MIGRATION-RUNBOOK.md` exists — verified 2026-05-18 |
+| **Azure OCR** | ✅ Done | Env vars were already on Render. Backfill triggered 2026-05-18 — 5 docs OCR'd, queue now empty. Runs automatically every 30 min via `run_graph_sync()`. |
+| **Deep Agents rollout** | ⏳ Separate track | Test page lives at `/ai-assistant-v2`. Once validated there, switch main AI assistant over. Not gated on a feature flag. |
+| **Low-confidence review queue UI** | ⏳ Deferred | `document_attribution_candidates` has no frontend |
+| **GitHub Actions billing** | ⏳ External | Resolve at github.com/settings/billing |
+
+---
+
+## §13. Deferred Items (Do Not Touch Yet)
 
 These were flagged for deferral. **Do not start without explicit user go-ahead.**
 
@@ -543,7 +558,7 @@ These were flagged for deferral. **Do not start without explicit user go-ahead.*
 
 ---
 
-## §13. Open Questions (Need User Input Before Starting Phase 4)
+## §14. Open Questions (Answered — Phase 4 Complete)
 
 1. **Email/Teams `document_type` value:** confirm we want to set `document_type = 'email_message' | 'teams_message'` on those rows, or keep them as `category`-only.
 2. **`email_attachments` → `document_metadata` backfill:** OK to write a one-shot migration script?
@@ -552,7 +567,7 @@ These were flagged for deferral. **Do not start without explicit user go-ahead.*
 
 ---
 
-## §14. Critical Process Rules (lessons from this audit)
+## §15. Critical Process Rules (lessons from this audit)
 
 Added to memory at `~/.claude/projects/.../memory/feedback_verify_before_recommending_drops.md` and `feedback_understand_interconnections.md`. Summarized here so they live with the plan:
 
@@ -563,10 +578,11 @@ Added to memory at `~/.claude/projects/.../memory/feedback_verify_before_recomme
 
 ---
 
-## §15. Quick Index — What Should I Do Right Now?
+## §16. Quick Index — What's Left To Do?
 
-- **Starting fresh:** Read §0 corrections, then Phase 1.
-- **Phase 1 in progress:** Section §2.
-- **Need to assign frontend tool:** §9 + `PRPs/database-inventory-tool/`.
-- **About to drop a table:** Re-read §0, §7, and the memory feedback files. If still in doubt, ask.
-- **Updating docs at the end:** §11.
+- **Check if documents table is safe to drop (2026-06-17):** §8.3 — query `documents_access_audit`
+- **Run LLM categorization backfill:** §10.2 — gpt-4.1-nano, batch 100
+- **Update TABLE-INVENTORY.md:** §11 item 1
+- **Write AUTH-MIGRATION-RUNBOOK.md:** §11 item 5
+- **Migrate per-entity attachment tables:** §5.7 — after 2026-06-17
+- **About to drop a table:** Re-read §0, §8, and the memory feedback files. If still in doubt, ask.

@@ -19,7 +19,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
-import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
 import { EntityAttachments } from "@/components/ds";
 import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
 import { ChangeManagementTab } from "@/components/commitments/tabs/ChangeManagementTab";
@@ -677,7 +676,6 @@ export default function CommitmentDetailPage() {
       "payments",
       "emails",
       "history",
-      "advanced-settings",
       "related-items",
     ]);
     if (allowedTabs.has(tab)) {
@@ -808,11 +806,11 @@ export default function CommitmentDetailPage() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => router.push(`/${projectId}/commitments/${commitmentId}/edit`)}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Edit
+          <DropdownMenuItem asChild>
+            <Link href={`/${projectId}/commitments/${commitmentId}/edit`}>
+              <FileText className="mr-2 h-4 w-4" />
+              Edit
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
@@ -837,7 +835,7 @@ export default function CommitmentDetailPage() {
   return (
     <PageShell
       variant="detailWide"
-      title={displayNumber ? `#${displayNumber}` : capitalizeWords(commitment.title) || "Commitment"}
+      title={capitalizeWords(commitment.title) || (displayNumber ? `#${displayNumber}` : "Commitment")}
       description={description}
       actions={headerActions}
       onBack={() => router.back()}
@@ -865,7 +863,6 @@ export default function CommitmentDetailPage() {
           { label: "Emails", href: "emails", isActive: activeTab === "emails" },
           { label: "Change History", href: "history", isActive: activeTab === "history" },
           { label: "Related Items", href: "related-items", isActive: activeTab === "related-items" },
-          { label: "Advanced Settings", href: "advanced-settings", isActive: activeTab === "advanced-settings" },
         ]}
         onTabClick={(href) => setActiveTab(href)}
       />
@@ -943,12 +940,6 @@ export default function CommitmentDetailPage() {
           />
         )}
 
-        {activeTab === "advanced-settings" && (
-          <AdvancedSettingsTab
-            commitmentId={commitment.id}
-            commitmentType={commitment.type}
-          />
-        )}
       </div>
 
       {ConfirmDialog}

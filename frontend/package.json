@@ -111,6 +111,7 @@
     "@fullcalendar/timegrid": "^6.1.20",
     "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^5.2.2",
+    "@langchain/langgraph-sdk": "^1.9.2",
     "@langfuse/otel": "^5.3.0",
     "@langfuse/tracing": "^5.3.0",
     "@lexical/code": "^0.35.0",

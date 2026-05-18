@@ -192,7 +192,7 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 
 > **⚠️ Two Supabase projects.** As of **2026-05-15** the RAG tables (`document_chunks`, `rag_document_metadata`, `rag_pipeline_state`) live in the **"AI Database"** project (`fqcvmfqldlewvbsuxdvz`), reached via `RAG_SUPABASE_URL` and the `get_rag_read_client()` / `get_rag_write_client()` helpers in `backend/src/services/supabase_helpers.py`.
 >
-> The same tables still exist in the **"AI APP"** project (`lgveqfnpkxvzbnnwuled`) but are **legacy / read-only** — a database trigger blocks all writes with `LEGACY TABLE: ...`. Do not point new code at the AI APP copy. If you see stale data, you are likely querying the wrong project.
+> The same tables still exist in the **"PM APP"** project (`lgveqfnpkxvzbnnwuled`) but are **legacy / read-only** — a database trigger blocks all writes with `LEGACY TABLE: ...`. Do not point new code at the PM APP copy. If you see stale data, you are likely querying the wrong project.
 >
 > **Partial HNSW indexes (added 2026-05-15):** the `search_document_chunks` RPC has its statement_timeout bumped to 60s and `ivfflat.probes` raised to 24. Partial HNSW indexes exist for `meeting_*`, `email`, `onedrive_document`, and `teams_*` source types. Without these the CEO Daily Brief vector search times out.
 

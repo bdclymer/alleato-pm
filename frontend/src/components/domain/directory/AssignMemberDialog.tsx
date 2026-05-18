@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Modal,
   ModalContent,
-  ModalFooter,
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/unified-modal";
@@ -92,17 +91,24 @@ export function MemberCombobox({
   people,
   selectedIds,
   onSelect,
+  disabled,
 }: {
   people: PersonOption[];
   selectedIds: string[];
   onSelect: (id: string) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" className="w-full justify-between">
+        <Button
+          variant="outline"
+          role="combobox"
+          className="w-full justify-between"
+          disabled={disabled}
+        >
           {selectedIds.length > 0 ? `${selectedIds.length} selected` : "Select people..."}
           <ChevronsUpDown className="shrink-0 opacity-50" />
         </Button>
@@ -135,7 +141,7 @@ export function MemberCombobox({
                 return (
                   <CommandItem
                     key={person.id}
-                    value={`${displayName} ${email} ${meta}`}
+                    value={`${displayName} ${meta}`}
                     onSelect={() => onSelect(person.id)}
                     className="min-h-11"
                   >
@@ -187,17 +193,16 @@ export function AssignMemberDialog({
     if (!open || !role) return;
     setSelectedIds(role.members.map((m) => m.person_id));
 
-    const loadProjectPeople = async () => {
+    const loadAllPeople = async () => {
       try {
         const params = new URLSearchParams({
           type: "all",
           status: "active",
           page: "1",
           per_page: "1000",
-          sort: "last_name,first_name",
         });
         const result = await apiFetch<DirectoryPeopleResponse>(
-          `/api/projects/${projectId}/directory/people?${params}`,
+          `/api/people?${params}`,
         );
 
         setPeople(
@@ -212,23 +217,22 @@ export function AssignMemberDialog({
         );
       } catch (error) {
         setPeople([]);
-        toast.error("Failed to load project members");
+        toast.error("Failed to load people");
       }
     };
 
-    void loadProjectPeople();
+    void loadAllPeople();
   }, [open, role, projectId]);
 
-  const toggle = (id: string) =>
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-
-  const handleSave = async () => {
-    if (!role) return;
+  const handleSelect = async (personId: string) => {
+    if (!role || saving) return;
+    const next = selectedIds.includes(personId)
+      ? selectedIds.filter((x) => x !== personId)
+      : [...selectedIds, personId];
+    setSelectedIds(next);
     setSaving(true);
     try {
-      await onSave(role.id, selectedIds);
+      await onSave(role.id, next);
       toast.success("Role assignment updated");
       onOpenChange(false);
     } catch (err) {
@@ -245,37 +249,26 @@ export function AssignMemberDialog({
           <ModalTitle>Assign Members — {role?.role_name}</ModalTitle>
         </ModalHeader>
         <div className="py-2">
-          <MemberCombobox people={people} selectedIds={selectedIds} onSelect={toggle} />
+          <MemberCombobox
+            people={people}
+            selectedIds={selectedIds}
+            onSelect={handleSelect}
+            disabled={saving}
+          />
           {selectedIds.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {selectedIds.map((id) => {
                 const p = people.find((x) => x.id === id);
                 if (!p) return null;
                 return (
-                  <Badge key={id} variant="secondary" className="gap-1">
+                  <Badge key={id} variant="secondary">
                     {getPersonDisplayName(p)}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggle(id)}
-                      className="ml-0.5 rounded-sm hover:bg-muted h-auto p-0 px-0.5"
-                    >
-                      ×
-                    </Button>
                   </Badge>
                 );
               })}
             </div>
           )}
         </div>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save"}
-          </Button>
-        </ModalFooter>
       </ModalContent>
     </Modal>
   );

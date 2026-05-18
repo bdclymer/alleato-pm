@@ -411,91 +411,16 @@ services:
       - key: DOMAIN_PACKET_MODEL
         value: "gpt-5.4-mini"
 
-  # Generates the approved executive Daily Brief on Render and then sends the
-  # stored packet to Teams through a short-lived delivery endpoint.
-  - type: cron
-    name: alleato-executive-daily-brief-morning
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile.executive-brief
-    dockerContext: .
-    schedule: "0 11,12 * * 1-5"
-    envVars:
-      - key: PYTHONUNBUFFERED
-        value: 1
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_SUPABASE_URL
-        sync: false
-      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_DATABASE_READS_ENABLED
-        value: "true"
-      - key: AI_GATEWAY_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: CRON_SECRET
-        sync: false
-      - key: EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL
-        value: https://projects.alleatogroup.com
-      - key: EXECUTIVE_DAILY_BRIEF_SEND_TEAMS
-        value: "false"
-      - key: EXECUTIVE_DAILY_BRIEF_SCHEDULE
-        value: "weekday-morning-0700-et"
-      - key: EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE
-        value: America/New_York
-      - key: EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME
-        value: "07:00"
-      - key: EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS
-        value: "1,2,3,4,5"
-
-  - type: cron
-    name: alleato-executive-daily-brief-evening
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile.executive-brief
-    dockerContext: .
-    schedule: "30 22,23 * * 1-5"
-    envVars:
-      - key: PYTHONUNBUFFERED
-        value: 1
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_SUPABASE_URL
-        sync: false
-      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_DATABASE_READS_ENABLED
-        value: "true"
-      - key: AI_GATEWAY_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: CRON_SECRET
-        sync: false
-      - key: EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL
-        value: https://projects.alleatogroup.com
-      - key: EXECUTIVE_DAILY_BRIEF_SEND_TEAMS
-        value: "false"
-      - key: EXECUTIVE_DAILY_BRIEF_SCHEDULE
-        value: "weekday-evening-1830-et"
-      - key: EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE
-        value: America/New_York
-      - key: EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME
-        value: "18:30"
-      - key: EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS
-        value: "1,2,3,4,5"
+  # DEACTIVATED 2026-05-18 — Executive Daily Brief Teams delivery turned off
+  # at user request. Both crons (morning + evening) are suspended in Render and
+  # removed from this file so they will not be re-created on deploy. The
+  # Next.js delivery endpoint (/api/executive/daily-brief/send-teams) is also
+  # gated by EXECUTIVE_DAILY_BRIEF_ENABLED in
+  # frontend/scripts/run-executive-daily-brief.ts and the route itself.
+  # To re-enable: restore these cron blocks, unsuspend in Render, and set
+  # EXECUTIVE_DAILY_BRIEF_ENABLED=true in Vercel + Render env.
+  # (previous service IDs: crn-d827chojs32c73doj780 morning,
+  #  crn-d827cijbc2fs73c3uqsg evening)
 
   - type: web
     name: alleato-backend

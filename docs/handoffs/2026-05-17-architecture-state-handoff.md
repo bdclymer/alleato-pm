@@ -22,11 +22,11 @@ This is the most important thing to know before touching any database code.
 
 | Project | Ref ID | What lives here | Env var |
 |---------|--------|----------------|---------|
-| **AI APP** (primary) | `lgveqfnpkxvzbnnwuled` | All app tables: projects, contracts, budgets, commitments, invoices, RFIs, submittals, companies, people, emails, meetings, insights, tasks, files, Acumatica sync | `SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_URL` |
+| **PM APP** (primary) | `lgveqfnpkxvzbnnwuled` | All app tables: projects, contracts, budgets, commitments, invoices, RFIs, submittals, companies, people, emails, meetings, insights, tasks, files, Acumatica sync | `SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_URL` |
 | **AI Database** (RAG store) | `fqcvmfqldlewvbsuxdvz` | `document_chunks` (pgvector embeddings), `rag_document_metadata`, `rag_pipeline_state` | `RAG_SUPABASE_URL` + `RAG_SUPABASE_SERVICE_ROLE_KEY` |
 
-**Rule:** anything RAG/embeddings → AI Database. Everything else → AI APP.  
-**Legacy:** `document_chunks` and `rag_pipeline_state` still physically exist in AI APP but are write-blocked by a trigger (migrated 2026-05-15).
+**Rule:** anything RAG/embeddings → AI Database. Everything else → PM APP.  
+**Legacy:** `document_chunks` and `rag_pipeline_state` still physically exist in PM APP but are write-blocked by a trigger (migrated 2026-05-15).
 
 ### Supabase clients
 ```ts

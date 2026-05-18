@@ -334,15 +334,6 @@ tables:
     relatedTables:
       - companies
 
-  - name: subcontractor_contacts
-    db: MAIN
-    domain: directory
-    owner: unknown
-    status: dead
-    purpose: "Superseded by people + project_directory_memberships. Drop candidate."
-    cleanupPriority: medium
-    relatedTables: []
-
   - name: subcontractor_documents
     db: MAIN
     domain: directory
@@ -1982,69 +1973,6 @@ tables:
     purpose: "AI assistant chat session metadata. 226 rows. Thread/session header for chat_history."
     relatedTables:
       - chat_history
-
-  - name: chat_messages
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
-
-  - name: chat_sessions
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
-
-  - name: chat_threads
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
-
-  - name: chat_thread_items
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
-
-  - name: chat_thread_attachments
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
-
-  - name: chat_thread_attachment_files
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
-
-  - name: chat_thread_feedback
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
 
   - name: chats
     db: MAIN
@@ -3782,3 +3710,128 @@ tables:
     purpose: "Dormant submittal workflow step definitions."
     relatedTables:
       - submittal_workflow_templates
+
+  # ─────────────────────────────────────────────────────────
+  # NEEDS_DOCUMENTATION — stubs auto-added by drift check
+  # TODO: move into the correct section above, fill in writers/readers/gotchas
+  # ─────────────────────────────────────────────────────────
+
+  - name: change_order_documents
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Pattern C junction: change orders ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: company_documents
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Pattern C junction: companies ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: prime_contract_documents
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Pattern C junction: prime contracts ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: purchase_order_documents
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Pattern C junction: purchase orders ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: rfi_documents
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Pattern C junction: RFIs ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: subcontract_documents
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Pattern C junction: subcontracts ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: owner_invoice_documents
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Pattern C junction: owner invoices ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: submittal_doc_links
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Pattern C junction: submittals ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: document_type_taxonomy
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Lookup table for document_metadata.document_type values (Pattern C). TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: documents_access_audit
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Audit log of document access events. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: project_documents_v2
+    db: MAIN
+    domain: documents
+    owner: unknown
+    status: live
+    purpose: "Successor to project_documents (Pattern C migration). Project ↔ document_metadata. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: estimate_gc_templates
+    db: MAIN
+    domain: estimating
+    owner: unknown
+    status: live
+    purpose: "GC template definitions for the estimating workflow. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: estimate_sublist_bid_items
+    db: MAIN
+    domain: estimating
+    owner: unknown
+    status: live
+    purpose: "Line items in subcontractor bid lists during estimating. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: estimate_sublist_call_logs
+    db: MAIN
+    domain: estimating
+    owner: unknown
+    status: live
+    purpose: "Call logs against estimate sublists. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  - name: estimate_sublist_scope_items
+    db: MAIN
+    domain: estimating
+    owner: unknown
+    status: live
+    purpose: "Scope items attached to estimate sublists. TODO: expand metadata, identify writers/readers."
+    relatedTables: []

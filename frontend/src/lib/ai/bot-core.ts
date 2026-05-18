@@ -600,7 +600,7 @@ export async function persistChatMessage(params: {
 }): Promise<void> {
   const supabase = createServiceClient();
   const sessionUuid = toSessionUuid(params.sessionId);
-  const { error } = await (supabase.from("chat_history") as any).insert({
+  const { error } = await supabase.from("chat_history").insert({
     session_id: sessionUuid,
     user_id: params.userId,
     role: params.role,

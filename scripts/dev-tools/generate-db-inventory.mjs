@@ -354,6 +354,93 @@ function serializeRefs(refs) {
   return `[\n${refs.map((r) => `          ${serializeRef(r)},`).join("\n")}\n        ]`;
 }
 
+// ─── Markdown table list (agent-facing) ───────────────────────────────────────
+
+function renderTableListMarkdown(tableEntries, generatedAt) {
+  const escape = (s) => String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+  const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s);
+
+  const fmtRows = (n) => {
+    if (!n) return "0";
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1) + "k";
+    return String(n);
+  };
+
+  // Strip trailing/embedded "N code references" sentences from purpose —
+  // that count belongs in its own column now and rotted in the YAML.
+  const stripCodeRefs = (s) =>
+    String(s ?? "")
+      .replace(/\s*\d+\s+code\s+references?\.?/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  function renderSection(dbLabel, entries) {
+    if (entries.length === 0) return `_(no ${dbLabel} tables)_\n`;
+    const sorted = [...entries].sort((a, b) => {
+      const da = a.entry.domain || "";
+      const db = b.entry.domain || "";
+      if (da !== db) return da.localeCompare(db);
+      return a.entry.name.localeCompare(b.entry.name);
+    });
+
+    let out = "| Table | Domain | Status | Rows | Code refs | Purpose | Notes |\n";
+    out += "|---|---|---|---:|---:|---|---|\n";
+    for (const { entry, liveStats, refs } of sorted) {
+      const codeRefs = refs.writes.length + refs.reads.length + refs.unknown.length;
+      const notes = entry.notes_for_ai || entry.gotchas || "";
+      out += `| \`${entry.name}\` | ${escape(entry.domain)} | ${escape(entry.status)} | ${fmtRows(liveStats.approxRows)} | ${codeRefs} | ${escape(truncate(stripCodeRefs(entry.purpose), 160))} | ${escape(truncate(notes, 160))} |\n`;
+    }
+    return out;
+  }
+
+  const main = tableEntries.filter((t) => t.entry.db === "MAIN");
+  const rag = tableEntries.filter((t) => t.entry.db === "RAG");
+
+  const statusCounts = (entries) => {
+    const counts = {};
+    for (const { entry } of entries) counts[entry.status] = (counts[entry.status] || 0) + 1;
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .map(([k, v]) => `${v} ${k}`)
+      .join(" · ");
+  };
+
+  return `# Database Tables — Live List
+
+> **AUTO-GENERATED — DO NOT EDIT BY HAND.**
+> Regenerate with \`npm run db:inventory\`. Source: \`docs/architecture/tables.yaml\` + live Supabase stats.
+> Last generated: ${generatedAt}
+
+This file lists every table in both Supabase projects with its current status, row count, code-reference count, one-line purpose, and any gotchas/notes. It is the fastest way to answer "does table X exist, what does it do, is it live, does anything use it?"
+
+Column meanings:
+- **Rows** — approximate row count from \`pg_class.reltuples\` (refreshed each regenerate).
+- **Code refs** — count of \`.from("table")\` / \`.table("table")\` references in \`frontend/src\`, \`backend/src\`, and \`alleato-ai\`. Does NOT include migration files or one-off scripts. **0 code refs + 0 rows = strong drop candidate.** **0 code refs + N rows = stale data, no readers.**
+- **Notes** — \`notes_for_ai\` if set, else \`gotchas\`, from \`tables.yaml\`.
+
+For richer information (full writer/reader file lists, columns, line numbers), open the admin UI at \`/database-inventory\` or read the source: \`docs/architecture/tables.yaml\`. For architectural narrative + dated corrections, read \`docs/architecture/TABLE-INVENTORY.md\`.
+
+**How to update:** edit \`docs/architecture/tables.yaml\` and run \`npm run db:inventory\`. This file is regenerated from that source.
+
+---
+
+## MAIN — PM App database (\`lgveqfnpkxvzbnnwuled\`)
+
+${main.length} tables · ${statusCounts(main)}
+
+${renderSection("MAIN", main)}
+
+---
+
+## RAG — AI Database (\`fqcvmfqldlewvbsuxdvz\`)
+
+${rag.length} tables · ${statusCounts(rag)}
+
+${renderSection("RAG", rag)}
+`;
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -408,6 +495,33 @@ async function main() {
         }
       } catch (err) {
         warn(`Could not get stats for ${entry.name}: ${err.message}`);
+      }
+
+      // pg_class.reltuples and pg_stat_user_tables.n_live_tup are estimates that
+      // only update during VACUUM/ANALYZE — so any table that grew since its last
+      // analyze (or has never been analyzed) reports a wrong count. Always run a
+      // real COUNT(*) and trust it over the estimate. Cap at 5s so a multi-million-
+      // row table can't hang the run; on timeout we keep the estimate.
+      {
+        let client;
+        try {
+          client = await pool.connect();
+          await client.query("SET LOCAL statement_timeout = '5s'");
+          const cnt = await client.query(`SELECT COUNT(*)::bigint AS n FROM public."${entry.name.replace(/"/g, '""')}"`);
+          const real = Number(cnt.rows[0].n) || 0;
+          liveStats.approxRows = real;
+          liveStats.nLiveTup = real;
+        } catch (err) {
+          // Timeout or permission error — leave the estimate in place and warn so
+          // the operator knows that specific table's row count is approximate.
+          if (String(err.message).includes("statement timeout")) {
+            warn(`COUNT(*) timed out for ${entry.name} — using stale estimate (${liveStats.approxRows})`);
+          } else {
+            warn(`COUNT(*) failed for ${entry.name}: ${err.message}`);
+          }
+        } finally {
+          if (client) client.release();
+        }
       }
 
       // Columns
@@ -556,6 +670,11 @@ ${tableLines.join(",\n")}
     if (sizeKB > 500) {
       warn(`Output file is ${sizeKB} KB — consider reducing snippet length if this causes issues.`);
     }
+
+    // ─── Emit TABLE-LIST.md (agent-facing, two tables per DB) ──────────────
+    const tableListPath = path.join(repoRoot, "docs", "architecture", "TABLE-LIST.md");
+    fs.writeFileSync(tableListPath, renderTableListMarkdown(tableEntries, generatedAt), "utf8");
+    log(`✅ Written: ${tableListPath}`);
   } finally {
     await mainPool.end();
     await ragPool.end();

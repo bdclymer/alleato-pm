@@ -303,7 +303,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
       <SheetContent side="right" className="overflow-hidden p-0 flex flex-col">
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-            <SheetHeader className="pb-2">
+            <SheetHeader className="px-0 pt-0 pb-2">
               <SheetTitle className="text-xl font-semibold text-left">Edit Project</SheetTitle>
               <SheetDescription className="sr-only">Edit project details</SheetDescription>
             </SheetHeader>

@@ -7,7 +7,7 @@
 | | MAIN | RAG |
 |---|---|---|
 | Supabase project id | `lgveqfnpkxvzbnnwuled` | `fqcvmfqldlewvbsuxdvz` |
-| Display name | "AI APP" | "AI Database" |
+| Display name | "PM APP" | "AI Database" |
 | Env vars | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | `RAG_SUPABASE_URL`, `RAG_SUPABASE_SERVICE_ROLE_KEY` |
 | Holds | Business / app catalog | Embeddings + content + pipeline state |
 | Optimized for | OLTP / app queries | Vector search + heavy text I/O |

@@ -196,7 +196,7 @@ export function PageShell({
   // Form/detail/content/dashboard: constrained inner width
   if (config.contentMaxWidth) {
     return (
-      <PageContainer maxWidth={config.containerMaxWidth} className={cn(variant === "form" && "form-page-bg", fillHeight && "flex flex-col min-h-0", className)}>
+      <PageContainer maxWidth={config.containerMaxWidth} className={cn(fillHeight && "flex flex-col min-h-0", className)}>
         <div ref={rootRef} className={cn("mx-auto w-full min-w-0", config.contentMaxWidth, config.headerPadding, fillHeight && "flex flex-col flex-1 min-h-0")}>
           {header}
           <div className={cn(config.spacing, "min-w-0 pt-6 pb-12", fillHeight && "flex flex-col flex-1 min-h-0", contentClassName)}>{children}</div>

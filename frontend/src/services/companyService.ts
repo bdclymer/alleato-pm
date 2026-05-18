@@ -195,11 +195,13 @@ export class CompanyService {
         );
 
         let primaryContact = null;
-        if (pc.primary_contact_id) {
+        const contactId =
+          pc.primary_contact_id ?? pc.company?.primary_contact_id ?? null;
+        if (contactId) {
           const { data: contact } = await this.supabase
             .from("people")
             .select("*")
-            .eq("id", pc.primary_contact_id)
+            .eq("id", contactId)
             .single();
           primaryContact = contact;
         }

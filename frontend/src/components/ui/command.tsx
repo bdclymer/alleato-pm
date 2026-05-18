@@ -13,13 +13,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+/**
+ * Substring-only filter: items match only when their `value` (case-insensitive)
+ * literally contains the search term. cmdk's default scorer is fuzzy and will
+ * return non-substring matches (e.g. "Andre Audi" -> "Andrew Brannan"), which
+ * is confusing for typeahead pickers. Components can still override by passing
+ * their own `filter` prop or `shouldFilter={false}`.
+ */
+function substringFilter(value: string, search: string): number {
+  if (!search) return 1;
+  return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+}
+
 function Command({
   className,
+  filter,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
     <CommandPrimitive
       data-slot="command"
+      filter={filter ?? substringFilter}
       className={cn(
         "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
         className,
@@ -147,7 +161,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-xs outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

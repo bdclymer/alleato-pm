@@ -24,6 +24,22 @@ import { sendOwnerBriefingToTeams } from "@/lib/executive/owner-briefing-deliver
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export const POST = withApiGuardrails("executive/daily-brief/send-teams#POST", async ({ request }): Promise<Response> => {
+  // Kill switch: deactivated 2026-05-18 at user request. Default OFF.
+  // Set EXECUTIVE_DAILY_BRIEF_ENABLED=true to re-enable Teams delivery.
+  const enabled = (process.env.EXECUTIVE_DAILY_BRIEF_ENABLED ?? "false").toLowerCase() === "true";
+  if (!enabled) {
+    return NextResponse.json(
+      {
+        ok: true,
+        skipped: true,
+        status: "disabled",
+        reason: "executive_daily_brief_disabled",
+        message: "Executive Daily Brief Teams delivery is disabled. Set EXECUTIVE_DAILY_BRIEF_ENABLED=true to re-enable.",
+      },
+      { status: 200 },
+    );
+  }
+
   // Auth: CRON_SECRET bearer OR active session
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;

@@ -155,7 +155,7 @@ async function main() {
     console.error(`createConversation failed (${createRes.status}): ${err}`);
     if (createRes.status === 403) {
       console.error(
-        "Hint: The user may not have the Alleato AI app installed in their Teams client.",
+        "Hint: The user may not have the Alleato PM APP installed in their Teams client.",
       );
     }
     process.exit(1);

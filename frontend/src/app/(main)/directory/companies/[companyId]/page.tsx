@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Building2,
   Check,
@@ -177,7 +177,14 @@ export default function CompanyDetailsPage() {
 
   const [invoiceFilter, setInvoiceFilter] = React.useState<"all" | "open">("all");
 
+  const searchParams = useSearchParams();
   const [editOpen, setEditOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (searchParams?.get("edit") === "1") {
+      setEditOpen(true);
+    }
+  }, [searchParams]);
   const [isSavingCompany, setIsSavingCompany] = React.useState(false);
   const [companyForm, setCompanyForm] = React.useState({
     name: "",
@@ -599,27 +606,9 @@ export default function CompanyDetailsPage() {
       title={company.name}
       onBack={() => router.back()}
       actions={
-        <>
-          <Button variant="outline" size="sm" onClick={() => void openAddContactModal()} className="gap-2 active:scale-[0.98]">
-            <UserPlus className="h-4 w-4" />
-            Add Contact
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Company actions" className="active:scale-[0.98]">
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-                Edit Company
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => void openAddContactModal()}>
-                Add Contact
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </>
+        <Button size="sm" onClick={() => setEditOpen(true)} className="active:scale-[0.98]">
+          Edit
+        </Button>
       }
     >
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
@@ -628,7 +617,6 @@ export default function CompanyDetailsPage() {
               <section className="space-y-4">
                 <DsSectionHeader
                   title="Contacts"
-                  count={contacts.length > 0 ? contacts.length : undefined}
                   action={{ label: "Add contact", onClick: () => void openAddContactModal() }}
                 />
                 {contacts.length === 0 ? (
@@ -720,8 +708,7 @@ export default function CompanyDetailsPage() {
                     <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-2xl border border-border">
-                    <Table>
+                  <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30">
                           <TableHead>Project</TableHead>
@@ -755,7 +742,6 @@ export default function CompanyDetailsPage() {
                         ))}
                       </TableBody>
                     </Table>
-                  </div>
                 )}
               </section>
 
@@ -780,8 +766,7 @@ export default function CompanyDetailsPage() {
                     />
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-2xl border border-border">
-                    <Table>
+                  <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30">
                           <TableHead>Invoice</TableHead>
@@ -811,7 +796,6 @@ export default function CompanyDetailsPage() {
                         ))}
                       </TableBody>
                     </Table>
-                  </div>
                 )}
               </section>
 
@@ -822,8 +806,7 @@ export default function CompanyDetailsPage() {
                     <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-2xl border border-border">
-                    <Table>
+                  <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30">
                           <TableHead>Meeting</TableHead>
@@ -861,7 +844,6 @@ export default function CompanyDetailsPage() {
                         )}
                       </TableBody>
                     </Table>
-                  </div>
                 )}
               </section>
             </div>

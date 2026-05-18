@@ -1,7 +1,7 @@
 -- Migration: Backfill email_attachments → document_metadata
 -- Purpose: Promote legacy email_attachments rows into document_metadata so they
 --          can be embedded, searched, and linked via Pattern C junctions.
--- Affects: INSERT into public.document_metadata (AI APP project)
+-- Affects: INSERT into public.document_metadata (PM APP project)
 -- Note: email_attachments has 471 rows, all with graph_attachment_id.
 --       Idempotency: uses source_system='email_attachment_legacy' + source_item_id=graph_attachment_id.
 --       Conflict clause: on conflict (source_system, source_item_id) do nothing.

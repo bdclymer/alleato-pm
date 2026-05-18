@@ -20,7 +20,7 @@
 --   budget/specification/knowledge/internal/etc → other
 --   document / NULL           → NULL (Phase 9 will handle these)
 --
--- Post-backfill distribution (AI APP):
+-- Post-backfill distribution (PM APP):
 --   teams_message:       27,286
 --   email_message:        2,445
 --   other:                  361

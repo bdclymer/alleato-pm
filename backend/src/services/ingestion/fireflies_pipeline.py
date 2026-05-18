@@ -347,7 +347,16 @@ class FirefliesIngestionPipeline:
                     metadata[key] = value
 
         segments = parsed.transcript_segments
-        chunks = list(self._chunk_segments(document_id, segments, effective_project_id))
+        chunks = list(
+            self._chunk_segments(
+                document_id,
+                segments,
+                effective_project_id,
+                title=parsed.title,
+                captured_at=parsed.captured_at,
+                fireflies_id=parsed.fireflies_id,
+            )
+        )
 
         if dry_run:
             return IngestionResult(
@@ -1388,6 +1397,10 @@ class FirefliesIngestionPipeline:
         project_id: Optional[int],
         chunk_size: int = 12,
         overlap: int = 2,
+        *,
+        title: Optional[str] = None,
+        captured_at: Optional[datetime] = None,
+        fireflies_id: Optional[str] = None,
     ) -> Iterable[DocumentChunk]:
         if not segments:
             return []
@@ -1396,11 +1409,27 @@ class FirefliesIngestionPipeline:
         for segment in segments:
             window.append(segment)
             if len(window) >= chunk_size:
-                yield self._build_chunk(document_id, index, window, project_id)
+                yield self._build_chunk(
+                    document_id,
+                    index,
+                    window,
+                    project_id,
+                    title=title,
+                    captured_at=captured_at,
+                    fireflies_id=fireflies_id,
+                )
                 index += 1
                 window = window[-overlap:]
         if window:
-            yield self._build_chunk(document_id, index, window, project_id)
+            yield self._build_chunk(
+                document_id,
+                index,
+                window,
+                project_id,
+                title=title,
+                captured_at=captured_at,
+                fireflies_id=fireflies_id,
+            )
 
     @staticmethod
     def _build_chunk(
@@ -1408,15 +1437,29 @@ class FirefliesIngestionPipeline:
         index: int,
         segments: List[TranscriptSegment],
         project_id: Optional[int],
+        *,
+        title: Optional[str] = None,
+        captured_at: Optional[datetime] = None,
+        fireflies_id: Optional[str] = None,
     ) -> DocumentChunk:
         lines = [f"[{seg.timestamp or '??:??'}] {seg.speaker or 'Unknown'}: {seg.text}" for seg in segments]
         text = "\n".join(lines)
+        # `file_date` is sourced from the per-transcript `captured_at` to avoid the
+        # known recurring-meeting bug where a series-level date sticks across
+        # occurrences. Match the canonical embedder.py chunk metadata shape so
+        # downstream RAG filters (title, file_date) work uniformly across the
+        # transcript and summary paths.
+        captured_at_iso = captured_at.isoformat() if captured_at else None
         metadata = {
             "chunk_index": index,
             "speakers": sorted({seg.speaker or "Unknown" for seg in segments}),
             "start_timestamp": segments[0].timestamp,
             "end_timestamp": segments[-1].timestamp,
             "project_id": project_id,
+            "title": title,
+            "captured_at": captured_at_iso,
+            "file_date": captured_at_iso,
+            "fireflies_id": fireflies_id,
         }
         return DocumentChunk(
             document_id=document_id,

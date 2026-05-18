@@ -61,11 +61,11 @@
     --neutral-600: 180 1% 38%;
     --neutral-700: 240 6% 25%;
     --neutral-800: 0 0% 20%;
-    --neutral-900: 240 20% 8%;
+    --neutral-900: 240 6% 10%;
 
     /* Carbon scale (dark surfaces) */
     --carbon-800: 240 5% 13%;
-    --carbon-900: 240 20% 8%;
+    --carbon-900: 240 6% 10%;
 
     /* Semantic status primitives */
     --green-500:  152 69% 37%;
@@ -108,9 +108,9 @@
     --muted-foreground: var(--neutral-600);
     --heading-label: var(--neutral-800);
 
-    /* Accent */
-    --accent: var(--brand-orange-50);
-    --accent-foreground: var(--brand-orange-700);
+    /* Accent — neutral gray for command/dropdown highlights (sidebar uses its own token) */
+    --accent: var(--neutral-100);
+    --accent-foreground: var(--neutral-900);
     --light: var(--brand-orange-50);
 
     /* Destructive */
@@ -294,8 +294,8 @@
     --muted-subtle: 240 5% 12%;
     --muted-foreground: 0 0% 58%;
     --heading-label: 0 0% 72%;
-    --accent: 28 69% 16%;
-    --accent-foreground: 29 90% 72%;
+    --accent: 240 5% 16%;
+    --accent-foreground: 0 0% 95%;
     --light: 28 69% 18%;
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 98%;
@@ -2115,31 +2115,4 @@
     }
   }
 
-/* ============================================================================
-   16. FORM PAGE BACKGROUND
-   Subtle architectural sketch applied to all PageShell variant="form" pages.
-   ============================================================================ */
-
-.form-page-bg {
-  position: relative;
-  background-color: hsl(var(--background));
-}
-
-.form-page-bg::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image: url("/images/arch-sketch-bg.png");
-  background-repeat: no-repeat;
-  background-position: right top;
-  background-size: 900px 900px;
-  opacity: 0.07;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.dark .form-page-bg::after {
-  opacity: 0.04;
-  filter: invert(1);
-}
 }

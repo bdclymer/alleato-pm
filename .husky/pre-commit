@@ -77,4 +77,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── RAG architecture docs freshness gate ─────────────────────────
+# If staged changes touch RAG code or RAG-table migrations, the two
+# architecture docs (AI-RAG-ARCHITECTURE.md + TABLE-INVENTORY.md) must
+# be updated in the same commit. See .claude/rules/RAG-DOCS-GATE.md.
+sh .husky/pre-commit-rag-docs
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
 npx lint-staged

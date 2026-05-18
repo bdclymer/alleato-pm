@@ -8,6 +8,7 @@ import {
   useUnifiedTableState,
   type ColumnConfig,
   type FilterConfig,
+  type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
 import { CellText, TableDateValue } from "@/components/tables/unified";
@@ -284,7 +285,7 @@ function InlineTagEditor({
     <Button
       variant="ghost"
       size="sm"
-      className="h-auto px-1.5 py-1 flex flex-wrap gap-1 justify-start"
+      className="h-7 px-1.5 py-1 flex flex-nowrap gap-1 justify-start overflow-hidden max-w-full"
       title="Click to edit tags"
       onClick={(e) => { e.stopPropagation(); open(); }}
     >
@@ -588,6 +589,7 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
 
   const activeGroup = ((searchParams?.get("group") ?? "")) as FileGroup | "";
 
+
   // Optimistic overrides for inline edits
   const [projectOverrides, setProjectOverrides] = useState<
     Record<string, { project_id: number | null; project: string | null }>
@@ -633,8 +635,11 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     {
       id: "project_id",
       label: "Project",
-      type: "multiSelect",
-      options: projects.map((p) => ({ value: String(p.id), label: p.name })),
+      type: "select",
+      options: [
+        { value: "__unassigned__", label: "Unassigned" },
+        ...projects.map((p) => ({ value: String(p.id), label: p.name })),
+      ],
     },
     {
       id: "source",
@@ -717,7 +722,24 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
       sortBy: "modified",
       sortDirection: "desc",
       visibleColumns: defaultVisibleColumns,
-      filters: {},
+      filters: (() => {
+        const f: Record<string, FilterValue> = {};
+        const pid = searchParams?.get("project_id");
+        if (pid) f.project_id = pid;
+        const ft = searchParams?.get("file_type");
+        if (ft) f.file_type = ft.split(",");
+        const src = searchParams?.get("source");
+        if (src) f.source = src;
+        const asgn = searchParams?.get("assigned");
+        if (asgn) f.assigned = asgn;
+        const idx = searchParams?.get("indexed");
+        if (idx) f.indexed = idx.split(",");
+        const mAfter = searchParams?.get("modified_after");
+        if (mAfter) f.modified_after = mAfter;
+        const mBefore = searchParams?.get("modified_before");
+        if (mBefore) f.modified_before = mBefore;
+        return f;
+      })(),
     },
   });
 
@@ -748,11 +770,14 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     }
 
     // Project filter
-    const projectFilter = af.project_id;
-    if (Array.isArray(projectFilter) && projectFilter.length > 0) {
-      result = result.filter(
-        (item) => item.project_id != null && projectFilter.includes(String(item.project_id)),
-      );
+    if (typeof af.project_id === "string" && af.project_id) {
+      if (af.project_id === "__unassigned__") {
+        result = result.filter((item) => item.project_id == null);
+      } else {
+        result = result.filter(
+          (item) => item.project_id != null && String(item.project_id) === af.project_id,
+        );
+      }
     }
 
     // Source filter
@@ -796,6 +821,7 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
 
   const handleFilterChange = useCallback(
     (next: Record<string, unknown>) => {
+      tableState.setActiveFilters(next as Record<string, FilterValue>);
       tableState.setSearchParams(
         Object.fromEntries(
           Object.entries(next).map(([k, v]) => [
