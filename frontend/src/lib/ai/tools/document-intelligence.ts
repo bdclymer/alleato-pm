@@ -3,7 +3,6 @@ import { z } from "zod";
 import {
   createRagServiceClient,
   createServiceClient,
-  isRagDatabaseReadsEnabled,
 } from "@/lib/supabase/service";
 import {
   type ToolTracePayload,
@@ -58,9 +57,7 @@ export function createDocumentIntelligenceTools(
   options: CreateDocumentIntelligenceToolsOptions = {},
 ) {
   const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : supabase;
+  const ragSupabase = createRagServiceClient();
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
   });

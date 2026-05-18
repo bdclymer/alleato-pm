@@ -4,7 +4,6 @@ import { formatAIProviderFailure } from "@/lib/ai/provider-config";
 import {
   createRagServiceClient,
   createServiceClient,
-  isRagDatabaseReadsEnabled,
 } from "@/lib/supabase/service";
 import {
   EMBEDDING,
@@ -1059,9 +1058,7 @@ async function runChunkSearch(
   queryEmbedding: string,
   sourceGroup: SourceGroup,
 ): Promise<RagRow[]> {
-  const supabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : createServiceClient();
+  const supabase = createRagServiceClient();
   const { data, error } = await supabase.rpc("search_document_chunks", {
     query_embedding: queryEmbedding,
     filter_source_types: sourceGroup.sourceTypes,

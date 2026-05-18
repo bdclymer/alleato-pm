@@ -3424,7 +3424,7 @@ async function searchDocumentChunksByCategoryFallback({
   rpcError,
 }: {
   supabase: ReturnType<typeof createRagServiceClient>;
-  metadataSupabase?: ReturnType<typeof createServiceClient>;
+  metadataSupabase: ReturnType<typeof createServiceClient>;
   query: string;
   category: string;
   matchCount: number;
@@ -3446,8 +3446,7 @@ async function searchDocumentChunksByCategoryFallback({
     };
   }
 
-  const appSupabase = metadataSupabase ?? supabase;
-  let docsQuery = appSupabase
+  let docsQuery = metadataSupabase
     .from("document_metadata")
     .select(
       "id, title, category, source, type, date, participants, tags, project_id, created_at",

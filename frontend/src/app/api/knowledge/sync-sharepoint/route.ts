@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   createRagServiceClient,
   createServiceClient,
-  isRagDatabaseWritesEnabled,
 } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
 
@@ -289,9 +288,7 @@ export const POST = withApiGuardrails(
 
     // Upsert using service client (bypasses RLS)
     const serviceClient = createServiceClient();
-    const ragWriteClient = isRagDatabaseWritesEnabled()
-      ? createRagServiceClient()
-      : serviceClient;
+    const ragWriteClient = createRagServiceClient();
     let upserted = 0;
     let errors = 0;
 

@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   createRagServiceClient,
   createServiceClient,
-  isRagDatabaseReadsEnabled,
 } from "@/lib/supabase/service";
 
 const actionSchema = z.object({
@@ -73,9 +72,7 @@ export const GET = withApiGuardrails(
       Math.max(1, Number(request.nextUrl.searchParams.get("limit") ?? 100)),
     );
     const serviceSupabase = createServiceClient();
-    const ragSupabase = isRagDatabaseReadsEnabled()
-      ? createRagServiceClient()
-      : serviceSupabase;
+    const ragSupabase = createRagServiceClient();
 
     const { data: candidates, error } = await ragSupabase
       .from("document_attribution_candidates")
@@ -138,9 +135,7 @@ export const POST = withApiGuardrails(
       "api.admin.project-attribution-candidates.POST",
     );
     const serviceSupabase = createServiceClient();
-    const ragSupabase = isRagDatabaseReadsEnabled()
-      ? createRagServiceClient()
-      : serviceSupabase;
+    const ragSupabase = createRagServiceClient();
 
     const { data: candidate, error: candidateError } = await ragSupabase
       .from("document_attribution_candidates")

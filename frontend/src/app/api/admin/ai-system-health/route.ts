@@ -3,7 +3,6 @@ import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
 import {
   createRagServiceClient,
   createServiceClient,
-  isRagDatabaseReadsEnabled,
 } from "@/lib/supabase/service";
 import { estimateCostWithFallback } from "@/lib/ai/model-pricing";
 
@@ -34,9 +33,7 @@ function msAgo(hours: number) {
 export const GET = withApiGuardrails(WHERE, async () => {
   await requireAdmin(WHERE);
   const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : supabase;
+  const ragSupabase = createRagServiceClient();
   const generatedAt = new Date().toISOString();
   const since30d = msAgo(24 * DAYS_BACK);
 

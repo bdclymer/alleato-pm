@@ -2,11 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import {
-  createRagServiceClient,
-  createServiceClient,
-  isRagDatabaseReadsEnabled,
-} from "@/lib/supabase/service";
+import { createRagServiceClient } from "@/lib/supabase/service";
 
 type PipelinePhase = "parse" | "embed" | "extract";
 
@@ -47,9 +43,7 @@ export const POST = withApiGuardrails(
     };
 
     const { currentStage } = stageMapping[phase];
-    const jobClient = isRagDatabaseReadsEnabled()
-      ? createRagServiceClient()
-      : createServiceClient();
+    const jobClient = createRagServiceClient();
 
     // Get documents ready for this phase
     let query = jobClient
@@ -158,9 +152,7 @@ export const GET = withApiGuardrails(
         message: "Authentication required.",
       });
     }
-    const jobClient = isRagDatabaseReadsEnabled()
-      ? createRagServiceClient()
-      : createServiceClient();
+    const jobClient = createRagServiceClient();
 
     // Count documents in each stage
     const stages = [

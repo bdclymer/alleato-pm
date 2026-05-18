@@ -1261,6 +1261,17 @@ tables:
     purpose: "Writers exist for change event attachments but table never populated."
     relatedTables: []
 
+  - name: change_event_documents
+    db: MAIN
+    domain: financial
+    owner: core
+    status: live
+    purpose: "Pattern C junction between change events and document_metadata. Created during attachment backfill; 2 rows."
+    relatedTables:
+      - change_events
+      - document_metadata
+      - document_type_taxonomy
+
   - name: change_event_pco_links
     db: MAIN
     domain: financial
@@ -1651,17 +1662,6 @@ tables:
     relatedTables:
       - document_metadata
       - project_attribution_rules
-
-  - name: documents
-    db: MAIN
-    domain: documents
-    owner: core
-    status: legacy
-    purpose: "Legacy project file index. 12,471 rows. Project-setup wizard still writes here in parallel with document_metadata. Migration needed."
-    gotchas: "Project-setup wizard still writes here creating a parallel file index. Migrate to document_metadata or pick one."
-    cleanupPriority: medium
-    relatedTables:
-      - document_metadata
 
   - name: document_rows
     db: MAIN
@@ -3155,14 +3155,6 @@ tables:
     purpose: "Dormant knowledge base page sections. No code references."
     relatedTables: []
 
-  - name: chunks
-    db: MAIN
-    domain: support
-    owner: unknown
-    status: dormant
-    purpose: "Generic chunks table. Likely test or legacy."
-    relatedTables: []
-
 # ─────────────────────────────────────────────────────────
   # DOMAIN: TEST / ADMIN / DEV INFRASTRUCTURE
   # ─────────────────────────────────────────────────────────
@@ -3758,14 +3750,6 @@ tables:
     owner: unknown
     status: live
     purpose: "Lookup table for document_metadata.document_type values (Pattern C). TODO: expand metadata, identify writers/readers."
-    relatedTables: []
-
-  - name: documents_access_audit
-    db: MAIN
-    domain: documents
-    owner: unknown
-    status: live
-    purpose: "Audit log of document access events. TODO: expand metadata, identify writers/readers."
     relatedTables: []
 
   - name: project_documents_v2

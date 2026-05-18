@@ -1,7 +1,6 @@
 import {
   createRagServiceClient,
   createServiceClient,
-  isRagDatabaseReadsEnabled,
 } from "@/lib/supabase/service";
 import { toSessionUuid } from "@/lib/ai/session-id";
 import {
@@ -2408,9 +2407,7 @@ export async function applyAttributionRulePromotion(
   params: ApplyAttributionRulePromotionParams,
 ): Promise<ApplyAttributionRulePromotionResult> {
   const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : supabase;
+  const ragSupabase = createRagServiceClient();
   const promotionId = optionalUuid(
     params.promotionId,
     "promotionId",

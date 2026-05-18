@@ -6,8 +6,6 @@ import {
 import type { SourceSyncStatus } from "@/app/api/admin/source-sync/_contracts";
 import {
   createRagServiceClient,
-  createServiceClient,
-  isRagDatabaseReadsEnabled,
 } from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
 
@@ -66,10 +64,7 @@ export type SourceSyncAiBriefSnapshotListItem = SourceSyncAiBriefSnapshot & {
 };
 
 function createSourceSyncRunSnapshotLedger(): SourceSyncRunSnapshotLedger {
-  const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : supabase;
+  const ragSupabase = createRagServiceClient();
   return {
     async insertAiBriefSnapshot(insert) {
       return ragSupabase
