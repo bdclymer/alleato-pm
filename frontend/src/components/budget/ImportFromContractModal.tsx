@@ -144,7 +144,7 @@ export function ImportFromContractModal({
             <FileText className="h-4 w-4 mt-0.5 shrink-0 text-foreground" />
             <p>
               Imports all Schedule of Values line items from a Prime Contract into the budget.
-              Each line item&apos;s cost code and cost type will be resolved from the contract&apos;s budget code mapping.
+              Each line item&apos;s cost code and cost type will be resolved from the contract&apos;s budget code mapping or supported markup mapping.
               Existing budget lines are not affected.
             </p>
           </div>
@@ -231,7 +231,7 @@ export function ImportFromContractModal({
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Line items without a budget code mapping will be skipped.
+                    Unsupported line items without a budget code or markup mapping will be skipped.
                   </p>
                 </>
               )}
