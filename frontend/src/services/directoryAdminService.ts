@@ -661,7 +661,7 @@ export class DirectoryAdminService {
       .select(
         `
         *,
-        company:companies(*),
+        company:companies!people_company_id_fkey(*),
         project_directory_memberships!inner(
           *,
           permission_template:permission_templates(*)

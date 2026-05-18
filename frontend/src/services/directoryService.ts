@@ -183,7 +183,7 @@ export class DirectoryService {
           phone_business,
           person_type,
           status,
-          company:companies(id, name)
+          company:companies!people_company_id_fkey(id, name)
         `,
         { count: "exact" },
       )
@@ -244,7 +244,7 @@ export class DirectoryService {
       .select(
         `
         *,
-        company:companies(*),
+        company:companies!people_company_id_fkey(*),
         project_directory_memberships!inner(
           *,
           permission_template:permission_templates(*)
@@ -574,7 +574,7 @@ export class DirectoryService {
       .select(
         `
         *,
-        company:companies(*),
+        company:companies!people_company_id_fkey(*),
         project_directory_memberships!inner(
           *,
           permission_template:permission_templates(*)

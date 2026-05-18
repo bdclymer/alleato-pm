@@ -428,7 +428,10 @@ export function PrimeContractEstimateImportModal({
             }),
           },
         );
-        createdItems.push(created);
+        // apiFetch returns null at runtime for empty-body or 204 responses even
+        // though it's typed as T. Guard here so a failed/empty response never
+        // injects undefined into lineItems and crashes the SOV render.
+        if (created) createdItems.push(created);
       }
 
       toast.success(

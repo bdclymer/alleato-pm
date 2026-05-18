@@ -71,7 +71,7 @@ export const GET = withApiGuardrails("/api/contacts#GET", async ({ request }) =>
     .select(
       `
         *,
-        company:companies(id, name)
+        company:companies!people_company_id_fkey(id, name)
       `,
       { count: "exact" },
     )
@@ -170,7 +170,7 @@ export const POST = withApiGuardrails("/api/contacts#POST", async ({ request }) 
     .select(
       `
         *,
-        company:companies(id, name)
+        company:companies!people_company_id_fkey(id, name)
       `,
     )
     .single();

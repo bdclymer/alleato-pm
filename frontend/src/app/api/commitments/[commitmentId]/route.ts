@@ -342,6 +342,20 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
   "commitments/[commitmentId]#PUT",
   async ({ request, params }) => {
     const { commitmentId } = await params;
+
+    // Guard: reject the nil UUID before hitting the DB. This happens when a
+    // caller fires the mutation before the real commitment id has loaded
+    // (e.g. a component renders with a placeholder/default UUID).
+    // Surfaced via telemetry: 22 events of PUT with 00000000-0000-0000-0000-000000000000.
+    const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+    if (!commitmentId || commitmentId === NIL_UUID) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "commitments/[commitmentId]#PUT",
+        message: "commitmentId is missing or invalid. Did the form fire before the commitment loaded?",
+      });
+    }
+
     const supabase = await createClient();
 
     // Auth check FIRST — before parsing the request body. An unauthenticated

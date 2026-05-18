@@ -4,7 +4,6 @@ import React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
-import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -57,18 +56,22 @@ function cleanPersonText(value: string | null | undefined): string {
   const trimmed = value?.trim() ?? "";
   if (!trimmed) return "";
 
-  try {
-    const parsed = JSON.parse(trimmed) as unknown;
-    if (Array.isArray(parsed)) {
-      return cleanPersonText(parsed.find((item) => typeof item === "string") as string | undefined);
+  // Only attempt JSON.parse when the value actually looks like JSON (array or
+  // object). Plain names/emails (the overwhelming majority of values) are
+  // returned directly, avoiding the flood of JSON-parse errors that occurred
+  // when every plain-text field was unconditionally fed through JSON.parse.
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) {
+        return cleanPersonText(parsed.find((item) => typeof item === "string") as string | undefined);
+      }
+      if (parsed !== null && typeof parsed === "object" && "display" in parsed) {
+        return cleanPersonText((parsed as { display?: unknown }).display as string | undefined);
+      }
+    } catch {
+      // Fall through — treat as plain text
     }
-  } catch (error) {
-    reportNonCriticalFailure({
-      area: "assign-member-dialog",
-      operation: "parse-person-name",
-      error,
-      userVisibleFallback: "Imported person name was cleaned as plain text.",
-    });
   }
 
   return trimmed.replace(WRAPPED_VALUE_PATTERN, "").trim();

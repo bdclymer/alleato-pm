@@ -70,7 +70,7 @@ export const GET = withApiGuardrails(
     if (personIds.length > 0) {
       const { data: people, error: peopleError } = await supabase
         .from("people")
-        .select("id, first_name, last_name, email, phone_mobile, phone_business, company")
+        .select("id, first_name, last_name, email, phone_mobile, phone_business, company, company_data:companies!people_company_id_fkey(id, name)")
         .in("id", personIds);
 
       if (peopleError) {
@@ -89,7 +89,7 @@ export const GET = withApiGuardrails(
           email: p.email || "",
           phone_mobile: p.phone_mobile || null,
           phone_business: p.phone_business || null,
-          company_name: p.company || null,
+          company_name: (p.company_data as { name?: string } | null)?.name || p.company || null,
         });
       });
     }

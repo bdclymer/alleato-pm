@@ -56,7 +56,7 @@ export const SourceSyncStuckItemSchema = z.object({
 });
 
 export const SourceSyncStatusSchema = z.object({
-  status: z.enum(["healthy", "degraded"]),
+  status: z.enum(["healthy", "degraded", "unavailable"]),
   healthy: z.boolean(),
   generatedAt: z.string(),
   thresholds: z.record(z.string(), z.number()),

@@ -22,8 +22,9 @@ import logging
 import os
 import re
 import threading
+import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # Load environment variables from root .env file
 from src.services.env_loader import load_env
@@ -1267,23 +1268,60 @@ async def get_intelligence_compiler_health(
         ) from exc
 
 
+# In-process cache for the source-sync health endpoint.
+# The handler performs 10+ Supabase queries across two projects (MAIN + RAG)
+# and can take 20-30 s on busy instances — far exceeding the Next.js 25 s timeout
+# when retried. Caching for 60 s keeps the UI responsive without stale risk for
+# a status-monitoring endpoint whose meaningful resolution is minutes, not seconds.
+_SOURCE_SYNC_HEALTH_CACHE: Tuple[float, Dict[str, Any]] | None = None
+_SOURCE_SYNC_HEALTH_CACHE_TTL_S = 60.0
+_SOURCE_SYNC_HEALTH_CACHE_LOCK = threading.Lock()
+
+
 @app.get("/api/health/source-sync", tags=["Health"], summary="Source sync and intelligence health")
 async def get_source_sync_health_status(
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
-    """Return sync freshness, vectorization, task extraction, compiler, and packet health."""
-    try:
-        from src.services.health.source_sync_health import get_source_sync_health
-        from src.services.supabase_helpers import get_supabase_client
+    """Return sync freshness, vectorization, task extraction, compiler, and packet health.
 
-        client = get_supabase_client()
-        return get_source_sync_health(client)
-    except Exception as exc:
-        logger.error("[SourceSyncHealthAPI] status failed: %s", exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=_public_backend_error("Source sync health query failed", exc),
-        ) from exc
+    Results are cached in-process for up to 60 seconds to avoid repeated full-table
+    scans across both Supabase projects on every poll interval. The ``cachedAt``
+    field in the response shows the age of the cached result.
+    """
+    global _SOURCE_SYNC_HEALTH_CACHE  # noqa: PLW0603
+
+    # Fast path: return cached result if still fresh (lock-free read is safe here
+    # because Python GIL guarantees atomic reference reads on CPython).
+    cached = _SOURCE_SYNC_HEALTH_CACHE
+    if cached is not None:
+        cached_at, cached_payload = cached
+        age = time.monotonic() - cached_at
+        if age < _SOURCE_SYNC_HEALTH_CACHE_TTL_S:
+            return {**cached_payload, "cachedAt": cached_payload.get("generatedAt"), "cacheAgeSeconds": round(age, 1)}
+
+    with _SOURCE_SYNC_HEALTH_CACHE_LOCK:
+        # Re-check under lock — another thread may have refreshed while we waited.
+        cached = _SOURCE_SYNC_HEALTH_CACHE
+        if cached is not None:
+            cached_at, cached_payload = cached
+            age = time.monotonic() - cached_at
+            if age < _SOURCE_SYNC_HEALTH_CACHE_TTL_S:
+                return {**cached_payload, "cachedAt": cached_payload.get("generatedAt"), "cacheAgeSeconds": round(age, 1)}
+
+        try:
+            from src.services.health.source_sync_health import get_source_sync_health
+            from src.services.supabase_helpers import get_supabase_client
+
+            client = get_supabase_client()
+            payload = get_source_sync_health(client)
+            _SOURCE_SYNC_HEALTH_CACHE = (time.monotonic(), payload)
+            return payload
+        except Exception as exc:
+            logger.error("[SourceSyncHealthAPI] status failed: %s", exc, exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=_public_backend_error("Source sync health query failed", exc),
+            ) from exc
 
 
 @app.post("/api/health/source-sync/recompute", tags=["Health"], summary="Recompute source sync health")

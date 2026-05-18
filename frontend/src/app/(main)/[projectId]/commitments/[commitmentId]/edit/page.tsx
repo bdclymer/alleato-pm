@@ -224,10 +224,16 @@ export default function EditCommitmentPage() {
     );
   };
 
+  const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+
   const handleSubmitSubcontract = async (
     data: CreateSubcontractInput,
     attachmentFiles: File[] = [],
   ) => {
+    if (!commitmentId || commitmentId === NIL_UUID) {
+      toast.error("Cannot save: commitment ID is not loaded yet. Please refresh and try again.");
+      return;
+    }
     await apiFetch(`/api/commitments/${commitmentId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -265,6 +271,10 @@ export default function EditCommitmentPage() {
   };
 
   const handleSubmitPurchaseOrder = async (data: CreatePurchaseOrderInput) => {
+    if (!commitmentId || commitmentId === NIL_UUID) {
+      toast.error("Cannot save: commitment ID is not loaded yet. Please refresh and try again.");
+      return;
+    }
     await apiFetch(`/api/commitments/${commitmentId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

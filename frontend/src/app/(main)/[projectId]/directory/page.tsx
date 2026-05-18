@@ -376,7 +376,7 @@ function AddMemberDialog({
     supabase
       .from("people")
       .select(
-        "id, first_name, last_name, email, job_title, company:companies(name)"
+        "id, first_name, last_name, email, job_title, company:companies!people_company_id_fkey(name)"
       )
       .order("first_name")
       .then(({ data }) => {

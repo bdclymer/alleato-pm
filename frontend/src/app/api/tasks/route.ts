@@ -94,7 +94,7 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
   const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({
-      code: "UNAUTHORIZED",
+      code: "AUTH_EXPIRED",
       where: "/api/tasks#GET",
       message: "Not authenticated.",
       details: { reason: "No valid session cookie" },
@@ -152,12 +152,13 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
         .order("created_at", { ascending: false }),
     ]);
 
-    if (byProjectIds.error ?? byProjectId.error) {
+    if (byProjectIds.error ?? byProjectId.error ?? viaDocsMeta.error) {
+      const firstError = byProjectIds.error ?? byProjectId.error ?? viaDocsMeta.error;
       throw new GuardrailError({
         code: "INTERNAL_ERROR",
         where: "/api/tasks#GET",
-        message: "Failed to load project tasks.",
-        details: { projectId, byProjectIdsError: byProjectIds.error?.message, byProjectIdError: byProjectId.error?.message },
+        message: `Failed to load project tasks: ${firstError?.message}`,
+        details: { projectId, byProjectIdsError: byProjectIds.error?.message, byProjectIdError: byProjectId.error?.message, viaDocsMetaError: viaDocsMeta.error?.message },
       });
     }
 
@@ -243,7 +244,7 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
     throw new GuardrailError({
       code: "INTERNAL_ERROR",
       where: "/api/tasks#GET",
-      message: "Failed to load tasks.",
+      message: `Failed to load tasks: ${error.message}`,
       details: { reason: error.message },
       cause: error,
     });

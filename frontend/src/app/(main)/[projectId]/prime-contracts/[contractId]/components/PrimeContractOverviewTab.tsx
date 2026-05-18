@@ -274,6 +274,9 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     let hasInsertedFeeBasisSubtotal = false;
 
     for (const item of displayedSovItems) {
+      // Guard against null/undefined entries that can arrive from the estimate
+      // import path (apiFetch returns null on empty-body responses).
+      if (!item) continue;
       if (item.is_group_header) continue;
       const divCode = getDivCode(item);
       const markupType = (item.markup_type || "").toLowerCase();
@@ -545,6 +548,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     </InlineTableHeader>
                     <InlineTableBody>
                       {displayedSovItems.map((item) => {
+                        if (!item) return null;
                         if (item.is_group_header) {
                           return (
                             <SortableSovRow
@@ -945,6 +949,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       );
                     }
 
+                    // Exhaustive guard: only "item" rows reach this point.
+                    // Without this check, a future union extension (or a null
+                    // entry slipping through viewModeRows construction) would
+                    // silently make `item` undefined and crash on `.markup_type`.
+                    if (row.type !== "item") return null;
                     const { item, divCode } = row;
                     if (collapsedDivisions.has(divCode)) return null;
 
