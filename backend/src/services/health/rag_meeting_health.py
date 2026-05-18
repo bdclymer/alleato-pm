@@ -3,15 +3,16 @@ RAG Meeting Vectorization Health Check
 
 Canary for the AI Strategist's meeting recall path.
 Fails loudly if:
-  1. No embeddings exist at all
-  2. Recent meetings (last 14 days) have <50% summary embeddings
-  3. Newest meeting is >7 days ahead of newest embedding
-  4. Recent meetings have <50% chunk coverage
-  5. Recent meetings have <90% full transcript chunk coverage
-  6. The embedding endpoint cannot embed a probe string
-  7. Supabase RPCs return zero results for known-good probe vectors
-  8. >100 Fireflies ingestion jobs stuck at raw_ingested
-  9. Any quota-error ingestion jobs exist
+  1. PM APP database (lgveqfnpkxvzbnnwuled) is unreachable
+  2. No meeting document_metadata rows exist
+  3. Recent meetings (last 14 days) have <50% chunk coverage in AI Database
+  4. Recent meetings have <90% full transcript chunk coverage in AI Database
+  5. The embedding endpoint cannot embed a probe string
+  6. >100 Fireflies ingestion jobs stuck at raw_ingested
+  7. Any quota-error ingestion jobs exist
+
+Note: summary_embedding was removed from PM APP on 2026-05-17 (caused OOM crash loop).
+Meeting embedding health is now measured via document_chunks in the AI Database only.
 
 Returns a dict with keys: passed (bool), failures (list), warnings (list), stats (dict).
 Exits non-zero when called as __main__, posts Slack alert on failure if
@@ -31,10 +32,8 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-STALENESS_DAYS = 7
 RECENT_WINDOW_DAYS = 14
 MEETING_SIGNAL_LIMIT = 2_000
-RECENT_MIN_EMBEDDED_RATIO = 0.5
 RECENT_MIN_CHUNK_RATIO = 0.5
 RECENT_MIN_TRANSCRIPT_CHUNK_RATIO = 0.9
 BATCH_SIZE = 500
@@ -224,58 +223,62 @@ def run_health_check(
         return rows[:limit] if limit else rows
 
     try:
-        # ── 1. Overall meeting embedding coverage ────────────────────────────
+        # ── 1. PM APP connectivity check ─────────────────────────────────────
+        # Must pass before anything else — a crash loop here means all checks fail.
+        try:
+            resp = httpx.get(
+                f"{supabase_url}/rest/v1/projects?select=id&limit=1",
+                headers=app_headers,
+                timeout=10,
+            )
+            if not resp.is_success:
+                failures.append(
+                    f"PM APP database unreachable: HTTP {resp.status_code}. "
+                    f"Check lgveqfnpkxvzbnnwuled in Supabase dashboard immediately."
+                )
+                stats["pm_app_connectivity"] = {"ok": False, "status": resp.status_code}
+            else:
+                stats["pm_app_connectivity"] = {"ok": True}
+        except Exception as exc:
+            failures.append(
+                f"PM APP database connection failed: {exc}. "
+                f"The database may be in a crash loop — check lgveqfnpkxvzbnnwuled."
+            )
+            stats["pm_app_connectivity"] = {"ok": False, "error": str(exc)}
+
+        # ── 2. Meeting document_metadata inventory ───────────────────────────
+        # Fetch meeting rows WITHOUT summary_embedding — that column was cleared
+        # from PM APP on 2026-05-17 (it caused OOM via HNSW index on startup).
+        # Embedding health is measured via document_chunks in the AI Database below.
         signal_cutoff = datetime.now(timezone.utc) - timedelta(days=max(RECENT_WINDOW_DAYS * 2, 60))
         meeting_rows = rest_rows(
             supabase_url,
             app_headers,
             "document_metadata",
             {
-                "select": "id,summary_embedding,captured_at,date,created_at",
+                "select": "id,captured_at,date,created_at",
                 "or": "(source.eq.fireflies,type.in.(meeting,meeting_transcript),category.eq.meeting,fireflies_id.not.is.null)",
                 "created_at": f"gte.{signal_cutoff.isoformat()}",
                 "order": "created_at.desc",
             },
             limit=MEETING_SIGNAL_LIMIT,
         )
-        embedded_summary_rows = [row for row in meeting_rows if row.get("summary_embedding") is not None]
         meeting_timestamps = [
             timestamp
             for row in meeting_rows
             if (timestamp := _row_timestamp(row, ["captured_at", "date", "created_at"]))
         ]
-        embedded_timestamps = [
-            timestamp
-            for row in embedded_summary_rows
-            if (timestamp := _row_timestamp(row, ["captured_at", "created_at"]))
-        ]
         metadata = {
             "total_meetings": len(meeting_rows),
-            "embedded_summaries": len(embedded_summary_rows),
             "latest_meeting_at": max(meeting_timestamps).isoformat() if meeting_timestamps else None,
-            "latest_summary_embedding_at": max(embedded_timestamps).isoformat() if embedded_timestamps else None,
             "sample_limit": MEETING_SIGNAL_LIMIT,
         }
         stats["metadata"] = metadata
 
         if metadata.get("total_meetings", 0) == 0:
             failures.append("No meeting document_metadata rows matched the Fireflies/meeting health filter.")
-        if metadata.get("embedded_summaries", 0) == 0:
-            failures.append("No meeting summary embeddings exist at all. Strategist is keyword-only.")
 
-        if metadata.get("latest_meeting_at") and metadata.get("latest_summary_embedding_at"):
-            latest_meeting = datetime.fromisoformat(metadata["latest_meeting_at"].replace("Z", "+00:00"))
-            latest_embed = datetime.fromisoformat(metadata["latest_summary_embedding_at"].replace("Z", "+00:00"))
-            lag_days = (latest_meeting - latest_embed).total_seconds() / 86400
-            if lag_days > STALENESS_DAYS:
-                failures.append(
-                    f"Newest meeting is {lag_days:.1f} days ahead of newest summary embedding "
-                    f"(threshold: {STALENESS_DAYS}d). Embedding pipeline is stalled."
-                )
-        elif metadata.get("latest_meeting_at") and not metadata.get("latest_summary_embedding_at"):
-            failures.append("Meetings exist but ZERO have summary embeddings. Pipeline never ran.")
-
-        # ── 2. Recent meeting coverage ───────────────────────────────────────
+        # ── 3. Chunk coverage ────────────────────────────────────────────────
         cutoff = datetime.now(timezone.utc).timestamp() - RECENT_WINDOW_DAYS * 86400
         recent_rows = [
             row
@@ -283,24 +286,8 @@ def run_health_check(
             if (timestamp := _row_timestamp(row, ["captured_at", "date", "created_at"]))
             and timestamp.timestamp() >= cutoff
         ]
-        recent_embedded_summary_rows = [row for row in recent_rows if row.get("summary_embedding") is not None]
-        recent = {
-            "recent_meetings": len(recent_rows),
-            "recent_embedded_summaries": len(recent_embedded_summary_rows),
-        }
-        stats["recent"] = recent
+        stats["recent"] = {"recent_meetings": len(recent_rows)}
 
-        if recent and recent.get("recent_meetings", 0) > 0:
-            ratio = recent["recent_embedded_summaries"] / recent["recent_meetings"]
-            if ratio < RECENT_MIN_EMBEDDED_RATIO:
-                failures.append(
-                    f"Only {recent['recent_embedded_summaries']}/{recent['recent_meetings']} meetings "
-                    f"from the last {RECENT_WINDOW_DAYS}d have summary embeddings "
-                    f"({ratio*100:.1f}%, need ≥{RECENT_MIN_EMBEDDED_RATIO*100:.0f}%). "
-                    f"Recent meetings are NOT being vectorized."
-                )
-
-        # ── 3. Chunk coverage ────────────────────────────────────────────────
         recent_meeting_ids = [str(row.get("id")) for row in recent_rows if row.get("id")]
         with_embedded_chunk_ids: set[str] = set()
         with_embedded_transcript_chunk_ids: set[str] = set()
@@ -416,11 +403,14 @@ def run_health_check(
 
 
 def _post_slack(webhook_url: str, result: dict) -> None:
+    pm_down = any("PM APP database" in f for f in result.get("failures", []))
+    icon = ":fire:" if pm_down else ":rotating_light:"
+    title = "*PM APP DATABASE DOWN*" if pm_down else "*RAG Meeting Health FAILED*"
     failure_lines = "\n".join(f"• {f}" for f in result["failures"])
     try:
         httpx.post(
             webhook_url,
-            json={"text": f":rotating_light: *RAG Meeting Health FAILED*\n{failure_lines}"},
+            json={"text": f"{icon} {title}\n{failure_lines}"},
             timeout=10,
         )
     except Exception as exc:
