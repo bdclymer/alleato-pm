@@ -2590,8 +2590,8 @@ function SubListTab({
                     <tr
                       className={`border-b border-border/30 transition-colors hover:bg-muted/30 ${sub.is_awarded ? "bg-status-warning/5" : ""}`}
                     >
-                      <td className="py-1.5 pl-4 pr-2 text-muted-foreground">
-                        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-muted px-1.5 font-mono text-[10px] tabular-nums">
+                      <td className="w-6 py-1.5 pl-2 pr-1 text-right align-middle text-muted-foreground">
+                        <span className="font-mono text-[10px] tabular-nums">
                           {sub.position ?? idx + 1}
                         </span>
                       </td>
