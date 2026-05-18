@@ -5,6 +5,7 @@ import IconPlus from '@/components/icon/icon-plus';
 import IconTrashLines from '@/components/icon/icon-trash-lines';
 import { sortBy } from 'lodash';
 import { DataTableSortStatus, DataTable } from 'mantine-datatable';
+import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 
@@ -239,7 +240,7 @@ const ComponentsAppsInvoiceList = () => {
                                 render: ({ name, id }) => (
                                     <div className="flex items-center font-semibold">
                                         <div className="w-max rounded-full bg-white-dark/30 p-0.5 ltr:mr-2 rtl:ml-2">
-                                            <img className="h-8 w-8 rounded-full object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" />
+                                            <Image className="h-8 w-8 rounded-full object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" width={32} height={32} />
                                         </div>
                                         <div>{name}</div>
                                     </div>

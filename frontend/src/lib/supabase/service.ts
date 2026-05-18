@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import type { Database as RagDatabase } from "@/types/rag-database.types";
 
 /**
  * Supabase Admin Client (Service Role)
@@ -70,7 +71,7 @@ export function createRagServiceClient() {
     );
   }
 
-  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+  return createClient<RagDatabase>(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

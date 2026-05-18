@@ -2,8 +2,10 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 const WHERE = "projects/[projectId]/estimates/[estimateId]/sublist/[subId]/award#POST";
+const awardSchema = z.object({ revoke: z.boolean().optional() }).strict();
 
 /**
  * POST /api/projects/[projectId]/estimates/[estimateId]/sublist/[subId]/award
@@ -19,7 +21,7 @@ export const POST = withApiGuardrails<{
   estimateId: string;
   subId: string;
 }>(WHERE, async ({ request, params }) => {
-  const { estimateId, subId } = await params;
+  const { projectId, estimateId, subId } = await params;
   const supabase = await createClient();
 
   const {
@@ -30,26 +32,37 @@ export const POST = withApiGuardrails<{
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 
+  const projectIdNum = parseInt(projectId, 10);
   const estimateIdNum = parseInt(estimateId, 10);
   const subIdNum = parseInt(subId, 10);
-  if (isNaN(estimateIdNum) || isNaN(subIdNum)) {
+  if (isNaN(projectIdNum) || isNaN(estimateIdNum) || isNaN(subIdNum)) {
     throw new GuardrailError({
       code: "INVALID_PAYLOAD",
       where: WHERE,
-      message: "Invalid estimate or sub ID.",
+      message: "Invalid project, estimate, or sub ID.",
     });
   }
 
-  const body = await request.json().catch(() => ({}));
-  const revoking = body?.revoke === true;
+  const parsed = awardSchema.safeParse(await request.json().catch(() => ({})));
+  if (!parsed.success) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: WHERE,
+      message: "Invalid award payload.",
+      details: parsed.error.flatten(),
+    });
+  }
+  const revoking = parsed.data.revoke === true;
 
   // Look up the target sub to get its division_code
   const { data: targetSub, error: lookupError } = await supabase
     .from("estimate_sublist_subs")
-    .select("id, division_code, is_awarded")
+    .select("id, division_code, is_awarded, estimates!inner(estimate_id, project_id, is_deleted)")
     .eq("id", subIdNum)
     .eq("estimate_id", estimateIdNum)
-    .single();
+    .eq("estimates.project_id", projectIdNum)
+    .eq("estimates.is_deleted", false)
+    .maybeSingle();
 
   if (lookupError || !targetSub) {
     throw new GuardrailError({

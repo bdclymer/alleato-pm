@@ -2,11 +2,70 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+
+const WHERE = "projects/[projectId]/estimates/[estimateId]/sublist";
+
+const sublistCreateSchema = z.object({
+  division_code: z.string().trim().regex(/^\d{2}$/).default("02"),
+  division_name: z.string().trim().max(120).default(""),
+  position: z.number().int().min(1).max(5).optional(),
+  company_id: z.string().uuid().nullable().optional(),
+  company: z.string().trim().max(200).nullable().optional(),
+  contact_name: z.string().trim().max(160).nullable().optional(),
+  email: z.string().trim().email().or(z.literal("")).nullable().optional(),
+  cell: z.string().trim().max(60).nullable().optional(),
+  price: z.number().finite().min(0).nullable().optional(),
+  comments: z.string().trim().max(2000).nullable().optional(),
+  intend_to_submit: z.enum(["", "Yes", "No"]).nullable().optional(),
+  email_sent: z.enum(["", "Yes", "No", "Other"]).nullable().optional(),
+  phone_follow_up: z.enum(["", "Yes", "No", "Voicemail"]).nullable().optional(),
+  bid_received: z.enum(["", "Yes", "No", "Other"]).nullable().optional(),
+});
+
+async function assertEstimateBelongsToProject(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectId: string,
+  estimateId: string,
+): Promise<{ projectIdNum: number; estimateIdNum: number }> {
+  const projectIdNum = parseInt(projectId, 10);
+  const estimateIdNum = parseInt(estimateId, 10);
+  if (isNaN(projectIdNum) || isNaN(estimateIdNum)) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: WHERE,
+      message: "Invalid project or estimate ID.",
+      details: { projectId, estimateId },
+    });
+  }
+
+  const { data, error } = await supabase
+    .from("estimates")
+    .select("estimate_id")
+    .eq("estimate_id", estimateIdNum)
+    .eq("project_id", projectIdNum)
+    .eq("is_deleted", false)
+    .maybeSingle();
+
+  if (error) {
+    throw new GuardrailError({ code: "DB_ERROR", where: WHERE, message: error.message, cause: error });
+  }
+  if (!data) {
+    throw new GuardrailError({
+      code: "NOT_FOUND",
+      where: WHERE,
+      message: "Estimate not found for this project.",
+      details: { projectId, estimateId },
+    });
+  }
+
+  return { projectIdNum, estimateIdNum };
+}
 
 export const GET = withApiGuardrails<{ projectId: string; estimateId: string }>(
   "projects/[projectId]/estimates/[estimateId]/sublist#GET",
   async ({ params }) => {
-    const { estimateId } = await params;
+    const { projectId, estimateId } = await params;
     const supabase = await createClient();
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -14,15 +73,7 @@ export const GET = withApiGuardrails<{ projectId: string; estimateId: string }>(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "sublist#GET", message: "Authentication required." });
     }
 
-    const estimateIdNum = parseInt(estimateId, 10);
-    if (isNaN(estimateIdNum)) {
-      throw new GuardrailError({
-        code: "INVALID_PAYLOAD",
-        where: "sublist#GET",
-        message: "Invalid estimate ID.",
-        details: { estimateId },
-      });
-    }
+    const { estimateIdNum } = await assertEstimateBelongsToProject(supabase, projectId, estimateId);
 
     const { data, error } = await supabase
       .from("estimate_sublist_subs")
@@ -47,7 +98,7 @@ export const GET = withApiGuardrails<{ projectId: string; estimateId: string }>(
 export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>(
   "projects/[projectId]/estimates/[estimateId]/sublist#POST",
   async ({ request, params }) => {
-    const { estimateId } = await params;
+    const { projectId, estimateId } = await params;
     const supabase = await createClient();
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -55,37 +106,45 @@ export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "sublist#POST", message: "Authentication required." });
     }
 
-    const estimateIdNum = parseInt(estimateId, 10);
-    if (isNaN(estimateIdNum)) {
+    const { estimateIdNum } = await assertEstimateBelongsToProject(supabase, projectId, estimateId);
+
+    const parsed = sublistCreateSchema.safeParse(await request.json().catch(() => ({})));
+    if (!parsed.success) {
       throw new GuardrailError({
         code: "INVALID_PAYLOAD",
         where: "sublist#POST",
-        message: "Invalid estimate ID.",
-        details: { estimateId },
+        message: "Invalid sublist row payload.",
+        details: parsed.error.flatten(),
       });
     }
-
-    const body = await request.json();
-    const { division_code, division_name, ...rest } = body;
+    const { division_code, division_name, ...rest } = parsed.data;
 
     // Compute next position for this division (auto-increment per division)
     const { data: maxRow } = await supabase
       .from("estimate_sublist_subs")
       .select("position")
       .eq("estimate_id", estimateIdNum)
-      .eq("division_code", division_code ?? "02")
+      .eq("division_code", division_code)
       .order("position", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    const nextPosition = (maxRow?.position ?? 0) + 1;
+    const nextPosition = rest.position ?? (maxRow?.position ?? 0) + 1;
+    if (nextPosition > 5) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "sublist#POST",
+        message: "The current sublist schema supports five bidders per division. Delete an unused row before adding another bidder.",
+        details: { division_code, nextPosition },
+      });
+    }
 
     const { data, error } = await supabase
       .from("estimate_sublist_subs")
       .insert({
         estimate_id: estimateIdNum,
-        division_code: division_code ?? "02",
-        division_name: division_name ?? "",
+        division_code,
+        division_name,
         position: nextPosition,
         ...rest,
       })

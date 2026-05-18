@@ -7,9 +7,33 @@
 
 ## Current focus
 
-**Status:** Pattern C attachment consolidation — batch 1 of 2 shipped (commitments). 6 more entities + form audit pending.
+**Status:** Pattern C attachment consolidation — migration skill + manifest created; batch 2 route conversion still pending.
 **Last updated:** 2026-05-18
-**Last worked on by:** Claude Code (Pattern C attachment migration — batch 1)
+**Last worked on by:** Codex (Pattern C attachment migration skill + guardrails)
+
+## Pattern C attachment migration system pass (2026-05-18)
+
+Codex reviewed `docs/architecture/CONSOLIDATED-IMPLEMENTATION-PLAN.md`, `docs/architecture/TASKS-CONSOLIDATED-IMPLEMENTATION.md`, this working context, live Supabase counts, and the current `/api/document-picker/*` implementation.
+
+**Created:**
+- `.codex/skills/pattern-c-attachment-migration/SKILL.md` — repeatable workflow for migrating each legacy PURT/entity attachment table to Pattern C.
+- `docs/architecture/pattern-c-attachment-migration-manifest.json` — manifest of legacy tables, target junctions, route surfaces, deterministic id prefixes, known live counts, and open decisions.
+- `supabase/migrations/20260518105545_backfill_attachments_to_pattern_c_v2.sql` — ledger placeholder for remote-applied May 18 migration.
+- `supabase/migrations/20260518105737_create_change_event_documents_and_backfill_v2.sql` — ledger placeholder for remote-applied May 18 migration.
+- `supabase/migrations/20260524010000_reconcile_pattern_c_attachment_backfills.sql` — replay-safe reconciliation migration that re-extends `user_can_access_entity()`, creates `change_event_documents` if needed, and idempotently backfills legacy `attachments`, `change_event_attachments`, and `submittal_attachments` into Pattern C after base junction tables exist in local chronological order.
+
+**Important findings:**
+- Live counts contradicted the "all empty tables" note: `attachments` still has 29 rows, `change_event_attachments` has 2, and `submittal_attachments` has 1. The migrated Pattern C rows are already present, but batch 2 must keep reconciliation checks before any drop.
+- The linked remote migration ledger contains `20260518105545|backfill_attachments_to_pattern_c_v2` and `20260518105737|create_change_event_documents_and_backfill_v2`; those files were missing locally and are now represented.
+- Do **not** run broad `supabase db push` blindly. `npx supabase migration list --linked` shows broader local/remote drift, and `npm run db:migrations:verify-applied -- <file>` is currently blocked by pre-existing duplicate local migration prefixes:
+  - `20260515120000`: `20260515120000_estimate_gc_templates.sql`, `20260515120000_seed_company_process_intelligence_targets.sql`
+  - `20260518120000`: `20260518120000_add_generate_and_send_stage.sql`, `20260518120000_drop_legacy_documents_table.sql`
+
+**Next recommended slice:**
+1. Fix the duplicate local migration timestamp prefixes or update the verifier so it can inspect a single file despite existing duplicate-prefix debt.
+2. Apply/verify `20260524010000_reconcile_pattern_c_attachment_backfills.sql` deliberately after ledger drift is understood.
+3. Extract the hard-coded entity maps from `/api/document-picker/upload`, `/api/document-picker/linked`, and `/api/document-picker/attach` into one shared registry.
+4. Run the new `pattern-c-attachment-migration` skill on the remaining routes, starting with a zero-row table like `cco_attachments`.
 
 ## Pattern C attachment migration — batch 1 (2026-05-18)
 

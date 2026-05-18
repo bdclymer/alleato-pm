@@ -20,7 +20,7 @@ export const POST = withApiGuardrails<{
   estimateId: string;
   subId: string;
 }>(WHERE, async ({ params }) => {
-  const { estimateId, subId } = await params;
+  const { projectId, estimateId, subId } = await params;
   const supabase = await createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -28,19 +28,22 @@ export const POST = withApiGuardrails<{
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 
+  const projectIdNum = parseInt(projectId, 10);
   const estimateIdNum = parseInt(estimateId, 10);
   const subIdNum = parseInt(subId, 10);
-  if (isNaN(estimateIdNum) || isNaN(subIdNum)) {
+  if (isNaN(projectIdNum) || isNaN(estimateIdNum) || isNaN(subIdNum)) {
     throw new GuardrailError({ code: "INVALID_PAYLOAD", where: WHERE, message: "Invalid IDs." });
   }
 
   // Load sub
   const { data: sub, error: subError } = await supabase
     .from("estimate_sublist_subs")
-    .select("*")
+    .select("*, estimates!inner(estimate_id, project_id, is_deleted)")
     .eq("id", subIdNum)
     .eq("estimate_id", estimateIdNum)
-    .single();
+    .eq("estimates.project_id", projectIdNum)
+    .eq("estimates.is_deleted", false)
+    .maybeSingle();
 
   if (subError || !sub) {
     throw new GuardrailError({ code: "NOT_FOUND", where: WHERE, message: "Sub not found in this estimate." });

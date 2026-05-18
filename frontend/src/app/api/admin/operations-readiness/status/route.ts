@@ -8,7 +8,6 @@ import {
 import {
   createRagServiceClient,
   createServiceClient,
-  isRagDatabaseReadsEnabled,
 } from "@/lib/supabase/service";
 
 import {
@@ -198,10 +197,7 @@ async function countCurrentPackets() {
 }
 
 async function countSignalCandidates(status: string, confidence?: string) {
-  const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : supabase;
+  const ragSupabase = createRagServiceClient();
   let query = ragSupabase
     .from("source_signal_candidates")
     .select("id", { count: "exact", head: true })
@@ -217,9 +213,7 @@ async function countSignalCandidates(status: string, confidence?: string) {
 
 async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
   const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : supabase;
+  const ragSupabase = createRagServiceClient();
   const [
     documentsResult,
     chunksResult,
@@ -381,10 +375,7 @@ async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
 }
 
 async function loadCompilerFallbackStatus(now: Date): Promise<CompilerStatus> {
-  const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : supabase;
+  const ragSupabase = createRagServiceClient();
   const [
     sourceJobsResult,
     packetJobsResult,

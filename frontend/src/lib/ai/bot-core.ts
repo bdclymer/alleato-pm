@@ -39,6 +39,7 @@ import {
 } from "@/lib/ai/services/workspace-artifact-service";
 import { createServiceClient } from "@/lib/supabase/service";
 import { toSessionUuid } from "@/lib/ai/session-id";
+import type { Json } from "@/types/database.types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -605,7 +606,7 @@ export async function persistChatMessage(params: {
     user_id: params.userId,
     role: params.role,
     content: params.content,
-    ...(params.metadata ? { metadata: params.metadata } : {}),
+    ...(params.metadata ? { metadata: params.metadata as Json } : {}),
   });
   if (error) {
     console.error("[persistChatMessage] insert failed", {

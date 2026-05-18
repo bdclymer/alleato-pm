@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useId } from "react";
+import Image from "next/image";
 import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
 import {
   AlertTriangle, Zap, Minus, Link2, Plus, Send, X, Check,
@@ -448,7 +449,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
           {/* Cover image */}
           {coverUrl && (
             <div className="relative h-48 w-full flex-none overflow-hidden">
-              <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+              <Image src={coverUrl} alt="" fill sizes="(max-width: 768px) 100vw, 640px" className="object-cover" />
               <Button
                 variant="ghost" size="sm"
                 onClick={() => { setCoverUrl(""); save({ screenshot_url: null }); }}
@@ -653,7 +654,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
                 />
                 {commentImageUrl && (
                   <div className="relative inline-block">
-                    <img src={commentImageUrl} alt="Attached" className="max-h-32 rounded-lg object-cover ring-1 ring-border" />
+                    <Image src={commentImageUrl} alt="Attached" width={400} height={128} sizes="400px" className="max-h-32 w-auto rounded-lg object-cover ring-1 ring-border" />
                     <Button
                       variant="ghost" size="icon"
                       onClick={() => setCommentImageUrl(null)}

@@ -2,16 +2,58 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 const WHERE = "projects/[projectId]/estimates/[estimateId]/sublist/[subId]/bid-items/[bidItemId]";
 type Params = { projectId: string; estimateId: string; subId: string; bidItemId: string };
+const bidItemUpdateSchema = z.object({
+  description: z.string().trim().min(1).max(300).optional(),
+  amount: z.number().finite().min(0).optional(),
+  scope_item_id: z.number().int().positive().nullable().optional(),
+  is_excluded: z.boolean().optional(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+}).strict();
+
+async function parseAndVerifyParams(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectId: string,
+  estimateId: string,
+  subId: string,
+  bidItemId: string,
+): Promise<{ estimateIdNum: number; subIdNum: number; bidItemIdNum: number }> {
+  const projectIdNum = parseInt(projectId, 10);
+  const estimateIdNum = parseInt(estimateId, 10);
+  const subIdNum = parseInt(subId, 10);
+  const bidItemIdNum = parseInt(bidItemId, 10);
+  if (isNaN(projectIdNum) || isNaN(subIdNum) || isNaN(estimateIdNum) || isNaN(bidItemIdNum)) {
+    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: WHERE, message: "Invalid ID." });
+  }
+
+  const { data, error } = await supabase
+    .from("estimate_sublist_subs")
+    .select("id, estimates!inner(estimate_id, project_id, is_deleted)")
+    .eq("id", subIdNum)
+    .eq("estimate_id", estimateIdNum)
+    .eq("estimates.project_id", projectIdNum)
+    .eq("estimates.is_deleted", false)
+    .maybeSingle();
+
+  if (error) {
+    throw new GuardrailError({ code: "DB_ERROR", where: WHERE, message: error.message, cause: error });
+  }
+  if (!data) {
+    throw new GuardrailError({ code: "NOT_FOUND", where: WHERE, message: "Bid line item not found for this project estimate." });
+  }
+
+  return { estimateIdNum, subIdNum, bidItemIdNum };
+}
 
 /**
  * PATCH /api/projects/[projectId]/estimates/[estimateId]/sublist/[subId]/bid-items/[bidItemId]
  * Updates a bid line item.
  */
 export const PATCH = withApiGuardrails<Params>(WHERE + "#PATCH", async ({ request, params }) => {
-  const { estimateId, subId, bidItemId } = await params;
+  const { projectId, estimateId, subId, bidItemId } = await params;
   const supabase = await createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -19,18 +61,20 @@ export const PATCH = withApiGuardrails<Params>(WHERE + "#PATCH", async ({ reques
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 
-  const subIdNum = parseInt(subId, 10);
-  const estimateIdNum = parseInt(estimateId, 10);
-  const bidItemIdNum = parseInt(bidItemId, 10);
-  if (isNaN(subIdNum) || isNaN(estimateIdNum) || isNaN(bidItemIdNum)) {
-    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: WHERE, message: "Invalid ID." });
+  const { estimateIdNum, subIdNum, bidItemIdNum } = await parseAndVerifyParams(supabase, projectId, estimateId, subId, bidItemId);
+  const parsed = bidItemUpdateSchema.safeParse(await request.json().catch(() => ({})));
+  if (!parsed.success) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: WHERE,
+      message: "Invalid bid line item update payload.",
+      details: parsed.error.flatten(),
+    });
   }
-
-  const body = await request.json().catch(() => ({}));
 
   const { data, error } = await supabase
     .from("estimate_sublist_bid_items")
-    .update({ ...body, updated_at: new Date().toISOString() })
+    .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq("id", bidItemIdNum)
     .eq("sub_id", subIdNum)
     .select()
@@ -62,7 +106,7 @@ export const PATCH = withApiGuardrails<Params>(WHERE + "#PATCH", async ({ reques
  * DELETE /api/projects/[projectId]/estimates/[estimateId]/sublist/[subId]/bid-items/[bidItemId]
  */
 export const DELETE = withApiGuardrails<Params>(WHERE + "#DELETE", async ({ params }) => {
-  const { estimateId, subId, bidItemId } = await params;
+  const { projectId, estimateId, subId, bidItemId } = await params;
   const supabase = await createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -70,12 +114,7 @@ export const DELETE = withApiGuardrails<Params>(WHERE + "#DELETE", async ({ para
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 
-  const subIdNum = parseInt(subId, 10);
-  const estimateIdNum = parseInt(estimateId, 10);
-  const bidItemIdNum = parseInt(bidItemId, 10);
-  if (isNaN(subIdNum) || isNaN(estimateIdNum) || isNaN(bidItemIdNum)) {
-    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: WHERE, message: "Invalid ID." });
-  }
+  const { estimateIdNum, subIdNum, bidItemIdNum } = await parseAndVerifyParams(supabase, projectId, estimateId, subId, bidItemId);
 
   const { error } = await supabase
     .from("estimate_sublist_bid_items")

@@ -37,10 +37,12 @@ export const POST = withApiGuardrails<{
   // Load sub details
   const { data: sub, error: subError } = await supabase
     .from("estimate_sublist_subs")
-    .select("*")
+    .select("*, estimates!inner(estimate_id, project_id, is_deleted)")
     .eq("id", subIdNum)
     .eq("estimate_id", estimateIdNum)
-    .single();
+    .eq("estimates.project_id", projectIdNum)
+    .eq("estimates.is_deleted", false)
+    .maybeSingle();
 
   if (subError || !sub) {
     throw new GuardrailError({ code: "NOT_FOUND", where: WHERE, message: "Sub not found." });

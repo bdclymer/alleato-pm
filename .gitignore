@@ -77,6 +77,7 @@ user-data/
 # Documentation
 # Ignore docs but keep development documentation and screenshots
 openai-cs-agents-demo/
+docs/video/
 
 # Playwright
 /playwright-report/

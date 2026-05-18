@@ -2,16 +2,24 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 const WHERE = "projects/[projectId]/estimates/[estimateId]/sublist/[subId]/bid-items";
 type Params = { projectId: string; estimateId: string; subId: string };
+const bidItemCreateSchema = z.object({
+  description: z.string().trim().min(1).max(300),
+  amount: z.number().finite().min(0).default(0),
+  scope_item_id: z.number().int().positive().nullable().optional(),
+  is_excluded: z.boolean().optional(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+}).strict();
 
 /**
  * GET /api/projects/[projectId]/estimates/[estimateId]/sublist/[subId]/bid-items
  * Returns all bid line items for a sub.
  */
 export const GET = withApiGuardrails<Params>(WHERE + "#GET", async ({ params }) => {
-  const { estimateId, subId } = await params;
+  const { projectId, estimateId, subId } = await params;
   const supabase = await createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -19,19 +27,22 @@ export const GET = withApiGuardrails<Params>(WHERE + "#GET", async ({ params }) 
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 
+  const projectIdNum = parseInt(projectId, 10);
   const subIdNum = parseInt(subId, 10);
   const estimateIdNum = parseInt(estimateId, 10);
-  if (isNaN(subIdNum) || isNaN(estimateIdNum)) {
+  if (isNaN(projectIdNum) || isNaN(subIdNum) || isNaN(estimateIdNum)) {
     throw new GuardrailError({ code: "INVALID_PAYLOAD", where: WHERE, message: "Invalid sub or estimate ID." });
   }
 
   // Verify sub belongs to this estimate
   const { data: sub, error: subError } = await supabase
     .from("estimate_sublist_subs")
-    .select("id")
+    .select("id, estimates!inner(estimate_id, project_id, is_deleted)")
     .eq("id", subIdNum)
     .eq("estimate_id", estimateIdNum)
-    .single();
+    .eq("estimates.project_id", projectIdNum)
+    .eq("estimates.is_deleted", false)
+    .maybeSingle();
 
   if (subError || !sub) {
     throw new GuardrailError({ code: "NOT_FOUND", where: WHERE, message: "Sub not found in this estimate." });
@@ -56,7 +67,7 @@ export const GET = withApiGuardrails<Params>(WHERE + "#GET", async ({ params }) 
  * Body: { description, amount, scope_item_id?, is_excluded?, notes? }
  */
 export const POST = withApiGuardrails<Params>(WHERE + "#POST", async ({ request, params }) => {
-  const { estimateId, subId } = await params;
+  const { projectId, estimateId, subId } = await params;
   const supabase = await createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -64,31 +75,33 @@ export const POST = withApiGuardrails<Params>(WHERE + "#POST", async ({ request,
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 
+  const projectIdNum = parseInt(projectId, 10);
   const subIdNum = parseInt(subId, 10);
   const estimateIdNum = parseInt(estimateId, 10);
-  if (isNaN(subIdNum) || isNaN(estimateIdNum)) {
+  if (isNaN(projectIdNum) || isNaN(subIdNum) || isNaN(estimateIdNum)) {
     throw new GuardrailError({ code: "INVALID_PAYLOAD", where: WHERE, message: "Invalid sub or estimate ID." });
   }
 
-  const body = await request.json().catch(() => ({})) as {
-    description?: string;
-    amount?: number;
-    scope_item_id?: number;
-    is_excluded?: boolean;
-    notes?: string;
-  };
-
-  if (!body.description?.trim()) {
-    throw new GuardrailError({ code: "INVALID_PAYLOAD", where: WHERE, message: "description is required." });
+  const parsed = bidItemCreateSchema.safeParse(await request.json().catch(() => ({})));
+  if (!parsed.success) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: WHERE,
+      message: "Invalid bid line item payload.",
+      details: parsed.error.flatten(),
+    });
   }
+  const body = parsed.data;
 
   // Verify sub belongs to this estimate
   const { data: sub, error: subError } = await supabase
     .from("estimate_sublist_subs")
-    .select("id")
+    .select("id, estimates!inner(estimate_id, project_id, is_deleted)")
     .eq("id", subIdNum)
     .eq("estimate_id", estimateIdNum)
-    .single();
+    .eq("estimates.project_id", projectIdNum)
+    .eq("estimates.is_deleted", false)
+    .maybeSingle();
 
   if (subError || !sub) {
     throw new GuardrailError({ code: "NOT_FOUND", where: WHERE, message: "Sub not found in this estimate." });
@@ -99,10 +112,10 @@ export const POST = withApiGuardrails<Params>(WHERE + "#POST", async ({ request,
     .insert({
       sub_id: subIdNum,
       scope_item_id: body.scope_item_id ?? null,
-      description: body.description.trim(),
-      amount: body.amount ?? 0,
+      description: body.description,
+      amount: body.amount,
       is_excluded: body.is_excluded ?? false,
-      notes: body.notes?.trim() || null,
+      notes: body.notes || null,
     })
     .select()
     .single();

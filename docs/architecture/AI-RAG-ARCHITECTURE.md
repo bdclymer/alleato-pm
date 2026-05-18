@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-05-17
+Last verified: 2026-05-18
 
 ---
 
@@ -190,7 +190,7 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 
 ## 6. Vector Store
 
-> **⚠️ Two Supabase projects.** As of **2026-05-15** the RAG tables (`document_chunks`, `rag_document_metadata`, `rag_pipeline_state`) live in the **"AI Database"** project (`fqcvmfqldlewvbsuxdvz`), reached via `RAG_SUPABASE_URL` and the `get_rag_read_client()` / `get_rag_write_client()` helpers in `backend/src/services/supabase_helpers.py`.
+> **⚠️ Two Supabase projects.** As of **2026-05-15** the RAG tables (`document_chunks`, `rag_document_metadata`, `rag_pipeline_state`) live in the **"AI Database"** project (`fqcvmfqldlewvbsuxdvz`), reached by backend code via `RAG_SUPABASE_URL` and the `get_rag_read_client()` / `get_rag_write_client()` helpers in `backend/src/services/supabase_helpers.py`. Frontend/server tool code reaches the same AI Database through `createRagServiceClient()` in `frontend/src/lib/supabase/service.ts`; operational semantic-search tools now use that RAG client directly for `document_chunks` while keeping the app service client for PM-app metadata and project tables.
 >
 > The same tables still exist in the **"PM APP"** project (`lgveqfnpkxvzbnnwuled`) but are **legacy / read-only** — a database trigger blocks all writes with `LEGACY TABLE: ...`. Do not point new code at the PM APP copy. If you see stale data, you are likely querying the wrong project.
 >

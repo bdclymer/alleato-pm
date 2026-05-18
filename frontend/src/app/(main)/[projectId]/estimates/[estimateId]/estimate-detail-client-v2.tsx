@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, ChevronDown, ChevronRight, ExternalLink, Loader2, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ExternalLink, Loader2, Mail, Printer, Plus, Search, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -528,6 +528,10 @@ function computeDetailDivisionTotal(items: DetailItem[], divCode: string): numbe
   return items
     .filter((i) => i.division_code === divCode)
     .reduce((sum, i) => sum + (i.estimated_amount ?? 0), 0);
+}
+
+function isYes(value: string | null): boolean {
+  return value === "Yes";
 }
 
 // ---------------------------------------------------------------------------
@@ -1958,6 +1962,7 @@ function SubListTab({
   const [expandedBidSubIds, setExpandedBidSubIds] = React.useState<Set<number>>(new Set());
   const [newBidDesc, setNewBidDesc] = React.useState<Record<number, string>>({});
   const [newBidAmount, setNewBidAmount] = React.useState<Record<number, string>>({});
+  const [newBidScopeItemId, setNewBidScopeItemId] = React.useState<Record<number, string>>({});
 
   const deleteSub = React.useCallback(async (sub: SublistSub) => {
     const deleted = await onDeleteSub(sub);
@@ -1978,6 +1983,11 @@ function SubListTab({
       return next;
     });
     setNewBidAmount((prev) => {
+      const next = { ...prev };
+      delete next[sub.id];
+      return next;
+    });
+    setNewBidScopeItemId((prev) => {
       const next = { ...prev };
       delete next[sub.id];
       return next;
@@ -2017,16 +2027,25 @@ function SubListTab({
   const addBidItem = React.useCallback(async (subId: number) => {
     const desc = (newBidDesc[subId] ?? "").trim();
     const amount = parseFloat(newBidAmount[subId] ?? "0") || 0;
+    const scopeItemId = parseInt(newBidScopeItemId[subId] ?? "", 10);
     if (!desc) return;
     try {
       const item = await apiFetch<BidItem>(
         `/api/projects/${projectId}/estimates/${estimateId}/sublist/${subId}/bid-items`,
-        { method: "POST", body: JSON.stringify({ description: desc, amount }) }
+        {
+          method: "POST",
+          body: JSON.stringify({
+            description: desc,
+            amount,
+            scope_item_id: Number.isNaN(scopeItemId) ? undefined : scopeItemId,
+          }),
+        }
       );
       if (item) {
         setBidItemsBySubId((prev) => ({ ...prev, [subId]: [...(prev[subId] ?? []), item] }));
         setNewBidDesc((prev) => ({ ...prev, [subId]: "" }));
         setNewBidAmount((prev) => ({ ...prev, [subId]: "" }));
+        setNewBidScopeItemId((prev) => ({ ...prev, [subId]: "" }));
         // Update local sub price
         const newTotal = [...(bidItemsBySubId[subId] ?? []), item]
           .filter((b) => !b.is_excluded)
@@ -2036,7 +2055,7 @@ function SubListTab({
     } catch {
       toast.error("Failed to add bid item");
     }
-  }, [projectId, estimateId, newBidDesc, newBidAmount, bidItemsBySubId, onPatchSub]);
+  }, [projectId, estimateId, newBidDesc, newBidAmount, newBidScopeItemId, bidItemsBySubId, onPatchSub]);
 
   const patchBidItem = React.useCallback(async (subId: number, itemId: number, fields: Partial<BidItem>) => {
     setBidItemsBySubId((prev) => ({
@@ -2265,6 +2284,94 @@ function SubListTab({
     [filteredSubs, hasActiveFilter],
   );
 
+  const coverage = React.useMemo(() => {
+    const activeDivisions = ALL_DIVISIONS.map((div) => {
+      const rows = sublistSubs.filter((sub) => sub.division_code === div.code);
+      const budget = detailTotalsByDiv[div.code] ?? 0;
+      const pricedRows = rows.filter((sub) => (sub.price ?? 0) > 0);
+      const lowestBid = pricedRows.reduce<number | null>(
+        (min, sub) => min === null || (sub.price ?? 0) < min ? sub.price ?? 0 : min,
+        null
+      );
+
+      return {
+        ...div,
+        rows,
+        budget,
+        pricedRows,
+        lowestBid,
+        hasEstimateScope: budget > 0,
+        invitedCount: rows.filter((sub) => isYes(sub.email_sent)).length,
+        intendingCount: rows.filter((sub) => isYes(sub.intend_to_submit)).length,
+        bidCount: rows.filter((sub) => isYes(sub.bid_received) || (sub.price ?? 0) > 0).length,
+        awarded: rows.find((sub) => sub.is_awarded) ?? null,
+        emptyRowCount: rows.filter((sub) => !sub.company?.trim() && !sub.company_id).length,
+        missingContactCount: rows.filter((sub) => {
+          const hasCompany = Boolean(sub.company?.trim() || sub.company_id);
+          const hasReachableContact = Boolean(sub.email?.trim() || sub.cell?.trim());
+          return hasCompany && !hasReachableContact;
+        }).length,
+      };
+    }).filter((div) => div.hasEstimateScope || div.rows.length > 0);
+
+    const uncovered = activeDivisions.filter((div) => div.hasEstimateScope && div.rows.length === 0);
+    const noBid = activeDivisions.filter((div) => div.hasEstimateScope && div.rows.length > 0 && div.bidCount === 0);
+    const readyToAward = activeDivisions.filter((div) => div.bidCount > 0 && !div.awarded);
+    const overBudget = activeDivisions.filter((div) => div.budget > 0 && div.lowestBid !== null && div.lowestBid > div.budget);
+    const emptyRows = activeDivisions.reduce((sum, div) => sum + div.emptyRowCount, 0);
+    const missingContacts = activeDivisions.reduce((sum, div) => sum + div.missingContactCount, 0);
+    const awardedCount = activeDivisions.filter((div) => div.awarded).length;
+    const bidCoveragePercent = activeDivisions.length > 0
+      ? Math.round((activeDivisions.filter((div) => div.bidCount > 0).length / activeDivisions.length) * 100)
+      : 0;
+
+    const attentionItems = [
+      ...activeDivisions.filter((div) => div.emptyRowCount > 0).slice(0, 3).map((div) => ({
+        key: `empty-${div.code}`,
+        label: `Division ${div.code} has ${div.emptyRowCount} placeholder bidder row${div.emptyRowCount !== 1 ? "s" : ""} with no company selected.`,
+        tone: "warning" as const,
+      })),
+      ...activeDivisions.filter((div) => div.missingContactCount > 0).slice(0, 3).map((div) => ({
+        key: `missing-contact-${div.code}`,
+        label: `Division ${div.code} has ${div.missingContactCount} bidder${div.missingContactCount !== 1 ? "s" : ""} missing email or phone.`,
+        tone: "warning" as const,
+      })),
+      ...uncovered.slice(0, 3).map((div) => ({
+        key: `uncovered-${div.code}`,
+        label: `Division ${div.code} has estimate dollars but no subs invited.`,
+        tone: "destructive" as const,
+      })),
+      ...noBid.slice(0, 3).map((div) => ({
+        key: `no-bid-${div.code}`,
+        label: `Division ${div.code} has sub rows but no bid price received.`,
+        tone: "warning" as const,
+      })),
+      ...overBudget.slice(0, 3).map((div) => ({
+        key: `over-budget-${div.code}`,
+        label: `Division ${div.code} low bid is ${formatCurrencyFull((div.lowestBid ?? 0) - div.budget)} over estimate.`,
+        tone: "destructive" as const,
+      })),
+      ...readyToAward.slice(0, 3).map((div) => ({
+        key: `ready-${div.code}`,
+        label: `Division ${div.code} has bid coverage but no award decision.`,
+        tone: "success" as const,
+      })),
+    ].slice(0, 5);
+
+    return {
+      activeDivisions,
+      uncoveredCount: uncovered.length,
+      noBidCount: noBid.length,
+      readyToAwardCount: readyToAward.length,
+      overBudgetCount: overBudget.length,
+      emptyRows,
+      missingContacts,
+      awardedCount,
+      bidCoveragePercent,
+      attentionItems,
+    };
+  }, [detailTotalsByDiv, sublistSubs]);
+
   const SortTh = ({
     col,
     label,
@@ -2295,6 +2402,76 @@ function SubListTab({
 
   return (
     <div className="space-y-4">
+      <section className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-md border border-border bg-background px-3 py-2.5">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Bid coverage</div>
+            <div className="mt-1 text-lg font-semibold tabular-nums text-foreground">{coverage.bidCoveragePercent}%</div>
+            <div className="text-xs text-muted-foreground">
+              {coverage.activeDivisions.length} active division{coverage.activeDivisions.length !== 1 ? "s" : ""}
+            </div>
+          </div>
+          <div className="rounded-md border border-border bg-background px-3 py-2.5">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Uncovered</div>
+            <div className={`mt-1 text-lg font-semibold tabular-nums ${coverage.uncoveredCount > 0 ? "text-destructive" : "text-foreground"}`}>
+              {coverage.uncoveredCount}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {coverage.emptyRows > 0 ? `${coverage.emptyRows} empty bidder row${coverage.emptyRows !== 1 ? "s" : ""}` : "estimate divisions without subs"}
+            </div>
+          </div>
+          <div className="rounded-md border border-border bg-background px-3 py-2.5">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">No bid yet</div>
+            <div className={`mt-1 text-lg font-semibold tabular-nums ${coverage.noBidCount > 0 ? "text-status-warning" : "text-foreground"}`}>
+              {coverage.noBidCount}
+            </div>
+            <div className="text-xs text-muted-foreground">covered divisions still waiting</div>
+          </div>
+          <div className="rounded-md border border-border bg-background px-3 py-2.5">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Ready to award</div>
+            <div className={`mt-1 text-lg font-semibold tabular-nums ${coverage.readyToAwardCount > 0 ? "text-status-success" : "text-foreground"}`}>
+              {coverage.readyToAwardCount}
+            </div>
+            <div className="text-xs text-muted-foreground">bid received, no award selected</div>
+          </div>
+          <div className="rounded-md border border-border bg-background px-3 py-2.5">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Awarded</div>
+            <div className="mt-1 text-lg font-semibold tabular-nums text-foreground">{coverage.awardedCount}</div>
+            <div className="text-xs text-muted-foreground">
+              {coverage.missingContacts > 0
+                ? `${coverage.missingContacts} missing contact`
+                : coverage.overBudgetCount > 0
+                  ? `${coverage.overBudgetCount} over estimate`
+                  : "no low-bid overages flagged"}
+            </div>
+          </div>
+        </div>
+
+        {coverage.attentionItems.length > 0 ? (
+          <div className="divide-y divide-border rounded-md border border-border bg-background">
+            {coverage.attentionItems.map((item) => (
+              <div key={item.key} className="flex items-center gap-2 px-3 py-2 text-xs">
+                <AlertTriangle
+                  className={`h-3.5 w-3.5 shrink-0 ${
+                    item.tone === "destructive"
+                      ? "text-destructive"
+                      : item.tone === "success"
+                        ? "text-status-success"
+                        : "text-status-warning"
+                  }`}
+                />
+                <span className="text-foreground">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+            <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
+            Bid coverage has no immediate attention flags.
+          </div>
+        )}
+      </section>
+
       {/* Toolbar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="flex items-center">
@@ -2943,31 +3120,61 @@ function SubListTab({
                     </tr>
 
                     {/* Bid detail panel */}
-                    {expandedBidSubIds.has(sub.id) && (
-                      <tr>
-                        <td colSpan={12} className="bg-muted/10 px-8 py-3">
-                          <div className="max-w-xl">
-                            <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                              Bid Line Items — {sub.company ?? "Sub"}
-                            </p>
-                            <div className="mb-2 space-y-1">
-                              {(bidItemsBySubId[sub.id] ?? []).length === 0 ? (
-                                <p className="text-xs text-muted-foreground">No line items. Add items below or enter lump sum in the price field.</p>
-                              ) : (
-                                (bidItemsBySubId[sub.id] ?? []).map((item) => (
-                                  <div key={item.id} className="group flex items-center gap-2">
-                                    <Checkbox
-                                      checked={!item.is_excluded}
-                                      onCheckedChange={(v) => void patchBidItem(sub.id, item.id, { is_excluded: !v })}
-                                      className="h-3.5 w-3.5 shrink-0"
-                                      title={item.is_excluded ? "Excluded from total" : "Included"}
-                                    />
-                                    <span className={`flex-1 text-xs ${item.is_excluded ? "text-muted-foreground line-through" : "text-foreground"}`}>
-                                      {item.description}
-                                    </span>
-                                    <span className={`w-24 shrink-0 text-right text-xs ${item.is_excluded ? "text-muted-foreground line-through" : "font-medium text-foreground"}`}>
-                                      {formatCurrencyFull(Number(item.amount))}
-                                    </span>
+	                    {expandedBidSubIds.has(sub.id) && (
+	                      <tr>
+	                        <td colSpan={12} className="bg-muted/10 px-8 py-3">
+	                          <div className="max-w-3xl">
+	                            <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+	                              Bid Line Items — {sub.company ?? "Sub"}
+	                            </p>
+	                            {(() => {
+	                              const divisionScopeItems = scopeItemsByDiv[sub.division_code] ?? [];
+	                              const scopeLabelById = new Map(divisionScopeItems.map((item) => [item.id, item.description]));
+	                              return (
+	                              <>
+	                            <div className="mb-2 space-y-1">
+	                              {(bidItemsBySubId[sub.id] ?? []).length === 0 ? (
+	                                <p className="text-xs text-muted-foreground">No line items. Add items below or enter lump sum in the price field.</p>
+	                              ) : (
+	                                (bidItemsBySubId[sub.id] ?? []).map((item) => (
+	                                  <div key={item.id} className="group flex items-center gap-2">
+	                                    <Checkbox
+	                                      checked={!item.is_excluded}
+	                                      onCheckedChange={(v) => void patchBidItem(sub.id, item.id, { is_excluded: !v })}
+	                                      className="h-3.5 w-3.5 shrink-0"
+	                                      title={item.is_excluded ? "Excluded from total" : "Included"}
+	                                    />
+	                                    <div className="min-w-0 flex-1">
+	                                      <span className={`block truncate text-xs ${item.is_excluded ? "text-muted-foreground line-through" : "text-foreground"}`}>
+	                                        {item.description}
+	                                      </span>
+	                                      {item.scope_item_id && (
+	                                        <span className="block truncate text-[10px] text-muted-foreground">
+	                                          Scope: {scopeLabelById.get(item.scope_item_id) ?? `Item ${item.scope_item_id}`}
+	                                        </span>
+	                                      )}
+	                                    </div>
+	                                    {divisionScopeItems.length > 0 && (
+	                                      <Select
+	                                        value={item.scope_item_id ? String(item.scope_item_id) : "none"}
+	                                        onValueChange={(value) => void patchBidItem(sub.id, item.id, { scope_item_id: value === "none" ? null : Number(value) })}
+	                                      >
+	                                        <SelectTrigger className="h-7 w-44 shrink-0 text-xs">
+	                                          <SelectValue placeholder="Scope" />
+	                                        </SelectTrigger>
+	                                        <SelectContent>
+	                                          <SelectItem value="none" className="text-xs">No scope mapping</SelectItem>
+	                                          {divisionScopeItems.map((scopeItem) => (
+	                                            <SelectItem key={scopeItem.id} value={String(scopeItem.id)} className="text-xs">
+	                                              {scopeItem.description}
+	                                            </SelectItem>
+	                                          ))}
+	                                        </SelectContent>
+	                                      </Select>
+	                                    )}
+	                                    <span className={`w-24 shrink-0 text-right text-xs ${item.is_excluded ? "text-muted-foreground line-through" : "font-medium text-foreground"}`}>
+	                                      {formatCurrencyFull(Number(item.amount))}
+	                                    </span>
                                     <Button
                                       variant="ghost"
                                       type="button"
@@ -2984,20 +3191,36 @@ function SubListTab({
                                 <div className="border-t border-border/40 pt-1 text-right text-xs font-semibold text-foreground">
                                   Total: {formatCurrencyFull(
                                     (bidItemsBySubId[sub.id] ?? []).filter((b) => !b.is_excluded).reduce((s, b) => s + Number(b.amount), 0)
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex gap-1.5">
-                              <Input
-                                placeholder="Description"
-                                value={newBidDesc[sub.id] ?? ""}
-                                onChange={(e) => setNewBidDesc((prev) => ({ ...prev, [sub.id]: e.target.value }))}
-                                className="h-7 flex-1 text-xs"
-                              />
-                              <Input
-                                placeholder="$0"
-                                type="number"
+	                                  )}
+	                                </div>
+	                              )}
+	                            </div>
+	                            <div className="grid gap-1.5 md:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)_6rem_auto]">
+	                              <Input
+	                                placeholder="Description"
+	                                value={newBidDesc[sub.id] ?? ""}
+	                                onChange={(e) => setNewBidDesc((prev) => ({ ...prev, [sub.id]: e.target.value }))}
+	                                className="h-7 flex-1 text-xs"
+	                              />
+	                              <Select
+	                                value={newBidScopeItemId[sub.id] ?? "none"}
+	                                onValueChange={(value) => setNewBidScopeItemId((prev) => ({ ...prev, [sub.id]: value === "none" ? "" : value }))}
+	                              >
+	                                <SelectTrigger className="h-7 text-xs">
+	                                  <SelectValue placeholder="Map to scope" />
+	                                </SelectTrigger>
+	                                <SelectContent>
+	                                  <SelectItem value="none" className="text-xs">No scope mapping</SelectItem>
+	                                  {divisionScopeItems.map((scopeItem) => (
+	                                    <SelectItem key={scopeItem.id} value={String(scopeItem.id)} className="text-xs">
+	                                      {scopeItem.description}
+	                                    </SelectItem>
+	                                  ))}
+	                                </SelectContent>
+	                              </Select>
+	                              <Input
+	                                placeholder="$0"
+	                                type="number"
                                 value={newBidAmount[sub.id] ?? ""}
                                 onChange={(e) => setNewBidAmount((prev) => ({ ...prev, [sub.id]: e.target.value }))}
                                 className="h-7 w-24 text-right text-xs"
@@ -3008,12 +3231,20 @@ function SubListTab({
                                 className="h-7 px-2 text-xs"
                                 onClick={() => void addBidItem(sub.id)}
                               >
-                                Add
-                              </Button>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
+	                                Add
+	                              </Button>
+	                            </div>
+	                            {divisionScopeItems.length === 0 && (
+	                              <p className="mt-1 text-[10px] text-muted-foreground">
+	                                Open Scope and seed or add items to enable bid leveling by scope.
+	                              </p>
+	                            )}
+	                              </>
+	                              );
+	                            })()}
+	                          </div>
+	                        </td>
+	                      </tr>
                     )}
                     </React.Fragment>
                   ))}

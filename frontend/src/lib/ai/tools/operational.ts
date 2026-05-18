@@ -3,7 +3,6 @@ import { z } from "zod";
 import {
   createRagServiceClient,
   createServiceClient,
-  isRagDatabaseReadsEnabled,
 } from "@/lib/supabase/service";
 import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
 import { createStructuredQueryTools } from "./structured-queries";
@@ -322,9 +321,7 @@ export function createOperationalTools(
   options: CreateOperationalToolsOptions = {},
 ) {
   const supabase = createServiceClient();
-  const ragSupabase = isRagDatabaseReadsEnabled()
-    ? createRagServiceClient()
-    : supabase;
+  const ragSupabase = createRagServiceClient();
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
   });
@@ -3269,7 +3266,7 @@ async function searchDocumentChunksByCategory({
   scope,
   filterProjectId,
 }: {
-  supabase: ReturnType<typeof createServiceClient>;
+  supabase: ReturnType<typeof createRagServiceClient>;
   metadataSupabase: ReturnType<typeof createServiceClient>;
   query: string;
   category: string;
@@ -3426,7 +3423,7 @@ async function searchDocumentChunksByCategoryFallback({
   filterProjectId,
   rpcError,
 }: {
-  supabase: ReturnType<typeof createServiceClient>;
+  supabase: ReturnType<typeof createRagServiceClient>;
   metadataSupabase?: ReturnType<typeof createServiceClient>;
   query: string;
   category: string;

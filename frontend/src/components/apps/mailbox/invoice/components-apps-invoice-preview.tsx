@@ -4,6 +4,7 @@ import IconEdit from '@/components/icon/icon-edit';
 import IconPlus from '@/components/icon/icon-plus';
 import IconPrinter from '@/components/icon/icon-printer';
 import IconSend from '@/components/icon/icon-send';
+import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 
@@ -100,7 +101,7 @@ const ComponentsAppsInvoicePreview = () => {
                 <div className="flex flex-wrap justify-between gap-4 px-4">
                     <div className="text-2xl font-semibold uppercase">Invoice</div>
                     <div className="shrink-0">
-                        <img src="/assets/images/logo.svg" alt="img" className="w-14 ltr:ml-auto rtl:mr-auto" />
+                        <Image src="/assets/images/logo.svg" alt="Invoice logo" width={56} height={56} className="w-14 ltr:ml-auto rtl:mr-auto" />
                     </div>
                 </div>
                 <div className="px-4 ltr:text-right rtl:text-left">
