@@ -243,7 +243,7 @@ export function PrimeContractSovSection({
                 Billed to Date
               </InlineTableHeaderCell>
               <InlineTableHeaderCell className="w-44 min-w-44">
-                Amount Remaining
+                Balance
               </InlineTableHeaderCell>
               <InlineTableHeaderCell className="w-10" />
             </InlineTableHeaderRow>
