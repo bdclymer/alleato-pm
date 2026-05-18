@@ -16,12 +16,11 @@ async function verifyOwnerInvoice(
 ) {
   const { data: invoice, error: invoiceError } = await supabase
     .from("owner_invoices")
-    .select("id")
+    .select("id, prime_contract:prime_contracts!owner_invoices_prime_contract_id_fkey(project_id)")
     .eq("id", invoiceId)
-    .eq("project_id", projectId)
     .single();
 
-  return !invoiceError && !!invoice;
+  return !invoiceError && invoice?.prime_contract?.project_id === projectId;
 }
 
 export const GET = withApiGuardrails(
