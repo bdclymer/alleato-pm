@@ -108,4 +108,46 @@ describe("parseAlleatoEstimateWorkbook", () => {
     expect(preview.rows.map((row) => row.costCode)).toEqual(["01-6113"]);
     expect(preview.skippedRows).toBe(2);
   });
+
+  it("imports the 55-0100 contingency row as contract revenue when cost type is blank", () => {
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ["Alleato Prime Contract SOV Import Template"],
+        ["Fill rows below. Keep sheet names and column order unchanged."],
+        ["Cost Code", "Description", "Cost Type", "Budget Amount"],
+      ]),
+      "General Conditions",
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        [
+          "Cost Code",
+          "Cost Type",
+          "Description",
+          "Work Description",
+          "Budget Amount",
+        ],
+        ["55-0100", "", "Contingency", "5%", 20465.1],
+      ]),
+      "Details",
+    );
+
+    const preview = parseAlleatoEstimateWorkbook(workbook);
+
+    expect(preview.warnings).toEqual([]);
+    expect(preview.rows).toHaveLength(1);
+    expect(preview.rows[0]).toMatchObject({
+      costCode: "55-0100",
+      costTypeCode: "R",
+      description: "Contingency",
+      workDescription: "5%",
+      budgetAmount: 20465.1,
+      includeInOwnerSov: true,
+      includeInPrimeContract: true,
+    });
+  });
 });

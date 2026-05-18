@@ -66,6 +66,16 @@ function normalizeCostType(value: string): string | null {
   return COST_TYPE_BY_LABEL[key] ?? null;
 }
 
+function inferCostTypeCode(costCode: string, description: string): string | null {
+  if (
+    costCode === "55-0100" &&
+    description.trim().toLowerCase() === "contingency"
+  ) {
+    return "R";
+  }
+  return null;
+}
+
 function buildWarningPrefix(sheet: string, rowNumber: number): string {
   return `${sheet} row ${rowNumber}`;
 }
@@ -119,7 +129,8 @@ function parseGeneralConditions(workbook: WorkBook): {
       continue;
     }
 
-    const costTypeCode = normalizeCostType(costType);
+    const costTypeCode =
+      normalizeCostType(costType) ?? inferCostTypeCode(costCode, description);
     const rowWarnings: string[] = [];
     pushCodeWarnings(rowWarnings, sheetName, rowNumber, costCode);
 
@@ -191,7 +202,8 @@ function parseDetails(workbook: WorkBook): {
       continue;
     }
 
-    const costTypeCode = normalizeCostType(costType);
+    const costTypeCode =
+      normalizeCostType(costType) ?? inferCostTypeCode(costCode, description);
     const rowWarnings: string[] = [];
     pushCodeWarnings(rowWarnings, sheetName, rowNumber, costCode);
 
