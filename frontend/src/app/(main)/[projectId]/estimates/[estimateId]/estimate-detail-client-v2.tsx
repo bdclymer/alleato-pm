@@ -1036,9 +1036,33 @@ export function EstimateDetailClientV2({
       setSublistSubs((prev) => prev.map((s) => (s.id === id ? updated : s)));
       setIsDirty(true);
     } catch (err) {
+      console.error("Failed to save estimate sublist sub", err);
       toast.error("Failed to save");
     }
   };
+
+  const deleteSublistSub = React.useCallback(
+    async (sub: SublistSub): Promise<boolean> => {
+      const label = sub.company || `Division ${sub.division_code} sub`;
+      if (!window.confirm(`Delete ${label} from the sublist?`)) return false;
+
+      try {
+        await apiFetch(
+          `/api/projects/${projectId}/estimates/${estimate.estimate_id}/sublist/${sub.id}`,
+          { method: "DELETE" }
+        );
+        setSublistSubs((prev) => prev.filter((item) => item.id !== sub.id));
+        setIsDirty(true);
+        toast.success("Sub deleted");
+        return true;
+      } catch (error) {
+        console.error("Failed to delete estimate sublist sub", error);
+        toast.error("Failed to delete sub");
+        return false;
+      }
+    },
+    [projectId, estimate.estimate_id]
+  );
 
   // Add a single new row to a division (unlimited slots — PRP 1.3)
   const ensureSublistRows = React.useCallback(
@@ -1059,8 +1083,9 @@ export function EstimateDetailClientV2({
         );
         setSublistSubs((prev) => [...prev, created]);
         return created;
-      } catch {
-        // silently ignore — rows will be created on first edit
+      } catch (error) {
+        console.error("Failed to create estimate sublist row", error);
+        toast.error("Failed to add sub");
         return null;
       }
     },
@@ -1353,6 +1378,7 @@ export function EstimateDetailClientV2({
             onPatchSub={patchSublistSub}
             onEnsureRows={ensureSublistRows}
             onAwardSub={awardSub}
+            onDeleteSub={deleteSublistSub}
           />
         )}
         {activeTab === "summary" && (
@@ -1711,6 +1737,7 @@ function SubListTab({
   onPatchSub,
   onEnsureRows,
   onAwardSub,
+  onDeleteSub,
 }: {
   sublistSubs: SublistSub[];
   projectId: string;
@@ -1719,6 +1746,7 @@ function SubListTab({
   onPatchSub: (id: number, fields: Partial<SublistSub>) => Promise<void>;
   onEnsureRows: (divCode: string, divName: string) => Promise<SublistSub | null>;
   onAwardSub: (subId: number, revoke?: boolean) => Promise<void>;
+  onDeleteSub: (sub: SublistSub) => Promise<boolean>;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [filterIntend, setFilterIntend] = React.useState("all");
@@ -1885,6 +1913,37 @@ function SubListTab({
   const [expandedBidSubIds, setExpandedBidSubIds] = React.useState<Set<number>>(new Set());
   const [newBidDesc, setNewBidDesc] = React.useState<Record<number, string>>({});
   const [newBidAmount, setNewBidAmount] = React.useState<Record<number, string>>({});
+
+  const deleteSub = React.useCallback(async (sub: SublistSub) => {
+    const deleted = await onDeleteSub(sub);
+    if (!deleted) return;
+    setExpandedBidSubIds((prev) => {
+      const next = new Set(prev);
+      next.delete(sub.id);
+      return next;
+    });
+    setBidItemsBySubId((prev) => {
+      const next = { ...prev };
+      delete next[sub.id];
+      return next;
+    });
+    setNewBidDesc((prev) => {
+      const next = { ...prev };
+      delete next[sub.id];
+      return next;
+    });
+    setNewBidAmount((prev) => {
+      const next = { ...prev };
+      delete next[sub.id];
+      return next;
+    });
+    setCallLogsBySubId((prev) => {
+      const next = { ...prev };
+      delete next[sub.id];
+      return next;
+    });
+    setOpenCallLogSubId((current) => (current === sub.id ? null : current));
+  }, [onDeleteSub]);
 
   const loadBidItems = React.useCallback(async (subId: number) => {
     try {
@@ -2784,7 +2843,7 @@ function SubListTab({
                       </td>
 
                       {/* Award action + Use bid */}
-                      <td className="w-20 py-1 pr-2 text-right">
+                      <td className="w-28 py-1 pr-2 text-right">
                         <div className="flex items-center justify-end gap-0.5">
                           {sub.is_awarded && sub.price && sub.price > 0 && (
                             <Button
@@ -2806,11 +2865,23 @@ function SubListTab({
                           <Button
                             variant="ghost"
                             size="icon"
+                            type="button"
                             className={`h-7 w-7 ${sub.is_awarded ? "text-status-warning hover:text-status-warning/80" : "text-muted-foreground/30 hover:text-status-warning"}`}
                             title={sub.is_awarded ? "Revoke award" : "Award this sub"}
                             onClick={() => void onAwardSub(sub.id, sub.is_awarded)}
                           >
                             <span className="text-base leading-none">{sub.is_awarded ? "★" : "☆"}</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            className="h-7 w-7 text-muted-foreground/40 hover:text-destructive"
+                            title="Delete sub"
+                            aria-label={`Delete ${sub.company || "sub"} from sublist`}
+                            onClick={() => void deleteSub(sub)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </td>
