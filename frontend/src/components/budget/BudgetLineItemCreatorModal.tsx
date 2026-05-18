@@ -34,7 +34,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import {
   BaseModal,
@@ -663,7 +662,7 @@ export function BudgetLineItemCreatorModal({
                                 value={searchQuery}
                                 onValueChange={setSearchQuery}
                               />
-                              <CommandList>
+                              <CommandList className="max-h-80">
                                 <CommandEmpty>
                                   {loadingCodes
                                     ? "Loading..."
@@ -684,21 +683,23 @@ export function BudgetLineItemCreatorModal({
                                     ),
                                   )}
                                 </CommandGroup>
-                                <CommandSeparator />
-                                <CommandGroup>
-                                  <CommandItem
-                                    onSelect={() => {
-                                      setOpenPopoverId(null);
-                                      setPendingRowIndex(index);
-                                      setShowCreateCodeModal(true);
-                                    }}
-                                    className="text-primary"
-                                  >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Create New Budget Code
-                                  </CommandItem>
-                                </CommandGroup>
                               </CommandList>
+                              <div className="border-t">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setOpenPopoverId(null);
+                                    setPendingRowIndex(index);
+                                    setSearchQuery("");
+                                    setShowCreateCodeModal(true);
+                                  }}
+                                  className="h-auto w-full justify-start rounded-none px-4 py-2 text-sm font-medium text-primary hover:text-primary"
+                                >
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Create New Budget Code
+                                </Button>
+                              </div>
                             </Command>
                           </PopoverContent>
                         </Popover>
