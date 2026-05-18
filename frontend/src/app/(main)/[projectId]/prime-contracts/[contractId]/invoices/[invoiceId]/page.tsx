@@ -3,7 +3,7 @@
 import { use, useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Plus, Trash2, FileSpreadsheet } from "lucide-react";
+import { Download, Plus, Trash2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { StatusBadge } from "@/components/ds";
@@ -181,6 +181,14 @@ export default function InvoiceDetailPage({
     }
   }, [confirm, deleteMutation, invoiceId, projectId, contractId, router]);
 
+  const handleExportPdf = useCallback(() => {
+    window.open(
+      `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${invoiceId}/pdf`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }, [projectId, contractId, invoiceId]);
+
   // Page title and subtitle
   const pageTitle = invoice
     ? `Invoice #${invoice.application_number}`
@@ -256,6 +264,14 @@ export default function InvoiceDetailPage({
         <div className="flex items-center gap-2">
           <StatusBadge status={formatStatusDisplay(invoice.status)} />
           <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPdf}
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+          <Button
             variant="ghost"
             size="sm"
             onClick={handleDelete}
@@ -318,9 +334,11 @@ export default function InvoiceDetailPage({
         </TabsContent>
 
         <TabsContent value="change-history" className="mt-6">
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            Change history tracking coming soon.
-          </div>
+          <EmptyState
+            icon={<FileSpreadsheet className="h-10 w-10" />}
+            title="Change history coming soon"
+            description="Invoice change history will appear here once tracking is available."
+          />
         </TabsContent>
       </Tabs>
     </PageShell>
