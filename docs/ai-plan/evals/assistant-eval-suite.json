@@ -113,7 +113,11 @@
       "prompt": "Westfield just came up again. Give me the real current read: what changed, what is stuck, and what should I be worried about?",
       "selectedProjectId": 43,
       "expectedToolFamilies": ["project", "semantic", "communications"],
-      "expectedToolNames": ["getProjectBriefingSnapshot", "semanticSearch"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
       "mustInclude": ["Westfield"],
       "mustExclude": ["Vermillion"],
       "minAnswerLength": 200
@@ -124,7 +128,10 @@
       "prompt": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
       "selectedProjectId": 67,
       "expectedToolFamilies": ["project", "semantic"],
-      "expectedToolNames": ["getProjectBriefingSnapshot"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "getProjectBriefingSnapshot"
+      ],
       "mustInclude": ["Vermillion"],
       "minAnswerLength": 200
     },
