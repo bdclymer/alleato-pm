@@ -79,10 +79,38 @@ Required behavior:
 - Expose `microsoft_graph_live` in the tool trace for live Office reads.
 - Separate urgent or business-important items from routine inbox/Teams noise.
 - Recommend reply, delegate, watch, schedule, or ignore.
+- Distinguish confirmed user-owned action from items that merely exist in the inbox.
+- Avoid unsupported certainty about urgency, phishing, Teams escalation, or "ignore" recommendations.
 
 Existing related guardrail:
 
 - `inbox-outlook-regression` in `docs/ai-plan/evals/assistant-eval-suite.json`
+
+First strategic run:
+
+- `docs/ai-plan/evals/runs/2026-05-19T11-16-44-188Z-9a77e16d/summary.md`
+
+Result:
+
+- Failed.
+- The route did delegate to `consultMicrosoftExecutiveAssistant`, but the persisted trace did not prove `microsoft_graph_live`.
+- Judge score was 3/4 because the answer included useful triage but overclaimed several judgments and did not clearly separate Brandon-owned actions from ordinary inbox items.
+
+Correction:
+
+- The email operator judge rubric now explicitly penalizes unsupported urgency/phishing/ignore certainty.
+- The case remains red until the Microsoft Executive Assistant trace proves live Graph source and the answer is more carefully calibrated.
+
+Second strategic run:
+
+- `docs/ai-plan/evals/runs/2026-05-19T11-22-37-369Z-4769350a/summary.md`
+
+Result:
+
+- Failed as expected.
+- The assistant used `consultMicrosoftExecutiveAssistant`, but the persisted trace still did not include `microsoft_graph_live`.
+- Judge score remained 3/4 because the answer overclaimed live Outlook status and inferred thread details/ownership that were not proven.
+- Runtime was 52.699s, above the 45s warning budget.
 
 ## Weekly Meeting Insights
 
@@ -101,3 +129,53 @@ Existing related guardrails:
 - `realworld-todays-meetings`
 - `ceo-meetings-what-happened`
 - `ceo-meetings-promised-to-do`
+
+First strategic run:
+
+- `docs/ai-plan/evals/runs/2026-05-19T11-16-44-188Z-9a77e16d/summary.md`
+
+Result:
+
+- Passed.
+- Judge score was 5/4 and the answer gave a strong executive synthesis.
+- The run warned that the `meetings` family was not represented even though `getMeetingIntelligence` fired.
+
+Correction:
+
+- `getMeetingIntelligence` is now mapped into the `meetings` family.
+
+Second strategic run:
+
+- `docs/ai-plan/evals/runs/2026-05-19T11-22-37-369Z-4769350a/summary.md`
+
+Result:
+
+- Passed.
+- Judge score was 5/4.
+- The previous meeting-family warning is gone.
+
+## Cross-Source Open Loops
+
+First strategic run:
+
+- `docs/ai-plan/evals/runs/2026-05-19T11-16-44-188Z-9a77e16d/summary.md`
+
+Result:
+
+- Passed by judge, but too loosely.
+- The prompt asked for meetings and Office messages, yet the assistant did not use the Microsoft Executive Assistant.
+- The answer mixed domain/project-adjacent synthesis with weekly open-loop claims.
+
+Correction:
+
+- The cross-source case now requires `consultMicrosoftExecutiveAssistant` and `microsoft_graph_live` trace evidence.
+
+Second strategic run:
+
+- `docs/ai-plan/evals/runs/2026-05-19T11-22-37-369Z-4769350a/summary.md`
+
+Result:
+
+- Failed as expected.
+- The answer was strategically useful, but it did not use `consultMicrosoftExecutiveAssistant`.
+- The case now catches this as a hard failure because the prompt explicitly asks for Office messages.

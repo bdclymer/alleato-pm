@@ -383,7 +383,9 @@
         "Separate urgent, important-but-not-urgent, informational, and ignorable items.",
         "Explain why each important item matters.",
         "Recommend reply, delegate, watch, schedule, or ignore for each item when supported.",
-        "State source or access gaps clearly."
+        "State source or access gaps clearly.",
+        "Distinguish confirmed user-owned actions from inbox items that are merely present or interesting.",
+        "Avoid unsupported certainty about urgency, phishing, Teams escalation, or ignore recommendations."
       ],
       "must_include_capabilities": [
         "live Office retrieval",
@@ -396,13 +398,16 @@
         "Treats newsletters, notifications, or FYI messages as equally important.",
         "Claims to have checked live Office sources when only stale data was available.",
         "Fails to distinguish Outlook from Teams signals.",
-        "Does not tell the user what can be ignored."
+        "Does not tell the user what can be ignored.",
+        "Labels an item as phishing, urgent, ignorable, or no-alert without source evidence.",
+        "Treats ordinary inbox presence as proof that Brandon personally owns the next action."
       ],
       "judge_dimensions": {
         "source_routing": "Uses the Microsoft Office agent path for Office data.",
         "triage_quality": "Correctly separates important work from noise.",
         "executive_usefulness": "The answer saves the user time and gives clear actions.",
-        "honesty": "Accurately discloses missing permissions, stale sync, or thin evidence."
+        "honesty": "Accurately discloses missing permissions, stale sync, or thin evidence.",
+        "ownership_calibration": "Separates confirmed user-owned work from items that simply need someone on the team to handle them."
       }
     },
     "metadata": {
@@ -432,7 +437,9 @@
         "Rank attention-worthy items by urgency and business impact.",
         "Suppress routine notifications, duplicative threads, and FYI-only chatter.",
         "Identify whether the user needs to respond, decide, delegate, or monitor.",
-        "Include enough source context for the user to trust the triage."
+        "Include enough source context for the user to trust the triage.",
+        "Distinguish confirmed user-owned actions from inbox items that are merely present or interesting.",
+        "Avoid unsupported certainty about urgency, phishing, Teams escalation, or ignore recommendations."
       ],
       "must_include_capabilities": [
         "cross-source Office retrieval",
@@ -444,13 +451,15 @@
         "Dumps all messages.",
         "Fails to deduplicate the same topic across email and Teams.",
         "Equates recency with importance.",
-        "Leaves the user to decide the action for each item."
+        "Leaves the user to decide the action for each item.",
+        "Treats ordinary inbox presence as proof that Brandon personally owns the next action."
       ],
       "judge_dimensions": {
         "importance_judgment": "Ranks by what actually needs attention.",
         "deduplication": "Combines related Office signals into one item.",
         "actionability": "Provides a concrete action label per item.",
-        "source_grounding": "Includes enough evidence without overwhelming the user."
+        "source_grounding": "Includes enough evidence without overwhelming the user.",
+        "ownership_calibration": "Separates confirmed user-owned work from items that simply need someone on the team to handle them."
       }
     },
     "metadata": {
@@ -481,7 +490,8 @@
         "Look for subtle risk signals such as repeated follow-ups, delayed approvals, missing documents, unresolved decisions, or changes buried in FYI threads.",
         "Avoid overpromoting routine noise.",
         "Explain why a low-signal item may still matter.",
-        "Recommend a lightweight verification or watch action."
+        "Recommend a lightweight verification or watch action.",
+        "Avoid unsupported certainty about urgency, phishing, Teams escalation, or ignore recommendations."
       ],
       "must_include_capabilities": [
         "hidden-risk detection",
@@ -492,13 +502,15 @@
         "Labels everything as a risk.",
         "Misses repeated follow-up patterns.",
         "Invents urgency without evidence.",
-        "Does not explain why the item is worth watching."
+        "Does not explain why the item is worth watching.",
+        "Labels an item as phishing, urgent, ignorable, or no-alert without source evidence."
       ],
       "judge_dimensions": {
         "subtle_signal_detection": "Finds meaningful weak signals without panicking.",
         "calibration": "Does not inflate every message into a major risk.",
         "reasoning": "Explains the risk mechanism clearly.",
-        "next_step": "Suggests a proportionate follow-up."
+        "next_step": "Suggests a proportionate follow-up.",
+        "evidence_discipline": "Does not make suspiciousness, urgency, or ignore claims stronger than the source evidence supports."
       }
     },
     "metadata": {
@@ -530,7 +542,9 @@
         "Organize the brief into what matters, what changed, actions, and ignore/watch items.",
         "Prioritize by business impact and urgency.",
         "Avoid raw inbox/message dumps.",
-        "Flag any source the Office agent could not access."
+        "Flag any source the Office agent could not access.",
+        "Distinguish confirmed user-owned actions from inbox items that are merely present or interesting.",
+        "Avoid unsupported certainty about urgency, phishing, Teams escalation, or ignore recommendations."
       ],
       "must_include_capabilities": [
         "executive briefing",
@@ -542,13 +556,15 @@
         "Summarizes by app instead of by importance.",
         "Includes routine calendar events without explaining relevance.",
         "Does not identify ignored or low-priority items.",
-        "Makes unsupported claims about attachments or files."
+        "Makes unsupported claims about attachments or files.",
+        "Treats ordinary inbox presence as proof that Brandon personally owns the next action."
       ],
       "judge_dimensions": {
         "brief_structure": "Uses a brief structure that reduces user effort.",
         "priority_order": "Most important items appear first.",
         "action_clarity": "Clear action items are separated from FYIs.",
-        "source_integrity": "Does not overclaim Office coverage."
+        "source_integrity": "Does not overclaim Office coverage.",
+        "ownership_calibration": "Separates confirmed user-owned work from items that simply need someone on the team to handle them."
       }
     },
     "metadata": {
@@ -580,7 +596,8 @@
         "Find unresolved decisions, asks, approvals, follow-ups, or blockers across source types.",
         "Deduplicate the same open loop if it appears in meetings and messages.",
         "Rank by impact and urgency.",
-        "Recommend who or what should close each loop when supported."
+        "Recommend who or what should close each loop when supported.",
+        "Use the Microsoft Office agent path for Office messages and disclose if live Office evidence is unavailable."
       ],
       "must_include_capabilities": [
         "open-loop extraction",
@@ -592,13 +609,15 @@
         "Confuses completed action items with open loops.",
         "Duplicates the same issue because it appears in multiple sources.",
         "Lists minor follow-ups ahead of major blockers.",
-        "Omits source freshness caveats."
+        "Omits source freshness caveats.",
+        "Claims cross-source Office coverage without live Microsoft Office trace evidence."
       ],
       "judge_dimensions": {
         "open_loop_accuracy": "Items are genuinely unresolved based on evidence.",
         "cross_source_synthesis": "Combines meeting and Office signals.",
         "prioritization": "Ranks by impact rather than source order.",
-        "closure_path": "Provides practical closeout actions."
+        "closure_path": "Provides practical closeout actions.",
+        "office_source_integrity": "Uses or explicitly attempts live Microsoft Office evidence for Office-message claims."
       }
     },
     "metadata": {
@@ -631,7 +650,8 @@
         "Surface second-order risks or weak signals rather than only obvious tasks.",
         "Explain why each item could become a surprise.",
         "Calibrate confidence based on source strength and recurrence.",
-        "Recommend what to verify now to prevent the surprise."
+        "Recommend what to verify now to prevent the surprise.",
+        "Use the Microsoft Office agent path for Office messages and disclose if live Office evidence is unavailable."
       ],
       "must_include_capabilities": [
         "proactive risk detection",
@@ -643,13 +663,15 @@
         "Only lists explicit action items.",
         "Overstates weak evidence as certainty.",
         "Uses generic risk language unrelated to retrieved sources.",
-        "Does not provide a prevention step."
+        "Does not provide a prevention step.",
+        "Claims cross-source Office coverage without live Microsoft Office trace evidence."
       ],
       "judge_dimensions": {
         "proactivity": "Identifies what the user did not explicitly ask for but should know.",
         "strategic_depth": "Explains second-order consequences.",
         "confidence": "Correctly distinguishes strong and weak signals.",
-        "prevention": "Gives a practical guardrail or verification step."
+        "prevention": "Gives a practical guardrail or verification step.",
+        "office_source_integrity": "Uses or explicitly attempts live Microsoft Office evidence for Office-message claims."
       }
     },
     "metadata": {

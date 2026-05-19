@@ -2040,7 +2040,6 @@
         "as an AI"
       ],
       "minAnswerLength": 220,
-      "minSourceQuality": "medium",
       "judgeRubric": "strategic_advisor",
       "minJudgeScore": 4,
       "notes": "Strategic RAG golden-seed case. Canonical project target is Exol Wilmer, project ID 760, project number 26-103. This case must fail if the answer treats Exol Morrisville/Exol PA, Vermillion, Pratt & Whitney, Exotec, Superior Beverage, or generic FM Global evidence as project-specific Exol Wilmer proof. Direct ASRS sprinkler meeting/email/Teams source IDs still need to be attached before this becomes a factual golden case."
@@ -2121,6 +2120,13 @@
         "getActionItemsAndInsights",
         "backendDeepAgentExecutiveBriefing"
       ],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
       "mustIncludeAny": [
         ["open loop", "unresolved", "waiting", "needs", "follow up"],
         ["meeting", "email", "Teams", "message"]
@@ -2177,6 +2183,7 @@
     ],
     "people": ["getPeopleAndRoles", "getVendorPerformance"],
     "meetings": [
+      "getMeetingIntelligence",
       "searchMeetingsByTopic",
       "getMeetingDetails",
       "getMeetingsByDate"

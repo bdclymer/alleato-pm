@@ -88,6 +88,8 @@ const JUDGE_RUBRICS = {
       "Recommends a concrete response path: reply now, delegate, watch, draft, or ignore.",
       "For draft requests, sounds short, direct, and practical enough for Brandon to review and send.",
       "Never claims an email was sent and never invents thread details not present in the answer.",
+      "Separates confirmed user-owned actions from inbox items that merely exist or look interesting.",
+      "Labels suspicious, phishing, urgency, or ignore recommendations as evidence-backed judgments instead of unsupported certainty.",
     ],
   },
 };
