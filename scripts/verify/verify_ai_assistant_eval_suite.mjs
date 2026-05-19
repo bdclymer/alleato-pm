@@ -664,7 +664,6 @@ async function evaluateWithJudge(testCase, score) {
       body: JSON.stringify({
         model: config.model,
         temperature: 0,
-        response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
