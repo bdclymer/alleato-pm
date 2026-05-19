@@ -5,6 +5,7 @@ const MAX_CHUNK_CHARS = 1200;
 const MAX_VECTOR_RESULTS = 8;
 const MAX_COMPACT_VALUE_CHARS = 1200;
 const MAX_PACKET_CARDS = 8;
+const MAX_PACKET_LIST_ITEMS = 5;
 
 type SemanticResult = {
   content?: string;
@@ -51,6 +52,97 @@ function compactText(value: unknown, maxChars = MAX_COMPACT_VALUE_CHARS): string
   return `${text.slice(0, maxChars)} [truncated]`;
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function renderTitledItems(value: unknown, fields: string[], limit = MAX_PACKET_LIST_ITEMS): string {
+  const items = asArray(value)
+    .slice(0, limit)
+    .map((item) => {
+      const record = asRecord(item);
+      const title = compactText(record.title, 220);
+      if (!title) return null;
+      const detail = fields
+        .map((field) => compactText(record[field], 320))
+        .filter(Boolean)
+        .join(" ");
+      return detail ? `- ${title}: ${detail}` : `- ${title}`;
+    })
+    .filter((line): line is string => Boolean(line));
+  return items.join("\n");
+}
+
+function renderPacketSourceCoverage(packet: Record<string, unknown>): string {
+  const coverage = asRecord(packet.sourceCoverage ?? packet.source_coverage);
+  const categoryRows = asArray(coverage.categoryCoverage);
+  const linkedEvidenceCount = compactText(coverage.linkedEvidenceCount, 80);
+  const latestSourceAt = compactText(coverage.latestSourceAt, 120);
+  const lines: string[] = [];
+
+  if (linkedEvidenceCount) {
+    lines.push(`- linked evidence citations: ${linkedEvidenceCount}`);
+  }
+  if (latestSourceAt) {
+    lines.push(`- latest packet source date: ${latestSourceAt}`);
+  }
+
+  for (const row of categoryRows.slice(0, 8)) {
+    const record = asRecord(row);
+    const label = compactText(record.label ?? record.category, 120);
+    if (!label) continue;
+    const selected = compactText(record.sourceCount, 40) ?? "0";
+    const available = compactText(record.availableCount, 40) ?? "0";
+    const latest = compactText(record.latestAt, 120);
+    lines.push(
+      `- ${label}: ${selected} selected / ${available} available${latest ? `; latest ${latest}` : ""}`,
+    );
+  }
+
+  const qualityCounts = asRecord(coverage.sourceQualityCounts);
+  if (Object.keys(qualityCounts).length > 0) {
+    const quality = Object.entries(qualityCounts)
+      .map(([key, value]) => `${key}=${compactText(value, 40) ?? "0"}`)
+      .join(", ");
+    lines.push(`- source quality: ${quality}`);
+  }
+
+  if (lines.length === 0) return "";
+  return [
+    "## Source Coverage",
+    ...lines,
+    "",
+    "If this coverage lists meeting sources, do not claim no meeting transcripts surfaced. Say the packet has meeting coverage, and separately state if a fresh direct transcript lookup was not run or returned no additional rows.",
+  ].join("\n");
+}
+
+function renderStrategicReport(packet: Record<string, unknown>): string {
+  const packetJson = asRecord(packet.packetJson ?? packet.packet_json);
+  const report = asRecord(packetJson.strategicReport);
+  if (Object.keys(report).length === 0) return "";
+
+  const sections = [
+    ["What Changed", renderTitledItems(report.whatChanged, ["impact"])],
+    ["Risks", renderTitledItems(report.risks, ["recommendedAction", "severity"])],
+    ["Open Decisions", renderTitledItems(report.openDecisions, ["owner", "neededBy"])],
+    ["Money Impact", compactText(asRecord(report.moneyImpact).summary, 700)],
+    ["Promises Made", renderTitledItems(report.promisesMade, ["owner", "dueDate"])],
+    ["Recommended Actions", renderTitledItems(report.recommendedActions, ["reason", "priority"])],
+  ].filter(([, body]) => Boolean(body));
+
+  if (sections.length === 0) return "";
+  return [
+    "## Strategic Report",
+    ...sections.map(([title, body]) => `### ${title}\n${body}`),
+  ].join("\n\n");
+}
+
 function renderIntelligencePacket(raw: unknown): string {
   if (!raw || typeof raw !== "object") return "";
   const packet = raw as Record<string, unknown>;
@@ -77,6 +169,34 @@ function renderIntelligencePacket(raw: unknown): string {
   const summary = compactText(packet.executiveSummary ?? packet.executive_summary);
   if (summary) {
     lines.push(`## Executive Summary\n${summary}`);
+  }
+
+  const currentStatus = compactText(packet.currentStatus ?? packet.current_status);
+  if (currentStatus) {
+    lines.push(`## Current Status\n${currentStatus}`);
+  }
+
+  const strategicRead = compactText(packet.strategicRead ?? packet.strategic_read);
+  if (strategicRead) {
+    lines.push(`## Strategic Read\n${strategicRead}`);
+  }
+
+  const recommendedMoves = asArray(packet.recommendedNextMoves ?? packet.recommended_next_moves)
+    .map((move) => compactText(move, 260))
+    .filter((move): move is string => Boolean(move))
+    .slice(0, MAX_PACKET_LIST_ITEMS);
+  if (recommendedMoves.length > 0) {
+    lines.push(`## Recommended Next Moves\n${recommendedMoves.map((move) => `- ${move}`).join("\n")}`);
+  }
+
+  const sourceCoverage = renderPacketSourceCoverage(packet);
+  if (sourceCoverage) {
+    lines.push(sourceCoverage);
+  }
+
+  const strategicReport = renderStrategicReport(packet);
+  if (strategicReport) {
+    lines.push(strategicReport);
   }
 
   const cards = Array.isArray(packet.cards) ? packet.cards.slice(0, MAX_PACKET_CARDS) : [];

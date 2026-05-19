@@ -812,6 +812,7 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "title": summary.get("headline") or "Current project operating read",
             "summary": summary.get("currentExecutiveRead") or summary.get("context") or "",
             "why": summary.get("context"),
+            "nextAction": (recommended_actions[0] or {}).get("title") if recommended_actions else None,
             "sourceIds": summary.get("sourceIds", [])[:8],
         },
         {
@@ -826,6 +827,9 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             )
             or "No recent changes were explicit.",
             "why": "Keeps project-status answers grounded in the recent change trail.",
+            "nextAction": "Validate changed scope, schedule, and budget assumptions against the current project plan."
+            if what_changed
+            else None,
             "sourceIds": list({sid for item in what_changed for sid in item.get("sourceIds", [])})[:12],
         },
         {
@@ -840,6 +844,7 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             )
             or "No risks were explicit.",
             "why": "Separates strategic risk from raw source activity.",
+            "nextAction": (risks[0] or {}).get("recommendedAction") if risks else None,
             "sourceIds": list({sid for item in risks for sid in item.get("sourceIds", [])})[:12],
         },
         {
@@ -850,6 +855,9 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "title": "Open decisions",
             "summary": " ".join(item.get("title", "") for item in open_decisions) or "No open decisions were explicit.",
             "why": "Shows unresolved decisions before they become schedule or money risk.",
+            "nextAction": f"Resolve: {(open_decisions[0] or {}).get('title')}"
+            if open_decisions
+            else None,
             "sourceIds": list({sid for item in open_decisions for sid in item.get("sourceIds", [])})[:12],
         },
         {
@@ -860,6 +868,16 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "title": "Money impact",
             "summary": money_impact.get("summary") or "",
             "why": "Financial claims must disclose coverage and gaps.",
+            "nextAction": next(
+                (
+                    item.get("title")
+                    for item in recommended_actions
+                    if "budget" in _normalized_text(item.get("title") or item.get("reason") or "")
+                    or "cost" in _normalized_text(item.get("title") or item.get("reason") or "")
+                    or "estimate" in _normalized_text(item.get("title") or item.get("reason") or "")
+                ),
+                None,
+            ),
             "sourceIds": money_impact.get("sourceIds", [])[:12],
         },
         {
@@ -870,6 +888,9 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "title": "Promises made",
             "summary": " ".join(item.get("title", "") for item in promises_made) or "No promises were explicit.",
             "why": "Captures commitments made in meetings, Teams, and email before they disappear into raw comms.",
+            "nextAction": "Confirm each promise has an owner, due date, and current status."
+            if promises_made
+            else None,
             "sourceIds": list({sid for item in promises_made for sid in item.get("sourceIds", [])})[:12],
         },
         {
@@ -884,6 +905,7 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             )
             or "No recommended actions were explicit.",
             "why": "Sets the next-action baseline for the assistant.",
+            "nextAction": (recommended_actions[0] or {}).get("title") if recommended_actions else None,
             "sourceIds": list({sid for item in recommended_actions for sid in item.get("sourceIds", [])})[:12],
         },
         {
@@ -894,6 +916,9 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "title": "Project controls and tasks",
             "summary": " ".join(item.get("title", "") for item in controls.get("tasks", [])) or "No task/control items were explicit.",
             "why": "Links available task/control records into the current packet.",
+            "nextAction": (controls.get("tasks", [{}])[0] or {}).get("title")
+            if controls.get("tasks")
+            else None,
             "sourceIds": list({sid for item in controls.get("tasks", []) for sid in item.get("sourceIds", [])})[:12],
         },
         {
@@ -904,6 +929,16 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "title": "Schedule and procurement",
             "summary": (summary.get("scheduleAndProcurement") or {}).get("summary") or "",
             "why": "Schedule and procurement claims must be tied to source evidence.",
+            "nextAction": next(
+                (
+                    item.get("title")
+                    for item in recommended_actions
+                    if "schedule" in _normalized_text(item.get("title") or item.get("reason") or "")
+                    or "permit" in _normalized_text(item.get("title") or item.get("reason") or "")
+                    or "approval" in _normalized_text(item.get("title") or item.get("reason") or "")
+                ),
+                None,
+            ),
             "sourceIds": (summary.get("scheduleAndProcurement") or {}).get("sourceIds", [])[:12],
         },
     ]
@@ -943,6 +978,7 @@ def _source_coverage_card(source_set: Dict[str, Any]) -> Optional[Dict[str, Any]
             f"{', '.join(str(label) for label in covered_labels) if covered_labels else 'available source categories'}."
         ),
         "why": "Keeps the packet audit truthful even when the summary model does not cite every available source category.",
+        "nextAction": "Use source coverage only as audit context; rely on the strategic report for recommendations.",
         "sourceIds": selected[:16],
     }
 
@@ -1074,9 +1110,7 @@ def refresh_project_operating_packet(
             "current_status": "open",
             "confidence": confidence,
             "attribution_status": "approved" if confidence != "low" else "needs_review",
-            "next_action": _truncate((recommended_actions or [{}])[0].get("title", ""), 600)
-            if recommended_actions
-            else None,
+            "next_action": _truncate(card.get("nextAction") or "", 600) or None,
             "first_seen_at": (first_source or {}).get("capturedAt") or generated_at,
             "last_seen_at": latest_dates[-1] if latest_dates else generated_at,
             "stale_after": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),

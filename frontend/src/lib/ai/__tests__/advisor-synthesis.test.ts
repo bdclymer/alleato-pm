@@ -83,6 +83,55 @@ const packet: ClientProjectIntelligencePacket = {
   ],
 };
 
+const operatingPacket: ClientProjectIntelligencePacket = {
+  ...packet,
+  freshnessStatus: "fresh",
+  compilerVersion: "project-operating-summary-v1",
+  packetJson: {
+    strategicReport: {
+      whatChanged: [
+        {
+          title: "Permit package deadline tightened",
+          impact: "Open design items now threaten the June permit target.",
+        },
+      ],
+      risks: [
+        {
+          title: "Permit schedule may slip",
+          recommendedAction: "Escalate unresolved permit-blocking decisions.",
+          severity: "high",
+        },
+      ],
+      openDecisions: [
+        {
+          title: "Finalize second-floor private room configuration",
+          owner: "Design team / owner",
+          neededBy: "Before permit package finalization",
+        },
+      ],
+      moneyImpact: {
+        summary: "Scope growth needs current estimate reconciliation.",
+      },
+      promisesMade: [
+        {
+          title: "Permit drawings due June 11",
+          owner: "Project team",
+          dueDate: "2026-06-11",
+        },
+      ],
+    },
+  },
+  sourceCoverage: {
+    freshnessStatus: "fresh",
+    linkedEvidenceCount: 90,
+    latestSourceAt: "2026-05-19T00:00:00.000Z",
+    categoryCoverage: [
+      { label: "Meetings", sourceCount: 32, availableCount: 32 },
+      { label: "Emails", sourceCount: 20, availableCount: 383 },
+    ],
+  },
+};
+
 describe("advisor synthesis", () => {
   it("turns a packet into the required project advisor response sections", () => {
     const response = synthesizeAdvisorResponse({
@@ -109,5 +158,20 @@ describe("advisor synthesis", () => {
 
     expect(response).toContain("I do not have a current intelligence packet");
     expect(response).toContain("live lookup");
+  });
+
+  it("uses the operating packet strategic report and meeting coverage when present", () => {
+    const response = synthesizeAdvisorResponse({
+      target,
+      packet: operatingPacket,
+      intent: "latest_status",
+      query: "What's the latest on Union Collective?",
+    });
+
+    expect(response).toContain("Permit package deadline tightened");
+    expect(response).toContain("Escalate unresolved permit-blocking decisions");
+    expect(response).toContain("Finalize second-floor private room configuration");
+    expect(response).toContain("90 linked packet citations");
+    expect(response).toContain("Meetings: 32 selected / 32 available");
   });
 });

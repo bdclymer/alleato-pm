@@ -299,4 +299,63 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).not.toContain("xxxxxxxxxx");
     expect(prompt.length).toBeLessThan(5_000);
   });
+
+  it("renders operating packet meeting coverage and strategic report without dumping packetJson", () => {
+    const plan: RetrievalPlan = {
+      intent: "latest_status",
+      responseFormat: "briefing_template",
+      sources: { intelligencePacket: { mode: "additive" } },
+      reason: "test",
+    };
+    const ctx: RetrievalContext = {
+      intelligencePacket: {
+        id: "p1",
+        executiveSummary: "Union Collective is moving from concept to permit-ready design.",
+        currentStatus: "Design is active, but permit and budget decisions need attention.",
+        recommendedNextMoves: ["Lock design decisions"],
+        sourceCoverage: {
+          linkedEvidenceCount: 90,
+          categoryCoverage: [
+            { label: "Meetings", sourceCount: 32, availableCount: 32, latestAt: "2026-05-14T14:00:00Z" },
+            { label: "Emails", sourceCount: 20, availableCount: 383 },
+          ],
+          sourceQualityCounts: { clean_source: 63, metadata_only: 33, raw_dump: 0 },
+        },
+        packetJson: {
+          huge: "x".repeat(20_000),
+          strategicReport: {
+            risks: [
+              {
+                title: "Permit schedule may slip",
+                recommendedAction: "Escalate unresolved permit-blocking decisions.",
+                severity: "high",
+              },
+            ],
+            moneyImpact: {
+              summary: "Scope growth needs current estimate reconciliation.",
+            },
+            recommendedActions: [
+              {
+                title: "Reconcile budget and current estimate",
+                reason: "Scope growth needs cost control.",
+                priority: "high",
+              },
+            ],
+          },
+        },
+        cards: [],
+      } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE");
+
+    expect(prompt).toContain("Meetings: 32 selected / 32 available");
+    expect(prompt).toContain("do not claim no meeting transcripts surfaced");
+    expect(prompt).toContain("Permit schedule may slip");
+    expect(prompt).toContain("Scope growth needs current estimate reconciliation");
+    expect(prompt).not.toContain("packetJson");
+    expect(prompt).not.toContain("xxxxxxxxxx");
+  });
 });

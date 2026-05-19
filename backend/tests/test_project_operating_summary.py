@@ -4,6 +4,7 @@ import pytest
 
 from src.services.intelligence.operating_summary import (
     _assert_summary_quality,
+    _card_defs,
     _make_source,
     _quality_counts,
     _select_operating_sources,
@@ -105,3 +106,74 @@ def test_quality_counts_tracks_metadata_and_clean_sources():
 
     assert counts["clean_source"] == 1
     assert counts["metadata_only"] == 1
+
+
+def test_card_defs_do_not_duplicate_one_next_action_across_every_section():
+    cards = _card_defs(
+        {
+            "headline": "Union Collective has permit and budget pressure.",
+            "currentExecutiveRead": "Design is active and decisions need to close.",
+            "context": "Permit drawings and budget reconciliation are the current pressure points.",
+            "sourceIds": ["document_metadata:meeting-1"],
+            "whatChanged": [
+                {
+                    "title": "Permit package deadline tightened",
+                    "impact": "Open design items now threaten the June permit target.",
+                    "sourceIds": ["document_metadata:meeting-1"],
+                }
+            ],
+            "risks": [
+                {
+                    "title": "Permit schedule may slip",
+                    "recommendedAction": "Escalate unresolved permit-blocking decisions.",
+                    "sourceIds": ["document_metadata:meeting-1"],
+                }
+            ],
+            "openDecisions": [
+                {
+                    "title": "Finalize second-floor private room configuration",
+                    "sourceIds": ["document_metadata:meeting-1"],
+                }
+            ],
+            "moneyImpact": {
+                "summary": "Scope growth needs current estimate reconciliation.",
+                "sourceIds": ["document_metadata:meeting-1"],
+            },
+            "promisesMade": [
+                {
+                    "title": "Permit drawings due June 11",
+                    "sourceIds": ["document_metadata:meeting-1"],
+                }
+            ],
+            "recommendedActions": [
+                {
+                    "title": "Lock remaining design decisions",
+                    "reason": "Needed for permit readiness.",
+                    "sourceIds": ["document_metadata:meeting-1"],
+                },
+                {
+                    "title": "Reconcile budget and current estimate",
+                    "reason": "Scope growth needs cost control.",
+                    "sourceIds": ["document_metadata:meeting-1"],
+                },
+            ],
+            "projectControls": {
+                "tasks": [
+                    {
+                        "title": "Maintain master decision log",
+                        "sourceIds": ["document_metadata:meeting-1"],
+                    }
+                ]
+            },
+            "scheduleAndProcurement": {
+                "summary": "Permit path is tight.",
+                "sourceIds": ["document_metadata:meeting-1"],
+            },
+        }
+    )
+
+    next_actions = [card.get("nextAction") for card in cards if card.get("nextAction")]
+
+    assert len(set(next_actions)) > 3
+    assert "Escalate unresolved permit-blocking decisions." in next_actions
+    assert "Resolve: Finalize second-floor private room configuration" in next_actions

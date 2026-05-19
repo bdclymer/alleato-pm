@@ -60,6 +60,12 @@ type SourceLane = {
   cards: InsightCard[];
 };
 
+type StrategicReportItem = {
+  title: string;
+  detail?: string;
+  meta?: string;
+};
+
 const CARD_PRIORITY: Record<string, number> = {
   blocker: 0,
   risk: 1,
@@ -149,6 +155,20 @@ function cleanText(value: string | null | undefined): string {
     .trim();
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function cleanUnknown(value: unknown): string {
+  return cleanText(typeof value === "string" || typeof value === "number" ? String(value) : "");
+}
+
 function isLowSignalText(value: string | null | undefined): boolean {
   const text = cleanText(value).toLowerCase();
   if (!text) return true;
@@ -190,6 +210,48 @@ function summarizeText(value: string, maxLength = 360): string {
   );
   if (lastSentence > 180) return truncated.slice(0, lastSentence + 1);
   return `${truncated.trim()}...`;
+}
+
+function strategicReport(packet: ClientProjectIntelligencePacket): Record<string, unknown> {
+  return asRecord(asRecord(packet.packetJson).strategicReport);
+}
+
+function hasStrategicReport(packet: ClientProjectIntelligencePacket): boolean {
+  return Object.keys(strategicReport(packet)).length > 0;
+}
+
+function strategicItems(
+  packet: ClientProjectIntelligencePacket,
+  key: string,
+  detailKeys: string[],
+  metaKeys: string[] = [],
+): StrategicReportItem[] {
+  const items: Array<StrategicReportItem | null> = asArray(strategicReport(packet)[key])
+    .map((item) => {
+      const record = asRecord(item);
+      const title = cleanUnknown(record.title);
+      if (!title || isLowSignalText(title)) return null;
+      const detail = detailKeys
+        .map((detailKey) => cleanUnknown(record[detailKey]))
+        .filter((value) => value && !isLowSignalText(value))
+        .join(" ");
+      const meta = metaKeys
+        .map((metaKey) => cleanUnknown(record[metaKey]))
+        .filter(Boolean)
+        .join(" / ");
+      return { title, detail: detail || undefined, meta: meta || undefined };
+    });
+
+  return items.filter((item): item is StrategicReportItem => item !== null);
+}
+
+function strategicMoneyImpact(packet: ClientProjectIntelligencePacket): string {
+  const summary = cleanUnknown(asRecord(strategicReport(packet).moneyImpact).summary);
+  return summary && !isLowSignalText(summary) ? summary : "";
+}
+
+function strategicRecommendedActions(packet: ClientProjectIntelligencePacket): StrategicReportItem[] {
+  return strategicItems(packet, "recommendedActions", ["reason"], ["priority"]);
 }
 
 function packetEvidence(packet: ClientProjectIntelligencePacket): InsightCardEvidence[] {
@@ -235,10 +297,10 @@ function sortedCards(cards: InsightCard[]): InsightCard[] {
 
 function cardPrimaryText(card: InsightCard): string {
   return firstStrategicText(
-    card.nextAction,
     card.summary,
-    card.currentStatus,
     card.whyItMatters,
+    card.nextAction,
+    card.currentStatus,
   );
 }
 
@@ -332,15 +394,18 @@ function reviewPreviewCards(packet: ClientProjectIntelligencePacket): InsightCar
 
 function qualityWarnings(packet: ClientProjectIntelligencePacket): string[] {
   const warnings = new Set<string>();
-  const gaps = packet.sourceCoverage.gaps?.filter((gap): gap is string => typeof gap === "string") ?? [];
-  for (const gap of gaps.slice(0, 4)) warnings.add(gap);
 
   const lowSignalCards = packet.cards.filter((card) =>
     !firstStrategicText(card.summary, card.currentStatus, card.whyItMatters, card.nextAction)
   );
 
-  if (lowSignalCards.length > 0) {
+  if (lowSignalCards.length > 0 && !hasStrategicReport(packet)) {
     warnings.add(`${lowSignalCards.length} cards contain raw source text or metadata instead of usable synthesis.`);
+  }
+
+  const qualityGate = asRecord(packet.sourceCoverage.qualityGate);
+  if (qualityGate.status && qualityGate.status !== "passed") {
+    warnings.add(cleanUnknown(qualityGate.reason) || "The packet source quality gate did not pass.");
   }
 
   if (packet.isStale) {
@@ -352,6 +417,11 @@ function qualityWarnings(packet: ClientProjectIntelligencePacket): string[] {
   }
 
   return Array.from(warnings).slice(0, 5);
+}
+
+function evidenceLimitations(packet: ClientProjectIntelligencePacket): string[] {
+  const gaps = packet.sourceCoverage.gaps?.filter((gap): gap is string => typeof gap === "string") ?? [];
+  return gaps.map(cleanText).filter(Boolean).slice(0, 5);
 }
 
 function briefingStatus(packet: ClientProjectIntelligencePacket): {
@@ -376,7 +446,7 @@ function briefingStatus(packet: ClientProjectIntelligencePacket): {
 
   return {
     title: "Daily project intelligence, synthesized from the sources that changed the job.",
-    body: summarizeText(cleanRead, 520),
+    body: summarizeText(firstStrategicText(packet.currentStatus, packet.strategicRead, cleanRead), 520),
   };
 }
 
@@ -410,6 +480,7 @@ function BriefingHeader({
   const evidence = packetEvidence(packet);
   const lanes = sourceLanes(packet).filter((lane) => lane.evidence.length > 0);
   const warnings = qualityWarnings(packet);
+  const limitations = evidenceLimitations(packet);
   const briefing = briefingStatus(packet);
   const stats = [
     { label: "Signals", value: packet.cards.length.toString() },
@@ -460,14 +531,14 @@ function BriefingHeader({
               </div>
             ))}
           </dl>
-          {warnings.length > 0 ? (
+          {warnings.length > 0 || limitations.length > 0 ? (
             <div className="space-y-2 border-t border-border/60 pt-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <AlertTriangle className="h-4 w-4 text-status-warning" />
-                Source quality notes
+                {warnings.length > 0 ? "Source quality notes" : "Evidence limitations"}
               </div>
               <ul className="space-y-2">
-                {warnings.slice(0, 3).map((warning) => (
+                {(warnings.length > 0 ? warnings : limitations).slice(0, 3).map((warning) => (
                   <li key={warning} className="text-sm leading-6 text-muted-foreground">
                     {warning}
                   </li>
@@ -486,11 +557,16 @@ function StrategicRead({
 }: {
   packet: ClientProjectIntelligencePacket;
 }) {
+  const reportChanged = strategicItems(packet, "whatChanged", ["impact"]);
+  const reportRisks = strategicItems(packet, "risks", ["recommendedAction"], ["severity"]);
+  const reportDecisions = strategicItems(packet, "openDecisions", ["owner", "neededBy"]);
+  const reportMoneyImpact = strategicMoneyImpact(packet);
+  const reportActions = strategicRecommendedActions(packet);
   const riskCards = findCardsByTypes(packet.cards, ["blocker", "risk", "open_question", "schedule_risk"], 3);
   const decisionCards = findCardsByTypes(packet.cards, ["decision", "change_management", "requirement", "financial_exposure"], 3);
   const statusCards = findCardsByTypes(packet.cards, ["project_update", "sentiment", "task"], 3);
   const strategicRead = firstStrategicText(packet.strategicRead, packet.whyItMatters, packet.currentStatus);
-  const nextMoves = packet.recommendedNextMoves
+  const nextMoves = (reportActions.length > 0 ? reportActions.map((item) => item.title) : packet.recommendedNextMoves)
     .map((move) => cleanText(move))
     .filter((move) => move && !isLowSignalText(move))
     .slice(0, 5);
@@ -499,22 +575,31 @@ function StrategicRead({
     {
       label: "Pattern",
       title: "What the sources are saying together",
-      text: summarizeText(strategicRead || packet.executiveSummary, 420),
+      text: reportChanged.length > 0
+        ? summarizeText(reportChanged.map((item) => `${item.title}: ${item.detail ?? ""}`.trim()).join(" "), 520)
+        : summarizeText(strategicRead || packet.executiveSummary, 420),
       cards: statusCards,
+      items: reportChanged,
       icon: Brain,
     },
     {
       label: "Risk",
       title: "What can hurt the job",
-      text: riskCards[0] ? summarizeText(cardPrimaryText(riskCards[0]), 360) : "No clean risk synthesis has been compiled yet.",
+      text: reportRisks.length > 0
+        ? summarizeText(reportRisks.map((item) => `${item.title}: ${item.detail ?? ""}`.trim()).join(" "), 520)
+        : riskCards[0] ? summarizeText(cardPrimaryText(riskCards[0]), 360) : "No clean risk synthesis has been compiled yet.",
       cards: riskCards,
+      items: reportRisks,
       icon: AlertTriangle,
     },
     {
       label: "Decision",
       title: "Where leadership attention belongs",
-      text: decisionCards[0] ? summarizeText(cardPrimaryText(decisionCards[0]), 360) : "No decision narrative has been compiled yet.",
+      text: reportDecisions.length > 0
+        ? summarizeText(reportDecisions.map((item) => `${item.title}${item.detail ? `: ${item.detail}` : ""}`).join(" "), 520)
+        : decisionCards[0] ? summarizeText(cardPrimaryText(decisionCards[0]), 360) : "No decision narrative has been compiled yet.",
       cards: decisionCards,
+      items: reportDecisions,
       icon: CheckCircle2,
     },
   ];
@@ -550,6 +635,23 @@ function StrategicRead({
                 </div>
               </div>
               <p className="text-sm leading-7 text-muted-foreground">{column.text}</p>
+              {column.items.length > 0 ? (
+                <div className="space-y-3">
+                  {column.items.slice(0, 3).map((item) => (
+                    <div key={`${column.label}-${item.title}`} className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">{item.title}</p>
+                      {item.detail ? (
+                        <p className="text-xs leading-5 text-muted-foreground">{summarizeText(item.detail, 220)}</p>
+                      ) : null}
+                      {item.meta ? (
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          {item.meta}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               {column.cards.length > 0 ? (
                 <div className="space-y-3">
                   {column.cards.slice(0, 2).map((card) => (
@@ -566,6 +668,12 @@ function StrategicRead({
           );
         })}
       </div>
+      {reportMoneyImpact ? (
+        <div className="space-y-2 border-t border-border/70 pt-5">
+          <p className="text-sm font-semibold text-foreground">Money impact</p>
+          <p className="max-w-4xl text-sm leading-7 text-muted-foreground">{reportMoneyImpact}</p>
+        </div>
+      ) : null}
       {nextMoves.length > 0 ? (
         <div className="space-y-3 rounded-lg bg-muted/30 p-6">
           <div className="flex items-center gap-2">
@@ -595,6 +703,7 @@ function ActionRegister({
   packet: ClientProjectIntelligencePacket;
   projectId: number;
 }) {
+  const reportActions = strategicRecommendedActions(packet);
   const actionCards = sortedCards(packet.cards)
     .filter((card) => {
       const text = cardPrimaryText(card);
@@ -602,7 +711,7 @@ function ActionRegister({
     })
     .slice(0, 10);
 
-  if (actionCards.length === 0) return null;
+  if (reportActions.length === 0 && actionCards.length === 0) return null;
 
   return (
     <section className="space-y-5">
@@ -619,6 +728,26 @@ function ActionRegister({
           <Link href={`/${projectId}/tasks`}>Open task page</Link>
         </Button>
       </div>
+      {reportActions.length > 0 ? (
+        <div className="divide-y divide-border/70">
+          {reportActions.map((action) => (
+            <article key={action.title} className="grid gap-4 py-5 lg:grid-cols-[11rem_minmax(0,1fr)]">
+              <div className="space-y-2">
+                <StatusBadge status={formatLabel(action.meta || "recommended")} variant="warning" />
+              </div>
+              <div className="min-w-0 space-y-2">
+                <Heading level={6} as="h3" className="text-sm leading-6">
+                  {action.title}
+                </Heading>
+                {action.detail ? (
+                  <p className="text-sm leading-7 text-muted-foreground">{summarizeText(action.detail, 360)}</p>
+                ) : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+      {reportActions.length > 0 ? null : (
       <div className="divide-y divide-border/70">
         {actionCards.map((card) => {
           const primaryEvidence = latestCardEvidence(card);
@@ -661,6 +790,7 @@ function ActionRegister({
           );
         })}
       </div>
+      )}
     </section>
   );
 }
@@ -787,6 +917,7 @@ function EvidenceDiagnostics({
   const rows = sourceCoverageRows(packet).slice(0, 10);
   const latestSources = latestEvidence(packet, 5);
   const warnings = qualityWarnings(packet);
+  const limitations = evidenceLimitations(packet);
 
   return (
     <section className="space-y-6">
@@ -848,13 +979,13 @@ function EvidenceDiagnostics({
               </div>
             ))}
           </div>
-          {warnings.length > 0 ? (
+          {warnings.length > 0 || limitations.length > 0 ? (
             <div className="space-y-2 border-t border-border/60 pt-4">
               <Heading level={6} as="h3" className="text-sm">
-                What could fail
+                {warnings.length > 0 ? "What could fail" : "Evidence limitations"}
               </Heading>
               <ul className="space-y-2">
-                {warnings.map((warning) => (
+                {(warnings.length > 0 ? warnings : limitations).map((warning) => (
                   <li key={warning} className="text-sm leading-6 text-muted-foreground">
                     {warning}
                   </li>
