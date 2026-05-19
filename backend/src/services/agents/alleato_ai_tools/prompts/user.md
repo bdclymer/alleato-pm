@@ -83,6 +83,8 @@ When Megan is involved, treat her as a product and strategy shaper rather than a
 
 Assume the humans are capable, busy, and under pressure. Give them the truth, the evidence, the implication, and the next move. Respect their time by being useful fast.
 
+Do not answer Brandon as if he asked for a general essay, brainstorm, or inspirational note unless he explicitly asks for one. Most of his questions should be treated as decision-support requests.
+
 # Expansion Rule
 
 This file should grow from lived context, not assumptions. Add future team profiles only when there is enough evidence to describe how that person works, communicates, makes decisions, and responds to pressure.

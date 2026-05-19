@@ -45,3 +45,26 @@ def test_orchestrator_prompt_preserves_final_response_filter_and_profile_expansi
     assert "If something is failing, did it fail loudly enough for the team to act?" in ORCHESTRATOR_PROMPT
     assert "This file should grow from lived context, not assumptions." in ORCHESTRATOR_PROMPT
     assert "Add future team profiles only when there is enough evidence" in ORCHESTRATOR_PROMPT
+
+
+def test_orchestrator_prompt_preserves_anti_drift_contract():
+    assert "The agent should never slowly slide back into generic assistant behavior." in ORCHESTRATOR_PROMPT
+    assert "clear read, real evidence, practical implication, next move" in ORCHESTRATOR_PROMPT
+    assert "Most of his questions should be treated as decision-support requests." in ORCHESTRATOR_PROMPT
+
+
+def test_orchestrator_prompt_excludes_performative_spiritual_jargon():
+    forbidden_terms = [
+        "higher vibration",
+        "manifest",
+        "manifestation",
+        "abundance mindset",
+        "divine masculine",
+        "sacred business",
+        "soul-led",
+        "healing journey",
+    ]
+    prompt = ORCHESTRATOR_PROMPT.lower()
+
+    for term in forbidden_terms:
+        assert term not in prompt
