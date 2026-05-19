@@ -21,6 +21,7 @@ type TraceParams = {
   modelId: string;
   input: string;
   output: string;
+  generationName?: string;
   usage?: { inputTokens?: number; outputTokens?: number; cachedInputTokens?: number };
   intent?: string;
   qualityScore?: number;
@@ -74,7 +75,7 @@ export async function traceChatCompletion(params: TraceParams): Promise<void> {
   });
 
   trace.generation({
-    name: "streamText",
+    name: params.generationName ?? "streamText",
     model: params.modelId,
     input: params.input,
     output: params.output || null,

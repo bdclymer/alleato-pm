@@ -205,6 +205,11 @@ def _deep_agent_config(
 
 
 def _invoke_agent(agent: Any, payload: dict[str, Any], config: dict[str, Any]) -> Any:
+    # LangSmith tracing is enabled by env vars (LANGSMITH_TRACING=true +
+    # LANGSMITH_API_KEY + LANGSMITH_PROJECT). LangChain's runtime auto-installs
+    # the tracer on every Runnable.invoke, so we do NOT need to manually open a
+    # tracing_context here — doing so previously installed a context that
+    # suppressed trace export in langsmith 0.8.x.
     try:
         return agent.invoke(payload, config=config)
     except TypeError as exc:

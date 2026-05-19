@@ -690,6 +690,13 @@ async function persistDirectDeepAgentResponse(params: {
   content: string;
   metadata: Json;
   responseLabel: string;
+  trace: {
+    input: string;
+    intent: string;
+    modelId: string;
+    selectedProjectId?: number | null;
+    toolTrace: Array<Record<string, unknown>>;
+  };
 }): Promise<void> {
   const { error: assistantError } = await params.supabase
     .from("chat_history")
@@ -718,6 +725,28 @@ async function persistDirectDeepAgentResponse(params: {
       `Updating the Deep Agents ${params.responseLabel} conversation failed: ${conversationError.message}`,
     );
   }
+
+  waitUntil(
+    traceChatCompletion({
+      userId: params.userId,
+      sessionId: params.sessionId,
+      modelId: params.trace.modelId,
+      input: params.trace.input,
+      output: params.content,
+      generationName: `directDeepAgent:${params.responseLabel}`,
+      intent: params.trace.intent,
+      selectedProjectId: params.trace.selectedProjectId ?? null,
+      toolCallNames: params.trace.toolTrace
+        .map((trace) => trace.toolName ?? trace.tool)
+        .filter((tool): tool is string => typeof tool === "string"),
+      stepCount: params.trace.toolTrace.length,
+      metadata: {
+        architecture: "render-backend-deep-agents-v1",
+        responseLabel: params.responseLabel,
+        tracePath: "direct-deep-agent-response",
+      },
+    }),
+  );
 
   waitUntil(runPostResponseTasks(params.sessionId, params.userId));
 }
@@ -1135,6 +1164,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               userId: args.user.id,
               content,
               responseLabel: "research",
+              trace: {
+                input: lastUserContent,
+                intent: plan.intent,
+                modelId:
+                  process.env.DEEP_AGENTS_RESEARCH_MODEL ??
+                  "render-backend-deep-agents",
+                selectedProjectId: args.selectedProjectId ?? null,
+                toolTrace,
+              },
               metadata: {
                 architecture: "render-backend-deep-agents-v1",
                 model: process.env.DEEP_AGENTS_RESEARCH_MODEL ?? null,
@@ -1308,6 +1346,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               userId: args.user.id,
               content,
               responseLabel: "project",
+              trace: {
+                input: lastUserContent,
+                intent: plan.intent,
+                modelId:
+                  process.env.DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL ??
+                  "render-backend-deep-agents",
+                selectedProjectId: args.selectedProjectId,
+                toolTrace,
+              },
               metadata: {
                 architecture: "render-backend-deep-agents-v1",
                 model:
@@ -1491,6 +1538,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               userId: args.user.id,
               content,
               responseLabel: "executive",
+              trace: {
+                input: lastUserContent,
+                intent: plan.intent,
+                modelId:
+                  process.env.DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL ??
+                  "render-backend-deep-agents",
+                selectedProjectId: args.selectedProjectId ?? null,
+                toolTrace,
+              },
               metadata: {
                 architecture: "render-backend-deep-agents-v1",
                 model:

@@ -369,6 +369,22 @@ services:
         value: deep_agents
       - key: DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL
         value: gpt-5.4-mini
+      - key: LANGSMITH_TRACING
+        value: "true"
+      - key: LANGSMITH_PROJECT
+        value: alleato-ai
+      - key: LANGSMITH_DEPLOYMENT_NAME
+        value: alleato-ai
+      - key: LANGSMITH_API_KEY
+        sync: false
+      - key: LANGCHAIN_TRACING_V2
+        value: "true"
+      - key: LANGCHAIN_PROJECT
+        value: alleato-ai
+      - key: LANGCHAIN_ENDPOINT
+        value: https://api.smith.langchain.com
+      - key: LANGCHAIN_API_KEY
+        sync: false
       - key: DEEP_AGENTS_RESEARCH_ENABLED
         value: true
       - key: DEEP_AGENTS_RESEARCH_MODEL
