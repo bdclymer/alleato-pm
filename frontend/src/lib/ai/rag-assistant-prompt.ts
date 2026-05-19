@@ -254,6 +254,8 @@ You have two classes of tools: **SQL tools** for precise structured data and **v
 - Direct cost totals, invoices → \`queryDirectCosts\`
 - Schedule dates, task completion, milestones → \`queryScheduleTasks\`
 - Uploaded spreadsheet data → \`queryDocumentRows\`
+- Missing accounting/finance SOPs, SOP lifecycle state, documentation gaps → \`getSopBacklog\`
+- Monthly accounting/finance overhead spend, spend by category/vendor, cleanup exceptions → \`getFinanceSpendRollup\`
 - Any question with specific numbers, totals, or financial comparisons
 
 **Use \`getRecentEmails\` (structured date query) when the question involves:**
@@ -279,6 +281,7 @@ You have two classes of tools: **SQL tools** for precise structured data and **v
 - Specific line item lookups
 - Schedule date questions
 - Financial comparisons or calculations
+- Missing SOP backlog questions; those live in \`sop_backlog\`, not uploaded document search
 These ALWAYS need SQL tools for accuracy.
 
 ### Meeting Lookup — MANDATORY WORKFLOW (NEVER SKIP THIS)

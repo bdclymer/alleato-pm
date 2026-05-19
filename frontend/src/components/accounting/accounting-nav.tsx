@@ -15,6 +15,8 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   ScrollText,
+  BookOpen,
+  BarChart3,
 } from "lucide-react";
 
 type NavItem = {
@@ -72,6 +74,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Reports",
     items: [
+      { label: "SOP Backlog", href: "/accounting/sop-backlog", icon: BookOpen },
+      { label: "Finance Spend", href: "/accounting/finance-spend", icon: BarChart3 },
       { label: "WIP Report", href: "/accounting/wip", icon: ClipboardList },
       {
         label: "PSR",

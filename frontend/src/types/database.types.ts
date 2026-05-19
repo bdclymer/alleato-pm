@@ -13221,6 +13221,48 @@ export type Database = {
           },
         ]
       }
+      finance_spend_classification_rules: {
+        Row: {
+          active: boolean
+          category: string
+          confidence: number
+          created_at: string
+          exclude: boolean
+          exclusion_reason: string | null
+          id: string
+          match_text: string
+          priority: number
+          rule_name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          confidence?: number
+          created_at?: string
+          exclude?: boolean
+          exclusion_reason?: string | null
+          id?: string
+          match_text: string
+          priority?: number
+          rule_name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          confidence?: number
+          created_at?: string
+          exclude?: boolean
+          exclusion_reason?: string | null
+          id?: string
+          match_text?: string
+          priority?: number
+          rule_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       financial_contracts: {
         Row: {
           change_order_amount: number | null
@@ -25834,6 +25876,156 @@ export type Database = {
             columns: ["project_sync_id"]
             isOneToOne: false
             referencedRelation: "projects_sync"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sop_backlog: {
+        Row: {
+          business_area: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          document_type: string
+          id: string
+          linked_document_metadata_id: string | null
+          owner: string | null
+          priority: number
+          priority_label: string | null
+          project_id: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_area: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_type?: string
+          id?: string
+          linked_document_metadata_id?: string | null
+          owner?: string | null
+          priority?: number
+          priority_label?: string | null
+          project_id?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_area?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_type?: string
+          id?: string
+          linked_document_metadata_id?: string | null
+          owner?: string | null
+          priority?: number
+          priority_label?: string | null
+          project_id?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
+            columns: ["linked_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
+            columns: ["linked_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
+            columns: ["linked_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
+            columns: ["linked_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
+            columns: ["linked_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
+            columns: ["linked_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
+            columns: ["linked_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
+            columns: ["linked_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_backlog_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]

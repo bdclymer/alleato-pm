@@ -146,6 +146,8 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 
 All tools are server-side only (Next.js API routes). They receive `userId` for RLS scoping.
 
+2026-05-19 SAIS update: accounting/finance SOP gaps and Acumatica overhead spend are structured tool reads (`getSopBacklog`, `getFinanceSpendRollup`), not vector-search-only document retrieval.
+
 ### Core Project Tools (`project-tools.ts`)
 
 | Tool | Queries | Returns |
