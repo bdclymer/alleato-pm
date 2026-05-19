@@ -4,7 +4,13 @@ import * as React from "react";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import type { ViewMode } from "./table-toolbar";
 
-export type FilterValue = string | number | boolean | string[] | null | undefined;
+export type FilterValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | null
+  | undefined;
 
 export interface UnifiedTableStateOptions {
   entityKey: string;
@@ -38,7 +44,9 @@ export interface UnifiedTableState {
   sortDirection: "asc" | "desc";
   setSearchInput: (value: string) => void;
   setCurrentView: (view: ViewMode) => void;
-  setActiveFilters: React.Dispatch<React.SetStateAction<Record<string, FilterValue>>>;
+  setActiveFilters: React.Dispatch<
+    React.SetStateAction<Record<string, FilterValue>>
+  >;
   setPage: (page: number) => void;
   setPerPage: (perPage: number) => void;
   setVisibleColumns: React.Dispatch<React.SetStateAction<string[]>>;
@@ -48,10 +56,16 @@ export interface UnifiedTableState {
   setSearchParams: (updates: Record<string, string | null>) => void;
 }
 
-function mergeStoredColumnOrder(storedColumns: string[], defaultColumns: string[]): string[] {
+function mergeStoredColumnOrder(
+  storedColumns: string[],
+  defaultColumns: string[],
+): string[] {
   if (!defaultColumns.length) return storedColumns;
 
-  const result = storedColumns.filter((id, index) => typeof id === "string" && storedColumns.indexOf(id) === index);
+  const result = storedColumns.filter(
+    (id, index) =>
+      typeof id === "string" && storedColumns.indexOf(id) === index,
+  );
 
   for (const defaultColumn of defaultColumns) {
     if (result.includes(defaultColumn)) continue;
@@ -102,6 +116,7 @@ export function useUnifiedTableState({
       const normalized = candidate ?? defaults.view;
       if (
         normalized === "table" ||
+        normalized === "board" ||
         normalized === "card" ||
         normalized === "list" ||
         normalized === "split"
@@ -128,11 +143,13 @@ export function useUnifiedTableState({
   const [searchInput, setSearchInputState] = React.useState(initialSearch);
   const [debouncedSearch, setDebouncedSearch] = React.useState(initialSearch);
   const [currentView, setCurrentView] = React.useState<ViewMode>(initialView);
-  const [activeFilters, setActiveFilters] = React.useState<Record<string, FilterValue>>(
-    defaults.filters,
-  );
+  const [activeFilters, setActiveFilters] = React.useState<
+    Record<string, FilterValue>
+  >(defaults.filters);
   const [page, setPage] = React.useState(
-    Number.isFinite(initialPage) && initialPage > 0 ? initialPage : defaults.page,
+    Number.isFinite(initialPage) && initialPage > 0
+      ? initialPage
+      : defaults.page,
   );
   const [perPage, setPerPage] = React.useState(
     Number.isFinite(initialPerPage) && initialPerPage > 0
@@ -256,8 +273,12 @@ export function useUnifiedTableState({
     }
 
     setCurrentView((prev: ViewMode) => (prev === nextView ? prev : nextView));
-    setSearchInputState((prev: string) => (prev === nextSearch ? prev : nextSearch));
-    setDebouncedSearch((prev: string) => (prev === nextSearch ? prev : nextSearch));
+    setSearchInputState((prev: string) =>
+      prev === nextSearch ? prev : nextSearch,
+    );
+    setDebouncedSearch((prev: string) =>
+      prev === nextSearch ? prev : nextSearch,
+    );
 
     const normalizedPage =
       Number.isFinite(nextPage) && nextPage > 0 ? nextPage : defaults.page;
@@ -266,10 +287,16 @@ export function useUnifiedTableState({
         ? Math.min(nextPerPage, 150)
         : defaults.perPage;
     setPage((prev) => (prev === normalizedPage ? prev : normalizedPage));
-    setPerPage((prev) => (prev === normalizedPerPage ? prev : normalizedPerPage));
+    setPerPage((prev) =>
+      prev === normalizedPerPage ? prev : normalizedPerPage,
+    );
     setSortBy((prev) => (prev === nextSortBy ? prev : nextSortBy));
     setSortDirection((prev) =>
-      prev === nextSortDirection ? prev : nextSortDirection === "desc" ? "desc" : "asc",
+      prev === nextSortDirection
+        ? prev
+        : nextSortDirection === "desc"
+          ? "desc"
+          : "asc",
     );
   }, [
     defaults.page,

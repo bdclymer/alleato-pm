@@ -34,7 +34,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -48,7 +52,13 @@ import {
   ModalHeader as DialogHeader,
   ModalTitle as DialogTitle,
 } from "@/components/ui/unified-modal";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
@@ -64,13 +74,20 @@ import { TableCountIndicator } from "./table-primitives";
 
 export { ExpandableSearch };
 
-export type ViewMode = "table" | "card" | "list" | "split";
+export type ViewMode = "table" | "board" | "card" | "list" | "split";
 export type TableDensity = "compact" | "default" | "comfortable";
 
 export interface FilterConfig {
   id: string;
   label: string;
-  type: "select" | "multiSelect" | "dateRange" | "text" | "boolean" | "date" | "number";
+  type:
+    | "select"
+    | "multiSelect"
+    | "dateRange"
+    | "text"
+    | "boolean"
+    | "date"
+    | "number";
   options?: { value: string; label: string }[];
   placeholder?: string;
 }
@@ -156,27 +173,45 @@ export function ViewSwitcher({
 }): ReactElement {
   const views: { mode: ViewMode; icon: ReactNode; label: string }[] = [
     { mode: "table", icon: <Table2 className="h-3.5 w-3.5" />, label: "Table" },
-    { mode: "card", icon: <LayoutGrid className="h-3.5 w-3.5" />, label: "Grid" },
+    {
+      mode: "board",
+      icon: <Columns3 className="h-3.5 w-3.5" />,
+      label: "Board",
+    },
+    {
+      mode: "card",
+      icon: <LayoutGrid className="h-3.5 w-3.5" />,
+      label: "Grid",
+    },
     { mode: "list", icon: <List className="h-3.5 w-3.5" />, label: "List" },
-    { mode: "split", icon: <PanelRight className="h-3.5 w-3.5" />, label: "Split" },
+    {
+      mode: "split",
+      icon: <PanelRight className="h-3.5 w-3.5" />,
+      label: "Split",
+    },
   ];
 
-  const filteredViews = views.filter((view) => enabledViews.includes(view.mode));
+  const filteredViews = views.filter((view) =>
+    enabledViews.includes(view.mode),
+  );
   if (filteredViews.length <= 1) return <></>;
 
   return (
-    <Tabs value={currentView} onValueChange={(value) => onViewChange(value as ViewMode)}>
+    <Tabs
+      value={currentView}
+      onValueChange={(value) => onViewChange(value as ViewMode)}
+    >
       <TabsList className="h-10 sm:h-8">
         {filteredViews.map((view) => (
-            <TabsTrigger
-              key={view.mode}
-              value={view.mode}
-              className="h-8 min-w-10 gap-1.5 px-2.5 sm:h-6 sm:min-w-0"
-            >
-              {view.icon}
-              <span className="hidden text-[12px] sm:inline">{view.label}</span>
-            </TabsTrigger>
-          ))}
+          <TabsTrigger
+            key={view.mode}
+            value={view.mode}
+            className="h-8 min-w-10 gap-1.5 px-2.5 sm:h-6 sm:min-w-0"
+          >
+            {view.icon}
+            <span className="hidden text-[12px] sm:inline">{view.label}</span>
+          </TabsTrigger>
+        ))}
       </TabsList>
     </Tabs>
   );
@@ -191,9 +226,13 @@ function FilterFields({
   activeFilters: Record<string, FilterValue>;
   onFilterChange: (filters: Record<string, FilterValue>) => void;
 }): ReactElement {
-  const selectFilters = filters.filter((filter) => filter.type === "select" && filter.options);
+  const selectFilters = filters.filter(
+    (filter) => filter.type === "select" && filter.options,
+  );
   const dateFilters = filters.filter((filter) => filter.type === "date");
-  const inputFilters = filters.filter((filter) => filter.type === "number" || filter.type === "text");
+  const inputFilters = filters.filter(
+    (filter) => filter.type === "number" || filter.type === "text",
+  );
 
   return (
     <div className="space-y-2">
@@ -234,14 +273,19 @@ function FilterFields({
         );
       })}
 
-      {selectFilters.length > 0 && (dateFilters.length > 0 || inputFilters.length > 0) && <div className="h-px bg-border/70" />}
+      {selectFilters.length > 0 &&
+        (dateFilters.length > 0 || inputFilters.length > 0) && (
+          <div className="h-px bg-border/70" />
+        )}
 
       {dateFilters.map((filter) => {
         const currentValue =
           typeof activeFilters[filter.id] === "string"
             ? (activeFilters[filter.id] as string)
             : "";
-        const selectedDate = currentValue ? new Date(currentValue + "T00:00:00") : undefined;
+        const selectedDate = currentValue
+          ? new Date(currentValue + "T00:00:00")
+          : undefined;
 
         return (
           <div
@@ -296,14 +340,18 @@ function FilterFields({
         );
       })}
 
-      {(selectFilters.length > 0 || dateFilters.length > 0) && inputFilters.length > 0 && <div className="h-px bg-border/70" />}
+      {(selectFilters.length > 0 || dateFilters.length > 0) &&
+        inputFilters.length > 0 && <div className="h-px bg-border/70" />}
 
       {inputFilters.map((filter) => (
         <div
           key={filter.id}
           className="flex items-center justify-between gap-3 px-2 py-1.5"
         >
-          <label htmlFor={`filter-${filter.id}`} className="text-sm text-foreground">
+          <label
+            htmlFor={`filter-${filter.id}`}
+            className="text-sm text-foreground"
+          >
             {filter.label}
           </label>
           <Input
@@ -364,7 +412,10 @@ export function FilterMenu({
                     {activeCount}
                   </span>
                 ) : null}
-                <TableCountIndicator count={activeCount} className="absolute -right-1 -top-1 bg-secondary text-secondary-foreground sm:hidden" />
+                <TableCountIndicator
+                  count={activeCount}
+                  className="absolute -right-1 -top-1 bg-secondary text-secondary-foreground sm:hidden"
+                />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
@@ -387,11 +438,11 @@ export function FilterMenu({
             ) : null}
           </div>
           <div className="p-2.5">
-          <FilterFields
-            filters={filters}
-            activeFilters={activeFilters}
-            onFilterChange={onFilterChange}
-          />
+            <FilterFields
+              filters={filters}
+              activeFilters={activeFilters}
+              onFilterChange={onFilterChange}
+            />
           </div>
         </div>
       </PopoverContent>
@@ -427,13 +478,20 @@ function MobileSettingsRow({
         {icon}
       </span>
       <span className="min-w-0 flex-1 text-base text-foreground">{label}</span>
-      {value ? <span className="shrink-0 text-base text-muted-foreground">{value}</span> : null}
-      {onClick ? <span className="text-xl leading-none text-muted-foreground/70">›</span> : null}
+      {value ? (
+        <span className="shrink-0 text-base text-muted-foreground">
+          {value}
+        </span>
+      ) : null}
+      {onClick ? (
+        <span className="text-xl leading-none text-muted-foreground/70">›</span>
+      ) : null}
     </Button>
   );
 }
 
 function getViewLabel(view: ViewMode): string {
+  if (view === "board") return "Board";
   if (view === "card") return "Grid";
   if (view === "list") return "List";
   if (view === "split") return "Split";
@@ -453,7 +511,10 @@ function getFirstActiveFilterLabel(
 
   const value = activeFilters[active.id];
   if (typeof value === "string" && active.options) {
-    return active.options.find((option) => option.value === value)?.label ?? active.label;
+    return (
+      active.options.find((option) => option.value === value)?.label ??
+      active.label
+    );
   }
 
   return active.label;
@@ -478,7 +539,12 @@ export function DensityToggle({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Row density">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                aria-label="Row density"
+              >
                 <AlignJustify className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -523,7 +589,12 @@ export function ColumnToggle({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Toggle columns">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                aria-label="Toggle columns"
+              >
                 <Columns3 className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -545,7 +616,9 @@ export function ColumnToggle({
                 if (checked) {
                   onColumnVisibilityChange([...visibleColumns, column.id]);
                 } else {
-                  onColumnVisibilityChange(visibleColumns.filter((existing) => existing !== column.id));
+                  onColumnVisibilityChange(
+                    visibleColumns.filter((existing) => existing !== column.id),
+                  );
                 }
               }}
             >
@@ -553,7 +626,11 @@ export function ColumnToggle({
             </DropdownMenuCheckboxItem>
           ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => onColumnVisibilityChange(columns.map((column) => column.id))}>
+        <DropdownMenuItem
+          onClick={() =>
+            onColumnVisibilityChange(columns.map((column) => column.id))
+          }
+        >
           Show all
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -562,7 +639,9 @@ export function ColumnToggle({
               Array.from(
                 new Set(
                   defaultColumns.concat(
-                    columns.filter((column) => column.alwaysVisible).map((column) => column.id),
+                    columns
+                      .filter((column) => column.alwaysVisible)
+                      .map((column) => column.id),
                   ),
                 ),
               ),
@@ -615,12 +694,12 @@ export function TableToolbar({
   // Resolve feature flags: new `features` object takes precedence,
   // legacy flat props are honoured for backwards-compatibility, default is enabled.
   const feat = {
-    search:        features?.search        ?? enableSearch        ?? true,
-    views:         features?.views         ?? enableViews         ?? true,
-    filters:       features?.filters       ?? enableFilters       ?? true,
-    columnToggle:  features?.columnToggle  ?? enableColumnToggle  ?? true,
-    export:        features?.export        ?? enableExport        ?? true,
-    bulkDelete:    features?.bulkDelete    ?? enableBulkDelete    ?? true,
+    search: features?.search ?? enableSearch ?? true,
+    views: features?.views ?? enableViews ?? true,
+    filters: features?.filters ?? enableFilters ?? true,
+    columnToggle: features?.columnToggle ?? enableColumnToggle ?? true,
+    export: features?.export ?? enableExport ?? true,
+    bulkDelete: features?.bulkDelete ?? enableBulkDelete ?? true,
   };
 
   const [isMobile, setIsMobile] = useState(false);
@@ -650,9 +729,16 @@ export function TableToolbar({
   const activeFilterCount = Object.values(activeFilters).filter(
     (value) => value !== undefined && value !== "" && value !== null,
   ).length;
-  const visibleColumnCount = columns.filter((column) => visibleColumns.includes(column.id)).length;
-  const firstActiveFilterLabel = getFirstActiveFilterLabel(filters, activeFilters);
-  const activeSortLabel = sortOptions.find((option) => option.id === sortBy)?.label;
+  const visibleColumnCount = columns.filter((column) =>
+    visibleColumns.includes(column.id),
+  ).length;
+  const firstActiveFilterLabel = getFirstActiveFilterLabel(
+    filters,
+    activeFilters,
+  );
+  const activeSortLabel = sortOptions.find(
+    (option) => option.id === sortBy,
+  )?.label;
 
   if (isMobile) {
     return (
@@ -668,10 +754,16 @@ export function TableToolbar({
                   aria-label="Open table settings"
                 >
                   <MoreVertical className="h-6 w-6" />
-                  <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
+                  <TableCountIndicator
+                    count={activeFilterCount}
+                    className="absolute -right-1 -top-1"
+                  />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full max-w-none gap-0 bg-muted p-0">
+              <SheetContent
+                side="right"
+                className="w-full max-w-none gap-0 bg-muted p-0"
+              >
                 <SheetHeader className="px-4 pb-5 pt-2 text-center">
                   <SheetTitle className="text-lg">Settings</SheetTitle>
                 </SheetHeader>
@@ -695,8 +787,12 @@ export function TableToolbar({
                         label="Layout"
                         value={getViewLabel(currentView)}
                         onClick={() => {
-                          const currentIndex = enabledViews.indexOf(currentView);
-                          const nextView = enabledViews[(currentIndex + 1) % enabledViews.length] ?? "table";
+                          const currentIndex =
+                            enabledViews.indexOf(currentView);
+                          const nextView =
+                            enabledViews[
+                              (currentIndex + 1) % enabledViews.length
+                            ] ?? "table";
                           onViewChange(nextView);
                         }}
                       />
@@ -708,7 +804,10 @@ export function TableToolbar({
                         value={visibleColumnCount}
                         onClick={() => {
                           setMobilePanelOpen(false);
-                          window.setTimeout(() => setMobileColumnsOpen(true), 160);
+                          window.setTimeout(
+                            () => setMobileColumnsOpen(true),
+                            160,
+                          );
                         }}
                       />
                     )}
@@ -716,10 +815,18 @@ export function TableToolbar({
                       <MobileSettingsRow
                         icon={<Filter className="h-5 w-5" />}
                         label="Filter"
-                        value={firstActiveFilterLabel ?? (activeFilterCount > 0 ? `${activeFilterCount}` : "None")}
+                        value={
+                          firstActiveFilterLabel ??
+                          (activeFilterCount > 0
+                            ? `${activeFilterCount}`
+                            : "None")
+                        }
                         onClick={() => {
                           setMobilePanelOpen(false);
-                          window.setTimeout(() => setMobileFilterOpen(true), 160);
+                          window.setTimeout(
+                            () => setMobileFilterOpen(true),
+                            160,
+                          );
                         }}
                       />
                     )}
@@ -731,7 +838,10 @@ export function TableToolbar({
                         onSortChange && sortOptions.length > 0
                           ? () => {
                               setMobilePanelOpen(false);
-                              window.setTimeout(() => setMobileSortOpen(true), 160);
+                              window.setTimeout(
+                                () => setMobileSortOpen(true),
+                                160,
+                              );
                             }
                           : undefined
                       }
@@ -740,9 +850,20 @@ export function TableToolbar({
                     <MobileSettingsRow
                       icon={<AlignJustify className="h-5 w-5" />}
                       label="Row density"
-                      value={density === "compact" ? "Compact" : density === "comfortable" ? "Comfortable" : "Default"}
+                      value={
+                        density === "compact"
+                          ? "Compact"
+                          : density === "comfortable"
+                            ? "Comfortable"
+                            : "Default"
+                      }
                       onClick={() => {
-                        const next: TableDensity = density === "compact" ? "default" : density === "default" ? "comfortable" : "compact";
+                        const next: TableDensity =
+                          density === "compact"
+                            ? "default"
+                            : density === "default"
+                              ? "comfortable"
+                              : "compact";
                         onDensityChange?.(next);
                       }}
                     />
@@ -761,13 +882,18 @@ export function TableToolbar({
                         value={searchValue ? "Active" : undefined}
                         onClick={() => {
                           setMobilePanelOpen(false);
-                          window.setTimeout(() => setMobileSearchOpen(true), 160);
+                          window.setTimeout(
+                            () => setMobileSearchOpen(true),
+                            160,
+                          );
                         }}
                       />
                     </div>
                   )}
 
-                  {(feat.export && onExport) || mobilePanelActions || (feat.bulkDelete && onBulkDelete) ? (
+                  {(feat.export && onExport) ||
+                  mobilePanelActions ||
+                  (feat.bulkDelete && onBulkDelete) ? (
                     <div className="overflow-hidden rounded-2xl bg-background">
                       {mobilePanelActions}
                       {feat.export && onExport ? (
@@ -829,12 +955,20 @@ export function TableToolbar({
             </Dialog>
 
             <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
-              <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
+              <SheetContent
+                side="right"
+                className="w-full max-w-none gap-0 p-0"
+              >
                 <SheetHeader className="px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <SheetTitle>Filter</SheetTitle>
                     {activeFilterCount > 0 ? (
-                      <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={onClearFilters}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={onClearFilters}
+                      >
                         Clear
                       </Button>
                     ) : null}
@@ -851,7 +985,10 @@ export function TableToolbar({
             </Sheet>
 
             <Sheet open={mobileColumnsOpen} onOpenChange={setMobileColumnsOpen}>
-              <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
+              <SheetContent
+                side="right"
+                className="w-full max-w-none gap-0 p-0"
+              >
                 <SheetHeader className="px-4 py-4">
                   <SheetTitle>Property visibility</SheetTitle>
                 </SheetHeader>
@@ -870,15 +1007,22 @@ export function TableToolbar({
                             checked={visibleColumns.includes(column.id)}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                onColumnVisibilityChange([...visibleColumns, column.id]);
+                                onColumnVisibilityChange([
+                                  ...visibleColumns,
+                                  column.id,
+                                ]);
                               } else {
                                 onColumnVisibilityChange(
-                                  visibleColumns.filter((existing) => existing !== column.id),
+                                  visibleColumns.filter(
+                                    (existing) => existing !== column.id,
+                                  ),
                                 );
                               }
                             }}
                           />
-                          <span className="text-base text-foreground">{column.label}</span>
+                          <span className="text-base text-foreground">
+                            {column.label}
+                          </span>
                         </label>
                       ))}
                   </div>
@@ -887,13 +1031,19 @@ export function TableToolbar({
             </Sheet>
 
             <Sheet open={mobileSortOpen} onOpenChange={setMobileSortOpen}>
-              <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
+              <SheetContent
+                side="right"
+                className="w-full max-w-none gap-0 p-0"
+              >
                 <SheetHeader className="px-4 py-4">
                   <SheetTitle>Sort</SheetTitle>
                 </SheetHeader>
                 <div className="space-y-4 px-4 py-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground" htmlFor="mobile-table-sort-column">
+                    <label
+                      className="text-sm font-medium text-foreground"
+                      htmlFor="mobile-table-sort-column"
+                    >
                       Field
                     </label>
                     <Select
@@ -903,7 +1053,10 @@ export function TableToolbar({
                         onSortChange(nextSortBy, sortDirection);
                       }}
                     >
-                      <SelectTrigger id="mobile-table-sort-column" className="h-10 w-full">
+                      <SelectTrigger
+                        id="mobile-table-sort-column"
+                        className="h-10 w-full"
+                      >
                         <SelectValue placeholder="Select field" />
                       </SelectTrigger>
                       <SelectContent>
@@ -916,10 +1069,14 @@ export function TableToolbar({
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-foreground">Direction</p>
+                    <p className="text-sm font-medium text-foreground">
+                      Direction
+                    </p>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
-                        variant={sortDirection === "asc" ? "default" : "outline"}
+                        variant={
+                          sortDirection === "asc" ? "default" : "outline"
+                        }
                         onClick={() => {
                           if (!onSortChange || !sortBy) return;
                           onSortChange(sortBy, "asc");
@@ -928,7 +1085,9 @@ export function TableToolbar({
                         Ascending
                       </Button>
                       <Button
-                        variant={sortDirection === "desc" ? "default" : "outline"}
+                        variant={
+                          sortDirection === "desc" ? "default" : "outline"
+                        }
                         onClick={() => {
                           if (!onSortChange || !sortBy) return;
                           onSortChange(sortBy, "desc");
@@ -960,7 +1119,9 @@ export function TableToolbar({
           </div>
         )}
 
-        {feat.views && <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />}
+        {feat.views && (
+          <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />
+        )}
 
         <div className="flex items-center gap-1 shrink-0">
           {feat.search && (
@@ -1039,7 +1200,6 @@ export function TableToolbar({
             </TooltipProvider>
           )}
         </div>
-
       </div>
     </div>
   );

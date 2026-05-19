@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -51,7 +45,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -78,12 +78,12 @@ import {
 import {
   buildTasksFilters,
   buildTasksTableColumns,
-  renderTasksCard,
   renderTasksList,
   renderTasksRowActions,
   tasksColumns,
   tasksDefaultVisibleColumns,
 } from "@/features/tasks/tasks-table-config";
+import { TasksBoardView } from "@/features/tasks/tasks-board-view";
 import {
   type EmailThreadMessage,
   type MeetingContextItem,
@@ -260,7 +260,13 @@ function TaskListHeader({
     >
       <div className="sticky left-0 z-50 flex h-9 items-center justify-center bg-background">
         <Checkbox
-          checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+          checked={
+            allVisibleSelected
+              ? true
+              : someVisibleSelected
+                ? "indeterminate"
+                : false
+          }
           onCheckedChange={(value) => onToggleVisibleSelection(value === true)}
           disabled={visibleTaskIds.length === 0}
           aria-label="Select visible tasks"
@@ -307,7 +313,7 @@ function projectOptionLabel(project: ProjectOption): string {
   const projectNumber = project.project_number ?? project["job number"] ?? null;
   return projectNumber
     ? `${projectNumber} - ${project.name ?? "Unnamed project"}`
-    : project.name ?? `Project ${project.id}`;
+    : (project.name ?? `Project ${project.id}`);
 }
 
 function taskProjectLabel(task: TasksRow, projects: ProjectOption[]): string {
@@ -369,9 +375,15 @@ function splitContextParagraphs(value: string): string[] {
   if (!value.trim()) return [];
 
   const cleanParagraph = (paragraph: string) =>
-    paragraph.replace(/[^\S\n]+/g, " ").replace(/\s([,.;:!?])/g, "$1").trim();
+    paragraph
+      .replace(/[^\S\n]+/g, " ")
+      .replace(/\s([,.;:!?])/g, "$1")
+      .trim();
 
-  const naturalParagraphs = value.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+  const naturalParagraphs = value
+    .split(/\n\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   if (naturalParagraphs.length > 1) {
     return naturalParagraphs.flatMap((paragraph) => {
@@ -392,7 +404,9 @@ function splitContextParagraphs(value: string): string[] {
     .trim();
 
   const sentences = normalized
-    .split(/(?<=[.!?])\s+(?=(?:[A-Z@]|\d|Thanks|Thank you|Please|Who|See|Let|Can|I|We)\b)/)
+    .split(
+      /(?<=[.!?])\s+(?=(?:[A-Z@]|\d|Thanks|Thank you|Please|Who|See|Let|Can|I|We)\b)/,
+    )
     .map((part) => part.trim())
     .filter(Boolean);
 
@@ -405,7 +419,7 @@ function splitContextParagraphs(value: string): string[] {
       return;
     }
 
-    if ((current.length + sentence.length) > 360) {
+    if (current.length + sentence.length > 360) {
       paragraphs.push(current);
       current = sentence;
       return;
@@ -457,7 +471,11 @@ function MeetingContextItemRow({ item }: { item: MeetingContextItem }) {
   );
 }
 
-function MeetingContextSectionBlock({ section }: { section: MeetingContextSection }) {
+function MeetingContextSectionBlock({
+  section,
+}: {
+  section: MeetingContextSection;
+}) {
   return (
     <section className="space-y-3 border-b border-border/35 py-4 first:pt-0 last:border-b-0 last:pb-0">
       <div className="text-xs font-semibold text-foreground">
@@ -475,7 +493,10 @@ function MeetingContextSectionBlock({ section }: { section: MeetingContextSectio
       {section.items.length > 0 && (
         <div>
           {section.items.map((item) => (
-            <MeetingContextItemRow key={`${section.title}-${item.label}`} item={item} />
+            <MeetingContextItemRow
+              key={`${section.title}-${item.label}`}
+              item={item}
+            />
           ))}
         </div>
       )}
@@ -483,19 +504,26 @@ function MeetingContextSectionBlock({ section }: { section: MeetingContextSectio
   );
 }
 
-function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { value: string; collapsedChars?: number }) {
+function ContextBody({
+  value,
+  collapsedChars = COLLAPSED_CONTEXT_CHARS,
+}: {
+  value: string;
+  collapsedChars?: number;
+}) {
   const [expanded, setExpanded] = useState(false);
   const isLong = value.length > collapsedChars;
   const visibleBody =
-    !isLong || expanded
-      ? value
-      : `${value.slice(0, collapsedChars).trim()}...`;
+    !isLong || expanded ? value : `${value.slice(0, collapsedChars).trim()}...`;
 
   return (
     <div className="space-y-2">
       <div className="space-y-2.5 text-xs leading-5 text-foreground">
         {splitContextParagraphs(visibleBody).map((paragraph, index) => (
-          <p key={`${paragraph.slice(0, 24)}-${index}`} className="break-words whitespace-pre-line">
+          <p
+            key={`${paragraph.slice(0, 24)}-${index}`}
+            className="break-words whitespace-pre-line"
+          >
             {paragraph}
           </p>
         ))}
@@ -516,7 +544,10 @@ function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { valu
 }
 
 function isEmailSourceContext(value: string): boolean {
-  return /\bSubject:\s/i.test(value) || /\bFrom:\s+[^<\n]{0,160}<[^>\n]+>/i.test(value);
+  return (
+    /\bSubject:\s/i.test(value) ||
+    /\bFrom:\s+[^<\n]{0,160}<[^>\n]+>/i.test(value)
+  );
 }
 
 function MessageCard({ message }: { message: EmailThreadMessage }) {
@@ -572,7 +603,10 @@ function SourceContextBlock({ value }: { value: string }) {
         </div>
         <div className="divide-y-0">
           {teamsConversation.messages.map((message) => (
-            <TeamsMessageRow key={`${message.date}-${message.author}`} message={message} />
+            <TeamsMessageRow
+              key={`${message.date}-${message.author}`}
+              message={message}
+            />
           ))}
         </div>
       </div>
@@ -600,7 +634,10 @@ function SourceContextBlock({ value }: { value: string }) {
     return (
       <div className="w-full rounded-md bg-muted/20 px-4 py-4">
         {messages.map((message, index) => (
-          <MessageCard key={`${message.subject ?? "message"}-${message.date ?? index}`} message={message} />
+          <MessageCard
+            key={`${message.subject ?? "message"}-${message.date ?? index}`}
+            message={message}
+          />
         ))}
       </div>
     );
@@ -626,15 +663,20 @@ const STATUS_SELECT_CLASSES: Record<DisplayStatus, string> = {
   in_progress: "text-blue-700 dark:text-blue-400",
 };
 
-const PRIORITY_META: Record<string, { dot: string; badge: string; label: string }> = {
+const PRIORITY_META: Record<
+  string,
+  { dot: string; badge: string; label: string }
+> = {
   high: {
     dot: "bg-red-400",
-    badge: "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400",
+    badge:
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400",
     label: "High priority",
   },
   medium: {
     dot: "bg-amber-400",
-    badge: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400",
+    badge:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400",
     label: "Medium priority",
   },
   low: {
@@ -648,7 +690,9 @@ const PRIORITY_META: Record<string, { dot: string; badge: string; label: string 
 // Resizable Panel Hook
 // ---------------------------------------------------------------------------
 
-function useResizablePanel(containerRef: React.RefObject<HTMLDivElement | null>) {
+function useResizablePanel(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+) {
   const [leftPct, setLeftPct] = useState(PANEL_DEFAULT_PCT);
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -658,21 +702,28 @@ function useResizablePanel(containerRef: React.RefObject<HTMLDivElement | null>)
     setLeftPct(getSavedPanelPct());
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isDragging.current = true;
-    startX.current = e.clientX;
-    startPct.current = leftPct;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  }, [leftPct]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      isDragging.current = true;
+      startX.current = e.clientX;
+      startPct.current = leftPct;
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    },
+    [leftPct],
+  );
 
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
       if (!isDragging.current) return;
-      const containerWidth = containerRef.current?.offsetWidth ?? window.innerWidth;
+      const containerWidth =
+        containerRef.current?.offsetWidth ?? window.innerWidth;
       const deltaPct = ((e.clientX - startX.current) / containerWidth) * 100;
-      const newPct = Math.min(PANEL_MAX_PCT, Math.max(PANEL_MIN_PCT, startPct.current + deltaPct));
+      const newPct = Math.min(
+        PANEL_MAX_PCT,
+        Math.max(PANEL_MIN_PCT, startPct.current + deltaPct),
+      );
       setLeftPct(newPct);
     }
     function handleMouseUp() {
@@ -728,7 +779,9 @@ function TaskListItem({
   const sourceLabel = getTaskSourceLabel(item);
   const priority = (item.priority ?? "").toLowerCase();
   const priorityMeta = PRIORITY_META[priority];
-  const priorityLabel = item.priority ? formatPriorityLabel(item.priority) : "—";
+  const priorityLabel = item.priority
+    ? formatPriorityLabel(item.priority)
+    : "—";
   const isDone = ds === "done";
   const assignedBy = item.assigned_by ?? "—";
   const assignedDate = formatShortDate(item.created_at);
@@ -741,85 +794,114 @@ function TaskListItem({
 
   return (
     <SwipeableListRow onEdit={onClick} onDelete={onDelete}>
-    <div
-      role="button"
-      tabIndex={0}
-      data-task-item
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onClick();
-        }
-      }}
-      className={cn(
-        "group grid cursor-pointer items-center border-b border-border/30 text-sm transition-colors",
-        isSelected
-          ? "bg-accent"
-          : "hover:bg-muted/50",
-      )}
-      style={{
-        gridTemplateColumns: TASK_LIST_GRID_TEMPLATE,
-        minWidth: TASK_LIST_MIN_WIDTH,
-      }}
-    >
       <div
+        role="button"
+        tabIndex={0}
+        data-task-item
+        onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onClick();
+          }
+        }}
         className={cn(
-          "sticky left-0 z-20 flex min-h-12 self-stretch items-center justify-center",
-          pinnedCellClassName,
+          "group grid cursor-pointer items-center border-b border-border/30 text-sm transition-colors",
+          isSelected ? "bg-accent" : "hover:bg-muted/50",
         )}
+        style={{
+          gridTemplateColumns: TASK_LIST_GRID_TEMPLATE,
+          minWidth: TASK_LIST_MIN_WIDTH,
+        }}
       >
-        <Checkbox
-          checked={isChecked}
-          onCheckedChange={(value) => onCheckedChange(value === true)}
-          onClick={(event) => event.stopPropagation()}
-          aria-label={`Select ${item.description || item.title || "task"}`}
-        />
-      </div>
-      <div
-        className={cn(
-          "sticky z-10 flex min-h-12 min-w-0 self-stretch items-start gap-2 overflow-hidden border-r border-border/30 px-2 py-2.5",
-          pinnedCellClassName,
-        )}
-        style={{ left: TASK_LIST_PINNED_TASK_LEFT }}
-      >
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <p
-            className={cn(
-              "line-clamp-2 min-w-0 text-sm leading-snug",
-              isSelected ? "font-medium text-foreground" : "text-foreground/90",
-              isDone && "text-muted-foreground line-through decoration-muted-foreground/40",
+        <div
+          className={cn(
+            "sticky left-0 z-20 flex min-h-12 self-stretch items-center justify-center",
+            pinnedCellClassName,
+          )}
+        >
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={(value) => onCheckedChange(value === true)}
+            onClick={(event) => event.stopPropagation()}
+            aria-label={`Select ${item.description || item.title || "task"}`}
+          />
+        </div>
+        <div
+          className={cn(
+            "sticky z-10 flex min-h-12 min-w-0 self-stretch items-start gap-2 overflow-hidden border-r border-border/30 px-2 py-2.5",
+            pinnedCellClassName,
+          )}
+          style={{ left: TASK_LIST_PINNED_TASK_LEFT }}
+        >
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <p
+              className={cn(
+                "line-clamp-2 min-w-0 text-sm leading-snug",
+                isSelected
+                  ? "font-medium text-foreground"
+                  : "text-foreground/90",
+                isDone &&
+                  "text-muted-foreground line-through decoration-muted-foreground/40",
+              )}
+            >
+              {item.description || item.title || "Untitled task"}
+            </p>
+          </div>
+        </div>
+        <div
+          className="min-w-0 truncate px-2 text-sm text-muted-foreground"
+          title={projectLabel}
+        >
+          {projectLabel}
+        </div>
+        <div
+          className="min-w-0 truncate px-2 text-sm text-foreground"
+          title={assignedTo}
+        >
+          {assignedTo}
+        </div>
+        <div
+          className="min-w-0 truncate px-2 text-sm text-muted-foreground"
+          title={sourceLabel}
+        >
+          {sourceLabel || "—"}
+        </div>
+        <div
+          className="min-w-0 truncate px-2 text-sm text-muted-foreground"
+          title={sourceDate}
+        >
+          {sourceDate}
+        </div>
+        <div
+          className="min-w-0 truncate px-2 text-sm text-muted-foreground"
+          title={assignedDate}
+        >
+          {assignedDate}
+        </div>
+        <div
+          className="min-w-0 truncate px-2 text-sm text-muted-foreground"
+          title={assignedBy}
+        >
+          {assignedBy}
+        </div>
+        <div
+          className="min-w-0 truncate px-2 text-sm text-muted-foreground"
+          title={priorityLabel}
+        >
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            {priorityMeta && (
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 shrink-0 rounded-full",
+                  priorityMeta.dot,
+                )}
+              />
             )}
-          >
-            {item.description || item.title || "Untitled task"}
-          </p>
+            <span className="truncate">{priorityLabel}</span>
+          </span>
         </div>
       </div>
-      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={projectLabel}>
-        {projectLabel}
-      </div>
-      <div className="min-w-0 truncate px-2 text-sm text-foreground" title={assignedTo}>
-        {assignedTo}
-      </div>
-      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={sourceLabel}>
-        {sourceLabel || "—"}
-      </div>
-      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={sourceDate}>
-        {sourceDate}
-      </div>
-      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={assignedDate}>
-        {assignedDate}
-      </div>
-      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={assignedBy}>
-        {assignedBy}
-      </div>
-      <div className="min-w-0 truncate px-2 text-sm text-muted-foreground" title={priorityLabel}>
-        <span className="inline-flex min-w-0 items-center gap-1.5">
-          {priorityMeta && <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", priorityMeta.dot)} />}
-          <span className="truncate">{priorityLabel}</span>
-        </span>
-      </div>
-    </div>
     </SwipeableListRow>
   );
 }
@@ -858,7 +940,10 @@ function TaskDetailRow({
   );
 }
 
-function updateTaskCategoryLocally(task: TasksRow, category: string | null): TasksRow {
+function updateTaskCategoryLocally(
+  task: TasksRow,
+  category: string | null,
+): TasksRow {
   const metadata =
     typeof task.extraction_metadata === "object" &&
     task.extraction_metadata !== null &&
@@ -896,7 +981,11 @@ function TaskDetail({
   updatingId: string | null;
   deletingId: string | null;
   onUpdateStatus: (id: string, status: string) => void;
-  onUpdateTask: (id: string, patch: TaskPatch, localPatch?: Partial<TasksRow>) => Promise<boolean> | boolean;
+  onUpdateTask: (
+    id: string,
+    patch: TaskPatch,
+    localPatch?: Partial<TasksRow>,
+  ) => Promise<boolean> | boolean;
   onDelete: (id: string) => void;
   onBack?: () => void;
   projects: ProjectOption[];
@@ -910,14 +999,25 @@ function TaskDetail({
       ? `email:${task.assignee_email.toLowerCase()}`
       : "__unassigned__";
   const matchedAssigneeUser =
-    users.find((u) => u.person_id && task.assignee_person_id && u.person_id === task.assignee_person_id) ??
     users.find(
-      (u) => u.email && task.assignee_email && u.email.toLowerCase() === task.assignee_email?.toLowerCase(),
+      (u) =>
+        u.person_id &&
+        task.assignee_person_id &&
+        u.person_id === task.assignee_person_id,
+    ) ??
+    users.find(
+      (u) =>
+        u.email &&
+        task.assignee_email &&
+        u.email.toLowerCase() === task.assignee_email?.toLowerCase(),
     ) ??
     null;
-  const fallbackAssigneeLabel = task.assignee_name || task.assignee_email || null;
+  const fallbackAssigneeLabel =
+    task.assignee_name || task.assignee_email || null;
   const [isEditingText, setIsEditingText] = useState(false);
-  const [taskTextDraft, setTaskTextDraft] = useState(task.description || task.title || "");
+  const [taskTextDraft, setTaskTextDraft] = useState(
+    task.description || task.title || "",
+  );
   const taskTextInputRef = useRef<HTMLTextAreaElement | null>(null);
   const ds = toDisplayStatus(task.status);
   const sourceLabel = getTaskSourceLabel(task);
@@ -931,9 +1031,12 @@ function TaskDetail({
   const extractionModelLabel = task.extraction_model ?? "Untracked";
   const extractionPromptLabel = task.extraction_prompt_version ?? "Untracked";
   const taskProjectId = task.project_id ?? task.project_ids?.[0] ?? null;
-  const selectedProjectValue = taskProjectId ? String(taskProjectId) : "__none__";
+  const selectedProjectValue = taskProjectId
+    ? String(taskProjectId)
+    : "__none__";
   const selectedCategoryValue = category || "__none__";
-  const selectedPriorityValue = task.priority?.trim().toLowerCase() || "__none__";
+  const selectedPriorityValue =
+    task.priority?.trim().toLowerCase() || "__none__";
   const taskFeedbackSnapshot = {
     name: task.description || task.title || "Untitled task",
     assignee: task.assignee_name || task.assignee_email,
@@ -995,7 +1098,11 @@ function TaskDetail({
       return;
     }
 
-    const updated = await onUpdateTask(task.id, { description }, { description });
+    const updated = await onUpdateTask(
+      task.id,
+      { description },
+      { description },
+    );
     if (!updated) return;
     setIsEditingText(false);
   }
@@ -1004,7 +1111,6 @@ function TaskDetail({
     <>
       {ConfirmDialog}
       <div className="mx-auto max-w-3xl px-6 py-7">
-
         {onBack && (
           <Button
             type="button"
@@ -1031,7 +1137,10 @@ function TaskDetail({
                       setTaskTextDraft(task.description || task.title || "");
                       setIsEditingText(false);
                     }
-                    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                    if (
+                      (event.metaKey || event.ctrlKey) &&
+                      event.key === "Enter"
+                    ) {
                       event.preventDefault();
                       void handleSaveTaskText();
                     }
@@ -1044,10 +1153,14 @@ function TaskDetail({
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() => { void handleSaveTaskText(); }}
+                    onClick={() => {
+                      void handleSaveTaskText();
+                    }}
                     disabled={updatingId === task.id}
                   >
-                    {updatingId === task.id && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {updatingId === task.id && (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    )}
                     Save
                   </Button>
                   <Button
@@ -1102,7 +1215,9 @@ function TaskDetail({
               <DropdownMenuItem
                 variant="destructive"
                 disabled={deletingId === task.id}
-                onSelect={() => { void handleDelete(); }}
+                onSelect={() => {
+                  void handleDelete();
+                }}
               >
                 <Trash2 className="h-4 w-4" />
                 Delete task
@@ -1116,10 +1231,14 @@ function TaskDetail({
             <TaskDetailRow label="Status">
               <Select
                 value={task.status ?? "open"}
-                onValueChange={(value) => task.id && onUpdateStatus(task.id, value)}
+                onValueChange={(value) =>
+                  task.id && onUpdateStatus(task.id, value)
+                }
                 disabled={updatingId === task.id}
               >
-                <SelectTrigger className={cn(GHOST_SELECT_CLASS, STATUS_SELECT_CLASSES[ds])}>
+                <SelectTrigger
+                  className={cn(GHOST_SELECT_CLASS, STATUS_SELECT_CLASSES[ds])}
+                >
                   {updatingId === task.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
@@ -1128,7 +1247,11 @@ function TaskDetail({
                 </SelectTrigger>
                 <SelectContent>
                   {statusOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                      className="text-sm"
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}
@@ -1142,7 +1265,11 @@ function TaskDetail({
                 onValueChange={(value) => {
                   if (!task.id) return;
                   const nextPriority = value === "__none__" ? null : value;
-                  onUpdateTask(task.id, { priority: nextPriority }, { priority: nextPriority });
+                  onUpdateTask(
+                    task.id,
+                    { priority: nextPriority },
+                    { priority: nextPriority },
+                  );
                 }}
                 disabled={updatingId === task.id}
               >
@@ -1157,9 +1284,15 @@ function TaskDetail({
                   {TASK_PRIORITY_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       <span className="inline-flex items-center gap-2">
-                        {option.value !== "__none__" && PRIORITY_META[option.value] && (
-                          <span className={cn("h-1.5 w-1.5 rounded-full", PRIORITY_META[option.value].dot)} />
-                        )}
+                        {option.value !== "__none__" &&
+                          PRIORITY_META[option.value] && (
+                            <span
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full",
+                                PRIORITY_META[option.value].dot,
+                              )}
+                            />
+                          )}
                         {option.label}
                       </span>
                     </SelectItem>
@@ -1185,7 +1318,9 @@ function TaskDetail({
                     );
                     return;
                   }
-                  const nextUser = users.find((u) => `person:${u.person_id ?? ""}` === value);
+                  const nextUser = users.find(
+                    (u) => `person:${u.person_id ?? ""}` === value,
+                  );
                   if (!nextUser) return;
                   onUpdateTask(
                     task.id,
@@ -1204,12 +1339,12 @@ function TaskDetail({
                     placeholder={
                       usersLoading
                         ? "Loading…"
-                        : fallbackAssigneeLabel ?? "Unassigned"
+                        : (fallbackAssigneeLabel ?? "Unassigned")
                     }
                   >
                     {matchedAssigneeUser
                       ? userOptionLabel(matchedAssigneeUser)
-                      : fallbackAssigneeLabel ?? undefined}
+                      : (fallbackAssigneeLabel ?? undefined)}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -1217,7 +1352,10 @@ function TaskDetail({
                   {users
                     .filter((u) => u.person_id)
                     .map((user) => (
-                      <SelectItem key={user.id} value={`person:${user.person_id}`}>
+                      <SelectItem
+                        key={user.id}
+                        value={`person:${user.person_id}`}
+                      >
                         {userOptionLabel(user)}
                       </SelectItem>
                     ))}
@@ -1246,14 +1384,18 @@ function TaskDetail({
                     {
                       project_id: pid,
                       project_ids: [pid],
-                      project_name: project ? projectOptionLabel(project) : task.project_name,
+                      project_name: project
+                        ? projectOptionLabel(project)
+                        : task.project_name,
                     },
                   );
                 }}
                 disabled={updatingId === task.id || projectsLoading}
               >
                 <SelectTrigger className={cn(GHOST_SELECT_CLASS, "max-w-xs")}>
-                  <SelectValue placeholder={projectsLoading ? "Loading…" : "No project"} />
+                  <SelectValue
+                    placeholder={projectsLoading ? "Loading…" : "No project"}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">No project</SelectItem>
@@ -1306,14 +1448,20 @@ function TaskDetail({
                   onChange={(event) => {
                     if (!task.id) return;
                     const dueDate = event.target.value || null;
-                    onUpdateTask(task.id, { due_date: dueDate }, { due_date: dueDate });
+                    onUpdateTask(
+                      task.id,
+                      { due_date: dueDate },
+                      { due_date: dueDate },
+                    );
                   }}
                   disabled={updatingId === task.id}
                   className={GHOST_DATE_CLASS}
                   aria-label="Task due date"
                 />
                 {task.due_date && overdue && ds !== "done" && (
-                  <span className="text-sm font-medium text-destructive">Overdue</span>
+                  <span className="text-sm font-medium text-destructive">
+                    Overdue
+                  </span>
                 )}
               </div>
             </TaskDetailRow>
@@ -1341,7 +1489,9 @@ function TaskDetail({
                   <a
                     href={sourceTarget.href}
                     target={sourceTarget.external ? "_blank" : undefined}
-                    rel={sourceTarget.external ? "noopener noreferrer" : undefined}
+                    rel={
+                      sourceTarget.external ? "noopener noreferrer" : undefined
+                    }
                     className="inline-flex min-w-0 items-center gap-2 text-foreground underline-offset-4 hover:text-primary hover:underline"
                   >
                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
@@ -1354,7 +1504,9 @@ function TaskDetail({
                   </a>
                 ) : (
                   <span className="inline-flex min-w-0 items-center gap-2 text-foreground">
-                    <span className="truncate">{sourceLinkLabel || "No source link"}</span>
+                    <span className="truncate">
+                      {sourceLinkLabel || "No source link"}
+                    </span>
                     {task.assigned_by && (
                       <span className="shrink-0 text-xs text-muted-foreground">
                         via {task.assigned_by}
@@ -1367,7 +1519,9 @@ function TaskDetail({
 
             <TaskDetailRow label="Generated">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="shrink-0 text-foreground">{extractionSourceLabel}</span>
+                <span className="shrink-0 text-foreground">
+                  {extractionSourceLabel}
+                </span>
                 <span className="min-w-0 truncate text-xs text-muted-foreground">
                   {extractionModelLabel} · {extractionPromptLabel}
                 </span>
@@ -1379,7 +1533,9 @@ function TaskDetail({
         {/* Source context — outside the card since it can be long */}
         {task.source_context && (
           <div className="mt-4 space-y-2">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">Context</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+              Context
+            </p>
             <SourceContextBlock value={task.source_context} />
           </div>
         )}
@@ -1413,7 +1569,11 @@ function EmptyDetail({
         <ClipboardList className="h-6 w-6 text-muted-foreground" />
       </div>
       <p className="mb-1 text-sm font-semibold text-foreground">
-        {loading ? "Loading tasks…" : total === 0 ? "No tasks yet" : "Select a task"}
+        {loading
+          ? "Loading tasks…"
+          : total === 0
+            ? "No tasks yet"
+            : "Select a task"}
       </p>
       <p className="mb-6 max-w-xs text-xs text-muted-foreground leading-relaxed">
         {scope === "mine"
@@ -1423,17 +1583,23 @@ function EmptyDetail({
       {!loading && total > 0 && (
         <div className="flex items-center gap-8 text-xs">
           <div className="text-center">
-            <p className="text-2xl font-bold text-foreground tabular-nums">{openCount}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">
+              {openCount}
+            </p>
             <p className="mt-0.5 text-muted-foreground">Open</p>
           </div>
           <div className="h-8 w-px bg-border/60" />
           <div className="text-center">
-            <p className="text-2xl font-bold text-foreground tabular-nums">{doneCount}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">
+              {doneCount}
+            </p>
             <p className="mt-0.5 text-muted-foreground">Done</p>
           </div>
           <div className="h-8 w-px bg-border/60" />
           <div className="text-center">
-            <p className="text-2xl font-bold text-foreground tabular-nums">{total}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">
+              {total}
+            </p>
             <p className="mt-0.5 text-muted-foreground">Total</p>
           </div>
         </div>
@@ -1450,7 +1616,7 @@ interface TasksInboxProps {
   projectId?: string | null;
   projectName?: string | null;
   defaultScope?: Scope;
-  defaultView?: "table" | "card" | "split";
+  defaultView?: "table" | "board" | "split";
   showTabs?: boolean;
 }
 
@@ -1464,10 +1630,11 @@ export function TasksInbox({
   const isProjectScoped = Boolean(projectId);
 
   const router = useRouter();
-  const pathname = usePathname() ?? (isProjectScoped ? `/${projectId}/tasks` : "/tasks");
+  const pathname =
+    usePathname() ?? (isProjectScoped ? `/${projectId}/tasks` : "/tasks");
   const searchParamsRaw = useSearchParams();
-  const searchParams =
-    (searchParamsRaw ?? new URLSearchParams()) as ReadonlyURLSearchParams;
+  const searchParams = (searchParamsRaw ??
+    new URLSearchParams()) as ReadonlyURLSearchParams;
   const { profile, isLoading: profileLoading } = useCurrentUserProfile();
   const isAdmin = profile?.isAdmin === true;
 
@@ -1475,9 +1642,7 @@ export function TasksInbox({
   const rawTaskId = searchParams.get("task");
   const rawView = searchParams.get("view");
   const initialScope: Scope =
-    rawScope === "all" || rawScope === "mine"
-      ? rawScope
-      : defaultScope;
+    rawScope === "all" || rawScope === "mine" ? rawScope : defaultScope;
 
   const [scope, setScope] = useState<Scope>(initialScope);
   const [items, setItems] = useState<TasksRow[]>([]);
@@ -1496,7 +1661,9 @@ export function TasksInbox({
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(Boolean(rawTaskId));
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const [selectedTaskDetails, setSelectedTaskDetails] = useState<TasksRow | null | undefined>(undefined);
+  const [selectedTaskDetails, setSelectedTaskDetails] = useState<
+    TasksRow | null | undefined
+  >(undefined);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -1522,7 +1689,10 @@ export function TasksInbox({
     containerRef.current = node;
     if (!node || typeof window === "undefined") return;
 
-    const nextHeight = Math.max(window.innerHeight - node.getBoundingClientRect().top, 320);
+    const nextHeight = Math.max(
+      window.innerHeight - node.getBoundingClientRect().top,
+      320,
+    );
     setSplitViewHeight((prev) => (prev === nextHeight ? prev : nextHeight));
   }, []);
 
@@ -1533,7 +1703,7 @@ export function TasksInbox({
     router,
     defaults: {
       view: defaultView,
-      allowedViews: ["table", "card", "split"],
+      allowedViews: ["table", "board", "split"],
       page: 1,
       perPage: 25,
       search: "",
@@ -1558,11 +1728,19 @@ export function TasksInbox({
 
   useEffect(() => {
     if (!isMobileViewport || rawView) return;
-    if (tableState.currentView === "card") return;
+    if (tableState.currentView === "board") return;
 
-    tableState.setCurrentView("card");
-    tableState.setSearchParams({ view: "card" });
+    tableState.setCurrentView("board");
+    tableState.setSearchParams({ view: "board" });
   }, [isMobileViewport, rawView, tableState]);
+
+  useEffect(() => {
+    if (rawView !== "card") return;
+    if (tableState.currentView === "board") return;
+
+    tableState.setCurrentView("board");
+    tableState.setSearchParams({ view: "board" });
+  }, [rawView, tableState]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1571,7 +1749,13 @@ export function TasksInbox({
     window.addEventListener("resize", syncSplitViewHeight);
 
     return () => window.removeEventListener("resize", syncSplitViewHeight);
-  }, [filter, scope, selectedTaskIds.length, syncSplitViewHeight, tableState.currentView]);
+  }, [
+    filter,
+    scope,
+    selectedTaskIds.length,
+    syncSplitViewHeight,
+    tableState.currentView,
+  ]);
 
   useEffect(() => {
     if (!rawTaskId) return;
@@ -1587,7 +1771,10 @@ export function TasksInbox({
   // Merge lazily loaded detail data into the selected task for deep links and source context.
   const selectedWithContext = useMemo(() => {
     if (selectedTaskDetails) {
-      return { ...(selectedListItem ?? selectedTaskDetails), ...selectedTaskDetails };
+      return {
+        ...(selectedListItem ?? selectedTaskDetails),
+        ...selectedTaskDetails,
+      };
     }
     return selectedListItem;
   }, [selectedListItem, selectedTaskDetails]);
@@ -1602,7 +1789,9 @@ export function TasksInbox({
     setSelectedTaskDetails(undefined);
     let cancelled = false;
     void apiFetch<{ task: TasksRow }>(`/api/tasks/${selectedId}`)
-      .then((data) => { if (!cancelled) setSelectedTaskDetails(data.task ?? null); })
+      .then((data) => {
+        if (!cancelled) setSelectedTaskDetails(data.task ?? null);
+      })
       .catch((err) => {
         if (cancelled) return;
         reportNonCriticalFailure({
@@ -1614,7 +1803,9 @@ export function TasksInbox({
         });
         setSelectedTaskDetails(null);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedId]);
 
   // ---- Fetch ----
@@ -1640,7 +1831,9 @@ export function TasksInbox({
     }
   }, [isProjectScoped, projectId, scope]);
 
-  useEffect(() => { fetchItems(); }, [fetchItems]);
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1648,16 +1841,20 @@ export function TasksInbox({
     async function fetchProjects() {
       setProjectsLoading(true);
       try {
-        const result = await apiFetch<{ data?: ProjectOption[] }>("/api/projects?limit=250&archived=false", {
-          cache: "no-store",
-        });
+        const result = await apiFetch<{ data?: ProjectOption[] }>(
+          "/api/projects?limit=250&archived=false",
+          {
+            cache: "no-store",
+          },
+        );
         if (!cancelled) setProjects(result.data ?? []);
       } catch (err) {
         if (!cancelled) {
           notifyTasksFailure({
             operation: "load-project-options",
             title: "Could not load project options",
-            fallback: "Project options could not be loaded for the task filters.",
+            fallback:
+              "Project options could not be loaded for the task filters.",
             error: err,
             metadata: { scope },
           });
@@ -1668,7 +1865,9 @@ export function TasksInbox({
     }
 
     void fetchProjects();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -1697,7 +1896,9 @@ export function TasksInbox({
     }
 
     void fetchUsers();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleScopeChange = useCallback((nextScope: Scope) => {
@@ -1710,9 +1911,7 @@ export function TasksInbox({
 
   useEffect(() => {
     const nextScope: Scope =
-      rawScope === "all" || rawScope === "mine"
-        ? rawScope
-        : defaultScope;
+      rawScope === "all" || rawScope === "mine" ? rawScope : defaultScope;
     if (nextScope !== scope) handleScopeChange(nextScope);
   }, [defaultScope, handleScopeChange, rawScope, scope]);
 
@@ -1720,7 +1919,15 @@ export function TasksInbox({
     const basePath = isProjectScoped ? `/${projectId}/tasks` : "/tasks";
     const tabs: { label: string; href: string; scope: Scope }[] = [
       { label: "My Tasks", href: `${basePath}?scope=mine`, scope: "mine" },
-      ...(isAdmin ? [{ label: "All Tasks", href: `${basePath}?scope=all`, scope: "all" as Scope }] : []),
+      ...(isAdmin
+        ? [
+            {
+              label: "All Tasks",
+              href: `${basePath}?scope=all`,
+              scope: "all" as Scope,
+            },
+          ]
+        : []),
     ];
     return tabs.map((tab) => ({
       label: tab.label,
@@ -1742,7 +1949,11 @@ export function TasksInbox({
         : null;
 
     return items.filter((item) => {
-      if (sourceFilter && getTaskSourceLabel(item).toLowerCase() !== sourceFilter) return false;
+      if (
+        sourceFilter &&
+        getTaskSourceLabel(item).toLowerCase() !== sourceFilter
+      )
+        return false;
 
       if (!searchTerm) return true;
 
@@ -1770,24 +1981,25 @@ export function TasksInbox({
   // so the list reflects the active tab without blocking the split view from rendering.
   const filteredItems = useMemo(() => {
     const activeStatus =
-      tableState.activeFilters.status === "open" || tableState.activeFilters.status === "done"
+      tableState.activeFilters.status === "open" ||
+      tableState.activeFilters.status === "done"
         ? tableState.activeFilters.status
         : filter;
 
     return baseFilteredItems.filter((item) => {
       const ds = toDisplayStatus(item.status);
-      if (activeStatus === "open" && !(ds === "open" || ds === "in_progress")) return false;
+      if (activeStatus === "open" && !(ds === "open" || ds === "in_progress"))
+        return false;
       if (activeStatus === "done" && ds !== "done") return false;
       return true;
     });
-  }, [
-    baseFilteredItems,
-    filter,
-    tableState.activeFilters.status,
-  ]);
+  }, [baseFilteredItems, filter, tableState.activeFilters.status]);
 
   const visibleTaskIds = useMemo(
-    () => filteredItems.map((item) => item.id).filter((id): id is string => Boolean(id)),
+    () =>
+      filteredItems
+        .map((item) => item.id)
+        .filter((id): id is string => Boolean(id)),
     [filteredItems],
   );
 
@@ -1820,7 +2032,8 @@ export function TasksInbox({
   // Auto-select first item
   useEffect(() => {
     if (loading || filteredItems.length === 0) return;
-    const currentExists = selectedId && filteredItems.some((i) => i.id === selectedId);
+    const currentExists =
+      selectedId && filteredItems.some((i) => i.id === selectedId);
     if (!currentExists) {
       setSelectedId(filteredItems[0].id);
       setFocusedIndex(0);
@@ -1838,7 +2051,12 @@ export function TasksInbox({
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return;
       switch (e.key) {
         case "ArrowDown": {
           e.preventDefault();
@@ -1846,7 +2064,9 @@ export function TasksInbox({
           const nextIdx = Math.min(focusedIndex + 1, filteredItems.length - 1);
           setFocusedIndex(nextIdx);
           setSelectedId(filteredItems[nextIdx].id);
-          listPanelRef.current?.querySelectorAll("[data-task-item]")[nextIdx]?.scrollIntoView({ block: "nearest" });
+          listPanelRef.current
+            ?.querySelectorAll("[data-task-item]")
+            [nextIdx]?.scrollIntoView({ block: "nearest" });
           break;
         }
         case "ArrowUp": {
@@ -1855,7 +2075,9 @@ export function TasksInbox({
           const prevIdx = Math.max(focusedIndex - 1, 0);
           setFocusedIndex(prevIdx);
           setSelectedId(filteredItems[prevIdx].id);
-          listPanelRef.current?.querySelectorAll("[data-task-item]")[prevIdx]?.scrollIntoView({ block: "nearest" });
+          listPanelRef.current
+            ?.querySelectorAll("[data-task-item]")
+            [prevIdx]?.scrollIntoView({ block: "nearest" });
           break;
         }
         case "Enter":
@@ -1873,7 +2095,11 @@ export function TasksInbox({
   }, [filteredItems, focusedIndex]);
 
   // ---- Update task fields ----
-  async function updateTask(id: string, patch: TaskPatch, localPatch: Partial<TasksRow> = patch) {
+  async function updateTask(
+    id: string,
+    patch: TaskPatch,
+    localPatch: Partial<TasksRow> = patch,
+  ) {
     setUpdatingId(id);
     try {
       await apiFetch(`/api/tasks/${id}`, {
@@ -1881,7 +2107,9 @@ export function TasksInbox({
         body: JSON.stringify(patch),
       });
       toast.success("Task updated");
-      setItems((prev) => prev.map((t) => (t.id === id ? { ...t, ...localPatch } : t)));
+      setItems((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...localPatch } : t)),
+      );
       return true;
     } catch (err) {
       notifyTasksFailure({
@@ -1928,7 +2156,8 @@ export function TasksInbox({
     } = { task_ids: selectedTaskIds };
 
     const selectedUser =
-      bulkAssigneeUserId !== "__no_change__" && bulkAssigneeUserId !== "__unassigned__"
+      bulkAssigneeUserId !== "__no_change__" &&
+      bulkAssigneeUserId !== "__unassigned__"
         ? users.find((user) => user.id === bulkAssigneeUserId)
         : null;
 
@@ -1944,7 +2173,10 @@ export function TasksInbox({
       payload.assignee_user_id = bulkAssigneeUserId;
     }
 
-    if (payload.category === undefined && payload.assignee_user_id === undefined) {
+    if (
+      payload.category === undefined &&
+      payload.assignee_user_id === undefined
+    ) {
       toast.error("Choose a category or assignee before applying bulk edits");
       return;
     }
@@ -1984,7 +2216,9 @@ export function TasksInbox({
       );
       setBulkCategory("__no_change__");
       setBulkAssigneeUserId("__no_change__");
-      toast.success(`Updated ${selectedTaskIds.length} selected task${selectedTaskIds.length === 1 ? "" : "s"}`);
+      toast.success(
+        `Updated ${selectedTaskIds.length} selected task${selectedTaskIds.length === 1 ? "" : "s"}`,
+      );
     } catch (err) {
       notifyTasksFailure({
         operation: "bulk-update-tasks",
@@ -1993,7 +2227,9 @@ export function TasksInbox({
         error: err,
         metadata: {
           selectedCount: selectedTaskIds.length,
-          fields: Object.keys(payload).filter((key) => key !== "task_ids").join(","),
+          fields: Object.keys(payload)
+            .filter((key) => key !== "task_ids")
+            .join(","),
         },
       });
     } finally {
@@ -2010,7 +2246,9 @@ export function TasksInbox({
         setSelectedId(null);
         setMobileShowDetail(false);
       }
-      setSelectedTaskIds((current) => current.filter((taskId) => taskId !== id));
+      setSelectedTaskIds((current) =>
+        current.filter((taskId) => taskId !== id),
+      );
       setItems((prev) => prev.filter((t) => t.id !== id));
       setTotal((prev) => prev - 1);
     } catch (err) {
@@ -2037,14 +2275,18 @@ export function TasksInbox({
       });
 
       const selectedSet = new Set(selectedTaskIds);
-      setItems((prev) => prev.filter((task) => !task.id || !selectedSet.has(task.id)));
+      setItems((prev) =>
+        prev.filter((task) => !task.id || !selectedSet.has(task.id)),
+      );
       setTotal((prev) => Math.max(0, prev - selectedSet.size));
       if (selectedId && selectedSet.has(selectedId)) {
         setSelectedId(null);
         setMobileShowDetail(false);
       }
       setSelectedTaskIds([]);
-      toast.success(`Deleted ${selectedSet.size} selected task${selectedSet.size === 1 ? "" : "s"}`);
+      toast.success(
+        `Deleted ${selectedSet.size} selected task${selectedSet.size === 1 ? "" : "s"}`,
+      );
     } catch (err) {
       notifyTasksFailure({
         operation: "bulk-delete-tasks",
@@ -2066,7 +2308,11 @@ export function TasksInbox({
   }
 
   const openCount = useMemo(
-    () => items.filter((i) => { const ds = toDisplayStatus(i.status); return ds === "open" || ds === "in_progress"; }).length,
+    () =>
+      items.filter((i) => {
+        const ds = toDisplayStatus(i.status);
+        return ds === "open" || ds === "in_progress";
+      }).length,
     [items],
   );
   const doneCount = useMemo(
@@ -2075,13 +2321,18 @@ export function TasksInbox({
   );
 
   const filters = useMemo(() => {
-    const sourceFilters = buildTasksFilters(items).filter((item) => item.id !== "status");
+    const sourceFilters = buildTasksFilters(items).filter(
+      (item) => item.id !== "status",
+    );
     return [
       {
         id: "status",
         label: "Status",
         type: "select" as const,
-        options: STATUS_FILTERS.map((item) => ({ value: item.value, label: item.label })),
+        options: STATUS_FILTERS.map((item) => ({
+          value: item.value,
+          label: item.label,
+        })),
       },
       ...sourceFilters,
     ];
@@ -2105,16 +2356,25 @@ export function TasksInbox({
     () =>
       buildTasksTableColumns(null, {
         onOpenPanel: openPanelForItem,
-        onUpdate: (id, patch) => { void updateTaskRef.current(id, patch); },
-        onDelete: (id) => { void deleteItemRef.current(id); },
+        onUpdate: (id, patch) => {
+          void updateTaskRef.current(id, patch);
+        },
+        onDelete: (id) => {
+          void deleteItemRef.current(id);
+        },
         projects,
         users,
       }),
     [openPanelForItem, projects, users],
   );
-  const allowedColumnIds = useMemo(() => tasksColumns.map((column) => column.id), []);
+  const allowedColumnIds = useMemo(
+    () => tasksColumns.map((column) => column.id),
+    [],
+  );
   const sanitizedVisibleColumns = useMemo(() => {
-    const visible = tableState.visibleColumns.filter((id) => allowedColumnIds.includes(id));
+    const visible = tableState.visibleColumns.filter((id) =>
+      allowedColumnIds.includes(id),
+    );
     return visible.length > 0 ? visible : tasksDefaultVisibleColumns;
   }, [allowedColumnIds, tableState.visibleColumns]);
 
@@ -2151,8 +2411,16 @@ export function TasksInbox({
 
   const handleExport = useCallback(() => {
     const headers = [
-      "Task Name", "Project Name", "Assigned User", "Source", "Created From",
-      "Source Date", "Assignee Email", "Due Date", "Priority", "Status",
+      "Task Name",
+      "Project Name",
+      "Assigned User",
+      "Source",
+      "Created From",
+      "Source Date",
+      "Assignee Email",
+      "Due Date",
+      "Priority",
+      "Status",
     ];
     const rows = filteredItems.map((task) => [
       task.description || "",
@@ -2188,278 +2456,296 @@ export function TasksInbox({
   return (
     <>
       <UnifiedTablePage<TasksRow>
-          header={{
-            title: "Tasks",
-            description,
-          }}
-          tabs={showTabs && !profileLoading ? scopeTabs : undefined}
-          toolbar={{
-            totalItems: items.length,
-            filteredItems: baseFilteredItems.length,
-            selectedCount: selectedTaskIds.length,
-            searchValue: tableState.searchInput,
-            onSearchChange: tableState.setSearchInput,
-            searchPlaceholder: "Search tasks...",
-            currentView: tableState.currentView,
-            onViewChange: (view) => {
-              tableState.setCurrentView(view);
-              tableState.setSearchParams({ view });
-            },
-            enabledViews: ["table", "card", "split"],
-            filters,
-            activeFilters: tableState.activeFilters,
-            onFilterChange: handleFilterChange,
-            onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-            columns: tasksColumns,
-            visibleColumns: sanitizedVisibleColumns,
-            onColumnVisibilityChange: (columns) =>
-              tableState.setVisibleColumns(columns.filter((id) => allowedColumnIds.includes(id))),
-            onExport: handleExport,
-            onBulkDelete: selectedTaskIds.length > 0 ? () => setBulkDeleteDialogOpen(true) : undefined,
-          }}
-          data={{
-            items: baseFilteredItems,
-            isLoading: loading,
-            isFetching: false,
-          }}
-          table={{
-            columns: tableColumns,
-            getRowId: (item) => item.id ?? "",
-            onRowClick: tableState.currentView === "table" ? undefined : (item) => {
-              if (item.id) selectItem(item.id);
-            },
-            activeRowId: selectedId,
-            rowActions: (item) =>
-              renderTasksRowActions(
-                item,
-                handleOpenSource,
-                item.id ? () => deleteItem(item.id!) : undefined,
-              ),
-          }}
-          views={{
-            card: (item) => renderTasksCard(item, handleOpenSource),
-            list: (item) => renderTasksList(item, handleOpenSource),
-            split: () => (
+        header={{
+          title: "Tasks",
+          description,
+        }}
+        tabs={showTabs && !profileLoading ? scopeTabs : undefined}
+        toolbar={{
+          totalItems: items.length,
+          filteredItems: baseFilteredItems.length,
+          selectedCount: selectedTaskIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search tasks...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          enabledViews: ["table", "board", "split"],
+          filters,
+          activeFilters: tableState.activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          columns: tasksColumns,
+          visibleColumns: sanitizedVisibleColumns,
+          onColumnVisibilityChange: (columns) =>
+            tableState.setVisibleColumns(
+              columns.filter((id) => allowedColumnIds.includes(id)),
+            ),
+          onExport: handleExport,
+          onBulkDelete:
+            selectedTaskIds.length > 0
+              ? () => setBulkDeleteDialogOpen(true)
+              : undefined,
+        }}
+        data={{
+          items: baseFilteredItems,
+          isLoading: loading,
+          isFetching: false,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id ?? "",
+          onRowClick:
+            tableState.currentView === "table"
+              ? undefined
+              : (item) => {
+                  if (item.id) selectItem(item.id);
+                },
+          activeRowId: selectedId,
+          rowActions: (item) =>
+            renderTasksRowActions(
+              item,
+              handleOpenSource,
+              item.id ? () => deleteItem(item.id!) : undefined,
+            ),
+        }}
+        views={{
+          board: ({ items }) => (
+            <TasksBoardView items={items} onOpen={openPanelForItem} />
+          ),
+          list: (item) => renderTasksList(item, handleOpenSource),
+          split: () => (
+            <div
+              ref={setSplitViewContainer}
+              data-task-split-view
+              className="flex min-h-0 flex-1 overflow-hidden border-t border-border/40"
+              style={
+                splitViewHeight ? { height: `${splitViewHeight}px` } : undefined
+              }
+            >
+              {/* Left: task list */}
               <div
-                ref={setSplitViewContainer}
-                data-task-split-view
-                className="flex min-h-0 flex-1 overflow-hidden border-t border-border/40"
-                style={splitViewHeight ? { height: `${splitViewHeight}px` } : undefined}
+                ref={listPanelRef}
+                className={cn(
+                  "flex h-full min-w-0 flex-col overflow-hidden border-r border-border/40 bg-background lg:w-[var(--tasks-left-pct)]",
+                  mobileShowDetail ? "hidden lg:flex" : "flex",
+                  "w-full lg:shrink-0",
+                )}
+                style={{ "--tasks-left-pct": `${leftPct}%` } as CSSProperties}
               >
-                {/* Left: task list */}
-                <div
-                  ref={listPanelRef}
-                  className={cn(
-                    "flex h-full min-w-0 flex-col overflow-hidden border-r border-border/40 bg-background lg:w-[var(--tasks-left-pct)]",
-                    mobileShowDetail ? "hidden lg:flex" : "flex",
-                    "w-full lg:shrink-0",
-                  )}
-                  style={{ "--tasks-left-pct": `${leftPct}%` } as CSSProperties}
-                >
-                  {/* Status filter tabs */}
-                  <div className="py-2 pr-2">
-                    <Tabs
-                      value={filter}
-                      onValueChange={(value) => {
-                        if (value === "open" || value === "done") {
-                          setFilter(value);
-                          tableState.setActiveFilters((current) => ({ ...current, status: value }));
-                          setSelectedId(null);
-                          setMobileShowDetail(false);
-                        }
-                      }}
-                    >
-                      <TabsList>
-                        {STATUS_FILTERS.map((tab) => (
-                          <TabsTrigger key={tab.value} value={tab.value}>
-                            {tab.label}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
-                  </div>
+                {/* Status filter tabs */}
+                <div className="py-2 pr-2">
+                  <Tabs
+                    value={filter}
+                    onValueChange={(value) => {
+                      if (value === "open" || value === "done") {
+                        setFilter(value);
+                        tableState.setActiveFilters((current) => ({
+                          ...current,
+                          status: value,
+                        }));
+                        setSelectedId(null);
+                        setMobileShowDetail(false);
+                      }
+                    }}
+                  >
+                    <TabsList>
+                      {STATUS_FILTERS.map((tab) => (
+                        <TabsTrigger key={tab.value} value={tab.value}>
+                          {tab.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
 
-                  {/* Bulk action bar */}
-                  {selectedTaskIds.length > 0 && (
-                    <div className="border-b border-border/40 px-3 py-2">
-                      <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {selectedTaskIds.length} selected
-                        </span>
+                {/* Bulk action bar */}
+                {selectedTaskIds.length > 0 && (
+                  <div className="border-b border-border/40 px-3 py-2">
+                    <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {selectedTaskIds.length} selected
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedTaskIds([])}
+                        className="h-8 gap-1.5 px-2 text-xs text-muted-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Clear
+                      </Button>
+                    </div>
+
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                      <Select
+                        value={bulkCategory}
+                        onValueChange={setBulkCategory}
+                      >
+                        <SelectTrigger className="h-8 w-full gap-2 sm:w-44">
+                          <Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__no_change__">
+                            Category unchanged
+                          </SelectItem>
+                          <SelectItem value="__clear__">
+                            Clear category
+                          </SelectItem>
+                          {categoryOptions.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={bulkAssigneeUserId}
+                        onValueChange={setBulkAssigneeUserId}
+                        disabled={usersLoading}
+                      >
+                        <SelectTrigger className="h-8 w-full gap-2 sm:w-56">
+                          <UserRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <SelectValue
+                            placeholder={
+                              usersLoading ? "Loading users..." : "Assign user"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__no_change__">
+                            Assignee unchanged
+                          </SelectItem>
+                          <SelectItem value="__unassigned__">
+                            Unassigned
+                          </SelectItem>
+                          {users.map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {userOptionLabel(user)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <div className="flex items-center gap-2 sm:ml-auto">
                         <Button
                           type="button"
-                          variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedTaskIds([])}
-                          className="h-8 gap-1.5 px-2 text-xs text-muted-foreground"
+                          onClick={applyBulkEdit}
+                          disabled={bulkUpdating}
+                          className="h-8 gap-1.5"
                         >
-                          <X className="h-3.5 w-3.5" />
-                          Clear
+                          {bulkUpdating ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <CheckSquare2 className="h-3.5 w-3.5" />
+                          )}
+                          Apply
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setBulkDeleteDialogOpen(true)}
+                          disabled={bulkDeleting}
+                          className="h-8 gap-1.5"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
                         </Button>
                       </div>
+                    </div>
+                  </div>
+                )}
 
-                      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                        <Select value={bulkCategory} onValueChange={setBulkCategory}>
-                          <SelectTrigger className="h-8 w-full gap-2 sm:w-44">
-                            <Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            <SelectValue placeholder="Category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__no_change__">Category unchanged</SelectItem>
-                            <SelectItem value="__clear__">Clear category</SelectItem>
-                            {categoryOptions.map((category) => (
-                              <SelectItem key={category} value={category}>
-                                {category}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                {/* Task list */}
+                <div
+                  data-task-list-scroll
+                  className="flex-1 overflow-auto overscroll-contain"
+                >
+                  {!loading && filteredItems.length > 0 && (
+                    <TaskListHeader
+                      allVisibleSelected={allVisibleSelected}
+                      someVisibleSelected={someVisibleSelected}
+                      visibleTaskIds={visibleTaskIds}
+                      selectedTaskIds={selectedTaskIds}
+                      onToggleVisibleSelection={toggleVisibleSelection}
+                    />
+                  )}
 
-                        <Select
-                          value={bulkAssigneeUserId}
-                          onValueChange={setBulkAssigneeUserId}
-                          disabled={usersLoading}
-                        >
-                          <SelectTrigger className="h-8 w-full gap-2 sm:w-56">
-                            <UserRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            <SelectValue placeholder={usersLoading ? "Loading users..." : "Assign user"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__no_change__">Assignee unchanged</SelectItem>
-                            <SelectItem value="__unassigned__">Unassigned</SelectItem>
-                            {users.map((user) => (
-                              <SelectItem key={user.id} value={user.id}>
-                                {userOptionLabel(user)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        <div className="flex items-center gap-2 sm:ml-auto">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={applyBulkEdit}
-                            disabled={bulkUpdating}
-                            className="h-8 gap-1.5"
-                          >
-                            {bulkUpdating ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <CheckSquare2 className="h-3.5 w-3.5" />
-                            )}
-                            Apply
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => setBulkDeleteDialogOpen(true)}
-                            disabled={bulkDeleting}
-                            className="h-8 gap-1.5"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
+                  {loading && (
+                    <div className="flex items-center justify-center py-20">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
                     </div>
                   )}
 
-                  {/* Task list */}
-                  <div
-                    data-task-list-scroll
-                    className="flex-1 overflow-auto overscroll-contain"
-                  >
-                    {!loading && filteredItems.length > 0 && (
-                      <TaskListHeader
-                        allVisibleSelected={allVisibleSelected}
-                        someVisibleSelected={someVisibleSelected}
-                        visibleTaskIds={visibleTaskIds}
-                        selectedTaskIds={selectedTaskIds}
-                        onToggleVisibleSelection={toggleVisibleSelection}
-                      />
-                    )}
+                  {!loading && filteredItems.length === 0 && (
+                    <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+                      <CheckCircle2 className="mb-3 h-8 w-8 text-muted-foreground/30" />
+                      <p className="text-sm font-medium text-foreground">
+                        {filter === "open" && scope === "mine"
+                          ? "All caught up"
+                          : "Nothing here"}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        No {filter} tasks
+                        {scope === "mine" ? " assigned to you" : ""}.
+                      </p>
+                    </div>
+                  )}
 
-                    {loading && (
-                      <div className="flex items-center justify-center py-20">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
-                      </div>
-                    )}
-
-                    {!loading && filteredItems.length === 0 && (
-                      <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-                        <CheckCircle2 className="mb-3 h-8 w-8 text-muted-foreground/30" />
-                        <p className="text-sm font-medium text-foreground">
-                          {filter === "open" && scope === "mine" ? "All caught up" : "Nothing here"}
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          No {filter} tasks{scope === "mine" ? " assigned to you" : ""}.
-                        </p>
-                      </div>
-                    )}
-
-                    {!loading &&
-                      filteredItems.map((item) => (
-                        <TaskListItem
-                          key={item.id}
-                          item={item}
-                          projects={projects}
-                          isSelected={selectedId === item.id}
-                          isChecked={item.id ? selectedTaskIds.includes(item.id) : false}
-                          onClick={() => item.id && selectItem(item.id)}
-                          onCheckedChange={(checked) => item.id && toggleTaskSelection(item.id, checked)}
-                          onDelete={() => item.id && deleteItem(item.id)}
-                        />
-                      ))}
-                  </div>
-                </div>
-
-                {/* Resize handle */}
-                <div
-                  className="group relative hidden w-1 shrink-0 cursor-col-resize lg:block"
-                  onMouseDown={handleMouseDown}
-                  aria-hidden="true"
-                >
-                  <div className="absolute inset-y-0 left-0 w-px bg-border/40 transition-colors group-hover:bg-primary/50 group-active:bg-primary" />
-                  <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
-                </div>
-
-                {/* Right: detail panel (desktop) */}
-                <div
-                  data-task-detail-panel
-                  className="hidden min-h-0 min-w-0 flex-1 lg:flex lg:flex-col"
-                >
-                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-                    {!selectedWithContext ? (
-                      <EmptyDetail
-                        total={total}
-                        openCount={openCount}
-                        doneCount={doneCount}
-                        loading={loading}
-                        scope={scope}
-                        isProjectScoped={isProjectScoped}
-                      />
-                    ) : (
-                      <TaskDetail
-                        task={selectedWithContext}
-                        updatingId={updatingId}
-                        deletingId={deletingId}
-                        onUpdateStatus={updateStatus}
-                        onUpdateTask={updateTask}
-                        onDelete={deleteItem}
+                  {!loading &&
+                    filteredItems.map((item) => (
+                      <TaskListItem
+                        key={item.id}
+                        item={item}
                         projects={projects}
-                        projectsLoading={projectsLoading}
-                        users={users}
-                        usersLoading={usersLoading}
+                        isSelected={selectedId === item.id}
+                        isChecked={
+                          item.id ? selectedTaskIds.includes(item.id) : false
+                        }
+                        onClick={() => item.id && selectItem(item.id)}
+                        onCheckedChange={(checked) =>
+                          item.id && toggleTaskSelection(item.id, checked)
+                        }
+                        onDelete={() => item.id && deleteItem(item.id)}
                       />
-                    )}
-                  </div>
+                    ))}
                 </div>
+              </div>
 
-                {/* Mobile: full-screen detail */}
-                {mobileShowDetail && selectedWithContext && (
-                  <div className="flex h-full flex-1 flex-col overflow-y-auto overscroll-contain bg-background lg:hidden">
+              {/* Resize handle */}
+              <div
+                className="group relative hidden w-1 shrink-0 cursor-col-resize lg:block"
+                onMouseDown={handleMouseDown}
+                aria-hidden="true"
+              >
+                <div className="absolute inset-y-0 left-0 w-px bg-border/40 transition-colors group-hover:bg-primary/50 group-active:bg-primary" />
+                <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
+              </div>
+
+              {/* Right: detail panel (desktop) */}
+              <div
+                data-task-detail-panel
+                className="hidden min-h-0 min-w-0 flex-1 lg:flex lg:flex-col"
+              >
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                  {!selectedWithContext ? (
+                    <EmptyDetail
+                      total={total}
+                      openCount={openCount}
+                      doneCount={doneCount}
+                      loading={loading}
+                      scope={scope}
+                      isProjectScoped={isProjectScoped}
+                    />
+                  ) : (
                     <TaskDetail
                       task={selectedWithContext}
                       updatingId={updatingId}
@@ -2467,60 +2753,86 @@ export function TasksInbox({
                       onUpdateStatus={updateStatus}
                       onUpdateTask={updateTask}
                       onDelete={deleteItem}
-                      onBack={() => setMobileShowDetail(false)}
                       projects={projects}
                       projectsLoading={projectsLoading}
                       users={users}
                       usersLoading={usersLoading}
                     />
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            ),
-          }}
-          selection={{
-            selectedIds: selectedTaskIds,
-            onSelectAll: toggleVisibleSelection,
-            onSelectRow: toggleTaskSelection,
-          }}
-          sorting={{
-            sortBy: tableState.sortBy,
-            sortDirection: tableState.sortDirection,
-            onSortChange: (sortBy, direction) => {
-              tableState.setSortBy(sortBy);
-              tableState.setSortDirection(direction);
-              tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
-            },
-          }}
-          emptyState={{
-            title: "No tasks found",
-            description: "Tasks appear here when they are linked to a source record.",
-            filteredDescription: "Try adjusting your search or filters.",
-            isFiltered,
-          }}
-          features={{
-            enableExport: true,
-            enableBulkDelete: true,
-            enableRowSelection: true,
-          }}
-          layout={{
-            fullBleedTable: false,
-            toolbarInlineWithHeader: true,
-            containerClassName: "pt-0",
-          }}
-        />
 
-      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+              {/* Mobile: full-screen detail */}
+              {mobileShowDetail && selectedWithContext && (
+                <div className="flex h-full flex-1 flex-col overflow-y-auto overscroll-contain bg-background lg:hidden">
+                  <TaskDetail
+                    task={selectedWithContext}
+                    updatingId={updatingId}
+                    deletingId={deletingId}
+                    onUpdateStatus={updateStatus}
+                    onUpdateTask={updateTask}
+                    onDelete={deleteItem}
+                    onBack={() => setMobileShowDetail(false)}
+                    projects={projects}
+                    projectsLoading={projectsLoading}
+                    users={users}
+                    usersLoading={usersLoading}
+                  />
+                </div>
+              )}
+            </div>
+          ),
+        }}
+        selection={{
+          selectedIds: selectedTaskIds,
+          onSelectAll: toggleVisibleSelection,
+          onSelectRow: toggleTaskSelection,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+          },
+        }}
+        emptyState={{
+          title: "No tasks found",
+          description:
+            "Tasks appear here when they are linked to a source record.",
+          filteredDescription: "Try adjusting your search or filters.",
+          isFiltered,
+        }}
+        features={{
+          enableExport: true,
+          enableBulkDelete: true,
+          enableRowSelection: true,
+        }}
+        layout={{
+          fullBleedTable: false,
+          toolbarInlineWithHeader: true,
+          containerClassName: "pt-0",
+        }}
+      />
+
+      <AlertDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete selected tasks</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {selectedTaskIds.length} selected task
+              This will permanently delete {selectedTaskIds.length} selected
+              task
               {selectedTaskIds.length === 1 ? "" : "s"}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={bulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={bulkDeleting}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={deleteSelectedItems}
               disabled={bulkDeleting || selectedTaskIds.length === 0}
@@ -2532,11 +2844,11 @@ export function TasksInbox({
         </AlertDialogContent>
       </AlertDialog>
 
-      <Sheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-      >
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-lg overflow-y-auto p-0"
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>Task detail</SheetTitle>
           </SheetHeader>

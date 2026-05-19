@@ -8,15 +8,33 @@ import { cn } from "@/lib/utils";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PageHeader } from "@/components/layout/page-header-unified";
-import { PageContainer, type PageContainerProps } from "@/components/layout/PageContainer";
+import {
+  PageContainer,
+  type PageContainerProps,
+} from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { EmptyState } from "@/components/ds";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SimplePagination } from "@/components/ui/pagination";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,9 +52,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode, type TableDensity } from "./table-toolbar";
+import {
+  TableToolbar,
+  type ColumnConfig,
+  type FilterConfig,
+  type ViewMode,
+  type TableDensity,
+} from "./table-toolbar";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, GripVertical, Inbox, MoreHorizontal, MoreVertical, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  ChevronUp,
+  EyeOff,
+  GripVertical,
+  Inbox,
+  MoreHorizontal,
+  MoreVertical,
+  PanelRightClose,
+  PanelRightOpen,
+  Pin,
+  PinOff,
+  Trash2,
+  X,
+} from "lucide-react";
 import { MobileCardList } from "./mobile-card-list";
 
 const INTERACTIVE_ROW_TARGET_SELECTOR = [
@@ -137,8 +177,16 @@ export interface UnifiedTablePageProps<T> {
     onViewChange: (view: ViewMode) => void;
     enabledViews?: ViewMode[];
     filters?: FilterConfig[];
-    activeFilters?: Record<string, string | number | boolean | string[] | null | undefined>;
-    onFilterChange?: (filters: Record<string, string | number | boolean | string[] | null | undefined>) => void;
+    activeFilters?: Record<
+      string,
+      string | number | boolean | string[] | null | undefined
+    >;
+    onFilterChange?: (
+      filters: Record<
+        string,
+        string | number | boolean | string[] | null | undefined
+      >,
+    ) => void;
     onClearFilters?: () => void;
     columns?: ColumnConfig[];
     visibleColumns?: string[];
@@ -167,7 +215,10 @@ export interface UnifiedTablePageProps<T> {
     getRowId: (item: T) => string;
     onRowClick?: (item: T) => void;
     activeRowId?: string | null;
-    onTableKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>, visibleItems: T[]) => void;
+    onTableKeyDown?: (
+      event: React.KeyboardEvent<HTMLDivElement>,
+      visibleItems: T[],
+    ) => void;
     autoFocusOnLoad?: boolean;
     stickyHeader?: boolean;
     onRowOrderChange?: (orderedRowIds: string[]) => void;
@@ -177,7 +228,11 @@ export interface UnifiedTablePageProps<T> {
     renderExpandedRow?: (
       item: T,
       colSpan: number,
-      context?: { columns: Array<{ id: string; width?: number }>; hasSelection: boolean; hasActions: boolean },
+      context?: {
+        columns: Array<{ id: string; width?: number }>;
+        hasSelection: boolean;
+        hasActions: boolean;
+      },
     ) => ReactNode | null;
   };
   sorting?: {
@@ -191,6 +246,12 @@ export interface UnifiedTablePageProps<T> {
     onSelectRow: (id: string, checked: boolean) => void;
   };
   views?: {
+    board?: (context: {
+      items: T[];
+      getRowId: (item: T) => string;
+      activeRowId?: string | null;
+      onRowClick?: (item: T) => void;
+    }) => ReactElement;
     card?: (item: T) => ReactElement;
     list?: (item: T) => ReactElement;
     split?: (context: {
@@ -325,21 +386,38 @@ export function UnifiedTablePage<T>({
     enableInlineEditing: features?.enableInlineEditing ?? false,
   };
   // Internal sort state — used when the parent does not supply a sorting prop
-  const [internalSortBy, setInternalSortBy] = React.useState<string | null>(null);
-  const [internalSortDirection, setInternalSortDirection] = React.useState<SortDirection>("asc");
+  const [internalSortBy, setInternalSortBy] = React.useState<string | null>(
+    null,
+  );
+  const [internalSortDirection, setInternalSortDirection] =
+    React.useState<SortDirection>("asc");
   // Internal pagination state — used when the parent does not supply a pagination prop
   const [internalPage, setInternalPage] = React.useState(1);
   const [internalPerPage, setInternalPerPage] = React.useState(25);
 
   // Internal selection state — used when the parent does not supply a selection prop
-  const [internalSelectedIds, setInternalSelectedIds] = React.useState<string[]>([]);
+  const [internalSelectedIds, setInternalSelectedIds] = React.useState<
+    string[]
+  >([]);
   const selectedIds = selection?.selectedIds ?? internalSelectedIds;
-  const handleSelectAll = selection?.onSelectAll ?? ((checked: boolean) => {
-    setInternalSelectedIds(checked ? data.items.map((item) => table.getRowId(item)) : []);
-  });
-  const handleSelectRow = selection?.onSelectRow ?? ((id: string, checked: boolean) => {
-    setInternalSelectedIds((prev) => checked ? (prev.includes(id) ? prev : [...prev, id]) : prev.filter((i) => i !== id));
-  });
+  const handleSelectAll =
+    selection?.onSelectAll ??
+    ((checked: boolean) => {
+      setInternalSelectedIds(
+        checked ? data.items.map((item) => table.getRowId(item)) : [],
+      );
+    });
+  const handleSelectRow =
+    selection?.onSelectRow ??
+    ((id: string, checked: boolean) => {
+      setInternalSelectedIds((prev) =>
+        checked
+          ? prev.includes(id)
+            ? prev
+            : [...prev, id]
+          : prev.filter((i) => i !== id),
+      );
+    });
   const effectiveSorting = React.useMemo(() => {
     if (sorting) return sorting;
     if (!resolvedFeatures.enableSorting) return undefined;
@@ -351,11 +429,18 @@ export function UnifiedTablePage<T>({
         setInternalSortDirection(dir);
       },
     };
-  }, [sorting, resolvedFeatures.enableSorting, internalSortBy, internalSortDirection]);
+  }, [
+    sorting,
+    resolvedFeatures.enableSorting,
+    internalSortBy,
+    internalSortDirection,
+  ]);
 
   const effectiveSelectedCount = toolbar.selectedCount ?? selectedIds.length;
   const hasRowSelection = resolvedFeatures.enableRowSelection;
-  const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions || table.onDelete || table.onEdit);
+  const hasRowActions =
+    resolvedFeatures.enableRowActions &&
+    Boolean(table.rowActions || table.onDelete || table.onEdit);
 
   // Built-in delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -386,7 +471,9 @@ export function UnifiedTablePage<T>({
 
   const handleBulkDeleteConfirm = React.useCallback(() => {
     if (!table.onDelete) return;
-    const itemsById = new Map(data.items.map((item) => [table.getRowId(item), item]));
+    const itemsById = new Map(
+      data.items.map((item) => [table.getRowId(item), item]),
+    );
     selectedIds.forEach((id) => {
       const item = itemsById.get(id);
       if (item) table.onDelete!(item);
@@ -401,7 +488,9 @@ export function UnifiedTablePage<T>({
   // If the parent does manage view state (e.g. persisting to URL), calling
   // onViewChange still propagates the value upward, and the parent's
   // toolbar.currentView is honoured as the initial value and on external changes.
-  const [internalView, setInternalView] = React.useState<ViewMode>(toolbar.currentView);
+  const [internalView, setInternalView] = React.useState<ViewMode>(
+    toolbar.currentView,
+  );
   // Sync when the parent drives a view change from outside (e.g. URL navigation)
   React.useEffect(() => {
     setInternalView(toolbar.currentView);
@@ -409,46 +498,100 @@ export function UnifiedTablePage<T>({
 
   // ── Density state — global preference persisted in localStorage ─────────
   const [density, setDensityState] = React.useState<TableDensity>(() => {
-    if (typeof window === "undefined") return table.density === "compact" ? "compact" : "default";
+    if (typeof window === "undefined")
+      return table.density === "compact" ? "compact" : "default";
     try {
-      const stored = localStorage.getItem("alleato:tableDensity") as TableDensity | null;
-      if (stored === "compact" || stored === "default" || stored === "comfortable") return stored;
-    } catch { /* ignore */ }
+      const stored = localStorage.getItem(
+        "alleato:tableDensity",
+      ) as TableDensity | null;
+      if (
+        stored === "compact" ||
+        stored === "default" ||
+        stored === "comfortable"
+      )
+        return stored;
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "unified-table-page",
+        operation: "load-density-preference",
+        error,
+        userVisibleFallback: "Saved table density could not be restored.",
+        metadata: { tableTitle: header.title },
+      });
+    }
     return table.density === "compact" ? "compact" : "default";
   });
 
-  const handleDensityChange = React.useCallback((next: TableDensity) => {
-    setDensityState(next);
-    try { localStorage.setItem("alleato:tableDensity", next); } catch { /* ignore */ }
-  }, []);
+  const handleDensityChange = React.useCallback(
+    (next: TableDensity) => {
+      setDensityState(next);
+      try {
+        localStorage.setItem("alleato:tableDensity", next);
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "unified-table-page",
+          operation: "save-density-preference",
+          error,
+          userVisibleFallback: "Table density preference was not saved.",
+          metadata: { tableTitle: header.title, density: next },
+        });
+      }
+    },
+    [header.title],
+  );
 
   const activeView = internalView;
 
-  const handleViewChange = React.useCallback((view: ViewMode) => {
-    setInternalView(view);
-    toolbar.onViewChange(view);
-  }, [toolbar]);
+  const handleViewChange = React.useCallback(
+    (view: ViewMode) => {
+      setInternalView(view);
+      toolbar.onViewChange(view);
+    },
+    [toolbar],
+  );
 
   // Derive available views from what renderers are actually provided.
   // Honour an explicit override from the caller; otherwise auto-include
-  // "card" / "list" / "split" only when the views prop supplies renderers.
+  // "board" / "card" / "list" / "split" only when the views prop supplies renderers.
   const effectiveEnabledViews: ViewMode[] = React.useMemo(() => {
-    if (toolbar.enabledViews && toolbar.enabledViews.length > 0) return toolbar.enabledViews;
+    if (toolbar.enabledViews && toolbar.enabledViews.length > 0)
+      return toolbar.enabledViews;
     const derived: ViewMode[] = ["table"];
+    if (views?.board) derived.push("board");
     if (views?.card) derived.push("card");
     if (views?.list) derived.push("list");
     if (views?.split) derived.push("split");
     return derived;
-  }, [toolbar.enabledViews, views?.card, views?.list, views?.split]);
+  }, [
+    toolbar.enabledViews,
+    views?.board,
+    views?.card,
+    views?.list,
+    views?.split,
+  ]);
 
+  const canRenderBoardView =
+    resolvedFeatures.enableViews &&
+    activeView === "board" &&
+    Boolean(views?.board);
   const canRenderCardView =
-    resolvedFeatures.enableViews && activeView === "card" && Boolean(views?.card);
+    resolvedFeatures.enableViews &&
+    activeView === "card" &&
+    Boolean(views?.card);
   const canRenderListView =
-    resolvedFeatures.enableViews && activeView === "list" && Boolean(views?.list);
+    resolvedFeatures.enableViews &&
+    activeView === "list" &&
+    Boolean(views?.list);
   const canRenderSplitView =
-    resolvedFeatures.enableViews && activeView === "split" && Boolean(views?.split);
+    resolvedFeatures.enableViews &&
+    activeView === "split" &&
+    Boolean(views?.split);
   const shouldRenderTableView =
-    activeView === "table" || (!canRenderCardView && !canRenderListView && !canRenderSplitView);
+    activeView === "table" ||
+    (!canRenderBoardView &&
+      !canRenderCardView &&
+      !canRenderListView &&
+      !canRenderSplitView);
   const isFullBleedTable = layout?.fullBleedTable ?? false;
   const alignHeaderWithFullBleedTable =
     layout?.alignHeaderWithFullBleedTable ?? false;
@@ -473,24 +616,46 @@ export function UnifiedTablePage<T>({
   // Internal column visibility — persisted to localStorage when the caller
   // does not supply toolbar.visibleColumns / toolbar.onColumnVisibilityChange.
   const colStorageKey = `alleato:cols:${header.title}`;
-  const [internalVisibleColumns, setInternalVisibleColumns] = React.useState<string[]>(() => {
+  const [internalVisibleColumns, setInternalVisibleColumns] = React.useState<
+    string[]
+  >(() => {
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem(`alleato:cols:${header.title}`);
         if (stored) {
           const parsed = JSON.parse(stored) as unknown;
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed as string[];
+          if (Array.isArray(parsed) && parsed.length > 0)
+            return parsed as string[];
         }
-      } catch { /* ignore */ }
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "unified-table-page",
+          operation: "load-column-preferences",
+          error,
+          userVisibleFallback:
+            "Saved table column preferences could not be restored.",
+          metadata: { tableTitle: header.title },
+        });
+      }
     }
-    const baseCols = (toolbar.columns ?? table.columns) as Array<{ id: string; defaultVisible?: boolean; alwaysVisible?: boolean }>;
-    return baseCols.filter((c) => c.defaultVisible !== false || c.alwaysVisible).map((c) => c.id);
+    const baseCols = (toolbar.columns ?? table.columns) as Array<{
+      id: string;
+      defaultVisible?: boolean;
+      alwaysVisible?: boolean;
+    }>;
+    return baseCols
+      .filter((c) => c.defaultVisible !== false || c.alwaysVisible)
+      .map((c) => c.id);
   });
   // Always include alwaysVisible columns even if stale localStorage omits them
   const rawVisibleColumns = toolbar.visibleColumns ?? internalVisibleColumns;
   const visibleColumns = React.useMemo(() => {
-    const alwaysVisibleIds = toolbarColumns.filter((c) => c.alwaysVisible).map((c) => c.id);
-    const missing = alwaysVisibleIds.filter((id) => !rawVisibleColumns.includes(id));
+    const alwaysVisibleIds = toolbarColumns
+      .filter((c) => c.alwaysVisible)
+      .map((c) => c.id);
+    const missing = alwaysVisibleIds.filter(
+      (id) => !rawVisibleColumns.includes(id),
+    );
     if (missing.length === 0) return rawVisibleColumns;
     const visibleSet = new Set([...rawVisibleColumns, ...missing]);
     return toolbarColumns
@@ -516,24 +681,45 @@ export function UnifiedTablePage<T>({
         setInternalVisibleColumns(columns);
         try {
           localStorage.setItem(colStorageKey, JSON.stringify(columns));
-        } catch { /* ignore */ }
+        } catch (error) {
+          reportNonCriticalFailure({
+            area: "unified-table-page",
+            operation: "save-column-preferences",
+            error,
+            userVisibleFallback: "Table column preferences were not saved.",
+            metadata: { tableTitle: header.title },
+          });
+        }
       }
     },
     [toolbar.onColumnVisibilityChange, colStorageKey],
   );
-  const [columnWidths, setColumnWidths] = React.useState<Record<string, number>>({});
-  const [columnOrder, setColumnOrder] = React.useState<string[]>(visibleColumns);
-  const [columnPinning, setColumnPinning] = React.useState<{ left: string[]; right: string[] }>(() => ({
+  const [columnWidths, setColumnWidths] = React.useState<
+    Record<string, number>
+  >({});
+  const [columnOrder, setColumnOrder] =
+    React.useState<string[]>(visibleColumns);
+  const [columnPinning, setColumnPinning] = React.useState<{
+    left: string[];
+    right: string[];
+  }>(() => ({
     left: table.defaultPinnedLeftColumns ?? [],
     right: table.defaultPinnedRightColumns ?? [],
   }));
-  const [draggedColumnId, setDraggedColumnId] = React.useState<string | null>(null);
+  const [draggedColumnId, setDraggedColumnId] = React.useState<string | null>(
+    null,
+  );
   const draggedColumnIdRef = React.useRef<string | null>(null);
   const [rowOrderIds, setRowOrderIds] = React.useState<string[]>([]);
   const [draggedRowId, setDraggedRowId] = React.useState<string | null>(null);
-  const [editingCell, setEditingCell] = React.useState<{ rowId: string; columnId: string } | null>(null);
+  const [editingCell, setEditingCell] = React.useState<{
+    rowId: string;
+    columnId: string;
+  } | null>(null);
   const [editingValue, setEditingValue] = React.useState("");
-  const [inlineEdits, setInlineEdits] = React.useState<Record<string, string>>({});
+  const [inlineEdits, setInlineEdits] = React.useState<Record<string, string>>(
+    {},
+  );
   const tableScrollRef = React.useRef<HTMLDivElement>(null);
   const rowRefs = React.useRef<Record<string, HTMLTableRowElement | null>>({});
   const resizeStateRef = React.useRef<{
@@ -563,7 +749,8 @@ export function UnifiedTablePage<T>({
   }, [panelVariant, sidePanel?.maxWidth]);
   const panelStorageKey = sidePanel?.storageKey ?? "unified-table-side-panel";
   const panelDefaultWidth = getPanelDefaultWidth();
-  const panelMinWidth = sidePanel?.minWidth ?? (panelVariant === "wide" ? 520 : 480);
+  const panelMinWidth =
+    sidePanel?.minWidth ?? (panelVariant === "wide" ? 520 : 480);
   const panelMaxWidth = getPanelMaxWidth();
   const panelCollapsible = sidePanel?.collapsible !== false;
   const panelResizable = sidePanel?.resizable !== false;
@@ -573,8 +760,13 @@ export function UnifiedTablePage<T>({
   const [panelWidth, setPanelWidth] = React.useState(panelDefaultWidth);
   const [panelMounted, setPanelMounted] = React.useState(false);
   const [isResizingPanel, setIsResizingPanel] = React.useState(false);
-  const [panelToggleLeft, setPanelToggleLeft] = React.useState<number | null>(null);
-  const panelResizeRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
+  const [panelToggleLeft, setPanelToggleLeft] = React.useState<number | null>(
+    null,
+  );
+  const panelResizeRef = React.useRef<{
+    startX: number;
+    startWidth: number;
+  } | null>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
   const isSidePanelOpen = Boolean(sidePanel && table.activeRowId);
 
@@ -584,26 +776,45 @@ export function UnifiedTablePage<T>({
     try {
       const stored = localStorage.getItem(`alleato-panel-${panelStorageKey}`);
       if (stored) {
-        const parsed = JSON.parse(stored) as { collapsed?: boolean; width?: number };
-        if (typeof parsed.collapsed === "boolean") setPanelCollapsed(parsed.collapsed);
+        const parsed = JSON.parse(stored) as {
+          collapsed?: boolean;
+          width?: number;
+        };
+        if (typeof parsed.collapsed === "boolean")
+          setPanelCollapsed(parsed.collapsed);
         if (typeof parsed.width === "number") {
-          const clampedWidth = Math.max(panelMinWidth, Math.min(panelMaxWidth, parsed.width));
+          const clampedWidth = Math.max(
+            panelMinWidth,
+            Math.min(panelMaxWidth, parsed.width),
+          );
           setPanelWidth(clampedWidth);
         }
       } else {
-        setPanelWidth(Math.max(panelMinWidth, Math.min(panelMaxWidth, getPanelDefaultWidth())));
+        setPanelWidth(
+          Math.max(
+            panelMinWidth,
+            Math.min(panelMaxWidth, getPanelDefaultWidth()),
+          ),
+        );
       }
     } catch (error) {
       reportNonCriticalFailure({
         area: "unified-table-page",
         operation: "load-side-panel-preferences",
         error,
-        userVisibleFallback: "Saved table panel preferences could not be restored.",
+        userVisibleFallback:
+          "Saved table panel preferences could not be restored.",
         metadata: { panelStorageKey },
       });
     }
     setPanelMounted(true);
-  }, [getPanelDefaultWidth, panelMaxWidth, panelMinWidth, panelStorageKey, sidePanel]);
+  }, [
+    getPanelDefaultWidth,
+    panelMaxWidth,
+    panelMinWidth,
+    panelStorageKey,
+    sidePanel,
+  ]);
 
   const persistPanel = React.useCallback(
     (collapsed: boolean, width: number) => {
@@ -647,7 +858,9 @@ export function UnifiedTablePage<T>({
     const gridRect = gridRef.current?.getBoundingClientRect();
     if (!gridRect) return;
 
-    const dividerX = panelCollapsed ? gridRect.right : gridRect.right - panelWidth;
+    const dividerX = panelCollapsed
+      ? gridRect.right
+      : gridRect.right - panelWidth;
     // Button width is 20px (w-5); offset by half width so its center sits on the divider.
     setPanelToggleLeft(dividerX - 10);
   }, [isSidePanelOpen, panelCollapsed, panelMounted, panelWidth]);
@@ -657,7 +870,10 @@ export function UnifiedTablePage<T>({
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      panelResizeRef.current = { startX: event.clientX, startWidth: panelWidth };
+      panelResizeRef.current = {
+        startX: event.clientX,
+        startWidth: panelWidth,
+      };
       setIsResizingPanel(true);
       document.body.style.cursor = "col-resize";
     },
@@ -673,7 +889,10 @@ export function UnifiedTablePage<T>({
       // Dragging left = wider panel (handle is on left edge)
       const delta = state.startX - event.clientX;
       const maxAllowed = Math.min(panelMaxWidth, window.innerWidth * 0.75);
-      const next = Math.max(panelMinWidth, Math.min(maxAllowed, state.startWidth + delta));
+      const next = Math.max(
+        panelMinWidth,
+        Math.min(maxAllowed, state.startWidth + delta),
+      );
       setPanelWidth(next);
     };
 
@@ -695,7 +914,13 @@ export function UnifiedTablePage<T>({
       window.removeEventListener("mouseup", handleMouseUp);
       document.body.style.cursor = "";
     };
-  }, [isResizingPanel, panelCollapsed, panelMaxWidth, panelMinWidth, persistPanel]);
+  }, [
+    isResizingPanel,
+    panelCollapsed,
+    panelMaxWidth,
+    panelMinWidth,
+    persistPanel,
+  ]);
 
   React.useEffect(() => {
     updatePanelTogglePosition();
@@ -724,7 +949,9 @@ export function UnifiedTablePage<T>({
 
   const sortedItems = React.useMemo(() => {
     if (!effectiveSorting?.sortBy) return data.items;
-    const column = table.columns.find((col) => col.id === effectiveSorting.sortBy);
+    const column = table.columns.find(
+      (col) => col.id === effectiveSorting.sortBy,
+    );
     const getSortValue = column?.sortValue;
     if (!getSortValue) return data.items;
 
@@ -733,23 +960,36 @@ export function UnifiedTablePage<T>({
       const valueB = getSortValue(b);
 
       if (valueA == null && valueB == null) return 0;
-      if (valueA == null) return effectiveSorting!.sortDirection === "asc" ? -1 : 1;
-      if (valueB == null) return effectiveSorting!.sortDirection === "asc" ? 1 : -1;
+      if (valueA == null)
+        return effectiveSorting!.sortDirection === "asc" ? -1 : 1;
+      if (valueB == null)
+        return effectiveSorting!.sortDirection === "asc" ? 1 : -1;
 
       if (typeof valueA === "number" && typeof valueB === "number") {
-        return effectiveSorting!.sortDirection === "asc" ? valueA - valueB : valueB - valueA;
+        return effectiveSorting!.sortDirection === "asc"
+          ? valueA - valueB
+          : valueB - valueA;
       }
 
       const comparison = String(valueA).localeCompare(String(valueB));
-      return effectiveSorting!.sortDirection === "asc" ? comparison : -comparison;
+      return effectiveSorting!.sortDirection === "asc"
+        ? comparison
+        : -comparison;
     });
 
     return sorted;
-  }, [data.items, effectiveSorting?.sortBy, effectiveSorting?.sortDirection, table.columns]);
+  }, [
+    data.items,
+    effectiveSorting?.sortBy,
+    effectiveSorting?.sortDirection,
+    table.columns,
+  ]);
 
   React.useEffect(() => {
     if (!hasUserManagedColumnOrderRef.current) {
-      setColumnOrder((prev) => (areStringArraysEqual(prev, visibleColumns) ? prev : visibleColumns));
+      setColumnOrder((prev) =>
+        areStringArraysEqual(prev, visibleColumns) ? prev : visibleColumns,
+      );
       return;
     }
 
@@ -777,7 +1017,10 @@ export function UnifiedTablePage<T>({
     setColumnPinning((prev) => {
       const prevLeft = prev.left.join("|");
       const prevRight = prev.right.join("|");
-      if (prevLeft === defaultPinnedLeftSignature && prevRight === defaultPinnedRightSignature) {
+      if (
+        prevLeft === defaultPinnedLeftSignature &&
+        prevRight === defaultPinnedRightSignature
+      ) {
         return prev;
       }
       return { left: nextLeft, right: nextRight };
@@ -790,16 +1033,29 @@ export function UnifiedTablePage<T>({
   ]);
 
   const rowOrderedItems = React.useMemo(() => {
-    const isManualRowOrderEnabled = resolvedFeatures.enableRowReorder && !effectiveSorting?.sortBy;
+    const isManualRowOrderEnabled =
+      resolvedFeatures.enableRowReorder && !effectiveSorting?.sortBy;
     if (!isManualRowOrderEnabled) return sortedItems;
     if (rowOrderIds.length === 0) return sortedItems;
 
-    const byId = new Map(sortedItems.map((item) => [table.getRowId(item), item]));
-    const ordered = rowOrderIds.map((id) => byId.get(id)).filter((item): item is T => Boolean(item));
+    const byId = new Map(
+      sortedItems.map((item) => [table.getRowId(item), item]),
+    );
+    const ordered = rowOrderIds
+      .map((id) => byId.get(id))
+      .filter((item): item is T => Boolean(item));
     const orderedIds = new Set(ordered.map((item) => table.getRowId(item)));
-    const remaining = sortedItems.filter((item) => !orderedIds.has(table.getRowId(item)));
+    const remaining = sortedItems.filter(
+      (item) => !orderedIds.has(table.getRowId(item)),
+    );
     return [...ordered, ...remaining];
-  }, [resolvedFeatures.enableRowReorder, rowOrderIds, sortedItems, effectiveSorting?.sortBy, table]);
+  }, [
+    resolvedFeatures.enableRowReorder,
+    rowOrderIds,
+    sortedItems,
+    effectiveSorting?.sortBy,
+    table,
+  ]);
 
   // Auto-built CSV exporter: used when toolbar.onExport is not provided.
   // Only exports columns that define csvValue — columns without it are silently skipped.
@@ -814,7 +1070,9 @@ export function UnifiedTablePage<T>({
       const escape = (val: string) => `"${val.replace(/"/g, '""')}"`;
       const headers = exportableCols.map((c) => escape(c.label)).join(",");
       const rows = rowOrderedItems.map((item) =>
-        exportableCols.map((c) => escape(String(c.csvValue!(item) ?? ""))).join(","),
+        exportableCols
+          .map((c) => escape(String(c.csvValue!(item) ?? "")))
+          .join(","),
       );
       const csv = [headers, ...rows].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -825,7 +1083,14 @@ export function UnifiedTablePage<T>({
       a.click();
       URL.revokeObjectURL(url);
     };
-  }, [toolbar.onExport, resolvedFeatures.enableExport, visibleColumns, table.columns, rowOrderedItems, header.title]);
+  }, [
+    toolbar.onExport,
+    resolvedFeatures.enableExport,
+    visibleColumns,
+    table.columns,
+    rowOrderedItems,
+    header.title,
+  ]);
 
   React.useEffect(() => {
     if (!resolvedFeatures.enableRowReorder || effectiveSorting?.sortBy) {
@@ -844,10 +1109,17 @@ export function UnifiedTablePage<T>({
       const nextOrder = [...preserved, ...additions];
       return areStringArraysEqual(prev, nextOrder) ? prev : nextOrder;
     });
-  }, [resolvedFeatures.enableRowReorder, rowOrderedItems, effectiveSorting?.sortBy, table]);
+  }, [
+    resolvedFeatures.enableRowReorder,
+    rowOrderedItems,
+    effectiveSorting?.sortBy,
+    table,
+  ]);
 
   // Slice client-side when: caller passes pagination.clientSide, OR no pagination prop + enablePagination.
-  const shouldClientPaginate = pagination?.clientSide || (!pagination && resolvedFeatures.enablePagination);
+  const shouldClientPaginate =
+    pagination?.clientSide ||
+    (!pagination && resolvedFeatures.enablePagination);
   const activePage = pagination?.page ?? internalPage;
   const activePerPage = pagination?.perPage ?? internalPerPage;
 
@@ -862,19 +1134,26 @@ export function UnifiedTablePage<T>({
     rowOrderedItems.every((item) => selectedIds.includes(table.getRowId(item)));
   const someSelected = selectedIds.length > 0 && !allSelected;
 
-  const showEmptyState = !data.isLoading && !data.error && rowOrderedItems.length === 0;
-  const showTable = !data.isLoading && !data.error && rowOrderedItems.length > 0;
+  const showEmptyState =
+    !data.isLoading && !data.error && rowOrderedItems.length === 0;
+  const showTable =
+    !data.isLoading && !data.error && rowOrderedItems.length > 0;
 
   const handleSortClick = (columnId: string) => {
     if (!effectiveSorting) return;
     const nextDirection =
-      effectiveSorting.sortBy === columnId && effectiveSorting.sortDirection === "asc" ? "desc" : "asc";
+      effectiveSorting.sortBy === columnId &&
+      effectiveSorting.sortDirection === "asc"
+        ? "desc"
+        : "asc";
     effectiveSorting.onSortChange(columnId, nextDirection);
   };
 
   const renderSortIcon = (columnId: string) => {
     if (!effectiveSorting || effectiveSorting.sortBy !== columnId) {
-      return <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground/0 group-hover/th:text-muted-foreground transition-colors" />;
+      return (
+        <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground/0 group-hover/th:text-muted-foreground transition-colors" />
+      );
     }
 
     return effectiveSorting.sortDirection === "asc" ? (
@@ -887,7 +1166,9 @@ export function UnifiedTablePage<T>({
   const hideColumn = React.useCallback(
     (columnId: string) => {
       if (visibleColumns.length <= 1) return;
-      handleColumnVisibilityChange(visibleColumns.filter((existingId) => existingId !== columnId));
+      handleColumnVisibilityChange(
+        visibleColumns.filter((existingId) => existingId !== columnId),
+      );
     },
     [handleColumnVisibilityChange, visibleColumns],
   );
@@ -899,11 +1180,19 @@ export function UnifiedTablePage<T>({
     const merged = [...fromOrder, ...missing];
     const leftPinned = columnPinning.left.filter((id) => merged.includes(id));
     const rightPinned = columnPinning.right.filter((id) => merged.includes(id));
-    const unpinned = merged.filter((id) => !leftPinned.includes(id) && !rightPinned.includes(id));
+    const unpinned = merged.filter(
+      (id) => !leftPinned.includes(id) && !rightPinned.includes(id),
+    );
     return [...leftPinned, ...unpinned, ...rightPinned]
       .map((id) => table.columns.find((column) => column.id === id))
       .filter((column): column is TableColumn<T> => Boolean(column));
-  }, [columnOrder, columnPinning.left, columnPinning.right, table.columns, visibleColumns]);
+  }, [
+    columnOrder,
+    columnPinning.left,
+    columnPinning.right,
+    table.columns,
+    visibleColumns,
+  ]);
 
   const leftPinnedOffsets = React.useMemo(() => {
     let offset = 0;
@@ -1039,7 +1328,8 @@ export function UnifiedTablePage<T>({
     async (item: T, column: TableColumn<T>, rowId: string, value: string) => {
       const cellKey = `${rowId}::${column.id}`;
       const nextValue = value.trim();
-      const currentValue = inlineEdits[cellKey] ?? column.editValue?.(item) ?? "";
+      const currentValue =
+        inlineEdits[cellKey] ?? column.editValue?.(item) ?? "";
 
       if (nextValue === currentValue) {
         setEditingCell(null);
@@ -1055,7 +1345,8 @@ export function UnifiedTablePage<T>({
       } catch (error) {
         toast.error("Cell update issue", {
           id: "unified-table-cell-update",
-          description: "The edited cell was restored because the save request did not complete.",
+          description:
+            "The edited cell was restored because the save request did not complete.",
         });
       } finally {
         setEditingCell(null);
@@ -1096,16 +1387,29 @@ export function UnifiedTablePage<T>({
   const handleTableKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     table.onTableKeyDown?.(event, paginatedItems);
     if (event.defaultPrevented || paginatedItems.length === 0) return;
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp" && event.key !== "Tab") return;
-    if (event.target instanceof HTMLElement && ["INPUT", "TEXTAREA"].includes(event.target.tagName)) {
+    if (
+      event.key !== "ArrowDown" &&
+      event.key !== "ArrowUp" &&
+      event.key !== "Tab"
+    )
+      return;
+    if (
+      event.target instanceof HTMLElement &&
+      ["INPUT", "TEXTAREA"].includes(event.target.tagName)
+    ) {
       return;
     }
 
     event.preventDefault();
     const currentIndex = table.activeRowId
-      ? paginatedItems.findIndex((item) => table.getRowId(item) === table.activeRowId)
+      ? paginatedItems.findIndex(
+          (item) => table.getRowId(item) === table.activeRowId,
+        )
       : -1;
-    const step = event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey) ? -1 : 1;
+    const step =
+      event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey)
+        ? -1
+        : 1;
     const fallbackStart = step > 0 ? 0 : paginatedItems.length - 1;
     const nextIndex =
       currentIndex < 0
@@ -1220,7 +1524,9 @@ export function UnifiedTablePage<T>({
     "max-sm:[&_button:not([data-keep-text])]:!justify-center";
 
   const headerActionsSlot = header.actions ? (
-    <div className={cn("contents", mobileIconOnlyActions)}>{header.actions}</div>
+    <div className={cn("contents", mobileIconOnlyActions)}>
+      {header.actions}
+    </div>
   ) : null;
 
   const headerContent = (
@@ -1262,7 +1568,9 @@ export function UnifiedTablePage<T>({
           className={cn(
             "flex flex-col gap-2 md:flex-row md:items-end md:gap-4",
             tabs ? "md:justify-between" : "md:justify-end",
-            isCompactDensity ? "pb-1 pt-0" : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
+            isCompactDensity
+              ? "pb-1 pt-0"
+              : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
           )}
         >
           {tabs && (
@@ -1273,7 +1581,9 @@ export function UnifiedTablePage<T>({
             />
           )}
           {!toolbarInlineWithHeader ? (
-            <div className="hidden min-w-0 justify-end sm:flex md:shrink-0">{tableToolbar}</div>
+            <div className="hidden min-w-0 justify-end sm:flex md:shrink-0">
+              {tableToolbar}
+            </div>
           ) : null}
         </div>
       )}
@@ -1296,7 +1606,9 @@ export function UnifiedTablePage<T>({
         </div>
       )}
 
-      {topContent && !data.isLoading && !data.error && <div className="mt-4 space-y-4">{topContent}</div>}
+      {topContent && !data.isLoading && !data.error && (
+        <div className="mt-4 space-y-4">{topContent}</div>
+      )}
 
       {showEmptyState && (
         <div className="mt-4">
@@ -1347,7 +1659,11 @@ export function UnifiedTablePage<T>({
             onKeyDown={handleTableKeyDown}
             onClick={() => tableScrollRef.current?.focus()}
             ref={tableScrollRef}
-            style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
+            style={
+              resolvedFeatures.enableVirtualization
+                ? { maxHeight: 640, overflowY: "auto" }
+                : undefined
+            }
           >
             <Table
               className={cn(
@@ -1359,14 +1675,24 @@ export function UnifiedTablePage<T>({
                   !hasRowSelection &&
                   "[&_th:first-child]:pl-0 [&_td:first-child]:pl-0 [&_th:last-child]:pr-0 [&_td:last-child]:pr-0",
               )}
-              style={layout?.minWidth ? { minWidth: layout.minWidth } : undefined}
+              style={
+                layout?.minWidth ? { minWidth: layout.minWidth } : undefined
+              }
             >
-              <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-card")}>
+              <TableHeader
+                className={cn(
+                  table.stickyHeader !== false && "sticky top-0 z-20 bg-card",
+                )}
+              >
                 {columnGroups && columnGroups.length > 0 && (
                   <TableRow className="border-b-0">
                     {hasRowSelection && (
                       <TableHead
-                        style={{ width: selectionColumnWidth, minWidth: selectionColumnWidth, maxWidth: selectionColumnWidth }}
+                        style={{
+                          width: selectionColumnWidth,
+                          minWidth: selectionColumnWidth,
+                          maxWidth: selectionColumnWidth,
+                        }}
                         className=""
                       />
                     )}
@@ -1389,7 +1715,12 @@ export function UnifiedTablePage<T>({
                       );
                     })}
                     {hasRowActions && (
-                      <TableHead className={cn("w-[56px] pl-2", sidePanel ? "pr-4" : "pr-2")} />
+                      <TableHead
+                        className={cn(
+                          "w-[56px] pl-2",
+                          sidePanel ? "pr-4" : "pr-2",
+                        )}
+                      />
                     )}
                   </TableRow>
                 )}
@@ -1405,221 +1736,262 @@ export function UnifiedTablePage<T>({
                     >
                       <div className="flex items-center justify-center">
                         <Checkbox
-                          checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                          checked={
+                            allSelected
+                              ? true
+                              : someSelected
+                                ? "indeterminate"
+                                : false
+                          }
+                          onCheckedChange={(checked) =>
+                            handleSelectAll(Boolean(checked))
+                          }
                           aria-label="Select all rows"
                         />
                       </div>
                     </TableHead>
                   )}
                   {orderedVisibleColumns.map((column) => {
-                      const isSortable = column.sortable !== false && Boolean(effectiveSorting);
-                      const isHideable = !column.alwaysVisible;
-                      const columnAlignment = column.align ?? headerAlignment;
-                      const width = columnWidths[column.id] ?? column.width;
-                      const isPinnedLeft = columnPinning.left.includes(column.id);
-                      const pinnedStyle = getPinnedStyle(column.id);
-                      const headerPinnedStyle = pinnedStyle ?? undefined;
-                      const columnStyle =
-                        width || headerPinnedStyle
-                          ? ({ width, minWidth: columnWidths[column.id] ?? undefined, maxWidth: column.width && !columnWidths[column.id] ? column.width : undefined, ...headerPinnedStyle } as React.CSSProperties)
-                          : undefined;
-                      const hasContextActions =
-                        isSortable || isHideable || resolvedFeatures.enableColumnPinning;
-                      const dragHandle = resolvedFeatures.enableColumnReorder ? (
-                        <span
-                          draggable
-                          aria-label={`Drag ${column.label} column`}
-                          title="Drag to reorder column"
-                          className="inline-flex h-4 w-3 shrink-0 cursor-grab items-center justify-center text-muted-foreground/45 opacity-0 transition-[color,opacity] hover:text-muted-foreground group-hover/th:opacity-100 group-focus-within/th:opacity-100 active:cursor-grabbing"
-                          onClick={(event) => event.stopPropagation()}
-                          onMouseDown={(event) => event.stopPropagation()}
-                          onDragStart={(event) => {
-                            event.stopPropagation();
-                            event.dataTransfer.effectAllowed = "move";
-                            event.dataTransfer.setData("text/plain", column.id);
-                            draggedColumnIdRef.current = column.id;
-                            setDraggedColumnId(column.id);
-                          }}
-                          onDragEnd={(event) => {
-                            event.stopPropagation();
-                            draggedColumnIdRef.current = null;
-                            setDraggedColumnId(null);
-                          }}
-                        >
-                          <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
-                        </span>
-                      ) : null;
-                      return (
-                          <TableHead
-                            key={column.id}
-                            className={cn(
-                              "relative align-middle",
-                              columnAlignment === "right"
-                                ? "text-right"
-                                : columnAlignment === "center"
-                                  ? "text-center"
-                                  : "text-left",
-                              isSortable && "cursor-pointer select-none group/th",
-                            )}
-                          aria-sort={
-                            isSortable
-                              ? effectiveSorting?.sortBy === column.id
-                                ? effectiveSorting.sortDirection === "asc"
-                                  ? "ascending"
-                                  : "descending"
-                                : "none"
-                              : undefined
+                    const isSortable =
+                      column.sortable !== false && Boolean(effectiveSorting);
+                    const isHideable = !column.alwaysVisible;
+                    const columnAlignment = column.align ?? headerAlignment;
+                    const width = columnWidths[column.id] ?? column.width;
+                    const isPinnedLeft = columnPinning.left.includes(column.id);
+                    const pinnedStyle = getPinnedStyle(column.id);
+                    const headerPinnedStyle = pinnedStyle ?? undefined;
+                    const columnStyle =
+                      width || headerPinnedStyle
+                        ? ({
+                            width,
+                            minWidth: columnWidths[column.id] ?? undefined,
+                            maxWidth:
+                              column.width && !columnWidths[column.id]
+                                ? column.width
+                                : undefined,
+                            ...headerPinnedStyle,
+                          } as React.CSSProperties)
+                        : undefined;
+                    const hasContextActions =
+                      isSortable ||
+                      isHideable ||
+                      resolvedFeatures.enableColumnPinning;
+                    const dragHandle = resolvedFeatures.enableColumnReorder ? (
+                      <span
+                        draggable
+                        aria-label={`Drag ${column.label} column`}
+                        title="Drag to reorder column"
+                        className="inline-flex h-4 w-3 shrink-0 cursor-grab items-center justify-center text-muted-foreground/45 opacity-0 transition-[color,opacity] hover:text-muted-foreground group-hover/th:opacity-100 group-focus-within/th:opacity-100 active:cursor-grabbing"
+                        onClick={(event) => event.stopPropagation()}
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onDragStart={(event) => {
+                          event.stopPropagation();
+                          event.dataTransfer.effectAllowed = "move";
+                          event.dataTransfer.setData("text/plain", column.id);
+                          draggedColumnIdRef.current = column.id;
+                          setDraggedColumnId(column.id);
+                        }}
+                        onDragEnd={(event) => {
+                          event.stopPropagation();
+                          draggedColumnIdRef.current = null;
+                          setDraggedColumnId(null);
+                        }}
+                      >
+                        <GripVertical
+                          className="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    ) : null;
+                    return (
+                      <TableHead
+                        key={column.id}
+                        className={cn(
+                          "relative align-middle",
+                          columnAlignment === "right"
+                            ? "text-right"
+                            : columnAlignment === "center"
+                              ? "text-center"
+                              : "text-left",
+                          isSortable && "cursor-pointer select-none group/th",
+                        )}
+                        aria-sort={
+                          isSortable
+                            ? effectiveSorting?.sortBy === column.id
+                              ? effectiveSorting.sortDirection === "asc"
+                                ? "ascending"
+                                : "descending"
+                              : "none"
+                            : undefined
+                        }
+                        style={columnStyle}
+                        onDragOver={(event) => {
+                          if (!resolvedFeatures.enableColumnReorder) return;
+                          if (!draggedColumnIdRef.current && !draggedColumnId)
+                            return;
+                          event.preventDefault();
+                        }}
+                        onDrop={() => {
+                          if (!resolvedFeatures.enableColumnReorder) return;
+                          if (!draggedColumnIdRef.current && !draggedColumnId)
+                            return;
+                          handleColumnDrop(column.id);
+                          draggedColumnIdRef.current = null;
+                          setDraggedColumnId(null);
+                        }}
+                        onClick={() => {
+                          if (isSortable) {
+                            handleSortClick(column.id);
                           }
-                          style={columnStyle}
-                          onDragOver={(event) => {
-                            if (!resolvedFeatures.enableColumnReorder) return;
-                            if (!draggedColumnIdRef.current && !draggedColumnId) return;
-                            event.preventDefault();
-                          }}
-                          onDrop={() => {
-                            if (!resolvedFeatures.enableColumnReorder) return;
-                            if (!draggedColumnIdRef.current && !draggedColumnId) return;
-                            handleColumnDrop(column.id);
-                            draggedColumnIdRef.current = null;
-                            setDraggedColumnId(null);
-                          }}
-                          onClick={() => {
-                            if (isSortable) {
-                              handleSortClick(column.id);
-                            }
-                          }}
-                          onContextMenu={(e) => {
-                            if (!isHideable) return;
-                            e.preventDefault();
-                            const btn = e.currentTarget.querySelector<HTMLButtonElement>("button[type='button']");
-                            btn?.click();
-                          }}
-                        >
-                          {hasContextActions ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className={cn(
-                                    "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
-                                    "text-xs",
-                                    "w-full",
-                                    "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
-                                    columnAlignment === "right"
-                                      ? "justify-end"
-                                      : columnAlignment === "center"
-                                        ? "justify-center"
-                                        : "justify-start",
-                                  )}
-                                  onContextMenu={(event) => {
-                                    event.preventDefault();
-                                    event.currentTarget.click();
-                                  }}
-                                >
-                                  {columnAlignment !== "right" && dragHandle}
-                                  {isSortable &&
-                                    columnAlignment === "right" &&
-                                    renderSortIcon(column.id)}
-                                  <span>{column.label}</span>
-                                  {isSortable &&
-                                    columnAlignment !== "right" &&
-                                    renderSortIcon(column.id)}
-                                  {columnAlignment === "right" && dragHandle}
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start">
-                                {isSortable && (
-                                  <>
-                                    <DropdownMenuItem
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        effectiveSorting?.onSortChange(column.id, "asc");
-                                      }}
-                                    >
-                                      <ArrowUp className="mr-2 h-3.5 w-3.5" />
-                                      Sort ascending
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        effectiveSorting?.onSortChange(column.id, "desc");
-                                      }}
-                                    >
-                                      <ArrowDown className="mr-2 h-3.5 w-3.5" />
-                                      Sort descending
-                                    </DropdownMenuItem>
-                                  </>
+                        }}
+                        onContextMenu={(e) => {
+                          if (!isHideable) return;
+                          e.preventDefault();
+                          const btn =
+                            e.currentTarget.querySelector<HTMLButtonElement>(
+                              "button[type='button']",
+                            );
+                          btn?.click();
+                        }}
+                      >
+                        {hasContextActions ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                className={cn(
+                                  "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
+                                  "text-xs",
+                                  "w-full",
+                                  "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
+                                  columnAlignment === "right"
+                                    ? "justify-end"
+                                    : columnAlignment === "center"
+                                      ? "justify-center"
+                                      : "justify-start",
                                 )}
-                                {resolvedFeatures.enableColumnPinning && (
-                                  <>
-                                    {isSortable && <DropdownMenuSeparator />}
-                                    <DropdownMenuItem
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        pinColumn(column.id);
-                                      }}
-                                    >
-                                      {columnPinning.left.includes(column.id) ? (
-                                        <>
-                                          <PinOff className="mr-2 h-3.5 w-3.5" />
-                                          Unpin column
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Pin className="mr-2 h-3.5 w-3.5" />
-                                          Pin column
-                                        </>
-                                      )}
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                                {isHideable && (
-                                  <>
-                                    {(isSortable || resolvedFeatures.enableColumnPinning) && (
-                                      <DropdownMenuSeparator />
-                                    )}
-                                    <DropdownMenuItem
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        hideColumn(column.id);
-                                      }}
-                                    >
-                                      <EyeOff className="mr-2 h-3.5 w-3.5" />
-                                      Hide column
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <div
-                              className={cn(
-                                "flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground",
-                                "w-full",
-                                columnAlignment === "right"
-                                  ? "justify-end"
-                                  : columnAlignment === "center"
-                                    ? "justify-center"
-                                    : "justify-start",
+                                onContextMenu={(event) => {
+                                  event.preventDefault();
+                                  event.currentTarget.click();
+                                }}
+                              >
+                                {columnAlignment !== "right" && dragHandle}
+                                {isSortable &&
+                                  columnAlignment === "right" &&
+                                  renderSortIcon(column.id)}
+                                <span>{column.label}</span>
+                                {isSortable &&
+                                  columnAlignment !== "right" &&
+                                  renderSortIcon(column.id)}
+                                {columnAlignment === "right" && dragHandle}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              {isSortable && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      effectiveSorting?.onSortChange(
+                                        column.id,
+                                        "asc",
+                                      );
+                                    }}
+                                  >
+                                    <ArrowUp className="mr-2 h-3.5 w-3.5" />
+                                    Sort ascending
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      effectiveSorting?.onSortChange(
+                                        column.id,
+                                        "desc",
+                                      );
+                                    }}
+                                  >
+                                    <ArrowDown className="mr-2 h-3.5 w-3.5" />
+                                    Sort descending
+                                  </DropdownMenuItem>
+                                </>
                               )}
-                            >
-                              {columnAlignment !== "right" && dragHandle}
-                              <span>{column.label}</span>
-                              {columnAlignment === "right" && dragHandle}
-                            </div>
-                          )}
+                              {resolvedFeatures.enableColumnPinning && (
+                                <>
+                                  {isSortable && <DropdownMenuSeparator />}
+                                  <DropdownMenuItem
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      pinColumn(column.id);
+                                    }}
+                                  >
+                                    {columnPinning.left.includes(column.id) ? (
+                                      <>
+                                        <PinOff className="mr-2 h-3.5 w-3.5" />
+                                        Unpin column
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Pin className="mr-2 h-3.5 w-3.5" />
+                                        Pin column
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {isHideable && (
+                                <>
+                                  {(isSortable ||
+                                    resolvedFeatures.enableColumnPinning) && (
+                                    <DropdownMenuSeparator />
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      hideColumn(column.id);
+                                    }}
+                                  >
+                                    <EyeOff className="mr-2 h-3.5 w-3.5" />
+                                    Hide column
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
                           <div
-                            className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-border active:bg-primary/40 transition-colors"
-                            onMouseDown={(event) => handleColumnResizeStart(event, column.id)}
-                            aria-hidden="true"
-                          />
-                        </TableHead>
-                      );
-                    })}
+                            className={cn(
+                              "flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground",
+                              "w-full",
+                              columnAlignment === "right"
+                                ? "justify-end"
+                                : columnAlignment === "center"
+                                  ? "justify-center"
+                                  : "justify-start",
+                            )}
+                          >
+                            {columnAlignment !== "right" && dragHandle}
+                            <span>{column.label}</span>
+                            {columnAlignment === "right" && dragHandle}
+                          </div>
+                        )}
+                        <div
+                          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-border active:bg-primary/40 transition-colors"
+                          onMouseDown={(event) =>
+                            handleColumnResizeStart(event, column.id)
+                          }
+                          aria-hidden="true"
+                        />
+                      </TableHead>
+                    );
+                  })}
                   {hasRowActions && (
-                    <TableHead className={cn("w-[56px] pl-2", sidePanel ? "pr-4" : "pr-2")} />
+                    <TableHead
+                      className={cn(
+                        "w-[56px] pl-2",
+                        sidePanel ? "pr-4" : "pr-2",
+                      )}
+                    />
                   )}
                 </TableRow>
               </TableHeader>
@@ -1650,82 +2022,113 @@ export function UnifiedTablePage<T>({
                       item,
                       key: table.getRowId(item),
                       style: undefined,
-                    }))).map(({ item, key, style }) => (
+                    }))
+                ).map(({ item, key, style }) => (
                   <React.Fragment key={key}>
-                  <TableRow
-                    ref={(element) => {
-                      rowRefs.current[key] = element;
-                    }}
-                    className={cn(
-                      "group/row cursor-pointer transition-colors duration-150",
-                      "hover:bg-muted/40",
-                      table.activeRowId === table.getRowId(item) && "bg-muted",
-                      selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
-                    )}
-                    style={style}
-                    draggable={
-                      resolvedFeatures.enableRowReorder &&
-                      !effectiveSorting?.sortBy &&
-                      !resolvedFeatures.enableVirtualization
-                    }
-                    onDragStart={() => setDraggedRowId(table.getRowId(item))}
-                    onDragOver={(event) => {
-                      if (!(resolvedFeatures.enableRowReorder && !effectiveSorting?.sortBy)) return;
-                      event.preventDefault();
-                    }}
-                    onDrop={() => {
-                      if (!(resolvedFeatures.enableRowReorder && !effectiveSorting?.sortBy)) return;
-                      handleRowDrop(table.getRowId(item));
-                      setDraggedRowId(null);
-                    }}
-                    onDragEnd={() => setDraggedRowId(null)}
-                    onClick={(event) => {
-                      if (isInteractiveRowTarget(event.target)) {
-                        return;
+                    <TableRow
+                      ref={(element) => {
+                        rowRefs.current[key] = element;
+                      }}
+                      className={cn(
+                        "group/row cursor-pointer transition-colors duration-150",
+                        "hover:bg-muted/40",
+                        table.activeRowId === table.getRowId(item) &&
+                          "bg-muted",
+                        selectedIds.includes(table.getRowId(item)) &&
+                          "bg-muted/50",
+                      )}
+                      style={style}
+                      draggable={
+                        resolvedFeatures.enableRowReorder &&
+                        !effectiveSorting?.sortBy &&
+                        !resolvedFeatures.enableVirtualization
                       }
-                      activateRow(item);
-                    }}
-                    tabIndex={table.onRowClick ? 0 : undefined}
-                    onKeyDown={table.onRowClick ? (event) => {
-                      if (isInteractiveRowTarget(event.target)) {
-                        return;
-                      }
-                      if (event.key === "Enter" || event.key === " ") {
+                      onDragStart={() => setDraggedRowId(table.getRowId(item))}
+                      onDragOver={(event) => {
+                        if (
+                          !(
+                            resolvedFeatures.enableRowReorder &&
+                            !effectiveSorting?.sortBy
+                          )
+                        )
+                          return;
                         event.preventDefault();
+                      }}
+                      onDrop={() => {
+                        if (
+                          !(
+                            resolvedFeatures.enableRowReorder &&
+                            !effectiveSorting?.sortBy
+                          )
+                        )
+                          return;
+                        handleRowDrop(table.getRowId(item));
+                        setDraggedRowId(null);
+                      }}
+                      onDragEnd={() => setDraggedRowId(null)}
+                      onClick={(event) => {
+                        if (isInteractiveRowTarget(event.target)) {
+                          return;
+                        }
                         activateRow(item);
-                      }
-                    } : undefined}
-                  >
-                    {hasRowSelection && (
-                      <TableCell
-                        className="pl-0 pr-2"
-                        style={{
-                          width: selectionColumnWidth,
-                          minWidth: selectionColumnWidth,
-                          maxWidth: selectionColumnWidth,
-                        }}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <div className="flex items-center justify-center">
-                          <Checkbox
-                            checked={selectedIds.includes(table.getRowId(item))}
-                            onCheckedChange={(checked) =>
-                              handleSelectRow(table.getRowId(item), Boolean(checked))
+                      }}
+                      tabIndex={table.onRowClick ? 0 : undefined}
+                      onKeyDown={
+                        table.onRowClick
+                          ? (event) => {
+                              if (isInteractiveRowTarget(event.target)) {
+                                return;
+                              }
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                activateRow(item);
+                              }
                             }
-                            aria-label="Select row"
-                          />
-                        </div>
-                      </TableCell>
-                    )}
-                    {orderedVisibleColumns.map((column) => (
+                          : undefined
+                      }
+                    >
+                      {hasRowSelection && (
+                        <TableCell
+                          className="pl-0 pr-2"
+                          style={{
+                            width: selectionColumnWidth,
+                            minWidth: selectionColumnWidth,
+                            maxWidth: selectionColumnWidth,
+                          }}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-center">
+                            <Checkbox
+                              checked={selectedIds.includes(
+                                table.getRowId(item),
+                              )}
+                              onCheckedChange={(checked) =>
+                                handleSelectRow(
+                                  table.getRowId(item),
+                                  Boolean(checked),
+                                )
+                              }
+                              aria-label="Select row"
+                            />
+                          </div>
+                        </TableCell>
+                      )}
+                      {orderedVisibleColumns.map((column) => (
                         <TableCell
                           key={column.id}
                           style={
-                            columnWidths[column.id] || column.width || getPinnedStyle(column.id)
+                            columnWidths[column.id] ||
+                            column.width ||
+                            getPinnedStyle(column.id)
                               ? ({
-                                  width: columnWidths[column.id] ?? column.width,
-                                  minWidth: columnWidths[column.id] ?? undefined,
-                                  maxWidth: column.width && !columnWidths[column.id] ? column.width : undefined,
+                                  width:
+                                    columnWidths[column.id] ?? column.width,
+                                  minWidth:
+                                    columnWidths[column.id] ?? undefined,
+                                  maxWidth:
+                                    column.width && !columnWidths[column.id]
+                                      ? column.width
+                                      : undefined,
                                   ...getPinnedStyle(column.id),
                                 } as React.CSSProperties)
                               : undefined
@@ -1737,10 +2140,14 @@ export function UnifiedTablePage<T>({
                             const rowId = table.getRowId(item);
                             const cellKey = `${rowId}::${column.id}`;
                             setEditingCell({ rowId, columnId: column.id });
-                            setEditingValue(inlineEdits[cellKey] ?? column.editValue(item));
+                            setEditingValue(
+                              inlineEdits[cellKey] ?? column.editValue(item),
+                            );
                           }}
                           className={cn(
-                            resolvedFeatures.enableInlineEditing && column.editable && column.editValue
+                            resolvedFeatures.enableInlineEditing &&
+                              column.editable &&
+                              column.editValue
                               ? "cursor-text hover:bg-muted/60 transition-colors"
                               : "",
                           )}
@@ -1768,95 +2175,113 @@ export function UnifiedTablePage<T>({
                                 },
                               })
                             ) : (
-                            <Input
-                              className="h-7 w-full rounded border border-border bg-background px-2 text-sm -my-0.5"
-                              value={editingValue}
-                              autoFocus
-                              onChange={(event) => setEditingValue(event.target.value)}
-                              onClick={(event) => event.stopPropagation()}
-                              onBlur={() =>
-                                commitInlineEdit(
-                                  item,
-                                  column,
-                                  table.getRowId(item),
-                                  editingValue,
-                                )
-                              }
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter") {
-                                  event.preventDefault();
-                                  void commitInlineEdit(
+                              <Input
+                                className="h-7 w-full rounded border border-border bg-background px-2 text-sm -my-0.5"
+                                value={editingValue}
+                                autoFocus
+                                onChange={(event) =>
+                                  setEditingValue(event.target.value)
+                                }
+                                onClick={(event) => event.stopPropagation()}
+                                onBlur={() =>
+                                  commitInlineEdit(
                                     item,
                                     column,
                                     table.getRowId(item),
                                     editingValue,
-                                  );
+                                  )
                                 }
-                                if (event.key === "Escape") {
-                                  event.preventDefault();
-                                  setEditingCell(null);
-                                  setEditingValue("");
-                                }
-                                if (event.key === "Tab") {
-                                  void commitInlineEdit(
-                                    item,
-                                    column,
-                                    table.getRowId(item),
-                                    editingValue,
-                                  );
-                                }
-                              }}
-                            />
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    void commitInlineEdit(
+                                      item,
+                                      column,
+                                      table.getRowId(item),
+                                      editingValue,
+                                    );
+                                  }
+                                  if (event.key === "Escape") {
+                                    event.preventDefault();
+                                    setEditingCell(null);
+                                    setEditingValue("");
+                                  }
+                                  if (event.key === "Tab") {
+                                    void commitInlineEdit(
+                                      item,
+                                      column,
+                                      table.getRowId(item),
+                                      editingValue,
+                                    );
+                                  }
+                                }}
+                              />
                             )
                           ) : (
                             column.render(item)
                           )}
                         </TableCell>
                       ))}
-                    {hasRowActions && (
-                      <TableCell
-                        className={cn("pl-2", sidePanel ? "pr-4" : "pr-2")}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        {table.rowActions ? table.rowActions(item) : (table.onDelete || table.onEdit) ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Row actions">
-                                <MoreHorizontal />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {table.onEdit && (
-                                <DropdownMenuItem onClick={() => table.onEdit!(item)}>
-                                  Edit
-                                </DropdownMenuItem>
-                              )}
-                              {table.onEdit && table.onDelete && <DropdownMenuSeparator />}
-                              {table.onDelete && (
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteIntent(item)}
+                      {hasRowActions && (
+                        <TableCell
+                          className={cn("pl-2", sidePanel ? "pr-4" : "pr-2")}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {table.rowActions ? (
+                            table.rowActions(item)
+                          ) : table.onDelete || table.onEdit ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  aria-label="Row actions"
                                 >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : null}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                  {!resolvedFeatures.enableVirtualization &&
-                    table.renderExpandedRow?.(
-                      item,
-                      orderedVisibleColumns.length + (hasRowSelection ? 1 : 0) + (hasRowActions ? 1 : 0),
-                      {
-                        columns: orderedVisibleColumns.map((c) => ({ id: c.id, width: columnWidths[c.id] ?? c.width })),
-                        hasSelection: hasRowSelection,
-                        hasActions: hasRowActions,
-                      },
-                    )}
+                                  <MoreHorizontal />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {table.onEdit && (
+                                  <DropdownMenuItem
+                                    onClick={() => table.onEdit!(item)}
+                                  >
+                                    Edit
+                                  </DropdownMenuItem>
+                                )}
+                                {table.onEdit && table.onDelete && (
+                                  <DropdownMenuSeparator />
+                                )}
+                                {table.onDelete && (
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => handleDeleteIntent(item)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : null}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                    {!resolvedFeatures.enableVirtualization &&
+                      table.renderExpandedRow?.(
+                        item,
+                        orderedVisibleColumns.length +
+                          (hasRowSelection ? 1 : 0) +
+                          (hasRowActions ? 1 : 0),
+                        {
+                          columns: orderedVisibleColumns.map((c) => ({
+                            id: c.id,
+                            width: columnWidths[c.id] ?? c.width,
+                          })),
+                          hasSelection: hasRowSelection,
+                          hasActions: hasRowActions,
+                        },
+                      )}
                   </React.Fragment>
                 ))}
               </TableBody>
@@ -1865,24 +2290,36 @@ export function UnifiedTablePage<T>({
                   <TableRow className={cn("font-medium", "bg-transparent")}>
                     {hasRowSelection && <TableCell />}
                     {orderedVisibleColumns.map((column, index) => {
-                        const width = columnWidths[column.id];
-                        const columnStyle = width
-                          ? ({ width, minWidth: width, ...getPinnedStyle(column.id) } as React.CSSProperties)
-                          : undefined;
-                        const value = footerTotals.values[column.id];
-                        if (index === 0 && !value) {
-                          return (
-                            <TableCell key={column.id} className="font-semibold" style={columnStyle}>
-                              {footerTotals.label ?? "Totals"}
-                            </TableCell>
-                          );
-                        }
+                      const width = columnWidths[column.id];
+                      const columnStyle = width
+                        ? ({
+                            width,
+                            minWidth: width,
+                            ...getPinnedStyle(column.id),
+                          } as React.CSSProperties)
+                        : undefined;
+                      const value = footerTotals.values[column.id];
+                      if (index === 0 && !value) {
                         return (
-                          <TableCell key={column.id} className="font-semibold" style={columnStyle}>
-                            {value ?? null}
+                          <TableCell
+                            key={column.id}
+                            className="font-semibold"
+                            style={columnStyle}
+                          >
+                            {footerTotals.label ?? "Totals"}
                           </TableCell>
                         );
-                      })}
+                      }
+                      return (
+                        <TableCell
+                          key={column.id}
+                          className="font-semibold"
+                          style={columnStyle}
+                        >
+                          {value ?? null}
+                        </TableCell>
+                      );
+                    })}
                     {hasRowActions && <TableCell />}
                   </TableRow>
                 </TableFooter>
@@ -1892,47 +2329,74 @@ export function UnifiedTablePage<T>({
         </div>
       )}
 
-      {showTable && canRenderCardView && (() => {
-        const CardView = views?.card;
-        const groupFn = views?.cardGroupBy;
-        const gridCls = cn("grid", layout?.cardGridClassName ?? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4");
+      {showTable &&
+        canRenderBoardView &&
+        (() => {
+          const BoardRenderer = views?.board;
+          if (!BoardRenderer) return null;
 
-        if (groupFn) {
-          const groups = new Map<string, T[]>();
-          for (const item of rowOrderedItems) {
-            const key = groupFn(item);
-            const arr = groups.get(key);
-            if (arr) arr.push(item); else groups.set(key, [item]);
-          }
           return (
-            <div className="mt-4 space-y-6">
-              {Array.from(groups.entries()).map(([label, items]) => (
-                <div key={label}>
-                  {/* eslint-disable-next-line design-system/no-raw-heading */}
-                  <h3 className="text-sm font-semibold text-foreground mb-3 px-0.5">{label}</h3>
-                  <div className={gridCls}>
-                    {items.map((item) => (
-                      <React.Fragment key={table.getRowId(item)}>
-                        {CardView ? CardView(item) : null}
-                      </React.Fragment>
-                    ))}
+            <div className="mt-4">
+              {BoardRenderer({
+                items: rowOrderedItems,
+                getRowId: table.getRowId,
+                activeRowId: table.activeRowId,
+                onRowClick: table.onRowClick,
+              })}
+            </div>
+          );
+        })()}
+
+      {showTable &&
+        canRenderCardView &&
+        (() => {
+          const CardView = views?.card;
+          const groupFn = views?.cardGroupBy;
+          const gridCls = cn(
+            "grid",
+            layout?.cardGridClassName ??
+              "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
+          );
+
+          if (groupFn) {
+            const groups = new Map<string, T[]>();
+            for (const item of rowOrderedItems) {
+              const key = groupFn(item);
+              const arr = groups.get(key);
+              if (arr) arr.push(item);
+              else groups.set(key, [item]);
+            }
+            return (
+              <div className="mt-4 space-y-6">
+                {Array.from(groups.entries()).map(([label, items]) => (
+                  <div key={label}>
+                    <SectionRuleHeading
+                      className="mb-3 px-0.5 pb-0"
+                      label={label}
+                    />
+                    <div className={gridCls}>
+                      {items.map((item) => (
+                        <React.Fragment key={table.getRowId(item)}>
+                          {CardView ? CardView(item) : null}
+                        </React.Fragment>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ))}
+              </div>
+            );
+          }
+
+          return (
+            <div className={cn("mt-4", gridCls)}>
+              {rowOrderedItems.map((item) => (
+                <React.Fragment key={table.getRowId(item)}>
+                  {CardView ? CardView(item) : null}
+                </React.Fragment>
               ))}
             </div>
           );
-        }
-
-        return (
-          <div className={cn("mt-4", gridCls)}>
-            {rowOrderedItems.map((item) => (
-              <React.Fragment key={table.getRowId(item)}>
-                {CardView ? CardView(item) : null}
-              </React.Fragment>
-            ))}
-          </div>
-        );
-      })()}
+        })()}
 
       {showTable && canRenderListView && (
         <div className="mt-4 flex flex-col gap-2">
@@ -1947,42 +2411,58 @@ export function UnifiedTablePage<T>({
         </div>
       )}
 
-      {showTable && canRenderSplitView && (() => {
-        const SplitView = views?.split;
-        if (!SplitView) return null;
-        return (
-          <div className="flex flex-1 min-h-0">
-            {SplitView({
-              items: rowOrderedItems,
-              getRowId: table.getRowId,
-              activeRowId: table.activeRowId,
-              selectedIds,
-              onSelectRow: selection ? handleSelectRow : undefined,
-              onSelectAll: selection ? handleSelectAll : undefined,
-              onRowClick: table.onRowClick,
-            })}
-          </div>
-        );
-      })()}
+      {showTable &&
+        canRenderSplitView &&
+        (() => {
+          const SplitView = views?.split;
+          if (!SplitView) return null;
+          return (
+            <div className="flex flex-1 min-h-0">
+              {SplitView({
+                items: rowOrderedItems,
+                getRowId: table.getRowId,
+                activeRowId: table.activeRowId,
+                selectedIds,
+                onSelectRow: selection ? handleSelectRow : undefined,
+                onSelectAll: selection ? handleSelectAll : undefined,
+                onRowClick: table.onRowClick,
+              })}
+            </div>
+          );
+        })()}
 
       {(() => {
-        const paginProps = pagination ?? (resolvedFeatures.enablePagination ? {
-          page: internalPage,
-          totalPages: Math.max(1, Math.ceil(rowOrderedItems.length / internalPerPage)),
-          perPage: internalPerPage,
-          onPageChange: setInternalPage,
-          onPerPageChange: (val: string) => {
-            setInternalPerPage(Number(val));
-            setInternalPage(1);
-          },
-        } : null);
+        const paginProps =
+          pagination ??
+          (resolvedFeatures.enablePagination
+            ? {
+                page: internalPage,
+                totalPages: Math.max(
+                  1,
+                  Math.ceil(rowOrderedItems.length / internalPerPage),
+                ),
+                perPage: internalPerPage,
+                onPageChange: setInternalPage,
+                onPerPageChange: (val: string) => {
+                  setInternalPerPage(Number(val));
+                  setInternalPage(1);
+                },
+              }
+            : null);
         if (!paginProps || paginProps.totalPages <= 1) return null;
         return (
           <div className="flex flex-col gap-4 items-center justify-between pt-6 md:flex-row">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Rows per page</span>
-              <Select value={String(paginProps.perPage)} onValueChange={paginProps.onPerPageChange}>
-                <SelectTrigger variant="inline" size="sm" className="h-8 w-16 px-1">
+              <Select
+                value={String(paginProps.perPage)}
+                onValueChange={paginProps.onPerPageChange}
+              >
+                <SelectTrigger
+                  variant="inline"
+                  size="sm"
+                  className="h-8 w-16 px-1"
+                >
                   <SelectValue placeholder={String(paginProps.perPage)} />
                 </SelectTrigger>
                 <SelectContent>
@@ -2009,7 +2489,11 @@ export function UnifiedTablePage<T>({
   const leftPaneContent = (
     <>
       {aboveTableContent}
-      <div className={canRenderSplitView ? "flex flex-col flex-1 min-h-0" : undefined}>
+      <div
+        className={
+          canRenderSplitView ? "flex flex-col flex-1 min-h-0" : undefined
+        }
+      >
         {tableAreaContent}
       </div>
     </>
@@ -2040,15 +2524,18 @@ export function UnifiedTablePage<T>({
                   (sidePanel
                     ? "-ml-1 sm:-ml-6 lg:-ml-8"
                     : "-mx-1 sm:-mx-6 lg:-mx-8"),
-                !panelMounted && isSidePanelOpen && "lg:grid-cols-[minmax(0,1fr)_35rem]",
+                !panelMounted &&
+                  isSidePanelOpen &&
+                  "lg:grid-cols-[minmax(0,1fr)_35rem]",
                 !panelMounted && isSidePanelOpen && sidePanel.columnClassName,
               )}
               style={
                 panelMounted
                   ? {
-                      gridTemplateColumns: !isSidePanelOpen || panelCollapsed
-                        ? "minmax(0, 1fr)"
-                        : `minmax(0, 1fr) ${panelWidth}px`,
+                      gridTemplateColumns:
+                        !isSidePanelOpen || panelCollapsed
+                          ? "minmax(0, 1fr)"
+                          : `minmax(0, 1fr) ${panelWidth}px`,
                       transition: isResizingPanel
                         ? "none"
                         : "grid-template-columns 200ms ease-in-out",
@@ -2102,14 +2589,21 @@ export function UnifiedTablePage<T>({
                   )}
                   style={{
                     left: panelToggleLeft ?? undefined,
-                    right: panelToggleLeft == null ? (panelCollapsed ? -2 : panelWidth - 10) : undefined,
+                    right:
+                      panelToggleLeft == null
+                        ? panelCollapsed
+                          ? -2
+                          : panelWidth - 10
+                        : undefined,
                     transition: isResizingPanel
                       ? "none"
                       : panelToggleLeft == null
                         ? "right 200ms ease-in-out"
                         : "left 200ms ease-in-out",
                   }}
-                  aria-label={panelCollapsed ? "Expand panel" : "Collapse panel"}
+                  aria-label={
+                    panelCollapsed ? "Expand panel" : "Collapse panel"
+                  }
                 >
                   <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-background shadow-sm">
                     {panelCollapsed ? (
@@ -2142,9 +2636,7 @@ export function UnifiedTablePage<T>({
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto">
-            {sidePanel.content}
-          </div>
+          <div className="flex-1 overflow-y-auto">{sidePanel.content}</div>
         </div>
       )}
 
@@ -2154,7 +2646,8 @@ export function UnifiedTablePage<T>({
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Item</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this item? This action cannot be undone.
+                Are you sure you want to delete this item? This action cannot be
+                undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -2170,15 +2663,20 @@ export function UnifiedTablePage<T>({
         </AlertDialog>
       )}
       {!toolbar.onBulkDelete && table.onDelete && (
-        <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialog
+          open={bulkDeleteDialogOpen}
+          onOpenChange={setBulkDeleteDialogOpen}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                Delete {selectedIds.length} {selectedIds.length === 1 ? "item" : "items"}?
+                Delete {selectedIds.length}{" "}
+                {selectedIds.length === 1 ? "item" : "items"}?
               </AlertDialogTitle>
               <AlertDialogDescription>
                 This will permanently delete {selectedIds.length} selected{" "}
-                {selectedIds.length === 1 ? "item" : "items"}. This action cannot be undone.
+                {selectedIds.length === 1 ? "item" : "items"}. This action
+                cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -2187,7 +2685,8 @@ export function UnifiedTablePage<T>({
                 onClick={handleBulkDeleteConfirm}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete {selectedIds.length} {selectedIds.length === 1 ? "item" : "items"}
+                Delete {selectedIds.length}{" "}
+                {selectedIds.length === 1 ? "item" : "items"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

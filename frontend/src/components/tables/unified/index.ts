@@ -1,7 +1,22 @@
 "use client";
 
-export { TableToolbar, DensityToggle, type ColumnConfig, type FilterConfig, type TableToolbarFeatures, type TableToolbarProps, type ViewMode, type TableDensity } from "./table-toolbar";
-export { DetailPanel, type DetailPanelProps, type DetailFieldConfig, type RelatedSectionConfig } from "./detail-panel";
+export {
+  TableToolbar,
+  DensityToggle,
+  type ColumnConfig,
+  type FilterConfig,
+  type TableToolbarFeatures,
+  type TableToolbarProps,
+  type ViewMode,
+  type TableDensity,
+} from "./table-toolbar";
+export { BoardView, type BoardColumnDefinition } from "./board-view";
+export {
+  DetailPanel,
+  type DetailPanelProps,
+  type DetailFieldConfig,
+  type RelatedSectionConfig,
+} from "./detail-panel";
 export {
   TableCountIndicator,
   TableDateValue,
@@ -31,5 +46,14 @@ export {
   type TableColumn,
   type UnifiedTableFeatures,
 } from "./unified-table-page";
-export { useUnifiedTableState, type UnifiedTableState, type UnifiedTableStateOptions, type FilterValue } from "./use-unified-table-state";
-export { TablePageActions, type TablePageActionsProps, type TablePageActionItem } from "./table-page-actions";
+export {
+  useUnifiedTableState,
+  type UnifiedTableState,
+  type UnifiedTableStateOptions,
+  type FilterValue,
+} from "./use-unified-table-state";
+export {
+  TablePageActions,
+  type TablePageActionsProps,
+  type TablePageActionItem,
+} from "./table-page-actions";
