@@ -524,6 +524,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `frontend/src/lib/ai/retrieval/types.ts` | `RetrievalPlan`, `RetrievalContext`, `SubAgent`, `ResponseFormat`, `ExternalSource` types — shared by planner/executor. | planner.ts, executor.ts |
 | `frontend/src/lib/ai/intelligence/packet-service.ts` | Loads and resolves the project intelligence packet (cards, evidence, confidence, freshness) from `intelligence_packets` and related tables. | deps.ts, types.ts, compiler.py |
 | `frontend/src/lib/ai/intelligence/advisor-synthesis.ts` | Synthesizes packet strategic reports into final advisor-style answers per intent, including meeting/source coverage and linked citation counts. Falls back to packet cards only when `packet_json.strategicReport` is absent. | packet-service.ts, types.ts |
+| `frontend/src/lib/ai/intelligence/page-state.ts` | Pure page-state guard for project intelligence pages. Separates fatal synthesis/source-quality failures from normal `source_coverage.gaps` evidence limitations so a valid strategic report is not mislabeled as needing resynthesis. | `[projectId]/intelligence/page.tsx`, intelligence-page-state.test.ts |
 | `frontend/src/lib/ai/intelligence/types.ts` | `ClientProjectIntelligencePacket`, `InsightCard`, `ResolvedIntelligenceTarget`, freshness/confidence types. | packet-service.ts, advisor-synthesis.ts |
 
 ### Agents & Prompts
@@ -691,6 +692,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `frontend/src/lib/ai/__tests__/intent-router.test.ts` | Unit tests for intent classification regex patterns and task-write precedence. | intent-router.ts |
 | `frontend/src/lib/ai/__tests__/intelligence-packet-service.test.ts` | Unit tests for packet loading and confidence resolution. | packet-service.ts |
 | `frontend/src/lib/ai/__tests__/advisor-synthesis.test.ts` | Unit tests for synthesized advisor responses per intent. | advisor-synthesis.ts |
+| `frontend/src/lib/ai/__tests__/intelligence-page-state.test.ts` | Regression test for intelligence page state. Ensures passed strategic reports with evidence limitations do not show fatal resynthesis copy. | page-state.ts |
 | `frontend/src/lib/ai/__tests__/cmo-orchestrator.test.ts` | Tests CMO agent registry wiring. | cmo.ts, orchestrator.ts |
 | `frontend/src/lib/ai/__tests__/strategist-failure-response.test.ts` | Regression guard — failure response must include cause + tool trace. | strategist-failure-response.ts |
 | `frontend/src/lib/ai/__tests__/score-response-quality.test.ts` | Meta-commentary phrase detection coverage. | score-response-quality.ts |
@@ -733,7 +735,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `scripts/verify/verify_ai_intelligence_compiler_health.mjs` | Compiler queue + freshness health check. | compiler.py |
 | `scripts/verify/verify_ai_packet_synthesis_quality.mjs` | Project operating packet quality gate. Rejects placeholder/raw-dump packets, stale-or-failed dominant source mixes, repeated generic card `next_action` values, and missing meeting coverage when meeting sources exist. | operating_summary.py, intelligence page |
 | `scripts/verify/verify_ai_memory_contract.mjs` | Memory storage/recall contract, including lifecycle and visibility hydration filters, AI Database memory chunk sync/delete, latest-message extraction, and chat `memory_usage`/post-response scheduling. | ai-memory-service.ts |
-| `scripts/verify/verify_ai_assistant_eval_suite.mjs` | Assistant eval runner. Persists per-case traces, tool coverage, backend Deep Agents metadata, and memory-candidate counts into `docs/ai-plan/evals/runs/**`. | assistant-eval-suite.json, handler-v2.ts |
+| `scripts/verify/verify_ai_assistant_eval_suite.mjs` | Assistant eval runner. Persists per-case traces, tool coverage, backend Deep Agents metadata, and memory-candidate counts into `docs/ai-plan/evals/runs/**`. Includes `project-briefing-union-meeting-coverage`, which fails if Union Collective answers deny meeting transcript coverage when the operating packet exposes it. | assistant-eval-suite.json, handler-v2.ts |
 | `scripts/verify/verify_ai_source_specific_rag_contract.mjs` | Source-specific RAG retrieval contract. | detect-rag-request.ts |
 | `scripts/verify/verify_ai_strategist_frontend_conversation.mjs` | End-to-end frontend conversation flow. | chat/route.ts |
 | `scripts/verify/verify_ai_assistant_operational_readiness.mjs` | Pre-deploy readiness — all AI deps live. | ai-system-health-panel.tsx |

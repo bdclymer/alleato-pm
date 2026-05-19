@@ -25,6 +25,7 @@ import {
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { InsightCardShowcase } from "@/components/ai-intelligence/insight-card-showcase";
+import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
   loadCurrentIntelligencePacket,
   resolveIntelligenceTarget,
@@ -392,72 +393,6 @@ function reviewPreviewCards(packet: ClientProjectIntelligencePacket): InsightCar
   return sortedCards(packet.cards).slice(0, 24);
 }
 
-function qualityWarnings(packet: ClientProjectIntelligencePacket): string[] {
-  const warnings = new Set<string>();
-
-  const lowSignalCards = packet.cards.filter((card) =>
-    !firstStrategicText(card.summary, card.currentStatus, card.whyItMatters, card.nextAction)
-  );
-
-  if (lowSignalCards.length > 0 && !hasStrategicReport(packet)) {
-    warnings.add(`${lowSignalCards.length} cards contain raw source text or metadata instead of usable synthesis.`);
-  }
-
-  const qualityGate = asRecord(packet.sourceCoverage.qualityGate);
-  if (qualityGate.status && qualityGate.status !== "passed") {
-    warnings.add(cleanUnknown(qualityGate.reason) || "The packet source quality gate did not pass.");
-  }
-
-  if (packet.isStale) {
-    warnings.add("The packet is older than the expected refresh window.");
-  }
-
-  if (packetEvidence(packet).length === 0) {
-    warnings.add("No linked citations are attached to the current packet.");
-  }
-
-  return Array.from(warnings).slice(0, 5);
-}
-
-function evidenceLimitations(packet: ClientProjectIntelligencePacket): string[] {
-  const gaps = packet.sourceCoverage.gaps?.filter((gap): gap is string => typeof gap === "string") ?? [];
-  return gaps.map(cleanText).filter(Boolean).slice(0, 5);
-}
-
-function briefingStatus(packet: ClientProjectIntelligencePacket): {
-  title: string;
-  body: string;
-} {
-  const cleanRead = firstStrategicText(
-    packet.executiveSummary,
-    packet.currentStatus,
-    packet.strategicRead,
-    packet.whyItMatters,
-  );
-  const warnings = qualityWarnings(packet);
-
-  if (!cleanRead) {
-    return {
-      title: "Daily intelligence could not produce a usable strategic read.",
-      body:
-        "The page found source-backed signals, but the current packet did not produce a synthesized operating read. This should be refreshed before a human or AI agent treats it as an operating report.",
-    };
-  }
-
-  if (warnings.length > 0) {
-    return {
-      title: "Daily intelligence failed source-quality checks.",
-      body:
-        "The page found source-backed signals, but the current packet has a stale, uncited, or failed quality-gate condition. The evidence limits below are separate from this failure state.",
-    };
-  }
-
-  return {
-    title: "Daily project intelligence, synthesized from the sources that changed the job.",
-    body: summarizeText(firstStrategicText(packet.currentStatus, packet.strategicRead, cleanRead), 520),
-  };
-}
-
 function IntelligenceEmptyState({
   project,
   reason,
@@ -487,9 +422,7 @@ function BriefingHeader({
 }) {
   const evidence = packetEvidence(packet);
   const lanes = sourceLanes(packet).filter((lane) => lane.evidence.length > 0);
-  const warnings = qualityWarnings(packet);
-  const limitations = evidenceLimitations(packet);
-  const briefing = briefingStatus(packet);
+  const { briefing, warnings, limitations } = buildIntelligencePageState(packet);
   const stats = [
     { label: "Signals", value: packet.cards.length.toString() },
     { label: "Citations", value: evidence.length.toString() },
@@ -939,8 +872,7 @@ function EvidenceDiagnostics({
 }) {
   const rows = sourceCoverageRows(packet).slice(0, 10);
   const latestSources = latestEvidence(packet, 5);
-  const warnings = qualityWarnings(packet);
-  const limitations = evidenceLimitations(packet);
+  const { warnings, limitations } = buildIntelligencePageState(packet);
 
   return (
     <section className="space-y-6">

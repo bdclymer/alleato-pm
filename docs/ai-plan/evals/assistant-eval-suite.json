@@ -414,6 +414,34 @@
       "notes": "Exact Brandon-reported transcript regression. The final turn must preserve Union Collective context, check the project record first, run RAG/semantic fallback when the structured address is blank, and avoid clarification loops or process narration."
     },
     {
+      "id": "project-briefing-union-meeting-coverage",
+      "intent": "project_briefing",
+      "prompt": "Give me the current operating read for Union Collective. Include whether meeting transcripts are available in the packet.",
+      "selectedProjectId": 1009,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "backendDeepAgentProjectStatus",
+        "semanticSearch"
+      ],
+      "mustInclude": ["Union Collective"],
+      "mustIncludeAny": [
+        ["meeting", "meetings", "transcript", "transcripts"],
+        ["packet", "coverage", "source"]
+      ],
+      "mustExclude": [
+        "no meeting transcripts surfaced",
+        "no project meeting transcript surfaced",
+        "no meeting transcript surfaced",
+        "no meeting transcripts",
+        "no meetings surfaced",
+        "no meetings found"
+      ],
+      "minAnswerLength": 180,
+      "requiredMetadataPaths": ["response_quality.score"],
+      "notes": "Regression guard for the Union Collective launch issue: when the operating packet exposes meeting coverage, the assistant must not deny that meeting transcripts surfaced."
+    },
+    {
       "id": "recent-meetings-portfolio",
       "intent": "meeting_query",
       "prompt": "What came out of meetings over the last couple days that could turn into a problem?",
