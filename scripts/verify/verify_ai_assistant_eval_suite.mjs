@@ -481,6 +481,26 @@ function metadataPath(metadata, pathExpression) {
     }, metadata);
 }
 
+function extractBackendDeepAgentMemory(metadata) {
+  const backend = metadata?.backend_deep_agent;
+  if (!backend || typeof backend !== "object") {
+    return { candidateCount: 0, candidates: [] };
+  }
+  const rawCandidates = Array.isArray(backend.memory_candidates)
+    ? backend.memory_candidates
+    : [];
+  const candidateCount =
+    typeof backend.memory_candidate_count === "number"
+      ? backend.memory_candidate_count
+      : rawCandidates.length;
+  return {
+    candidateCount,
+    candidates: rawCandidates.filter(
+      (candidate) => candidate && typeof candidate === "object",
+    ),
+  };
+}
+
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -517,6 +537,12 @@ function scoreCase(testCase, runOutput, persisted) {
   const streamToolNames = extractStreamToolNames(runOutput.streamEvents);
   const toolNames = uniqueStrings([...persistedToolNames, ...streamToolNames]);
   observations.push(`tools fired: ${toolNames.join(", ") || "(none)"}`);
+  const backendMemory = extractBackendDeepAgentMemory(persisted?.metadata);
+  if (metadataPath(persisted?.metadata, "backend_deep_agent") != null) {
+    observations.push(
+      `backend Deep Agents memory candidates: ${backendMemory.candidateCount}`,
+    );
+  }
 
   if (!persisted) {
     failures.push("assistant message was not persisted to chat_history");
@@ -659,6 +685,7 @@ function scoreCase(testCase, runOutput, persisted) {
     familiesHit: [...familiesHit],
     finalTextLength: finalText.length,
     finalText,
+    backendDeepAgentMemory: backendMemory,
     latencyBudget: {
       warnDurationMs,
       maxDurationMs: maxDurationMs ?? null,
@@ -691,6 +718,18 @@ function toPublishedRun(result, runId) {
           observations: Array.isArray(score.observations)
             ? score.observations.filter((observation) => typeof observation === "string")
             : [],
+          backendDeepAgentMemory:
+            score.backendDeepAgentMemory && typeof score.backendDeepAgentMemory === "object"
+              ? {
+                  candidateCount:
+                    typeof score.backendDeepAgentMemory.candidateCount === "number"
+                      ? score.backendDeepAgentMemory.candidateCount
+                      : 0,
+                  candidates: Array.isArray(score.backendDeepAgentMemory.candidates)
+                    ? score.backendDeepAgentMemory.candidates
+                    : [],
+                }
+              : { candidateCount: 0, candidates: [] },
           finalText: typeof score.finalText === "string" ? score.finalText : "",
           latencyBudget:
             score.latencyBudget && typeof score.latencyBudget === "object"
@@ -888,6 +927,10 @@ const summary = {
   passed: results.filter((r) => r.score.status === "pass").length,
   failed: results.filter((r) => r.score.status === "fail").length,
   warningCount: results.reduce((count, r) => count + r.score.warnings.length, 0),
+  backendDeepAgentMemoryCandidateCount: results.reduce(
+    (count, r) => count + (r.score.backendDeepAgentMemory?.candidateCount ?? 0),
+    0,
+  ),
   slowestCases: [...results]
     .sort((a, b) => b.durationMs - a.durationMs)
     .slice(0, 10)
@@ -928,6 +971,7 @@ const md = [
   `- Passed: ${summary.passed}`,
   `- Failed: ${summary.failed}`,
   `- Warnings: ${summary.warningCount}`,
+  `- Backend Deep Agents memory candidates: ${summary.backendDeepAgentMemoryCandidateCount}`,
   "",
   "## Slowest Cases",
   "",
@@ -948,11 +992,11 @@ const md = [
     : []),
   "## Per-case results",
   "",
-  "| Case | Intent | Status | Duration | Tools fired | Failures |",
-  "|---|---|---|---|---|---|",
+  "| Case | Intent | Status | Duration | Memory candidates | Tools fired | Failures |",
+  "|---|---|---|---|---|---|---|",
   ...results.map(
     (r) =>
-      `| ${r.id} | ${r.intent} | ${r.score.status === "pass" ? "✅" : "❌"} | ${r.durationMs}ms | ${r.score.toolNames.join(", ") || "(none)"} | ${r.score.failures.join("; ") || "—"} |`,
+      `| ${r.id} | ${r.intent} | ${r.score.status === "pass" ? "✅" : "❌"} | ${r.durationMs}ms | ${r.score.backendDeepAgentMemory?.candidateCount ?? 0} | ${r.score.toolNames.join(", ") || "(none)"} | ${r.score.failures.join("; ") || "—"} |`,
   ),
   "",
   "## Tool coverage across the suite",

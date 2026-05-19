@@ -1,5 +1,6 @@
 import {
   buildDeepAgentExecutiveEvidenceWidget,
+  buildDeepAgentMemoryCandidateWidget,
   buildDeepAgentResearchEvidenceWidget,
   buildDeepAgentSourceEvidenceWidget,
   fetchDeepAgentResearch,
@@ -76,7 +77,13 @@ const packet: DeepProjectIntelligenceResponse = {
         "Deep Agents runtime produced a synthesis from checked source coverage.",
     },
   ],
-  memoryCandidates: [],
+  memoryCandidates: [
+    {
+      scope: "project",
+      fact: "Owner wants Division 9 cost code detail preserved for future answers.",
+      requiresApproval: true,
+    },
+  ],
   orchestrator: "deep_project_intelligence_v1",
   mode: "deep_agents",
 };
@@ -133,7 +140,13 @@ const executivePacket: DeepExecutiveIntelligenceResponse = {
         "Deep Agents runtime produced an executive synthesis from checked source coverage.",
     },
   ],
-  memoryCandidates: [],
+  memoryCandidates: [
+    {
+      scope: "organization",
+      fact: "Morning triage answers should prioritize owner-blocking decisions.",
+      requiresApproval: true,
+    },
+  ],
   orchestrator: "deep-agents-executive-intelligence",
   mode: "deep_agents",
 };
@@ -291,6 +304,26 @@ describe("Deep Agents project-status bridge", () => {
           title: "Project status packet",
           sourceType: "project_record",
           snippet: "Packet says owner decisions are pending.",
+          confidence: "medium",
+        },
+      ],
+    });
+  });
+
+  it("turns backend memory candidates into a review evidence widget", () => {
+    const widget = buildDeepAgentMemoryCandidateWidget(packet);
+
+    expect(widget).toMatchObject({
+      type: "source_evidence_drawer",
+      id: "deep-agent-memory-candidates",
+      title: "Memory candidates for review",
+      sources: [
+        {
+          id: "memory-candidate-1",
+          title: "project memory candidate",
+          sourceType: "knowledge",
+          snippet:
+            "Owner wants Division 9 cost code detail preserved for future answers.",
           confidence: "medium",
         },
       ],

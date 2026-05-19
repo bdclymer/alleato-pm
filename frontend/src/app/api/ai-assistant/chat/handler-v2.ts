@@ -19,6 +19,7 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
 import {
   buildDeepAgentExecutiveEvidenceWidget,
+  buildDeepAgentMemoryCandidateWidget,
   buildDeepAgentResearchEvidenceWidget,
   buildDeepAgentSourceEvidenceWidget,
   fetchDeepAgentExecutiveBriefing,
@@ -877,16 +878,28 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
 
           if (shouldUseDeepAgentProjectDirectResponse(packet)) {
             const content = formatDeepAgentProjectDirectResponse(packet);
-            const widget = buildDeepAgentSourceEvidenceWidget(packet);
-            const dataParts = widget
-              ? [
-                  {
-                    type: "data-assistant-widget",
-                    id: "assistant-widget-deep-agent-project-status",
-                    data: { widget },
-                  },
-                ]
-              : [];
+            const evidenceWidget = buildDeepAgentSourceEvidenceWidget(packet);
+            const memoryWidget = buildDeepAgentMemoryCandidateWidget(packet);
+            const dataParts = [
+              ...(evidenceWidget
+                ? [
+                    {
+                      type: "data-assistant-widget",
+                      id: "assistant-widget-deep-agent-project-status",
+                      data: { widget: evidenceWidget },
+                    },
+                  ]
+                : []),
+              ...(memoryWidget
+                ? [
+                    {
+                      type: "data-assistant-widget",
+                      id: "assistant-widget-deep-agent-memory-candidates",
+                      data: { widget: memoryWidget },
+                    },
+                  ]
+                : []),
+            ];
 
             dataParts.forEach((dataPart) => writer.write(dataPart as never));
             writeTextResponse(
@@ -918,6 +931,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                     ),
                     recommended_action_count: packet.recommendedActions.length,
                     evidence_count: packet.evidence.length,
+                    memory_candidate_count: packet.memoryCandidates.length,
+                    memory_candidates: packet.memoryCandidates,
                   },
                   retrieval_plan: {
                     intent: plan.intent,
@@ -1030,16 +1045,28 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
 
           if (shouldUseDeepAgentExecutiveDirectResponse(packet)) {
             const content = formatDeepAgentExecutiveDirectResponse(packet);
-            const widget = buildDeepAgentExecutiveEvidenceWidget(packet);
-            const dataParts = widget
-              ? [
-                  {
-                    type: "data-assistant-widget",
-                    id: "assistant-widget-deep-agent-executive-briefing",
-                    data: { widget },
-                  },
-                ]
-              : [];
+            const evidenceWidget = buildDeepAgentExecutiveEvidenceWidget(packet);
+            const memoryWidget = buildDeepAgentMemoryCandidateWidget(packet);
+            const dataParts = [
+              ...(evidenceWidget
+                ? [
+                    {
+                      type: "data-assistant-widget",
+                      id: "assistant-widget-deep-agent-executive-briefing",
+                      data: { widget: evidenceWidget },
+                    },
+                  ]
+                : []),
+              ...(memoryWidget
+                ? [
+                    {
+                      type: "data-assistant-widget",
+                      id: "assistant-widget-deep-agent-memory-candidates",
+                      data: { widget: memoryWidget },
+                    },
+                  ]
+                : []),
+            ];
 
             dataParts.forEach((dataPart) => writer.write(dataPart as never));
             writeTextResponse(
@@ -1071,6 +1098,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                     ),
                     recommended_action_count: packet.recommendedActions.length,
                     evidence_count: packet.evidence.length,
+                    memory_candidate_count: packet.memoryCandidates.length,
+                    memory_candidates: packet.memoryCandidates,
                   },
                   retrieval_plan: {
                     intent: plan.intent,

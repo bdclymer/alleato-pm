@@ -614,6 +614,27 @@ export function buildDeepAgentExecutiveEvidenceWidget(
   };
 }
 
+export function buildDeepAgentMemoryCandidateWidget(
+  packet: DeepProjectIntelligenceResponse | DeepExecutiveIntelligenceResponse,
+): AssistantWidgetPayload | null {
+  if (packet.memoryCandidates.length === 0) return null;
+
+  return {
+    type: "source_evidence_drawer",
+    id: "deep-agent-memory-candidates",
+    title: "Memory candidates for review",
+    sources: packet.memoryCandidates.slice(0, 8).map(
+      (candidate, index): SourceEvidenceItem => ({
+        id: `memory-candidate-${index + 1}`,
+        title: `${candidate.scope} memory candidate`,
+        sourceType: "knowledge",
+        snippet: candidate.fact,
+        confidence: candidate.requiresApproval ? "medium" : "high",
+      }),
+    ),
+  };
+}
+
 export function buildDeepAgentResearchEvidenceWidget(
   packet: DeepResearchResponse,
 ): AssistantWidgetPayload | null {

@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-05-18
+Last verified: 2026-05-19
 
 ---
 
@@ -86,12 +86,12 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | File | Purpose |
 |------|---------|
 | `frontend/src/app/api/ai-assistant/chat/route.ts` | Primary chat API route. All user messages enter here. Calls orchestrator, streams response, persists to `chat_history`. |
-| `frontend/src/app/api/ai-assistant/chat/handler-v2.ts` | Current `/ai-assistant` server handler. Plans retrieval, persists chat history, and, when `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, direct-returns successful Render Deep Agents project, executive, and external-research packets before falling back to local AI SDK synthesis. |
+| `frontend/src/app/api/ai-assistant/chat/handler-v2.ts` | Current `/ai-assistant` server handler. Plans retrieval, persists chat history, and, when `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, direct-returns successful Render Deep Agents project, executive, and external-research packets before falling back to local AI SDK synthesis. Project/executive Deep Agents responses stream source evidence and memory-candidate widgets, then persist `backend_deep_agent.memory_candidate_count` / `memory_candidates` for evals. |
 | `frontend/src/app/api/ai-assistant-v2/deep-agent/route.ts` | `/ai-assistant-v2` fallback route when no LangGraph URL is configured. Authenticates the user, resolves project names from the prompt when no project ID is supplied, calls the Render Deep Agents project/executive endpoints, and returns packet metadata to the v2 UI. |
 | `backend/src/services/agents/research_agent/` | Standalone Alleato Deep Agents research module. Uses public web research tools, read-only Alleato PM/RAG/search tools, Deep Agents subagents, packaged runtime skills, optional local installed skill directories, and fail-loud response metadata. Exposed through `/api/intelligence/research`. |
 | `backend/src/services/agents/content_builder/` | Isolated Deep Agents content builder ported from `alleato-ai/alleato_ai/subagents/content-builder-agent`. Packages the example memory file, `blog-post` and `social-media` skills, YAML researcher subagent config, Tavily research tool, and Gemini image tools. Exposed through `/api/intelligence/content-builder` behind `DEEP_AGENTS_CONTENT_BUILDER_ENABLED`; uses AI Gateway/OpenAI for the orchestrator and `GOOGLE_API_KEY` for generated images. |
 | `frontend/src/components/ai-assistant-v2/advisor-chat.tsx` | `/ai-assistant-v2` client surface. Uses the LangGraph SDK only when `NEXT_PUBLIC_LANGGRAPH_API_URL` is configured; otherwise submits through the Render Deep Agents fallback route and displays mode, confidence, source count, and tool-call count. |
-| `frontend/src/lib/ai/deep-agent-project-status.ts` | Typed server-side bridge to Render backend Deep Agents endpoints. Owns env gating, request schemas, source-evidence widgets, optional route-level timeout overrides, and direct-response eligibility for project/executive/research packets. |
+| `frontend/src/lib/ai/deep-agent-project-status.ts` | Typed server-side bridge to Render backend Deep Agents endpoints. Owns env gating, request schemas, source-evidence widgets, memory-candidate review widgets, optional route-level timeout overrides, and direct-response eligibility for project/executive/research packets. |
 | `backend/src/services/agents/alleato_ai_tools/` | Backend-local port of the standalone `alleato-ai` Deep Agents tools: resolvers, SQL schema/query, RAG/meeting/email/Teams search, recent activity, Acumatica reads, draft-preview actions, prompts, and domain subagent definitions. |
 | `backend/src/services/agents/deep_project_intelligence.py` | Render Deep Agents runtime. The narrow PM tools are always present; the standalone registry is enabled by `DEEP_AGENTS_STANDALONE_TOOLS_ENABLED`, with separate SQL, Acumatica, draft-action, and subagent gates. |
 | `frontend/src/lib/ai/orchestrator.ts` | Registers the agent registry, constructs Strategist tool set, executes sub-agent calls via `ToolLoopAgent`. Adding a new agent: add config here + add `consultXxx` tool + add name to `agents/types.ts`. |
@@ -385,10 +385,13 @@ Stage 1B must tolerate first-time uploads that do not yet have a `rag_document_m
 row. The parser reads optional RAG metadata when present, otherwise downloads the
 stored source file from Supabase Storage and writes extracted text into
 `rag_document_metadata`. For table-heavy PDFs, extract to structured Markdown first
-and run with `DOC_SEGMENT_USE_LLM=false`; this produces deterministic line-window
-segments and prevents invalid LLM JSON from collapsing a long technical document into
-one summary-only segment. The embedder must then chunk generic document lines directly
-and store those chunks with `source_type='document'`.
+with `scripts/ingestion/prepare_pdf_for_rag.py` and run ingestion with
+`DOC_SEGMENT_USE_LLM=false`; this produces deterministic line-window segments and
+prevents invalid LLM JSON from collapsing a long technical document into one
+summary-only segment. The prep script can also render figure-heavy pages and create
+a separate vision-caption Markdown file for diagram-aware retrieval. The embedder
+must then chunk generic document lines directly and store those chunks with
+`source_type='document'`.
 
 ### Embedding in the Pipeline
 
@@ -713,6 +716,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `scripts/verify/verify_ai_intelligence_packet_contract.mjs` | Intelligence packet shape contract. | packet-service.ts |
 | `scripts/verify/verify_ai_intelligence_compiler_health.mjs` | Compiler queue + freshness health check. | compiler.py |
 | `scripts/verify/verify_ai_memory_contract.mjs` | Memory storage/recall contract. | ai-memory-service.ts |
+| `scripts/verify/verify_ai_assistant_eval_suite.mjs` | Assistant eval runner. Persists per-case traces, tool coverage, backend Deep Agents metadata, and memory-candidate counts into `docs/ai-plan/evals/runs/**`. | assistant-eval-suite.json, handler-v2.ts |
 | `scripts/verify/verify_ai_source_specific_rag_contract.mjs` | Source-specific RAG retrieval contract. | detect-rag-request.ts |
 | `scripts/verify/verify_ai_strategist_frontend_conversation.mjs` | End-to-end frontend conversation flow. | chat/route.ts |
 | `scripts/verify/verify_ai_assistant_operational_readiness.mjs` | Pre-deploy readiness — all AI deps live. | ai-system-health-panel.tsx |
