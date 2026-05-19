@@ -128,7 +128,15 @@ function renderRecentEmailInbox(raw: unknown): string {
   const record = raw as Record<string, unknown>;
   const lines: string[] = [];
 
-  for (const key of ["summary", "dataCutoffNote", "count", "threadCount"]) {
+  for (const key of [
+    "summary",
+    "dataCutoffNote",
+    "latestAvailableFallback",
+    "requestedWindowEmpty",
+    "latestAvailableReceivedAt",
+    "count",
+    "threadCount",
+  ]) {
     const value = compactText(record[key], 700);
     if (value) lines.push(`- ${key}: ${value}`);
   }

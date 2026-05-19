@@ -3,7 +3,7 @@ import { assembleSystemPromptFromContext } from "../system-prompt";
 import type { RetrievalPlan, RetrievalContext } from "../types";
 
 describe("assembleSystemPromptFromContext", () => {
-  it("returns base prompt unchanged when nothing was retrieved", () => {
+  it("adds tool-routing guidance when nothing was pre-fetched", () => {
     const plan: RetrievalPlan = {
       intent: "app_help",
       responseFormat: "app_help",
@@ -12,7 +12,9 @@ describe("assembleSystemPromptFromContext", () => {
     };
     const ctx: RetrievalContext = { warnings: [], durationsMs: {} };
     const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE_PROMPT");
-    expect(prompt).toBe("BASE_PROMPT");
+    expect(prompt).toContain("No Pre-fetched Context");
+    expect(prompt).toContain("Use your available tools to answer");
+    expect(prompt).toContain("BASE_PROMPT");
   });
 
   it("includes only sections for sources that returned data", () => {
@@ -81,6 +83,47 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).toContain("outlook_email_intake");
     expect(prompt).toContain("Owner approval needed");
     expect(prompt).not.toContain("Source-Specific RAG Result");
+  });
+
+  it("renders latest-available email fallback metadata for stale same-day windows", () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "recent_email_inbox",
+      sources: {
+        recentEmails: {
+          daysBack: 0,
+          limit: 50,
+          reason: "structured_outlook_inbox_query",
+        },
+      },
+      reason: "structured_outlook_inbox_query",
+    };
+    const ctx: RetrievalContext = {
+      recentEmailInbox: {
+        count: 5,
+        latestAvailableFallback: true,
+        requestedWindowEmpty: true,
+        latestAvailableReceivedAt: "2026-05-18T16:55:09Z",
+        summary:
+          "No emails are synced in the requested today window; latest available synced mailbox messages returned instead.",
+        threads: [
+          {
+            latestSubject: "Re: RI-3959-0012 May Final Pay App",
+            latestPreview: "This has already been resolved. Thanks!",
+          },
+        ],
+      },
+      warnings: [],
+      durationsMs: {},
+    };
+
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE");
+
+    expect(prompt).toContain("latestAvailableFallback: true");
+    expect(prompt).toContain("requestedWindowEmpty: true");
+    expect(prompt).toContain("latestAvailableReceivedAt: 2026-05-18T16:55:09Z");
+    expect(prompt).toContain("latest available synced mailbox messages");
+    expect(prompt).toContain("RI-3959-0012");
   });
 
   it("orders sections deterministically: packet → snapshot → vector → briefing → rag → warnings → BASE", () => {
