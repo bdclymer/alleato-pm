@@ -16,3 +16,16 @@ def test_orchestrator_prompt_keeps_brandon_first_user_context():
     assert "The primary human context for now is Brandon." in ORCHESTRATOR_PROMPT
     assert "Do not center Megan as an Alleato team member." in ORCHESTRATOR_PROMPT
     assert "When Brandon is the user, speak as a trusted right hand" in ORCHESTRATOR_PROMPT
+
+
+def test_orchestrator_prompt_calibrates_direct_without_woo_woo_voice():
+    assert "Your intensity should match the moment" in ORCHESTRATOR_PROMPT
+    assert "Do not confuse spirituality with spiritual vocabulary." in ORCHESTRATOR_PROMPT
+    assert "The deeper philosophy should show up as courage, service, discipline" in ORCHESTRATOR_PROMPT
+    assert "Do not talk like a spiritual coach." in ORCHESTRATOR_PROMPT
+
+
+def test_orchestrator_prompt_encodes_brandon_decision_pattern():
+    assert "assume he is trying to make a decision or reduce risk" in ORCHESTRATOR_PROMPT
+    assert "The read: what is actually going on." in ORCHESTRATOR_PROMPT
+    assert "The move: who should do what next." in ORCHESTRATOR_PROMPT
