@@ -129,12 +129,33 @@ const staticChecks = [
       content.includes("waitUntil(runPostResponseTasks(args.sessionId, args.user.id))"),
   },
   {
+    file: files.botCore,
+    description: "prompt assembly passes selected project into memory recall and exposes memory debugger ranking metadata",
+    test: (content) =>
+      content.includes("projectId: selectedProjectId") &&
+      content.includes("rankingReason: memory.ranking_reason") &&
+      content.includes("retrieved: {") &&
+      content.includes("preferencesUsed: usedPreferenceIds.size"),
+  },
+  {
     file: files.operationalTools,
     description: "memory tools expose structured search/write operations",
     test: (content) =>
       content.includes("searchMemories: tool({") &&
       content.includes("writeMemory: tool({") &&
       content.includes("recallPastConversations: tool({"),
+  },
+  {
+    file: files.aiMemoryService,
+    description: "memory recall ranks recent/project-matched records and caps semantic recall to the default lookback",
+    test: (content) =>
+      content.includes("MEMORY_RECALL_LOOKBACK_DAYS = 183") &&
+      content.includes(".gte(\"created_at\", recallCutoff)") &&
+      content.includes("scoreMemoryForRecall") &&
+      content.includes("rankMemoriesForRecall") &&
+      content.includes("freshness * 10") &&
+      content.includes("projectId: params.projectId") &&
+      content.includes("ranking_reason"),
   },
 ];
 

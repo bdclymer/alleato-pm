@@ -70,10 +70,20 @@ export interface MemoryUsageSummary {
   relevantUsed: number;
   teamUsed: number;
   recentConversationsUsed: number;
+  retrieved?: {
+    preferences: number;
+    relevant: number;
+    team: number;
+  };
   memories: Array<{
     id: string;
     type: string;
     content: string;
+    projectId?: number | null;
+    visibility?: string;
+    similarity?: number;
+    rankingScore?: number;
+    rankingReason?: string;
   }>;
 }
 
@@ -125,7 +135,11 @@ export async function assembleSystemPrompt(options: {
     try {
       const [{ preferences, relevant, team, errors: memoryErrors }, recentSummaries, activeArtifacts] =
         await Promise.all([
-          getMemoriesForSession({ userId, firstMessage: messageText }),
+          getMemoriesForSession({
+            userId,
+            firstMessage: messageText,
+            projectId: selectedProjectId,
+          }),
           isFirstTurn && sessionId
             ? getRecentConversationSummaries(userId, sessionId, 3)
             : Promise.resolve([]),
@@ -150,7 +164,9 @@ export async function assembleSystemPrompt(options: {
       });
 
       const { block: memoryBlock, selected: selectedMemories } =
-        buildMemoryContextPayload(preferences, relevant, team);
+        buildMemoryContextPayload(preferences, relevant, team, {
+          projectId: selectedProjectId,
+        });
       const {
         block: learningBlock,
         selected: selectedLearnings,
@@ -161,13 +177,31 @@ export async function assembleSystemPrompt(options: {
           id: memory.id,
           type: memory.type,
           content: memory.content,
+          projectId: memory.project_id,
+          visibility: memory.visibility,
+          similarity: memory.similarity,
+          rankingScore: memory.ranking_score,
+          rankingReason: memory.ranking_reason,
         }));
+      const usedPreferenceIds = new Set(
+        selectedMemories.filter((memory) => memory.type === "preference").map((memory) => memory.id),
+      );
+      const usedTeamIds = new Set(
+        selectedMemories
+          .filter((memory) => memory.visibility === "team")
+          .map((memory) => memory.id),
+      );
       onMemoryUsage?.({
         totalUsed: usedMemories.length,
-        preferencesUsed: preferences.length,
-        relevantUsed: relevant.length,
-        teamUsed: team.length,
+        preferencesUsed: usedPreferenceIds.size,
+        relevantUsed: selectedMemories.length - usedPreferenceIds.size - usedTeamIds.size,
+        teamUsed: usedTeamIds.size,
         recentConversationsUsed: recentSummaries.length,
+        retrieved: {
+          preferences: preferences.length,
+          relevant: relevant.length,
+          team: team.length,
+        },
         memories: usedMemories,
       });
       onLearningUsage?.({

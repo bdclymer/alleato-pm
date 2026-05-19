@@ -42,9 +42,13 @@ export interface AiMemory {
   visibility?: MemoryVisibility;
   created_at: string;
   similarity?: number;
+  ranking_score?: number;
+  ranking_reason?: string;
 }
 
 const AI_MEMORY_CHUNKS_TABLE = "document_chunks";
+const MEMORY_RECALL_LOOKBACK_DAYS = 183;
+const MEMORY_RECALL_LOOKBACK_MS = MEMORY_RECALL_LOOKBACK_DAYS * 86_400_000;
 
 // ---------------------------------------------------------------------------
 // Lazy OpenAI client
@@ -347,11 +351,13 @@ export async function searchMemories(params: {
       ]),
     );
 
+    const recallCutoff = new Date(Date.now() - MEMORY_RECALL_LOOKBACK_MS).toISOString();
     let q = supabase
       .from("ai_memories")
       .select("id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at")
       .in("id", memoryIds)
       .eq("is_active", true)
+      .gte("created_at", recallCutoff)
       .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .or(`user_id.eq.${params.userId},visibility.eq.team`);
     if (params.type) q = q.eq("type", params.type);
@@ -363,9 +369,10 @@ export async function searchMemories(params: {
     if (memError) throw new Error(`Memory hydration failed: ${memError.message}`);
     if (!memories) return [];
 
-    const results = memories
-      .map((m) => ({ ...m, similarity: similarityMap.get(m.id) ?? 0 }))
-      .sort((a, b) => b.similarity - a.similarity) as AiMemory[];
+    const results = rankMemoriesForRecall(
+      memories.map((m) => ({ ...m, similarity: similarityMap.get(m.id) ?? 0 })) as AiMemory[],
+      { projectId: params.projectId },
+    );
 
     if (results.length > 0) {
       void supabase
@@ -388,6 +395,7 @@ export async function searchMemories(params: {
 
 async function searchTeamMemories(params: {
   query: string;
+  projectId?: number;
   matchCount?: number;
 }): Promise<AiMemory[]> {
   const supabase = createServiceClient();
@@ -395,6 +403,7 @@ async function searchTeamMemories(params: {
   try {
     const chunks = await searchMemoryChunks({
       query: params.query,
+      projectId: params.projectId,
       matchCount: params.matchCount ?? 4,
       matchThreshold: 0.5,
       failureLabel: "Team memory search",
@@ -404,20 +413,27 @@ async function searchTeamMemories(params: {
     const memoryIds = chunks.map((chunk) => chunk.document_id);
     const similarityMap = new Map(chunks.map((chunk) => [chunk.document_id, chunk.similarity]));
 
-    const { data, error } = await supabase
+    const recallCutoff = new Date(Date.now() - MEMORY_RECALL_LOOKBACK_MS).toISOString();
+    let query = supabase
       .from("ai_memories")
       .select("id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at")
       .in("id", memoryIds)
       .eq("visibility", "team")
       .eq("is_active", true)
+      .gte("created_at", recallCutoff)
       .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+    if (params.projectId !== undefined) {
+      query = query.or(`project_id.is.null,project_id.eq.${params.projectId}`);
+    }
+    const { data, error } = await query;
     if (error) {
       throw new Error(`Team memory search failed: ${error.message}`);
     }
     if (!data) return [];
-    return data
-      .map((m) => ({ ...m, similarity: similarityMap.get(m.id) ?? 0 }))
-      .sort((a, b) => b.similarity - a.similarity) as AiMemory[];
+    return rankMemoriesForRecall(
+      data.map((m) => ({ ...m, similarity: similarityMap.get(m.id) ?? 0 })) as AiMemory[],
+      { projectId: params.projectId },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown team memory search error";
     throw new Error(message);
@@ -603,6 +619,54 @@ function recencyFactor(createdAt: string): number {
   return 1 / (ageDays / 7 + 1); // 0-day = 1.0, 7-day = 0.5, 30-day = 0.18
 }
 
+function freshnessScore(createdAt: string): number {
+  const ageMs = Math.max(0, Date.now() - new Date(createdAt).getTime());
+  return Math.max(0, 1 - ageMs / MEMORY_RECALL_LOOKBACK_MS);
+}
+
+export function scoreMemoryForRecall(
+  memory: AiMemory,
+  options: { projectId?: number } = {},
+): { score: number; reason: string } {
+  const freshness = freshnessScore(memory.created_at);
+  const projectMatch =
+    options.projectId !== undefined && memory.project_id === options.projectId ? 1 : 0;
+  const globalProjectContext = memory.project_id === null ? 0.25 : 0;
+  const similarity = memory.similarity ?? 0;
+  const importance = memory.importance ?? 0;
+  const score =
+    freshness * 10 +
+    projectMatch * 2 +
+    globalProjectContext +
+    similarity +
+    importance * 0.5;
+  return {
+    score,
+    reason: [
+      `freshness=${freshness.toFixed(2)}`,
+      projectMatch ? "project=selected" : memory.project_id === null ? "project=global" : "project=other",
+      `similarity=${similarity.toFixed(2)}`,
+      `importance=${importance.toFixed(2)}`,
+    ].join("; "),
+  };
+}
+
+export function rankMemoriesForRecall(
+  memories: AiMemory[],
+  options: { projectId?: number } = {},
+): AiMemory[] {
+  return memories
+    .map((memory) => {
+      const ranking = scoreMemoryForRecall(memory, options);
+      return {
+        ...memory,
+        ranking_score: ranking.score,
+        ranking_reason: ranking.reason,
+      };
+    })
+    .sort((a, b) => (b.ranking_score ?? 0) - (a.ranking_score ?? 0));
+}
+
 /**
  * Build the memory context block to prepend to the system prompt.
  * - Caps at MAX_INJECT_TOKENS to avoid context bloat
@@ -622,6 +686,7 @@ export function buildMemoryContextPayload(
   preferences: AiMemory[],
   relevantMemories: AiMemory[],
   teamMemories: AiMemory[] = [],
+  options: { projectId?: number } = {},
 ): { block: string | null; selected: AiMemory[] } {
   // Deduplicate by id
   const seen = new Set<string>();
@@ -635,15 +700,17 @@ export function buildMemoryContextPayload(
 
   if (all.length === 0) return { block: null, selected: [] };
 
-  // Sort non-preference memories by importance × recency
-  const prefs = all.filter((m) => m.type === "preference");
-  const others = all
-    .filter((m) => m.type !== "preference")
+  const prefs = all
+    .filter((m) => m.type === "preference")
     .sort(
       (a, b) =>
         b.importance * recencyFactor(b.created_at) -
         a.importance * recencyFactor(a.created_at),
     );
+  const others = rankMemoriesForRecall(
+    all.filter((m) => m.type !== "preference"),
+    options,
+  );
 
   // Token-cap: always include all preferences, then fill others until budget
   const selected: AiMemory[] = [...prefs];
@@ -711,6 +778,7 @@ export async function getMemoriesForSession(params: {
     }),
     searchTeamMemories({
       query: params.firstMessage,
+      projectId: params.projectId,
       matchCount: 4,
     }),
   ]);
