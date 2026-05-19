@@ -134,6 +134,8 @@ import {
   AssistantWidgetRenderer,
   hasAssistantDynamicToolComponent,
 } from "./assistant-widget-renderer";
+import { ArtifactRenderer } from "./artifact-renderer";
+import { ArtifactSidePanel } from "./artifact-side-panel";
 import {
   isAssistantWidgetPayload,
   type AssistantWidgetPayload,
@@ -203,6 +205,17 @@ interface ToolPart {
   };
 }
 
+type ToolPartCandidate = {
+  type: string;
+  toolCallId?: unknown;
+  input?: unknown;
+  state?: unknown;
+  output?: unknown;
+  errorText?: unknown;
+  title?: unknown;
+  approval?: unknown;
+};
+
 type ToolApprovalResponseHandler = (response: {
   id: string;
   approved: boolean;
@@ -266,10 +279,56 @@ export interface StrategistLiveStatus {
   timestamp?: string;
 }
 
+function toToolPart(part: UIMessage["parts"][number]): ToolPart | null {
+  const candidate: ToolPartCandidate = part;
+  if (!candidate.type.startsWith("tool-")) return null;
+  if (typeof candidate.toolCallId !== "string") return null;
+  if (typeof candidate.state !== "string") return null;
+
+  const approval =
+    candidate.approval && typeof candidate.approval === "object"
+      ? candidate.approval
+      : null;
+  const normalizedApproval =
+    approval && typeof (approval as { id?: unknown }).id === "string"
+      ? {
+          id: (approval as { id: string }).id,
+          approved:
+            typeof (approval as { approved?: unknown }).approved === "boolean"
+              ? (approval as { approved: boolean }).approved
+              : undefined,
+          reason:
+            typeof (approval as { reason?: unknown }).reason === "string"
+              ? (approval as { reason: string }).reason
+              : undefined,
+        }
+      : undefined;
+
+  return {
+    type: candidate.type,
+    toolCallId: candidate.toolCallId,
+    input: candidate.input,
+    state: candidate.state,
+    output: candidate.output,
+    errorText:
+      typeof candidate.errorText === "string" ? candidate.errorText : undefined,
+    title: typeof candidate.title === "string" ? candidate.title : undefined,
+    approval: normalizedApproval,
+  };
+}
+
 function getToolParts(msg: UIMessage): ToolPart[] {
-  return msg.parts
-    .filter((p) => p.type.startsWith("tool-"))
-    .map((p) => p as unknown as ToolPart);
+  return msg.parts.reduce<ToolPart[]>((parts, part) => {
+    const toolPart = toToolPart(part);
+    if (toolPart) parts.push(toolPart);
+    return parts;
+  }, []);
+}
+
+function getArtifactParts(msg: UIMessage): ToolPart[] {
+  return getToolParts(msg).filter(
+    (part) => part.type === "tool-saveWorkspaceArtifact",
+  );
 }
 
 function getBrandonDailyUpdateWidgetParts(
@@ -1759,9 +1818,17 @@ export function ChatArea({
                   ? formatStructuredMeetingList(textWithoutSources)
                   : text;
                 const reasoningText = isAssistant ? getReasoningText(msg) : "";
-                const toolParts = isAssistant
+                const allToolParts = isAssistant
                   ? getToolParts(msg)
                   : [];
+                const artifactParts = isAssistant
+                  ? getArtifactParts(msg)
+                  : [];
+                // saveWorkspaceArtifact is rendered as a dedicated artifact card,
+                // so exclude it from the generic tool display.
+                const toolParts = allToolParts.filter(
+                  (p) => p.type !== "tool-saveWorkspaceArtifact",
+                );
                 const brandonWidgetParts = isAssistant
                   ? getBrandonDailyUpdateWidgetParts(msg)
                   : [];
@@ -1791,8 +1858,10 @@ export function ChatArea({
                 const traceDiagnostics = traceDiagnosticsByMessageId[msg.id];
                 const isLastMessage = msgIndex === messages.length - 1;
 
-                // Show tool-only assistant messages with live tool call display
-                if (isAssistant && !text.trim() && hasToolInvocations(msg)) {
+                // Show tool-only assistant messages with live tool call display.
+                // Falls through when the only tool call is an artifact (which has
+                // its own dedicated renderer below).
+                if (isAssistant && !text.trim() && toolParts.length > 0) {
                   if (toolParts.length > 0) {
                     return (
                       <div key={msg.id} className="flex items-start">
@@ -1875,7 +1944,8 @@ export function ChatArea({
                   isAssistant &&
                   !text.trim() &&
                   assistantWidgetParts.length === 0 &&
-                  brandonWidgetParts.length === 0
+                  brandonWidgetParts.length === 0 &&
+                  artifactParts.length === 0
                 ) {
                   return null;
                 }
@@ -2012,6 +2082,13 @@ export function ChatArea({
                             <BrandonDailyUpdateWidgetCard
                               key={`${msg.id}-brandon-widget-${index}`}
                               packet={widget.packet}
+                            />
+                          ))}
+
+                          {artifactParts.map((part) => (
+                            <ArtifactRenderer
+                              key={part.toolCallId}
+                              part={part}
                             />
                           ))}
 
@@ -2176,6 +2253,8 @@ export function ChatArea({
           </div>
         </div>
       )}
+
+      <ArtifactSidePanel />
     </div>
   );
 }
