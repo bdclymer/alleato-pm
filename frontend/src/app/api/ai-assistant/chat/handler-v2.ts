@@ -47,6 +47,7 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   DEFAULT_AI_ASSISTANT_MODEL,
+  isDeepAgentsStrategistModelId,
   isAiAssistantModelId,
 } from "@/lib/ai/assistant-models";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -745,6 +746,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     selectedProjectId: args.selectedProjectId,
     messages: args.messages,
   });
+  const selectedDeepAgentsStrategist = isDeepAgentsStrategistModelId(
+    args.activeModel,
+  );
+  const synthesisModel = selectedDeepAgentsStrategist
+    ? DEFAULT_AI_ASSISTANT_MODEL
+    : args.activeModel;
 
   const stream = createUIMessageStream({
     originalMessages: args.messages,
@@ -1066,7 +1073,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       if (
         shouldUseDeepAgentResearchBridge({
           intent: plan.intent,
-        })
+        }) ||
+        (selectedDeepAgentsStrategist && plan.intent === "external_research")
       ) {
         writer.write({
           type: "data-status",
@@ -1221,10 +1229,13 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       if (
-        shouldUseDeepAgentProjectStatusBridge({
+        (shouldUseDeepAgentProjectStatusBridge({
           intent: plan.intent,
           selectedProjectId: args.selectedProjectId ?? null,
-        }) &&
+        }) ||
+          (selectedDeepAgentsStrategist &&
+            plan.intent !== "external_research" &&
+            typeof args.selectedProjectId === "number")) &&
         typeof args.selectedProjectId === "number"
       ) {
         writer.write({
@@ -1405,7 +1416,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         shouldUseDeepAgentExecutiveBridge({
           intent: plan.intent,
           selectedProjectId: args.selectedProjectId ?? null,
-        })
+        }) ||
+        (selectedDeepAgentsStrategist &&
+          plan.intent !== "external_research" &&
+          typeof args.selectedProjectId !== "number")
       ) {
         writer.write({
           type: "data-status",
@@ -1635,7 +1649,6 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           if (normalizedTrace) liveToolTrace.push(normalizedTrace);
         },
       });
-
       if (process.env.NODE_ENV !== "production") {
         console.log("[handler-v2] streamText input", {
           plan_reason: plan.reason,
@@ -1649,6 +1662,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           message_count: args.messages.length,
           tool_count: Object.keys(tools).length,
           model: args.activeModel,
+          synthesis_model: synthesisModel,
         });
       }
 
@@ -1669,7 +1683,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         : "";
 
       const result = streamText({
-        model: getLanguageModel(args.activeModel),
+        model: getLanguageModel(synthesisModel),
         system: systemPrompt,
         messages: modelMessages,
         tools,
@@ -1716,7 +1730,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             traceChatCompletion({
               userId: args.user.id,
               sessionId: args.sessionId,
-              modelId: args.activeModel,
+              modelId: synthesisModel,
               input: inputText,
               output: text ?? "",
               usage: {
@@ -1738,6 +1752,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 hasProjectSnapshot: Boolean(retrievalCtx.projectSnapshot),
                 hasSemanticResults: Boolean(retrievalCtx.semanticVectorResults),
                 selectedProjectId: args.selectedProjectId ?? null,
+                selectedModel: args.activeModel,
+                synthesisModel,
               },
             }),
           );
@@ -1785,7 +1801,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         architecture: "retrieval-planner-v2",
         response_message_id: responseMessage.id,
         model: args.activeModel,
-        provider_path: "ai-gateway",
+        synthesis_model: synthesisModel,
+        provider_path: selectedDeepAgentsStrategist
+          ? "render-backend-deep-agents+ai-gateway-synthesis"
+          : "ai-gateway",
         finish_reason: finishMetadata?.finishReason ?? finishReason ?? null,
         empty_model_response: !assistantText.trim(),
         usage: finishMetadata?.usage ?? null,
