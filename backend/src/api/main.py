@@ -53,6 +53,8 @@ from src.services.agents.deep_project_intelligence_contracts import (
     DeepProjectIntelligenceRequest,
 )
 from src.services.agents.content_builder import ContentBuilderRequest, run_content_builder_agent
+from src.services.agents.docs_research_agent import DocsResearchRequest, run_docs_research_agent
+from src.services.agents.llm_wiki import WikiRequest, run_llm_wiki_agent
 from src.services.agents.microsoft_executive_assistant import (
     MicrosoftExecutiveAssistantRequest,
     run_microsoft_executive_assistant,
@@ -1264,6 +1266,62 @@ async def run_deep_agent_content_builder(
     response = run_content_builder_agent(
         request,
         model=os.getenv("DEEP_AGENTS_CONTENT_BUILDER_MODEL", "openai:gpt-5.4-mini"),
+    )
+    if response.mode == "unavailable":
+        raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
+    return response.model_dump(by_alias=True)
+
+
+@app.post(
+    "/api/intelligence/deep-agent/docs-research",
+    tags=["Intelligence"],
+    summary="Run LangChain docs MCP Deep Agents research",
+)
+async def run_deep_agent_docs_research(
+    request: DocsResearchRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Run the docs-first Deep Agent with the LangChain docs MCP server."""
+    if not _env_flag_enabled("DEEP_AGENTS_DOCS_RESEARCH_ENABLED"):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Deep Agents docs research is disabled. Set "
+                "DEEP_AGENTS_DOCS_RESEARCH_ENABLED=true to run the docs MCP research agent."
+            ),
+        )
+
+    response = run_docs_research_agent(
+        request,
+        model=os.getenv("DEEP_AGENTS_DOCS_RESEARCH_MODEL", "openai:gpt-5.4-mini"),
+    )
+    if response.mode == "unavailable":
+        raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
+    return response.model_dump(by_alias=True)
+
+
+@app.post(
+    "/api/intelligence/deep-agent/llm-wiki",
+    tags=["Intelligence"],
+    summary="Run Deep Agents LLM wiki workflow",
+)
+async def run_deep_agent_llm_wiki(
+    request: WikiRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Run the packaged LLM wiki workflow with local filesystem isolation."""
+    if not _env_flag_enabled("DEEP_AGENTS_LLM_WIKI_ENABLED"):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Deep Agents LLM wiki is disabled. Set "
+                "DEEP_AGENTS_LLM_WIKI_ENABLED=true to run the LLM wiki agent."
+            ),
+        )
+
+    response = run_llm_wiki_agent(
+        request,
+        model=os.getenv("DEEP_AGENTS_LLM_WIKI_MODEL", "openai:gpt-5.4-mini"),
     )
     if response.mode == "unavailable":
         raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))

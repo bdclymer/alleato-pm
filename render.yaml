@@ -549,6 +549,16 @@ services:
         value: gpt-5.4-mini
       - key: CONTENT_BUILDER_IMAGE_MODEL
         value: gemini-2.5-flash-image
+      - key: DEEP_AGENTS_DOCS_RESEARCH_ENABLED
+        value: true
+      - key: DEEP_AGENTS_DOCS_RESEARCH_MODEL
+        value: gpt-5.4-mini
+      - key: LANGCHAIN_DOCS_MCP_URL
+        value: https://docs.langchain.com/mcp
+      - key: DEEP_AGENTS_LLM_WIKI_ENABLED
+        value: true
+      - key: DEEP_AGENTS_LLM_WIKI_MODEL
+        value: gpt-5.4-mini
       - key: DEEP_AGENTS_MEMORY_ENABLED
         value: true
       - key: DEEP_AGENTS_STANDALONE_TOOLS_ENABLED
