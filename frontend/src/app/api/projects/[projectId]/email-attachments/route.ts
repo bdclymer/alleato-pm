@@ -1,5 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { filterEmailAttachments } from "@/lib/email/attachment-filter";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -157,6 +158,6 @@ export const GET = withApiGuardrails(
       }),
     );
 
-    return NextResponse.json(attachments);
+    return NextResponse.json(filterEmailAttachments(attachments));
   },
 );

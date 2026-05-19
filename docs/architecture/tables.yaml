@@ -1804,6 +1804,25 @@ tables:
     purpose: "Dormant audit log for skipped Outlook emails."
     relatedTables: []
 
+  - name: email_filter_rules
+    db: MAIN
+    domain: communications
+    owner: communications
+    status: live
+    purpose: >-
+      User-trained junk-mail rules. Applied by the Outlook sync as Gate 1.5
+      between the hand-coded noise filter (_is_noise_email) and the heuristic
+      classifier. Each rule matches on sender_pattern, sender_domain,
+      subject_pattern, body_pattern (ILIKE) and emits action skip/review/allow.
+    notes_for_ai: >-
+      Reads in backend/src/services/integrations/microsoft_graph/user_filter_rules.py.
+      Writes from frontend/src/app/api/email-filter-rules/ (admin-only POST/PATCH/DELETE).
+      Allow actions short-circuit allowlist; skip drops the email with no DB writes;
+      review writes to outlook_email_skip_audit only.
+    relatedTables:
+      - outlook_email_skip_audit
+      - outlook_email_intake
+
   - name: email_events
     db: MAIN
     domain: communications

@@ -22,7 +22,16 @@ from urllib.parse import urlparse
 from ...intelligence.compiler import process_source_document_to_packet
 from ...supabase_helpers import SupabaseRagStore, storage_upload_with_retry
 from .client import get_graph_client
-from .email_classification import EmailIntakeAction, classify_graph_email_for_intake
+from .email_classification import (
+    EmailIntakeAction,
+    EmailIntakeClassification,
+    classify_graph_email_for_intake,
+)
+from .user_filter_rules import (
+    load_active_filter_rules,
+    match_user_filter_rule,
+    record_rule_match,
+)
 from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
 from .project_documents import upsert_project_document_by_source as _upsert_project_document_by_source
 from .project_inference import infer_project_id
@@ -231,15 +240,26 @@ def _is_useful_link(url: str) -> bool:
     return False
 
 
+_DECORATIVE_INLINE_PATTERNS = (
+    re.compile(r"^image\d*\.(png|jpe?g|gif|bmp|webp)$", re.IGNORECASE),
+    re.compile(r"^outlook-", re.IGNORECASE),
+    re.compile(r"^inky-injection-inliner-", re.IGNORECASE),
+    re.compile(
+        r"^(image|logo|icon|signature|facebook|linkedin|twitter|instagram|youtube)\d*[\W_]*\.(png|jpe?g|gif|bmp|webp|svg)$",
+        re.IGNORECASE,
+    ),
+    re.compile(r"^[\d_-]+\.(png|jpe?g|gif|bmp|webp)$"),
+    re.compile(r"^cid:", re.IGNORECASE),
+)
+
+
 def _is_decorative_inline_attachment(attachment_name: str, content_type: str, is_inline: bool) -> bool:
-    if not is_inline or not content_type.startswith("image/"):
+    if not content_type.startswith("image/"):
         return False
     normalized = attachment_name.strip().lower()
-    return bool(
-        re.match(r"image\d+\.(png|jpe?g|gif)$", normalized)
-        or normalized.startswith("outlook-")
-        or normalized.startswith("inky-injection-inliner-")
-    )
+    if any(pattern.search(normalized) for pattern in _DECORATIVE_INLINE_PATTERNS):
+        return True
+    return False
 
 
 def _extract_links(msg: dict) -> list[dict]:
@@ -1361,6 +1381,10 @@ def sync_outlook_emails(
 
     new_delta_token = f"inbox:{new_inbox_token}|sent:{new_sent_token}" if (new_inbox_token or new_sent_token) else ""
 
+    # Load user-trained filter rules once per sync run. These are applied as
+    # Gate 1.5 between the hand-coded noise filter and the heuristic classifier.
+    user_filter_rules = load_active_filter_rules(supabase_client)
+
     synced = 0
     for msg in items:
         # Skip deleted items (delta returns removed items with @removed)
@@ -1386,12 +1410,43 @@ def sync_outlook_emails(
 
         participants = _message_participants(msg, sender_name, sender_addr)
 
-        # Gate 1: skip noise entirely — no DB writes at all.
+        # Gate 1: skip noise entirely - no DB writes at all.
         if _is_noise_email(msg):
             logger.debug("[Outlook] Noise email skipped: %s", subject)
             continue
 
-        intake_classification = classify_graph_email_for_intake(msg, body_text)
+        # Gate 1.5: user-trained junk rules from `email_filter_rules`. Skip
+        # actions drop the email with no DB writes (same as Gate 1). Allow
+        # actions short-circuit further filtering and force import. Review
+        # actions fall through but get tagged in source_metadata.
+        user_rule_match = match_user_filter_rule(msg, user_filter_rules)
+        user_rule_review_label: Optional[str] = None
+        if user_rule_match is not None:
+            if user_rule_match.action == "skip":
+                record_rule_match(supabase_client, user_rule_match.id)
+                logger.info(
+                    "[Outlook] User filter rule skipped email: rule=%s label=%s subject=%s",
+                    user_rule_match.id,
+                    user_rule_match.label,
+                    subject,
+                )
+                continue
+            if user_rule_match.action == "review":
+                record_rule_match(supabase_client, user_rule_match.id)
+                user_rule_review_label = user_rule_match.label or user_rule_match.id
+            if user_rule_match.action == "allow":
+                record_rule_match(supabase_client, user_rule_match.id)
+
+        if user_rule_match is not None and user_rule_match.action == "allow":
+            intake_classification = EmailIntakeClassification(
+                action=EmailIntakeAction.IMPORT,
+                category="user_filter_rule_allow",
+                confidence=1.0,
+                reason="User filter rule explicitly allowed this email.",
+                signals=("user_filter_rule_allow",),
+            )
+        else:
+            intake_classification = classify_graph_email_for_intake(msg, body_text)
         source_metadata = {
             "outlook_message_id": msg_id,
             "mailbox_user_id": user_email,
@@ -1403,6 +1458,13 @@ def sync_outlook_emails(
             "links": extracted_links,
             "intake_classification": intake_classification.as_metadata(),
         }
+        if user_rule_match is not None:
+            source_metadata["user_filter_rule"] = {
+                "rule_id": user_rule_match.id,
+                "label": user_rule_match.label,
+                "action": user_rule_match.action,
+                "review_only": user_rule_review_label is not None,
+            }
 
         if intake_classification.action == EmailIntakeAction.SKIP:
             try:

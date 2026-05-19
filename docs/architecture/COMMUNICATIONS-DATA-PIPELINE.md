@@ -8,6 +8,18 @@ This document is the authoritative reference for the Microsoft Graph communicati
 
 The communications pipeline ingests Outlook email, Teams channel messages, Teams direct messages, and OneDrive/SharePoint files from the Microsoft 365 tenant into Supabase. Each source goes through three stages: **raw intake** (write everything), **relevance filter** (drop noise, assign projects), and **vectorization** (chunk and embed for AI retrieval). A fourth stage — the **Teams compiler** — runs an LLM pass over DM conversations to extract structured intelligence (tasks, insights, risks, decisions). The AI assistant queries the resulting `document_chunks` table via pgvector RPCs; it does not read `document_metadata` or `outlook_email_intake` directly.
 
+The Microsoft operator surface is now owned by the backend Microsoft Executive Assistant specialist, not by the Chief Strategist directly. The Strategist delegates Outlook inbox triage, email search, Teams escalation drafts, calendar review, and Microsoft file context to:
+
+- Route: `POST /api/intelligence/microsoft-executive-assistant`
+- Module: `backend/src/services/agents/microsoft_executive_assistant/`
+- Feature flag: `DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED`
+- Model env: `DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL`
+- Webhook trigger: `MICROSOFT_EXECUTIVE_ASSISTANT_WEBHOOK_ENABLED` runs after accepted Outlook Graph notifications complete delta sync.
+- 15-minute trigger: Render cron `alleato-microsoft-executive-assistant-check` runs `backend/src/scripts/run_microsoft_executive_assistant_check.py` when `MICROSOFT_EXECUTIVE_ASSISTANT_SCHEDULED_ENABLED=true`.
+- Runtime contract: draft or recommend Microsoft actions for review; fail loudly when Graph credentials, provider keys, indexed source context, or Deep Agents runtime are unavailable.
+
+The Strategist tool surface should expose `consultMicrosoftExecutiveAssistant` for Microsoft operator work. Direct Outlook/Teams read/write tools must not be treated as the Strategist's own responsibilities.
+
 ---
 
 ## 2. Data Flow
@@ -177,7 +189,8 @@ Microsoft 365
    For each user in MICROSOFT_SYNC_USERS:
    - Fetch delta token from graph_sync_state
    - Call sync_outlook_emails() → delta query from Graph API
-   - Filter noise (_is_noise_email), filter relevance (_is_relevant_email)
+   - Filter noise (_is_noise_email), apply user-trained rules from
+     `email_filter_rules` (Gate 1.5), filter relevance (_is_relevant_email)
    - Write to outlook_email_intake (all non-noise)
    - Write to document_metadata (relevance-passed only)
    - Write to project_emails (project-matched only)

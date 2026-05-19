@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { MoreHorizontal, Paperclip, Pencil, Star, Trash2 } from "lucide-react";
+import { Ban, MoreHorizontal, Paperclip, Pencil, Star, Trash2 } from "lucide-react";
 
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -180,9 +180,13 @@ export function buildEmailTableColumns(options?: {
 
 export function renderEmailRowActions(
   item: ProjectEmail,
-  onEdit: (email: ProjectEmail) => void,
-  onDelete: (email: ProjectEmail) => void,
-): ReactElement {
+  onEdit: ((email: ProjectEmail) => void) | null,
+  onDelete: ((email: ProjectEmail) => void) | null,
+  onMarkAsJunk?: ((email: ProjectEmail) => void) | null,
+): ReactElement | null {
+  // If every action is disabled, render nothing.
+  if (!onEdit && !onDelete && !onMarkAsJunk) return null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -191,17 +195,27 @@ export function renderEmailRowActions(
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onEdit(item)}>
-          <Pencil className="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="text-destructive"
-          onClick={() => onDelete(item)}
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
+        {onEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(item)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {onMarkAsJunk ? (
+          <DropdownMenuItem onClick={() => onMarkAsJunk(item)}>
+            <Ban className="mr-2 h-4 w-4" />
+            Mark as junk...
+          </DropdownMenuItem>
+        ) : null}
+        {onDelete ? (
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() => onDelete(item)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -42,6 +42,7 @@ import {
   renderEmailRowActions,
 } from "@/features/emails/emails-table-config";
 import { EmailComposeDialog } from "@/features/emails/email-compose-dialog";
+import { MarkAsJunkDialog } from "@/features/emails/mark-as-junk-dialog";
 import {
   EmailDetailPanel,
   projectEmailToDetailRecord,
@@ -162,6 +163,8 @@ export function EmailsClient({
   const [selectedEmail, setSelectedEmail] = React.useState<ProjectEmail | null>(null);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
+  const [junkDialogOpen, setJunkDialogOpen] = React.useState(false);
+  const [emailToMarkAsJunk, setEmailToMarkAsJunk] = React.useState<ProjectEmail | null>(null);
 
   // Sync URL status filter
   React.useEffect(() => {
@@ -276,6 +279,31 @@ export function EmailsClient({
     if (noWriteActions) return;
     setEmailToDelete(item);
     setDeleteDialogOpen(true);
+  };
+
+  const handleMarkAsJunkIntent = (item: ProjectEmail) => {
+    if (noWriteActions) return;
+    setEmailToMarkAsJunk(item);
+    setJunkDialogOpen(true);
+  };
+
+  const handleJunkRuleCreated = async (item: ProjectEmail) => {
+    // On project views with write access, optimistically delete the email
+    // that prompted the rule. On read-only views (Outlook intake, global
+    // inbox) we can't delete — the rule only applies to future emails, so
+    // we just leave the source email in place and let the next sync clean
+    // up any future duplicates.
+    if (noWriteActions || !projectId) return;
+    try {
+      await deleteEmail.mutateAsync(String(item.id));
+    } catch (err) {
+      reportNonCriticalFailure({
+        area: "emails-client",
+        operation: "handleJunkRuleCreated",
+        error: err,
+        userVisibleFallback: "Rule was created but the source email could not be deleted automatically.",
+      });
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -503,9 +531,15 @@ export function EmailsClient({
           activeRowId: selectedEmail ? String(selectedEmail.id) : null,
           onRowClick: handleOpenEmail,
           rowActions: (item) =>
-            noWriteActions
-              ? null
-              : renderEmailRowActions(item, handleEdit, handleDeleteIntent),
+            renderEmailRowActions(
+              item,
+              noWriteActions ? null : handleEdit,
+              noWriteActions ? null : handleDeleteIntent,
+              // "Mark as junk" creates a filter rule — it doesn't mutate the
+              // email itself, so we expose it even on read-only views
+              // (Outlook intake, global inbox) where it's most useful.
+              isOutlook ? handleMarkAsJunkIntent : null,
+            ),
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -665,6 +699,16 @@ export function EmailsClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <MarkAsJunkDialog
+        email={emailToMarkAsJunk}
+        open={junkDialogOpen}
+        onOpenChange={(open) => {
+          setJunkDialogOpen(open);
+          if (!open) setEmailToMarkAsJunk(null);
+        }}
+        onRuleCreated={handleJunkRuleCreated}
+      />
     </>
   );
 }

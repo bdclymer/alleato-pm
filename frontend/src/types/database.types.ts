@@ -11755,6 +11755,63 @@ export type Database = {
         }
         Relationships: []
       }
+      email_filter_rules: {
+        Row: {
+          action: string
+          body_pattern: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          id: string
+          label: string | null
+          last_matched_at: string | null
+          match_count: number
+          sender_domain: string | null
+          sender_pattern: string | null
+          source_message_id: string | null
+          source_subject: string | null
+          subject_pattern: string | null
+          updated_at: string
+        }
+        Insert: {
+          action?: string
+          body_pattern?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          label?: string | null
+          last_matched_at?: string | null
+          match_count?: number
+          sender_domain?: string | null
+          sender_pattern?: string | null
+          source_message_id?: string | null
+          source_subject?: string | null
+          subject_pattern?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          body_pattern?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          label?: string | null
+          last_matched_at?: string | null
+          match_count?: number
+          sender_domain?: string | null
+          sender_pattern?: string | null
+          source_message_id?: string | null
+          source_subject?: string | null
+          subject_pattern?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_messages: {
         Row: {
           body_text: string | null
@@ -34648,6 +34705,10 @@ export type Database = {
         }[]
       }
       record_app_error_event: { Args: { payload: Json }; Returns: string }
+      record_email_filter_rule_match: {
+        Args: { p_rule_id: string }
+        Returns: undefined
+      }
       refresh_budget_rollup:
         | {
             Args: { p_project_id?: number }
