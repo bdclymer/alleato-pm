@@ -2,14 +2,28 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Brain,
+  CheckCircle2,
+  Clock3,
+  FileText,
+  Mail,
+  MessageSquare,
+  Search,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 import {
+  Badge,
   Button,
   EmptyState,
   Heading,
+  StatusBadge,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 import { InsightCardShowcase } from "@/components/ai-intelligence/insight-card-showcase";
 import {
   loadCurrentIntelligencePacket,
@@ -36,6 +50,60 @@ type ProjectRow = Pick<
   | "summary"
   | "work_scope"
 >;
+
+type SourceLane = {
+  id: string;
+  label: string;
+  description: string;
+  icon: typeof Users;
+  evidence: InsightCardEvidence[];
+  cards: InsightCard[];
+};
+
+const CARD_PRIORITY: Record<string, number> = {
+  blocker: 0,
+  risk: 1,
+  open_question: 2,
+  financial_exposure: 3,
+  change_management: 4,
+  schedule_risk: 5,
+  decision: 6,
+  requirement: 7,
+  task: 8,
+  project_update: 9,
+  sentiment: 10,
+};
+
+const SOURCE_LANE_DEFS = [
+  {
+    id: "meetings",
+    label: "Meetings",
+    description: "Themes, decisions, and open loops pulled from meeting transcripts.",
+    icon: Users,
+    match: ["meeting", "fireflies", "transcript"],
+  },
+  {
+    id: "emails",
+    label: "Outlook",
+    description: "Approval friction, owner/vendor signals, and email-based commitments.",
+    icon: Mail,
+    match: ["email", "outlook"],
+  },
+  {
+    id: "teams",
+    label: "Teams",
+    description: "Coordination gaps, informal blockers, and tone shifts from team messages.",
+    icon: MessageSquare,
+    match: ["teams", "chat", "message"],
+  },
+  {
+    id: "documents",
+    label: "Files and docs",
+    description: "Referenced proposals, scope, drawings, specs, and uploaded project files.",
+    icon: FileText,
+    match: ["document", "file", "drawing", "spec", "proposal", "quote", "pdf"],
+  },
+] as const;
 
 function formatLabel(value: string | null | undefined): string {
   if (!value) return "Unknown";
@@ -81,10 +149,13 @@ function cleanText(value: string | null | undefined): string {
     .trim();
 }
 
-function isMetadataNarrative(value: string | null | undefined): boolean {
+function isLowSignalText(value: string | null | undefined): boolean {
   const text = cleanText(value).toLowerCase();
   if (!text) return true;
   const emailCount = text.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/g)?.length ?? 0;
+  const dateCount = text.match(/\b(?:mon|tue|wed|thu|fri|sat|sun)\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g)?.length ?? 0;
+  const spacedLetters = text.match(/\b(?:[a-z]\s){4,}[a-z]\b/g)?.length ?? 0;
+
   return (
     text.length < 24 ||
     text === "this source contains project-relevant language that should be reviewed before it is trusted in a current intelligence packet." ||
@@ -92,71 +163,53 @@ function isMetadataNarrative(value: string | null | undefined): boolean {
     (text.includes(" duration:") && text.includes(" participants:")) ||
     (text.includes(" date:") && text.includes(" participants:") && emailCount >= 2) ||
     text.startsWith("subject:") ||
-    emailCount >= 5
+    (text.includes("active intelligence card") && text.includes("top signal")) ||
+    text.includes("no clean synthesis has been compiled") ||
+    emailCount >= 5 ||
+    dateCount >= 8 ||
+    spacedLetters > 0
   );
 }
 
-function firstUsefulText(...values: Array<string | null | undefined>): string {
+function firstStrategicText(...values: Array<string | null | undefined>): string {
   for (const value of values) {
     const text = cleanText(value);
-    if (text && !isMetadataNarrative(text)) return text;
+    if (text && !isLowSignalText(text)) return text;
   }
-  return cleanText(values.find((value) => Boolean(cleanText(value))) ?? "");
+  return "";
 }
 
-function getCardText(card: InsightCard): string {
-  return firstUsefulText(
-    card.summary,
-    card.whyItMatters,
-    card.nextAction,
-    card.currentStatus,
-  );
-}
-
-function getSectionText(cards: InsightCard[], types: string[], fallback: string): string {
-  for (const card of cards) {
-    if (!types.includes(card.cardType)) continue;
-    const text = getCardText(card);
-    if (text && !isMetadataNarrative(text)) return text;
-  }
-  return fallback;
-}
-
-function splitIntoReadableItems(value: string): string[] {
+function summarizeText(value: string, maxLength = 360): string {
   const text = cleanText(value);
-  if (!text) return [];
-
-  return text
-    .replace(/\?\s+/g, "?\n")
-    .replace(/\.\s+/g, ".\n")
-    .replace(
-      /\s+(?=(?:Lock|Close|Finish|Resolve|Complete|Maintain|Confirm|Coordinate|Review|Provide|Verify|Submit|Finalize|Freeze)\b)/g,
-      "\n",
-    )
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  if (text.length <= maxLength) return text;
+  const truncated = text.slice(0, maxLength);
+  const lastSentence = Math.max(
+    truncated.lastIndexOf("."),
+    truncated.lastIndexOf("?"),
+    truncated.lastIndexOf("!"),
+  );
+  if (lastSentence > 180) return truncated.slice(0, lastSentence + 1);
+  return `${truncated.trim()}...`;
 }
 
-function splitRiskNarrative(value: string): { questions: string[]; actions: string[] } {
-  const items = splitIntoReadableItems(value);
-  return {
-    questions: items.filter((item) => item.endsWith("?")),
-    actions: items.filter((item) => !item.endsWith("?")),
-  };
+function packetEvidence(packet: ClientProjectIntelligencePacket): InsightCardEvidence[] {
+  return packet.cards.flatMap((card) => card.evidence);
 }
 
-function confidenceClass(value: string | null | undefined): string {
-  if (value === "high") return "text-status-success";
-  if (value === "medium") return "text-status-warning";
-  return "text-status-error";
+function evidenceSearchText(evidence: InsightCardEvidence): string {
+  return [
+    evidence.sourceType,
+    evidence.sourceCategory,
+    evidence.sourceTitle,
+    evidence.relevanceReason,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 }
 
-function freshnessText(packet: ClientProjectIntelligencePacket): string {
-  const generated = formatDate(packet.generatedAt);
-  if (packet.freshnessStatus === "fresh" && generated) return `Fresh as of ${generated}`;
-  if (generated) return `${formatLabel(packet.freshnessStatus)} as of ${generated}`;
-  return formatLabel(packet.freshnessStatus);
+function evidenceCategoryLabel(evidence: InsightCardEvidence): string {
+  return formatLabel(evidence.sourceCategory || evidence.sourceType);
 }
 
 function sourceHref(projectId: number, evidence: InsightCardEvidence): string | null {
@@ -165,39 +218,166 @@ function sourceHref(projectId: number, evidence: InsightCardEvidence): string | 
 }
 
 function sourceLabel(evidence: InsightCardEvidence): string {
-  return [evidence.sourceTitle || "Untitled source", formatLabel(evidence.sourceCategory || evidence.sourceType)]
+  return [evidence.sourceTitle || "Untitled source", evidenceCategoryLabel(evidence)]
     .filter(Boolean)
     .join(" - ");
 }
 
 function cardPriority(card: InsightCard): number {
-  const typePriority: Record<string, number> = {
-    blocker: 0,
-    risk: 1,
-    open_question: 2,
-    financial_exposure: 3,
-    change_management: 4,
-    schedule_risk: 5,
-    decision: 6,
-    requirement: 7,
-    task: 8,
-    project_update: 9,
-  };
-  return typePriority[card.cardType] ?? 10;
+  return CARD_PRIORITY[card.cardType] ?? 20;
 }
 
-function packetEvidence(packet: ClientProjectIntelligencePacket): InsightCardEvidence[] {
-  return packet.cards.flatMap((card) => card.evidence);
+function sortedCards(cards: InsightCard[]): InsightCard[] {
+  return [...cards].sort(
+    (a, b) => cardPriority(a) - cardPriority(b) || (a.rank ?? 99) - (b.rank ?? 99),
+  );
 }
 
-function evidenceCategoryLabel(evidence: InsightCardEvidence): string {
-  return formatLabel(evidence.sourceCategory || evidence.sourceType);
+function cardPrimaryText(card: InsightCard): string {
+  return firstStrategicText(
+    card.nextAction,
+    card.summary,
+    card.currentStatus,
+    card.whyItMatters,
+  );
 }
 
-function latestEvidence(packet: ClientProjectIntelligencePacket): InsightCardEvidence[] {
+function findCardsByTypes(cards: InsightCard[], types: string[], limit: number): InsightCard[] {
+  return sortedCards(cards)
+    .filter((card) => types.includes(card.cardType) && cardPrimaryText(card))
+    .slice(0, limit);
+}
+
+function confidenceVariant(value: string | null | undefined): "success" | "warning" | "error" | "neutral" {
+  if (value === "high") return "success";
+  if (value === "medium") return "warning";
+  if (value === "low") return "error";
+  return "neutral";
+}
+
+function freshnessText(packet: ClientProjectIntelligencePacket): string {
+  const generated = formatDate(packet.generatedAt);
+  if (packet.freshnessStatus === "fresh") return `Updated ${generated}`;
+  return `${formatLabel(packet.freshnessStatus)} as of ${generated}`;
+}
+
+function latestEvidence(packet: ClientProjectIntelligencePacket, limit = 4): InsightCardEvidence[] {
   return [...packetEvidence(packet)]
     .sort((a, b) => (b.sourceOccurredAt ?? "").localeCompare(a.sourceOccurredAt ?? ""))
-    .slice(0, 4);
+    .slice(0, limit);
+}
+
+function latestCardEvidence(card: InsightCard): InsightCardEvidence | null {
+  return [...card.evidence].sort(
+    (a, b) => (b.sourceOccurredAt ?? "").localeCompare(a.sourceOccurredAt ?? ""),
+  )[0] ?? null;
+}
+
+function getMetadataString(card: InsightCard, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = card.metadata[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function sourceLanes(packet: ClientProjectIntelligencePacket): SourceLane[] {
+  const evidence = packetEvidence(packet);
+  return SOURCE_LANE_DEFS.map((definition) => {
+    const laneEvidence = evidence.filter((item) => {
+      const searchText = evidenceSearchText(item);
+      return definition.match.some((match) => searchText.includes(match));
+    });
+    const laneEvidenceIds = new Set(laneEvidence.map((item) => item.id));
+    const laneCards = sortedCards(packet.cards).filter((card) =>
+      card.evidence.some((item) => laneEvidenceIds.has(item.id)),
+    );
+
+    return {
+      id: definition.id,
+      label: definition.label,
+      description: definition.description,
+      icon: definition.icon,
+      evidence: laneEvidence,
+      cards: laneCards,
+    };
+  });
+}
+
+function sourceCoverageRows(packet: ClientProjectIntelligencePacket): Array<{
+  label: string;
+  count: number;
+  latestAt: string | null;
+}> {
+  const evidence = packetEvidence(packet);
+  return Array.from(
+    evidence.reduce((counts, item) => {
+      const label = evidenceCategoryLabel(item);
+      const current = counts.get(label) ?? { label, count: 0, latestAt: null as string | null };
+      current.count += 1;
+      if (item.sourceOccurredAt && (!current.latestAt || item.sourceOccurredAt > current.latestAt)) {
+        current.latestAt = item.sourceOccurredAt;
+      }
+      counts.set(label, current);
+      return counts;
+    }, new Map<string, { label: string; count: number; latestAt: string | null }>()),
+  )
+    .map(([, row]) => row)
+    .sort((a, b) => b.count - a.count);
+}
+
+function reviewPreviewCards(packet: ClientProjectIntelligencePacket): InsightCard[] {
+  return sortedCards(packet.cards).slice(0, 24);
+}
+
+function qualityWarnings(packet: ClientProjectIntelligencePacket): string[] {
+  const warnings = new Set<string>();
+  const gaps = packet.sourceCoverage.gaps?.filter((gap): gap is string => typeof gap === "string") ?? [];
+  for (const gap of gaps.slice(0, 4)) warnings.add(gap);
+
+  const lowSignalCards = packet.cards.filter((card) =>
+    !firstStrategicText(card.summary, card.currentStatus, card.whyItMatters, card.nextAction)
+  );
+
+  if (lowSignalCards.length > 0) {
+    warnings.add(`${lowSignalCards.length} cards contain raw source text or metadata instead of usable synthesis.`);
+  }
+
+  if (packet.isStale) {
+    warnings.add("The packet is older than the expected refresh window.");
+  }
+
+  if (packetEvidence(packet).length === 0) {
+    warnings.add("No linked citations are attached to the current packet.");
+  }
+
+  return Array.from(warnings).slice(0, 5);
+}
+
+function briefingStatus(packet: ClientProjectIntelligencePacket): {
+  title: string;
+  body: string;
+} {
+  const cleanRead = firstStrategicText(
+    packet.executiveSummary,
+    packet.currentStatus,
+    packet.strategicRead,
+    packet.whyItMatters,
+  );
+  const warnings = qualityWarnings(packet);
+
+  if (!cleanRead || warnings.length > 0) {
+    return {
+      title: "Daily intelligence needs resynthesis before agents rely on it.",
+      body:
+        "The page found source-backed signals, but the current packet is mixing raw source text, metadata, or stale output into the strategy layer. This is the right place to catch that failure before a human or AI agent treats it as an operating report.",
+    };
+  }
+
+  return {
+    title: "Daily project intelligence, synthesized from the sources that changed the job.",
+    body: summarizeText(cleanRead, 520),
+  };
 }
 
 function IntelligenceEmptyState({
@@ -209,8 +389,8 @@ function IntelligenceEmptyState({
 }) {
   return (
     <EmptyState
-      title="No project intelligence packet yet"
-      description={`${project.name ?? `Project ${project.id}`} does not have a current packet to display. ${reason}`}
+      title="No daily intelligence briefing yet"
+      description={`${project.name ?? `Project ${project.id}`} cannot show a strategic briefing until the intelligence pipeline has a current packet. ${reason}`}
       action={
         <Button asChild size="sm" variant="outline">
           <Link href="/ai-assistant">Open assistant</Link>
@@ -220,7 +400,7 @@ function IntelligenceEmptyState({
   );
 }
 
-function PacketHealth({
+function BriefingHeader({
   project,
   packet,
 }: {
@@ -228,166 +408,212 @@ function PacketHealth({
   packet: ClientProjectIntelligencePacket;
 }) {
   const evidence = packetEvidence(packet);
-  const gaps = packet.sourceCoverage.gaps?.filter((gap): gap is string => typeof gap === "string").slice(0, 3) ?? [];
-  const activeSourceGroups = new Set(evidence.map(evidenceCategoryLabel)).size;
-  const latestSources = latestEvidence(packet);
-  const details = [
-    ["Packet", freshnessText(packet)],
-    ["Confidence", formatLabel(packet.confidenceSummary.overall)],
-    ["Budget", formatCurrency(project.budget)],
-    ["Direct costs", formatCurrency(project.budget_used)],
-    ["Evidence", `${evidence.length} linked citations`],
-    ["Coverage", `${activeSourceGroups} source groups active`],
-    ["Review queue", `${packet.reviewQueueCount} queued`],
+  const lanes = sourceLanes(packet).filter((lane) => lane.evidence.length > 0);
+  const warnings = qualityWarnings(packet);
+  const briefing = briefingStatus(packet);
+  const stats = [
+    { label: "Signals", value: packet.cards.length.toString() },
+    { label: "Citations", value: evidence.length.toString() },
+    { label: "Source lanes", value: lanes.length.toString() },
+    { label: "Review queue", value: packet.reviewQueueCount.toString() },
   ];
 
   return (
-    <aside className="space-y-6 rounded-md bg-muted/35 px-6 py-6">
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
-          Packet health
-        </p>
-        <p className="text-sm leading-6 text-muted-foreground">
-          This is the source quality check before anyone acts on the read.
-        </p>
-      </div>
-      <dl className="space-y-4">
-        {details.map(([label, value]) => (
-          <div key={label} className="grid grid-cols-[6.5rem_1fr] gap-4 text-sm">
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd className="font-semibold text-foreground">{value}</dd>
+    <section className="space-y-6">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={formatLabel(packet.freshnessStatus)} variant={packet.isStale ? "warning" : "success"} />
+            <StatusBadge
+              status={`${formatLabel(packet.confidenceSummary.overall)} confidence`}
+              variant={confidenceVariant(packet.confidenceSummary.overall)}
+            />
+            <Badge variant="outline">{freshnessText(packet)}</Badge>
           </div>
-        ))}
-      </dl>
-      {gaps.length > 0 ? (
-        <div className="space-y-2 border-t border-border/60 pt-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Known gaps
-          </p>
-          <ul className="space-y-2">
-            {gaps.map((gap) => (
-              <li key={gap} className="text-sm leading-6 text-muted-foreground">
-                {gap}
-              </li>
+          <div className="max-w-4xl space-y-4">
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Daily strategy briefing
+            </p>
+            <Heading level={3} as="h2" className="leading-tight">
+              {briefing.title}
+            </Heading>
+            <p className="max-w-3xl text-base leading-7 text-muted-foreground">
+              {briefing.body}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4 rounded-lg bg-muted/35 p-6">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">Trust check</p>
+            <p className="text-sm leading-6 text-muted-foreground">
+              The page should expose weak source coverage before an agent treats the report as truth.
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 gap-4">
+            {stats.map((item) => (
+              <div key={item.label} className="space-y-1">
+                <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {item.label}
+                </dt>
+                <dd className="text-2xl font-semibold tabular-nums text-foreground">{item.value}</dd>
+              </div>
             ))}
-          </ul>
-        </div>
-      ) : null}
-      <div className="border-t border-border/60 pt-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Latest cited sources
-        </p>
-        <div className="mt-3 space-y-2">
-          {latestSources.map((source) => (
-            <div key={source.id} className="grid grid-cols-[5.5rem_1fr] gap-3 text-xs">
-              <span className="text-muted-foreground">{evidenceCategoryLabel(source)}</span>
-              <span className="truncate font-medium text-foreground">{source.sourceTitle ?? "Untitled source"}</span>
+          </dl>
+          {warnings.length > 0 ? (
+            <div className="space-y-2 border-t border-border/60 pt-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <AlertTriangle className="h-4 w-4 text-status-warning" />
+                Source quality notes
+              </div>
+              <ul className="space-y-2">
+                {warnings.slice(0, 3).map((warning) => (
+                  <li key={warning} className="text-sm leading-6 text-muted-foreground">
+                    {warning}
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function OperatingRead({
-  packet,
-  project,
-}: {
-  packet: ClientProjectIntelligencePacket;
-  project: ProjectRow;
-}) {
-  const cards = packet.cards;
-  const scheduleTypes = ["schedule_risk", "project_update", "task"];
-  const riskTypes = ["risk", "blocker", "open_question"];
-  const decisionTypes = ["decision", "change_management", "financial_exposure", "requirement"];
-  const schedule = getSectionText(
-    cards,
-    scheduleTypes,
-    cleanText(project.summary || project.work_scope) || "No schedule narrative has been compiled yet.",
-  );
-  const risks = getSectionText(
-    cards,
-    riskTypes,
-    cleanText(packet.whyItMatters || packet.currentStatus) || "No active risk narrative has been compiled yet.",
-  );
-  const decisions = getSectionText(
-    cards,
-    decisionTypes,
-    cleanText(packet.strategicRead || packet.executiveSummary) || "No decision narrative has been compiled yet.",
-  );
-  const riskNarrative = splitRiskNarrative(risks);
-  const openItems = [...riskNarrative.questions, ...riskNarrative.actions].slice(0, 5);
-
-  const sections: Array<{ label: string; text: string }> = [
-    {
-      label: "Current status",
-      text: firstUsefulText(
-        packet.currentStatus,
-        packet.executiveSummary,
-        packet.strategicRead,
-        schedule,
-      ),
-    },
-    { label: "Schedule and milestones", text: schedule },
-    { label: "Decisions and scope movement", text: decisions },
-  ];
-
-  return (
-    <section className="space-y-5">
-      <Heading level={4} as="h2">
-        What this packet says about the job right now
-      </Heading>
-      <div className="space-y-6">
-        {sections.map(({ label, text }) => (
-          <div key={label} className="space-y-2 border-t border-border/60 pt-4 first:border-t-0 first:pt-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">{label}</p>
-            <p className="text-sm leading-7 text-muted-foreground">{text}</p>
-          </div>
-        ))}
-        <div className="space-y-3 rounded-md bg-muted/30 px-5 py-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">
-            Open risk loop
-          </p>
-          {openItems.length > 0 ? (
-            <ul className="space-y-3">
-              {openItems.map((item) => (
-                <li key={item} className="flex gap-3 text-sm leading-6 text-muted-foreground">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm leading-6 text-muted-foreground">{risks}</p>
-          )}
+          ) : null}
         </div>
       </div>
     </section>
   );
 }
 
-function ActionQueue({
+function StrategicRead({
+  packet,
+}: {
+  packet: ClientProjectIntelligencePacket;
+}) {
+  const riskCards = findCardsByTypes(packet.cards, ["blocker", "risk", "open_question", "schedule_risk"], 3);
+  const decisionCards = findCardsByTypes(packet.cards, ["decision", "change_management", "requirement", "financial_exposure"], 3);
+  const statusCards = findCardsByTypes(packet.cards, ["project_update", "sentiment", "task"], 3);
+  const strategicRead = firstStrategicText(packet.strategicRead, packet.whyItMatters, packet.currentStatus);
+  const nextMoves = packet.recommendedNextMoves
+    .map((move) => cleanText(move))
+    .filter((move) => move && !isLowSignalText(move))
+    .slice(0, 5);
+
+  const columns = [
+    {
+      label: "Pattern",
+      title: "What the sources are saying together",
+      text: summarizeText(strategicRead || packet.executiveSummary, 420),
+      cards: statusCards,
+      icon: Brain,
+    },
+    {
+      label: "Risk",
+      title: "What can hurt the job",
+      text: riskCards[0] ? summarizeText(cardPrimaryText(riskCards[0]), 360) : "No clean risk synthesis has been compiled yet.",
+      cards: riskCards,
+      icon: AlertTriangle,
+    },
+    {
+      label: "Decision",
+      title: "Where leadership attention belongs",
+      text: decisionCards[0] ? summarizeText(cardPrimaryText(decisionCards[0]), 360) : "No decision narrative has been compiled yet.",
+      cards: decisionCards,
+      icon: CheckCircle2,
+    },
+  ];
+
+  return (
+    <section className="space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Strategic analysis
+          </p>
+          <Heading level={4} as="h2">
+            The report an AI strategist should hand you every morning
+          </Heading>
+        </div>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {columns.map((column) => {
+          const Icon = column.icon;
+          return (
+            <article key={column.label} className="space-y-4 border-t border-border/70 pt-4">
+              <div className="flex items-start gap-3">
+                <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {column.label}
+                  </p>
+                  <Heading level={6} as="h3" className="leading-6">
+                    {column.title}
+                  </Heading>
+                </div>
+              </div>
+              <p className="text-sm leading-7 text-muted-foreground">{column.text}</p>
+              {column.cards.length > 0 ? (
+                <div className="space-y-3">
+                  {column.cards.slice(0, 2).map((card) => (
+                    <div key={card.id} className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">{card.title}</p>
+                      <p className="text-xs leading-5 text-muted-foreground">
+                        {card.evidence.length} citation{card.evidence.length === 1 ? "" : "s"} / {formatLabel(card.confidence)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
+      </div>
+      {nextMoves.length > 0 ? (
+        <div className="space-y-3 rounded-lg bg-muted/30 p-6">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <Heading level={6} as="h3">
+              Recommended focus
+            </Heading>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {nextMoves.map((move) => (
+              <div key={move} className="flex gap-3 text-sm leading-6 text-muted-foreground">
+                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-primary" />
+                <span>{summarizeText(move, 220)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function ActionRegister({
   packet,
   projectId,
 }: {
   packet: ClientProjectIntelligencePacket;
   projectId: number;
 }) {
-  const actionCards = [...packet.cards]
-    .filter((card) => cleanText(card.nextAction || card.summary || card.currentStatus))
-    .sort((a, b) => cardPriority(a) - cardPriority(b) || (a.rank ?? 99) - (b.rank ?? 99))
-    .slice(0, 8);
+  const actionCards = sortedCards(packet.cards)
+    .filter((card) => {
+      const text = cardPrimaryText(card);
+      return text && ["blocker", "risk", "open_question", "financial_exposure", "change_management", "schedule_risk", "decision", "requirement", "task"].includes(card.cardType);
+    })
+    .slice(0, 10);
 
   if (actionCards.length === 0) return null;
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Action queue
+          <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Action register
           </p>
+          <Heading level={4} as="h2">
+            What the briefing thinks needs follow-through
+          </Heading>
         </div>
         <Button asChild size="sm" variant="outline">
           <Link href={`/${projectId}/tasks`}>Open task page</Link>
@@ -395,29 +621,30 @@ function ActionQueue({
       </div>
       <div className="divide-y divide-border/70">
         {actionCards.map((card) => {
-          const primaryEvidence = card.evidence[0];
+          const primaryEvidence = latestCardEvidence(card);
           const href = primaryEvidence ? sourceHref(projectId, primaryEvidence) : null;
-          const primaryText = cleanText(card.nextAction || card.summary || card.currentStatus);
+          const owner = getMetadataString(card, ["owner", "assignee", "assigned_to", "responsible_party"]);
+          const due = getMetadataString(card, ["due_date", "target_date", "needed_by"]);
+          const primaryText = summarizeText(cardPrimaryText(card), 300);
 
           return (
-            <article key={card.id} className="grid gap-4 py-5 md:grid-cols-[9rem_minmax(0,1fr)_12rem]">
+            <article key={card.id} className="grid gap-4 py-5 lg:grid-cols-[11rem_minmax(0,1fr)_15rem]">
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  {formatLabel(card.cardType)}
-                </p>
-                <p className={`text-xs font-semibold uppercase tracking-[0.12em] ${confidenceClass(card.confidence)}`}>
-                  {formatLabel(card.confidence)} confidence
-                </p>
+                <StatusBadge status={formatLabel(card.cardType)} variant={confidenceVariant(card.confidence)} />
+                <p className="text-xs font-medium text-muted-foreground">{formatLabel(card.confidence)} confidence</p>
               </div>
               <div className="min-w-0 space-y-2">
-                <p className="text-sm font-semibold text-foreground">{card.title}</p>
+                <Heading level={6} as="h3" className="text-sm leading-6">
+                  {card.title}
+                </Heading>
                 <p className="text-sm leading-7 text-muted-foreground">{primaryText}</p>
                 {primaryEvidence ? (
                   href ? (
                     <Link
                       href={href}
-                      className="inline-flex max-w-full text-xs font-medium text-foreground underline-offset-4 hover:underline"
+                      className="inline-flex max-w-full items-center gap-2 text-xs font-medium text-foreground underline-offset-4 hover:underline"
                     >
+                      <Search className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{sourceLabel(primaryEvidence)}</span>
                     </Link>
                   ) : (
@@ -425,9 +652,10 @@ function ActionQueue({
                   )
                 ) : null}
               </div>
-              <div className="text-xs text-muted-foreground md:text-right">
+              <div className="space-y-2 text-xs text-muted-foreground lg:text-right">
+                <p>{owner ? `Owner: ${owner}` : "Owner not assigned"}</p>
+                <p>{due ? `Due: ${due}` : primaryEvidence?.sourceOccurredAt ? `Signal date: ${formatDate(primaryEvidence.sourceOccurredAt)}` : "No source date"}</p>
                 <p>{card.evidence.length} citation{card.evidence.length === 1 ? "" : "s"}</p>
-                {primaryEvidence?.sourceOccurredAt ? <p>{formatDate(primaryEvidence.sourceOccurredAt)}</p> : null}
               </div>
             </article>
           );
@@ -437,72 +665,207 @@ function ActionQueue({
   );
 }
 
-function EvidenceCoverage({
+function SourceIntelligence({
   packet,
+  project,
+  projectId,
 }: {
   packet: ClientProjectIntelligencePacket;
+  project: ProjectRow;
+  projectId: number;
 }) {
-  const evidence = packetEvidence(packet);
-  const rows = Array.from(
-    evidence.reduce((counts, item) => {
-      const label = evidenceCategoryLabel(item);
-      const current = counts.get(label) ?? {
-        label,
-        count: 0,
-        latestAt: null as string | null,
-      };
-      current.count += 1;
-      if (item.sourceOccurredAt && (!current.latestAt || item.sourceOccurredAt > current.latestAt)) {
-        current.latestAt = item.sourceOccurredAt;
-      }
-      counts.set(label, current);
-      return counts;
-    }, new Map<string, { label: string; count: number; latestAt: string | null }>()),
-  )
-    .map(([, row]) => row)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
+  const lanes = sourceLanes(packet);
+  const projectFacts = [
+    ["Project number", project.project_number || "Not set"],
+    ["Phase", formatLabel(project.phase)],
+    ["Stage", formatLabel(project.stage)],
+    ["Budget", formatCurrency(project.budget)],
+    ["Direct costs", formatCurrency(project.budget_used)],
+  ];
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          Evidence coverage
+        <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Source synthesis
         </p>
-        <SectionRuleHeading
-          label="What the compiler could see"
-          className="mb-0 pb-0"
-        />
+        <Heading level={4} as="h2">
+          Where the report is drawing its intelligence from
+        </Heading>
       </div>
-      <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <div className="space-y-2">
-          <p className="text-3xl font-semibold tabular-nums text-foreground">{evidence.length}</p>
-          <p className="text-sm leading-6 text-muted-foreground">
-            citations are linked to the current packet. Use this to judge whether the read is supported before acting.
-          </p>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid gap-4 md:grid-cols-2">
+          {lanes.map((lane) => {
+            const Icon = lane.icon;
+            const topCard = lane.cards.find((card) => cardPrimaryText(card));
+            const latest = [...lane.evidence].sort(
+              (a, b) => (b.sourceOccurredAt ?? "").localeCompare(a.sourceOccurredAt ?? ""),
+            )[0];
+
+            return (
+              <article key={lane.id} className="space-y-4 rounded-lg bg-muted/30 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <div className="space-y-1">
+                      <Heading level={6} as="h3" className="text-sm">
+                        {lane.label}
+                      </Heading>
+                      <p className="text-xs leading-5 text-muted-foreground">{lane.description}</p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
+                    {lane.evidence.length}
+                  </span>
+                </div>
+                {topCard ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium leading-6 text-foreground">{topCard.title}</p>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      {summarizeText(cardPrimaryText(topCard), 240)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    No clean synthesis has been promoted from this source lane yet.
+                  </p>
+                )}
+                {latest ? (
+                  <div className="border-t border-border/60 pt-3">
+                    {sourceHref(projectId, latest) ? (
+                      <Link
+                        href={sourceHref(projectId, latest) ?? ""}
+                        className="inline-flex max-w-full items-center gap-2 text-xs font-medium text-foreground underline-offset-4 hover:underline"
+                      >
+                        <Clock3 className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{sourceLabel(latest)}</span>
+                      </Link>
+                    ) : (
+                      <p className="inline-flex max-w-full items-center gap-2 text-xs font-medium text-foreground">
+                        <Clock3 className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{sourceLabel(latest)}</span>
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
-        <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">
-          {rows.map((row) => (
-            <div key={row.label} className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                {row.label}
-              </p>
-              <p className="text-sm font-semibold text-foreground">{row.count} cited</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {row.latestAt ? formatDate(row.latestAt) : "No recent source date"}
-              </p>
-            </div>
-          ))}
-        </div>
+        <aside className="space-y-4 rounded-lg bg-muted/30 p-6">
+          <div className="space-y-1">
+            <Heading level={6} as="h3" className="text-sm">
+              Supabase project context
+            </Heading>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Structured project data should anchor the narrative so agents do not rely on RAG alone.
+            </p>
+          </div>
+          <dl className="space-y-3">
+            {projectFacts.map(([label, value]) => (
+              <div key={label} className="grid grid-cols-[7rem_1fr] gap-4 text-sm">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd className="min-w-0 truncate font-medium text-foreground">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </aside>
       </div>
     </section>
   );
 }
 
-function reviewPreviewCards(packet: ClientProjectIntelligencePacket): InsightCard[] {
-  return [...packet.cards]
-    .sort((a, b) => cardPriority(a) - cardPriority(b) || (a.rank ?? 99) - (b.rank ?? 99))
-    .slice(0, 24);
+function EvidenceDiagnostics({
+  packet,
+  projectId,
+}: {
+  packet: ClientProjectIntelligencePacket;
+  projectId: number;
+}) {
+  const rows = sourceCoverageRows(packet).slice(0, 10);
+  const latestSources = latestEvidence(packet, 5);
+  const warnings = qualityWarnings(packet);
+
+  return (
+    <section className="space-y-6">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Evidence and diagnostics
+        </p>
+        <Heading level={4} as="h2">
+          Audit trail for humans and agents
+        </Heading>
+      </div>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {rows.map((row) => (
+              <div key={row.label} className="space-y-1 border-t border-border/70 pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {row.label}
+                </p>
+                <p className="text-lg font-semibold tabular-nums text-foreground">{row.count} cited</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {row.latestAt ? formatDate(row.latestAt) : "No source date"}
+                </p>
+              </div>
+            ))}
+          </div>
+          <details className="group border-t border-border/70 pt-5">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-foreground marker:hidden">
+              Packet card detail
+              <span className="text-xs font-medium text-muted-foreground group-open:hidden">
+                Show top {reviewPreviewCards(packet).length} cards
+              </span>
+              <span className="hidden text-xs font-medium text-muted-foreground group-open:inline">
+                Hide card detail
+              </span>
+            </summary>
+            <div className="mt-6 space-y-10">
+              <InsightCardShowcase cards={reviewPreviewCards(packet)} projectId={projectId} />
+            </div>
+          </details>
+        </div>
+        <aside className="space-y-5 rounded-lg bg-muted/30 p-6">
+          <div className="space-y-1">
+            <Heading level={6} as="h3" className="text-sm">
+              Latest cited sources
+            </Heading>
+            <p className="text-sm leading-6 text-muted-foreground">
+              These are the quickest places to inspect when the strategy read feels wrong.
+            </p>
+          </div>
+          <div className="space-y-3">
+            {latestSources.map((source) => (
+              <div key={source.id} className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {evidenceCategoryLabel(source)}
+                </p>
+                <p className="truncate text-sm font-medium text-foreground">{source.sourceTitle ?? "Untitled source"}</p>
+                <p className="text-xs text-muted-foreground">{formatDate(source.sourceOccurredAt)}</p>
+              </div>
+            ))}
+          </div>
+          {warnings.length > 0 ? (
+            <div className="space-y-2 border-t border-border/60 pt-4">
+              <Heading level={6} as="h3" className="text-sm">
+                What could fail
+              </Heading>
+              <ul className="space-y-2">
+                {warnings.map((warning) => (
+                  <li key={warning} className="text-sm leading-6 text-muted-foreground">
+                    {warning}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </aside>
+      </div>
+    </section>
+  );
 }
 
 export default async function ProjectIntelligencePage({
@@ -549,8 +912,6 @@ export default async function ProjectIntelligencePage({
     }
   }
 
-  const reviewCards = packet ? reviewPreviewCards(packet) : [];
-
   return (
     <PageShell
       variant="dashboard"
@@ -566,20 +927,18 @@ export default async function ProjectIntelligencePage({
       {!target ? (
         <IntelligenceEmptyState
           project={project}
-          reason="Create an intelligence target before the page can show cards, evidence, and recommendations."
+          reason="Create an intelligence target before the daily report can compile source-backed analysis."
         />
       ) : packetLoadError ? (
-        <>
-          <EmptyState
-            title="Project intelligence packet could not load"
-            description={`The current packet cards failed to load: ${packetLoadError}`}
-            action={
-              <Button asChild size="sm" variant="outline">
-                <Link href="/intelligence-compiler">Open compiler health</Link>
-              </Button>
-            }
-          />
-        </>
+        <EmptyState
+          title="Daily intelligence briefing could not load"
+          description={`The current packet failed to load: ${packetLoadError}`}
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link href="/intelligence-compiler">Open compiler health</Link>
+            </Button>
+          }
+        />
       ) : !packet ? (
         <IntelligenceEmptyState
           project={project}
@@ -587,29 +946,11 @@ export default async function ProjectIntelligencePage({
         />
       ) : (
         <>
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-            <OperatingRead packet={packet} project={project} />
-            <PacketHealth
-              project={project}
-              packet={packet}
-            />
-          </div>
-          <ActionQueue packet={packet} projectId={numericProjectId} />
-          <EvidenceCoverage packet={packet} />
-          <details className="group border-t border-border/70 pt-6">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-foreground marker:hidden">
-              Packet card review
-              <span className="text-xs font-medium text-muted-foreground group-open:hidden">
-                Show top {reviewCards.length} cards
-              </span>
-              <span className="hidden text-xs font-medium text-muted-foreground group-open:inline">
-                Hide card detail
-              </span>
-            </summary>
-            <div className="mt-6 space-y-10">
-              <InsightCardShowcase cards={reviewCards} projectId={numericProjectId} />
-            </div>
-          </details>
+          <BriefingHeader project={project} packet={packet} />
+          <StrategicRead packet={packet} />
+          <ActionRegister packet={packet} projectId={numericProjectId} />
+          <SourceIntelligence packet={packet} project={project} projectId={numericProjectId} />
+          <EvidenceDiagnostics packet={packet} projectId={numericProjectId} />
         </>
       )}
     </PageShell>
