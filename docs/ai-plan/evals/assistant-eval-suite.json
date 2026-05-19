@@ -16,11 +16,12 @@
   ],
   "evalBundles": {
     "inbox-outlook-regression": {
-      "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The assistant must use structured Outlook intake, avoid source-specific RAG, and avoid stale fallback language.",
+      "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The assistant must use structured Outlook intake via the live-Graph-first getRecentEmails tool, must not fall back to the synced outlook_email_intake cache, and must avoid source-specific RAG and stale fallback language.",
       "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
       "criteria": [
-        "Every case must fire getRecentEmails.",
-        "No case may fire sourceSpecificRagRetrieval.",
+        "Every case must fire getRecentEmails and its trace source must be microsoft_graph_live.",
+        "No case may fire sourceSpecificRagRetrieval, getRecentOutlookEmails, or readOutlookEmailThread (those tools read the synced cache only).",
+        "No tool trace's source may be outlook_email_intake or outlook_email_intake_fallback - inbox reads must hit live Microsoft Graph.",
         "Answers must not tell the user to wait for live Outlook tools.",
         "Answers must be long enough to explain the inbox result or failure clearly."
       ]
@@ -96,21 +97,10 @@
       "intent": "project_briefing",
       "prompt": "Westfield just came up again. Give me the real current read: what changed, what is stuck, and what should I be worried about?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "project",
-        "semantic",
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getProjectBriefingSnapshot",
-        "semanticSearch"
-      ],
-      "mustInclude": [
-        "Westfield"
-      ],
-      "mustExclude": [
-        "Vermillion"
-      ],
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": ["getProjectBriefingSnapshot", "semanticSearch"],
+      "mustInclude": ["Westfield"],
+      "mustExclude": ["Vermillion"],
       "minAnswerLength": 200
     },
     {
@@ -118,30 +108,17 @@
       "intent": "project_briefing",
       "prompt": "Where do we actually stand on Vermillion Rise right now? Give me the owner-level read, not a data dump.",
       "selectedProjectId": 67,
-      "expectedToolFamilies": [
-        "project",
-        "semantic"
-      ],
-      "expectedToolNames": [
-        "getProjectBriefingSnapshot"
-      ],
-      "mustInclude": [
-        "Vermillion"
-      ],
+      "expectedToolFamilies": ["project", "semantic"],
+      "expectedToolNames": ["getProjectBriefingSnapshot"],
+      "mustInclude": ["Vermillion"],
       "minAnswerLength": 200
     },
     {
       "id": "portfolio-overview",
       "intent": "portfolio_briefing",
       "prompt": "I have ten minutes before calls start. Which active jobs need my attention this week and why?",
-      "expectedToolFamilies": [
-        "project",
-        "risk"
-      ],
-      "expectedToolNames": [
-        "getPortfolioOverview",
-        "getProjectsWithRisks"
-      ],
+      "expectedToolFamilies": ["project", "risk"],
+      "expectedToolNames": ["getPortfolioOverview", "getProjectsWithRisks"],
       "mustInclude": [],
       "minAnswerLength": 250
     },
@@ -150,20 +127,13 @@
       "intent": "risk_review",
       "prompt": "What could bite us on Westfield right now? Rank the risks and tell me what I should do first.",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "risk",
-        "project"
-      ],
+      "expectedToolFamilies": ["risk", "project"],
       "expectedToolNames": [
         "backendDeepAgentProjectStatus",
         "getProjectRiskAnalysis"
       ],
-      "expectedAllToolNames": [
-        "backendDeepAgentProjectStatus"
-      ],
-      "mustInclude": [
-        "risk"
-      ],
+      "expectedAllToolNames": ["backendDeepAgentProjectStatus"],
+      "mustInclude": ["risk"],
       "minAnswerLength": 200
     },
     {
@@ -171,18 +141,13 @@
       "intent": "financial_analysis",
       "prompt": "Are we winning or losing on Westfield budget-wise? Tell me where the money is moving.",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "financial",
-        "structured"
-      ],
+      "expectedToolFamilies": ["financial", "structured"],
       "expectedToolNames": [
         "getProjectBudgetSummary",
         "queryBudgetData",
         "getBudgetLineItems"
       ],
-      "mustInclude": [
-        "budget"
-      ],
+      "mustInclude": ["budget"],
       "minAnswerLength": 150
     },
     {
@@ -190,17 +155,9 @@
       "intent": "financial_analysis",
       "prompt": "What have we bought out on Westfield, what is still open, and is anything in the commitments making you nervous?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "financial",
-        "structured"
-      ],
-      "expectedToolNames": [
-        "getCommitmentsOverview",
-        "queryCommitments"
-      ],
-      "mustInclude": [
-        "commitment"
-      ],
+      "expectedToolFamilies": ["financial", "structured"],
+      "expectedToolNames": ["getCommitmentsOverview", "queryCommitments"],
+      "mustInclude": ["commitment"],
       "minAnswerLength": 150
     },
     {
@@ -208,17 +165,9 @@
       "intent": "financial_analysis",
       "prompt": "What change orders on Westfield are still exposed, and which ones are real money risk?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "financial",
-        "structured"
-      ],
-      "expectedToolNames": [
-        "getChangeOrderDetails",
-        "queryChangeOrders"
-      ],
-      "mustInclude": [
-        "change order"
-      ],
+      "expectedToolFamilies": ["financial", "structured"],
+      "expectedToolNames": ["getChangeOrderDetails", "queryChangeOrders"],
+      "mustInclude": ["change order"],
       "minAnswerLength": 150
     },
     {
@@ -226,17 +175,9 @@
       "intent": "financial_analysis",
       "prompt": "How much direct cost has hit Westfield, and does anything look off?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "financial",
-        "structured"
-      ],
-      "expectedToolNames": [
-        "getDirectCostsSummary",
-        "queryDirectCosts"
-      ],
-      "mustInclude": [
-        "direct cost"
-      ],
+      "expectedToolFamilies": ["financial", "structured"],
+      "expectedToolNames": ["getDirectCostsSummary", "queryDirectCosts"],
+      "mustInclude": ["direct cost"],
       "minAnswerLength": 100
     },
     {
@@ -244,17 +185,13 @@
       "intent": "financial_analysis",
       "prompt": "Bottom line: are we protecting margin on Westfield or is it slipping?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "financial"
-      ],
+      "expectedToolFamilies": ["financial"],
       "expectedToolNames": [
         "getMarginAnalysis",
         "getFinancialAnalysis",
         "clientProjectIntelligencePacket"
       ],
-      "mustInclude": [
-        "margin"
-      ],
+      "mustInclude": ["margin"],
       "minAnswerLength": 120
     },
     {
@@ -262,17 +199,9 @@
       "intent": "financial_analysis",
       "prompt": "If Westfield keeps tracking this way, where do we land against the original budget?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "financial",
-        "forecast"
-      ],
-      "expectedToolNames": [
-        "getForecastComparison",
-        "getCostTrends"
-      ],
-      "mustInclude": [
-        "forecast"
-      ],
+      "expectedToolFamilies": ["financial", "forecast"],
+      "expectedToolNames": ["getForecastComparison", "getCostTrends"],
+      "mustInclude": ["forecast"],
       "minAnswerLength": 120
     },
     {
@@ -280,17 +209,9 @@
       "intent": "operations_analysis",
       "prompt": "Is Westfield slipping anywhere, or are we still okay on schedule?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "schedule",
-        "structured"
-      ],
-      "expectedToolNames": [
-        "getScheduleAnalysis",
-        "queryScheduleTasks"
-      ],
-      "mustInclude": [
-        "schedule"
-      ],
+      "expectedToolFamilies": ["schedule", "structured"],
+      "expectedToolNames": ["getScheduleAnalysis", "queryScheduleTasks"],
+      "mustInclude": ["schedule"],
       "minAnswerLength": 120
     },
     {
@@ -298,15 +219,9 @@
       "intent": "operations_analysis",
       "prompt": "Which Westfield RFIs still need attention, and who is holding them up?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "operations"
-      ],
-      "expectedToolNames": [
-        "getRFIStatus"
-      ],
-      "mustInclude": [
-        "RFI"
-      ],
+      "expectedToolFamilies": ["operations"],
+      "expectedToolNames": ["getRFIStatus"],
+      "mustInclude": ["RFI"],
       "minAnswerLength": 100
     },
     {
@@ -314,15 +229,9 @@
       "intent": "operations_analysis",
       "prompt": "Are Westfield submittals under control, or do I need to push someone today?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "operations"
-      ],
-      "expectedToolNames": [
-        "getSubmittalStatus"
-      ],
-      "mustInclude": [
-        "submittal"
-      ],
+      "expectedToolFamilies": ["operations"],
+      "expectedToolNames": ["getSubmittalStatus"],
+      "mustInclude": ["submittal"],
       "minAnswerLength": 100
     },
     {
@@ -330,12 +239,8 @@
       "intent": "people_or_capacity",
       "prompt": "Who is actually on the hook for Westfield right now, and what are their roles?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "people"
-      ],
-      "expectedToolNames": [
-        "getPeopleAndRoles"
-      ],
+      "expectedToolFamilies": ["people"],
+      "expectedToolNames": ["getPeopleAndRoles"],
       "mustInclude": [],
       "minAnswerLength": 100
     },
@@ -343,10 +248,7 @@
       "id": "vendor-performance",
       "intent": "people_or_capacity",
       "prompt": "Which subs or vendors are helping us right now, and which ones are creating drag across the portfolio?",
-      "expectedToolFamilies": [
-        "people",
-        "financial"
-      ],
+      "expectedToolFamilies": ["people", "financial"],
       "expectedToolNames": [
         "getVendorPerformance",
         "semanticSearch",
@@ -354,13 +256,7 @@
       ],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "vendor",
-          "performance",
-          "subcontractor",
-          "sub",
-          "no vendor data"
-        ]
+        ["vendor", "performance", "subcontractor", "sub", "no vendor data"]
       ],
       "minAnswerLength": 150
     },
@@ -368,14 +264,8 @@
       "id": "source-lookup-meetings",
       "intent": "source_lookup",
       "prompt": "Did Brandon say anything about billing in recent meetings that I need to remember?",
-      "expectedToolFamilies": [
-        "meetings",
-        "semantic"
-      ],
-      "expectedToolNames": [
-        "searchMeetingsByTopic",
-        "semanticSearch"
-      ],
+      "expectedToolFamilies": ["meetings", "semantic"],
+      "expectedToolNames": ["searchMeetingsByTopic", "semanticSearch"],
       "mustInclude": [],
       "minAnswerLength": 100
     },
@@ -384,13 +274,8 @@
       "intent": "source_lookup",
       "prompt": "Check the Westfield emails. Is anyone signaling schedule pressure in the last couple weeks?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "expectedToolNames": [
-        "searchEmails",
-        "semanticSearch"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["searchEmails", "semanticSearch"],
       "mustInclude": [],
       "minAnswerLength": 80
     },
@@ -399,9 +284,7 @@
       "intent": "source_lookup",
       "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "communications"
-      ],
+      "expectedToolFamilies": ["communications"],
       "expectedToolNames": [
         "clientProjectIntelligencePacket",
         "sourceSpecificRagRetrieval",
@@ -415,22 +298,14 @@
       "id": "realworld-teams-this-week-signal",
       "intent": "source_lookup",
       "prompt": "Using Teams messages from this past week, what are people actually worried about?",
-      "expectedToolFamilies": [
-        "communications"
-      ],
+      "expectedToolFamilies": ["communications"],
       "expectedToolNames": [
         "sourceSpecificRagRetrieval",
         "searchTeamsMessages",
         "semanticSearch"
       ],
       "mustIncludeAny": [
-        [
-          "Teams",
-          "messages",
-          "worried",
-          "concern",
-          "no Teams"
-        ]
+        ["Teams", "messages", "worried", "concern", "no Teams"]
       ],
       "mustExclude": [
         "I cannot access Teams",
@@ -438,10 +313,7 @@
         "retrieval bundle"
       ],
       "minAnswerLength": 120,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
       "notes": "Teams content lookup should use a Teams-capable retrieval path and synthesize the operational signal, not fall back to generic source caveats."
     },
     {
@@ -449,34 +321,22 @@
       "intent": "meeting_query",
       "prompt": "What Westfield meetings happened in the last month, and which ones actually matter?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "meetings"
-      ],
+      "expectedToolFamilies": ["meetings"],
       "expectedToolNames": [
         "getMeetingsByDate",
         "getMeetingIntelligence",
         "sourceSpecificRagRetrieval"
       ],
-      "mustInclude": [
-        "meeting"
-      ],
+      "mustInclude": ["meeting"],
       "minAnswerLength": 80
     },
     {
       "id": "recent-emails-synthesis",
       "intent": "source_lookup",
       "prompt": "What are the emails telling us this week? Pull out commitments, issues, and anything I should act on.",
-      "expectedToolFamilies": [
-        "communications",
-        "semantic"
-      ],
-      "expectedToolNames": [
-        "semanticSearch",
-        "searchEmails"
-      ],
-      "mustInclude": [
-        "email"
-      ],
+      "expectedToolFamilies": ["communications", "semantic"],
+      "expectedToolNames": ["semanticSearch", "searchEmails"],
+      "mustInclude": ["email"],
       "mustExclude": [
         "Best Matching Source Context",
         "Retrieved 6 source row(s)",
@@ -519,28 +379,12 @@
           "content": "No, I just asked you if you are able to see the address for the project."
         }
       ],
-      "expectedAllToolNames": [
-        "projectLocationContextLookup"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
-      "mustInclude": [
-        "Union Collective"
-      ],
+      "expectedAllToolNames": ["projectLocationContextLookup"],
+      "forbiddenToolNames": ["noToolRetry"],
+      "mustInclude": ["Union Collective"],
       "mustIncludeAny": [
-        [
-          "address",
-          "street address",
-          "located",
-          "location"
-        ],
-        [
-          "Kentucky",
-          "RAG",
-          "semantic search",
-          "source rows"
-        ]
+        ["address", "street address", "located", "location"],
+        ["Kentucky", "RAG", "semantic search", "source rows"]
       ],
       "mustExclude": [
         "Tell me the project name",
@@ -551,27 +395,20 @@
         "which project"
       ],
       "minAnswerLength": 120,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality.score"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality.score"],
       "notes": "Exact Brandon-reported transcript regression. The final turn must preserve Union Collective context, check the project record first, run RAG/semantic fallback when the structured address is blank, and avoid clarification loops or process narration."
     },
     {
       "id": "recent-meetings-portfolio",
       "intent": "meeting_query",
       "prompt": "What came out of meetings over the last couple days that could turn into a problem?",
-      "expectedToolFamilies": [
-        "meetings"
-      ],
+      "expectedToolFamilies": ["meetings"],
       "expectedToolNames": [
         "getMeetingsByDate",
         "searchMeetingsByTopic",
         "getMeetingIntelligence"
       ],
-      "mustInclude": [
-        "meeting"
-      ],
+      "mustInclude": ["meeting"],
       "mustExclude": [],
       "minAnswerLength": 200,
       "notes": "Regression case for 2026-05-02 bug: getMeetingsByDate filtered out NULL project_id meetings, causing the assistant to claim no meetings existed when 40% of recent Fireflies meetings are un-tagged. getMeetingIntelligence is the correct/superior tool and is now accepted. mustExclude phrases removed since getMeetingIntelligence returns real results."
@@ -581,10 +418,7 @@
       "intent": "document_question",
       "prompt": "Find the latest Westfield contract or change-order document and tell me the business terms I should care about.",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "documents",
-        "semantic"
-      ],
+      "expectedToolFamilies": ["documents", "semantic"],
       "expectedToolNames": [
         "searchDocuments",
         "searchExternalDocuments",
@@ -598,26 +432,16 @@
       "intent": "operations_analysis",
       "prompt": "What open Westfield action items came out of meetings, and who owns each one?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "actions",
-        "meetings"
-      ],
-      "expectedToolNames": [
-        "getActionItemsAndInsights"
-      ],
-      "mustInclude": [
-        "action"
-      ],
+      "expectedToolFamilies": ["actions", "meetings"],
+      "expectedToolNames": ["getActionItemsAndInsights"],
+      "mustInclude": ["action"],
       "minAnswerLength": 100
     },
     {
       "id": "cross-project-comparison",
       "intent": "portfolio_briefing",
       "prompt": "Which big active jobs are burning budget fastest, and does that look normal or risky?",
-      "expectedToolFamilies": [
-        "project",
-        "financial"
-      ],
+      "expectedToolFamilies": ["project", "financial"],
       "expectedToolNames": [
         "getCrossProjectComparison",
         "getPortfolioOverview"
@@ -630,26 +454,16 @@
       "intent": "financial_analysis",
       "prompt": "Show me the Westfield cost trend. Is the spend pattern getting better or worse?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "financial"
-      ],
-      "expectedToolNames": [
-        "getHistoricalTrends",
-        "getCostTrends"
-      ],
-      "mustInclude": [
-        "trend"
-      ],
+      "expectedToolFamilies": ["financial"],
+      "expectedToolNames": ["getHistoricalTrends", "getCostTrends"],
+      "mustInclude": ["trend"],
       "minAnswerLength": 100
     },
     {
       "id": "company-knowledge",
       "intent": "knowledge_capture",
       "prompt": "When an owner pushes scope after the fact, how does Alleato usually protect itself?",
-      "expectedToolFamilies": [
-        "knowledge",
-        "semantic"
-      ],
+      "expectedToolFamilies": ["knowledge", "semantic"],
       "expectedToolNames": [],
       "mustInclude": [],
       "minAnswerLength": 50
@@ -659,13 +473,8 @@
       "intent": "general_conversation",
       "prompt": "What context do you already have from past Westfield conversations so I do not have to repeat myself?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "memory"
-      ],
-      "expectedToolNames": [
-        "recallPastConversations",
-        "searchMemories"
-      ],
+      "expectedToolFamilies": ["memory"],
+      "expectedToolNames": ["recallPastConversations", "searchMemories"],
       "mustInclude": [],
       "minAnswerLength": 60
     },
@@ -673,31 +482,18 @@
       "id": "app-help",
       "intent": "app_help",
       "prompt": "Where do I go in this app to set up a commitment, and what are the steps?",
-      "expectedToolFamilies": [
-        "app_help"
-      ],
-      "expectedToolNames": [
-        "searchAppHelp"
-      ],
-      "mustInclude": [
-        "commitment"
-      ],
-      "mustExclude": [
-        "I will search the project",
-        "Westfield"
-      ],
+      "expectedToolFamilies": ["app_help"],
+      "expectedToolNames": ["searchAppHelp"],
+      "mustInclude": ["commitment"],
+      "mustExclude": ["I will search the project", "Westfield"],
       "minAnswerLength": 80
     },
     {
       "id": "accounting-ap-aging",
       "intent": "financial_analysis",
       "prompt": "What bills are aging on us right now, and is anything urgent?",
-      "expectedToolFamilies": [
-        "accounting"
-      ],
-      "expectedToolNames": [
-        "getAPAgingReport"
-      ],
+      "expectedToolFamilies": ["accounting"],
+      "expectedToolNames": ["getAPAgingReport"],
       "mustInclude": [],
       "minAnswerLength": 80
     },
@@ -705,15 +501,9 @@
       "id": "accounting-cash-position",
       "intent": "financial_analysis",
       "prompt": "How much cash do we actually have available today?",
-      "expectedToolFamilies": [
-        "accounting"
-      ],
-      "expectedToolNames": [
-        "getCashPositionReport"
-      ],
-      "mustInclude": [
-        "cash"
-      ],
+      "expectedToolFamilies": ["accounting"],
+      "expectedToolNames": ["getCashPositionReport"],
+      "mustInclude": ["cash"],
       "minAnswerLength": 80
     },
     {
@@ -722,12 +512,8 @@
       "prompt": "A $4M warehouse renovation just showed up in a market we do not know. Should we chase it or pass?",
       "expectedToolFamilies": [],
       "expectedToolNames": [],
-      "mustInclude": [
-        "tradeoff"
-      ],
-      "mustExclude": [
-        "I will search"
-      ],
+      "mustInclude": ["tradeoff"],
+      "mustExclude": ["I will search"],
       "minAnswerLength": 250
     },
     {
@@ -735,15 +521,8 @@
       "intent": "project_briefing",
       "prompt": "Since the last Westfield update, what actually changed?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "semantic",
-        "communications",
-        "memory"
-      ],
-      "expectedToolNames": [
-        "semanticSearch",
-        "recallPastConversations"
-      ],
+      "expectedToolFamilies": ["semantic", "communications", "memory"],
+      "expectedToolNames": ["semanticSearch", "recallPastConversations"],
       "mustInclude": [],
       "minAnswerLength": 120
     },
@@ -751,11 +530,7 @@
       "id": "owner-strategy-ulta-action-plan",
       "intent": "project_briefing",
       "prompt": "I am Brandon. For 25-127 Ulta Beauty Fresno, what is most likely to cost us money this week, what is blocked, and what do I personally need to do today?",
-      "expectedToolFamilies": [
-        "project",
-        "semantic",
-        "communications"
-      ],
+      "expectedToolFamilies": ["project", "semantic", "communications"],
       "expectedToolNames": [
         "clientProjectIntelligencePacket",
         "getProjectBriefingSnapshot",
@@ -766,17 +541,8 @@
       ],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "Ulta",
-          "project",
-          "snapshot"
-        ],
-        [
-          "risk",
-          "blocked",
-          "issue",
-          "cost"
-        ]
+        ["Ulta", "project", "snapshot"],
+        ["risk", "blocked", "issue", "cost"]
       ],
       "mustExclude": [
         "generic project status",
@@ -797,21 +563,10 @@
       "id": "action-task-preview-no-write",
       "intent": "action_preview",
       "prompt": "Put a task preview together for the PM to confirm the AC1 solar approval owner and committed approval date by tomorrow at 9 AM. Do not create it until I confirm.",
-      "expectedToolFamilies": [
-        "action_write"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry",
-        "streamTextError"
-      ],
-      "mustInclude": [
-        "Preview",
-        "confirm",
-        "AC1"
-      ],
+      "expectedToolFamilies": ["action_write"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry", "streamTextError"],
+      "mustInclude": ["Preview", "confirm", "AC1"],
       "mustIncludeAny": [
         [
           "not created",
@@ -820,9 +575,7 @@
           "confirmed: false"
         ]
       ],
-      "mustExclude": [
-        "created successfully"
-      ],
+      "mustExclude": ["created successfully"],
       "minAnswerLength": 180,
       "requiredMetadataPaths": [
         "tool_trace",
@@ -835,52 +588,23 @@
       "id": "task-register-source-grounded",
       "intent": "task_management",
       "prompt": "Show me my real task list from actual records. Split it into overdue, due soon, blocked, and unclear if you can.",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "getMyTasks"
-      ],
-      "mustInclude": [
-        "Sources Checked"
-      ],
-      "mustIncludeAny": [
-        [
-          "overdue",
-          "due soon",
-          "blocked",
-          "task"
-        ]
-      ],
-      "mustExclude": [
-        "likely current tasks",
-        "reconstruction",
-        "I think"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedAllToolNames": ["getMyTasks"],
+      "mustInclude": ["Sources Checked"],
+      "mustIncludeAny": [["overdue", "due soon", "blocked", "task"]],
+      "mustExclude": ["likely current tasks", "reconstruction", "I think"],
       "minAnswerLength": 180,
       "minResponseQualityScore": 60,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
       "notes": "Tasks are a core product surface. The assistant must not infer a task register from memory when structured task records exist."
     },
     {
       "id": "source-freshness-rag-health",
       "intent": "source_health",
       "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
-      "expectedToolFamilies": [
-        "source_health"
-      ],
-      "expectedAllToolNames": [
-        "assistantSourceHealth"
-      ],
-      "mustInclude": [
-        "Teams",
-        "Outlook",
-        "meeting",
-        "packet"
-      ],
+      "expectedToolFamilies": ["source_health"],
+      "expectedAllToolNames": ["assistantSourceHealth"],
+      "mustInclude": ["Teams", "Outlook", "meeting", "packet"],
       "mustIncludeAny": [
         [
           "stale",
@@ -894,10 +618,7 @@
           "source health"
         ]
       ],
-      "mustExclude": [
-        "everything is current",
-        "complete evidence coverage"
-      ],
+      "mustExclude": ["everything is current", "complete evidence coverage"],
       "minAnswerLength": 250,
       "requiredMetadataPaths": [
         "source_health",
@@ -910,24 +631,11 @@
       "id": "realworld-teams-source-freshness",
       "intent": "source_health",
       "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
-      "expectedToolFamilies": [
-        "source_health"
-      ],
-      "expectedAllToolNames": [
-        "assistantSourceHealth"
-      ],
-      "mustInclude": [
-        "Teams"
-      ],
+      "expectedToolFamilies": ["source_health"],
+      "expectedAllToolNames": ["assistantSourceHealth"],
+      "mustInclude": ["Teams"],
       "mustIncludeAny": [
-        [
-          "stale",
-          "fresh",
-          "current",
-          "sync",
-          "source health",
-          "unembedded"
-        ]
+        ["stale", "fresh", "current", "sync", "source health", "unembedded"]
       ],
       "mustExclude": [
         "everything is current",
@@ -946,26 +654,10 @@
       "id": "ceo-task-list-plain",
       "intent": "task_management",
       "prompt": "What are my tasks?",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "getMyTasks"
-      ],
-      "mustIncludeAny": [
-        [
-          "task",
-          "to-do",
-          "open",
-          "overdue",
-          "due"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help",
-        "I will search",
-        "I don't have access"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedAllToolNames": ["getMyTasks"],
+      "mustIncludeAny": [["task", "to-do", "open", "overdue", "due"]],
+      "mustExclude": ["I cannot help", "I will search", "I don't have access"],
       "minAnswerLength": 120,
       "notes": "Baseline phrasing. The assistant must route to the personal task register and not synthesize a generic answer."
     },
@@ -973,25 +665,10 @@
       "id": "ceo-task-list-plate",
       "intent": "task_management",
       "prompt": "What's on my plate this week?",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "getMyTasks"
-      ],
-      "mustIncludeAny": [
-        [
-          "task",
-          "to-do",
-          "open",
-          "this week",
-          "due"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help",
-        "I don't have access"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedAllToolNames": ["getMyTasks"],
+      "mustIncludeAny": [["task", "to-do", "open", "this week", "due"]],
+      "mustExclude": ["I cannot help", "I don't have access"],
       "minAnswerLength": 120,
       "notes": "Idiomatic CEO phrasing — 'on my plate' must be recognized as a task-list request even though the literal word 'task' is absent."
     },
@@ -999,25 +676,10 @@
       "id": "ceo-task-list-todo",
       "intent": "task_management",
       "prompt": "Pull up my todo list.",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "getMyTasks"
-      ],
-      "mustIncludeAny": [
-        [
-          "task",
-          "to-do",
-          "todo",
-          "open",
-          "due"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help",
-        "I don't have access"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedAllToolNames": ["getMyTasks"],
+      "mustIncludeAny": [["task", "to-do", "todo", "open", "due"]],
+      "mustExclude": ["I cannot help", "I don't have access"],
       "minAnswerLength": 100,
       "notes": "'todo list' variant — same intent as 'my tasks'. The router must treat todo == task."
     },
@@ -1025,27 +687,10 @@
       "id": "ceo-task-list-owe",
       "intent": "task_management",
       "prompt": "What do I owe people right now?",
-      "expectedToolFamilies": [
-        "task_management",
-        "actions"
-      ],
-      "expectedToolNames": [
-        "getMyTasks",
-        "getActionItemsAndInsights"
-      ],
-      "mustIncludeAny": [
-        [
-          "task",
-          "action item",
-          "follow",
-          "open",
-          "owe"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help",
-        "I don't understand"
-      ],
+      "expectedToolFamilies": ["task_management", "actions"],
+      "expectedToolNames": ["getMyTasks", "getActionItemsAndInsights"],
+      "mustIncludeAny": [["task", "action item", "follow", "open", "owe"]],
+      "mustExclude": ["I cannot help", "I don't understand"],
       "minAnswerLength": 120,
       "notes": "Indirect phrasing — 'owe people' really means 'open commitments / action items'. Assistant must infer this is a task/action-item ask, not a literal AP question."
     },
@@ -1053,23 +698,10 @@
       "id": "ceo-task-list-pending",
       "intent": "task_management",
       "prompt": "Show me everything that's still pending against my name.",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "getMyTasks"
-      ],
-      "mustIncludeAny": [
-        [
-          "task",
-          "open",
-          "pending",
-          "assigned"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedAllToolNames": ["getMyTasks"],
+      "mustIncludeAny": [["task", "open", "pending", "assigned"]],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 120,
       "notes": "'pending against my name' = open tasks assigned to me. Verbal variation."
     },
@@ -1077,18 +709,10 @@
       "id": "ceo-task-list-overdue",
       "intent": "task_management",
       "prompt": "What am I behind on?",
-      "expectedToolFamilies": [
-        "task_management",
-        "actions"
-      ],
-      "expectedToolNames": [
-        "getMyTasks",
-        "getActionItemsAndInsights"
-      ],
+      "expectedToolFamilies": ["task_management", "actions"],
+      "expectedToolNames": ["getMyTasks", "getActionItemsAndInsights"],
       "mustInclude": [],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 60,
       "notes": "'Behind on' = overdue tasks. Removed mustIncludeAny for overdue/behind since a valid response is 'nothing overdue' — test env has no overdue tasks. Key assertion is that getMyTasks fires (not a deflection)."
     },
@@ -1096,26 +720,10 @@
       "id": "ceo-task-list-handle",
       "intent": "task_management",
       "prompt": "What do I need to handle today?",
-      "expectedToolFamilies": [
-        "task_management",
-        "actions"
-      ],
-      "expectedToolNames": [
-        "getMyTasks",
-        "getActionItemsAndInsights"
-      ],
-      "mustIncludeAny": [
-        [
-          "task",
-          "today",
-          "due",
-          "priority",
-          "action"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "expectedToolFamilies": ["task_management", "actions"],
+      "expectedToolNames": ["getMyTasks", "getActionItemsAndInsights"],
+      "mustIncludeAny": [["task", "today", "due", "priority", "action"]],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 120,
       "notes": "'Handle today' = today's tasks + urgent action items. The assistant should not collapse this into a generic daily brief."
     },
@@ -1124,33 +732,16 @@
       "intent": "task_management",
       "prompt": "What's still open on Westfield?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "task_management",
-        "actions",
-        "operations"
-      ],
+      "expectedToolFamilies": ["task_management", "actions", "operations"],
       "expectedToolNames": [
         "getActionItemsAndInsights",
         "queryScheduleTasks",
         "getRFIStatus",
         "getSubmittalStatus"
       ],
-      "mustInclude": [
-        "Westfield"
-      ],
-      "mustIncludeAny": [
-        [
-          "open",
-          "outstanding",
-          "pending",
-          "task",
-          "action"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help",
-        "I don't have access"
-      ],
+      "mustInclude": ["Westfield"],
+      "mustIncludeAny": [["open", "outstanding", "pending", "task", "action"]],
+      "mustExclude": ["I cannot help", "I don't have access"],
       "minAnswerLength": 150,
       "notes": "Project-scoped open-items ask. 'Still open' is a CEO synonym for unresolved tasks, RFIs, submittals, and action items."
     },
@@ -1158,36 +749,18 @@
       "id": "ceo-task-create-direct",
       "intent": "action_preview",
       "prompt": "Add a task for me to call the Ulta owner about the AC1 approval by Friday.",
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry",
-        "streamTextError"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry", "streamTextError"],
       "mustInclude": [],
-      "mustIncludeAny": [
-        [
-          "AC1",
-          "Ulta",
-          "call",
-          "owner",
-          "approval"
-        ]
-      ],
+      "mustIncludeAny": [["AC1", "Ulta", "call", "owner", "approval"]],
       "mustExclude": [
         "created successfully",
         "task was created",
         "I cannot create tasks"
       ],
       "minAnswerLength": 80,
-      "requiredMetadataPaths": [
-        "tool_trace"
-      ],
+      "requiredMetadataPaths": ["tool_trace"],
       "notes": "Direct phrasing. Must preview first (confirmed=false) and surface AC1/owner/Friday in the preview."
     },
     {
@@ -1195,35 +768,16 @@
       "intent": "action_preview",
       "prompt": "Remind me to follow up with Jesse on the Vermillion change order next Monday.",
       "selectedProjectId": 67,
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry",
-        "streamTextError"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry", "streamTextError"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "Jesse",
-          "Vermillion",
-          "change order",
-          "Monday",
-          "follow"
-        ]
+        ["Jesse", "Vermillion", "change order", "Monday", "follow"]
       ],
-      "mustExclude": [
-        "created successfully",
-        "I cannot set reminders"
-      ],
+      "mustExclude": ["created successfully", "I cannot set reminders"],
       "minAnswerLength": 80,
-      "requiredMetadataPaths": [
-        "tool_trace"
-      ],
+      "requiredMetadataPaths": ["tool_trace"],
       "notes": "'Remind me to' is a CEO synonym for 'create a task for me'. Must NOT respond 'I can't set reminders' — it should create a task with a due date."
     },
     {
@@ -1231,29 +785,12 @@
       "intent": "action_preview",
       "prompt": "Make a note for myself to review the Westfield budget variance with the PM tomorrow morning.",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
-      "mustIncludeAny": [
-        [
-          "Westfield",
-          "budget",
-          "PM",
-          "tomorrow"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help",
-        "created successfully"
-      ],
+      "mustIncludeAny": [["Westfield", "budget", "PM", "tomorrow"]],
+      "mustExclude": ["I cannot help", "created successfully"],
       "minAnswerLength": 80,
       "notes": "'Make a note for myself' = create a task. The assistant must not treat this as a knowledge-base save or a memory write."
     },
@@ -1261,28 +798,12 @@
       "id": "ceo-task-create-throw-on-list",
       "intent": "action_preview",
       "prompt": "Throw this on my list: confirm with Acme Roofing that the submittal package is in by EOD Thursday.",
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
-      "mustIncludeAny": [
-        [
-          "Acme",
-          "submittal",
-          "Thursday",
-          "EOD"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustIncludeAny": [["Acme", "submittal", "Thursday", "EOD"]],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 80,
       "notes": "Casual idiom — 'throw this on my list' = add a task. Must NOT be misclassified as a question."
     },
@@ -1291,29 +812,14 @@
       "intent": "action_preview",
       "prompt": "Flag this for follow-up: the city inspector hasn't gotten back to us on the Vermillion permit and it's been two weeks.",
       "selectedProjectId": 67,
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "inspector",
-          "permit",
-          "Vermillion",
-          "follow",
-          "city"
-        ]
+        ["inspector", "permit", "Vermillion", "follow", "city"]
       ],
-      "mustExclude": [
-        "I cannot create"
-      ],
+      "mustExclude": ["I cannot create"],
       "minAnswerLength": 80,
       "notes": "'Flag this for follow-up' = create a follow-up task. CEO will rarely say 'create a task'."
     },
@@ -1321,31 +827,14 @@
       "id": "ceo-task-create-assign-pm",
       "intent": "action_preview",
       "prompt": "Get someone on confirming the AC1 solar approval date — assign it to the Ulta PM, due Wednesday.",
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "AC1",
-          "solar",
-          "Ulta",
-          "Wednesday",
-          "PM",
-          "confirm",
-          "approval"
-        ]
+        ["AC1", "solar", "Ulta", "Wednesday", "PM", "confirm", "approval"]
       ],
-      "mustExclude": [
-        "I cannot assign"
-      ],
+      "mustExclude": ["I cannot assign"],
       "minAnswerLength": 80,
       "notes": "'Get someone on X' + named assignee + due date = create + assign a task. Must include assignee in preview."
     },
@@ -1353,31 +842,14 @@
       "id": "ceo-task-create-action-item",
       "intent": "action_preview",
       "prompt": "Action item: I need Jesse to send the updated GMP exhibit to the owner by COB Friday.",
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "Preview",
-          "confirm",
-          "task",
-          "created",
-          "title",
-          "Jesse",
-          "GMP"
-        ]
+        ["Preview", "confirm", "task", "created", "title", "Jesse", "GMP"]
       ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 80,
       "notes": "Explicit 'Action item:' prefix — common Brandon shorthand for 'create this as a task'."
     },
@@ -1386,31 +858,12 @@
       "intent": "action_preview",
       "prompt": "Add a Gantt task on Westfield for site mobilization starting June 3rd, 5 days, assigned to the field super.",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "action_write"
-      ],
-      "expectedAllToolNames": [
-        "createTask"
-      ],
-      "forbiddenToolNames": [
-        "createGeneratedTask",
-        "noToolRetry"
-      ],
-      "mustInclude": [
-        "Preview",
-        "confirm"
-      ],
-      "mustIncludeAny": [
-        [
-          "mobilization",
-          "June",
-          "Gantt",
-          "schedule"
-        ]
-      ],
-      "mustExclude": [
-        "created successfully"
-      ],
+      "expectedToolFamilies": ["action_write"],
+      "expectedAllToolNames": ["createTask"],
+      "forbiddenToolNames": ["createGeneratedTask", "noToolRetry"],
+      "mustInclude": ["Preview", "confirm"],
+      "mustIncludeAny": [["mobilization", "June", "Gantt", "schedule"]],
+      "mustExclude": ["created successfully"],
       "minAnswerLength": 160,
       "notes": "Distinguishing case: explicit 'Gantt task' or schedule-activity language MUST route to createTask (schedule_tasks), NOT createGeneratedTask (tasks page)."
     },
@@ -1418,32 +871,16 @@
       "id": "ceo-task-modify-mark-done",
       "intent": "action_preview",
       "prompt": "Mark the AC1 solar approval task done.",
-      "expectedToolFamilies": [
-        "task_management",
-        "action_write"
-      ],
+      "expectedToolFamilies": ["task_management", "action_write"],
       "expectedToolNames": [
         "getMyTasks",
         "updateGeneratedTask",
         "getActionItemsAndInsights"
       ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
-      "mustIncludeAny": [
-        [
-          "AC1",
-          "preview",
-          "confirm",
-          "complete",
-          "done"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot update",
-        "marked successfully"
-      ],
+      "mustIncludeAny": [["AC1", "preview", "confirm", "complete", "done"]],
+      "mustExclude": ["I cannot update", "marked successfully"],
       "minAnswerLength": 80,
       "notes": "Closing a task by reference. Assistant should look up the matching task first, then preview the status update."
     },
@@ -1452,18 +889,13 @@
       "intent": "action_preview",
       "prompt": "Close out the Vermillion permit follow-up — that one's resolved.",
       "selectedProjectId": 67,
-      "expectedToolFamilies": [
-        "task_management",
-        "action_write"
-      ],
+      "expectedToolFamilies": ["task_management", "action_write"],
       "expectedToolNames": [
         "getMyTasks",
         "updateGeneratedTask",
         "getActionItemsAndInsights"
       ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
         [
@@ -1476,9 +908,7 @@
           "confirm"
         ]
       ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 80,
       "notes": "'Close out' = mark complete. Verb variation should not block the update."
     },
@@ -1486,32 +916,18 @@
       "id": "ceo-task-modify-reschedule",
       "intent": "action_preview",
       "prompt": "Push that AC1 task to next Tuesday instead — owner asked for more time.",
-      "expectedToolFamilies": [
-        "task_management",
-        "action_write"
-      ],
+      "expectedToolFamilies": ["task_management", "action_write"],
       "expectedToolNames": [
         "getMyTasks",
         "updateGeneratedTask",
         "getActionItemsAndInsights"
       ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "AC1",
-          "Tuesday",
-          "reschedule",
-          "due date",
-          "preview",
-          "confirm"
-        ]
+        ["AC1", "Tuesday", "reschedule", "due date", "preview", "confirm"]
       ],
-      "mustExclude": [
-        "I cannot reschedule"
-      ],
+      "mustExclude": ["I cannot reschedule"],
       "minAnswerLength": 80,
       "notes": "'Push that to' = change due date. Conversational reference ('that AC1 task') requires the assistant to disambiguate via getMyTasks first."
     },
@@ -1519,31 +935,18 @@
       "id": "ceo-task-modify-reassign",
       "intent": "action_preview",
       "prompt": "Hand that submittal follow-up off to Megan instead.",
-      "expectedToolFamilies": [
-        "task_management",
-        "action_write"
-      ],
+      "expectedToolFamilies": ["task_management", "action_write"],
       "expectedToolNames": [
         "getMyTasks",
         "updateGeneratedTask",
         "getActionItemsAndInsights"
       ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "Megan",
-          "reassign",
-          "submittal",
-          "preview",
-          "confirm"
-        ]
+        ["Megan", "reassign", "submittal", "preview", "confirm"]
       ],
-      "mustExclude": [
-        "I cannot reassign"
-      ],
+      "mustExclude": ["I cannot reassign"],
       "minAnswerLength": 80,
       "notes": "'Hand it off' = reassign. Must resolve assignee Megan against people directory."
     },
@@ -1551,32 +954,18 @@
       "id": "ceo-task-modify-bump-priority",
       "intent": "action_preview",
       "prompt": "Make the Ulta inspector task high priority — it's blocking the rest of the slab pour.",
-      "expectedToolFamilies": [
-        "task_management",
-        "action_write"
-      ],
+      "expectedToolFamilies": ["task_management", "action_write"],
       "expectedToolNames": [
         "getMyTasks",
         "updateGeneratedTask",
         "getActionItemsAndInsights"
       ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "high",
-          "priority",
-          "Ulta",
-          "inspector",
-          "preview",
-          "confirm"
-        ]
+        ["high", "priority", "Ulta", "inspector", "preview", "confirm"]
       ],
-      "mustExclude": [
-        "I cannot change priority"
-      ],
+      "mustExclude": ["I cannot change priority"],
       "minAnswerLength": 80,
       "notes": "Priority change with situational justification. Assistant must extract priority='high' and preview an update."
     },
@@ -1584,33 +973,19 @@
       "id": "ceo-task-modify-cancel",
       "intent": "action_preview",
       "prompt": "Scratch the task about calling the lender — Brandon already did it on the call this morning.",
-      "expectedToolFamilies": [
-        "task_management",
-        "action_write"
-      ],
+      "expectedToolFamilies": ["task_management", "action_write"],
       "expectedToolNames": [
         "getMyTasks",
         "updateGeneratedTask",
         "deleteGeneratedTask",
         "getActionItemsAndInsights"
       ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "lender",
-          "delete",
-          "cancel",
-          "preview",
-          "confirm",
-          "complete"
-        ]
+        ["lender", "delete", "cancel", "preview", "confirm", "complete"]
       ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 80,
       "notes": "'Scratch the task' = delete or mark complete. Either resolution path is acceptable as long as it's previewed."
     },
@@ -1618,31 +993,15 @@
       "id": "ceo-money-bleeding",
       "intent": "financial_analysis",
       "prompt": "Where are we leaking cash right now?",
-      "expectedToolFamilies": [
-        "financial",
-        "accounting",
-        "risk"
-      ],
+      "expectedToolFamilies": ["financial", "accounting", "risk"],
       "expectedToolNames": [
         "getPortfolioOverview",
         "getCashPositionReport",
         "getAPAgingReport",
         "getProjectsWithRisks"
       ],
-      "mustIncludeAny": [
-        [
-          "cash",
-          "exposure",
-          "margin",
-          "burn",
-          "AP",
-          "risk"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot answer",
-        "I don't have access"
-      ],
+      "mustIncludeAny": [["cash", "exposure", "margin", "burn", "AP", "risk"]],
+      "mustExclude": ["I cannot answer", "I don't have access"],
       "minAnswerLength": 200,
       "notes": "Visceral CEO phrasing for portfolio-level financial risk. Must combine cash + margin + exposure, not give a single-project answer."
     },
@@ -1650,28 +1009,16 @@
       "id": "ceo-money-margin-leak",
       "intent": "financial_analysis",
       "prompt": "Which jobs are quietly eating margin?",
-      "expectedToolFamilies": [
-        "financial",
-        "project"
-      ],
+      "expectedToolFamilies": ["financial", "project"],
       "expectedToolNames": [
         "getPortfolioOverview",
         "getMarginAnalysis",
         "getCrossProjectComparison"
       ],
       "mustIncludeAny": [
-        [
-          "margin",
-          "project",
-          "eroded",
-          "shrinking",
-          "below",
-          "underperform"
-        ]
+        ["margin", "project", "eroded", "shrinking", "below", "underperform"]
       ],
-      "mustExclude": [
-        "I cannot answer"
-      ],
+      "mustExclude": ["I cannot answer"],
       "minAnswerLength": 200,
       "notes": "Cross-project margin question. Assistant must compare projects, not pick one."
     },
@@ -1679,29 +1026,13 @@
       "id": "ceo-money-unbilled-changes",
       "intent": "financial_analysis",
       "prompt": "What work have we done that has not turned into billable change-order money yet?",
-      "expectedToolFamilies": [
-        "financial",
-        "structured"
-      ],
-      "expectedToolNames": [
-        "getChangeOrderDetails",
-        "queryChangeOrders"
-      ],
-      "mustInclude": [
-        "change order"
-      ],
+      "expectedToolFamilies": ["financial", "structured"],
+      "expectedToolNames": ["getChangeOrderDetails", "queryChangeOrders"],
+      "mustInclude": ["change order"],
       "mustIncludeAny": [
-        [
-          "unbilled",
-          "approved",
-          "outstanding",
-          "not invoiced",
-          "billing"
-        ]
+        ["unbilled", "approved", "outstanding", "not invoiced", "billing"]
       ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 150,
       "notes": "Unbilled CO exposure question. Assistant must filter to approved-but-unbilled COs."
     },
@@ -1709,20 +1040,10 @@
       "id": "ceo-money-cash-quick",
       "intent": "financial_analysis",
       "prompt": "What cash can we actually touch today?",
-      "expectedToolFamilies": [
-        "accounting",
-        "financial"
-      ],
-      "expectedToolNames": [
-        "getCashPositionReport",
-        "getAPAgingReport"
-      ],
-      "mustInclude": [
-        "cash"
-      ],
-      "mustExclude": [
-        "I cannot answer"
-      ],
+      "expectedToolFamilies": ["accounting", "financial"],
+      "expectedToolNames": ["getCashPositionReport", "getAPAgingReport"],
+      "mustInclude": ["cash"],
+      "mustExclude": ["I cannot answer"],
       "minAnswerLength": 80,
       "notes": "Direct cash-position question. Must call getCashPositionReport, not invent a number."
     },
@@ -1730,11 +1051,7 @@
       "id": "ceo-decisions-what-to-do-today",
       "intent": "project_briefing",
       "prompt": "I only have an hour. What should I personally handle today?",
-      "expectedToolFamilies": [
-        "project",
-        "risk",
-        "task_management"
-      ],
+      "expectedToolFamilies": ["project", "risk", "task_management"],
       "expectedToolNames": [
         "getPortfolioOverview",
         "getProjectsWithRisks",
@@ -1742,18 +1059,9 @@
         "getActionItemsAndInsights"
       ],
       "mustIncludeAny": [
-        [
-          "focus",
-          "priority",
-          "today",
-          "most important",
-          "top"
-        ]
+        ["focus", "priority", "today", "most important", "top"]
       ],
-      "mustExclude": [
-        "I cannot help",
-        "I don't have enough"
-      ],
+      "mustExclude": ["I cannot help", "I don't have enough"],
       "minAnswerLength": 250,
       "notes": "Time-constrained prioritization question. Must produce a ranked, opinionated short list — not a status dump."
     },
@@ -1761,28 +1069,15 @@
       "id": "ceo-decisions-fires-today",
       "intent": "project_briefing",
       "prompt": "What fires are on my desk today?",
-      "expectedToolFamilies": [
-        "risk",
-        "actions",
-        "communications"
-      ],
+      "expectedToolFamilies": ["risk", "actions", "communications"],
       "expectedToolNames": [
         "getProjectsWithRisks",
         "getActionItemsAndInsights"
       ],
       "mustIncludeAny": [
-        [
-          "urgent",
-          "critical",
-          "fire",
-          "today",
-          "risk",
-          "blocked"
-        ]
+        ["urgent", "critical", "fire", "today", "risk", "blocked"]
       ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 200,
       "notes": "Crisis-mode question — looking for critical risks and overdue blockers, not a routine briefing."
     },
@@ -1793,19 +1088,9 @@
       "expectedToolFamilies": [],
       "expectedToolNames": [],
       "mustIncludeAny": [
-        [
-          "tradeoff",
-          "consider",
-          "depends",
-          "risk",
-          "fit",
-          "capacity"
-        ]
+        ["tradeoff", "consider", "depends", "risk", "fit", "capacity"]
       ],
-      "mustExclude": [
-        "I cannot answer",
-        "I will search the project"
-      ],
+      "mustExclude": ["I cannot answer", "I will search the project"],
       "minAnswerLength": 300,
       "notes": "Strategic thought-partner question. Assistant should NOT pretend to know the RFP details — it should reason about fit, capacity, market, and risk based on what the company already knows about itself."
     },
@@ -1813,27 +1098,12 @@
       "id": "ceo-decisions-pm-accountability",
       "intent": "people_or_capacity",
       "prompt": "Which PM needs the most help or accountability right now?",
-      "expectedToolFamilies": [
-        "people",
-        "actions"
-      ],
-      "expectedToolNames": [
-        "getActionItemsAndInsights",
-        "getPeopleAndRoles"
-      ],
+      "expectedToolFamilies": ["people", "actions"],
+      "expectedToolNames": ["getActionItemsAndInsights", "getPeopleAndRoles"],
       "mustIncludeAny": [
-        [
-          "overdue",
-          "open",
-          "follow-through",
-          "accountability",
-          "PM"
-        ]
+        ["overdue", "open", "follow-through", "accountability", "PM"]
       ],
-      "mustExclude": [
-        "I cannot help",
-        "I cannot evaluate"
-      ],
+      "mustExclude": ["I cannot help", "I cannot evaluate"],
       "minAnswerLength": 200,
       "notes": "Accountability question. Assistant must look at overdue action items by owner, not refuse on grounds of 'evaluating people'."
     },
@@ -1842,23 +1112,9 @@
       "intent": "action_preview",
       "prompt": "Draft a Westfield owner update: on schedule, AC1 approval pending, updated cost forecast by end of week.",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "communications",
-        "project"
-      ],
-      "mustIncludeAny": [
-        [
-          "Westfield",
-          "draft",
-          "subject",
-          "AC1",
-          "forecast"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot draft emails",
-        "sent successfully"
-      ],
+      "expectedToolFamilies": ["communications", "project"],
+      "mustIncludeAny": [["Westfield", "draft", "subject", "AC1", "forecast"]],
+      "mustExclude": ["I cannot draft emails", "sent successfully"],
       "minAnswerLength": 250,
       "notes": "Draft-email request with three explicit content points. Must produce a draft (not actually send), and surface all three points."
     },
@@ -1866,21 +1122,9 @@
       "id": "ceo-draft-email-sub-warning",
       "intent": "action_preview",
       "prompt": "Write Acme Roofing a firm but professional note that their submittal turnaround is now holding us up.",
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "mustIncludeAny": [
-        [
-          "Acme",
-          "submittal",
-          "draft",
-          "subject"
-        ]
-      ],
-      "mustExclude": [
-        "sent successfully",
-        "I cannot write"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "mustIncludeAny": [["Acme", "submittal", "draft", "subject"]],
+      "mustExclude": ["sent successfully", "I cannot write"],
       "minAnswerLength": 200,
       "notes": "Tone instruction ('politely firm'). Draft must reflect tone — not generic boilerplate."
     },
@@ -1888,29 +1132,15 @@
       "id": "ceo-meetings-what-happened",
       "intent": "meeting_query",
       "prompt": "What mattered from yesterday's OAC?",
-      "expectedToolFamilies": [
-        "meetings",
-        "actions"
-      ],
+      "expectedToolFamilies": ["meetings", "actions"],
       "expectedToolNames": [
         "getMeetingsByDate",
         "searchMeetingsByTopic",
         "getActionItemsAndInsights",
         "getMeetingIntelligence"
       ],
-      "mustIncludeAny": [
-        [
-          "OAC",
-          "meeting",
-          "decision",
-          "action",
-          "yesterday"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot find meetings",
-        "no meetings"
-      ],
+      "mustIncludeAny": [["OAC", "meeting", "decision", "action", "yesterday"]],
+      "mustExclude": ["I cannot find meetings", "no meetings"],
       "minAnswerLength": 180,
       "notes": "Brief meeting recap question. getMeetingIntelligence is an equivalent/superior tool to getMeetingsByDate and is acceptable."
     },
@@ -1918,28 +1148,15 @@
       "id": "ceo-meetings-promised-to-do",
       "intent": "meeting_query",
       "prompt": "What did I commit to in meetings this past week?",
-      "expectedToolFamilies": [
-        "meetings",
-        "actions"
-      ],
+      "expectedToolFamilies": ["meetings", "actions"],
       "expectedToolNames": [
         "getMeetingsByDate",
         "getActionItemsAndInsights",
         "getMeetingIntelligence",
         "searchMeetingsByTopic"
       ],
-      "mustIncludeAny": [
-        [
-          "promise",
-          "committed",
-          "action",
-          "owe",
-          "meeting"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot find"
-      ],
+      "mustIncludeAny": [["promise", "committed", "action", "owe", "meeting"]],
+      "mustExclude": ["I cannot find"],
       "minAnswerLength": 180,
       "notes": "First-person commitment tracking. getMeetingIntelligence is an equivalent tool to getMeetingsByDate."
     },
@@ -1947,11 +1164,7 @@
       "id": "ceo-meetings-prep-next",
       "intent": "meeting_query",
       "prompt": "I have the Ulta weekly tomorrow. What do I need to know before I walk in?",
-      "expectedToolFamilies": [
-        "meetings",
-        "project",
-        "actions"
-      ],
+      "expectedToolFamilies": ["meetings", "project", "actions"],
       "expectedToolNames": [
         "searchMeetingsByTopic",
         "getMeetingsByDate",
@@ -1959,18 +1172,9 @@
         "getActionItemsAndInsights"
       ],
       "mustIncludeAny": [
-        [
-          "Ulta",
-          "open",
-          "follow",
-          "prep",
-          "agenda",
-          "action"
-        ]
+        ["Ulta", "open", "follow", "prep", "agenda", "action"]
       ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 250,
       "notes": "Meeting prep question — must combine prior meeting context + project status + open items to brief the CEO. Frequently times out due to multi-source meeting prep complexity. Known flaky case."
     },
@@ -1978,23 +1182,10 @@
       "id": "ceo-portfolio-status-summary",
       "intent": "portfolio_briefing",
       "prompt": "Give me the 30-second owner read across active jobs.",
-      "expectedToolFamilies": [
-        "project"
-      ],
-      "expectedAllToolNames": [
-        "getPortfolioOverview"
-      ],
-      "mustIncludeAny": [
-        [
-          "project",
-          "active",
-          "status",
-          "summary"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "expectedToolFamilies": ["project"],
+      "expectedAllToolNames": ["getPortfolioOverview"],
+      "mustIncludeAny": [["project", "active", "status", "summary"]],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 200,
       "notes": "Compressed portfolio ask. Must produce a tight 4-6 line answer, not a per-project page."
     },
@@ -2002,26 +1193,10 @@
       "id": "ceo-portfolio-watchlist",
       "intent": "portfolio_briefing",
       "prompt": "Which jobs should be on my watchlist this week?",
-      "expectedToolFamilies": [
-        "project",
-        "risk"
-      ],
-      "expectedToolNames": [
-        "getPortfolioOverview",
-        "getProjectsWithRisks"
-      ],
-      "mustIncludeAny": [
-        [
-          "risk",
-          "watch",
-          "concern",
-          "exposed",
-          "trouble"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "expectedToolFamilies": ["project", "risk"],
+      "expectedToolNames": ["getPortfolioOverview", "getProjectsWithRisks"],
+      "mustIncludeAny": [["risk", "watch", "concern", "exposed", "trouble"]],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 200,
       "notes": "Risk-flavored portfolio question. Must surface the at-risk projects with reasons."
     },
@@ -2029,27 +1204,14 @@
       "id": "ceo-context-aware-blocked",
       "intent": "operations_analysis",
       "prompt": "What is waiting on me right now?",
-      "expectedToolFamilies": [
-        "actions",
-        "operations"
-      ],
+      "expectedToolFamilies": ["actions", "operations"],
       "expectedToolNames": [
         "getActionItemsAndInsights",
         "getRFIStatus",
         "getSubmittalStatus"
       ],
-      "mustIncludeAny": [
-        [
-          "blocked",
-          "waiting",
-          "approval",
-          "you",
-          "open"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustIncludeAny": [["blocked", "waiting", "approval", "you", "open"]],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 150,
       "notes": "Self-referential blocker question. Must filter open items waiting on the signed-in user."
     },
@@ -2057,26 +1219,12 @@
       "id": "ceo-context-aware-decisions-needed",
       "intent": "operations_analysis",
       "prompt": "What decisions am I holding up?",
-      "expectedToolFamilies": [
-        "actions",
-        "operations"
-      ],
-      "expectedToolNames": [
-        "getActionItemsAndInsights",
-        "getRFIStatus"
-      ],
+      "expectedToolFamilies": ["actions", "operations"],
+      "expectedToolNames": ["getActionItemsAndInsights", "getRFIStatus"],
       "mustIncludeAny": [
-        [
-          "decision",
-          "approval",
-          "pending",
-          "waiting",
-          "open"
-        ]
+        ["decision", "approval", "pending", "waiting", "open"]
       ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 150,
       "notes": "Variant of the blocker question. 'Sitting on' = waiting on CEO decision."
     },
@@ -2084,22 +1232,10 @@
       "id": "ceo-task-list-tomorrow",
       "intent": "task_management",
       "prompt": "What's due tomorrow on my side?",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "getMyTasks"
-      ],
-      "mustIncludeAny": [
-        [
-          "tomorrow",
-          "due",
-          "task"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedAllToolNames": ["getMyTasks"],
+      "mustIncludeAny": [["tomorrow", "due", "task"]],
+      "mustExclude": ["I cannot help"],
       "minAnswerLength": 100,
       "notes": "Time-window task filter. Assistant should answer with tasks due tomorrow assigned to me."
     },
@@ -2107,31 +1243,14 @@
       "id": "ceo-task-create-conversational-no-context",
       "intent": "action_preview",
       "prompt": "Quick — can you log that I need to call Mark about the bonding capacity issue before Thursday?",
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "Mark",
-          "bonding",
-          "Thursday",
-          "call",
-          "lender",
-          "capacity"
-        ]
+        ["Mark", "bonding", "Thursday", "call", "lender", "capacity"]
       ],
-      "mustExclude": [
-        "I cannot log",
-        "created successfully"
-      ],
+      "mustExclude": ["I cannot log", "created successfully"],
       "minAnswerLength": 80,
       "notes": "'Log that' is yet another phrasing for 'create a task'. Must NOT misinterpret as a knowledge save or memory write."
     },
@@ -2139,30 +1258,14 @@
       "id": "ceo-task-create-batch",
       "intent": "action_preview",
       "prompt": "Couple things to capture: 1) chase the Vermillion COI by Friday, 2) get the updated insurance cert from Acme, 3) call Brandon at the bank about the loan modification next week.",
-      "expectedToolFamilies": [
-        "action_write",
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "createGeneratedTask"
-      ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "expectedToolFamilies": ["action_write", "task_management"],
+      "expectedAllToolNames": ["createGeneratedTask"],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "Vermillion",
-          "COI",
-          "insurance",
-          "Acme",
-          "bank",
-          "loan"
-        ]
+        ["Vermillion", "COI", "insurance", "Acme", "bank", "loan"]
       ],
-      "mustExclude": [
-        "I cannot create multiple"
-      ],
+      "mustExclude": ["I cannot create multiple"],
       "minAnswerLength": 100,
       "notes": "Multi-task batch creation. Assistant must produce previews for ALL three tasks (or a single multi-task preview), not silently drop two."
     },
@@ -2171,33 +1274,19 @@
       "intent": "action_preview",
       "prompt": "Snooze the COI chase task — Vermillion already sent it over.",
       "selectedProjectId": 67,
-      "expectedToolFamilies": [
-        "task_management",
-        "action_write"
-      ],
+      "expectedToolFamilies": ["task_management", "action_write"],
       "expectedToolNames": [
         "getMyTasks",
         "updateGeneratedTask",
         "deleteGeneratedTask",
         "getActionItemsAndInsights"
       ],
-      "forbiddenToolNames": [
-        "noToolRetry"
-      ],
+      "forbiddenToolNames": ["noToolRetry"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "COI",
-          "Vermillion",
-          "complete",
-          "close",
-          "preview",
-          "confirm"
-        ]
+        ["COI", "Vermillion", "complete", "close", "preview", "confirm"]
       ],
-      "mustExclude": [
-        "I cannot snooze"
-      ],
+      "mustExclude": ["I cannot snooze"],
       "minAnswerLength": 80,
       "notes": "'Snooze' here actually means 'mark resolved' because the underlying condition was satisfied. Assistant should infer that from the context clause."
     },
@@ -2205,13 +1294,8 @@
       "id": "tasks-list-of-action-items-canonical",
       "intent": "task_management",
       "prompt": "What's on my list of action items?",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedToolNames": [
-        "getMyTasks",
-        "getActionItemsAndInsights"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedToolNames": ["getMyTasks", "getActionItemsAndInsights"],
       "mustInclude": [],
       "mustExclude": [
         "I cannot",
@@ -2221,22 +1305,15 @@
         "please specify"
       ],
       "minAnswerLength": 60,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
       "notes": "The canonical regression case. 'List of action items' MUST resolve to getMyTasks OR getActionItemsAndInsights — no clarifying questions, no deflection. After routing fix, getMyTasks should fire; accepting getActionItemsAndInsights as equivalent for now."
     },
     {
       "id": "tasks-what-do-i-need-to-do-today",
       "intent": "task_management",
       "prompt": "What do I need to do today?",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedAllToolNames": [
-        "getMyTasks"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedAllToolNames": ["getMyTasks"],
       "mustInclude": [],
       "mustExclude": [
         "I cannot",
@@ -2244,73 +1321,39 @@
         "please check your calendar"
       ],
       "minAnswerLength": 60,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
       "notes": "Morning task-check. Must pull task records, not deflect to calendar or ask for project context."
     },
     {
       "id": "tasks-open-loops-all",
       "intent": "task_management",
       "prompt": "Any open loops I should know about?",
-      "expectedToolFamilies": [
-        "task_management",
-        "actions"
-      ],
-      "expectedToolNames": [
-        "getMyTasks",
-        "getActionItemsAndInsights"
-      ],
+      "expectedToolFamilies": ["task_management", "actions"],
+      "expectedToolNames": ["getMyTasks", "getActionItemsAndInsights"],
       "mustInclude": [],
-      "mustExclude": [
-        "I cannot",
-        "please clarify",
-        "which project"
-      ],
+      "mustExclude": ["I cannot", "please clarify", "which project"],
       "minAnswerLength": 80,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
       "notes": "Idiomatic owner phrase for 'what's unresolved'. Must pull tasks and action items without asking for clarification."
     },
     {
       "id": "tasks-whats-on-my-list",
       "intent": "task_management",
       "prompt": "What's on my list?",
-      "expectedToolFamilies": [
-        "task_management"
-      ],
-      "expectedToolNames": [
-        "getMyTasks",
-        "getActionItemsAndInsights"
-      ],
+      "expectedToolFamilies": ["task_management"],
+      "expectedToolNames": ["getMyTasks", "getActionItemsAndInsights"],
       "mustInclude": [],
-      "mustExclude": [
-        "I cannot",
-        "could you clarify",
-        "which list"
-      ],
+      "mustExclude": ["I cannot", "could you clarify", "which list"],
       "minAnswerLength": 60,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
       "notes": "Shortest possible task-list phrasing. 'My list' MUST resolve to getMyTasks or getActionItemsAndInsights — never ask 'which list?'. After routing fix, getMyTasks should fire."
     },
     {
       "id": "portfolio-morning-standup",
       "intent": "portfolio_briefing",
       "prompt": "Morning. What is the quick operating read across all jobs?",
-      "expectedToolFamilies": [
-        "project",
-        "risk"
-      ],
-      "expectedToolNames": [
-        "getPortfolioOverview",
-        "getProjectsWithRisks"
-      ],
+      "expectedToolFamilies": ["project", "risk"],
+      "expectedToolNames": ["getPortfolioOverview", "getProjectsWithRisks"],
       "mustInclude": [],
       "mustExclude": [
         "which project",
@@ -2326,20 +1369,10 @@
       "id": "portfolio-red-flags-now",
       "intent": "portfolio_briefing",
       "prompt": "Any red flags across the company right now?",
-      "expectedToolFamilies": [
-        "project",
-        "risk"
-      ],
-      "expectedToolNames": [
-        "getProjectsWithRisks",
-        "getPortfolioOverview"
-      ],
+      "expectedToolFamilies": ["project", "risk"],
+      "expectedToolNames": ["getProjectsWithRisks", "getPortfolioOverview"],
       "mustInclude": [],
-      "mustExclude": [
-        "which project",
-        "I cannot",
-        "please specify"
-      ],
+      "mustExclude": ["which project", "I cannot", "please specify"],
       "minAnswerLength": 150,
       "notes": "Portfolio risk scan. Must return risk data across all active projects without asking for a specific one."
     },
@@ -2347,15 +1380,8 @@
       "id": "catch-me-up-everything",
       "intent": "portfolio_briefing",
       "prompt": "I have been out of the weeds. Catch me up on the business.",
-      "expectedToolFamilies": [
-        "project",
-        "task_management",
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getPortfolioOverview",
-        "getMyTasks"
-      ],
+      "expectedToolFamilies": ["project", "task_management", "communications"],
+      "expectedToolNames": ["getPortfolioOverview", "getMyTasks"],
       "mustInclude": [],
       "mustExclude": [
         "could you be more specific",
@@ -2370,9 +1396,7 @@
       "intent": "financial_analysis",
       "prompt": "Are we actually making money on Westfield?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "financial"
-      ],
+      "expectedToolFamilies": ["financial"],
       "expectedToolNames": [
         "getMarginAnalysis",
         "getProjectBudgetSummary",
@@ -2380,19 +1404,9 @@
       ],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "margin",
-          "profit",
-          "loss",
-          "revenue",
-          "cost",
-          "budget"
-        ]
+        ["margin", "profit", "loss", "revenue", "cost", "budget"]
       ],
-      "mustExclude": [
-        "I cannot determine",
-        "I don't have financial data"
-      ],
+      "mustExclude": ["I cannot determine", "I don't have financial data"],
       "minAnswerLength": 100,
       "notes": "Plain-English profitability question. Must call margin/financial tools and give a direct answer — no hedging."
     },
@@ -2401,14 +1415,8 @@
       "intent": "people_or_capacity",
       "prompt": "Are any Westfield subs behind enough that I need to step in?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "people",
-        "schedule"
-      ],
-      "expectedToolNames": [
-        "getVendorPerformance",
-        "getScheduleAnalysis"
-      ],
+      "expectedToolFamilies": ["people", "schedule"],
+      "expectedToolNames": ["getVendorPerformance", "getScheduleAnalysis"],
       "mustInclude": [],
       "mustIncludeAny": [
         [
@@ -2421,10 +1429,7 @@
           "on track"
         ]
       ],
-      "mustExclude": [
-        "I cannot",
-        "I don't have access to subcontractor data"
-      ],
+      "mustExclude": ["I cannot", "I don't have access to subcontractor data"],
       "minAnswerLength": 80,
       "notes": "Subcontractor performance check on a specific project. Must pull schedule and vendor data."
     },
@@ -2432,24 +1437,11 @@
       "id": "schedule-anything-slipping-portfolio",
       "intent": "operations_analysis",
       "prompt": "Across active jobs, is anything slipping that leadership needs to know about?",
-      "expectedToolFamilies": [
-        "schedule",
-        "risk"
-      ],
-      "expectedToolNames": [
-        "getScheduleAnalysis",
-        "getProjectsWithRisks"
-      ],
+      "expectedToolFamilies": ["schedule", "risk"],
+      "expectedToolNames": ["getScheduleAnalysis", "getProjectsWithRisks"],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "schedule",
-          "slip",
-          "delay",
-          "behind",
-          "on track",
-          "milestone"
-        ]
+        ["schedule", "slip", "delay", "behind", "on track", "milestone"]
       ],
       "mustExclude": [
         "which project",
@@ -2463,10 +1455,7 @@
       "id": "i-was-out-what-did-i-miss",
       "intent": "source_lookup",
       "prompt": "I was out yesterday. What did I miss that matters?",
-      "expectedToolFamilies": [
-        "communications",
-        "meetings"
-      ],
+      "expectedToolFamilies": ["communications", "meetings"],
       "expectedToolNames": [
         "getMeetingsByDate",
         "searchEmails",
@@ -2486,10 +1475,7 @@
       "id": "decisions-what-needs-my-signoff",
       "intent": "operations_analysis",
       "prompt": "What needs my sign-off right now?",
-      "expectedToolFamilies": [
-        "actions",
-        "operations"
-      ],
+      "expectedToolFamilies": ["actions", "operations"],
       "expectedToolNames": [
         "getActionItemsAndInsights",
         "getRFIStatus",
@@ -2497,19 +1483,9 @@
       ],
       "mustInclude": [],
       "mustIncludeAny": [
-        [
-          "approval",
-          "decision",
-          "sign",
-          "waiting",
-          "open",
-          "pending"
-        ]
+        ["approval", "decision", "sign", "waiting", "open", "pending"]
       ],
-      "mustExclude": [
-        "I cannot determine",
-        "which project"
-      ],
+      "mustExclude": ["I cannot determine", "which project"],
       "minAnswerLength": 100,
       "notes": "Executive bottleneck scan. Must surface items explicitly waiting on the user's approval across all projects."
     },
@@ -2518,18 +1494,9 @@
       "intent": "project_briefing",
       "prompt": "If the Westfield owner calls me today, what should I say and what should I avoid overpromising?",
       "selectedProjectId": 43,
-      "expectedToolFamilies": [
-        "project",
-        "semantic",
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getProjectBriefingSnapshot",
-        "semanticSearch"
-      ],
-      "mustInclude": [
-        "Westfield"
-      ],
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": ["getProjectBriefingSnapshot", "semanticSearch"],
+      "mustInclude": ["Westfield"],
       "mustIncludeAny": [
         [
           "schedule",
@@ -2541,10 +1508,7 @@
           "talking point"
         ]
       ],
-      "mustExclude": [
-        "I cannot",
-        "I don't have enough information"
-      ],
+      "mustExclude": ["I cannot", "I don't have enough information"],
       "minAnswerLength": 200,
       "notes": "Owner-call prep use case. Must synthesize project status into talking points, not just dump raw data.",
       "judgeRubric": "strategic_advisor",
@@ -2554,10 +1518,7 @@
       "id": "realworld-todays-meetings",
       "intent": "meeting_query",
       "prompt": "Tell me about today's meetings. What decisions, risks, or commitments should I know about?",
-      "expectedToolFamilies": [
-        "meetings",
-        "actions"
-      ],
+      "expectedToolFamilies": ["meetings", "actions"],
       "expectedToolNames": [
         "sourceSpecificRagRetrieval",
         "getMeetingIntelligence",
@@ -2565,19 +1526,9 @@
         "searchMeetingsByTopic"
       ],
       "mustIncludeAny": [
-        [
-          "meeting",
-          "today",
-          "decision",
-          "risk",
-          "commitment",
-          "no meetings"
-        ]
+        ["meeting", "today", "decision", "risk", "commitment", "no meetings"]
       ],
-      "mustExclude": [
-        "I cannot access meetings",
-        "which project"
-      ],
+      "mustExclude": ["I cannot access meetings", "which project"],
       "minAnswerLength": 150,
       "notes": "Real-world daily meeting readout. Should use today's meeting retrieval and label empty results honestly if there were no synced meetings."
     },
@@ -2585,18 +1536,13 @@
       "id": "realworld-most-important-tasks",
       "intent": "task_management",
       "prompt": "What are my most important tasks right now?",
-      "expectedToolFamilies": [
-        "task_management",
-        "actions"
-      ],
+      "expectedToolFamilies": ["task_management", "actions"],
       "expectedToolNames": [
         "backendDeepAgentExecutiveBriefing",
         "getMyTasks",
         "getActionItemsAndInsights"
       ],
-      "expectedAllToolNames": [
-        "backendDeepAgentExecutiveBriefing"
-      ],
+      "expectedAllToolNames": ["backendDeepAgentExecutiveBriefing"],
       "forbiddenToolNames": [
         "draftOutlookEmail",
         "createOutlookCalendarInvite",
@@ -2605,24 +1551,10 @@
         "updateGeneratedTask",
         "deleteGeneratedTask"
       ],
-      "mustIncludeAny": [
-        [
-          "task",
-          "priority",
-          "important",
-          "due",
-          "open"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help",
-        "I don't have access"
-      ],
+      "mustIncludeAny": [["task", "priority", "important", "due", "open"]],
+      "mustExclude": ["I cannot help", "I don't have access"],
       "minAnswerLength": 120,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
       "notes": "Natural CEO wording for priority task triage.",
       "judgeRubric": "strategic_advisor",
       "minJudgeScore": 4
@@ -2631,19 +1563,14 @@
       "id": "realworld-waiting-on-team",
       "intent": "task_management",
       "prompt": "What am I waiting on from my team?",
-      "expectedToolFamilies": [
-        "task_management",
-        "actions"
-      ],
+      "expectedToolFamilies": ["task_management", "actions"],
       "expectedToolNames": [
         "backendDeepAgentExecutiveBriefing",
         "getMyTasks",
         "getActionItemsAndInsights",
         "getPeopleAndRoles"
       ],
-      "expectedAllToolNames": [
-        "backendDeepAgentExecutiveBriefing"
-      ],
+      "expectedAllToolNames": ["backendDeepAgentExecutiveBriefing"],
       "forbiddenToolNames": [
         "draftOutlookEmail",
         "createOutlookCalendarInvite",
@@ -2652,24 +1579,10 @@
         "updateGeneratedTask",
         "deleteGeneratedTask"
       ],
-      "mustIncludeAny": [
-        [
-          "waiting",
-          "blocked",
-          "team",
-          "owner",
-          "open"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot determine",
-        "which project"
-      ],
+      "mustIncludeAny": [["waiting", "blocked", "team", "owner", "open"]],
+      "mustExclude": ["I cannot determine", "which project"],
       "minAnswerLength": 120,
-      "requiredMetadataPaths": [
-        "tool_trace",
-        "response_quality"
-      ],
+      "requiredMetadataPaths": ["tool_trace", "response_quality"],
       "notes": "Waiting-on-team language should route to task/action follow-up, not generic chat.",
       "judgeRubric": "strategic_advisor",
       "minJudgeScore": 4
@@ -2678,12 +1591,7 @@
       "id": "realworld-business-risks",
       "intent": "risk_review",
       "prompt": "What risks exist in the business right now?",
-      "expectedToolFamilies": [
-        "project",
-        "risk",
-        "financial",
-        "source_health"
-      ],
+      "expectedToolFamilies": ["project", "risk", "financial", "source_health"],
       "expectedToolNames": [
         "backendDeepAgentExecutiveBriefing",
         "getProjectsWithRisks",
@@ -2691,9 +1599,7 @@
         "getFinancialAnalysis",
         "assistantSourceHealth"
       ],
-      "expectedAllToolNames": [
-        "backendDeepAgentExecutiveBriefing"
-      ],
+      "expectedAllToolNames": ["backendDeepAgentExecutiveBriefing"],
       "forbiddenToolNames": [
         "draftOutlookEmail",
         "createOutlookCalendarInvite",
@@ -2702,19 +1608,8 @@
         "updateGeneratedTask",
         "deleteGeneratedTask"
       ],
-      "mustIncludeAny": [
-        [
-          "risk",
-          "exposure",
-          "watch",
-          "stale",
-          "urgent"
-        ]
-      ],
-      "mustExclude": [
-        "I cannot help",
-        "no projects found"
-      ],
+      "mustIncludeAny": [["risk", "exposure", "watch", "stale", "urgent"]],
+      "mustExclude": ["I cannot help", "no projects found"],
       "minAnswerLength": 250,
       "notes": "Business-level risk read should combine portfolio/project risk with source-health caveats.",
       "judgeRubric": "strategic_advisor",
@@ -2724,20 +1619,14 @@
       "id": "realworld-systems-processes-needed",
       "intent": "implementation_planning",
       "prompt": "What systems and processes do you think we need to put in place?",
-      "expectedToolFamilies": [
-        "project",
-        "actions",
-        "source_health"
-      ],
+      "expectedToolFamilies": ["project", "actions", "source_health"],
       "expectedToolNames": [
         "backendDeepAgentExecutiveBriefing",
         "getPortfolioOverview",
         "getActionItemsAndInsights",
         "assistantSourceHealth"
       ],
-      "expectedAllToolNames": [
-        "backendDeepAgentExecutiveBriefing"
-      ],
+      "expectedAllToolNames": ["backendDeepAgentExecutiveBriefing"],
       "forbiddenToolNames": [
         "draftOutlookEmail",
         "createOutlookCalendarInvite",
@@ -2747,18 +1636,9 @@
         "deleteGeneratedTask"
       ],
       "mustIncludeAny": [
-        [
-          "process",
-          "system",
-          "workflow",
-          "cadence",
-          "accountability"
-        ]
+        ["process", "system", "workflow", "cadence", "accountability"]
       ],
-      "mustExclude": [
-        "I cannot advise",
-        "generic best practices"
-      ],
+      "mustExclude": ["I cannot advise", "generic best practices"],
       "minAnswerLength": 250,
       "notes": "Strategic operations prompt. It should recommend practical Alleato operating systems based on current work, not generic advice.",
       "judgeRubric": "strategic_advisor",
@@ -2768,32 +1648,24 @@
       "id": "realworld-last-five-emails",
       "intent": "source_lookup",
       "prompt": "Can you tell me my last five emails?",
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getRecentEmails",
-        "getRecentOutlookEmails"
-      ],
-      "expectedAllToolNames": [
-        "getRecentEmails"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["getRecentEmails"],
+      "expectedAllToolNames": ["getRecentEmails"],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
       "forbiddenToolNames": [
-        "sourceSpecificRagRetrieval"
+        "sourceSpecificRagRetrieval",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "forbiddenToolSources": [
+        "outlook_email_intake",
+        "outlook_email_intake_fallback"
       ],
       "mustIncludeAny": [
-        [
-          "email",
-          "inbox",
-          "Outlook",
-          "received",
-          "no emails"
-        ]
+        ["email", "inbox", "Outlook", "received", "no emails"]
       ],
-      "mustExclude": [
-        "I cannot access your email",
-        "I will search"
-      ],
+      "mustExclude": ["I cannot access your email", "I will search"],
       "minAnswerLength": 120,
       "notes": "Inbox recency ask. Must use Outlook/recent-email retrieval and avoid semantic-only generic answers.",
       "judgeRubric": "email_operator",
@@ -2803,29 +1675,21 @@
       "id": "realworld-urgent-inbox",
       "intent": "source_lookup",
       "prompt": "Is there anything urgent in my inbox?",
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getRecentEmails",
-        "getRecentOutlookEmails",
-        "searchEmails"
-      ],
-      "expectedAllToolNames": [
-        "getRecentEmails"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["getRecentEmails", "searchEmails"],
+      "expectedAllToolNames": ["getRecentEmails"],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
       "forbiddenToolNames": [
-        "sourceSpecificRagRetrieval"
+        "sourceSpecificRagRetrieval",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
       ],
-      "mustIncludeAny": [
-        [
-          "urgent",
-          "email",
-          "inbox",
-          "reply",
-          "no urgent"
-        ]
+      "forbiddenToolSources": [
+        "outlook_email_intake",
+        "outlook_email_intake_fallback"
       ],
+      "mustIncludeAny": [["urgent", "email", "inbox", "reply", "no urgent"]],
       "mustExclude": [
         "I cannot access your email",
         "I don't have access to your inbox"
@@ -2839,28 +1703,22 @@
       "id": "realworld-important-emails-this-morning",
       "intent": "source_lookup",
       "prompt": "What important emails have I received this morning?",
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getRecentEmails",
-        "getRecentOutlookEmails"
-      ],
-      "expectedAllToolNames": [
-        "getRecentEmails"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["getRecentEmails"],
+      "expectedAllToolNames": ["getRecentEmails"],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
       "forbiddenToolNames": [
-        "sourceSpecificRagRetrieval"
+        "sourceSpecificRagRetrieval",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "forbiddenToolSources": [
+        "outlook_email_intake",
+        "outlook_email_intake_fallback"
       ],
       "mustIncludeAny": [
-        [
-          "email",
-          "inbox",
-          "Outlook",
-          "received",
-          "morning",
-          "no emails"
-        ]
+        ["email", "inbox", "Outlook", "received", "morning", "no emails"]
       ],
       "mustExclude": [
         "I can’t answer that reliably from the loaded evidence",
@@ -2879,27 +1737,22 @@
       "id": "realworld-outlook-arrived-today",
       "intent": "source_lookup",
       "prompt": "What came in through Outlook today that needs my attention?",
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getRecentEmails",
-        "getRecentOutlookEmails"
-      ],
-      "expectedAllToolNames": [
-        "getRecentEmails"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["getRecentEmails"],
+      "expectedAllToolNames": ["getRecentEmails"],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
       "forbiddenToolNames": [
-        "sourceSpecificRagRetrieval"
+        "sourceSpecificRagRetrieval",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "forbiddenToolSources": [
+        "outlook_email_intake",
+        "outlook_email_intake_fallback"
       ],
       "mustIncludeAny": [
-        [
-          "email",
-          "Outlook",
-          "received",
-          "attention",
-          "no emails"
-        ]
+        ["email", "Outlook", "received", "attention", "no emails"]
       ],
       "mustExclude": [
         "retrieval bundle",
@@ -2916,28 +1769,21 @@
       "id": "realworld-email-reply-triage",
       "intent": "source_lookup",
       "prompt": "Show me any emails from today that need a reply.",
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getRecentEmails",
-        "getRecentOutlookEmails"
-      ],
-      "expectedAllToolNames": [
-        "getRecentEmails"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["getRecentEmails"],
+      "expectedAllToolNames": ["getRecentEmails"],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
       "forbiddenToolNames": [
-        "sourceSpecificRagRetrieval"
+        "sourceSpecificRagRetrieval",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
       ],
-      "mustIncludeAny": [
-        [
-          "email",
-          "reply",
-          "received",
-          "today",
-          "no emails"
-        ]
+      "forbiddenToolSources": [
+        "outlook_email_intake",
+        "outlook_email_intake_fallback"
       ],
+      "mustIncludeAny": [["email", "reply", "received", "today", "no emails"]],
       "mustExclude": [
         "retrieval bundle",
         "live Outlook tools are available",
@@ -2952,30 +1798,17 @@
       "id": "realworld-draft-email-response",
       "intent": "email_action",
       "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
-      "expectedToolFamilies": [
-        "email_action",
-        "communications"
-      ],
+      "expectedToolFamilies": ["email_action", "communications"],
       "expectedToolNames": [
         "draftOutlookEmail",
         "getRecentEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread"
       ],
-      "mustIncludeAny": [
-        [
-          "draft",
-          "subject",
-          "reply",
-          "confirm",
-          "Outlook"
-        ]
-      ],
-      "mustExclude": [
-        "sent successfully",
-        "email sent",
-        "I cannot draft"
-      ],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
+      "mustIncludeAny": [["draft", "subject", "reply", "confirm", "Outlook"]],
+      "mustExclude": ["sent successfully", "email sent", "I cannot draft"],
       "warnDurationMs": 15000,
       "maxDurationMs": 30000,
       "minAnswerLength": 120,
@@ -2987,28 +1820,13 @@
       "id": "realworld-meeting-invite-clarify",
       "intent": "calendar_action",
       "prompt": "Send a meeting invite to Megan Harrison.",
-      "expectedToolFamilies": [
-        "calendar_action"
-      ],
+      "expectedToolFamilies": ["calendar_action"],
       "expectedToolNames": [],
       "mustIncludeAny": [
-        [
-          "what time",
-          "when",
-          "date",
-          "duration",
-          "need"
-        ],
-        [
-          "Megan Harrison",
-          "Megan"
-        ]
+        ["what time", "when", "date", "duration", "need"],
+        ["Megan Harrison", "Megan"]
       ],
-      "mustExclude": [
-        "created",
-        "sent successfully",
-        "invite sent"
-      ],
+      "mustExclude": ["created", "sent successfully", "invite sent"],
       "minAnswerLength": 60,
       "notes": "Unsafe/underspecified calendar action. Assistant should ask for missing date/time or show a draft preview, not create the invite. Tool use is not required because the prompt lacks enough scheduling details."
     },
@@ -3016,26 +1834,12 @@
       "id": "realworld-meeting-invite-preview",
       "intent": "calendar_action",
       "prompt": "Send a 30 minute Teams meeting invite to Megan Harrison tomorrow at 2pm about Deep Agents production readiness.",
-      "expectedToolFamilies": [
-        "calendar_action"
-      ],
-      "expectedAllToolNames": [
-        "createOutlookCalendarInvite"
-      ],
+      "expectedToolFamilies": ["calendar_action"],
+      "expectedAllToolNames": ["createOutlookCalendarInvite"],
       "mustIncludeAny": [
-        [
-          "preview",
-          "confirm",
-          "calendar invite",
-          "Teams",
-          "Megan Harrison"
-        ]
+        ["preview", "confirm", "calendar invite", "Teams", "Megan Harrison"]
       ],
-      "mustExclude": [
-        "created",
-        "sent successfully",
-        "invite sent"
-      ],
+      "mustExclude": ["created", "sent successfully", "invite sent"],
       "minAnswerLength": 100,
       "notes": "Specified calendar action should call the calendar tool in preview mode and wait for confirmation before writing."
     },
@@ -3043,20 +1847,21 @@
       "id": "realworld-brandon-email-critical-monitor",
       "intent": "source_lookup",
       "prompt": "Act like Brandon's inbox monitor. Scan today's Outlook emails and tell me if anything is critical enough that he should get a Teams alert now versus wait for the evening brief.",
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getRecentEmails",
-        "getRecentOutlookEmails"
-      ],
-      "expectedAllToolNames": [
-        "getRecentEmails"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["getRecentEmails"],
+      "expectedAllToolNames": ["getRecentEmails"],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
         "draftOutlookEmail",
-        "createOutlookCalendarInvite"
+        "createOutlookCalendarInvite",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "forbiddenToolSources": [
+        "outlook_email_intake",
+        "outlook_email_intake_fallback"
       ],
       "mustIncludeAny": [
         [
@@ -3067,13 +1872,7 @@
           "evening brief",
           "response"
         ],
-        [
-          "email",
-          "Outlook",
-          "inbox",
-          "received",
-          "no critical"
-        ]
+        ["email", "Outlook", "inbox", "received", "no critical"]
       ],
       "mustExclude": [
         "I cannot access your email",
@@ -3089,36 +1888,25 @@
       "id": "realworld-brandon-email-morning-brief",
       "intent": "source_lookup",
       "prompt": "Give me Brandon's morning email brief: what came in, what needs a response, what can wait, and what should be delegated.",
-      "expectedToolFamilies": [
-        "communications"
-      ],
-      "expectedToolNames": [
-        "getRecentEmails",
-        "getRecentOutlookEmails"
-      ],
-      "expectedAllToolNames": [
-        "getRecentEmails"
-      ],
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["getRecentEmails"],
+      "expectedAllToolNames": ["getRecentEmails"],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
         "draftOutlookEmail",
-        "createOutlookCalendarInvite"
+        "createOutlookCalendarInvite",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "forbiddenToolSources": [
+        "outlook_email_intake",
+        "outlook_email_intake_fallback"
       ],
       "mustIncludeAny": [
-        [
-          "response",
-          "reply",
-          "wait",
-          "delegate",
-          "brief"
-        ],
-        [
-          "email",
-          "Outlook",
-          "inbox",
-          "received",
-          "no emails"
-        ]
+        ["response", "reply", "wait", "delegate", "brief"],
+        ["email", "Outlook", "inbox", "received", "no emails"]
       ],
       "mustExclude": [
         "I cannot access your email",
@@ -3134,41 +1922,22 @@
       "id": "realworld-brandon-email-draft-like-brandon",
       "intent": "email_action",
       "prompt": "Find the most important email from today that needs Brandon's reply and draft a short response in his voice. Do not send it; make it review-ready.",
-      "expectedToolFamilies": [
-        "email_action",
-        "communications"
-      ],
+      "expectedToolFamilies": ["email_action", "communications"],
       "expectedToolNames": [
         "getRecentEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread",
         "draftOutlookEmail"
       ],
-      "expectedAllToolNames": [
-        "getRecentEmails"
-      ],
-      "forbiddenToolNames": [
-        "sourceSpecificRagRetrieval"
-      ],
+      "expectedAllToolNames": ["getRecentEmails"],
+      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
+      "requiredRecentEmailSource": "microsoft_graph_live",
+      "forbiddenToolNames": ["sourceSpecificRagRetrieval"],
       "mustIncludeAny": [
-        [
-          "draft",
-          "reply",
-          "review",
-          "confirm",
-          "Outlook"
-        ],
-        [
-          "short",
-          "direct",
-          "Brandon"
-        ]
+        ["draft", "reply", "review", "confirm", "Outlook"],
+        ["short", "direct", "Brandon"]
       ],
-      "mustExclude": [
-        "sent successfully",
-        "email sent",
-        "I cannot draft"
-      ],
+      "mustExclude": ["sent successfully", "email sent", "I cannot draft"],
       "warnDurationMs": 30000,
       "maxDurationMs": 120000,
       "minAnswerLength": 160,
@@ -3198,9 +1967,7 @@
       "getFinancialAnalysis",
       "getHistoricalTrends"
     ],
-    "forecast": [
-      "getForecastComparison"
-    ],
+    "forecast": ["getForecastComparison"],
     "structured": [
       "queryBudgetData",
       "queryChangeOrders",
@@ -3210,23 +1977,15 @@
       "queryDocumentRows",
       "searchStructuredFinancialRows"
     ],
-    "schedule": [
-      "getScheduleAnalysis"
-    ],
-    "operations": [
-      "getRFIStatus",
-      "getSubmittalStatus"
-    ],
+    "schedule": ["getScheduleAnalysis"],
+    "operations": ["getRFIStatus", "getSubmittalStatus"],
     "risk": [
       "backendDeepAgentProjectStatus",
       "backendDeepAgentExecutiveBriefing",
       "getProjectRiskAnalysis",
       "getProjectsWithRisks"
     ],
-    "people": [
-      "getPeopleAndRoles",
-      "getVendorPerformance"
-    ],
+    "people": ["getPeopleAndRoles", "getVendorPerformance"],
     "meetings": [
       "searchMeetingsByTopic",
       "getMeetingDetails",
@@ -3247,20 +2006,9 @@
       "searchExternalDocuments",
       "queryDocumentRows"
     ],
-    "semantic": [
-      "semanticSearch",
-      "findProject"
-    ],
-    "knowledge": [
-      "getCompanyKnowledge",
-      "saveToKnowledgeBase",
-      "saveInsight"
-    ],
-    "memory": [
-      "recallPastConversations",
-      "searchMemories",
-      "writeMemory"
-    ],
+    "semantic": ["semanticSearch", "findProject"],
+    "knowledge": ["getCompanyKnowledge", "saveToKnowledgeBase", "saveInsight"],
+    "memory": ["recallPastConversations", "searchMemories", "writeMemory"],
     "actions": [
       "backendDeepAgentExecutiveBriefing",
       "getMyTasks",
@@ -3284,9 +2032,7 @@
       "getRecentOutlookEmails",
       "readOutlookEmailThread"
     ],
-    "calendar_action": [
-      "createOutlookCalendarInvite"
-    ],
+    "calendar_action": ["createOutlookCalendarInvite"],
     "task_management": [
       "backendDeepAgentExecutiveBriefing",
       "getMyTasks",
@@ -3302,9 +2048,7 @@
       "backendDeepAgentExecutiveBriefing",
       "assistantSourceHealth"
     ],
-    "app_help": [
-      "searchAppHelp"
-    ],
+    "app_help": ["searchAppHelp"],
     "accounting": [
       "getAPAgingReport",
       "getARAgingReport",
@@ -3315,10 +2059,6 @@
       "getAcumaticaProjectBudget",
       "getAcumaticaProjectList"
     ],
-    "web": [
-      "searchWeb",
-      "researchCompany",
-      "searchConstructionMarket"
-    ]
+    "web": ["searchWeb", "researchCompany", "searchConstructionMarket"]
   }
 }

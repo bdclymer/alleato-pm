@@ -38,9 +38,15 @@ const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
 
 dotenv.config({ path: path.join(repoRoot, ".env"), quiet: true });
-dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true });
+dotenv.config({
+  path: path.join(repoRoot, "frontend/.env.local"),
+  quiet: true,
+});
 
-const SUITE_PATH = path.join(repoRoot, "docs/ai-plan/evals/assistant-eval-suite.json");
+const SUITE_PATH = path.join(
+  repoRoot,
+  "docs/ai-plan/evals/assistant-eval-suite.json",
+);
 const AUTH_PATH = path.join(repoRoot, "frontend/tests/.auth/user.json");
 const PUBLISHED_ASSISTANT_EVAL_RUNS_PATH = path.join(
   repoRoot,
@@ -112,14 +118,16 @@ const bundle = bundleName ? suite.evalBundles?.[bundleName] : null;
 if (bundleName && !bundle) {
   console.error(`Unknown eval bundle: ${bundleName}`);
   console.error("Available bundles:");
-  for (const name of Object.keys(suite.evalBundles ?? {})) console.error(`  - ${name}`);
+  for (const name of Object.keys(suite.evalBundles ?? {}))
+    console.error(`  - ${name}`);
   process.exit(1);
 }
 const effectiveFilterPattern = filterPattern ?? bundle?.filter;
 const allCases = suite.cases ?? [];
 const cases = allCases.filter((c) => {
   if (onlyCase && c.id !== onlyCase) return false;
-  if (effectiveFilterPattern && !new RegExp(effectiveFilterPattern).test(c.id)) return false;
+  if (effectiveFilterPattern && !new RegExp(effectiveFilterPattern).test(c.id))
+    return false;
   return true;
 });
 if (cases.length === 0) {
@@ -137,12 +145,15 @@ let cookieHeader = (authState.cookies ?? [])
   .join("; ");
 
 // ─────────────────────────────────────────────────────── Auth refresh
-const SUPABASE_URL = process.env.AI_EVAL_SUPABASE_URL || "https://lgveqfnpkxvzbnnwuled.supabase.co";
+const SUPABASE_URL =
+  process.env.AI_EVAL_SUPABASE_URL ||
+  "https://lgveqfnpkxvzbnnwuled.supabase.co";
 const SUPABASE_ANON_KEY =
   process.env.AI_EVAL_SUPABASE_ANON_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndmVxZm5wa3h2emJubnd1bGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTQxNjYsImV4cCI6MjA3MDgzMDE2Nn0.g56kDPUokoJpWY7vXd3GTMXpOc4WFOU0hDVWfGMZtO8";
 const SUPABASE_EMAIL = process.env.AI_EVAL_SUPABASE_EMAIL || "test1@mail.com";
-const SUPABASE_PASSWORD = process.env.AI_EVAL_SUPABASE_PASSWORD || "test12026!!!";
+const SUPABASE_PASSWORD =
+  process.env.AI_EVAL_SUPABASE_PASSWORD || "test12026!!!";
 const SUPABASE_COOKIE_NAME = "sb-lgveqfnpkxvzbnnwuled-auth-token";
 const SUPABASE_PROJECT_REF = "lgveqfnpkxvzbnnwuled";
 const SUPABASE_POOLER_HOST = "aws-1-us-east-2.pooler.supabase.com";
@@ -153,9 +164,7 @@ function getCookieExpiry(header) {
   // Find the auth cookie in the header string and decode its expiry.
   // Cookie value format: base64-<base64-encoded-JSON>
   // The JSON contains { expires_at: <unix-seconds> }
-  const match = header.match(
-    new RegExp(`${SUPABASE_COOKIE_NAME}=([^;]+)`),
-  );
+  const match = header.match(new RegExp(`${SUPABASE_COOKIE_NAME}=([^;]+)`));
   if (!match) return null;
   try {
     let value = match[1];
@@ -179,24 +188,26 @@ async function refreshAuthIfNeeded() {
 
   // Token is missing, expired, or expiring soon — fetch a fresh one.
   if (!cookieHeader) {
-    console.log(`[auth] Auth state missing or empty at ${AUTH_PATH}; creating a fresh eval session.`);
+    console.log(
+      `[auth] Auth state missing or empty at ${AUTH_PATH}; creating a fresh eval session.`,
+    );
   }
   let res = null;
   let lastAuthError = null;
   for (let attempt = 1; attempt <= AUTH_REFRESH_RETRIES; attempt += 1) {
     try {
-      res = await fetch(
-        `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            apikey: SUPABASE_ANON_KEY,
-            authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ email: SUPABASE_EMAIL, password: SUPABASE_PASSWORD }),
+      res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
-      );
+        body: JSON.stringify({
+          email: SUPABASE_EMAIL,
+          password: SUPABASE_PASSWORD,
+        }),
+      });
       if (res.ok || res.status < 500 || attempt === AUTH_REFRESH_RETRIES) break;
       lastAuthError = new Error(`HTTP ${res.status}`);
     } catch (error) {
@@ -204,13 +215,19 @@ async function refreshAuthIfNeeded() {
       if (attempt === AUTH_REFRESH_RETRIES) break;
     }
     const backoffMs = 500 * attempt;
-    console.warn(`[auth] Refresh attempt ${attempt} failed; retrying in ${backoffMs}ms.`);
+    console.warn(
+      `[auth] Refresh attempt ${attempt} failed; retrying in ${backoffMs}ms.`,
+    );
     await new Promise((resolve) => setTimeout(resolve, backoffMs));
   }
 
   if (!res?.ok) {
-    const text = res ? await res.text().catch(() => "") : String(lastAuthError?.message ?? "unknown error");
-    throw new Error(`Auth refresh failed (HTTP ${res?.status ?? "unknown"}): ${text.slice(0, 200)}`);
+    const text = res
+      ? await res.text().catch(() => "")
+      : String(lastAuthError?.message ?? "unknown error");
+    throw new Error(
+      `Auth refresh failed (HTTP ${res?.status ?? "unknown"}): ${text.slice(0, 200)}`,
+    );
   }
 
   const session = await res.json();
@@ -224,7 +241,14 @@ async function refreshAuthIfNeeded() {
   } = session;
 
   // Encode new cookie value in the same format Supabase sets via the browser.
-  const payload = JSON.stringify({ access_token, token_type, expires_in, expires_at: newExpiresAt, refresh_token, user });
+  const payload = JSON.stringify({
+    access_token,
+    token_type,
+    expires_in,
+    expires_at: newExpiresAt,
+    refresh_token,
+    user,
+  });
   const encoded = `base64-${Buffer.from(payload).toString("base64")}`;
 
   // Patch the in-memory authState and persist it back to the file.
@@ -252,7 +276,9 @@ async function refreshAuthIfNeeded() {
   await fs.writeFile(AUTH_PATH, JSON.stringify(authState, null, 2));
 
   // Rebuild the cookie header string.
-  cookieHeader = authState.cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+  cookieHeader = authState.cookies
+    .map((c) => `${c.name}=${c.value}`)
+    .join("; ");
 
   const expiryIso = newExpiresAt
     ? new Date(newExpiresAt * 1000).toISOString()
@@ -284,7 +310,9 @@ async function buildDatabaseConnectionString() {
       const { address, family } = await lookup(url.hostname, { family: 4 });
       if (family === 4) url.hostname = address;
     } catch (error) {
-      console.warn(`[db] IPv4 hostname lookup failed for ${url.hostname}: ${error.message}`);
+      console.warn(
+        `[db] IPv4 hostname lookup failed for ${url.hostname}: ${error.message}`,
+      );
     }
   }
 
@@ -300,8 +328,8 @@ const pool = new pg.Pool({
 // ───────────────────────────────────────────────────────── Helpers
 function tokenizeUserId() {
   // Decode the supabase auth cookie to extract the user id for chat_history filtering.
-  const cookie = (authState.cookies ?? []).find((c) =>
-    c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
+  const cookie = (authState.cookies ?? []).find(
+    (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
   );
   if (!cookie) return null;
   try {
@@ -316,19 +344,24 @@ function tokenizeUserId() {
 }
 async function postPromptAndDrain(testCase, sessionId, messageId) {
   const currentCookieHeader = await refreshAuthIfNeeded();
-  const messages = Array.isArray(testCase.messages) && testCase.messages.length > 0
-    ? testCase.messages.map((message, index) => ({
-        id: message.id ?? (index === testCase.messages.length - 1 ? messageId : randomUUID()),
-        role: message.role,
-        parts: [{ type: "text", text: message.content ?? message.text ?? "" }],
-      }))
-    : [
-        {
-          id: messageId,
-          role: "user",
-          parts: [{ type: "text", text: testCase.prompt }],
-        },
-      ];
+  const messages =
+    Array.isArray(testCase.messages) && testCase.messages.length > 0
+      ? testCase.messages.map((message, index) => ({
+          id:
+            message.id ??
+            (index === testCase.messages.length - 1 ? messageId : randomUUID()),
+          role: message.role,
+          parts: [
+            { type: "text", text: message.content ?? message.text ?? "" },
+          ],
+        }))
+      : [
+          {
+            id: messageId,
+            role: "user",
+            parts: [{ type: "text", text: testCase.prompt }],
+          },
+        ];
 
   const body = {
     id: sessionId,
@@ -511,6 +544,17 @@ function metadataPath(metadata, pathExpression) {
     }, metadata);
 }
 
+function findToolTrace(metadata, toolName) {
+  const trace = metadata?.tool_trace;
+  if (!Array.isArray(trace)) return null;
+  return (
+    trace.find((entry) => {
+      const name = entry?.tool ?? entry?.toolName ?? entry?.name;
+      return name === toolName;
+    }) ?? null
+  );
+}
+
 function extractBackendDeepAgentMemory(metadata) {
   const backend = metadata?.backend_deep_agent;
   if (!backend || typeof backend !== "object") {
@@ -538,7 +582,9 @@ function escapeRegExp(value) {
 function containsForbiddenPhrase(text, phrase) {
   const normalizedPhrase = String(phrase);
   if (/^[A-Za-z0-9]+$/.test(normalizedPhrase)) {
-    return new RegExp(`\\b${escapeRegExp(normalizedPhrase)}\\b`, "i").test(text);
+    return new RegExp(`\\b${escapeRegExp(normalizedPhrase)}\\b`, "i").test(
+      text,
+    );
   }
   return text.toLowerCase().includes(normalizedPhrase.toLowerCase());
 }
@@ -642,7 +688,8 @@ async function evaluateWithJudge(testCase, score) {
       rubric: rubric.name,
       score: 0,
       minScore: rubric.minScore,
-      summary: "AI_EVAL_JUDGE_MODEL requires AI_GATEWAY_API_KEY or OPENAI_API_KEY.",
+      summary:
+        "AI_EVAL_JUDGE_MODEL requires AI_GATEWAY_API_KEY or OPENAI_API_KEY.",
       strengths: [],
       weaknesses: ["No judge provider key configured."],
       dimensionScores: {},
@@ -680,7 +727,9 @@ async function evaluateWithJudge(testCase, score) {
               `Minimum passing score: ${rubric.minScore}/5`,
               "",
               "Score each dimension from 1 to 5:",
-              ...rubric.dimensions.map((dimension, index) => `${index + 1}. ${dimension}`),
+              ...rubric.dimensions.map(
+                (dimension, index) => `${index + 1}. ${dimension}`,
+              ),
               "",
               "Case prompt:",
               testCase.prompt,
@@ -778,6 +827,7 @@ function scoreCase(testCase, runOutput, persisted) {
       `backend Deep Agents memory candidates: ${backendMemory.candidateCount}`,
     );
   }
+  const metadata = persisted?.metadata ?? {};
 
   if (!persisted) {
     failures.push("assistant message was not persisted to chat_history");
@@ -810,6 +860,31 @@ function scoreCase(testCase, runOutput, persisted) {
     }
   }
 
+  // Source-of-truth guardrail: fail the case if any tool trace's `source` field
+  // matches a forbidden value. Prevents a tool from silently answering from a
+  // stale cache when the case requires a live source (e.g., Microsoft Graph
+  // inbox reads must not fall back to outlook_email_intake). Catches the data
+  // flow, not just the tool name, covering tools we have not yet enumerated.
+  const forbiddenSources = testCase.forbiddenToolSources ?? [];
+  if (forbiddenSources.length > 0) {
+    const traceEntries = Array.isArray(metadata?.tool_trace)
+      ? metadata.tool_trace
+      : [];
+    for (const entry of traceEntries) {
+      const traceSource =
+        entry?.output?.source ??
+        entry?.source ??
+        entry?.output?.graphLive?.source;
+      if (forbiddenSources.includes(traceSource)) {
+        const toolLabel =
+          entry?.tool ?? entry?.toolName ?? entry?.name ?? "(unknown)";
+        failures.push(
+          `forbidden tool source '${traceSource}' returned by '${toolLabel}'`,
+        );
+      }
+    }
+  }
+
   // Family coverage — soft signal
   const expectedFamilies = testCase.expectedToolFamilies ?? [];
   const familyMap = suite.toolFamilyMap ?? {};
@@ -832,9 +907,13 @@ function scoreCase(testCase, runOutput, persisted) {
   }
   for (const anyGroup of testCase.mustIncludeAny ?? []) {
     const options = Array.isArray(anyGroup) ? anyGroup : [anyGroup];
-    const hit = options.some((phrase) => lower.includes(String(phrase).toLowerCase()));
+    const hit = options.some((phrase) =>
+      lower.includes(String(phrase).toLowerCase()),
+    );
     if (!hit) {
-      failures.push(`mustIncludeAny missing one of: ${options.map((p) => `"${p}"`).join(", ")}`);
+      failures.push(
+        `mustIncludeAny missing one of: ${options.map((p) => `"${p}"`).join(", ")}`,
+      );
     }
   }
   for (const phrase of testCase.mustExclude ?? []) {
@@ -864,16 +943,50 @@ function scoreCase(testCase, runOutput, persisted) {
     suiteSafeNumber(bundle?.maxDurationMs) ??
     suiteSafeNumber(suite.defaultMaxDurationMs);
   if (warnDurationMs && runOutput.durationMs > warnDurationMs) {
-    warnings.push(`duration ${runOutput.durationMs}ms exceeded warning budget ${warnDurationMs}ms`);
+    warnings.push(
+      `duration ${runOutput.durationMs}ms exceeded warning budget ${warnDurationMs}ms`,
+    );
   }
   if (maxDurationMs && runOutput.durationMs > maxDurationMs) {
-    failures.push(`duration ${runOutput.durationMs}ms exceeded max budget ${maxDurationMs}ms`);
+    failures.push(
+      `duration ${runOutput.durationMs}ms exceeded max budget ${maxDurationMs}ms`,
+    );
   }
 
-  const metadata = persisted?.metadata ?? {};
   for (const pathExpression of testCase.requiredMetadataPaths ?? []) {
     if (metadataPath(metadata, pathExpression) == null) {
       failures.push(`required metadata missing: ${pathExpression}`);
+    }
+  }
+
+  if (testCase.requiredRecentEmailMailbox) {
+    const trace = findToolTrace(metadata, "getRecentEmails");
+    const actual =
+      trace?.output?.appliedFilter?.email ??
+      trace?.input?.mailbox ??
+      trace?.appliedFilter?.email;
+    const expected = String(testCase.requiredRecentEmailMailbox).toLowerCase();
+    if (String(actual ?? "").toLowerCase() !== expected) {
+      failures.push(
+        `getRecentEmails mailbox ${actual ?? "(missing)"} did not match required ${expected}`,
+      );
+    }
+    if (!trace?.output?.dataCutoffNote && !trace?.output?.error) {
+      failures.push("getRecentEmails missing sync cutoff or error evidence");
+    }
+  }
+
+  if (testCase.requiredRecentEmailSource) {
+    const trace = findToolTrace(metadata, "getRecentEmails");
+    const actual =
+      trace?.output?.source ??
+      trace?.source ??
+      trace?.output?.graphLive?.source;
+    const expected = String(testCase.requiredRecentEmailSource);
+    if (actual !== expected) {
+      failures.push(
+        `getRecentEmails source ${actual ?? "(missing)"} did not match required ${expected}`,
+      );
     }
   }
 
@@ -895,7 +1008,10 @@ function scoreCase(testCase, runOutput, persisted) {
 
   if (testCase.minSourceQuality) {
     const actual = responseQuality.sourceQuality;
-    if (!actual || qualityRank[actual] < qualityRank[testCase.minSourceQuality]) {
+    if (
+      !actual ||
+      qualityRank[actual] < qualityRank[testCase.minSourceQuality]
+    ) {
       failures.push(
         `response_quality.sourceQuality ${actual ?? "(missing)"} < ${testCase.minSourceQuality}`,
       );
@@ -938,9 +1054,14 @@ function toPublishedRun(result, runId) {
           prompt: String(testCase.prompt ?? ""),
           intent: typeof testCase.intent === "string" ? testCase.intent : null,
           status: typeof score.status === "string" ? score.status : "unknown",
-          durationMs: typeof testCase.durationMs === "number" ? testCase.durationMs : null,
+          durationMs:
+            typeof testCase.durationMs === "number"
+              ? testCase.durationMs
+              : null,
           streamEventCount:
-            typeof testCase.streamEventCount === "number" ? testCase.streamEventCount : null,
+            typeof testCase.streamEventCount === "number"
+              ? testCase.streamEventCount
+              : null,
           toolNames: Array.isArray(score.toolNames)
             ? score.toolNames.filter((tool) => typeof tool === "string")
             : [],
@@ -951,16 +1072,22 @@ function toPublishedRun(result, runId) {
             ? score.warnings.filter((warning) => typeof warning === "string")
             : [],
           observations: Array.isArray(score.observations)
-            ? score.observations.filter((observation) => typeof observation === "string")
+            ? score.observations.filter(
+                (observation) => typeof observation === "string",
+              )
             : [],
           backendDeepAgentMemory:
-            score.backendDeepAgentMemory && typeof score.backendDeepAgentMemory === "object"
+            score.backendDeepAgentMemory &&
+            typeof score.backendDeepAgentMemory === "object"
               ? {
                   candidateCount:
-                    typeof score.backendDeepAgentMemory.candidateCount === "number"
+                    typeof score.backendDeepAgentMemory.candidateCount ===
+                    "number"
                       ? score.backendDeepAgentMemory.candidateCount
                       : 0,
-                  candidates: Array.isArray(score.backendDeepAgentMemory.candidates)
+                  candidates: Array.isArray(
+                    score.backendDeepAgentMemory.candidates,
+                  )
                     ? score.backendDeepAgentMemory.candidates
                     : [],
                 }
@@ -1020,15 +1147,18 @@ function toPublishedRun(result, runId) {
 
   return {
     runId,
-    generatedAt: typeof result.generatedAt === "string" ? result.generatedAt : null,
+    generatedAt:
+      typeof result.generatedAt === "string" ? result.generatedAt : null,
     baseUrl: typeof result.baseUrl === "string" ? result.baseUrl : null,
-    bundle: result.bundle && typeof result.bundle === "object"
-      ? result.bundle.name ?? null
-      : typeof result.bundle === "string"
-        ? result.bundle
-        : null,
+    bundle:
+      result.bundle && typeof result.bundle === "object"
+        ? (result.bundle.name ?? null)
+        : typeof result.bundle === "string"
+          ? result.bundle
+          : null,
     filter: typeof result.filter === "string" ? result.filter : null,
-    totalCases: typeof result.totalCases === "number" ? result.totalCases : cases.length,
+    totalCases:
+      typeof result.totalCases === "number" ? result.totalCases : cases.length,
     passed:
       typeof result.passed === "number"
         ? result.passed
@@ -1040,7 +1170,10 @@ function toPublishedRun(result, runId) {
     warningCount:
       typeof result.warningCount === "number"
         ? result.warningCount
-        : cases.reduce((count, testCase) => count + testCase.warnings.length, 0),
+        : cases.reduce(
+            (count, testCase) => count + testCase.warnings.length,
+            0,
+          ),
     slowestCases: Array.isArray(result.slowestCases)
       ? result.slowestCases
       : [...cases]
@@ -1076,14 +1209,19 @@ async function refreshPublishedAssistantEvalRuns() {
   const runs = [];
   for (const runId of runIds) {
     try {
-      const resultRaw = await fs.readFile(path.join(runsDir, runId, "results.json"), "utf8");
+      const resultRaw = await fs.readFile(
+        path.join(runsDir, runId, "results.json"),
+        "utf8",
+      );
       runs.push(toPublishedRun(JSON.parse(resultRaw), runId));
     } catch {
       // Ignore incomplete run directories.
     }
   }
 
-  await fs.mkdir(path.dirname(PUBLISHED_ASSISTANT_EVAL_RUNS_PATH), { recursive: true });
+  await fs.mkdir(path.dirname(PUBLISHED_ASSISTANT_EVAL_RUNS_PATH), {
+    recursive: true,
+  });
   await fs.writeFile(
     PUBLISHED_ASSISTANT_EVAL_RUNS_PATH,
     JSON.stringify(
@@ -1209,7 +1347,10 @@ const summary = {
   totalCases: results.length,
   passed: results.filter((r) => r.score.status === "pass").length,
   failed: results.filter((r) => r.score.status === "fail").length,
-  warningCount: results.reduce((count, r) => count + r.score.warnings.length, 0),
+  warningCount: results.reduce(
+    (count, r) => count + r.score.warnings.length,
+    0,
+  ),
   backendDeepAgentMemoryCandidateCount: results.reduce(
     (count, r) => count + (r.score.backendDeepAgentMemory?.candidateCount ?? 0),
     0,
@@ -1227,7 +1368,9 @@ const summary = {
         .filter((score) => typeof score === "number" && Number.isFinite(score));
       if (judged.length === 0) return null;
       return Number(
-        (judged.reduce((sum, score) => sum + score, 0) / judged.length).toFixed(2),
+        (judged.reduce((sum, score) => sum + score, 0) / judged.length).toFixed(
+          2,
+        ),
       );
     })(),
   },
@@ -1321,7 +1464,9 @@ const md = [
   "",
   "| Tool | Hits |",
   "|---|---|",
-  ...Object.entries(summary.toolCoverage).map(([tool, hits]) => `| \`${tool}\` | ${hits} |`),
+  ...Object.entries(summary.toolCoverage).map(
+    ([tool, hits]) => `| \`${tool}\` | ${hits} |`,
+  ),
   "",
   "## Tools defined but never fired in this run",
   "",
