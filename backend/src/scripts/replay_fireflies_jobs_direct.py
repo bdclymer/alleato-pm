@@ -3,7 +3,8 @@
 Replay Fireflies ingestion jobs directly from the worker process.
 
 This is the no-HTTP fallback for local/ops backfills when ADMIN_API_KEY is not
-available. It uses the same run_full_pipeline path as /api/pipeline/process.
+available. It mirrors the protected /api/admin/documents/generate-embeddings
+stage controls without sending work through the hosted Render endpoint.
 """
 
 from __future__ import annotations
@@ -70,29 +71,47 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="Replay Fireflies pipeline jobs directly")
     parser.add_argument("--stage", default="raw_ingested")
+    parser.add_argument(
+        "--metadata-id",
+        default=None,
+        help="Process one explicit document_metadata id instead of selecting from the queue.",
+    )
     parser.add_argument("--stale-minutes", type=int, default=120)
     parser.add_argument("--limit", type=int, default=5)
     parser.add_argument("--include-errors", action="store_true")
     parser.add_argument("--error-contains", default=None)
+    parser.add_argument("--skip-extraction", action="store_true")
+    parser.add_argument("--skip-embedding", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    from src.services.supabase_helpers import get_supabase_client
-    from src.services.pipeline import run_full_pipeline
+    from src.services.supabase_helpers import get_rag_read_client
+    from src.services.pipeline import run_embedder, run_extractor, run_parser
 
     if not os.getenv("AI_GATEWAY_API_KEY") and not os.getenv("OPENAI_API_KEY"):
         print("ERROR: AI_GATEWAY_API_KEY or OPENAI_API_KEY is required")
         return 2
 
-    supabase = get_supabase_client()
-    jobs = _find_jobs(
-        supabase,
-        stage=args.stage,
-        stale_minutes=args.stale_minutes,
-        limit=args.limit,
-        include_errors=args.include_errors,
-        error_contains=args.error_contains,
-    )
+    supabase = get_rag_read_client()
+    if args.metadata_id:
+        jobs = [
+            {
+                "fireflies_id": args.metadata_id,
+                "metadata_id": args.metadata_id,
+                "stage": args.stage,
+                "error_message": None,
+                "updated_at": None,
+            }
+        ]
+    else:
+        jobs = _find_jobs(
+            supabase,
+            stage=args.stage,
+            stale_minutes=args.stale_minutes,
+            limit=args.limit,
+            include_errors=args.include_errors,
+            error_contains=args.error_contains,
+        )
 
     results = []
     for job in jobs:
@@ -101,7 +120,21 @@ def main() -> int:
             results.append({**job, "status": "would_process"})
             continue
         try:
-            result = run_full_pipeline(metadata_id)
+            stage = job.get("stage") or args.stage
+            result: Dict[str, Any] = {"metadataId": metadata_id, "initial_stage": stage}
+            if stage == "raw_ingested":
+                result["parser"] = run_parser(metadata_id)
+                stage = "segmented"
+
+            if stage == "segmented" and not args.skip_embedding:
+                result["embedder"] = run_embedder(metadata_id)
+                stage = "embedded"
+
+            if stage == "embedded" and not args.skip_extraction:
+                result["extractor"] = run_extractor(metadata_id)
+                stage = "done"
+
+            result["final_stage"] = stage
             results.append({**job, "status": "processed", "result": result})
         except Exception as exc:
             results.append({**job, "status": "failed", "error": str(exc)})

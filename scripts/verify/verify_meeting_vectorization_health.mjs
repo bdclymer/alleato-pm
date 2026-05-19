@@ -23,11 +23,16 @@ import "dotenv/config";
 import postgres from "postgres";
 
 const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+const ragDatabaseUrl = process.env.RAG_DATABASE_URL;
 const aiGatewayKey = process.env.AI_GATEWAY_API_KEY;
 const openAiKey = process.env.OPENAI_API_KEY;
 
 if (!databaseUrl) {
   console.error("[FATAL] DATABASE_URL or SUPABASE_DB_URL is required.");
+  process.exit(1);
+}
+if (!ragDatabaseUrl) {
+  console.error("[FATAL] RAG_DATABASE_URL is required. document_chunks and fireflies_ingestion_jobs live in the AI/RAG database.");
   process.exit(1);
 }
 
@@ -37,8 +42,10 @@ const HISTORY_WINDOW_DAYS = 180;
 const MEETING_SIGNAL_LIMIT = 2_000;
 const RECENT_MIN_EMBEDDED_RATIO = 0.5;
 const RECENT_MIN_CHUNK_RATIO = 0.5;
+const RECENT_MIN_TRANSCRIPT_CHUNK_RATIO = 0.9;
 
-const sql = postgres(databaseUrl, { max: 1, ssl: "require" });
+const appSql = postgres(databaseUrl, { max: 1, ssl: "require" });
+const ragSql = postgres(ragDatabaseUrl, { max: 1, ssl: "require" });
 
 const failures = [];
 const warnings = [];
@@ -133,9 +140,27 @@ async function probeEmbeddingProvider() {
 }
 
 try {
-  await sql`set statement_timeout = '45s'`;
+  await appSql`set statement_timeout = '45s'`;
+  await ragSql`set statement_timeout = '45s'`;
 
-  const [metadata] = await sql`
+  const recentMeetings = await appSql`
+    select
+      id::text,
+      title,
+      coalesce(captured_at, date, created_at::timestamptz) as meeting_at
+    from public.document_metadata
+    where (
+      source = 'fireflies'
+      or type in ('meeting', 'meeting_transcript')
+      or category = 'meeting'
+      or fireflies_id is not null
+    )
+      and coalesce(captured_at, date, created_at::timestamptz) >= now() - (${RECENT_WINDOW_DAYS} || ' days')::interval
+    order by meeting_at desc
+  `;
+  const recentMeetingIds = recentMeetings.map((row) => row.id).filter(Boolean);
+
+  const [metadata] = await appSql`
     with meeting_ids as materialized (
       select id from (
         select id from public.document_metadata
@@ -167,122 +192,68 @@ try {
     )
     select
       count(*)::int as total_meetings,
-      count(*) filter (where summary_embedding is not null)::int as embedded_summaries,
-      max(coalesce(captured_at, date, created_at::timestamptz)) as latest_meeting_at,
-      max(coalesce(captured_at, created_at::timestamptz)) filter (where summary_embedding is not null) as latest_summary_embedding_at
+      max(coalesce(captured_at, date, created_at::timestamptz)) as latest_meeting_at
     from public.document_metadata
     where id in (select id from meeting_ids)
   `;
 
-  const [recent] = await sql`
-    with meeting_ids as materialized (
-      select id from public.document_metadata where source = 'fireflies'
-      union
-      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
-      union
-      select id from public.document_metadata where category = 'meeting'
-      union
-      select id from public.document_metadata where fireflies_id is not null
-    )
+  const recent = {
+    recent_meetings: recentMeetings.length,
+  };
+
+  const [summaryMetadata] = await ragSql`
     select
-      count(*)::int as recent_meetings,
-      count(*) filter (where summary_embedding is not null)::int as recent_embedded_summaries
-    from public.document_metadata
-    where id in (select id from meeting_ids)
-      and coalesce(captured_at, date, created_at::timestamptz) >= now() - (${RECENT_WINDOW_DAYS} || ' days')::interval
+      count(*)::int as total_rag_metadata,
+      count(*) filter (where summary_embedding is not null)::int as embedded_summaries,
+      max(updated_at) filter (where summary_embedding is not null) as latest_summary_embedding_at
+    from public.rag_document_metadata
   `;
 
-  const [chunks] = await sql`
-    with meeting_ids as materialized (
-      select id from public.document_metadata where source = 'fireflies'
-      union
-      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
-      union
-      select id from public.document_metadata where category = 'meeting'
-      union
-      select id from public.document_metadata where fireflies_id is not null
-    )
+  const [chunks] = await ragSql`
     select
       count(*)::int as total_chunks,
       count(*) filter (where dc.embedding is not null)::int as embedded_chunks,
+      count(distinct dc.document_id) filter (where dc.embedding is not null)::int as docs_with_embedded_chunks,
       max(dc.updated_at) as latest_chunk_embedding_at
     from public.document_chunks dc
-    where dc.document_id in (select id from meeting_ids)
+    where dc.source_type in ('meeting_transcript', 'meeting_summary', 'meeting_segment_summary', 'meeting_notes', 'meeting_section')
   `;
 
-  const [recentChunkCoverage] = await sql`
-    with meeting_ids as materialized (
-      select id from public.document_metadata where source = 'fireflies'
-      union
-      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
-      union
-      select id from public.document_metadata where category = 'meeting'
-      union
-      select id from public.document_metadata where fireflies_id is not null
-    ),
-    recent_meetings as materialized (
-      select id
-      from public.document_metadata
-      where id in (select id from meeting_ids)
-        and coalesce(captured_at, date, created_at::timestamptz) >= now() - (${RECENT_WINDOW_DAYS} || ' days')::interval
-    ),
-    per_meeting as (
+  let recentChunkRows = [];
+  if (recentMeetingIds.length > 0) {
+    recentChunkRows = await ragSql`
       select
-        rm.id,
+        dc.document_id::text,
         count(dc.chunk_id)::int as chunk_count,
         count(dc.chunk_id) filter (where dc.embedding is not null)::int as embedded_chunk_count,
+        count(dc.chunk_id) filter (where dc.source_type = 'meeting_transcript' and dc.embedding is not null)::int as embedded_transcript_chunk_count,
         max(dc.updated_at) as latest_chunk_embedding_at
-      from recent_meetings rm
-      left join public.document_chunks dc on dc.document_id = rm.id
-      group by rm.id
-    )
-    select
-      count(*)::int as recent_meetings,
-      count(*) filter (where chunk_count > 0)::int as recent_meetings_with_chunks,
-      count(*) filter (where embedded_chunk_count > 0)::int as recent_meetings_with_embedded_chunks,
-      coalesce(sum(chunk_count), 0)::int as recent_chunks,
-      coalesce(sum(embedded_chunk_count), 0)::int as recent_embedded_chunks,
-      max(latest_chunk_embedding_at) as latest_recent_chunk_embedding_at
-    from per_meeting
-  `;
+      from public.document_chunks dc
+      where dc.document_id = any(${recentMeetingIds})
+      group by dc.document_id
+    `;
+  }
+  const chunkByDocumentId = new Map(recentChunkRows.map((row) => [row.document_id, row]));
+  const recentChunkCoverage = {
+    recent_meetings: recentMeetingIds.length,
+    recent_meetings_with_chunks: recentMeetings.filter((row) => (chunkByDocumentId.get(row.id)?.chunk_count ?? 0) > 0).length,
+    recent_meetings_with_embedded_chunks: recentMeetings.filter((row) => (chunkByDocumentId.get(row.id)?.embedded_chunk_count ?? 0) > 0).length,
+    recent_meetings_with_embedded_transcript_chunks: recentMeetings.filter((row) => (chunkByDocumentId.get(row.id)?.embedded_transcript_chunk_count ?? 0) > 0).length,
+    recent_chunks: recentChunkRows.reduce((sum, row) => sum + Number(row.chunk_count ?? 0), 0),
+    recent_embedded_chunks: recentChunkRows.reduce((sum, row) => sum + Number(row.embedded_chunk_count ?? 0), 0),
+    latest_recent_chunk_embedding_at: recentChunkRows.reduce((latest, row) => {
+      if (!row.latest_chunk_embedding_at) return latest;
+      if (!latest || new Date(row.latest_chunk_embedding_at) > new Date(latest)) return row.latest_chunk_embedding_at;
+      return latest;
+    }, null),
+  };
 
-  const [summaryProbe] = await sql`
-    with meeting_ids as materialized (
-      select id from public.document_metadata where source = 'fireflies'
-      union
-      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
-      union
-      select id from public.document_metadata where category = 'meeting'
-      union
-      select id from public.document_metadata where fireflies_id is not null
-    ),
-    q as (
-      select summary_embedding
-      from public.document_metadata
-      where summary_embedding is not null
-        and id in (select id from meeting_ids)
-      order by coalesce(captured_at, date, created_at::timestamptz) desc
-      limit 1
-    )
-    select count(*)::int as result_count, max(similarity) as max_similarity
-    from q, public.match_document_metadata_by_summary(q.summary_embedding, 5, 0.3, null)
-  `;
-
-  const [chunkProbe] = await sql`
-    with meeting_ids as materialized (
-      select id from public.document_metadata where source = 'fireflies'
-      union
-      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
-      union
-      select id from public.document_metadata where category = 'meeting'
-      union
-      select id from public.document_metadata where fireflies_id is not null
-    ),
-    q as (
+  const [chunkProbe] = await ragSql`
+    with q as (
       select dc.embedding
       from public.document_chunks dc
       where dc.embedding is not null
-        and dc.document_id in (select id from meeting_ids)
+        and dc.source_type in ('meeting_transcript', 'meeting_summary', 'meeting_segment_summary', 'meeting_notes', 'meeting_section')
       order by dc.updated_at desc nulls last
       limit 1
     )
@@ -296,36 +267,38 @@ try {
     )
   `;
 
-  const pipelineJobs = await sql`
+  const pipelineJobs = await ragSql`
     select
       stage,
       count(*)::int as count,
       min(created_at) as oldest_created_at,
       max(updated_at) as newest_updated_at
     from public.fireflies_ingestion_jobs
+    where updated_at >= now() - (${HISTORY_WINDOW_DAYS} || ' days')::interval
     group by stage
     order by count desc
   `;
 
-  const quotaErrorJobs = await sql`
+  const quotaErrorJobs = await ragSql`
     select count(*)::int as count
     from public.fireflies_ingestion_jobs
     where stage = 'error'
       and error_message ilike '%quota%'
+      and updated_at >= now() - (${HISTORY_WINDOW_DAYS} || ' days')::interval
   `;
 
   const provider = await probeEmbeddingProvider();
 
-  if (metadata.embedded_summaries === 0 && chunks.embedded_chunks === 0) {
+  if (summaryMetadata.embedded_summaries === 0 && chunks.embedded_chunks === 0) {
     fail("No meeting summary or chunk embeddings exist at all. The strategist is keyword-only.");
   }
 
   if (recent.recent_meetings > 0) {
-    const ratio = recent.recent_embedded_summaries / recent.recent_meetings;
+    const ratio = recentChunkCoverage.recent_meetings_with_embedded_chunks / recent.recent_meetings;
     if (ratio < RECENT_MIN_EMBEDDED_RATIO) {
       fail(
-        `Only ${recent.recent_embedded_summaries} of ${recent.recent_meetings} ` +
-          `meetings from the last ${RECENT_WINDOW_DAYS} days have summary embeddings ` +
+        `Only ${recentChunkCoverage.recent_meetings_with_embedded_chunks} of ${recent.recent_meetings} ` +
+          `meetings from the last ${RECENT_WINDOW_DAYS} days have embedded chunks ` +
           `(${(ratio * 100).toFixed(1)}%, required ≥${RECENT_MIN_EMBEDDED_RATIO * 100}%). ` +
           `New meetings are NOT being vectorized. AI Strategist is missing recent context.`
       );
@@ -342,27 +315,36 @@ try {
           `AI Strategist semanticSearch is missing recent meeting context.`
       );
     }
+
+    const transcriptRatio =
+      recentChunkCoverage.recent_meetings_with_embedded_transcript_chunks / recent.recent_meetings;
+    if (transcriptRatio < RECENT_MIN_TRANSCRIPT_CHUNK_RATIO) {
+      fail(
+        `Only ${recentChunkCoverage.recent_meetings_with_embedded_transcript_chunks} of ` +
+          `${recent.recent_meetings} meetings from the last ${RECENT_WINDOW_DAYS} days ` +
+          `have embedded full-transcript chunks (${(transcriptRatio * 100).toFixed(1)}%, ` +
+          `required ≥${RECENT_MIN_TRANSCRIPT_CHUNK_RATIO * 100}%). ` +
+          `Meeting summaries may exist, but full-transcript RAG coverage is incomplete.`
+      );
+    }
   }
 
-  if (metadata.latest_meeting_at && metadata.latest_summary_embedding_at) {
+  if (metadata.latest_meeting_at && recentChunkCoverage.latest_recent_chunk_embedding_at) {
     const meetingMs = new Date(metadata.latest_meeting_at).getTime();
-    const embedMs = new Date(metadata.latest_summary_embedding_at).getTime();
+    const embedMs = new Date(recentChunkCoverage.latest_recent_chunk_embedding_at).getTime();
     const lagDays = (meetingMs - embedMs) / (1000 * 60 * 60 * 24);
     if (lagDays > STALENESS_DAYS) {
       fail(
         `Newest meeting (${new Date(metadata.latest_meeting_at).toISOString().slice(0, 10)}) is ` +
-          `${lagDays.toFixed(1)} days ahead of newest summary embedding ` +
-          `(${new Date(metadata.latest_summary_embedding_at).toISOString().slice(0, 10)}). ` +
+          `${lagDays.toFixed(1)} days ahead of newest recent chunk embedding ` +
+          `(${new Date(recentChunkCoverage.latest_recent_chunk_embedding_at).toISOString().slice(0, 10)}). ` +
           `Threshold: ${STALENESS_DAYS} days. Embedding pipeline is stalled.`
       );
     }
-  } else if (metadata.latest_meeting_at && !metadata.latest_summary_embedding_at) {
-    fail("Meetings exist but ZERO have summary embeddings. Pipeline never ran.");
+  } else if (metadata.latest_meeting_at && !recentChunkCoverage.latest_recent_chunk_embedding_at) {
+    fail("Meetings exist but ZERO recent meeting chunks have embeddings. Pipeline never ran.");
   }
 
-  if (summaryProbe.result_count === 0) {
-    fail("RPC match_document_metadata_by_summary returned no results for a known-good probe vector. Retrieval is broken.");
-  }
   if (chunkProbe.result_count === 0) {
     fail("RPC search_document_chunks returned no meeting chunk results for a known-good probe vector. Retrieval is broken.");
   }
@@ -386,12 +368,12 @@ try {
 
   const result = {
     metadata,
+    summaryMetadata,
     recent,
     chunks,
     recentChunkCoverage,
     pipelineJobs,
     probes: {
-      meetingSummarySearch: summaryProbe,
       documentChunkSearch: chunkProbe,
       embeddingProvider: provider,
     },
@@ -416,5 +398,6 @@ try {
 
   console.log("\nMeeting vectorization health: PASS");
 } finally {
-  await sql.end();
+  await appSql.end();
+  await ragSql.end();
 }
