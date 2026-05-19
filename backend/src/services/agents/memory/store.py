@@ -7,7 +7,13 @@ import os
 from dataclasses import dataclass, field
 from functools import lru_cache
 
-from sqlalchemy import bindparam, create_engine, text
+try:
+    from sqlalchemy import bindparam, create_engine, text
+except ImportError:
+    from sqlalchemy import create_engine, text
+
+    def bindparam(*_args, **_kwargs):  # type: ignore[no-redef]
+        return None
 from sqlalchemy.engine import Engine
 from sqlalchemy.pool import NullPool
 
@@ -17,6 +23,13 @@ USER_MEMORY_LIMIT = 30
 PROJECT_MEMORY_LIMIT = 40
 HIGH_VALUE_TYPES = ("preference", "lesson", "commitment", "context")
 SEARCHABLE_TYPES = ("fact", "preference", "lesson", "commitment", "context")
+
+
+def _with_expanding_types(query: object) -> object:
+    try:
+        return query.bindparams(bindparam("types", expanding=True))  # type: ignore[attr-defined]
+    except AttributeError:
+        return query
 
 
 @lru_cache(maxsize=1)
@@ -77,7 +90,7 @@ def load_user_memory(user_id: str) -> UserMemory | None:
     try:
         engine = _memory_engine()
         with engine.connect() as conn:
-            query = text(
+            query = _with_expanding_types(text(
                 """
                 SELECT type, content
                 FROM ai_memories
@@ -89,7 +102,7 @@ def load_user_memory(user_id: str) -> UserMemory | None:
                 ORDER BY importance DESC NULLS LAST, created_at DESC
                 LIMIT :limit
                 """
-            ).bindparams(bindparam("types", expanding=True))
+            ))
             rows = conn.execute(
                 query,
                 {
@@ -127,7 +140,7 @@ def load_project_memory(project_id: int | str) -> ProjectMemory | None:
             ).fetchone()
             project_name = str(name_row[0]) if name_row else str(pid)
 
-            query = text(
+            query = _with_expanding_types(text(
                 """
                 SELECT type, content
                 FROM ai_memories
@@ -138,7 +151,7 @@ def load_project_memory(project_id: int | str) -> ProjectMemory | None:
                 ORDER BY importance DESC NULLS LAST, created_at DESC
                 LIMIT :limit
                 """
-            ).bindparams(bindparam("types", expanding=True))
+            ))
             rows = conn.execute(
                 query,
                 {
@@ -306,7 +319,7 @@ def _query_and_rank_memories(
 ) -> list[MemoryEntry]:
     try:
         engine = _memory_engine()
-        sql = text(
+        sql = _with_expanding_types(text(
             f"""
             SELECT
               id::text,
@@ -323,7 +336,7 @@ def _query_and_rank_memories(
             ORDER BY importance DESC NULLS LAST, created_at DESC
             LIMIT :limit
             """
-        ).bindparams(bindparam("types", expanding=True))
+        ))
         with engine.connect() as conn:
             rows = conn.execute(sql, params).fetchall()
     except Exception:

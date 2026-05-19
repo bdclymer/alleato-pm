@@ -26,8 +26,11 @@ import {
   fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
   fetchDeepAgentResearch,
+  formatDeepAgentExecutiveBriefingContext,
   formatDeepAgentExecutiveDirectResponse,
+  formatDeepAgentProjectStatusContext,
   formatDeepAgentProjectDirectResponse,
+  formatDeepAgentResearchContext,
   formatDeepAgentResearchDirectResponse,
   shouldUseDeepAgentExecutiveBridge,
   shouldUseDeepAgentExecutiveDirectResponse,
@@ -694,6 +697,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     stepCount: number;
   } | null = null;
   const bridgeToolTrace: Array<Record<string, unknown>> = [];
+  const backendDeepAgentContextBlocks: string[] = [];
   const liveToolTrace: Array<Record<string, unknown>> = [];
   let latestRetrievalCtx: Awaited<
     ReturnType<typeof executeRetrievalPlan>
@@ -1145,6 +1149,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             return;
           }
 
+          backendDeepAgentContextBlocks.push(formatDeepAgentResearchContext(packet));
           bridgeToolTrace.push(
             createBackendBridgeTrace({
               tool: "backendDeepAgentResearch",
@@ -1153,6 +1158,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               selectedProjectId: args.selectedProjectId ?? null,
               detail:
                 "Backend research packet returned context for local synthesis.",
+            }),
+            ...mapBackendPacketTrace(packet.toolTrace, {
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
             }),
           );
           writer.write({
@@ -1338,6 +1347,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             return;
           }
 
+          backendDeepAgentContextBlocks.push(
+            formatDeepAgentProjectStatusContext(packet),
+          );
           bridgeToolTrace.push(
             createBackendBridgeTrace({
               tool: "backendDeepAgentProjectStatus",
@@ -1346,6 +1358,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               selectedProjectId: args.selectedProjectId,
               detail:
                 "Backend project packet returned context for local synthesis.",
+            }),
+            ...mapBackendPacketTrace(packet.toolTrace, {
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId,
             }),
           );
           writer.write({
@@ -1531,6 +1547,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             return;
           }
 
+          backendDeepAgentContextBlocks.push(
+            formatDeepAgentExecutiveBriefingContext(packet),
+          );
           bridgeToolTrace.push(
             createBackendBridgeTrace({
               tool: "backendDeepAgentExecutiveBriefing",
@@ -1539,6 +1558,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               selectedProjectId: args.selectedProjectId ?? null,
               detail:
                 "Backend executive packet returned context for local synthesis.",
+            }),
+            ...mapBackendPacketTrace(packet.toolTrace, {
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
             }),
           );
           writer.write({
@@ -1610,11 +1633,21 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         },
       } as never);
 
-      const systemPrompt = assembleSystemPromptFromContext(
+      const assembledSystemPrompt = assembleSystemPromptFromContext(
         plan,
         retrievalCtx,
         baseSystemPrompt,
       );
+      const systemPrompt =
+        backendDeepAgentContextBlocks.length > 0
+          ? [
+              assembledSystemPrompt,
+              "",
+              "## Backend Deep Agents Context",
+              "",
+              ...backendDeepAgentContextBlocks,
+            ].join("\n")
+          : assembledSystemPrompt;
 
       const tools = createStrategistTools(args.user.id, {
         pinnedProjectId: args.selectedProjectId,

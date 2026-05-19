@@ -20,6 +20,8 @@ const requestSchema = z.object({
 
 const V2_DEEP_AGENT_TIMEOUT_MS = 180_000;
 
+export const maxDuration = 180;
+
 async function resolveProjectIdFromQuestion(
   question: string,
 ): Promise<number | undefined> {

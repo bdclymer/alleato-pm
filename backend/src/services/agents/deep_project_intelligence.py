@@ -10,6 +10,8 @@ from __future__ import annotations
 import os
 import time
 from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
 from src.services.agents.deep_project_intelligence_contracts import (
@@ -33,7 +35,7 @@ from src.services.agents.alleato_ai_tools import (
     SQL_TOOLS,
 )
 from src.services.agents.alleato_ai_tools.prompts import ORCHESTRATOR_PROMPT
-from src.services.agents.alleato_ai_tools.subagents import ALL_SUBAGENTS
+from src.services.agents.alleato_ai_tools.subagents import build_subagents
 from src.services.agents.pm_advisor_tools import (
     portfolio_overview,
     project_briefing_snapshot,
@@ -69,6 +71,23 @@ REQUIRED_EXECUTIVE_SOURCE_TYPES = (
 DEEP_AGENT_RUNTIME_MODE = "deep_agents"
 CONTRACT_SPIKE_MODE = "contract_spike"
 AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
+RUNTIME_SKILL_NAMES = (
+    "deep-agents-core",
+    "deep-agents-memory",
+    "deep-agents-orchestration",
+)
+RUNTIME_AGENTS_MD = """# Alleato Deep Agents Project Intelligence Runtime
+
+You are running inside the Alleato PM Render backend.
+
+Use the Deep Agents harness deliberately:
+- Create and maintain a concise plan for multi-step project intelligence work.
+- Use source coverage and explicit tool evidence before synthesis.
+- Delegate focused investigations to the specialist subagents when their tools fit.
+- Treat draft/write tools as approval previews only; never claim an action was executed.
+- Fail loudly when a source, tool, provider, or memory capability is unavailable.
+- Keep tenant, user, and project boundaries from the request config.
+"""
 
 
 def _env_flag(name: str) -> bool:
@@ -83,11 +102,85 @@ def _deep_agents_memory_enabled() -> bool:
     return _env_flag("DEEP_AGENTS_MEMORY_ENABLED")
 
 
+def _repo_root() -> Path:
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "backend").exists() and (parent / "frontend").exists():
+            return parent
+    return Path.cwd()
+
+
+def _runtime_skill_payloads() -> dict[str, str]:
+    payloads: dict[str, str] = {}
+    roots = [
+        _repo_root() / ".agents" / "skills",
+        Path(__file__).resolve().parent / "research_agent" / "skills",
+    ]
+    for name in RUNTIME_SKILL_NAMES:
+        for root in roots:
+            skill_path = root / name / "SKILL.md"
+            if skill_path.exists():
+                payloads[f"/skills/{name}/SKILL.md"] = skill_path.read_text(encoding="utf-8")
+                break
+    return payloads
+
+
+@lru_cache(maxsize=1)
+def _runtime_store() -> Any:
+    from deepagents.backends.utils import create_file_data
+    from langgraph.store.memory import InMemoryStore
+
+    store = InMemoryStore()
+    store.put(("filesystem",), "/AGENTS.md", create_file_data(RUNTIME_AGENTS_MD))
+    for key, content in _runtime_skill_payloads().items():
+        store.put(("filesystem",), key, create_file_data(content))
+    return store
+
+
+@lru_cache(maxsize=1)
+def _runtime_checkpointer() -> Any:
+    from langgraph.checkpoint.memory import MemorySaver
+
+    return MemorySaver()
+
+
+def _store_backend_factory(runtime: Any) -> Any:
+    from deepagents.backends import StoreBackend
+
+    return StoreBackend(runtime)
+
+
+def _runtime_harness_options() -> tuple[dict[str, Any], list[str]]:
+    """Build optional Deep Agents harness configuration for web-server use."""
+    options: dict[str, Any] = {}
+    missing: list[str] = []
+
+    try:
+        store = _runtime_store()
+        options.update(
+            {
+                "backend": _store_backend_factory,
+                "store": store,
+                "skills": ["/skills/"],
+                "memory": ["/AGENTS.md"],
+            }
+        )
+    except Exception as exc:
+        missing.append(f"StoreBackend skills/memory backend ({exc})")
+
+    try:
+        options["checkpointer"] = _runtime_checkpointer()
+    except Exception as exc:
+        missing.append(f"MemorySaver checkpointer ({exc})")
+
+    return options, missing
+
+
 def _runtime_memory_middleware() -> list[Any]:
     if not _deep_agents_memory_enabled():
         return []
     try:
-        from src.services.agents.memory import DbMemoryMiddleware
+        from src.services.agents.memory.middleware import DbMemoryMiddleware
 
         return [DbMemoryMiddleware()]
     except Exception:
@@ -137,7 +230,25 @@ def _runtime_tools() -> list[Any]:
 def _runtime_subagents() -> list[dict[str, Any]]:
     if not (_standalone_tools_enabled() and _env_flag("DEEP_AGENTS_SUBAGENTS_ENABLED")):
         return []
-    return list(ALL_SUBAGENTS)
+    return build_subagents(
+        include_sql=_env_flag("DEEP_AGENTS_SQL_TOOLS_ENABLED"),
+        include_acumatica=_env_flag("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED"),
+    )
+
+
+def _subagents_with_skills(
+    subagents: Sequence[dict[str, Any]],
+    skills: Sequence[str],
+) -> list[dict[str, Any]]:
+    if not skills:
+        return [dict(subagent) for subagent in subagents]
+    return [
+        {
+            **subagent,
+            "skills": list(subagent.get("skills") or skills),
+        }
+        for subagent in subagents
+    ]
 
 
 def deep_agents_runtime_tool_names() -> tuple[str, ...]:
@@ -207,11 +318,8 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         memory_tool_names = _tool_names(
             build_memory_tools(user_id="inventory", project_id=1, candidate_sink=[]),
         )
-    known_missing = [
-        "FilesystemBackend",
-        "skills directory runtime loading",
-        "runtime AGENTS.md injection",
-    ]
+    harness_options, harness_missing = _runtime_harness_options()
+    known_missing = list(harness_missing)
     if not memory_middleware:
         known_missing.append("DbMemoryMiddleware")
     return {
@@ -231,6 +339,13 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
             "middleware": "DbMemoryMiddleware" if memory_middleware else None,
             "tools": memory_tool_names,
             "databaseUrlConfigured": bool(os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")),
+        },
+        "harness": {
+            "backend": "StoreBackend" if "backend" in harness_options else None,
+            "skills": list(harness_options.get("skills") or []),
+            "memory": list(harness_options.get("memory") or []),
+            "checkpointer": "MemorySaver" if "checkpointer" in harness_options else None,
+            "store": "InMemoryStore" if "store" in harness_options else None,
         },
         "knownMissing": known_missing,
     }
@@ -1045,7 +1160,10 @@ def _run_deep_agents_runtime(
                 project_id=request.project_id,
                 candidate_sink=memory_candidates,
             )
+        harness_options, _harness_missing = _runtime_harness_options()
+        skills = list(harness_options.get("skills") or [])
         agent = create_agent(
+            name="alleato-project-intelligence-orchestrator",
             model=model,
             tools=[
                 source_coverage,
@@ -1067,8 +1185,9 @@ def _run_deep_agents_runtime(
                 "write, email, Teams post, RFI, commitment, change event, or task was actually executed. "
                 "If sources are missing, say so plainly."
             ),
-            subagents=_runtime_subagents(),
+            subagents=_subagents_with_skills(_runtime_subagents(), skills),
             middleware=memory_middleware,
+            **harness_options,
         )
         result = _invoke_agent(
             agent,
@@ -1135,7 +1254,10 @@ def _run_deep_agents_executive_runtime(
                 user_id=request.user_id,
                 candidate_sink=memory_candidates,
             )
+        harness_options, _harness_missing = _runtime_harness_options()
+        skills = list(harness_options.get("skills") or [])
         agent = create_agent(
+            name="alleato-executive-intelligence-orchestrator",
             model=model,
             tools=[source_coverage, pm_portfolio_overview, *memory_tools, *_runtime_tools()],
             system_prompt=(
@@ -1150,8 +1272,9 @@ def _run_deep_agents_executive_runtime(
                 "Draft tools, if enabled, only produce approval previews; never imply that an email, invite, "
                 "task, project mutation, Teams post, RFI, commitment, or change event was completed."
             ),
-            subagents=_runtime_subagents(),
+            subagents=_subagents_with_skills(_runtime_subagents(), skills),
             middleware=memory_middleware,
+            **harness_options,
         )
         result = _invoke_agent(
             agent,

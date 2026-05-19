@@ -35,60 +35,47 @@ from . import (
     think_tool,
 )
 
-financial_analyst = {
-    "name": "financial-analyst",
-    "description": (
-        "Delegate financial questions: budget vs. actuals, commitments, change orders, "
-        "pay applications, cash position, Acumatica data. Give one focused question at a time."
-    ),
-    "system_prompt": FINANCIAL_ANALYST_PROMPT,
-    "tools": [
-        describe_schema,
-        query_db,
-        acumatica_ap_aging,
-        acumatica_ar_aging,
-        acumatica_cash_position,
-        acumatica_project_budget,
-        acumatica_project_list,
+def build_subagents(
+    *,
+    include_sql: bool = True,
+    include_acumatica: bool = True,
+) -> list[dict]:
+    """Build subagents with the same tool gates as the orchestrator runtime."""
+
+    financial_tools = [
         project_budget_summary,
         portfolio_overview,
-        acumatica_purchase_orders,
-        acumatica_recent_bills,
-        acumatica_recent_invoices,
-        acumatica_vendor_spend,
         think_tool,
-    ],
-}
+    ]
+    if include_sql:
+        financial_tools = [describe_schema, query_db, *financial_tools]
+    if include_acumatica:
+        financial_tools.extend(
+            [
+                acumatica_ap_aging,
+                acumatica_ar_aging,
+                acumatica_cash_position,
+                acumatica_project_budget,
+                acumatica_project_list,
+                acumatica_purchase_orders,
+                acumatica_recent_bills,
+                acumatica_recent_invoices,
+                acumatica_vendor_spend,
+            ]
+        )
 
-schedule_analyst = {
-    "name": "schedule-analyst",
-    "description": (
-        "Delegate schedule questions: status vs. baseline, float, critical path, milestones, "
-        "delays. Give one focused question at a time."
-    ),
-    "system_prompt": SCHEDULE_ANALYST_PROMPT,
-    "tools": [
-        describe_schema,
-        query_db,
+    schedule_tools = [
         project_briefing_snapshot,
         project_risk_snapshot,
         search_meeting_transcripts,
         list_recent_meetings,
         recent_activity,
         think_tool,
-    ],
-}
+    ]
+    if include_sql:
+        schedule_tools = [describe_schema, query_db, *schedule_tools]
 
-risk_analyst = {
-    "name": "risk-analyst",
-    "description": (
-        "Delegate risk-surfacing: aged RFIs, late submittals, unanswered communications, "
-        "approaching deadlines, contractual exposure. Give one focused question at a time."
-    ),
-    "system_prompt": RISK_ANALYST_PROMPT,
-    "tools": [
-        describe_schema,
-        query_db,
+    risk_tools = [
         project_briefing_snapshot,
         project_risk_snapshot,
         search_meeting_transcripts,
@@ -97,17 +84,11 @@ risk_analyst = {
         search_emails,
         search_teams_messages,
         think_tool,
-    ],
-}
+    ]
+    if include_sql:
+        risk_tools = [describe_schema, query_db, *risk_tools]
 
-communications_analyst = {
-    "name": "communications-analyst",
-    "description": (
-        "Delegate stakeholder-communication investigation: meeting discussions, Teams threads, "
-        "email tone, sentiment. Give one focused question at a time."
-    ),
-    "system_prompt": COMMUNICATIONS_ANALYST_PROMPT,
-    "tools": [
+    communications_tools = [
         search_meeting_transcripts,
         list_recent_meetings,
         recent_activity,
@@ -115,7 +96,46 @@ communications_analyst = {
         search_emails,
         search_teams_messages,
         think_tool,
-    ],
-}
+    ]
 
-ALL_SUBAGENTS = [financial_analyst, schedule_analyst, risk_analyst, communications_analyst]
+    return [
+        {
+            "name": "financial-analyst",
+            "description": (
+                "Delegate financial questions: budget vs. actuals, commitments, change orders, "
+                "pay applications, cash position, Acumatica data. Give one focused question at a time."
+            ),
+            "system_prompt": FINANCIAL_ANALYST_PROMPT,
+            "tools": financial_tools,
+        },
+        {
+            "name": "schedule-analyst",
+            "description": (
+                "Delegate schedule questions: status vs. baseline, float, critical path, milestones, "
+                "delays. Give one focused question at a time."
+            ),
+            "system_prompt": SCHEDULE_ANALYST_PROMPT,
+            "tools": schedule_tools,
+        },
+        {
+            "name": "risk-analyst",
+            "description": (
+                "Delegate risk-surfacing: aged RFIs, late submittals, unanswered communications, "
+                "approaching deadlines, contractual exposure. Give one focused question at a time."
+            ),
+            "system_prompt": RISK_ANALYST_PROMPT,
+            "tools": risk_tools,
+        },
+        {
+            "name": "communications-analyst",
+            "description": (
+                "Delegate stakeholder-communication investigation: meeting discussions, Teams threads, "
+                "email tone, sentiment. Give one focused question at a time."
+            ),
+            "system_prompt": COMMUNICATIONS_ANALYST_PROMPT,
+            "tools": communications_tools,
+        },
+    ]
+
+
+ALL_SUBAGENTS = build_subagents(include_sql=True, include_acumatica=True)

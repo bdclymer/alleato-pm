@@ -14,7 +14,7 @@ import type { AssistantIntent } from "@/lib/ai/intent-router";
 const WHERE = "ai-assistant.deep-agent-project-status";
 const EXECUTIVE_WHERE = "ai-assistant.deep-agent-executive-briefing";
 const RESEARCH_WHERE = "ai-assistant.deep-agent-research";
-const DEFAULT_DEEP_AGENT_BRIDGE_TIMEOUT_MS = 8_000;
+const DEFAULT_DEEP_AGENT_BRIDGE_TIMEOUT_MS = 120_000;
 
 const confidenceSchema = z.enum(["high", "medium", "low"]);
 
@@ -448,6 +448,37 @@ export function formatDeepAgentExecutiveBriefingContext(
     "Use this packet as checked business-wide backend context.",
     "Do not claim missing or failed source categories were available.",
     "Do not claim email, calendar, task, or project writes were completed unless a deterministic action tool did that work.",
+  ].join("\n");
+}
+
+export function formatDeepAgentResearchContext(packet: DeepResearchResponse): string {
+  const sourceLines = packet.sources.slice(0, 8).map((source) => {
+    const url = source.url ? ` ${source.url}` : "";
+    return `- [${source.sourceType}] ${source.title}${url}`;
+  });
+  const traceLines = packet.toolTrace.slice(0, 8).map((trace) => {
+    return `- ${trace.agent}/${trace.tool}: ${trace.status}${trace.detail ? ` - ${trace.detail}` : ""}`;
+  });
+
+  return [
+    "# Backend Deep Agents Research Packet",
+    "",
+    `Mode: ${packet.mode}`,
+    `Orchestrator: ${packet.orchestrator}`,
+    `Skills loaded: ${packet.skillsLoaded.join(", ") || "none reported"}`,
+    "",
+    "Backend research synthesis:",
+    packet.answer,
+    "",
+    "Sources:",
+    ...(sourceLines.length > 0
+      ? sourceLines
+      : ["- No parsed source URLs were returned."]),
+    "",
+    "Backend trace:",
+    ...(traceLines.length > 0 ? traceLines : ["- No backend trace rows were returned."]),
+    "",
+    "Use this packet as checked backend research context. Do not treat uncited public claims as audit-ready evidence.",
   ].join("\n");
 }
 

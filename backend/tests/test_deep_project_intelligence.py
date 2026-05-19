@@ -261,6 +261,55 @@ def test_deep_agents_runtime_can_synthesize_behind_contract():
     assert response.tool_trace[-1].status == "success"
 
 
+def test_deep_agents_runtime_attaches_harness_options_and_subagent_skills(monkeypatch):
+    captured: dict[str, object] = {}
+    harness_options = {
+        "backend": object(),
+        "store": object(),
+        "skills": ["/skills/"],
+        "memory": ["/AGENTS.md"],
+        "checkpointer": object(),
+    }
+
+    monkeypatch.setenv("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_SUBAGENTS_ENABLED", "true")
+    monkeypatch.setattr(
+        "src.services.agents.deep_project_intelligence._runtime_harness_options",
+        lambda: (harness_options, []),
+    )
+
+    class _Agent:
+        def invoke(self, payload, config=None):
+            captured["payload"] = payload
+            captured["config"] = config
+            return {"messages": [{"role": "assistant", "content": "Runtime synthesis from full harness."}]}
+
+    def create_agent(**kwargs):
+        captured["kwargs"] = kwargs
+        return _Agent()
+
+    response = build_project_status_contract_spike(
+        _request(),
+        _Store(
+            {"id": 43, "name": "Westfield Collective"},
+            client=_FakeSupabase({"intelligence_targets": []}),
+        ),
+        runtime="deep_agents",
+        create_agent=create_agent,
+    )
+
+    kwargs = captured["kwargs"]
+    assert response.mode == "deep_agents"
+    assert kwargs["name"] == "alleato-project-intelligence-orchestrator"
+    assert kwargs["backend"] is harness_options["backend"]
+    assert kwargs["store"] is harness_options["store"]
+    assert kwargs["skills"] == ["/skills/"]
+    assert kwargs["memory"] == ["/AGENTS.md"]
+    assert kwargs["checkpointer"] is harness_options["checkpointer"]
+    assert kwargs["subagents"]
+    assert all(subagent["skills"] == ["/skills/"] for subagent in kwargs["subagents"])
+
+
 def test_deep_agents_runtime_tool_inventory_is_gated(monkeypatch):
     monkeypatch.delenv("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED", raising=False)
     assert deep_agents_runtime_tool_names() == ()
@@ -340,6 +389,28 @@ def test_deep_agents_runtime_tool_inventory_matches_full_standalone_surface(monk
         "risk-analyst",
         "communications-analyst",
     }
+
+
+def test_deep_agents_runtime_subagents_respect_sql_and_acumatica_gates(monkeypatch):
+    from src.services.agents.deep_project_intelligence import _runtime_subagents
+
+    monkeypatch.setenv("DEEP_AGENTS_STANDALONE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("DEEP_AGENTS_SUBAGENTS_ENABLED", "true")
+    monkeypatch.delenv("DEEP_AGENTS_SQL_TOOLS_ENABLED", raising=False)
+    monkeypatch.delenv("DEEP_AGENTS_ACUMATICA_TOOLS_ENABLED", raising=False)
+
+    subagents = _runtime_subagents()
+    tool_names = {
+        getattr(tool, "name", getattr(tool, "__name__", ""))
+        for subagent in subagents
+        for tool in subagent["tools"]
+    }
+
+    assert "query_db" not in tool_names
+    assert "describe_schema" not in tool_names
+    assert not any(name.startswith("acumatica_") for name in tool_names)
+    assert "project_budget_summary" in tool_names
+    assert "search_meeting_transcripts" in tool_names
 
 
 def test_deep_agents_runtime_inventory_reports_effective_surface(monkeypatch):

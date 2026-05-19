@@ -10,6 +10,7 @@ import {
   formatDeepAgentExecutiveBriefingContext,
   formatDeepAgentProjectDirectResponse,
   formatDeepAgentProjectStatusContext,
+  formatDeepAgentResearchContext,
   formatDeepAgentResearchDirectResponse,
   shouldUseDeepAgentExecutiveDirectResponse,
   shouldUseDeepAgentExecutiveBridge,
@@ -476,6 +477,16 @@ describe("Deep Agents project-status bridge", () => {
         ],
       }),
     ).toBe(false);
+  });
+
+  it("formats research packets as additive AI SDK context", () => {
+    const context = formatDeepAgentResearchContext(researchPacket);
+
+    expect(context).toContain("Backend Deep Agents Research Packet");
+    expect(context).toContain("Mode: deep_agents");
+    expect(context).toContain("Skills loaded: web-research, deep-agents-core");
+    expect(context).toContain("[web] City zoning source https://example.com/zoning");
+    expect(context).toContain("Do not treat uncited public claims as audit-ready evidence");
   });
 
   it("turns research sources into the existing source evidence widget", () => {

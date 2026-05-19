@@ -17,6 +17,8 @@ const backendUrl = (
 const expectEnabled = process.env.DEEP_AGENTS_EXPECT_ENABLED === "true";
 const expectFrontendBridge = process.env.DEEP_AGENTS_EXPECT_FRONTEND_BRIDGE === "true";
 const adminApiKey = process.env.ADMIN_API_KEY;
+const DEFAULT_FETCH_TIMEOUT_MS = Number(process.env.DEEP_AGENTS_VERIFY_FETCH_TIMEOUT_MS || 120000);
+const SHORT_FETCH_TIMEOUT_MS = Number(process.env.DEEP_AGENTS_VERIFY_SHORT_FETCH_TIMEOUT_MS || 30000);
 const failures = [];
 const warnings = [];
 
@@ -26,6 +28,24 @@ function fail(message) {
 
 function warn(message) {
   warnings.push(message);
+}
+
+async function fetchWithTimeout(label, url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`${label} timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function findBackendService(manifestPath) {
@@ -68,9 +88,14 @@ async function verifyRenderApiServiceMapping() {
     return;
   }
 
-  const response = await fetch("https://api.render.com/v1/services?limit=100", {
-    headers: { accept: "application/json", authorization: `Bearer ${apiKey}` },
-  });
+  const response = await fetchWithTimeout(
+    "Render service mapping check",
+    "https://api.render.com/v1/services?limit=100",
+    {
+      headers: { accept: "application/json", authorization: `Bearer ${apiKey}` },
+    },
+    SHORT_FETCH_TIMEOUT_MS,
+  );
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     warn(`Render service mapping check failed with HTTP ${response.status}.`);
@@ -100,6 +125,7 @@ function verifyVercelProductionBridgeEnv() {
     {
       encoding: "utf8",
       maxBuffer: 1024 * 1024,
+      timeout: SHORT_FETCH_TIMEOUT_MS,
     },
   );
   const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
@@ -125,9 +151,14 @@ async function main() {
     fail(`Backend URL must point at ${ACTIVE_BACKEND_HOST}; found ${backendUrl}`);
   }
 
-  const healthResponse = await fetch(`${backendUrl}/health`, {
-    headers: { accept: "application/json" },
-  });
+  const healthResponse = await fetchWithTimeout(
+    "Active backend health check",
+    `${backendUrl}/health`,
+    {
+      headers: { accept: "application/json" },
+    },
+    SHORT_FETCH_TIMEOUT_MS,
+  );
   const health = await healthResponse.json().catch(() => ({}));
   if (!healthResponse.ok || health.status !== "healthy") {
     fail(`Active backend health failed: HTTP ${healthResponse.status}, status=${health.status ?? "missing"}`);
@@ -150,12 +181,17 @@ async function main() {
   if (!adminApiKey) {
     fail("ADMIN_API_KEY is required for the Deep Agents endpoint readiness probe.");
   } else {
-    const inventoryResponse = await fetch(`${backendUrl}/api/intelligence/deep-agent/tool-inventory`, {
-      headers: {
-        accept: "application/json",
-        "x-admin-api-key": adminApiKey,
+    const inventoryResponse = await fetchWithTimeout(
+      "Deep Agents tool inventory probe",
+      `${backendUrl}/api/intelligence/deep-agent/tool-inventory`,
+      {
+        headers: {
+          accept: "application/json",
+          "x-admin-api-key": adminApiKey,
+        },
       },
-    });
+      SHORT_FETCH_TIMEOUT_MS,
+    );
     const inventoryPayload = await inventoryResponse.json().catch(() => ({}));
     if (!inventoryResponse.ok) {
       fail(`Deep Agents tool inventory probe failed with HTTP ${inventoryResponse.status}.`);
@@ -184,21 +220,25 @@ async function main() {
       fail(`Deep Agents enabled check requires 4 subagents; found ${toolInventory.subagentCount}.`);
     }
 
-    const response = await fetch(`${backendUrl}/api/intelligence/deep-agent/project-status`, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-        "x-admin-api-key": adminApiKey,
+    const response = await fetchWithTimeout(
+      "Deep Agents project endpoint probe",
+      `${backendUrl}/api/intelligence/deep-agent/project-status`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-admin-api-key": adminApiKey,
+        },
+        body: JSON.stringify({
+          userId: "deep-agents-nonprod-readiness",
+          projectId: 43,
+          sessionId: "deep-agents-nonprod-readiness",
+          question: "What is the current risk/status on this project?",
+          mode: "project_status_risk",
+        }),
       },
-      body: JSON.stringify({
-        userId: "deep-agents-nonprod-readiness",
-        projectId: 43,
-        sessionId: "deep-agents-nonprod-readiness",
-        question: "What is the current risk/status on this project?",
-        mode: "project_status_risk",
-      }),
-    });
+    );
     const payload = await response.json().catch(() => ({}));
     endpointMode = payload.mode ?? null;
     if (response.status === 503 && String(payload.detail ?? "").includes("Deep Agents project intelligence is disabled")) {
@@ -211,20 +251,24 @@ async function main() {
       fail(`Deep Agents endpoint probe failed with HTTP ${response.status}.`);
     }
 
-    const executiveResponse = await fetch(`${backendUrl}/api/intelligence/deep-agent/executive-briefing`, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-        "x-admin-api-key": adminApiKey,
+    const executiveResponse = await fetchWithTimeout(
+      "Deep Agents executive endpoint probe",
+      `${backendUrl}/api/intelligence/deep-agent/executive-briefing`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-admin-api-key": adminApiKey,
+        },
+        body: JSON.stringify({
+          userId: "deep-agents-nonprod-readiness",
+          sessionId: "deep-agents-nonprod-readiness",
+          question: "What business risks need attention and what am I waiting on from the team?",
+          mode: "business_briefing",
+        }),
       },
-      body: JSON.stringify({
-        userId: "deep-agents-nonprod-readiness",
-        sessionId: "deep-agents-nonprod-readiness",
-        question: "What business risks need attention and what am I waiting on from the team?",
-        mode: "business_briefing",
-      }),
-    });
+    );
     const executivePayload = await executiveResponse.json().catch(() => ({}));
     executiveEndpointMode = executivePayload.mode ?? null;
     if (
@@ -240,21 +284,25 @@ async function main() {
       fail(`Deep Agents executive endpoint probe failed with HTTP ${executiveResponse.status}.`);
     }
 
-    const researchResponse = await fetch(`${backendUrl}/api/intelligence/research`, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-        "x-admin-api-key": adminApiKey,
+    const researchResponse = await fetchWithTimeout(
+      "Deep Agents research endpoint probe",
+      `${backendUrl}/api/intelligence/research`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-admin-api-key": adminApiKey,
+        },
+        body: JSON.stringify({
+          userId: "deep-agents-nonprod-readiness",
+          sessionId: "deep-agents-nonprod-readiness-research",
+          question:
+            "In one short paragraph, confirm public web research is available and cite one public source URL.",
+          maxSearches: 1,
+        }),
       },
-      body: JSON.stringify({
-        userId: "deep-agents-nonprod-readiness",
-        sessionId: "deep-agents-nonprod-readiness-research",
-        question:
-          "In one short paragraph, confirm public web research is available and cite one public source URL.",
-        maxSearches: 1,
-      }),
-    });
+    );
     const researchPayload = await researchResponse.json().catch(() => ({}));
     researchEndpointMode = researchPayload.mode ?? null;
     researchSourceCount = Array.isArray(researchPayload.sources) ? researchPayload.sources.length : 0;

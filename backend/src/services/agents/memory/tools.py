@@ -5,7 +5,18 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal
 
-from langchain_core.tools import StructuredTool
+try:
+    from langchain_core.tools import StructuredTool
+except Exception:
+    from langchain_core.tools import tool
+
+    class StructuredTool:  # type: ignore[no-redef]
+        @staticmethod
+        def from_function(func, name: str, description: str):
+            wrapped = tool(func)
+            wrapped.name = name
+            wrapped.description = description
+            return wrapped
 
 from src.services.agents.deep_project_intelligence_contracts import MemoryCandidate
 from src.services.agents.memory.store import (
