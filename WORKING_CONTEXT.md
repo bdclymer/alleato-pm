@@ -7,9 +7,57 @@
 
 ## Current focus
 
-**Status:** Pattern C attachment consolidation closed out; legacy PURT/entity attachment tables dropped after Pattern C reconciliation.
-**Last updated:** 2026-05-18
-**Last worked on by:** Codex (Pattern C attachment migration — batch 2)
+**Status:** Error-tracker triage complete — 3 rounds shipped, 7 recurring patterns documented, telemetry signal:noise restored.
+**Last updated:** 2026-05-19
+**Last worked on by:** Claude Code (error-tracker triage + patterns documentation)
+
+## Error-tracker triage (2026-05-18 → 2026-05-19)
+
+The `/errors` admin page had been silently collecting events for weeks without anyone looking — **973 grouped patterns spanning 3,638 events, 969 still in `new`**. Three parallel-agent rounds closed it out and surfaced **seven distinct recurring patterns** that account for every bug we fixed.
+
+### What shipped
+
+| Commit | Round | Files | What |
+|---|---|---|---|
+| `aca196aa6` | 1 | 14 | Six high-sev bug groups: commitments nil-UUID, directory roles FK ambiguity, /api/tasks generic-error, prime-contract markup_type crash, source-sync 504, AssignMemberDialog JSON.parse |
+| `0bf0c5878` | 2 | 2 | Suppress 401/403 from telemetry at both server (`withApiGuardrails`) and client (`apiFetch`) write points |
+| `3e9931613` | 3 | 15 | `assertNonNilUuid` shared helper across 14 handlers, `asGuardrailError` plain-object support (every API route benefits), `"job number"` → `project_number`, Supabase auth-lock + 4xx user-error noise filters |
+
+### The seven patterns (all newly documented under `docs/patterns/`)
+
+1. **Nil-UUID cascade** — parent-not-loaded React hooks fire with `00000000-…`. Affected commitments, change-events, commitment-pcos routes. Solved with shared `assertNonNilUuid` helper.
+2. **Generic error swallow** — "Unexpected error" / "Failed to load X" erased the real Supabase error. `asGuardrailError` was using `instanceof Error` which fails for Supabase's plain-object `PostgrestError`. Fix applies to every API route.
+3. **PostgREST embed/select quirks** — multi-FK ambiguity (people↔companies, 5 files) and quoted-identifier-with-space (`"job number"`, 4 files). Solved with `!fk_name` hints and snake_case renames.
+4. **Telemetry signal inversion** — 614+ noise events of auth-state, lock contention, and 4xx user-validation were buried real bugs. Solved with two-layer suppress-list.
+5. **`apiFetch<T>` null passthrough** — returns null at runtime for 204/empty responses despite typing `T`. Crashed `PrimeContractOverviewTab`. Defensive fix in place; durable wrapper fix open.
+6. **Schema rename drift** — `"job number"` rename left 4 stragglers, silently broken for 5 days. Sweep procedure documented; registry + CI gate proposed.
+7. **Status-endpoint sequential I/O** — `/api/admin/source-sync/status` made 10+ sequential DB queries and 504'd repeatedly. Solved with backend cache + frontend graceful degradation.
+
+Full retrospective: `docs/patterns/2026-05-18-error-tracker-triage-retrospective.md`.
+
+### Telemetry queue state
+
+| Status | Before | After |
+|---|---|---|
+| `new` | 969 | ~280 (manageable, real bugs) |
+| `in_progress` (fixed, awaiting confirmation) | 0 | ~85 |
+| `ignored` (noise filtered) | 0 | 645+ |
+| `needs_human` | 3 | 3 |
+
+### New pattern docs (all registered in `docs/patterns/index.json`)
+
+- `docs/patterns/errors/nil-uuid-cascade.md` + `solutions/assert-non-nil-uuid.md`
+- `docs/patterns/errors/generic-error-swallow.md` + `solutions/error-message-fidelity.md`
+- `docs/patterns/errors/postgrest-embed-ambiguity.md` + `solutions/postgrest-fk-disambiguation.md`
+- `docs/patterns/errors/telemetry-noise-classification.md` + `solutions/telemetry-suppress-list.md`
+- `docs/patterns/errors/apifetch-null-passthrough.md` (durable solution open)
+- `docs/patterns/errors/schema-rename-drift.md` (registry proposed)
+- `docs/patterns/errors/status-endpoint-sequential-io.md` (solution inline)
+- `docs/patterns/2026-05-18-error-tracker-triage-retrospective.md` (capstone)
+
+### New shared utility
+
+`frontend/src/lib/guardrails/path-params.ts` — exports `NIL_UUID` constant + `assertNonNilUuid()` helper. Apply at the top of every API handler whose path param is a UUID (not integer-shaped IDs like `[projectId]`).
 
 ## Pattern C attachment migration — batch 2 (2026-05-18)
 
@@ -365,14 +413,23 @@ Nothing actively blocked. All changes pushed to main.
 
 ## What's next / follow-ups
 
-1. **Azure OCR activation** — Add env vars + deploy + run backfill (see 2026-05-17 session notes above)
-2. **Deep Agents production validation** — the bridge is gated behind `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED`. Needs end-to-end test with a real project question before toggling on in production.
-3. **Outlook email widget actions** — Project assignment and Task creation currently delegate to `onSubmit` (AI handles them). Could wire to direct API calls if the assistant round-trip feels slow in practice.
-4. **Radix Select + browser automation gap** — ~30 cascading E2E failures trace to this. The dropdown test pattern needs a dedicated fix before Playwright suite can cover full CRUD flows.
-5. **Estimates tool** — has no seed data; E2E tests can't run until seed data is created.
-6. **`/prp-validate` runs needed** — Change Events, Change Management, Commitments, Direct Costs, Invoicing, Prime Contracts, Estimates still need PRP validation.
-7. **Low-confidence review queue** — `document_attribution_candidates` table still has no UI.
-8. **GitHub billing** — CI workflows are still disabled (billing lock at github.com/settings/billing).
+**From error-tracker triage (2026-05-19) — high leverage:**
+
+1. **Fix `apiFetch<T>` at the wrapper** so 204/empty bodies throw when `T` doesn't permit null. Single change in `frontend/src/lib/api-client.ts` kills pattern #5 across the entire codebase. See `docs/patterns/errors/apifetch-null-passthrough.md`.
+2. **Build the column-rename registry + CI gate**. A `docs/database/column-renames.json` listing every rename, plus a pre-commit check that fails if any `from` string appears in code outside the migration. Kills pattern #6 going forward. See `docs/patterns/errors/schema-rename-drift.md`.
+3. **Write the ESLint rules** proposed in `docs/patterns/solutions/error-message-fidelity.md` and `docs/patterns/solutions/postgrest-fk-disambiguation.md`. Each rule eliminates its pattern class at commit time.
+4. **Triage the remaining ~280 `new` error groups**. Now that noise is filtered, most are real bugs. Recommend batches of ~10, prioritizing high-severity + high-event-count.
+
+**Pre-existing:**
+
+5. **Azure OCR activation** — Add env vars + deploy + run backfill (see 2026-05-17 session notes above)
+6. **Deep Agents production validation** — the bridge is gated behind `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED`. Needs end-to-end test with a real project question before toggling on in production.
+7. **Outlook email widget actions** — Project assignment and Task creation currently delegate to `onSubmit` (AI handles them). Could wire to direct API calls if the assistant round-trip feels slow in practice.
+8. **Radix Select + browser automation gap** — ~30 cascading E2E failures trace to this. The dropdown test pattern needs a dedicated fix before Playwright suite can cover full CRUD flows.
+9. **Estimates tool** — has no seed data; E2E tests can't run until seed data is created.
+10. **`/prp-validate` runs needed** — Change Events, Change Management, Commitments, Direct Costs, Invoicing, Prime Contracts, Estimates still need PRP validation.
+11. **Low-confidence review queue** — `document_attribution_candidates` table still has no UI.
+12. **GitHub billing** — CI workflows are still disabled (billing lock at github.com/settings/billing).
 
 ---
 
