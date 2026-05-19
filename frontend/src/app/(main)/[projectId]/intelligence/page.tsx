@@ -436,11 +436,19 @@ function briefingStatus(packet: ClientProjectIntelligencePacket): {
   );
   const warnings = qualityWarnings(packet);
 
-  if (!cleanRead || warnings.length > 0) {
+  if (!cleanRead) {
     return {
-      title: "Daily intelligence needs resynthesis before agents rely on it.",
+      title: "Daily intelligence could not produce a usable strategic read.",
       body:
-        "The page found source-backed signals, but the current packet is mixing raw source text, metadata, or stale output into the strategy layer. This is the right place to catch that failure before a human or AI agent treats it as an operating report.",
+        "The page found source-backed signals, but the current packet did not produce a synthesized operating read. This should be refreshed before a human or AI agent treats it as an operating report.",
+    };
+  }
+
+  if (warnings.length > 0) {
+    return {
+      title: "Daily intelligence failed source-quality checks.",
+      body:
+        "The page found source-backed signals, but the current packet has a stale, uncited, or failed quality-gate condition. The evidence limits below are separate from this failure state.",
     };
   }
 
@@ -531,16 +539,31 @@ function BriefingHeader({
               </div>
             ))}
           </dl>
-          {warnings.length > 0 || limitations.length > 0 ? (
+          {warnings.length > 0 ? (
             <div className="space-y-2 border-t border-border/60 pt-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <AlertTriangle className="h-4 w-4 text-status-warning" />
-                {warnings.length > 0 ? "Source quality notes" : "Evidence limitations"}
+                Source quality failure
               </div>
               <ul className="space-y-2">
-                {(warnings.length > 0 ? warnings : limitations).slice(0, 3).map((warning) => (
+                {warnings.slice(0, 3).map((warning) => (
                   <li key={warning} className="text-sm leading-6 text-muted-foreground">
                     {warning}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {limitations.length > 0 ? (
+            <div className="space-y-2 border-t border-border/60 pt-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <AlertTriangle className="h-4 w-4 text-status-warning" />
+                Evidence limitations
+              </div>
+              <ul className="space-y-2">
+                {limitations.slice(0, 3).map((limitation) => (
+                  <li key={limitation} className="text-sm leading-6 text-muted-foreground">
+                    {limitation}
                   </li>
                 ))}
               </ul>
@@ -979,15 +1002,29 @@ function EvidenceDiagnostics({
               </div>
             ))}
           </div>
-          {warnings.length > 0 || limitations.length > 0 ? (
+          {warnings.length > 0 ? (
             <div className="space-y-2 border-t border-border/60 pt-4">
               <Heading level={6} as="h3" className="text-sm">
-                {warnings.length > 0 ? "What could fail" : "Evidence limitations"}
+                What could fail
               </Heading>
               <ul className="space-y-2">
-                {(warnings.length > 0 ? warnings : limitations).map((warning) => (
+                {warnings.map((warning) => (
                   <li key={warning} className="text-sm leading-6 text-muted-foreground">
                     {warning}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {limitations.length > 0 ? (
+            <div className="space-y-2 border-t border-border/60 pt-4">
+              <Heading level={6} as="h3" className="text-sm">
+                Evidence limitations
+              </Heading>
+              <ul className="space-y-2">
+                {limitations.map((limitation) => (
+                  <li key={limitation} className="text-sm leading-6 text-muted-foreground">
+                    {limitation}
                   </li>
                 ))}
               </ul>
