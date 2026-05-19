@@ -228,6 +228,7 @@ const ENDPOINTS = [
   ["GET", "/api/admin/feedback", "Admin feedback", [200, 401]],
   ["GET", "/api/admin/feedback/tools", "Feedback tools", [200, 401]],
   ["GET", "/api/admin/company-context", "Company context", [200, 401]],
+  ["GET", "/api/email-filter-rules", "Email filter rules (admin)", [200, 401, 403]],
   ["GET",  "/api/knowledge",             "Knowledge documents (public)", [200, 401]],
   ["GET",  "/api/knowledge?manage=true", "Knowledge documents (admin)",  [200, 401, 403]],
   ["POST", "/api/knowledge/upload",      "Knowledge upload (auth guard)", [201, 400, 401, 403]],
