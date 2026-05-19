@@ -3373,7 +3373,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
 
     draftOutlookEmail: tool({
       description:
-        "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. Use readOutlookEmailThread before drafting a reply when a specific thread is involved. When drafting from Brandon's mailbox, apply the Brandon Email Voice Profile at docs/ai-plan/brandon-email-voice-profile.md: short, direct, action-oriented, minimal formal greeting in active reply chains, practical construction/business wording, and no consultant-style over-explanation.",
+        "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. For reply drafts, ground the response through the Microsoft Executive Assistant specialist or a live Graph message/thread lookup before calling this tool. When drafting from Brandon's mailbox, apply the Brandon Email Voice Profile at docs/ai-plan/brandon-email-voice-profile.md: short, direct, action-oriented, minimal formal greeting in active reply chains, practical construction/business wording, and no consultant-style over-explanation.",
       inputSchema: z.object({
         mailboxUserId: z
           .string()

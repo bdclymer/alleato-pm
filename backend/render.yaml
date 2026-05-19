@@ -244,6 +244,48 @@ services:
       - key: OUTLOOK_ATTACHMENT_PROMOTION_LIMIT
         value: "25"
 
+  - type: cron
+    name: alleato-microsoft-executive-assistant-check
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "*/15 * * * *"
+    dockerCommand: >-
+      timeout 10m python3 src/scripts/run_microsoft_executive_assistant_check.py
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_SCHEDULED_ENABLED
+        value: "true"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAX_MESSAGES
+        value: "25"
+      - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED
+        value: "true"
+      - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL
+        value: gpt-5.4-mini
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
   - type: web
     name: alleato-backend
     runtime: docker
@@ -331,6 +373,16 @@ services:
         value: true
       - key: DEEP_AGENTS_RESEARCH_MODEL
         value: gpt-5.4-mini
+      - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED
+        value: true
+      - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL
+        value: gpt-5.4-mini
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_WEBHOOK_ENABLED
+        value: "true"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_EVENT_MAX_MESSAGES
+        value: "10"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX
+        sync: false
       - key: DEEP_AGENTS_CONTENT_BUILDER_ENABLED
         value: true
       - key: DEEP_AGENTS_CONTENT_BUILDER_MODEL

@@ -38,6 +38,8 @@ import {
   type InsightCardWithTarget,
 } from "@/lib/ai/insight-cards";
 import type { Json } from "@/types/database.types";
+import { fetchWithPolicy } from "@/lib/guardrails/dependency";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   normalizeRetrievalWeightQuerySignature,
   retrievalWeightMultiplierForItem,
@@ -54,7 +56,7 @@ type CreateOperationalToolsOptions = {
 type RecentEmailDirection = "mailbox" | "to" | "from" | "to_or_from";
 
 type RecentEmailRow = {
-  id: number;
+  id: number | string;
   subject: string;
   from_name: string | null;
   from_email: string | null;
@@ -71,6 +73,22 @@ type RecentEmailRow = {
   match_status: string | null;
   source_metadata: Record<string, unknown> | null;
 };
+
+type LiveOutlookInboxResult =
+  | {
+      ok: true;
+      source: "microsoft_graph_live";
+      mailbox_user_id: string;
+      fetched_at: string;
+      count: number;
+      messages: RecentEmailRow[];
+      truncated: boolean;
+    }
+  | {
+      ok: false;
+      source: "microsoft_graph_live";
+      error: string;
+    };
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
   name: string,
@@ -134,6 +152,42 @@ function getPrimarySyncedMailbox(): string | null {
     normalizeEmail(process.env.OUTLOOK_OPERATOR_MAILBOX) ??
     normalizeEmail(process.env.MICROSOFT_SYNC_USERS?.split(",")[0])
   );
+}
+
+function backendUrl(): string {
+  const value = (
+    process.env.BACKEND_URL ||
+    process.env.PYTHON_BACKEND_URL ||
+    (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000" : "")
+  )
+    .replace(/\/+$/, "")
+    .trim();
+
+  try {
+    new URL(value);
+  } catch {
+    throw new GuardrailError({
+      code: "MISSING_ENV_VAR",
+      where: "ai-assistant.getRecentEmails.live-inbox",
+      message: "Missing or invalid backend URL. Set BACKEND_URL or PYTHON_BACKEND_URL.",
+      status: 503,
+    });
+  }
+
+  return value;
+}
+
+function backendAdminApiKey(): string {
+  const apiKey = process.env.ADMIN_API_KEY?.trim();
+  if (!apiKey) {
+    throw new GuardrailError({
+      code: "MISSING_ENV_VAR",
+      where: "ai-assistant.getRecentEmails.live-inbox",
+      message: "ADMIN_API_KEY is required to read Outlook live inbox through the backend.",
+      status: 503,
+    });
+  }
+  return apiKey;
 }
 
 function isCompanyMailbox(email: string): boolean {
@@ -360,6 +414,73 @@ function formatRecentEmailRows(
   const threads = groupByThread ? groupRecentEmailsByThread(data, limit) : [];
 
   return { emails, threads };
+}
+
+async function readLiveOutlookInbox(input: {
+  mailboxUserId: string;
+  sinceIso: string;
+  limit: number;
+}): Promise<LiveOutlookInboxResult> {
+  try {
+    const headers = new Headers({
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-Admin-Api-Key": backendAdminApiKey(),
+    });
+    const response = await fetchWithPolicy(
+      `ai-assistant-live-inbox-${Date.now()}`,
+      "ai-assistant.getRecentEmails.live-inbox",
+      "backend.graph.outlook.live-inbox",
+      `${backendUrl()}/api/graph/outlook/live-inbox`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          mailbox_user_id: input.mailboxUserId,
+          since_iso: input.sinceIso,
+          limit: input.limit,
+        }),
+        cache: "no-store",
+      },
+      {
+        timeoutMs: 15_000,
+        maxRetries: 0,
+      },
+    );
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      return {
+        ok: false,
+        source: "microsoft_graph_live",
+        error: `Backend live Outlook inbox read failed: ${response.status} ${response.statusText}${detail ? `: ${detail.slice(0, 400)}` : ""}`,
+      };
+    }
+
+    const payload = (await response.json()) as {
+      source?: string;
+      mailbox_user_id?: string;
+      fetched_at?: string;
+      count?: number;
+      messages?: RecentEmailRow[];
+      truncated?: boolean;
+    };
+    return {
+      ok: true,
+      source: "microsoft_graph_live",
+      mailbox_user_id: payload.mailbox_user_id ?? input.mailboxUserId,
+      fetched_at: payload.fetched_at ?? new Date().toISOString(),
+      count: payload.count ?? payload.messages?.length ?? 0,
+      messages: payload.messages ?? [],
+      truncated: Boolean(payload.truncated),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      source: "microsoft_graph_live",
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2924,7 +3045,7 @@ export function createOperationalTools(
         "Use this when the user asks a time-based question about emails: " +
         "'what emails did I receive today?', 'show me emails from this week', " +
         "'any emails received yesterday?', 'how many emails came in today?'. " +
-        "This is a structured date query over synced Outlook intake rows — NOT a semantic/topic search or direct Microsoft Graph live read. " +
+        "This queries the backend Microsoft Graph live inbox first. Synced Outlook intake rows are fallback only — never treat them as live inbox truth. " +
         "By default, queries the signed-in user's synced mailbox so 'my emails today' does not spill into other mailboxes. " +
         "Returns consolidated conversation/thread groups first, with message counts, senders, recipients, dates, and previews. " +
         "Use participantEmail plus direction='to' or direction='from' only when the user explicitly asks for emails to/from a person. " +
@@ -3048,6 +3169,60 @@ export function createOperationalTools(
             timeZone || "America/New_York",
           );
           const fetchLimit = Math.min(Math.max(safeLimit * 6, 100), 600);
+          const liveGraphResult =
+            effectiveDirection === "mailbox"
+              ? await readLiveOutlookInbox({
+                  mailboxUserId: effectiveParticipantEmail,
+                  sinceIso: since.toISOString(),
+                  limit: Math.min(fetchLimit, 100),
+                })
+              : null;
+
+          if (liveGraphResult?.ok) {
+            const liveData = liveGraphResult.messages;
+            const { emails, threads } = formatRecentEmailRows(
+              liveData,
+              safeLimit,
+              groupByThread,
+            );
+            const rangeLabel =
+              safeDaysBack === 0
+                ? "today"
+                : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
+            const dataCutoffNote = `Queried Microsoft Graph live at ${new Date(
+              liveGraphResult.fetched_at,
+            ).toLocaleString("en-US", {
+              timeZone: "America/New_York",
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })} ET.`;
+
+            return {
+              source: "microsoft_graph_live",
+              emails,
+              threads,
+              count: liveData.length,
+              threadCount: groupByThread ? threads.length : undefined,
+              summary: groupByThread
+                ? `Found ${liveData.length} live Outlook email${liveData.length === 1 ? "" : "s"} in ${threads.length} thread${threads.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`
+                : `Found ${liveData.length} live Outlook email${liveData.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
+              dataCutoffNote,
+              mailboxResolutionNote,
+              appliedFilter: {
+                email: effectiveParticipantEmail,
+                direction: effectiveDirection,
+                since: since.toISOString(),
+                timeZone,
+              },
+              graphLive: {
+                fetchedAt: liveGraphResult.fetched_at,
+                truncated: liveGraphResult.truncated,
+              },
+            };
+          }
+
           const emailSelect =
             "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link, graph_message_id, conversation_id, match_status, source_metadata";
 
@@ -3098,27 +3273,34 @@ export function createOperationalTools(
                 effectiveDirection,
               ),
           );
-	          const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
-	          const dataCutoffNote = lastSyncedAt
-	            ? `Outlook email sync last completed ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET. Syncs run hourly, so emails received after that sync may not appear yet.`
-	            : "Outlook email sync time is unknown, so emails received since the last completed sync may not appear.";
+          const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
+          const graphLiveError =
+            liveGraphResult && !liveGraphResult.ok
+              ? liveGraphResult.error
+              : "not available for this filter";
+          const dataCutoffNote = lastSyncedAt
+            ? `Microsoft Graph live inbox read failed (${graphLiveError}). Falling back to synced Outlook rows. Outlook email sync last completed ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET. Syncs run hourly, so emails received after that sync may not appear yet.`
+            : `Microsoft Graph live inbox read failed (${graphLiveError}). Outlook email sync time is unknown, so emails received since the last completed sync may not appear.`;
 
-	          if (data.length === 0) {
-	            if (!lastSyncedAt) {
-	              return {
-	                error:
-	                  `No Outlook sync state exists for ${effectiveParticipantEmail}. This mailbox is not configured or has not completed an Outlook sync; do not treat this as an empty inbox.`,
-	                emails: [],
-	                threads: [],
-	                mailboxResolutionNote,
-	                appliedFilter: {
-	                  email: effectiveParticipantEmail,
-	                  direction: effectiveDirection,
-	                  since: since.toISOString(),
-	                  timeZone,
-	                },
-	              };
-	            }
+          if (data.length === 0) {
+            if (!lastSyncedAt) {
+              return {
+                source: "outlook_email_intake_fallback",
+                error:
+                  `No Outlook sync state exists for ${effectiveParticipantEmail}. This mailbox is not configured or has not completed an Outlook sync; do not treat this as an empty inbox.`,
+                emails: [],
+                threads: [],
+                dataCutoffNote,
+                graphLiveError,
+                mailboxResolutionNote,
+                appliedFilter: {
+                  email: effectiveParticipantEmail,
+                  direction: effectiveDirection,
+                  since: since.toISOString(),
+                  timeZone,
+                },
+              };
+            }
             const rangeLabel =
               safeDaysBack === 0
                 ? "today"
@@ -3149,6 +3331,7 @@ export function createOperationalTools(
                   const latestReceivedAt =
                     latestData[0]?.received_at ?? lastSyncedAt;
                   return {
+                    source: "outlook_email_intake_fallback",
                     emails,
                     threads,
                     count: latestData.length,
@@ -3160,6 +3343,7 @@ export function createOperationalTools(
                     requestedWindowEmpty: true,
                     latestAvailableReceivedAt: latestReceivedAt,
                     dataCutoffNote,
+                    graphLiveError,
                     mailboxResolutionNote,
                     appliedFilter: {
                       email: effectiveParticipantEmail,
@@ -3172,14 +3356,16 @@ export function createOperationalTools(
               }
             }
             return {
+              source: "outlook_email_intake_fallback",
               emails: [],
               threads: [],
-	              summary: `No emails received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
-	              dataCutoffNote,
-	              mailboxResolutionNote,
-	              appliedFilter: {
-	                email: effectiveParticipantEmail,
-	                direction: effectiveDirection,
+              summary: `No emails received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
+              dataCutoffNote,
+              graphLiveError,
+              mailboxResolutionNote,
+              appliedFilter: {
+                email: effectiveParticipantEmail,
+                direction: effectiveDirection,
                 since: since.toISOString(),
                 timeZone,
               },
@@ -3196,6 +3382,7 @@ export function createOperationalTools(
               ? "today"
               : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
           return {
+            source: "outlook_email_intake_fallback",
             emails,
             threads,
             count: data.length,
@@ -3203,9 +3390,10 @@ export function createOperationalTools(
             summary: groupByThread
               ? `Found ${data.length} email${data.length === 1 ? "" : "s"} in ${threads.length} thread${threads.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`
               : `Found ${data.length} email${data.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
-	            dataCutoffNote,
-	            mailboxResolutionNote,
-	            appliedFilter: {
+            dataCutoffNote,
+            graphLiveError,
+            mailboxResolutionNote,
+            appliedFilter: {
               email: effectiveParticipantEmail,
               direction: effectiveDirection,
               since: since.toISOString(),

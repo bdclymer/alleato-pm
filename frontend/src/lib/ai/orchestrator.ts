@@ -80,6 +80,108 @@ type StrategistToolOptions = CreateProjectToolsOptions &
     includeActionTools?: boolean;
   };
 
+const MICROSOFT_OPERATOR_TOOL_NAMES = new Set([
+  "getRecentEmails",
+  "searchEmails",
+  "searchTeamsMessages",
+  "searchExternalDocuments",
+  "readOutlookEmailThread",
+  "getOutlookOperationalStatus",
+  "draftOutlookEmail",
+  "createOutlookCalendarInvite",
+  "sendTeamsMessage",
+]);
+
+function omitMicrosoftOperatorTools(tools: ToolSet): ToolSet {
+  return Object.fromEntries(
+    Object.entries(tools).filter(([name]) => !MICROSOFT_OPERATOR_TOOL_NAMES.has(name)),
+  ) as ToolSet;
+}
+
+function microsoftAssistantBackendUrl(): string {
+  const value = (
+    process.env.BACKEND_URL ||
+    process.env.PYTHON_BACKEND_URL ||
+    (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000" : "")
+  )
+    .replace(/\/+$/, "")
+    .trim();
+
+  try {
+    new URL(value);
+  } catch {
+    throw new Error(
+      "Missing or invalid backend URL. Set BACKEND_URL or PYTHON_BACKEND_URL before using the Microsoft Executive Assistant.",
+    );
+  }
+
+  return value;
+}
+
+function microsoftAssistantAdminApiKey(): string {
+  const value = process.env.ADMIN_API_KEY?.trim();
+  if (!value) {
+    throw new Error(
+      "ADMIN_API_KEY is required to call the backend Microsoft Executive Assistant.",
+    );
+  }
+  return value;
+}
+
+function defaultMicrosoftMailbox(): string | undefined {
+  return (
+    process.env.AI_ASSISTANT_DEFAULT_OUTLOOK_MAILBOX?.trim() ||
+    process.env.OUTLOOK_OPERATOR_MAILBOX?.trim() ||
+    process.env.MICROSOFT_SYNC_USERS?.split(",")[0]?.trim() ||
+    undefined
+  );
+}
+
+async function callMicrosoftExecutiveAssistant(input: {
+  userId: string;
+  sessionId?: string;
+  question: string;
+  context?: string;
+  mailboxUserId?: string;
+  projectId?: number;
+}) {
+  const response = await fetch(
+    `${microsoftAssistantBackendUrl()}/api/intelligence/microsoft-executive-assistant`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Admin-Api-Key": microsoftAssistantAdminApiKey(),
+      },
+      body: JSON.stringify({
+        userId: input.userId,
+        sessionId: input.sessionId,
+        prompt: input.context
+          ? `Context from the Chief Strategist:\n${input.context}\n\nRequest:\n${input.question}`
+          : input.question,
+        mailboxUserId: input.mailboxUserId ?? defaultMicrosoftMailbox(),
+        projectId: input.projectId,
+        trigger: "strategist_delegation",
+      }),
+    },
+  );
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    return {
+      success: false,
+      error:
+        typeof body?.detail === "string"
+          ? body.detail
+          : body?.detail?.answer ??
+            `Microsoft Executive Assistant failed with HTTP ${response.status}.`,
+      details: body?.detail ?? body,
+    };
+  }
+  return { success: true, ...body };
+}
+
 // ---------------------------------------------------------------------------
 // Agent Registry
 // ---------------------------------------------------------------------------
@@ -897,9 +999,9 @@ export function createStrategistTools(
 ) {
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
-  const baseTools = createProjectTools(userId, options);
+  const baseTools = omitMicrosoftOperatorTools(createProjectTools(userId, options));
   const strategistActionTools = options.includeActionTools
-    ? createActionTools(userId, options)
+    ? omitMicrosoftOperatorTools(createActionTools(userId, options))
     : {};
   const featureRequestTools = createFeatureRequestTools(userId, options);
   const progressReportTools = createProgressReportTools(userId, options);
@@ -1008,6 +1110,48 @@ export function createStrategistTools(
       userId,
       options,
     ),
+
+    consultMicrosoftExecutiveAssistant: tool({
+      description:
+        "Delegate Microsoft operator work to the Microsoft Executive Assistant specialist. " +
+        "Use this for Outlook inbox triage, email search, drafting Outlook replies, Teams message review/escalation, " +
+        "calendar review, Microsoft file context, and Microsoft follow-up workflows. The Strategist must not do this work directly.",
+      inputSchema: z.object({
+        question: z
+          .string()
+          .describe("The Microsoft operator request to delegate. Include the user's exact ask and the desired output."),
+        context: z
+          .string()
+          .optional()
+          .describe("Optional context from the Chief Strategist, selected project, or current conversation."),
+        mailboxUserId: z
+          .string()
+          .optional()
+          .describe("Optional Outlook mailbox email. If omitted, the configured operator mailbox is used."),
+        projectId: z
+          .number()
+          .optional()
+          .describe("Optional Alleato project ID for project-scoped Microsoft context."),
+      }),
+      execute: async ({ question, context, mailboxUserId, projectId }) => {
+        const response = await callMicrosoftExecutiveAssistant({
+          userId,
+          sessionId: options.sessionId,
+          question,
+          context,
+          mailboxUserId,
+          projectId: projectId ?? options.pinnedProjectId,
+        });
+        options.onTrace?.({
+          toolName: "consultMicrosoftExecutiveAssistant",
+          status: response.success ? "success" : "error",
+          projectId: projectId ?? options.pinnedProjectId ?? null,
+          input: { question, context, mailboxUserId, projectId },
+          response,
+        });
+        return response;
+      },
+    }),
 
     // Include base project tools so the Strategist can answer
     // questions directly when no specialist route is needed

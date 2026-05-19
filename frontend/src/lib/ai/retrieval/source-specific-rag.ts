@@ -17,6 +17,10 @@ import {
   fetchRecentTeamsMessagesFromGraph,
   type RecentTeamsMessagesResult,
 } from "@/lib/microsoft-graph/recent-teams-messages";
+import {
+  listOutlookInboxMessages,
+  type ListOutlookMessagesResult,
+} from "@/lib/microsoft-graph/mail";
 import { buildMeetingSignalBuckets } from "@/lib/ai/meeting-insight-signals";
 
 export type SourceSpecificRagRow = {
@@ -51,6 +55,7 @@ export type SourceSpecificRagAnswer = {
 
 type SourceSpecificRagFormatOptions = {
   liveTeams?: RecentTeamsMessagesResult | null;
+  liveEmails?: ListOutlookMessagesResult | null;
 };
 
 function formatSourceSpecificDate(row: SourceSpecificRagRow): string {
@@ -98,12 +103,19 @@ function formatSourceSpecificRagContent(
   options: SourceSpecificRagFormatOptions = {},
 ): string {
   const liveTeams = options.liveTeams ?? null;
+  const liveEmails = options.liveEmails ?? null;
   const sourceLine =
-    request.kind === "recent_teams_discussions"
+    request.kind === "recent_emails"
+      ? `Source checked: live Microsoft Graph Outlook inbox first, then Supabase document_metadata/document_chunks-backed email index.`
+      : request.kind === "recent_teams_discussions"
       ? `Source checked: live Microsoft Graph Teams messages first, then Supabase document_metadata/document_chunks-backed Teams index.`
       : `Source checked: ${request.label} in Supabase document_metadata/document_chunks-backed RAG index.`;
   const liveLine =
-    request.kind === "recent_teams_discussions" && liveTeams
+    request.kind === "recent_emails" && liveEmails
+      ? liveEmails.ok
+        ? `- Live Microsoft Graph Outlook retrieval checked ${liveEmails.mailboxUserId} and returned ${liveEmails.messages.length} live row(s).`
+        : `- Live Microsoft Graph Outlook retrieval failed: ${liveEmails.error}.`
+      : request.kind === "recent_teams_discussions" && liveTeams
       ? liveTeams.status === "checked"
         ? `- Live Microsoft Graph Teams retrieval checked ${liveTeams.checkedMailboxes.length} mailbox(es) and returned ${liveTeams.rows.length} live row(s).`
         : `- Live Microsoft Graph Teams retrieval ${liveTeams.status}: ${liveTeams.warning ?? "no detail returned"}.`
@@ -159,7 +171,7 @@ function formatSourceSpecificRagContent(
       : request.kind === "recent_meetings"
         ? "Recent Meetings"
         : request.kind === "recent_emails"
-          ? "Last Five Emails in Supabase"
+          ? "Recent Outlook Emails"
           : "Most Recent OneDrive Documents";
 
   // For recent_meetings, include a content snippet so the model can ground its answer
@@ -214,6 +226,7 @@ export async function buildSourceSpecificRagAnswer(params: {
   const { supabase, request, scope } = params;
   let rows: SourceSpecificRagRow[] = [];
   let liveTeams: RecentTeamsMessagesResult | null = null;
+  let liveEmails: ListOutlookMessagesResult | null = null;
 
   const adminOnlyKinds = new Set<SourceSpecificRagKind>([
     "recent_emails",
@@ -360,6 +373,18 @@ export async function buildSourceSpecificRagAnswer(params: {
   }
 
   if (request.kind === "recent_emails") {
+    const fallbackStart = new Date();
+    fallbackStart.setUTCDate(fallbackStart.getUTCDate() - 7);
+    const sinceIso = request.startDate
+      ? `${request.startDate}T00:00:00.000Z`
+      : request.date
+        ? `${request.date}T00:00:00.000Z`
+        : fallbackStart.toISOString();
+    liveEmails = await listOutlookInboxMessages({
+      sinceIso,
+      limit: request.limit,
+    });
+
     const { data, error } = await applyProjectScope(
       supabase
         .from("document_metadata")
@@ -371,7 +396,36 @@ export async function buildSourceSpecificRagAnswer(params: {
         .limit(request.limit),
     );
     if (error) throw new Error(error.message);
-    rows = (data ?? []) as SourceSpecificRagRow[];
+    const storedRows = (data ?? []) as SourceSpecificRagRow[];
+    const liveEmailResult = liveEmails?.ok ? liveEmails : null;
+    const liveRows: SourceSpecificRagRow[] = liveEmailResult
+      ? liveEmailResult.messages.map((message) => ({
+          id: `live-outlook:${message.mailbox}:${message.id}`,
+          title: message.subject || "(no subject)",
+          source: "microsoft_graph_live",
+          category: "email",
+          type: "outlook_live_message",
+          date: message.receivedAt,
+          created_at: liveEmailResult.fetchedAt,
+          content: [
+            "[Live Microsoft Graph Outlook email]",
+            `Mailbox: ${message.mailbox}`,
+            `From: ${message.fromName ?? "Unknown"} <${message.fromEmail ?? "unknown"}>`,
+            `To: ${message.toList.join(", ") || "unknown"}`,
+            `Importance: ${message.importance ?? "unknown"}`,
+            `Unread: ${message.isRead === false ? "yes" : "no"}`,
+            message.bodyPreview ?? "No preview returned.",
+          ].join("\n"),
+          project_id: null,
+        }))
+      : [];
+    const seen = new Set<string>();
+    rows = [...liveRows, ...storedRows].filter((row) => {
+      const key = `${row.title ?? ""}:${row.date ?? ""}:${row.content?.slice(0, 180) ?? ""}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, request.limit);
   }
 
   if (request.kind === "recent_onedrive_documents") {
@@ -437,7 +491,7 @@ export async function buildSourceSpecificRagAnswer(params: {
     }).slice(0, request.limit);
   }
 
-  const content = formatSourceSpecificRagContent(request, rows, { liveTeams });
+  const content = formatSourceSpecificRagContent(request, rows, { liveTeams, liveEmails });
   return {
     content,
     rows,
@@ -462,6 +516,24 @@ export async function buildSourceSpecificRagAnswer(params: {
               checkedMailboxes: liveTeams.checkedMailboxes,
               warning: liveTeams.warning ?? null,
             }
+          : null,
+        liveEmails: liveEmails
+          ? liveEmails.ok
+            ? {
+                status: "checked",
+                source: liveEmails.source,
+                mailboxUserId: liveEmails.mailboxUserId,
+                rowCount: liveEmails.messages.length,
+                fetchedAt: liveEmails.fetchedAt,
+                truncated: liveEmails.truncated,
+              }
+            : {
+                status: "failed",
+                source: liveEmails.source,
+                mailboxUserId: liveEmails.mailboxUserId ?? null,
+                rowCount: 0,
+                error: liveEmails.error,
+              }
           : null,
       },
       timestamp: new Date().toISOString(),

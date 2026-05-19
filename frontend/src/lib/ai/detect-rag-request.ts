@@ -293,7 +293,7 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
   // Outlook inbox/date/triage questions must be answered from structured
   // Outlook intake tools, not the RAG/document index. Returning
   // source-specific RAG here lets the chat route short-circuit before
-  // getRecentEmails/getRecentOutlookEmails can check the live inbox tables.
+  // getRecentEmails can check the live inbox tables.
 
   const asksForRecentTeams =
     normalized.includes("teams") &&

@@ -78,6 +78,11 @@ def test_run_content_builder_uses_packaged_memory_skills_subagents_and_workspace
     assert Path(captured["memory"][0]).name == "AGENTS.md"
     assert Path(captured["skills"][0]).name == "skills"
     assert any(subagent["name"] == "researcher" for subagent in captured["subagents"])
+    assert any(
+        subagent["name"] == "researcher"
+        and subagent["model"] == "anthropic:claude-haiku-4-5-20251001"
+        for subagent in captured["subagents"]
+    )
     assert captured["config"]["configurable"]["thread_id"] == "session-1"
     prompt = captured["payload"]["messages"][0]["content"]
     assert "Save research under research/<slug>.md" in prompt

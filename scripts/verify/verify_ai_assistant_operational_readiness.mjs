@@ -51,7 +51,7 @@ const packageJson = readJson("package.json");
 const scripts = packageJson.scripts ?? {};
 const evalSuite = readJson("docs/ai-plan/evals/assistant-eval-suite.json");
 const evalRunner = read("scripts/verify/verify_ai_assistant_eval_suite.mjs");
-const chatHandler = read("frontend/src/lib/ai/chat-handler.ts");
+const chatHandler = read("frontend/src/app/api/ai-assistant/chat/handler-v2.ts");
 const actionTools = read("frontend/src/lib/ai/tools/action-tools.ts");
 const sourceHealth = read("frontend/src/lib/ai/source-health.ts");
 const integrationHealth = read("scripts/verify/verify_integration_health.py");
@@ -131,12 +131,14 @@ for (const field of [
   "minResponseQualityScore",
   "minSourceQuality",
   "minConfidence",
+  "requiredRecentEmailSource",
+  "requiredRecentEmailMailbox",
 ]) {
   requireCondition(evalRunner.includes(field), `eval runner enforces ${field}`);
 }
 
 requireCondition(
-  chatHandler.includes("intentPlanner") && chatHandler.includes("planAssistantIntent"),
+  chatHandler.includes("planRetrieval") && chatHandler.includes("retrieval_plan"),
   "chat backend records intent planning before routing",
 );
 requireCondition(
@@ -144,21 +146,21 @@ requireCondition(
   "chat backend persists response quality scoring",
 );
 requireCondition(
-  chatHandler.includes("provider_decision") && chatHandler.includes("getAssistantToolCallingDecision"),
-  "chat backend persists provider/tool-calling decision",
+  chatHandler.includes("provider_path") && chatHandler.includes("getLanguageModel"),
+  "chat backend persists provider/model path",
 );
 requireCondition(
-  chatHandler.includes("persistRetrievalFeedbackFromToolTrace") &&
-    chatHandler.includes("recordRetrievalFeedbackBatch"),
-  "chat backend records retrieval feedback from tool traces",
+  chatHandler.includes("tool_trace") && chatHandler.includes("toolName"),
+  "chat backend records normalized tool traces",
 );
 requireCondition(
-  chatHandler.includes("assistantSourceHealth") && chatHandler.includes("source_health"),
-  "chat backend attaches source/RAG health metadata",
+  chatHandler.includes("fetchDeepAgentExecutiveBriefing") &&
+    chatHandler.includes("backendDeepAgentExecutiveBriefing"),
+  "chat backend attaches canonical backend Deep Agents executive trace",
 );
 requireCondition(
-  chatHandler.includes("getMyTasks"),
-  "chat backend has a source-backed personal task route",
+  chatHandler.includes("getGeneratedTasksToday") || chatHandler.includes("createStrategistTools"),
+  "chat backend has source-backed task/tool routing",
 );
 requireCondition(
   actionTools.includes("createTask") &&

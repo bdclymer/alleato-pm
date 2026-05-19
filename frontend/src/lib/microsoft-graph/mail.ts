@@ -28,6 +28,45 @@ export type OutlookMailDraftResult = {
   mode: "new_message" | "reply";
 };
 
+export type OutlookLiveMessage = {
+  id: string;
+  conversationId: string | null;
+  subject: string;
+  fromName: string | null;
+  fromEmail: string | null;
+  toList: string[];
+  ccList: string[];
+  receivedAt: string;
+  bodyPreview: string | null;
+  hasAttachments: boolean;
+  webLink: string | null;
+  importance: string | null;
+  isRead: boolean | null;
+  mailbox: string;
+};
+
+export type ListOutlookMessagesInput = {
+  mailboxUserId?: string | null;
+  sinceIso?: string | null;
+  limit?: number;
+};
+
+export type ListOutlookMessagesResult =
+  | {
+      ok: true;
+      source: "microsoft_graph_live";
+      mailboxUserId: string;
+      fetchedAt: string;
+      messages: OutlookLiveMessage[];
+      truncated: boolean;
+    }
+  | {
+      ok: false;
+      source: "microsoft_graph_live";
+      mailboxUserId?: string;
+      error: string;
+    };
+
 type GraphEnvResult =
   | {
       ok: true;
@@ -58,6 +97,15 @@ type GraphMessageResponse = {
 };
 
 const GRAPH_MAIL_WRITE_PERMISSIONS = new Set([
+  "Mail.ReadWrite",
+  "Mail.ReadWrite.Shared",
+]);
+
+const GRAPH_MAIL_READ_PERMISSIONS = new Set([
+  "Mail.Read",
+  "Mail.Read.Shared",
+  "Mail.ReadBasic",
+  "Mail.ReadBasic.Shared",
   "Mail.ReadWrite",
   "Mail.ReadWrite.Shared",
 ]);
@@ -183,6 +231,76 @@ export function assertGraphMailWritePermission(accessToken: string): void {
   );
 }
 
+function assertGraphMailReadPermission(accessToken: string): void {
+  const status = getGraphMailPermissionStatus(accessToken);
+  const hasRead =
+    status.roles.some((role) => GRAPH_MAIL_READ_PERMISSIONS.has(role)) ||
+    status.scopes.some((scope) => GRAPH_MAIL_READ_PERMISSIONS.has(scope));
+  if (hasRead) return;
+
+  const granted = [...status.roles, ...status.scopes].sort();
+  throw new Error(
+    [
+      "Microsoft Graph mail read permission is not configured.",
+      "Cause: live Outlook inbox reads require Mail.Read, Mail.ReadBasic, or Mail.ReadWrite for the configured Microsoft app registration.",
+      `Detected Graph permissions: ${granted.length ? granted.join(", ") : "none"}.`,
+      "Detection gap: synced database email reads can appear healthy while live Graph inbox reads are not authorized.",
+      "Prevention: validate mail-read permission before attempting live Outlook retrieval.",
+    ].join(" "),
+  );
+}
+
+type GraphMailRecipient = {
+  emailAddress?: {
+    address?: string | null;
+    name?: string | null;
+  } | null;
+};
+
+type GraphMailMessage = {
+  id?: string;
+  conversationId?: string | null;
+  subject?: string | null;
+  from?: GraphMailRecipient | null;
+  toRecipients?: GraphMailRecipient[] | null;
+  ccRecipients?: GraphMailRecipient[] | null;
+  receivedDateTime?: string | null;
+  bodyPreview?: string | null;
+  hasAttachments?: boolean | null;
+  webLink?: string | null;
+  importance?: string | null;
+  isRead?: boolean | null;
+};
+
+function recipientEmails(recipients: GraphMailRecipient[] | null | undefined) {
+  return (recipients ?? [])
+    .map((recipient) => recipient.emailAddress?.address?.trim().toLowerCase())
+    .filter((email): email is string => Boolean(email));
+}
+
+function normalizeLiveMessage(
+  message: GraphMailMessage,
+  mailboxUserId: string,
+): OutlookLiveMessage | null {
+  if (!message.id || !message.receivedDateTime) return null;
+  return {
+    id: message.id,
+    conversationId: message.conversationId ?? null,
+    subject: message.subject?.trim() || "(no subject)",
+    fromName: message.from?.emailAddress?.name ?? null,
+    fromEmail: message.from?.emailAddress?.address?.trim().toLowerCase() ?? null,
+    toList: recipientEmails(message.toRecipients),
+    ccList: recipientEmails(message.ccRecipients),
+    receivedAt: message.receivedDateTime,
+    bodyPreview: message.bodyPreview?.trim() || null,
+    hasAttachments: message.hasAttachments === true,
+    webLink: message.webLink ?? null,
+    importance: message.importance ?? null,
+    isRead: typeof message.isRead === "boolean" ? message.isRead : null,
+    mailbox: mailboxUserId,
+  };
+}
+
 function normalizeRecipients(recipients: OutlookMailRecipient[]) {
   return recipients.map((recipient) => {
     const address = recipient.email.trim().toLowerCase();
@@ -215,6 +333,81 @@ export function buildOutlookMailMessagePayload(input: OutlookMailDraftInput) {
     toRecipients: normalizeRecipients(input.toRecipients),
     ccRecipients: normalizeRecipients(input.ccRecipients ?? []),
     bccRecipients: normalizeRecipients(input.bccRecipients ?? []),
+  };
+}
+
+export async function listOutlookInboxMessages(
+  input: ListOutlookMessagesInput,
+): Promise<ListOutlookMessagesResult> {
+  let mailboxUserId: string;
+  try {
+    mailboxUserId = resolveOutlookMailboxUserId(input.mailboxUserId);
+  } catch (error) {
+    return {
+      ok: false,
+      source: "microsoft_graph_live",
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  let token: string;
+  try {
+    token = await getGraphToken();
+    assertGraphMailReadPermission(token);
+  } catch (error) {
+    return {
+      ok: false,
+      source: "microsoft_graph_live",
+      mailboxUserId,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  const limit = Math.min(Math.max(input.limit ?? 25, 1), 100);
+  const params = new URLSearchParams({
+    $select:
+      "id,conversationId,subject,from,toRecipients,ccRecipients,receivedDateTime,bodyPreview,hasAttachments,webLink,importance,isRead",
+    $orderby: "receivedDateTime desc",
+    $top: String(limit),
+  });
+  if (input.sinceIso) {
+    params.set("$filter", `receivedDateTime ge ${input.sinceIso}`);
+  }
+
+  const response = await fetch(
+    `${GRAPH_BASE}/users/${encodeURIComponent(mailboxUserId)}/mailFolders/inbox/messages?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${token}`,
+        Prefer: 'outlook.body-content-type="text", outlook.timezone="America/New_York"',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => "");
+    return {
+      ok: false,
+      source: "microsoft_graph_live",
+      mailboxUserId,
+      error: `Microsoft Graph Outlook inbox read failed: ${response.status} ${response.statusText}${responseBody ? `: ${responseBody.slice(0, 500)}` : ""}`,
+    };
+  }
+
+  const data = (await response.json()) as {
+    value?: GraphMailMessage[];
+    "@odata.nextLink"?: string;
+  };
+  return {
+    ok: true,
+    source: "microsoft_graph_live",
+    mailboxUserId,
+    fetchedAt: new Date().toISOString(),
+    messages: (data.value ?? [])
+      .map((message) => normalizeLiveMessage(message, mailboxUserId))
+      .filter((message): message is OutlookLiveMessage => Boolean(message)),
+    truncated: Boolean(data["@odata.nextLink"]),
   };
 }
 

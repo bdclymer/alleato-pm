@@ -35,6 +35,10 @@ Chat Handler v2 — frontend/src/app/api/ai-assistant/chat/handler-v2.ts
     ├──[executive briefing without selected project]─────────► Render backend
     │                                                          /api/intelligence/deep-agent/executive-briefing
     │
+    ├──[Outlook / Teams / Microsoft operator work]───────────► Render backend
+    │                                                          /api/intelligence/microsoft-executive-assistant
+    │                                                          (specialist owns live Graph reads and review-only drafts)
+    │
     ├──[/ai-assistant-v2 fallback when LangGraph URL is unset]► Next API route
     │                                                          /api/ai-assistant-v2/deep-agent
     │                                                          (resolves project names, then calls Render Deep Agents)
@@ -51,7 +55,7 @@ Orchestrator — frontend/src/lib/ai/orchestrator.ts
     ├──[direct]──────────────► createProjectTools() + all other tool sets
     │
     ▼
-Tool Layer (28 registered tools across 4 files)
+Tool Layer (AI SDK tools + backend specialist tools)
     │
     ├── Structured SQL reads from Supabase (projects, budgets, commitments...)
     ├── pgvector semantic search (document_chunks, 24K+ rows)
@@ -73,7 +77,7 @@ Supabase (PostgreSQL + pgvector)
 | Phase | Name | Status | What's Built |
 |-------|------|--------|--------------|
 | 1 | Data Foundation | **Complete** | RAG assistant, 28+ tools, C-Suite architecture (Strategist + CFO live), document ingestion pipeline (PDF/DOCX + Azure OCR for scanned PDFs), Acumatica ERP integration (9 tools), company knowledge base, vector embeddings (109K+ chunks in AI Database), chat persistence, guardrails, daily digest, intelligence packet compiler, contextual retrieval pilot (added 2026-05-17) |
-| 2 | Proactive Intelligence | **In progress** | Intelligence packets (86 per project, cron-refreshed), executive daily briefing (cron-delivered), insight cards (6,900+ rows), packet card feedback, Render-backed Deep Agents bridge for read-heavy project/executive AI assistant answers, standalone `alleato-ai` tool registry gated into the backend runtime |
+| 2 | Proactive Intelligence | **In progress** | Intelligence packets (86 per project, cron-refreshed), executive daily briefing (cron-delivered), insight cards (6,900+ rows), packet card feedback, Render-backed Deep Agents bridge for read-heavy project/executive AI assistant answers, backend Microsoft Executive Assistant specialist for Outlook/Teams/calendar operator work, standalone `alleato-ai` tool registry gated into the backend runtime |
 | 3 | Workflow Automation | Not started | Auto-classify documents on upload, AI-generated status reports, smart form templates (pre-fill RFIs, change order descriptions) |
 | 4 | Strategic Advisory | Not started | Project completion probability models, budget overrun prediction, cross-project pattern recognition, competitive benchmarking |
 
@@ -86,17 +90,18 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | File | Purpose |
 |------|---------|
 | `frontend/src/app/api/ai-assistant/chat/route.ts` | Primary chat API route. All user messages enter here. Calls orchestrator, streams response, persists to `chat_history`. |
-| `frontend/src/app/api/ai-assistant/chat/handler-v2.ts` | Current `/ai-assistant` server handler. Plans retrieval, persists chat history, and, when `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, direct-returns successful Render Deep Agents project, executive, and external-research packets before falling back to local AI SDK synthesis. Project/executive Deep Agents responses stream source evidence and memory-candidate widgets, then persist `backend_deep_agent.memory_candidate_count` / `memory_candidates` for evals. All direct and fallback response paths persist `response_quality`; Deep Agents bridge attempts are recorded in `tool_trace` as the frontend wrapper tools (`backendDeepAgentProjectStatus`, `backendDeepAgentExecutiveBriefing`, `backendDeepAgentResearch`) plus backend-internal packet trace so evals can distinguish real backend routing from local synthesis. Pre-fetched and live AI SDK recent Outlook inbox calls are normalized into `tool_trace` as `getRecentEmails` with mailbox, date window, sync cutoff, and sync/config errors so inbox evals and support diagnostics can prove which mailbox was checked. |
+| `frontend/src/app/api/ai-assistant/chat/handler-v2.ts` | Current `/ai-assistant` server handler. Plans retrieval, persists chat history, and, when `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED=true`, direct-returns successful Render Deep Agents project, executive, and external-research packets before falling back to local AI SDK synthesis. Project/executive Deep Agents responses stream source evidence and memory-candidate widgets, then persist `backend_deep_agent.memory_candidate_count` / `memory_candidates` for evals. All direct and fallback response paths persist `response_quality`; Deep Agents bridge attempts are recorded in `tool_trace` as the frontend wrapper tools (`backendDeepAgentProjectStatus`, `backendDeepAgentExecutiveBriefing`, `backendDeepAgentResearch`) plus backend-internal packet trace so evals can distinguish real backend routing from local synthesis. Pre-fetched and live AI SDK recent Outlook inbox calls are normalized into `tool_trace` as `getRecentEmails` with mailbox, date window, live Graph source, sync cutoff, and sync/config errors so inbox evals and support diagnostics can prove which mailbox was checked. |
 | `frontend/src/lib/ai/retrieval/system-prompt.ts` | Converts retrieval context into compact model-visible evidence. The structured Outlook inbox renderer intentionally surfaces `latestAvailableFallback`, `requestedWindowEmpty`, and `latestAvailableReceivedAt` so the model can distinguish "no live/today rows because sync is stale" from a genuinely empty inbox and still triage latest available synced threads. |
-| `frontend/src/lib/ai/agents/strategist.ts` | Primary strategist prompt. The Outlook Operations Protocol requires Brandon/operator inbox prompts to use `bclymer@alleatogroup.com`, answer simple inbox lookups with a clean list before caveats, use reply/delegate/watch/ignore labels for triage, and keep drafts grounded only in retrieved email/thread facts. |
+| `frontend/src/lib/ai/agents/strategist.ts` | Primary strategist prompt. The Outlook Operations Protocol now makes the Strategist an orchestrator, not the Microsoft operator: Outlook inbox triage, reply drafting, Teams escalation, calendar review, and Microsoft file context route through `consultMicrosoftExecutiveAssistant`. Brandon/operator inbox prompts must pass `bclymer@alleatogroup.com`, answer simple inbox lookups with a clean list before caveats, use reply/delegate/watch/ignore labels for triage, and keep drafts grounded only in retrieved email/thread facts. |
 | `frontend/src/app/api/ai-assistant-v2/deep-agent/route.ts` | `/ai-assistant-v2` fallback route when no LangGraph URL is configured. Authenticates the user, resolves project names from the prompt when no project ID is supplied, calls the Render Deep Agents project/executive endpoints, and returns packet metadata to the v2 UI. |
 | `backend/src/services/agents/research_agent/` | Standalone Alleato Deep Agents research module. Uses public web research tools, read-only Alleato PM/RAG/search tools, Deep Agents subagents, packaged runtime skills, optional local installed skill directories, and fail-loud response metadata. Exposed through `/api/intelligence/research`. |
 | `backend/src/services/agents/content_builder/` | Isolated Deep Agents content builder ported from `alleato-ai/alleato_ai/subagents/content-builder-agent`. Packages the example memory file, `blog-post` and `social-media` skills, YAML researcher subagent config, Tavily research tool, and Gemini image tools. Exposed through `/api/intelligence/content-builder` behind `DEEP_AGENTS_CONTENT_BUILDER_ENABLED`; uses AI Gateway/OpenAI for the orchestrator and `GOOGLE_API_KEY` for generated images. |
+| `backend/src/services/agents/microsoft_executive_assistant/` | Backend Microsoft operator specialist. Exposed through `/api/intelligence/microsoft-executive-assistant`, delegated by the Strategist via `consultMicrosoftExecutiveAssistant`, and available to Render webhook/scheduled triggers. Owns live Outlook inbox reads, synced email/Teams/file search, calendar review, and review-only email/Teams draft payloads. It fails loudly when provider keys, Graph credentials, or source evidence are missing. |
 | `frontend/src/components/ai-assistant-v2/advisor-chat.tsx` | `/ai-assistant-v2` client surface. Uses the LangGraph SDK only when `NEXT_PUBLIC_LANGGRAPH_API_URL` is configured; otherwise submits through the Render Deep Agents fallback route and displays mode, confidence, source count, and tool-call count. |
 | `frontend/src/lib/ai/deep-agent-project-status.ts` | Typed server-side bridge to Render backend Deep Agents endpoints. Owns env gating, request schemas, source-evidence widgets, memory-candidate review widgets, optional route-level timeout overrides, and direct-response eligibility for project/executive/research packets. |
 | `backend/src/services/agents/alleato_ai_tools/` | Backend-local port of the standalone `alleato-ai` Deep Agents tools: resolvers, SQL schema/query, RAG/meeting/email/Teams search, recent activity, Acumatica reads, draft-preview actions, prompts, and domain subagent definitions. |
 | `backend/src/services/agents/deep_project_intelligence.py` | Render Deep Agents runtime. The narrow PM tools are always present; the standalone registry is enabled by `DEEP_AGENTS_STANDALONE_TOOLS_ENABLED`, with separate SQL, Acumatica, draft-action, and subagent gates. |
-| `frontend/src/lib/ai/orchestrator.ts` | Registers the agent registry, constructs Strategist tool set, executes sub-agent calls via `ToolLoopAgent`. Adding a new agent: add config here + add `consultXxx` tool + add name to `agents/types.ts`. |
+| `frontend/src/lib/ai/orchestrator.ts` | Registers the agent registry, constructs Strategist tool set, executes sub-agent calls via `ToolLoopAgent`, and removes direct Microsoft operator tools from the Strategist in favor of `consultMicrosoftExecutiveAssistant`. Adding a new agent: add config here + add `consultXxx` tool + add name to `agents/types.ts`. |
 | `frontend/src/lib/ai/agents/strategist.ts` | Strategist system prompt — routing rules, synthesis instructions, which tool to call for which question. |
 | `frontend/src/lib/ai/agents/cfo.ts` | CFO system prompt — financial expertise, personality, CFO-specific tool usage instructions. |
 | `frontend/src/lib/ai/agents/coo.ts` | COO system prompt (designed, not live). |
@@ -178,7 +183,7 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 | `recallPastConversations` | conversation_memories (pgvector) | Semantically relevant facts from past sessions |
 | `searchMeetingsByTopic` | document_chunks (meetings category, pgvector) | Meeting content by topic |
 | `getMeetingDetails` | document_metadata, meeting_segments, decisions, risks, tasks | Full meeting record with extracted intelligence |
-| `getRecentEmails` | outlook_email_intake (by date) | Recent emails — use for "what emails today?" questions. Defaults to the signed-in user's synced mailbox only when that mailbox has company sync coverage; test/non-company auth accounts fall back to the primary synced operator mailbox, and missing Outlook sync state is returned as a configuration error rather than an empty inbox. When a requested same-day window has no synced rows because the sync cutoff predates that window, the tool labels the window empty/stale and returns latest available synced mailbox messages for operational triage instead of leaving the assistant with no threads. |
+| `getRecentEmails` | Microsoft Graph live inbox first; `outlook_email_intake` fallback | Recent emails - use for "what emails today?" questions. Defaults to the signed-in user's synced mailbox only when that mailbox has company sync coverage; test/non-company auth accounts fall back to the primary synced operator mailbox. The tool calls the backend `/api/graph/outlook/live-inbox` endpoint first and returns `source: "microsoft_graph_live"` when Graph succeeds. Synced `outlook_email_intake` rows are fallback only and are labeled `source: "outlook_email_intake_fallback"` with `graphLiveError` / sync-cutoff evidence so evals can fail stale-cache answers loudly. |
 | `searchEmails` | document_chunks (email category, pgvector) | Email content by topic — use for subject-based questions |
 | `searchTeamsMessages` | document_chunks (teams category, pgvector) | Teams message content by topic |
 | `saveInsight` | ai_insights (write) | Persist an AI-generated insight to the insights table |
@@ -324,7 +329,7 @@ Embeddings are generated via the same OpenAI client (routes through gateway when
 Every user message enters the chat route, which runs the Strategist agent. The Strategist has two paths:
 
 1. **Direct tool use**: For non-financial questions, the Strategist calls project/operational tools directly and responds.
-2. **Sub-agent delegation**: For financial questions (detected by keyword matching in `orchestrator.ts`), the Strategist calls `consultCFO`, which spawns a CFO `ToolLoopAgent` with its own system prompt and financial tools, then returns the CFO's analysis.
+2. **Sub-agent delegation**: For financial questions (detected by keyword matching in `orchestrator.ts`), the Strategist calls `consultCFO`, which spawns a CFO `ToolLoopAgent` with its own system prompt and financial tools, then returns the CFO's analysis. For Microsoft operator work, the Strategist calls `consultMicrosoftExecutiveAssistant`, which posts to the Render backend specialist instead of directly owning Outlook/Teams/calendar workflows.
 
 ### Currently Live Agents
 
@@ -332,6 +337,7 @@ Every user message enters the chat route, which runs the Strategist agent. The S
 |-------|--------|---------------|-------|---------|
 | Strategist | Live (orchestrator) | `agents/strategist.ts` | `openai/gpt-5.4` (user-selectable) | All messages |
 | CFO | Live (`consultCFO` tool) | `agents/cfo.ts` | `openai/gpt-5.4-mini` | Financial keywords |
+| Microsoft Executive Assistant | Live backend specialist (`consultMicrosoftExecutiveAssistant`) | `backend/src/services/agents/microsoft_executive_assistant/agent.py` + packaged Microsoft skills when present | `openai/gpt-5.4-mini` | Outlook inbox triage, email drafts/replies, Teams escalation, calendar review, Microsoft files |
 
 ### Designed but Not Wired
 

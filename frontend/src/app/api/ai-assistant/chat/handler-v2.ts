@@ -188,10 +188,13 @@ function buildRecentEmailTrace(
       timeZone: appliedFilter?.timeZone ?? null,
     },
     output: {
+      source: record.source ?? null,
       count: record.count ?? 0,
       threadCount: record.threadCount ?? 0,
       summary: record.summary ?? null,
       dataCutoffNote: record.dataCutoffNote ?? null,
+      graphLive: record.graphLive ?? null,
+      graphLiveError: record.graphLiveError ?? null,
       mailboxResolutionNote: record.mailboxResolutionNote ?? null,
       latestAvailableFallback: record.latestAvailableFallback ?? null,
       requestedWindowEmpty: record.requestedWindowEmpty ?? null,
@@ -217,6 +220,14 @@ function buildLiveToolTrace(
 
   const input = asRecord(trace.input);
   const output = asRecord(trace.output);
+  const response = asRecord(trace.response);
+  const responseToolTrace = Array.isArray(response.toolTrace)
+    ? response.toolTrace.filter((item) => item && typeof item === "object")
+    : [];
+  const microsoftLiveTrace = responseToolTrace.find((item) => {
+    const record = item as Record<string, unknown>;
+    return record.source === "microsoft_graph_live" || asRecord(record.output).source === "microsoft_graph_live";
+  }) as Record<string, unknown> | undefined;
   const error = asString(trace.error);
 
   return {
@@ -231,9 +242,14 @@ function buildLiveToolTrace(
       trace.output === undefined
         ? undefined
         : {
+            source: output.source ?? microsoftLiveTrace?.source ?? asRecord(microsoftLiveTrace?.output).source ?? null,
             count: output.count ?? null,
             summary: output.summary ?? null,
             error: output.error ?? error ?? null,
+            orchestrator: response.orchestrator ?? null,
+            mode: response.mode ?? null,
+            actionCount: Array.isArray(response.actions) ? response.actions.length : null,
+            toolTrace: responseToolTrace,
           },
     error,
     timestamp: asString(trace.timestamp) ?? new Date().toISOString(),

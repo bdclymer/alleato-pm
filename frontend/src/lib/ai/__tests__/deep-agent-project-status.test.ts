@@ -264,6 +264,26 @@ describe("Deep Agents project-status bridge", () => {
     ).toBe(false);
   });
 
+  it("enables the backend bridge when a backend URL is configured", () => {
+    delete process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED;
+    process.env.BACKEND_URL = "https://alleato-backend.example";
+
+    expect(
+      shouldUseDeepAgentExecutiveBridge({
+        intent: "risk_review",
+        selectedProjectId: null,
+      }),
+    ).toBe(true);
+
+    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "false";
+    expect(
+      shouldUseDeepAgentExecutiveBridge({
+        intent: "risk_review",
+        selectedProjectId: null,
+      }),
+    ).toBe(false);
+  });
+
   it("enables the research bridge for external research intents", () => {
     process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "true";
 

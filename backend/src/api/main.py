@@ -53,6 +53,10 @@ from src.services.agents.deep_project_intelligence_contracts import (
     DeepProjectIntelligenceRequest,
 )
 from src.services.agents.content_builder import ContentBuilderRequest, run_content_builder_agent
+from src.services.agents.microsoft_executive_assistant import (
+    MicrosoftExecutiveAssistantRequest,
+    run_microsoft_executive_assistant,
+)
 from src.services.agents.research_agent import ResearchRequest, run_research_agent
 
 # Configure logging
@@ -99,11 +103,16 @@ def _run_pipeline_limited(metadata_id: str) -> None:
 def _process_graph_notification_realtime(notification: Dict[str, Any]) -> None:
     """Drain Microsoft Graph webhook work after the endpoint has acknowledged it."""
     from src.services.integrations.microsoft_graph.webhooks import process_graph_notification_realtime
+    from src.services.agents.microsoft_executive_assistant.triggers import (
+        run_outlook_event_microsoft_executive_assistant,
+    )
     from src.services.supabase_helpers import get_supabase_client
 
     client = get_supabase_client()
     result = process_graph_notification_realtime(client, notification)
     logger.info("[GraphWebhook] realtime processing result: %s", result)
+    assistant_result = run_outlook_event_microsoft_executive_assistant(sync_result=result)
+    logger.info("[GraphWebhook] Microsoft Executive Assistant trigger result: %s", assistant_result)
 
 
 def _run_intelligence_compiler_limited(
@@ -202,6 +211,12 @@ class GraphSubscriptionReconcileRequest(BaseModel):
 class OutlookMailboxSyncRequest(BaseModel):
     user_email: str
     verify_persisted_count: bool = False
+
+
+class OutlookLiveInboxRequest(BaseModel):
+    mailbox_user_id: str
+    since_iso: Optional[str] = None
+    limit: int = 50
 
 
 class OutlookMailboxSubscriptionRequest(BaseModel):
@@ -687,6 +702,40 @@ async def graph_outlook_mailbox_sync_endpoint(
 
     import asyncio
     return await asyncio.get_event_loop().run_in_executor(None, _run)
+
+
+@app.post(
+    "/api/graph/outlook/live-inbox",
+    tags=["Ingestion"],
+    summary="Read one Outlook inbox live through Microsoft Graph",
+)
+async def graph_outlook_live_inbox_endpoint(
+    payload: OutlookLiveInboxRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Read live Outlook inbox messages without using synced cache/RAG tables."""
+    mailbox = payload.mailbox_user_id.strip().lower()
+    if not mailbox or "@" not in mailbox:
+        raise HTTPException(status_code=400, detail="mailbox_user_id must be a valid mailbox address")
+    if payload.limit < 1 or payload.limit > 100:
+        raise HTTPException(status_code=422, detail="limit must be between 1 and 100")
+
+    from src.services.integrations.microsoft_graph.live_mail import list_live_outlook_inbox
+
+    import asyncio
+    loop = asyncio.get_event_loop()
+    try:
+        return await loop.run_in_executor(
+            None,
+            lambda: list_live_outlook_inbox(
+                mailbox_user_id=mailbox,
+                since_iso=payload.since_iso,
+                limit=payload.limit,
+            ),
+        )
+    except Exception as exc:
+        logger.warning("[Graph Outlook] Live inbox read failed for %s: %s", mailbox, exc, exc_info=True)
+        raise HTTPException(status_code=502, detail=f"Microsoft Graph live inbox read failed: {exc}") from exc
 
 
 @app.post(
@@ -1243,6 +1292,37 @@ async def run_deep_agent_research(
     response = run_research_agent(
         request,
         model=os.getenv("DEEP_AGENTS_RESEARCH_MODEL", "openai:gpt-5.4-mini"),
+    )
+    if response.mode == "unavailable":
+        raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
+    return response.model_dump(by_alias=True)
+
+
+@app.post(
+    "/api/intelligence/microsoft-executive-assistant",
+    tags=["Intelligence"],
+    summary="Run the Microsoft Executive Assistant specialist agent",
+)
+async def run_deep_agent_microsoft_executive_assistant(
+    request: MicrosoftExecutiveAssistantRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Run the Microsoft specialist instead of making the Strategist operate Microsoft directly."""
+    if not _env_flag_enabled("DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED"):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Deep Agents Microsoft Executive Assistant is disabled. Set "
+                "DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED=true to run the specialist."
+            ),
+        )
+
+    response = run_microsoft_executive_assistant(
+        request,
+        model=os.getenv(
+            "DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL",
+            "openai:gpt-5.4-mini",
+        ),
     )
     if response.mode == "unavailable":
         raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))

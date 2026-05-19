@@ -131,6 +131,9 @@ def _load_subagents(config_path: Path) -> list[dict[str, Any]]:
             "description": spec.get("description", ""),
             "system_prompt": spec.get("system_prompt", ""),
         }
+        configured_model = spec.get("model")
+        if isinstance(configured_model, str) and configured_model.strip():
+            subagent["model"] = configured_model.strip()
         tool_names = spec.get("tools") or []
         tools = [available_tools[tool_name] for tool_name in tool_names if tool_name in available_tools]
         if tools:

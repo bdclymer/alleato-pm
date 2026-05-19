@@ -1,6 +1,7 @@
 """Shared fixtures for backend tests."""
 import os
 import sys
+import types
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -30,6 +31,46 @@ def _stub_modules():
         "pandas", "numpy",
     ]:
         stubs[mod_name] = MagicMock()
+
+    langchain_core_mod = types.ModuleType("langchain_core")
+    langchain_core_tools_mod = types.ModuleType("langchain_core.tools")
+
+    class _ToolWrapper:
+        def __init__(self, func):
+            self.func = func
+            self.name = getattr(func, "__name__", "tool")
+            self.__name__ = self.name
+
+        def __call__(self, *args, **kwargs):
+            return self.func(*args, **kwargs)
+
+        def invoke(self, payload):
+            if isinstance(payload, dict):
+                return self.func(**payload)
+            return self.func(payload)
+
+    def _tool(func=None, *_args, **_kwargs):
+        if func is None:
+            return lambda wrapped: _ToolWrapper(wrapped)
+        return _ToolWrapper(func)
+
+    langchain_core_tools_mod.tool = _tool
+    stubs["langchain_core"] = langchain_core_mod
+    stubs["langchain_core.tools"] = langchain_core_tools_mod
+
+    sqlalchemy_mod = types.ModuleType("sqlalchemy")
+    sqlalchemy_engine_mod = types.ModuleType("sqlalchemy.engine")
+    sqlalchemy_exc_mod = types.ModuleType("sqlalchemy.exc")
+    sqlalchemy_pool_mod = types.ModuleType("sqlalchemy.pool")
+    sqlalchemy_mod.create_engine = MagicMock()
+    sqlalchemy_mod.text = MagicMock(side_effect=lambda value: value)
+    sqlalchemy_engine_mod.Engine = object
+    sqlalchemy_exc_mod.OperationalError = RuntimeError
+    sqlalchemy_pool_mod.NullPool = object
+    stubs["sqlalchemy"] = sqlalchemy_mod
+    stubs["sqlalchemy.engine"] = sqlalchemy_engine_mod
+    stubs["sqlalchemy.exc"] = sqlalchemy_exc_mod
+    stubs["sqlalchemy.pool"] = sqlalchemy_pool_mod
 
     for name, mod in stubs.items():
         sys.modules.setdefault(name, mod)

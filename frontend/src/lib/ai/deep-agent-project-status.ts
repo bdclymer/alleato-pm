@@ -14,6 +14,7 @@ import type { AssistantIntent } from "@/lib/ai/intent-router";
 const WHERE = "ai-assistant.deep-agent-project-status";
 const EXECUTIVE_WHERE = "ai-assistant.deep-agent-executive-briefing";
 const RESEARCH_WHERE = "ai-assistant.deep-agent-research";
+const DEFAULT_DEEP_AGENT_BRIDGE_TIMEOUT_MS = 8_000;
 
 const confidenceSchema = z.enum(["high", "medium", "low"]);
 
@@ -164,7 +165,21 @@ const DEEP_AGENT_EXECUTIVE_CONTEXT_INTENTS = new Set<AssistantIntent>([
 ]);
 
 export function isDeepAgentProjectStatusBridgeEnabled(): boolean {
-  return process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED === "true";
+  if (process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED === "false") {
+    return false;
+  }
+  return Boolean(
+    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED === "true" ||
+    process.env.BACKEND_URL ||
+    process.env.PYTHON_BACKEND_URL,
+  );
+}
+
+function getDeepAgentBridgeTimeoutMs(): number {
+  const parsed = Number(process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_TIMEOUT_MS);
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : DEFAULT_DEEP_AGENT_BRIDGE_TIMEOUT_MS;
 }
 
 export function shouldUseDeepAgentProjectStatusBridge(params: {
@@ -269,7 +284,7 @@ export async function fetchDeepAgentProjectStatus(
         params.sessionId ?? `deep-agent-project-status-${params.projectId}`,
       where: WHERE,
       dependency: "backend.deep-agent-project-status",
-      timeoutMs: params.timeoutMs ?? AI_CALL_POLICY.timeoutMs,
+      timeoutMs: params.timeoutMs ?? getDeepAgentBridgeTimeoutMs(),
       retries: 0,
       backoffMs: AI_CALL_POLICY.backoffMs,
     },
@@ -302,7 +317,7 @@ export async function fetchDeepAgentExecutiveBriefing(
       requestId: params.sessionId ?? "deep-agent-executive-briefing",
       where: EXECUTIVE_WHERE,
       dependency: "backend.deep-agent-executive-briefing",
-      timeoutMs: params.timeoutMs ?? AI_CALL_POLICY.timeoutMs,
+      timeoutMs: params.timeoutMs ?? getDeepAgentBridgeTimeoutMs(),
       retries: 0,
       backoffMs: AI_CALL_POLICY.backoffMs,
     },
@@ -336,7 +351,7 @@ export async function fetchDeepAgentResearch(
       requestId: params.sessionId ?? "deep-agent-research",
       where: RESEARCH_WHERE,
       dependency: "backend.deep-agent-research",
-      timeoutMs: params.timeoutMs ?? AI_CALL_POLICY.timeoutMs,
+      timeoutMs: params.timeoutMs ?? getDeepAgentBridgeTimeoutMs(),
       retries: 0,
       backoffMs: AI_CALL_POLICY.backoffMs,
     },
@@ -649,7 +664,8 @@ export function buildDeepAgentResearchEvidenceWidget(
       title: source.title,
       sourceType: "knowledge",
       href: source.url ?? undefined,
-      snippet: source.sourceType === "web" ? "Public web source" : "Research source",
+      snippet:
+        source.sourceType === "web" ? "Public web source" : "Research source",
       confidence: "medium",
     })),
   };
