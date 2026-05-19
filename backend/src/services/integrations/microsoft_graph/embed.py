@@ -489,14 +489,19 @@ def _count_pending_status_rows(supabase_client) -> int:
 
     Used as a divergence detector: if the candidate fetch returns 0 but this
     count is > 0, the candidate query is filtering out rows that should be
-    embedded. Returns 0 on any error so the guardrail never breaks the run.
+    embedded. Matches the same date window the candidate query uses (365
+    days) so old, intentionally-excluded rows don't generate false alarms.
+
+    Returns 0 on any error so the guardrail never breaks the run.
     """
     try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=365)).date().isoformat()
         resp = (
             supabase_client.from_("document_metadata")
             .select("id", count="exact", head=True)
             .eq("source", "microsoft_graph")
             .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
+            .gte("date", cutoff)
             .execute()
         )
         return int(getattr(resp, "count", None) or 0)
