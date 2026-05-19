@@ -416,6 +416,51 @@ services:
       - key: RAG_DATABASE_WRITES_ENABLED
         value: "true"
 
+  # Drains source intelligence + packet refresh queues. The backend web service
+  # keeps APScheduler disabled in production, so this cron is the production
+  # compiler loop that turns queued RAG work into current intelligence packets.
+  - type: cron
+    name: alleato-intelligence-compiler-drain
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "*/15 * * * *"
+    dockerCommand: >-
+      timeout 12m python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.scheduler import _run_intelligence_compiler;
+      result = _run_intelligence_compiler(source_limit=15, packet_limit=10, max_processing_time_ms=600000);
+      print(json.dumps(result, indent=2, default=str));
+      failed = int(result.get('source_jobs_failed') or 0) + int(result.get('packet_jobs_failed') or 0);
+      succeeded = int(result.get('source_jobs_succeeded') or 0) + int(result.get('packet_jobs_succeeded') or 0);
+      packet_failed = int(result.get('packet_jobs_failed') or 0);
+      sys.exit(1 if result.get('timed_out') or packet_failed or (failed and not succeeded) else 0)
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services:/app/src/workers
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
   # Domain (company_process) packet compiler — synthesizes cross-project
   # communications about a single business function (accounting, operations,
   # business development, people & talent) into an intelligence_packets row

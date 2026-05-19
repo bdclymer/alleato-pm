@@ -21,6 +21,8 @@ Config lives in `render.yaml` at the repo root.
 | `alleato-task-extraction` | Daily 7:00 AM (`0 7 * * *`) | Extract action items from communications (window: last 2 days) | `backend/src/services/task_extraction.py` | Exit 1 only if errors **and** `inserted == 0`. |
 | `alleato-rag-health` | Daily 12:15 PM (`15 12 * * *`) | RAG meeting vectorization health check. Posts to Slack on failure. | `backend/src/services/health/rag_meeting_health.py` | Standard Python exit code (non-zero on failure). Posts to `SLACK_WEBHOOK_URL`. |
 | `alleato-source-rag-health` | Every 4 hours at minute 5 (`5 */4 * * *`) | Multi-source RAG/source watchdog: Fireflies, Outlook, Teams channel, Teams DM, OneDrive, SharePoint, vectorization, compiler backlog, and task extraction | `backend/src/services/health/source_rag_health.py` | Exit 1 if any watched source is stale, unhealthy, or has critical pipeline alerts. Persists `system_alerts`; optionally calls `RAG_HEALTH_REMEDIATION_WEBHOOK_URL` for cloud remediation. |
+| `alleato-packet-refresh-periodic` | 4x/day (`0 2,9,15,21 * * *`) | Enqueue project intelligence packet refresh jobs for every active `client_project` target, including quiet projects with no new source messages. | `backend/src/scripts/enqueue_periodic_packet_refresh.py` | Exit 1 only if every target enqueue fails. Dedupes existing queued/running jobs. |
+| `alleato-intelligence-compiler-drain` | Every 15 min (`*/15 * * * *`) | Drain `source_intelligence_jobs` and `packet_refresh_jobs` from the RAG database into insight cards and current project intelligence packets. This is the production compiler loop because the backend web service disables APScheduler. | `backend/src/services/scheduler.py` | Exit 1 if the run times out, if any packet refresh job fails, or if compiler jobs fail with zero successes. Writes compiler-run telemetry through `source_sync_runs`. |
 | `alleato-executive-daily-brief-morning` | Weekdays 11:00 AM and noon UTC (`0 11,12 * * 1-5`) | Generate the approved executive Daily Brief on Render. Teams delivery is currently paused with `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS=false`; when re-enabled, sends the CEO Operating Brief Teams message at 7:00 AM America/New_York. One UTC run skips depending on daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or enabled Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. Non-target UTC runs exit 0 before generation. |
 | `alleato-executive-daily-brief-evening` | Weekdays 10:30 PM and 11:30 PM UTC (`30 22,23 * * 1-5`) | Same as morning run, targeted at 6:30 PM America/New_York. Teams delivery is currently paused with `EXECUTIVE_DAILY_BRIEF_SEND_TEAMS=false`. One UTC run skips depending on daylight saving time. | `frontend/scripts/run-executive-daily-brief.ts` | Exit 1 on generation, persistence, or enabled Teams delivery failure. Writes `source_sync_runs` with source `executive_daily_brief`. Non-target UTC runs exit 0 before generation. |
 
@@ -106,6 +108,34 @@ Set these in the Render dashboard under each cron's **Environment** tab. All are
 | `PYTHONPATH` | `/app:/app/src:/app/src/services` (set in render.yaml) |
 | `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
 
+### `alleato-packet-refresh-periodic`
+
+| Var | Notes |
+|-----|-------|
+| `SUPABASE_URL` | Main app Supabase project URL |
+| `SUPABASE_SERVICE_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Main app service role key, used to read active `intelligence_targets` |
+| `RAG_SUPABASE_URL` | Split RAG Supabase project URL |
+| `RAG_SUPABASE_SERVICE_ROLE_KEY` | RAG service role key, used to enqueue `packet_refresh_jobs` |
+| `RAG_DATABASE_READS_ENABLED` | Set to `"true"` |
+| `RAG_DATABASE_WRITES_ENABLED` | Set to `"true"` |
+| `PYTHONPATH` | `/app:/app/src:/app/src/services:/app/src/workers` (set in render.yaml) |
+| `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
+
+### `alleato-intelligence-compiler-drain`
+
+| Var | Notes |
+|-----|-------|
+| `SUPABASE_URL` | Main app Supabase project URL |
+| `SUPABASE_SERVICE_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Main app service role key, used for packet/card writes |
+| `RAG_SUPABASE_URL` | Split RAG Supabase project URL |
+| `RAG_SUPABASE_SERVICE_ROLE_KEY` | RAG service role key, used to claim/update compiler queues |
+| `RAG_DATABASE_READS_ENABLED` | Set to `"true"` |
+| `RAG_DATABASE_WRITES_ENABLED` | Set to `"true"` |
+| `AI_GATEWAY_API_KEY` | Primary AI provider key for operating-summary packet generation |
+| `OPENAI_API_KEY` | Direct OpenAI fallback |
+| `PYTHONPATH` | `/app:/app/src:/app/src/services:/app/src/workers` (set in render.yaml) |
+| `PYTHONUNBUFFERED` | `1` (set in render.yaml) |
+
 ### `alleato-executive-daily-brief-morning` / `alleato-executive-daily-brief-evening`
 
 | Var | Notes |
@@ -184,6 +214,16 @@ print(json.dumps(result, indent=2))
 
 # RAG health
 python3 -m src.services.health.rag_meeting_health
+
+# Project intelligence packet refresh enqueue + compiler drain
+python3 src/scripts/enqueue_periodic_packet_refresh.py --dry-run
+python3 -c "
+import json, sys
+sys.path.insert(0, '.')
+from src.services.scheduler import _run_intelligence_compiler
+result = _run_intelligence_compiler(source_limit=15, packet_limit=10, max_processing_time_ms=600000)
+print(json.dumps(result, indent=2, default=str))
+"
 ```
 
 For AI/RAG data quality follow-up after `alleato-rag-health` or

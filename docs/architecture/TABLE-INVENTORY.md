@@ -94,13 +94,13 @@ See [DATABASE-ARCHITECTURE.md §12 "Unified File Architecture (Pattern C)"](./DA
 
 ---
 
-## Pipeline B compiler refresh — three trigger paths
+## Pipeline B compiler refresh — enqueue and drain paths
 
-Many readers won't know this: the intelligence compiler refreshes packets via THREE distinct triggers, not one.
+Many readers won't know this: the intelligence compiler refreshes packets in two stages. First, source changes and periodic sweeps enqueue work. Then a Render cron drains the queue and writes current packets.
 
-1. **Event-driven (priority 10)** — on every `promote_signal_candidate` call inside the compiler, an immediate packet refresh job is enqueued.
-2. **APScheduler tick (every 10 minutes)** — inside the FastAPI process, `scheduler.py:340-370` runs `run_intelligence_compiler_batch`, claiming `source_intelligence_jobs` and `packet_refresh_jobs` from RAG. Env var: `INTELLIGENCE_COMPILER_INTERVAL_MINUTES=10`.
-3. **Render cron `alleato-packet-refresh-periodic` (4×/day at 02/09/15/21 UTC)** — `scripts/enqueue_periodic_packet_refresh.py` enqueues a refresh for every active `intelligence_targets` row, so quiet projects don't sit stale.
+1. **Event-driven enqueue (priority 10)** — on every `promote_signal_candidate` call inside the compiler, an immediate packet refresh job is enqueued.
+2. **Periodic enqueue (priority 20)** — Render cron `alleato-packet-refresh-periodic` runs `scripts/enqueue_periodic_packet_refresh.py` 4x/day for every active `intelligence_targets` row, so quiet projects do not sit stale.
+3. **Compiler drain** — Render cron `alleato-intelligence-compiler-drain` runs every 15 minutes and calls `scheduler._run_intelligence_compiler`, claiming `source_intelligence_jobs` and `packet_refresh_jobs` from RAG. The `alleato-backend` web service intentionally has `DISABLE_SCHEDULER=true` and `INTELLIGENCE_COMPILER_ENABLED=false`, so Render cron is the production drain loop.
 
 All three converge on the same compiler logic in `backend/src/services/intelligence/compiler.py`.
 
@@ -120,9 +120,9 @@ All three converge on the same compiler logic in `backend/src/services/intellige
 | `alleato-rag-health` | `15 12 * * *` (daily) | `system_alerts` |
 | `alleato-source-rag-health` | `5 */4 * * *` (every 4h) | `system_alerts` |
 | **`alleato-packet-refresh-periodic`** | `0 2,9,15,21 * * *` (4×/day) | Enqueues `packet_refresh_jobs` (RAG) for every active `intelligence_targets` row |
+| **`alleato-intelligence-compiler-drain`** | `*/15 * * * *` (every 15 min) | Drains `source_intelligence_jobs` + `packet_refresh_jobs` -> writes `insight_cards`, `insight_card_evidence`, `insight_card_targets`, `intelligence_packets`, `intelligence_packet_cards` |
 | `alleato-executive-daily-brief-morning` | `0 11,12 * * 1-5` | Generates `daily_recaps` + Teams delivery |
 | `alleato-executive-daily-brief-evening` | `0 22,23 * * 1-5` | Same as above, evening cadence |
-| **APScheduler in FastAPI (intelligence_compiler)** | every 10 min | Drains `source_intelligence_jobs` + `packet_refresh_jobs` → writes `insight_cards`, `insight_card_evidence`, `insight_card_targets`, `intelligence_packets`, `intelligence_packet_cards` |
 | **APScheduler in FastAPI (fireflies)** | per `scheduler.py:540` | Polls Fireflies, enqueues `fireflies_ingestion_jobs` |
 
 ---
@@ -623,11 +623,11 @@ Compiler version stamp: `ai_intelligence_compiler_v0_1`.
    - On `confidence='high'`: `promote_signal_candidate` (`:1356`) flips candidate to `promoted`, upserts `insight_cards` (MAIN), writes `insight_card_targets` + `insight_card_evidence` (MAIN), enqueues `packet_refresh_jobs` (RAG).
 3. **Packet refresh** — same batch claims from `packet_refresh_jobs` and runs `compile_current_packet` (`:1289`): reads live `insight_cards` joined via `insight_card_targets`, upserts `intelligence_packets` (MAIN), clears + re-inserts `intelligence_packet_cards` (MAIN).
 
-### Two refresh triggers (plus the APScheduler tick = three total)
+### Refresh enqueue and drain
 
 - **Event-driven** (priority 10): on every promotion.
 - **Periodic** (priority 20): Render cron `alleato-packet-refresh-periodic` at `0 2,9,15,21 * * *` (4×/day). Runs `scripts/enqueue_periodic_packet_refresh.py`.
-- **APScheduler tick**: every 10 min in FastAPI, drains both queues regardless of how rows were enqueued.
+- **Production drain**: Render cron `alleato-intelligence-compiler-drain` at `*/15 * * * *`. Calls `scheduler._run_intelligence_compiler` and drains both queues regardless of how rows were enqueued. The FastAPI web process keeps the in-process scheduler disabled in production.
 
 ### Pipeline B table inventory
 
