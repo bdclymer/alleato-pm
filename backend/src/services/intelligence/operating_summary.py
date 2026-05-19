@@ -667,20 +667,25 @@ def _source_digest(sources: List[Dict[str, Any]]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
+def _source_aliases(index: int) -> List[str]:
+    aliases = [f"S{index:03d}", f"S{index:02d}", f"S{index}"]
+    return list(dict.fromkeys(aliases))
+
+
 def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[str] = None) -> Dict[str, Any]:
     client, prefix = _provider_client()
     raw_model = model or os.getenv("OPERATING_SUMMARY_MODEL", "gpt-5.4-mini")
     model_name = raw_model if raw_model.startswith(prefix) else f"{prefix}{raw_model}"
     sources = source_set["sources"]
-    alias_to_source_id = {
-        f"S{index:03d}": source["id"]
-        for index, source in enumerate(sources, start=1)
-    }
+    alias_to_source_id = {}
+    for index, source in enumerate(sources, start=1):
+        for alias in _source_aliases(index):
+            alias_to_source_id[alias] = source["id"]
     aliased_sources = [
         {**source, "id": alias}
-        for alias, source in zip(alias_to_source_id.keys(), sources)
+        for alias, source in zip([f"S{index:03d}" for index in range(1, len(sources) + 1)], sources)
     ]
-    source_ids = list(alias_to_source_id.keys())
+    source_ids = [f"S{index:03d}" for index in range(1, len(sources) + 1)]
     prompt = {
         "focus": "project_operating_summary",
         "projectName": source_set.get("projectName"),
@@ -735,7 +740,7 @@ def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[st
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
     summary = json.loads(raw)
-    known = set(source_ids)
+    known = set(alias_to_source_id.keys()) | {source["id"] for source in sources}
     cited = set()
 
     def collect(value: Any) -> None:
@@ -758,7 +763,7 @@ def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[st
         if isinstance(value, dict):
             ids = value.get("sourceIds")
             if isinstance(ids, list):
-                value["sourceIds"] = [alias_to_source_id[str(item)] for item in ids]
+                value["sourceIds"] = [alias_to_source_id.get(str(item), str(item)) for item in ids]
             for nested in value.values():
                 remap(nested)
         elif isinstance(value, list):

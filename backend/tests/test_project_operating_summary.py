@@ -8,6 +8,7 @@ from src.services.intelligence.operating_summary import (
     _make_source,
     _quality_counts,
     _select_operating_sources,
+    _source_aliases,
 )
 
 
@@ -177,3 +178,8 @@ def test_card_defs_do_not_duplicate_one_next_action_across_every_section():
     assert len(set(next_actions)) > 3
     assert "Escalate unresolved permit-blocking decisions." in next_actions
     assert "Resolve: Finalize second-floor private room configuration" in next_actions
+
+
+def test_source_aliases_accept_common_model_citation_formats():
+    assert _source_aliases(1) == ["S001", "S01", "S1"]
+    assert _source_aliases(12) == ["S012", "S12"]
