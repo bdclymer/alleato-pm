@@ -1,7 +1,495 @@
 {
-  "generatedAt": "2026-05-19T08:49:33.600Z",
+  "generatedAt": "2026-05-19T11:11:43.915Z",
   "source": "scripts/verify/verify_ai_assistant_eval_suite.mjs",
   "runs": [
+    {
+      "runId": "2026-05-19T11-10-39-734Z-88222626",
+      "generatedAt": "2026-05-19T11:11:43.904Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": null,
+      "filter": null,
+      "totalCases": 1,
+      "passed": 1,
+      "failed": 0,
+      "warningCount": 1,
+      "slowestCases": [
+        {
+          "id": "strategic-rag-asrs-sprinkler-time-sink",
+          "intent": "strategic_rag",
+          "durationMs": 60177,
+          "status": "pass",
+          "warnings": [
+            "duration 60177ms exceeded warning budget 30000ms"
+          ]
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-19T11-10-39-734Z-88222626/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-19T11-10-39-734Z-88222626/summary.md",
+      "cases": [
+        {
+          "id": "strategic-rag-asrs-sprinkler-time-sink",
+          "prompt": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly instead of using another project as proof.",
+          "intent": "strategic_rag",
+          "status": "pass",
+          "durationMs": 60177,
+          "streamEventCount": 519,
+          "toolNames": [
+            "searchMeetingsByTopic",
+            "searchDocuments",
+            "semanticSearch",
+            "findProjectDocuments"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 60177ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: searchMeetingsByTopic, searchDocuments, semanticSearch, findProjectDocuments",
+            "judge strategic_advisor: pass (4/4)"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": {
+            "status": "pass",
+            "rubric": "strategic_advisor",
+            "score": 4,
+            "minScore": 4,
+            "summary": "The answer is honest and appropriately refuses to overstate evidence. It clearly says direct Exol Wilmer / 26-103 ASRS sprinkler evidence is missing, avoids using another project as proof, and keeps claims anchored to the project. The main limitation is that it does not provide a real strategic conclusion about the most time-consuming design step because the evidence gap prevents it.",
+            "strengths": [
+              "Directly answers the evidence constraint instead of fabricating a conclusion.",
+              "Clearly distinguishes Exol Wilmer-specific evidence from adjacent fire alarm/electrical material.",
+              "Uses project-specific sourcing language and repeatedly fences off non-qualifying evidence.",
+              "States plausible reasons for the missing evidence without pretending certainty.",
+              "Includes a reasonable next step to broaden the search while preserving project boundaries."
+            ],
+            "weaknesses": [
+              "Does not identify the most time-consuming part of ASRS sprinkler design, so it cannot fully satisfy the business question.",
+              "The response is more evidence-status report than executive strategic analysis.",
+              "Some cited items are useful only as negative evidence and do not advance the core decision.",
+              "Could have been more explicit about what would be needed to answer the question definitively from meetings/emails/messages."
+            ]
+          },
+          "finalText": "I can’t prove that from direct **Exol Wilmer / 26-103 ASRS sprinkler** evidence.\n\nWhat I found for **Exol Wilmer** is fire alarm work, electrical coordination, inspections, and closeout activity — not meeting/email/message evidence that spells out **which part of ASRS sprinkler system design is the most time-consuming**.\n\nWhat the Exol Wilmer record does show:\n- **Fire alarm design was completed** by the week of Feb. 15–21, with wire installation starting and permitting planned next. That’s fire alarm scope, not ASRS sprinkler design. [Source: **Exol Wilmer Weekly Report 022026**, indexed OneDrive doc]\n- A Mar. 3 meeting covered **fire alarm diagnosis** and broader electrical redesign, not ASRS sprinkler engineering. [Source: **Meeting – “Exol Wilmer Electrical” – 2026-03-03**]\n- Mid-May emails are about **electrical inspection, fire alarm inspection, closeout docs, and an electrical RFI**, again not ASRS sprinkler design. [Sources: **Email: RE: Exol Wilmer – 2026-05-14**; **Email: Exol Wilmer – 2026-05-14**]\n- I also searched Exol Wilmer-specific semantic/document results for **ASRS sprinkler / hydraulic calculations / FM Global / rack elevations**, and the returned items were still fire alarm proposals and weekly reports, not sprinkler-design discussions.\n\nSo the answer is: **the direct Exol Wilmer evidence is missing**. I’m not going to use another project as proof.\n\nWhat I can say with confidence:\n- There is **not enough Exol Wilmer-specific meeting/email/message evidence** in the current search results to identify the bottleneck in **ASRS sprinkler design**.\n- If that work happened, it’s either **not indexed under Exol Wilmer**, buried in attachments not surfaced by these searches, or discussed under a different project/topic label.\n\nNext move:\n- I can do a broader evidence pull using alternate terms tied to the system itself — things like **Exotec, Hy-Tek, FM Global, in-rack sprinkler, hydraulic calc, IRAS, rack elevations** — but I’d still keep the answer fenced to **Exol Wilmer only** unless the source explicitly links back to this project.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 60177
+          }
+        }
+      ]
+    },
+    {
+      "runId": "2026-05-19T11-07-15-069Z-89fe2e34",
+      "generatedAt": "2026-05-19T11:08:04.153Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": null,
+      "filter": null,
+      "totalCases": 1,
+      "passed": 0,
+      "failed": 1,
+      "warningCount": 1,
+      "slowestCases": [
+        {
+          "id": "strategic-rag-asrs-sprinkler-time-sink",
+          "intent": "strategic_rag",
+          "durationMs": 45428,
+          "status": "fail",
+          "warnings": [
+            "duration 45428ms exceeded warning budget 30000ms"
+          ]
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-19T11-07-15-069Z-89fe2e34/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-19T11-07-15-069Z-89fe2e34/summary.md",
+      "cases": [
+        {
+          "id": "strategic-rag-asrs-sprinkler-time-sink",
+          "prompt": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly instead of using another project as proof.",
+          "intent": "strategic_rag",
+          "status": "fail",
+          "durationMs": 45428,
+          "streamEventCount": 490,
+          "toolNames": [
+            "searchMeetingsByTopic",
+            "semanticSearch",
+            "searchDocuments"
+          ],
+          "failures": [
+            "mustIncludeAny missing one of: \"missing\", \"not direct\", \"no direct\", \"could not confirm\", \"evidence gap\""
+          ],
+          "warnings": [
+            "duration 45428ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: searchMeetingsByTopic, semanticSearch, searchDocuments",
+            "judge strategic_advisor: pass (4/4)"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": {
+            "status": "pass",
+            "rubric": "strategic_advisor",
+            "score": 4,
+            "minScore": 4,
+            "summary": "The answer is appropriately cautious and does not fabricate a project-specific ASRS sprinkler bottleneck for Exol Wilmer. It clearly states the direct evidence is missing, distinguishes adjacent fire alarm material from the requested ASRS sprinkler scope, and avoids using another project as proof. The main weakness is that it does not provide a decisive business conclusion beyond the absence of evidence, but that is acceptable given the prompt constraints.",
+            "strengths": [
+              "Leads with an explicit, honest point of view: direct Exol Wilmer ASRS sprinkler evidence is missing.",
+              "Anchors claims to the requested project and labels fire alarm and Exotec material as not proof for Exol Wilmer.",
+              "Handles evidence carefully and repeatedly avoids overclaiming.",
+              "Identifies what was found versus what was not found, which is useful for decision-making.",
+              "Maintains project specificity and does not drift into generic construction advice."
+            ],
+            "weaknesses": [
+              "Does not identify the most time-consuming ASRS sprinkler design activity because the evidence base is missing, so the strategic value is limited.",
+              "Could have been sharper about the likely next investigative path or specific stakeholders to query, but the prompt mainly asked for evidence handling.",
+              "Some references to fire alarm scope are informative but do not materially answer the ASRS sprinkler question."
+            ]
+          },
+          "finalText": "I can’t prove that from **direct Exol Wilmer ASRS sprinkler evidence**.\n\nWhat I found for **Exol Wilmer / 26-103** was about **fire alarm** scope, clarifications, and weekly reporting — not ASRS sprinkler design workflow:\n\n- **Exol Wilmer Weekly Report 022026** says **fire alarm design was completed** and permitting/rough-in work was moving forward. That tells us design happened, but not what part of **ASRS sprinkler** design took the most time. [Source: *Exol Wilmer Weekly Report 022026*, indexed 2026-05-08]\n- **Exol Wilmer FA Clarifications / FA 020926** are fire alarm proposal and scope documents with NFPA 72/code compliance language, again **not ASRS sprinkler design**. [Source: *Exol Wilmer FA Clarifications.pdf* and *Exol Wilmer FA 020926.pdf*, indexed 2026-05-08]\n- I also searched meetings on **“ASRS sprinkler design”** scoped to Exol Wilmer and got **no meeting results**. [Source: meeting search for Exol Wilmer, 2026-05-19]\n\nSo the clean answer is:\n\n**For Exol Wilmer specifically, I do not have direct meeting/email/message evidence showing what the most time-consuming part of the ASRS sprinkler design was.**\n\nWhat I can say without stretching:\n- There’s evidence of **fire alarm design completion** at Exol Wilmer.\n- There is **not enough direct Exol Wilmer evidence** in the retrieved meetings/messages/docs to identify the bottleneck inside **ASRS sprinkler system design**.\n\nBy the way, I do see separate email evidence on another job about **Exotec in-rack sprinkler** work discussing FM Global/NFPA alignment and hydraulic calculation issues — but that is **not Exol Wilmer**, so I’m **not** using it as proof here.\n\nIf you want, I can take one more pass specifically on:\n1. **Exol Wilmer + sprinkler / suppression / FM Global / hydraulic calc / rack**, or  \n2. find the exact **emails/documents** tied to fire protection at Exol Wilmer to see whether ASRS scope was labeled differently.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 45428
+          }
+        }
+      ]
+    },
+    {
+      "runId": "2026-05-19T11-03-49-986Z-1cfff01c",
+      "generatedAt": "2026-05-19T11:04:39.849Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": null,
+      "filter": null,
+      "totalCases": 1,
+      "passed": 1,
+      "failed": 0,
+      "warningCount": 1,
+      "slowestCases": [
+        {
+          "id": "strategic-rag-asrs-sprinkler-time-sink",
+          "intent": "strategic_rag",
+          "durationMs": 45594,
+          "status": "pass",
+          "warnings": [
+            "duration 45594ms exceeded warning budget 30000ms"
+          ]
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-19T11-03-49-986Z-1cfff01c/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-19T11-03-49-986Z-1cfff01c/summary.md",
+      "cases": [
+        {
+          "id": "strategic-rag-asrs-sprinkler-time-sink",
+          "prompt": "What is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages?",
+          "intent": "strategic_rag",
+          "status": "pass",
+          "durationMs": 45594,
+          "streamEventCount": 676,
+          "toolNames": [
+            "searchDocuments",
+            "searchMeetingsByTopic",
+            "semanticSearch"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 45594ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: searchDocuments, searchMeetingsByTopic, semanticSearch",
+            "judge strategic_advisor: pass (4/4)"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": {
+            "status": "pass",
+            "rubric": "strategic_advisor",
+            "score": 4,
+            "minScore": 4,
+            "summary": "The answer is strategically strong and evidence-aware. It takes a clear position that the main time sink is coordination/model reconciliation and standards interpretation, not drafting. It connects meeting and email evidence to a business implication (rework risk and iterative design cycles), and it explicitly flags what is not directly confirmed. The main weakness is that it leans slightly on inference rather than a single decisive source that names the bottleneck, but it handles that honestly.",
+            "strengths": [
+              "Leads with a clear executive point of view instead of a neutral recap.",
+              "Connects multiple evidence points into an operational conclusion about rework and coordination overhead.",
+              "Uses specific examples from meetings and emails rather than vague generalities.",
+              "Honest about evidence limits and avoids pretending there is a direct quote naming the exact bottleneck.",
+              "Signals second-order risk: standards mismatch and model churn can drive redesign and delay."
+            ],
+            "weaknesses": [
+              "Some of the conclusion is inferential rather than directly stated in the sources.",
+              "Does not quantify relative time spent across coordination, calculations, and drafting.",
+              "Could be more operational by naming who should own the next step and by when.",
+              "The final answer is strong, but it does not fully separate confirmed evidence from interpretation in a concise way.",
+              "It references several sources, but the strongest direct proof of 'most time-consuming' is still missing."
+            ]
+          },
+          "finalText": "The long pole looks like **coordination-driven layout/modeling and standards reconciliation**, not simple drafting.\n\nWhy I’m saying that:\n\n- In the **Exol Morrisville Kick Off** meeting, Brandon said the team would need **weekly design calls** and wanted to “**hammer through**” the preliminary work, while Steve Fischer said the design needed to be worked **in parallel** because there were still **nuances** and unknowns to go back and forth on. That points to coordination and iterative layout work being the time sink, not a one-pass sprinkler design task. [Source: *Exol Morrisville Kick Off*, 2026-03-18]\n- In the **Weekly design coordination Exol PA** meeting, the team said **Phase Two modeling and drawing updates are centralized in Revit**, with **full new drawings** to be issued, and stressed **centralized document sharing** and **clear role assignments**. That’s a classic sign that the heavy lift is getting everyone onto one coordinated model and avoiding redesign/rework. [Source: *Weekly design coordination Exol PA*, 2026-05-11]\n- Separate ASRS sprinkler email traffic shows the design work is also slowed by **code/standard interpretation**, especially reconciling **FM Global 8-34** with **NFPA** requirements and updating calculations accordingly. In the **Exotec In-Rack Sprinkler CO-01** email chain, Matthew Perry was asking for clarity on which standard governed different parts of the design and noted the need for **updated calculations** to be shared. [Source: email *Re: Exotec In-Rack Sprinkler CO-01*, 2026-05-12]\n- A related fire suppression review for **Pratt & Whitney** shows the same pattern: the designer had to revisit the basis of design because the initial table/criteria didn’t fit the container type, forcing a redesign of sprinkler demand and adding FM-required detection/manual features. That’s more evidence that **figuring out the correct design basis and recalculating it** is where time gets burned. [Source: email *FW: Pratt & Whitney Fire Suppression Submittal*, 2026-03-29]\n\nBottom line:\n\n**The most time-consuming part appears to be coordinating the ASRS layout with the latest building/model information and then reconciling FM Global vs. NFPA design requirements well enough to finalize the hydraulic/design basis without rework.**\n\nIn plain English:  \n**it’s the back-and-forth to get the design basis right**, not just drawing sprinkler lines.\n\nWhat I can confirm from the evidence:\n- Repeated weekly coordination is required\n- Revit/model updates are central\n- Full drawing revisions are being issued\n- Standards interpretation and updated calculations are recurring issues\n\nWhat I can’t confirm cleanly:\n- I do **not** have a quote that says verbatim “the most time-consuming part is X”\n- I also didn’t get usable Teams/message hits here—mostly meetings plus email evidence\n\nIf you want, I can do one more pass focused specifically on **hydraulic calculations vs. model coordination vs. permitting** and rank which one shows up most often as the bottleneck.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 45594
+          }
+        }
+      ]
+    },
+    {
+      "runId": "2026-05-19T09-11-54-678Z-158cad1d",
+      "generatedAt": "2026-05-19T09:13:59.253Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": "inbox-outlook-regression",
+      "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+      "totalCases": 5,
+      "passed": 5,
+      "failed": 0,
+      "warningCount": 6,
+      "slowestCases": [
+        {
+          "id": "realworld-outlook-arrived-today",
+          "intent": "source_lookup",
+          "durationMs": 40590,
+          "status": "pass",
+          "warnings": [
+            "duration 40590ms exceeded warning budget 30000ms",
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ]
+        },
+        {
+          "id": "realworld-urgent-inbox",
+          "intent": "source_lookup",
+          "durationMs": 27460,
+          "status": "pass",
+          "warnings": [
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ]
+        },
+        {
+          "id": "realworld-important-emails-this-morning",
+          "intent": "source_lookup",
+          "durationMs": 22759,
+          "status": "pass",
+          "warnings": [
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ]
+        },
+        {
+          "id": "realworld-last-five-emails",
+          "intent": "source_lookup",
+          "durationMs": 15906,
+          "status": "pass",
+          "warnings": [
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ]
+        },
+        {
+          "id": "realworld-email-reply-triage",
+          "intent": "source_lookup",
+          "durationMs": 11743,
+          "status": "pass",
+          "warnings": [
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ]
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-05-19T09-11-54-678Z-158cad1d/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-05-19T09-11-54-678Z-158cad1d/summary.md",
+      "cases": [
+        {
+          "id": "realworld-last-five-emails",
+          "prompt": "Can you tell me my last five emails?",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 15906,
+          "streamEventCount": 6,
+          "toolNames": [
+            "consultMicrosoftExecutiveAssistant"
+          ],
+          "failures": [],
+          "warnings": [
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ],
+          "observations": [
+            "tools fired: consultMicrosoftExecutiveAssistant",
+            "judge email_operator: skipped"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": {
+            "status": "skipped",
+            "rubric": "email_operator",
+            "score": null,
+            "minScore": 4,
+            "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+            "strengths": [],
+            "weaknesses": []
+          },
+          "finalText": "Last five inbox emails for bclymer@alleatogroup.com:\n\n1. Vercel — “Approaching your limits: Upgrade now to avoid service disruption”\n   - Received: 2026-05-19 06:40:41 UTC\n   - Notes: Possible operational action needed; usage warning. Not client-urgent, but time-sensitive.\n\n2. Alleato Group — “ERP Integrations Daily Summary”\n   - Received: 2026-05-19 06:16:11 UTC\n   - Notes: Internal/system summary. No immediate action evident from the snippet.\n\n3. Kenny / Alleato-related external sender — “Alleato group 2026 Pay Allowance Adjustment, Compensations Plans_REF - 6li4aon8GM”\n   - Received: 2026-05-19 01:54:16 UTC\n   - Notes: Attachment present. Sender looks unusual/spoof-like; treat as suspicious until verified.\n\n4. Mark Purvis — “Fw: Exol Wilmer”\n   - Received: 2026-05-19 01:29:42 UTC\n   - Notes: Project-related forwarded message with attachment. Likely routine follow-up.\n\n5. Connor Clark — “Re: Superior Beverage 8319 - In Rack Sprinkler Call Follow Up”\n   - Received: 2026-05-19 01:17:59 UTC\n   - Notes: Project follow-up; mentions ceiling height not yet available. No urgent escalation indicated.\n\nUrgent-item assessment:\n- I did not find a true emergency, legal, security, or client-critical escalation in the last five messages.\n- The most notable risk item is the suspicious pay/compensation email with a mismatched-looking sender/domain. That should be verified before opening attachments or replying.\n\nCapability status:\n- Live Outlook inbox read succeeded.\n- No stale context or tool failure occurred.\n- No Teams draft was created because no urgent escalation threshold was clearly met.\n\nRecommended next steps for Megan:\n- Review the Vercel usage warning if that site/app matters operationally.\n- Verify the suspicious compensation email before interacting with it.\n- Open the project follow-ups only if you want a response drafted or summarized further.\n\nApprovals needed:\n- None for reading the inbox.\n- Approval would be needed only if you want me to draft a reply, Teams escalation, or any send/post action.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 15906
+          }
+        },
+        {
+          "id": "realworld-urgent-inbox",
+          "prompt": "Is there anything urgent in my inbox?",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 27460,
+          "streamEventCount": 6,
+          "toolNames": [
+            "consultMicrosoftExecutiveAssistant"
+          ],
+          "failures": [],
+          "warnings": [
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ],
+          "observations": [
+            "tools fired: consultMicrosoftExecutiveAssistant",
+            "judge email_operator: skipped"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": {
+            "status": "skipped",
+            "rubric": "email_operator",
+            "score": null,
+            "minScore": 4,
+            "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+            "strengths": [],
+            "weaknesses": []
+          },
+          "finalText": "Yes — there is one urgent item in the inbox, and one security item to flag.\n\nUrgent inbox items\n1. Vendor usage warning from Vercel\n- Subject: “Approaching your limits: Upgrade now to avoid service disruption”\n- Received: 2026-05-19 06:40 UTC\n- Why it matters: the free team has used 75% of Function Invocation usage; if limits are exceeded, projects may be automatically paused.\n- Assessment: operationally urgent, but not a true emergency.\n\nSecurity item\n2. Microsoft 365 quarantine notice\n- Subject: “Microsoft 365 security: You have messages in quarantine”\n- Received: 2026-05-18 22:49 UTC\n- Why it matters: 2 messages were held as prevented phish messages.\n- Assessment: needs review today, but I did not find evidence of an active compromise.\n\nWhat I checked\n- Live Outlook inbox: yes\n- Outlook email search for urgent/security/legal terms: no matching passages\n- Teams search for urgent/security/legal terms: no matching passages\n- No calendar or Microsoft file signals were necessary to improve the answer\n\nEscalation draft for Megan review\n- Teams message draft: available if you want me to prepare it\n- Suggested recipient: someone responsible for the Vercel project / IT-security review\n- Suggested content:\n  “Urgent: Vercel free-tier usage is at 75% for Function Invocation and may pause projects if limits are exceeded. Also, Microsoft 365 quarantine shows 2 prevented phish messages. Please review today and confirm whether any action is needed.”\n\nRecommended next steps for Megan\n- Review the Vercel usage notice today and decide whether to upgrade or reduce usage.\n- Open the Microsoft 365 quarantine notice and confirm the held messages are legitimate phish.\n- If you want, I can draft a concise Teams escalation message for review.\n\nApprovals needed\n- None to inspect or draft.\n- Approval would be needed only if you want me to prepare a Teams or email draft for review.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 27460
+          }
+        },
+        {
+          "id": "realworld-important-emails-this-morning",
+          "prompt": "What important emails have I received this morning?",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 22759,
+          "streamEventCount": 6,
+          "toolNames": [
+            "consultMicrosoftExecutiveAssistant"
+          ],
+          "failures": [],
+          "warnings": [
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ],
+          "observations": [
+            "tools fired: consultMicrosoftExecutiveAssistant",
+            "judge email_operator: skipped"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": {
+            "status": "skipped",
+            "rubric": "email_operator",
+            "score": null,
+            "minScore": 4,
+            "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+            "strengths": [],
+            "weaknesses": []
+          },
+          "finalText": "This morning’s important emails in bclymer@alleatogroup.com:\n\n- **Vercel — “Approaching your limits: Upgrade now to avoid service disruption”**  \n  Received **06:40 UTC**. Actionable because the free tier is at **75% usage** and the message warns of possible pause if usage exceeds limits.  \n  **Priority:** High operational attention.\n\n- **Alleato Group — “ERP Integrations Daily Summary”**  \n  Received **06:16 UTC**. Routine system summary, but relevant if you’re tracking ERP sync health.  \n  **Priority:** Medium.\n\n- **Suspected spam/phishing — “Alleato group 2026 Pay Allowance Adjustment, Compensations Plans_REF - 6li4aon8GM”** from **kenny@buro-imagin.be**  \n  Received **01:54 UTC** with attachment and odd sender identity. This looks suspicious and should be treated carefully.  \n  **Priority:** High security review.\n\n- **Project thread — “Fw: Exol Wilmer”** from **Mark Purvis**  \n  Received **01:29 UTC**. Appears to be a project reply about an internet outage and has an attachment.  \n  **Priority:** Medium, likely operational follow-up.\n\n- **Project thread — “Re: Superior Beverage 8319 - In Rack Sprinkler Call Follow Up”**  \n  Received **01:17 UTC**. Indicates the ceiling height is still pending and may arrive tomorrow.  \n  **Priority:** Medium.\n\n- **Project thread — “RE: Noblesville Goodwill Excel Center”**  \n  Received **00:35 UTC**. Notes that one participant is unavailable for a site visit and suggests alternate responders tomorrow.  \n  **Priority:** Medium.\n\n- **Non-business/personal — “Boarding & Training Request for Charles”**  \n  Received **00:02 UTC**. Not business-critical unless you need personal triage.  \n  **Priority:** Low.\n\nSupporting checks:\n- Outlook search returned **no additional matches** for urgent/legal/security/prospect keywords this morning.\n- Teams search returned **no supporting urgent items**.\n- I did **not** read calendar or files because the inbox evidence was sufficient and no message required immediate cross-checking.\n\nPotential urgent escalation:\n- **Suspicious compensation-plan email** is the only item that looks like a true security concern.\n- I can prepare a concise Teams escalation draft for Megan’s review if you want it routed.\n\nRecommended next steps for Megan:\n1. Review the **Vercel usage warning** and decide whether to upgrade or monitor usage.\n2. Treat the **compensation-plan email** as suspicious and avoid opening attachments until verified.\n3. Follow up on the **project threads** where tomorrow’s response or missing data is blocking progress.\n4. If you want, I can draft a **Teams escalation message** for the suspicious email and a short response plan for the Vercel alert.\n\nApprovals needed:\n- **None** to review these emails.\n- **Approval required** only if you want me to prepare an escalation draft for Megan.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 22759
+          }
+        },
+        {
+          "id": "realworld-outlook-arrived-today",
+          "prompt": "What came in through Outlook today that needs my attention?",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 40590,
+          "streamEventCount": 6,
+          "toolNames": [
+            "consultMicrosoftExecutiveAssistant"
+          ],
+          "failures": [],
+          "warnings": [
+            "duration 40590ms exceeded warning budget 30000ms",
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ],
+          "observations": [
+            "tools fired: consultMicrosoftExecutiveAssistant",
+            "judge email_operator: skipped"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": {
+            "status": "skipped",
+            "rubric": "email_operator",
+            "score": null,
+            "minScore": 4,
+            "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+            "strengths": [],
+            "weaknesses": []
+          },
+          "finalText": "Today’s Outlook inbox for bclymer@alleatogroup.com has 7 messages. The items that most likely need attention are:\n\n### Highest priority\n1. **Vercel: “Approaching your limits: Upgrade now to avoid service disruption”**\n   - **Why it matters:** free-tier usage is at **75%** and the note warns projects may be **paused** if limits are exceeded.\n   - **Action needed:** decide whether this site/project should be upgraded or monitored.\n   - **Context check:** I searched Outlook and Teams for related Vercel/usage-limit mentions and found **no matches**, so I don’t have evidence of who owns it or whether a decision is already in motion.\n\n### Likely action items\n2. **Alleato Group: ERP Integrations Daily Summary**\n   - **Why it matters:** says there are **2 vendors available to sync** with the ERP accounting system.\n   - **Action needed:** review if you or the integrations owner should approve or process the sync.\n\n3. **Fw: Exol Wilmer**\n   - **Why it matters:** mentions an **internet outage** and has attachments.\n   - **Action needed:** likely project coordination follow-up if this is an active job.\n\n4. **RE: Noblesville Goodwill Excel Center**\n   - **Why it matters:** site visit timing update; they expect a response tomorrow.\n   - **Action needed:** monitor for the follow-up if you own the thread.\n\n5. **Boarding & Training Request for Charles**\n   - **Why it matters:** routine service request; probably only needs attention if you manage that account.\n\n### Items to treat cautiously\n6. **“Alleato group 2026 Pay Allowance Adjustment, Compensations Plans_REF - 6li4aon8GM”**\n   - **Why it matters:** sender/domain looks inconsistent and the subject is unusual.\n   - **Action needed:** **do not open attachments unless verified**. This should be treated as suspicious until confirmed.\n   - **Context check:** Outlook and Teams searches for the subject terms returned **no matches**, so there’s no corroborating context.\n\n### Recommended next steps for Megan\n- Review the **Vercel** alert first and decide whether the service should be upgraded.\n- Confirm ownership of the **ERP integrations** summary and whether the vendor sync should be actioned today.\n- Treat the **pay allowance adjustment** email as suspicious until verified.\n- Skim the project threads for **Exol Wilmer** and **Noblesville Goodwill Excel Center** if you own those jobs.\n\n### Approvals needed\n- **No email or Teams message was sent.**\n- If you want, I can prepare a **Teams escalation draft** for the Vercel limit warning and/or a **suspicious-email alert draft** for review only.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 40590
+          }
+        },
+        {
+          "id": "realworld-email-reply-triage",
+          "prompt": "Show me any emails from today that need a reply.",
+          "intent": "source_lookup",
+          "status": "pass",
+          "durationMs": 11743,
+          "streamEventCount": 2,
+          "toolNames": [
+            "consultMicrosoftExecutiveAssistant"
+          ],
+          "failures": [],
+          "warnings": [
+            "judge email_operator skipped: Judge disabled with AI_EVAL_JUDGE_ENABLED=false."
+          ],
+          "observations": [
+            "tools fired: consultMicrosoftExecutiveAssistant",
+            "judge email_operator: skipped"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": {
+            "status": "skipped",
+            "rubric": "email_operator",
+            "score": null,
+            "minScore": 4,
+            "summary": "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+            "strengths": [],
+            "weaknesses": []
+          },
+          "finalText": "Today’s inbox has 7 messages. Likely reply-needed items:\n\n1. **Mark Purvis / Corelectric**\n   - Subject: **Fw: Exol Wilmer**\n   - Received: **01:29 UTC**\n   - Why it needs attention: forwarded thread with attached material and project context; likely needs a response or internal routing.\n\n2. **Connor Clark / Hy-Tek**\n   - Subject: **Re: Superior Beverage 8319 - In Rack Sprinkler Call Follow Up**\n   - Received: **01:17 UTC**\n   - Why it needs attention: direct project update answering a prior request (“ceiling height yet… should have it tomorrow”). Likely needs a follow-up once the missing info arrives.\n\n3. **Sam Hurt / TEC MEP**\n   - Subject: **RE: Noblesville Goodwill Excel Center**\n   - Received: **00:35 UTC**\n   - Why it needs attention: states availability for site visit is limited and suggests alternate responders; likely needs acknowledgment and coordination.\n\n4. **Maria Calcetero / Alleato Group**\n   - Subject: **Boarding & Training Request for Charles**\n   - Received: **00:02 UTC**\n   - Why it needs attention: direct service request with dates and bath request; likely needs a reply confirming scheduling.\n\nPotentially non-reply / low-priority:\n- **Vercel usage warning** — operational notification, not obviously requiring a reply, but may merit action if the usage limit matters.\n- **ERP Integrations Daily Summary** — explicitly says do not reply.\n- **Pay allowance adjustment email** — looks suspicious/phishing-like based on sender mismatch and garbled subject; should be treated cautiously, not replied to.\n\nUrgent escalation:\n- None of the messages clearly meet client/legal/security/emergency escalation criteria from the available text.\n- The **Vercel usage warning** may become operationally urgent if it affects a live service, but I don’t have evidence of immediate outage yet.\n\nWhat I could not verify:\n- I only read the live inbox; I did **not** inspect Teams, calendar, or files because the inbox evidence was sufficient for identifying reply-needed emails.\n- No send/post/mutation occurred.\n\nRecommended next steps for Megan:\n1. Reply to **Maria Calcetero** to confirm Charles’s boarding/training schedule.\n2. Follow up on **Connor Clark** once the missing ceiling-height info arrives.\n3. Acknowledge **Sam Hurt** and route to the alternate responders if needed.\n4. Review **Mark Purvis** thread to determine whether it needs a substantive response or internal handling.\n5. Treat the **pay allowance** email as suspicious and avoid engaging until verified.\n\nApprovals needed:\n- **None** to review or draft responses.\n- If you want, I can draft reply emails for the four reply-needed items for Megan’s review.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 11743
+          }
+        }
+      ]
+    },
     {
       "runId": "2026-05-19T08-48-23-096Z-edca370d",
       "generatedAt": "2026-05-19T08:49:33.595Z",
@@ -5347,1196 +5835,6 @@
             "warnDurationMs": 45000,
             "maxDurationMs": 120000,
             "durationMs": 22826
-          }
-        }
-      ]
-    },
-    {
-      "runId": "2026-05-19T04-19-07-376Z-c825f378",
-      "generatedAt": "2026-05-19T04:24:58.724Z",
-      "baseUrl": "https://projects.alleatogroup.com",
-      "bundle": "strategic-advisor-quality",
-      "filter": "(realworld-most-important-tasks|realworld-waiting-on-team|realworld-business-risks|realworld-systems-processes-needed|portfolio-morning-standup|owner-prep-call-westfield)$",
-      "totalCases": 6,
-      "passed": 0,
-      "failed": 6,
-      "warningCount": 15,
-      "slowestCases": [
-        {
-          "id": "portfolio-morning-standup",
-          "intent": "portfolio_briefing",
-          "durationMs": 71214,
-          "status": "fail",
-          "warnings": [
-            "duration 71214ms exceeded warning budget 45000ms"
-          ]
-        },
-        {
-          "id": "realworld-systems-processes-needed",
-          "intent": "implementation_planning",
-          "durationMs": 70227,
-          "status": "fail",
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'actions' not represented",
-            "expected family 'source_health' not represented",
-            "duration 70227ms exceeded warning budget 45000ms"
-          ]
-        },
-        {
-          "id": "realworld-business-risks",
-          "intent": "risk_review",
-          "durationMs": 68855,
-          "status": "fail",
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'risk' not represented",
-            "expected family 'financial' not represented",
-            "expected family 'source_health' not represented",
-            "duration 68855ms exceeded warning budget 45000ms"
-          ]
-        },
-        {
-          "id": "realworld-waiting-on-team",
-          "intent": "task_management",
-          "durationMs": 57896,
-          "status": "fail",
-          "warnings": [
-            "duration 57896ms exceeded warning budget 45000ms"
-          ]
-        },
-        {
-          "id": "realworld-most-important-tasks",
-          "intent": "task_management",
-          "durationMs": 53834,
-          "status": "fail",
-          "warnings": [
-            "duration 53834ms exceeded warning budget 45000ms"
-          ]
-        },
-        {
-          "id": "owner-prep-call-westfield",
-          "intent": "project_briefing",
-          "durationMs": 25303,
-          "status": "fail",
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'semantic' not represented",
-            "expected family 'communications' not represented"
-          ]
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-05-19T04-19-07-376Z-c825f378/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-05-19T04-19-07-376Z-c825f378/summary.md",
-      "cases": [
-        {
-          "id": "portfolio-morning-standup",
-          "prompt": "Morning. What is the quick operating read across all jobs?",
-          "intent": "portfolio_briefing",
-          "status": "fail",
-          "durationMs": 71214,
-          "streamEventCount": 1294,
-          "toolNames": [
-            "getPortfolioOverview",
-            "getProjectsWithRisks",
-            "getActionItemsAndInsights",
-            "semanticSearch"
-          ],
-          "failures": [
-            "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [
-            "duration 71214ms exceeded warning budget 45000ms"
-          ],
-          "observations": [
-            "tools fired: getPortfolioOverview, getProjectsWithRisks, getActionItemsAndInsights, semanticSearch",
-            "judge strategic_advisor: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "strategic_advisor",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Quick read: the portfolio is active, but a handful of jobs are carrying most of the risk load, and the task register is oddly quiet enough that I wouldn’t trust it as the full operating picture.\n\n- **40 current-phase jobs** in the system\n- **$19.6M total contract value** across jobs with contract data\n- **22 open change events**\n- **100 meetings recorded**, with insights on **99** of them\n- Risk radar flagged **15 current jobs** with critical items or high/critical insight volume  \n  [Source: Portfolio Overview - Current Projects] [Source: Project Risk Radar - Current projects]\n\nWhat matters this morning:\n\n- **Westfield Collective is the biggest concern.** It’s carrying the highest risk score in the portfolio at **518**, with **74 open critical items** tied to recent site-planning, grading, parking, truck access, and stormwater complexity. That’s not noise — that’s a job that can drift expensively if decisions lag. [Source: Meeting - \"Union Site Review Meeting\" - 2026-05-15T13:30:00+00:00]\n\n- **Union Collective is still decision-bound.** Risk score **232**, with **44 open critical items**. Latest OAC shows design/site planning moving, but zoning amendments and utility/site decisions are still shaping schedule risk. There’s also outside signal that the structural system decision is waiting on reconciled pricing and design-risk alignment. [Source: Meeting - \"Union Collective: OAC\" - 2026-05-14T14:00:00+00:00] [Source: Teams DM Conversation - 2026-05-07]\n\n- **Uniqlo Phillipsburg needs management attention, not just field momentum.** Risk score **203**, with **29 open critical items**. Meeting signal says work is progressing, but separate Teams signal is more important: **IQ Fire responsiveness is at risk while $500K+ remains owed**, and the team wanted a same-day recovery plan for missing pipe, couplings, fabricated parts, tools, tunnel piping rework, and CO exposure. That’s a real execution and relationship risk. [Source: Meeting - \"Uniqlo, Martinsville, CEVA, & GPC Huddle\" - null] [Source: Teams DM Conversation - 2026-05-07]\n\n- **Vermillion Rise is still one of the cleaner high-attention jobs, but it’s not quiet.** Risk score **98**, **10 open change events**, **7 tracked issues**, **13 open critical items**. Latest meeting signal is actually constructive: the team avoided a potential **$500K roof drain rebuild** by retaining existing drains, clarified gas piping, and kept HVAC/electrical design decisions moving. Good progress, but it still needs active leadership because design decisions are directly controlling cost. [Source: Portfolio Overview - Current Projects] [Source: Meeting - \"Hillsdale Holdings // Alleato Weekly\" - null]\n\n- **Exol Wilmer is early but moving into estimate/GC-definition risk.** Risk score **49**, **4 open change events**, with the latest review showing a roughly **$30M job**, soft costs around **$1.3M**, GC fees at **8–10%**, and still-open bid follow-up on doors and roofing. That’s manageable now, but only if scope clarifications tighten quickly. [Source: Meeting - \"Exol Wilmer - Review on GC's\" - 2026-05-18T18:00:00+00:00] [Source: Portfolio Overview - Current Projects]\n\n- **Goodwill Allisonville has a very specific procurement risk.** Latest schedule review flagged **door frame order delays due to submittal issues**, with **6–8 week lead times**, plus sprinkler communication problems. That’s the kind of “small” buyout issue that turns into a real schedule miss if nobody forces resolution this week. [Source: Meeting - \"Weekly Schedule Review Goodwill Allisonville Road Teams Meeting\" - 2026-05-11T13:00:00+00:00]\n\nWhat looks good:\n\n- **Goodwill Tremont / Noblesville signal is better than most.** The latest OAC says drywall is nearing completion, inspections are coming next week, and contractor engagement is improving with POs in approval. That’s one of the few jobs reading like forward motion instead of unresolved friction. [Source: Meeting - \"Goodwill Weekly OAC Meeting\" - null]\n\nWhat’s off in the data:\n\n- The formal action-item/task pull came back with **0 open tasks, 0 priority items, 0 overdue RFIs**. I don’t believe that reflects reality across 40 live jobs. It means the task register is either underused, not current, or this query didn’t surface the real operational backlog. So the stronger signal this morning is coming from meetings and risk radar, not task rows. [Source: Action Items & Insights]\n\nMy take: the portfolio isn’t broadly on fire, but leadership attention is too concentrated in a few places:\n1. **Westfield Collective**\n2. **Union Collective**\n3. **Uniqlo Phillipsburg**\n4. **Vermillion Rise**\n5. **Goodwill Allisonville procurement**\n\nWhat I’d do next, in order:\n1. **Force a decision/recovery huddle on Westfield and Union today** — those are high-consequence decision bottlenecks.\n2. **Get a payment/recovery decision on Uniqlo IQ Fire today** — if $500K+ owed is affecting responsiveness, that needs an owner-level call, not more passive follow-up. [Source: Teams DM Conversation - 2026-05-07]\n3. **Pressure-test the task system** — if the register says zero open items across the portfolio, your ops visibility is weaker than it should be.\n4. **Stay on Vermillion design-to-cost decisions** — that job is still salvageable because the team is making smart cost-avoidance choices early.\n\nIf you want, I’ll turn this into a tighter **red / yellow / green job list** with owner actions for each.",
-          "latencyBudget": {
-            "warnDurationMs": 45000,
-            "maxDurationMs": 120000,
-            "durationMs": 71214
-          }
-        },
-        {
-          "id": "owner-prep-call-westfield",
-          "prompt": "If the Westfield owner calls me today, what should I say and what should I avoid overpromising?",
-          "intent": "project_briefing",
-          "status": "fail",
-          "durationMs": 25303,
-          "streamEventCount": 7,
-          "toolNames": [
-            "project_lookup",
-            "packet_reader",
-            "teams_reader",
-            "meetings_reader",
-            "emails_reader",
-            "documents_reader",
-            "financials_reader",
-            "schedule_reader",
-            "rfi_reader",
-            "submittal_reader",
-            "deepagents_runtime"
-          ],
-          "failures": [
-            "expected at least one of [getProjectBriefingSnapshot, semanticSearch] to fire — none did",
-            "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'semantic' not represented",
-            "expected family 'communications' not represented"
-          ],
-          "observations": [
-            "tools fired: project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
-            "backend Deep Agents memory candidates: 0",
-            "judge strategic_advisor: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "strategic_advisor",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Westfield Collective is not in a place where you should sound done. If the owner calls today, say the project is active, the team is working through a few live field issues, and the big thing you’re managing is closing those items without promising dates you can’t control.\n\nEvidence\n- The project still shows 181 overdue schedule tasks, including very early items like notice to proceed, schedule submission, and permit-related design work still marked not started. Source: PM database project briefing and risk snapshot.\n- Financially, the revised budget and revised prime contract are both $9,255,275, with $1,204,204 in pending owner change orders and $8,722,804 already received. Source: PM database budget summary.\n- Recent activity is concentrated in a few live issue threads: dumpster enclosure gates, water pooling at the 2nd-level patio, counter shutter replacement, electrical contact info, and occupancy count. Source: recent activity dated 2026-05-18.\n- Open RFIs and submittals are clean at zero, so the issue is not paperwork backlogs right now; it’s execution and follow-through on field items and overdue workflow. Source: PM database risk snapshot.\n- The latest ingested meeting exists, but the structured data is the better source for owner-facing status; don’t lean on meeting chatter for hard numbers. Source: list_recent_meetings and PM database.\n\nWhat this means\nThe owner should hear that the job is moving, but not that it’s wrapped up. Your risk is overcommitting on finish dates, approvals, or scope closure while several open field threads are still being worked and a large amount of change exposure is still pending owner action.\n\nRecommended next steps\n- Tell the owner you’re tracking the current field issues directly and will confirm status as soon as the responsible parties close them out.\n- Do not promise a completion date for the water pooling, dumpster gate, or counter shutter items unless the responsible vendor has committed in writing.\n- Do not describe the $1,204,204 in pending owner change orders as approved or “essentially done.”\n- If the owner pushes on schedule, anchor the conversation on what is actually complete and what is still being validated, not on optimistic finish language.\n\nAvoid overpromising on\n- Final completion dates\n- Approval of change orders\n- Resolution of field issues before you’ve confirmed vendor/owner response\n- Any statement that the project is “substantially complete” or “basically done”\n\nUncertainty\n- I do not yet have the exact status/owner for the current email threads, so I would avoid naming a specific resolution date unless you verify those threads first.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
-          "latencyBudget": {
-            "warnDurationMs": 45000,
-            "maxDurationMs": 120000,
-            "durationMs": 25303
-          }
-        },
-        {
-          "id": "realworld-most-important-tasks",
-          "prompt": "What are my most important tasks right now?",
-          "intent": "task_management",
-          "status": "fail",
-          "durationMs": 53834,
-          "streamEventCount": 699,
-          "toolNames": [
-            "getActionItemsAndInsights",
-            "semanticSearch"
-          ],
-          "failures": [
-            "expected required tool 'backendDeepAgentExecutiveBriefing' to fire",
-            "required metadata missing: response_quality",
-            "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [
-            "duration 53834ms exceeded warning budget 45000ms"
-          ],
-          "observations": [
-            "tools fired: getActionItemsAndInsights, semanticSearch",
-            "judge strategic_advisor: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "strategic_advisor",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Your biggest issue right now is **follow-through on overdue items**. You’ve got **10 open tasks, 9 overdue**, and a few of them are either assigned to you directly or were initiated by you and still hanging. [Source: Action Items & Insights]\n\nMost important right now:\n\n- **Send updated calculations to Matthew** — assigned to **Brandon Clymer**, due **2026-05-06**, now overdue. This is one of the clearest direct actions sitting on you. [Source: Action Items & Insights]\n- **Review quarantined Microsoft 365 message** — assigned to **Brandon Clymer**, due **2026-05-19**. This is the one that’s actually due now, not just stale. [Source: Action Items & Insights]\n- **Lock Uniqlo scope ownership** from the **May 13 Fast Retailing/Uniqlo meeting** — specifically fire suppression, racking coordination, MEP design/order timing, drawing-file format, and updated layout path. It was due **2026-05-13** and is overdue. That matters because unclear ownership turns into delay fast. [Source: Action Items & Insights]\n- **Close the loop on insurance requirements** with **Corey Kunkleman** — there are **two separate open high-priority items** tied to this, both due **2026-05-05**, both saying you needed status back to respond to the client. That duplication usually means the issue got raised more than once and still didn’t die. [Source: Action Items & Insights]\n- **Clear the delegated drawing/signature items** you initiated or are tied into:\n  - **Share 90% drawings** from Richard Ellison, due **2026-05-01**\n  - **Updated Om Nangia signature / send updated signature document** from Brandon Griffith, both due **2026-05-05**  \n  These aren’t necessarily your hands-on tasks, but they’re old enough that they need escalation or closure. [Source: Action Items & Insights]\n\nWhat I’d treat as noise unless you care:\n- **Best Buy survey** — overdue, but low priority.\n- **Fountain Life call scheduling** — personal admin, not business-critical unless you want it back on the radar. [Source: Action Items & Insights]\n\nWhat else is sitting in the background:\n- **Westfield Collective** has multiple unresolved **critical schedule-risk signals** in Teams history — site security/locks, completion list, bollard/gate coordination, landscaping/path sequencing, and contract/warranty wording with LeMaster. These are not verified task rows assigned to you, but they are real unresolved follow-ups that could still need leadership pressure. [Source: Action Items & Insights]\n\nIf I had to rank your top 5 for today:\n\n1. **Review the quarantined M365 message today**\n2. **Send updated calculations to Matthew**\n3. **Resolve or reassign the Uniqlo ownership items**\n4. **Get Corey’s insurance status and respond to the client**\n5. **Force closure on the stale drawings/signature items**\n\nIf you want, I can turn this into a **clean priority list by project** or create **real follow-up tasks** for the items that still need chasing.",
-          "latencyBudget": {
-            "warnDurationMs": 45000,
-            "maxDurationMs": 120000,
-            "durationMs": 53834
-          }
-        },
-        {
-          "id": "realworld-waiting-on-team",
-          "prompt": "What am I waiting on from my team?",
-          "intent": "task_management",
-          "status": "fail",
-          "durationMs": 57896,
-          "streamEventCount": 636,
-          "toolNames": [
-            "getActionItemsAndInsights",
-            "semanticSearch"
-          ],
-          "failures": [
-            "expected required tool 'backendDeepAgentExecutiveBriefing' to fire",
-            "required metadata missing: response_quality",
-            "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [
-            "duration 57896ms exceeded warning budget 45000ms"
-          ],
-          "observations": [
-            "tools fired: getActionItemsAndInsights, semanticSearch",
-            "judge strategic_advisor: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "strategic_advisor",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "You’re waiting on a few real things from your team, and the clearest blockers are these:\n\n- **Richard Ellison** — share the **90% drawings** with you. Due **2026-05-01**, still open. [Source: Action Items & Insights]\n- **Brandon Griffith** — fix the **Om Nangia signature** issue and send back the updated document. Due **2026-05-05**, still open, and it shows up twice from the same thread, so that one looks unresolved. [Source: Action Items & Insights]\n- **Corey Kunkleman** — give you status on whether the **insurance requirements are met** so you can respond to the client. Due **2026-05-05**, still open, also duplicated in the system. **Project 31.** [Source: Action Items & Insights]\n- **Bob Wright** — create the **design-cost change request** under the existing Steel Services PO for added **Vermillion Rise** design costs. Still open. [Source: Action Items & Insights]\n- **Maria Calcetero** — go back to the charter companies with the **$7,500 Piper offer**. Still open. [Source: Action Items & Insights]\n- **Spencer Geissel** — review the attached **sprinkler options** for **Superior Beverage**. Still open, also duplicated. [Source: Action Items & Insights]\n\nWhat matters most: the overdue items are mostly admin/compliance handoffs, not field production — but they’re the kind that slow your response time and make you the bottleneck if they sit.\n\nThere’s also a second layer: communication-derived follow-ups that look like unresolved team dependencies, especially on **Westfield Collective**. Those are not clean task-register items, but they show repeated unresolved pressure around:\n- completion list / getting people off site,\n- schedule dates not being clearly tracked,\n- locks/security,\n- landscaping sequencing,\n- punch and closeout coordination.  \nAll of that is still surfacing as unresolved risk signal in the system. [Source: Action Items & Insights]\n\nOne thing that’s directly on your side too:\n- **RFI #2** — “Specified fire rating for north wall assembly” is open, overdue, and the ball is in **Brandon**. Due **2026-04-10**. [Source: Action Items & Insights]\n\nMy read: you’re not mainly waiting on broad effort from the team — you’re waiting on **specific confirmations and document handoffs**. The highest-value chases today are:\n1. **Corey** on insurance status\n2. **Brandon Griffith** on signature correction\n3. **Richard** on 90% drawings\n4. **Bob** on Vermillion design-cost change request\n\nIf you want, I can turn this into a **clean “waiting on others” list by person and project** or draft **Teams follow-up messages** to each of them.",
-          "latencyBudget": {
-            "warnDurationMs": 45000,
-            "maxDurationMs": 120000,
-            "durationMs": 57896
-          }
-        },
-        {
-          "id": "realworld-business-risks",
-          "prompt": "What risks exist in the business right now?",
-          "intent": "risk_review",
-          "status": "fail",
-          "durationMs": 68855,
-          "streamEventCount": 1488,
-          "toolNames": [
-            "listDomainIntelligence",
-            "getDomainIntelligence",
-            "semanticSearch"
-          ],
-          "failures": [
-            "expected at least one of [backendDeepAgentExecutiveBriefing, getProjectsWithRisks, getPortfolioOverview, getFinancialAnalysis, assistantSourceHealth] to fire — none did",
-            "expected required tool 'backendDeepAgentExecutiveBriefing' to fire",
-            "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'risk' not represented",
-            "expected family 'financial' not represented",
-            "expected family 'source_health' not represented",
-            "duration 68855ms exceeded warning budget 45000ms"
-          ],
-          "observations": [
-            "tools fired: listDomainIntelligence, getDomainIntelligence, semanticSearch",
-            "judge strategic_advisor: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "strategic_advisor",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Yes. The business has real risk right now, and it’s mostly coming from **process fragility while the company is trying to scale**.\n\nThe short version: **you do not have one big fire — you have several connected weak points that can turn into financial mistakes, delayed execution, and margin leakage if they stay manual.**\n\n## The risks that matter most right now\n\n### 1. Financial control risk\nThis is the biggest one.\n\nAccounting is still too manual across transaction coding, payroll/time tracking, and system handoffs. The clearest signal is that:\n- credit card coding still requires weekly downloads, duplicate checks, job/date verification, and **individual posting into Acumatica**\n- payroll/time tracking is still being reworked through **TimeCo / Venture / Acumatica**\n- leadership discussed **billing discrepancies, inaccurate revenue recognition, and a $1.7M revenue increase not reflected in financial statements** [Source: Domain Intelligence — Accounting; evidence from “Rob & Brandon - Next steps,” 2026-05-14]\n\nWhat that means:\n- financial statements can be directionally wrong at exactly the wrong time\n- WIP and revenue visibility are not solid enough for confident growth decisions\n- too much depends on a few people knowing how the workarounds work\n\nIf I had to name the sharpest business risk today, it’s this: **management could be making decisions off numbers that are not wrong enough to trigger panic, but wrong enough to distort margin, backlog, and cash planning.**\n\n### 2. Key-person dependency risk\nThis shows up everywhere.\n\nLauren’s onboarding is being used to transfer critical accounting workflow knowledge, but the documents also make it clear that core execution still relies on people like **Jose, Misty, and Maria** to train, troubleshoot, and unblock work [Source: Domain Intelligence — Accounting; People & Talent, 2026-05-19 packet]\n\nWhat that means:\n- if one of those people is overloaded, absent, or leaves, throughput drops fast\n- onboarding stays slow\n- process quality depends on memory and availability, not a system\n\nThat’s not just an HR issue. It’s an operating risk.\n\n### 3. Operations execution risk\nOperations are moving, but there’s too much manual coordination and too many late clarifications.\n\nCurrent patterns across active work:\n- scope and schedule clarity are still being built midstream\n- closeout documentation is arriving late\n- estimating/procurement still depends on chasing bids and missing material data\n- teams are compensating with daily follow-ups and manual checks instead of stable workflows  \n[Source: Domain Intelligence — Operations, generated 2026-05-19]\n\nExamples in the evidence:\n- Wilmer still needed scope clarifications and bid follow-ups on doors, roofing, and other trades [Exol Wilmer - Review on GC's, 2026-05-18]\n- Uniqlo/GPC is still managing testing, punch items, surplus material verification, photo documentation, and permit-close discipline near closeout [Uniqlo & GPC Huddle, 2026-05-18]\n\nWhat that means:\n- delays compound quietly\n- closeout and billing can slip\n- field teams burn time chasing information instead of executing\n\n### 4. BD conversion and margin-protection risk\nThe pipeline is active, but the BD machine is noisier than it should be.\n\nThe recurring pattern:\n- pricing gaps\n- incomplete design inputs\n- bid coverage still dependent on manual chase work\n- owner expectations sometimes ahead of design/budget reality  \n[Source: Domain Intelligence — Business Development]\n\nThat matters because **bad precon discipline becomes bad project margin later**.\n\nStrong example:\n- Ace Champaign discussed a total budget likely between **$550K and $750K** while initial client proposals were around **$300K**, with permitting and coordination still in play [Weekly OAC Meeting// Ace Hardware Champaign-Building Addition, 2026-05-14]\n\nThat’s the classic setup for margin pain:\n- sold number anchored early\n- scope still moving\n- team forced to make reality fit the budget\n\n### 5. Systems/tooling risk\nThis is underneath almost everything else.\n\nThere are repeated issues with:\n- Notion\n- Bluebeam\n- Job Planner / BuildingConnected access\n- Acumatica workflow friction\n- manual uploads and cross-checks between systems  \n[Source: Domain Intelligence — Operations; People & Talent; BD]\n\nThat sounds administrative, but it’s not. It directly affects:\n- onboarding speed\n- bid tracking\n- document sharing\n- transaction posting\n- field coordination\n\nIn plain English: **the company is spending too much senior energy just keeping the machine running.**\n\n### 6. Hiring and role-fit risk\nNot the biggest risk, but it’s real.\n\nThe People & Talent packet shows:\n- active recruiting\n- compensation sensitivity\n- need for clearer role fit on senior hires\n- pay expectations already being discussed explicitly  \n[Source: Domain Intelligence — People & Talent]\n\nThat means growth hiring can get expensive fast if:\n- role scope is vague\n- compensation bands aren’t set\n- leaders hire for urgency instead of fit\n\n## What all of this adds up to\n\nThe business risk is not “we don’t have opportunities.”\n\nIt’s this:\n\n**Alleato is growing with an operating system that still depends too much on manual coordination, tribal knowledge, and leadership intervention.**\n\nThat creates four concrete exposures:\n1. **Financial reporting distortion**\n2. **Margin leakage before and after award**\n3. **Execution drag from incomplete handoffs**\n4. **Scaling bottlenecks tied to specific people**\n\n## What I’d do next\n\nThree moves, in order:\n\n1. **Pick one owner for systems/process stabilization across accounting + time tracking + workflow handoffs.**  \n   Right now the risks are cross-functional, so they won’t get fixed piecemeal.\n\n2. **Lock down the top 5 repeatable workflows into SOPs immediately.**  \n   Start with:\n   - weekly transaction coding/posting\n   - payroll/time export and approval\n   - onboarding/access setup\n   - bid tracking/follow-up\n   - closeout documentation\n\n3. **Force a weekly risk review on financial visibility and precon scope gaps.**  \n   Specifically:\n   - WIP/revenue exceptions\n   - projects with sold budgets ahead of stable design\n   - pursuits with missing trade coverage\n   - closeout-ready jobs missing docs\n\n## Confidence / gaps\n\nI’m confident on the direction of the risk. The domain packets are fresh as of **2026-05-19**.\n\nWhat I have not pulled yet is live accounting data like:\n- AP/AR aging\n- cash position\n- current vendor exposure\n\nSo I can tell you the **operating risks** are real. I have not yet quantified the **cash and balance-sheet pressure** behind them in this answer.\n\nIf you want the sharper version, I can do the next pass as:\n**“Top 5 business risks ranked by financial impact”** using live accounting data plus the domain signals.",
-          "latencyBudget": {
-            "warnDurationMs": 45000,
-            "maxDurationMs": 120000,
-            "durationMs": 68855
-          }
-        },
-        {
-          "id": "realworld-systems-processes-needed",
-          "prompt": "What systems and processes do you think we need to put in place?",
-          "intent": "implementation_planning",
-          "status": "fail",
-          "durationMs": 70227,
-          "streamEventCount": 1290,
-          "toolNames": [
-            "semanticSearch"
-          ],
-          "failures": [
-            "expected at least one of [backendDeepAgentExecutiveBriefing, getPortfolioOverview, getActionItemsAndInsights, assistantSourceHealth] to fire — none did",
-            "expected required tool 'backendDeepAgentExecutiveBriefing' to fire",
-            "judge strategic_advisor error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [
-            "expected family 'project' not represented",
-            "expected family 'actions' not represented",
-            "expected family 'source_health' not represented",
-            "duration 70227ms exceeded warning budget 45000ms"
-          ],
-          "observations": [
-            "tools fired: semanticSearch",
-            "judge strategic_advisor: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "strategic_advisor",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "You need a real operating system, not a pile of good intentions.\n\nBased on the meeting history, the biggest gap is consistency. The same theme keeps showing up: get the work into a defined system, make it visible, and make it repeatable.\n\nWhat I’d put in place:\n\n## 1. A single workflow system for operational work\nThis came through clearly on 2026-05-13: Brandon said to set up a system using **files, notes, and activities** so Jose, Rob, and others are all working the same way, with visibility into whether something has been processed yet [meeting transcript, 2026-05-13].\n\nThat means:\n- one place where every item lives\n- one status flow\n- one owner\n- one source of truth for attachments and notes\n- visible handoff history\n\nIf you don’t do this, the work stays person-dependent.\n\n## 2. Standard SOPs for repeatable tasks\nOn 2026-03-23 and 2026-03-20, the team kept coming back to **onboarding checklists, master documents, and office management systems** [meeting transcript, 2026-03-23; meeting segment summary, 2026-03-20].\n\nYou need SOPs for:\n- onboarding\n- purchasing / ordering\n- equipment setup\n- app and login provisioning\n- document filing\n- recurring office/admin workflows\n- closeout of completed tasks\n\nNot theoretical SOPs. Short, usable ones.\n\n## 3. A master checklist library\nThe team already identified the need for a **master onboarding document** and detailed checklists [meeting segment summary, 2026-03-20]. Ashley also said she needed help making the **office management checklist and systems** [meeting transcript, 2026-03-23].\n\nBuild a checklist library for:\n- new hire onboarding\n- new project setup\n- vendor setup\n- monthly accounting/admin close steps\n- meeting follow-up\n- procurement / equipment ordering\n- offboarding\n\nChecklists are what keep standards alive when the business gets busy.\n\n## 4. A testing / pilot process before rollout\nThis is non-negotiable. On 2026-05-13, Brandon said not to just take a new system live suddenly — test it first [meeting transcript, 2026-05-13].\n\nSo every new process should have:\n- pilot users\n- test cases\n- a 2-week trial run\n- feedback loop\n- go-live criteria\n- owner for revisions\n\nThat keeps you from rolling out something that looks clean but breaks in practice.\n\n## 5. A real automation map\nOn 2026-03-23, Brandon said, “we need to hammer on this automation” and that “everything is a data entry point” [meeting transcript, 2026-03-23].\n\nThat means you should map:\n- where data first enters\n- who touches it next\n- what can be auto-created\n- what status changes should trigger alerts/tasks\n- what documents should auto-attach\n- what reporting should auto-update\n\nIf you don’t map the handoffs first, automation just speeds up a messy process.\n\n## 6. A training system, not just documentation\nKebba’s point on 2026-03-23 was right: once systems exist, AI and training content become useful. He talked about **SOPs, onboarding schedules, videos, and a learning lab** so people can click, watch, and follow the process [meeting transcript, 2026-03-23].\n\nYou need:\n- short SOP videos\n- role-based training paths\n- searchable process library\n- “how do I do this?” quick guides\n- screenshots and examples\n- refresher training when a process changes\n\nDocumentation without training gets ignored.\n\n## 7. A working-memory / in-progress workspace\nThe May 3 Teams DM laid this out well: not just long-term memory, but a **workspace for active work in progress** — drafts, follow-ups, assigned owners, due dates, staged outputs [Teams DM, 2026-05-03].\n\nThat should hold:\n- draft emails\n- draft RFIs\n- draft weekly reports\n- meeting action items before finalization\n- pending approvals\n- “waiting on” items\n- next moves tied to the exact object\n\nThis is the difference between “AI can answer questions” and “AI can help run the company.”\n\n## 8. Role clarity and handoff rules\nThe deeper issue underneath all of this is handoff ambiguity. Brandon’s comments about checks, balances, and staying nimble only work if people know:\n- who starts the process\n- who reviews it\n- who approves it\n- what counts as complete\n- what happens if it stalls\n\nWithout that, systems become shared confusion.\n\n## What matters most\nThe core answer is this:\n\nYou need **standardized workflows + checklists + visible handoffs + pilot testing + automation triggers + training**.\n\nThat’s the stack.\n\nIf I were sequencing it, I’d do it in this order:\n1. Define the top 10 repeatable workflows\n2. Build checklists for each\n3. Set owner/status/handoff rules\n4. Put them in one shared system\n5. Pilot with a small group\n6. Add automation only after the workflow is stable\n7. Record SOP videos and training\n\n## My read\nYou’re at the point where growth will punish loose process. That matches the April 24 discussion warning that the business is asking more from the current team than the current structure can comfortably support [Rob & Brandon progress check-in, 2026-04-24].\n\nSo this isn’t admin clean-up. It’s capacity protection.\n\nIf you want, I can turn this into a concrete rollout plan:\n- the exact systems/processes to build first\n- owners\n- 30/60/90-day sequence\n- what should be manual first vs automated later.",
-          "latencyBudget": {
-            "warnDurationMs": 45000,
-            "maxDurationMs": 120000,
-            "durationMs": 70227
-          }
-        }
-      ]
-    },
-    {
-      "runId": "2026-05-19T04-19-07-190Z-bc17e15c",
-      "generatedAt": "2026-05-19T04:20:42.862Z",
-      "baseUrl": "https://projects.alleatogroup.com",
-      "bundle": "email-operator-quality",
-      "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage|draft-email-response|brandon-email-critical-monitor|brandon-email-morning-brief|brandon-email-draft-like-brandon)$",
-      "totalCases": 9,
-      "passed": 0,
-      "failed": 9,
-      "warningCount": 0,
-      "slowestCases": [
-        {
-          "id": "realworld-last-five-emails",
-          "intent": "source_lookup",
-          "durationMs": 15889,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "realworld-draft-email-response",
-          "intent": "email_action",
-          "durationMs": 14262,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "realworld-brandon-email-draft-like-brandon",
-          "intent": "email_action",
-          "durationMs": 10729,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "realworld-brandon-email-morning-brief",
-          "intent": "source_lookup",
-          "durationMs": 10137,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "realworld-urgent-inbox",
-          "intent": "source_lookup",
-          "durationMs": 9433,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "realworld-email-reply-triage",
-          "intent": "source_lookup",
-          "durationMs": 8414,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "realworld-brandon-email-critical-monitor",
-          "intent": "source_lookup",
-          "durationMs": 8403,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "realworld-outlook-arrived-today",
-          "intent": "source_lookup",
-          "durationMs": 7451,
-          "status": "fail",
-          "warnings": []
-        },
-        {
-          "id": "realworld-important-emails-this-morning",
-          "intent": "source_lookup",
-          "durationMs": 6729,
-          "status": "fail",
-          "warnings": []
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-05-19T04-19-07-190Z-bc17e15c/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-05-19T04-19-07-190Z-bc17e15c/summary.md",
-      "cases": [
-        {
-          "id": "realworld-last-five-emails",
-          "prompt": "Can you tell me my last five emails?",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 15889,
-          "streamEventCount": 174,
-          "toolNames": [
-            "getRecentEmails"
-          ],
-          "failures": [
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "I checked your synced Outlook inbox. There aren’t any emails showing for the last 30 days in **test1@mail.com**, so I can’t give you a last five from the data available.\n\nWhat I can confirm:\n- **Result:** 0 emails found\n- **Mailbox checked:** test1@mail.com\n- **Window checked:** last 30 days\n- **Data caveat:** Outlook sync freshness is unknown, so anything that arrived after the last completed sync may not be included\n\nIf you want, I can try a different angle:\n- check a different mailbox\n- search by sender or topic\n- check whether Outlook sync is working properly",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 120000,
-            "durationMs": 15889
-          }
-        },
-        {
-          "id": "realworld-urgent-inbox",
-          "prompt": "Is there anything urgent in my inbox?",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 9433,
-          "streamEventCount": 152,
-          "toolNames": [
-            "getRecentEmails"
-          ],
-          "failures": [
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Nothing urgent showing right now — I checked today’s inbox for **test1@mail.com** and there are **no emails received today** in the synced Outlook data.\n\nOne caveat: the Outlook sync cutoff is unknown, so anything that arrived after the last completed sync might not be reflected yet.\n\nIf you want, I can check it a different way:\n- **recent important-looking threads** from the last 2–3 days\n- **emails from a specific person**\n- **anything about a project/topic** like Vermillion Rise or change orders",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 120000,
-            "durationMs": 9433
-          }
-        },
-        {
-          "id": "realworld-important-emails-this-morning",
-          "prompt": "What important emails have I received this morning?",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 6729,
-          "streamEventCount": 131,
-          "toolNames": [
-            "getRecentEmails"
-          ],
-          "failures": [
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Nothing important has come in this morning — the synced inbox shows **no emails received today** for **test1@mail.com**.\n\nOne caveat: Outlook sync freshness is unknown, so anything received after the last completed sync may not be in yet.\n\nIf you want, I can check:\n- **emails that need a reply**\n- **messages from a specific person**\n- **everything from yesterday + today** to catch anything just outside this morning",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 120000,
-            "durationMs": 6729
-          }
-        },
-        {
-          "id": "realworld-outlook-arrived-today",
-          "prompt": "What came in through Outlook today that needs my attention?",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 7451,
-          "streamEventCount": 176,
-          "toolNames": [
-            "getRecentEmails"
-          ],
-          "failures": [
-            "mustExclude present: \"semantic search\"",
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Nothing new is showing in Outlook today for **test1@mail.com**, so there’s nothing in the synced inbox that I can confidently flag as needing attention.\n\nWhat matters:\n- **0 emails received today**\n- This was checked from the structured Outlook inbox sync, not a semantic search\n- **Data gap:** Outlook sync freshness is unknown, so anything that arrived after the last completed sync may not be included\n\nIf you want, I can take the next step two ways:\n1. check **recent email threads that likely need replies** based on the last few days, or  \n2. narrow it to **project-related emails** and tell you what actually needs action.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 120000,
-            "durationMs": 7451
-          }
-        },
-        {
-          "id": "realworld-email-reply-triage",
-          "prompt": "Show me any emails from today that need a reply.",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 8414,
-          "streamEventCount": 155,
-          "toolNames": [
-            "getRecentEmails"
-          ],
-          "failures": [
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Nothing in today’s synced inbox needs a reply because there’s nothing showing as received today for **test1@mail.com**.\n\nWhat I can confirm:\n- **Today’s mailbox results:** no emails received\n- **Source:** structured Outlook inbox sync, not semantic email search\n\nData gap:\n- Outlook sync freshness is **unknown**, so anything received after the last completed sync may not be in yet.\n\nIf you want, I can check:\n- **yesterday + today**\n- **last 7 days**\n- or **important emails from a specific person/project**",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 120000,
-            "durationMs": 8414
-          }
-        },
-        {
-          "id": "realworld-draft-email-response",
-          "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
-          "intent": "email_action",
-          "status": "fail",
-          "durationMs": 14262,
-          "streamEventCount": 314,
-          "toolNames": [
-            "getRecentOutlookEmails",
-            "readOutlookEmailThread",
-            "draftOutlookEmail",
-            "getRecentEmails"
-          ],
-          "failures": [
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentOutlookEmails, readOutlookEmailThread, draftOutlookEmail, getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Draft is ready:\n\nBryan,\n\nThanks for the update. Noted on the 22nd for site work.\n\nI’m still working through the change orders and will send you an update shortly.\n\nAndrew\n\nIf you want, I can tighten it further or create the Outlook draft now.",
-          "latencyBudget": {
-            "warnDurationMs": 15000,
-            "maxDurationMs": 30000,
-            "durationMs": 14262
-          }
-        },
-        {
-          "id": "realworld-brandon-email-critical-monitor",
-          "prompt": "Act like Brandon's inbox monitor. Scan today's Outlook emails and tell me if anything is critical enough that he should get a Teams alert now versus wait for the evening brief.",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 8403,
-          "streamEventCount": 198,
-          "toolNames": [
-            "getRecentEmails"
-          ],
-          "failures": [
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Nothing in today's synced Outlook inbox looks critical right now.\n\nWhat I found:\n- **No emails received today** in the monitored mailbox: **test1@mail.com**\n- So based on the current synced data, there’s **nothing that justifies a Teams alert now**\n\nWhat that means:\n- **No immediate ping needed**\n- This can **wait for the evening brief**\n\nData gap:\n- Outlook sync freshness is **unknown**, so if anything hit the inbox after the last completed sync, it may not be reflected yet\n\nIf you want, I can also check:\n- **recent Teams messages** for anything urgent that bypassed email\n- **specific senders** Brandon would want escalated immediately\n- **calendar + inbox together** to catch issues tied to today’s meetings",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 120000,
-            "durationMs": 8403
-          }
-        },
-        {
-          "id": "realworld-brandon-email-morning-brief",
-          "prompt": "Give me Brandon's morning email brief: what came in, what needs a response, what can wait, and what should be delegated.",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 10137,
-          "streamEventCount": 210,
-          "toolNames": [
-            "getRecentEmails"
-          ],
-          "failures": [
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "Nothing came in this morning in Brandon's synced mailbox.\n\nWhat came in\n- **No new emails received today** for **test1@mail.com** based on the current Outlook sync.\n\nWhat needs a response\n- **Nothing new** showed up that needs a reply.\n\nWhat can wait\n- **Everything can wait**, because there’s nothing new in the intake.\n\nWhat should be delegated\n- **Nothing from this morning’s inbox**.\n\nData gap\n- Outlook email sync time is **unknown**, so anything received **after the last completed sync** may not be showing yet.\n\nNext move\n- If you want, I can also check:\n  - **recent existing threads that are still open**\n  - **emails that likely need a reply regardless of arrival time**\n  - **project-specific emails** for Vermillion Rise or another job",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 120000,
-            "durationMs": 10137
-          }
-        },
-        {
-          "id": "realworld-brandon-email-draft-like-brandon",
-          "prompt": "Find the most important email from today that needs Brandon's reply and draft a short response in his voice. Do not send it; make it review-ready.",
-          "intent": "email_action",
-          "status": "fail",
-          "durationMs": 10729,
-          "streamEventCount": 249,
-          "toolNames": [
-            "getRecentEmails"
-          ],
-          "failures": [
-            "judge email_operator error: HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-          ],
-          "warnings": [],
-          "observations": [
-            "tools fired: getRecentEmails",
-            "judge email_operator: error (0/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "error",
-            "rubric": "email_operator",
-            "score": 0,
-            "minScore": 4,
-            "summary": "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}",
-            "strengths": [],
-            "weaknesses": [
-              "HTTP 400: {\"error\":{\"message\":\"Invalid input\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":\"invalid_request_error\"}}"
-            ]
-          },
-          "finalText": "I checked today’s synced Outlook inbox for **test1@mail.com**. There’s nothing received today, so I don’t have a thread to draft a reply against.\n\nWhat I can confirm:\n- **No emails received today** in that mailbox\n- This came from the structured Outlook inbox feed, not a semantic search\n- **Data gap:** Outlook sync cutoff is unknown, so anything that arrived after the last completed sync may not be showing yet\n\nIf you want, I can take the next best angle right now:\n1. Check **Brandon’s actual mailbox** instead of `test1@mail.com`\n2. Look at **yesterday + today** for the most reply-worthy thread\n3. Search emails by topic/person if you already know what it’s about\n\nIf you want, send me **Brandon’s mailbox email** or say **“check Brandon’s mailbox for today and yesterday”** and I’ll find the best candidate and draft the reply in his voice.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 120000,
-            "durationMs": 10729
-          }
-        }
-      ]
-    },
-    {
-      "runId": "2026-05-14T21-24-36-746Z-792745ba",
-      "generatedAt": "2026-05-14T21:27:04.587Z",
-      "baseUrl": "https://projects.alleatogroup.com",
-      "bundle": "deep-agents-executive-regression",
-      "filter": "realworld-(most-important-tasks|waiting-on-team|business-risks|systems-processes-needed)$",
-      "totalCases": 4,
-      "passed": 4,
-      "failed": 0,
-      "warningCount": 4,
-      "slowestCases": [
-        {
-          "id": "realworld-waiting-on-team",
-          "intent": "task_management",
-          "durationMs": 42262,
-          "status": "pass",
-          "warnings": [
-            "duration 42262ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "realworld-systems-processes-needed",
-          "intent": "implementation_planning",
-          "durationMs": 36663,
-          "status": "pass",
-          "warnings": [
-            "duration 36663ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "realworld-business-risks",
-          "intent": "risk_review",
-          "durationMs": 35199,
-          "status": "pass",
-          "warnings": [
-            "duration 35199ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "realworld-most-important-tasks",
-          "intent": "task_management",
-          "durationMs": 31718,
-          "status": "pass",
-          "warnings": [
-            "duration 31718ms exceeded warning budget 30000ms"
-          ]
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-746Z-792745ba/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-746Z-792745ba/summary.md",
-      "cases": [
-        {
-          "id": "realworld-most-important-tasks",
-          "prompt": "What are my most important tasks right now?",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 31718,
-          "streamEventCount": 31,
-          "toolNames": [
-            "intentPlanner",
-            "promptContextReducer",
-            "backendDeepAgentExecutiveBriefing",
-            "mcpToolDiscoverySkipped",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [
-            "duration 31718ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: intentPlanner, promptContextReducer, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "Your most important tasks right now are:\n\n1. **Mail and Tax Document Cleanup**\n   - There’s a persistent backlog in mail and tax document processing. Keeping this cleanup on track is critical because it directly supports audit readiness and eliminates risk of missing key items.\n   - You have a set cadence: Thursdays for regular checks, Fridays for overflow. Stick to that pace and address any slippage immediately.\n\n2. **Closing Open Accounting Follow-ups**\n   - There are outstanding issues flagged for accounting; Misty is responsible for sending you a detailed issues list, and Maria/Shania are sharing outreach. Staying disciplined on responses matters since Brandon’s review depends on a clear, updated list.\n\n3. **Union Collective Design Payment/Invoice**\n   - There’s an active design milestone for Union Collective, with a recent pay application (“Design Pay App 1”) and an updated milestone schedule. Promptly coordinating payment and administrative steps here is important to prevent project delays.\n\n**Immediate priority:**  \nStay focused on cleaning up the mail/tax backlog and ensuring the accounting issues list is up-to-date for Brandon’s review. Simultaneously, check status and next action for the Union Collective design payment, coordinating promptly if anything is pending.\n\n**Main risk:**  \nOperational backlog, especially in mail/tax documents, could impact audit readiness and financial clarity if not resolved.\n\n*Source gap note: Your formal task/project tracking systems are down—this answer is based on executive briefings, meetings, emails, and document review as of today.*",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 31718
-          }
-        },
-        {
-          "id": "realworld-waiting-on-team",
-          "prompt": "What am I waiting on from my team?",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 42262,
-          "streamEventCount": 23,
-          "toolNames": [
-            "intentPlanner",
-            "promptContextReducer",
-            "messageDrivenToolRouter",
-            "backendDeepAgentExecutiveBriefing",
-            "mcpToolDiscoverySkipped",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [
-            "duration 42262ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: intentPlanner, promptContextReducer, messageDrivenToolRouter, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "You are currently waiting on the following key items from your team:\n\n1. **Structural Steel Shop Drawings Submission** (Assigned to: Sean Miller – Structural PM)  \n   - Status: Delayed. Last update was 6 days ago; drawings not yet submitted, which is holding up the steel fabrication schedule.\n   - Why it matters: Delayed shop drawings could delay fabrication, impacting the critical path for structural erection.\n\n2. **HVAC Coordination Layout Review** (Assigned to: Dana Li – MEP Coordinator)  \n   - Status: In progress. Team committed to finalizing by end of this week, but no upload yet in the shared drive.\n   - Why it matters: HVAC install cannot proceed until layout review and adjustments are confirmed, risking mechanical trades start.\n\n**First actionable step:**  \nFollow up directly with Sean Miller and Dana Li for immediate status and unblock steps, as these are now impacting next-phase work.\n\nIf you need detailed submittal or RFI-specific follow-ups, please specify which package or trade.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 42262
-          }
-        },
-        {
-          "id": "realworld-business-risks",
-          "prompt": "What risks exist in the business right now?",
-          "intent": "risk_review",
-          "status": "pass",
-          "durationMs": 35199,
-          "streamEventCount": 33,
-          "toolNames": [
-            "intentPlanner",
-            "promptContextReducer",
-            "assistantWidgetPlanner",
-            "backendDeepAgentExecutiveBriefing",
-            "mcpToolDiscoverySkipped",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [
-            "duration 35199ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: intentPlanner, promptContextReducer, assistantWidgetPlanner, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "The key business risks right now are:\n\n1. **Visibility Gaps on Projects and Tasks**  \n   - Critical project/task tracking systems failed to update. This means open action items, accountability for deadlines, and potential issues may not be documented or caught promptly. **Risk:** Missed deliverables, deadlines, or overlooked issues.\n\n2. **Cash-Flow Uncertainty**  \n   - Recent invoices (latest: Union Collective Design Pay App 1 as of May 14) show billing is active, but it’s unclear if collections are current due to limited financial updates beyond May 11. **Risk:** Potential delays in receivables impacting cash flow.\n\n3. **Operational/Admin Backlog**  \n   - Ongoing issues with mail and tax document processing have required dedicated weekly follow-ups; backlog is being addressed but not yet fully cleared. **Risk:** Compliance problems, delayed responses to auditors or tax/legal requirements.\n\n---\n\n**Supporting Evidence & Details:**\n\n- **Project & Tasks Data Not Refreshed:**  \n  Both tracking sources failed (backend errors), so incomplete info may hide major risks that haven’t surfaced in emails/documents yet.\n  \n- **Finances & Invoices:**  \n  Invoice \"RI-8628-0003\" (May 14) is new, but last detailed financials are from May 11—meaning any recent nonpayment or overrun issues wouldn’t be visible.\n  \n- **Admin Backlog (Meetings, March):**  \n  Regular efforts to process backlog and prep for audits noted, but the persistence of this issue suggests ongoing administrative vulnerability.\n\n---\n\n**First Action:**\nManually review all current project/task trackers and invoices to close the visibility gap, then confirm collections and any unresolved admin/document issues with the relevant staff this week.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 35199
-          }
-        },
-        {
-          "id": "realworld-systems-processes-needed",
-          "prompt": "What systems and processes do you think we need to put in place?",
-          "intent": "implementation_planning",
-          "status": "pass",
-          "durationMs": 36663,
-          "streamEventCount": 42,
-          "toolNames": [
-            "intentPlanner",
-            "assistantSourceHealth",
-            "backendDeepAgentExecutiveBriefing",
-            "mcpToolDiscoverySkipped",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [
-            "duration 36663ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: intentPlanner, assistantSourceHealth, backendDeepAgentExecutiveBriefing, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "You need a tighter operating backbone. Right now, evidence points to recurring headaches: backlog on mail/tax/admin, missed or late document handling, and too much reliance on memory or side conversations for follow-up. Here's what will close those gaps:\n\n**1. Weekly Operating Cadence**\n- Standard, non-optional weekly meetings to triage all inbound mail, admin, and tax docs.\n- Every open item gets an owner, a next action, and a due date—visible to leadership.\n- Clear escalation rules when things sit unreviewed.\n\n**2. Centralized Intake and Tracking**\n- One list for all open operational and admin issues—fed by email, meetings, and Teams.\n- Standard fields for owner, status, due date, and blockers.\n- Real-time visibility for leadership; nothing falls through the cracks.\n\n**3. Document Control/Audit Readiness**\n- Systematic scanning, naming, and filing of critical docs: mail, pay apps, invoices, and tax.\n- Consistent conventions for all stored documents.\n- Regular reconciliation of invoices and milestone schedules before payment approval.\n- Audit trail built in up front—not as an afterthought.\n\n**4. Explicit Handoffs**\n- Written, not just verbal, handoffs for admin, finance, and project transitions.\n- Owner and “done” criteria defined every time.\n- Short, written meeting summaries after key sessions to lock in commitments.\n\n**5. Marketing/External Reporting Workflow**\n- Repeatable production process for any outgoing reports (owner, BD, project performance).\n- Pre-set deadlines and pre-defined approval chains to stop last-minute scrambles.\n- One accountable person for assembling and distributing all external comms.\n\n**6. Milestone/Schedule Coordination**\n- Ongoing review of live schedules versus milestones—feeds into pay app/invoice review.\n- Issues flagged *before* they delay delivery or payment.\n- Integration between schedule, finance, and field updates (not handled in silos).\n\n**Operational Risks Right Now**\n- Admin backlog risk: recurring need to \"clean up\" mail and doc piles.\n- Document/audit risk: evidence of missed items and inconsistent organization.\n- Follow-up risk: some action items go quiet unless hunted individually.\n- Visibility risk: leaders can’t see all outstanding tasks in one place.\n\n**Priority Move**\nSet up a single, recurring weekly review covering admin, finance, tax, project milestone status, and overdue action items. The output: one actionable list with names, due dates, and blockers.\n\nIf you want, I can summarize this as a 1-page executive operating model—just say the word.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 36663
-          }
-        }
-      ]
-    },
-    {
-      "runId": "2026-05-14T21-24-36-720Z-5969890b",
-      "generatedAt": "2026-05-14T21:26:23.639Z",
-      "baseUrl": "https://projects.alleatogroup.com",
-      "bundle": "source-sync-teams-regression",
-      "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
-      "totalCases": 4,
-      "passed": 4,
-      "failed": 0,
-      "warningCount": 2,
-      "slowestCases": [
-        {
-          "id": "realworld-teams-this-week-signal",
-          "intent": "source_lookup",
-          "durationMs": 33801,
-          "status": "pass",
-          "warnings": [
-            "duration 33801ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "source-lookup-teams",
-          "intent": "source_lookup",
-          "durationMs": 32399,
-          "status": "pass",
-          "warnings": [
-            "duration 32399ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "source-freshness-rag-health",
-          "intent": "source_health",
-          "durationMs": 29425,
-          "status": "pass",
-          "warnings": []
-        },
-        {
-          "id": "realworld-teams-source-freshness",
-          "intent": "source_health",
-          "durationMs": 9317,
-          "status": "pass",
-          "warnings": []
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-720Z-5969890b/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-05-14T21-24-36-720Z-5969890b/summary.md",
-      "cases": [
-        {
-          "id": "source-lookup-teams",
-          "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
-          "intent": "source_lookup",
-          "status": "pass",
-          "durationMs": 32399,
-          "streamEventCount": 25,
-          "toolNames": [
-            "intentPlanner",
-            "assistantSourceHealth",
-            "semanticSearch",
-            "sourceLookupIntentRouter",
-            "messageDrivenToolRouter",
-            "mcpToolDiscoverySkipped",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [
-            "duration 32399ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "There’s no recent punch-list chatter for Westfield Collective in the available Teams data. My semantic and Teams searches returned zero matches related to punch-list updates, assignments, or closeout signals.\n\n**What this means:**  \n- No discussions, photos, checklists, or coordination notes about punch-list items have been captured in Teams under Westfield Collective in the current source snapshot.\n- If punch-list activity is happening, it's either not being documented in Teams channels or hasn’t synced/vectorized yet. With 1,065 unembedded and 11,501 uncompiled sources as of today, it’s possible some recent Teams data isn’t yet searchable.\n\n**Bottom line:**  \nI can’t confirm any new punch-list issues, completions, or disputes for Westfield from Teams—there’s no chatter on record. If you believe there’s Teams activity that hasn’t shown up, best move is to manually check the channel or DM where punch is usually tracked, or specify individual team members who might have the offline update.\n\n**Next step:**  \nIf you need punch-list movement from another source (email, meetings, direct status in Procore or project management), let me know. Or tell me if there’s a key person or trade to target for a direct signal.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 32399
-          }
-        },
-        {
-          "id": "realworld-teams-this-week-signal",
-          "prompt": "Using Teams messages from this past week, what are people actually worried about?",
-          "intent": "source_lookup",
-          "status": "pass",
-          "durationMs": 33801,
-          "streamEventCount": 38,
-          "toolNames": [
-            "intentPlanner",
-            "assistantSourceHealth",
-            "semanticSearch",
-            "sourceLookupIntentRouter",
-            "messageDrivenToolRouter",
-            "mcpToolDiscoverySkipped",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [
-            "duration 33801ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "Here’s the signal from Teams messages over the past week:\n\n- **Risk and uncertainty with early-stage projects:** Multiple messages across the week express unease about moving forward on projects like Eye Surgeons of Indiana while concept-level planning is still unsettled. The main concern is exposure to rework, lost time, or cost escalation if the owner/landlord delays or pulls back on approvals.\n- **Action paralysis due to incomplete owner decisions:** There are repeated threads flagging that workstreams (demolition, estimating) are on hold until the owner provides firmer direction on layouts and scope. Team members are worried about standing by without clear go/no-go authority, risking idle time or missed windows with subs.\n- **Schedule slippage on preconstruction tasks:** There’s tension around whether the pace of internal reviews, site walks, and estimate revisions are aligned with commitments made to owners/landlords. The worry is that slow cycles internally will be noticed externally and damage confidence.\n- **Procurement bottlenecks flagging early:** Some chatter indicates teams are already wary of procurement lead times — specifically for long-lead items — even at the schematic phase. There’s an anxiety that if the owner green-lights suddenly, the team isn’t positioned to move quickly into buyout.\n- **Owner communication gaps:** There is concern that owner-facing messaging is either lagging or unclear, especially regarding what decisions are needed from the owner, and the true impact of indecision on schedule and cost.\n\n**Summary:**  \nThe main worries are paralysis due to incomplete owner inputs, risk of wasted estimating/coordination, and not being ready to pivot fast if approvals land suddenly. The team is alert to owner delays, internal slowdowns, and early procurement exposures — and there’s underlying anxiety about not clearly surfacing these risks upstream.\n\n**What to do:**  \n1. Pin down owner decision points and escalate any missing or delayed inputs.\n2. Flag procurement exposure now — get a list of known long-lead items and prep contingency language for owners.\n3. Increase frequency of internal syncs on precon status and communication cadence to owners, so risks aren’t sliding by unreported.\n\nIf you want project-by-project specifics or attribution of concerns to individuals, say so — I’ll extract the direct messages and name names.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 33801
-          }
-        },
-        {
-          "id": "source-freshness-rag-health",
-          "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
-          "intent": "source_health",
-          "status": "pass",
-          "durationMs": 29425,
-          "streamEventCount": 31,
-          "toolNames": [
-            "intentPlanner",
-            "assistantSourceHealth",
-            "semanticSearch",
-            "sourceLookupIntentRouter",
-            "messageDrivenToolRouter",
-            "mcpToolDiscoverySkipped",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: intentPlanner, assistantSourceHealth, semanticSearch, sourceLookupIntentRouter, messageDrivenToolRouter, mcpToolDiscoverySkipped, streamingToolPolicy, noToolRetry"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "Here’s where your data stands right now:\n\n**Teams, Outlook, and Meetings:**\n- Several critical integrations are reporting degraded or incomplete syncs:\n    - **Teams DM export for acannon@alleatogroup.com is critical** — direct messages from this account may be missing or stale.\n    - **Outlook for the following users is critical**: njepson@alleatogroup.com, mparsons@alleatogroup.com, mharrison@alleatogroup.com, jdawson@alleatogroup.com, ctragesser@alleatogroup.com. Emails to/from these users may not be fully up to date.\n- If your key stakeholder activity, approvals, or action items are running through these specific accounts, you may be missing recent developments.\n\n**Packet Coverage:**\n- The system reports **over 11,000 items uncompiled** and 1,065 unembedded — meaning recent meetings, documents, or correspondence may not be included in today’s intelligence packets.\n- As a result, **any readout based solely on packets risks being incomplete, especially for events/decisions in the last few days.**\n\n**Bottom Line:**\n- Routine meetings, Outlook emails, and Teams chats for the company are being ingested, but coverage is patchy—especially from the user mailboxes flagged above and for uncompiled sources. \n- Anything highly time-sensitive, or involving those flagged users, needs manual confirmation or a deeper dive before using for critical decisions.\n\n**What to do:**\n- Treat current project status and activity reports as potentially lagging for the past few days.\n- For anything you need to be 100% current—especially about owner direction, payments, key RFIs/submittals, or commitments—ask for explicit verification or direct communication, not just the AI summary.\n\nDecisions are solid when the pipeline is healthy. Today, it isn’t. Don’t rely blindly on AI readouts until these sync issues are resolved.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 29425
-          }
-        },
-        {
-          "id": "realworld-teams-source-freshness",
-          "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
-          "intent": "source_health",
-          "status": "pass",
-          "durationMs": 9317,
-          "streamEventCount": 21,
-          "toolNames": [
-            "intentPlanner",
-            "assistantSourceHealth",
-            "messageDrivenToolRouter",
-            "mcpToolDiscovery",
-            "streamingToolPolicy",
-            "noToolRetry"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: intentPlanner, assistantSourceHealth, messageDrivenToolRouter, mcpToolDiscovery, streamingToolPolicy, noToolRetry"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "Teams message sync is partially stale today. Here’s what’s going on:\n\n- There is a critical sync issue on the Teams DM export for acannon@alleatogroup.com. Messages from that user may be missing or delayed.\n- For all other Teams chat sources, there isn’t an explicit outage flagged—but with 1,065 unembedded and 11,501 uncompiled sources in the pipeline, anything pulled today risks being incomplete, especially for recent activity.\n- If you’re looking for the most recent Teams conversations and it involves critical users (like acannon), treat the results with caution. Older or less active threads are more likely to be available; the latest updates may lag behind real time.\n\nBottom line: Teams message search will surface most historic context, but anything from the last few days—especially private or group DMs—might miss newer or unsynced content. For high-stakes or time-sensitive threads, confirm with the sender directly or flag that the system may be missing recent context.\n\nIf you need to know whether a specific message or thread is reliably present, name it—I can check for its timestamp or call out the likely sync gap.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 9317
           }
         }
       ]
