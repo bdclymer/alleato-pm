@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -86,6 +87,30 @@ type ApBillRow = Pick<
   | "raw_payload"
 >;
 type RuleRow = Database["public"]["Tables"]["finance_spend_classification_rules"]["Row"];
+
+export const financeSpendRuleUpdateSchema = z.object({
+  rule_name: z.string().trim().min(1).max(180).optional(),
+  match_text: z.string().trim().min(1).max(180).optional(),
+  category: z.enum([
+    "audit_tax",
+    "controller_accounting_services",
+    "erp_accounting_software",
+    "payroll_timekeeping",
+    "finance_legal_compliance",
+    "other_finance_overhead",
+  ]).optional(),
+  priority: z.coerce.number().int().min(0).max(10000).optional(),
+  confidence: z.coerce.number().min(0).max(1).optional(),
+  exclude: z.boolean().optional(),
+  exclusion_reason: z.string().trim().max(500).nullish(),
+  active: z.boolean().optional(),
+}).refine(
+  (value) => Object.keys(value).length > 0,
+  "At least one finance spend rule field must be provided.",
+);
+
+export type FinanceSpendRuleUpdateInput = z.infer<typeof financeSpendRuleUpdateSchema>;
+export type FinanceSpendClassificationRule = RuleRow;
 
 const CATEGORY_LABELS: Record<FinanceSpendCategory, string> = {
   audit_tax: "Audit / tax",
@@ -345,4 +370,60 @@ export async function buildFinanceSpendRollup(
       .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
       .slice(0, 200),
   };
+}
+
+export async function listFinanceSpendClassificationRules(
+  supabase: Supabase,
+): Promise<FinanceSpendClassificationRule[]> {
+  const { data, error } = await supabase
+    .from("finance_spend_classification_rules")
+    .select("*")
+    .order("active", { ascending: false })
+    .order("priority", { ascending: true })
+    .order("match_text", { ascending: true });
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "listFinanceSpendClassificationRules",
+      message: "Failed to load finance spend classification rules.",
+      details: { reason: error.message },
+      cause: error,
+    });
+  }
+
+  return data ?? [];
+}
+
+export async function updateFinanceSpendClassificationRule(
+  supabase: Supabase,
+  id: string,
+  input: FinanceSpendRuleUpdateInput,
+): Promise<FinanceSpendClassificationRule> {
+  const payload = {
+    ...input,
+    exclusion_reason:
+      "exclusion_reason" in input
+        ? input.exclusion_reason?.trim() || null
+        : undefined,
+  };
+
+  const { data, error } = await supabase
+    .from("finance_spend_classification_rules")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "updateFinanceSpendClassificationRule",
+      message: "Failed to update finance spend classification rule.",
+      details: { reason: error.message, id },
+      cause: error,
+    });
+  }
+
+  return data;
 }

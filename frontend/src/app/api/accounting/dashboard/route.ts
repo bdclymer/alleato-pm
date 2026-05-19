@@ -5,6 +5,8 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createServiceClient } from "@/lib/supabase/service";
 import { classifyAgingBucket, type FinancialGuardrailAlert } from "@/lib/accounting/aging-calculator";
 import { loadPaymentGuardrailAlerts } from "@/lib/accounting/payment-guardrails";
+import { buildFinanceSpendRollup } from "@/lib/accounting/finance-spend";
+import { listSopBacklog } from "@/lib/accounting/sop-backlog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,6 +71,13 @@ interface DashboardResponse {
     checks: RecentCheck[];
   };
   guardrailAlerts: FinancialGuardrailAlert[];
+  leadership: {
+    neededSopCount: number;
+    staleNeededSopCount: number;
+    linkedSopCount: number;
+    trailingFinanceSpend: number;
+    financeSpendExceptionCount: number;
+  };
   generatedAt: string;
 }
 
@@ -160,6 +169,8 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
     recentPaymentsResult,
     recentChecksResult,
     guardrailAlerts,
+    sopBacklogRecords,
+    financeSpendRollup,
   ] = await Promise.all([
     // 1. AR invoices — outstanding only, for aging + cash position
     supabase
@@ -212,6 +223,8 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
       .order("application_date", { ascending: false })
       .limit(10),
     loadPaymentGuardrailAlerts(),
+    listSopBacklog(supabase),
+    buildFinanceSpendRollup(supabase, 12),
   ]);
 
   // Surface any query errors
@@ -377,6 +390,15 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
       checks: recentChecks,
     },
     guardrailAlerts,
+    leadership: {
+      neededSopCount: sopBacklogRecords.filter((record) => record.status === "needed").length,
+      staleNeededSopCount: sopBacklogRecords.filter(
+        (record) => record.status === "needed" && record.age_days >= 30,
+      ).length,
+      linkedSopCount: sopBacklogRecords.filter((record) => record.linked_document_metadata_id).length,
+      trailingFinanceSpend: financeSpendRollup.totals.includedSpend,
+      financeSpendExceptionCount: financeSpendRollup.totals.uncertainBillCount,
+    },
     generatedAt: new Date().toISOString(),
   };
 

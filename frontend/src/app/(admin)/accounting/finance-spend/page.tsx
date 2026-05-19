@@ -14,6 +14,7 @@ import {
 import { PageShell } from "@/components/layout";
 import { InfoAlert, KpiRow, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { apiFetch } from "@/lib/api-client";
 
 type FinanceSpendCategory =
@@ -73,6 +74,24 @@ type FinanceSpendRollup = {
   }>;
   exceptions: FinanceSpendBill[];
   includedBills: FinanceSpendBill[];
+};
+
+type FinanceSpendClassificationRule = {
+  id: string;
+  rule_name: string;
+  match_text: string;
+  category: FinanceSpendCategory;
+  priority: number;
+  confidence: number;
+  exclude: boolean;
+  exclusion_reason: string | null;
+  active: boolean;
+  updated_at: string;
+};
+
+type FinanceSpendRulesResponse = {
+  rules: FinanceSpendClassificationRule[];
+  generatedAt: string;
 };
 
 function formatCurrency(value: number): string {
@@ -137,14 +156,22 @@ function vendorTotals(rollup: FinanceSpendRollup | null) {
 
 export default function FinanceSpendPage() {
   const [rollup, setRollup] = React.useState<FinanceSpendRollup | null>(null);
+  const [rules, setRules] = React.useState<FinanceSpendClassificationRule[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [ruleSavingId, setRuleSavingId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   const loadRollup = React.useCallback(() => {
     setIsLoading(true);
     setError(null);
-    apiFetch<FinanceSpendRollup>("/api/accounting/finance-spend?months=12")
-      .then(setRollup)
+    Promise.all([
+      apiFetch<FinanceSpendRollup>("/api/accounting/finance-spend?months=12"),
+      apiFetch<FinanceSpendRulesResponse>("/api/accounting/finance-spend/rules"),
+    ])
+      .then(([rollupResponse, rulesResponse]) => {
+        setRollup(rollupResponse);
+        setRules(rulesResponse.rules);
+      })
       .catch((loadError: unknown) => {
         setError(loadError instanceof Error ? loadError.message : "Failed to load finance spend rollup.");
       })
@@ -161,6 +188,36 @@ export default function FinanceSpendPage() {
   }));
   const categories = categoryTotals(rollup);
   const vendors = vendorTotals(rollup);
+  const disabledRules = rules.filter((rule) => !rule.active).length;
+
+  async function updateRuleActive(rule: FinanceSpendClassificationRule, active: boolean) {
+    const previous = rules;
+    setRuleSavingId(rule.id);
+    setError(null);
+    setRules((current) =>
+      current.map((item) => (item.id === rule.id ? { ...item, active } : item)),
+    );
+
+    try {
+      const response = await apiFetch<{ rule: FinanceSpendClassificationRule }>(
+        `/api/accounting/finance-spend/rules/${rule.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ active }),
+        },
+      );
+      setRules((current) =>
+        current.map((item) => (item.id === rule.id ? response.rule : item)),
+      );
+      loadRollup();
+    } catch (ruleError) {
+      setRules(previous);
+      setError(ruleError instanceof Error ? ruleError.message : "Failed to update classification rule.");
+    } finally {
+      setRuleSavingId(null);
+    }
+  }
 
   return (
     <PageShell
@@ -202,6 +259,11 @@ export default function FinanceSpendPage() {
               label: "Needs review",
               value: String(rollup?.totals.uncertainBillCount ?? "-"),
               context: "Low confidence or flagged rows",
+            },
+            {
+              label: "Rules disabled",
+              value: String(disabledRules),
+              context: "Held for human review",
             },
           ]}
         />
@@ -309,6 +371,63 @@ export default function FinanceSpendPage() {
                     <tr>
                       <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
                         No classified vendor spend found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Classification rule review</h2>
+            <p className="text-sm text-muted-foreground">
+              Enable only rules that are specific enough to count as accounting or finance overhead.
+            </p>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-border">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-xs text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">Active</th>
+                    <th className="px-4 py-3 text-left font-medium">Rule</th>
+                    <th className="px-4 py-3 text-left font-medium">Match</th>
+                    <th className="px-4 py-3 text-left font-medium">Category</th>
+                    <th className="px-4 py-3 text-right font-medium">Confidence</th>
+                    <th className="px-4 py-3 text-left font-medium">Review note</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {rules.map((rule) => (
+                    <tr key={rule.id}>
+                      <td className="px-4 py-3">
+                        <Switch
+                          checked={rule.active}
+                          disabled={ruleSavingId === rule.id}
+                          aria-label={`${rule.active ? "Disable" : "Enable"} ${rule.rule_name}`}
+                          onCheckedChange={(active) => updateRuleActive(rule, active)}
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-medium text-foreground">{rule.rule_name}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-foreground">{rule.match_text}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {rule.category.replace(/_/g, " ")}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-foreground">
+                        {Math.round(Number(rule.confidence) * 100)}%
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {rule.exclusion_reason ?? (rule.active ? "Included in rollup" : "Disabled")}
+                      </td>
+                    </tr>
+                  ))}
+                  {!isLoading && rules.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+                        No classification rules found.
                       </td>
                     </tr>
                   )}

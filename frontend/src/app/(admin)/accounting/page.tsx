@@ -13,6 +13,8 @@ import {
   ArrowDownRight,
   AlertTriangle,
   ClipboardList,
+  CircleDollarSign,
+  FileCheck2,
   ScrollText,
   FolderKanban,
   ArrowRight,
@@ -96,6 +98,13 @@ interface DashboardResponse {
     checks: RecentCheck[];
   };
   guardrailAlerts: FinancialGuardrailAlert[];
+  leadership: {
+    neededSopCount: number;
+    staleNeededSopCount: number;
+    linkedSopCount: number;
+    trailingFinanceSpend: number;
+    financeSpendExceptionCount: number;
+  };
   generatedAt: string;
 }
 
@@ -794,6 +803,7 @@ export default function AccountingDashboardPage() {
     arByProject,
     recentActivity,
     guardrailAlerts,
+    leadership,
   } = data;
 
   const paymentsIn = recentActivity.payments.slice(0, 6).map((p) => ({
@@ -867,7 +877,7 @@ export default function AccountingDashboardPage() {
 
       {/* ── Featured Reports ── */}
       <Section title="Reports">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
           <ReportCard
             href="/accounting/wip"
             icon={<ClipboardList className="h-5 w-5 text-primary" />}
@@ -882,6 +892,22 @@ export default function AccountingDashboardPage() {
             title="Project Status Reports"
             description="Per-project PSR with schedule, budget, RFIs, submittals, and change orders in a single view."
             accentClass="bg-primary/10"
+          />
+          <ReportCard
+            href="/accounting/sop-backlog"
+            icon={<FileCheck2 className="h-5 w-5 text-primary" />}
+            title="SOP Backlog"
+            description="Missing accounting and finance SOPs by lifecycle state, owner, priority, and linked-file status."
+            meta={`${leadership.neededSopCount} needed · ${leadership.staleNeededSopCount} stale`}
+            accentClass="bg-primary/10"
+          />
+          <ReportCard
+            href="/accounting/finance-spend"
+            icon={<CircleDollarSign className="h-5 w-5 text-status-warning" />}
+            title="Finance Spend"
+            description="Trailing accounting and finance overhead classified from Acumatica AP bills with exceptions."
+            meta={`${formatCurrency(leadership.trailingFinanceSpend)} TTM · ${leadership.financeSpendExceptionCount} review`}
+            accentClass="bg-amber-500/10"
           />
           <ReportCard
             href="/accounting/projects"
