@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 /* ── Types ────────────────────────────────────────────────────────── */
@@ -186,25 +187,38 @@ export function ChangeEventExpandedRow({
     let cancelled = false;
 
     async function fetchData() {
+      // Guard: do not fire if changeEventId is missing or is the nil UUID.
+      // The parent table can render expanded rows before the real ID is known
+      // (e.g. while the list is still loading), which floods the API with
+      // 404s for a non-existent change event.
+      const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+      const ceId = String(changeEventId ?? "");
+      if (!ceId || ceId === NIL_UUID) {
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const [lineItemsRes, markupsRes] = await Promise.all([
-          fetch(`/api/projects/${projectId}/change-events/${changeEventId}/line-items`),
+        const [lineItemsData, markupsData] = await Promise.all([
+          apiFetch<{ data?: LineItem[] }>(
+            `/api/projects/${projectId}/change-events/${ceId}/line-items`,
+          ).catch(() => null),
           expectingRevenue
-            ? fetch(`/api/projects/${projectId}/vertical-markup`).catch(() => null)
+            ? apiFetch<{ markups?: MarkupItem[] }>(
+                `/api/projects/${projectId}/vertical-markup`,
+              ).catch(() => null)
             : Promise.resolve(null),
         ]);
 
         if (cancelled) return;
 
-        if (lineItemsRes.ok) {
-          const data = await lineItemsRes.json();
-          setLineItems(data.data || []);
+        if (lineItemsData) {
+          setLineItems(lineItemsData.data || []);
         }
 
-        if (markupsRes?.ok) {
-          const data = await markupsRes.json();
-          setMarkups(data.markups || []);
+        if (markupsData) {
+          setMarkups(markupsData.markups || []);
         }
       } catch (error) {
         reportNonCriticalFailure({

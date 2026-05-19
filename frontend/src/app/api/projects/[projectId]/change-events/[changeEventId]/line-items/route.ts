@@ -1,5 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { assertNonNilUuid } from "@/lib/guardrails/path-params";
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { createLineItemSchema, updateLineItemSchema } from '../../validation';
@@ -22,8 +23,9 @@ interface RouteParams {
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/line-items#GET",
   async ({ request, params }) => {
-  
+
     const { projectId, changeEventId } = await params;
+    assertNonNilUuid(changeEventId, "changeEventId", "projects/[projectId]/change-events/[changeEventId]/line-items#GET");
     const supabase = await createClient();
 
     // Verify change event exists
@@ -225,8 +227,9 @@ export const GET = withApiGuardrails(
 export const POST = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
   async ({ request, params }) => {
-  
+
     const { projectId, changeEventId } = await params;
+    assertNonNilUuid(changeEventId, "changeEventId", "projects/[projectId]/change-events/[changeEventId]/line-items#POST");
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
     if (guard.denied) return guard.response;
@@ -379,8 +382,9 @@ export const POST = withApiGuardrails(
 export const PUT = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/line-items#PUT",
   async ({ request, params }) => {
-  
+
     const { projectId, changeEventId } = await params;
+    assertNonNilUuid(changeEventId, "changeEventId", "projects/[projectId]/change-events/[changeEventId]/line-items#PUT");
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
     if (guard.denied) return guard.response;

@@ -137,9 +137,23 @@ function getApiErrorMessage(status: number, body: ApiErrorBody): string {
   );
 }
 
+// Supabase auth lock coordinator emits these when another tab steals the token-refresh lock — operational noise, not bugs.
+const LOCK_NOISE_PATTERNS = [
+  "lock broken by another request",
+  "lock was stolen by another request",
+  'lock "lock:sb-',
+  "was released because another",
+];
+
 function reportApiFailure(url: string, status: number, body: ApiErrorBody): void {
   // 401/403 are user-state, not application errors — do not pollute telemetry
   if (typeof window === "undefined" || url.includes("/api/app-error-events") || status === 401 || status === 403) {
+    return;
+  }
+
+  // Supabase cross-tab lock contention messages are library internals, not app errors
+  const errorMessage = getApiErrorMessage(status, body).toLowerCase();
+  if (LOCK_NOISE_PATTERNS.some((pattern) => errorMessage.includes(pattern))) {
     return;
   }
 

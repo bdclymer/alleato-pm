@@ -9,7 +9,7 @@ const WHERE = "projects/[projectId]/estimates/[estimateId]/sublist";
 const sublistCreateSchema = z.object({
   division_code: z.string().trim().regex(/^\d{2}$/).default("02"),
   division_name: z.string().trim().max(120).default(""),
-  position: z.number().int().min(1).max(5).optional(),
+  position: z.number().int().min(1).optional(),
   company_id: z.string().uuid().nullable().optional(),
   company: z.string().trim().max(200).nullable().optional(),
   contact_name: z.string().trim().max(160).nullable().optional(),
@@ -130,15 +130,10 @@ export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>
       .maybeSingle();
 
     const nextPosition = rest.position ?? (maxRow?.position ?? 0) + 1;
-    if (nextPosition > 5) {
-      throw new GuardrailError({
-        code: "INVALID_PAYLOAD",
-        where: "sublist#POST",
-        message: "The current sublist schema supports five bidders per division. Delete an unused row before adding another bidder.",
-        details: { division_code, nextPosition },
-      });
-    }
 
+    // Uses INSERT (not upsert): estimate_sublist_subs has no unique constraint on
+    // (estimate_id, division_code, position) — only PRIMARY KEY (id). Upsert with
+    // onConflict:"estimate_id,division_code,position" caused HTTP 500 in production.
     const { data, error } = await supabase
       .from("estimate_sublist_subs")
       .insert({

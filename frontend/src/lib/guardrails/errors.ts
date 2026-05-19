@@ -53,7 +53,13 @@ export function asGuardrailError(
       ? error.message
       : typeof error === "string"
         ? error
-        : "Unexpected error";
+        : error !== null &&
+            typeof error === "object" &&
+            "message" in error &&
+            typeof (error as Record<string, unknown>).message === "string"
+          ? // Supabase PostgrestError and similar plain-object errors with a message
+            (error as Record<string, unknown>).message as string
+          : "Unexpected error";
 
   return new GuardrailError({
     ...fallback,

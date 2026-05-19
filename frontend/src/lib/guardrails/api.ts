@@ -151,7 +151,16 @@ export function withApiGuardrails<TParams = RouteParams>(
       const httpStatus = error.status ?? catalog.httpStatus;
       const isAuthNoise = authCodes.has(error.code) || httpStatus === 401 || httpStatus === 403;
 
-      if (where !== "/api/app-error-events#POST" && !isAuthNoise) {
+      // 4xx user-error codes are by-design rejections (bad input, not found, conflict) — not application bugs
+      const userErrorCodes = new Set([
+        "INVALID_PAYLOAD", "INVALID_INPUT", "BAD_REQUEST",
+        "VALIDATION_ERROR", "VALIDATION",
+        "NOT_FOUND", "ROUTE_BINDING_MISSING",
+        "READ_ONLY_RESOURCE", "SUBMITTAL_WORKFLOW_NOT_ASSIGNED", "PRECONDITION_FAILED",
+      ]);
+      const is4xxUserError = userErrorCodes.has(error.code) && httpStatus >= 400 && httpStatus < 500;
+
+      if (where !== "/api/app-error-events#POST" && !isAuthNoise && !is4xxUserError) {
         const user = await resolveApiRouteUserForTelemetry();
         await recordAppErrorEvent({
           source: "api",

@@ -237,7 +237,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       await Promise.all([
         authResult.serviceClient
           .from("projects")
-          .select('id, name, "job number", phase, "start date", "est completion"')
+          .select('id, name, project_number, phase, "start date", "est completion"')
           .eq("id", projectIdNum)
           .single(),
         permissionsPromise,
@@ -267,8 +267,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       id: Number(projectRecord.id),
       name: String(projectRecord.name ?? `Project ${projectIdNum}`),
       number:
-        typeof projectRecord["job number"] === "string"
-          ? projectRecord["job number"]
+        typeof projectRecord.project_number === "string"
+          ? projectRecord.project_number
           : undefined,
       status:
         typeof projectRecord.phase === "string"

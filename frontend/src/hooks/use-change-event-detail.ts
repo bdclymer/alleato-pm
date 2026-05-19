@@ -112,6 +112,15 @@ export function useChangeEventDetail(
   const [error, setError] = useState<string | null>(null);
 
   const fetchChangeEventDetails = useCallback(async () => {
+    // Guard: skip if changeEventId is the nil UUID or falsy. The detail page
+    // can mount before the real ID is resolved from params, causing spurious
+    // 404s for every sub-fetch (line-items, attachments, rfqs, related-items).
+    const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+    if (!changeEventId || changeEventId === NIL_UUID) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -170,6 +179,8 @@ export function useChangeEventDetail(
   }, [projectId, changeEventId]);
 
   const fetchRfqCount = useCallback(async () => {
+    const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+    if (!changeEventId || changeEventId === NIL_UUID) return;
     try {
       const json = await apiFetch<unknown[] | { data?: unknown[] }>(
         `/api/projects/${projectId}/change-events/rfqs?changeEventId=${changeEventId}`,
@@ -187,6 +198,8 @@ export function useChangeEventDetail(
   }, [projectId, changeEventId]);
 
   const fetchRelatedItems = useCallback(async () => {
+    const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+    if (!changeEventId || changeEventId === NIL_UUID) return;
     try {
       const data = await apiFetch<
         ChangeEventRelatedItem[] | { data?: ChangeEventRelatedItem[] }

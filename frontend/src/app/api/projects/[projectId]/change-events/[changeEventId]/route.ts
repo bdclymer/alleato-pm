@@ -1,5 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { assertNonNilUuid } from "@/lib/guardrails/path-params";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
@@ -112,8 +113,9 @@ async function enrichHistoryEntries(
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]#GET",
   async ({ request, params }) => {
-  
+
     const { projectId, changeEventId } = await params;
+    assertNonNilUuid(changeEventId, "changeEventId", "projects/[projectId]/change-events/[changeEventId]#GET");
     const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
@@ -528,8 +530,9 @@ export const GET = withApiGuardrails(
 export const PATCH = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]#PATCH",
   async ({ request, params }) => {
-  
+
     const { projectId, changeEventId } = await params;
+    assertNonNilUuid(changeEventId, "changeEventId", "projects/[projectId]/change-events/[changeEventId]#PATCH");
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
     if (guard.denied) return guard.response;
@@ -728,8 +731,9 @@ export const PATCH = withApiGuardrails(
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]#DELETE",
   async ({ request, params }) => {
-  
+
     const { projectId, changeEventId } = await params;
+    assertNonNilUuid(changeEventId, "changeEventId", "projects/[projectId]/change-events/[changeEventId]#DELETE");
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "admin");
     if (guard.denied) return guard.response;

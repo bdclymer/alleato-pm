@@ -1,5 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { assertNonNilUuid } from "@/lib/guardrails/path-params";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -22,8 +23,9 @@ const updateCommitmentPcoSchema = z.object({
 export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/commitment-pcos/[pcoId]#GET",
   async ({ request, params }) => {
-  
+
     const { projectId, pcoId } = await params;
+    assertNonNilUuid(pcoId, "pcoId", "projects/[projectId]/commitment-pcos/[pcoId]#GET");
     const projectIdNum = parseInt(projectId, 10);
     const supabase = await createClient();
 
@@ -136,8 +138,9 @@ export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
 export const PATCH = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/commitment-pcos/[pcoId]#PATCH",
   async ({ request, params }) => {
-  
+
     const { projectId, pcoId } = await params;
+    assertNonNilUuid(pcoId, "pcoId", "projects/[projectId]/commitment-pcos/[pcoId]#PATCH");
     const projectIdNum = parseInt(projectId, 10);
     const supabase = await createClient();
 
@@ -226,8 +229,9 @@ export const PATCH = withApiGuardrails<{ projectId: string; pcoId: string }>(
 export const DELETE = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/commitment-pcos/[pcoId]#DELETE",
   async ({ request, params }) => {
-  
+
     const { projectId, pcoId } = await params;
+    assertNonNilUuid(pcoId, "pcoId", "projects/[projectId]/commitment-pcos/[pcoId]#DELETE");
     const projectIdNum = parseInt(projectId, 10);
     const supabase = await createClient();
 

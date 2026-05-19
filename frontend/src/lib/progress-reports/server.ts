@@ -90,7 +90,6 @@ interface ProgressReportProjectRow {
   id: number;
   name: string | null;
   project_number: string | null;
-  "job number": string | null;
 }
 
 function parseContacts(value: unknown): ProgressReportContact[] {
@@ -395,7 +394,7 @@ export async function listAllProgressReports(): Promise<ProgressReportAllListIte
   if (projectIds.length > 0) {
     const { data: projects, error: projectsError } = await db
       .from("projects")
-      .select('id, name, project_number, "job number"')
+      .select('id, name, project_number')
       .in("id", projectIds);
 
     if (projectsError) throw new Error(projectsError.message);
@@ -420,7 +419,7 @@ export async function listAllProgressReports(): Promise<ProgressReportAllListIte
         id: report.project_id,
         name: project?.name ?? null,
         project_number: project?.project_number ?? null,
-        job_number: project?.["job number"] ?? null,
+        job_number: project?.project_number ?? null,
         client: null,
       },
     };

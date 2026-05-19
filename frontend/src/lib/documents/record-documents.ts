@@ -202,7 +202,6 @@ interface ProjectRow {
   name: string | null;
   address: string | null;
   project_number: string | null;
-  "job number": string | null;
   company_id: string | null;
 }
 
@@ -1285,7 +1284,7 @@ async function loadCommitmentBundle(
 
   const { data: projectData } = await supabase
     .from("projects")
-    .select('id, name, address, project_number, "job number", company_id')
+    .select('id, name, address, project_number, company_id')
     .eq("id", base.project_id)
     .single();
 
@@ -1356,7 +1355,7 @@ async function loadCommitmentBundle(
     project: {
       name: project?.name || "Not set",
       address: project?.address || "Not set",
-      jobNumber: project?.project_number || project?.["job number"] || String(base.project_id),
+      jobNumber: project?.project_number || String(base.project_id),
     },
     sections: [
       {
