@@ -76,7 +76,7 @@ Supabase (PostgreSQL + pgvector)
 
 | Phase | Name | Status | What's Built |
 |-------|------|--------|--------------|
-| 1 | Data Foundation | **Complete** | RAG assistant, 28+ tools, C-Suite architecture (Strategist + CFO live), document ingestion pipeline (PDF/DOCX + Azure OCR for scanned PDFs), Acumatica ERP integration (9 tools), company knowledge base, vector embeddings (109K+ chunks in AI Database), chat persistence, guardrails, daily digest, intelligence packet compiler, contextual retrieval pilot (added 2026-05-17) |
+| 1 | Data Foundation | **Complete** | RAG assistant, 30+ tools, C-Suite architecture (Strategist + CFO live), document ingestion pipeline (PDF/DOCX + Azure OCR for scanned PDFs), Acumatica ERP integration (9 tools), company knowledge base, vector embeddings (109K+ chunks in AI Database), chat persistence, guardrails, daily digest, intelligence packet compiler, structured SOP backlog and finance spend tools, contextual retrieval pilot (added 2026-05-17) |
 | 2 | Proactive Intelligence | **In progress** | Intelligence packets (project packets now compile through the source-quality-scored `project-operating-summary-v1` path), executive daily briefing (cron-delivered), insight cards (6,900+ rows), packet card feedback, Render-backed Deep Agents bridge for read-heavy project/executive AI assistant answers, backend Microsoft Executive Assistant specialist for Outlook/Teams/calendar operator work, standalone `alleato-ai` tool registry gated into the backend runtime |
 | 3 | Workflow Automation | Not started | Auto-classify documents on upload, AI-generated status reports, smart form templates (pre-fill RFIs, change order descriptions) |
 | 4 | Strategic Advisory | Not started | Project completion probability models, budget overrun prediction, cross-project pattern recognition, competitive benchmarking |
@@ -114,7 +114,8 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | `frontend/src/lib/ai/agents/types.ts` | `AgentName` union type, `AgentResponse` type. Update when adding agents. |
 | `frontend/src/lib/ai/providers.ts` | AI Gateway provider setup. `getLanguageModel(modelId)` is the single entry point for all LLM calls. |
 | `frontend/src/lib/ai/assistant-models.ts` | User-selectable model list and `DEFAULT_AI_ASSISTANT_MODEL`. Includes the `deep-agents/strategist` option, which routes eligible project, executive, and external-research prompts through the backend Deep Agents strategist harness before local synthesis fallback. |
-| `frontend/src/lib/ai/tools/project-tools.ts` | 9 core project tools (portfolio, risk, budget, meetings, search). |
+| `frontend/src/lib/ai/tools/project-tools.ts` | Core project tools plus SAIS structured backlog/spend tools (portfolio, risk, budget, meetings, search, SOP backlog, finance spend rollup). |
+| `frontend/src/lib/ai/tools/sais.ts` | SAIS tools: `getSopBacklog` for missing accounting/finance SOP requirements and `getFinanceSpendRollup` for trailing Acumatica AP bill spend classification. These are structured SQL reads, not vector/RAG document search. |
 | `frontend/src/lib/ai/tools/financial.ts` | 6 financial tools (commitments, change orders, direct costs, budget line items, cost trends, margin). |
 | `frontend/src/lib/ai/tools/operational.ts` | 15+ operational tools (people, vendors, RFIs, submittals, cross-project, semantic search, emails, Teams, knowledge base, memories). |
 | `frontend/src/lib/ai/tools/acumatica.ts` | 9 Acumatica ERP tools (AP/AR aging, cash position, vendor spend, bills, invoices, POs, project budget). |
@@ -159,6 +160,8 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 | `getMeetingsByDate` | document_metadata, meeting_segments | Meetings filtered by date range |
 | `searchDocuments` | document_metadata, document_chunks (full-text) | Keyword search across all ingested documents |
 | `getProjectDetails` | projects + related tables | Single project record with team and contract info |
+| `getSopBacklog` | sop_backlog, document_metadata, projects | Missing/draft/in-review/published SOP requirements by accounting/finance area, priority, owner, and file-link status |
+| `getFinanceSpendRollup` | acumatica_ap_bills, finance_spend_classification_rules | Trailing monthly accounting/finance overhead spend by category/vendor with exclusions and review flags |
 
 ### Financial Tools (`financial.ts`)
 
@@ -557,7 +560,8 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 
 | File Path | What it controls / does | Related files |
 |-----------|-------------------------|---------------|
-| `frontend/src/lib/ai/tools/project-tools.ts` | 10 core project tools: portfolio overview, risk analysis, briefing snapshot, financial analysis, budget summary, action items, meetings by date, document search, project details. | orchestrator.ts, financial.ts |
+| `frontend/src/lib/ai/tools/project-tools.ts` | Core project tools plus SAIS structured tools: portfolio overview, risk analysis, briefing snapshot, financial analysis, budget summary, action items, meetings by date, document search, project details, SOP backlog, finance spend rollup. | orchestrator.ts, financial.ts, sais.ts |
+| `frontend/src/lib/ai/tools/sais.ts` | `getSopBacklog`, `getFinanceSpendRollup` — structured accounting/finance leadership tools backed by `sop_backlog`, `acumatica_ap_bills`, and `finance_spend_classification_rules`. | project-tools.ts, rag-assistant-prompt.ts |
 | `frontend/src/lib/ai/tools/financial.ts` | 6 financial tools: commitments, change orders, direct costs, budget line items, cost trends, margin analysis. | cfo.ts, acumatica.ts |
 | `frontend/src/lib/ai/tools/operational.ts` | 15+ operational tools: people/roles, vendor performance, RFIs, submittals, cross-project, semantic search, recent emails, search emails, search Teams, save insight, write memory, recall conversations. | coo.ts, document-intelligence.ts |
 | `frontend/src/lib/ai/tools/acumatica.ts` | 9 Acumatica ERP tools: AP/AR aging, cash position, vendor spend, recent bills/invoices, project budget/list, PO summary. Cookie auth. | financial.ts |

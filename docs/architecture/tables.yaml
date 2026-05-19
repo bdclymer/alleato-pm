@@ -93,6 +93,18 @@ tables:
       - projects
       - document_metadata
 
+  - name: sop_backlog
+    db: MAIN
+    domain: documents
+    owner: accounting
+    status: live
+    purpose: "SAIS structured backlog for missing or lifecycle-managed accounting/finance SOP requirements. Placeholder records exist before a real SOP file is uploaded, then optionally link to document_metadata once the final SOP exists."
+    gotchas: "Do not create fake document_metadata rows for missing SOPs. Placeholder backlog rows are requirements, not uploaded files; AI retrieval must distinguish them from real documents."
+    relatedTables:
+      - document_metadata
+      - projects
+    notesForAi: "Use sop_backlog for questions about missing accounting/finance SOPs, documentation gaps, SOP priority, lifecycle state, owner, and linked-file status."
+
   - name: project_emails
     db: MAIN
     domain: projects
@@ -555,6 +567,17 @@ tables:
       - direct_costs
       - projects
     notesForAi: "Do not write manually. acumatica_document_key is the upsert key."
+
+  - name: finance_spend_classification_rules
+    db: MAIN
+    domain: financial
+    owner: accounting
+    status: live
+    purpose: "SAIS classification layer for accounting/finance overhead spend. Read with acumatica_ap_bills to produce trailing monthly spend by category/vendor while excluding project costs, reversals, refunds, duplicates, zero-dollar adjustments, and unclassified AP noise."
+    gotchas: "Raw Acumatica AP bills remain sync-owned. Broad keyword rules such as PAYROLL, TAX, CPA, LEGAL, and COMPLIANCE are disabled by default until reviewed so spend rollups do not over-count unrelated AP rows."
+    relatedTables:
+      - acumatica_ap_bills
+    notesForAi: "Use this table for finance overhead classification; do not infer finance spend from raw AP bills or document search alone."
 
   - name: acumatica_ap_bill_lines
     db: MAIN
