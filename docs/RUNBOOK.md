@@ -148,6 +148,10 @@ cd backend && pytest --cov --cov-report=html
 
 # Run against production
 API_SMOKE_BASE_URL=https://projects.alleatogroup.com node scripts/api-smoke-contracts.mjs
+
+# Deep Agents docs/wiki backend smoke against the active Render service
+node scripts/verify/verify_deep_agents_docs_wiki_render_env.mjs
+node scripts/verify/smoke_deep_agents_docs_wiki_live.mjs
 ```
 
 ---
