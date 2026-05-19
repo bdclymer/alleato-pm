@@ -89,6 +89,21 @@
         "Draft requests must produce short, direct Brandon-style drafts or approval previews, never claim sent email.",
         "The answer must make the next action obvious: reply, draft, delegate, watch, or ignore."
       ]
+    },
+    "strategic-rag-operator-quality": {
+      "description": "LLM-judge eval for cross-source strategic RAG questions: ASRS sprinkler design time sinks, Microsoft Office importance filtering, and weekly meeting risk synthesis.",
+      "filter": "strategic-rag-(asrs-sprinkler-time-sink|office-morning-importance|weekly-meeting-risks|cross-source-open-loops)$",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4,
+      "warnDurationMs": 45000,
+      "maxDurationMs": 150000,
+      "criteria": [
+        "The assistant must retrieve or explicitly attempt the relevant source families for the prompt.",
+        "The answer must filter important signals from routine source noise.",
+        "The answer must synthesize across sources into a business point of view, not dump raw source summaries.",
+        "The answer must rank issues by time, money, schedule, owner risk, or decision impact.",
+        "The answer must include a concrete next action or verification step and name source gaps honestly."
+      ]
     }
   },
   "cases": [
@@ -1991,6 +2006,125 @@
       "judgeRubric": "email_operator",
       "minJudgeScore": 4,
       "notes": "Measures the desired future state: Brandon reviews a direct draft instead of composing from scratch."
+    },
+    {
+      "id": "strategic-rag-asrs-sprinkler-time-sink",
+      "intent": "strategic_rag",
+      "prompt": "What is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages?",
+      "selectedProjectId": 67,
+      "expectedToolFamilies": ["meetings", "communications", "semantic"],
+      "expectedToolNames": [
+        "semanticSearch",
+        "searchMeetingsByTopic",
+        "searchEmails",
+        "searchTeamsMessages",
+        "sourceLookupIntentRouter",
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "mustIncludeAny": [
+        ["sprinkler", "fire protection", "ASRS"],
+        ["time", "cycle", "coordination", "review", "design"]
+      ],
+      "mustExclude": [
+        "I cannot access meetings",
+        "I cannot access your email",
+        "as an AI"
+      ],
+      "minAnswerLength": 220,
+      "minSourceQuality": "medium",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4,
+      "notes": "Strategic RAG golden-seed case. Existing source basis in prod RAG smoke points to Vermillion Rise fire protection design issues: final review sets expected Friday, missing double block valves, four zones reduced to two without documented agreement, and sprinkler header concerns."
+    },
+    {
+      "id": "strategic-rag-office-morning-importance",
+      "intent": "email_query",
+      "prompt": "What important Microsoft Office items came in this morning, and what can I ignore?",
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval",
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread"
+      ],
+      "forbiddenToolSources": [
+        "outlook_email_intake",
+        "outlook_email_intake_fallback"
+      ],
+      "mustIncludeAny": [
+        ["important", "urgent", "attention", "ignore"],
+        ["email", "Teams", "Office", "Outlook"]
+      ],
+      "mustExclude": [
+        "I cannot access your email",
+        "live Outlook tools are available",
+        "retrieval bundle"
+      ],
+      "minAnswerLength": 180,
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4,
+      "notes": "Microsoft Office operator case: must separate important items from noise and clearly say what can be ignored."
+    },
+    {
+      "id": "strategic-rag-weekly-meeting-risks",
+      "intent": "meeting_query",
+      "prompt": "Tell me the biggest insights, risks, or hurdles from the past week's meetings.",
+      "expectedToolFamilies": ["meetings", "actions", "risk"],
+      "expectedToolNames": [
+        "getMeetingIntelligence",
+        "getMeetingsByDate",
+        "searchMeetingsByTopic",
+        "getActionItemsAndInsights",
+        "backendDeepAgentExecutiveBriefing"
+      ],
+      "mustIncludeAny": [
+        ["risk", "hurdle", "issue", "blocker", "insight"],
+        ["meeting", "week", "past week"]
+      ],
+      "mustExclude": [
+        "I cannot access meetings",
+        "which project",
+        "as an AI"
+      ],
+      "minAnswerLength": 220,
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4,
+      "notes": "Weekly meeting intelligence case: must filter the past week down to business-relevant signals rather than summarizing meetings in order."
+    },
+    {
+      "id": "strategic-rag-cross-source-open-loops",
+      "intent": "strategic_rag",
+      "prompt": "What are the biggest open loops from this week's meetings and Office messages?",
+      "expectedToolFamilies": ["meetings", "communications", "actions"],
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant",
+        "semanticSearch",
+        "searchTeamsMessages",
+        "searchEmails",
+        "getActionItemsAndInsights",
+        "backendDeepAgentExecutiveBriefing"
+      ],
+      "mustIncludeAny": [
+        ["open loop", "unresolved", "waiting", "needs", "follow up"],
+        ["meeting", "email", "Teams", "message"]
+      ],
+      "mustExclude": [
+        "I cannot access meetings",
+        "I cannot access your email",
+        "which project"
+      ],
+      "minAnswerLength": 220,
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4,
+      "notes": "Cross-source strategic case: must deduplicate unresolved issues across meeting and Office signals and recommend closeout actions."
     }
   ],
   "toolFamilyMap": {

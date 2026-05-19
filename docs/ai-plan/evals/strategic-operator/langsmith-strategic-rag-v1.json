@@ -1,0 +1,534 @@
+[
+  {
+    "inputs": {
+      "query": "What is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages?",
+      "scenario": "Cross-source strategic RAG question about ASRS sprinkler design complexity.",
+      "required_source_types": ["meetings", "emails", "teams_messages"],
+      "preferred_optional_source_types": ["attachments", "calendar"],
+      "time_window": "all relevant available history unless the user narrows the window"
+    },
+    "outputs": {
+      "evaluation_type": "strategic_rag_final_response",
+      "expected_behavior": [
+        "Identify the dominant time-consuming design driver instead of listing every sprinkler topic equally.",
+        "Separate evidence-backed findings from inference.",
+        "Compare signals across meetings, emails, and messages before concluding.",
+        "Explain why the driver consumes time in operational terms such as coordination cycles, redesign, approvals, missing information, field constraints, or jurisdictional review.",
+        "Name the next verification step if source coverage is incomplete."
+      ],
+      "must_include_capabilities": [
+        "source synthesis",
+        "importance ranking",
+        "evidence caveat",
+        "recommended next action"
+      ],
+      "anti_patterns": [
+        "Answers from a single source type while claiming cross-source confidence.",
+        "Only explains what ASRS or sprinklers are.",
+        "Lists every issue without identifying the biggest time sink.",
+        "Invents project facts, code requirements, names, or dates not present in retrieved evidence.",
+        "Hides behind generic RAG/source caveats without giving an operational read."
+      ],
+      "judge_dimensions": {
+        "retrieval_coverage": "Uses or explicitly attempts meetings, emails, and Teams/messages.",
+        "strategic_synthesis": "Connects repeated evidence into the actual time driver.",
+        "business_value": "Explains what the delay means for design schedule, coordination effort, cost, or owner risk.",
+        "actionability": "Recommends a concrete next step, owner question, or source check."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "asrs_sprinkler_rag",
+      "difficulty": "hard",
+      "priority": "p0",
+      "langsmith_split": "baseline",
+      "project_id": 67,
+      "project_name": "Vermillion Rise Warehouse",
+      "source_basis": [
+        "docs/ai-plan/evals/prod-rag-smoke/2026-05-13T23-01-34-663Z/report.md",
+        "docs/ai-plan/evals/prod-rag-smoke/2026-05-13T23-01-34-663Z/05-project-filtered.json",
+        "docs/ai-plan/evals/strategic-operator/source-basis.md"
+      ],
+      "known_seed_facts": [
+        "Final review drawing sets were expected by Friday with structural confirmation still pending.",
+        "The 5/13 Hillsdale Holdings / Alleato weekly meeting surfaced urgent sprinkler design issues.",
+        "The sprinkler design reportedly lacked double block valves, creating water damage/flooding exposure.",
+        "Fire protection was apparently reduced from four zones to two without documented agreement.",
+        "Sprinkler header placement was flagged as a concern."
+      ]
+    }
+  },
+  {
+    "inputs": {
+      "query": "For ASRS sprinkler design, what keeps coming up repeatedly across the last few meetings and messages?",
+      "scenario": "Pattern-detection prompt for repeated ASRS sprinkler blockers.",
+      "required_source_types": ["meetings", "teams_messages"],
+      "preferred_optional_source_types": ["emails"],
+      "time_window": "recent relevant history"
+    },
+    "outputs": {
+      "evaluation_type": "strategic_rag_final_response",
+      "expected_behavior": [
+        "Cluster repeated themes instead of summarizing each meeting separately.",
+        "Rank themes by recurrence and likely impact.",
+        "Call out whether repeated mentions are unresolved issues, normal coordination, or already-closed decisions.",
+        "Distinguish evidence from speculation."
+      ],
+      "must_include_capabilities": [
+        "theme clustering",
+        "recency awareness",
+        "open-versus-closed status",
+        "risk framing"
+      ],
+      "anti_patterns": [
+        "Chronological transcript dump.",
+        "Treats one mention as a repeated theme.",
+        "Fails to distinguish active hurdles from historical discussion.",
+        "Suggests generic design best practices without source evidence."
+      ],
+      "judge_dimensions": {
+        "pattern_recognition": "Finds recurring signals across source items.",
+        "importance_filtering": "Separates meaningful blockers from noise.",
+        "status_judgment": "Makes clear what is still open versus resolved.",
+        "clarity": "Produces a concise operator-readable answer."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "asrs_sprinkler_rag",
+      "difficulty": "medium",
+      "priority": "p0",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "What should I ask the sprinkler designer next on the ASRS scope so we stop cycling on the same issue?",
+      "scenario": "Strategic follow-up that should convert retrieved ASRS evidence into a decision-oriented question list.",
+      "required_source_types": ["meetings", "emails", "teams_messages"],
+      "time_window": "all relevant available history"
+    },
+    "outputs": {
+      "evaluation_type": "strategic_rag_final_response",
+      "expected_behavior": [
+        "Infer the unresolved decision points from source evidence.",
+        "Produce a short prioritized list of questions for the sprinkler designer.",
+        "Tie each question to why it matters and what decision it unlocks.",
+        "Avoid overstepping into unsupported technical design instructions."
+      ],
+      "must_include_capabilities": [
+        "decision extraction",
+        "next-best-question generation",
+        "risk-to-action conversion"
+      ],
+      "anti_patterns": [
+        "Gives generic coordination advice.",
+        "Creates technical requirements not found in evidence.",
+        "Does not identify what decision each question is meant to unlock.",
+        "Provides a long unfocused list."
+      ],
+      "judge_dimensions": {
+        "decision_focus": "Questions map to real unresolved decisions.",
+        "source_grounding": "Question rationale is grounded in retrieved evidence.",
+        "operator_value": "The user could send or use the questions in a real coordination meeting.",
+        "scope_control": "Does not pretend to be the engineer of record."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "asrs_sprinkler_rag",
+      "difficulty": "hard",
+      "priority": "p1",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "Tell me the biggest insights, risks, or hurdles from the past week's meetings.",
+      "scenario": "Executive weekly meeting-intelligence prompt.",
+      "required_source_types": ["meetings"],
+      "preferred_optional_source_types": ["teams_messages", "emails", "action_items"],
+      "time_window": "past 7 days"
+    },
+    "outputs": {
+      "evaluation_type": "strategic_rag_final_response",
+      "expected_behavior": [
+        "Filter the past week's meetings to the issues that matter most.",
+        "Group insights, risks, and hurdles separately or make the distinction clear.",
+        "Prioritize by business impact rather than meeting order.",
+        "Include the likely owner or follow-up path when supported by evidence.",
+        "State if the meeting corpus for the past week appears incomplete or stale."
+      ],
+      "must_include_capabilities": [
+        "time-window retrieval",
+        "meeting synthesis",
+        "risk prioritization",
+        "owner-action framing"
+      ],
+      "anti_patterns": [
+        "Summarizes every meeting equally.",
+        "Uses old meetings outside the requested week without disclosure.",
+        "Confuses action items with risks.",
+        "Gives generic business risks not found in meeting evidence.",
+        "Does not tell the user what to do next."
+      ],
+      "judge_dimensions": {
+        "time_accuracy": "Stays within or clearly labels the past-week window.",
+        "signal_filtering": "Promotes important issues and suppresses meeting noise.",
+        "strategic_framing": "Explains why each issue matters.",
+        "next_actions": "Turns the weekly read into a practical follow-up list."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "weekly_meeting_insights",
+      "difficulty": "hard",
+      "priority": "p0",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "What changed in meetings this week that I should care about as the owner?",
+      "scenario": "Owner-facing weekly delta prompt.",
+      "required_source_types": ["meetings"],
+      "preferred_optional_source_types": ["emails", "teams_messages"],
+      "time_window": "current week"
+    },
+    "outputs": {
+      "evaluation_type": "strategic_rag_final_response",
+      "expected_behavior": [
+        "Identify changes or new signals, not static status.",
+        "Translate the changes into owner-level implications.",
+        "Avoid raw transcript-style summaries.",
+        "Call out missing source coverage if the current-week meeting set is thin."
+      ],
+      "must_include_capabilities": [
+        "delta detection",
+        "owner-readable summary",
+        "business implication"
+      ],
+      "anti_patterns": [
+        "Reports stale facts as new changes.",
+        "Lists agenda items without implications.",
+        "Uses technical source labels in the owner-facing answer.",
+        "Omits uncertainty about incomplete meeting coverage."
+      ],
+      "judge_dimensions": {
+        "change_detection": "Focuses on what changed this week.",
+        "owner_relevance": "Frames why the owner should care.",
+        "conciseness": "Keeps the answer brief enough for real use.",
+        "evidence_honesty": "Does not overclaim when the corpus is incomplete."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "weekly_meeting_insights",
+      "difficulty": "medium",
+      "priority": "p1",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "Of all the meetings from last week, what are the three things most likely to cost us time or money?",
+      "scenario": "Cost/schedule risk extraction from meeting corpus.",
+      "required_source_types": ["meetings"],
+      "preferred_optional_source_types": ["financial_records", "schedule_tasks", "emails"],
+      "time_window": "previous calendar week"
+    },
+    "outputs": {
+      "evaluation_type": "strategic_rag_final_response",
+      "expected_behavior": [
+        "Select exactly or approximately three top issues unless source evidence does not support three.",
+        "Explain whether each issue threatens time, money, or both.",
+        "Rank by likely business impact.",
+        "Name the evidence gap if meeting notes are insufficient to quantify impact."
+      ],
+      "must_include_capabilities": [
+        "cost-risk reasoning",
+        "schedule-risk reasoning",
+        "impact ranking",
+        "uncertainty disclosure"
+      ],
+      "anti_patterns": [
+        "Treats all risks as equal.",
+        "Includes generic construction risks not present in meetings.",
+        "Provides dollar amounts or durations without source support.",
+        "Fails to distinguish time risk from money risk."
+      ],
+      "judge_dimensions": {
+        "impact_prioritization": "Ranks the issues by expected business impact.",
+        "risk_specificity": "Makes each risk concrete and evidence-backed.",
+        "financial_schedule_judgment": "Correctly separates cost and schedule implications.",
+        "follow_through": "Recommends the next check or decision."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "weekly_meeting_insights",
+      "difficulty": "hard",
+      "priority": "p1",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "What important Microsoft Office items came in this morning, and what can I ignore?",
+      "scenario": "Microsoft Office executive-assistant triage across Outlook, Teams, calendar, and files.",
+      "required_source_types": ["outlook_email", "teams_messages"],
+      "preferred_optional_source_types": ["calendar", "onedrive_files"],
+      "time_window": "this morning"
+    },
+    "outputs": {
+      "evaluation_type": "microsoft_office_operator_final_response",
+      "expected_behavior": [
+        "Retrieve or attempt live Microsoft Office sources rather than stale indexed-only data.",
+        "Separate urgent, important-but-not-urgent, informational, and ignorable items.",
+        "Explain why each important item matters.",
+        "Recommend reply, delegate, watch, schedule, or ignore for each item when supported.",
+        "State source or access gaps clearly."
+      ],
+      "must_include_capabilities": [
+        "live Office retrieval",
+        "importance filtering",
+        "noise suppression",
+        "action recommendation"
+      ],
+      "anti_patterns": [
+        "Lists newest messages by timestamp without importance filtering.",
+        "Treats newsletters, notifications, or FYI messages as equally important.",
+        "Claims to have checked live Office sources when only stale data was available.",
+        "Fails to distinguish Outlook from Teams signals.",
+        "Does not tell the user what can be ignored."
+      ],
+      "judge_dimensions": {
+        "source_routing": "Uses the Microsoft Office agent path for Office data.",
+        "triage_quality": "Correctly separates important work from noise.",
+        "executive_usefulness": "The answer saves the user time and gives clear actions.",
+        "honesty": "Accurately discloses missing permissions, stale sync, or thin evidence."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "microsoft_office_operator",
+      "difficulty": "hard",
+      "priority": "p0",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "Look across my Microsoft emails and Teams messages from the last 24 hours. What actually needs my attention?",
+      "scenario": "Office triage for attention-worthy communications.",
+      "required_source_types": ["outlook_email", "teams_messages"],
+      "preferred_optional_source_types": ["calendar"],
+      "time_window": "last 24 hours"
+    },
+    "outputs": {
+      "evaluation_type": "microsoft_office_operator_final_response",
+      "expected_behavior": [
+        "Rank attention-worthy items by urgency and business impact.",
+        "Suppress routine notifications, duplicative threads, and FYI-only chatter.",
+        "Identify whether the user needs to respond, decide, delegate, or monitor.",
+        "Include enough source context for the user to trust the triage."
+      ],
+      "must_include_capabilities": [
+        "cross-source Office retrieval",
+        "importance ranking",
+        "action classification",
+        "deduplication"
+      ],
+      "anti_patterns": [
+        "Dumps all messages.",
+        "Fails to deduplicate the same topic across email and Teams.",
+        "Equates recency with importance.",
+        "Leaves the user to decide the action for each item."
+      ],
+      "judge_dimensions": {
+        "importance_judgment": "Ranks by what actually needs attention.",
+        "deduplication": "Combines related Office signals into one item.",
+        "actionability": "Provides a concrete action label per item.",
+        "source_grounding": "Includes enough evidence without overwhelming the user."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "microsoft_office_operator",
+      "difficulty": "medium",
+      "priority": "p0",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "Do I have any Office messages that look unimportant but might hide a risk?",
+      "scenario": "Strategic risk detection in low-signal Microsoft Office communications.",
+      "required_source_types": ["outlook_email", "teams_messages"],
+      "preferred_optional_source_types": ["attachments", "calendar"],
+      "time_window": "recent relevant history"
+    },
+    "outputs": {
+      "evaluation_type": "microsoft_office_operator_final_response",
+      "expected_behavior": [
+        "Look for subtle risk signals such as repeated follow-ups, delayed approvals, missing documents, unresolved decisions, or changes buried in FYI threads.",
+        "Avoid overpromoting routine noise.",
+        "Explain why a low-signal item may still matter.",
+        "Recommend a lightweight verification or watch action."
+      ],
+      "must_include_capabilities": [
+        "hidden-risk detection",
+        "low-noise triage",
+        "watch-item recommendation"
+      ],
+      "anti_patterns": [
+        "Labels everything as a risk.",
+        "Misses repeated follow-up patterns.",
+        "Invents urgency without evidence.",
+        "Does not explain why the item is worth watching."
+      ],
+      "judge_dimensions": {
+        "subtle_signal_detection": "Finds meaningful weak signals without panicking.",
+        "calibration": "Does not inflate every message into a major risk.",
+        "reasoning": "Explains the risk mechanism clearly.",
+        "next_step": "Suggests a proportionate follow-up."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "microsoft_office_operator",
+      "difficulty": "hard",
+      "priority": "p1",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "Build me a quick morning brief from Microsoft Office: what matters, what changed, what I need to do, and what I can ignore.",
+      "scenario": "Combined Outlook, Teams, calendar, and files morning brief.",
+      "required_source_types": ["outlook_email", "teams_messages", "calendar"],
+      "preferred_optional_source_types": ["onedrive_files", "attachments"],
+      "time_window": "since yesterday evening"
+    },
+    "outputs": {
+      "evaluation_type": "microsoft_office_operator_final_response",
+      "expected_behavior": [
+        "Organize the brief into what matters, what changed, actions, and ignore/watch items.",
+        "Prioritize by business impact and urgency.",
+        "Avoid raw inbox/message dumps.",
+        "Flag any source the Office agent could not access."
+      ],
+      "must_include_capabilities": [
+        "executive briefing",
+        "Office source synthesis",
+        "action extraction",
+        "noise filtering"
+      ],
+      "anti_patterns": [
+        "Summarizes by app instead of by importance.",
+        "Includes routine calendar events without explaining relevance.",
+        "Does not identify ignored or low-priority items.",
+        "Makes unsupported claims about attachments or files."
+      ],
+      "judge_dimensions": {
+        "brief_structure": "Uses a brief structure that reduces user effort.",
+        "priority_order": "Most important items appear first.",
+        "action_clarity": "Clear action items are separated from FYIs.",
+        "source_integrity": "Does not overclaim Office coverage."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "microsoft_office_operator",
+      "difficulty": "hard",
+      "priority": "p1",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "What are the biggest open loops from this week's meetings and Office messages?",
+      "scenario": "Cross-source open-loop extraction from meetings, Outlook, and Teams.",
+      "required_source_types": ["meetings", "outlook_email", "teams_messages"],
+      "preferred_optional_source_types": ["tasks", "calendar"],
+      "time_window": "current week"
+    },
+    "outputs": {
+      "evaluation_type": "strategic_rag_final_response",
+      "expected_behavior": [
+        "Find unresolved decisions, asks, approvals, follow-ups, or blockers across source types.",
+        "Deduplicate the same open loop if it appears in meetings and messages.",
+        "Rank by impact and urgency.",
+        "Recommend who or what should close each loop when supported."
+      ],
+      "must_include_capabilities": [
+        "open-loop extraction",
+        "cross-source deduplication",
+        "impact ranking",
+        "closure recommendation"
+      ],
+      "anti_patterns": [
+        "Confuses completed action items with open loops.",
+        "Duplicates the same issue because it appears in multiple sources.",
+        "Lists minor follow-ups ahead of major blockers.",
+        "Omits source freshness caveats."
+      ],
+      "judge_dimensions": {
+        "open_loop_accuracy": "Items are genuinely unresolved based on evidence.",
+        "cross_source_synthesis": "Combines meeting and Office signals.",
+        "prioritization": "Ranks by impact rather than source order.",
+        "closure_path": "Provides practical closeout actions."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "cross_source_strategy",
+      "difficulty": "hard",
+      "priority": "p0",
+      "langsmith_split": "baseline"
+    }
+  },
+  {
+    "inputs": {
+      "query": "What am I missing from the past week that could surprise me later?",
+      "scenario": "Proactive strategic risk scan across meetings and Office sources.",
+      "required_source_types": ["meetings", "outlook_email", "teams_messages"],
+      "preferred_optional_source_types": ["calendar", "tasks", "attachments"],
+      "time_window": "past 7 days"
+    },
+    "outputs": {
+      "evaluation_type": "strategic_rag_final_response",
+      "expected_behavior": [
+        "Surface second-order risks or weak signals rather than only obvious tasks.",
+        "Explain why each item could become a surprise.",
+        "Calibrate confidence based on source strength and recurrence.",
+        "Recommend what to verify now to prevent the surprise."
+      ],
+      "must_include_capabilities": [
+        "proactive risk detection",
+        "second-order reasoning",
+        "confidence calibration",
+        "prevention action"
+      ],
+      "anti_patterns": [
+        "Only lists explicit action items.",
+        "Overstates weak evidence as certainty.",
+        "Uses generic risk language unrelated to retrieved sources.",
+        "Does not provide a prevention step."
+      ],
+      "judge_dimensions": {
+        "proactivity": "Identifies what the user did not explicitly ask for but should know.",
+        "strategic_depth": "Explains second-order consequences.",
+        "confidence": "Correctly distinguishes strong and weak signals.",
+        "prevention": "Gives a practical guardrail or verification step."
+      }
+    },
+    "metadata": {
+      "dataset": "Strategic Operator Eval v1",
+      "category": "cross_source_strategy",
+      "difficulty": "hard",
+      "priority": "p1",
+      "langsmith_split": "baseline"
+    }
+  }
+]

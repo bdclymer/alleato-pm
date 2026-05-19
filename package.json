@@ -133,6 +133,9 @@
     "rag:verify:strategic-advisor-evals:prod": "AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:strategic-advisor-evals",
     "rag:verify:email-operator-evals": "node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle email-operator-quality",
     "rag:verify:email-operator-evals:prod": "AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:email-operator-evals",
+    "rag:verify:strategic-rag-operator-evals": "node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle strategic-rag-operator-quality",
+    "rag:verify:strategic-rag-operator-evals:prod": "AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=150000 npm run rag:verify:strategic-rag-operator-evals",
+    "langsmith:upload:strategic-operator": "node scripts/ops/upload-langsmith-strategic-dataset.mjs",
     "rag:verify:assistant-operational-readiness": "node scripts/verify/verify_ai_assistant_operational_readiness.mjs",
     "rag:verify:source-freshness": "python3 scripts/verify/verify_integration_health.py --skip-env"
   },
