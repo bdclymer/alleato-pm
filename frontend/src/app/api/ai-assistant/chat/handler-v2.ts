@@ -200,6 +200,43 @@ function buildRecentEmailTrace(
   };
 }
 
+function buildLiveToolTrace(
+  trace: Record<string, unknown>,
+  message: string,
+): Record<string, unknown> | null {
+  const tool = asString(trace.tool);
+  if (!tool) return null;
+
+  if (tool === "getRecentEmails") {
+    const emailTrace = buildRecentEmailTrace(trace.output, message);
+    if (emailTrace) return emailTrace;
+  }
+
+  const input = asRecord(trace.input);
+  const output = asRecord(trace.output);
+  const error = asString(trace.error);
+
+  return {
+    tool,
+    toolName: tool,
+    status: error ? "failed" : "success",
+    input: {
+      message: message.slice(0, 240),
+      selectedProjectId: input.projectId ?? input.selectedProjectId ?? null,
+    },
+    output:
+      trace.output === undefined
+        ? undefined
+        : {
+            count: output.count ?? null,
+            summary: output.summary ?? null,
+            error: output.error ?? error ?? null,
+          },
+    error,
+    timestamp: asString(trace.timestamp) ?? new Date().toISOString(),
+  };
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -560,6 +597,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     stepCount: number;
   } | null = null;
   const bridgeToolTrace: Array<Record<string, unknown>> = [];
+  const liveToolTrace: Array<Record<string, unknown>> = [];
   let latestRetrievalCtx: Awaited<
     ReturnType<typeof executeRetrievalPlan>
   > | null = null;
@@ -1402,6 +1440,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         pinnedProjectId: args.selectedProjectId,
         sessionId: args.sessionId,
         includeActionTools: true,
+        onTrace: (trace) => {
+          const normalizedTrace = buildLiveToolTrace(trace, lastUserContent);
+          if (normalizedTrace) liveToolTrace.push(normalizedTrace);
+        },
       });
 
       if (process.env.NODE_ENV !== "production") {
@@ -1545,6 +1587,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       const toolTrace = [
         ...bridgeToolTrace,
         ...retrievalToolTrace,
+        ...liveToolTrace,
         ...streamToolTrace,
       ];
 
