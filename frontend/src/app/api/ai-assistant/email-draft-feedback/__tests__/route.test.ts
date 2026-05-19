@@ -64,7 +64,7 @@ describe("/api/ai-assistant/email-draft-feedback", () => {
       eventId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
       storedIn: "ai_feedback_events",
       voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
-      voiceProfileVersion: "2026-05-13",
+      voiceProfileVersion: "2026-05-19",
     });
     expect(recordEmailDraftFeedbackMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -76,7 +76,7 @@ describe("/api/ai-assistant/email-draft-feedback", () => {
         signal: "edited",
         reasonCategory: "too_formal",
         voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
-        voiceProfileVersion: "2026-05-13",
+        voiceProfileVersion: "2026-05-19",
       }),
     );
   });

@@ -1158,7 +1158,7 @@ function taskPromotionTitle(row: AiTaskFeedbackRow): string {
 
 const BRANDON_EMAIL_VOICE_PROFILE_PATH =
   "docs/ai-plan/brandon-email-voice-profile.md";
-const BRANDON_EMAIL_VOICE_PROFILE_VERSION = "2026-05-13";
+const BRANDON_EMAIL_VOICE_PROFILE_VERSION = "2026-05-19";
 
 const EMAIL_VOICE_REASON_RULES: Record<
   string,

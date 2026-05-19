@@ -169,7 +169,7 @@ function emailDraftFeedbackEvent(
       mailboxUserId: "bclymer@alleatogroup.com",
       graphDraftMessageId: "draft-message-id",
       voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
-      voiceProfileVersion: "2026-05-13",
+      voiceProfileVersion: "2026-05-19",
     },
     metadata: {
       visibility: "private",
@@ -825,7 +825,7 @@ describe("feedback event service retrieval promotions", () => {
             mailboxUserId: "bclymer@alleatogroup.com",
             graphDraftMessageId: "draft-message-id-2",
             voiceProfilePath: "docs/ai-plan/brandon-email-voice-profile.md",
-            voiceProfileVersion: "2026-05-13",
+            voiceProfileVersion: "2026-05-19",
           },
           free_text: "Still too polished.",
         }),

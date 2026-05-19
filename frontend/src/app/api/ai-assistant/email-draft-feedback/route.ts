@@ -10,7 +10,7 @@ import type { Json } from "@/types/database.types";
 
 const DEFAULT_BRANDON_VOICE_PROFILE_PATH =
   "docs/ai-plan/brandon-email-voice-profile.md";
-const DEFAULT_BRANDON_VOICE_PROFILE_VERSION = "2026-05-13";
+const DEFAULT_BRANDON_VOICE_PROFILE_VERSION = "2026-05-19";
 
 const emailDraftFeedbackSchema = z.object({
   mailboxUserId: z.string().email(),
