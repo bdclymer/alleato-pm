@@ -66,15 +66,11 @@ describe("planRetrieval", () => {
     "what mail arrived today",
     "any important messages I got today?",
     "what are the priority emails from today",
-  ])("routes inbox triage wording to structured Outlook intake: %s", (message) => {
+  ])("routes inbox triage wording to Microsoft specialist delegation: %s", (message) => {
     const plan = planRetrieval({ message, messages: [userMsg(message)] });
-    expect(plan.responseFormat).toBe("recent_email_inbox");
-    expect(plan.sources.recentEmails).toEqual(
-      expect.objectContaining({
-        reason: "structured_outlook_inbox_query",
-        limit: 50,
-      }),
-    );
+    expect(plan.responseFormat).toBe("conversational");
+    expect(plan.reason).toContain("microsoft_specialist_delegation");
+    expect(plan.sources.recentEmails).toBeUndefined();
     expect(plan.sources.sourceSpecificRag).toBeUndefined();
     expect(plan.sources.semanticVectorSearch).toBeUndefined();
   });
@@ -85,7 +81,8 @@ describe("planRetrieval", () => {
     "what came in through Outlook today",
   ])("uses today's business window for same-day email wording: %s", (message) => {
     const plan = planRetrieval({ message, messages: [userMsg(message)] });
-    expect(plan.sources.recentEmails?.daysBack).toBe(0);
+    expect(plan.reason).toContain("microsoft_specialist_delegation");
+    expect(plan.sources.recentEmails).toBeUndefined();
   });
 
   it("financial question → preconsult includes CFO", () => {

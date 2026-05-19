@@ -66,6 +66,47 @@ type GeneratedTaskSummaryAnswer = {
   traceOutput: Record<string, unknown>;
 };
 
+function microsoftAssistantBackendUrl(): string {
+  const value = (
+    (process.env.NODE_ENV === "development"
+      ? process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000"
+      : process.env.BACKEND_URL || process.env.PYTHON_BACKEND_URL || "")
+  )
+    .replace(/\/+$/, "")
+    .trim();
+  try {
+    new URL(value);
+  } catch {
+    throw new Error(
+      "Missing or invalid backend URL. Set BACKEND_URL or PYTHON_BACKEND_URL before using the Microsoft Executive Assistant.",
+    );
+  }
+  return value;
+}
+
+function microsoftAssistantAdminApiKey(): string {
+  const value = process.env.ADMIN_API_KEY?.trim();
+  if (!value) {
+    throw new Error(
+      "ADMIN_API_KEY is required to call the backend Microsoft Executive Assistant.",
+    );
+  }
+  return value;
+}
+
+function defaultMicrosoftMailbox(): string | undefined {
+  return (
+    process.env.AI_ASSISTANT_DEFAULT_OUTLOOK_MAILBOX?.trim() ||
+    process.env.OUTLOOK_OPERATOR_MAILBOX?.trim() ||
+    process.env.MICROSOFT_SYNC_USERS?.split(",")[0]?.trim() ||
+    undefined
+  );
+}
+
+function isMicrosoftSpecialistDelegationPlan(reason: string): boolean {
+  return reason.startsWith("microsoft_specialist_delegation_");
+}
+
 function extractTextFromParts(parts: UIMessage["parts"]): string {
   if (!Array.isArray(parts)) return "";
   return parts
@@ -254,6 +295,43 @@ function buildLiveToolTrace(
     error,
     timestamp: asString(trace.timestamp) ?? new Date().toISOString(),
   };
+}
+
+async function fetchMicrosoftExecutiveAssistant(params: {
+  userId: string;
+  sessionId: string;
+  question: string;
+  selectedProjectId?: number;
+}) {
+  const response = await fetch(
+    `${microsoftAssistantBackendUrl()}/api/intelligence/microsoft-executive-assistant`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Admin-Api-Key": microsoftAssistantAdminApiKey(),
+      },
+      body: JSON.stringify({
+        userId: params.userId,
+        sessionId: params.sessionId,
+        prompt: params.question,
+        mailboxUserId: defaultMicrosoftMailbox(),
+        projectId: params.selectedProjectId,
+        trigger: "strategist_delegation",
+      }),
+    },
+  );
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    const detail =
+      typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.answer ??
+          `Microsoft Executive Assistant failed with HTTP ${response.status}.`;
+    throw new Error(detail);
+  }
+  return body as Record<string, unknown>;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -859,6 +937,89 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             `Persisting the user message failed: ${error.message}`,
           );
         }
+      }
+
+      if (isMicrosoftSpecialistDelegationPlan(plan.reason)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "microsoft-specialist",
+            message: "Delegating Microsoft operator work",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        const response = await fetchMicrosoftExecutiveAssistant({
+          userId: args.user.id,
+          sessionId: args.sessionId,
+          question: lastUserContent,
+          selectedProjectId: args.selectedProjectId,
+        });
+        const content =
+          typeof response.answer === "string"
+            ? response.answer
+            : "The Microsoft Executive Assistant returned no answer.";
+        const trace = buildLiveToolTrace(
+          {
+            tool: "consultMicrosoftExecutiveAssistant",
+            input: {
+              question: lastUserContent,
+              projectId: args.selectedProjectId ?? null,
+              mailboxUserId: defaultMicrosoftMailbox() ?? null,
+            },
+            response,
+            output: {
+              summary: content.slice(0, 500),
+            },
+          },
+          lastUserContent,
+        );
+        const toolTrace = trace ? [trace] : [];
+
+        writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
+
+        await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "assistant",
+          content,
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            delegated_orchestrator: "microsoft-executive-assistant",
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            retrieval_plan: {
+              intent: plan.intent,
+              reason: plan.reason,
+              responseFormat: plan.responseFormat,
+              sources: Object.keys(plan.sources),
+            },
+          } as Json,
+        });
+
+        await args.supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", args.sessionId)
+          .eq("user_id", args.user.id);
+
+        responseAlreadyPersisted = true;
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Microsoft Executive Assistant answer returned",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
       }
 
       if (

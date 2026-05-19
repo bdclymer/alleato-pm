@@ -16,12 +16,12 @@
   ],
   "evalBundles": {
     "inbox-outlook-regression": {
-      "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The assistant must use structured Outlook intake via the live-Graph-first getRecentEmails tool, must not fall back to the synced outlook_email_intake cache, and must avoid source-specific RAG and stale fallback language.",
+      "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The Strategist must delegate Microsoft operator work to consultMicrosoftExecutiveAssistant, the specialist must expose microsoft_graph_live in its trace, and the assistant must avoid direct/stale Outlook tools and source-specific RAG fallback.",
       "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
       "criteria": [
-        "Every case must fire getRecentEmails and its trace source must be microsoft_graph_live.",
-        "No case may fire sourceSpecificRagRetrieval, getRecentOutlookEmails, or readOutlookEmailThread (those tools read the synced cache only).",
-        "No tool trace's source may be outlook_email_intake or outlook_email_intake_fallback - inbox reads must hit live Microsoft Graph.",
+        "Every case must fire consultMicrosoftExecutiveAssistant and its nested trace must include microsoft_graph_live.",
+        "No case may fire sourceSpecificRagRetrieval, getRecentEmails, getRecentOutlookEmails, or readOutlookEmailThread.",
+        "No tool trace's source may be outlook_email_intake or outlook_email_intake_fallback - Microsoft operator inbox reads must hit live Microsoft Graph through the specialist.",
         "Answers must not tell the user to wait for live Outlook tools.",
         "Answers must be long enough to explain the inbox result or failure clearly."
       ]
@@ -83,7 +83,7 @@
       "warnDurationMs": 30000,
       "maxDurationMs": 120000,
       "criteria": [
-        "The assistant must use structured recent Outlook retrieval for inbox questions.",
+        "The assistant must delegate Outlook inbox questions to the Microsoft Executive Assistant specialist.",
         "The assistant must separate urgent response-needed email from normal inbox noise.",
         "The assistant must provide a concise executive brief suitable for Teams/morning/evening reporting.",
         "Draft requests must produce short, direct Brandon-style drafts or approval previews, never claim sent email.",
@@ -1649,12 +1649,17 @@
       "intent": "source_lookup",
       "prompt": "Can you tell me my last five emails?",
       "expectedToolFamilies": ["communications"],
-      "expectedToolNames": ["getRecentEmails"],
-      "expectedAllToolNames": ["getRecentEmails"],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
+        "getRecentEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread"
       ],
@@ -1667,7 +1672,7 @@
       ],
       "mustExclude": ["I cannot access your email", "I will search"],
       "minAnswerLength": 120,
-      "notes": "Inbox recency ask. Must use Outlook/recent-email retrieval and avoid semantic-only generic answers.",
+      "notes": "Inbox recency ask. Must delegate to the Microsoft Executive Assistant specialist and avoid semantic-only generic answers.",
       "judgeRubric": "email_operator",
       "minJudgeScore": 4
     },
@@ -1676,12 +1681,18 @@
       "intent": "source_lookup",
       "prompt": "Is there anything urgent in my inbox?",
       "expectedToolFamilies": ["communications"],
-      "expectedToolNames": ["getRecentEmails", "searchEmails"],
-      "expectedAllToolNames": ["getRecentEmails"],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
+        "getRecentEmails",
+        "searchEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread"
       ],
@@ -1695,7 +1706,7 @@
         "I don't have access to your inbox"
       ],
       "minAnswerLength": 120,
-      "notes": "Inbox triage ask. Must retrieve email context and explicitly separate urgent items from normal mail.",
+      "notes": "Inbox triage ask. Must delegate email context and explicitly separate urgent items from normal mail.",
       "judgeRubric": "email_operator",
       "minJudgeScore": 4
     },
@@ -1704,12 +1715,17 @@
       "intent": "source_lookup",
       "prompt": "What important emails have I received this morning?",
       "expectedToolFamilies": ["communications"],
-      "expectedToolNames": ["getRecentEmails"],
-      "expectedAllToolNames": ["getRecentEmails"],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
+        "getRecentEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread"
       ],
@@ -1729,7 +1745,7 @@
         "I don't have access to your inbox"
       ],
       "minAnswerLength": 120,
-      "notes": "Regression for inbox phrasing that previously fell through to stale source-specific RAG. Must use structured Outlook intake.",
+      "notes": "Regression for inbox phrasing that previously fell through to stale source-specific RAG. Must use the Microsoft Executive Assistant specialist.",
       "judgeRubric": "email_operator",
       "minJudgeScore": 4
     },
@@ -1738,12 +1754,17 @@
       "intent": "source_lookup",
       "prompt": "What came in through Outlook today that needs my attention?",
       "expectedToolFamilies": ["communications"],
-      "expectedToolNames": ["getRecentEmails"],
-      "expectedAllToolNames": ["getRecentEmails"],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
+        "getRecentEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread"
       ],
@@ -1770,12 +1791,17 @@
       "intent": "source_lookup",
       "prompt": "Show me any emails from today that need a reply.",
       "expectedToolFamilies": ["communications"],
-      "expectedToolNames": ["getRecentEmails"],
-      "expectedAllToolNames": ["getRecentEmails"],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
+        "getRecentEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread"
       ],
@@ -1790,7 +1816,7 @@
         "I cannot access your email"
       ],
       "minAnswerLength": 120,
-      "notes": "Reply triage must use structured recent email retrieval, not historical semantic search.",
+      "notes": "Reply triage must use the Microsoft Executive Assistant specialist, not historical semantic search.",
       "judgeRubric": "email_operator",
       "minJudgeScore": 4
     },
@@ -1799,14 +1825,20 @@
       "intent": "email_action",
       "prompt": "Draft a response in my email to the latest message asking for an update. Keep it short and professional.",
       "expectedToolFamilies": ["email_action", "communications"],
-      "expectedToolNames": [
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
+      "forbiddenToolNames": [
         "draftOutlookEmail",
         "getRecentEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread"
       ],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
       "mustIncludeAny": [["draft", "subject", "reply", "confirm", "Outlook"]],
       "mustExclude": ["sent successfully", "email sent", "I cannot draft"],
       "warnDurationMs": 15000,
@@ -1848,12 +1880,17 @@
       "intent": "source_lookup",
       "prompt": "Act like Brandon's inbox monitor. Scan today's Outlook emails and tell me if anything is critical enough that he should get a Teams alert now versus wait for the evening brief.",
       "expectedToolFamilies": ["communications"],
-      "expectedToolNames": ["getRecentEmails"],
-      "expectedAllToolNames": ["getRecentEmails"],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
+        "getRecentEmails",
         "draftOutlookEmail",
         "createOutlookCalendarInvite",
         "getRecentOutlookEmails",
@@ -1889,12 +1926,17 @@
       "intent": "source_lookup",
       "prompt": "Give me Brandon's morning email brief: what came in, what needs a response, what can wait, and what should be delegated.",
       "expectedToolFamilies": ["communications"],
-      "expectedToolNames": ["getRecentEmails"],
-      "expectedAllToolNames": ["getRecentEmails"],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
       "forbiddenToolNames": [
         "sourceSpecificRagRetrieval",
+        "getRecentEmails",
         "draftOutlookEmail",
         "createOutlookCalendarInvite",
         "getRecentOutlookEmails",
@@ -1923,16 +1965,21 @@
       "intent": "email_action",
       "prompt": "Find the most important email from today that needs Brandon's reply and draft a short response in his voice. Do not send it; make it review-ready.",
       "expectedToolFamilies": ["email_action", "communications"],
-      "expectedToolNames": [
+      "expectedToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "expectedAllToolNames": ["consultMicrosoftExecutiveAssistant"],
+      "requiredToolTraceSources": [
+        {
+          "toolName": "consultMicrosoftExecutiveAssistant",
+          "source": "microsoft_graph_live"
+        }
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval",
         "getRecentEmails",
         "getRecentOutlookEmails",
         "readOutlookEmailThread",
         "draftOutlookEmail"
       ],
-      "expectedAllToolNames": ["getRecentEmails"],
-      "requiredRecentEmailMailbox": "bclymer@alleatogroup.com",
-      "requiredRecentEmailSource": "microsoft_graph_live",
-      "forbiddenToolNames": ["sourceSpecificRagRetrieval"],
       "mustIncludeAny": [
         ["draft", "reply", "review", "confirm", "Outlook"],
         ["short", "direct", "Brandon"]
@@ -1992,9 +2039,8 @@
       "getMeetingsByDate"
     ],
     "communications": [
+      "consultMicrosoftExecutiveAssistant",
       "getRecentEmails",
-      "getRecentOutlookEmails",
-      "readOutlookEmailThread",
       "searchEmails",
       "searchTeamsMessages",
       "searchExternalDocuments",
@@ -2027,10 +2073,9 @@
       "captureFeatureRequest"
     ],
     "email_action": [
+      "consultMicrosoftExecutiveAssistant",
       "draftOutlookEmail",
-      "getRecentEmails",
-      "getRecentOutlookEmails",
-      "readOutlookEmailThread"
+      "getRecentEmails"
     ],
     "calendar_action": ["createOutlookCalendarInvite"],
     "task_management": [

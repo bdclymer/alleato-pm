@@ -100,9 +100,9 @@ function omitMicrosoftOperatorTools(tools: ToolSet): ToolSet {
 
 function microsoftAssistantBackendUrl(): string {
   const value = (
-    process.env.BACKEND_URL ||
-    process.env.PYTHON_BACKEND_URL ||
-    (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000" : "")
+    (process.env.NODE_ENV === "development"
+      ? process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000"
+      : process.env.BACKEND_URL || process.env.PYTHON_BACKEND_URL || "")
   )
     .replace(/\/+$/, "")
     .trim();

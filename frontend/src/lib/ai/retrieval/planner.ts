@@ -85,9 +85,9 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
   if (recentEmailInbox) {
     return {
       intent,
-      responseFormat: "recent_email_inbox",
-      sources: { recentEmails: recentEmailInbox },
-      reason: recentEmailInbox.reason,
+      responseFormat: "conversational",
+      sources: {},
+      reason: `microsoft_specialist_delegation_${recentEmailInbox.reason}`,
     };
   }
 

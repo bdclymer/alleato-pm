@@ -555,6 +555,30 @@ function findToolTrace(metadata, toolName) {
   );
 }
 
+function collectTraceSources(value, sources = []) {
+  if (!value || typeof value !== "object") return sources;
+  if (Array.isArray(value)) {
+    for (const item of value) collectTraceSources(item, sources);
+    return sources;
+  }
+  if (typeof value.source === "string") sources.push(value.source);
+  for (const nested of Object.values(value)) collectTraceSources(nested, sources);
+  return sources;
+}
+
+function traceSourcesForTool(metadata, toolName) {
+  const trace = metadata?.tool_trace;
+  if (!Array.isArray(trace)) return [];
+  return uniqueStrings(
+    trace
+      .filter((entry) => {
+        const name = entry?.tool ?? entry?.toolName ?? entry?.name;
+        return name === toolName;
+      })
+      .flatMap((entry) => collectTraceSources(entry)),
+  );
+}
+
 function extractBackendDeepAgentMemory(metadata) {
   const backend = metadata?.backend_deep_agent;
   if (!backend || typeof backend !== "object") {
@@ -871,15 +895,15 @@ function scoreCase(testCase, runOutput, persisted) {
       ? metadata.tool_trace
       : [];
     for (const entry of traceEntries) {
-      const traceSource =
-        entry?.output?.source ??
-        entry?.source ??
-        entry?.output?.graphLive?.source;
-      if (forbiddenSources.includes(traceSource)) {
+      const traceSources = collectTraceSources(entry);
+      const forbiddenHit = traceSources.find((source) =>
+        forbiddenSources.includes(source),
+      );
+      if (forbiddenHit) {
         const toolLabel =
           entry?.tool ?? entry?.toolName ?? entry?.name ?? "(unknown)";
         failures.push(
-          `forbidden tool source '${traceSource}' returned by '${toolLabel}'`,
+          `forbidden tool source '${forbiddenHit}' returned by '${toolLabel}'`,
         );
       }
     }
@@ -986,6 +1010,21 @@ function scoreCase(testCase, runOutput, persisted) {
     if (actual !== expected) {
       failures.push(
         `getRecentEmails source ${actual ?? "(missing)"} did not match required ${expected}`,
+      );
+    }
+  }
+
+  for (const requirement of testCase.requiredToolTraceSources ?? []) {
+    const toolName = requirement?.toolName;
+    const expectedSource = requirement?.source;
+    if (typeof toolName !== "string" || typeof expectedSource !== "string") {
+      failures.push("invalid requiredToolTraceSources entry");
+      continue;
+    }
+    const sources = traceSourcesForTool(metadata, toolName);
+    if (!sources.includes(expectedSource)) {
+      failures.push(
+        `${toolName} trace sources [${sources.join(", ") || "(none)"}] did not include required ${expectedSource}`,
       );
     }
   }

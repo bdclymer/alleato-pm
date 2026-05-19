@@ -242,7 +242,7 @@ export function assembleSystemPromptFromContext(
           "",
           "The server-side retrieval for this query found no matching records.",
           "Do NOT say 'no data available'. Instead, use your available tools to answer the question directly.",
-          "Call the most relevant tool (e.g. getMeetingIntelligence, getMeetingsByDate, getActionItemsAndInsights, getRecentEmails) and report what you find.",
+          "Call the most relevant tool (e.g. getMeetingIntelligence, getMeetingsByDate, getActionItemsAndInsights, consultMicrosoftExecutiveAssistant) and report what you find.",
         ].join("\n"),
       );
     }
@@ -281,8 +281,8 @@ export function assembleSystemPromptFromContext(
       "**Risks / blockers / decisions on a project**:",
       "  → call `getProjectsWithRisks` for portfolio rollup, or `getProjectRiskAnalysis(projectId)` for a single project deep dive.",
       "",
-      "**Calendar (read)**: `getOutlookCalendarEvents`.  **Calendar (write)**: `createOutlookCalendarInvite`.",
-      "**Email triage by date**: `getRecentEmails`.  **Email by topic**: `searchEmails`.",
+      "**Microsoft operator work** (Outlook inbox/date triage, email replies, Teams escalation, Microsoft calendar/files):",
+      "  → call `consultMicrosoftExecutiveAssistant`. The Strategist delegates this work instead of using direct Outlook/Teams tools.",
       "**Specialist analysis** (financial / operational / risk / people / BD / marketing):",
       "  → `consultCFO`, `consultCOO`, `consultCRO`, `consultCHRO`, `consultVPBD`, `consultCMO`.",
       "",
