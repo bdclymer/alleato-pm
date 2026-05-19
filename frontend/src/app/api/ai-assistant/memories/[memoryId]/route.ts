@@ -33,7 +33,7 @@ export const PATCH = withApiGuardrails(
     const result = await updateMemoryContent(
       user.id,
       memoryId,
-      content?.trim() ?? "",
+      content?.trim(),
       importance,
     );
 

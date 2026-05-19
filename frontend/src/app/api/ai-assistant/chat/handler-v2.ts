@@ -13,7 +13,11 @@ import { planRetrieval } from "@/lib/ai/retrieval/planner";
 import { executeRetrievalPlan } from "@/lib/ai/retrieval/executor";
 import { assembleSystemPromptFromContext } from "@/lib/ai/retrieval/system-prompt";
 import { buildExecutorDeps } from "@/lib/ai/retrieval/deps";
-import { assembleSystemPrompt } from "@/lib/ai/bot-core";
+import {
+  assembleSystemPrompt,
+  runPostResponseTasks,
+  type MemoryUsageSummary,
+} from "@/lib/ai/bot-core";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
@@ -714,6 +718,8 @@ async function persistDirectDeepAgentResponse(params: {
       `Updating the Deep Agents ${params.responseLabel} conversation failed: ${conversationError.message}`,
     );
   }
+
+  waitUntil(runPostResponseTasks(params.sessionId, params.userId));
 }
 
 async function runChatV2(args: HandlerArgs): Promise<Response> {
@@ -724,6 +730,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     ? extractTextFromParts(lastUserMessage.parts)
     : "";
   let responseAlreadyPersisted = false;
+  let memoryUsage: MemoryUsageSummary | null = null;
   let finishMetadata: {
     finishReason?: string;
     usage?: {
@@ -1603,6 +1610,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           selectedProjectId: args.selectedProjectId,
           sessionId: args.sessionId,
           isFirstTurn: args.messages.length === 1,
+          onMemoryUsage: (usage) => {
+            memoryUsage = usage;
+          },
         }),
         executeRetrievalPlan(
           plan,
@@ -1822,6 +1832,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         step_count: finishMetadata?.stepCount ?? null,
       };
 
+      if (memoryUsage) {
+        metadata.memory_usage = memoryUsage;
+      }
+
       if (dataParts.length > 0) {
         metadata.data_parts = dataParts;
       }
@@ -1851,6 +1865,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           `Updating the assistant conversation failed: ${conversationError.message}`,
         );
       }
+
+      waitUntil(runPostResponseTasks(args.sessionId, args.user.id));
     },
   });
 

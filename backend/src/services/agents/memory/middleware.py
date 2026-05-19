@@ -133,7 +133,7 @@ def _fetch_memory_block(config: RunnableConfig) -> str:
     project_id: int | str | None = configurable.get("project_id")
 
     user_memory = load_user_memory(user_id) if user_id else None
-    project_memory = load_project_memory(project_id) if project_id is not None else None
+    project_memory = load_project_memory(project_id, user_id=user_id) if project_id is not None else None
     memory_block = build_memory_block(user_memory, project_memory)
     if memory_block:
         logger.info(

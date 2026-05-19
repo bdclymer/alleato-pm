@@ -131,7 +131,7 @@ export async function extractAndStoreMemories(
     .from("chat_history")
     .select("role, content")
     .eq("session_id", sessionUuid)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(MAX_MESSAGES);
 
   if (error) {
@@ -139,7 +139,7 @@ export async function extractAndStoreMemories(
   }
   if (!messages) return;
 
-  const valid = messages.filter((m) => m.content?.trim());
+  const valid = [...messages].reverse().filter((m) => m.content?.trim());
   if (valid.length < MIN_MESSAGES_TO_EXTRACT) return;
 
   const transcript = valid

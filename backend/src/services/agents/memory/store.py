@@ -123,7 +123,7 @@ def load_user_memory(user_id: str) -> UserMemory | None:
     )
 
 
-def load_project_memory(project_id: int | str) -> ProjectMemory | None:
+def load_project_memory(project_id: int | str, user_id: str | None = None) -> ProjectMemory | None:
     """Load active project-scoped memories from ai_memories."""
     try:
         pid = int(project_id)
@@ -140,14 +140,20 @@ def load_project_memory(project_id: int | str) -> ProjectMemory | None:
             ).fetchone()
             project_name = str(name_row[0]) if name_row else str(pid)
 
+            visibility_clause = (
+                "AND (visibility = 'team' OR user_id = :uid)"
+                if user_id
+                else "AND visibility = 'team'"
+            )
             query = _with_expanding_types(text(
-                """
+                f"""
                 SELECT type, content
                 FROM ai_memories
                 WHERE project_id = :pid
                   AND is_active = TRUE
                   AND (expires_at IS NULL OR expires_at > NOW())
                   AND type IN :types
+                  {visibility_clause}
                 ORDER BY importance DESC NULLS LAST, created_at DESC
                 LIMIT :limit
                 """
@@ -158,6 +164,7 @@ def load_project_memory(project_id: int | str) -> ProjectMemory | None:
                     "pid": pid,
                     "types": tuple(HIGH_VALUE_TYPES),
                     "limit": PROJECT_MEMORY_LIMIT,
+                    "uid": user_id,
                 },
             ).fetchall()
     except Exception:
@@ -248,6 +255,7 @@ def recall_user_memories(
 
     clauses = [
         "user_id = :uid",
+        "(visibility IS NULL OR visibility = 'private')",
         "is_active = TRUE",
         "(expires_at IS NULL OR expires_at > NOW())",
     ]
@@ -274,9 +282,10 @@ def recall_project_memories(
     project_id: int | str,
     query: str = "",
     *,
+    user_id: str | None = None,
     limit: int = 8,
 ) -> list[MemoryEntry]:
-    """Recall active project-scoped memories."""
+    """Recall active project-scoped memories visible to this caller."""
     try:
         pid = int(project_id)
     except (TypeError, ValueError):
@@ -293,6 +302,11 @@ def recall_project_memories(
         "types": tuple(SEARCHABLE_TYPES),
         "limit": max(limit * 8, 25),
     }
+    if user_id:
+        clauses.append("(visibility = 'team' OR user_id = :uid)")
+        params["uid"] = user_id
+    else:
+        clauses.append("visibility = 'team'")
     return _query_and_rank_memories(clauses, params, query, limit)
 
 

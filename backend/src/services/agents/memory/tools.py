@@ -57,7 +57,7 @@ def build_memory_tools(
         """Recall durable memories attached to the current project."""
         if project_id is None:
             return "No project_id is available for project memory recall."
-        return format_memory_entries(recall_project_memories(project_id, query, limit=limit))
+        return format_memory_entries(recall_project_memories(project_id, query, user_id=user_id, limit=limit))
 
     def recall_team_memory(query: str = "", limit: int = 6) -> str:
         """Recall durable team-visible memories shared across Alleato users."""

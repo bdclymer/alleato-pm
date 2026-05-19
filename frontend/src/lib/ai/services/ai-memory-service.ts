@@ -44,6 +44,8 @@ export interface AiMemory {
   similarity?: number;
 }
 
+const AI_MEMORY_CHUNKS_TABLE = "document_chunks";
+
 // ---------------------------------------------------------------------------
 // Lazy OpenAI client
 // ---------------------------------------------------------------------------
@@ -68,29 +70,38 @@ export async function embed(text: string): Promise<number[]> {
 
 // Write a memory's embedding to AI Database document_chunks (fqcvmfqldlewvbsuxdvz).
 // PM APP holds the text record; AI DB holds the searchable vector.
-async function _syncMemoryChunkToAiDb(
+async function syncMemoryChunkToAiDb(
   memoryId: string,
   content: string,
   metadata: Record<string, unknown>,
 ): Promise<void> {
-  try {
-    const vec = await embed(content);
-    const ragClient = createRagServiceClient();
-    await ragClient.from("document_chunks").upsert(
-      {
-        chunk_id: `ai_memory_${memoryId}`,
-        document_id: memoryId,
-        chunk_index: 0,
-        text: content,
-        source_type: "ai_memory",
-        embedding: JSON.stringify(vec),
-        metadata: metadata as Json,
-      },
-      { onConflict: "chunk_id" },
-    );
-  } catch (e) {
-    // Non-fatal: PM APP record already written. Log and continue.
-    console.warn("[ai-memory-service] Failed to sync chunk to AI DB:", e instanceof Error ? e.message : e);
+  const vec = await embed(content);
+  const ragClient = createRagServiceClient();
+  const { error } = await ragClient.from(AI_MEMORY_CHUNKS_TABLE).upsert(
+    {
+      chunk_id: `ai_memory_${memoryId}`,
+      document_id: memoryId,
+      chunk_index: 0,
+      text: content,
+      source_type: "ai_memory",
+      embedding: JSON.stringify(vec),
+      metadata: metadata as Json,
+    },
+    { onConflict: "chunk_id" },
+  );
+  if (error) {
+    throw new Error(`Memory vector sync failed: ${error.message}`);
+  }
+}
+
+async function deleteMemoryChunkFromAiDb(memoryId: string): Promise<void> {
+  const ragClient = createRagServiceClient();
+  const { error } = await ragClient
+    .from(AI_MEMORY_CHUNKS_TABLE)
+    .delete()
+    .eq("chunk_id", `ai_memory_${memoryId}`);
+  if (error) {
+    throw new Error(`Memory vector delete failed: ${error.message}`);
   }
 }
 
@@ -130,13 +141,17 @@ export async function writeMemory(
     // in the AI Database (fqcvmfqldlewvbsuxdvz) via document_chunks.
     //
     // Deduplication falls back to exact content match (no vector RPC).
-    const { data: dupRows } = await supabase
+    const { data: dupRows, error: duplicateError } = await supabase
       .from("ai_memories")
       .select("id, importance")
       .eq("user_id", params.userId)
       .eq("type", params.type)
       .eq("content", params.content.trim())
       .limit(1);
+
+    if (duplicateError) {
+      return { error: `Duplicate memory check failed: ${duplicateError.message}` };
+    }
 
     if (dupRows && dupRows.length > 0) {
       const dup = dupRows[0] as { id: string; importance: number };
@@ -151,7 +166,7 @@ export async function writeMemory(
         .eq("id", dup.id);
 
       if (updateError) return { error: updateError.message };
-      void _syncMemoryChunkToAiDb(dup.id, params.content, {
+      await syncMemoryChunkToAiDb(dup.id, params.content, {
         user_id: params.userId, type: params.type, project_id: params.projectId ?? null,
         meeting_id: params.meetingId ?? null, visibility: params.visibility ?? "private",
       });
@@ -202,11 +217,18 @@ export async function writeMemory(
     if (error) return { error: `Memory save failed: ${error.message}` };
     const memoryId = data.id;
 
-    // Sync embedding to AI Database asynchronously — non-blocking.
-    void _syncMemoryChunkToAiDb(memoryId, params.content, {
-      user_id: params.userId, type: params.type, project_id: safeProjectId,
-      meeting_id: params.meetingId ?? null, visibility: params.visibility ?? "private",
-    });
+    // Sync embedding to AI Database so the memory is searchable immediately.
+    try {
+      await syncMemoryChunkToAiDb(memoryId, params.content, {
+        user_id: params.userId, type: params.type, project_id: safeProjectId,
+        meeting_id: params.meetingId ?? null, visibility: params.visibility ?? "private",
+      });
+    } catch (syncError) {
+      await supabase.from("ai_memories").update({ is_active: false }).eq("id", memoryId);
+      return {
+        error: syncError instanceof Error ? syncError.message : "Memory vector sync failed",
+      };
+    }
 
     // --- Commitment bridge ---
     // Commitment memories automatically surface as action items in ai_insights
@@ -306,22 +328,13 @@ export async function searchMemories(params: {
   const supabase = createServiceClient();
 
   try {
-    const embeddingVec = await embed(params.query);
-    const ragClient = createRagServiceClient();
-
-    // Search document_chunks in AI Database — embeddings live there now.
-    const { data: chunks, error: chunkError } = await ragClient.rpc(
-      "search_document_chunks",
-      {
-        query_embedding: JSON.stringify(embeddingVec),
-        filter_source_types: ["ai_memory"],
-        filter_project_id: params.projectId ?? undefined,
-        match_count: params.matchCount ?? 8,
-        match_threshold: params.matchThreshold ?? 0.45,
-      },
-    );
-
-    if (chunkError) throw new Error(`AI memory search failed: ${chunkError.message}`);
+    const chunks = await searchMemoryChunks({
+      query: params.query,
+      projectId: params.projectId,
+      matchCount: params.matchCount ?? 8,
+      matchThreshold: params.matchThreshold ?? 0.45,
+      failureLabel: "AI memory search",
+    });
     if (!chunks || chunks.length === 0) return [];
 
     // Hydrate full memory records from PM APP using document_id = memory.id
@@ -337,8 +350,14 @@ export async function searchMemories(params: {
     let q = supabase
       .from("ai_memories")
       .select("id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at")
-      .in("id", memoryIds);
+      .in("id", memoryIds)
+      .eq("is_active", true)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+      .or(`user_id.eq.${params.userId},visibility.eq.team`);
     if (params.type) q = q.eq("type", params.type);
+    if (params.projectId !== undefined) {
+      q = q.or(`project_id.is.null,project_id.eq.${params.projectId}`);
+    }
 
     const { data: memories, error: memError } = await q;
     if (memError) throw new Error(`Memory hydration failed: ${memError.message}`);
@@ -374,23 +393,59 @@ async function searchTeamMemories(params: {
   const supabase = createServiceClient();
 
   try {
-    const embeddingVec = await embed(params.query);
-
-    const { data, error } = await supabase.rpc("search_team_memories", {
-      query_embedding: JSON.stringify(embeddingVec),
-      match_count: params.matchCount ?? 4,
-      match_threshold: 0.5,
+    const chunks = await searchMemoryChunks({
+      query: params.query,
+      matchCount: params.matchCount ?? 4,
+      matchThreshold: 0.5,
+      failureLabel: "Team memory search",
     });
+    if (!chunks || chunks.length === 0) return [];
 
+    const memoryIds = chunks.map((chunk) => chunk.document_id);
+    const similarityMap = new Map(chunks.map((chunk) => [chunk.document_id, chunk.similarity]));
+
+    const { data, error } = await supabase
+      .from("ai_memories")
+      .select("id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at")
+      .in("id", memoryIds)
+      .eq("visibility", "team")
+      .eq("is_active", true)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
     if (error) {
       throw new Error(`Team memory search failed: ${error.message}`);
     }
     if (!data) return [];
-    return data as AiMemory[];
+    return data
+      .map((m) => ({ ...m, similarity: similarityMap.get(m.id) ?? 0 }))
+      .sort((a, b) => b.similarity - a.similarity) as AiMemory[];
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown team memory search error";
     throw new Error(message);
   }
+}
+
+async function searchMemoryChunks(params: {
+  query: string;
+  projectId?: number;
+  matchCount: number;
+  matchThreshold: number;
+  failureLabel: string;
+}): Promise<Array<{ document_id: string; similarity: number }>> {
+  const embeddingVec = await embed(params.query);
+  const ragClient = createRagServiceClient();
+
+  const { data, error } = await ragClient.rpc("search_document_chunks", {
+    query_embedding: JSON.stringify(embeddingVec),
+    filter_source_types: ["ai_memory"],
+    filter_project_id: params.projectId ?? undefined,
+    match_count: params.matchCount,
+    match_threshold: params.matchThreshold,
+  });
+
+  if (error) {
+    throw new Error(`${params.failureLabel} failed: ${error.message}`);
+  }
+  return (data ?? []) as Array<{ document_id: string; similarity: number }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -461,28 +516,59 @@ export async function deleteMemory(
     .eq("user_id", userId); // RLS belt-and-suspenders
 
   if (error) return { success: false, error: error.message };
+  try {
+    await deleteMemoryChunkFromAiDb(memoryId);
+  } catch (chunkError) {
+    return {
+      success: false,
+      error: chunkError instanceof Error ? chunkError.message : "Memory vector delete failed",
+    };
+  }
   return { success: true };
 }
 
 export async function updateMemoryContent(
   userId: string,
   memoryId: string,
-  content: string,
+  content?: string,
   importance?: number,
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createServiceClient();
+  const trimmedContent = content?.trim();
+  if (!trimmedContent && importance === undefined) {
+    return { success: false, error: "content or importance is required" };
+  }
 
-  // No embedding write — see writeMemory comment above.
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("ai_memories")
     .update({
-      content,
+      ...(trimmedContent ? { content: trimmedContent } : {}),
       ...(importance !== undefined ? { importance } : {}),
     })
     .eq("id", memoryId)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .select("id, type, content, project_id, meeting_id, visibility")
+    .maybeSingle();
 
   if (error) return { success: false, error: error.message };
+  if (!data) return { success: false, error: "Memory not found or inactive" };
+  if (trimmedContent) {
+    try {
+      await syncMemoryChunkToAiDb(data.id, data.content, {
+        user_id: userId,
+        type: data.type,
+        project_id: data.project_id,
+        meeting_id: data.meeting_id,
+        visibility: data.visibility ?? "private",
+      });
+    } catch (chunkError) {
+      return {
+        success: false,
+        error: chunkError instanceof Error ? chunkError.message : "Memory vector sync failed",
+      };
+    }
+  }
   return { success: true };
 }
 

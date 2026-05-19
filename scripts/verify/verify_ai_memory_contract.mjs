@@ -62,7 +62,7 @@ const staticChecks = [
     test: (content) =>
       content.includes("Promise.allSettled") &&
       content.includes("errors: string[]") &&
-      content.includes("AI memory search failed") &&
+      content.includes("failureLabel: \"AI memory search\"") &&
       content.includes("Team memory search failed") &&
       content.includes("User preference memory lookup failed") &&
       !content.includes("catch {\n    return [];"),
@@ -73,8 +73,20 @@ const staticChecks = [
     test: (content) =>
       content.includes("Duplicate memory check failed") &&
       content.includes("if (updateError) return { error: updateError.message };") &&
+      content.includes("Memory vector sync failed") &&
+      content.includes("Memory vector delete failed") &&
       content.includes("Failed to check commitment insight duplicate") &&
       content.includes("Failed to create commitment insight from memory"),
+  },
+  {
+    file: files.aiMemoryService,
+    description: "memory chunk hydration enforces lifecycle and visibility filters",
+    test: (content) =>
+      content.includes("filter_source_types: [\"ai_memory\"]") &&
+      content.includes(".eq(\"is_active\", true)") &&
+      content.includes("user_id.eq.${params.userId},visibility.eq.team") &&
+      content.includes(".eq(\"visibility\", \"team\")") &&
+      !content.includes("supabase.rpc(\"search_team_memories\""),
   },
   {
     file: files.botCore,
@@ -99,10 +111,22 @@ const staticChecks = [
       content.includes("Output.object") &&
       content.includes("extractedMemorySchema") &&
       content.includes("result.output.memories") &&
+      content.includes("order(\"created_at\", { ascending: false })") &&
+      content.includes("[...messages].reverse()") &&
       !content.includes("JSON.parse") &&
       content.includes("Failed to fetch chat history for memory extraction") &&
       content.includes("Failed to store extracted") &&
       content.includes("Extracted memory write failures"),
+  },
+  {
+    file: "frontend/src/app/api/ai-assistant/chat/handler-v2.ts",
+    description: "main chat persists memory usage and schedules post-response memory extraction",
+    test: (content) =>
+      content.includes("runPostResponseTasks") &&
+      content.includes("type MemoryUsageSummary") &&
+      content.includes("onMemoryUsage") &&
+      content.includes("metadata.memory_usage = memoryUsage") &&
+      content.includes("waitUntil(runPostResponseTasks(args.sessionId, args.user.id))"),
   },
   {
     file: files.operationalTools,
