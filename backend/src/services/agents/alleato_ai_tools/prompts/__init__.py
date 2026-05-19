@@ -9,6 +9,7 @@ composes them into the constants the rest of the codebase imports:
 - `SCHEDULE_ANALYST_PROMPT`  = schedule_analyst.md  + _subagent_output_rule.md
 - `RISK_ANALYST_PROMPT`      = risk_analyst.md      + _subagent_output_rule.md
 - `COMMUNICATIONS_ANALYST_PROMPT` = communications_analyst.md + _subagent_output_rule.md
+- `BUSINESS_DEVELOPMENT_ANALYST_PROMPT` = business_development_analyst.md + _subagent_output_rule.md
 
 Editing rules:
 - Tweak philosophy / governing paradigm → edit `soul.md`.
@@ -53,6 +54,9 @@ RISK_ANALYST_PROMPT = _compose(_read("risk_analyst.md"), _SUBAGENT_OUTPUT_RULE)
 COMMUNICATIONS_ANALYST_PROMPT = _compose(
     _read("communications_analyst.md"), _SUBAGENT_OUTPUT_RULE
 )
+BUSINESS_DEVELOPMENT_ANALYST_PROMPT = _compose(
+    _read("business_development_analyst.md"), _SUBAGENT_OUTPUT_RULE
+)
 
 
 __all__ = [
@@ -61,4 +65,5 @@ __all__ = [
     "SCHEDULE_ANALYST_PROMPT",
     "RISK_ANALYST_PROMPT",
     "COMMUNICATIONS_ANALYST_PROMPT",
+    "BUSINESS_DEVELOPMENT_ANALYST_PROMPT",
 ]

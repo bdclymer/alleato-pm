@@ -26,6 +26,32 @@ const FINANCIAL_KEYWORDS = /\b(budget|cost|margin|invoice|payment|exposure|cash|
 const PEOPLE_KEYWORDS = /\b(who|stretched|capacity|staffing|on the team|assigned)\b/i;
 const RISK_KEYWORDS = /\b(risk|worried|blocker|delay|issue|exposure)\b/i;
 const BD_KEYWORDS = /\b(pipeline|new business|win rate|hit rate|lead|opportunity)\b/i;
+const EXECUTIVE_DEEP_AGENT_PATTERNS: Array<{
+  pattern: RegExp;
+  intent: ReturnType<typeof classifyAssistantIntent>;
+}> = [
+  {
+    pattern:
+      /\b(highest priority|top priority|what should brandon focus|what should i focus|most important thing|state of the business)\b/i,
+    intent: "risk_review",
+  },
+  {
+    pattern:
+      /\b(brandon'?s? must[- ]do|must[- ]do items?|what are brandon'?s? tasks|what does brandon need to do|my must[- ]do)\b/i,
+    intent: "task_followup",
+  },
+  {
+    pattern:
+      /\b(pipeline|new business|opportunities|pursuits?|stuck deals?|deal flow)\b/i,
+    intent: "latest_status",
+  },
+  {
+    pattern:
+      /\b(today'?s meetings?|meetings? today|meeting insights?|insights from today'?s meetings?)\b/i,
+    intent: "latest_status",
+  },
+];
+
 function detectPreconsult(message: string): SubAgent[] {
   const agents: SubAgent[] = [];
   if (FINANCIAL_KEYWORDS.test(message)) agents.push("cfo");
@@ -33,6 +59,17 @@ function detectPreconsult(message: string): SubAgent[] {
   if (RISK_KEYWORDS.test(message)) agents.push("coo");
   if (BD_KEYWORDS.test(message)) agents.push("vpbd");
   return agents;
+}
+
+function detectExecutiveDeepAgentIntent(
+  message: string,
+  selectedProjectId?: number,
+): ReturnType<typeof classifyAssistantIntent> | null {
+  if (typeof selectedProjectId === "number") return null;
+  const match = EXECUTIVE_DEEP_AGENT_PATTERNS.find(({ pattern }) =>
+    pattern.test(message),
+  );
+  return match?.intent ?? null;
 }
 
 function extractText(msg: UIMessage): string {
@@ -88,6 +125,20 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
       responseFormat: "conversational",
       sources: {},
       reason: `microsoft_specialist_delegation_${recentEmailInbox.reason}`,
+    };
+  }
+
+  const executiveDeepAgentIntent = detectExecutiveDeepAgentIntent(
+    message,
+    selectedProjectId,
+  );
+  if (executiveDeepAgentIntent) {
+    return {
+      intent: executiveDeepAgentIntent,
+      responseFormat: "briefing_template",
+      sources: {},
+      selectedProjectId,
+      reason: "executive_deep_agent_broad_operator_question",
     };
   }
 

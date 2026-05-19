@@ -44,6 +44,19 @@ describe("planRetrieval", () => {
     expect(plan.sources.intelligencePacket).toBeUndefined();
   });
 
+  it.each([
+    "What is the highest priority Brandon should focus on right now across the business?",
+    "What are Brandon's must-do items today?",
+    "How does the pipeline look right now?",
+    "Find important insights from today's meetings.",
+  ])("delegates broad operator question to executive Deep Agents workflow: %s", (message) => {
+    const plan = planRetrieval({ message, messages: [userMsg(message)] });
+    expect(plan.responseFormat).toBe("briefing_template");
+    expect(plan.reason).toBe("executive_deep_agent_broad_operator_question");
+    expect(plan.sources.semanticVectorSearch).toBeUndefined();
+    expect(plan.sources.sourceSpecificRag).toBeUndefined();
+  });
+
   it("app help question → app_help format with no retrieval", () => {
     const message = "How do I create a change order in the app?";
     const plan = planRetrieval({ message, messages: [userMsg(message)] });

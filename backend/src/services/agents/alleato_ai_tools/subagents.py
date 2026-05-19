@@ -5,6 +5,7 @@ The orchestrator delegates to them in parallel and integrates their reports.
 """
 
 from .prompts import (
+    BUSINESS_DEVELOPMENT_ANALYST_PROMPT,
     COMMUNICATIONS_ANALYST_PROMPT,
     FINANCIAL_ANALYST_PROMPT,
     RISK_ANALYST_PROMPT,
@@ -98,6 +99,24 @@ def build_subagents(
         think_tool,
     ]
 
+    business_development_tools = [
+        portfolio_overview,
+        project_briefing_snapshot,
+        list_recent_meetings,
+        recent_activity,
+        search_unstructured,
+        search_emails,
+        search_teams_messages,
+        search_meeting_transcripts,
+        think_tool,
+    ]
+    if include_sql:
+        business_development_tools = [
+            describe_schema,
+            query_db,
+            *business_development_tools,
+        ]
+
     return [
         {
             "name": "financial-analyst",
@@ -134,6 +153,16 @@ def build_subagents(
             ),
             "system_prompt": COMMUNICATIONS_ANALYST_PROMPT,
             "tools": communications_tools,
+        },
+        {
+            "name": "business-development-analyst",
+            "description": (
+                "Delegate pipeline and client-development questions: pursuits, estimating handoffs, "
+                "proposal or quote follow-up, client relationship risk, and stuck deals. "
+                "Give one focused question at a time."
+            ),
+            "system_prompt": BUSINESS_DEVELOPMENT_ANALYST_PROMPT,
+            "tools": business_development_tools,
         },
     ]
 

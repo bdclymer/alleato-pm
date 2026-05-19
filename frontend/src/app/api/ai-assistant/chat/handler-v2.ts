@@ -683,6 +683,53 @@ function summarizeDeepAgentSourceCoverage(
   }));
 }
 
+function assistantMaxOutputTokens(planReason: string): number {
+  const raw = Number(process.env.AI_ASSISTANT_MAX_OUTPUT_TOKENS);
+  const requested = Number.isFinite(raw) && raw > 0 ? raw : 8_000;
+  const bounded = Math.min(Math.max(Math.round(requested), 4_000), 12_000);
+  if (planReason === "executive_deep_agent_broad_operator_question") {
+    return Math.max(bounded, 8_000);
+  }
+  return bounded;
+}
+
+function buildAnswerDebugMetadata(params: {
+  orchestrator: string;
+  plan: ReturnType<typeof planRetrieval>;
+  toolTrace: Array<Record<string, unknown>>;
+  memoryUsage?: MemoryUsageSummary | null;
+  sourceCoverage?: Array<Record<string, unknown>>;
+  evidenceCount?: number;
+  outputPolicy?: Record<string, unknown>;
+}): Record<string, unknown> {
+  const toolNames = params.toolTrace
+    .map((trace) => trace.toolName ?? trace.tool)
+    .filter((tool): tool is string => typeof tool === "string");
+  return {
+    orchestrator: params.orchestrator,
+    retrievalPlan: {
+      intent: params.plan.intent,
+      reason: params.plan.reason,
+      responseFormat: params.plan.responseFormat,
+      sources: Object.keys(params.plan.sources),
+    },
+    memory:
+      params.memoryUsage ??
+      {
+        status: "not_loaded_in_frontend",
+        reason:
+          "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+      },
+    sources: {
+      toolNames,
+      toolCallCount: toolNames.length,
+      sourceCoverage: params.sourceCoverage ?? [],
+      evidenceCount: params.evidenceCount ?? null,
+    },
+    outputPolicy: params.outputPolicy ?? null,
+  };
+}
+
 async function persistDirectDeepAgentResponse(params: {
   supabase: SupabaseClient;
   sessionId: string;
@@ -690,6 +737,7 @@ async function persistDirectDeepAgentResponse(params: {
   content: string;
   metadata: Json;
   responseLabel: string;
+  sourceDebug: Record<string, unknown>;
   trace: {
     input: string;
     intent: string;
@@ -744,6 +792,7 @@ async function persistDirectDeepAgentResponse(params: {
         architecture: "render-backend-deep-agents-v1",
         responseLabel: params.responseLabel,
         tracePath: "direct-deep-agent-response",
+        sourceDebug: params.sourceDebug,
       },
     }),
   );
@@ -1061,6 +1110,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           lastUserContent,
         );
         const toolTrace = trace ? [trace] : [];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "microsoft-executive-assistant",
+          plan,
+          toolTrace,
+        });
 
         writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
 
@@ -1077,6 +1131,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               toolTrace,
               content,
             }),
+            source_debug: sourceDebug,
             retrieval_plan: {
               intent: plan.intent,
               reason: plan.reason,
@@ -1164,6 +1219,17 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               userId: args.user.id,
               content,
               responseLabel: "research",
+              sourceDebug: buildAnswerDebugMetadata({
+                orchestrator: "backend-deep-agent-research",
+                plan,
+                toolTrace,
+                sourceCoverage: packet.sources.map((source) => ({
+                  sourceType: source.sourceType,
+                  title: source.title,
+                  url: source.url ?? null,
+                })),
+                evidenceCount: packet.sources.length,
+              }),
               trace: {
                 input: lastUserContent,
                 intent: plan.intent,
@@ -1194,6 +1260,17 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 response_quality: buildResponseQualityMetadata({
                   toolTrace,
                   content,
+                }),
+                source_debug: buildAnswerDebugMetadata({
+                  orchestrator: "backend-deep-agent-research",
+                  plan,
+                  toolTrace,
+                  sourceCoverage: packet.sources.map((source) => ({
+                    sourceType: source.sourceType,
+                    title: source.title,
+                    url: source.url ?? null,
+                  })),
+                  evidenceCount: packet.sources.length,
                 }),
                 data_parts: dataParts,
               } as Json,
@@ -1346,6 +1423,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               userId: args.user.id,
               content,
               responseLabel: "project",
+              sourceDebug: buildAnswerDebugMetadata({
+                orchestrator: "backend-deep-agent-project-status",
+                plan,
+                toolTrace,
+                sourceCoverage: summarizeDeepAgentSourceCoverage(
+                  packet.sourcesChecked,
+                ),
+                evidenceCount: packet.evidence.length,
+              }),
               trace: {
                 input: lastUserContent,
                 intent: plan.intent,
@@ -1384,6 +1470,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 response_quality: buildResponseQualityMetadata({
                   toolTrace,
                   content,
+                }),
+                source_debug: buildAnswerDebugMetadata({
+                  orchestrator: "backend-deep-agent-project-status",
+                  plan,
+                  toolTrace,
+                  sourceCoverage: summarizeDeepAgentSourceCoverage(
+                    packet.sourcesChecked,
+                  ),
+                  evidenceCount: packet.evidence.length,
                 }),
                 data_parts: dataParts,
               } as Json,
@@ -1538,6 +1633,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               userId: args.user.id,
               content,
               responseLabel: "executive",
+              sourceDebug: buildAnswerDebugMetadata({
+                orchestrator: "backend-deep-agent-executive-briefing",
+                plan,
+                toolTrace,
+                sourceCoverage: summarizeDeepAgentSourceCoverage(
+                  packet.sourcesChecked,
+                ),
+                evidenceCount: packet.evidence.length,
+              }),
               trace: {
                 input: lastUserContent,
                 intent: plan.intent,
@@ -1576,6 +1680,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 response_quality: buildResponseQualityMetadata({
                   toolTrace,
                   content,
+                }),
+                source_debug: buildAnswerDebugMetadata({
+                  orchestrator: "backend-deep-agent-executive-briefing",
+                  plan,
+                  toolTrace,
+                  sourceCoverage: summarizeDeepAgentSourceCoverage(
+                    packet.sourcesChecked,
+                  ),
+                  evidenceCount: packet.evidence.length,
                 }),
                 data_parts: dataParts,
               } as Json,
@@ -1753,7 +1866,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         system: systemPrompt,
         messages: modelMessages,
         tools,
-        maxOutputTokens: 4000,
+        maxOutputTokens: assistantMaxOutputTokens(plan.reason),
         stopWhen: stepCountIs(10),
         experimental_telemetry: {
           isEnabled: process.env.PHOENIX_TRACING === "true",
@@ -1878,6 +1991,21 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         response_quality: buildResponseQualityMetadata({
           toolTrace,
           content: assistantContent,
+        }),
+        source_debug: buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2",
+          plan,
+          toolTrace,
+          memoryUsage,
+          sourceCoverage: latestRetrievalCtx?.warnings.map((warning) => ({
+            sourceType: warning.source,
+            status: "warning",
+            notes: warning.message,
+          })),
+          outputPolicy: {
+            maxOutputTokens: assistantMaxOutputTokens(plan.reason),
+            stopWhen: "stepCountIs(10)",
+          },
         }),
         retrieval_plan: {
           intent: plan.intent,

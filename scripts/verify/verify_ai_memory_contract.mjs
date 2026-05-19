@@ -120,13 +120,24 @@ const staticChecks = [
   },
   {
     file: "frontend/src/app/api/ai-assistant/chat/handler-v2.ts",
-    description: "main chat persists memory usage and schedules post-response memory extraction",
+    description: "main chat persists memory/source debug metadata and schedules post-response memory extraction",
     test: (content) =>
       content.includes("runPostResponseTasks") &&
       content.includes("type MemoryUsageSummary") &&
       content.includes("onMemoryUsage") &&
       content.includes("metadata.memory_usage = memoryUsage") &&
+      content.includes("source_debug") &&
+      content.includes("buildAnswerDebugMetadata") &&
       content.includes("waitUntil(runPostResponseTasks(args.sessionId, args.user.id))"),
+  },
+  {
+    file: "frontend/src/app/api/ai-assistant/chat/handler-v2.ts",
+    description: "chat synthesis uses a bounded high-output token policy instead of a 4000-token hard cap",
+    test: (content) =>
+      content.includes("AI_ASSISTANT_MAX_OUTPUT_TOKENS") &&
+      content.includes("12_000") &&
+      content.includes("maxOutputTokens: assistantMaxOutputTokens(plan.reason)") &&
+      !content.includes("maxOutputTokens: 4000"),
   },
   {
     file: files.botCore,

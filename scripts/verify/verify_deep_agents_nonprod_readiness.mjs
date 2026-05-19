@@ -216,8 +216,8 @@ async function main() {
     if (expectEnabled && missingTools.length > 0) {
       fail(`Deep Agents enabled check is missing required standalone tools: ${missingTools.join(", ")}.`);
     }
-    if (expectEnabled && toolInventory.subagentCount < 4) {
-      fail(`Deep Agents enabled check requires 4 subagents; found ${toolInventory.subagentCount}.`);
+    if (expectEnabled && toolInventory.subagentCount < 5) {
+      fail(`Deep Agents enabled check requires 5 subagents; found ${toolInventory.subagentCount}.`);
     }
 
     const response = await fetchWithTimeout(

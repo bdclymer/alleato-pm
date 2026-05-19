@@ -388,6 +388,7 @@ def test_deep_agents_runtime_tool_inventory_matches_full_standalone_surface(monk
         "schedule-analyst",
         "risk-analyst",
         "communications-analyst",
+        "business-development-analyst",
     }
 
 
@@ -428,7 +429,7 @@ def test_deep_agents_runtime_inventory_reports_effective_surface(monkeypatch):
 
     assert inventory["status"] == "active"
     assert inventory["toolCount"] == 33
-    assert inventory["subagentCount"] == 4
+    assert inventory["subagentCount"] == 5
     assert "query_db" in inventory["tools"]
     assert "draft_rfi" in inventory["tools"]
     assert "financial-analyst" in inventory["subagents"]
@@ -859,6 +860,7 @@ def test_deep_agent_tool_inventory_endpoint_reports_active_tools(client, monkeyp
         "schedule-analyst",
         "risk-analyst",
         "communications-analyst",
+        "business-development-analyst",
     ]
 
 
