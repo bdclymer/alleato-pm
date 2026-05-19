@@ -328,6 +328,40 @@ function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
     .slice(0, limit);
 }
 
+function formatRecentEmailRows(
+  data: RecentEmailRow[],
+  limit: number,
+  groupByThread: boolean,
+) {
+  const emails = data.slice(0, limit).map((e) => ({
+    id: e.id,
+    graphMessageId: e.graph_message_id,
+    conversationId: e.conversation_id,
+    subject: e.subject,
+    fromName: e.from_name,
+    fromEmail: e.from_email,
+    from: e.from_name
+      ? `${e.from_name} <${e.from_email}>`
+      : (e.from_email ?? "Unknown"),
+    toList: e.to_list,
+    ccList: e.cc_list,
+    to: Array.isArray(e.to_list) ? e.to_list.join(", ") : e.to_list,
+    receivedAt: e.received_at,
+    mailbox: e.mailbox_user_id,
+    bodyText: e.body_text,
+    preview: e.body_text
+      ? e.body_text.slice(0, 200).replace(/\s+/g, " ").trim()
+      : null,
+    hasAttachments: e.has_attachments,
+    projectId: e.project_id,
+    webLink: e.web_link,
+  }));
+
+  const threads = groupByThread ? groupRecentEmailsByThread(data, limit) : [];
+
+  return { emails, threads };
+}
+
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
@@ -3014,24 +3048,31 @@ export function createOperationalTools(
             timeZone || "America/New_York",
           );
           const fetchLimit = Math.min(Math.max(safeLimit * 6, 100), 600);
+          const emailSelect =
+            "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link, graph_message_id, conversation_id, match_status, source_metadata";
 
-          let query = supabase
-            .from("outlook_email_intake")
-            .select(
-              "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link, graph_message_id, conversation_id, match_status, source_metadata",
-            )
-            .is("deleted_at", null)
-            .neq("match_status", "ignored")
-            .gte("received_at", since.toISOString())
-            .order("received_at", { ascending: false })
-            .limit(fetchLimit);
+          const buildEmailQuery = (sinceIso?: string) => {
+            let query = supabase
+              .from("outlook_email_intake")
+              .select(emailSelect)
+              .is("deleted_at", null)
+              .neq("match_status", "ignored")
+              .order("received_at", { ascending: false })
+              .limit(fetchLimit);
 
-          if (effectiveDirection === "mailbox") {
-            query = query.eq("mailbox_user_id", effectiveParticipantEmail);
-          }
+            if (sinceIso) {
+              query = query.gte("received_at", sinceIso);
+            }
+
+            if (effectiveDirection === "mailbox") {
+              query = query.eq("mailbox_user_id", effectiveParticipantEmail);
+            }
+
+            return query;
+          };
 
           const [emailResult, syncStateResult] = await Promise.all([
-            query,
+            buildEmailQuery(since.toISOString()),
             supabase
               .from("graph_sync_state")
               .select("last_sync_at")
@@ -3078,10 +3119,58 @@ export function createOperationalTools(
 	                },
 	              };
 	            }
-	            const rangeLabel =
-	              safeDaysBack === 0
-	                ? "today"
+            const rangeLabel =
+              safeDaysBack === 0
+                ? "today"
                 : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
+            const syncCutoffBeforeRequestedWindow =
+              Date.parse(lastSyncedAt) < since.getTime();
+            if (syncCutoffBeforeRequestedWindow) {
+              const latestResult = await buildEmailQuery();
+              if (!latestResult.error) {
+                const latestData = (
+                  (latestResult.data ?? []) as RecentEmailRow[]
+                ).filter(
+                  (row) =>
+                    isDisplayableRecentEmail(row) &&
+                    emailMatchesDirection(
+                      row,
+                      effectiveParticipantEmail,
+                      effectiveDirection,
+                    ),
+                );
+
+                if (latestData.length > 0) {
+                  const { emails, threads } = formatRecentEmailRows(
+                    latestData,
+                    safeLimit,
+                    groupByThread,
+                  );
+                  const latestReceivedAt =
+                    latestData[0]?.received_at ?? lastSyncedAt;
+                  return {
+                    emails,
+                    threads,
+                    count: latestData.length,
+                    threadCount: groupByThread ? threads.length : undefined,
+                    summary:
+                      `No emails are synced in the requested ${rangeLabel} window for ${effectiveParticipantEmail} (${effectiveDirection}). ` +
+                      `Because the Outlook sync cutoff is before that window, I returned the latest available synced mailbox messages instead for triage.`,
+                    latestAvailableFallback: true,
+                    requestedWindowEmpty: true,
+                    latestAvailableReceivedAt: latestReceivedAt,
+                    dataCutoffNote,
+                    mailboxResolutionNote,
+                    appliedFilter: {
+                      email: effectiveParticipantEmail,
+                      direction: effectiveDirection,
+                      since: since.toISOString(),
+                      timeZone,
+                    },
+                  };
+                }
+              }
+            }
             return {
               emails: [],
               threads: [],
@@ -3097,33 +3186,11 @@ export function createOperationalTools(
             };
           }
 
-          const emails = data.slice(0, safeLimit).map((e) => ({
-            id: e.id,
-            graphMessageId: e.graph_message_id,
-            conversationId: e.conversation_id,
-            subject: e.subject,
-            fromName: e.from_name,
-            fromEmail: e.from_email,
-            from: e.from_name
-              ? `${e.from_name} <${e.from_email}>`
-              : (e.from_email ?? "Unknown"),
-            toList: e.to_list,
-            ccList: e.cc_list,
-            to: Array.isArray(e.to_list) ? e.to_list.join(", ") : e.to_list,
-            receivedAt: e.received_at,
-            mailbox: e.mailbox_user_id,
-            bodyText: e.body_text,
-            preview: e.body_text
-              ? e.body_text.slice(0, 200).replace(/\s+/g, " ").trim()
-              : null,
-            hasAttachments: e.has_attachments,
-            projectId: e.project_id,
-            webLink: e.web_link,
-          }));
-
-          const threads = groupByThread
-            ? groupRecentEmailsByThread(data, safeLimit)
-            : [];
+          const { emails, threads } = formatRecentEmailRows(
+            data,
+            safeLimit,
+            groupByThread,
+          );
           const rangeLabel =
             safeDaysBack === 0
               ? "today"
