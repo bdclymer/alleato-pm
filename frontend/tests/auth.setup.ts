@@ -70,6 +70,25 @@ function hasValidExistingSession(): boolean {
   }
 }
 
+async function loadExistingSessionIntoContext(
+  page: Parameters<typeof setup>[1]["page"],
+) {
+  const state = JSON.parse(fs.readFileSync(authFile, "utf-8"));
+  const cookies = state.cookies ?? [];
+  if (!Array.isArray(cookies) || cookies.length === 0) {
+    throw new Error(
+      [
+        "Existing auth session file did not contain any cookies.",
+        "Cause: frontend/tests/.auth/user.json is present but incomplete.",
+        "Detection gap: auth setup previously checked token validity without ensuring the browser context received the saved cookies.",
+        "Prevention: auth setup now loads saved cookies into the setup context before protected route verification.",
+      ].join(" "),
+    );
+  }
+
+  await page.context().addCookies(cookies);
+}
+
 async function withAuthSetupTimeout<T>(
   label: string,
   operation: Promise<T>,
@@ -129,6 +148,7 @@ setup("authenticate", async ({ page, baseURL }) => {
   // Fast path: reuse existing valid session without any API calls
   if (hasValidExistingSession()) {
     console.log("Existing auth session is still valid; verifying protected route access");
+    await loadExistingSessionIntoContext(page);
     await verifySavedAuthState(page, url);
     return;
   }
