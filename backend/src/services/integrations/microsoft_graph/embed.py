@@ -405,14 +405,41 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         return {"embedded": 0, "errors": 1}
 
     if not docs:
-        logger.info("[GraphEmbed] No pending microsoft_graph documents to embed")
+        # Guardrail: the candidate query returning 0 should mean nothing is
+        # actually pending. If document_metadata still has rows matching the
+        # status filter, the candidate query has drifted from reality (e.g. a
+        # column filter that no longer applies post-schema-change). Surface
+        # that as a warning so it can't fail silently again — this is exactly
+        # how the 2026-05-14 incident hid for five days.
+        unfetchable_pending = _count_pending_status_rows(supabase_client)
+        status_value = "warning" if unfetchable_pending > 0 else "succeeded"
+        if unfetchable_pending > 0:
+            logger.warning(
+                "[GraphEmbed] No candidates returned but %d microsoft_graph rows still match the "
+                "raw_ingested/segmented/compiled/error status filter — candidate query may be stale",
+                unfetchable_pending,
+            )
+        else:
+            logger.info("[GraphEmbed] No pending microsoft_graph documents to embed")
         _record_graph_embed_run(
             supabase_client,
             started_at=started_at,
-            status="succeeded",
-            metadata={"limit": limit, "pending": 0},
+            status=status_value,
+            metadata={
+                "limit": limit,
+                "pending": 0,
+                "unfetchable_pending": unfetchable_pending,
+            },
+            error_message=(
+                f"{unfetchable_pending} rows match status filter but candidate query returned 0"
+                if unfetchable_pending > 0
+                else None
+            ),
         )
-        return {"embedded": 0, "errors": 0}
+        result: Dict[str, Any] = {"embedded": 0, "errors": 0}
+        if unfetchable_pending > 0:
+            result["unfetchable_pending"] = unfetchable_pending
+        return result
 
     logger.info("[GraphEmbed] Processing %d pending microsoft_graph documents", len(docs))
     total_chunks = 0
@@ -457,6 +484,27 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
     return result
 
 
+def _count_pending_status_rows(supabase_client) -> int:
+    """Count microsoft_graph rows still flagged as needing embedding.
+
+    Used as a divergence detector: if the candidate fetch returns 0 but this
+    count is > 0, the candidate query is filtering out rows that should be
+    embedded. Returns 0 on any error so the guardrail never breaks the run.
+    """
+    try:
+        resp = (
+            supabase_client.from_("document_metadata")
+            .select("id", count="exact", head=True)
+            .eq("source", "microsoft_graph")
+            .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
+            .execute()
+        )
+        return int(getattr(resp, "count", None) or 0)
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Pending-status count failed: %s", exc)
+        return 0
+
+
 def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any]]]:
     """Fetch Graph docs that need embedding using SQL anti-joins when DB access is available."""
     database_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
@@ -472,8 +520,13 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
 
     candidate_limit = max(limit * 4, limit)
     if rag_database_writes_enabled():
-        # Once chunks are isolated, app-DB anti-joins against document_chunks are
-        # stale and can reintroduce the heavy scans that made the app DB unhealthy.
+        # Post-RAG-split: document_metadata.content is always NULL because
+        # SupabaseRagStore.upsert_document_metadata strips content/raw_text and
+        # writes them to rag_document_metadata instead. Filtering by content
+        # length here would always return zero rows. Trust status alone — the
+        # embed step (embed_graph_document) hydrates content from
+        # rag_document_metadata and marks empty docs as 'embedded' so they
+        # aren't retried.
         query = """
             with pending as (
               select
@@ -487,7 +540,6 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
               from public.document_metadata
               where source = 'microsoft_graph'
                 and status in ('raw_ingested', 'segmented', 'compiled', 'error')
-                and length(coalesce(content, '')) > 0
                 and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '365 days'
               order by captured_at desc nulls last,
                 date desc nulls last,
@@ -574,12 +626,14 @@ def _fetch_graph_embedding_candidates_via_supabase(
 ) -> List[Dict[str, Any]]:
     """Fallback candidate scan when the backend only has Supabase API access."""
     try:
+        # Post-RAG-split: document_metadata.content is always NULL because content
+        # now lives in rag_document_metadata. Don't filter by content here — trust
+        # status. embed_graph_document hydrates content from the RAG DB.
         pending_resp = (
             supabase_client.from_("document_metadata")
             .select("id, category, status, created_at, date")
             .eq("source", "microsoft_graph")
             .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
-            .not_.is_("content", "null")
             .gte("date", (datetime.now(timezone.utc) - timedelta(days=365)).date().isoformat())
             .order("date", desc=True)
             .limit(limit)
