@@ -75,6 +75,7 @@ const JUDGE_RUBRICS = {
       "Surfaces what the user did not ask but should be thinking about.",
       "Sounds like a high-level strategist who knows the business, not a document retriever.",
       "Stays honest about missing or weak evidence and does not fabricate details.",
+      "Keeps project-specific claims anchored to the requested project and labels adjacent-project or generic source material as background only.",
     ],
   },
   email_operator: {

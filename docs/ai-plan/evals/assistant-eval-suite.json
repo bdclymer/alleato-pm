@@ -2010,7 +2010,7 @@
     {
       "id": "strategic-rag-asrs-sprinkler-time-sink",
       "intent": "strategic_rag",
-      "prompt": "What is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages?",
+      "prompt": "For Exol Wilmer / 26-103 specifically, what is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages? If the direct Exol Wilmer ASRS sprinkler evidence is missing, say that clearly instead of using another project as proof.",
       "selectedProjectId": 760,
       "expectedToolFamilies": ["meetings", "communications", "semantic"],
       "expectedToolNames": [
@@ -2023,11 +2023,18 @@
       ],
       "mustIncludeAny": [
         ["sprinkler", "fire protection", "ASRS"],
-        ["time", "cycle", "coordination", "review", "design"]
+        ["time", "cycle", "coordination", "review", "design"],
+        ["Exol Wilmer", "26-103"],
+        ["missing", "not direct", "no direct", "do not have direct", "direct evidence", "could not confirm", "evidence gap"]
       ],
       "mustExclude": [
         "Vermillion",
         "Vermillion Rise",
+        "Exol Morrisville Kick Off",
+        "Exol Morrisville",
+        "Weekly design coordination Exol PA",
+        "Pratt & Whitney",
+        "Superior Beverage",
         "I cannot access meetings",
         "I cannot access your email",
         "as an AI"
@@ -2036,7 +2043,7 @@
       "minSourceQuality": "medium",
       "judgeRubric": "strategic_advisor",
       "minJudgeScore": 4,
-      "notes": "Strategic RAG golden-seed case. Canonical project target is Exol Wilmer, project ID 760, project number 26-103. Do not answer from Vermillion Rise sprinkler evidence; direct ASRS sprinkler meeting/email/Teams source IDs still need to be attached before this becomes a factual golden case."
+      "notes": "Strategic RAG golden-seed case. Canonical project target is Exol Wilmer, project ID 760, project number 26-103. This case must fail if the answer treats Exol Morrisville/Exol PA, Vermillion, Pratt & Whitney, Exotec, Superior Beverage, or generic FM Global evidence as project-specific Exol Wilmer proof. Direct ASRS sprinkler meeting/email/Teams source IDs still need to be attached before this becomes a factual golden case."
     },
     {
       "id": "strategic-rag-office-morning-importance",

@@ -12,7 +12,13 @@
         "attachments",
         "calendar"
       ],
-      "time_window": "all relevant available history unless the user narrows the window"
+      "time_window": "all relevant available history unless the user narrows the window",
+      "project_context": {
+        "project_id": 760,
+        "project_name": "Exol Wilmer",
+        "project_number": "26-103",
+        "requirement": "Only use Exol Wilmer project evidence for project-specific conclusions. Generic ASRS/FM/NFPA references may be used only as background and must be labeled as background."
+      }
     },
     "outputs": {
       "evaluation_type": "strategic_rag_final_response",
@@ -21,7 +27,9 @@
         "Separate evidence-backed findings from inference.",
         "Compare signals across meetings, emails, and messages before concluding.",
         "Explain why the driver consumes time in operational terms such as coordination cycles, redesign, approvals, missing information, field constraints, or jurisdictional review.",
-        "Name the next verification step if source coverage is incomplete."
+        "Name the next verification step if source coverage is incomplete.",
+        "Stay anchored to Exol Wilmer / 26-103 and do not treat Exol Morrisville, Exol PA, Vermillion, Pratt & Whitney, Exotec, or Superior Beverage evidence as Exol Wilmer evidence.",
+        "If direct Exol Wilmer ASRS sprinkler source evidence is missing, say that clearly and answer from the strongest Exol Wilmer project evidence plus labeled background only."
       ],
       "must_include_capabilities": [
         "source synthesis",
@@ -34,13 +42,17 @@
         "Only explains what ASRS or sprinklers are.",
         "Lists every issue without identifying the biggest time sink.",
         "Invents project facts, code requirements, names, or dates not present in retrieved evidence.",
-        "Hides behind generic RAG/source caveats without giving an operational read."
+        "Hides behind generic RAG/source caveats without giving an operational read.",
+        "Uses Exol Morrisville, Exol PA, Vermillion, Pratt & Whitney, Exotec, Superior Beverage, or generic FM Global evidence as if it proves Exol Wilmer project facts.",
+        "Fails to mention that direct Exol Wilmer ASRS sprinkler source evidence is missing when no such direct source is retrieved.",
+        "Lets semantic retrieval drift to adjacent ASRS projects without warning the user."
       ],
       "judge_dimensions": {
         "retrieval_coverage": "Uses or explicitly attempts meetings, emails, and Teams/messages.",
         "strategic_synthesis": "Connects repeated evidence into the actual time driver.",
         "business_value": "Explains what the delay means for design schedule, coordination effort, cost, or owner risk.",
-        "actionability": "Recommends a concrete next step, owner question, or source check."
+        "actionability": "Recommends a concrete next step, owner question, or source check.",
+        "project_scope_integrity": "Keeps project-specific claims tied to Exol Wilmer and labels adjacent-project or generic ASRS material as background only."
       }
     },
     "metadata": {
@@ -77,7 +89,13 @@
       "preferred_optional_source_types": [
         "emails"
       ],
-      "time_window": "recent relevant history"
+      "time_window": "recent relevant history",
+      "project_context": {
+        "project_id": 760,
+        "project_name": "Exol Wilmer",
+        "project_number": "26-103",
+        "requirement": "Only use Exol Wilmer project evidence for project-specific conclusions. Generic ASRS/FM/NFPA references may be used only as background and must be labeled as background."
+      }
     },
     "outputs": {
       "evaluation_type": "strategic_rag_final_response",
@@ -85,7 +103,9 @@
         "Cluster repeated themes instead of summarizing each meeting separately.",
         "Rank themes by recurrence and likely impact.",
         "Call out whether repeated mentions are unresolved issues, normal coordination, or already-closed decisions.",
-        "Distinguish evidence from speculation."
+        "Distinguish evidence from speculation.",
+        "Stay anchored to Exol Wilmer / 26-103 and do not treat Exol Morrisville, Exol PA, Vermillion, Pratt & Whitney, Exotec, or Superior Beverage evidence as Exol Wilmer evidence.",
+        "If direct Exol Wilmer ASRS sprinkler source evidence is missing, say that clearly and answer from the strongest Exol Wilmer project evidence plus labeled background only."
       ],
       "must_include_capabilities": [
         "theme clustering",
@@ -97,13 +117,17 @@
         "Chronological transcript dump.",
         "Treats one mention as a repeated theme.",
         "Fails to distinguish active hurdles from historical discussion.",
-        "Suggests generic design best practices without source evidence."
+        "Suggests generic design best practices without source evidence.",
+        "Uses Exol Morrisville, Exol PA, Vermillion, Pratt & Whitney, Exotec, Superior Beverage, or generic FM Global evidence as if it proves Exol Wilmer project facts.",
+        "Fails to mention that direct Exol Wilmer ASRS sprinkler source evidence is missing when no such direct source is retrieved.",
+        "Lets semantic retrieval drift to adjacent ASRS projects without warning the user."
       ],
       "judge_dimensions": {
         "pattern_recognition": "Finds recurring signals across source items.",
         "importance_filtering": "Separates meaningful blockers from noise.",
         "status_judgment": "Makes clear what is still open versus resolved.",
-        "clarity": "Produces a concise operator-readable answer."
+        "clarity": "Produces a concise operator-readable answer.",
+        "project_scope_integrity": "Keeps project-specific claims tied to Exol Wilmer and labels adjacent-project or generic ASRS material as background only."
       }
     },
     "metadata": {
@@ -133,7 +157,13 @@
         "emails",
         "teams_messages"
       ],
-      "time_window": "all relevant available history"
+      "time_window": "all relevant available history",
+      "project_context": {
+        "project_id": 760,
+        "project_name": "Exol Wilmer",
+        "project_number": "26-103",
+        "requirement": "Only use Exol Wilmer project evidence for project-specific conclusions. Generic ASRS/FM/NFPA references may be used only as background and must be labeled as background."
+      }
     },
     "outputs": {
       "evaluation_type": "strategic_rag_final_response",
@@ -141,7 +171,9 @@
         "Infer the unresolved decision points from source evidence.",
         "Produce a short prioritized list of questions for the sprinkler designer.",
         "Tie each question to why it matters and what decision it unlocks.",
-        "Avoid overstepping into unsupported technical design instructions."
+        "Avoid overstepping into unsupported technical design instructions.",
+        "Stay anchored to Exol Wilmer / 26-103 and do not treat Exol Morrisville, Exol PA, Vermillion, Pratt & Whitney, Exotec, or Superior Beverage evidence as Exol Wilmer evidence.",
+        "If direct Exol Wilmer ASRS sprinkler source evidence is missing, say that clearly and answer from the strongest Exol Wilmer project evidence plus labeled background only."
       ],
       "must_include_capabilities": [
         "decision extraction",
@@ -152,13 +184,17 @@
         "Gives generic coordination advice.",
         "Creates technical requirements not found in evidence.",
         "Does not identify what decision each question is meant to unlock.",
-        "Provides a long unfocused list."
+        "Provides a long unfocused list.",
+        "Uses Exol Morrisville, Exol PA, Vermillion, Pratt & Whitney, Exotec, Superior Beverage, or generic FM Global evidence as if it proves Exol Wilmer project facts.",
+        "Fails to mention that direct Exol Wilmer ASRS sprinkler source evidence is missing when no such direct source is retrieved.",
+        "Lets semantic retrieval drift to adjacent ASRS projects without warning the user."
       ],
       "judge_dimensions": {
         "decision_focus": "Questions map to real unresolved decisions.",
         "source_grounding": "Question rationale is grounded in retrieved evidence.",
         "operator_value": "The user could send or use the questions in a real coordination meeting.",
-        "scope_control": "Does not pretend to be the engineer of record."
+        "scope_control": "Does not pretend to be the engineer of record.",
+        "project_scope_integrity": "Keeps project-specific claims tied to Exol Wilmer and labels adjacent-project or generic ASRS material as background only."
       }
     },
     "metadata": {
