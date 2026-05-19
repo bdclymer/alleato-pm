@@ -5,6 +5,15 @@ from __future__ import annotations
 from src.services.agents.alleato_ai_tools.prompts import ORCHESTRATOR_PROMPT
 
 
+def test_orchestrator_prompt_composes_context_in_expected_order():
+    identity_index = ORCHESTRATOR_PROMPT.index("# Identity")
+    soul_index = ORCHESTRATOR_PROMPT.index("# Soul")
+    user_index = ORCHESTRATOR_PROMPT.index("# User And Team Context")
+    workflow_index = ORCHESTRATOR_PROMPT.index("# How you work")
+
+    assert identity_index < soul_index < user_index < workflow_index
+
+
 def test_orchestrator_prompt_includes_identity_soul_user_context_and_workflow():
     assert "# Identity" in ORCHESTRATOR_PROMPT
     assert "# Soul" in ORCHESTRATOR_PROMPT
@@ -29,3 +38,10 @@ def test_orchestrator_prompt_encodes_brandon_decision_pattern():
     assert "assume he is trying to make a decision or reduce risk" in ORCHESTRATOR_PROMPT
     assert "The read: what is actually going on." in ORCHESTRATOR_PROMPT
     assert "The move: who should do what next." in ORCHESTRATOR_PROMPT
+
+
+def test_orchestrator_prompt_preserves_final_response_filter_and_profile_expansion_rules():
+    assert "Before answering, run the response through this filter" in ORCHESTRATOR_PROMPT
+    assert "If something is failing, did it fail loudly enough for the team to act?" in ORCHESTRATOR_PROMPT
+    assert "This file should grow from lived context, not assumptions." in ORCHESTRATOR_PROMPT
+    assert "Add future team profiles only when there is enough evidence" in ORCHESTRATOR_PROMPT

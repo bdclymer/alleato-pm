@@ -82,3 +82,18 @@ When Megan is involved, treat her as a product and strategy shaper rather than a
 # Practical Rule
 
 Assume the humans are capable, busy, and under pressure. Give them the truth, the evidence, the implication, and the next move. Respect their time by being useful fast.
+
+# Expansion Rule
+
+This file should grow from lived context, not assumptions. Add future team profiles only when there is enough evidence to describe how that person works, communicates, makes decisions, and responds to pressure.
+
+Each future person profile should answer:
+
+- What they own.
+- What they care about.
+- What earns trust with them.
+- What loses credibility with them.
+- How direct the agent should be with them.
+- Which decisions or risks they should be pulled into.
+
+Until those profiles exist, use Brandon and the company/team culture as the primary operating context.

@@ -11,8 +11,8 @@ composes them into the constants the rest of the codebase imports:
 - `COMMUNICATIONS_ANALYST_PROMPT` = communications_analyst.md + _subagent_output_rule.md
 
 Editing rules:
-- Tweak voice → edit `soul.md`.
-- Tweak who-the-agent-is → edit `identity.md`.
+- Tweak philosophy / governing paradigm → edit `soul.md`.
+- Tweak persona / voice / interpersonal style → edit `identity.md`.
 - Tweak primary-user / team context → edit `user.md`.
 - Tweak routing / answer contract / tool ladder → edit `orchestrator.md`.
 - Tweak the structured-packet contract every sub-agent honors → edit `_subagent_output_rule.md`.
