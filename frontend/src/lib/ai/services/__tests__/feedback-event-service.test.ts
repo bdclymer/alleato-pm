@@ -8,7 +8,10 @@ import {
   generateTaskPromotionCandidates,
   recordPacketCardFeedback,
 } from "../feedback-event-service";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import { upsertAgentLearning } from "@/lib/ai/services/agent-learning-service";
 import { writeMemory } from "@/lib/ai/services/ai-memory-service";
 
@@ -86,6 +89,7 @@ type AiFeedbackEventFixture = {
 };
 
 const createServiceClientMock = createServiceClient as jest.Mock;
+const createRagServiceClientMock = createRagServiceClient as jest.Mock;
 const upsertAgentLearningMock = upsertAgentLearning as jest.Mock;
 const writeMemoryMock = writeMemory as jest.Mock;
 
@@ -573,11 +577,6 @@ function mockAttributionRuleApplySupabase(params: {
           update: jest.fn().mockReturnValue(promotionUpdateQuery),
         };
       }
-      if (table === "document_attribution_candidates") {
-        return {
-          update: jest.fn().mockReturnValue(candidateUpdateQuery),
-        };
-      }
       if (table === "document_metadata") {
         return {
           select: documentSelectQuery.select,
@@ -587,6 +586,16 @@ function mockAttributionRuleApplySupabase(params: {
         };
       }
       throw new Error(`Unexpected attribution apply table: ${table}`);
+    }),
+  };
+  const ragSupabase = {
+    from: jest.fn((table: string) => {
+      if (table !== "document_attribution_candidates") {
+        throw new Error(`Unexpected attribution RAG table: ${table}`);
+      }
+      return {
+        update: jest.fn().mockReturnValue(candidateUpdateQuery),
+      };
     }),
   };
   const eventSupabase = {
@@ -603,6 +612,7 @@ function mockAttributionRuleApplySupabase(params: {
   createServiceClientMock
     .mockReturnValueOnce(applySupabase)
     .mockReturnValueOnce(eventSupabase);
+  createRagServiceClientMock.mockReturnValueOnce(ragSupabase);
 }
 
 describe("feedback event service retrieval promotions", () => {
