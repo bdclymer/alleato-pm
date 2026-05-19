@@ -166,6 +166,40 @@ function mapBackendPacketTrace(
   }));
 }
 
+function buildRecentEmailTrace(
+  raw: unknown,
+  message: string,
+): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  const appliedFilter =
+    record.appliedFilter && typeof record.appliedFilter === "object"
+      ? (record.appliedFilter as Record<string, unknown>)
+      : null;
+  return {
+    tool: "getRecentEmails",
+    toolName: "getRecentEmails",
+    status: record.error ? "failed" : "success",
+    input: {
+      message: message.slice(0, 240),
+      mailbox: appliedFilter?.email ?? null,
+      direction: appliedFilter?.direction ?? null,
+      since: appliedFilter?.since ?? null,
+      timeZone: appliedFilter?.timeZone ?? null,
+    },
+    output: {
+      count: record.count ?? 0,
+      threadCount: record.threadCount ?? 0,
+      summary: record.summary ?? null,
+      dataCutoffNote: record.dataCutoffNote ?? null,
+      mailboxResolutionNote: record.mailboxResolutionNote ?? null,
+      appliedFilter,
+      error: record.error ?? null,
+    },
+    timestamp: new Date().toISOString(),
+  };
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -526,6 +560,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     stepCount: number;
   } | null = null;
   const bridgeToolTrace: Array<Record<string, unknown>> = [];
+  let latestRetrievalCtx: Awaited<
+    ReturnType<typeof executeRetrievalPlan>
+  > | null = null;
 
   const plan = planRetrieval({
     message: lastUserContent,
@@ -1341,6 +1378,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           { sessionId: args.sessionId, message: lastUserContent },
         ),
       ]);
+      latestRetrievalCtx = retrievalCtx;
 
       writer.write({
         type: "data-status",
@@ -1498,7 +1536,17 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           },
           timestamp: new Date().toISOString(),
         })) ?? [];
-      const toolTrace = [...bridgeToolTrace, ...streamToolTrace];
+      const retrievalToolTrace = [
+        buildRecentEmailTrace(
+          latestRetrievalCtx?.recentEmailInbox,
+          lastUserContent,
+        ),
+      ].filter((trace): trace is Record<string, unknown> => Boolean(trace));
+      const toolTrace = [
+        ...bridgeToolTrace,
+        ...retrievalToolTrace,
+        ...streamToolTrace,
+      ];
 
       const metadata: Record<string, unknown> = {
         architecture: "retrieval-planner-v2",
