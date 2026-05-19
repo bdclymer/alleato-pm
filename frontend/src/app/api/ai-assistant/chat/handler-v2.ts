@@ -215,6 +215,41 @@ function mapBackendPacketTrace(
   }));
 }
 
+function traceDurationMs(trace: Record<string, unknown>): number | null {
+  const raw = trace.durationMs ?? trace.duration_ms;
+  return typeof raw === "number" && Number.isFinite(raw) && raw >= 0
+    ? Math.round(raw)
+    : null;
+}
+
+function summarizeToolTiming(toolTrace: Array<Record<string, unknown>>) {
+  const timed = toolTrace
+    .map((trace) => {
+      const durationMs = traceDurationMs(trace);
+      const tool = trace.toolName ?? trace.tool;
+      if (durationMs === null || typeof tool !== "string") return null;
+      return {
+        tool,
+        agent:
+          typeof trace.agent === "string" ? trace.agent : "unknown-agent",
+        status:
+          typeof trace.status === "string" ? trace.status : "unknown-status",
+        durationMs,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  const slowest = [...timed]
+    .sort((a, b) => b.durationMs - a.durationMs)
+    .slice(0, 8);
+
+  return {
+    totalMeasuredMs: timed.reduce((sum, item) => sum + item.durationMs, 0),
+    slowest,
+    failedCount: timed.filter((item) => item.status === "failed").length,
+  };
+}
+
 function buildRecentEmailTrace(
   raw: unknown,
   message: string,
@@ -669,6 +704,38 @@ function writeTextResponse(
   writer.write({ type: "text-end", id });
 }
 
+// Why: deep-agent and Microsoft-specialist fetches can take 40–60s. Without
+// any bytes on the wire during that window, browsers / HTTP/2 / dev middleware
+// silently kill the stream and the client renders "Failed to fetch" even though
+// the server is still working. Periodic data-status writes keep the stream alive
+// and double as visible "still working…" feedback for the user.
+async function withKeepAlive<T>(
+  writer: Parameters<
+    Parameters<typeof createUIMessageStream>[0]["execute"]
+  >[0]["writer"],
+  options: { statusId: string; stage: string; message: string; intervalMs?: number },
+  task: () => Promise<T>,
+): Promise<T> {
+  const intervalMs = options.intervalMs ?? 3_000;
+  const interval = setInterval(() => {
+    writer.write({
+      type: "data-status",
+      id: options.statusId,
+      data: {
+        stage: options.stage,
+        message: options.message,
+        status: "loading",
+        timestamp: new Date().toISOString(),
+      },
+    } as never);
+  }, intervalMs);
+  try {
+    return await task();
+  } finally {
+    clearInterval(interval);
+  }
+}
+
 function summarizeDeepAgentSourceCoverage(
   sourcesChecked: Array<{
     sourceType: string;
@@ -723,6 +790,7 @@ function buildAnswerDebugMetadata(params: {
     sources: {
       toolNames,
       toolCallCount: toolNames.length,
+      timing: summarizeToolTiming(params.toolTrace),
       sourceCoverage: params.sourceCoverage ?? [],
       evidenceCount: params.evidenceCount ?? null,
     },
@@ -1084,12 +1152,24 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           },
         } as never);
 
-        const response = await fetchMicrosoftExecutiveAssistant({
-          userId: args.user.id,
-          sessionId: args.sessionId,
-          question: lastUserContent,
-          selectedProjectId: args.selectedProjectId,
-        });
+        const microsoftBridgeStarted = Date.now();
+        const response = await withKeepAlive(
+          writer,
+          {
+            statusId: "strategist-status",
+            stage: "microsoft-specialist",
+            message: "Still delegating to Microsoft operator…",
+          },
+          () =>
+            fetchMicrosoftExecutiveAssistant({
+              userId: args.user.id,
+              sessionId: args.sessionId,
+              question: lastUserContent,
+              selectedProjectId: args.selectedProjectId,
+            }),
+        );
+        const microsoftBridgeDurationMs =
+          Date.now() - microsoftBridgeStarted;
         const content =
           typeof response.answer === "string"
             ? response.answer
@@ -1109,7 +1189,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           },
           lastUserContent,
         );
-        const toolTrace = trace ? [trace] : [];
+        const toolTrace = trace
+          ? [{ ...trace, durationMs: microsoftBridgeDurationMs }]
+          : [];
         const sourceDebug = buildAnswerDebugMetadata({
           orchestrator: "microsoft-executive-assistant",
           plan,
@@ -1179,13 +1261,25 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } as never);
 
         try {
-          const packet = await fetchDeepAgentResearch({
-            userId: args.user.id,
-            sessionId: args.sessionId,
-            question: lastUserContent,
-            projectId: args.selectedProjectId ?? null,
-            maxSearches: 5,
-          });
+          const researchBridgeStarted = Date.now();
+          const packet = await withKeepAlive(
+            writer,
+            {
+              statusId: "strategist-status",
+              stage: "backend-deep-agents",
+              message: "Still working with Render Deep Agents research…",
+            },
+            () =>
+              fetchDeepAgentResearch({
+                userId: args.user.id,
+                sessionId: args.sessionId,
+                question: lastUserContent,
+                projectId: args.selectedProjectId ?? null,
+                maxSearches: 5,
+              }),
+          );
+          const researchBridgeDurationMs =
+            Date.now() - researchBridgeStarted;
 
           if (shouldUseDeepAgentResearchDirectResponse(packet)) {
             const content = formatDeepAgentResearchDirectResponse(packet);
@@ -1206,6 +1300,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 status: "success",
                 message: lastUserContent,
                 selectedProjectId: args.selectedProjectId ?? null,
+                durationMs: researchBridgeDurationMs,
               }),
               ...mapBackendPacketTrace(packet.toolTrace, {
                 message: lastUserContent,
@@ -1364,6 +1459,60 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           type: "data-status",
           id: "strategist-status",
           data: {
+            stage: "project-intelligence-packet",
+            message: "Checking current compiled project intelligence packet",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        try {
+          const usedPacketFastPath = await tryWriteProjectPacketFastPath({
+            supabase: args.supabase,
+            writer,
+            userId: args.user.id,
+            sessionId: args.sessionId,
+            selectedProjectId: args.selectedProjectId,
+            message: lastUserContent,
+            plan,
+          });
+
+          if (usedPacketFastPath) {
+            responseAlreadyPersisted = true;
+            return;
+          }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "clientProjectIntelligencePacket",
+              status: "failed",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId,
+              detail,
+            }),
+          );
+          console.error("[handler-v2] Project packet fast path failed", {
+            message: detail,
+            selectedProjectId: args.selectedProjectId,
+            intent: plan.intent,
+          });
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "project-intelligence-packet",
+              message: `Project packet fast path failed; falling back to Render Deep Agents: ${detail}`,
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        }
+
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
             stage: "backend-deep-agents",
             message: "Checking Render Deep Agents project intelligence",
             status: "loading",
@@ -1372,12 +1521,22 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } as never);
 
         try {
-          const packet = await fetchDeepAgentProjectStatus({
-            userId: args.user.id,
-            projectId: args.selectedProjectId,
-            sessionId: args.sessionId,
-            question: lastUserContent,
-          });
+          const projectIdForBridge = args.selectedProjectId;
+          const packet = await withKeepAlive(
+            writer,
+            {
+              statusId: "strategist-status",
+              stage: "backend-deep-agents",
+              message: "Still working with Render Deep Agents project status…",
+            },
+            () =>
+              fetchDeepAgentProjectStatus({
+                userId: args.user.id,
+                projectId: projectIdForBridge,
+                sessionId: args.sessionId,
+                question: lastUserContent,
+              }),
+          );
 
           if (shouldUseDeepAgentProjectDirectResponse(packet)) {
             const content = formatDeepAgentProjectDirectResponse(packet);
@@ -1582,11 +1741,20 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } as never);
 
         try {
-          const packet = await fetchDeepAgentExecutiveBriefing({
-            userId: args.user.id,
-            sessionId: args.sessionId,
-            question: lastUserContent,
-          });
+          const packet = await withKeepAlive(
+            writer,
+            {
+              statusId: "strategist-status",
+              stage: "backend-deep-agents",
+              message: "Still working with Render Deep Agents executive briefing…",
+            },
+            () =>
+              fetchDeepAgentExecutiveBriefing({
+                userId: args.user.id,
+                sessionId: args.sessionId,
+                question: lastUserContent,
+              }),
+          );
 
           if (shouldUseDeepAgentExecutiveDirectResponse(packet)) {
             const content = formatDeepAgentExecutiveDirectResponse(packet);
