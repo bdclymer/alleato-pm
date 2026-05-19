@@ -110,7 +110,7 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | `frontend/src/lib/ai/agents/vpbd.ts` | VP BD system prompt (designed, not live). |
 | `frontend/src/lib/ai/agents/types.ts` | `AgentName` union type, `AgentResponse` type. Update when adding agents. |
 | `frontend/src/lib/ai/providers.ts` | AI Gateway provider setup. `getLanguageModel(modelId)` is the single entry point for all LLM calls. |
-| `frontend/src/lib/ai/assistant-models.ts` | User-selectable model list and `DEFAULT_AI_ASSISTANT_MODEL`. Includes the `deep-agents/strategist` option, which routes eligible project/executive prompts through the backend Deep Agents strategist harness before local synthesis fallback. |
+| `frontend/src/lib/ai/assistant-models.ts` | User-selectable model list and `DEFAULT_AI_ASSISTANT_MODEL`. Includes the `deep-agents/strategist` option, which routes eligible project, executive, and external-research prompts through the backend Deep Agents strategist harness before local synthesis fallback. |
 | `frontend/src/lib/ai/tools/project-tools.ts` | 9 core project tools (portfolio, risk, budget, meetings, search). |
 | `frontend/src/lib/ai/tools/financial.ts` | 6 financial tools (commitments, change orders, direct costs, budget line items, cost trends, margin). |
 | `frontend/src/lib/ai/tools/operational.ts` | 15+ operational tools (people, vendors, RFIs, submittals, cross-project, semantic search, emails, Teams, knowledge base, memories). |
@@ -509,7 +509,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 
 | File Path | What it controls / does | Related files |
 |-----------|-------------------------|---------------|
-| `frontend/src/lib/ai/intent-router.ts` | `AssistantIntent` union and regex-based intent classification. Defines task-write patterns that must beat task-followup routing. | intent-classifier.ts, planner.ts |
+| `frontend/src/lib/ai/intent-router.ts` | `AssistantIntent` union and regex-based intent classification. Defines task-write patterns that must beat task-followup routing and external-research patterns for public web/current market/trend prompts that must route to the Render Deep Agents research endpoint instead of internal executive briefing. | intent-classifier.ts, planner.ts |
 | `frontend/src/lib/ai/intent-classifier.ts` | LLM-based intent classifier using `generateObject`. Wraps with `withTimeout`. Falls back to regex router on timeout. | intent-router.ts, planner.ts |
 | `frontend/src/lib/ai/detect-rag-request.ts` | Source-specific RAG request detection (meetings-on-date, recent-emails, recent-teams, recent-onedrive). Workaround module for AI Gateway `finishReason:other` bug when tools are disabled. | preflights.ts, planner.ts |
 | `frontend/src/lib/ai/retrieval/planner.ts` | Builds a `RetrievalPlan` from message + selected project: classifies intent, detects source-specific RAG, picks sub-agent, decides external sources. | intent-router.ts, detect-rag-request.ts, types.ts |

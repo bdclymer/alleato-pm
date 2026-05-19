@@ -75,6 +75,8 @@ describe("intent router", () => {
       "Use online sources to find the latest municipal ordinance requirements.",
       "Research current market competitors for a construction project management AI and cite public sources.",
       "Look up public vendor requirements for Carmel zoning and summarize the sources.",
+      "Research current construction AI trends and cite sources.",
+      "Search the public web for current construction AI trends and cite public URLs. Do not answer from internal Alleato records.",
     ];
 
     for (const prompt of prompts) {
