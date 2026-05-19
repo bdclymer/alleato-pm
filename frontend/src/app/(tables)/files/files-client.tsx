@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ExternalLink, File } from "lucide-react";
+import { Check, ChevronsUpDown, ExternalLink, File, Tag } from "lucide-react";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -13,7 +13,28 @@ import {
 } from "@/components/tables/unified";
 import { CellText, TableDateValue } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -22,9 +43,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 interface FileItem {
   id: string;
@@ -64,9 +87,16 @@ interface FilesClientProps {
   errorMessage: string | null;
 }
 
-// ── File type detection ───────────────────────────────────────────────────────
+// File type detection
 
-type FileGroup = "pdf" | "word" | "spreadsheet" | "presentation" | "image" | "text" | "other";
+type FileGroup =
+  | "pdf"
+  | "word"
+  | "spreadsheet"
+  | "presentation"
+  | "image"
+  | "text"
+  | "other";
 
 function getFileGroup(item: FileItem): FileGroup {
   const name = (item.file_name ?? item.title ?? "").toLowerCase();
@@ -75,44 +105,52 @@ function getFileGroup(item: FileItem): FileGroup {
   if (["doc", "docx"].includes(ext)) return "word";
   if (["xls", "xlsx", "csv"].includes(ext)) return "spreadsheet";
   if (["ppt", "pptx"].includes(ext)) return "presentation";
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff"].includes(ext)) return "image";
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff"].includes(ext))
+    return "image";
   if (["txt", "md", "rtf"].includes(ext)) return "text";
   return "other";
 }
 
 const FILE_GROUP_META: Record<FileGroup, { label: string }> = {
-  pdf:          { label: "PDF" },
-  word:         { label: "Word" },
-  spreadsheet:  { label: "Spreadsheets" },
+  pdf: { label: "PDF" },
+  word: { label: "Word" },
+  spreadsheet: { label: "Spreadsheets" },
   presentation: { label: "Slides" },
-  image:        { label: "Images" },
-  text:         { label: "Text" },
-  other:        { label: "Other" },
+  image: { label: "Images" },
+  text: { label: "Text" },
+  other: { label: "Other" },
 };
 
 function FileTypeIcon({ className }: { item: FileItem; className?: string }) {
-  return <File className={cn("h-4 w-4 shrink-0 text-muted-foreground", className)} />;
+  return (
+    <File className={cn("h-4 w-4 shrink-0 text-muted-foreground", className)} />
+  );
 }
 
-// ── Source label ──────────────────────────────────────────────────────────────
+// Source label
 
 function friendlySource(item: FileItem): string {
   const sys = item.source_system ?? item.source ?? "";
   if (sys.includes("sharepoint")) return "SharePoint";
   if (sys.includes("onedrive") || sys === "microsoft_graph") return "OneDrive";
-  if (sys.includes("knowledge_upload") || sys.includes("upload")) return "Uploaded";
+  if (sys.includes("knowledge_upload") || sys.includes("upload"))
+    return "Uploaded";
   if (sys.includes("google")) return "Google Drive";
   return sys || "—";
 }
 
-// ── Folder helpers ────────────────────────────────────────────────────────────
+// Folder helpers
 
 function parsePathFromSharePointUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
-    const personalMatch = parsed.pathname.match(/\/personal\/[^/]+\/Documents\/(.+)/);
+    const personalMatch = parsed.pathname.match(
+      /\/personal\/[^/]+\/Documents\/(.+)/,
+    );
     if (personalMatch) return decodeURIComponent(personalMatch[1]);
-    const siteMatch = parsed.pathname.match(/\/sites\/[^/]+\/(?:Shared%20Documents|Documents|[^/]+\/[^/]+)\/(.+)/);
+    const siteMatch = parsed.pathname.match(
+      /\/sites\/[^/]+\/(?:Shared%20Documents|Documents|[^/]+\/[^/]+)\/(.+)/,
+    );
     if (siteMatch) return decodeURIComponent(siteMatch[1]);
     return null;
   } catch {
@@ -147,17 +185,41 @@ function fullFolderPath(item: FileItem): string {
   return parts.length > 1 ? parts.slice(0, -1).join(" / ") : "";
 }
 
-// ── File size ─────────────────────────────────────────────────────────────────
+// File size
 
 function formatSize(bytes: number | null): string {
   if (!bytes || bytes <= 0) return "—";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
-// ── Inline project select ─────────────────────────────────────────────────────
+function reportDocumentMetadataFailure({
+  operation,
+  error,
+  docId,
+  userVisibleFallback,
+}: {
+  operation: string;
+  error: unknown;
+  docId?: string;
+  userVisibleFallback: string;
+}) {
+  reportNonCriticalFailure({
+    area: "files-table",
+    operation,
+    error,
+    userVisibleFallback,
+    metadata: { docId },
+  });
+  toast.error(userVisibleFallback, {
+    description: "Your change was not saved. Please retry from the row action.",
+  });
+}
+
+// Inline project select
 
 function InlineProjectSelect({
   item,
@@ -166,7 +228,11 @@ function InlineProjectSelect({
 }: {
   item: FileItem;
   projects: Project[];
-  onSave: (docId: string, projectId: number | null, projectName: string | null) => void;
+  onSave: (
+    docId: string,
+    projectId: number | null,
+    projectName: string | null,
+  ) => void;
 }) {
   const [saving, setSaving] = useState(false);
 
@@ -180,8 +246,13 @@ function InlineProjectSelect({
         body: JSON.stringify({ project_id: projectId }),
       });
       onSave(item.id, projectId, project?.name ?? null);
-    } catch {
-      // silently revert — user can retry
+    } catch (error) {
+      reportDocumentMetadataFailure({
+        operation: "assign-project",
+        error,
+        docId: item.id,
+        userVisibleFallback: "Project assignment could not be saved.",
+      });
     } finally {
       setSaving(false);
     }
@@ -217,7 +288,7 @@ function InlineProjectSelect({
   );
 }
 
-// ── Inline tag editor ─────────────────────────────────────────────────────────
+// Inline tag editor
 
 function InlineTagEditor({
   item,
@@ -230,9 +301,15 @@ function InlineTagEditor({
   const [value, setValue] = useState(item.tags ?? "");
   const [saving, setSaving] = useState(false);
 
-  const currentTags = (item.tags ?? "").split(",").map((t) => t.trim()).filter(Boolean);
+  const currentTags = (item.tags ?? "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
 
-  const open = () => { setValue(item.tags ?? ""); setEditing(true); };
+  const open = () => {
+    setValue(item.tags ?? "");
+    setEditing(true);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -243,8 +320,13 @@ function InlineTagEditor({
       });
       onSave(item.id, value);
       setEditing(false);
-    } catch {
-      // revert on failure
+    } catch (error) {
+      reportDocumentMetadataFailure({
+        operation: "save-tags",
+        error,
+        docId: item.id,
+        userVisibleFallback: "Tags could not be saved.",
+      });
     } finally {
       setSaving(false);
     }
@@ -274,7 +356,10 @@ function InlineTagEditor({
         variant="ghost"
         size="sm"
         className="h-7 px-1.5 text-xs text-muted-foreground/40 italic font-normal hover:text-muted-foreground"
-        onClick={(e) => { e.stopPropagation(); open(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          open();
+        }}
       >
         Add tags
       </Button>
@@ -287,7 +372,10 @@ function InlineTagEditor({
       size="sm"
       className="h-7 px-1.5 py-1 flex flex-nowrap gap-1 justify-start overflow-hidden max-w-full"
       title="Click to edit tags"
-      onClick={(e) => { e.stopPropagation(); open(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        open();
+      }}
     >
       {currentTags.map((tag) => (
         <span
@@ -301,7 +389,272 @@ function InlineTagEditor({
   );
 }
 
-// ── Indexed / RAG status badge ────────────────────────────────────────────────
+// Markdown stripper for compact preview cells
+
+function stripMarkdownToPlain(text: string): string {
+  return (
+    text
+      // code fences and inline code
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/`([^`]+)`/g, "$1")
+      // images and links: keep label
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      // headings, blockquote markers, list bullets
+      .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+      .replace(/^\s{0,3}>\s?/gm, "")
+      .replace(/^\s*[-*+]\s+/gm, "")
+      .replace(/^\s*\d+\.\s+/gm, "")
+      // emphasis markers
+      .replace(/(\*\*|__)(.*?)\1/g, "$2")
+      .replace(/(\*|_)(.*?)\1/g, "$2")
+      // strikethrough
+      .replace(/~~(.*?)~~/g, "$1")
+      // horizontal rules
+      .replace(/^\s*([-*_])\1{2,}\s*$/gm, "")
+      // collapse whitespace
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
+// Inline string select (combobox)
+
+function StringCombobox({
+  value,
+  options,
+  onSelect,
+  autoFocus,
+  placeholder = "Search or create...",
+  clearLabel = "Clear",
+}: {
+  value: string | null;
+  options: string[];
+  onSelect: (next: string | null) => void;
+  autoFocus?: boolean;
+  placeholder?: string;
+  clearLabel?: string;
+}) {
+  const [search, setSearch] = useState("");
+  const normalized = search.trim();
+  const lowerSearch = normalized.toLowerCase();
+  const showCreateOption =
+    normalized.length > 0 &&
+    !options.some((opt) => opt.toLowerCase() === lowerSearch);
+
+  return (
+    <Command>
+      <CommandInput
+        placeholder={placeholder}
+        value={search}
+        onValueChange={setSearch}
+        autoFocus={autoFocus}
+      />
+      <CommandList>
+        <CommandEmpty>No matching categories.</CommandEmpty>
+        <CommandGroup>
+          <CommandItem value="__none__" onSelect={() => onSelect(null)}>
+            <span className="text-muted-foreground italic">{clearLabel}</span>
+            {value == null && <Check className="ml-auto h-4 w-4" />}
+          </CommandItem>
+          {options.map((opt) => (
+            <CommandItem key={opt} value={opt} onSelect={() => onSelect(opt)}>
+              {opt}
+              {value === opt && <Check className="ml-auto h-4 w-4" />}
+            </CommandItem>
+          ))}
+          {showCreateOption && (
+            <CommandItem
+              value={`__create__${normalized}`}
+              onSelect={() => onSelect(normalized)}
+            >
+              <span className="text-muted-foreground">Create&nbsp;</span>
+              <span className="font-medium">"{normalized}"</span>
+            </CommandItem>
+          )}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+}
+
+function InlineStringSelect({
+  value,
+  options,
+  onCommit,
+  clearLabel,
+  placeholder,
+  fieldKey,
+  docId,
+}: {
+  value: string | null;
+  options: string[];
+  onCommit: (docId: string, next: string | null) => void;
+  clearLabel: string;
+  placeholder: string;
+  fieldKey: "category" | "access_level";
+  docId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSelect = async (next: string | null) => {
+    setOpen(false);
+    const normalizedNext = next ?? null;
+    const normalizedCurrent = value ?? null;
+    if (normalizedNext === normalizedCurrent) return;
+    setSaving(true);
+    try {
+      await apiFetch(`/api/documents/${docId}/assign-project`, {
+        method: "PATCH",
+        body: JSON.stringify({ [fieldKey]: next }),
+      });
+      onCommit(docId, next);
+    } catch (error) {
+      reportDocumentMetadataFailure({
+        operation: `save-${fieldKey}`,
+        error,
+        docId,
+        userVisibleFallback:
+          fieldKey === "category"
+            ? "Category could not be saved."
+            : "Access level could not be saved.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          role="combobox"
+          aria-expanded={open}
+          disabled={saving}
+          onClick={(e) => e.stopPropagation()}
+          className="h-7 w-full justify-between px-1.5 text-sm font-normal hover:bg-muted/60 data-[state=open]:bg-muted/60"
+        >
+          {value ? (
+            <span className="truncate text-muted-foreground">{value}</span>
+          ) : (
+            <span className="truncate text-muted-foreground/50 italic">-</span>
+          )}
+          <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-40" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-56 p-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <StringCombobox
+          value={value}
+          options={options}
+          onSelect={handleSelect}
+          autoFocus
+          placeholder={placeholder}
+          clearLabel={clearLabel}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// Bulk category dialog
+
+function BulkCategoryDialog({
+  open,
+  onOpenChange,
+  selectedCount,
+  options,
+  onApply,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedCount: number;
+  options: string[];
+  onApply: (category: string | null) => Promise<void>;
+}) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setSelected(null);
+      setTouched(false);
+      setSubmitting(false);
+    }
+  }, [open]);
+
+  const handleSubmit = async () => {
+    if (!touched) return;
+    setSubmitting(true);
+    try {
+      await onApply(selected);
+      onOpenChange(false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="md">
+        <ModalHeader>
+          <ModalTitle>
+            Set category for {selectedCount} file
+            {selectedCount === 1 ? "" : "s"}
+          </ModalTitle>
+          <ModalDescription>
+            Choose an existing category or type a new one. Choose "Clear
+            category" to remove.
+          </ModalDescription>
+        </ModalHeader>
+        <div className="rounded-md border border-border">
+          <StringCombobox
+            value={selected}
+            options={options}
+            placeholder="Search or create category..."
+            clearLabel="Clear category"
+            onSelect={(next) => {
+              setSelected(next);
+              setTouched(true);
+            }}
+            autoFocus
+          />
+        </div>
+        {touched && (
+          <p className="text-sm text-muted-foreground">
+            Will set category to:{" "}
+            {selected === null ? (
+              <span className="italic">cleared</span>
+            ) : (
+              <span className="font-medium text-foreground">{selected}</span>
+            )}
+          </p>
+        )}
+        <ModalFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={!touched || submitting}>
+            {submitting ? "Applying..." : `Apply to ${selectedCount}`}
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
+
+// Indexed / RAG status badge
 
 function IndexedBadge({ status }: { status: string | null }) {
   if (status === "embedded") {
@@ -348,22 +701,22 @@ function IndexedBadge({ status }: { status: string | null }) {
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns: ColumnConfig[] = [
-  { id: "name",          label: "Name",                 alwaysVisible: true },
-  { id: "document_type", label: "Type",                 defaultVisible: true },
-  { id: "category",      label: "Category",             defaultVisible: true },
-  { id: "date",          label: "Date",                 defaultVisible: true },
-  { id: "overview",      label: "Overview",             defaultVisible: true },
-  { id: "status",        label: "Status",               defaultVisible: true },
-  { id: "access_level",  label: "Access",               defaultVisible: true },
-  { id: "project",       label: "Project",              defaultVisible: true },
-  { id: "source",        label: "Source",               defaultVisible: true },
-  { id: "modified",      label: "Last Modified",        defaultVisible: false },
-  { id: "participants",  label: "Participants",          defaultVisible: false },
-  { id: "folder",        label: "Folder",               defaultVisible: false },
-  { id: "size",          label: "Size",                 defaultVisible: false },
-  { id: "full_path",     label: "Full Path",            defaultVisible: false },
-  { id: "division",      label: "Division",             defaultVisible: false },
-  { id: "tags",          label: "Tags",                 defaultVisible: false },
+  { id: "name", label: "Name", alwaysVisible: true },
+  { id: "project", label: "Project", defaultVisible: true },
+  { id: "document_type", label: "Type", defaultVisible: true },
+  { id: "category", label: "Category", defaultVisible: true },
+  { id: "date", label: "Date", defaultVisible: true },
+  { id: "overview", label: "Overview", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "access_level", label: "Access", defaultVisible: true },
+  { id: "source", label: "Source", defaultVisible: true },
+  { id: "modified", label: "Last Modified", defaultVisible: false },
+  { id: "size", label: "Size", defaultVisible: false },
+  { id: "participants", label: "Participants", defaultVisible: false },
+  { id: "folder", label: "Folder", defaultVisible: false },
+  { id: "full_path", label: "Full Path", defaultVisible: false },
+  { id: "division", label: "Division", defaultVisible: false },
+  { id: "tags", label: "Tags", defaultVisible: false },
 ];
 
 const defaultVisibleColumns = columns
@@ -376,10 +729,25 @@ function col(id: string): ColumnConfig {
   return found;
 }
 
+const DEFAULT_ACCESS_OPTIONS = [
+  "public",
+  "internal",
+  "confidential",
+  "restricted",
+];
+
 function buildColumns(
   projects: Project[],
-  onProjectSave: (docId: string, projectId: number | null, projectName: string | null) => void,
+  categoryOptions: string[],
+  accessOptions: string[],
+  onProjectSave: (
+    docId: string,
+    projectId: number | null,
+    projectName: string | null,
+  ) => void,
   onTagSave: (docId: string, tags: string) => void,
+  onCategorySave: (docId: string, category: string | null) => void,
+  onAccessSave: (docId: string, access: string | null) => void,
 ): TableColumn<FileItem>[] {
   return [
     {
@@ -415,6 +783,20 @@ function buildColumns(
       width: 320,
     },
     {
+      ...col("project"),
+      render: (item) => (
+        <InlineProjectSelect
+          item={item}
+          projects={projects}
+          onSave={onProjectSave}
+        />
+      ),
+      csvValue: (item) => item.project ?? "",
+      sortValue: (item) => item.project ?? "",
+      sortable: true,
+      width: 220,
+    },
+    {
       ...col("document_type"),
       render: (item) => <CellText value={item.document_type} muted />,
       csvValue: (item) => item.document_type ?? "",
@@ -423,10 +805,21 @@ function buildColumns(
     },
     {
       ...col("category"),
-      render: (item) => <CellText value={item.category} muted />,
+      render: (item) => (
+        <InlineStringSelect
+          docId={item.id}
+          value={item.category}
+          options={categoryOptions}
+          onCommit={onCategorySave}
+          fieldKey="category"
+          placeholder="Search or create..."
+          clearLabel="Clear category"
+        />
+      ),
       csvValue: (item) => item.category ?? "",
       sortValue: (item) => item.category ?? "",
       sortable: true,
+      width: 180,
     },
     {
       ...col("date"),
@@ -440,15 +833,21 @@ function buildColumns(
     },
     {
       ...col("overview"),
-      render: (item) =>
-        item.overview ? (
-          <span className="text-sm text-muted-foreground line-clamp-2" title={item.overview}>
-            {item.overview}
+      render: (item) => {
+        const plain = item.overview ? stripMarkdownToPlain(item.overview) : "";
+        return plain ? (
+          <span
+            className="text-sm text-muted-foreground line-clamp-2"
+            title={plain}
+          >
+            {plain}
           </span>
         ) : (
           <span className="text-sm text-muted-foreground/40">—</span>
-        ),
-      csvValue: (item) => item.overview ?? "",
+        );
+      },
+      csvValue: (item) =>
+        item.overview ? stripMarkdownToPlain(item.overview) : "",
       sortValue: (item) => item.overview ?? "",
       sortable: false,
       width: 280,
@@ -463,20 +862,21 @@ function buildColumns(
     },
     {
       ...col("access_level"),
-      render: (item) => <CellText value={item.access_level} muted />,
+      render: (item) => (
+        <InlineStringSelect
+          docId={item.id}
+          value={item.access_level}
+          options={accessOptions}
+          onCommit={onAccessSave}
+          fieldKey="access_level"
+          placeholder="Search or create..."
+          clearLabel="Clear access"
+        />
+      ),
       csvValue: (item) => item.access_level ?? "",
       sortValue: (item) => item.access_level ?? "",
       sortable: true,
-    },
-    {
-      ...col("project"),
-      render: (item) => (
-        <InlineProjectSelect item={item} projects={projects} onSave={onProjectSave} />
-      ),
-      csvValue: (item) => item.project ?? "",
-      sortValue: (item) => item.project ?? "",
-      sortable: true,
-      width: 220,
+      width: 160,
     },
     {
       ...col("source"),
@@ -488,9 +888,12 @@ function buildColumns(
     {
       ...col("modified"),
       render: (item) => (
-        <TableDateValue value={item.source_last_modified_at ?? item.date ?? item.created_at} />
+        <TableDateValue
+          value={item.source_last_modified_at ?? item.date ?? item.created_at}
+        />
       ),
-      csvValue: (item) => item.source_last_modified_at ?? item.date ?? item.created_at ?? "",
+      csvValue: (item) =>
+        item.source_last_modified_at ?? item.date ?? item.created_at ?? "",
       sortValue: (item) => {
         const d = item.source_last_modified_at ?? item.date ?? item.created_at;
         return d ? new Date(d).getTime() : 0;
@@ -501,7 +904,10 @@ function buildColumns(
       ...col("participants"),
       render: (item) =>
         item.participants ? (
-          <span className="text-sm text-muted-foreground truncate" title={item.participants}>
+          <span
+            className="text-sm text-muted-foreground truncate"
+            title={item.participants}
+          >
             {item.participants}
           </span>
         ) : (
@@ -518,7 +924,10 @@ function buildColumns(
         const parent = parentFolderName(item);
         const full = fullFolderPath(item);
         return (
-          <span className="text-sm text-muted-foreground truncate" title={full || undefined}>
+          <span
+            className="text-sm text-muted-foreground truncate"
+            title={full || undefined}
+          >
             {parent}
           </span>
         );
@@ -580,25 +989,48 @@ function renderRowActions(item: FileItem) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const ACTIVE_GROUPS: FileGroup[] = ["pdf", "word", "spreadsheet", "presentation", "image", "text", "other"];
+const ACTIVE_GROUPS: FileGroup[] = [
+  "pdf",
+  "word",
+  "spreadsheet",
+  "presentation",
+  "image",
+  "text",
+  "other",
+];
 
-export function FilesClient({ items, projects, errorMessage }: FilesClientProps) {
+export function FilesClient({
+  items,
+  projects,
+  errorMessage,
+}: FilesClientProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname() ?? "";
   const router = useRouter();
 
-  const activeGroup = ((searchParams?.get("group") ?? "")) as FileGroup | "";
-
+  const activeGroup = (searchParams?.get("group") ?? "") as FileGroup | "";
 
   // Optimistic overrides for inline edits
   const [projectOverrides, setProjectOverrides] = useState<
     Record<string, { project_id: number | null; project: string | null }>
   >({});
   const [tagOverrides, setTagOverrides] = useState<Record<string, string>>({});
+  const [categoryOverrides, setCategoryOverrides] = useState<
+    Record<string, string | null>
+  >({});
+  const [accessOverrides, setAccessOverrides] = useState<
+    Record<string, string | null>
+  >({});
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkCategoryOpen, setBulkCategoryOpen] = useState(false);
 
   const handleProjectSave = useCallback(
     (docId: string, projectId: number | null, projectName: string | null) => {
-      setProjectOverrides((prev) => ({ ...prev, [docId]: { project_id: projectId, project: projectName } }));
+      setProjectOverrides((prev) => ({
+        ...prev,
+        [docId]: { project_id: projectId, project: projectName },
+      }));
     },
     [],
   );
@@ -607,85 +1039,130 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     setTagOverrides((prev) => ({ ...prev, [docId]: tags }));
   }, []);
 
-  const itemsWithOverrides = useMemo(
-    () => items.map((item) => ({
-      ...item,
-      ...(projectOverrides[item.id] ?? {}),
-      ...(tagOverrides[item.id] !== undefined ? { tags: tagOverrides[item.id] } : {}),
-    })),
-    [items, projectOverrides, tagOverrides],
+  const handleCategorySave = useCallback(
+    (docId: string, category: string | null) => {
+      setCategoryOverrides((prev) => ({ ...prev, [docId]: category }));
+    },
+    [],
   );
 
-  // Filter configs — project options built from the projects list
-  const fileFilters = useMemo<FilterConfig[]>(() => [
-    {
-      id: "file_type",
-      label: "File Type",
-      type: "multiSelect",
-      options: [
-        { value: "pdf",          label: "PDF" },
-        { value: "word",         label: "Word" },
-        { value: "spreadsheet",  label: "Spreadsheet" },
-        { value: "presentation", label: "Slides" },
-        { value: "image",        label: "Image" },
-        { value: "text",         label: "Text" },
-        { value: "other",        label: "Other" },
-      ],
+  const handleAccessSave = useCallback(
+    (docId: string, access: string | null) => {
+      setAccessOverrides((prev) => ({ ...prev, [docId]: access }));
     },
-    {
-      id: "project_id",
-      label: "Project",
-      type: "select",
-      options: [
-        { value: "__unassigned__", label: "Unassigned" },
-        ...projects.map((p) => ({ value: String(p.id), label: p.name })),
-      ],
-    },
-    {
-      id: "source",
-      label: "Source",
-      type: "select",
-      options: [
-        { value: "OneDrive",   label: "OneDrive" },
-        { value: "SharePoint", label: "SharePoint" },
-        { value: "Uploaded",   label: "Uploaded" },
-      ],
-    },
-    {
-      id: "assigned",
-      label: "Assignment",
-      type: "select",
-      options: [
-        { value: "assigned",   label: "Assigned to project" },
-        { value: "unassigned", label: "Unassigned" },
-      ],
-    },
-    {
-      id: "indexed",
-      label: "RAG Status",
-      type: "multiSelect",
-      options: [
-        { value: "embedded",    label: "Indexed" },
-        { value: "raw_ingested", label: "Pending indexing" },
-        { value: "ocr_partial", label: "Partially indexed (page cap)" },
-        { value: "no_text",     label: "No text / not indexed" },
-        { value: "ocr_failed",  label: "OCR failed" },
-      ],
-    },
-    {
-      id: "modified_after",
-      label: "Modified after",
-      type: "date",
-    },
-    {
-      id: "modified_before",
-      label: "Modified before",
-      type: "date",
-    },
-  ], [projects]);
+    [],
+  );
+
+  const itemsWithOverrides = useMemo(
+    () =>
+      items.map((item) => ({
+        ...item,
+        ...(projectOverrides[item.id] ?? {}),
+        ...(tagOverrides[item.id] !== undefined
+          ? { tags: tagOverrides[item.id] }
+          : {}),
+        ...(categoryOverrides[item.id] !== undefined
+          ? { category: categoryOverrides[item.id] }
+          : {}),
+        ...(accessOverrides[item.id] !== undefined
+          ? { access_level: accessOverrides[item.id] }
+          : {}),
+      })),
+    [items, projectOverrides, tagOverrides, categoryOverrides, accessOverrides],
+  );
+
+  const categoryOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const item of itemsWithOverrides) {
+      const c = item.category?.trim();
+      if (c) seen.add(c);
+    }
+    return Array.from(seen).sort((a, b) => a.localeCompare(b));
+  }, [itemsWithOverrides]);
+
+  const accessOptions = useMemo(() => {
+    const seen = new Set<string>(DEFAULT_ACCESS_OPTIONS);
+    for (const item of itemsWithOverrides) {
+      const a = item.access_level?.trim();
+      if (a) seen.add(a);
+    }
+    return Array.from(seen).sort((a, b) => a.localeCompare(b));
+  }, [itemsWithOverrides]);
+
+  // Filter configs: project options built from the projects list
+  const fileFilters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "file_type",
+        label: "File Type",
+        type: "multiSelect",
+        options: [
+          { value: "pdf", label: "PDF" },
+          { value: "word", label: "Word" },
+          { value: "spreadsheet", label: "Spreadsheet" },
+          { value: "presentation", label: "Slides" },
+          { value: "image", label: "Image" },
+          { value: "text", label: "Text" },
+          { value: "other", label: "Other" },
+        ],
+      },
+      {
+        id: "project_id",
+        label: "Project",
+        type: "select",
+        options: [
+          { value: "__unassigned__", label: "Unassigned" },
+          ...projects.map((p) => ({ value: String(p.id), label: p.name })),
+        ],
+      },
+      {
+        id: "source",
+        label: "Source",
+        type: "select",
+        options: [
+          { value: "OneDrive", label: "OneDrive" },
+          { value: "SharePoint", label: "SharePoint" },
+          { value: "Uploaded", label: "Uploaded" },
+        ],
+      },
+      {
+        id: "assigned",
+        label: "Assignment",
+        type: "select",
+        options: [
+          { value: "assigned", label: "Assigned to project" },
+          { value: "unassigned", label: "Unassigned" },
+        ],
+      },
+      {
+        id: "indexed",
+        label: "RAG Status",
+        type: "multiSelect",
+        options: [
+          { value: "embedded", label: "Indexed" },
+          { value: "raw_ingested", label: "Pending indexing" },
+          { value: "ocr_partial", label: "Partially indexed (page cap)" },
+          { value: "no_text", label: "No text / not indexed" },
+          { value: "ocr_failed", label: "OCR failed" },
+        ],
+      },
+      {
+        id: "modified_after",
+        label: "Modified after",
+        type: "date",
+      },
+      {
+        id: "modified_before",
+        label: "Modified before",
+        type: "date",
+      },
+    ],
+    [projects],
+  );
 
   const itemsWithGroup = useMemo(
-    () => itemsWithOverrides.map((item) => ({ item, group: getFileGroup(item) })),
+    () =>
+      itemsWithOverrides.map((item) => ({ item, group: getFileGroup(item) })),
     [itemsWithOverrides],
   );
 
@@ -698,14 +1175,16 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
   }, [itemsWithGroup]);
 
   const tabs = [
-    { label: `All (${itemsWithOverrides.length.toLocaleString()})`, href: pathname, isActive: !activeGroup },
-    ...ACTIVE_GROUPS
-      .filter((g) => (groupCounts[g] ?? 0) > 0)
-      .map((g) => ({
-        label: `${FILE_GROUP_META[g].label} (${(groupCounts[g] ?? 0).toLocaleString()})`,
-        href: `${pathname}?group=${g}`,
-        isActive: activeGroup === g,
-      })),
+    {
+      label: `All (${itemsWithOverrides.length.toLocaleString()})`,
+      href: pathname,
+      isActive: !activeGroup,
+    },
+    ...ACTIVE_GROUPS.filter((g) => (groupCounts[g] ?? 0) > 0).map((g) => ({
+      label: `${FILE_GROUP_META[g].label} (${(groupCounts[g] ?? 0).toLocaleString()})`,
+      href: `${pathname}?group=${g}`,
+      isActive: activeGroup === g,
+    })),
   ];
 
   const tableState = useUnifiedTableState({
@@ -747,7 +1226,9 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
 
   const filteredItems = useMemo(() => {
     let result = activeGroup
-      ? itemsWithGroup.filter(({ group }) => group === activeGroup).map(({ item }) => item)
+      ? itemsWithGroup
+          .filter(({ group }) => group === activeGroup)
+          .map(({ item }) => item)
       : itemsWithOverrides;
 
     const q = tableState.debouncedSearch.trim().toLowerCase();
@@ -766,7 +1247,9 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     // File type filter
     const fileTypeFilter = af.file_type;
     if (Array.isArray(fileTypeFilter) && fileTypeFilter.length > 0) {
-      result = result.filter((item) => fileTypeFilter.includes(getFileGroup(item)));
+      result = result.filter((item) =>
+        fileTypeFilter.includes(getFileGroup(item)),
+      );
     }
 
     // Project filter
@@ -775,7 +1258,9 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
         result = result.filter((item) => item.project_id == null);
       } else {
         result = result.filter(
-          (item) => item.project_id != null && String(item.project_id) === af.project_id,
+          (item) =>
+            item.project_id != null &&
+            String(item.project_id) === af.project_id,
         );
       }
     }
@@ -795,7 +1280,9 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     // RAG status filter
     const indexedFilter = af.indexed;
     if (Array.isArray(indexedFilter) && indexedFilter.length > 0) {
-      result = result.filter((item) => indexedFilter.includes(item.status ?? ""));
+      result = result.filter((item) =>
+        indexedFilter.includes(item.status ?? ""),
+      );
     }
 
     // Modified after
@@ -817,7 +1304,13 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
     }
 
     return result;
-  }, [activeGroup, itemsWithGroup, itemsWithOverrides, tableState.debouncedSearch, af]);
+  }, [
+    activeGroup,
+    itemsWithGroup,
+    itemsWithOverrides,
+    tableState.debouncedSearch,
+    af,
+  ]);
 
   const handleFilterChange = useCallback(
     (next: Record<string, unknown>) => {
@@ -826,7 +1319,7 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
         Object.fromEntries(
           Object.entries(next).map(([k, v]) => [
             k,
-            Array.isArray(v) ? v.join(",") : (v == null ? null : String(v)),
+            Array.isArray(v) ? v.join(",") : v == null ? null : String(v),
           ]),
         ),
       );
@@ -836,8 +1329,25 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
   );
 
   const tableColumns = useMemo(
-    () => buildColumns(projects, handleProjectSave, handleTagSave),
-    [projects, handleProjectSave, handleTagSave],
+    () =>
+      buildColumns(
+        projects,
+        categoryOptions,
+        accessOptions,
+        handleProjectSave,
+        handleTagSave,
+        handleCategorySave,
+        handleAccessSave,
+      ),
+    [
+      projects,
+      categoryOptions,
+      accessOptions,
+      handleProjectSave,
+      handleTagSave,
+      handleCategorySave,
+      handleAccessSave,
+    ],
   );
 
   const sortedItems = useMemo(() => {
@@ -855,86 +1365,170 @@ export function FilesClient({ items, projects, errorMessage }: FilesClientProps)
         ? String(va).localeCompare(String(vb))
         : String(vb).localeCompare(String(va));
     });
-  }, [filteredItems, tableColumns, tableState.sortBy, tableState.sortDirection]);
+  }, [
+    filteredItems,
+    tableColumns,
+    tableState.sortBy,
+    tableState.sortDirection,
+  ]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedItems.length / tableState.perPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedItems.length / tableState.perPage),
+  );
   const paginatedItems = useMemo(() => {
     const start = (tableState.page - 1) * tableState.perPage;
     return sortedItems.slice(start, start + tableState.perPage);
   }, [sortedItems, tableState.page, tableState.perPage]);
 
-  const activeTabLabel = tabs.find((t) => t.isActive)?.label.split(" (")[0].toLowerCase() ?? "file";
+  const activeTabLabel =
+    tabs
+      .find((t) => t.isActive)
+      ?.label.split(" (")[0]
+      .toLowerCase() ?? "file";
+
+  // Selection handlers: onSelectAll operates on the current page's visible items.
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      const pageIds = paginatedItems.map((i) => i.id);
+      if (checked) {
+        setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+      } else {
+        const pageSet = new Set(pageIds);
+        setSelectedIds((prev) => prev.filter((id) => !pageSet.has(id)));
+      }
+    },
+    [paginatedItems],
+  );
+
+  const handleSelectRow = useCallback((id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      if (checked) return prev.includes(id) ? prev : [...prev, id];
+      return prev.filter((x) => x !== id);
+    });
+  }, []);
+
+  const handleBulkCategoryApply = useCallback(
+    async (category: string | null) => {
+      if (selectedIds.length === 0) return;
+      try {
+        await apiFetch(`/api/documents/bulk-update`, {
+          method: "PATCH",
+          body: JSON.stringify({ doc_ids: selectedIds, fields: { category } }),
+        });
+        setCategoryOverrides((prev) => {
+          const next = { ...prev };
+          for (const id of selectedIds) next[id] = category;
+          return next;
+        });
+        setSelectedIds([]);
+      } catch (error) {
+        reportDocumentMetadataFailure({
+          operation: "bulk-set-category",
+          error,
+          userVisibleFallback: "Selected file categories could not be saved.",
+        });
+        throw error;
+      }
+    },
+    [selectedIds],
+  );
 
   return (
-    <UnifiedTablePage<FileItem>
-      header={{
-        title: "Files",
-        description: `${filteredItems.length.toLocaleString()} ${activeGroup ? FILE_GROUP_META[activeGroup].label : "file"}${filteredItems.length === 1 ? "" : "s"} from OneDrive, SharePoint, and uploads`,
-      }}
-      tabs={tabs}
-      layout={{ fullBleedTable: true }}
-      toolbar={{
-        totalItems: itemsWithOverrides.length,
-        filteredItems: filteredItems.length,
-        selectedCount: 0,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search by name, project, source…",
-        currentView: tableState.currentView,
-        onViewChange: (view) => {
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
-        },
-        filters: fileFilters,
-        activeFilters: af,
-        onFilterChange: handleFilterChange,
-        onClearFilters: () => handleFilterChange({}),
-        columns,
-        visibleColumns: tableState.visibleColumns,
-        onColumnVisibilityChange: tableState.setVisibleColumns,
-      }}
-      data={{
-        items: paginatedItems,
-        isLoading: false,
-        isFetching: false,
-        error: errorMessage ? new Error(errorMessage) : null,
-      }}
-      table={{
-        columns: tableColumns,
-        getRowId: (item) => item.id,
-        rowActions: renderRowActions,
-      }}
-      sorting={{
-        sortBy: tableState.sortBy,
-        sortDirection: tableState.sortDirection,
-        onSortChange: (col, dir) => {
-          tableState.setSortBy(col);
-          tableState.setSortDirection(dir);
-          tableState.setPage(1);
-        },
-      }}
-      selection={{ selectedIds: [], onSelectAll: () => {}, onSelectRow: () => {} }}
-      emptyState={{
-        title: `No ${activeTabLabel} files`,
-        description: activeGroup
-          ? `No ${FILE_GROUP_META[activeGroup].label.toLowerCase()} files have been synced yet.`
-          : "No files have been synced from OneDrive or SharePoint yet.",
-        filteredDescription: "Try adjusting your search.",
-        isFiltered: !!tableState.debouncedSearch,
-      }}
-      pagination={{
-        page: tableState.page,
-        totalPages,
-        perPage: tableState.perPage,
-        onPageChange: (p) => {
-          tableState.setPage(p);
-          tableState.setSearchParams({ page: String(p) });
-        },
-        onPerPageChange: (pp) => {
-          tableState.setPerPage(Number(pp));
-          tableState.setPage(1);
-        },
-      }}
-    />
+    <>
+      <UnifiedTablePage<FileItem>
+        header={{
+          title: "Files",
+          description: `${filteredItems.length.toLocaleString()} ${activeGroup ? FILE_GROUP_META[activeGroup].label : "file"}${filteredItems.length === 1 ? "" : "s"} from OneDrive, SharePoint, and uploads`,
+        }}
+        tabs={tabs}
+        layout={{ fullBleedTable: true }}
+        toolbar={{
+          totalItems: itemsWithOverrides.length,
+          filteredItems: filteredItems.length,
+          selectedCount: selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search by name, project, source…",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          filters: fileFilters,
+          activeFilters: af,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange({}),
+          columns,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+          customActions:
+            selectedIds.length > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBulkCategoryOpen(true)}
+                className="h-8"
+              >
+                <Tag className="h-3.5 w-3.5 mr-1.5" />
+                Set category
+              </Button>
+            ) : null,
+        }}
+        data={{
+          items: paginatedItems,
+          isLoading: false,
+          isFetching: false,
+          error: errorMessage ? new Error(errorMessage) : null,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id,
+          rowActions: renderRowActions,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (col, dir) => {
+            tableState.setSortBy(col);
+            tableState.setSortDirection(dir);
+            tableState.setPage(1);
+          },
+        }}
+        selection={{
+          selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
+        emptyState={{
+          title: `No ${activeTabLabel} files`,
+          description: activeGroup
+            ? `No ${FILE_GROUP_META[activeGroup].label.toLowerCase()} files have been synced yet.`
+            : "No files have been synced from OneDrive or SharePoint yet.",
+          filteredDescription: "Try adjusting your search.",
+          isFiltered: !!tableState.debouncedSearch,
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages,
+          perPage: tableState.perPage,
+          onPageChange: (p) => {
+            tableState.setPage(p);
+            tableState.setSearchParams({ page: String(p) });
+          },
+          onPerPageChange: (pp) => {
+            tableState.setPerPage(Number(pp));
+            tableState.setPage(1);
+          },
+        }}
+      />
+      <BulkCategoryDialog
+        open={bulkCategoryOpen}
+        onOpenChange={setBulkCategoryOpen}
+        selectedCount={selectedIds.length}
+        options={categoryOptions}
+        onApply={handleBulkCategoryApply}
+      />
+    </>
   );
 }

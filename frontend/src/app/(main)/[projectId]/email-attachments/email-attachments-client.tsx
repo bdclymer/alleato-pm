@@ -145,9 +145,9 @@ const attachmentColumns = [
 ];
 
 const globalAttachmentColumns = [
-  ...attachmentColumns.slice(0, 5),
+  attachmentColumns[0],
   { id: "project", label: "Project", defaultVisible: true },
-  ...attachmentColumns.slice(5),
+  ...attachmentColumns.slice(1),
 ];
 
 function formatBytes(value: number | null): string {
@@ -196,7 +196,10 @@ function senderLabel(attachment: EmailAttachment): string {
   return "Unknown sender";
 }
 
-function attachmentUrl(projectId: number | undefined, attachmentId: number): string {
+function attachmentUrl(
+  projectId: number | undefined,
+  attachmentId: number,
+): string {
   if (projectId) {
     return `/api/projects/${projectId}/email-attachments/${attachmentId}/download`;
   }
@@ -210,7 +213,10 @@ function patchUrl(projectId: number | undefined, attachmentId: number): string {
   return `/api/email-attachments/${attachmentId}`;
 }
 
-function previewUrl(projectId: number | undefined, attachmentId: number): string {
+function previewUrl(
+  projectId: number | undefined,
+  attachmentId: number,
+): string {
   return `${attachmentUrl(projectId, attachmentId)}?disposition=inline`;
 }
 
@@ -365,7 +371,11 @@ function TypeSelectCell({
 }: {
   attachment: EmailAttachment;
   projectId?: number;
-  onUpdate: (id: number, field: "attachmentType" | "attachmentCategory", value: string | null) => void;
+  onUpdate: (
+    id: number,
+    field: "attachmentType" | "attachmentCategory",
+    value: string | null,
+  ) => void;
 }) {
   const [saving, setSaving] = React.useState(false);
 
@@ -421,7 +431,11 @@ function CategorySelectCell({
 }: {
   attachment: EmailAttachment;
   projectId?: number;
-  onUpdate: (id: number, field: "attachmentType" | "attachmentCategory", value: string | null) => void;
+  onUpdate: (
+    id: number,
+    field: "attachmentType" | "attachmentCategory",
+    value: string | null,
+  ) => void;
 }) {
   const [saving, setSaving] = React.useState(false);
 
@@ -483,7 +497,10 @@ export function EmailAttachmentsClient({
   const isGlobal = scope === "global" || !projectId;
   const columnsConfig = isGlobal ? globalAttachmentColumns : attachmentColumns;
 
-  const queryKey = [isGlobal ? "email-attachments-global" : "email-attachments", projectId];
+  const queryKey = [
+    isGlobal ? "email-attachments-global" : "email-attachments",
+    projectId,
+  ];
 
   const [previewAttachment, setPreviewAttachment] =
     React.useState<EmailAttachment | null>(null);
@@ -528,15 +545,27 @@ export function EmailAttachmentsClient({
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
       tableState.setVisibleColumns(
-        columnsConfig.filter((c) => c.defaultVisible !== false).map((c) => c.id),
+        columnsConfig
+          .filter((c) => c.defaultVisible !== false)
+          .map((c) => c.id),
       );
     }
-  }, [columnsConfig, tableState.visibleColumns.length, tableState.setVisibleColumns]);
+  }, [
+    columnsConfig,
+    tableState.visibleColumns.length,
+    tableState.setVisibleColumns,
+  ]);
 
   const handleFieldUpdate = React.useCallback(
-    (id: number, field: "attachmentType" | "attachmentCategory", value: string | null) => {
-      queryClient.setQueryData<EmailAttachment[]>(queryKey, (prev) =>
-        prev?.map((a) => (a.id === id ? { ...a, [field]: value } : a)) ?? [],
+    (
+      id: number,
+      field: "attachmentType" | "attachmentCategory",
+      value: string | null,
+    ) => {
+      queryClient.setQueryData<EmailAttachment[]>(
+        queryKey,
+        (prev) =>
+          prev?.map((a) => (a.id === id ? { ...a, [field]: value } : a)) ?? [],
       );
     },
     [queryClient, queryKey.join(",")],
@@ -603,7 +632,10 @@ export function EmailAttachmentsClient({
               className="h-16 w-24 overflow-hidden bg-background p-0"
               aria-label={`Preview ${item.fileName}`}
             >
-              <AttachmentPreviewThumbnail attachment={item} projectId={isGlobal ? undefined : projectId} />
+              <AttachmentPreviewThumbnail
+                attachment={item}
+                projectId={isGlobal ? undefined : projectId}
+              />
             </Button>
           );
         },
@@ -613,7 +645,12 @@ export function EmailAttachmentsClient({
         label: "Email",
         sortable: true,
         sortValue: (item) => item.email?.subject ?? "",
-        render: (item) => <TruncatedCell value={item.email?.subject || "No subject"} maxWidth={220} />,
+        render: (item) => (
+          <TruncatedCell
+            value={item.email?.subject || "No subject"}
+            maxWidth={220}
+          />
+        ),
       },
       ...(isGlobal
         ? [
@@ -624,7 +661,10 @@ export function EmailAttachmentsClient({
               sortValue: projectLabel,
               render: (item: EmailAttachment) =>
                 item.project?.id ? (
-                  <CellLink value={projectLabel(item)} href={`/${item.project.id}/emails`} />
+                  <CellLink
+                    value={projectLabel(item)}
+                    href={`/${item.project.id}/emails`}
+                  />
                 ) : (
                   <CellText value={projectLabel(item)} />
                 ),
@@ -638,7 +678,9 @@ export function EmailAttachmentsClient({
         sortValue: senderLabel,
         render: (item) => (
           <CellStackText
-            primary={item.email?.fromName || item.email?.fromEmail || "Unknown sender"}
+            primary={
+              item.email?.fromName || item.email?.fromEmail || "Unknown sender"
+            }
             secondary={item.email?.fromName ? item.email.fromEmail : null}
           />
         ),
@@ -663,9 +705,11 @@ export function EmailAttachmentsClient({
         sortable: true,
         sortValue: (item) => item.textLength,
         render: (item) =>
-          item.textLength > 0
-            ? <CellNumber value={item.textLength} muted />
-            : <CellText value="No text" muted />,
+          item.textLength > 0 ? (
+            <CellNumber value={item.textLength} muted />
+          ) : (
+            <CellText value="No text" muted />
+          ),
       },
     ];
 
@@ -734,7 +778,9 @@ export function EmailAttachmentsClient({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      tableState.setSelectedIds(pagedAttachments.map((item) => String(item.id)));
+      tableState.setSelectedIds(
+        pagedAttachments.map((item) => String(item.id)),
+      );
     } else {
       tableState.setSelectedIds([]);
     }
@@ -772,7 +818,9 @@ export function EmailAttachmentsClient({
     await queryClient.invalidateQueries({ queryKey });
 
     if (errors.length > 0) {
-      toast.error(`${ids.length - errors.length} deleted, ${errors.length} failed`);
+      toast.error(
+        `${ids.length - errors.length} deleted, ${errors.length} failed`,
+      );
     } else {
       toast.success(
         `${ids.length} attachment${ids.length === 1 ? "" : "s"} deleted`,
@@ -801,19 +849,20 @@ export function EmailAttachmentsClient({
         attachment.textLength,
       ];
 
-      return (isGlobal
-        ? [
-            attachment.fileName,
-            attachment.attachmentType ?? "",
-            attachment.attachmentCategory ?? "",
-            attachment.email?.subject ?? "",
-            projectLabel(attachment),
-            senderLabel(attachment),
-            formatDate(receivedAt(attachment)),
-            formatBytes(attachment.fileSize),
-            attachment.textLength,
-          ]
-        : baseValues
+      return (
+        isGlobal
+          ? [
+              attachment.fileName,
+              attachment.attachmentType ?? "",
+              attachment.attachmentCategory ?? "",
+              attachment.email?.subject ?? "",
+              projectLabel(attachment),
+              senderLabel(attachment),
+              formatDate(receivedAt(attachment)),
+              formatBytes(attachment.fileSize),
+              attachment.textLength,
+            ]
+          : baseValues
       )
         .map((value) => JSON.stringify(value))
         .join(",");
@@ -913,7 +962,8 @@ export function EmailAttachmentsClient({
         }}
         emptyState={{
           title: "No email attachments found",
-          description: "No synced Outlook attachments are stored for this project yet.",
+          description:
+            "No synced Outlook attachments are stored for this project yet.",
           filteredDescription: "Try adjusting your search.",
           isFiltered,
           icon: <Paperclip className="h-10 w-10 text-muted-foreground" />,
@@ -967,10 +1017,7 @@ export function EmailAttachmentsClient({
             </ModalDescription>
           </ModalHeader>
           {previewAttachment ? (
-            <div
-              className="min-h-0"
-              style={{ height: "calc(85vh - 96px)" }}
-            >
+            <div className="min-h-0" style={{ height: "calc(85vh - 96px)" }}>
               <AttachmentPreviewViewer
                 attachment={previewAttachment}
                 projectId={isGlobal ? undefined : projectId}
@@ -997,7 +1044,9 @@ export function EmailAttachmentsClient({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isBulkDeleting}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBulkDelete}
               disabled={isBulkDeleting}

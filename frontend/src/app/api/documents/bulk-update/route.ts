@@ -15,9 +15,11 @@ const ALLOWED_FIELDS = new Set([
   "access_level",
 ]);
 
-export const PATCH = withApiGuardrails<{ docId: string }>(
-  "documents/[docId]/assign-project#PATCH",
-  async ({ request, params }) => {
+const MAX_BULK_SIZE = 500;
+
+export const PATCH = withApiGuardrails(
+  "documents/bulk-update#PATCH",
+  async ({ request }) => {
     const supabase = await createClient();
     const {
       data: { user },
@@ -27,19 +29,76 @@ export const PATCH = withApiGuardrails<{ docId: string }>(
     if (authError || !user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
-        where: "documents/[docId]/assign-project#PATCH",
+        where: "documents/bulk-update#PATCH",
         message: "Authentication required.",
       });
     }
 
-    const { docId } = await params;
     const body = await request.json();
+    const docIds = body?.doc_ids;
+    const fields = body?.fields;
 
-    // Filter to only allowed fields.
+    if (!Array.isArray(docIds) || docIds.length === 0) {
+      return NextResponse.json(
+        { error: "doc_ids must be a non-empty array" },
+        { status: 400 },
+      );
+    }
+
+    if (docIds.length > MAX_BULK_SIZE) {
+      return NextResponse.json(
+        { error: `Cannot update more than ${MAX_BULK_SIZE} records at once` },
+        { status: 400 },
+      );
+    }
+
+    if (!docIds.every((id) => typeof id === "string" && id.length > 0)) {
+      return NextResponse.json(
+        { error: "doc_ids must be strings" },
+        { status: 400 },
+      );
+    }
+
+    if (!fields || typeof fields !== "object") {
+      return NextResponse.json(
+        { error: "fields object is required" },
+        { status: 400 },
+      );
+    }
+
     const updates: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(body)) {
+    for (const [key, value] of Object.entries(fields)) {
       if (ALLOWED_FIELDS.has(key)) {
         updates[key] = value;
+      }
+    }
+
+    if ("project_id" in updates) {
+      const projectId = updates.project_id;
+      if (projectId === null || projectId === "") {
+        updates.project_id = null;
+        updates.project = null;
+      } else if (typeof projectId === "number" && Number.isInteger(projectId)) {
+        const { data: project, error: projectError } = await supabase
+          .from("projects")
+          .select("id, name")
+          .eq("id", projectId)
+          .single();
+
+        if (projectError) return apiErrorResponse(projectError);
+        if (!project) {
+          return NextResponse.json(
+            { error: "Selected project does not exist" },
+            { status: 400 },
+          );
+        }
+        updates.project_id = project.id;
+        updates.project = project.name;
+      } else {
+        return NextResponse.json(
+          { error: "project_id must be an integer or null" },
+          { status: 400 },
+        );
       }
     }
 
@@ -82,39 +141,6 @@ export const PATCH = withApiGuardrails<{ docId: string }>(
       }
     }
 
-    if ("project_id" in updates) {
-      const projectId = updates.project_id;
-      if (projectId === null || projectId === "") {
-        updates.project_id = null;
-        updates.project = null;
-      } else if (typeof projectId === "number" && Number.isInteger(projectId)) {
-        const { data: project, error: projectError } = await supabase
-          .from("projects")
-          .select("id, name")
-          .eq("id", projectId)
-          .single();
-
-        if (projectError) {
-          return apiErrorResponse(projectError);
-        }
-
-        if (!project) {
-          return NextResponse.json(
-            { error: "Selected project does not exist" },
-            { status: 400 },
-          );
-        }
-
-        updates.project_id = project.id;
-        updates.project = project.name;
-      } else {
-        return NextResponse.json(
-          { error: "project_id must be an integer or null" },
-          { status: 400 },
-        );
-      }
-    }
-
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
         { error: "No valid fields to update" },
@@ -122,15 +148,16 @@ export const PATCH = withApiGuardrails<{ docId: string }>(
       );
     }
 
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from("document_metadata")
-      .update(updates)
-      .eq("id", docId);
+      .update(updates, { count: "exact" })
+      .in("id", docIds);
 
-    if (error) {
-      return apiErrorResponse(error);
-    }
+    if (error) return apiErrorResponse(error);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      updated: count ?? docIds.length,
+    });
   },
 );
