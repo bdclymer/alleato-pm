@@ -20,6 +20,7 @@ COMPILER_VERSION = "project-operating-summary-v1"
 PACKET_VERSION = "project_operating_summary_v1"
 MAX_SOURCES = 96
 MAX_SOURCE_TEXT_CHARS = 1600
+DEFAULT_LOOKBACK_DAYS = int(os.getenv("PROJECT_OPERATING_SUMMARY_LOOKBACK_DAYS", "180"))
 
 CATEGORY_LABELS = {
     "project_detail": "Project Details",
@@ -35,6 +36,30 @@ CATEGORY_LABELS = {
     "daily_report": "Daily Reports",
     "task": "Tasks",
     "risk": "Risks",
+}
+
+SOURCE_CATEGORY_PRIORITY = {
+    "project_detail": -1,
+    "meeting": 0,
+    "teams": 1,
+    "email": 2,
+    "task": 3,
+    "risk": 3,
+    "rfi": 3,
+    "submittal": 3,
+    "drawing": 3,
+    "specification": 3,
+    "daily_report": 3,
+    "acumatica": 3,
+    "document": 4,
+}
+
+SOURCE_QUALITY_LABELS = {
+    "strategic_synthesis",
+    "clean_source",
+    "raw_dump",
+    "metadata_only",
+    "stale_or_failed",
 }
 
 
@@ -100,11 +125,121 @@ def _safe_date(*values: Any) -> Optional[str]:
     return None
 
 
+def _parse_source_datetime(value: Any) -> Optional[datetime]:
+    text = _compact(value)
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def _source_timestamp(source: Dict[str, Any]) -> Optional[datetime]:
+    return _parse_source_datetime(source.get("capturedAt"))
+
+
 def _truncate(value: str, max_length: int) -> str:
     text = re.sub(r"\s+", " ", value or "").strip()
     if len(text) <= max_length:
         return text
     return f"{text[: max_length - 3].rstrip()}..."
+
+
+def _normalized_text(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip().lower()
+
+
+def _looks_metadata_only(text: str) -> bool:
+    normalized = _normalized_text(text)
+    if len(normalized) < 60:
+        return True
+
+    field_tokens = [
+        "title:",
+        "type:",
+        "category:",
+        "source:",
+        "date:",
+        "from:",
+        "to:",
+        "participants:",
+        "duration:",
+        "organizer email:",
+    ]
+    field_count = sum(1 for token in field_tokens if token in normalized)
+    has_body_signal = any(
+        token in normalized
+        for token in (
+            "summary:",
+            "notes:",
+            "action items:",
+            "decisions:",
+            "key topics:",
+            "question:",
+            "description:",
+            "work performed:",
+        )
+    )
+    if field_count >= 4 and not has_body_signal and len(normalized) < 160:
+        return True
+
+    return (
+        normalized.startswith("subject:")
+        and " from:" in normalized
+        and " to:" in normalized
+        and len(normalized) < 160
+    )
+
+
+def _looks_raw_dump(text: str) -> bool:
+    normalized = _normalized_text(text)
+    email_count = len(re.findall(r"[\w.+-]+@[\w.-]+\.[a-z]{2,}", normalized))
+    date_count = len(
+        re.findall(
+            r"\b(?:mon|tue|wed|thu|fri|sat|sun)\b|\b\d{1,2}/\d{1,2}/\d{2,4}\b",
+            normalized,
+        )
+    )
+    return (
+        normalized.startswith("subject:")
+        or (" subject:" in normalized and " from:" in normalized and " to:" in normalized)
+        or (" duration:" in normalized and " participants:" in normalized)
+        or "[message:" in normalized
+        or email_count >= 4
+        or date_count >= 8
+    )
+
+
+def _source_quality(category: str, text: str, captured_at: Optional[str]) -> Dict[str, Any]:
+    parsed_at = _parse_source_datetime(captured_at)
+    is_stale = False
+    if parsed_at:
+        is_stale = parsed_at < datetime.now(timezone.utc) - timedelta(days=DEFAULT_LOOKBACK_DAYS)
+
+    if is_stale:
+        label = "stale_or_failed"
+        score = 0.15
+        reason = f"Source is older than the {DEFAULT_LOOKBACK_DAYS}-day default operating lookback."
+    elif category in {"task", "risk", "rfi", "submittal", "drawing", "specification", "daily_report", "acumatica", "project_detail"}:
+        label = "clean_source"
+        score = 0.8
+        reason = "Structured project record with typed fields."
+    elif _looks_metadata_only(text):
+        label = "metadata_only"
+        score = 0.2
+        reason = "Source text contains mostly headers or record metadata."
+    elif _looks_raw_dump(text):
+        label = "raw_dump"
+        score = 0.45
+        reason = "Source text appears to be a raw transcript, email thread, or message dump."
+    else:
+        label = "clean_source"
+        score = 0.7
+        reason = "Source contains usable body text or summary fields."
+
+    return {"label": label, "score": score, "reason": reason}
 
 
 def _source_type_for_category(category: str) -> str:
@@ -154,6 +289,7 @@ def _make_source(
     captured_at: Optional[str] = None,
     source_url: Optional[str] = None,
 ) -> Dict[str, Any]:
+    truncated_text = _truncate(text, MAX_SOURCE_TEXT_CHARS)
     return {
         "id": source_id,
         "type": _source_type_for_category(category),
@@ -161,9 +297,10 @@ def _make_source(
         "recordId": record_id,
         "title": title,
         "projectName": project_name,
-        "text": _truncate(text, MAX_SOURCE_TEXT_CHARS),
+        "text": truncated_text,
         "capturedAt": captured_at,
         "sourceUrl": source_url,
+        "sourceQuality": _source_quality(category, truncated_text, captured_at),
     }
 
 
@@ -172,6 +309,42 @@ def _fetch_optional_rows(query: Any) -> List[Dict[str, Any]]:
         return _rows(_execute(query, operation="fetch optional operating sources"))
     except Exception:
         return []
+
+
+def _select_operating_sources(sources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=DEFAULT_LOOKBACK_DAYS)
+    selected_pool = []
+    for source in sources:
+        if source.get("category") == "project_detail":
+            selected_pool.append(source)
+            continue
+        captured_at = _source_timestamp(source)
+        if captured_at and captured_at < cutoff:
+            continue
+        selected_pool.append(source)
+
+    def sort_key(source: Dict[str, Any]) -> tuple[int, float, float, str]:
+        captured_at = _source_timestamp(source)
+        timestamp = captured_at.timestamp() if captured_at else 0.0
+        quality = source.get("sourceQuality") if isinstance(source.get("sourceQuality"), dict) else {}
+        score = float(quality.get("score") or 0)
+        return (
+            SOURCE_CATEGORY_PRIORITY.get(str(source.get("category")), 99),
+            -timestamp,
+            -score,
+            str(source.get("title") or source.get("id") or ""),
+        )
+
+    return sorted(selected_pool, key=sort_key)[:MAX_SOURCES]
+
+
+def _quality_counts(sources: List[Dict[str, Any]]) -> Dict[str, int]:
+    counts = {label: 0 for label in sorted(SOURCE_QUALITY_LABELS)}
+    for source in sources:
+        quality = source.get("sourceQuality") if isinstance(source.get("sourceQuality"), dict) else {}
+        label = quality.get("label") if quality.get("label") in SOURCE_QUALITY_LABELS else "metadata_only"
+        counts[label] = counts.get(label, 0) + 1
+    return counts
 
 
 def _slugify(value: str) -> str:
@@ -431,7 +604,7 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
             )
 
     all_sources = sources
-    sources = all_sources[:MAX_SOURCES]
+    sources = _select_operating_sources(all_sources)
     coverage = []
     for category, label in CATEGORY_LABELS.items():
         all_category_sources = [source for source in all_sources if source["category"] == category]
@@ -442,6 +615,7 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
                 "label": label,
                 "availableCount": len(all_category_sources),
                 "sourceCount": len(category_sources),
+                "inPacketCount": len(category_sources),
                 "latestAt": sorted([s["capturedAt"] for s in category_sources if s.get("capturedAt")])[-1]
                 if any(s.get("capturedAt") for s in category_sources)
                 else None,
@@ -473,6 +647,7 @@ def _provider_client() -> tuple[OpenAI, str]:
 def _source_digest(sources: List[Dict[str, Any]]) -> str:
     parts = []
     for index, source in enumerate(sources, start=1):
+        quality = source.get("sourceQuality") if isinstance(source.get("sourceQuality"), dict) else {}
         parts.append(
             "\n".join(
                 [
@@ -480,6 +655,8 @@ def _source_digest(sources: List[Dict[str, Any]]) -> str:
                     f"id: {source['id']}",
                     f"type: {source['type']}",
                     f"category: {source['category']}",
+                    f"source_quality: {quality.get('label') or 'unknown'}",
+                    f"source_quality_reason: {quality.get('reason') or ''}",
                     f"title: {source.get('title') or ''}",
                     f"captured_at: {source.get('capturedAt') or ''}",
                     "text:",
@@ -514,12 +691,24 @@ def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[st
             "confidence": "low|medium|high",
             "currentExecutiveRead": "string",
             "timeline": [{"title": "string", "sourceIds": ["one or more availableSourceIds"]}],
+            "whatChanged": [{"title": "string", "impact": "string", "sourceIds": ["one or more availableSourceIds"]}],
             "recentChanges": [{"title": "string", "sourceIds": ["one or more availableSourceIds"]}],
+            "risks": [{"title": "string", "severity": "low|medium|high|critical", "recommendedAction": "string", "sourceIds": ["one or more availableSourceIds"]}],
+            "openDecisions": [{"title": "string", "owner": "string|null", "neededBy": "string|null", "sourceIds": ["one or more availableSourceIds"]}],
             "financialPosition": {"summary": "string", "sourceIds": ["one or more availableSourceIds"]},
+            "moneyImpact": {"summary": "string", "sourceIds": ["one or more availableSourceIds"]},
             "scheduleAndProcurement": {"summary": "string", "sourceIds": ["one or more availableSourceIds"]},
             "projectControls": {"tasks": [{"title": "string", "sourceIds": ["one or more availableSourceIds"]}]},
+            "promisesMade": [{"title": "string", "owner": "string|null", "dueDate": "string|null", "sourceIds": ["one or more availableSourceIds"]}],
             "openQuestions": [{"title": "string", "sourceIds": ["one or more availableSourceIds"]}],
+            "recommendedActions": [{"title": "string", "priority": "low|medium|high|critical", "reason": "string", "sourceIds": ["one or more availableSourceIds"]}],
             "recommendedFocus": [{"title": "string", "sourceIds": ["one or more availableSourceIds"]}],
+            "evidenceQuality": {
+                "cleanSynthesisCount": "number",
+                "rawDumpCount": "number",
+                "metadataOnlyCount": "number",
+                "notes": ["string"],
+            },
             "dataGaps": ["string"],
         },
         "sources": _source_digest(aliased_sources),
@@ -531,7 +720,11 @@ def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[st
                 "role": "system",
                 "content": (
                     "Return only valid JSON. Use only the provided source IDs. "
-                    "Do not cite raw Outlook IDs, task IDs, or any ID not in availableSourceIds."
+                    "Do not cite raw Outlook IDs, task IDs, or any ID not in availableSourceIds. "
+                    "Prioritize source_quality=clean_source and recent meeting/Teams sources. "
+                    "Treat source_quality=raw_dump as evidence that must be synthesized, not copied. "
+                    "Do not copy email headers, transcript dumps, signatures, or metadata into the report. "
+                    "Treat source_quality=metadata_only as weak evidence and call it out in evidenceQuality/dataGaps."
                 ),
             },
             {"role": "user", "content": json.dumps(prompt)},
@@ -577,7 +770,25 @@ def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[st
     summary["model"] = model_name
     summary["sourceCount"] = len(sources)
     summary["sourceIds"] = [source["id"] for source in sources]
+    summary["sourceQualityCounts"] = _quality_counts(sources)
+    _assert_summary_quality(summary)
     return summary
+
+
+def _assert_summary_quality(summary: Dict[str, Any]) -> None:
+    text = " ".join(
+        str(value or "")
+        for value in [
+            summary.get("headline"),
+            summary.get("context"),
+            summary.get("currentExecutiveRead"),
+        ]
+    )
+    normalized = _normalized_text(text)
+    if not summary.get("headline") or not summary.get("currentExecutiveRead"):
+        raise ValueError("Operating summary model returned an incomplete strategic report.")
+    if _looks_raw_dump(normalized) or _looks_metadata_only(normalized):
+        raise ValueError("Operating summary model returned raw source text or metadata instead of synthesis.")
 
 
 def _find_source(sources: Dict[str, Dict[str, Any]], source_id: str) -> Optional[Dict[str, Any]]:
@@ -586,6 +797,12 @@ def _find_source(sources: Dict[str, Dict[str, Any]], source_id: str) -> Optional
 
 def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
     controls = summary.get("projectControls") or {}
+    what_changed = summary.get("whatChanged") or summary.get("recentChanges") or []
+    risks = summary.get("risks") or []
+    open_decisions = summary.get("openDecisions") or summary.get("openQuestions") or []
+    money_impact = summary.get("moneyImpact") or summary.get("financialPosition") or {}
+    promises_made = summary.get("promisesMade") or []
+    recommended_actions = summary.get("recommendedActions") or summary.get("recommendedFocus") or []
     cards = [
         {
             "key": "operating-current-read",
@@ -598,9 +815,81 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "sourceIds": summary.get("sourceIds", [])[:8],
         },
         {
+            "key": "operating-what-changed",
+            "section": "timeline",
+            "rank": 2,
+            "type": "change_management",
+            "title": "What changed",
+            "summary": " ".join(
+                f"{item.get('title', '')}: {item.get('impact', '')}".strip(": ")
+                for item in what_changed
+            )
+            or "No recent changes were explicit.",
+            "why": "Keeps project-status answers grounded in the recent change trail.",
+            "sourceIds": list({sid for item in what_changed for sid in item.get("sourceIds", [])})[:12],
+        },
+        {
+            "key": "operating-risks",
+            "section": "risks",
+            "rank": 3,
+            "type": "risk",
+            "title": "Risks and exposure",
+            "summary": " ".join(
+                f"{item.get('title', '')}: {item.get('recommendedAction', '')}".strip(": ")
+                for item in risks
+            )
+            or "No risks were explicit.",
+            "why": "Separates strategic risk from raw source activity.",
+            "sourceIds": list({sid for item in risks for sid in item.get("sourceIds", [])})[:12],
+        },
+        {
+            "key": "operating-open-decisions",
+            "section": "decisions",
+            "rank": 4,
+            "type": "decision",
+            "title": "Open decisions",
+            "summary": " ".join(item.get("title", "") for item in open_decisions) or "No open decisions were explicit.",
+            "why": "Shows unresolved decisions before they become schedule or money risk.",
+            "sourceIds": list({sid for item in open_decisions for sid in item.get("sourceIds", [])})[:12],
+        },
+        {
+            "key": "operating-financial-position",
+            "section": "financials",
+            "rank": 5,
+            "type": "financial_exposure",
+            "title": "Money impact",
+            "summary": money_impact.get("summary") or "",
+            "why": "Financial claims must disclose coverage and gaps.",
+            "sourceIds": money_impact.get("sourceIds", [])[:12],
+        },
+        {
+            "key": "operating-promises-made",
+            "section": "commitments",
+            "rank": 6,
+            "type": "task",
+            "title": "Promises made",
+            "summary": " ".join(item.get("title", "") for item in promises_made) or "No promises were explicit.",
+            "why": "Captures commitments made in meetings, Teams, and email before they disappear into raw comms.",
+            "sourceIds": list({sid for item in promises_made for sid in item.get("sourceIds", [])})[:12],
+        },
+        {
+            "key": "operating-recommended-actions",
+            "section": "next_actions",
+            "rank": 7,
+            "type": "open_question",
+            "title": "Recommended actions",
+            "summary": " ".join(
+                f"{item.get('title', '')}: {item.get('reason', '')}".strip(": ")
+                for item in recommended_actions
+            )
+            or "No recommended actions were explicit.",
+            "why": "Sets the next-action baseline for the assistant.",
+            "sourceIds": list({sid for item in recommended_actions for sid in item.get("sourceIds", [])})[:12],
+        },
+        {
             "key": "operating-project-controls",
             "section": "controls",
-            "rank": 2,
+            "rank": 8,
             "type": "task",
             "title": "Project controls and tasks",
             "summary": " ".join(item.get("title", "") for item in controls.get("tasks", [])) or "No task/control items were explicit.",
@@ -608,48 +897,14 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "sourceIds": list({sid for item in controls.get("tasks", []) for sid in item.get("sourceIds", [])})[:12],
         },
         {
-            "key": "operating-recent-changes",
-            "section": "timeline",
-            "rank": 3,
-            "type": "change_management",
-            "title": "Recent changes and timeline",
-            "summary": " ".join(item.get("title", "") for item in summary.get("recentChanges", [])) or "No recent changes were explicit.",
-            "why": "Keeps project-status answers grounded in change history.",
-            "sourceIds": list({sid for item in summary.get("recentChanges", []) + summary.get("timeline", []) for sid in item.get("sourceIds", [])})[:8],
-        },
-        {
             "key": "operating-schedule-procurement",
             "section": "schedule",
-            "rank": 4,
+            "rank": 9,
             "type": "schedule_risk",
             "title": "Schedule and procurement",
             "summary": (summary.get("scheduleAndProcurement") or {}).get("summary") or "",
             "why": "Schedule and procurement claims must be tied to source evidence.",
-            "sourceIds": (summary.get("scheduleAndProcurement") or {}).get("sourceIds", [])[:8],
-        },
-        {
-            "key": "operating-financial-position",
-            "section": "financials",
-            "rank": 5,
-            "type": "financial_exposure",
-            "title": "Financial position and exposure",
-            "summary": (summary.get("financialPosition") or {}).get("summary") or "",
-            "why": "Financial claims must disclose coverage and gaps.",
-            "sourceIds": (summary.get("financialPosition") or {}).get("sourceIds", [])[:8],
-        },
-        {
-            "key": "operating-open-questions",
-            "section": "next_actions",
-            "rank": 6,
-            "type": "open_question",
-            "title": "Open questions and recommended focus",
-            "summary": " ".join(
-                item.get("title", "")
-                for item in summary.get("openQuestions", []) + summary.get("recommendedFocus", [])
-            )
-            or "No open questions were explicit.",
-            "why": "Sets the next-action baseline for the assistant.",
-            "sourceIds": list({sid for item in summary.get("openQuestions", []) + summary.get("recommendedFocus", []) for sid in item.get("sourceIds", [])})[:8],
+            "sourceIds": (summary.get("scheduleAndProcurement") or {}).get("sourceIds", [])[:12],
         },
     ]
     return [card for card in cards if card["sourceIds"]]
@@ -680,7 +935,7 @@ def _source_coverage_card(source_set: Dict[str, Any]) -> Optional[Dict[str, Any]
     return {
         "key": "operating-source-coverage",
         "section": "source_coverage",
-        "rank": 7,
+        "rank": 10,
         "type": "project_update",
         "title": "Available project source coverage",
         "summary": (
@@ -710,6 +965,12 @@ def refresh_project_operating_packet(
     if coverage_card:
         cards.append(coverage_card)
     linked_evidence_count = sum(len(card["sourceIds"]) for card in cards)
+    source_quality_counts = _quality_counts(source_set["sources"])
+    recommended_actions = summary.get("recommendedActions") or summary.get("recommendedFocus") or []
+    risks = summary.get("risks") or []
+    what_changed = summary.get("whatChanged") or summary.get("recentChanges") or []
+    open_decisions = summary.get("openDecisions") or summary.get("openQuestions") or []
+    promises_made = summary.get("promisesMade") or []
 
     source_coverage = {
         "freshnessStatus": "fresh",
@@ -719,6 +980,12 @@ def refresh_project_operating_packet(
         "categoryCoverage": source_set["coverage"],
         "latestSourceAt": latest_dates[-1] if latest_dates else None,
         "linkedEvidenceCount": linked_evidence_count,
+        "sourceQualityCounts": source_quality_counts,
+        "evidenceQuality": summary.get("evidenceQuality") or {},
+        "qualityGate": {
+            "status": "passed",
+            "reason": "Operating summary passed raw-source and metadata-only synthesis checks.",
+        },
         "gaps": list(summary.get("dataGaps") or []),
     }
     payload = {
@@ -731,15 +998,27 @@ def refresh_project_operating_packet(
         "freshness_status": "fresh",
         "executive_summary": _truncate(summary.get("headline") or "Project operating summary", 1000),
         "current_status": _truncate(summary.get("currentExecutiveRead") or summary.get("context") or "", 2000),
-        "strategic_read": _truncate(summary.get("context") or "", 1600),
-        "why_it_matters": _truncate(" ".join(item.get("title", "") for item in summary.get("recommendedFocus", [])) or summary.get("context") or "", 1600),
-        "recommended_next_moves": [item.get("title") for item in summary.get("recommendedFocus", []) if item.get("title")][:8],
+        "strategic_read": _truncate(
+            " ".join(
+                [
+                    summary.get("context") or "",
+                    "What changed: " + "; ".join(item.get("title", "") for item in what_changed[:4]) if what_changed else "",
+                    "Risks: " + "; ".join(item.get("title", "") for item in risks[:4]) if risks else "",
+                ]
+            ),
+            1600,
+        ),
+        "why_it_matters": _truncate(
+            " ".join(item.get("title", "") for item in recommended_actions[:5]) or summary.get("context") or "",
+            1600,
+        ),
+        "recommended_next_moves": [item.get("title") for item in recommended_actions if item.get("title")][:8],
         "confidence_summary": {
             "overall": confidence,
             "status": confidence,
             "financialExposure": confidence if (summary.get("financialPosition") or {}).get("summary") else "low",
-            "changeManagement": confidence if summary.get("recentChanges") else "low",
-            "followUps": confidence if summary.get("recommendedFocus") else "low",
+            "changeManagement": confidence if what_changed else "low",
+            "followUps": confidence if recommended_actions or promises_made else "low",
             "reason": f"Structured operating summary generated from {len(source_set['sources'])} source capsules.",
         },
         "source_coverage": source_coverage,
@@ -751,6 +1030,15 @@ def refresh_project_operating_packet(
             "generatedAt": generated_at,
             "sourceSet": source_set,
             "summary": summary,
+            "strategicReport": {
+                "whatChanged": what_changed,
+                "risks": risks,
+                "openDecisions": open_decisions,
+                "moneyImpact": summary.get("moneyImpact") or summary.get("financialPosition") or {},
+                "promisesMade": promises_made,
+                "recommendedActions": recommended_actions,
+                "evidenceQuality": summary.get("evidenceQuality") or {},
+            },
         },
         "compiler_version": COMPILER_VERSION,
     }
@@ -786,8 +1074,8 @@ def refresh_project_operating_packet(
             "current_status": "open",
             "confidence": confidence,
             "attribution_status": "approved" if confidence != "low" else "needs_review",
-            "next_action": _truncate((summary.get("recommendedFocus") or [{}])[0].get("title", ""), 600)
-            if summary.get("recommendedFocus")
+            "next_action": _truncate((recommended_actions or [{}])[0].get("title", ""), 600)
+            if recommended_actions
             else None,
             "first_seen_at": (first_source or {}).get("capturedAt") or generated_at,
             "last_seen_at": latest_dates[-1] if latest_dates else generated_at,

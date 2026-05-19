@@ -102,6 +102,7 @@
     "rag:verify:deep-agents-nonprod": "node scripts/verify/verify_deep_agents_nonprod_readiness.mjs",
     "rag:repair:intelligence-current-packets": "node scripts/verify/repair_ai_intelligence_current_packet_links.mjs",
     "rag:verify:intelligence-compiler": "node scripts/verify/verify_ai_intelligence_compiler_health.mjs",
+    "rag:verify:packet-synthesis-quality": "node scripts/verify/verify_ai_packet_synthesis_quality.mjs",
     "rag:verify:graph-embedding": "node scripts/verify/verify_graph_embedding_contract.mjs",
     "rag:verify:chunk-integrity": "node scripts/verify/verify_rag_chunk_integrity.mjs",
     "rag:verify:repaired-meeting-retrieval": "node scripts/verify/verify_repaired_meeting_transcript_retrieval.mjs",

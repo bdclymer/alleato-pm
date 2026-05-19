@@ -221,6 +221,14 @@ try {
        and c.attribution_status <> 'rejected'
        and not exists (
          select 1
+         from public.intelligence_packets operating_packet
+         where operating_packet.target_id = c.primary_target_id
+           and operating_packet.packet_type = 'current'
+           and operating_packet.compiler_version = 'project-operating-summary-v1'
+           and coalesce(c.compiler_version, '') <> 'project-operating-summary-v1'
+       )
+       and not exists (
+         select 1
          from public.intelligence_packets p
          join public.intelligence_packet_cards pc on pc.packet_id = p.id
          where p.target_id = c.primary_target_id

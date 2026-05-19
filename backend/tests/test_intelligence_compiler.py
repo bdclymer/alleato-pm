@@ -1,5 +1,8 @@
 from datetime import datetime
 
+import pytest
+
+import src.services.intelligence.compiler as compiler_module
 from src.services.intelligence.compiler import (
     classify_basic_signal,
     compile_current_packet,
@@ -11,6 +14,8 @@ from src.services.intelligence.compiler import (
     promote_signal_candidate,
     run_intelligence_compiler_batch,
 )
+
+_ACTIVE_FAKE_SUPABASE = None
 
 
 class _Result:
@@ -107,8 +112,10 @@ class _TableQuery:
 
 class _FakeSupabase:
     def __init__(self):
+        global _ACTIVE_FAKE_SUPABASE
         self.tables = {}
         self.counters = {}
+        _ACTIVE_FAKE_SUPABASE = self
 
     def table(self, table_name):
         return _TableQuery(self, table_name)
@@ -116,6 +123,14 @@ class _FakeSupabase:
     def next_id(self, table_name):
         self.counters[table_name] = self.counters.get(table_name, 0) + 1
         return f"{table_name}-{self.counters[table_name]}"
+
+
+@pytest.fixture(autouse=True)
+def _legacy_packet_compiler_for_existing_contract_tests(monkeypatch):
+    monkeypatch.setenv("INTELLIGENCE_USE_OPERATING_SUMMARY_COMPILER", "false")
+    monkeypatch.setenv("INTELLIGENCE_INLINE_PACKET_REFRESH", "true")
+    monkeypatch.setattr(compiler_module, "_rag_read", lambda: _ACTIVE_FAKE_SUPABASE)
+    monkeypatch.setattr(compiler_module, "_rag_write", lambda: _ACTIVE_FAKE_SUPABASE)
 
 
 def test_confidence_label_thresholds():
