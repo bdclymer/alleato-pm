@@ -1519,6 +1519,43 @@ async def start_scheduler():
         logger.warning("Scheduler init failed (non-critical): %s", e)
 
 
+@app.on_event("startup")
+async def emit_langsmith_tracing_probe() -> None:
+    # If tracing breaks again, this run is the first thing missing from the
+    # LangSmith project — we see the regression on deploy instead of finding out
+    # a day later. Failure here is logged, never crashes the app.
+    import os
+
+    project = os.getenv("LANGSMITH_PROJECT") or os.getenv("LANGCHAIN_PROJECT")
+    tracing_on = (
+        os.getenv("LANGSMITH_TRACING") == "true"
+        or os.getenv("LANGCHAIN_TRACING_V2") == "true"
+    )
+    has_key = bool(os.getenv("LANGSMITH_API_KEY") or os.getenv("LANGCHAIN_API_KEY"))
+    if not (project and tracing_on and has_key):
+        logger.warning(
+            "[tracing-probe] LangSmith not fully configured (project=%s tracing=%s api_key=%s) — skipping probe",
+            bool(project), tracing_on, has_key,
+        )
+        return
+
+    try:
+        from langsmith import traceable
+
+        @traceable(name="alleato-backend.startup_probe", project_name=project)
+        def _probe() -> dict:
+            return {
+                "service": os.getenv("LANGSMITH_DEPLOYMENT_NAME", "alleato-backend"),
+                "commit": os.getenv("RENDER_GIT_COMMIT", "unknown"),
+                "ok": True,
+            }
+
+        result = _probe()
+        logger.info("[tracing-probe] emitted startup trace to project=%s result=%s", project, result)
+    except Exception as exc:
+        logger.warning("[tracing-probe] failed to emit startup trace: %s", exc, exc_info=True)
+
+
 @app.on_event("shutdown")
 async def stop_scheduler():
     """Gracefully shut down the scheduler."""

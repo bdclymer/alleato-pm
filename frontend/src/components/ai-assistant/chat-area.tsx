@@ -293,6 +293,9 @@ function getAssistantWidgetParts(msg: UIMessage): AssistantWidgetPayload[] {
     if (!data || typeof data !== "object") return widgets;
     const widget = (data as { widget?: unknown }).widget;
     if (!isAssistantWidgetPayload(widget)) return widgets;
+    // Evidence/source-coverage cards disabled in chat UI per 2026-05-19 —
+    // backend still emits them; re-enable by removing this filter.
+    if (widget.type === "source_evidence_drawer") return widgets;
     widgets.push(widget);
     return widgets;
   }, []);
@@ -2067,8 +2070,8 @@ export function ChatArea({
                             />
                           )}
 
-                          {/* Source citations */}
-                          {persistedSources.length > 0 && (
+                          {/* Source citations — disabled in chat UI per 2026-05-19. */}
+                          {false && persistedSources.length > 0 && (
                             <AssistantSourceEvidenceWidget sources={persistedSources} />
                           )}
 
