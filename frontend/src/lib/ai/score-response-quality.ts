@@ -52,6 +52,10 @@ const SOURCE_BEARING_TOOLS = new Set([
   "getProjectBriefingSnapshot",
   "cachedProjectBriefingSnapshot",
   "cachedExecutiveRetrievalPacket",
+  "backendDeepAgentExecutiveBriefing",
+  "backendDeepAgentProjectStatus",
+  "backendDeepAgentResearch",
+  "deepagents_runtime",
 ]);
 
 function asRecord(value: unknown): Record<string, unknown> | null {

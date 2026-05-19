@@ -16,6 +16,7 @@ import { buildExecutorDeps } from "@/lib/ai/retrieval/deps";
 import { assembleSystemPrompt } from "@/lib/ai/bot-core";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
 import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
 import {
   buildDeepAgentExecutiveEvidenceWidget,
@@ -105,6 +106,64 @@ function extractPersistableDataParts(message: UIMessage): Json[] {
     })
     .map(toJsonValue)
     .filter((part): part is Json => part !== undefined);
+}
+
+function buildResponseQualityMetadata(params: {
+  toolTrace: Array<Record<string, unknown>>;
+  content: string;
+}) {
+  return scoreResponseQuality(params);
+}
+
+function createBackendBridgeTrace(params: {
+  tool: string;
+  status: "success" | "failed" | "skipped";
+  message: string;
+  selectedProjectId?: number | null;
+  durationMs?: number;
+  detail?: string | null;
+}) {
+  return {
+    tool: params.tool,
+    toolName: params.tool,
+    agent: "frontend-ai-assistant",
+    status: params.status,
+    durationMs: params.durationMs ?? 0,
+    detail: params.detail ?? null,
+    input: {
+      message: params.message.slice(0, 240),
+      selectedProjectId: params.selectedProjectId ?? null,
+    },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function mapBackendPacketTrace(
+  packetTrace: Array<{
+    tool: string;
+    agent: string;
+    status: string;
+    durationMs: number;
+    detail?: string | null;
+  }>,
+  params: {
+    message: string;
+    selectedProjectId?: number | null;
+  },
+) {
+  return packetTrace.map((trace) => ({
+    tool: trace.tool,
+    toolName: trace.tool,
+    agent: trace.agent,
+    status: trace.status,
+    durationMs: trace.durationMs,
+    detail: trace.detail,
+    input: {
+      message: params.message.slice(0, 240),
+      selectedProjectId: params.selectedProjectId ?? null,
+    },
+    timestamp: new Date().toISOString(),
+  }));
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -466,6 +525,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     toolCallNames: string[];
     stepCount: number;
   } | null = null;
+  const bridgeToolTrace: Array<Record<string, unknown>> = [];
 
   const plan = planRetrieval({
     message: lastUserContent,
@@ -746,7 +806,24 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               : [];
 
             dataParts.forEach((dataPart) => writer.write(dataPart as never));
-            writeTextResponse(writer, "strategist-deep-agent-research", content);
+            writeTextResponse(
+              writer,
+              "strategist-deep-agent-research",
+              content,
+            );
+
+            const toolTrace = [
+              createBackendBridgeTrace({
+                tool: "backendDeepAgentResearch",
+                status: "success",
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId ?? null,
+              }),
+              ...mapBackendPacketTrace(packet.toolTrace, {
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId ?? null,
+              }),
+            ];
 
             const { error: assistantError } = await args.supabase
               .from("chat_history")
@@ -772,18 +849,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                     responseFormat: plan.responseFormat,
                     sources: Object.keys(plan.sources),
                   },
-                  tool_trace: packet.toolTrace.map((trace) => ({
-                    tool: trace.tool,
-                    agent: trace.agent,
-                    status: trace.status,
-                    durationMs: trace.durationMs,
-                    detail: trace.detail,
-                    input: {
-                      message: lastUserContent.slice(0, 240),
-                      selectedProjectId: args.selectedProjectId ?? null,
-                    },
-                    timestamp: new Date().toISOString(),
-                  })),
+                  tool_trace: toolTrace,
+                  response_quality: buildResponseQualityMetadata({
+                    toolTrace,
+                    content,
+                  }),
                   data_parts: dataParts,
                 } as Json,
               });
@@ -820,6 +890,16 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             return;
           }
 
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentResearch",
+              status: "success",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+              detail:
+                "Backend research packet returned context for local synthesis.",
+            }),
+          );
           writer.write({
             type: "data-status",
             id: "strategist-status",
@@ -833,6 +913,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           } as never);
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentResearch",
+              status: "failed",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+              detail,
+            }),
+          );
           console.error("[handler-v2] Deep Agents research bridge failed", {
             message: detail,
             intent: plan.intent,
@@ -908,6 +997,19 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               content,
             );
 
+            const toolTrace = [
+              createBackendBridgeTrace({
+                tool: "backendDeepAgentProjectStatus",
+                status: "success",
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId,
+              }),
+              ...mapBackendPacketTrace(packet.toolTrace, {
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId,
+              }),
+            ];
+
             const { error: assistantError } = await args.supabase
               .from("chat_history")
               .insert({
@@ -940,18 +1042,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                     responseFormat: plan.responseFormat,
                     sources: Object.keys(plan.sources),
                   },
-                  tool_trace: packet.toolTrace.map((trace) => ({
-                    tool: trace.tool,
-                    agent: trace.agent,
-                    status: trace.status,
-                    durationMs: trace.durationMs,
-                    detail: trace.detail,
-                    input: {
-                      message: lastUserContent.slice(0, 240),
-                      selectedProjectId: args.selectedProjectId,
-                    },
-                    timestamp: new Date().toISOString(),
-                  })),
+                  tool_trace: toolTrace,
+                  response_quality: buildResponseQualityMetadata({
+                    toolTrace,
+                    content,
+                  }),
                   data_parts: dataParts,
                 } as Json,
               });
@@ -988,6 +1083,16 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             return;
           }
 
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentProjectStatus",
+              status: "success",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId,
+              detail:
+                "Backend project packet returned context for local synthesis.",
+            }),
+          );
           writer.write({
             type: "data-status",
             id: "strategist-status",
@@ -1001,6 +1106,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           } as never);
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentProjectStatus",
+              status: "failed",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId,
+              detail,
+            }),
+          );
           console.error("[handler-v2] Deep Agents project bridge failed", {
             message: detail,
             selectedProjectId: args.selectedProjectId,
@@ -1045,7 +1159,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
 
           if (shouldUseDeepAgentExecutiveDirectResponse(packet)) {
             const content = formatDeepAgentExecutiveDirectResponse(packet);
-            const evidenceWidget = buildDeepAgentExecutiveEvidenceWidget(packet);
+            const evidenceWidget =
+              buildDeepAgentExecutiveEvidenceWidget(packet);
             const memoryWidget = buildDeepAgentMemoryCandidateWidget(packet);
             const dataParts = [
               ...(evidenceWidget
@@ -1074,6 +1189,19 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               "strategist-deep-agent-executive-briefing",
               content,
             );
+
+            const toolTrace = [
+              createBackendBridgeTrace({
+                tool: "backendDeepAgentExecutiveBriefing",
+                status: "success",
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId ?? null,
+              }),
+              ...mapBackendPacketTrace(packet.toolTrace, {
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId ?? null,
+              }),
+            ];
 
             const { error: assistantError } = await args.supabase
               .from("chat_history")
@@ -1107,18 +1235,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                     responseFormat: plan.responseFormat,
                     sources: Object.keys(plan.sources),
                   },
-                  tool_trace: packet.toolTrace.map((trace) => ({
-                    tool: trace.tool,
-                    agent: trace.agent,
-                    status: trace.status,
-                    durationMs: trace.durationMs,
-                    detail: trace.detail,
-                    input: {
-                      message: lastUserContent.slice(0, 240),
-                      selectedProjectId: args.selectedProjectId ?? null,
-                    },
-                    timestamp: new Date().toISOString(),
-                  })),
+                  tool_trace: toolTrace,
+                  response_quality: buildResponseQualityMetadata({
+                    toolTrace,
+                    content,
+                  }),
                   data_parts: dataParts,
                 } as Json,
               });
@@ -1155,6 +1276,16 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             return;
           }
 
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentExecutiveBriefing",
+              status: "success",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+              detail:
+                "Backend executive packet returned context for local synthesis.",
+            }),
+          );
           writer.write({
             type: "data-status",
             id: "strategist-status",
@@ -1168,6 +1299,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           } as never);
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentExecutiveBriefing",
+              status: "failed",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+              detail,
+            }),
+          );
           console.error("[handler-v2] Deep Agents executive bridge failed", {
             message: detail,
             intent: plan.intent,
@@ -1347,6 +1487,19 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         : "The assistant could not get a usable response from the AI provider. This usually means the provider account is out of credits, over quota, or blocked by billing. I saved your question so it is not lost; after the provider billing issue is fixed, retry this message or choose a different model.";
 
       const dataParts = extractPersistableDataParts(responseMessage);
+      const streamToolTrace =
+        finishMetadata?.toolCallNames.map((tool) => ({
+          tool,
+          toolName: tool,
+          status: "success",
+          input: {
+            message: lastUserContent.slice(0, 240),
+            selectedProjectId: args.selectedProjectId ?? null,
+          },
+          timestamp: new Date().toISOString(),
+        })) ?? [];
+      const toolTrace = [...bridgeToolTrace, ...streamToolTrace];
+
       const metadata: Record<string, unknown> = {
         architecture: "retrieval-planner-v2",
         response_message_id: responseMessage.id,
@@ -1355,15 +1508,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         finish_reason: finishMetadata?.finishReason ?? finishReason ?? null,
         empty_model_response: !assistantText.trim(),
         usage: finishMetadata?.usage ?? null,
-        tool_trace:
-          finishMetadata?.toolCallNames.map((tool) => ({
-            tool,
-            input: {
-              message: lastUserContent.slice(0, 240),
-              selectedProjectId: args.selectedProjectId ?? null,
-            },
-            timestamp: new Date().toISOString(),
-          })) ?? [],
+        tool_trace: toolTrace,
+        response_quality: buildResponseQualityMetadata({
+          toolTrace,
+          content: assistantContent,
+        }),
         retrieval_plan: {
           intent: plan.intent,
           reason: plan.reason,

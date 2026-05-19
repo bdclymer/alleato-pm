@@ -31,6 +31,21 @@ function cleanPreview(value: unknown, limit = 500): string | null {
   return text.length > limit ? `${text.slice(0, limit - 1)}...` : text;
 }
 
+function normalizeEmail(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  const match = normalized.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/);
+  return match?.[0] ?? null;
+}
+
+function getPrimarySyncedMailbox(): string | null {
+  return (
+    normalizeEmail(process.env.AI_ASSISTANT_DEFAULT_OUTLOOK_MAILBOX) ??
+    normalizeEmail(process.env.OUTLOOK_OPERATOR_MAILBOX) ??
+    normalizeEmail(process.env.MICROSOFT_SYNC_USERS?.split(",")[0])
+  );
+}
+
 function stringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
@@ -152,8 +167,8 @@ export function createOutlookOperationsTools(
 
   return {
     getRecentOutlookEmails: tool({
-      description:
-        "Read recent synced Outlook email rows from Microsoft 365. Use for inbox-style questions such as 'what emails came in today', 'show recent Outlook mail', 'what needs a reply', or 'what has Brandon received about this project'. This reads synced Outlook intake table rows, not semantic RAG and not a direct Microsoft Graph live read.",
+	      description:
+	        "Read recent synced Outlook email rows from Microsoft 365. Use for inbox-style questions such as 'what emails came in today', 'show recent Outlook mail', 'what needs a reply', or 'what has Brandon received about this project'. This reads synced Outlook intake table rows, not semantic RAG and not a direct Microsoft Graph live read. For Brandon/operator inbox work, pass mailboxUserId='bclymer@alleatogroup.com'.",
       inputSchema: z.object({
         projectId: z.number().optional().describe("Optional project ID to scope recent emails"),
         mailboxUserId: z.string().optional().describe("Optional Outlook mailbox user ID/email"),
@@ -188,9 +203,12 @@ export function createOutlookOperationsTools(
           if (Array.isArray(projectScope)) {
             dbQuery = dbQuery.in("project_id", projectScope);
           }
-          if (mailboxUserId?.trim()) {
-            dbQuery = dbQuery.ilike("mailbox_user_id", mailboxUserId.trim());
-          }
+	          const effectiveMailboxUserId =
+	            normalizeEmail(mailboxUserId) ??
+	            (!projectId && !senderEmail && !query ? getPrimarySyncedMailbox() : null);
+	          if (effectiveMailboxUserId) {
+	            dbQuery = dbQuery.eq("mailbox_user_id", effectiveMailboxUserId);
+	          }
           if (senderEmail?.trim()) {
             dbQuery = dbQuery.ilike("from_email", senderEmail.trim());
           }

@@ -128,6 +128,22 @@ function normalizeEmail(value: string | null | undefined): string | null {
   return match?.[0] ?? null;
 }
 
+function getPrimarySyncedMailbox(): string | null {
+  return (
+    normalizeEmail(process.env.AI_ASSISTANT_DEFAULT_OUTLOOK_MAILBOX) ??
+    normalizeEmail(process.env.OUTLOOK_OPERATOR_MAILBOX) ??
+    normalizeEmail(process.env.MICROSOFT_SYNC_USERS?.split(",")[0])
+  );
+}
+
+function isCompanyMailbox(email: string): boolean {
+  const domains = (process.env.COMPANY_EMAIL_DOMAINS ?? "alleatogroup.com")
+    .split(",")
+    .map((domain) => domain.trim().toLowerCase())
+    .filter(Boolean);
+  return domains.some((domain) => email.endsWith(`@${domain}`));
+}
+
 function includesEmail(
   values: string[] | null | undefined,
   email: string,
@@ -2887,12 +2903,12 @@ export function createOperationalTools(
           .describe(
             "How many days back to look. 0 = today only, 1 = yesterday through now, 7 = last 7 days. Default 1.",
           ),
-        mailboxFilter: z
-          .string()
-          .optional()
-          .describe(
-            "Optional: filter to a specific synced mailbox email address. Omit for the signed-in user's mailbox.",
-          ),
+	        mailboxFilter: z
+	          .string()
+	          .optional()
+	          .describe(
+	            "Optional: filter to a specific synced mailbox email address. Use bclymer@alleatogroup.com for Brandon/operator inbox prompts. Omit only for the signed-in user's synced mailbox.",
+	          ),
         participantEmail: z
           .string()
           .optional()
@@ -2956,15 +2972,30 @@ export function createOperationalTools(
             currentUserEmail = normalizeEmail(userData.user?.email);
           }
 
-          const effectiveParticipantEmail =
-            normalizedParticipantEmail ??
-            normalizedMailboxFilter ??
-            currentUserEmail;
-          const effectiveDirection: RecentEmailDirection =
-            normalizedParticipantEmail ? direction : "mailbox";
+	          let mailboxResolutionNote: string | null = null;
+	          let effectiveParticipantEmail =
+	            normalizedParticipantEmail ??
+	            normalizedMailboxFilter ??
+	            currentUserEmail;
+	          const effectiveDirection: RecentEmailDirection =
+	            normalizedParticipantEmail ? direction : "mailbox";
 
-          if (!effectiveParticipantEmail) {
-            return {
+	          const primarySyncedMailbox = getPrimarySyncedMailbox();
+	          if (
+	            !normalizedMailboxFilter &&
+	            !normalizedParticipantEmail &&
+	            currentUserEmail &&
+	            primarySyncedMailbox &&
+	            currentUserEmail !== primarySyncedMailbox &&
+	            !isCompanyMailbox(currentUserEmail)
+	          ) {
+	            effectiveParticipantEmail = primarySyncedMailbox;
+	            mailboxResolutionNote =
+	              `The signed-in account ${currentUserEmail} is not a company-synced Outlook mailbox, so I used the primary synced operator mailbox ${primarySyncedMailbox}.`;
+	          }
+
+	          if (!effectiveParticipantEmail) {
+	            return {
               error:
                 "Could not resolve a mailbox or participant email for this email lookup. Ask for a specific mailbox or sign in with a synced mailbox account.",
             };
@@ -3026,24 +3057,40 @@ export function createOperationalTools(
                 effectiveDirection,
               ),
           );
-          const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
-          const dataCutoffNote = lastSyncedAt
-            ? `Outlook email sync last completed ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET. Syncs run hourly, so emails received after that sync may not appear yet.`
-            : "Outlook email sync time is unknown, so emails received since the last completed sync may not appear.";
+	          const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
+	          const dataCutoffNote = lastSyncedAt
+	            ? `Outlook email sync last completed ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET. Syncs run hourly, so emails received after that sync may not appear yet.`
+	            : "Outlook email sync time is unknown, so emails received since the last completed sync may not appear.";
 
-          if (data.length === 0) {
-            const rangeLabel =
-              safeDaysBack === 0
-                ? "today"
+	          if (data.length === 0) {
+	            if (!lastSyncedAt) {
+	              return {
+	                error:
+	                  `No Outlook sync state exists for ${effectiveParticipantEmail}. This mailbox is not configured or has not completed an Outlook sync; do not treat this as an empty inbox.`,
+	                emails: [],
+	                threads: [],
+	                mailboxResolutionNote,
+	                appliedFilter: {
+	                  email: effectiveParticipantEmail,
+	                  direction: effectiveDirection,
+	                  since: since.toISOString(),
+	                  timeZone,
+	                },
+	              };
+	            }
+	            const rangeLabel =
+	              safeDaysBack === 0
+	                ? "today"
                 : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
             return {
               emails: [],
               threads: [],
-              summary: `No emails received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
-              dataCutoffNote,
-              appliedFilter: {
-                email: effectiveParticipantEmail,
-                direction: effectiveDirection,
+	              summary: `No emails received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
+	              dataCutoffNote,
+	              mailboxResolutionNote,
+	              appliedFilter: {
+	                email: effectiveParticipantEmail,
+	                direction: effectiveDirection,
                 since: since.toISOString(),
                 timeZone,
               },
@@ -3089,8 +3136,9 @@ export function createOperationalTools(
             summary: groupByThread
               ? `Found ${data.length} email${data.length === 1 ? "" : "s"} in ${threads.length} thread${threads.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`
               : `Found ${data.length} email${data.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
-            dataCutoffNote,
-            appliedFilter: {
+	            dataCutoffNote,
+	            mailboxResolutionNote,
+	            appliedFilter: {
               email: effectiveParticipantEmail,
               direction: effectiveDirection,
               since: since.toISOString(),
