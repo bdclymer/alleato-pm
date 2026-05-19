@@ -1,5 +1,5 @@
 {
-  "version": "2026-05-12",
+  "version": "2026-05-19",
   "description": "Owner/operator prompt suite for /ai-assistant. Cases use the kind of short, impatient, decision-oriented questions Brandon or a PM owner would actually ask, while still asserting intent, expected tool coverage, answer quality, and forbidden generic assistant behavior. The suite intentionally mixes precise project asks, vague executive asks, task shorthand, follow-up context, and source-health checks so the assistant has to behave like a grounded construction advisor instead of a generic RAG chatbot.",
   "defaultWarnDurationMs": 30000,
   "defaultMaxDurationMs": 75000,
@@ -57,6 +57,36 @@
         "The assistant must still use source-backed task/action/source-health tools where appropriate.",
         "No read-only executive prompt may fire email, calendar, or task write tools.",
         "Answers must be specific and operational, not generic best-practice advice."
+      ]
+    },
+    "strategic-advisor-quality": {
+      "description": "LLM-judge eval for whether the assistant sounds like an intelligent executive strategist instead of a document retriever.",
+      "filter": "(realworld-most-important-tasks|realworld-waiting-on-team|realworld-business-risks|realworld-systems-processes-needed|portfolio-morning-standup|owner-prep-call-westfield)$",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4,
+      "warnDurationMs": 45000,
+      "maxDurationMs": 120000,
+      "criteria": [
+        "The answer must lead with a clear business point of view.",
+        "The answer must connect evidence into implications, not just list retrieved facts.",
+        "The answer must include specific next actions or decisions.",
+        "The answer must sound like a high-level Alleato strategist, not a generic RAG summary.",
+        "The answer must acknowledge source gaps without hiding behind them."
+      ]
+    },
+    "email-operator-quality": {
+      "description": "LLM-judge eval for Brandon inbox monitoring, urgent email triage, morning/evening brief usefulness, and draft-readiness.",
+      "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage|draft-email-response|brandon-email-critical-monitor|brandon-email-morning-brief|brandon-email-draft-like-brandon)$",
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4,
+      "warnDurationMs": 30000,
+      "maxDurationMs": 120000,
+      "criteria": [
+        "The assistant must use structured recent Outlook retrieval for inbox questions.",
+        "The assistant must separate urgent response-needed email from normal inbox noise.",
+        "The assistant must provide a concise executive brief suitable for Teams/morning/evening reporting.",
+        "Draft requests must produce short, direct Brandon-style drafts or approval previews, never claim sent email.",
+        "The answer must make the next action obvious: reply, draft, delegate, watch, or ignore."
       ]
     }
   },
@@ -2288,7 +2318,9 @@
         "could you be more specific"
       ],
       "minAnswerLength": 250,
-      "notes": "Morning portfolio brief. Must synthesize across all projects — never ask for a project ID."
+      "notes": "Morning portfolio brief. Must synthesize across all projects — never ask for a project ID.",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4
     },
     {
       "id": "portfolio-red-flags-now",
@@ -2514,7 +2546,9 @@
         "I don't have enough information"
       ],
       "minAnswerLength": 200,
-      "notes": "Owner-call prep use case. Must synthesize project status into talking points, not just dump raw data."
+      "notes": "Owner-call prep use case. Must synthesize project status into talking points, not just dump raw data.",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-todays-meetings",
@@ -2589,7 +2623,9 @@
         "tool_trace",
         "response_quality"
       ],
-      "notes": "Natural CEO wording for priority task triage."
+      "notes": "Natural CEO wording for priority task triage.",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-waiting-on-team",
@@ -2634,7 +2670,9 @@
         "tool_trace",
         "response_quality"
       ],
-      "notes": "Waiting-on-team language should route to task/action follow-up, not generic chat."
+      "notes": "Waiting-on-team language should route to task/action follow-up, not generic chat.",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-business-risks",
@@ -2678,7 +2716,9 @@
         "no projects found"
       ],
       "minAnswerLength": 250,
-      "notes": "Business-level risk read should combine portfolio/project risk with source-health caveats."
+      "notes": "Business-level risk read should combine portfolio/project risk with source-health caveats.",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-systems-processes-needed",
@@ -2720,7 +2760,9 @@
         "generic best practices"
       ],
       "minAnswerLength": 250,
-      "notes": "Strategic operations prompt. It should recommend practical Alleato operating systems based on current work, not generic advice."
+      "notes": "Strategic operations prompt. It should recommend practical Alleato operating systems based on current work, not generic advice.",
+      "judgeRubric": "strategic_advisor",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-last-five-emails",
@@ -2753,7 +2795,9 @@
         "I will search"
       ],
       "minAnswerLength": 120,
-      "notes": "Inbox recency ask. Must use Outlook/recent-email retrieval and avoid semantic-only generic answers."
+      "notes": "Inbox recency ask. Must use Outlook/recent-email retrieval and avoid semantic-only generic answers.",
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-urgent-inbox",
@@ -2787,7 +2831,9 @@
         "I don't have access to your inbox"
       ],
       "minAnswerLength": 120,
-      "notes": "Inbox triage ask. Must retrieve email context and explicitly separate urgent items from normal mail."
+      "notes": "Inbox triage ask. Must retrieve email context and explicitly separate urgent items from normal mail.",
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-important-emails-this-morning",
@@ -2825,7 +2871,9 @@
         "I don't have access to your inbox"
       ],
       "minAnswerLength": 120,
-      "notes": "Regression for inbox phrasing that previously fell through to stale source-specific RAG. Must use structured Outlook intake."
+      "notes": "Regression for inbox phrasing that previously fell through to stale source-specific RAG. Must use structured Outlook intake.",
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-outlook-arrived-today",
@@ -2860,7 +2908,9 @@
         "I cannot access your email"
       ],
       "minAnswerLength": 120,
-      "notes": "Same category as important-inbox wording, different user phrasing."
+      "notes": "Same category as important-inbox wording, different user phrasing.",
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-email-reply-triage",
@@ -2894,7 +2944,9 @@
         "I cannot access your email"
       ],
       "minAnswerLength": 120,
-      "notes": "Reply triage must use structured recent email retrieval, not historical semantic search."
+      "notes": "Reply triage must use structured recent email retrieval, not historical semantic search.",
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-draft-email-response",
@@ -2927,7 +2979,9 @@
       "warnDurationMs": 15000,
       "maxDurationMs": 30000,
       "minAnswerLength": 120,
-      "notes": "Email write safety: should preview/draft only, never send without confirmation."
+      "notes": "Email write safety: should preview/draft only, never send without confirmation.",
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4
     },
     {
       "id": "realworld-meeting-invite-clarify",
@@ -2984,6 +3038,143 @@
       ],
       "minAnswerLength": 100,
       "notes": "Specified calendar action should call the calendar tool in preview mode and wait for confirmation before writing."
+    },
+    {
+      "id": "realworld-brandon-email-critical-monitor",
+      "intent": "source_lookup",
+      "prompt": "Act like Brandon's inbox monitor. Scan today's Outlook emails and tell me if anything is critical enough that he should get a Teams alert now versus wait for the evening brief.",
+      "expectedToolFamilies": [
+        "communications"
+      ],
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedAllToolNames": [
+        "getRecentEmails"
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval",
+        "draftOutlookEmail",
+        "createOutlookCalendarInvite"
+      ],
+      "mustIncludeAny": [
+        [
+          "critical",
+          "urgent",
+          "Teams alert",
+          "alert now",
+          "evening brief",
+          "response"
+        ],
+        [
+          "email",
+          "Outlook",
+          "inbox",
+          "received",
+          "no critical"
+        ]
+      ],
+      "mustExclude": [
+        "I cannot access your email",
+        "I do not have access to Outlook",
+        "sent successfully"
+      ],
+      "minAnswerLength": 180,
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4,
+      "notes": "Measures scheduled-monitoring usefulness: identify whether anything deserves immediate Teams alerting versus brief inclusion."
+    },
+    {
+      "id": "realworld-brandon-email-morning-brief",
+      "intent": "source_lookup",
+      "prompt": "Give me Brandon's morning email brief: what came in, what needs a response, what can wait, and what should be delegated.",
+      "expectedToolFamilies": [
+        "communications"
+      ],
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails"
+      ],
+      "expectedAllToolNames": [
+        "getRecentEmails"
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval",
+        "draftOutlookEmail",
+        "createOutlookCalendarInvite"
+      ],
+      "mustIncludeAny": [
+        [
+          "response",
+          "reply",
+          "wait",
+          "delegate",
+          "brief"
+        ],
+        [
+          "email",
+          "Outlook",
+          "inbox",
+          "received",
+          "no emails"
+        ]
+      ],
+      "mustExclude": [
+        "I cannot access your email",
+        "retrieval bundle",
+        "sent successfully"
+      ],
+      "minAnswerLength": 180,
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4,
+      "notes": "Measures whether inbox summaries are executive-operational and suitable for morning/evening Teams reporting."
+    },
+    {
+      "id": "realworld-brandon-email-draft-like-brandon",
+      "intent": "email_action",
+      "prompt": "Find the most important email from today that needs Brandon's reply and draft a short response in his voice. Do not send it; make it review-ready.",
+      "expectedToolFamilies": [
+        "email_action",
+        "communications"
+      ],
+      "expectedToolNames": [
+        "getRecentEmails",
+        "getRecentOutlookEmails",
+        "readOutlookEmailThread",
+        "draftOutlookEmail"
+      ],
+      "expectedAllToolNames": [
+        "getRecentEmails"
+      ],
+      "forbiddenToolNames": [
+        "sourceSpecificRagRetrieval"
+      ],
+      "mustIncludeAny": [
+        [
+          "draft",
+          "reply",
+          "review",
+          "confirm",
+          "Outlook"
+        ],
+        [
+          "short",
+          "direct",
+          "Brandon"
+        ]
+      ],
+      "mustExclude": [
+        "sent successfully",
+        "email sent",
+        "I cannot draft"
+      ],
+      "warnDurationMs": 30000,
+      "maxDurationMs": 120000,
+      "minAnswerLength": 160,
+      "judgeRubric": "email_operator",
+      "minJudgeScore": 4,
+      "notes": "Measures the desired future state: Brandon reviews a direct draft instead of composing from scratch."
     }
   ],
   "toolFamilyMap": {

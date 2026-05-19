@@ -54,6 +54,36 @@ const POLL_MAX_MS = 15_000;
 const DEFAULT_WARN_DURATION_MS = Number(
   suiteSafeNumber(process.env.AI_EVAL_WARN_DURATION_MS) ?? 30_000,
 );
+const JUDGE_ENABLED = process.env.AI_EVAL_JUDGE_ENABLED !== "false";
+const JUDGE_MODEL = process.env.AI_EVAL_JUDGE_MODEL || "openai/gpt-5.4-mini";
+const JUDGE_TIMEOUT_MS = Number(process.env.AI_EVAL_JUDGE_TIMEOUT_MS ?? 45_000);
+
+const JUDGE_RUBRICS = {
+  strategic_advisor: {
+    label: "Strategic Advisor Quality",
+    minScore: 4,
+    dimensions: [
+      "Leads with a clear executive point of view instead of a neutral data recap.",
+      "Connects evidence into business implications, tradeoffs, or second-order risks.",
+      "Gives specific, operational next steps with owners/timing when supported.",
+      "Surfaces what the user did not ask but should be thinking about.",
+      "Sounds like a high-level strategist who knows the business, not a document retriever.",
+      "Stays honest about missing or weak evidence and does not fabricate details.",
+    ],
+  },
+  email_operator: {
+    label: "Email Operator Quality",
+    minScore: 4,
+    dimensions: [
+      "Separates urgent/critical email from normal inbox noise.",
+      "Identifies who needs a response, why it matters, and what could happen if ignored.",
+      "Summarizes email threads efficiently without dumping raw message data.",
+      "Recommends a concrete response path: reply now, delegate, watch, draft, or ignore.",
+      "For draft requests, sounds short, direct, and practical enough for Brandon to review and send.",
+      "Never claims an email was sent and never invents thread details not present in the answer.",
+    ],
+  },
+};
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is required.");
@@ -515,6 +545,212 @@ function containsForbiddenPhrase(text, phrase) {
 
 const qualityRank = { low: 1, medium: 2, high: 3 };
 
+function getJudgeConfig() {
+  const gatewayKey = process.env.AI_GATEWAY_API_KEY?.trim();
+  if (gatewayKey && process.env.AI_PROVIDER_PATH !== "openai") {
+    return {
+      apiKey: gatewayKey,
+      baseUrl: "https://ai-gateway.vercel.sh/v1",
+      model: JUDGE_MODEL.includes("/") ? JUDGE_MODEL : `openai/${JUDGE_MODEL}`,
+      provider: "vercel_gateway",
+    };
+  }
+
+  const openAiKey = process.env.OPENAI_API_KEY?.trim();
+  if (openAiKey) {
+    return {
+      apiKey: openAiKey,
+      baseUrl: "https://api.openai.com/v1",
+      model: JUDGE_MODEL.replace(/^openai\//, ""),
+      provider: "openai",
+    };
+  }
+
+  return null;
+}
+
+function getJudgeRubric(testCase) {
+  const rubricName = testCase.judgeRubric ?? bundle?.judgeRubric;
+  if (!rubricName) return null;
+  const rubric = JUDGE_RUBRICS[rubricName];
+  if (!rubric) {
+    return {
+      name: rubricName,
+      error: `Unknown judge rubric: ${rubricName}`,
+    };
+  }
+  return {
+    name: rubricName,
+    ...rubric,
+    minScore:
+      suiteSafeNumber(testCase.minJudgeScore) ??
+      suiteSafeNumber(bundle?.minJudgeScore) ??
+      rubric.minScore,
+  };
+}
+
+function extractJsonObject(text) {
+  const trimmed = String(text ?? "").trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(trimmed.slice(start, end + 1));
+    }
+    throw new Error("Judge did not return parseable JSON.");
+  }
+}
+
+async function evaluateWithJudge(testCase, score) {
+  const rubric = getJudgeRubric(testCase);
+  if (!rubric) return null;
+  if (rubric.error) {
+    return {
+      status: "error",
+      rubric: rubric.name,
+      score: 0,
+      minScore: 0,
+      summary: rubric.error,
+      strengths: [],
+      weaknesses: [rubric.error],
+      dimensionScores: {},
+      provider: null,
+      model: JUDGE_MODEL,
+    };
+  }
+  if (!JUDGE_ENABLED) {
+    return {
+      status: "skipped",
+      rubric: rubric.name,
+      score: null,
+      minScore: rubric.minScore,
+      summary: "Judge disabled with AI_EVAL_JUDGE_ENABLED=false.",
+      strengths: [],
+      weaknesses: [],
+      dimensionScores: {},
+      provider: null,
+      model: JUDGE_MODEL,
+    };
+  }
+
+  const config = getJudgeConfig();
+  if (!config) {
+    return {
+      status: "error",
+      rubric: rubric.name,
+      score: 0,
+      minScore: rubric.minScore,
+      summary: "AI_EVAL_JUDGE_MODEL requires AI_GATEWAY_API_KEY or OPENAI_API_KEY.",
+      strengths: [],
+      weaknesses: ["No judge provider key configured."],
+      dimensionScores: {},
+      provider: null,
+      model: JUDGE_MODEL,
+    };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), JUDGE_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${config.apiKey}`,
+        "content-type": "application/json",
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: config.model,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: [
+              "You are an unforgiving evaluator for a construction-business AI assistant.",
+              "Return only JSON. Do not reward generic fluent writing.",
+              "A high score requires business judgment, specificity, and honest evidence handling.",
+            ].join(" "),
+          },
+          {
+            role: "user",
+            content: [
+              `Rubric: ${rubric.label}`,
+              `Minimum passing score: ${rubric.minScore}/5`,
+              "",
+              "Score each dimension from 1 to 5:",
+              ...rubric.dimensions.map((dimension, index) => `${index + 1}. ${dimension}`),
+              "",
+              "Case prompt:",
+              testCase.prompt,
+              "",
+              `Intent: ${testCase.intent}`,
+              `Tools fired: ${score.toolNames.join(", ") || "(none)"}`,
+              "",
+              "Assistant answer:",
+              score.finalText || "(empty)",
+              "",
+              "Return JSON with this exact shape:",
+              '{"score": number, "passes": boolean, "summary": string, "strengths": string[], "weaknesses": string[], "dimensionScores": {"dimension_name": number}}',
+            ].join("\n"),
+          },
+        ],
+      }),
+    });
+
+    const raw = await response.text();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${raw.slice(0, 300)}`);
+    }
+
+    const payload = JSON.parse(raw);
+    const content = payload?.choices?.[0]?.message?.content;
+    const parsed = extractJsonObject(content);
+    const judgeScore = Number(parsed.score);
+    const passes =
+      parsed.passes === true &&
+      Number.isFinite(judgeScore) &&
+      judgeScore >= rubric.minScore;
+
+    return {
+      status: passes ? "pass" : "fail",
+      rubric: rubric.name,
+      score: Number.isFinite(judgeScore) ? judgeScore : 0,
+      minScore: rubric.minScore,
+      summary: String(parsed.summary ?? ""),
+      strengths: Array.isArray(parsed.strengths)
+        ? parsed.strengths.map(String).slice(0, 5)
+        : [],
+      weaknesses: Array.isArray(parsed.weaknesses)
+        ? parsed.weaknesses.map(String).slice(0, 5)
+        : [],
+      dimensionScores:
+        parsed.dimensionScores && typeof parsed.dimensionScores === "object"
+          ? parsed.dimensionScores
+          : {},
+      provider: config.provider,
+      model: config.model,
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      rubric: rubric.name,
+      score: 0,
+      minScore: rubric.minScore,
+      summary: error instanceof Error ? error.message : String(error),
+      strengths: [],
+      weaknesses: [error instanceof Error ? error.message : String(error)],
+      dimensionScores: {},
+      provider: config.provider,
+      model: config.model,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function scoreCase(testCase, runOutput, persisted) {
   const failures = [];
   const warnings = [];
@@ -730,6 +966,37 @@ function toPublishedRun(result, runId) {
                     : [],
                 }
               : { candidateCount: 0, candidates: [] },
+          judge:
+            score.judge && typeof score.judge === "object"
+              ? {
+                  status:
+                    typeof score.judge.status === "string"
+                      ? score.judge.status
+                      : "unknown",
+                  rubric:
+                    typeof score.judge.rubric === "string"
+                      ? score.judge.rubric
+                      : null,
+                  score:
+                    typeof score.judge.score === "number"
+                      ? score.judge.score
+                      : null,
+                  minScore:
+                    typeof score.judge.minScore === "number"
+                      ? score.judge.minScore
+                      : null,
+                  summary:
+                    typeof score.judge.summary === "string"
+                      ? score.judge.summary
+                      : "",
+                  strengths: Array.isArray(score.judge.strengths)
+                    ? score.judge.strengths
+                    : [],
+                  weaknesses: Array.isArray(score.judge.weaknesses)
+                    ? score.judge.weaknesses
+                    : [],
+                }
+              : null,
           finalText: typeof score.finalText === "string" ? score.finalText : "",
           latencyBudget:
             score.latencyBudget && typeof score.latencyBudget === "object"
@@ -860,6 +1127,23 @@ for (const [index, testCase] of cases.entries()) {
   const runOutput = await postPromptAndDrain(testCase, sessionId, messageId);
   const persisted = await fetchPersistedAssistantMessage(sessionId);
   const score = scoreCase(testCase, runOutput, persisted);
+  const judge = await evaluateWithJudge(testCase, score);
+  if (judge) {
+    score.judge = judge;
+    score.observations.push(
+      `judge ${judge.rubric}: ${judge.status}${typeof judge.score === "number" ? ` (${judge.score}/${judge.minScore})` : ""}`,
+    );
+    if (judge.status === "fail") {
+      score.failures.push(
+        `judge ${judge.rubric} score ${judge.score} < ${judge.minScore}: ${judge.summary}`,
+      );
+    } else if (judge.status === "error") {
+      score.failures.push(`judge ${judge.rubric} error: ${judge.summary}`);
+    } else if (judge.status === "skipped") {
+      score.warnings.push(`judge ${judge.rubric} skipped: ${judge.summary}`);
+    }
+    score.status = score.failures.length === 0 ? "pass" : "fail";
+  }
   const finishedAt = new Date().toISOString();
 
   for (const tool of score.toolNames) {
@@ -931,6 +1215,23 @@ const summary = {
     (count, r) => count + (r.score.backendDeepAgentMemory?.candidateCount ?? 0),
     0,
   ),
+  judge: {
+    enabled: JUDGE_ENABLED,
+    model: JUDGE_MODEL,
+    judgedCases: results.filter((r) => r.score.judge).length,
+    passed: results.filter((r) => r.score.judge?.status === "pass").length,
+    failed: results.filter((r) => r.score.judge?.status === "fail").length,
+    errors: results.filter((r) => r.score.judge?.status === "error").length,
+    averageScore: (() => {
+      const judged = results
+        .map((r) => r.score.judge?.score)
+        .filter((score) => typeof score === "number" && Number.isFinite(score));
+      if (judged.length === 0) return null;
+      return Number(
+        (judged.reduce((sum, score) => sum + score, 0) / judged.length).toFixed(2),
+      );
+    })(),
+  },
   slowestCases: [...results]
     .sort((a, b) => b.durationMs - a.durationMs)
     .slice(0, 10)
@@ -972,6 +1273,7 @@ const md = [
   `- Failed: ${summary.failed}`,
   `- Warnings: ${summary.warningCount}`,
   `- Backend Deep Agents memory candidates: ${summary.backendDeepAgentMemoryCandidateCount}`,
+  `- Judge: ${summary.judge.judgedCases} judged, ${summary.judge.passed} passed, ${summary.judge.failed} failed, ${summary.judge.errors} errors, avg ${summary.judge.averageScore ?? "n/a"} (${summary.judge.model})`,
   "",
   "## Slowest Cases",
   "",
@@ -992,13 +1294,30 @@ const md = [
     : []),
   "## Per-case results",
   "",
-  "| Case | Intent | Status | Duration | Memory candidates | Tools fired | Failures |",
-  "|---|---|---|---|---|---|---|",
+  "| Case | Intent | Status | Duration | Judge | Memory candidates | Tools fired | Failures |",
+  "|---|---|---|---|---|---|---|---|",
   ...results.map(
     (r) =>
-      `| ${r.id} | ${r.intent} | ${r.score.status === "pass" ? "✅" : "❌"} | ${r.durationMs}ms | ${r.score.backendDeepAgentMemory?.candidateCount ?? 0} | ${r.score.toolNames.join(", ") || "(none)"} | ${r.score.failures.join("; ") || "—"} |`,
+      `| ${r.id} | ${r.intent} | ${r.score.status === "pass" ? "✅" : "❌"} | ${r.durationMs}ms | ${r.score.judge ? `${r.score.judge.rubric}: ${r.score.judge.status} (${r.score.judge.score ?? "n/a"}/${r.score.judge.minScore ?? "n/a"})` : "—"} | ${r.score.backendDeepAgentMemory?.candidateCount ?? 0} | ${r.score.toolNames.join(", ") || "(none)"} | ${r.score.failures.join("; ") || "—"} |`,
   ),
   "",
+  ...(summary.judge.judgedCases > 0
+    ? [
+        "## Judge notes",
+        "",
+        ...results
+          .filter((r) => r.score.judge)
+          .flatMap((r) => [
+            `### ${r.id}`,
+            "",
+            `- Rubric: \`${r.score.judge.rubric}\``,
+            `- Score: ${r.score.judge.score ?? "n/a"} / ${r.score.judge.minScore ?? "n/a"} (${r.score.judge.status})`,
+            `- Summary: ${r.score.judge.summary || "—"}`,
+            `- Weaknesses: ${r.score.judge.weaknesses?.join("; ") || "—"}`,
+            "",
+          ]),
+      ]
+    : []),
   "## Tool coverage across the suite",
   "",
   "| Tool | Hits |",
