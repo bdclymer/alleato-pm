@@ -678,6 +678,43 @@ function summarizeDeepAgentSourceCoverage(
   }));
 }
 
+async function persistDirectDeepAgentResponse(params: {
+  supabase: SupabaseClient;
+  sessionId: string;
+  userId: string;
+  content: string;
+  metadata: Json;
+  responseLabel: string;
+}): Promise<void> {
+  const { error: assistantError } = await params.supabase
+    .from("chat_history")
+    .insert({
+      session_id: params.sessionId,
+      user_id: params.userId,
+      role: "assistant",
+      content: params.content,
+      metadata: params.metadata,
+    });
+
+  if (assistantError) {
+    throw new Error(
+      `Persisting the Deep Agents ${params.responseLabel} response failed: ${assistantError.message}`,
+    );
+  }
+
+  const { error: conversationError } = await params.supabase
+    .from("conversations")
+    .update({ last_message_at: new Date().toISOString() })
+    .eq("session_id", params.sessionId)
+    .eq("user_id", params.userId);
+
+  if (conversationError) {
+    throw new Error(
+      `Updating the Deep Agents ${params.responseLabel} conversation failed: ${conversationError.message}`,
+    );
+  }
+}
+
 async function runChatV2(args: HandlerArgs): Promise<Response> {
   const lastUserMessage = [...args.messages]
     .reverse()
@@ -1064,13 +1101,6 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 ]
               : [];
 
-            dataParts.forEach((dataPart) => writer.write(dataPart as never));
-            writeTextResponse(
-              writer,
-              "strategist-deep-agent-research",
-              content,
-            );
-
             const toolTrace = [
               createBackendBridgeTrace({
                 tool: "backendDeepAgentResearch",
@@ -1084,58 +1114,45 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               }),
             ];
 
-            const { error: assistantError } = await args.supabase
-              .from("chat_history")
-              .insert({
-                session_id: args.sessionId,
-                user_id: args.user.id,
-                role: "assistant",
-                content,
-                metadata: {
-                  architecture: "render-backend-deep-agents-v1",
-                  model: process.env.DEEP_AGENTS_RESEARCH_MODEL ?? null,
-                  provider_path: "render-backend-ai-gateway",
-                  backend_deep_agent: {
-                    endpoint: "research",
-                    mode: packet.mode,
-                    orchestrator: packet.orchestrator,
-                    source_count: packet.sources.length,
-                    skills_loaded: packet.skillsLoaded,
-                  },
-                  retrieval_plan: {
-                    intent: plan.intent,
-                    reason: plan.reason,
-                    responseFormat: plan.responseFormat,
-                    sources: Object.keys(plan.sources),
-                  },
-                  tool_trace: toolTrace,
-                  response_quality: buildResponseQualityMetadata({
-                    toolTrace,
-                    content,
-                  }),
-                  data_parts: dataParts,
-                } as Json,
-              });
-
-            if (assistantError) {
-              throw new Error(
-                `Persisting the Deep Agents research response failed: ${assistantError.message}`,
-              );
-            }
-
-            const { error: conversationError } = await args.supabase
-              .from("conversations")
-              .update({ last_message_at: new Date().toISOString() })
-              .eq("session_id", args.sessionId)
-              .eq("user_id", args.user.id);
-
-            if (conversationError) {
-              throw new Error(
-                `Updating the Deep Agents research conversation failed: ${conversationError.message}`,
-              );
-            }
+            await persistDirectDeepAgentResponse({
+              supabase: args.supabase,
+              sessionId: args.sessionId,
+              userId: args.user.id,
+              content,
+              responseLabel: "research",
+              metadata: {
+                architecture: "render-backend-deep-agents-v1",
+                model: process.env.DEEP_AGENTS_RESEARCH_MODEL ?? null,
+                provider_path: "render-backend-ai-gateway",
+                backend_deep_agent: {
+                  endpoint: "research",
+                  mode: packet.mode,
+                  orchestrator: packet.orchestrator,
+                  source_count: packet.sources.length,
+                  skills_loaded: packet.skillsLoaded,
+                },
+                retrieval_plan: {
+                  intent: plan.intent,
+                  reason: plan.reason,
+                  responseFormat: plan.responseFormat,
+                  sources: Object.keys(plan.sources),
+                },
+                tool_trace: toolTrace,
+                response_quality: buildResponseQualityMetadata({
+                  toolTrace,
+                  content,
+                }),
+                data_parts: dataParts,
+              } as Json,
+            });
 
             responseAlreadyPersisted = true;
+            dataParts.forEach((dataPart) => writer.write(dataPart as never));
+            writeTextResponse(
+              writer,
+              "strategist-deep-agent-research",
+              content,
+            );
             writer.write({
               type: "data-status",
               id: "strategist-status",
@@ -1254,13 +1271,6 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 : []),
             ];
 
-            dataParts.forEach((dataPart) => writer.write(dataPart as never));
-            writeTextResponse(
-              writer,
-              "strategist-deep-agent-project-status",
-              content,
-            );
-
             const toolTrace = [
               createBackendBridgeTrace({
                 tool: "backendDeepAgentProjectStatus",
@@ -1274,66 +1284,53 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               }),
             ];
 
-            const { error: assistantError } = await args.supabase
-              .from("chat_history")
-              .insert({
-                session_id: args.sessionId,
-                user_id: args.user.id,
-                role: "assistant",
-                content,
-                metadata: {
-                  architecture: "render-backend-deep-agents-v1",
-                  model:
-                    process.env.DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL ?? null,
-                  provider_path: "render-backend-ai-gateway",
-                  backend_deep_agent: {
-                    endpoint: "project-status",
-                    mode: packet.mode,
-                    orchestrator: packet.orchestrator,
-                    confidence: packet.confidence,
-                    project: packet.project,
-                    source_coverage: summarizeDeepAgentSourceCoverage(
-                      packet.sourcesChecked,
-                    ),
-                    recommended_action_count: packet.recommendedActions.length,
-                    evidence_count: packet.evidence.length,
-                    memory_candidate_count: packet.memoryCandidates.length,
-                    memory_candidates: packet.memoryCandidates,
-                  },
-                  retrieval_plan: {
-                    intent: plan.intent,
-                    reason: plan.reason,
-                    responseFormat: plan.responseFormat,
-                    sources: Object.keys(plan.sources),
-                  },
-                  tool_trace: toolTrace,
-                  response_quality: buildResponseQualityMetadata({
-                    toolTrace,
-                    content,
-                  }),
-                  data_parts: dataParts,
-                } as Json,
-              });
-
-            if (assistantError) {
-              throw new Error(
-                `Persisting the Deep Agents project response failed: ${assistantError.message}`,
-              );
-            }
-
-            const { error: conversationError } = await args.supabase
-              .from("conversations")
-              .update({ last_message_at: new Date().toISOString() })
-              .eq("session_id", args.sessionId)
-              .eq("user_id", args.user.id);
-
-            if (conversationError) {
-              throw new Error(
-                `Updating the Deep Agents project conversation failed: ${conversationError.message}`,
-              );
-            }
+            await persistDirectDeepAgentResponse({
+              supabase: args.supabase,
+              sessionId: args.sessionId,
+              userId: args.user.id,
+              content,
+              responseLabel: "project",
+              metadata: {
+                architecture: "render-backend-deep-agents-v1",
+                model:
+                  process.env.DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL ?? null,
+                provider_path: "render-backend-ai-gateway",
+                backend_deep_agent: {
+                  endpoint: "project-status",
+                  mode: packet.mode,
+                  orchestrator: packet.orchestrator,
+                  confidence: packet.confidence,
+                  project: packet.project,
+                  source_coverage: summarizeDeepAgentSourceCoverage(
+                    packet.sourcesChecked,
+                  ),
+                  recommended_action_count: packet.recommendedActions.length,
+                  evidence_count: packet.evidence.length,
+                  memory_candidate_count: packet.memoryCandidates.length,
+                  memory_candidates: packet.memoryCandidates,
+                },
+                retrieval_plan: {
+                  intent: plan.intent,
+                  reason: plan.reason,
+                  responseFormat: plan.responseFormat,
+                  sources: Object.keys(plan.sources),
+                },
+                tool_trace: toolTrace,
+                response_quality: buildResponseQualityMetadata({
+                  toolTrace,
+                  content,
+                }),
+                data_parts: dataParts,
+              } as Json,
+            });
 
             responseAlreadyPersisted = true;
+            dataParts.forEach((dataPart) => writer.write(dataPart as never));
+            writeTextResponse(
+              writer,
+              "strategist-deep-agent-project-status",
+              content,
+            );
             writer.write({
               type: "data-status",
               id: "strategist-status",
@@ -1454,13 +1451,6 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 : []),
             ];
 
-            dataParts.forEach((dataPart) => writer.write(dataPart as never));
-            writeTextResponse(
-              writer,
-              "strategist-deep-agent-executive-briefing",
-              content,
-            );
-
             const toolTrace = [
               createBackendBridgeTrace({
                 tool: "backendDeepAgentExecutiveBriefing",
@@ -1474,66 +1464,53 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               }),
             ];
 
-            const { error: assistantError } = await args.supabase
-              .from("chat_history")
-              .insert({
-                session_id: args.sessionId,
-                user_id: args.user.id,
-                role: "assistant",
-                content,
-                metadata: {
-                  architecture: "render-backend-deep-agents-v1",
-                  model:
-                    process.env.DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL ?? null,
-                  provider_path: "render-backend-ai-gateway",
-                  backend_deep_agent: {
-                    endpoint: "executive-briefing",
-                    mode: packet.mode,
-                    orchestrator: packet.orchestrator,
-                    confidence: packet.confidence,
-                    organization: packet.organization,
-                    source_coverage: summarizeDeepAgentSourceCoverage(
-                      packet.sourcesChecked,
-                    ),
-                    recommended_action_count: packet.recommendedActions.length,
-                    evidence_count: packet.evidence.length,
-                    memory_candidate_count: packet.memoryCandidates.length,
-                    memory_candidates: packet.memoryCandidates,
-                  },
-                  retrieval_plan: {
-                    intent: plan.intent,
-                    reason: plan.reason,
-                    responseFormat: plan.responseFormat,
-                    sources: Object.keys(plan.sources),
-                  },
-                  tool_trace: toolTrace,
-                  response_quality: buildResponseQualityMetadata({
-                    toolTrace,
-                    content,
-                  }),
-                  data_parts: dataParts,
-                } as Json,
-              });
-
-            if (assistantError) {
-              throw new Error(
-                `Persisting the Deep Agents executive response failed: ${assistantError.message}`,
-              );
-            }
-
-            const { error: conversationError } = await args.supabase
-              .from("conversations")
-              .update({ last_message_at: new Date().toISOString() })
-              .eq("session_id", args.sessionId)
-              .eq("user_id", args.user.id);
-
-            if (conversationError) {
-              throw new Error(
-                `Updating the Deep Agents executive conversation failed: ${conversationError.message}`,
-              );
-            }
+            await persistDirectDeepAgentResponse({
+              supabase: args.supabase,
+              sessionId: args.sessionId,
+              userId: args.user.id,
+              content,
+              responseLabel: "executive",
+              metadata: {
+                architecture: "render-backend-deep-agents-v1",
+                model:
+                  process.env.DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL ?? null,
+                provider_path: "render-backend-ai-gateway",
+                backend_deep_agent: {
+                  endpoint: "executive-briefing",
+                  mode: packet.mode,
+                  orchestrator: packet.orchestrator,
+                  confidence: packet.confidence,
+                  organization: packet.organization,
+                  source_coverage: summarizeDeepAgentSourceCoverage(
+                    packet.sourcesChecked,
+                  ),
+                  recommended_action_count: packet.recommendedActions.length,
+                  evidence_count: packet.evidence.length,
+                  memory_candidate_count: packet.memoryCandidates.length,
+                  memory_candidates: packet.memoryCandidates,
+                },
+                retrieval_plan: {
+                  intent: plan.intent,
+                  reason: plan.reason,
+                  responseFormat: plan.responseFormat,
+                  sources: Object.keys(plan.sources),
+                },
+                tool_trace: toolTrace,
+                response_quality: buildResponseQualityMetadata({
+                  toolTrace,
+                  content,
+                }),
+                data_parts: dataParts,
+              } as Json,
+            });
 
             responseAlreadyPersisted = true;
+            dataParts.forEach((dataPart) => writer.write(dataPart as never));
+            writeTextResponse(
+              writer,
+              "strategist-deep-agent-executive-briefing",
+              content,
+            );
             writer.write({
               type: "data-status",
               id: "strategist-status",
