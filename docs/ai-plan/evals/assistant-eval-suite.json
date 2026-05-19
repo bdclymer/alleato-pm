@@ -2011,7 +2011,7 @@
       "id": "strategic-rag-asrs-sprinkler-time-sink",
       "intent": "strategic_rag",
       "prompt": "What is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages?",
-      "selectedProjectId": 67,
+      "selectedProjectId": 760,
       "expectedToolFamilies": ["meetings", "communications", "semantic"],
       "expectedToolNames": [
         "semanticSearch",
@@ -2026,6 +2026,8 @@
         ["time", "cycle", "coordination", "review", "design"]
       ],
       "mustExclude": [
+        "Vermillion",
+        "Vermillion Rise",
         "I cannot access meetings",
         "I cannot access your email",
         "as an AI"
@@ -2034,7 +2036,7 @@
       "minSourceQuality": "medium",
       "judgeRubric": "strategic_advisor",
       "minJudgeScore": 4,
-      "notes": "Strategic RAG golden-seed case. Existing source basis in prod RAG smoke points to Vermillion Rise fire protection design issues: final review sets expected Friday, missing double block valves, four zones reduced to two without documented agreement, and sprinkler header concerns."
+      "notes": "Strategic RAG golden-seed case. Canonical project target is Exol Wilmer, project ID 760, project number 26-103. Do not answer from Vermillion Rise sprinkler evidence; direct ASRS sprinkler meeting/email/Teams source IDs still need to be attached before this becomes a factual golden case."
     },
     {
       "id": "strategic-rag-office-morning-importance",

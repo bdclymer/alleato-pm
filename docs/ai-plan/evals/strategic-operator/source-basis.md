@@ -4,26 +4,29 @@ This file records the current source basis for the seed cases. It is intentional
 
 ## ASRS Sprinkler Design
 
-Current strongest local evidence comes from production RAG smoke artifacts for project `67`, Vermillion Rise Warehouse:
+Current canonical project target:
 
-- `docs/ai-plan/evals/prod-rag-smoke/2026-05-13T23-01-34-663Z/report.md`
-- `docs/ai-plan/evals/prod-rag-smoke/2026-05-13T23-01-34-663Z/05-project-filtered.json`
-- `docs/ai-plan/evals/prod-rag-smoke/2026-05-13T22-51-02-565Z/05-project-filtered.json`
+- Project name: `Exol Wilmer`
+- Project ID: `760`
+- Project number: `26-103`
+- Acumatica project ID: `26103`
+
+Current local evidence:
+
+- `docs/ai-plan/evals/runs/2026-05-19T06-13-15-043Z-12edee9a/realworld-business-risks.json`
+- `docs/ai-plan/evals/runs/2026-05-12T19-14-11-931Z/cross-project-comparison.json`
 
 Seed facts visible in those artifacts:
 
-- The project was design/contract coordination heavy.
-- Final review drawing sets were expected by Friday, with structural confirmation still pending.
-- The 5/13 Hillsdale Holdings / Alleato weekly meeting surfaced urgent sprinkler design issues.
-- The sprinkler design reportedly lacked double block valves, creating water damage/flooding exposure.
-- Fire protection was apparently reduced from four zones to two, with no documented agreement supporting that change.
-- Sprinkler header placement was flagged as a concern.
-- Electrical drawing review and A141 contract coordination were adjacent coordination burdens.
+- Existing eval artifacts identify `Exol Wilmer` as project number `26-103`.
+- `Exol Wilmer - Review on GC's` appears as a Fireflies source on 2026-05-18.
+- The Wilmer review evidence mentions a year-long schedule, 50-60% drawing completion before finalizing, approximately $30 million project value, bid collection, access issues, and scope clarification.
 
-Current inferred answer direction:
+Important correction:
 
-- The likely time-consuming driver is not "sprinkler design" generically. It is repeated design coordination/review caused by unresolved fire-protection design assumptions and missing/changed protection requirements.
-- A strong answer should still verify meetings, emails, and Teams/messages before stating this as the final answer because the local artifacts above are RAG smoke outputs, not direct source rows.
+- Do not use Vermillion Rise sprinkler evidence for this ASRS test.
+- The ASRS sprinkler case still needs direct meeting/email/Teams source IDs before it becomes a factual golden case.
+- Until those IDs are attached, this remains a behavioral strategic RAG case that checks source coverage, synthesis, and honesty.
 
 ## Microsoft Office Operator
 

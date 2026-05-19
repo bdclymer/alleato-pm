@@ -3,8 +3,15 @@
     "inputs": {
       "query": "What is the most time-consuming part of designing the ASRS sprinkler systems based on meetings, emails, and messages?",
       "scenario": "Cross-source strategic RAG question about ASRS sprinkler design complexity.",
-      "required_source_types": ["meetings", "emails", "teams_messages"],
-      "preferred_optional_source_types": ["attachments", "calendar"],
+      "required_source_types": [
+        "meetings",
+        "emails",
+        "teams_messages"
+      ],
+      "preferred_optional_source_types": [
+        "attachments",
+        "calendar"
+      ],
       "time_window": "all relevant available history unless the user narrows the window"
     },
     "outputs": {
@@ -42,28 +49,34 @@
       "difficulty": "hard",
       "priority": "p0",
       "langsmith_split": "baseline",
-      "project_id": 67,
-      "project_name": "Vermillion Rise Warehouse",
+      "project_id": 760,
+      "project_name": "Exol Wilmer",
       "source_basis": [
-        "docs/ai-plan/evals/prod-rag-smoke/2026-05-13T23-01-34-663Z/report.md",
-        "docs/ai-plan/evals/prod-rag-smoke/2026-05-13T23-01-34-663Z/05-project-filtered.json",
+        "docs/ai-plan/evals/runs/2026-05-19T06-13-15-043Z-12edee9a/realworld-business-risks.json",
+        "docs/ai-plan/evals/runs/2026-05-12T19-14-11-931Z/cross-project-comparison.json",
         "docs/ai-plan/evals/strategic-operator/source-basis.md"
       ],
       "known_seed_facts": [
-        "Final review drawing sets were expected by Friday with structural confirmation still pending.",
-        "The 5/13 Hillsdale Holdings / Alleato weekly meeting surfaced urgent sprinkler design issues.",
-        "The sprinkler design reportedly lacked double block valves, creating water damage/flooding exposure.",
-        "Fire protection was apparently reduced from four zones to two without documented agreement.",
-        "Sprinkler header placement was flagged as a concern."
-      ]
+        "The canonical app project is Exol Wilmer, project ID 760, project number 26-103, Acumatica project ID 26103.",
+        "Existing eval artifacts reference Exol Wilmer - Review on GC's as a 2026-05-18 Fireflies source with Wilmer schedule, budget, bid collection, access, and scope-clarification signals.",
+        "Direct ASRS sprinkler meeting/email/Teams source IDs still need to be attached before this case becomes a factual golden case."
+      ],
+      "project_number": "26-103",
+      "acumatica_project_id": "26103",
+      "source_lock_status": "needs_direct_meeting_email_teams_ids"
     }
   },
   {
     "inputs": {
       "query": "For ASRS sprinkler design, what keeps coming up repeatedly across the last few meetings and messages?",
       "scenario": "Pattern-detection prompt for repeated ASRS sprinkler blockers.",
-      "required_source_types": ["meetings", "teams_messages"],
-      "preferred_optional_source_types": ["emails"],
+      "required_source_types": [
+        "meetings",
+        "teams_messages"
+      ],
+      "preferred_optional_source_types": [
+        "emails"
+      ],
       "time_window": "recent relevant history"
     },
     "outputs": {
@@ -98,14 +111,28 @@
       "category": "asrs_sprinkler_rag",
       "difficulty": "medium",
       "priority": "p0",
-      "langsmith_split": "baseline"
+      "langsmith_split": "baseline",
+      "project_id": 760,
+      "project_number": "26-103",
+      "project_name": "Exol Wilmer",
+      "acumatica_project_id": "26103",
+      "source_lock_status": "needs_direct_meeting_email_teams_ids",
+      "source_basis": [
+        "docs/ai-plan/evals/runs/2026-05-19T06-13-15-043Z-12edee9a/realworld-business-risks.json",
+        "docs/ai-plan/evals/runs/2026-05-12T19-14-11-931Z/cross-project-comparison.json",
+        "docs/ai-plan/evals/strategic-operator/source-basis.md"
+      ]
     }
   },
   {
     "inputs": {
       "query": "What should I ask the sprinkler designer next on the ASRS scope so we stop cycling on the same issue?",
       "scenario": "Strategic follow-up that should convert retrieved ASRS evidence into a decision-oriented question list.",
-      "required_source_types": ["meetings", "emails", "teams_messages"],
+      "required_source_types": [
+        "meetings",
+        "emails",
+        "teams_messages"
+      ],
       "time_window": "all relevant available history"
     },
     "outputs": {
@@ -139,15 +166,31 @@
       "category": "asrs_sprinkler_rag",
       "difficulty": "hard",
       "priority": "p1",
-      "langsmith_split": "baseline"
+      "langsmith_split": "baseline",
+      "project_id": 760,
+      "project_number": "26-103",
+      "project_name": "Exol Wilmer",
+      "acumatica_project_id": "26103",
+      "source_lock_status": "needs_direct_meeting_email_teams_ids",
+      "source_basis": [
+        "docs/ai-plan/evals/runs/2026-05-19T06-13-15-043Z-12edee9a/realworld-business-risks.json",
+        "docs/ai-plan/evals/runs/2026-05-12T19-14-11-931Z/cross-project-comparison.json",
+        "docs/ai-plan/evals/strategic-operator/source-basis.md"
+      ]
     }
   },
   {
     "inputs": {
       "query": "Tell me the biggest insights, risks, or hurdles from the past week's meetings.",
       "scenario": "Executive weekly meeting-intelligence prompt.",
-      "required_source_types": ["meetings"],
-      "preferred_optional_source_types": ["teams_messages", "emails", "action_items"],
+      "required_source_types": [
+        "meetings"
+      ],
+      "preferred_optional_source_types": [
+        "teams_messages",
+        "emails",
+        "action_items"
+      ],
       "time_window": "past 7 days"
     },
     "outputs": {
@@ -191,8 +234,13 @@
     "inputs": {
       "query": "What changed in meetings this week that I should care about as the owner?",
       "scenario": "Owner-facing weekly delta prompt.",
-      "required_source_types": ["meetings"],
-      "preferred_optional_source_types": ["emails", "teams_messages"],
+      "required_source_types": [
+        "meetings"
+      ],
+      "preferred_optional_source_types": [
+        "emails",
+        "teams_messages"
+      ],
       "time_window": "current week"
     },
     "outputs": {
@@ -233,8 +281,14 @@
     "inputs": {
       "query": "Of all the meetings from last week, what are the three things most likely to cost us time or money?",
       "scenario": "Cost/schedule risk extraction from meeting corpus.",
-      "required_source_types": ["meetings"],
-      "preferred_optional_source_types": ["financial_records", "schedule_tasks", "emails"],
+      "required_source_types": [
+        "meetings"
+      ],
+      "preferred_optional_source_types": [
+        "financial_records",
+        "schedule_tasks",
+        "emails"
+      ],
       "time_window": "previous calendar week"
     },
     "outputs": {
@@ -276,8 +330,14 @@
     "inputs": {
       "query": "What important Microsoft Office items came in this morning, and what can I ignore?",
       "scenario": "Microsoft Office executive-assistant triage across Outlook, Teams, calendar, and files.",
-      "required_source_types": ["outlook_email", "teams_messages"],
-      "preferred_optional_source_types": ["calendar", "onedrive_files"],
+      "required_source_types": [
+        "outlook_email",
+        "teams_messages"
+      ],
+      "preferred_optional_source_types": [
+        "calendar",
+        "onedrive_files"
+      ],
       "time_window": "this morning"
     },
     "outputs": {
@@ -321,8 +381,13 @@
     "inputs": {
       "query": "Look across my Microsoft emails and Teams messages from the last 24 hours. What actually needs my attention?",
       "scenario": "Office triage for attention-worthy communications.",
-      "required_source_types": ["outlook_email", "teams_messages"],
-      "preferred_optional_source_types": ["calendar"],
+      "required_source_types": [
+        "outlook_email",
+        "teams_messages"
+      ],
+      "preferred_optional_source_types": [
+        "calendar"
+      ],
       "time_window": "last 24 hours"
     },
     "outputs": {
@@ -364,8 +429,14 @@
     "inputs": {
       "query": "Do I have any Office messages that look unimportant but might hide a risk?",
       "scenario": "Strategic risk detection in low-signal Microsoft Office communications.",
-      "required_source_types": ["outlook_email", "teams_messages"],
-      "preferred_optional_source_types": ["attachments", "calendar"],
+      "required_source_types": [
+        "outlook_email",
+        "teams_messages"
+      ],
+      "preferred_optional_source_types": [
+        "attachments",
+        "calendar"
+      ],
       "time_window": "recent relevant history"
     },
     "outputs": {
@@ -406,8 +477,15 @@
     "inputs": {
       "query": "Build me a quick morning brief from Microsoft Office: what matters, what changed, what I need to do, and what I can ignore.",
       "scenario": "Combined Outlook, Teams, calendar, and files morning brief.",
-      "required_source_types": ["outlook_email", "teams_messages", "calendar"],
-      "preferred_optional_source_types": ["onedrive_files", "attachments"],
+      "required_source_types": [
+        "outlook_email",
+        "teams_messages",
+        "calendar"
+      ],
+      "preferred_optional_source_types": [
+        "onedrive_files",
+        "attachments"
+      ],
       "time_window": "since yesterday evening"
     },
     "outputs": {
@@ -449,8 +527,15 @@
     "inputs": {
       "query": "What are the biggest open loops from this week's meetings and Office messages?",
       "scenario": "Cross-source open-loop extraction from meetings, Outlook, and Teams.",
-      "required_source_types": ["meetings", "outlook_email", "teams_messages"],
-      "preferred_optional_source_types": ["tasks", "calendar"],
+      "required_source_types": [
+        "meetings",
+        "outlook_email",
+        "teams_messages"
+      ],
+      "preferred_optional_source_types": [
+        "tasks",
+        "calendar"
+      ],
       "time_window": "current week"
     },
     "outputs": {
@@ -492,8 +577,16 @@
     "inputs": {
       "query": "What am I missing from the past week that could surprise me later?",
       "scenario": "Proactive strategic risk scan across meetings and Office sources.",
-      "required_source_types": ["meetings", "outlook_email", "teams_messages"],
-      "preferred_optional_source_types": ["calendar", "tasks", "attachments"],
+      "required_source_types": [
+        "meetings",
+        "outlook_email",
+        "teams_messages"
+      ],
+      "preferred_optional_source_types": [
+        "calendar",
+        "tasks",
+        "attachments"
+      ],
       "time_window": "past 7 days"
     },
     "outputs": {
