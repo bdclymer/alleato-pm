@@ -374,8 +374,8 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     if (recordingHandleRef.current) {
       try {
         recordingHandleRef.current.cancel();
-      } catch {
-        /* ignore */
+      } catch (cancelError) {
+        console.warn("[admin-feedback] cancel recording failed", cancelError);
       }
       recordingHandleRef.current = null;
     }
@@ -398,8 +398,8 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       if (recordingHandleRef.current) {
         try {
           recordingHandleRef.current.cancel();
-        } catch {
-          /* ignore */
+        } catch (cancelError) {
+          console.warn("[admin-feedback] cancel recording on unmount failed", cancelError);
         }
       }
       if (recordingTimerRef.current) {

@@ -116,8 +116,8 @@ export async function startScreenRecording(options?: {
     if (recorder.state !== "inactive") {
       try {
         recorder.stop();
-      } catch {
-        /* ignore */
+      } catch (stopError) {
+        console.warn("[screen-recorder] recorder.stop() on display-end failed", stopError);
       }
     }
   };
@@ -130,8 +130,8 @@ export async function startScreenRecording(options?: {
     if (recorder.state !== "inactive") {
       try {
         recorder.stop();
-      } catch {
-        /* ignore */
+      } catch (stopError) {
+        console.warn("[screen-recorder] recorder.stop() at duration cap failed", stopError);
       }
     }
   }, MAX_RECORDING_DURATION_MS);
@@ -150,13 +150,14 @@ export async function startScreenRecording(options?: {
         stopAllTracks();
         resolve({ blob, mimeType, durationMs: performance.now() - startedAt });
       };
-      recorder.onerror = (event) => {
+      recorder.onerror = (event: Event) => {
         stopAllTracks();
-        reject(
-          event instanceof Event && "error" in event
-            ? (event as unknown as { error: Error }).error
-            : new Error("MediaRecorder error"),
-        );
+        const maybeError =
+          "error" in event &&
+          (event as Event & { error?: unknown }).error instanceof Error
+            ? ((event as Event & { error: Error }).error)
+            : null;
+        reject(maybeError ?? new Error("MediaRecorder error"));
       };
 
       if (recorder.state !== "inactive") {
@@ -204,8 +205,8 @@ export async function uploadRecording(blob: Blob): Promise<UploadedRecording> {
     try {
       const body = await initResponse.json();
       detail = body?.error ?? body?.details ?? "";
-    } catch {
-      /* ignore */
+    } catch (parseError) {
+      console.warn("[screen-recorder] could not parse upload-init error body", parseError);
     }
     throw new Error(
       detail || `Recording upload init failed (HTTP ${initResponse.status})`,
