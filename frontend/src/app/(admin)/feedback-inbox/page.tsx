@@ -26,7 +26,6 @@ import {
   PanelRightOpen,
   PauseCircle,
   Play,
-  Send,
   ShieldCheck,
   Trash2,
   Wrench,
@@ -402,7 +401,7 @@ function CollapsibleDetailSection({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="border-t border-border/60 pt-4"
+      className="pt-2"
     >
       <CollapsibleTrigger className="group flex w-full items-center justify-between gap-4 text-left outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <SectionRuleHeading label={label} className="mb-0 pb-0" />
@@ -1008,49 +1007,24 @@ function AgentDispatchSection({
   dispatching: boolean;
   onDispatch: (id: string, target: AgentTarget) => void;
 }) {
-  const [target, setTarget] = useState<AgentTarget>(() => getAssignedAgent(item) ?? "codex");
   const dispatchStatus = getDispatchStatus(item);
   const dispatchTrigger = getDispatchTrigger(item);
   const history = getDispatchHistory(item);
   const lastDispatch = history[0] ?? null;
-
-  useEffect(() => {
-    setTarget(getAssignedAgent(item) ?? "codex");
-  }, [item.id, item.metadata]);
+  const target = getAssignedAgent(item) ?? "codex";
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <Select
-            value={target}
-          onValueChange={(value) => setTarget(value as AgentTarget)}
-        >
-          <SelectTrigger
-            aria-label="Agent assignee"
-            size="sm"
-            className="h-7 w-32 px-2 text-xs font-medium"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="codex">Codex</SelectItem>
-            <SelectItem value="claude_code">Claude Code</SelectItem>
-          </SelectContent>
-        </Select>
-
+      <div className="flex flex-wrap items-center gap-3 text-xs">
         <Button
-          size="sm"
-          variant="outline"
+          type="button"
+          variant="link"
+          size="xs"
           onClick={() => onDispatch(item.id, target)}
           disabled={dispatching}
-          className="h-7 border-border/60 text-xs"
+          className="h-auto p-0 text-xs font-medium"
         >
-          {dispatching ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Send className="h-3.5 w-3.5" />
-          )}
-          {dispatching ? "Dispatching..." : `Dispatch to ${agentLabel(target)}`}
+          {dispatching ? "Dispatching..." : "Dispatch"}
         </Button>
       </div>
 
@@ -1826,6 +1800,7 @@ function FeedbackDetail({
   commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   const displayStatus = toDisplayStatus(item.status);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const { confirm: confirmDetailDelete, ConfirmDialog: DetailConfirmDialog } = useConfirm();
   const displayTitle = displayAdminFeedbackTitle({
     storedTitle: item.title,
@@ -1834,6 +1809,25 @@ function FeedbackDetail({
     targetText: item.target_text,
     pageTitle: item.page_title,
   });
+
+  useEffect(() => {
+    if (!lightboxImage) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setLightboxImage(null);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [lightboxImage]);
 
   return (
     <>
@@ -1929,7 +1923,9 @@ function FeedbackDetail({
         </div>
 
         {/* Inline actions */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+          <span className="inline-flex items-center gap-2 text-muted-foreground">
+            <span>Status</span>
           <Select
               value={displayStatus}
             onValueChange={(value) => onUpdateStatus(item.id, value as DisplayStatus)}
@@ -1939,11 +1935,11 @@ function FeedbackDetail({
               aria-label="Feedback status"
               size="sm"
               className={cn(
-                "h-7 w-32 px-2 text-xs font-medium",
-                displayStatus === "resolved" && "bg-status-success/15 text-status-success",
-                displayStatus === "open" && "bg-status-warning/15 text-status-warning",
-                displayStatus === "in_progress" && "bg-status-info/15 text-status-info",
-                displayStatus === "deferred" && "bg-muted text-muted-foreground",
+                "h-auto w-auto min-w-24 border-0 bg-transparent px-0 py-0 text-xs font-medium shadow-none hover:bg-transparent focus-visible:ring-1",
+                displayStatus === "resolved" && "text-status-success",
+                displayStatus === "open" && "text-status-warning",
+                displayStatus === "in_progress" && "text-status-info",
+                displayStatus === "deferred" && "text-muted-foreground",
               )}
             >
               <SelectValue />
@@ -1956,17 +1952,17 @@ function FeedbackDetail({
               ))}
             </SelectContent>
           </Select>
+          </span>
 
           {/* GitHub */}
           {!item.github_issue_number && (
             <Button
-              size="sm"
-              variant="outline"
+              size="xs"
+              variant="link"
               onClick={() => onSendToGitHub(item.id)}
               disabled={sendingToGitHub}
-              className="h-7 border-border/60 text-xs"
+              className="h-auto p-0 text-xs font-medium"
             >
-              <Github />
               {sendingToGitHub ? "Sending..." : "Create Issue"}
             </Button>
           )}
@@ -1983,7 +1979,7 @@ function FeedbackDetail({
           )}
         </div>
 
-        <div className="mt-3 border-t border-border/50 pt-3">
+        <div className="mt-3">
           <AgentDispatchSection
             item={item}
             dispatching={dispatchingId === item.id}
@@ -2000,13 +1996,19 @@ function FeedbackDetail({
 
         {/* Screenshot */}
         {item.screenshot_url && (
-          <div className="overflow-hidden rounded-md border border-border/60">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setLightboxImage(item.screenshot_url)}
+            className="group block h-auto w-full overflow-hidden rounded-md border border-border/60 p-0 text-left transition-colors hover:border-border hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label="Open feedback screenshot"
+          >
             <img
               src={item.screenshot_url}
               alt="Feedback screenshot"
-              className="w-full max-h-75 object-cover object-top"
+              className="w-full max-h-75 object-cover object-top transition-opacity group-hover:opacity-95"
             />
-          </div>
+          </Button>
         )}
       </div>
 
@@ -2097,6 +2099,34 @@ function FeedbackDetail({
         </CollapsibleDetailSection>
       )}
     </div>
+
+    {lightboxImage && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4"
+        role="presentation"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) {
+            setLightboxImage(null);
+          }
+        }}
+      >
+        <img
+          src={lightboxImage}
+          alt="Feedback screenshot enlarged"
+          className="max-h-full max-w-full object-contain"
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setLightboxImage(null)}
+          className="absolute right-4 top-4 bg-background/80 text-muted-foreground hover:bg-background hover:text-foreground"
+          aria-label="Close screenshot"
+        >
+          <XCircle className="h-4 w-4" />
+        </Button>
+      </div>
+    )}
     </>
   );
 }
@@ -2336,6 +2366,13 @@ export default function FeedbackInboxPage() {
     }
   }
 
+  function showDetailOnMobileOnly() {
+    const isMobileViewport =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 1023px)").matches;
+    setMobileShowDetail(isMobileViewport);
+  }
+
   const issueItems = useMemo(
     () => items.filter((item) => item.request_type !== "feature_request"),
     [items],
@@ -2460,7 +2497,7 @@ export default function FeedbackInboxPage() {
         case "Enter": {
           if (visibleItems.length === 0) return;
           setSelectedId(visibleItems[focusedIndex].id);
-          setMobileShowDetail(true);
+          showDetailOnMobileOnly();
           break;
         }
         case "Escape": {
@@ -2613,7 +2650,7 @@ export default function FeedbackInboxPage() {
   // ---- Select item ----
   function selectItem(id: string) {
     setSelectedId(id);
-    setMobileShowDetail(true);
+    showDetailOnMobileOnly();
   }
 
   function handleMobileBack() {
