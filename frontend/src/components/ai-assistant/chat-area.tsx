@@ -85,11 +85,6 @@ import {
   PromptInputActionAddAttachments,
   PromptInputActionAddScreenshot,
   PromptInputSubmit,
-  PromptInputSelect,
-  PromptInputSelectTrigger,
-  PromptInputSelectContent,
-  PromptInputSelectItem,
-  PromptInputSelectValue,
   usePromptInputAttachments,
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
@@ -114,6 +109,8 @@ import {
   UsersRoundIcon,
   Volume2Icon,
   VolumeXIcon,
+  SparklesIcon,
+  ArrowUpIcon,
 } from "lucide-react";
 import type { DynamicToolUIPart, FileUIPart } from "ai";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -1190,6 +1187,7 @@ export function ChatArea({
 
   // Project selector
   const [projectOpen, setProjectOpen] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isMicrophoneBlocked, setIsMicrophoneBlocked] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
@@ -1600,11 +1598,11 @@ export function ChatArea({
           isRecording
             ? "Listening..."
             : councilMode
-            ? "Ask the council for a recommendation..."
-            : "Type a message... (Shift+Enter for new line)"
+            ? "Ask the council…"
+            : "Ask anything…"
         }
         className={cn(
-          "px-2 text-base leading-6 placeholder:text-muted-foreground/70 sm:text-lg",
+          "px-2 text-base leading-6 placeholder:text-muted-foreground/40 sm:text-lg",
           hasMessages ? "min-h-8 pb-2 pt-0.5" : "min-h-12 pb-3 pt-1",
         )}
       />
@@ -1747,28 +1745,54 @@ export function ChatArea({
               <UsersRoundIcon className="h-3.5 w-3.5" />
             </Button>
           </PromptInputAction>
-          <PromptInputSelect
-            value={selectedModel}
-            onValueChange={(v) => onModelChange?.(v as AiAssistantModelId)}
-          >
-            <PromptInputSelectTrigger
-              className={cn(composerIconButtonClass, "w-auto px-2 text-xs")}
-            >
-              <PromptInputSelectValue />
-            </PromptInputSelectTrigger>
-            <PromptInputSelectContent side="top">
-              {AI_ASSISTANT_MODELS.map((model) => (
-                <PromptInputSelectItem key={model.id} value={model.id}>
-                  <span>
-                    <span className="block">{model.label}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {model.description}
-                    </span>
-                  </span>
-                </PromptInputSelectItem>
-              ))}
-            </PromptInputSelectContent>
-          </PromptInputSelect>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <Popover open={modelOpen} onOpenChange={setModelOpen}>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className={composerIconButtonClass}
+                      aria-label="Select model"
+                    >
+                      <SparklesIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <PopoverContent className="w-64 p-1" align="end" side="top">
+                  {AI_ASSISTANT_MODELS.map((model) => (
+                    <button
+                      key={model.id}
+                      type="button"
+                      onClick={() => {
+                        onModelChange?.(model.id);
+                        setModelOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-start justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent",
+                        model.id === selectedModel && "bg-accent",
+                      )}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{model.label}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {model.description}
+                        </span>
+                      </span>
+                      {model.id === selectedModel && (
+                        <CheckIcon className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
+                      )}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+              <TooltipContent side="top">
+                Model: {selectedModelOption.label}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
           <PromptInputSubmit
@@ -1778,11 +1802,15 @@ export function ChatArea({
             size="icon-sm"
             disabled={!input.trim() && !isStreaming}
             className={cn(
-              "relative h-7 w-7 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8",
+              "relative h-7 w-7 rounded-full bg-transparent text-muted-foreground/40 shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8",
               input.trim() && "text-foreground",
               isStreaming && "text-foreground/60 hover:text-foreground/60",
             )}
-          />
+          >
+            {isStreaming ? undefined : (
+              <ArrowUpIcon className="h-3.5 w-3.5" strokeWidth={2.25} />
+            )}
+          </PromptInputSubmit>
         </div>
       </PromptInputFooter>
     </PromptInput>
