@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { buildOwnEmailsFilter } from "@/lib/emails/access";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
 
@@ -46,28 +47,13 @@ export const GET = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails#GET", message: "Authentication required." });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("user_profiles")
       .select("is_admin")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError) {
-      throw new GuardrailError({
-        code: "INTERNAL_ERROR",
-        where: "projects/[projectId]/emails#GET",
-        message: profileError.message,
-      });
-    }
-
-    if (!profile?.is_admin) {
-      throw new GuardrailError({
-        code: "FORBIDDEN",
-        where: "projects/[projectId]/emails#GET",
-        message: "Admin access required.",
-        status: 403,
-      });
-    }
+    const isAdmin = profile?.is_admin === true;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
@@ -115,6 +101,15 @@ export const GET = withApiGuardrails(
       query = query.or(
         `subject.ilike.%${search}%,from_name.ilike.%${search}%,from_email.ilike.%${search}%,body.ilike.%${search}%`,
       );
+    }
+
+    // Non-admins see only emails they are a party to.
+    if (!isAdmin) {
+      const filter = buildOwnEmailsFilter({ authUserId: user.id, email: user.email });
+      if (!filter) {
+        return NextResponse.json([]);
+      }
+      query = query.or(filter);
     }
 
     const { data, error } = await query;

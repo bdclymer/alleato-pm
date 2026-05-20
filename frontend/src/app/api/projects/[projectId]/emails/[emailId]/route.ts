@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { buildOwnEmailsFilter } from "@/lib/emails/access";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 interface RouteParams {
@@ -45,36 +46,30 @@ export const GET = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails/[emailId]#GET", message: "Authentication required." });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("user_profiles")
       .select("is_admin")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError) {
-      throw new GuardrailError({
-        code: "INTERNAL_ERROR",
-        where: "projects/[projectId]/emails/[emailId]#GET",
-        message: profileError.message,
-      });
-    }
+    const isAdmin = profile?.is_admin === true;
 
-    if (!profile?.is_admin) {
-      throw new GuardrailError({
-        code: "FORBIDDEN",
-        where: "projects/[projectId]/emails/[emailId]#GET",
-        message: "Admin access required.",
-        status: 403,
-      });
-    }
-
-    const { data, error } = await supabase
+    let query = supabase
       .from("project_emails")
       .select("*")
       .eq("id", parseInt(emailId, 10))
       .eq("project_id", parseInt(projectId, 10))
-      .is("deleted_at", null)
-      .single();
+      .is("deleted_at", null);
+
+    if (!isAdmin) {
+      const filter = buildOwnEmailsFilter({ authUserId: user.id, email: user.email });
+      if (!filter) {
+        return NextResponse.json({ error: "Email not found" }, { status: 404 });
+      }
+      query = query.or(filter);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) {
       if (error.code === "PGRST116") {

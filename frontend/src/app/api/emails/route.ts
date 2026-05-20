@@ -1,5 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { buildOwnEmailsFilter } from "@/lib/emails/access";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -37,46 +38,25 @@ interface EmailRow {
   projects: EmailProjectRow | null;
 }
 
-async function assertAdminAccess(where: string) {
+export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
   const supabase = await createClient();
   const user = await getApiRouteUser();
 
   if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
-      where,
+      where: "emails#GET",
       message: "Authentication required.",
     });
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from("user_profiles")
     .select("is_admin")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (profileError) {
-    throw new GuardrailError({
-      code: "INTERNAL_ERROR",
-      where,
-      message: profileError.message,
-    });
-  }
-
-  if (!profile?.is_admin) {
-    throw new GuardrailError({
-      code: "FORBIDDEN",
-      where,
-      message: "Admin access required.",
-      status: 403,
-    });
-  }
-
-  return supabase;
-}
-
-export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
-  const supabase = await assertAdminAccess("emails#GET");
+  const isAdmin = profile?.is_admin === true;
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const source = searchParams.get("source") ?? "app";
@@ -109,6 +89,16 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
       .is("graph_message_id", null)
       .is("mailbox_user_id", null)
       .is("conversation_id", null);
+  }
+
+  // Non-admins see only their own emails (sender, recipient, or app-created by them).
+  if (!isAdmin) {
+    const filter = buildOwnEmailsFilter({ authUserId: user.id, email: user.email });
+    if (!filter) {
+      // No identifiable user email — return empty rather than leak data.
+      return NextResponse.json([]);
+    }
+    query = query.or(filter);
   }
 
   const { data, error } = await query;
