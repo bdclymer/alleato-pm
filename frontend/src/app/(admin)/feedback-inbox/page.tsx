@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
   Link2,
   Loader2,
+  PauseCircle,
   Play,
   ShieldCheck,
   Trash2,
@@ -130,7 +131,7 @@ type GitHubComment = {
   author_association: string;
 };
 
-type StatusFilter = "open" | "in_progress" | "resolved" | "all";
+type StatusFilter = "open" | "in_progress" | "deferred" | "resolved" | "all";
 type DisplayStatus = Exclude<StatusFilter, "all"> | "archived";
 
 // ---------------------------------------------------------------------------
@@ -140,6 +141,7 @@ type DisplayStatus = Exclude<StatusFilter, "all"> | "archived";
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "in_progress", label: "In Progress" },
+  { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
   { value: "all", label: "All" },
 ];
@@ -147,6 +149,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "in_progress", label: "In Progress" },
+  { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
   { value: "archived", label: "Archived" },
 ];
@@ -163,6 +166,13 @@ const STATUS_META: Record<DisplayStatus, { icon: typeof Circle; className: strin
     className: "text-status-info",
     dotClassName: "bg-status-info animate-pulse",
     label: "In Progress",
+    showInList: true,
+  },
+  deferred: {
+    icon: PauseCircle,
+    className: "text-muted-foreground",
+    dotClassName: "bg-muted-foreground",
+    label: "Deferred",
     showInList: true,
   },
   resolved: {
@@ -203,8 +213,9 @@ const IN_PROGRESS_STATUSES = new Set([
   "in_review",
 ]);
 const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
+const DEFERRED_STATUSES = new Set(["deferred"]);
 const ARCHIVED_STATUSES = new Set(["archived"]);
-const LIST_SECTION_ORDER: DisplayStatus[] = ["in_progress", "open", "resolved"];
+const LIST_SECTION_ORDER: DisplayStatus[] = ["in_progress", "open", "deferred", "resolved"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -252,6 +263,7 @@ function relativeTime(dateStr: string) {
 function toDisplayStatus(status: string): DisplayStatus {
   if (ARCHIVED_STATUSES.has(status)) return "archived";
   if (RESOLVED_STATUSES.has(status)) return "resolved";
+  if (DEFERRED_STATUSES.has(status)) return "deferred";
   if (IN_PROGRESS_STATUSES.has(status)) return "in_progress";
   return "open";
 }
@@ -1025,6 +1037,9 @@ function ListItemContextMenu({
       case "archive":
         onUpdateStatus(item.id, "archived");
         break;
+      case "defer":
+        onUpdateStatus(item.id, "deferred");
+        break;
       case "delete": {
         const ok = await confirmDelete({
           description: "Delete this feedback item? This cannot be undone.",
@@ -1123,6 +1138,17 @@ function ListItemContextMenu({
           >
             <Hash className="h-3.5 w-3.5" />
             Copy ID
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="default"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+            onClick={() => handleAction("defer")}
+          >
+            <PauseCircle className="h-3.5 w-3.5" />
+            Defer
           </Button>
 
           <Button
@@ -1701,6 +1727,7 @@ function FeedbackDetail({
                 displayStatus === "resolved" && "bg-status-success/15 text-status-success",
                 displayStatus === "open" && "bg-status-warning/15 text-status-warning",
                 displayStatus === "in_progress" && "bg-status-info/15 text-status-info",
+                displayStatus === "deferred" && "bg-muted text-muted-foreground",
               )}
             >
               {STATUS_OPTIONS.map((opt) => (
@@ -1883,12 +1910,16 @@ export default function FeedbackInboxPage() {
         if (filter === "open") {
           params.set("status", "open,github_failed");
         } else if (filter === "in_progress") {
-          params.set("status", "submitted,triaged,diagnosing,fixing,verifying,in_review");
+          params.set("status", "submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review");
+        } else if (filter === "deferred") {
+          params.set("status", "deferred");
         } else if (filter === "resolved") {
           params.set("status", "resolved,closed");
         } else {
           params.set("status", filter);
         }
+      } else {
+        params.set("status", "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,deferred,resolved,closed");
       }
       const data = await apiFetch<{ items?: FeedbackItem[]; total?: number }>(
         `/api/admin/feedback?${params.toString()}`,

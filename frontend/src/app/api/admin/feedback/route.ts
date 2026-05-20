@@ -483,7 +483,7 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
 
 const patchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "resolved", "closed", "archived"]).optional(),
+  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "deferred", "resolved", "closed", "archived"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
