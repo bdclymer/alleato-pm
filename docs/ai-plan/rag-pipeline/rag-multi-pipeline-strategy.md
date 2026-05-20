@@ -76,10 +76,12 @@ A new local ingestion command was added:
 
 Capabilities:
 - Recursively scans supported files (PDF, Office docs, spreadsheets, text, images)
+- Skips dependency/build folders such as `node_modules`, `.git`, `.next`, `coverage`, and `dist`
 - Classifies document category heuristically from extension + filename hints
 - Uploads each file to Supabase Storage
 - Inserts/upserts `document_metadata` and `fireflies_ingestion_jobs`
 - Deduplicates via `content_hash`
+- Can use stable source IDs for update-in-place folder syncs
 - Tracks incremental state in a local manifest
 - Optional immediate processing through existing Python pipeline (`--process-now`)
 - Optional watch mode via polling
@@ -106,6 +108,38 @@ Manual run + immediate parsing/embedding/extraction:
 ```bash
 npm run rag:ingest:local -- --source-dir ~/Documents/AlleatoKnowledge --project-id 43 --process-now
 ```
+
+Estimating folder run + immediate parsing/embedding/extraction:
+
+```bash
+npm run rag:ingest:estimating
+```
+
+By default this embeds `docs/PRPs/estimates`. To point it at a different
+estimating folder without changing code:
+
+```bash
+RAG_ESTIMATING_SOURCE_DIR="/absolute/path/to/estimating-folder" npm run rag:ingest:estimating
+```
+
+Estimating dry run:
+
+```bash
+npm run rag:ingest:estimating:dry
+```
+
+Estimating ingest guardrail:
+
+```bash
+npm run rag:verify:estimating-ingest
+```
+
+Estimating uses `--category financial_document`, `--stable-source-ids`,
+`--workflow-target estimating`, `--reindex-all`, and the stable storage prefix
+`local/estimating`. Edits to the same source path update and re-queue the same
+document record instead of creating a new embedded document ID. The
+`--reindex-all` check is deliberate for this small folder: the manifest cannot
+hide unchanged rows that are not yet `embedded`/`complete` in the database.
 
 Dry run:
 

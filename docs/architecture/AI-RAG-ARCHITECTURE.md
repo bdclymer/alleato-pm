@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-05-19
+Last verified: 2026-05-20
 
 ---
 
@@ -137,6 +137,8 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | `backend/src/services/pipeline/digest.py` | Stage 4: Daily digest generation (non-blocking). |
 | `backend/src/services/pipeline/llm.py` | Backend LLM/embedding client. Current defaults: chat=gpt-4o-mini, embeddings=text-embedding-3-small. |
 | `backend/src/services/daily_digest.py` | Daily meeting digest generation. |
+| `scripts/ingestion/ingest_local_documents.py` | Local folder RAG ingestion. Supports stable source IDs, content-hash dedupe, dependency/build folder ignores, category/workflow overrides, and source-labeled storage prefixes. The estimating preset uses this script through `npm run rag:ingest:estimating`. |
+| `scripts/verify/verify_estimating_rag_ingest_target.mjs` | Guardrail for the estimating local-folder ingest target. Verifies the npm scripts, stable source IDs, `workflow_target=estimating`, `category=financial_document`, backend `PYTHONPATH`, and a Supabase-free dry run. |
 | `backend/src/services/ingestion/fireflies_pipeline.py` | Fireflies sync: fetch transcripts → normalize markdown → upload to Supabase Storage → upsert document_metadata → enqueue ingestion job. |
 | `backend/src/services/alleato_agent_workflow/guardrails.py` | PII and jailbreak guardrails. |
 
@@ -385,7 +387,9 @@ Post-response, `conversation-memory.ts` runs a fact extraction job (async) to di
 Source
   ├── Fireflies.ai transcript → Fireflies sync (backend cron)
   ├── Manual upload (PDF/DOCX/TXT) → /api/documents/upload (frontend API)
-  └── Local folder → scripts/ingestion/ingest_local_documents.py
+  ├── Local folder → scripts/ingestion/ingest_local_documents.py
+  └── Estimating folder preset → npm run rag:ingest:estimating
+      (defaults to docs/PRPs/estimates; override with RAG_ESTIMATING_SOURCE_DIR)
 
 → document_metadata row created/updated
 → DB trigger enqueues fireflies_ingestion_jobs row
@@ -399,6 +403,15 @@ Source
 → digest.py (Stage 4, non-blocking)
 ```
 
+The estimating preset stamps files as `category=financial_document` and
+`workflow_target=estimating`, stores raw files under `local/estimating`, and uses
+stable source IDs derived from source label + source directory + relative path.
+Exact duplicate content still skips through `document_metadata.content_hash`;
+changed files at the same path update and re-queue the same `document_metadata`
+row. The live estimating command intentionally uses `--reindex-all` so the local
+manifest cannot hide rows that are unchanged on disk but still not
+`embedded`/`complete` in the database.
+
 Stage 1B must tolerate first-time uploads that do not yet have a `rag_document_metadata`
 row. The parser reads optional RAG metadata when present, otherwise downloads the
 stored source file from Supabase Storage and writes extracted text into
@@ -409,7 +422,10 @@ prevents invalid LLM JSON from collapsing a long technical document into one
 summary-only segment. The prep script can also render figure-heavy pages and create
 a separate vision-caption Markdown file for diagram-aware retrieval. The embedder
 must then chunk generic document lines directly and store those chunks with
-`source_type='document'`.
+`source_type='document'`. Re-indexed generic documents reset prior
+`meeting_segments`, and Stage 2 resets prior `document_chunks` for the document
+before writing the regenerated chunk set so stale chunks cannot remain searchable
+after a source file changes.
 
 ### Embedding in the Pipeline
 

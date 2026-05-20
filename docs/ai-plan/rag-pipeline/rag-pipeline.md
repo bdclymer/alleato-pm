@@ -144,6 +144,20 @@ Manual local folder ingestion:
 - Script: [`scripts/ingestion/ingest_local_documents.py`](../../scripts/ingestion/ingest_local_documents.py)
 - Typical command:
   - `python3 scripts/ingestion/ingest_local_documents.py --source-dir "<folder>" --process-now`
+- Estimating preset:
+  - `npm run rag:ingest:estimating`
+  - Default source folder: `docs/PRPs/estimates`
+  - Override source folder with `RAG_ESTIMATING_SOURCE_DIR="/absolute/path" npm run rag:ingest:estimating`
+  - Dry-run/guardrail: `npm run rag:ingest:estimating:dry` and `npm run rag:verify:estimating-ingest`
+  - Stamps every row as `category=financial_document` and `workflow_target=estimating`
+
+Update and duplicate behavior:
+- Exact duplicate content is skipped before upload by comparing `document_metadata.content_hash`.
+- The estimating preset uses stable source IDs derived from source label + source directory + relative path, so a changed file updates and re-queues the same `document_metadata.id`.
+- The estimating live command also uses `--reindex-all` so the manifest cannot hide a row that is unchanged locally but not yet `embedded`/`complete` in the database.
+- Re-indexed generic documents reset prior `meeting_segments` before writing new segments.
+- Re-embedding resets prior `document_chunks` for that document before inserting the newly generated chunk set, so stale chunks do not remain searchable after a file edit.
+- The local manifest avoids rescanning unchanged files between runs; the database `content_hash` check is the cross-run/cross-folder duplicate guardrail.
 
 ## 8) Stage Details and Strategies
 

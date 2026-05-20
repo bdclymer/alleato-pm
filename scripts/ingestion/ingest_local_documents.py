@@ -62,6 +62,19 @@ SUPPORTED_EXTENSIONS = {
     ".webp",
 }
 
+DEFAULT_IGNORED_DIRS = {
+    ".git",
+    ".next",
+    ".turbo",
+    ".venv",
+    "__pycache__",
+    "coverage",
+    "dist",
+    "node_modules",
+}
+
+INDEXED_STATUSES = {"embedded", "complete"}
+
 FINANCIAL_HINTS = {
     "budget",
     "estimate",
@@ -203,9 +216,19 @@ def save_manifest(path: Path, manifest: Dict[str, Any]) -> None:
     tmp_path.replace(path)
 
 
-def iter_candidates(source_dir: Path) -> Iterable[FileCandidate]:
+def _ignored_dir_names(raw: Optional[str]) -> set[str]:
+    if not raw:
+        return set(DEFAULT_IGNORED_DIRS)
+    configured = {part.strip() for part in raw.split(",") if part.strip()}
+    return set(DEFAULT_IGNORED_DIRS) | configured
+
+
+def iter_candidates(source_dir: Path, ignored_dirs: set[str]) -> Iterable[FileCandidate]:
     for file_path in source_dir.rglob("*"):
         if not file_path.is_file():
+            continue
+        rel_parts = file_path.relative_to(source_dir).parts
+        if any(part in ignored_dirs for part in rel_parts[:-1]):
             continue
         ext = file_path.suffix.lower()
         if ext not in SUPPORTED_EXTENSIONS:
@@ -289,8 +312,20 @@ def upload_binary(
 def fetch_existing_by_hash(client, content_hash: str) -> Optional[Dict[str, Any]]:
     resp = (
         client.table("document_metadata")
-        .select("id, content_hash")
+        .select("id, content_hash, source_item_id, source_path, file_name, status")
         .eq("content_hash", content_hash)
+        .limit(1)
+        .execute()
+    )
+    rows = resp.data or []
+    return rows[0] if rows else None
+
+
+def fetch_existing_by_id(client, metadata_id: str) -> Optional[Dict[str, Any]]:
+    resp = (
+        client.table("document_metadata")
+        .select("id, content_hash, source_item_id, source_path, file_name, status")
+        .eq("id", metadata_id)
         .limit(1)
         .execute()
     )
@@ -349,8 +384,36 @@ def resolve_project_id(
     raise RuntimeError(f"Project not found for name '{project_name}'.")
 
 
-def make_metadata_id(rel_path: str, content_hash: str) -> str:
+def make_source_item_key(source_label: str, source_dir: Path, rel_path: str) -> str:
+    return f"local_filesystem:{source_label}:{source_dir}:{rel_path}"
+
+
+def make_metadata_id(
+    rel_path: str,
+    content_hash: str,
+    source_label: str,
+    source_dir: Path,
+    stable_source_ids: bool,
+) -> str:
+    if stable_source_ids:
+        return str(uuid5(NAMESPACE_URL, make_source_item_key(source_label, source_dir, rel_path)))
     return str(uuid5(NAMESPACE_URL, f"{rel_path}:{content_hash}"))
+
+
+def make_storage_path(
+    candidate: FileCandidate,
+    source_label: str,
+    storage_prefix: Optional[str],
+    stable_source_ids: bool,
+) -> str:
+    source_path_slug = sanitize_storage_component(candidate.rel_path.replace("/", "--"))
+    if storage_prefix:
+        prefix = storage_prefix.strip("/")
+    elif stable_source_ids:
+        prefix = f"local/{sanitize_storage_component(source_label)}"
+    else:
+        prefix = f"local/{datetime.now(timezone.utc).date().isoformat()}"
+    return f"{prefix}/{source_path_slug}"
 
 
 def ingest_candidate(
@@ -362,8 +425,15 @@ def ingest_candidate(
     process_now: bool,
     dry_run: bool,
     max_file_size_bytes: Optional[int],
+    stable_source_ids: bool,
+    source_label: str,
+    workflow_target: Optional[str],
+    storage_prefix: Optional[str],
+    category_override: Optional[str],
 ) -> IngestOutcome:
     category, strategy = classify_document(candidate.rel_path, candidate.extension)
+    if category_override:
+        category = category_override
 
     if max_file_size_bytes is not None and candidate.size > max_file_size_bytes:
         limit_mb = max_file_size_bytes / (1024 * 1024)
@@ -375,20 +445,45 @@ def ingest_candidate(
             reason=f"file size {actual_mb:.2f} MB exceeds max {limit_mb:.2f} MB",
         )
 
-    existing = fetch_existing_by_hash(client, candidate.sha256)
-    if existing:
+    metadata_id = make_metadata_id(
+        candidate.rel_path,
+        candidate.sha256,
+        source_label,
+        source_dir,
+        stable_source_ids,
+    )
+    source_item_id = str(uuid5(NAMESPACE_URL, make_source_item_key(source_label, source_dir, candidate.rel_path)))
+
+    existing_same_source = fetch_existing_by_id(client, metadata_id) if stable_source_ids else None
+    existing_same_hash = fetch_existing_by_hash(client, candidate.sha256)
+    if existing_same_hash and existing_same_hash.get("id") != metadata_id:
         return IngestOutcome(
             file=candidate.rel_path,
             status="skipped_existing",
-            metadata_id=existing.get("id"),
+            metadata_id=existing_same_hash.get("id"),
             category=category,
             reason="matching content_hash already exists",
         )
+    if (
+        existing_same_source
+        and existing_same_source.get("content_hash") == candidate.sha256
+        and existing_same_source.get("status") in INDEXED_STATUSES
+    ):
+        return IngestOutcome(
+            file=candidate.rel_path,
+            status="skipped_existing",
+            metadata_id=metadata_id,
+            category=category,
+            reason="same source path and content_hash already indexed",
+        )
 
-    metadata_id = make_metadata_id(candidate.rel_path, candidate.sha256)
     title = candidate.path.stem
-    source_path_slug = sanitize_storage_component(candidate.rel_path.replace("/", "--"))
-    storage_path = f"local/{datetime.now(timezone.utc).date().isoformat()}/{source_path_slug}"
+    storage_path = make_storage_path(
+        candidate,
+        source_label=source_label,
+        storage_prefix=storage_prefix,
+        stable_source_ids=stable_source_ids,
+    )
 
     metadata_row: Dict[str, Any] = {
         "id": metadata_id,
@@ -396,6 +491,9 @@ def ingest_candidate(
         "category": category,
         "type": "document",
         "source": "local_filesystem",
+        "source_system": "local_filesystem",
+        "source_item_id": source_item_id,
+        "source_path": candidate.rel_path,
         "status": "raw_ingested",
         "phase": "ingest",
         "content_hash": candidate.sha256,
@@ -403,8 +501,19 @@ def ingest_candidate(
         "file_path": storage_path,
         "storage_bucket": bucket,
         "captured_at": now_iso(),
-        "tags": f"strategy:{strategy};local_path:{candidate.rel_path}",
+        "tags": f"strategy:{strategy};source_label:{source_label};local_path:{candidate.rel_path}",
+        "source_metadata": {
+            "source_label": source_label,
+            "source_dir": str(source_dir),
+            "relative_path": candidate.rel_path,
+            "sha256": candidate.sha256,
+            "size": candidate.size,
+            "mtime": candidate.mtime,
+            "stable_source_ids": stable_source_ids,
+        },
     }
+    if workflow_target:
+        metadata_row["workflow_target"] = workflow_target
     if project_id is not None:
         metadata_row["project_id"] = project_id
 
@@ -446,10 +555,10 @@ def ingest_candidate(
 
     return IngestOutcome(
         file=candidate.rel_path,
-        status="ingested",
+        status="updated" if existing_same_source else "ingested",
         metadata_id=metadata_id,
         category=category,
-        reason=f"enqueued via {strategy}",
+        reason=f"{'updated and re-queued' if existing_same_source else 'enqueued'} via {strategy}",
     )
 
 
@@ -480,7 +589,8 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
         client = get_supabase_client()
         effective_project_id = resolve_project_id(client, args.project_id, args.project_name)
 
-    candidates = list(iter_candidates(source_dir))
+    ignored_dirs = _ignored_dir_names(args.ignore_dirs)
+    candidates = list(iter_candidates(source_dir, ignored_dirs))
     candidates.sort(key=lambda c: c.rel_path.lower())
 
     changed = [
@@ -497,7 +607,15 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
         try:
             if args.dry_run:
                 category, strategy = classify_document(c.rel_path, c.extension)
-                metadata_id = make_metadata_id(c.rel_path, c.sha256)
+                if args.category:
+                    category = args.category
+                metadata_id = make_metadata_id(
+                    c.rel_path,
+                    c.sha256,
+                    args.source_label,
+                    source_dir,
+                    args.stable_source_ids,
+                )
                 outcome = IngestOutcome(
                     file=c.rel_path,
                     status="dry_run",
@@ -515,6 +633,11 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
                     process_now=args.process_now,
                     dry_run=args.dry_run,
                     max_file_size_bytes=max_file_size_bytes,
+                    stable_source_ids=args.stable_source_ids,
+                    source_label=args.source_label,
+                    workflow_target=args.workflow_target,
+                    storage_prefix=args.storage_prefix,
+                    category_override=args.category,
                 )
         except Exception as exc:
             outcome = IngestOutcome(
@@ -525,7 +648,7 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
 
         outcomes.append(outcome)
 
-        if outcome.status in {"ingested", "skipped_existing", "skipped_oversized", "dry_run"}:
+        if outcome.status in {"ingested", "updated", "skipped_existing", "skipped_oversized", "dry_run"}:
             manifest_files[c.rel_path] = {
                 "sha256": c.sha256,
                 "size": c.size,
@@ -547,6 +670,7 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
         "changed_files": len(changed),
         "processed": len(outcomes),
         "ingested": sum(1 for o in outcomes if o.status == "ingested"),
+        "updated": sum(1 for o in outcomes if o.status == "updated"),
         "skipped_existing": sum(1 for o in outcomes if o.status == "skipped_existing"),
         "dry_run": sum(1 for o in outcomes if o.status == "dry_run"),
         "skipped_oversized": sum(1 for o in outcomes if o.status == "skipped_oversized"),
@@ -555,6 +679,8 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
         "process_now": bool(args.process_now),
         "project_id": effective_project_id,
         "max_file_size_mb": args.max_file_size_mb,
+        "stable_source_ids": bool(args.stable_source_ids),
+        "ignored_dirs": sorted(ignored_dirs),
         "results": [o.__dict__ for o in outcomes],
     }
     return summary
@@ -587,6 +713,37 @@ def parse_args() -> argparse.Namespace:
         "--manifest",
         default=os.getenv("RAG_LOCAL_MANIFEST", str(REPO_ROOT / "tmp" / "rag-ingestion" / "manifest.json")),
         help="Manifest path used for incremental ingestion",
+    )
+    parser.add_argument(
+        "--source-label",
+        default=os.getenv("RAG_LOCAL_SOURCE_LABEL", "default"),
+        help="Stable label for this local source, used in metadata and stable IDs",
+    )
+    parser.add_argument(
+        "--workflow-target",
+        default=os.getenv("RAG_LOCAL_WORKFLOW_TARGET"),
+        help="Optional workflow_target value to store on document_metadata",
+    )
+    parser.add_argument(
+        "--category",
+        default=os.getenv("RAG_LOCAL_CATEGORY"),
+        help="Optional category override for every ingested file in this source",
+    )
+    parser.add_argument(
+        "--storage-prefix",
+        default=os.getenv("RAG_LOCAL_STORAGE_PREFIX"),
+        help="Optional stable Supabase Storage prefix, for example local/estimating",
+    )
+    parser.add_argument(
+        "--stable-source-ids",
+        action="store_true",
+        default=os.getenv("RAG_LOCAL_STABLE_SOURCE_IDS", "").lower() in {"1", "true", "yes", "on"},
+        help="Use source label + relative path for document IDs so file edits update the same record",
+    )
+    parser.add_argument(
+        "--ignore-dirs",
+        default=os.getenv("RAG_LOCAL_IGNORE_DIRS"),
+        help="Comma-separated extra directory names to ignore; defaults already skip node_modules, .git, .next, coverage, dist",
     )
     parser.add_argument(
         "--limit",

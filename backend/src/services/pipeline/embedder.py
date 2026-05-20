@@ -397,9 +397,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     #      Segment summary embeddings are now stored as document_chunks rows with
     #      source_type='meeting_segment_summary' — written in step 11 below.)
 
-    # 11. Store chunks in document_chunks table (unified RAG table)
-    # Build existing content-hash map once to avoid per-chunk SELECT load.
-    existing_chunks_by_hash = _get_existing_chunks_by_hash(rag_client, metadata_id)
+    # 11. Store chunks in document_chunks table (unified RAG table).
+    # Re-indexing a stable local source must replace the prior chunk set, not
+    # leave old chunks searchable after the source file changes.
+    rag_client.table("document_chunks").delete().eq("document_id", metadata_id).execute()
     for chunk in all_chunks:
         seg_id = segment_id_map.get(chunk.segment_index) if chunk.segment_index >= 0 else None
         _upsert_chunk(
@@ -411,7 +412,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
             participants=participants,
             project_id=project_id,
             title=title,
-            existing_chunk_id=existing_chunks_by_hash.get(chunk.content_hash or ""),
+            existing_chunk_id=None,
         )
 
     # 12. Update metadata status
@@ -498,19 +499,3 @@ def _upsert_chunk(
         ).execute()
     except Exception as exc:
         logger.error("[Embedder] Failed to upsert chunk %s: %s", chunk_id, exc)
-
-
-def _get_existing_chunks_by_hash(client, metadata_id: str) -> Dict[str, str]:
-    """Fetch all existing chunks for a document and map content_hash -> chunk_id."""
-    existing_resp = (
-        client.table("document_chunks")
-        .select("chunk_id,content_hash")
-        .eq("document_id", metadata_id)
-        .execute()
-    )
-    existing = existing_resp.data or []
-    return {
-        row["content_hash"]: row["chunk_id"]
-        for row in existing
-        if row.get("content_hash") and row.get("chunk_id")
-    }

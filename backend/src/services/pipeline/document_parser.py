@@ -449,7 +449,10 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
         for i, s in enumerate(segment_dicts)
     ]
 
-    # 8. Upsert segments to meeting_segments table
+    # 8. Reset prior parser output, then upsert segments to meeting_segments.
+    # This keeps re-indexed local files from leaving stale sections behind when
+    # the source document shrinks or its headings change.
+    client.table("meeting_segments").delete().eq("metadata_id", metadata_id).execute()
     for seg in segments:
         client.table("meeting_segments").upsert(
             {
