@@ -121,7 +121,15 @@ export default function MainLayout({
                 {...feedbackTargetProps("app.main-content")}
               >
                 <React.Fragment key="route-content">{children}</React.Fragment>
-                {!isDrawingViewer && <SiteFooter key="site-footer" />}
+                {!isDrawingViewer && (
+                  isAiAssistant ? (
+                    <div key="site-footer-desktop" className="hidden md:contents">
+                      <SiteFooter key="site-footer" />
+                    </div>
+                  ) : (
+                    <SiteFooter key="site-footer" />
+                  )
+                )}
               </main>
               {shouldMountDeferredPanels && isProcoreReferenceOpen && (
                 <ProcoreReferencePanel key="procore-reference-panel" />
