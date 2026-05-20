@@ -2621,6 +2621,16 @@ export default function FeedbackInboxPage() {
   }
 
   const listSections = useMemo(() => {
+    if (filter !== "all") {
+      return visibleItems.length > 0
+        ? [{
+            status: filter as DisplayStatus,
+            label: STATUS_META[filter as DisplayStatus].label,
+            items: visibleItems,
+          }]
+        : [];
+    }
+
     const grouped = new Map<DisplayStatus, FeedbackItem[]>(
       LIST_SECTION_ORDER.map((status) => [status, []]),
     );
@@ -2630,10 +2640,7 @@ export default function FeedbackInboxPage() {
       grouped.get(status)?.push(item);
     }
 
-    const statusesToShow =
-      filter === "all" ? LIST_SECTION_ORDER : [filter as DisplayStatus];
-
-    return statusesToShow
+    return LIST_SECTION_ORDER
       .map((status) => ({
         status,
         label: STATUS_META[status].label,
