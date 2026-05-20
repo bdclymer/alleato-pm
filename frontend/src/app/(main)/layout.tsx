@@ -20,10 +20,6 @@ const AiChatSidebarPanel = dynamic(
   () => import("@/components/ai-assistant/ai-chat-sidebar").then((mod) => mod.AiChatSidebarPanel),
   { ssr: false },
 );
-const GlobalAiWidget = dynamic(
-  () => import("@/components/ai-assistant/global-ai-widget").then((mod) => mod.GlobalAiWidget),
-  { ssr: false },
-);
 const ProcoreReferencePanel = dynamic(
   () => import("@/components/header/procore-reference-panel").then((mod) => mod.ProcoreReferencePanel),
   { ssr: false },
@@ -39,8 +35,6 @@ function Overlays() {
   const { userType, isLoading } = useProjectPermissions(projectId);
   const shouldMountDeferredOverlays = useDeferredMount(6_000);
   const isSubcontractor = userType?.toLowerCase() === "subcontractor";
-  const pathname = usePathname();
-  const isAiAssistant = pathname?.startsWith("/ai-assistant");
 
   if (!shouldMountDeferredOverlays) {
     return null;
@@ -54,7 +48,6 @@ function Overlays() {
           suppressAutoOpen={isSubcontractor}
           suppressStorageValue="skipped:subcontractor"
         />
-        {!isAiAssistant && <GlobalAiWidget />}
       </div>
     </React.Suspense>
   );
@@ -84,11 +77,6 @@ export default function MainLayout({
           <CreateProjectDevConfigProvider>
             {children}
           </CreateProjectDevConfigProvider>
-          {shouldMountDeferredPanels && (
-            <React.Suspense fallback={null}>
-              <GlobalAiWidget />
-            </React.Suspense>
-          )}
         </SidebarInset>
       </SidebarProvider>
     );
