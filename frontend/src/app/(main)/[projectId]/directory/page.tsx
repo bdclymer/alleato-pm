@@ -326,26 +326,33 @@ function CreateRoleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Create Role</DialogTitle>
+      <DialogContent className="gap-0 p-0 sm:max-w-sm border-border/60 shadow-sm overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+          <DialogTitle className="text-xl tracking-tight">Create role</DialogTitle>
+          <DialogDescription>
+            Give the role a clear name. You&apos;ll assign members after.
+          </DialogDescription>
         </DialogHeader>
-        <div className="py-2 space-y-2">
-          <Label htmlFor="role-name">Role name</Label>
+        <div className="px-6 pb-4 space-y-1.5">
+          <Label htmlFor="role-name" className="text-xs font-medium text-muted-foreground">
+            Role name
+          </Label>
           <Input
             id="role-name"
             placeholder="e.g. Project Manager"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSave()}
+            autoFocus
+            className="h-9"
           />
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="border-t border-border/50 bg-muted/30 px-6 py-3 gap-2">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving || !name.trim()}>
-            {saving ? "Creating..." : "Create"}
+            {saving ? "Creating..." : "Create role"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2005,16 +2012,7 @@ export default function ProjectDirectoryPage() {
         </Button>
       }
     >
-        {/* Section 1: Project Team */}
-      <section>
-        <ProjectTeamSection
-          projectId={projectId}
-          manageRolesOpen={manageRolesOpen}
-          onManageRolesOpenChange={setManageRolesOpen}
-        />
-      </section>
-
-      {/* Section 2: Companies */}
+      {/* Section 1: Companies */}
       <section>
         <CompaniesSection
           projectId={projectId}
@@ -2024,6 +2022,15 @@ export default function ProjectDirectoryPage() {
           ownerCompanyId={ownerCompanyId}
           onAssignClick={() => setAddCompanyOpen(true)}
           onRefetch={() => { void refetchCompanies(); }}
+        />
+      </section>
+
+      {/* Section 2: Project Team */}
+      <section>
+        <ProjectTeamSection
+          projectId={projectId}
+          manageRolesOpen={manageRolesOpen}
+          onManageRolesOpenChange={setManageRolesOpen}
         />
       </section>
 

@@ -1,16 +1,17 @@
 "use client";
 
 import React from "react";
-import { Check, UserPlus, ArrowLeft, X } from "lucide-react";
+import { Check, UserPlus, ArrowLeft, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Modal,
   ModalContent,
+  ModalDescription,
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/unified-modal";
@@ -103,6 +104,15 @@ function getPersonDisplayName(person: PersonOption): string {
   return name;
 }
 
+function getPersonInitials(person: PersonOption): string {
+  const f = cleanPersonText(person.first_name)?.[0] ?? "";
+  const l = cleanPersonText(person.last_name)?.[0] ?? "";
+  const initials = `${f}${l}`.toUpperCase();
+  if (initials) return initials;
+  const email = cleanPersonText(person.email);
+  return email ? email[0].toUpperCase() : "?";
+}
+
 // Split a typed search like "Andrew Cannon" into a sensible first/last guess
 function splitSearchName(search: string): { first: string; last: string } {
   const tokens = search.trim().split(/\s+/);
@@ -170,93 +180,112 @@ function CreateContactForm({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 px-6 pt-2 pb-4">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="h-7 w-7 -ml-1.5"
+          className="h-8 w-8 -ml-2"
           onClick={onCancel}
           aria-label="Back to people search"
           disabled={saving}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <span className="text-sm font-medium text-foreground">New contact</span>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-foreground">New contact</span>
+          <span className="text-xs text-muted-foreground">Create and assign in one step</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex-1 space-y-4 px-6 pb-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="assign-create-first" className="text-xs font-medium text-muted-foreground">
+              First name
+            </Label>
+            <Input
+              id="assign-create-first"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              autoFocus
+              disabled={saving}
+              className="h-9"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="assign-create-last" className="text-xs font-medium text-muted-foreground">
+              Last name
+            </Label>
+            <Input
+              id="assign-create-last"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              disabled={saving}
+              className="h-9"
+            />
+          </div>
+        </div>
+
         <div className="space-y-1.5">
-          <Label htmlFor="assign-create-first">First name *</Label>
+          <Label htmlFor="assign-create-email" className="text-xs font-medium text-muted-foreground">
+            Email
+          </Label>
           <Input
-            id="assign-create-first"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            autoFocus
+            id="assign-create-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@example.com"
             disabled={saving}
+            className="h-9"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="assign-create-last">Last name *</Label>
-          <Input
-            id="assign-create-last"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            disabled={saving}
-          />
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="assign-create-title" className="text-xs font-medium text-muted-foreground">
+              Job title
+            </Label>
+            <Input
+              id="assign-create-title"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              disabled={saving}
+              className="h-9"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="assign-create-company" className="text-xs font-medium text-muted-foreground">
+              Company
+            </Label>
+            <Select
+              value={companyId}
+              onValueChange={setCompanyId}
+              disabled={saving}
+            >
+              <SelectTrigger id="assign-create-company" className="h-9">
+                <SelectValue placeholder="None" />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="assign-create-email">Email</Label>
-        <Input
-          id="assign-create-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="name@example.com"
-          disabled={saving}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="assign-create-title">Job title</Label>
-          <Input
-            id="assign-create-title"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-            disabled={saving}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="assign-create-company">Company</Label>
-          <Select
-            value={companyId}
-            onValueChange={setCompanyId}
-            disabled={saving}
-          >
-            <SelectTrigger id="assign-create-company">
-              <SelectValue placeholder="None" />
-            </SelectTrigger>
-            <SelectContent>
-              {companies.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
+      <div className="flex items-center justify-end gap-2 border-t border-border/50 px-6 py-3">
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
         <Button type="button" onClick={handleCreate} disabled={saving}>
-          {saving ? "Creating..." : "Create & Assign"}
+          {saving ? "Creating..." : "Create & assign"}
         </Button>
       </div>
     </div>
@@ -348,7 +377,6 @@ export function AssignMemberDialog({
       toast.success("Role assignment updated");
     } catch (err) {
       toast.error("Failed to update role assignment");
-      // Roll back optimistic state
       setSelectedIds(selectedIds);
     } finally {
       setSaving(false);
@@ -357,7 +385,6 @@ export function AssignMemberDialog({
 
   const handleCreated = async (newPerson: PersonOption) => {
     if (!role) return;
-    // Add to local people list so the badge can render the name
     setPeople((prev) => [newPerson, ...prev]);
     const next = [...selectedIds, newPerson.id];
     setSelectedIds(next);
@@ -394,35 +421,52 @@ export function AssignMemberDialog({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent
         size="lg"
-        className="flex flex-col overflow-hidden"
+        className="flex flex-col overflow-hidden gap-0 p-0 border-border/60 shadow-sm"
         style={{ maxHeight: "85vh" }}
       >
-        <ModalHeader>
-          <ModalTitle>Assign Members{role ? ` — ${role.role_name}` : ""}</ModalTitle>
+        <ModalHeader className="px-6 pt-6 pb-4 space-y-1">
+          <ModalTitle className="text-xl tracking-tight">
+            Assign members
+          </ModalTitle>
+          <ModalDescription>
+            {role
+              ? `Choose who fills the ${role.role_name} role on this project.`
+              : "Choose who fills this role."}
+          </ModalDescription>
         </ModalHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {mode === "create" ? (
-            <CreateContactForm
-              initialName={search}
-              companies={companies}
-              onCancel={() => setMode("search")}
-              onCreated={handleCreated}
-            />
-          ) : (
-            <div className="space-y-3">
-              <Command className="border rounded-md" shouldFilter={true}>
+        {mode === "create" ? (
+          <CreateContactForm
+            initialName={search}
+            companies={companies}
+            onCancel={() => setMode("search")}
+            onCreated={handleCreated}
+          />
+        ) : (
+          <>
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pb-4">
+              <Command className="overflow-visible rounded-lg border border-border/60 focus-within:ring-2 focus-within:ring-ring/40" shouldFilter={true}>
                 <CommandInput
-                  placeholder="Search people..."
+                  placeholder="Search people by name, role, or company…"
                   value={search}
                   onValueChange={setSearch}
                 />
-                <CommandList className="max-h-96 overscroll-contain">
+                <CommandList className="mt-3 max-h-80 overflow-y-auto overscroll-contain -mx-1">
                   <CommandEmpty>
-                    <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        {search ? `No people match "${search}".` : "No people found."}
-                      </p>
+                    <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium text-foreground">
+                          {search ? `No matches for "${search}"` : "No people yet"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {search
+                            ? "Try a different name or create a new contact."
+                            : "Add a new contact to assign them to this role."}
+                        </p>
+                      </div>
                       <Button
                         type="button"
                         size="sm"
@@ -430,38 +474,54 @@ export function AssignMemberDialog({
                         onClick={() => setMode("create")}
                       >
                         <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                        Create new contact{search ? ` "${search}"` : ""}
+                        Create new contact
                       </Button>
                     </div>
                   </CommandEmpty>
-                  <CommandGroup>
+                  <CommandGroup className="p-0">
                     {people.map((person) => {
                       const displayName = getPersonDisplayName(person);
                       const companyName = cleanPersonText(person.company_name);
                       const jobTitle = cleanPersonText(person.job_title);
                       const meta = [jobTitle, companyName].filter(Boolean).join(" · ");
+                      const isSelected = selectedIds.includes(person.id);
 
                       return (
                         <CommandItem
                           key={person.id}
                           value={`${displayName} ${meta}`}
                           onSelect={() => void handleSelect(person.id)}
-                          className="min-h-11 cursor-pointer"
+                          className={cn(
+                            "group flex min-h-12 cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors",
+                            "data-[selected=true]:bg-accent/60",
+                            isSelected && "bg-primary/[0.04]",
+                          )}
                           disabled={saving}
                         >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4 shrink-0",
-                              selectedIds.includes(person.id) ? "opacity-100" : "opacity-0",
-                            )}
-                          />
-                          <div className="min-w-0 flex flex-col">
-                            <span className="truncate text-sm">{displayName}</span>
+                          <Avatar className="h-8 w-8 shrink-0">
+                            <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-medium">
+                              {getPersonInitials(person)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1 flex flex-col">
+                            <span className="truncate text-sm font-medium text-foreground">
+                              {displayName}
+                            </span>
                             {meta && (
                               <span className="truncate text-xs text-muted-foreground">
                                 {meta}
                               </span>
                             )}
+                          </div>
+                          <div
+                            className={cn(
+                              "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                              isSelected
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border/70 bg-background text-transparent group-hover:border-border",
+                            )}
+                          >
+                            <Check className="h-3 w-3" strokeWidth={3} />
                           </div>
                         </CommandItem>
                       );
@@ -470,54 +530,63 @@ export function AssignMemberDialog({
                 </CommandList>
               </Command>
 
-              <div className="flex items-center justify-between pt-1">
-                <p className="text-xs text-muted-foreground">
-                  Can&apos;t find them?
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => setMode("create")}
-                >
-                  <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                  New contact
-                </Button>
-              </div>
-
               {selectedIds.length > 0 && (
-                <div className="border-t pt-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
-                    Assigned ({selectedIds.length})
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2.5">
+                    Assigned · {selectedIds.length}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedIds.map((id) => {
                       const p = people.find((x) => x.id === id);
                       if (!p) return null;
                       return (
-                        <Badge key={id} variant="secondary" className="gap-1 pr-1">
-                          <span>{getPersonDisplayName(p)}</span>
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-secondary py-1 pl-1 pr-2 text-xs"
+                        >
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="bg-primary/10 text-primary text-[9px] font-medium">
+                              {getPersonInitials(p)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium text-foreground">
+                            {getPersonDisplayName(p)}
+                          </span>
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-4 w-4 rounded-sm opacity-60 hover:opacity-100"
                             onClick={() => void handleRemoveSelected(id)}
                             disabled={saving}
                             aria-label={`Remove ${getPersonDisplayName(p)}`}
+                            className="ml-0.5 h-4 w-4 rounded-full text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-40"
                           >
                             <X className="h-3 w-3" />
                           </Button>
-                        </Badge>
+                        </span>
                       );
                     })}
                   </div>
                 </div>
               )}
             </div>
-          )}
-        </div>
+
+            <div className="flex items-center justify-between border-t border-border/50 px-6 py-3">
+              <p className="text-xs text-muted-foreground">
+                Can&apos;t find them in the list?
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setMode("create")}
+              >
+                <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                New contact
+              </Button>
+            </div>
+          </>
+        )}
       </ModalContent>
     </Modal>
   );
