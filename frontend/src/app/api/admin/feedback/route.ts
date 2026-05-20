@@ -489,7 +489,6 @@ const patchSchema = z.object({
 });
 
 const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
-  in_progress: "submitted",
   resolved: "closed",
 };
 

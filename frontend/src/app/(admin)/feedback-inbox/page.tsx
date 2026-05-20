@@ -139,7 +139,7 @@ type DisplayStatus = Exclude<StatusFilter, "all"> | "archived";
 // ---------------------------------------------------------------------------
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: "open", label: "Open" },
+  { value: "open", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
   { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
@@ -147,7 +147,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 ];
 
 const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
-  { value: "open", label: "Open" },
+  { value: "open", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
   { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
@@ -159,7 +159,7 @@ const STATUS_META: Record<DisplayStatus, { icon: typeof Circle; className: strin
     icon: Circle,
     className: "text-status-warning",
     dotClassName: "bg-status-warning",
-    label: "Open",
+    label: "Submitted",
   },
   in_progress: {
     icon: Loader2,
@@ -204,7 +204,6 @@ const PANEL_MAX_WIDTH = 600;
 const PANEL_DEFAULT_WIDTH = 480;
 const PANEL_STORAGE_KEY = "feedback-inbox-panel-width";
 const IN_PROGRESS_STATUSES = new Set([
-  "submitted",
   "in_progress",
   "triaged",
   "diagnosing",
@@ -1086,7 +1085,7 @@ function ListItemContextMenu({
               onClick={() => handleAction("reopen")}
             >
               <Circle className="h-3.5 w-3.5" />
-              Re-open
+              Move to Submitted
             </Button>
           )}
 
@@ -1900,6 +1899,9 @@ export default function FeedbackInboxPage() {
     () => items.find((i) => i.id === selectedId) ?? null,
     [items, selectedId],
   );
+  const currentFilterLabel =
+    STATUS_FILTERS.find((statusFilter) => statusFilter.value === filter)?.label ??
+    filter.replace("_", " ");
 
   // ---- Fetch ----
   const fetchItems = useCallback(async () => {
@@ -1908,9 +1910,9 @@ export default function FeedbackInboxPage() {
       const params = new URLSearchParams();
       if (filter !== "all") {
         if (filter === "open") {
-          params.set("status", "open,github_failed");
+          params.set("status", "open,submitted,github_failed");
         } else if (filter === "in_progress") {
-          params.set("status", "submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review");
+          params.set("status", "in_progress,triaged,diagnosing,fixing,verifying,in_review");
         } else if (filter === "deferred") {
           params.set("status", "deferred");
         } else if (filter === "resolved") {
@@ -2202,7 +2204,7 @@ export default function FeedbackInboxPage() {
                 <EmptyState
                   icon={<CheckCircle2 />}
                   title="No feedback items"
-                  description={`No ${filter.replace("_", " ")} items found.`}
+                  description={`No ${currentFilterLabel.toLowerCase()} items found.`}
                 />
               </div>
             )}
