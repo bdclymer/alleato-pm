@@ -1761,31 +1761,33 @@ export function ChatArea({
                     </Button>
                   </PopoverTrigger>
                 </TooltipTrigger>
-                <PopoverContent className="w-64 p-1" align="end" side="top">
-                  {AI_ASSISTANT_MODELS.map((model) => (
-                    <button
-                      key={model.id}
-                      type="button"
-                      onClick={() => {
-                        onModelChange?.(model.id);
-                        setModelOpen(false);
-                      }}
-                      className={cn(
-                        "flex w-full items-start justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent",
-                        model.id === selectedModel && "bg-accent",
-                      )}
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium">{model.label}</span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {model.description}
-                        </span>
-                      </span>
-                      {model.id === selectedModel && (
-                        <CheckIcon className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
-                      )}
-                    </button>
-                  ))}
+                <PopoverContent className="w-64 p-0" align="end" side="top">
+                  <Command>
+                    <CommandList>
+                      <CommandGroup>
+                        {AI_ASSISTANT_MODELS.map((model) => (
+                          <CommandItem
+                            key={model.id}
+                            value={model.id}
+                            onSelect={() => {
+                              onModelChange?.(model.id);
+                              setModelOpen(false);
+                            }}
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium">{model.label}</span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {model.description}
+                              </span>
+                            </span>
+                            {model.id === selectedModel && (
+                              <CheckIcon className="ml-2 h-3.5 w-3.5 shrink-0 text-primary" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
                 </PopoverContent>
               </Popover>
               <TooltipContent side="top">
