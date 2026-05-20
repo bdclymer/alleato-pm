@@ -131,8 +131,6 @@ import {
   AssistantWidgetRenderer,
   hasAssistantDynamicToolComponent,
 } from "./assistant-widget-renderer";
-import { ArtifactRenderer } from "./artifact-renderer";
-import { ArtifactSidePanel } from "./artifact-side-panel";
 import {
   isAssistantWidgetPayload,
   type AssistantWidgetPayload,
@@ -2115,13 +2113,6 @@ export function ChatArea({
                             />
                           ))}
 
-                          {artifactParts.map((part) => (
-                            <ArtifactRenderer
-                              key={part.toolCallId}
-                              part={part}
-                            />
-                          ))}
-
                           {/* Main text response — hidden when a widget fully replaces it */}
                           {!widgetSuppressesText && (
                           <MessageResponse
@@ -2283,8 +2274,6 @@ export function ChatArea({
           </div>
         </div>
       )}
-
-      <ArtifactSidePanel />
     </div>
   );
 }
