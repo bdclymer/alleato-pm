@@ -2755,9 +2755,6 @@ export default function FeedbackInboxPage() {
                   {visibleTotal} {visibleTotal === 1 ? "item" : "items"}
                 </span>
               </div>
-              <p className="mt-1 max-w-4xl text-sm text-muted-foreground">
-                Triage submitted issues and feature requests without mixing the two queues.
-              </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between xl:justify-end">
               {inboxTabs}
