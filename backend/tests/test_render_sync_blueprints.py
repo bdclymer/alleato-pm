@@ -53,6 +53,17 @@ def test_high_risk_sync_crons_are_not_disabled_echoes():
             assert "disabled while DB incident guard is active" not in services[name]["dockerCommand"]
 
 
+def test_alleato_crons_require_app_db_pressure_guard():
+    for path in (REPO_ROOT / "render.yaml", BACKEND_ROOT / "render.yaml"):
+        services = _services_by_name(path)
+        for name, service in services.items():
+            if service.get("type") != "cron" or not name.startswith("alleato-"):
+                continue
+            env = {item["key"]: item for item in service["envVars"]}
+            assert env["APP_DB_PRESSURE_GUARD_REQUIRED"]["value"] == "true"
+            assert env["DATABASE_URL"]["sync"] is False
+
+
 def test_teams_dm_cron_is_tightly_bounded():
     for path in (REPO_ROOT / "render.yaml", BACKEND_ROOT / "render.yaml"):
         teams_dm = _services_by_name(path)["alleato-teams-dm-sync"]

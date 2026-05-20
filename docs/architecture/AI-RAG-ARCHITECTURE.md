@@ -101,6 +101,7 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | `frontend/src/lib/ai/deep-agent-project-status.ts` | Typed server-side bridge to Render backend Deep Agents endpoints. Owns env gating, request schemas, source-evidence widgets, memory-candidate review widgets, bounded bridge timeout defaults, formatted fallback context for project/executive/research packets, and direct-response eligibility for project/executive/research packets. |
 | `backend/src/services/agents/alleato_ai_tools/` | Backend-local port of the standalone `alleato-ai` Deep Agents tools: resolvers, SQL schema/query, RAG/meeting/email/Teams search, recent activity, Acumatica reads, draft-preview actions, prompts, and domain subagent definitions. Subagent SQL and Acumatica tools are attached only when their runtime gates are enabled. |
 | `backend/src/services/agents/deep_project_intelligence.py` | Render Deep Agents runtime. The narrow PM tools are always present; the standalone registry is enabled by `DEEP_AGENTS_STANDALONE_TOOLS_ENABLED`, with separate SQL, Acumatica, draft-action, and subagent gates. The runtime also packages Deep Agents core/memory/orchestration skills into the store backend, attaches runtime memory instructions and a checkpointer when dependencies are available, and passes those skills to custom subagents so project/executive agents have the same harness surface as the standalone research agent. When `DEEP_AGENTS_MEMORY_ENABLED=true`, project memory is scoped in the existing memory SQL to team-visible rows or rows owned by the caller, avoiding extra per-page or per-tool permission lookups. Backend LangSmith tracing is controlled by the Render env keys `LANGSMITH_TRACING`, `LANGSMITH_PROJECT`, `LANGSMITH_API_KEY`, and the compatibility `LANGCHAIN_*` aliases; the LangChain/LangSmith dependencies are pinned in `backend/requirements.txt` so trace export behavior changes only through deliberate dependency bumps. |
+| `backend/src/services/ops/db_pressure_guard.py` | Fail-closed app database pressure guard for background jobs. Render crons that touch app-DB catalog/control-plane rows set `APP_DB_PRESSURE_GUARD_REQUIRED=true` and must provide `DATABASE_URL`; the guard checks `pg_stat_activity` before sync, compiler, health, promotion, executive-assistant, recap, and extraction work can start. This keeps high-churn RAG/Microsoft jobs from competing with employee app traffic when the Supabase pooler or app DB is already saturated. |
 | `backend/src/services/agents/memory/store.py` | Deep Agents durable memory SQL layer. Loads user/project memory, recalls user/project/team memory, formats memory entries, and owns the owner/team visibility filters that prevent private project memories from leaking across users. |
 | `backend/src/services/agents/memory/middleware.py` | Deep Agents memory middleware. Reads `user_id`, `project_id`, and thread config, loads durable memory from `store.py`, and injects the scoped memory context into the runtime. |
 | `backend/src/services/agents/memory/tools.py` | Deep Agents memory recall tools exposed to agents. Binds `user_id` and optional `project_id` from runtime config before calling `store.py`, so tool recall follows the same privacy and project scoping rules as startup injection. |
@@ -426,6 +427,26 @@ must then chunk generic document lines directly and store those chunks with
 `meeting_segments`, and Stage 2 resets prior `document_chunks` for the document
 before writing the regenerated chunk set so stale chunks cannot remain searchable
 after a source file changes.
+
+### App DB Pressure Guard for Background RAG and Sync Jobs
+
+The AI/RAG database owns heavy document bodies, chunks, embeddings, and high-churn
+pipeline state, but several background jobs still need small app-DB reads/writes
+for catalog rows, source sync health, project attribution, alerts, and operator
+outputs. Those jobs must call `enforce_app_db_pressure_guard()` before creating
+Supabase clients or starting app-DB work. In production Render crons, the guard is
+required by env (`APP_DB_PRESSURE_GUARD_REQUIRED=true`) and uses `DATABASE_URL` to
+query `pg_stat_activity`; missing credentials or failed guard queries block the
+job instead of running blind.
+
+The guard is wired through the scheduler wrappers and direct cron scripts for
+Fireflies, Microsoft Graph, Teams channel/DM sync, source/RAG health checks,
+packet compilation, daily recap, Outlook attachment promotion, executive-assistant
+checks, task extraction, and Acumatica financial sync. `render.yaml`,
+`backend/render.yaml`, and `scripts/verify/verify-render-web-scheduler-disabled.mjs`
+are the enforcement surface: every Alleato Render cron must keep the guard envs,
+and live safe-restart checks must validate those envs before any suspended cron is
+resumed.
 
 ### Embedding in the Pipeline
 

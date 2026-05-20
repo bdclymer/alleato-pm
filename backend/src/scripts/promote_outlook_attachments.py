@@ -29,7 +29,10 @@ def main() -> int:
     from src.services.integrations.microsoft_graph.attachment_promotion import (
         promote_outlook_intake_attachments,
     )
+    from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
     from src.services.supabase_helpers import get_supabase_client
+
+    enforce_app_db_pressure_guard("outlook_attachment_promotion")
 
     result = promote_outlook_intake_attachments(get_supabase_client(), limit=args.limit)
     print(json.dumps(result, indent=2, default=str))

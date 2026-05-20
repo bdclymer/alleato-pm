@@ -1,0 +1,174 @@
+"""Fail-fast app database pressure guard for background jobs.
+
+High-churn sync/RAG jobs are allowed to read small app-DB catalog and
+operational-control rows, but they must not compete with employee app traffic
+when the app database or Supabase pooler is already saturated.
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+from dataclasses import dataclass
+from typing import Any
+
+import psycopg2
+
+logger = logging.getLogger(__name__)
+
+
+class AppDbPressureError(RuntimeError):
+    """Raised when a background job must not start because app DB is unsafe."""
+
+
+def _env_flag(name: str, default: str = "false") -> bool:
+    return (os.getenv(name, default) or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
+    raw = os.getenv(name)
+    if raw is None or raw == "":
+        return default
+    try:
+        return max(minimum, int(raw))
+    except ValueError:
+        logger.warning("[DBPressureGuard] Invalid integer for %s=%r; using %d", name, raw, default)
+        return default
+
+
+def _database_url() -> str | None:
+    return (
+        os.getenv("APP_DATABASE_URL")
+        or os.getenv("DATABASE_URL")
+        or os.getenv("SUPABASE_DB_URL")
+        or None
+    )
+
+
+@dataclass(frozen=True)
+class AppDbPressureSnapshot:
+    total_connections: int
+    active_connections: int
+    idle_in_transaction_connections: int
+    long_running_active_connections: int
+    max_query_age_seconds: int
+
+
+def _snapshot_from_row(row: dict[str, Any]) -> AppDbPressureSnapshot:
+    return AppDbPressureSnapshot(
+        total_connections=int(row.get("total_connections") or 0),
+        active_connections=int(row.get("active_connections") or 0),
+        idle_in_transaction_connections=int(row.get("idle_in_transaction_connections") or 0),
+        long_running_active_connections=int(row.get("long_running_active_connections") or 0),
+        max_query_age_seconds=int(float(row.get("max_query_age_seconds") or 0)),
+    )
+
+
+def _fetch_pressure_snapshot(database_url: str) -> AppDbPressureSnapshot:
+    checkout_timeout = _env_int("APP_DB_PRESSURE_CONNECT_TIMEOUT_SECONDS", 5, minimum=1)
+    statement_timeout_ms = _env_int("APP_DB_PRESSURE_STATEMENT_TIMEOUT_MS", 5000, minimum=1000)
+    long_running_seconds = _env_int("APP_DB_PRESSURE_LONG_RUNNING_SECONDS", 120, minimum=1)
+
+    connection = None
+    try:
+        connection = psycopg2.connect(database_url, connect_timeout=checkout_timeout, sslmode="require")
+        with connection.cursor() as cursor:
+            cursor.execute("set statement_timeout = %s", (statement_timeout_ms,))
+            cursor.execute(
+                """
+                select
+                  count(*)::int as total_connections,
+                  count(*) filter (where state = 'active')::int as active_connections,
+                  count(*) filter (where state = 'idle in transaction')::int as idle_in_transaction_connections,
+                  count(*) filter (
+                    where state = 'active'
+                      and query_start is not null
+                      and now() - query_start > make_interval(secs => %s)
+                  )::int as long_running_active_connections,
+                  coalesce(
+                    max(extract(epoch from now() - query_start))
+                      filter (where query_start is not null),
+                    0
+                  )::int as max_query_age_seconds
+                from pg_stat_activity
+                where pid <> pg_backend_pid()
+                """,
+                (long_running_seconds,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return _snapshot_from_row({})
+            if isinstance(row, dict):
+                return _snapshot_from_row(row)
+            columns = [column[0] for column in cursor.description]
+            return _snapshot_from_row(dict(zip(columns, row)))
+    finally:
+        if connection is not None:
+            connection.close()
+
+
+def enforce_app_db_pressure_guard(job_name: str) -> AppDbPressureSnapshot | None:
+    """Block background work when the app DB/pooler is already under pressure.
+
+    Local ad-hoc runs without a database URL are allowed to skip the guard unless
+    ``APP_DB_PRESSURE_GUARD_REQUIRED=true`` is set. Render cron blueprints set
+    that flag so production jobs fail closed if the guard cannot run.
+    """
+
+    if _env_flag("DISABLE_APP_DB_PRESSURE_GUARD") or _env_flag("APP_DB_PRESSURE_GUARD_DISABLED"):
+        logger.warning("[DBPressureGuard] Disabled for %s by env override", job_name)
+        return None
+
+    database_url = _database_url()
+    required = _env_flag("APP_DB_PRESSURE_GUARD_REQUIRED")
+    if not database_url:
+        message = (
+            f"App DB pressure guard could not run for {job_name}: "
+            "APP_DATABASE_URL, DATABASE_URL, or SUPABASE_DB_URL is missing."
+        )
+        if required:
+            raise AppDbPressureError(message)
+        logger.warning("[DBPressureGuard] %s", message)
+        return None
+
+    max_total = _env_int("APP_DB_PRESSURE_MAX_TOTAL_CONNECTIONS", 35, minimum=1)
+    max_active = _env_int("APP_DB_PRESSURE_MAX_ACTIVE_CONNECTIONS", 8, minimum=1)
+    max_idle_txn = _env_int("APP_DB_PRESSURE_MAX_IDLE_IN_TXN_CONNECTIONS", 0, minimum=0)
+    max_long_running = _env_int("APP_DB_PRESSURE_MAX_LONG_RUNNING_ACTIVE_CONNECTIONS", 2, minimum=0)
+
+    try:
+        snapshot = _fetch_pressure_snapshot(database_url)
+    except Exception as exc:  # noqa: BLE001 - fail closed with the actual connection failure.
+        raise AppDbPressureError(
+            f"App DB pressure guard failed before {job_name}: {exc}"
+        ) from exc
+
+    reasons: list[str] = []
+    if snapshot.total_connections > max_total:
+        reasons.append(f"total_connections={snapshot.total_connections}>{max_total}")
+    if snapshot.active_connections > max_active:
+        reasons.append(f"active_connections={snapshot.active_connections}>{max_active}")
+    if snapshot.idle_in_transaction_connections > max_idle_txn:
+        reasons.append(
+            f"idle_in_transaction_connections={snapshot.idle_in_transaction_connections}>{max_idle_txn}"
+        )
+    if snapshot.long_running_active_connections > max_long_running:
+        reasons.append(
+            f"long_running_active_connections={snapshot.long_running_active_connections}>{max_long_running}"
+        )
+
+    if reasons:
+        raise AppDbPressureError(
+            f"App DB pressure guard blocked {job_name}: {', '.join(reasons)}"
+        )
+
+    logger.info(
+        "[DBPressureGuard] %s allowed: total=%d active=%d idle_in_txn=%d long_running=%d max_age=%ds",
+        job_name,
+        snapshot.total_connections,
+        snapshot.active_connections,
+        snapshot.idle_in_transaction_connections,
+        snapshot.long_running_active_connections,
+        snapshot.max_query_age_seconds,
+    )
+    return snapshot

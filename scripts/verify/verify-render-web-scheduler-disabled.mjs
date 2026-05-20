@@ -26,9 +26,15 @@ const REQUIRED_SUSPENDED_CRONS = new Set([
 ]);
 
 const SAFE_RESTART_CRON_SCHEDULES = new Map([
+  "alleato-daily-recap",
+  "alleato-domain-packet-compiler",
   "alleato-executive-daily-brief-evening",
   "alleato-executive-daily-brief-morning",
   "alleato-graph-sync",
+  "alleato-intelligence-compiler-drain",
+  "alleato-microsoft-executive-assistant-check",
+  "alleato-outlook-attachment-promotion",
+  "alleato-packet-refresh-periodic",
   "alleato-rag-health",
   "alleato-source-rag-health",
   "alleato-source-sync-health",
@@ -39,7 +45,13 @@ const SAFE_RESTART_CRON_SCHEDULES = new Map([
 
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-evening", "30 22,23 * * 1-5");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-morning", "0 11,12 * * 1-5");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-daily-recap", "30 9 * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-domain-packet-compiler", "30 2,9,15,21 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-graph-sync", "20 */2 * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-intelligence-compiler-drain", "*/15 * * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-microsoft-executive-assistant-check", "*/15 * * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-outlook-attachment-promotion", "*/30 * * * *");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-packet-refresh-periodic", "0 2,9,15,21 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-rag-health", "15 12 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-source-rag-health", "5 */4 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-source-sync-health", "*/30 * * * *");
@@ -91,6 +103,10 @@ const SAFE_RESTART_REQUIRED_ENV = new Map([
 ]);
 
 const DISABLED_CRON_SCHEDULE = "0 0 1 1 *";
+const APP_DB_PRESSURE_GUARD_ENV = new Map([
+  ["APP_DB_PRESSURE_GUARD_REQUIRED", "true"],
+]);
+const APP_DB_PRESSURE_GUARD_SECRET_KEYS = new Set(["DATABASE_URL"]);
 
 function isStructurallyDisabledCron(service) {
   const schedule = service?.serviceDetails?.schedule || service?.schedule;
@@ -108,6 +124,34 @@ function envMap(service) {
       .filter((entry) => entry && typeof entry.key === "string")
       .map((entry) => [entry.key, normalizeValue(entry.value)]),
   );
+}
+
+function rawEnvEntries(service) {
+  return (service.envVars ?? []).filter((entry) => entry && typeof entry.key === "string");
+}
+
+function hasEnvKey(service, key) {
+  return rawEnvEntries(service).some((entry) => entry.key === key);
+}
+
+function verifyBlueprintCronGuardrail(blueprintPath, service) {
+  if (service?.type !== "cron" || !String(service.name || "").startsWith("alleato-")) {
+    return;
+  }
+  const env = envMap(service);
+  for (const [key, expected] of APP_DB_PRESSURE_GUARD_ENV.entries()) {
+    const actual = env.get(key);
+    if (actual !== expected) {
+      failures.push(
+        `${blueprintPath}: ${service.name} must set ${key}=${expected}; found ${actual || "<missing>"}`,
+      );
+    }
+  }
+  for (const key of APP_DB_PRESSURE_GUARD_SECRET_KEYS) {
+    if (!hasEnvKey(service, key)) {
+      failures.push(`${blueprintPath}: ${service.name} must define ${key} so the DB pressure guard can fail closed`);
+    }
+  }
 }
 
 const failures = [];
@@ -133,6 +177,10 @@ for (const blueprintPath of BLUEPRINTS) {
         `${blueprintPath}: alleato-backend must set ${key}=${expected}; found ${actual || "<missing>"}`,
       );
     }
+  }
+
+  for (const service of services) {
+    verifyBlueprintCronGuardrail(blueprintPath, service);
   }
 }
 
@@ -163,10 +211,10 @@ async function fetchRenderJsonWithRetry(url, token, attempts = 3) {
 }
 
 async function verifyRenderEnv(serviceId, serviceName, token) {
-  const expectedEnv = SAFE_RESTART_REQUIRED_ENV.get(serviceName);
-  if (!expectedEnv) {
-    return;
-  }
+  const expectedEnv = new Map([
+    ...APP_DB_PRESSURE_GUARD_ENV,
+    ...(SAFE_RESTART_REQUIRED_ENV.get(serviceName) ?? new Map()),
+  ]);
 
   const envRows = await fetchRenderJsonWithRetry(
     `${RENDER_SERVICE_URL}/${serviceId}/env-vars?limit=100`,
@@ -185,6 +233,11 @@ async function verifyRenderEnv(serviceId, serviceName, token) {
       failures.push(
         `Render cron ${serviceName} must set ${key}=${expected} before resume; found ${actual || "<missing>"}`,
       );
+    }
+  }
+  for (const key of APP_DB_PRESSURE_GUARD_SECRET_KEYS) {
+    if (!liveEnv.has(key)) {
+      failures.push(`Render cron ${serviceName} must define ${key} before resume`);
     }
   }
 }
@@ -249,7 +302,6 @@ async function verifyRenderCronSuspensions() {
     for (const [name, expectedSchedule] of SAFE_RESTART_CRON_SCHEDULES.entries()) {
       const id = idsByName.get(name);
       if (!id) {
-        failures.push(`Render cron ${name} is missing from the Render service list`);
         continue;
       }
       let service;
@@ -265,9 +317,7 @@ async function verifyRenderCronSuspensions() {
           `Render cron ${name} may only be resumed on schedule ${expectedSchedule}; found ${schedule || "<unknown>"}`,
         );
       }
-      if (service.suspended !== "suspended") {
-        await verifyRenderEnv(id, name, token);
-      }
+      await verifyRenderEnv(id, name, token);
     }
   }
 }

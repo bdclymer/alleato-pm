@@ -112,6 +112,12 @@ def _log_job_misconfiguration(job_label: str, enabled_var: str, required_vars: t
     return True
 
 
+def _guard_background_app_db(job_name: str) -> None:
+    from .ops.db_pressure_guard import enforce_app_db_pressure_guard
+
+    enforce_app_db_pressure_guard(job_name)
+
+
 def init_scheduler() -> None:
     """Initialize and start the scheduler. Called from FastAPI startup."""
     global scheduler
@@ -542,6 +548,7 @@ def _run_fireflies_sync(limit: int = 10):
     from .supabase_helpers import SupabaseRagStore, get_supabase_client
     from .ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 
+    _guard_background_app_db("fireflies_sync")
     client = get_supabase_client()
     store = SupabaseRagStore(client)
     pipeline = FirefliesIngestionPipeline(store)
@@ -1014,6 +1021,7 @@ def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -
     """Drain stale shared document-pipeline rows through the normal full pipeline."""
     from .supabase_helpers import get_rag_write_client, get_supabase_client
 
+    _guard_background_app_db("fireflies_pipeline_backlog")
     client = get_supabase_client()
     rag_client = get_rag_write_client()
     auto_closed_runs = _close_abandoned_fireflies_backlog_runs(stale_minutes=stale_minutes)
@@ -1100,6 +1108,7 @@ def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -
 def _run_digest_sync():
     """Synchronous wrapper for daily digest generation."""
     from .daily_digest import run_daily_digest
+    _guard_background_app_db("daily_digest")
     return run_daily_digest()
 
 
@@ -1107,6 +1116,7 @@ def _run_acumatica_financial_sync():
     """Synchronous wrapper for Acumatica ERP finance sync."""
     from .acumatica_sync import run_acumatica_financial_sync
 
+    _guard_background_app_db("acumatica_financial_sync")
     return run_acumatica_financial_sync()
 
 
@@ -1121,6 +1131,7 @@ def _run_source_sync_health_recompute() -> dict:
     )
     from .supabase_helpers import get_supabase_client
 
+    _guard_background_app_db("source_sync_health_recompute")
     client = get_supabase_client()
     health = get_source_sync_health(client)
     updated = 0
@@ -1249,6 +1260,7 @@ def _run_graph_sync():
     from .supabase_helpers import get_supabase_client
     from .integrations.microsoft_graph.sync import run_graph_sync
 
+    _guard_background_app_db("graph_sync")
     client = get_supabase_client()
     run_inline_embedding = os.getenv("GRAPH_SYNC_RUN_EMBEDDING_INLINE", "false").lower() in (
         "1",
@@ -1274,6 +1286,7 @@ def _run_outlook_attachment_promotion(limit: int = 25) -> dict:
     from .supabase_helpers import get_supabase_client
     from .integrations.microsoft_graph.attachment_promotion import promote_outlook_intake_attachments
 
+    _guard_background_app_db("outlook_attachment_promotion")
     return promote_outlook_intake_attachments(get_supabase_client(), limit=limit)
 
 
@@ -1282,6 +1295,7 @@ def _run_graph_subscription_reconcile() -> dict:
     from .supabase_helpers import get_supabase_client
     from .integrations.microsoft_graph.subscriptions import ensure_subscriptions
 
+    _guard_background_app_db("graph_subscription_reconcile")
     client = get_supabase_client()
     renew_within_hours = max(
         1,
@@ -1303,6 +1317,7 @@ def _run_graph_embedding(limit: int = 100) -> dict:
     from .supabase_helpers import get_supabase_client
     from .integrations.microsoft_graph.embed import embed_pending_graph_documents
 
+    _guard_background_app_db("graph_embedding")
     client = get_supabase_client()
     return embed_pending_graph_documents(client, limit=limit)
 
@@ -1316,6 +1331,7 @@ def _run_intelligence_compiler(
     from .supabase_helpers import get_supabase_client
     from .intelligence.compiler import run_intelligence_compiler_batch
 
+    _guard_background_app_db("intelligence_compiler")
     client = get_supabase_client()
     return run_intelligence_compiler_batch(
         client,
@@ -1350,6 +1366,7 @@ async def run_task_extraction_job(window_days: int = 2) -> None:
 def _run_task_extraction(window_days: int = 2) -> dict:
     """Synchronous wrapper for task extraction."""
     from .task_extraction import run_task_extraction
+    _guard_background_app_db("task_extraction")
     return run_task_extraction(window_days=window_days)
 
 

@@ -143,7 +143,7 @@ def test_fireflies_backlog_drain_processes_retryable_jobs(monkeypatch):
     monkeypatch.setattr(
         scheduler,
         "_find_fireflies_pipeline_backlog_jobs",
-        lambda supabase_client, *, limit, stale_minutes: jobs,
+        lambda supabase_client, rag_supabase, *, limit, stale_minutes: jobs,
     )
     monkeypatch.setattr(
         scheduler,
@@ -199,7 +199,7 @@ def test_fireflies_backlog_marks_non_vectorizable_items_without_pipeline(monkeyp
     monkeypatch.setattr(
         scheduler,
         "_find_fireflies_pipeline_backlog_jobs",
-        lambda supabase_client, *, limit, stale_minutes: jobs,
+        lambda supabase_client, rag_supabase, *, limit, stale_minutes: jobs,
     )
     monkeypatch.setattr(
         scheduler,

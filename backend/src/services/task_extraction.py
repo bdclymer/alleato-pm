@@ -386,6 +386,10 @@ def run_task_extraction(
     Returns:
         Summary dict with docs_found, docs_processed, inserted, skipped, errors.
     """
+    from .ops.db_pressure_guard import enforce_app_db_pressure_guard
+
+    enforce_app_db_pressure_guard("task_extraction")
+
     started_at = datetime.now(timezone.utc)
     client_db = get_supabase_client()
     client_ai, model_id, provider_name = _openai_client()

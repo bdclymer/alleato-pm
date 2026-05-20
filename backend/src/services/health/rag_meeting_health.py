@@ -154,6 +154,19 @@ def run_health_check(
     stats: dict[str, Any] = {}
 
     try:
+        from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
+
+        enforce_app_db_pressure_guard("rag_meeting_health")
+    except Exception as exc:
+        return {
+            "passed": False,
+            "failures": [f"App DB pressure guard blocked RAG meeting health: {exc}"],
+            "warnings": warnings,
+            "stats": stats,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    try:
         rag_url, rag_service_key, rag_reads_enabled = _rag_credentials(
             supabase_url,
             supabase_service_key,

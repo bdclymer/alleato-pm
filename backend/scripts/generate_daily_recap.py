@@ -52,6 +52,7 @@ for env_path in env_locations:
         break
 
 from openai import OpenAI
+from ops.db_pressure_guard import enforce_app_db_pressure_guard
 from supabase_helpers import get_supabase_client
 
 
@@ -474,6 +475,7 @@ async def main():
     if args.verbose:
         print(f"Generating recap for {start_str} to {end_str}...")
 
+    enforce_app_db_pressure_guard("daily_recap")
     supabase = get_supabase_client()
 
     # Fetch meetings

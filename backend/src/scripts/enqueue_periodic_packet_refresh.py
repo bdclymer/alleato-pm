@@ -64,10 +64,13 @@ def main() -> int:
         COMPILER_VERSION,
         enqueue_packet_refresh,
     )
+    from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
     from src.services.supabase_helpers import (
         get_rag_write_client,
         get_supabase_client,
     )
+
+    enforce_app_db_pressure_guard("periodic_packet_refresh")
 
     # Targets live in MAIN; refresh jobs go to RAG (compiler convention).
     main_client = get_supabase_client()

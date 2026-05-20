@@ -74,6 +74,10 @@ def _trigger_remediation_task(report: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def run_source_rag_health_check(*, trigger_remediation: bool = True) -> Dict[str, Any]:
+    from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
+
+    enforce_app_db_pressure_guard("source_rag_health")
+
     supabase = get_supabase_client()
     health = get_source_sync_health(supabase)
 

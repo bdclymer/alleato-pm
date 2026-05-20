@@ -14,6 +14,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -48,6 +52,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -66,6 +74,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -106,6 +118,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -170,6 +186,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -226,6 +246,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_SCHEDULED_ENABLED
         value: "true"
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAX_MESSAGES
@@ -273,6 +297,10 @@ services:
         value: /app:/app/src:/app/src/services:/app/src/workers
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -306,6 +334,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -344,6 +376,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -375,6 +411,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -412,6 +452,10 @@ services:
         value: /app:/app/src:/app/src/services:/app/src/workers
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -453,6 +497,10 @@ services:
         value: /app:/app/src:/app/src/services:/app/src/workers
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -492,6 +540,10 @@ services:
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY

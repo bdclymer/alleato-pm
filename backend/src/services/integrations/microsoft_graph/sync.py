@@ -297,6 +297,10 @@ def run_graph_sync(
 
     Returns a summary dict with counts per source.
     """
+    from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
+
+    enforce_app_db_pressure_guard("graph_sync")
+
     graph = get_graph_client()
     if not graph.is_configured():
         logger.info("[GraphSync] Microsoft Graph credentials not set — skipping")
