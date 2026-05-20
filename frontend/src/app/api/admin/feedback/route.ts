@@ -474,7 +474,37 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
     throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#GET", message: details.message });
   }
 
-  return NextResponse.json({ items: data ?? [], total: count ?? 0 });
+  const submitterIds = [...new Set((data ?? []).map((item) => item.created_by))];
+  let submitters: Record<string, { id: string; email: string; full_name: string | null }> = {};
+
+  if (submitterIds.length > 0) {
+    const { data: profiles, error: profilesError } = await serviceSupabase
+      .from("user_profiles")
+      .select("id, email, full_name")
+      .in("id", submitterIds);
+
+    if (profilesError) {
+      const details = toErrorDetails(profilesError);
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/admin/feedback#GET",
+        message: `Unable to load feedback submitters: ${details.message}`,
+      });
+    }
+
+    submitters = Object.fromEntries((profiles ?? []).map((profile) => [profile.id, profile]));
+  }
+
+  const items = (data ?? []).map((item) => ({
+    ...item,
+    submitter: submitters[item.created_by] ?? {
+      id: item.created_by,
+      email: "Unknown submitter",
+      full_name: null,
+    },
+  }));
+
+  return NextResponse.json({ items, total: count ?? 0 });
 });
 
 // ---------------------------------------------------------------------------

@@ -74,6 +74,7 @@ type FeedbackItem = {
   github_issue_url: string | null;
   github_issue_state: string | null;
   metadata: Record<string, unknown>;
+  submitter: UserProfile;
 };
 
 type UserProfile = {
@@ -281,6 +282,10 @@ function getInitials(profile: UserProfile): string {
 
 function displayName(profile: UserProfile): string {
   return profile.full_name || profile.email.split("@")[0];
+}
+
+function submitterLabel(item: FeedbackItem): string {
+  return item.submitter ? displayName(item.submitter) : item.created_by;
 }
 
 /** Extract @mentioned user IDs from text like "@userId" */
@@ -1666,6 +1671,8 @@ function FeedbackDetail({
               <span>
                 {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
               </span>
+              <span className="text-border">·</span>
+              <span>Submitted by {submitterLabel(item)}</span>
               {item.severity && (
                 <>
                   <span className="text-border">·</span>
@@ -2267,11 +2274,19 @@ export default function FeedbackInboxPage() {
                               </div>
 
                               {toolLabel && (
-                                <div className="mt-1.5">
+                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                                   <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                                     {toolLabel}
                                   </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Submitted by {submitterLabel(item)}
+                                  </span>
                                 </div>
+                              )}
+                              {!toolLabel && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  Submitted by {submitterLabel(item)}
+                                </p>
                               )}
                             </div>
 
