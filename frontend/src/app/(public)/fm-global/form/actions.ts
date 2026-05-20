@@ -115,8 +115,15 @@ async function fetchKFactorMatches(
     p_k_factor: input.k_factor,
   });
 
+  // The k-factor overload of find_sprinkler_requirements references columns on
+  // fm_global_tables that no longer exist; treat this RPC as best-effort so the
+  // public form can still capture submissions while the DB function is fixed.
   if (error) {
-    throw new Error(error.message);
+    console.warn(
+      "[fm-global] k-factor RPC failed, continuing without it:",
+      error.message,
+    );
+    return [];
   }
 
   return normalizeMatchResults(data ?? []);
@@ -324,7 +331,21 @@ async function persistSubmission(
   input: FmGlobalSpecInput,
   tableIds: string[],
   recommendations: FmGlobalRecommendation[],
+  metadata?: FmPublicSubmissionMetadata,
 ): Promise<string> {
+  const contactInfo = metadata
+    ? {
+        name: metadata.contact_name,
+        email: metadata.contact_email,
+      }
+    : null;
+  const projectDetails = metadata
+    ? {
+        project_name: metadata.project_name,
+        project_location: metadata.project_location ?? null,
+      }
+    : null;
+
   const { data, error } = await supabase
     .from("fm_form_submissions")
     .insert({
@@ -333,6 +354,8 @@ async function persistSubmission(
       matched_table_ids: tableIds,
       recommendations: recommendations as unknown as Json,
       similarity_scores: null,
+      contact_info: contactInfo as unknown as Json,
+      project_details: projectDetails as unknown as Json,
     })
     .select("id")
     .single();
@@ -464,12 +487,45 @@ async function buildMatchViewsForInput(
 }
 
 /**
+ * Public form metadata captured from anonymous submitters.
+ */
+export interface FmPublicSubmissionMetadata {
+  contact_name: string;
+  contact_email: string;
+  project_name: string;
+  project_location?: string;
+}
+
+function normalizeMetadata(
+  metadata: FmPublicSubmissionMetadata | undefined,
+): FmPublicSubmissionMetadata | undefined {
+  if (!metadata) return undefined;
+  const contact_name = metadata.contact_name.trim();
+  const contact_email = metadata.contact_email.trim();
+  const project_name = metadata.project_name.trim();
+  const project_location = metadata.project_location?.trim();
+  if (!contact_name || !contact_email || !project_name) {
+    throw new Error(
+      "Name, email, and project name are required.",
+    );
+  }
+  return {
+    contact_name,
+    contact_email,
+    project_name,
+    project_location: project_location || undefined,
+  };
+}
+
+/**
  * Submit FM Global spec inputs and return matched tables, figures, and configs.
  */
 export async function submitFmGlobalSpecs(
   rawInput: FmGlobalSpecInput,
+  rawMetadata?: FmPublicSubmissionMetadata,
 ): Promise<FmGlobalSubmissionResponse> {
   const input = fmGlobalSpecInputSchema.parse(rawInput);
+  const metadata = normalizeMetadata(rawMetadata);
   const supabase = createServiceClient();
 
   const matchesByHeight = await fetchMatchResults(supabase, input);
@@ -487,6 +543,7 @@ export async function submitFmGlobalSpecs(
     input,
     tableIds,
     recommendations,
+    metadata,
   );
 
   revalidatePath("/fm-global/form");
