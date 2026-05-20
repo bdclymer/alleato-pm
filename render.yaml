@@ -350,35 +350,6 @@ services:
       - key: SLACK_WEBHOOK_URL
         sync: false
 
-  # Captures a point-in-time snapshot of the RAG pipeline 3x/day. One row per
-  # firing in rag_pipeline_snapshots — per-source synced/chunked/embedded
-  # counts, plus compiler + project-intelligence totals. Source of truth for
-  # the /rag dashboard. 06:00, 14:00, 22:00 UTC.
-  - type: cron
-    name: alleato-rag-snapshot
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    schedule: "0 6,14,22 * * *"
-    dockerCommand: python3 -m src.services.health.rag_snapshot
-    envVars:
-      - key: PYTHONPATH
-        value: /app:/app/src:/app/src/services
-      - key: PYTHONUNBUFFERED
-        value: 1
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_SUPABASE_URL
-        sync: false
-      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: RAG_DATABASE_READS_ENABLED
-        value: "true"
-
   # Checks source freshness, embedding backlog, compiler backlog, task extraction,
   # and persisted alerts for every RAG source multiple times per day.
   - type: cron
