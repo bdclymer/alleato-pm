@@ -1,10 +1,9 @@
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
 import { PageShell } from "@/components/layout";
 import { createServiceClient } from "@/lib/supabase/service";
-import { DetailField, DetailFieldGrid } from "@/components/ds/DetailField";
+import { DetailField } from "@/components/ds/DetailField";
 import { Button } from "@/components/ui/button";
 import { fmGlobalSpecInputSchema } from "@/lib/schemas/fm-global-schemas";
 import type { FmGlobalSpecInput } from "@/types/fm-global";
@@ -95,20 +94,11 @@ export default async function SubmittedPage({
   const { user_input, contact_info, project_details } = submission;
 
   return (
-    <PageShell
-      variant="content"
-      title="Submission received"
-      description="Thanks — we've received your ASRS sprinkler requirements. Our team will review the details below and follow up with the applicable FM Global 8-34 configuration."
-      eyebrow={
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <CheckCircle2 className="h-5 w-5" aria-hidden />
-        </span>
-      }
-    >
+    <PageShell variant="content" title="Submission received">
       <div className="space-y-10">
         <section className="space-y-4">
           <SectionHeading title="Your Details" />
-          <DetailFieldGrid cols={2}>
+          <div className="space-y-5">
             <DetailField label="Name" value={contact_info?.name} />
             <DetailField label="Email" value={contact_info?.email} />
             <DetailField
@@ -119,23 +109,23 @@ export default async function SubmittedPage({
               label="Project Location"
               value={project_details?.project_location}
             />
-          </DetailFieldGrid>
+          </div>
         </section>
 
         <section className="space-y-4">
           <SectionHeading title="System Classification" />
-          <DetailFieldGrid cols={2}>
+          <div className="space-y-5">
             <DetailField label="ASRS Type" value={user_input.asrs_type} />
             <DetailField
               label="Container Type"
               value={ContainerTypeLabel(user_input.container_type)}
             />
-          </DetailFieldGrid>
+          </div>
         </section>
 
         <section className="space-y-4">
           <SectionHeading title="Building & Storage" />
-          <DetailFieldGrid cols={3}>
+          <div className="space-y-5">
             <DetailField
               label="Ceiling Height"
               value={formatNumber(user_input.ceiling_height_ft, "ft")}
@@ -160,11 +150,11 @@ export default async function SubmittedPage({
                   : null
               }
             />
-          </DetailFieldGrid>
+          </div>
         </section>
 
         <div className="pt-2">
-          <Button variant="outline" asChild>
+          <Button asChild>
             <Link href="/fm-global/form">Submit another request</Link>
           </Button>
         </div>
