@@ -30,6 +30,7 @@ import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
 import {
   MAX_RECORDING_DURATION_MS,
   type ScreenRecorderHandle,
+  deleteOrphanedRecording,
   isScreenRecordingSupported,
   startScreenRecording,
   uploadRecording,
@@ -222,6 +223,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
   const [videoRecordingUrl, setVideoRecordingUrl] = useState<string | null>(
     null,
   );
+  const [videoRecordingPath, setVideoRecordingPath] = useState<string | null>(
+    null,
+  );
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
@@ -302,8 +306,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       setVideoPreviewUrl(previewUrl);
       setIsUploadingVideo(true);
       try {
-        const { publicUrl } = await uploadRecording(blob);
+        const { publicUrl, path } = await uploadRecording(blob);
         setVideoRecordingUrl(publicUrl);
+        setVideoRecordingPath(path);
         toast.success("Screen recording attached.");
       } catch (uploadError) {
         reportNonCriticalFailure({
@@ -391,6 +396,12 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       return null;
     });
     setVideoRecordingUrl(null);
+    setVideoRecordingPath((current) => {
+      if (current) {
+        void deleteOrphanedRecording(current);
+      }
+      return null;
+    });
   }, []);
 
   useEffect(() => {
@@ -682,6 +693,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
           toast.success("Feedback submitted.");
         }
 
+        // The recording is now referenced by the saved feedback record — clear
+        // the local path so resetComposer() does NOT delete it as an orphan.
+        setVideoRecordingPath(null);
         resetComposer();
       } catch (error) {
         const description = getErrorDetail(error);

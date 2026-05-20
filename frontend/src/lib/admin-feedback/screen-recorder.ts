@@ -190,6 +190,25 @@ export type UploadedRecording = {
   contentType: string;
 };
 
+/**
+ * Best-effort deletion of an orphaned recording. Used when the user discards
+ * a recording or closes the feedback composer without submitting. Never
+ * throws — orphan cleanup must not block the user flow.
+ */
+export async function deleteOrphanedRecording(path: string): Promise<void> {
+  if (!path) return;
+  try {
+    await fetch("/api/admin/feedback/recording", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ path }),
+      keepalive: true,
+    });
+  } catch (deleteError) {
+    console.warn("[screen-recorder] orphan delete failed", deleteError);
+  }
+}
+
 export async function uploadRecording(blob: Blob): Promise<UploadedRecording> {
   const initResponse = await fetch("/api/admin/feedback/recording", {
     method: "POST",

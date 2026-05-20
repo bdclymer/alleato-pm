@@ -17,6 +17,10 @@ import { z } from "zod";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { ADMIN_FEEDBACK_BUCKET } from "@/lib/admin-feedback/constants";
+import {
+  deleteAdminFeedbackObject,
+  ensureAdminFeedbackBucket,
+} from "@/lib/admin-feedback/storage";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -75,6 +79,8 @@ export const POST = withApiGuardrails(
       );
     }
 
+    await ensureAdminFeedbackBucket("/api/admin/feedback/recording#POST");
+
     const { contentType } = parsed.data;
     const extension = contentType.includes("mp4") ? "mp4" : "webm";
     const day = new Date().toISOString().slice(0, 10);
@@ -104,6 +110,78 @@ export const POST = withApiGuardrails(
       publicUrl: publicData.publicUrl,
       contentType,
       maxBytes: MAX_RECORDING_BYTES,
+    });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// DELETE — Remove an orphaned recording.
+//
+// The widget calls this when the user discards a recording or closes the
+// composer before submitting feedback. Without it, every cancelled recording
+// would leak as a permanent blob in Supabase Storage.
+// ---------------------------------------------------------------------------
+
+const deleteSchema = z.object({
+  path: z
+    .string()
+    .trim()
+    .min(1)
+    .max(500)
+    .regex(/^recordings\/[a-f0-9-]{36}\/\d{4}-\d{2}-\d{2}\/[a-f0-9-]{36}\.(webm|mp4)$/, {
+      message: "Path is not a recording owned by the admin-feedback bucket",
+    }),
+});
+
+export const DELETE = withApiGuardrails(
+  "/api/admin/feedback/recording#DELETE",
+  async ({ request }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "UNAUTHORIZED",
+        where: "/api/admin/feedback/recording#DELETE",
+        message: "Authentication required.",
+        status: 401,
+      });
+    }
+
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/admin/feedback/recording#DELETE",
+        message: "Request body is not valid JSON.",
+      });
+    }
+
+    const parsed = deleteSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { path } = parsed.data;
+
+    // Path-level ownership check: recordings live at recordings/{userId}/...
+    // so the user can only delete their own.
+    if (!path.startsWith(`recordings/${user.id}/`)) {
+      throw new GuardrailError({
+        code: "AUTH_FORBIDDEN",
+        where: "/api/admin/feedback/recording#DELETE",
+        message: "You can only delete your own recordings.",
+        status: 403,
+      });
+    }
+
+    const result = await deleteAdminFeedbackObject(path);
+    return NextResponse.json({
+      deleted: result.ok,
+      warning: result.ok ? null : result.details,
     });
   },
 );
