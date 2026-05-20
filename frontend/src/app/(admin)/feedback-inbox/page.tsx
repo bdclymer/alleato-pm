@@ -1011,11 +1011,28 @@ function AgentDispatchSection({
   const dispatchTrigger = getDispatchTrigger(item);
   const history = getDispatchHistory(item);
   const lastDispatch = history[0] ?? null;
-  const target = getAssignedAgent(item) ?? "codex";
+  const [target, setTarget] = useState<AgentTarget>(() => getAssignedAgent(item) ?? "codex");
+
+  useEffect(() => {
+    setTarget(getAssignedAgent(item) ?? "codex");
+  }, [item.id, item.metadata]);
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-3 text-xs">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <Select value={target} onValueChange={(value) => setTarget(value as AgentTarget)}>
+          <SelectTrigger
+            aria-label="Agent target"
+            size="sm"
+            className="h-7 w-32 px-2 text-xs font-medium"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="codex">Codex</SelectItem>
+            <SelectItem value="claude_code">Claude Code</SelectItem>
+          </SelectContent>
+        </Select>
         <Button
           type="button"
           variant="link"
@@ -1900,6 +1917,16 @@ function FeedbackDetail({
                   minute: "2-digit",
                 })}
               </span>
+              <span className="text-border">·</span>
+              <a
+                href={item.page_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-medium text-foreground transition-colors hover:text-muted-foreground"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Open referenced page
+              </a>
             </div>
           </div>
 
