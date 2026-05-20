@@ -21,9 +21,12 @@ import {
   Hash,
   Image as ImageIcon,
   Link2,
+  List,
   Loader2,
+  PanelRightOpen,
   PauseCircle,
   Play,
+  Send,
   ShieldCheck,
   Trash2,
   Wrench,
@@ -41,6 +44,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
@@ -139,6 +149,19 @@ type GitHubComment = {
 
 type StatusFilter = "open" | "in_progress" | "deferred" | "resolved" | "all";
 type DisplayStatus = Exclude<StatusFilter, "all"> | "archived";
+type InboxViewMode = "triage" | "split";
+type AgentTarget = "codex" | "claude_code";
+
+type DispatchHistoryEntry = {
+  target: AgentTarget;
+  at: string;
+  by: string;
+  status: string;
+  annotationId: string | null;
+  trigger?: "github" | "metadata_queue";
+  githubIssueUrl?: string | null;
+};
+type FeedbackInboxTab = "issues" | "feature_requests";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -158,6 +181,11 @@ const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
   { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
   { value: "archived", label: "Archived" },
+];
+
+const FEEDBACK_INBOX_TABS: { value: FeedbackInboxTab; label: string }[] = [
+  { value: "issues", label: "Issues" },
+  { value: "feature_requests", label: "Feature Requests" },
 ];
 
 const STATUS_META: Record<DisplayStatus, { icon: typeof Circle; className: string; dotClassName: string; label: string; showInList?: boolean }> = {
@@ -201,6 +229,7 @@ const REQUEST_TYPE_LABELS: Record<string, string> = {
   bug: "Bug",
   change_request: "Change Events",
   copy: "Copy",
+  feature_request: "Feature Request",
   question: "Question",
 };
 
@@ -209,6 +238,7 @@ const PANEL_MIN_WIDTH = 280;
 const PANEL_MAX_WIDTH = 600;
 const PANEL_DEFAULT_WIDTH = 480;
 const PANEL_STORAGE_KEY = "feedback-inbox-panel-width";
+const VIEW_MODE_STORAGE_KEY = "feedback-inbox-view-mode";
 const IN_PROGRESS_STATUSES = new Set([
   "in_progress",
   "triaged",
@@ -291,6 +321,72 @@ function displayName(profile: UserProfile): string {
 
 function submitterLabel(item: FeedbackItem): string {
   return item.submitter ? displayName(item.submitter) : item.created_by;
+}
+
+function getMetadata(item: FeedbackItem) {
+  if (item.metadata && typeof item.metadata === "object") {
+    return item.metadata;
+  }
+  return {};
+}
+
+function getAssignedAgent(item: FeedbackItem): AgentTarget | null {
+  const value = getMetadata(item).assignedAgent;
+  if (value === "codex" || value === "claude_code") return value;
+  return null;
+}
+
+function getDispatchStatus(item: FeedbackItem) {
+  const value = getMetadata(item).dispatchStatus;
+  return typeof value === "string" ? value : null;
+}
+
+function getDispatchTrigger(item: FeedbackItem) {
+  const value = getMetadata(item).dispatchTrigger;
+  if (value === "github") return "GitHub";
+  if (value === "metadata_queue") return "Queue";
+  return null;
+}
+
+function getDispatchHistory(item: FeedbackItem): DispatchHistoryEntry[] {
+  const value = getMetadata(item).dispatchHistory;
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry) => typeof entry === "object" && entry !== null)
+    .map((entry) => {
+      const record = entry as Record<string, unknown>;
+      return {
+        target: (record.target === "claude_code" ? "claude_code" : "codex") as AgentTarget,
+        at: typeof record.at === "string" ? record.at : "",
+        by: typeof record.by === "string" ? record.by : "",
+        status: typeof record.status === "string" ? record.status : "",
+        annotationId: typeof record.annotationId === "string" ? record.annotationId : null,
+        trigger: (record.trigger === "github" ? "github" : "metadata_queue") as "github" | "metadata_queue",
+        githubIssueUrl:
+          typeof record.githubIssueUrl === "string" ? record.githubIssueUrl : null,
+      } satisfies DispatchHistoryEntry;
+    })
+    .filter((entry) => entry.at.length > 0);
+}
+
+function agentLabel(target: AgentTarget) {
+  return target === "codex" ? "Codex" : "Claude Code";
+}
+
+function getSavedViewMode(): InboxViewMode {
+  if (typeof window === "undefined") return "triage";
+  try {
+    const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return saved === "split" ? "split" : "triage";
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "feedback-inbox",
+      operation: "load-view-mode",
+      error,
+      userVisibleFallback: "Feedback inbox view reset to triage.",
+    });
+    return "triage";
+  }
 }
 
 function CollapsibleDetailSection({
@@ -895,6 +991,92 @@ function CommentsSection({
         submitting={submitting}
         inputRef={commentInputRef}
       />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Agent Dispatch
+// ---------------------------------------------------------------------------
+
+function AgentDispatchSection({
+  item,
+  dispatching,
+  onDispatch,
+}: {
+  item: FeedbackItem;
+  dispatching: boolean;
+  onDispatch: (id: string, target: AgentTarget) => void;
+}) {
+  const [target, setTarget] = useState<AgentTarget>(() => getAssignedAgent(item) ?? "codex");
+  const dispatchStatus = getDispatchStatus(item);
+  const dispatchTrigger = getDispatchTrigger(item);
+  const history = getDispatchHistory(item);
+  const lastDispatch = history[0] ?? null;
+
+  useEffect(() => {
+    setTarget(getAssignedAgent(item) ?? "codex");
+  }, [item.id, item.metadata]);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
+            value={target}
+          onValueChange={(value) => setTarget(value as AgentTarget)}
+        >
+          <SelectTrigger
+            aria-label="Agent assignee"
+            size="sm"
+            className="h-7 w-32 px-2 text-xs font-medium"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="codex">Codex</SelectItem>
+            <SelectItem value="claude_code">Claude Code</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onDispatch(item.id, target)}
+          disabled={dispatching}
+          className="h-7 border-border/60 text-xs"
+        >
+          {dispatching ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Send className="h-3.5 w-3.5" />
+          )}
+          {dispatching ? "Dispatching..." : `Dispatch to ${agentLabel(target)}`}
+        </Button>
+      </div>
+
+      {(dispatchStatus || lastDispatch) && (
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {dispatchStatus && (
+            <span>
+              Dispatch: <span className="font-medium text-foreground">{dispatchStatus}</span>
+            </span>
+          )}
+          {dispatchTrigger && (
+            <>
+              <span className="text-border">/</span>
+              <span>{dispatchTrigger}</span>
+            </>
+          )}
+          {lastDispatch && (
+            <>
+              <span className="text-border">/</span>
+              <span>
+                Last sent to {agentLabel(lastDispatch.target)} {relativeTime(lastDispatch.at)}
+              </span>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1622,9 +1804,11 @@ function FeedbackDetail({
   item,
   updatingId,
   sendingToGitHub,
+  dispatchingId,
   deletingId,
   onUpdateStatus,
   onSendToGitHub,
+  onDispatchToAgent,
   onDelete,
   onBack,
   commentInputRef,
@@ -1632,9 +1816,11 @@ function FeedbackDetail({
   item: FeedbackItem;
   updatingId: string | null;
   sendingToGitHub: boolean;
+  dispatchingId: string | null;
   deletingId: string | null;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
   onSendToGitHub: (id: string) => void;
+  onDispatchToAgent: (id: string, target: AgentTarget) => void;
   onDelete: (id: string) => void;
   onBack?: () => void;
   commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
@@ -1744,30 +1930,32 @@ function FeedbackDetail({
 
         {/* Inline actions */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {/* Status dropdown */}
-          <div className="relative">
-            {/* eslint-disable-next-line design-system/no-raw-form-controls -- inline status select with custom styling; not a form field */}
-            <select
-              aria-label="Feedback status"
+          <Select
               value={displayStatus}
-              onChange={(e) => onUpdateStatus(item.id, e.target.value as DisplayStatus)}
+            onValueChange={(value) => onUpdateStatus(item.id, value as DisplayStatus)}
               disabled={updatingId === item.id}
+          >
+            <SelectTrigger
+              aria-label="Feedback status"
+              size="sm"
               className={cn(
-                "h-7 cursor-pointer appearance-none rounded-md border border-border/60 bg-background pl-2 pr-7 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
+                "h-7 w-32 px-2 text-xs font-medium",
                 displayStatus === "resolved" && "bg-status-success/15 text-status-success",
                 displayStatus === "open" && "bg-status-warning/15 text-status-warning",
                 displayStatus === "in_progress" && "bg-status-info/15 text-status-info",
                 displayStatus === "deferred" && "bg-muted text-muted-foreground",
               )}
             >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
               {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+                <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 opacity-50" />
-          </div>
+            </SelectContent>
+          </Select>
 
           {/* GitHub */}
           {!item.github_issue_number && (
@@ -1793,6 +1981,14 @@ function FeedbackDetail({
               #{item.github_issue_number}
             </a>
           )}
+        </div>
+
+        <div className="mt-3 border-t border-border/50 pt-3">
+          <AgentDispatchSection
+            item={item}
+            dispatching={dispatchingId === item.id}
+            onDispatch={onDispatchToAgent}
+          />
         </div>
       </div>
 
@@ -1906,29 +2102,255 @@ function FeedbackDetail({
 }
 
 // ---------------------------------------------------------------------------
+// Inbox Queue
+// ---------------------------------------------------------------------------
+
+type FeedbackListSection = {
+  status: DisplayStatus;
+  label: string;
+  items: FeedbackItem[];
+};
+
+function FeedbackQueueItem({
+  item,
+  itemIndex,
+  selectedId,
+  focusedIndex,
+  onSelect,
+  onUpdateStatus,
+  onSendToGitHub,
+  onDelete,
+}: {
+  item: FeedbackItem;
+  itemIndex: number;
+  selectedId: string | null;
+  focusedIndex: number;
+  onSelect: (id: string) => void;
+  onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onSendToGitHub: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const displayStatus = toDisplayStatus(item.status);
+  const meta = STATUS_META[displayStatus];
+  const isSelected = selectedId === item.id;
+  const isFocused = focusedIndex === itemIndex;
+  const itemDisplayTitle = displayAdminFeedbackTitle({
+    storedTitle: item.title,
+    requestType: item.request_type,
+    comment: item.comment,
+    targetText: item.target_text,
+    pageTitle: item.page_title,
+  });
+  const toolLabel = toolLabelFromPath(item.page_path);
+
+  return (
+    <ListItemContextMenu
+      item={item}
+      onUpdateStatus={onUpdateStatus}
+      onSendToGitHub={onSendToGitHub}
+      onDelete={onDelete}
+    >
+      <Button
+        type="button"
+        data-feedback-item
+        variant="ghost"
+        size="default"
+        onClick={() => onSelect(item.id)}
+        className={cn(
+          "group h-auto w-full items-start justify-start gap-3 rounded-none border-b border-border/50 px-4 py-3 text-left transition-colors",
+          isSelected
+            ? "bg-card shadow-[inset_2px_0_0_hsl(var(--primary))]"
+            : "hover:bg-card/70",
+          isFocused && !isSelected && "bg-card/60",
+        )}
+      >
+        <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted">
+          <span className={cn("h-2 w-2 rounded-full", meta.dotClassName)} />
+        </span>
+
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-start justify-between gap-3">
+            <span className="min-w-0">
+              <span className="line-clamp-1 text-sm font-semibold leading-normal text-foreground">
+                {itemDisplayTitle}
+              </span>
+              <span className="mt-1 line-clamp-2 text-sm font-normal leading-relaxed text-muted-foreground">
+                {item.comment}
+              </span>
+            </span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {relativeTime(item.created_at)}
+            </span>
+          </span>
+
+          <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>{REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}</span>
+            {toolLabel && (
+              <>
+                <span className="text-border">/</span>
+                <span>{toolLabel}</span>
+              </>
+            )}
+            <span className="text-border">/</span>
+            <span>Submitted by {submitterLabel(item)}</span>
+            {item.github_issue_number && (
+              <>
+                <span className="text-border">/</span>
+                <span className="inline-flex items-center gap-1">
+                  <Github className="h-3 w-3" />
+                  #{item.github_issue_number}
+                </span>
+              </>
+            )}
+            {item.severity === "high" && (
+              <>
+                <span className="text-border">/</span>
+                <span className="font-medium text-status-error">High priority</span>
+              </>
+            )}
+          </span>
+        </span>
+      </Button>
+    </ListItemContextMenu>
+  );
+}
+
+function FeedbackQueue({
+  sections,
+  items,
+  selectedId,
+  focusedIndex,
+  loading,
+  currentFilterLabel,
+  onSelect,
+  onUpdateStatus,
+  onSendToGitHub,
+  onDelete,
+}: {
+  sections: FeedbackListSection[];
+  items: FeedbackItem[];
+  selectedId: string | null;
+  focusedIndex: number;
+  loading: boolean;
+  currentFilterLabel: string;
+  onSelect: (id: string) => void;
+  onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onSendToGitHub: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="flex h-full min-h-48 items-center justify-center">
+        <EmptyState
+          icon={<CheckCircle2 />}
+          title="No feedback items"
+          description={`No ${currentFilterLabel.toLowerCase()} items found.`}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-border/50">
+      {sections.map((section) => (
+        <section key={section.status} className="bg-background">
+          {sections.length > 1 && (
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background/95 px-4 py-2 backdrop-blur">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {section.label}
+              </p>
+              <span className="text-xs text-muted-foreground">
+                {section.items.length}
+              </span>
+            </div>
+          )}
+          {section.items.map((item) => {
+            const itemIndex = items.findIndex((entry) => entry.id === item.id);
+            return (
+              <FeedbackQueueItem
+                key={item.id}
+                item={item}
+                itemIndex={itemIndex}
+                selectedId={selectedId}
+                focusedIndex={focusedIndex}
+                onSelect={onSelect}
+                onUpdateStatus={onUpdateStatus}
+                onSendToGitHub={onSendToGitHub}
+                onDelete={onDelete}
+              />
+            );
+          })}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
 
 export default function FeedbackInboxPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<FeedbackInboxTab>("issues");
   const [filter, setFilter] = useState<StatusFilter>("open");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
+  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<InboxViewMode>("triage");
 
   const listPanelRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
   const { panelWidth, handleMouseDown } = useResizablePanel();
 
+  useEffect(() => {
+    setViewMode(getSavedViewMode());
+  }, []);
+
+  function changeViewMode(mode: InboxViewMode) {
+    setViewMode(mode);
+    try {
+      localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "feedback-inbox",
+        operation: "save-view-mode",
+        error,
+        userVisibleFallback: "Feedback inbox view preference was not saved.",
+        metadata: { mode },
+      });
+    }
+  }
+
+  const issueItems = useMemo(
+    () => items.filter((item) => item.request_type !== "feature_request"),
+    [items],
+  );
+  const featureRequestItems = useMemo(
+    () => items.filter((item) => item.request_type === "feature_request"),
+    [items],
+  );
+  const visibleItems = activeTab === "feature_requests" ? featureRequestItems : issueItems;
+  const currentTabLabel =
+    FEEDBACK_INBOX_TABS.find((tab) => tab.value === activeTab)?.label ?? "Issues";
+  const visibleTotal = visibleItems.length;
   const selected = useMemo(
-    () => items.find((i) => i.id === selectedId) ?? null,
-    [items, selectedId],
+    () => visibleItems.find((i) => i.id === selectedId) ?? null,
+    [visibleItems, selectedId],
   );
   const currentFilterLabel =
     STATUS_FILTERS.find((statusFilter) => statusFilter.value === filter)?.label ??
@@ -1958,7 +2380,6 @@ export default function FeedbackInboxPage() {
         `/api/admin/feedback?${params.toString()}`,
       );
       setItems(data.items ?? []);
-      setTotal(data.total ?? 0);
     } catch (err) {
       notifyFeedbackInboxFailure({
         operation: "load-feedback-items",
@@ -1978,21 +2399,26 @@ export default function FeedbackInboxPage() {
 
   // Auto-select the most recent item when items load or current selection is invalid
   useEffect(() => {
-    if (loading || items.length === 0) return;
-    const currentExists = selectedId && items.some((i) => i.id === selectedId);
+    if (loading) return;
+    if (visibleItems.length === 0) {
+      if (selectedId) setSelectedId(null);
+      setFocusedIndex(0);
+      return;
+    }
+    const currentExists = selectedId && visibleItems.some((i) => i.id === selectedId);
     if (!currentExists) {
-      setSelectedId(items[0].id);
+      setSelectedId(visibleItems[0].id);
       setFocusedIndex(0);
     }
-  }, [loading, items, selectedId]);
+  }, [loading, visibleItems, selectedId]);
 
   // Keep focusedIndex in sync with selectedId
   useEffect(() => {
     if (selectedId) {
-      const idx = items.findIndex((i) => i.id === selectedId);
+      const idx = visibleItems.findIndex((i) => i.id === selectedId);
       if (idx >= 0) setFocusedIndex(idx);
     }
-  }, [selectedId, items]);
+  }, [selectedId, visibleItems]);
 
   // ---- Keyboard Navigation ----
   useEffect(() => {
@@ -2006,10 +2432,10 @@ export default function FeedbackInboxPage() {
       switch (e.key) {
         case "ArrowDown": {
           e.preventDefault();
-          if (items.length === 0) return;
-          const nextIdx = Math.min(focusedIndex + 1, items.length - 1);
+          if (visibleItems.length === 0) return;
+          const nextIdx = Math.min(focusedIndex + 1, visibleItems.length - 1);
           setFocusedIndex(nextIdx);
-          setSelectedId(items[nextIdx].id);
+          setSelectedId(visibleItems[nextIdx].id);
           // Scroll the focused item into view
           const listEl = listPanelRef.current;
           if (listEl) {
@@ -2020,10 +2446,10 @@ export default function FeedbackInboxPage() {
         }
         case "ArrowUp": {
           e.preventDefault();
-          if (items.length === 0) return;
+          if (visibleItems.length === 0) return;
           const prevIdx = Math.max(focusedIndex - 1, 0);
           setFocusedIndex(prevIdx);
-          setSelectedId(items[prevIdx].id);
+          setSelectedId(visibleItems[prevIdx].id);
           const listEl = listPanelRef.current;
           if (listEl) {
             const buttons = listEl.querySelectorAll("[data-feedback-item]");
@@ -2032,8 +2458,8 @@ export default function FeedbackInboxPage() {
           break;
         }
         case "Enter": {
-          if (items.length === 0) return;
-          setSelectedId(items[focusedIndex].id);
+          if (visibleItems.length === 0) return;
+          setSelectedId(visibleItems[focusedIndex].id);
           setMobileShowDetail(true);
           break;
         }
@@ -2057,7 +2483,7 @@ export default function FeedbackInboxPage() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [items, focusedIndex, selected]);
+  }, [visibleItems, focusedIndex, selected]);
 
   // ---- Update status ----
   async function updateStatus(id: string, status: DisplayStatus) {
@@ -2111,6 +2537,52 @@ export default function FeedbackInboxPage() {
     }
   }
 
+  // ---- Dispatch to agent ----
+  async function dispatchToAgent(id: string, target: AgentTarget) {
+    setDispatchingId(id);
+    try {
+      const data = await apiFetch<{
+        cliCommand?: string;
+        githubIssue?: { number?: number; url?: string } | null;
+        trigger?: "github" | "metadata_queue";
+      }>("/api/admin/feedback/dispatch", {
+        method: "POST",
+        body: JSON.stringify({ id, target, markInProgress: true }),
+      });
+
+      if (data.cliCommand) {
+        try {
+          await navigator.clipboard.writeText(data.cliCommand);
+        } catch (clipboardError) {
+          reportNonCriticalFailure({
+            area: "feedback-inbox",
+            operation: "copy-dispatch-command",
+            error: clipboardError,
+            userVisibleFallback: "Dispatch succeeded, but the command could not be copied.",
+            metadata: { feedbackId: id, target },
+          });
+        }
+      }
+
+      const triggerLabel = data.trigger === "github" ? "GitHub" : "dispatch queue";
+      const issueLabel = data.githubIssue?.number ? ` #${data.githubIssue.number}` : "";
+      toast.success(`Dispatched to ${agentLabel(target)}`, {
+        description: `${triggerLabel}${issueLabel}`,
+      });
+      fetchItems();
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: "dispatch-feedback-agent",
+        title: `Could not dispatch to ${agentLabel(target)}`,
+        fallback: "The feedback item could not be queued for agent work.",
+        error: err,
+        metadata: { feedbackId: id, target },
+      });
+    } finally {
+      setDispatchingId(null);
+    }
+  }
+
   // ---- Delete ----
   async function deleteItem(id: string) {
     setDeletingId(id);
@@ -2153,7 +2625,7 @@ export default function FeedbackInboxPage() {
       LIST_SECTION_ORDER.map((status) => [status, []]),
     );
 
-    for (const item of items) {
+    for (const item of visibleItems) {
       const status = toDisplayStatus(item.status);
       grouped.get(status)?.push(item);
     }
@@ -2168,215 +2640,256 @@ export default function FeedbackInboxPage() {
         items: grouped.get(status) ?? [],
       }))
       .filter((section) => section.items.length > 0);
-  }, [items, filter]);
+  }, [visibleItems, filter]);
+
+  const queue = (
+    <FeedbackQueue
+      sections={listSections}
+      items={visibleItems}
+      selectedId={selectedId}
+      focusedIndex={focusedIndex}
+      loading={loading}
+      currentFilterLabel={`${currentFilterLabel} ${currentTabLabel}`}
+      onSelect={selectItem}
+      onUpdateStatus={updateStatus}
+      onSendToGitHub={sendToGitHub}
+      onDelete={deleteItem}
+    />
+  );
+
+  const inboxTabs = (
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => {
+        setActiveTab(value as FeedbackInboxTab);
+        setSelectedId(null);
+        setMobileShowDetail(false);
+        setFocusedIndex(0);
+      }}
+    >
+      <TabsList className="h-8 w-full justify-start gap-1 rounded-md bg-muted/70 p-1 sm:w-auto">
+        {FEEDBACK_INBOX_TABS.map((tab) => {
+          const tabCount = tab.value === "feature_requests" ? featureRequestItems.length : issueItems.length;
+          return (
+            <TabsTrigger key={tab.value} value={tab.value} className="h-6 rounded-sm px-3 text-xs">
+              {tab.label}
+              <span className="ml-1.5 text-muted-foreground">
+                {tabCount}
+              </span>
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    </Tabs>
+  );
+
+  const filters = (
+    <Tabs
+      value={filter}
+      onValueChange={(v) => {
+        setFilter(v as StatusFilter);
+        setSelectedId(null);
+        setMobileShowDetail(false);
+      }}
+    >
+      <TabsList className="h-8 w-full justify-start gap-1 rounded-md bg-muted/70 p-1 sm:w-auto">
+        {STATUS_FILTERS.map((f) => (
+          <TabsTrigger key={f.value} value={f.value} className="h-6 rounded-sm px-3 text-xs">
+            {f.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
+  );
+
+  const viewSwitcher = (
+    <div className="inline-flex rounded-md bg-muted/70 p-1">
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        onClick={() => changeViewMode("triage")}
+        className={cn(
+          "h-6 gap-1.5 rounded-sm px-2 text-xs text-muted-foreground hover:bg-background hover:text-foreground",
+          viewMode === "triage" && "bg-background text-foreground shadow-xs",
+        )}
+      >
+        <List className="h-3.5 w-3.5" />
+        Triage
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        onClick={() => changeViewMode("split")}
+        className={cn(
+          "h-6 gap-1.5 rounded-sm px-2 text-xs text-muted-foreground hover:bg-background hover:text-foreground",
+          viewMode === "split" && "bg-background text-foreground shadow-xs",
+        )}
+      >
+        <PanelRightOpen className="h-3.5 w-3.5" />
+        Split pane
+      </Button>
+    </div>
+  );
 
   return (
     <PageShell
       variant="dashboard"
       title="Feedback Inbox"
       showHeader={false}
-      className="bg-muted/30 px-0! py-0!"
+      className="bg-background px-0! py-0!"
       contentClassName="space-y-0 pt-0 pb-0"
       fillHeight
       description="Review feedback, assign tools, and sync issues to GitHub."
     >
-      <div className="flex h-full min-h-0 flex-col">
-      <div className="flex min-h-0 flex-1 border-b border-border/60">
-        {/* ---- Left: list panel ---- */}
-        <div
-          ref={listPanelRef}
-          className={cn(
-            "flex flex-col border-r border-border/60 bg-background",
-            mobileShowDetail ? "hidden lg:flex" : "flex",
-            "w-full lg:w-auto lg:shrink-0",
-          )}
-          style={{ width: panelWidth, minWidth: PANEL_MIN_WIDTH, maxWidth: PANEL_MAX_WIDTH }}
-        >
-          <div className="border-b border-border/60 px-3 py-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="truncate text-sm font-semibold text-foreground">
-                Feedback Inbox
-              </p>
-              <p className="shrink-0 text-xs text-muted-foreground">
-                {total} {total === 1 ? "issue" : "issues"}
+      <div className="flex h-full min-h-0 flex-col bg-background">
+        <header className="border-b border-border/60 bg-background px-4 py-3 sm:px-6">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                  Feedback Inbox
+                </h1>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {visibleTotal} {visibleTotal === 1 ? "item" : "items"}
+                </span>
+              </div>
+              <p className="mt-1 max-w-4xl text-sm text-muted-foreground">
+                Triage submitted issues and feature requests without mixing the two queues.
               </p>
             </div>
-          </div>
-
-          <div className="border-b border-border/60 px-3 py-2">
-            <Tabs
-              value={filter}
-              onValueChange={(v) => {
-                setFilter(v as StatusFilter);
-                setSelectedId(null);
-                setMobileShowDetail(false);
-              }}
-            >
-              <TabsList className="h-8 w-full justify-start gap-1 rounded-md bg-muted/70 p-1">
-                {STATUS_FILTERS.map((f) => (
-                  <TabsTrigger key={f.value} value={f.value} className="h-6 rounded-sm px-3 text-xs">
-                    {f.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-
-          {/* Items */}
-          <div className="flex-1 overflow-y-auto bg-muted/25">
-            {loading && (
-              <div className="flex items-center justify-center py-16">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-              </div>
-            )}
-
-            {!loading && items.length === 0 && (
-              <div className="flex h-full min-h-48 items-center justify-center">
-                <EmptyState
-                  icon={<CheckCircle2 />}
-                  title="No feedback items"
-                  description={`No ${currentFilterLabel.toLowerCase()} items found.`}
-                />
-              </div>
-            )}
-
-            {!loading &&
-              listSections.map((section) => {
-                return (
-                  <section key={section.status}>
-                    {section.items.map((item) => {
-                      const displayStatus = toDisplayStatus(item.status);
-                      const meta = STATUS_META[displayStatus];
-                      const itemIndex = items.findIndex((entry) => entry.id === item.id);
-                      const isSelected = selectedId === item.id;
-                      const isFocused = focusedIndex === itemIndex;
-                      const itemDisplayTitle = displayAdminFeedbackTitle({
-                        storedTitle: item.title,
-                        requestType: item.request_type,
-                        comment: item.comment,
-                        targetText: item.target_text,
-                        pageTitle: item.page_title,
-                      });
-
-                      const toolLabel = toolLabelFromPath(item.page_path);
-                      return (
-                        <ListItemContextMenu
-                          key={item.id}
-                          item={item}
-                          onUpdateStatus={updateStatus}
-                          onSendToGitHub={sendToGitHub}
-                          onDelete={deleteItem}
-                        >
-                          <Button
-                            type="button"
-                            data-feedback-item
-                            variant="ghost"
-                            size="default"
-                            onClick={() => selectItem(item.id)}
-                            className={cn(
-                              "group h-auto w-full items-start justify-start gap-2 rounded-none border-b border-border/60 px-3 py-2 text-left transition-colors",
-                              isSelected
-                                ? "bg-background shadow-[inset_2px_0_0_hsl(var(--primary))]"
-                                : "hover:bg-background/70",
-                              isFocused && !isSelected && "bg-background/80",
-                            )}
-                          >
-                            {displayStatus !== "in_progress" && (
-                              <meta.icon className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", meta.className)} />
-                            )}
-
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-start gap-2">
-                                <span className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
-                                  {itemDisplayTitle}
-                                </span>
-                                {item.severity === "high" && (
-                                  <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-status-error">
-                                    High
-                                  </span>
-                                )}
-                              </div>
-
-                              {toolLabel && (
-                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                  <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                    {toolLabel}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    Submitted by {submitterLabel(item)}
-                                  </span>
-                                </div>
-                              )}
-                              {!toolLabel && (
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  Submitted by {submitterLabel(item)}
-                                </p>
-                              )}
-                            </div>
-
-                            <span className="shrink-0 pt-0.5 text-xs text-muted-foreground">
-                              {relativeTime(item.created_at)}
-                            </span>
-                          </Button>
-                        </ListItemContextMenu>
-                      );
-                    })}
-                  </section>
-                );
-              })}
-          </div>
-        </div>
-
-        {/* ---- Resize handle ---- */}
-        <div
-          className="group hidden w-1.5 shrink-0 cursor-col-resize items-center justify-center transition-colors hover:bg-muted/50 active:bg-muted lg:flex"
-          onMouseDown={handleMouseDown}
-          aria-hidden="true"
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
-        </div>
-
-        {/* ---- Right: detail panel (desktop) ---- */}
-        <div className="hidden flex-1 overflow-y-auto bg-background lg:block">
-          {!selected && (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">
-                Select an item to view details
-              </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between xl:justify-end">
+              {inboxTabs}
+              {filters}
+              {viewSwitcher}
             </div>
-          )}
+          </div>
+        </header>
 
-          {selected && (
-            <FeedbackDetail
-              item={selected}
-              updatingId={updatingId}
-              sendingToGitHub={sendingToGitHub}
-              deletingId={deletingId}
-              onUpdateStatus={updateStatus}
-              onSendToGitHub={sendToGitHub}
-              onDelete={deleteItem}
-              commentInputRef={commentInputRef}
-            />
-          )}
-        </div>
-
-        {/* ---- Mobile: full-screen detail view ---- */}
-        {mobileShowDetail && selected && (
+        {mobileShowDetail && selected ? (
           <div className="flex flex-1 flex-col overflow-y-auto bg-background lg:hidden">
             <FeedbackDetail
               item={selected}
               updatingId={updatingId}
               sendingToGitHub={sendingToGitHub}
+              dispatchingId={dispatchingId}
               onUpdateStatus={updateStatus}
               onSendToGitHub={sendToGitHub}
+              onDispatchToAgent={dispatchToAgent}
               deletingId={deletingId}
               onDelete={deleteItem}
               onBack={handleMobileBack}
               commentInputRef={commentInputRef}
             />
           </div>
+        ) : viewMode === "split" ? (
+          <div className="flex min-h-0 flex-1">
+            <div
+              ref={listPanelRef}
+              className={cn(
+                "flex flex-col border-r border-border/60 bg-background",
+                mobileShowDetail ? "hidden lg:flex" : "flex",
+                "w-full lg:w-auto lg:shrink-0",
+              )}
+              style={{ width: panelWidth, minWidth: PANEL_MIN_WIDTH, maxWidth: PANEL_MAX_WIDTH }}
+            >
+              <div className="flex items-center justify-between border-b border-border/60 px-4 py-2">
+                <p className="text-sm font-semibold text-foreground">
+                  {currentTabLabel}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {currentFilterLabel}
+                </p>
+              </div>
+              <div className="flex-1 overflow-y-auto bg-muted/20">
+                {queue}
+              </div>
+            </div>
+
+            <div
+              className="group hidden w-1.5 shrink-0 cursor-col-resize items-center justify-center transition-colors hover:bg-muted/50 active:bg-muted lg:flex"
+              onMouseDown={handleMouseDown}
+              aria-hidden="true"
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground" />
+            </div>
+
+            <div className="hidden flex-1 overflow-y-auto bg-background lg:block">
+              {!selected && (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-sm text-muted-foreground">
+                    Select an item to review
+                  </p>
+                </div>
+              )}
+
+              {selected && (
+                <FeedbackDetail
+                  item={selected}
+                  updatingId={updatingId}
+                  sendingToGitHub={sendingToGitHub}
+                  dispatchingId={dispatchingId}
+                  deletingId={deletingId}
+                  onUpdateStatus={updateStatus}
+                  onSendToGitHub={sendToGitHub}
+                  onDispatchToAgent={dispatchToAgent}
+                  onDelete={deleteItem}
+                  commentInputRef={commentInputRef}
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20">
+            <div className="mx-auto grid w-full max-w-screen-2xl gap-6 px-4 py-4 lg:grid-cols-2 lg:px-6">
+              <section
+                ref={listPanelRef}
+                className="min-h-0 overflow-hidden rounded-lg bg-card shadow-xs"
+              >
+                <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {currentFilterLabel} {currentTabLabel}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Use arrow keys to move through the queue.
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {visibleTotal}
+                  </span>
+                </div>
+                {queue}
+              </section>
+
+              <section className="hidden min-h-0 overflow-hidden rounded-lg bg-card shadow-xs lg:block">
+                {selected ? (
+                  <div className="max-h-screen overflow-y-auto">
+                    <FeedbackDetail
+                      item={selected}
+                      updatingId={updatingId}
+                      sendingToGitHub={sendingToGitHub}
+                      dispatchingId={dispatchingId}
+                      deletingId={deletingId}
+                      onUpdateStatus={updateStatus}
+                      onSendToGitHub={sendToGitHub}
+                      onDispatchToAgent={dispatchToAgent}
+                      onDelete={deleteItem}
+                      commentInputRef={commentInputRef}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-full min-h-96 items-center justify-center">
+                    <p className="text-sm text-muted-foreground">
+                      Select an item to review
+                    </p>
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
         )}
-      </div>
       </div>
     </PageShell>
   );
