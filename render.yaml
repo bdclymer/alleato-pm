@@ -6,16 +6,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 */2 * * *"
+    schedule: "0 0 1 1 *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.acumatica_sync import run_acumatica_financial_sync;
-      result = run_acumatica_financial_sync();
-      print(json.dumps(result, indent=2, default=str));
-      sys.exit(1 if result.get('status') == 'error' else 0)
-      "
+      echo "alleato-acumatica-financial-sync disabled while DB incident guard is active"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -87,6 +80,12 @@ services:
         value: "true"
       - key: RAG_DATABASE_READS_ENABLED
         value: "true"
+      - key: GRAPH_DELTA_MAX_PAGES
+        value: "3"
+      - key: GRAPH_DELTA_MAX_ITEMS
+        value: "250"
+      - key: TEAMS_CHANNEL_SYNC_MAX_CHANNELS
+        value: "3"
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -121,6 +120,10 @@ services:
         value: "true"
       - key: RAG_DATABASE_READS_ENABLED
         value: "true"
+      - key: GRAPH_DELTA_MAX_PAGES
+        value: "3"
+      - key: GRAPH_DELTA_MAX_ITEMS
+        value: "250"
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -187,6 +190,14 @@ services:
         sync: false
       - key: MICROSOFT_SYNC_USERS
         sync: false
+      - key: OUTLOOK_SYNC_MAX_USERS
+        value: "1"
+      - key: ONEDRIVE_SYNC_MAX_USERS
+        value: "1"
+      - key: ONEDRIVE_SYNC_MAX_FOLDERS
+        value: "2"
+      - key: SHAREPOINT_SYNC_MAX_FOLDERS
+        value: "2"
       - key: GRAPH_SYNC_ENABLED
         value: "true"
       - key: GRAPH_SYNC_OUTLOOK
