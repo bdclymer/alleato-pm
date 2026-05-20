@@ -36,6 +36,11 @@ import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
@@ -286,6 +291,37 @@ function displayName(profile: UserProfile): string {
 
 function submitterLabel(item: FeedbackItem): string {
   return item.submitter ? displayName(item.submitter) : item.created_by;
+}
+
+function CollapsibleDetailSection({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="border-t border-border/60 pt-4"
+    >
+      <CollapsibleTrigger className="group flex w-full items-center justify-between gap-4 text-left outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <SectionRuleHeading label={label} className="mb-0 pb-0" />
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            open && "rotate-180",
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-3">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }
 
 /** Extract @mentioned user IDs from text like "@userId" */
@@ -816,14 +852,6 @@ function CommentsSection({
           </div>
         )}
 
-        {!loading && comments.length === 0 && (
-          <EmptyState
-            icon={<Circle />}
-            title="No comments yet"
-            description="Be the first to comment."
-          />
-        )}
-
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary mt-0.5">
@@ -912,8 +940,6 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
 
   return (
     <div>
-      <SectionRuleHeading label={`GitHub Activity · #${issueNumber}`} />
-
       {loading && (
         <div className="flex items-center justify-center py-4">
           <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
@@ -1464,8 +1490,6 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
 
   return (
     <div>
-      <SectionRuleHeading label="Tool Context" />
-
       {/* Tool assignment */}
       <div className="flex items-center gap-2 mb-3">
         <div className="relative" ref={dropdownRef}>
@@ -1790,9 +1814,7 @@ function FeedbackDetail({
         )}
       </div>
 
-      {/* Page context */}
-      <div>
-        <SectionRuleHeading label="Page Context" />
+      <CollapsibleDetailSection key={`${item.id}-page-context`} label="Page Context">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs">
             <span className="w-16 shrink-0 text-muted-foreground">Page</span>
@@ -1832,16 +1854,15 @@ function FeedbackDetail({
             </div>
           )}
         </div>
-      </div>
+      </CollapsibleDetailSection>
 
-      <div>
+      <CollapsibleDetailSection key={`${item.id}-tool-context`} label="Tool Context">
         <ToolContextSection item={item} />
-      </div>
+      </CollapsibleDetailSection>
 
       {/* Source Metadata */}
       {item.metadata && Object.keys(item.metadata).length > 0 && (
-        <div className="border-t border-border/60 pt-4">
-          <SectionRuleHeading label="Source Metadata" />
+        <CollapsibleDetailSection key={`${item.id}-source-metadata`} label="Source Metadata">
           <div className="space-y-1.5">
             {Object.entries(item.metadata as Record<string, unknown>).map(([key, value]) => {
               const label = key
@@ -1862,7 +1883,7 @@ function FeedbackDetail({
               );
             })}
           </div>
-        </div>
+        </CollapsibleDetailSection>
       )}
 
       {/* Comments */}
@@ -1872,9 +1893,12 @@ function FeedbackDetail({
 
       {/* GitHub Activity */}
       {item.github_issue_number && (
-        <div>
+        <CollapsibleDetailSection
+          key={`${item.id}-github-activity`}
+          label={`GitHub Activity · #${item.github_issue_number}`}
+        >
           <GitHubActivitySection issueNumber={item.github_issue_number} />
-        </div>
+        </CollapsibleDetailSection>
       )}
     </div>
     </>
