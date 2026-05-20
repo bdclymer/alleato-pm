@@ -49,6 +49,7 @@ describe("planRetrieval", () => {
     "What are Brandon's must-do items today?",
     "How does the pipeline look right now?",
     "Find important insights from today's meetings.",
+    "Are any clients upset or showing relationship risk? Use recent meetings, email, and Teams evidence.",
   ])("delegates broad operator question to executive Deep Agents workflow: %s", (message) => {
     const plan = planRetrieval({ message, messages: [userMsg(message)] });
     expect(plan.responseFormat).toBe("briefing_template");

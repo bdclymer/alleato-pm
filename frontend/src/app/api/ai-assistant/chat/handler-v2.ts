@@ -1522,6 +1522,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
 
         try {
           const projectIdForBridge = args.selectedProjectId;
+          const projectBridgeStarted = Date.now();
           const packet = await withKeepAlive(
             writer,
             {
@@ -1537,6 +1538,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 question: lastUserContent,
               }),
           );
+          const projectBridgeDurationMs = Date.now() - projectBridgeStarted;
 
           if (shouldUseDeepAgentProjectDirectResponse(packet)) {
             const content = formatDeepAgentProjectDirectResponse(packet);
@@ -1569,6 +1571,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 status: "success",
                 message: lastUserContent,
                 selectedProjectId: args.selectedProjectId,
+                durationMs: projectBridgeDurationMs,
               }),
               ...mapBackendPacketTrace(packet.toolTrace, {
                 message: lastUserContent,
@@ -1741,6 +1744,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } as never);
 
         try {
+          const executiveBridgeStarted = Date.now();
           const packet = await withKeepAlive(
             writer,
             {
@@ -1755,6 +1759,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 question: lastUserContent,
               }),
           );
+          const executiveBridgeDurationMs =
+            Date.now() - executiveBridgeStarted;
 
           if (shouldUseDeepAgentExecutiveDirectResponse(packet)) {
             const content = formatDeepAgentExecutiveDirectResponse(packet);
@@ -1788,6 +1794,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 status: "success",
                 message: lastUserContent,
                 selectedProjectId: args.selectedProjectId ?? null,
+                durationMs: executiveBridgeDurationMs,
               }),
               ...mapBackendPacketTrace(packet.toolTrace, {
                 message: lastUserContent,

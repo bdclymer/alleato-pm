@@ -50,6 +50,11 @@ const EXECUTIVE_DEEP_AGENT_PATTERNS: Array<{
       /\b(today'?s meetings?|meetings? today|meeting insights?|insights from today'?s meetings?)\b/i,
     intent: "latest_status",
   },
+  {
+    pattern:
+      /\b(clients? upset|client relationship risk|relationship risk|unhappy clients?|frustrated clients?|client frustration|clients? angry)\b/i,
+    intent: "risk_review",
+  },
 ];
 
 function detectPreconsult(message: string): SubAgent[] {
@@ -119,15 +124,6 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     };
   }
 
-  if (recentEmailInbox) {
-    return {
-      intent,
-      responseFormat: "conversational",
-      sources: {},
-      reason: `microsoft_specialist_delegation_${recentEmailInbox.reason}`,
-    };
-  }
-
   const executiveDeepAgentIntent = detectExecutiveDeepAgentIntent(
     message,
     selectedProjectId,
@@ -139,6 +135,15 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
       sources: {},
       selectedProjectId,
       reason: "executive_deep_agent_broad_operator_question",
+    };
+  }
+
+  if (recentEmailInbox) {
+    return {
+      intent,
+      responseFormat: "conversational",
+      sources: {},
+      reason: `microsoft_specialist_delegation_${recentEmailInbox.reason}`,
     };
   }
 
