@@ -4,12 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Camera,
+  CircleStop,
   ImagePlus,
   ListFilter,
   RefreshCw,
   Sparkles,
   Trash2,
   Upload,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -25,6 +27,13 @@ import {
   type FeedbackTargetSnapshot,
 } from "@/lib/admin-feedback/targeting";
 import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
+import {
+  MAX_RECORDING_DURATION_MS,
+  type ScreenRecorderHandle,
+  isScreenRecordingSupported,
+  startScreenRecording,
+  uploadRecording,
+} from "@/lib/admin-feedback/screen-recorder";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apiFetch } from "@/lib/api-client";
@@ -56,6 +65,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 
 type FeedbackType = "Issue" | "Wishlist" | "General thought";
 type PriorityLevel = "high" | "medium" | "low";
@@ -209,6 +219,16 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
   );
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [videoRecordingUrl, setVideoRecordingUrl] = useState<string | null>(
+    null,
+  );
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [recordingElapsedMs, setRecordingElapsedMs] = useState(0);
+  const recordingHandleRef = useRef<ScreenRecorderHandle | null>(null);
+  const recordingTimerRef = useRef<number | null>(null);
+  const recordingSupported = isScreenRecordingSupported();
   const shouldLoadProfile = dialogOpen || isSubmitting;
   const { profile, isLoading } = useCurrentUserProfile({
     enabled: shouldLoadProfile,
@@ -261,6 +281,140 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     },
     [],
   );
+
+  const finalizeRecording = useCallback(async () => {
+    const handle = recordingHandleRef.current;
+    if (!handle) return;
+    recordingHandleRef.current = null;
+    if (recordingTimerRef.current) {
+      window.clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    try {
+      const { blob } = await handle.stop();
+      setIsRecording(false);
+      if (blob.size === 0) {
+        toast.error("Recording was empty — try again.");
+        return;
+      }
+      const previewUrl = URL.createObjectURL(blob);
+      setVideoPreviewUrl(previewUrl);
+      setIsUploadingVideo(true);
+      try {
+        const { publicUrl } = await uploadRecording(blob);
+        setVideoRecordingUrl(publicUrl);
+        toast.success("Screen recording attached.");
+      } catch (uploadError) {
+        reportNonCriticalFailure({
+          area: "admin-feedback-widget",
+          operation: "upload-screen-recording",
+          error: uploadError,
+          userVisibleFallback: "Could not save your screen recording.",
+        });
+        toast.error("Could not upload screen recording", {
+          description: getErrorDetail(uploadError),
+        });
+        setVideoPreviewUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return null;
+        });
+      } finally {
+        setIsUploadingVideo(false);
+      }
+    } catch (error) {
+      setIsRecording(false);
+      reportNonCriticalFailure({
+        area: "admin-feedback-widget",
+        operation: "stop-screen-recording",
+        error,
+        userVisibleFallback: "Could not finalize the screen recording.",
+      });
+      toast.error("Recording failed", { description: getErrorDetail(error) });
+    }
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    if (!recordingSupported || isRecording || recordingHandleRef.current) {
+      return;
+    }
+    try {
+      setRecordingElapsedMs(0);
+      const handle = await startScreenRecording();
+      recordingHandleRef.current = handle;
+      setIsRecording(true);
+      const startedAt = performance.now();
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingElapsedMs(performance.now() - startedAt);
+      }, 250);
+
+      // Hook into the recorder's own stop event so the browser "Stop sharing"
+      // button finalizes the recording too.
+      handle.recorder.addEventListener("stop", () => {
+        if (recordingHandleRef.current === handle) {
+          void finalizeRecording();
+        }
+      });
+    } catch (error) {
+      setIsRecording(false);
+      const message = error instanceof Error ? error.message : String(error);
+      if (/permission denied|not allowed/i.test(message)) {
+        toast.error("Screen recording permission was denied.");
+      } else {
+        toast.error("Could not start screen recording", { description: message });
+      }
+    }
+  }, [recordingSupported, isRecording, finalizeRecording]);
+
+  const stopRecording = useCallback(() => {
+    void finalizeRecording();
+  }, [finalizeRecording]);
+
+  const discardRecording = useCallback(() => {
+    if (recordingHandleRef.current) {
+      try {
+        recordingHandleRef.current.cancel();
+      } catch {
+        /* ignore */
+      }
+      recordingHandleRef.current = null;
+    }
+    if (recordingTimerRef.current) {
+      window.clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    setIsRecording(false);
+    setIsUploadingVideo(false);
+    setRecordingElapsedMs(0);
+    setVideoPreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
+    setVideoRecordingUrl(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (recordingHandleRef.current) {
+        try {
+          recordingHandleRef.current.cancel();
+        } catch {
+          /* ignore */
+        }
+      }
+      if (recordingTimerRef.current) {
+        window.clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (videoPreviewUrl) {
+        URL.revokeObjectURL(videoPreviewUrl);
+      }
+    };
+  }, [videoPreviewUrl]);
 
   const hoveredRect = hoveredTarget ? getRectState(hoveredTarget) : null;
   const isImmersiveChatRoute =
@@ -414,6 +568,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     setHoveredTarget(null);
     setScreenshotDataUrl(null);
     setForm(getDefaultForm(pagePath));
+    discardRecording();
   };
 
   const refreshScreenshot = () => {
@@ -512,6 +667,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
               selectedText: selectedTarget.text,
               selectedSelector: selectedTarget.selector,
               selectedDomPath: selectedTarget.domPath,
+              videoRecordingUrl: videoRecordingUrl ?? undefined,
             },
           }),
         });
@@ -806,6 +962,104 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                   </div>
                 )}
               </div>
+
+              {recordingSupported && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <Label>Screen recording</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Record up to 2 minutes of your screen to show the issue.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {!isRecording && !videoPreviewUrl && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={startRecording}
+                              aria-label="Record screen"
+                            >
+                              <Video className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Record screen</TooltipContent>
+                        </Tooltip>
+                      )}
+                      {isRecording && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={stopRecording}
+                              aria-label="Stop recording"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <CircleStop className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Stop recording</TooltipContent>
+                        </Tooltip>
+                      )}
+                      {(videoPreviewUrl || isUploadingVideo) && !isRecording && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={discardRecording}
+                              aria-label="Remove recording"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              disabled={isUploadingVideo}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Remove recording</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </div>
+
+                  {isRecording && (
+                    <InfoAlert
+                      variant="error"
+                      role="status"
+                      icon={
+                        <span className="mt-1 inline-flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-destructive" />
+                      }
+                    >
+                      Recording — {Math.floor(recordingElapsedMs / 1000)}s / {Math.floor(MAX_RECORDING_DURATION_MS / 1000)}s
+                    </InfoAlert>
+                  )}
+
+                  {videoPreviewUrl && !isRecording && (
+                    <div className="w-full max-w-sm overflow-hidden rounded shadow-sm">
+                      { }
+                      <video
+                        src={videoPreviewUrl}
+                        controls
+                        className="aspect-video w-full bg-foreground"
+                      />
+                      {isUploadingVideo ? (
+                        <p className="px-1 pt-1 text-xs text-muted-foreground">
+                          Uploading recording…
+                        </p>
+                      ) : videoRecordingUrl ? (
+                        <p className="px-1 pt-1 text-xs text-muted-foreground">
+                          Recording saved.
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -816,9 +1070,15 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
             <Button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isRecording || isUploadingVideo}
             >
-              {isSubmitting ? "Submitting..." : "Submit feedback"}
+              {isSubmitting
+                ? "Submitting..."
+                : isUploadingVideo
+                  ? "Uploading video..."
+                  : isRecording
+                    ? "Stop recording first"
+                    : "Submit feedback"}
             </Button>
           </DialogFooter>
         </DialogContent>

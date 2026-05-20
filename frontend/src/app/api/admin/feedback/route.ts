@@ -13,6 +13,7 @@ import {
   ADMIN_FEEDBACK_SEVERITIES,
 } from "@/lib/admin-feedback/constants";
 import { createGitHubIssue } from "@/lib/admin-feedback/github";
+import { notifyTeamsWebhook } from "@/lib/admin-feedback/teams-webhook";
 import { buildAdminFeedbackTitle } from "@/lib/admin-feedback/title";
 import { matchFeedbackToTool, getToolById } from "@/lib/admin-feedback/tool-matcher";
 import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
@@ -264,7 +265,7 @@ async function requireAdminUser(where: string) {
   return requestUser;
 }
 
-export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ request }) => {
+export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ request, requestId }) => {
   const requestUser = await getApiRouteUser();
   if (!requestUser) {
     throw new GuardrailError({ code: "UNAUTHORIZED", where: "/api/admin/feedback#POST", message: "Authentication required.", status: 401 });
@@ -405,6 +406,44 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
       .eq("id", inserted.id);
   }
 
+  const metadataRecord =
+    metadata && typeof metadata === "object" && !Array.isArray(metadata)
+      ? (metadata as Record<string, unknown>)
+      : {};
+  const submitterEmail =
+    typeof metadataRecord.submitterEmail === "string"
+      ? metadataRecord.submitterEmail
+      : null;
+  const submitterName =
+    typeof metadataRecord.submitterName === "string"
+      ? metadataRecord.submitterName
+      : null;
+  const videoRecordingUrl =
+    typeof metadataRecord.videoRecordingUrl === "string"
+      ? metadataRecord.videoRecordingUrl
+      : null;
+  const requestOrigin = new URL(request.url).origin;
+  const inboxBase =
+    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") || requestOrigin;
+
+  const teamsResult = await notifyTeamsWebhook({
+    requestId,
+    feedbackId: inserted.id,
+    title,
+    comment: payload.comment,
+    requestType: payload.requestType,
+    severity: payload.severity,
+    pageUrl: payload.pageUrl,
+    pagePath: payload.pagePath,
+    pageTitle: payload.pageTitle ?? null,
+    screenshotUrl,
+    videoRecordingUrl,
+    submitterEmail,
+    submitterName,
+    githubIssueUrl: githubIssue?.url ?? null,
+    inboxUrl: `${inboxBase}/feedback-inbox#item-${inserted.id}`,
+  });
+
   return NextResponse.json({
     feedbackId: inserted.id,
     title,
@@ -413,6 +452,10 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
     githubWarning:
       githubWarning ??
       (githubIssue ? null : "GitHub feedback integration is not configured in this environment."),
+    teamsWarning:
+      teamsResult.ok || teamsResult.reason === "not_configured"
+        ? null
+        : (teamsResult.details ?? "Teams webhook delivery failed."),
   });
 });
 

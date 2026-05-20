@@ -1,5 +1,5 @@
 /**
- * Next.js 15 instrumentation hook — runs once at server startup (Node.js runtime only).
+ * Next.js 15 instrumentation hook — runs once at server startup.
  *
  * Validates required env vars at boot so a misconfigured deployment fails fast
  * rather than crashing on the first user-facing request. Also warns if the
@@ -7,16 +7,28 @@
  * suppressed. Local development intentionally stays quiet unless an alertable
  * error actually occurs.
  *
+ * Sentry is only initialized when NEXT_PUBLIC_SENTRY_DSN (or SENTRY_DSN) is set,
+ * so dev environments without the env var are completely unaffected.
+ *
  * Phoenix tracing: set PHOENIX_TRACING=true in .env.local, then run:
  *   pip install arize-phoenix && python -m phoenix.server.main
  *   open http://localhost:6006
  */
+
+const sentryDsnPresent = Boolean(
+  process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN,
+);
+
 export async function register() {
+  if (sentryDsnPresent && process.env.NEXT_RUNTIME === "nodejs") {
+    await import("../sentry.server.config");
+  }
+
+  if (sentryDsnPresent && process.env.NEXT_RUNTIME === "edge") {
+    await import("../sentry.edge.config");
+  }
+
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    // ---------------------------------------------------------------------------
-    // Phoenix / OpenTelemetry tracing (local debugging only)
-    // Enable with: PHOENIX_TRACING=true in .env.local
-    // ---------------------------------------------------------------------------
     if (process.env.PHOENIX_TRACING === "true") {
       const { NodeSDK } = await import("@opentelemetry/sdk-node");
       const { OTLPTraceExporter } = await import(
@@ -32,9 +44,7 @@ export async function register() {
             process.env.PHOENIX_ENDPOINT ??
             "http://localhost:4318/v1/traces",
         }),
-        instrumentations: [
-          new OpenAIInstrumentation({}),
-        ],
+        instrumentations: [new OpenAIInstrumentation({})],
       });
 
       sdk.start();
@@ -42,7 +52,6 @@ export async function register() {
         "[instrumentation] Phoenix tracing enabled → http://localhost:6006",
       );
     }
-
 
     const { validateEnvVars } = await import("@/lib/guardrails/env");
 
@@ -73,3 +82,7 @@ export async function register() {
     }
   }
 }
+
+export const onRequestError = sentryDsnPresent
+  ? require("@sentry/nextjs").captureRequestError
+  : undefined;
