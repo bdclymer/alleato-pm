@@ -1,16 +1,20 @@
 /* eslint-disable design-system/require-page-shell -- UnifiedTablePage provides its own page layout */
 import type { Metadata } from "next";
+import { requireAdmin } from "@/app/api/admin/intelligence-compiler/_shared";
 import { EmailsClient } from "./emails-client";
 
 export const metadata: Metadata = {
   title: "Emails",
 };
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ projectId: string }>;
 }
 
 export default async function ProjectEmailsPage({ params }: PageProps) {
+  await requireAdmin("project-emails-page");
   const { projectId } = await params;
 
   return <EmailsClient projectId={parseInt(projectId, 10)} />;

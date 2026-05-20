@@ -122,7 +122,6 @@ const OPERATIONS_TOOLS = [
   "RFIs",
   "Submittals",
   "Transmittals",
-  "Emails",
   "Project Directory",
   "Project Tasks",
 ];
