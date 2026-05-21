@@ -275,6 +275,16 @@ function FirefliesSectionContent({ value }: { value: string }) {
   );
 }
 
+function meaningfulText(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+
+  if (!trimmed || trimmed === "{}" || trimmed === "[]") {
+    return null;
+  }
+
+  return trimmed;
+}
+
 // ─── Project Assignment Dialog ───────────────────────────────────────────────
 
 function ProjectAssignmentDialog({
@@ -434,15 +444,22 @@ export function MeetingDetailContent({
   };
 
   const overviewContent =
-    parsedSections?.shortSummary?.trim() ||
-    parsedSections?.shortOverview?.trim() ||
-    parsedSections?.gist?.trim() ||
-    parsedSections?.bulletGist?.trim() ||
-    meeting.summary ||
+    meaningfulText(parsedSections?.shortSummary) ||
+    meaningfulText(parsedSections?.shortOverview) ||
+    meaningfulText(parsedSections?.gist) ||
+    meaningfulText(parsedSections?.bulletGist) ||
+    meaningfulText(meeting.overview) ||
+    meaningfulText(meeting.summary) ||
     undefined;
-  const notesContent = parsedSections?.notes?.trim() || null;
-  const actionItemsContent = parsedSections?.actionItems?.trim() || null;
-  const shorthandBullet = parsedSections?.shorthandBullet?.trim() || null;
+  const notesContent =
+    meaningfulText(parsedSections?.notes) ||
+    meaningfulText(meeting.notes);
+  const actionItemsContent =
+    meaningfulText(parsedSections?.actionItems) ||
+    meaningfulText(meeting.action_items);
+  const shorthandBullet =
+    meaningfulText(parsedSections?.shorthandBullet) ||
+    meaningfulText(meeting.bullet_points);
   const hasActionItems =
     allRisks.length > 0 ||
     allOpportunities.length > 0;
