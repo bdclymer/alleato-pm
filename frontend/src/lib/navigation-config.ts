@@ -505,9 +505,17 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "Billing and payments",
         module: "contracts",
       },
+      {
+        name: "Project Status Report",
+        path: "project-status-report",
+        requiresProject: true,
+        icon: ClipboardList,
+        description: "Monthly project status summary",
+        module: "budget",
+      },
     ],
     subGroups: [
-      { label: "Budgeting", toolNames: ["Estimates", "Budget", "Direct Costs"] },
+      { label: "Budgeting", toolNames: ["Estimates", "Budget", "Direct Costs", "Project Status Report"] },
       {
         label: "Contracts",
         toolNames: ["Prime Contracts", "Commitments", "Invoicing"],
@@ -521,10 +529,10 @@ export const headerNavGroups: HeaderNavGroup[] = [
     tools: [
       {
         name: "Schedule",
-        path: "schedule/import",
+        path: "schedule",
         requiresProject: true,
         icon: Calendar,
-        description: "Import schedule tasks from Microsoft Project",
+        description: "Project schedule management",
         module: "schedule",
       },
       {
