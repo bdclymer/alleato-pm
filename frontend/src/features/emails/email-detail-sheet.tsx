@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ExternalLink, Mail, Paperclip, X } from "lucide-react";
+import { Paperclip, X } from "lucide-react";
 
 import { StatusBadge } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,6 @@ import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 import type { ProjectEmail } from "@/hooks/use-emails";
 
 export interface EmailDetailRecord {
@@ -55,7 +54,7 @@ type EmailContentBlock = {
   lines: string[];
 };
 
-const OUTLOOK_HEADER_RE = /^(From|Sent|To|Cc|Bcc|Subject):\s*(.*)$/i;
+const OUTLOOK_HEADER_RE = /^(From|Sent|Date|To|Cc|Bcc|Subject):\s*(.*)$/i;
 const SIGNATURE_NOISE_RE =
   /^(Assistant Project Manager at Alleato Group|Mobile\b|Web\b|www\.alleatogroup\.com|Indianapolis\s+-|Tampa\/St Pete\s+-|\|)/i;
 
@@ -224,6 +223,21 @@ function projectEmailLabel(email: ProjectEmail): string | null {
   return projectName || projectNumber || null;
 }
 
+function OutlookLogoIcon(props: React.SVGProps<SVGSVGElement>): React.ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...props}>
+      <path
+        fill="currentColor"
+        d="M13.5 4.75h6.25c.83 0 1.5.67 1.5 1.5v11.5c0 .83-.67 1.5-1.5 1.5H13.5v-2h5.75V8.5L13.5 12.3v-2.4l5.12-3.15H13.5v-2Z"
+      />
+      <path
+        fill="currentColor"
+        d="M2.75 7.25 13.5 5.4v13.2L2.75 16.75V7.25Zm5.32 7.65c1.66 0 2.83-1.27 2.83-3.06 0-1.8-1.17-3.04-2.83-3.04-1.67 0-2.85 1.25-2.85 3.04 0 1.8 1.18 3.06 2.85 3.06Zm0-1.28c-.78 0-1.32-.73-1.32-1.78 0-1.04.54-1.76 1.32-1.76.77 0 1.3.72 1.3 1.76 0 1.05-.53 1.78-1.3 1.78Z"
+      />
+    </svg>
+  );
+}
+
 export function projectEmailToDetailRecord(email: ProjectEmail): EmailDetailRecord {
   return {
     id: String(email.id),
@@ -307,12 +321,17 @@ export function EmailDetailPanel({
                 <div className="break-words text-xl font-semibold leading-7 text-foreground">
                   {email.subject || "Untitled email"}
                 </div>
-                <p
+                <div
                   id="email-detail-description"
-                  className="break-all text-sm [overflow-wrap:anywhere]"
+                  className="space-y-2 text-sm"
                 >
-                  {sender}
-                </p>
+                  <DetailItem label="From" value={sender} />
+                  <DetailItem label="To" value={formatList(email.toList)} />
+                  {email.ccList && email.ccList.length > 0 ? (
+                    <DetailItem label="Cc" value={formatList(email.ccList)} />
+                  ) : null}
+                  <DetailItem label="Date" value={formatDateTime(sentOrReceivedAt)} />
+                </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {actions}
@@ -334,38 +353,34 @@ export function EmailDetailPanel({
 
           <ScrollArea className="min-h-0 flex-1">
             <div className="space-y-6 px-4 py-6 sm:px-6">
-              <section className="space-y-3">
-                <div className="grid gap-3 text-sm md:grid-cols-2">
-                  <DetailItem label="From" value={sender} />
-                  <DetailItem label="To" value={formatList(email.toList)} />
-                  {email.ccList && email.ccList.length > 0 ? (
-                    <DetailItem label="Cc" value={formatList(email.ccList)} />
-                  ) : null}
-                  <DetailItem label="Date" value={formatDateTime(sentOrReceivedAt)} />
+              {email.projectLabel || email.relatedLabel ? (
+                <section className="space-y-2 text-sm">
                   {email.projectLabel ? (
                     <DetailItem label="Project" value={email.projectLabel} />
                   ) : null}
                   {email.relatedLabel ? (
                     <DetailItem label="Related" value={email.relatedLabel} />
                   ) : null}
-                </div>
-              </section>
-
-              {email.webLink ? (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={email.webLink} target="_blank" rel="noreferrer">
-                    <ExternalLink className="h-4 w-4" />
-                    Open in Outlook
-                  </a>
-                </Button>
+                </section>
               ) : null}
 
               <section className="space-y-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  Email content
-                </div>
                 <EmailContent blocks={contentBlocks} />
+                {email.webLink ? (
+                  <div className="flex justify-end">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                      <a
+                        href={email.webLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="Open in Outlook"
+                        title="Open in Outlook"
+                      >
+                        <OutlookLogoIcon className="h-4 w-4 text-primary" />
+                      </a>
+                    </Button>
+                  </div>
+                ) : null}
               </section>
             </div>
           </ScrollArea>
@@ -381,6 +396,10 @@ function EmailContent({ blocks }: { blocks: EmailContentBlock[] }): React.ReactE
   return (
     <div className="space-y-4 rounded-md bg-muted/30 px-4 py-4 text-sm leading-6 text-foreground [overflow-wrap:anywhere]">
       {blocks.map((block) => {
+        if (block.kind === "metadata" || block.kind === "quote-header") {
+          return null;
+        }
+
         if (block.kind === "warning") {
           return (
             <div
@@ -388,29 +407,6 @@ function EmailContent({ blocks }: { blocks: EmailContentBlock[] }): React.ReactE
               className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium uppercase tracking-wide text-warning-foreground"
             >
               {block.lines.join(" ")}
-            </div>
-          );
-        }
-
-        if (block.kind === "metadata" || block.kind === "quote-header") {
-          return (
-            <div
-              key={block.id}
-              className={cn(
-                "space-y-1 rounded-md border border-border/70 bg-background/70 px-3 py-3 text-xs leading-5 text-muted-foreground",
-                block.kind === "quote-header" && "border-l-2 border-l-primary/40",
-              )}
-            >
-              {block.lines.map((line) => {
-                const match = line.match(OUTLOOK_HEADER_RE);
-                if (!match) return <div key={line}>{line}</div>;
-                return (
-                  <div key={line} className="grid gap-1 sm:grid-cols-[4rem_minmax(0,1fr)]">
-                    <span className="font-medium uppercase tracking-wide">{match[1]}</span>
-                    <span className="break-words text-foreground/80">{match[2]}</span>
-                  </div>
-                );
-              })}
             </div>
           );
         }
@@ -437,11 +433,11 @@ function DetailItem({
   value: string;
 }): React.ReactElement {
   return (
-    <div className="min-w-0">
-      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] items-start gap-3">
+      <div className="pt-0.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 break-all text-foreground [overflow-wrap:anywhere]">
+      <div className="break-words text-foreground [overflow-wrap:anywhere]">
         {value}
       </div>
     </div>
