@@ -4,17 +4,17 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
 
 /**
  * GET /api/projects/[projectId]/employees
- * Returns people with person_type='employee' for use in form dropdowns.
- * Queries the people table directly, case-insensitive on person_type.
+ * Returns active employees/users for project form dropdowns.
  */
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/employees#GET",
-  async ({ request, params }) => {
+  async ({ params }) => {
   
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
@@ -27,11 +27,27 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     }
 
     const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase
+    if (authError || !user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/employees#GET",
+        message: "Authentication required to load employees.",
+        status: 401,
+        severity: "medium",
+      });
+    }
+
+    const service = createServiceClient();
+    const { data, error } = await service
       .from("people")
       .select("id, first_name, last_name")
-      .ilike("person_type", "employee")
+      .in("person_type", ["employee", "user"])
+      .eq("status", "active")
       .order("last_name", { ascending: true });
 
     if (error) {

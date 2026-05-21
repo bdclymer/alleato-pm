@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Check,
+  ChevronsUpDown,
   Edit,
   FileDown,
   FileUp,
@@ -80,12 +81,25 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tabs,
@@ -96,6 +110,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
+import {
+  normalizePrimeContractChangeOrderStatus,
+  PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
+} from "@/lib/change-orders/prime-contract-change-order-statuses";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -152,6 +171,7 @@ interface PrimeCO {
   project_id: number | null;
   rejection_reason: string | null;
   designated_reviewer: string | null;
+  reviewed_by: string | null;
   review_date: string | null;
   revised_substantial_completion_date: string | null;
   line_items: LineItem[];
@@ -162,6 +182,12 @@ interface PrimeContractOption {
   id: string;
   contract_number: string;
   title: string | null;
+}
+
+interface EmployeeOption {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 interface ProjectEmail {
@@ -186,8 +212,6 @@ const editSchema = z.object({
   pcco_number: z.string().min(1, "Number is required"),
   title: z.string().min(1, "Title is required"),
   description: z.string().nullable().optional(),
-  // Status is disabled in the edit form (changed via Approve/Reject actions only).
-  // It is stripped from the PUT payload in handleSave, so we do not require it here.
   status: z.string().optional(),
   total_amount: z.number(),
   prime_contract_id: z.string().nullable().optional(),
@@ -206,6 +230,7 @@ const editSchema = z.object({
   contract_company: z.string().nullable().optional(),
   rejection_reason: z.string().nullable().optional(),
   designated_reviewer: z.string().nullable().optional(),
+  reviewed_by: z.string().nullable().optional(),
   review_date: z.string().nullable().optional(),
   revised_substantial_completion_date: z.string().nullable().optional(),
 });
@@ -224,20 +249,6 @@ function formatCurrency(amount: number | null | undefined): string {
   }).format(amount);
 }
 
-
-const STATUS_OPTIONS = [
-  "draft",
-  "proposed",
-  "out_for_signature",
-  "approved",
-  "rejected",
-  "executed",
-  "void",
-];
-
-function statusLabel(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 function stripHtml(html: string | null): string {
   if (!html) return "";
@@ -366,6 +377,10 @@ export default function PrimeContractCODetailPage() {
   const [primeContracts, setPrimeContracts] = useState<PrimeContractOption[]>(
     [],
   );
+  const [employees, setEmployees] = useState<EmployeeOption[]>([]);
+  const [employeesLoading, setEmployeesLoading] = useState(false);
+  const [reviewerSelectOpen, setReviewerSelectOpen] = useState(false);
+  const [reviewedBySelectOpen, setReviewedBySelectOpen] = useState(false);
 
 
   const [emails, setEmails] = useState<ProjectEmail[]>([]);
@@ -414,12 +429,17 @@ export default function PrimeContractCODetailPage() {
       contract_company: null,
       rejection_reason: null,
       designated_reviewer: null,
+      reviewed_by: null,
       review_date: null,
       revised_substantial_completion_date: null,
     },
   });
 
   const apiBase = `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}`;
+
+  const formatEmployeeName = useCallback((employee: EmployeeOption) => {
+    return [employee.first_name, employee.last_name].filter(Boolean).join(" ") || "Unnamed employee";
+  }, []);
 
   const fetchEmails = useCallback(async () => {
     setEmailsLoading(true);
@@ -442,6 +462,24 @@ export default function PrimeContractCODetailPage() {
       setEmailsLoading(false);
     }
   }, [apiBase]);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      setEmployeesLoading(true);
+      try {
+        const data = await apiFetch<EmployeeOption[]>(
+          `/api/projects/${projectId}/employees`,
+        );
+        setEmployees(data);
+      } catch {
+        toast.error("Could not load employees.");
+      } finally {
+        setEmployeesLoading(false);
+      }
+    };
+
+    void fetchEmployees();
+  }, [projectId]);
 
   // ---- Vertical Markup ----------------------------------------------------
   const { markupRows } = useVerticalMarkup(
@@ -681,7 +719,7 @@ export default function PrimeContractCODetailPage() {
       pcco_number: co.pcco_number || "",
       title: co.title || "",
       description: co.description || "",
-      status: (co.status || "draft") as FormData["status"],
+      status: normalizePrimeContractChangeOrderStatus(co.status),
       total_amount: co.total_amount ?? 0,
       prime_contract_id: co.prime_contract_id ?? null,
       revision: co.revision ?? 0,
@@ -699,12 +737,13 @@ export default function PrimeContractCODetailPage() {
       contract_company: co.contract_company ?? null,
       rejection_reason: co.rejection_reason ?? null,
       designated_reviewer: co.designated_reviewer ?? null,
+      reviewed_by: co.reviewed_by ?? null,
       review_date: co.review_date ?? null,
       revised_substantial_completion_date: co.revised_substantial_completion_date ?? null,
     });
     // Explicitly set status after reset — shadcn Select doesn't always pick up
     // the value from form.reset() when the field was previously untouched.
-    form.setValue("status", (co.status || "draft") as FormData["status"]);
+    form.setValue("status", normalizePrimeContractChangeOrderStatus(co.status));
   }, [co, form]);
 
   // ---- Handlers ------------------------------------------------------------
@@ -715,12 +754,10 @@ export default function PrimeContractCODetailPage() {
   const handleSave: SubmitHandler<FormData> = async (data) => {
     setIsSaving(true);
     try {
-      // Status changes must go through approve/reject endpoints, not PUT
-      const { status: _status, ...updateData } = data;
       const res = await fetch(apiBase, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify(data),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -1015,8 +1052,9 @@ export default function PrimeContractCODetailPage() {
                       <FormLabel>Status</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value}
-                        disabled
+                        value={normalizePrimeContractChangeOrderStatus(
+                          field.value || co?.status,
+                        )}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -1024,16 +1062,13 @@ export default function PrimeContractCODetailPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {STATUS_OPTIONS.map((s) => (
-                            <SelectItem key={s} value={s}>
-                              {statusLabel(s)}
+                          {PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>
+                              {s.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Use Approve / Reject actions to change status.
-                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1235,13 +1270,72 @@ export default function PrimeContractCODetailPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Designated Reviewer</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value ?? ""}
-                          placeholder="Name"
-                        />
-                      </FormControl>
+                      <Popover
+                        open={reviewerSelectOpen}
+                        onOpenChange={setReviewerSelectOpen}
+                      >
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={reviewerSelectOpen}
+                              disabled={employeesLoading}
+                              className={cn(
+                                "w-full justify-between font-normal",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              <span className="truncate">
+                                {employeesLoading
+                                  ? "Loading employees..."
+                                  : field.value || "Select an employee"}
+                              </span>
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="p-0"
+                          align="start"
+                          style={{ width: "var(--radix-popover-trigger-width)" }}
+                        >
+                          <Command>
+                            <CommandInput placeholder="Search employees..." />
+                            <CommandList>
+                              <CommandEmpty>No employee found.</CommandEmpty>
+                              <CommandGroup>
+                                {employees.map((employee) => {
+                                  const employeeName = formatEmployeeName(employee);
+                                  return (
+                                    <CommandItem
+                                      key={employee.id}
+                                      value={employeeName}
+                                      onSelect={() => {
+                                        field.onChange(employeeName);
+                                        setReviewerSelectOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          field.value === employeeName
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                      />
+                                      <span className="truncate">
+                                        {employeeName}
+                                      </span>
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1261,6 +1355,82 @@ export default function PrimeContractCODetailPage() {
                           }
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="reviewed_by"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reviewed By</FormLabel>
+                      <Popover
+                        open={reviewedBySelectOpen}
+                        onOpenChange={setReviewedBySelectOpen}
+                      >
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={reviewedBySelectOpen}
+                              disabled={employeesLoading}
+                              className={cn(
+                                "w-full justify-between font-normal",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              <span className="truncate">
+                                {employeesLoading
+                                  ? "Loading employees..."
+                                  : field.value || "Select an employee"}
+                              </span>
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="p-0"
+                          align="start"
+                          style={{ width: "var(--radix-popover-trigger-width)" }}
+                        >
+                          <Command>
+                            <CommandInput placeholder="Search employees..." />
+                            <CommandList>
+                              <CommandEmpty>No employee found.</CommandEmpty>
+                              <CommandGroup>
+                                {employees.map((employee) => {
+                                  const employeeName = formatEmployeeName(employee);
+                                  return (
+                                    <CommandItem
+                                      key={employee.id}
+                                      value={employeeName}
+                                      onSelect={() => {
+                                        field.onChange(employeeName);
+                                        setReviewedBySelectOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          field.value === employeeName
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                      />
+                                      <span className="truncate">
+                                        {employeeName}
+                                      </span>
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1577,6 +1747,11 @@ export default function PrimeContractCODetailPage() {
                         {co.designated_reviewer && (
                           <LabelValueRow label="Designated Reviewer">
                             {co.designated_reviewer}
+                          </LabelValueRow>
+                        )}
+                        {co.reviewed_by && (
+                          <LabelValueRow label="Reviewed By">
+                            {co.reviewed_by}
                           </LabelValueRow>
                         )}
                       </dl>

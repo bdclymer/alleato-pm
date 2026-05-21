@@ -16,6 +16,10 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
+import {
+  PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
+  type PrimeContractChangeOrderStatus,
+} from "@/lib/change-orders/prime-contract-change-order-statuses";
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -24,7 +28,10 @@ import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachmen
 const updatePcoSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().max(5000).optional().nullable(),
-  status: z.enum(["draft", "pending", "approved", "void"]).optional(),
+  status: z.enum(PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((status) => status.value) as [
+    PrimeContractChangeOrderStatus,
+    ...PrimeContractChangeOrderStatus[],
+  ]).optional(),
   change_reason: z.string().optional().nullable(),
   revision: z.number().int().optional().nullable(),
   is_private: z.boolean().optional(),

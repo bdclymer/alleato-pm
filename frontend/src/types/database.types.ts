@@ -19514,6 +19514,7 @@ export type Database = {
           invoiced_date: string | null
           is_private: boolean | null
           location: string | null
+          paid_date: string | null
           paid_in_full: boolean | null
           pcco_number: string | null
           prime_contract_id: string | null
@@ -19522,6 +19523,7 @@ export type Database = {
           rejection_reason: string | null
           request_received_from: string | null
           review_date: string | null
+          reviewed_by: string | null
           revised_substantial_completion_date: string | null
           revision: number | null
           schedule_impact: number | null
@@ -19548,6 +19550,7 @@ export type Database = {
           invoiced_date?: string | null
           is_private?: boolean | null
           location?: string | null
+          paid_date?: string | null
           paid_in_full?: boolean | null
           pcco_number?: string | null
           prime_contract_id?: string | null
@@ -19556,6 +19559,7 @@ export type Database = {
           rejection_reason?: string | null
           request_received_from?: string | null
           review_date?: string | null
+          reviewed_by?: string | null
           revised_substantial_completion_date?: string | null
           revision?: number | null
           schedule_impact?: number | null
@@ -19582,6 +19586,7 @@ export type Database = {
           invoiced_date?: string | null
           is_private?: boolean | null
           location?: string | null
+          paid_date?: string | null
           paid_in_full?: boolean | null
           pcco_number?: string | null
           prime_contract_id?: string | null
@@ -19590,6 +19595,7 @@ export type Database = {
           rejection_reason?: string | null
           request_received_from?: string | null
           review_date?: string | null
+          reviewed_by?: string | null
           revised_substantial_completion_date?: string | null
           revision?: number | null
           schedule_impact?: number | null
@@ -30811,6 +30817,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_admin: boolean | null
+          is_developer: boolean
           onboarding_completed_at: string | null
           role: string | null
           updated_at: string
@@ -30822,6 +30829,7 @@ export type Database = {
           id: string
           is_active?: boolean
           is_admin?: boolean | null
+          is_developer?: boolean
           onboarding_completed_at?: string | null
           role?: string | null
           updated_at?: string
@@ -30833,6 +30841,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_admin?: boolean | null
+          is_developer?: boolean
           onboarding_completed_at?: string | null
           role?: string | null
           updated_at?: string
@@ -34724,6 +34733,7 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      is_developer: { Args: never; Returns: boolean }
       is_org_member: {
         Args: { p_org_id: string; p_roles?: string[] }
         Returns: boolean

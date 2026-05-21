@@ -8,7 +8,7 @@ import {
   headerNavGroups,
   getActiveGroupId,
   adminSettingsTools,
-  meganCompanyAdminTools,
+  developerCompanyAdminTools,
   type HeaderNavigationTool,
 } from "@/lib/navigation-config";
 import { apiFetch } from "@/lib/api-client";
@@ -61,6 +61,24 @@ const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
   projects: "projects",
 };
+
+function getCreateRouteBreadcrumbLabel(segments: string[], index: number): string | null {
+  if (segments[index] !== "new") return null;
+
+  if (segments[index - 1] === "prime-contract-pcos") {
+    return "New Prime Contract Change Order";
+  }
+
+  if (
+    segments[index - 1] === "pcos" &&
+    segments[index - 2] === "change-orders" &&
+    segments[index - 4] === "prime-contracts"
+  ) {
+    return "New Prime Contract Change Order";
+  }
+
+  return null;
+}
 
 export function useHeaderNav(): UseHeaderNavReturn {
   const pathname = usePathname()!;
@@ -151,7 +169,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const allTools: HeaderNavigationTool[] = [
       ...headerNavGroups.flatMap((g) => g.tools),
       ...companyWideHeaderTools,
-      ...meganCompanyAdminTools,
+      ...developerCompanyAdminTools,
       ...adminSettingsTools,
     ];
 
@@ -222,7 +240,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const allTools: HeaderNavigationTool[] = [
       ...headerNavGroups.flatMap((g) => g.tools),
       ...companyWideHeaderTools,
-      ...meganCompanyAdminTools,
+      ...developerCompanyAdminTools,
       ...adminSettingsTools,
     ];
     const isMeetingDetailRoute =
@@ -479,6 +497,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
           if (labelMap[segment]) {
             label = labelMap[segment];
           }
+
+          label = getCreateRouteBreadcrumbLabel(segments, index) ?? label;
         }
       }
 

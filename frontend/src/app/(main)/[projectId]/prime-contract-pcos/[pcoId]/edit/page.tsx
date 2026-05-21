@@ -19,10 +19,15 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  normalizePrimeContractChangeOrderStatus,
+  PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
+  type PrimeContractChangeOrderStatus,
+} from "@/lib/change-orders/prime-contract-change-order-statuses";
 
 interface PrimeContractPcoFormData {
   title: string;
-  status: "draft" | "pending" | "approved" | "void";
+  status: PrimeContractChangeOrderStatus;
   revision: number;
   change_reason: string;
   is_private: boolean;
@@ -42,7 +47,7 @@ interface PrimeContractPcoFormData {
 interface PrimeContractPcoResponse {
   id: string;
   title: string;
-  status: "draft" | "pending" | "approved" | "void";
+  status: PrimeContractChangeOrderStatus;
   revision: number | null;
   change_reason: string | null;
   is_private: boolean;
@@ -58,13 +63,6 @@ interface PrimeContractPcoResponse {
   prime_contract_id: string | null;
   pco_number: string;
 }
-
-const STATUS_OPTIONS: Array<{ value: PrimeContractPcoFormData["status"]; label: string }> = [
-  { value: "draft", label: "Draft" },
-  { value: "pending", label: "Pending - In Review" },
-  { value: "approved", label: "Approved" },
-  { value: "void", label: "Void" },
-];
 
 const CHANGE_REASONS = [
   "Allowance",
@@ -106,7 +104,7 @@ const EMPTY_FORM: PrimeContractPcoFormData = {
 function toFormData(pco: PrimeContractPcoResponse): PrimeContractPcoFormData {
   return {
     title: pco.title ?? "",
-    status: pco.status,
+    status: normalizePrimeContractChangeOrderStatus(pco.status),
     revision: pco.revision ?? 0,
     change_reason: pco.change_reason ?? "",
     is_private: pco.is_private,
@@ -296,7 +294,7 @@ export default function EditPrimeContractPcoPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {STATUS_OPTIONS.map((statusOption) => (
+                {PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((statusOption) => (
                   <SelectItem key={statusOption.value} value={statusOption.value}>
                     {statusOption.label}
                   </SelectItem>

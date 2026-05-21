@@ -75,12 +75,16 @@ export const GET = withApiGuardrails(
 // --- API-008: Whitelist of fields allowed in PUT updates ---
 const allowedFields = new Set([
   "title",
+  "status",
   "description",
   "change_reason",
   "designated_reviewer",
+  "review_date",
+  "reviewed_by",
   "request_received_from",
   "due_date",
   "invoiced_date",
+  "paid_date",
   "schedule_impact",
   "revised_substantial_completion_date",
   "location",
@@ -99,7 +103,7 @@ const allowedFields = new Set([
 
 /**
  * PUT /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
- * Update a PCCO — whitelisted fields only, status changes blocked (API-008)
+ * Update a PCCO — whitelisted fields only (API-008)
  */
 export const PUT = withApiGuardrails(
   "projects/[projectId]/prime-contract-change-orders/[primeCoId]#PUT",
@@ -127,17 +131,6 @@ export const PUT = withApiGuardrails(
     }
 
     const body = await request.json();
-
-    // --- API-008: Reject status changes through PUT ---
-    if ("status" in body) {
-      return NextResponse.json(
-        {
-          error:
-            "Status cannot be changed via update. Use the approve or reject endpoints.",
-        },
-        { status: 400 },
-      );
-    }
 
     // --- API-008: Only allow whitelisted fields ---
     const updateData: Record<string, unknown> = {};

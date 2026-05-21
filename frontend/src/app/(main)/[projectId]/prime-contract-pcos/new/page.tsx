@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
-import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { FileUploadField } from "@/components/forms/FileUploadField";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -29,13 +29,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -48,7 +46,10 @@ import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
-import { createClient } from "@/lib/supabase/client";
+import {
+  PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
+  type PrimeContractChangeOrderStatus,
+} from "@/lib/change-orders/prime-contract-change-order-statuses";
 import {
   buildPrimePcoSourceTitle,
   parseChangeEventIdsParam,
@@ -78,13 +79,6 @@ const CHANGE_REASONS = [
   "Other",
 ];
 
-const PCO_STATUSES = [
-  { value: "draft", label: "Draft" },
-  { value: "pending", label: "Pending - In Review" },
-  { value: "approved", label: "Approved" },
-  { value: "void", label: "Void" },
-];
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -98,19 +92,32 @@ interface PrimeContract {
   vendor: { id: string; name: string } | null;
 }
 
-interface ChangeOrder {
+interface CreatedPrimeContractChangeOrder {
   id: number;
-  pcco_number: string | null;
-  title: string;
-  status: string | null;
 }
 
-interface Contact {
+interface PrimePcoOption {
   id: string;
-  name: string;
+  pco_number: string | null;
+  title: string;
+  status: string | null;
+  total_amount: number | null;
+  revision: number | null;
+  prime_contract_id: string | null;
+}
+
+interface EmployeeOption {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 type ChangeEventSummary = PrimePcoSourceChangeEvent;
+type AttachmentFileInfo = {
+  name: string;
+  size: number;
+  type: string;
+};
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -119,25 +126,34 @@ type ChangeEventSummary = PrimePcoSourceChangeEvent;
 const schema = z.object({
   prime_contract_id: z.string().uuid("Select a prime contract"),
   title: z.string().min(1, "Title is required").max(255),
-  status: z.enum(["draft", "pending", "approved", "void"]),
+  status: z.enum(PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((status) => status.value) as [
+    PrimeContractChangeOrderStatus,
+    ...PrimeContractChangeOrderStatus[],
+  ]),
   revision: z.number().int().nullable().optional(),
   change_reason: z.string().nullable().optional(),
+  total_amount: z.number().nullable().optional(),
+  designated_reviewer: z.string().max(255).nullable().optional(),
+  review_date: z.string().nullable().optional(),
+  reviewed_by: z.string().max(255).nullable().optional(),
   is_private: z.boolean(),
   description: z.string().max(5000).nullable().optional(),
   executed: z.boolean(),
   signed_co_received_date: z.string().nullable().optional(),
+  due_date: z.string().nullable().optional(),
+  invoiced_date: z.string().nullable().optional(),
+  paid_date: z.string().nullable().optional(),
+  revised_substantial_completion_date: z.string().nullable().optional(),
   request_received_from: z.string().max(255).nullable().optional(),
   location: z.string().max(255).nullable().optional(),
   schedule_impact: z.number().int().nullable().optional(),
   field_change: z.boolean(),
   reference: z.string().max(255).nullable().optional(),
   paid_in_full: z.boolean(),
-  // CO linkage — handled as side state, not a direct form field
+  // CO linkage is handled as side state, not a direct form field.
 });
 
 type FormData = z.infer<typeof schema>;
-
-type CoLinkMode = "none" | "existing" | "create_new";
 
 // ---------------------------------------------------------------------------
 // Page
@@ -163,19 +179,17 @@ export default function NewPrimeContractPcoPage() {
   const [changeEvents, setChangeEvents] = useState<ChangeEventSummary[]>([]);
   const [isLoadingChangeEvents, setIsLoadingChangeEvents] = useState(false);
   const [sourceChangeEventError, setSourceChangeEventError] = useState<string | null>(null);
-
-  // CO linkage state
-  const [coLinkMode, setCoLinkMode] = useState<CoLinkMode>("none");
-  const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([]);
-  const [isLoadingCOs, setIsLoadingCOs] = useState(false);
-  const [selectedCoId, setSelectedCoId] = useState<string>("");
-
-  // Contacts combobox state
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [contactSearch, setContactSearch] = useState("");
-  const [contactsOpen, setContactsOpen] = useState(false);
-  const contactsFetched = useRef(false);
-  const [createdByLabel, setCreatedByLabel] = useState("You");
+  const [potentialChangeOrders, setPotentialChangeOrders] = useState<PrimePcoOption[]>([]);
+  const [isLoadingPcos, setIsLoadingPcos] = useState(false);
+  const [selectedPcoIds, setSelectedPcoIds] = useState<string[]>([]);
+  const [contractSelectOpen, setContractSelectOpen] = useState(false);
+  const [pcoSelectOpen, setPcoSelectOpen] = useState(false);
+  const [reviewerSelectOpen, setReviewerSelectOpen] = useState(false);
+  const [reviewedBySelectOpen, setReviewedBySelectOpen] = useState(false);
+  const [employees, setEmployees] = useState<EmployeeOption[]>([]);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const [attachmentFileInfo, setAttachmentFileInfo] = useState<AttachmentFileInfo[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -185,10 +199,18 @@ export default function NewPrimeContractPcoPage() {
       status: "draft",
       revision: null,
       change_reason: null,
+      total_amount: null,
+      designated_reviewer: null,
+      review_date: null,
+      reviewed_by: null,
       is_private: false,
       description: "",
       executed: false,
       signed_co_received_date: null,
+      due_date: null,
+      invoiced_date: null,
+      paid_date: null,
+      revised_substantial_completion_date: null,
       request_received_from: null,
       location: null,
       schedule_impact: null,
@@ -202,24 +224,24 @@ export default function NewPrimeContractPcoPage() {
   const selectedContract = contracts.find((c) => c.id === selectedContractId);
   const contractCompany =
     selectedContract?.client?.name ?? selectedContract?.vendor?.name ?? null;
-  const createdDateLabel = new Intl.DateTimeFormat("en-US", {
-    year: "2-digit",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date());
-
-  const buildPcoDetailPath = useCallback(
-    (pcoId: string, primeContractId?: string | null) => {
-      const resolvedContractId = primeContractId ?? contractContextId;
-      if (resolvedContractId) {
-        return `/${projectId}/prime-contracts/${resolvedContractId}/change-orders/pcos/${pcoId}`;
-      }
-      return `/${projectId}/prime-contract-pcos/${pcoId}`;
-    },
-    [projectId, contractContextId],
+  const selectedPotentialChangeOrders = useMemo(
+    () => potentialChangeOrders.filter((pco) => selectedPcoIds.includes(pco.id)),
+    [potentialChangeOrders, selectedPcoIds],
   );
+  const selectedPcoLabel = useMemo(() => {
+    if (selectedPotentialChangeOrders.length === 0) return "Select potential change orders";
+    if (selectedPotentialChangeOrders.length === 1) {
+      const [pco] = selectedPotentialChangeOrders;
+      return [pco.pco_number ? `#${pco.pco_number}` : "PCO", pco.title]
+        .filter(Boolean)
+        .join(" - ");
+    }
+    return `${selectedPotentialChangeOrders.length} PCOs selected`;
+  }, [selectedPotentialChangeOrders]);
+
+  const formatEmployeeName = useCallback((employee: EmployeeOption) => {
+    return [employee.first_name, employee.last_name].filter(Boolean).join(" ") || "Unnamed employee";
+  }, []);
 
   // ── Fetch prime contracts ──────────────────────────────────────────
   useEffect(() => {
@@ -239,40 +261,22 @@ export default function NewPrimeContractPcoPage() {
     fetchContracts();
   }, [projectId]);
 
-  // ── Fetch change orders when "add to existing" is selected ─────────
   useEffect(() => {
-    if (coLinkMode !== "existing") return;
-    if (changeOrders.length > 0) return;
-
-    const fetchCOs = async () => {
-      setIsLoadingCOs(true);
+    const fetchEmployees = async () => {
+      setIsLoadingEmployees(true);
       try {
-        const data = await apiFetch<ChangeOrder[]>(
-          `/api/projects/${projectId}/prime-contract-change-orders`,
+        const data = await apiFetch<EmployeeOption[]>(
+          `/api/projects/${projectId}/employees`,
         );
-        setChangeOrders(data.filter((co) => co.status !== "void"));
+        setEmployees(data);
       } catch {
-        toast.error("Could not load prime contract change orders.");
+        toast.error("Could not load employees.");
       } finally {
-        setIsLoadingCOs(false);
+        setIsLoadingEmployees(false);
       }
     };
-    fetchCOs();
-  }, [coLinkMode, projectId, changeOrders.length]);
 
-  // ── Fetch contacts (lazy, once on open) ───────────────────────────
-  const fetchContacts = useCallback(async () => {
-    if (contactsFetched.current) return;
-    contactsFetched.current = true;
-    try {
-      const data = await apiFetch<Array<{ id: string; name: string; email: string | null; person_type: string | null }>>(
-        `/api/projects/${projectId}/contacts`,
-      );
-      setContacts(data.map((c) => ({ id: c.id, name: c.name })));
-    } catch (err) {
-      toast.error("Could not load contacts");
-      contactsFetched.current = false; // allow retry
-    }
+    void fetchEmployees();
   }, [projectId]);
 
   // ── Fetch change event details for pre-fill ────────────────────────
@@ -395,113 +399,202 @@ export default function NewPrimeContractPcoPage() {
   }, [contractContextId, contracts, form]);
 
   useEffect(() => {
-    // Resolve current user display label for read-only "Created By" metadata.
-    const fetchCurrentUser = async () => {
+    setSelectedPcoIds([]);
+    setPcoSelectOpen(false);
+    form.setValue("total_amount", null);
+
+    if (!selectedContractId) {
+      setPotentialChangeOrders([]);
+      return;
+    }
+
+    let active = true;
+    const fetchPotentialChangeOrders = async () => {
+      setIsLoadingPcos(true);
       try {
-        const supabase = createClient();
-        const { data: authData, error } = await supabase.auth.getUser();
-        if (error || !authData?.user) return;
-        const metadata = authData.user.user_metadata as Record<string, unknown> | undefined;
-        const fullName = typeof metadata?.full_name === "string" ? metadata.full_name.trim() : "";
-        if (fullName.length > 0) {
-          setCreatedByLabel(fullName);
-          return;
-        }
-        const email = authData.user.email ?? "";
-        if (email.length > 0) {
-          setCreatedByLabel(email);
-        }
-      } catch (error) {
-        reportNonCriticalFailure({
-          area: "prime-contract-pcos",
-          operation: "load-current-user-label",
-          error,
-          userVisibleFallback: "Created-by label defaults to You.",
-          metadata: { projectId },
-        });
+        const data = await apiFetch<
+          PrimePcoOption[] | { data?: PrimePcoOption[] }
+        >(
+          `/api/projects/${projectId}/prime-contract-pcos?prime_contract_id=${selectedContractId}`,
+        );
+        if (!active) return;
+
+        const rows = Array.isArray(data) ? data : data.data ?? [];
+        setPotentialChangeOrders(
+          rows.filter((pco) => pco.prime_contract_id === selectedContractId),
+        );
+      } catch {
+        if (!active) return;
+        setPotentialChangeOrders([]);
+        toast.error("Could not load potential change orders.");
+      } finally {
+        if (active) setIsLoadingPcos(false);
       }
     };
 
-    void fetchCurrentUser();
+    void fetchPotentialChangeOrders();
+
+    return () => {
+      active = false;
+    };
+  }, [form, projectId, selectedContractId]);
+
+  useEffect(() => {
+    if (selectedPotentialChangeOrders.length === 0) return;
+
+    const totalAmount = selectedPotentialChangeOrders.reduce(
+      (total, pco) => total + Number(pco.total_amount ?? 0),
+      0,
+    );
+    form.setValue("total_amount", totalAmount, { shouldValidate: true });
+
+    if (
+      selectedPotentialChangeOrders.length === 1 &&
+      !form.getValues("title")
+    ) {
+      form.setValue("title", selectedPotentialChangeOrders[0].title, {
+        shouldValidate: true,
+      });
+    }
+  }, [form, selectedPotentialChangeOrders]);
+
+  const toggleSelectedPco = useCallback((pcoId: string) => {
+    setSelectedPcoIds((current) =>
+      current.includes(pcoId)
+        ? current.filter((id) => id !== pcoId)
+        : [...current, pcoId],
+    );
   }, []);
+
+  const formatPcoOptionLabel = useCallback((pco: PrimePcoOption) => {
+    return [pco.pco_number ? `#${pco.pco_number}` : "PCO", pco.title]
+      .filter(Boolean)
+      .join(" - ");
+  }, []);
+
+  const handleAttachmentFilesSelected = useCallback((files: File[]) => {
+    setAttachmentFiles((previous) => [...previous, ...files]);
+  }, []);
+
+  const handleAttachmentInfoChange = useCallback((files: AttachmentFileInfo[]) => {
+    setAttachmentFileInfo(files);
+    setAttachmentFiles((previous) =>
+      previous.filter((file) =>
+        files.some(
+          (selectedFile) =>
+            selectedFile.name === file.name &&
+            selectedFile.size === file.size &&
+            selectedFile.type === file.type,
+        ),
+      ),
+    );
+  }, []);
+
+  const uploadAttachmentsToPcco = useCallback(
+    async (primeCoId: number) => {
+      if (attachmentFiles.length === 0) return 0;
+
+      const results = await Promise.allSettled(
+        attachmentFiles.map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          await apiFetch(
+            `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}/attachments`,
+            {
+              method: "POST",
+              body: formData,
+            },
+          );
+        }),
+      );
+
+      return results.filter((result) => result.status === "rejected").length;
+    },
+    [attachmentFiles, projectId],
+  );
+
+  const createPrimeContractChangeOrder = useCallback(
+    async (data: FormData) => {
+      const created = await apiFetch<CreatedPrimeContractChangeOrder>(
+        `/api/projects/${projectId}/prime-contract-change-orders`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            title: data.title,
+            prime_contract_id: data.prime_contract_id,
+            status: data.status,
+            total_amount: data.total_amount ?? 0,
+            executed: data.executed,
+            description: data.description || null,
+            change_reason: data.change_reason || null,
+            designated_reviewer: data.designated_reviewer || null,
+            review_date: data.review_date || null,
+            reviewed_by: data.reviewed_by || null,
+            request_received_from: data.request_received_from || null,
+            due_date: data.due_date || null,
+            invoiced_date: data.invoiced_date || null,
+            paid_date: data.paid_date || null,
+            schedule_impact: data.schedule_impact ?? null,
+            revised_substantial_completion_date:
+              data.revised_substantial_completion_date || null,
+            location: data.location || null,
+            reference: data.reference || null,
+            field_change: data.field_change,
+            is_private: data.is_private,
+            paid_in_full: data.paid_in_full,
+            contract_company: contractCompany,
+          }),
+        },
+      );
+
+      return created.id;
+    },
+    [contractCompany, projectId],
+  );
 
   // ── Submit ─────────────────────────────────────────────────────────
   const handleSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const promotedToCoId =
-        coLinkMode === "existing" && selectedCoId
-          ? parseInt(selectedCoId, 10)
-          : null;
+      if (selectedPcoIds.length === 0) {
+        toast.error("Select at least one potential change order.");
+        return;
+      }
 
-      if (hasChangeEvents) {
-        const result = await apiFetch<{ pco?: { id?: string } }>(
-          `/api/projects/${projectId}/change-events/add-to-pco`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              change_event_ids: changeEventIds,
-              pco_type: "prime",
-              create_new: {
-                title: data.title,
-                prime_contract_id: data.prime_contract_id,
-                status: data.status,
-                description: data.description || undefined,
-                change_reason: data.change_reason || undefined,
-                revision: data.revision ?? undefined,
-                schedule_impact: data.schedule_impact ?? undefined,
-                is_private: data.is_private,
-                executed: data.executed,
-                signed_co_received_date: data.signed_co_received_date || undefined,
-                request_received_from: data.request_received_from || undefined,
-                location: data.location || undefined,
-                field_change: data.field_change,
-                reference: data.reference || undefined,
-                paid_in_full: data.paid_in_full,
-                promoted_to_co_id: promotedToCoId ?? undefined,
-              },
-            }),
-          },
-        );
+      const promotedToCoId = await createPrimeContractChangeOrder(data);
 
-        toast.success("Prime Contract PCO created with linked change events");
-        const pcoId = result?.pco?.id;
-        router.push(
-          pcoId
-            ? buildPcoDetailPath(pcoId, data.prime_contract_id)
-            : `/${projectId}/prime-contract-pcos`,
-        );
-      } else {
-        const created = await apiFetch<{ id: string }>(
-          `/api/projects/${projectId}/prime-contract-pcos`,
-          {
-            method: "POST",
+      const linkResults = await Promise.allSettled(
+        selectedPcoIds.map((pcoId) =>
+          apiFetch(`/api/projects/${projectId}/prime-contract-pcos/${pcoId}`, {
+            method: "PATCH",
             body: JSON.stringify({
-              prime_contract_id: data.prime_contract_id,
-              title: data.title,
-              status: data.status,
-              description: data.description || null,
-              change_reason: data.change_reason || null,
-              revision: data.revision ?? null,
-              schedule_impact: data.schedule_impact ?? null,
-              is_private: data.is_private,
-              executed: data.executed,
-              signed_co_received_date: data.signed_co_received_date || null,
-              request_received_from: data.request_received_from || null,
-              location: data.location || null,
-              field_change: data.field_change,
-              reference: data.reference || null,
-              paid_in_full: data.paid_in_full,
               promoted_to_co_id: promotedToCoId,
             }),
-          },
-        );
+          }),
+        ),
+      );
 
-        toast.success("Prime Contract PCO created");
-        router.push(buildPcoDetailPath(created.id, data.prime_contract_id));
+      const failedLinks = linkResults.filter(
+        (result) => result.status === "rejected",
+      ).length;
+      if (failedLinks > 0) {
+        throw new Error(
+          `Failed to link ${failedLinks} potential change order${failedLinks === 1 ? "" : "s"}.`,
+        );
       }
+
+      toast.success("Prime Contract Change Order created");
+      const failedUploads = await uploadAttachmentsToPcco(promotedToCoId);
+      if (failedUploads > 0) {
+        toast.warning(
+          `Change order created, but ${failedUploads} attachment${failedUploads === 1 ? "" : "s"} failed to upload.`,
+        );
+      }
+      router.push(`/${projectId}/change-orders/prime/${promotedToCoId}`);
     } catch (err) {
-      toast.error("Failed to create PCO");
+      const detail =
+        err instanceof Error ? err.message : "Unknown create error";
+      toast.error(`Prime Contract Change Order was not created: ${detail}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -514,7 +607,7 @@ export default function NewPrimeContractPcoPage() {
   return (
     <PageShell
       variant="form"
-      title="Create Prime Contract PCO"
+      title="New Prime Contract Change Order"
       onBack={() => router.back()}
       actions={
         <div className="flex items-center gap-2">
@@ -533,7 +626,12 @@ export default function NewPrimeContractPcoPage() {
           <Button
             size="sm"
             onClick={form.handleSubmit(handleSubmit)}
-            disabled={isSubmitting || isLoading || hasMissingSourceChangeEvents}
+            disabled={
+              isSubmitting ||
+              isLoading ||
+              hasMissingSourceChangeEvents ||
+              selectedPcoIds.length === 0
+            }
           >
             {isSubmitting ? (
               <>
@@ -599,10 +697,10 @@ export default function NewPrimeContractPcoPage() {
               </section>
             )}
 
-            {/* General Information */}
+            {/* Overview */}
             <section className="space-y-4">
               <SectionRuleHeading
-                label="General Information"
+                label="Overview"
                 className="[&_span]:text-primary"
               />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
@@ -614,7 +712,21 @@ export default function NewPrimeContractPcoPage() {
                     <FormItem>
                       <FormLabel>Contract *</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        open={contractSelectOpen}
+                        onOpenChange={(open) => {
+                          setContractSelectOpen(open);
+                          if (open) {
+                            setPcoSelectOpen(false);
+                            setReviewerSelectOpen(false);
+                            setReviewedBySelectOpen(false);
+                          }
+                        }}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setContractSelectOpen(false);
+                          setPcoSelectOpen(false);
+                          setReviewedBySelectOpen(false);
+                        }}
                         value={field.value}
                       >
                         <FormControl>
@@ -646,79 +758,108 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                {/* Contract Company (derived) */}
                 <FormItem>
-                  <FormLabel>Contract Company</FormLabel>
-                  <Input
-                    value={contractCompany ?? ""}
-                    disabled
-                    placeholder="Determined by selected contract"
-                  />
+                  <FormLabel>Potential Change Orders *</FormLabel>
+                  <Popover
+                    open={Boolean(selectedContractId) && pcoSelectOpen}
+                    onOpenChange={(open) => {
+                      if (!selectedContractId || isLoadingPcos) {
+                        setPcoSelectOpen(false);
+                        return;
+                      }
+                      setPcoSelectOpen(open);
+                      if (open) {
+                        setContractSelectOpen(false);
+                        setReviewerSelectOpen(false);
+                        setReviewedBySelectOpen(false);
+                      }
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        disabled={!selectedContractId || isLoadingPcos}
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          selectedPotentialChangeOrders.length === 0 &&
+                            "text-muted-foreground",
+                        )}
+                      >
+                        <span className="truncate">
+                          {isLoadingPcos ? "Loading PCOs..." : selectedPcoLabel}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="p-0"
+                      align="start"
+                      style={{ width: "var(--radix-popover-trigger-width)" }}
+                    >
+                      <Command>
+                        <CommandInput placeholder="Search potential change orders..." />
+                        <CommandList>
+                          <CommandEmpty>
+                            {selectedContractId
+                              ? "No potential change orders found."
+                              : "Select a contract first."}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {potentialChangeOrders.map((pco) => {
+                              const isSelected = selectedPcoIds.includes(pco.id);
+                              return (
+                                <CommandItem
+                                  key={pco.id}
+                                  value={formatPcoOptionLabel(pco)}
+                                  onSelect={() => toggleSelectedPco(pco.id)}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      isSelected ? "opacity-100" : "opacity-0",
+                                    )}
+                                  />
+                                  <div className="flex min-w-0 flex-col">
+                                    <span className="truncate">
+                                      {formatPcoOptionLabel(pco)}
+                                    </span>
+                                    {pco.status && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {pco.status}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </FormItem>
 
-                {/* PCO Number (read-only preview) */}
                 <FormItem>
-                  <FormLabel>#</FormLabel>
+                  <FormLabel>PCCO #</FormLabel>
                   <Input value="Auto-generated on save" disabled />
                 </FormItem>
 
-                {/* Date Created (read-only metadata) */}
-                <FormItem>
-                  <FormLabel>Date Created</FormLabel>
-                  <Input value={createdDateLabel} disabled />
-                </FormItem>
-
-                {/* Created By (read-only metadata) */}
-                <FormItem>
-                  <FormLabel>Created By</FormLabel>
-                  <Input value={createdByLabel} disabled />
-                </FormItem>
-
-                {/* Title */}
                 <FormField
                   control={form.control}
                   name="title"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem>
                       <FormLabel>Title *</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="PCO title" />
+                        <Input {...field} placeholder="Change order title" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Status */}
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {PCO_STATUSES.map((s) => (
-                            <SelectItem key={s.value} value={s.value}>
-                              {s.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Revision */}
                 <FormField
                   control={form.control}
                   name="revision"
@@ -737,7 +878,6 @@ export default function NewPrimeContractPcoPage() {
                                 : null,
                             )
                           }
-                          placeholder=""
                         />
                       </FormControl>
                       <FormMessage />
@@ -745,29 +885,25 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                {/* Change Reason */}
                 <FormField
                   control={form.control}
-                  name="change_reason"
+                  name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Change Reason</FormLabel>
+                      <FormLabel>Status</FormLabel>
                       <Select
-                        onValueChange={(val) =>
-                          field.onChange(val === "__none__" ? null : val)
-                        }
-                        value={field.value ?? "__none__"}
+                        onValueChange={field.onChange}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select reason" />
+                            <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="__none__">None</SelectItem>
-                          {CHANGE_REASONS.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {r}
+                          {PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>
+                              {s.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -777,108 +913,6 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                {/* Private */}
-                <FormField
-                  control={form.control}
-                  name="is_private"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 pt-6">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-0.5 leading-none">
-                        <FormLabel className="cursor-pointer">Private</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </section>
-
-            {/* Prime Contract Change Order */}
-            <section>
-              <SectionRuleHeading
-                label="Prime Contract Change Order"
-                className="[&_span]:text-primary"
-              />
-              <div className="space-y-4">
-                <RadioGroup
-                  value={coLinkMode}
-                  onValueChange={(v) => setCoLinkMode(v as CoLinkMode)}
-                  className="space-y-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="none" id="co-none" />
-                    <Label htmlFor="co-none" className="cursor-pointer">
-                      None
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="existing" id="co-existing" />
-                    <Label htmlFor="co-existing" className="cursor-pointer">
-                      Add to existing Change Order
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="create_new" id="co-new" />
-                    <Label htmlFor="co-new" className="cursor-pointer">
-                      Create new Change Order
-                    </Label>
-                  </div>
-                </RadioGroup>
-
-                {coLinkMode === "existing" && (
-                  <div className="pl-6">
-                    {isLoadingCOs ? (
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading change orders…
-                      </div>
-                    ) : changeOrders.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        No open change orders found for this project.
-                      </p>
-                    ) : (
-                      <Select
-                        value={selectedCoId}
-                        onValueChange={setSelectedCoId}
-                      >
-                        <SelectTrigger className="w-full max-w-md">
-                          <SelectValue placeholder="Select a change order" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {changeOrders.map((co) => (
-                            <SelectItem key={co.id} value={String(co.id)}>
-                              {co.pcco_number
-                                ? `#${co.pcco_number} — ${co.title}`
-                                : co.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                )}
-
-                {coLinkMode === "create_new" && (
-                  <p className="pl-6 text-sm text-muted-foreground">
-                    A new Change Order will be created after submitting this PCO.
-                  </p>
-                )}
-              </div>
-            </section>
-
-            {/* Details */}
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="Details"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
-                {/* Description */}
                 <FormField
                   control={form.control}
                   name="description"
@@ -890,7 +924,119 @@ export default function NewPrimeContractPcoPage() {
                           {...field}
                           value={field.value ?? ""}
                           rows={4}
-                          placeholder="Describe the potential change…"
+                          placeholder="Describe the change order..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <SectionRuleHeading
+                label="Approval And Schedule"
+                className="[&_span]:text-primary"
+              />
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="designated_reviewer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Designated Reviewer</FormLabel>
+                      <Popover
+                        open={reviewerSelectOpen}
+                        onOpenChange={(open) => {
+                          setReviewerSelectOpen(open);
+                          if (open) {
+                            setContractSelectOpen(false);
+                            setPcoSelectOpen(false);
+                            setReviewedBySelectOpen(false);
+                          }
+                        }}
+                      >
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={reviewerSelectOpen}
+                              disabled={isLoadingEmployees}
+                              className={cn(
+                                "w-full justify-between font-normal",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              <span className="truncate">
+                                {isLoadingEmployees
+                                  ? "Loading employees..."
+                                  : field.value || "Select an employee"}
+                              </span>
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="p-0"
+                          align="start"
+                          style={{ width: "var(--radix-popover-trigger-width)" }}
+                        >
+                          <Command>
+                            <CommandInput placeholder="Search employees..." />
+                            <CommandList>
+                              <CommandEmpty>No employee found.</CommandEmpty>
+                              <CommandGroup>
+                                {employees.map((employee) => {
+                                  const employeeName = formatEmployeeName(employee);
+                                  return (
+                                    <CommandItem
+                                      key={employee.id}
+                                      value={employeeName}
+                                      onSelect={() => {
+                                        field.onChange(employeeName);
+                                        setReviewerSelectOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          field.value === employeeName
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                      />
+                                      <span className="truncate">
+                                        {employeeName}
+                                      </span>
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="review_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Review Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -898,26 +1044,90 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                {/* Executed */}
                 <FormField
                   control={form.control}
-                  name="executed"
+                  name="reviewed_by"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 pt-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-0.5 leading-none">
-                        <FormLabel className="cursor-pointer">Executed</FormLabel>
-                      </div>
+                    <FormItem>
+                      <FormLabel>Reviewed By</FormLabel>
+                      <Popover
+                        open={reviewedBySelectOpen}
+                        onOpenChange={(open) => {
+                          setReviewedBySelectOpen(open);
+                          if (open) {
+                            setContractSelectOpen(false);
+                            setPcoSelectOpen(false);
+                            setReviewerSelectOpen(false);
+                          }
+                        }}
+                      >
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={reviewedBySelectOpen}
+                              disabled={isLoadingEmployees}
+                              className={cn(
+                                "w-full justify-between font-normal",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              <span className="truncate">
+                                {isLoadingEmployees
+                                  ? "Loading employees..."
+                                  : field.value || "Select an employee"}
+                              </span>
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="p-0"
+                          align="start"
+                          style={{ width: "var(--radix-popover-trigger-width)" }}
+                        >
+                          <Command>
+                            <CommandInput placeholder="Search employees..." />
+                            <CommandList>
+                              <CommandEmpty>No employee found.</CommandEmpty>
+                              <CommandGroup>
+                                {employees.map((employee) => {
+                                  const employeeName = formatEmployeeName(employee);
+                                  return (
+                                    <CommandItem
+                                      key={employee.id}
+                                      value={employeeName}
+                                      onSelect={() => {
+                                        field.onChange(employeeName);
+                                        setReviewedBySelectOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          field.value === employeeName
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                      />
+                                      <span className="truncate">
+                                        {employeeName}
+                                      </span>
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Signed CO Received Date */}
                 <FormField
                   control={form.control}
                   name="signed_co_received_date"
@@ -938,108 +1148,54 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                {/* Request Received From */}
                 <FormField
                   control={form.control}
-                  name="request_received_from"
-                  render={({ field }) => {
-                    const filtered = contacts.filter((c) =>
-                      c.name.toLowerCase().includes(contactSearch.toLowerCase()),
-                    );
-                    return (
-                      <FormItem>
-                        <FormLabel>Request Received From</FormLabel>
-                        <Popover
-                          open={contactsOpen}
-                          onOpenChange={(open) => {
-                            setContactsOpen(open);
-                            if (open) void fetchContacts();
-                          }}
-                        >
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn(
-                                  "w-full justify-between font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value || "Select or type a name"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                            <Command shouldFilter={false}>
-                              <CommandInput
-                                placeholder="Search contacts…"
-                                value={contactSearch}
-                                onValueChange={setContactSearch}
-                              />
-                              <CommandList>
-                                <CommandEmpty>
-                                  {contactSearch ? (
-                                    <button
-                                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
-                                      onClick={() => {
-                                        field.onChange(contactSearch);
-                                        setContactsOpen(false);
-                                        setContactSearch("");
-                                      }}
-                                    >
-                                      Use &ldquo;{contactSearch}&rdquo;
-                                    </button>
-                                  ) : (
-                                    "No contacts found."
-                                  )}
-                                </CommandEmpty>
-                                <CommandGroup>
-                                  {filtered.map((c) => (
-                                    <CommandItem
-                                      key={c.id}
-                                      value={c.name}
-                                      onSelect={() => {
-                                        field.onChange(c.name);
-                                        setContactsOpen(false);
-                                        setContactSearch("");
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          field.value === c.name
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-                                      {c.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
+                  name="executed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start gap-3 pt-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-0.5 leading-none">
+                        <FormLabel className="cursor-pointer">Executed</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
                 />
 
-                {/* Location */}
                 <FormField
                   control={form.control}
-                  name="location"
+                  name="is_private"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start gap-3 pt-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-0.5 leading-none">
+                        <FormLabel className="cursor-pointer">Private</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="due_date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel>Due Date</FormLabel>
                       <FormControl>
                         <Input
-                          {...field}
+                          type="date"
                           value={field.value ?? ""}
-                          placeholder="Site location"
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -1047,7 +1203,26 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                {/* Schedule Impact */}
+                <FormField
+                  control={form.control}
+                  name="revised_substantial_completion_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Revised Substantial Completion Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="schedule_impact"
@@ -1072,19 +1247,22 @@ export default function NewPrimeContractPcoPage() {
                     </FormItem>
                   )}
                 />
-
-                {/* Reference */}
                 <FormField
                   control={form.control}
-                  name="reference"
+                  name="total_amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Reference</FormLabel>
+                      <FormLabel>Amount</FormLabel>
                       <FormControl>
                         <Input
-                          {...field}
+                          type="number"
+                          step="0.01"
                           value={field.value ?? ""}
-                          placeholder="Reference number or code"
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -1092,43 +1270,64 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                {/* Field Change */}
                 <FormField
                   control={form.control}
-                  name="field_change"
+                  name="invoiced_date"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 pt-2">
+                    <FormItem>
+                      <FormLabel>Invoiced Date</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </FormControl>
-                      <div className="space-y-0.5 leading-none">
-                        <FormLabel className="cursor-pointer">Field Change</FormLabel>
-                      </div>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Paid in Full */}
                 <FormField
                   control={form.control}
-                  name="paid_in_full"
+                  name="paid_date"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 pt-2">
+                    <FormItem>
+                      <FormLabel>Paid Date</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </FormControl>
-                      <div className="space-y-0.5 leading-none">
-                        <FormLabel className="cursor-pointer">Paid in Full</FormLabel>
-                      </div>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <SectionRuleHeading
+                label="Details And Supporting Info"
+                className="[&_span]:text-primary"
+              />
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <FileUploadField
+                    label="Attachments"
+                    value={attachmentFileInfo}
+                    onChange={handleAttachmentInfoChange}
+                    onFilesSelected={handleAttachmentFilesSelected}
+                    multiple
+                    variant="minimal"
+                  />
+                </div>
               </div>
             </section>
           </form>
