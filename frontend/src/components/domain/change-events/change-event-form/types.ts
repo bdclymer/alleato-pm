@@ -91,6 +91,7 @@ export interface ContractOption {
   vendorId?: string | null;
   vendorName?: string | null;
   title?: string | null;
+  status?: string | null;
 }
 
 export interface CommitmentSovLineItem {

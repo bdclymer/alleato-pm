@@ -9,6 +9,10 @@ import type {
   BudgetCodeOption,
 } from "./types";
 
+// Commitments in these statuses have not been awarded yet and should not appear
+// in the Change Event vendor or commitment dropdowns.
+const EXCLUDED_COMMITMENT_STATUSES = new Set(["Draft", "Out for Bid"]);
+
 interface UseDropdownDataOptions {
   projectId: number;
 }
@@ -21,14 +25,21 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
   const [contracts, setContracts] = React.useState<ContractOption[]>([]);
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCodeOption[]>([]);
 
+  // Called after a company is added via AddCompanyModal so the new vendor
+  // appears immediately. Merges with the existing contract-derived list.
   const fetchVendors = React.useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/vendors`);
       if (!response.ok) return;
       const data = await response.json();
-      setVendors(Array.isArray(data) ? data : data.data || []);
+      const apiVendors: VendorOption[] = Array.isArray(data) ? data : data.data || [];
+      setVendors((prev) => {
+        const existingIds = new Set(prev.map((v) => v.id));
+        const incoming = apiVendors.filter((v) => !existingIds.has(v.id));
+        return incoming.length > 0 ? [...prev, ...incoming] : prev;
+      });
     } catch {
-      setVendors([]);
+      // Keep existing list on error
     }
   }, [projectId]);
 
@@ -94,10 +105,10 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
         setPrimeContractOptions([]);
       }
 
-      // Vendors
-      await fetchVendors();
-
-      // Purchase orders + subcontracts
+      // Purchase orders + subcontracts.
+      // Only commitments that have been issued (not Draft/Out for Bid) are eligible
+      // for Change Events. The vendor list is derived from these commitments so that
+      // only vendors with an active contract on this project appear in the dropdown.
       try {
         const [poRes, subRes] = await Promise.all([
           fetch(`/api/projects/${projectId}/purchase-orders`),
@@ -110,8 +121,7 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
           const poPayload = await poRes.json();
           const poData = poPayload.data || poPayload || [];
           for (const po of poData) {
-            // Skip deleted or voided commitments
-            if (po.deleted_at || po.status === "Void") continue;
+            if (po.deleted_at || po.status === "Void" || EXCLUDED_COMMITMENT_STATUSES.has(po.status)) continue;
             const companyLabel = po.company_name ? ` (${po.company_name})` : "";
             contractList.push({
               id: `po-${po.id}`,
@@ -120,6 +130,7 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
               vendorId: po.contract_company_id || null,
               vendorName: po.company_name || null,
               title: po.title || null,
+              status: po.status || null,
             });
           }
         }
@@ -128,8 +139,7 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
           const subPayload = await subRes.json();
           const subData = subPayload.data || subPayload || [];
           for (const sub of subData) {
-            // Skip deleted or voided commitments
-            if (sub.deleted_at || sub.status === "Void") continue;
+            if (sub.deleted_at || sub.status === "Void" || EXCLUDED_COMMITMENT_STATUSES.has(sub.status)) continue;
             const companyLabel = sub.company_name ? ` (${sub.company_name})` : "";
             contractList.push({
               id: `sub-${sub.id}`,
@@ -138,26 +148,22 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
               vendorId: sub.contract_company_id || null,
               vendorName: sub.company_name || null,
               title: sub.title || null,
+              status: sub.status || null,
             });
           }
         }
 
         setContracts(contractList);
 
-        // Backfill any commitment vendors that aren't in the vendor list yet.
-        // contract_company_id may not be in project_vendors or marked is_vendor=true,
-        // but we still need to display (and submit) it when a commitment is selected.
-        setVendors((prev) => {
-          const existingIds = new Set(prev.map((v) => v.id));
-          const missing: VendorOption[] = [];
-          for (const c of contractList) {
-            if (c.vendorId && c.vendorName && !existingIds.has(c.vendorId)) {
-              existingIds.add(c.vendorId);
-              missing.push({ id: c.vendorId, vendor_name: c.vendorName });
-            }
+        // Derive vendor list from active commitments only — vendors without a
+        // commitment on this project must not appear in the dropdown.
+        const vendorMap = new Map<string, VendorOption>();
+        for (const c of contractList) {
+          if (c.vendorId && c.vendorName && !vendorMap.has(c.vendorId)) {
+            vendorMap.set(c.vendorId, { id: c.vendorId, vendor_name: c.vendorName });
           }
-          return missing.length > 0 ? [...prev, ...missing] : prev;
-        });
+        }
+        setVendors(Array.from(vendorMap.values()));
       } catch {
         setContracts([]);
       }
@@ -167,7 +173,7 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
     };
 
     fetchAll();
-  }, [projectId, fetchVendors, fetchBudgetCodes]);
+  }, [projectId, fetchBudgetCodes]);
 
   const primeContractSelectOptions = React.useMemo(
     () =>
