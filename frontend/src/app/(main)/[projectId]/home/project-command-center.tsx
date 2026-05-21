@@ -433,6 +433,8 @@ interface TeamSlot {
   key: string;
   roleName: string;
   displayName: string | null;
+  email: string | null;
+  phone: string | null;
 }
 
 function SidebarTeamSection({
@@ -453,12 +455,14 @@ function SidebarTeamSection({
           role.members.map((member) => {
             const person = member.person;
             const displayName = person
-              ? `${person.first_name} ${person.last_name}`.trim() || null
+              ? `${person.first_name} ${person.last_name}`.trim() || person.full_name || null
               : null;
             return {
               key: `${role.id}:${member.id}`,
               roleName: role.role_name,
               displayName,
+              email: person?.email || null,
+              phone: person?.phone_mobile || person?.phone_business || null,
             };
           }),
         );
@@ -469,11 +473,13 @@ function SidebarTeamSection({
     return team
       .map((member, index) => {
         const roleName = member.role?.trim() || "Team Member";
-        const displayName = `${member.first_name} ${member.last_name}`.trim() || null;
+        const displayName = `${member.first_name} ${member.last_name}`.trim() || member.full_name || null;
         return {
-          key: `${roleName}-${index}`,
+          key: `${member.person_id || member.id || roleName}-${index}`,
           roleName,
           displayName,
+          email: member.email || null,
+          phone: member.phone_mobile || member.phone_office || null,
         };
       })
       .filter((slot) => {
@@ -514,7 +520,7 @@ function SidebarTeamSection({
 
   return (
     <div className="space-y-0.5">
-      {slots.map(({ key, roleName, displayName }) => (
+      {slots.map(({ key, roleName, displayName, email, phone }) => (
         <Button
           key={key}
           asChild
@@ -529,17 +535,21 @@ function SidebarTeamSection({
                     {initials(displayName)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0 flex-1 text-left">
-                  <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
-                  <p className="text-[11px] text-muted-foreground">{roleName}</p>
+                <div className="grid min-w-0 flex-1 grid-cols-[minmax(5rem,1.1fr)_minmax(4rem,0.8fr)_minmax(6rem,1.2fr)_minmax(4.5rem,0.8fr)] items-center gap-2 text-left">
+                  <span className="truncate text-xs font-medium text-foreground">{displayName}</span>
+                  <span className="truncate text-[11px] text-muted-foreground">{roleName}</span>
+                  <span className="truncate text-[11px] text-muted-foreground">{email || "—"}</span>
+                  <span className="truncate text-[11px] text-muted-foreground">{phone || "—"}</span>
                 </div>
               </>
             ) : (
               <>
                 <div className="h-6 w-6 shrink-0 rounded-full border border-dashed border-border/60" />
-                <div className="min-w-0 flex-1 text-left">
-                  <p className="text-xs text-muted-foreground italic">Unassigned</p>
-                  <p className="text-[11px] text-muted-foreground">{roleName}</p>
+                <div className="grid min-w-0 flex-1 grid-cols-[minmax(5rem,1.1fr)_minmax(4rem,0.8fr)_minmax(6rem,1.2fr)_minmax(4.5rem,0.8fr)] items-center gap-2 text-left">
+                  <span className="truncate text-xs text-muted-foreground italic">Unassigned</span>
+                  <span className="truncate text-[11px] text-muted-foreground">{roleName}</span>
+                  <span className="truncate text-[11px] text-muted-foreground">—</span>
+                  <span className="truncate text-[11px] text-muted-foreground">—</span>
                 </div>
               </>
             )}
