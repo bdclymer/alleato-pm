@@ -521,7 +521,6 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: ClipboardList,
         description: "Monthly project status summary",
         module: "budget",
-        developerOnly: true,
       },
     ],
     subGroups: [
@@ -542,7 +541,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
         path: "schedule",
         requiresProject: true,
         icon: Calendar,
-        description: "Project schedule management",
+        description: "Project schedule",
         module: "schedule",
       },
       {
