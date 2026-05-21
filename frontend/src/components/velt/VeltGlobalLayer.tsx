@@ -66,7 +66,8 @@ function AnnotationToggle() {
 }
 
 export function VeltGlobalLayer() {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = rawPathname ?? "/";
   const [activeRecorderId, setActiveRecorderId] = useState<string | null>(null);
 
   // Scope page annotations to the current route
