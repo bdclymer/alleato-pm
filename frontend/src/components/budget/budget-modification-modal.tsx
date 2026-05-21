@@ -255,7 +255,7 @@ export function BudgetModificationModal({
                       updateRow(row.id, { amount: event.target.value })
                     }
                     className="h-10 rounded-none border-0 focus-visible:ring-0"
-                    placeholder="0.00"
+                    placeholder=""
                   />
                 </div>
               </div>
