@@ -375,6 +375,7 @@ def _mark_task_extraction_state(
 def run_task_extraction(
     window_days: int = 2,
     max_docs: int | None = None,
+    backfill_mode: bool = False,
 ) -> dict[str, Any]:
     """
     Extract tasks from recent communication documents and insert into the tasks table.
@@ -382,6 +383,8 @@ def run_task_extraction(
     Args:
         window_days: How many days back to scan for unprocessed documents.
         max_docs: Maximum source documents to process in one run.
+        backfill_mode: When True, query orders oldest-first so the candidate pool
+            reaches historical docs before recent (already-processed) ones.
 
     Returns:
         Summary dict with docs_found, docs_processed, inserted, skipped, errors.
@@ -400,15 +403,18 @@ def run_task_extraction(
 
     # Fetch recently ingested communication docs, then guard against old source
     # conversations that were backfilled or recompiled inside the ingestion window.
+    # In backfill_mode, order oldest-first so the candidate pool reaches historical
+    # docs before the already-processed recent ones.
+    descending = not backfill_mode
     result = (
         client_db.table("document_metadata")
         .select("id,title,type,source_system,summary,action_items,bullet_points,project_id,date,captured_at,created_at,source_metadata")
         .in_("type", list(TASK_SOURCE_TYPES))
         .not_.in_("type", list(EXCLUDE_TYPES))
         .or_(f"date.gte.{since},captured_at.gte.{since},created_at.gte.{since}")
-        .order("date", desc=True)
-        .order("captured_at", desc=True)
-        .order("created_at", desc=True)
+        .order("date", desc=descending)
+        .order("captured_at", desc=descending)
+        .order("created_at", desc=descending)
         .limit(candidate_limit)
         .execute()
     )
