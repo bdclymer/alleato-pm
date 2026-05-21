@@ -123,13 +123,13 @@ function parseMicrosoftProjectXml(xml: string): MicrosoftProjectImportTask[] {
         sort_order: index + 1,
       } satisfies MicrosoftProjectImportTask;
     })
-    .filter((task): task is MicrosoftProjectImportTask => task !== null);
+    .filter((task): task is NonNullable<typeof task> => task !== null);
 
   return parsedTasks.map((task) => ({
     ...task,
     parent_external_id:
       outlineToExternalId.get(parentOutline(task.wbs_code) ?? "") ?? null,
-  }));
+  })) as MicrosoftProjectImportTask[];
 }
 
 export default function MicrosoftProjectScheduleImportPage() {
