@@ -1,4 +1,3 @@
-import { createHmac, randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -20,11 +19,7 @@ function normalizeBackendUrl(): string {
   return backendUrl.replace(/\/+$/, "");
 }
 
-function base64url(value: Buffer | string): string {
-  return Buffer.from(value).toString("base64url");
-}
-
-function signScheduleConvertToken(projectId: number): string {
+function getAdminApiKey(): string {
   const adminKey = process.env.ADMIN_API_KEY?.trim();
   if (!adminKey) {
     throw new GuardrailError({
@@ -36,16 +31,7 @@ function signScheduleConvertToken(projectId: number): string {
     });
   }
 
-  const payload = base64url(JSON.stringify({
-    project_id: projectId,
-    exp: Math.floor(Date.now() / 1000) + 5 * 60,
-    nonce: randomUUID(),
-  }));
-  const signature = createHmac("sha256", adminKey)
-    .update(payload)
-    .digest("base64url");
-
-  return `${payload}.${signature}`;
+  return adminKey;
 }
 
 export const POST = withApiGuardrails<{ projectId: string }>(
@@ -76,13 +62,36 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       });
     }
 
-    const convertUrl = new URL("/api/scheduling/microsoft-project/convert", normalizeBackendUrl());
-    convertUrl.searchParams.set("project_id", String(parsedProjectId));
-    convertUrl.searchParams.set("token", signScheduleConvertToken(parsedProjectId));
+    const tokenUrl = new URL("/api/scheduling/microsoft-project/convert-token", normalizeBackendUrl());
+    tokenUrl.searchParams.set("project_id", String(parsedProjectId));
+    const response = await fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        "x-admin-api-key": getAdminApiKey(),
+      },
+    });
+
+    const payload = await response.json().catch(() => ({})) as {
+      convert_url?: string;
+      expires_in_seconds?: number;
+      detail?: string;
+    };
+
+    if (!response.ok || !payload.convert_url) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "projects/[projectId]/scheduling/tasks/convert-token#POST",
+        message:
+          payload.detail ||
+          `Microsoft Project conversion token request failed (HTTP ${response.status}).`,
+        status: response.ok ? 502 : response.status,
+        severity: "high",
+      });
+    }
 
     return NextResponse.json({
-      convertUrl: convertUrl.toString(),
-      expiresInSeconds: 300,
+      convertUrl: payload.convert_url,
+      expiresInSeconds: payload.expires_in_seconds ?? 300,
     });
   },
 );

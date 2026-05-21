@@ -278,6 +278,34 @@ class MicrosoftProjectConvertResponse(BaseModel):
     task_count: int
 
 
+class MicrosoftProjectConvertTokenResponse(BaseModel):
+    convert_url: str
+    expires_in_seconds: int
+
+
+def _base64url(value: bytes | str) -> str:
+    source = value.encode("utf-8") if isinstance(value, str) else value
+    return base64.urlsafe_b64encode(source).decode("ascii").rstrip("=")
+
+
+def _sign_schedule_convert_token(project_id: int, expires_in_seconds: int = 300) -> str:
+    expected_secret = os.getenv("ADMIN_API_KEY")
+    if not expected_secret:
+        raise HTTPException(status_code=503, detail="ADMIN_API_KEY is not configured on the backend")
+
+    payload = _base64url(json.dumps({
+        "project_id": project_id,
+        "exp": int(datetime.now(timezone.utc).timestamp()) + expires_in_seconds,
+    }, separators=(",", ":")))
+    signature = hmac.new(
+        expected_secret.encode("utf-8"),
+        payload.encode("ascii"),
+        hashlib.sha256,
+    ).digest()
+
+    return f"{payload}.{_base64url(signature)}"
+
+
 def _base64url_decode_json(value: str) -> Dict[str, Any]:
     padding = "=" * (-len(value) % 4)
     try:
@@ -618,6 +646,25 @@ def rag_chat_api(payload: ChatRequest, store: SupabaseRagStore = Depends(get_rag
     if not payload.message.strip():
         raise HTTPException(status_code=422, detail="Message cannot be empty")
     return _build_chat_reply(payload.message, store=store, project_id=payload.project_id, limit=payload.limit)
+
+
+@app.post(
+    "/api/scheduling/microsoft-project/convert-token",
+    tags=["Scheduling"],
+    summary="Create a short-lived Microsoft Project conversion upload URL",
+    response_model=MicrosoftProjectConvertTokenResponse,
+)
+def create_microsoft_project_convert_token(
+    request: Request,
+    project_id: int = Query(..., ge=1),
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    token = _sign_schedule_convert_token(project_id)
+    base_url = str(request.base_url).rstrip("/")
+    return {
+        "convert_url": f"{base_url}/api/scheduling/microsoft-project/convert?project_id={project_id}&token={token}",
+        "expires_in_seconds": 300,
+    }
 
 
 @app.post(

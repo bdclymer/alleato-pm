@@ -8,6 +8,7 @@ import pytest
 from fastapi import HTTPException
 
 from src.api.main import _configured_cors_origins, _verify_schedule_convert_token
+from src.services.microsoft_project_parser import _is_missing_java_runtime_error
 
 
 def _token(secret: str, payload: dict) -> str:
@@ -23,6 +24,10 @@ def test_schedule_convert_token_accepts_matching_project(monkeypatch):
     token = _token("test-secret", {"project_id": 25125, "exp": int(time.time()) + 60})
 
     _verify_schedule_convert_token(token, 25125)
+
+
+def test_missing_java_runtime_detection_handles_local_macos_jpype_error():
+    assert _is_missing_java_runtime_error("Command '['/usr/libexec/java_home']' returned non-zero exit status 1.")
 
 
 def test_schedule_convert_token_rejects_project_mismatch(monkeypatch):

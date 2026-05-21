@@ -135,6 +135,10 @@ def _parse_mpp_with_mpxj(file_name: str, content: bytes) -> List[ParsedScheduleT
                 message = str(exc)
                 if "password" in message.lower():
                     raise MicrosoftProjectParseError("Password-protected .mpp files are not supported.") from exc
+                if _is_missing_java_runtime_error(message):
+                    raise MicrosoftProjectParseError(
+                        "Native .mpp import requires Java on the backend. Install a Java runtime and retry."
+                    ) from exc
                 raise MicrosoftProjectParseError(f"Unable to read Microsoft Project file: {message[:300]}") from exc
 
     outline_to_external_id: Dict[str, str] = {}
@@ -187,6 +191,18 @@ def _attach_parent_external_ids(
         task.parent_external_id = outline_to_external_id.get(parent_outline or "")
         task.sort_order = index
     return tasks
+
+
+def _is_missing_java_runtime_error(message: str) -> bool:
+    lowered = message.lower()
+    java_markers = (
+        "no jvm shared library file",
+        "unable to find java",
+        "java_home",
+        "jvm.dll",
+        "libjvm",
+    )
+    return any(marker in lowered for marker in java_markers)
 
 
 def _local_name(tag: str) -> str:
