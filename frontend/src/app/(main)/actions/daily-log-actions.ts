@@ -332,20 +332,55 @@ export async function createDailyLogNote(params: {
   return { success: true, data } as const;
 }
 
-export async function getDailyLogWithSections(dailyLogId: string) {
+export async function getDailyLogWithSections(params: {
+  dailyLogId: string;
+  projectId: number;
+}) {
   const supabase = await createClient();
 
   const [logResult, weatherResult, manpowerResult, equipmentResult, notesResult] =
     await Promise.all([
-      supabase.from("daily_logs").select("*").eq("id", dailyLogId).single(),
-      supabase.from("daily_log_weather").select("*").eq("daily_log_id", dailyLogId),
-      supabase.from("daily_log_manpower").select("*").eq("daily_log_id", dailyLogId),
-      supabase.from("daily_log_equipment").select("*").eq("daily_log_id", dailyLogId),
-      supabase.from("daily_log_notes").select("*").eq("daily_log_id", dailyLogId),
+      supabase
+        .from("daily_logs")
+        .select("*")
+        .eq("id", params.dailyLogId)
+        .eq("project_id", params.projectId)
+        .single(),
+      supabase
+        .from("daily_log_weather")
+        .select("*")
+        .eq("daily_log_id", params.dailyLogId),
+      supabase
+        .from("daily_log_manpower")
+        .select("*")
+        .eq("daily_log_id", params.dailyLogId),
+      supabase
+        .from("daily_log_equipment")
+        .select("*")
+        .eq("daily_log_id", params.dailyLogId),
+      supabase
+        .from("daily_log_notes")
+        .select("*")
+        .eq("daily_log_id", params.dailyLogId),
     ]);
 
   if (logResult.error || !logResult.data) {
-    return { error: logResult.error?.message ?? "Daily log not found." };
+    return { error: "Daily log was not found for this project." };
+  }
+
+  const sectionErrors = [
+    { name: "weather", error: weatherResult.error },
+    { name: "manpower", error: manpowerResult.error },
+    { name: "equipment", error: equipmentResult.error },
+    { name: "notes", error: notesResult.error },
+  ].filter((result) => result.error);
+
+  if (sectionErrors.length > 0) {
+    const details = sectionErrors
+      .map((result) => `${result.name}: ${result.error?.message}`)
+      .join("; ");
+
+    return { error: `Daily log sections could not be loaded: ${details}` };
   }
 
   return {
@@ -408,11 +443,21 @@ export async function updateDailyLogWithCoreSections(
       updated_at: new Date().toISOString(),
     })
     .eq("id", dailyLogId)
+    .eq("project_id", params.projectId)
     .select()
     .single();
 
-  if (logError || !dailyLog) {
-    return { error: logError?.message ?? "Daily log was not updated." };
+  if (logError) {
+    return {
+      error:
+        logError.code === "PGRST116"
+          ? "Daily log was not found for this project."
+          : logError.message,
+    };
+  }
+
+  if (!dailyLog) {
+    return { error: "Daily log was not found for this project." };
   }
 
   const deleteError = await deleteExistingSectionRows(dailyLogId);

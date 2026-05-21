@@ -14,7 +14,15 @@ export default async function EditDailyLogPage({
 }) {
   const { projectId, dailyLogId } = await params;
 
-  const result = await getDailyLogWithSections(dailyLogId);
+  const parsedProjectId = Number(projectId);
+  if (!Number.isInteger(parsedProjectId)) {
+    notFound();
+  }
+
+  const result = await getDailyLogWithSections({
+    dailyLogId,
+    projectId: parsedProjectId,
+  });
 
   if ("error" in result || !result.data) {
     notFound();
@@ -77,7 +85,7 @@ export default async function EditDailyLogPage({
 
   return (
     <DailyLogFormClient
-      projectId={Number(projectId)}
+      projectId={parsedProjectId}
       mode="edit"
       initialData={initialData}
     />
