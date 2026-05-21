@@ -12,6 +12,7 @@ build/
 .env.local
 .env.production
 .env.development
+.env.sentry-build-plugin
 
 # IDE
 .idea/

@@ -1,5 +1,7 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { reportErrorObject } from "@/lib/app-error-reporter";
@@ -24,6 +26,19 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    Sentry.captureException(error, {
+      tags: {
+        action: "global_error_boundary",
+        route: window.location.pathname,
+        severity: isChunkLoadError(error) ? "medium" : "critical",
+      },
+      contexts: {
+        nextjs: {
+          digest: error.digest,
+        },
+      },
+    });
+
     reportErrorObject(error, {
       severity: isChunkLoadError(error) ? "medium" : "critical",
       action: "global_error_boundary",
@@ -57,7 +72,11 @@ export default function GlobalError({
             ? "flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
             : "flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10"}
           >
-            <span className="text-3xl">{isChunk ? "🔄" : "⚠️"}</span>
+            {isChunk ? (
+              <RefreshCw className="h-7 w-7 text-primary" aria-hidden="true" />
+            ) : (
+              <AlertTriangle className="h-7 w-7 text-destructive" aria-hidden="true" />
+            )}
           </div>
           <h2 className="m-0 text-xl font-semibold text-foreground">
             {isChunk ? "New version available" : "Something went wrong"}

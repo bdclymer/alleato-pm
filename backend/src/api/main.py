@@ -31,6 +31,12 @@ from typing import Any, Dict, List, Optional, Tuple
 from src.services.env_loader import load_env
 load_env()
 
+from src.services.sentry_monitoring import init_sentry
+from src.services.posthog_monitoring import init_posthog
+
+init_sentry()
+init_posthog()
+
 from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
@@ -175,7 +181,7 @@ app.add_middleware(
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:3001", "http://127.0.0.1:3001"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*", "sentry-trace", "baggage"],
 )
 
 
