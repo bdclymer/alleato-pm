@@ -100,8 +100,56 @@ function getAddedLines(path) {
 }
 
 // Match .from("table") and .from('table') — STRING LITERAL ONLY.
-// Skip storage.from() (storage buckets, not tables).
+// Skip storage.from() (storage buckets, not tables) and RAG-client.from()
+// (RAG tables live in the AI Database project, not database.types.ts).
 const FROM_RE = /(?<!storage\s*)\.from\(\s*['"]([a-zA-Z_][a-zA-Z0-9_]*)['"]\s*\)/g;
+
+// Identifiers that hold a Supabase client pointed at the RAG (AI Database) project.
+// Calls through these clients legitimately reference tables not in database.types.ts.
+const RAG_CLIENT_IDENTS = [
+  "ragClient",
+  "ragRead",
+  "ragWrite",
+  "ragServiceClient",
+  "ragSupabase",
+  "ragReadClient",
+  "ragWriteClient",
+];
+const RAG_FROM_RE = new RegExp(
+  `\\b(?:${RAG_CLIENT_IDENTS.join("|")})\\s*\\.from\\(`,
+);
+
+// Walk back up to LOOKBACK lines from `lineNum` (1-based) in `filePath` and
+// return true if any of those lines contain a known RAG-client identifier.
+const RAG_LOOKBACK_LINES = 5;
+const fileLineCache = new Map();
+function getFileLines(filePath) {
+  if (fileLineCache.has(filePath)) return fileLineCache.get(filePath);
+  let lines = [];
+  try {
+    lines = readFileSync(join(REPO_ROOT, filePath), "utf8").split("\n");
+  } catch {
+    // File missing (deleted on disk) — leave lines empty
+  }
+  fileLineCache.set(filePath, lines);
+  return lines;
+}
+const RAG_IDENT_RE = new RegExp(
+  `\\b(?:${RAG_CLIENT_IDENTS.join("|")})\\b`,
+);
+function isRagClientCall(filePath, lineNum) {
+  const lines = getFileLines(filePath);
+  const start = Math.max(0, lineNum - 1 - RAG_LOOKBACK_LINES);
+  const end = Math.min(lines.length, lineNum);
+  for (let i = start; i < end; i++) {
+    if (RAG_FROM_RE.test(lines[i])) return true;
+    // Chained call across lines — receiver appears on a preceding line:
+    //   const { data } = await ragClient
+    //     .from("document_chunks")
+    if (RAG_IDENT_RE.test(lines[i])) return true;
+  }
+  return false;
+}
 
 function main() {
   const files = getStagedFiles();
@@ -126,14 +174,19 @@ function main() {
       if (trimmed.startsWith("//") || trimmed.startsWith("*")) continue;
       // Skip storage bucket calls explicitly
       if (/\.storage\.from\(/.test(content)) continue;
+      // Skip RAG-client.from(...) on a single line.
+      if (RAG_FROM_RE.test(content)) continue;
 
       let m;
       FROM_RE.lastIndex = 0;
       while ((m = FROM_RE.exec(content))) {
         const tableName = m[1];
-        if (!tables.has(tableName)) {
-          violations.push({ file, line, tableName, content: trimmed });
-        }
+        if (tables.has(tableName)) continue;
+        // Chained calls split across lines (e.g. `ragClient\n  .from("x")`)
+        // hide the receiver from the single-line check above. Peek at the
+        // file on disk and walk back up to 5 lines for a RAG identifier.
+        if (isRagClientCall(file, line)) continue;
+        violations.push({ file, line, tableName, content: trimmed });
       }
     }
   }
