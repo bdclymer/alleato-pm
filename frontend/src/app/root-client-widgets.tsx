@@ -16,8 +16,8 @@ const VeltAuthProvider = dynamic(
   () => import("@/components/velt/VeltAuthProvider").then((mod) => mod.VeltAuthProvider),
   { ssr: false },
 );
-const VeltRecorderWidget = dynamic(
-  () => import("@/components/velt/VeltRecorderWidget").then((mod) => mod.VeltRecorderWidget),
+const VeltGlobalLayer = dynamic(
+  () => import("@/components/velt/VeltGlobalLayer").then((m) => m.VeltGlobalLayer),
   { ssr: false },
 );
 const AgentationThemeSync = dynamic(
@@ -57,7 +57,7 @@ export function RootClientWidgets() {
       {shouldMountDeferredWidgets && (
         <VeltAuthProvider>
           <AdminFeedbackWidget showLauncher={false} />
-          <VeltRecorderWidget />
+          <VeltGlobalLayer />
         </VeltAuthProvider>
       )}
       {shouldMountDeferredWidgets && process.env.NODE_ENV === "development" && (
