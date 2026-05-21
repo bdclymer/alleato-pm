@@ -29,6 +29,7 @@ import {
   renderChangeEventList,
   renderChangeEventRowActions,
 } from "@/features/change-events/change-events-table-config";
+import { useProject } from "@/contexts/project-context";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
 import { AddToBudgetChangeDialog } from "@/components/domain/change-events/AddToBudgetChangeDialog";
@@ -78,6 +79,8 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const parsedProjectId = projectIdParamRaw ? parseInt(projectIdParamRaw, 10) : NaN;
   const hasValidProjectId = Number.isFinite(parsedProjectId) && parsedProjectId > 0;
   const projectId = hasValidProjectId ? parsedProjectId : 0;
+
+  const { selectedProject } = useProject();
 
   // Tab state — All | Line Items | No Line Items | RFQs | Recycle Bin
   const activeTab = searchParams.get("tab") ?? "all";
@@ -447,7 +450,29 @@ export default function ProjectChangeEventsPage(): ReactElement {
   ]);
 
   const handleExport = React.useCallback(() => {
-    const headers = ["#", "Title", "Status", "Scope", "Type", "Change Reason", "Origin", "Prime PCO", "Cost ROM", "Commitment", "Created"];
+    // Columns mirror the on-screen table 1:1 so the export contains every
+    // detail the user can see. Order matches the table left-to-right.
+    const headers = [
+      "#",
+      "Title",
+      "Status",
+      "Scope",
+      "Type",
+      "Change Reason",
+      "Origin",
+      "Prime PCO",
+      "Prime PCO Title",
+      "Cost ROM",
+      "RFQ Title",
+      "Commitment",
+      "Commitment Title",
+      "Created",
+      // Additional detail not in the table but valuable in CSV form.
+      "Description",
+      "Expecting Revenue",
+      "Conversion State",
+      "Line Items",
+    ];
 
     const scopeDisplayMap: Record<string, string> = {
       tbd: "TBD",
@@ -463,6 +488,15 @@ export default function ProjectChangeEventsPage(): ReactElement {
       pending: "Pending",
     };
 
+    const conversionStateLabel = (event: ChangeEvent): string => {
+      const sentPrime = Boolean(event.sent_to_prime_pco);
+      const sentCommitment = Boolean(event.sent_to_commitment_pco);
+      const linked = Number(sentPrime) + Number(sentCommitment);
+      if (linked === 0) return "Unlinked";
+      if (linked === 1) return "Partially Linked";
+      return "Fully Linked";
+    };
+
     const rows = filteredEvents.map((event) => {
       const number = event.number ?? `CE-${event.id}`;
       const title = event.title ?? "";
@@ -472,21 +506,94 @@ export default function ProjectChangeEventsPage(): ReactElement {
       const reason = event.reason ?? "";
       const origin = event.origin ?? "";
       const primePco = String(event.rom ?? 0);
+      // Matches table: prefer the title, fall back to the PCO number, else "".
+      const primePcoTitle = event.prime_pco_title ?? event.prime_pco ?? "";
       const costRom = String(event.cost_rom ?? 0);
+      const rfqTitle = event.rfq_title ?? "";
       const commitment = String(event.commitment ?? 0);
+      const commitmentTitle = event.commitment_title ?? "";
       const createdAt = formatDateValue(event.created_at);
+      const description = event.description ?? "";
+      const expectingRevenue = event.expecting_revenue === false ? "No" : "Yes";
+      const conversionState = conversionStateLabel(event);
+      const lineItemsCount = String(event.lineItemsCount ?? 0);
 
-      return [number, title, status, scope, type, reason, origin, primePco, costRom, commitment, createdAt]
+      return [
+        number,
+        title,
+        status,
+        scope,
+        type,
+        reason,
+        origin,
+        primePco,
+        primePcoTitle,
+        costRom,
+        rfqTitle,
+        commitment,
+        commitmentTitle,
+        createdAt,
+        description,
+        expectingRevenue,
+        conversionState,
+        lineItemsCount,
+      ]
         .map(escapeCsvField)
         .join(",");
     });
 
-    const csvContent = [headers.map(escapeCsvField).join(","), ...rows].join("\n");
+    // Metadata block — project context + applied filters so the CSV is
+    // self-describing when opened standalone.
+    const exportedAt = new Date();
+    const projectLabel =
+      selectedProject?.name && selectedProject?.number
+        ? `${selectedProject.number} — ${selectedProject.name}`
+        : selectedProject?.name ?? `Project ${projectId}`;
+
+    const metaPair = (label: string, value: string) =>
+      `${escapeCsvField(label)},${escapeCsvField(value)}`;
+
+    const tabLabelMap: Record<string, string> = {
+      all: "All",
+      line_items: "Line Items",
+      no_line_items: "No Line Items",
+      rfqs: "RFQs",
+      recycle_bin: "Recycle Bin",
+    };
+
+    const filterParts: string[] = [];
+    if (statusParam) filterParts.push(`status=${statusDisplayMap[statusParam.toLowerCase()] ?? statusParam}`);
+    if (scopeParam) filterParts.push(`scope=${scopeDisplayMap[scopeParam.toLowerCase()] ?? scopeParam}`);
+    if (tableState.debouncedSearch) filterParts.push(`search="${tableState.debouncedSearch}"`);
+
+    const metaLines = [
+      metaPair("Report", "Change Event Log"),
+      metaPair("Project", projectLabel),
+      metaPair("Tab", tabLabelMap[activeTab] ?? activeTab),
+      metaPair("Exported", exportedAt.toISOString()),
+      metaPair("Rows", String(filteredEvents.length)),
+    ];
+    if (filterParts.length > 0) {
+      metaLines.push(metaPair("Filters", filterParts.join("; ")));
+    }
+    // Blank separator row between metadata and the data table.
+    metaLines.push("");
+
+    const csvContent = [
+      ...metaLines,
+      headers.map(escapeCsvField).join(","),
+      ...rows,
+    ].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
+
+    const exportedIso = exportedAt.toISOString().slice(0, 10);
+    const projectToken = selectedProject?.number
+      ? `${selectedProject.number}-`
+      : `${projectId}-`;
     link.href = url;
-    link.download = "change-events-export.csv";
+    link.download = `${projectToken}change-events-${exportedIso}.csv`;
     link.style.display = "none";
     document.body.appendChild(link);
     link.click();
@@ -496,7 +603,15 @@ export default function ProjectChangeEventsPage(): ReactElement {
     toast.success(
       `Exported ${filteredEvents.length} change event${filteredEvents.length === 1 ? "" : "s"} to CSV`,
     );
-  }, [filteredEvents]);
+  }, [
+    filteredEvents,
+    selectedProject,
+    projectId,
+    activeTab,
+    statusParam,
+    scopeParam,
+    tableState.debouncedSearch,
+  ]);
 
   const tableColumns = React.useMemo(
     () => buildChangeEventTableColumns(expandedIds, handleToggleExpand),
@@ -802,6 +917,11 @@ export default function ProjectChangeEventsPage(): ReactElement {
         enableExport: true,
         enableBulkDelete: activeTab !== "recycle_bin",
         enableColumnPinning: false,
+      }}
+      reportContext={{
+        projectId,
+        projectName: selectedProject?.name,
+        projectNumber: selectedProject?.number,
       }}
       layout={{
         fullBleedTable: true,

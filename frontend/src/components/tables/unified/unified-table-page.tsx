@@ -373,6 +373,22 @@ export interface UnifiedTablePageProps<T> {
   };
   features?: UnifiedTableFeatures;
   columnGroups?: Array<{ label: string; columnIds: string[] }>;
+  /**
+   * Optional context embedded as a metadata header in CSV exports. Provides
+   * report title, project identification, and any extra fields (filters,
+   * exported-by user, etc.). Applies only to the auto-built CSV exporter —
+   * a custom `toolbar.onExport` overrides everything.
+   */
+  reportContext?: {
+    projectId?: number | string;
+    projectName?: string;
+    projectNumber?: string | number;
+    projectDescription?: string;
+    /** Person triggering the export (defaults to omitted) */
+    exportedBy?: string;
+    /** Any extra key/value rows appended after the standard metadata block */
+    extra?: Record<string, string | number | null | undefined>;
+  };
 }
 
 export function TableExpandedRow({
@@ -410,6 +426,7 @@ export function UnifiedTablePage<T>({
   layout,
   features,
   columnGroups,
+  reportContext,
 }: UnifiedTablePageProps<T>): ReactElement {
   const resolvedFeatures: Required<UnifiedTableFeatures> = {
     enableSorting: features?.enableSorting ?? true,
@@ -1186,18 +1203,62 @@ export function UnifiedTablePage<T>({
     if (exportableCols.length === 0) return undefined;
     return () => {
       const escape = (val: string) => `"${val.replace(/"/g, '""')}"`;
+      const metaRow = (label: string, value: string) =>
+        `${escape(label)},${escape(value)}`;
+
+      const exportedAt = new Date();
+      const exportedIso = exportedAt.toISOString().slice(0, 10);
+
+      // Metadata block — only emitted when reportContext is provided.
+      const metaLines: string[] = [];
+      if (reportContext) {
+        const projectLabel =
+          reportContext.projectName && reportContext.projectNumber
+            ? `${reportContext.projectNumber} — ${reportContext.projectName}`
+            : reportContext.projectName ||
+              (reportContext.projectNumber != null
+                ? String(reportContext.projectNumber)
+                : "");
+
+        metaLines.push(metaRow("Report", header.title));
+        if (projectLabel) metaLines.push(metaRow("Project", projectLabel));
+        if (reportContext.projectDescription) {
+          metaLines.push(
+            metaRow("Description", reportContext.projectDescription),
+          );
+        }
+        metaLines.push(metaRow("Exported", exportedAt.toISOString()));
+        if (reportContext.exportedBy) {
+          metaLines.push(metaRow("Exported by", reportContext.exportedBy));
+        }
+        if (reportContext.extra) {
+          for (const [key, value] of Object.entries(reportContext.extra)) {
+            if (value === null || value === undefined || value === "") continue;
+            metaLines.push(metaRow(key, String(value)));
+          }
+        }
+        // Blank separator line between metadata and the table.
+        metaLines.push("");
+      }
+
       const headers = exportableCols.map((c) => escape(c.label)).join(",");
       const rows = rowOrderedItems.map((item) =>
         exportableCols
           .map((c) => escape(String(c.csvValue!(item) ?? "")))
           .join(","),
       );
-      const csv = [headers, ...rows].join("\n");
+      const csv = [...metaLines, headers, ...rows].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
+
+      const slug = header.title.toLowerCase().replace(/\s+/g, "-");
+      const projectToken =
+        reportContext?.projectNumber != null
+          ? `${reportContext.projectNumber}-`
+          : "";
       a.href = url;
-      a.download = `${header.title.toLowerCase().replace(/\s+/g, "-")}-export.csv`;
+      a.download = `${projectToken}${slug}-${exportedIso}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     };
@@ -1208,6 +1269,7 @@ export function UnifiedTablePage<T>({
     table.columns,
     rowOrderedItems,
     header.title,
+    reportContext,
   ]);
 
   React.useEffect(() => {
