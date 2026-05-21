@@ -1,4 +1,5 @@
-import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
+import { format, formatDistanceToNow, isValid } from "date-fns";
+import { parseDisplayDate } from "@/lib/date-utils";
 
 /**
  * Format a number as currency (USD)
@@ -41,13 +42,8 @@ export function formatDate(
   styleOrFormat: "short" | "long" | "numeric" | "relative" | (string & Record<never, never>) = "short",
 ): string {
   if (!value) return "--";
-  const date = typeof value === "string" ? parseISO(value) : value;
-  if (!isValid(date)) {
-    // parseISO may return Invalid Date for non-ISO strings; fall back to new Date()
-    const fallback = typeof value === "string" ? new Date(value) : value;
-    if (!isValid(fallback)) return "--";
-    return _applyStyle(fallback, styleOrFormat);
-  }
+  const date = typeof value === "string" ? parseDisplayDate(value) : value;
+  if (!isValid(date)) return "--";
   return _applyStyle(date, styleOrFormat);
 }
 

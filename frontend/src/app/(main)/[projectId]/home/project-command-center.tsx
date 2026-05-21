@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseDisplayDate } from "@/lib/date-utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useProjectRoles } from "@/hooks/use-project-roles";
 import {
@@ -221,14 +222,14 @@ function getDateMs(value: string | null | undefined): number {
 
 function formatShortDate(value: string | null | undefined): string | null {
   if (!value) return null;
-  const date = new Date(value);
+  const date = parseDisplayDate(value);
   if (Number.isNaN(date.getTime())) return null;
   return format(date, "MMM d, yyyy");
 }
 
 function formatMonthDay(value: string | null | undefined): string | null {
   if (!value) return null;
-  const date = new Date(value);
+  const date = parseDisplayDate(value);
   if (Number.isNaN(date.getTime())) return null;
   return format(date, "MMM d");
 }
