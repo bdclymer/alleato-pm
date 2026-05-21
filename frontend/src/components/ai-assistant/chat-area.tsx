@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
-import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { cn } from "@/lib/utils";
 import {
   AI_ASSISTANT_MODELS,
@@ -93,8 +92,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   CopyIcon,
-  ThumbsUpIcon,
-  ThumbsDownIcon,
   DatabaseIcon,
   FileTextIcon,
   FolderIcon,
@@ -141,6 +138,7 @@ import {
 } from "@/lib/ai/score-response-quality";
 import { ASSISTANT_ACTION_CAPABILITIES } from "@/lib/ai/action-capabilities";
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
+import { AiResponseFeedback } from "@/components/ai/AiResponseFeedback";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -1493,36 +1491,8 @@ export function ChatArea({
     [speakingMessageId, stopSpeech],
   );
 
-  const handleFeedback = useCallback(
-    (type: "up" | "down", messageContent?: string) => {
-      toast.success(
-        type === "up"
-          ? "Thanks for the feedback!"
-          : "Sorry about that — I'll do better.",
-      );
-      // Persist feedback to database for AI observability
-      if (sessionId) {
-        apiFetch("/api/ai-assistant/feedback", {
-          method: "POST",
-          body: JSON.stringify({
-            sessionId,
-            feedback: type,
-            messageContent: messageContent?.slice(0, 500),
-          }),
-        }).catch((error: unknown) => {
-          reportNonCriticalFailure({
-            area: "ai-assistant",
-            operation: "persist-message-feedback",
-            error,
-            userVisibleFallback:
-              "Feedback was not saved, but the chat remains available.",
-            metadata: { sessionId, feedback: type },
-          });
-        });
-      }
-    },
-    [sessionId],
-  );
+  // handleFeedback removed — replaced by <AiResponseFeedback> component
+  // which owns API submission + toast + reason picker. See AiResponseFeedback.tsx.
 
   const handleToolApprove = useCallback(
     (part: ToolPart) => {
@@ -2218,18 +2188,21 @@ export function ChatArea({
                             >
                               <CopyIcon className="h-3.5 w-3.5" />
                             </MessageAction>
-                            <MessageAction
-                              tooltip="Good response"
-                              onClick={() => handleFeedback("up", text)}
-                            >
-                              <ThumbsUpIcon className="h-3.5 w-3.5" />
-                            </MessageAction>
-                            <MessageAction
-                              tooltip="Poor response"
-                              onClick={() => handleFeedback("down", text)}
-                            >
-                              <ThumbsDownIcon className="h-3.5 w-3.5" />
-                            </MessageAction>
+                            <AiResponseFeedback
+                              className="ml-1"
+                              subject={{
+                                surface: "ai_assistant",
+                                subjectType: "assistant_message",
+                                subjectId: msg.id,
+                                projectId: selectedProjectIdProp ?? null,
+                                sessionId: sessionId ?? null,
+                                contentSnapshot: {
+                                  text,
+                                  model: null,
+                                  generatedAt: new Date().toISOString(),
+                                },
+                              }}
+                            />
                           </MessageActions>
                         )}
                       </Message>

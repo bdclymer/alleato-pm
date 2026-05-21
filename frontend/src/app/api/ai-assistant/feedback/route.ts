@@ -6,12 +6,26 @@ import { ingestThumbsFeedbackLearning } from "@/lib/ai/services/agent-learning-s
 import { recordAiFeedbackEvent } from "@/lib/ai/services/feedback-event-service";
 import { toSessionUuid } from "@/lib/ai/session-id";
 import { logger } from "@/lib/logger";
+import type { Json } from "@/types/database.types";
 
 /**
  * POST /api/ai-assistant/feedback
  *
- * Persists user feedback (thumbs up/down) on AI assistant responses.
- * Stored in chat_history.metadata alongside tool traces and model info.
+ * Persists user feedback (thumbs up/down) on AI-generated responses.
+ *
+ * Accepts feedback from any AI surface, not just chat:
+ *   - `surface` — which AI surface produced the content (chat, daily_digest,
+ *     insight_card, etc.). Used as a scope tag for learning extraction so the
+ *     learning loop knows which retrieval/prompt path the issue came from.
+ *   - `subjectType` / `subjectId` — what kind of content was rated.
+ *   - `reasonCategory` / `reason` — optional categorical + free-text reason
+ *     when feedback is "down". Used to extract richer agent_learnings.
+ *
+ * Always writes:
+ *   - One row to `chat_history` (for assistant-chat compatibility).
+ *   - One row to `ai_feedback_events` (the unified feedback ledger).
+ *   - On "down": one row to `agent_learnings` via ingestThumbsFeedbackLearning,
+ *     so the model sees a prevention prompt next time.
  */
 export const POST = withApiGuardrails("/api/ai-assistant/feedback#POST", async ({ request }) => {
   const user = await getApiRouteUser();
@@ -20,75 +34,147 @@ export const POST = withApiGuardrails("/api/ai-assistant/feedback#POST", async (
   }
 
   const body = await request.json();
-  const { sessionId, messageId, feedback, messageContent } = body as {
-    sessionId: string;
+  const {
+    sessionId,
+    messageId,
+    feedback,
+    messageContent,
+    surface,
+    subjectType,
+    subjectId,
+    projectId,
+    reasonCategory,
+    reason,
+    contentSnapshot,
+  } = body as {
+    sessionId?: string | null;
     messageId?: string;
     feedback: "up" | "down";
     messageContent?: string;
+    surface?: string;
+    subjectType?: string;
+    subjectId?: string | null;
+    projectId?: number | null;
+    reasonCategory?: string | null;
+    reason?: string | null;
+    contentSnapshot?: Record<string, unknown>;
   };
 
-  if (!sessionId || !feedback) {
-    return new Response("sessionId and feedback are required", { status: 400 });
+  if (!feedback) {
+    return new Response("feedback is required", { status: 400 });
   }
 
+  // Resolve effective surface/subject. Defaults preserve the original
+  // assistant-only behavior for callers that don't pass these fields.
+  const effectiveSurface = surface ?? "ai_assistant";
+  const effectiveSubjectType = subjectType ?? "assistant_message";
+  // chat_history requires a sessionId. For non-chat surfaces (insight cards,
+  // digests) sessionId is optional — we only write chat_history when present.
+  const hasChatSession = Boolean(sessionId);
+
   const supabase = createServiceClient();
-  const sessionUuid = toSessionUuid(sessionId);
+  const sessionUuid = hasChatSession ? toSessionUuid(sessionId!) : null;
 
-  const { data, error } = await supabase
-    .from("chat_history")
-    .insert({
-      session_id: sessionUuid,
-      user_id: user.id,
-      role: "system",
-      content: `[feedback:${feedback}]`,
-      metadata: {
-        type: "feedback",
-        feedback,
-        messageId: messageId ?? null,
-        messageContent: messageContent?.slice(0, 500) ?? null,
-        originalSessionId: sessionId,
-        timestamp: new Date().toISOString(),
-      },
-    })
-    .select("id")
-    .single();
+  // Only write chat_history for chat-style sessions. Insight/digest surfaces
+  // don't belong in chat_history (and don't have a session id anyway).
+  let chatHistoryId: string | null = null;
+  if (hasChatSession && sessionUuid) {
+    const { data, error } = await supabase
+      .from("chat_history")
+      .insert({
+        session_id: sessionUuid,
+        user_id: user.id,
+        role: "system",
+        content: `[feedback:${feedback}]`,
+        metadata: {
+          type: "feedback",
+          feedback,
+          messageId: messageId ?? subjectId ?? null,
+          messageContent: messageContent?.slice(0, 500) ?? null,
+          originalSessionId: sessionId,
+          reasonCategory: reasonCategory ?? null,
+          reason: reason ?? null,
+          surface: effectiveSurface,
+          timestamp: new Date().toISOString(),
+        },
+      })
+      .select("id")
+      .single();
 
-  if (error || !data) {
-    throw new GuardrailError({
-      code: "INTERNAL_ERROR",
-      where: "/api/ai-assistant/feedback#POST",
-      message: error?.message ?? "Feedback chat_history insert returned no row.",
-    });
+    if (error || !data) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/ai-assistant/feedback#POST",
+        message: error?.message ?? "Feedback chat_history insert returned no row.",
+      });
+    }
+    chatHistoryId = data.id;
   }
 
   await recordAiFeedbackEvent({
     userId: user.id,
+    projectId: projectId ?? null,
     sessionId: sessionUuid,
-    sourceTable: "chat_history",
-    sourceRecordId: data.id,
+    sourceTable: chatHistoryId ? "chat_history" : null,
+    sourceRecordId: chatHistoryId,
     eventType: "assistant_feedback_recorded",
     eventFamily: "assistant_response",
-    surface: "ai_assistant",
-    subjectType: "assistant_message",
-    subjectId: messageId ?? null,
+    surface: effectiveSurface,
+    subjectType: effectiveSubjectType,
+    subjectId: messageId ?? subjectId ?? null,
     signal: feedback === "up" ? "positive" : "negative",
-    freeText: messageContent?.slice(0, 1000) ?? null,
+    reasonCategory: reasonCategory ?? null,
+    freeText: reason ?? messageContent?.slice(0, 1000) ?? null,
     sourceContext: {
-      messageId: messageId ?? null,
+      messageId: messageId ?? subjectId ?? null,
       messageContent: messageContent?.slice(0, 500) ?? null,
+      contentSnapshot: (contentSnapshot ?? null) as Json,
     },
     metadata: {
       feedback,
-      chatHistoryId: data.id,
-      originalSessionId: sessionId,
+      chatHistoryId,
+      originalSessionId: sessionId ?? null,
+      surface: effectiveSurface,
+      subjectType: effectiveSubjectType,
+      subjectId: subjectId ?? null,
+      reasonCategory: reasonCategory ?? null,
       visibility: "team",
     },
   });
 
-  try {
-    await ingestThumbsFeedbackLearning({ sessionId, feedback, messageContent });
-  } catch (learningError) {
-    logger.error({ msg: "[Feedback] Learning ingestion failed:", data: learningError });
+  // Extract a learning when the user marks the response negatively. This
+  // creates an agent_learnings row that gets injected into future prompts
+  // for the same surface so the AI avoids the pattern that was flagged.
+  if (feedback === "down") {
+    try {
+      await ingestThumbsFeedbackLearning({
+        sessionId: sessionId ?? "no-session",
+        feedback,
+        messageContent,
+        surface: effectiveSurface,
+        reasonCategory: reasonCategory ?? null,
+        reason: reason ?? null,
+        projectId: projectId ?? null,
+      });
+    } catch (learningError) {
+      logger.error({ msg: "[Feedback] Learning ingestion failed:", data: learningError });
+    }
+  } else {
+    // Still update usage outcomes for thumbs-up so retrieval learnings have
+    // signal even when the response was good.
+    try {
+      await ingestThumbsFeedbackLearning({
+        sessionId: sessionId ?? "no-session",
+        feedback,
+        messageContent,
+        surface: effectiveSurface,
+        reasonCategory: null,
+        reason: null,
+        projectId: projectId ?? null,
+      });
+    } catch (learningError) {
+      logger.error({ msg: "[Feedback] Positive feedback ingestion failed:", data: learningError });
+    }
   }
 
   return Response.json({ success: true });

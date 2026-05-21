@@ -25,6 +25,7 @@ import {
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { InsightCardShowcase } from "@/components/ai-intelligence/insight-card-showcase";
+import { AiResponseFeedback } from "@/components/ai/AiResponseFeedback";
 import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
   loadCurrentIntelligencePacket,
@@ -510,8 +511,10 @@ function BriefingHeader({
 
 function StrategicRead({
   packet,
+  projectId,
 }: {
   packet: ClientProjectIntelligencePacket;
+  projectId: number;
 }) {
   const reportChanged = strategicItems(packet, "whatChanged", ["impact"]);
   const reportRisks = strategicItems(packet, "risks", ["recommendedAction"], ["severity"]);
@@ -571,6 +574,28 @@ function StrategicRead({
             The report an AI strategist should hand you every morning
           </Heading>
         </div>
+        <AiResponseFeedback
+          subject={{
+            surface: "intelligence_packet",
+            subjectType: "strategic_read",
+            subjectId: packet.id,
+            projectId,
+            sessionId: null,
+            contentSnapshot: {
+              text: [
+                packet.executiveSummary,
+                packet.strategicRead,
+                packet.whyItMatters,
+                ...(packet.recommendedNextMoves ?? []),
+              ]
+                .filter(Boolean)
+                .join("\n\n")
+                .slice(0, 2000),
+              generatedAt: packet.generatedAt,
+              model: packet.compilerVersion,
+            },
+          }}
+        />
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         {columns.map((column) => {
@@ -1047,7 +1072,7 @@ export default async function ProjectIntelligencePage({
       ) : (
         <>
           <BriefingHeader project={project} packet={packet} />
-          <StrategicRead packet={packet} />
+          <StrategicRead packet={packet} projectId={numericProjectId} />
           <ActionRegister packet={packet} projectId={numericProjectId} />
           <SourceIntelligence packet={packet} project={project} projectId={numericProjectId} />
           <EvidenceDiagnostics packet={packet} projectId={numericProjectId} />

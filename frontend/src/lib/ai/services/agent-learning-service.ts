@@ -513,10 +513,41 @@ export async function updateLearningUsageOutcomeForSession(
     .eq("outcome", "unknown");
 }
 
+/**
+ * Categorical reason → targeted prevention prompt addition. When the user
+ * tells us *why* a response was bad, encode that into the learning so the
+ * model sees a specific instruction, not just "be better".
+ */
+const REASON_PREVENTION_HINTS: Record<string, string> = {
+  incorrect_facts:
+    "Verify each factual claim against the retrieved sources before stating it. Do not assert numbers, names, or dates that aren't grounded in evidence.",
+  outdated_info:
+    "Check the timestamp of any data you cite. If the most recent source is older than what the user is asking about, say so explicitly.",
+  hallucinated:
+    "If a fact is not in the retrieved context, do not invent it. Say you don't have that information and offer what you do have.",
+  incomplete:
+    "Cover all parts of the user's question. If you can only answer part of it, list what's still missing.",
+  irrelevant:
+    "Re-read the user's question and answer THAT question specifically. Do not drift into related topics they didn't ask about.",
+  wrong_tool:
+    "Pick the tool that matches the user's intent (emails vs meetings vs tasks vs budget). When unsure, prefer the more specific tool over a generic search.",
+  unhelpful:
+    "Give the actual answer, not a meta-description of what you could do. If you don't have enough context, ask one specific clarifying question.",
+  other: "Re-read the user feedback note and avoid this failure pattern.",
+};
+
 export async function ingestThumbsFeedbackLearning(params: {
   sessionId: string;
   feedback: "up" | "down";
   messageContent?: string;
+  /**
+   * Which AI surface produced the content. Becomes a scope tag so the
+   * learning is retrieved on the same surface next time.
+   */
+  surface?: string;
+  reasonCategory?: string | null;
+  reason?: string | null;
+  projectId?: number | null;
 }) {
   await updateLearningUsageOutcomeForSession(
     params.sessionId,
@@ -534,14 +565,28 @@ export async function ingestThumbsFeedbackLearning(params: {
   );
   const reasons = assistantSignal?.metadata?.response_quality?.reasons ?? [];
   const excerpt = (params.messageContent || assistantSignal?.content || "").slice(0, 280);
+
+  const surface = params.surface ?? "ai_assistant";
+  const reasonCategory = params.reasonCategory ?? null;
+  const reasonNote = params.reason?.trim() || null;
+
   const scopeTags = uniqueStrings([
     "thumbs_down",
+    surface,
+    ...(reasonCategory ? [reasonCategory] : []),
     ...toolNames,
     ...extractKeywords(excerpt),
     ...reasons.flatMap((reason) => extractKeywords(reason, 3)),
   ]);
 
+  const categoricalHint =
+    reasonCategory && REASON_PREVENTION_HINTS[reasonCategory]
+      ? REASON_PREVENTION_HINTS[reasonCategory]
+      : null;
+
   const preventionParts = uniqueStrings([
+    categoricalHint,
+    reasonNote ? `User note: ${reasonNote}` : null,
     toolNames.length > 0
       ? `Re-check tool outputs from ${toolNames.join(", ")} before finalizing the answer.`
       : "Call the relevant live tools before answering instead of relying on assumptions.",
@@ -551,25 +596,41 @@ export async function ingestThumbsFeedbackLearning(params: {
     "If the data is incomplete, say so explicitly instead of guessing.",
   ]);
 
+  // If the user gave us a specific reason category, trust the signal and
+  // activate the learning immediately rather than waiting for a 2nd occurrence.
+  // Anonymous "just thumbs-down, no reason" stays as a candidate.
+  const status: AgentLearningStatus = reasonCategory ? "active" : "candidate";
+  const confidence = reasonCategory ? 0.7 : 0.45;
+
+  const titleSuffix = reasonCategory
+    ? ` — ${reasonCategory.replace(/_/g, " ")}`
+    : "";
+
   return upsertAgentLearning({
     title:
       toolNames.length > 0
-        ? `Repeated thumbs-down on ${toolNames.join(", ")} responses`
-        : "Repeated thumbs-down on AI assistant responses",
+        ? `Thumbs-down on ${toolNames.join(", ")} responses${titleSuffix}`
+        : `Thumbs-down on ${surface} responses${titleSuffix}`,
     source: "thumbs_down",
-    status: "candidate",
-    problemSignature: `${toolNames.join(" ")} ${excerpt}`.trim() || "thumbs down response",
+    status,
+    problemSignature: `${surface} ${reasonCategory ?? "uncategorized"} ${toolNames.join(" ")} ${excerpt}`.trim() || "thumbs down response",
     symptoms: [
       excerpt ? `Rejected answer excerpt: ${excerpt}` : null,
+      reasonCategory ? `Reason category: ${reasonCategory}` : null,
+      reasonNote ? `User note: ${reasonNote}` : null,
       reasons.length > 0 ? `Response quality signals: ${reasons.join("; ")}` : null,
     ]
       .filter(Boolean)
       .join("\n"),
     preventionPrompt: preventionParts.join(" "),
     scopeTags,
-    confidence: 0.45,
+    projectId: params.projectId ?? null,
+    confidence,
     evidence: {
       sessionId: params.sessionId,
+      surface,
+      reasonCategory,
+      reason: reasonNote,
       assistantExcerpt: excerpt,
       toolNames,
       responseQuality: assistantSignal?.metadata?.response_quality ?? null,
