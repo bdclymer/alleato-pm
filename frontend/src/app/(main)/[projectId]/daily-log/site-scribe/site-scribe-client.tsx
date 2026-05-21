@@ -98,9 +98,9 @@ function formatDuration(ms: number) {
 }
 
 function confidenceTone(value?: number) {
-  if ((value ?? 0) >= 0.8) return "text-emerald-700";
-  if ((value ?? 0) >= 0.6) return "text-amber-700";
-  return "text-red-700";
+  if ((value ?? 0) >= 0.8) return "text-success";
+  if ((value ?? 0) >= 0.6) return "text-warning";
+  return "text-destructive";
 }
 
 function Confidence({ value }: { value?: number }) {
