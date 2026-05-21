@@ -21,6 +21,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { PageShell } from "@/components/layout";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
@@ -771,6 +772,17 @@ export default function ProjectSchedulePage() {
   // Actions for header — just the primary action, like every other page
   const headerActions = (
     <div className="flex w-full items-center gap-2 sm:w-auto">
+      <Button
+        asChild
+        size="sm"
+        variant="outline"
+        className="max-sm:min-h-11"
+      >
+        <Link href={`/${projectId}/schedule/import`}>
+          <Upload />
+          MS Project Import
+        </Link>
+      </Button>
       <Button
         size="sm"
         className="max-sm:min-h-11"

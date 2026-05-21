@@ -24,13 +24,14 @@ import re
 import threading
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 # Load environment variables from root .env file
 from src.services.env_loader import load_env
 load_env()
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
@@ -60,6 +61,10 @@ from src.services.agents.microsoft_executive_assistant import (
     run_microsoft_executive_assistant,
 )
 from src.services.agents.research_agent import ResearchRequest, run_research_agent
+from src.services.microsoft_project_parser import (
+    MicrosoftProjectParseError,
+    parse_microsoft_project_file,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -235,6 +240,12 @@ class OutlookIntakeReclassificationRequest(BaseModel):
     limit: int = 500
     page_size: int = 100
     apply: bool = False
+
+
+class MicrosoftProjectConvertResponse(BaseModel):
+    tasks: List[Dict[str, Any]]
+    source_format: str
+    task_count: int
 
 
 def get_rag_store() -> SupabaseRagStore:
@@ -530,6 +541,42 @@ def rag_chat_api(payload: ChatRequest, store: SupabaseRagStore = Depends(get_rag
     if not payload.message.strip():
         raise HTTPException(status_code=422, detail="Message cannot be empty")
     return _build_chat_reply(payload.message, store=store, project_id=payload.project_id, limit=payload.limit)
+
+
+@app.post(
+    "/api/scheduling/microsoft-project/convert",
+    tags=["Scheduling"],
+    summary="Convert Microsoft Project schedule file to importable tasks",
+    response_model=MicrosoftProjectConvertResponse,
+)
+async def convert_microsoft_project_schedule(
+    file: UploadFile = File(...),
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    file_name = file.filename or "schedule"
+    suffix = Path(file_name).suffix.lower()
+    if suffix not in {".mpp", ".mpt", ".xml"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Upload a Microsoft Project .mpp, .mpt, or XML file.",
+        )
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded schedule file is empty.")
+    if len(content) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Schedule file is larger than the 50 MB import limit.")
+
+    try:
+        tasks = parse_microsoft_project_file(file_name, content)
+    except MicrosoftProjectParseError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return {
+        "tasks": tasks,
+        "source_format": suffix.lstrip("."),
+        "task_count": len(tasks),
+    }
 
 
 @app.post("/api/ingest/fireflies", tags=["Ingestion"], summary="Ingest Fireflies transcript")

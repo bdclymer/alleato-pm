@@ -21,6 +21,8 @@ import { validateScheduleTaskCreateInput } from "@/lib/scheduling/task-validatio
 
 interface ImportTaskData {
   name: string;
+  external_id?: string;
+  parent_external_id?: string | null;
   wbs_code?: string;
   start_date?: string;
   finish_date?: string;
@@ -28,6 +30,7 @@ interface ImportTaskData {
   percent_complete?: number;
   status?: string;
   is_milestone?: boolean;
+  sort_order?: number;
 }
 
 interface ImportRequest {
@@ -89,15 +92,23 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       maxSortOrder = Math.max(...existingTasksResult.data.map((t: { sort_order?: number }) => t.sort_order || 0));
     }
 
-    // Import each task
+    const importedTaskIdsByExternalId = new Map<string, string>();
+
+    // Import each task in request order so parent_external_id references can map
+    // Microsoft Project outline hierarchy without adding source columns yet.
     for (let i = 0; i < body.tasks.length; i++) {
       const taskData = body.tasks[i];
 
       try {
+        const parentTaskId =
+          taskData.parent_external_id
+            ? importedTaskIdsByExternalId.get(taskData.parent_external_id) ?? null
+            : null;
+
         const createData: ScheduleTaskCreate = {
           name: taskData.name.trim(),
           project_id: Number(projectId),
-          parent_task_id: null,
+          parent_task_id: parentTaskId,
           wbs_code: taskData.wbs_code || null,
           start_date: taskData.start_date || null,
           finish_date: taskData.finish_date || null,
@@ -107,10 +118,13 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           is_milestone: taskData.is_milestone ?? false,
           constraint_type: null,
           constraint_date: null,
-          sort_order: maxSortOrder + i + 1,
+          sort_order: taskData.sort_order ?? maxSortOrder + i + 1,
         };
 
-        await service.createTask(projectId, createData);
+        const importedTask = await service.createTask(projectId, createData);
+        if (taskData.external_id) {
+          importedTaskIdsByExternalId.set(taskData.external_id, importedTask.id);
+        }
         results.imported++;
       } catch (error) {
         results.failed++;

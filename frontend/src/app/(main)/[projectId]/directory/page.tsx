@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Building2,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -58,6 +57,7 @@ import {
 import { PageShell } from "@/components/layout";
 import { DataTable } from "@/components/tables/DataTable";
 import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
+import { CompanyDetailSheet } from "@/components/domain/directory/CompanyDetailSheet";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
@@ -326,9 +326,9 @@ function CreateRoleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 p-0 sm:max-w-sm border-border/60 shadow-sm overflow-hidden">
+      <DialogContent className="gap-0 p-0 sm:max-w-sm border-border/60 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
-          <DialogTitle className="text-xl tracking-tight">Create role</DialogTitle>
+          <DialogTitle className="text-lg tracking-tight">Create role</DialogTitle>
           <DialogDescription>
             Give the role a clear name. You&apos;ll assign members after.
           </DialogDescription>
@@ -347,11 +347,11 @@ function CreateRoleDialog({
             className="h-9"
           />
         </div>
-        <DialogFooter className="border-t border-border/50 bg-muted/30 px-6 py-3 gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="px-6 pb-6 pt-2 gap-2">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving || !name.trim()}>
+          <Button size="sm" onClick={handleSave} disabled={saving || !name.trim()}>
             {saving ? "Creating..." : "Create role"}
           </Button>
         </DialogFooter>
@@ -423,53 +423,71 @@ function AddMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Add Member</DialogTitle>
+      <DialogContent className="gap-0 p-0 w-full sm:max-w-lg border-border/60 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+          <DialogTitle className="text-lg tracking-tight">Add member</DialogTitle>
+          <DialogDescription>
+            Add an existing person from your directory to this project.
+          </DialogDescription>
         </DialogHeader>
-        <div className="py-2">
-          <Command className="border rounded-md">
-            <CommandInput placeholder="Search people..." />
-            <CommandList className="max-h-64">
-              <CommandEmpty>No people found.</CommandEmpty>
-              <CommandGroup>
-                {people.map((person) => (
-                  <CommandItem
-                    key={person.id}
-                    value={`${person.first_name} ${person.last_name} ${person.email ?? ""}`}
-                    onSelect={() => setSelected(person.id)}
-                    className="cursor-pointer"
-                  >
-                    <Check
+        <div className="px-6 pb-2">
+          <Command className="overflow-visible" shouldFilter={true}>
+            <CommandInput placeholder="Search people…" />
+            <CommandList className="mt-2 max-h-72 -mx-1">
+              <CommandEmpty>
+                <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  No people found.
+                </div>
+              </CommandEmpty>
+              <CommandGroup className="p-0">
+                {people.map((person) => {
+                  const meta = [person.job_title, person.company_name]
+                    .filter(Boolean)
+                    .join(" · ");
+                  const isSelected = selected === person.id;
+                  return (
+                    <CommandItem
+                      key={person.id}
+                      value={`${person.first_name} ${person.last_name} ${person.email ?? ""}`}
+                      onSelect={() => setSelected(person.id)}
                       className={cn(
-                        "mr-2 h-4 w-4 shrink-0",
-                        selected === person.id
-                          ? "opacity-100"
-                          : "opacity-0"
+                        "flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
+                        "data-[selected=true]:bg-accent/60",
                       )}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium">
-                        {person.first_name} {person.last_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {[person.job_title, person.company_name]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    </div>
-                  </CommandItem>
-                ))}
+                    >
+                      <div
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted-foreground/25 bg-transparent",
+                        )}
+                      >
+                        {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                      </div>
+                      <div className="min-w-0 flex-1 flex items-baseline gap-2">
+                        <span className="truncate text-sm text-foreground">
+                          {person.first_name} {person.last_name}
+                        </span>
+                        {meta && (
+                          <span className="truncate text-xs text-muted-foreground">
+                            {meta}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="px-6 pb-6 pt-2 gap-2">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleAdd} disabled={!selected || saving}>
-            {saving ? "Adding..." : "Add Member"}
+          <Button size="sm" onClick={handleAdd} disabled={!selected || saving}>
+            {saving ? "Adding..." : "Add member"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -525,57 +543,76 @@ function AddVendorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Vendor</DialogTitle>
+      <DialogContent className="gap-0 p-0 sm:max-w-md border-border/60 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+          <DialogTitle className="text-lg tracking-tight">Add vendor</DialogTitle>
           <DialogDescription>
             Select a vendor from the company directory.
           </DialogDescription>
         </DialogHeader>
-        <Command className="border rounded-md">
-          <CommandInput placeholder="Search vendors..." />
-          <CommandList className="max-h-64">
-            <CommandEmpty>No vendors found.</CommandEmpty>
-            <CommandGroup>
-              {available.map((vendor) => (
-                <CommandItem
-                  key={vendor.id}
-                  value={`${vendor.name} ${vendor.legal_name ?? ""} ${vendor.vendor_class ?? ""}`}
-                  onSelect={() => setSelected(vendor.id)}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4 shrink-0",
-                      selected === vendor.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">
-                      {vendor.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {[
-                        vendor.vendor_class,
-                        vendor.city && vendor.state
-                          ? `${vendor.city}, ${vendor.state}`
-                          : (vendor.city ?? vendor.state),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="px-6 pb-2">
+          <Command className="overflow-visible" shouldFilter={true}>
+            <CommandInput placeholder="Search vendors…" />
+            <CommandList className="mt-2 max-h-72 -mx-1">
+              <CommandEmpty>
+                <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  No vendors found.
+                </div>
+              </CommandEmpty>
+              <CommandGroup className="p-0">
+                {available.map((vendor) => {
+                  const meta = [
+                    vendor.vendor_class,
+                    vendor.city && vendor.state
+                      ? `${vendor.city}, ${vendor.state}`
+                      : (vendor.city ?? vendor.state),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
+                  const isSelected = selected === vendor.id;
+                  return (
+                    <CommandItem
+                      key={vendor.id}
+                      value={`${vendor.name} ${vendor.legal_name ?? ""} ${vendor.vendor_class ?? ""}`}
+                      onSelect={() => setSelected(vendor.id)}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
+                        "data-[selected=true]:bg-accent/60",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted-foreground/25 bg-transparent",
+                        )}
+                      >
+                        {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                      </div>
+                      <div className="min-w-0 flex-1 flex items-baseline gap-2">
+                        <span className="truncate text-sm text-foreground">
+                          {vendor.name}
+                        </span>
+                        {meta && (
+                          <span className="truncate text-xs text-muted-foreground">
+                            {meta}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </div>
+        <DialogFooter className="px-6 pb-6 pt-2 gap-2">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleAdd} disabled={!selected || saving}>
-            {saving ? "Adding..." : "Add Vendor"}
+          <Button size="sm" onClick={handleAdd} disabled={!selected || saving}>
+            {saving ? "Adding..." : "Add vendor"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -645,57 +682,76 @@ function AssignExistingCompanyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Company</DialogTitle>
+      <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] gap-0 overflow-hidden border-border/60 p-0 sm:max-w-2xl">
+        <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+          <DialogTitle className="text-lg tracking-tight">Add company</DialogTitle>
           <DialogDescription>
             Search and select an existing company to add to this project.
           </DialogDescription>
         </DialogHeader>
-        <Command className="border rounded-md">
-          <CommandInput placeholder="Search companies..." />
-          <CommandList className="max-h-64">
-            <CommandEmpty>No companies found.</CommandEmpty>
-            <CommandGroup>
-              {available.map((company) => (
-                <CommandItem
-                  key={company.id}
-                  value={`${company.name} ${company.city ?? ""} ${company.state ?? ""}`}
-                  onSelect={() => setSelected(company.id)}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4 shrink-0",
-                      selected === company.id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{company.name}</p>
-                    {(company.vendor_class || company.city || company.state) && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {[
-                          company.vendor_class,
-                          company.city && company.state
-                            ? `${company.city}, ${company.state}`
-                            : (company.city ?? company.state),
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="px-6 pb-2">
+          <Command className="overflow-visible bg-transparent" shouldFilter={true}>
+            <CommandInput className="bg-muted" placeholder="Search companies…" />
+            <CommandList className="mt-3 max-h-72 -mx-1">
+              <CommandEmpty>
+                <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  No companies found.
+                </div>
+              </CommandEmpty>
+              <CommandGroup className="p-0">
+                {available.map((company) => {
+                  const meta = [
+                    company.vendor_class,
+                    company.city && company.state
+                      ? `${company.city}, ${company.state}`
+                      : (company.city ?? company.state),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
+                  const isSelected = selected === company.id;
+                  return (
+                    <CommandItem
+                      key={company.id}
+                      value={`${company.name} ${company.city ?? ""} ${company.state ?? ""}`}
+                      onSelect={() => setSelected(company.id)}
+                      className={cn(
+                        "flex min-w-0 cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
+                        "data-[selected=true]:bg-accent/60",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted-foreground/25 bg-transparent",
+                        )}
+                      >
+                        {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                      </div>
+                      <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <span className="min-w-0 truncate text-sm text-foreground">
+                          {company.name}
+                        </span>
+                        {meta && (
+                          <span className="min-w-0 truncate text-xs text-muted-foreground">
+                            {meta}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </div>
+        <DialogFooter className="px-6 pb-6 pt-2 gap-2">
+          <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleAssign} disabled={!selected || saving}>
-            {saving ? "Adding..." : "Add Company"}
+          <Button size="sm" className="w-full sm:w-auto" onClick={handleAssign} disabled={!selected || saving}>
+            {saving ? "Adding..." : "Add company"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -760,8 +816,9 @@ function ProjectTeamSection({
     {
       id: "role",
       header: "Role",
+      size: 240,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.role.role_name}</span>
+        <span className="block truncate text-sm text-muted-foreground">{row.original.role.role_name}</span>
       ),
     },
     {
@@ -956,72 +1013,74 @@ function EffectivePermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            Effective Permissions
+      <DialogContent className="gap-0 p-0 sm:max-w-lg border-border/60 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+          <DialogTitle className="text-lg tracking-tight">
+            Effective permissions
           </DialogTitle>
           <DialogDescription>
             What {person.first_name} {person.last_name} can do on this project.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Template info */}
+        <div className="px-6 pb-6 space-y-5">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Template:</span>
-            <Badge variant={template ? "secondary" : "outline"}>
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Template
+            </span>
+            <Badge variant={template ? "secondary" : "outline"} className="rounded-full">
               {template?.name ?? "No template assigned"}
             </Badge>
           </div>
 
-          {/* Module access matrix */}
-          <div className="rounded-md border border-border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50">
-                  <th className="text-left font-medium text-muted-foreground py-2 px-3">Module</th>
-                  <th className="text-left font-medium text-muted-foreground py-2 px-3">Access Level</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ALL_MODULES.map((mod) => {
-                  const levels = rules[mod] ?? [];
-                  const highest = getHighestLevel(levels);
-                  return (
-                    <tr key={mod} className="border-t border-border/50">
-                      <td className="py-2 px-3 font-medium text-foreground">{MODULE_LABELS[mod]}</td>
-                      <td className="py-2 px-3">
-                        <Badge
-                          variant={highest === "none" ? "outline" : "secondary"}
-                          className={cn(
-                            "text-xs",
-                            highest === "admin" && "bg-primary/10 text-primary border-primary/20",
-                            highest === "write" && "bg-blue-500/10 text-blue-600 border-blue-500/20",
-                            highest === "read" && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-                          )}
-                        >
-                          {LEVEL_LABELS[highest]}
-                        </Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Module access
+            </p>
+            <div className="divide-y divide-border/40 rounded-lg bg-muted/30">
+              {ALL_MODULES.map((mod) => {
+                const levels = rules[mod] ?? [];
+                const highest = getHighestLevel(levels);
+                return (
+                  <div
+                    key={mod}
+                    className="flex items-center justify-between gap-3 px-3 py-2.5"
+                  >
+                    <span className="text-sm font-medium text-foreground">
+                      {MODULE_LABELS[mod]}
+                    </span>
+                    <Badge
+                      variant={highest === "none" ? "outline" : "secondary"}
+                      className={cn(
+                        "rounded-full px-2.5 text-[11px] font-medium",
+                        highest === "admin" && "bg-primary/10 text-primary border-primary/20",
+                        highest === "write" && "bg-blue-500/10 text-blue-600 border-blue-500/20",
+                        highest === "read" && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                        highest === "none" && "text-muted-foreground",
+                      )}
+                    >
+                      {LEVEL_LABELS[highest]}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Granular flags */}
           {granularFlags.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
                 Additional capabilities
               </p>
-              <ul className="space-y-1">
+              <ul className="space-y-1.5">
                 {granularFlags.map((flag) => (
-                  <li key={flag} className="flex items-center gap-2 text-sm text-foreground">
-                    <Check className="h-3.5 w-3.5 text-primary shrink-0" strokeWidth={2.5} />
+                  <li
+                    key={flag}
+                    className="flex items-center gap-2 text-sm text-foreground"
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10">
+                      <Check className="h-2.5 w-2.5 text-primary" strokeWidth={3} />
+                    </span>
                     {GRANULAR_FLAG_LABELS[flag] ?? flag}
                   </li>
                 ))}
@@ -1659,6 +1718,7 @@ function CompaniesSection({
   ownerCompanyId,
   onAssignClick,
   onRefetch,
+  onCompanyClick,
 }: {
   projectId: string;
   companies: Array<{
@@ -1676,6 +1736,7 @@ function CompaniesSection({
   ownerCompanyId: string | null;
   onAssignClick: () => void;
   onRefetch: () => void;
+  onCompanyClick: (companyId: string) => void;
 }) {
   const { confirm: confirmCompany, ConfirmDialog: CompanyConfirmDialog } = useConfirm();
   const [search, setSearch] = React.useState("");
@@ -1763,18 +1824,17 @@ function CompaniesSection({
         id: "name",
         header: "Company Name",
         cell: ({ row }) => (
-          <Link
-            href={`/directory/companies/${row.original.id}`}
-            className="flex items-center gap-3"
-            onClick={(e) => e.stopPropagation()}
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCompanyClick(row.original.id);
+            }}
+            className="h-auto -ml-2 px-2 py-1 text-left font-medium text-foreground hover:bg-transparent hover:underline"
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <Building2 className="h-3.5 w-3.5 text-primary" />
-            </div>
-            <span className="text-sm font-medium text-foreground hover:underline">
-              {row.original.name}
-            </span>
-          </Link>
+            {row.original.name}
+          </Button>
         ),
       },
       {
@@ -1862,11 +1922,11 @@ function CompaniesSection({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
-                  disabled={removingCompanyId === company.id}
-                  onClick={() => void handleRemoveCompany(company.id, company.name)}
+                  disabled={removingCompanyId === company.projectCompanyId}
+                  onClick={() => void handleRemoveCompany(company.projectCompanyId, company.name)}
                 >
                   <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  {removingCompanyId === company.id ? "Removing..." : "Remove"}
+                  {removingCompanyId === company.projectCompanyId ? "Removing..." : "Remove"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1960,6 +2020,10 @@ export default function ProjectDirectoryPage() {
   const [addCompanyOpen, setAddCompanyOpen] = React.useState(false);
   const [addVendorOpen, setAddVendorOpen] = React.useState(false);
   const [manageRolesOpen, setManageRolesOpen] = React.useState(false);
+  const [companySheet, setCompanySheet] = React.useState<{
+    open: boolean;
+    companyId: string | null;
+  }>({ open: false, companyId: null });
   const {
     companies: projectCompanies,
     isLoading: companiesLoading,
@@ -2022,6 +2086,9 @@ export default function ProjectDirectoryPage() {
           ownerCompanyId={ownerCompanyId}
           onAssignClick={() => setAddCompanyOpen(true)}
           onRefetch={() => { void refetchCompanies(); }}
+          onCompanyClick={(companyId) =>
+            setCompanySheet({ open: true, companyId })
+          }
         />
       </section>
 
@@ -2049,6 +2116,13 @@ export default function ProjectDirectoryPage() {
           await addVendor(vendorId);
           toast.success("Vendor added to project");
         }}
+      />
+      <CompanyDetailSheet
+        companyId={companySheet.companyId}
+        open={companySheet.open}
+        onOpenChange={(open) =>
+          setCompanySheet((prev) => ({ ...prev, open }))
+        }
       />
     </PageShell>
   );

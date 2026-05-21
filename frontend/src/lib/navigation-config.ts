@@ -383,10 +383,10 @@ export const headerNavGroups: HeaderNavGroup[] = [
     tools: [
       {
         name: "Schedule",
-        path: "schedule",
+        path: "schedule/import",
         requiresProject: true,
         icon: Calendar,
-        description: "Project timeline and milestones",
+        description: "Import schedule tasks from Microsoft Project",
         module: "schedule",
       },
       {
