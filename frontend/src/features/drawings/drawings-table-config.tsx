@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 import { FileText, MoreHorizontal, QrCode } from "lucide-react";
@@ -27,7 +29,9 @@ import {
   type DrawingLogTableRow,
 } from "@/types/drawings.types";
 
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+if (typeof window !== "undefined") {
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+}
 
 // ─── Status formatting helpers ──────────────────────────────────────────────
 

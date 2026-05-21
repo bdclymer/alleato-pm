@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
+import * as Sentry from "@sentry/nextjs";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -59,6 +60,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     posthog.identify(profile.id, {
       email: profile.email ?? undefined,
       name: profile.fullName ?? undefined,
+    });
+    Sentry.setUser({
+      id: profile.id,
+      email: profile.email ?? undefined,
+      username: profile.fullName ?? undefined,
     });
   }, [profile?.id, profile?.email, profile?.fullName]);
 
