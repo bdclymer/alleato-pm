@@ -30,7 +30,7 @@ export default async function ChangeOrderNewAliasPage({
     mode === "commitment";
 
   const target = isCommitmentRoute
-    ? `/${projectId}/change-orders/commitment/new`
+    ? `/${projectId}/commitment-pcos/new`
     : `/${projectId}/prime-contract-pcos/new`;
 
   redirect(target);

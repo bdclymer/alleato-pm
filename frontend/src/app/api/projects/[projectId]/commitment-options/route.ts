@@ -29,7 +29,7 @@ export const GET = withApiGuardrails(
 
     const { data: commitments, error: commitmentsError } = await supabase
       .from("commitments_unified")
-      .select("id, contract_number, title, contract_company_id")
+      .select("id, contract_number, title, commitment_type, contract_company_id")
       .eq("project_id", projectId)
       .is("deleted_at", null)
       .order("contract_number", { ascending: true });
@@ -68,6 +68,7 @@ export const GET = withApiGuardrails(
       id: row.id,
       contract_number: row.contract_number,
       title: row.title,
+      commitment_type: row.commitment_type,
       company_name: row.contract_company_id
         ? (companyNameById.get(row.contract_company_id) ?? null)
         : null,

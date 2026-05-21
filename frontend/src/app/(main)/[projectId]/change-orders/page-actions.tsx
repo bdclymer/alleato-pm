@@ -16,10 +16,10 @@ export function PageActions({ projectId, tab = "prime" }: PageActionsProps) {
   const createHref =
     tab === "prime"
       ? `/${projectId}/prime-contract-pcos/new`
-      : `/${projectId}/change-orders/commitment/new`;
+      : `/${projectId}/commitment-pcos/new`;
 
   const label =
-    tab === "prime" ? "New Prime PCO" : "New Commitment CO";
+    tab === "prime" ? "New Prime PCO" : "New Commitment PCO";
 
   const handleExport = async () => {
     try {

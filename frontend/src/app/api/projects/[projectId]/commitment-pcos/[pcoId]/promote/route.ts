@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
+import { mapCommitmentPcoLineItemToCoLine } from "@/lib/change-events/commitment-pco-promotion-line-items";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -103,6 +104,37 @@ export const POST = withApiGuardrails(
     if (coError) {
       logger.error({ msg: "[commitment-pcos promote] CO creation error", error: coError.message });
       return apiErrorResponse(coError);
+    }
+
+    const { data: pcoLineItems, error: lineItemsError } = await supabase
+      .from("pco_line_items")
+      .select("budget_code_id, description, amount")
+      .eq("pco_id", pcoId)
+      .eq("pco_type", "commitment")
+      .order("sort_order", { ascending: true });
+
+    if (lineItemsError) {
+      await supabase.from("contract_change_orders").delete().eq("id", newCo.id);
+      return apiErrorResponse(lineItemsError);
+    }
+
+    if (pcoLineItems && pcoLineItems.length > 0) {
+      const { error: lineInsertError } = await supabase
+        .from("commitment_change_order_lines")
+        .insert(
+          pcoLineItems.map((item) =>
+            mapCommitmentPcoLineItemToCoLine(newCo.id, item),
+          ),
+        );
+
+      if (lineInsertError) {
+        logger.error({
+          msg: "[commitment-pcos promote] CO line item copy error, rolling back CO",
+          error: lineInsertError.message,
+        });
+        await supabase.from("contract_change_orders").delete().eq("id", newCo.id);
+        return apiErrorResponse(lineInsertError);
+      }
     }
 
     // Update the PCO with promotion info
