@@ -208,7 +208,7 @@ export default function NewChangeEventPage() {
   const initialData: Partial<ChangeEventFormData> = {
     contractNumber: "",
     title: "",
-    status: "open",
+    status: "Open",
     attachments: [],
     lineItems: [],
   };

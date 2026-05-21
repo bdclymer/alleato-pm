@@ -157,6 +157,7 @@ export function GeneralInfoSection({
           value={formData.lineItemRevenueSource || ""}
           onValueChange={(value) => updateFormData({ lineItemRevenueSource: value })}
           placeholder="Select Revenue Source"
+          hint="Match Cost: auto-copies cost to revenue. Enter Manually: type revenue per line. Qty × Unit Cost: calculates from those fields."
         />
         <SelectField
           label="Prime Contract For Markup Estimates"
