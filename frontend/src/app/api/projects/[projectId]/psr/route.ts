@@ -160,10 +160,14 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         : [];
     const primeContractIds = primeContracts.map((pc) => pc.id);
 
-    // Fetch owner invoices (no direct project_id — must filter by prime_contract_id)
+    // Fetch owner invoices (no direct project_id — must filter by prime_contract_id).
+    // We do NOT filter by billing_date here because many invoices store their period
+    // in `period_end` rather than `billing_date`, and PostgreSQL silently drops rows
+    // where billing_date IS NULL when a .gte() filter is applied.
     let ownerInvoicesData: Array<{
       id: number;
       billing_date: string | null;
+      period_end: string | null;
       gross_amount: number | null;
       paid_amount: number | null;
     }> = [];
@@ -171,9 +175,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     if (primeContractIds.length > 0) {
       const { data: ownerInvoices } = await supabase
         .from("owner_invoices")
-        .select("id, billing_date, gross_amount, paid_amount")
+        .select("id, billing_date, period_end, gross_amount, paid_amount")
         .in("prime_contract_id", primeContractIds)
-        .gte("billing_date", billingStart)
         .order("billing_date", { ascending: true });
       ownerInvoicesData = ownerInvoices ?? [];
     }
@@ -419,6 +422,7 @@ function buildMonthlyBilling(
   currentMonth: string,
   ownerInvoices: Array<{
     billing_date: string | null;
+    period_end: string | null;
     gross_amount: number | null;
     paid_amount: number | null;
   }>,
@@ -431,9 +435,11 @@ function buildMonthlyBilling(
     const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const monthLabel = d.toLocaleString("en-US", { month: "long" });
 
-    const ownerForMonth = ownerInvoices.filter(
-      (inv) => inv.billing_date?.slice(0, 7) === monthStr,
-    );
+    const ownerForMonth = ownerInvoices.filter((inv) => {
+      // Use billing_date if set; fall back to period_end (common for pay-app–linked invoices)
+      const effectiveDate = inv.billing_date ?? inv.period_end;
+      return effectiveDate?.slice(0, 7) === monthStr;
+    });
     const subForMonth = subInvoices.filter(
       (inv) => inv.billing_date?.slice(0, 7) === monthStr,
     );
