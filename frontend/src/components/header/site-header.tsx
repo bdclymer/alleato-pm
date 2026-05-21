@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import {
   headerNavGroups,
   companyWideHeaderTools,
-  meganCompanyAdminTools,
+  developerCompanyAdminTools,
   buildToolUrl,
   filterToolsByPermission,
   type HeaderNavGroup,
@@ -626,7 +626,7 @@ function ToolsDropdown({
     userType,
   );
   const visibleMeganAdminTools = canViewMeganAdminTools
-    ? meganCompanyAdminTools
+    ? developerCompanyAdminTools
     : [];
 
   React.useEffect(() => {
@@ -705,7 +705,7 @@ function ToolsDropdown({
             <CompanyToolsPanel
               tools={companyWideHeaderTools}
               visibleTools={visibleCompanyTools}
-              adminTools={canViewMeganAdminTools ? meganCompanyAdminTools : []}
+              adminTools={canViewMeganAdminTools ? developerCompanyAdminTools : []}
               visibleAdminTools={visibleMeganAdminTools}
               projectId={projectId}
               activeToolName={activeToolName}
