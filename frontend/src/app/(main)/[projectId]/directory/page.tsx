@@ -58,6 +58,7 @@ import { PageShell } from "@/components/layout";
 import { DataTable } from "@/components/tables/DataTable";
 import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
 import { CompanyDetailSheet } from "@/components/domain/directory/CompanyDetailSheet";
+import { ProjectTeamDialog } from "@/components/domain/directory/ProjectTeamDialog";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
@@ -299,66 +300,6 @@ function SectionRow({
 }
 
 // ─── Dialogs ─────────────────────────────────────────────────────
-
-function CreateRoleDialog({
-  open,
-  onOpenChange,
-  onSave,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (name: string) => Promise<void>;
-}) {
-  const [name, setName] = React.useState("");
-  const [saving, setSaving] = React.useState(false);
-
-  const handleSave = async () => {
-    if (!name.trim()) return;
-    setSaving(true);
-    try {
-      await onSave(name.trim());
-      setName("");
-      onOpenChange(false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 p-0 sm:max-w-sm border-border/60 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
-          <DialogTitle className="text-lg tracking-tight">Create role</DialogTitle>
-          <DialogDescription>
-            Give the role a clear name. You&apos;ll assign members after.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="px-6 pb-4 space-y-1.5">
-          <Label htmlFor="role-name" className="text-xs font-medium text-muted-foreground">
-            Role name
-          </Label>
-          <Input
-            id="role-name"
-            placeholder="e.g. Project Manager"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSave()}
-            autoFocus
-            className="h-9"
-          />
-        </div>
-        <DialogFooter className="px-6 pb-6 pt-2 gap-2">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving || !name.trim()}>
-            {saving ? "Creating..." : "Create role"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function AddMemberDialog({
   open,
@@ -959,13 +900,13 @@ function ProjectTeamSection({
         onSave={updateRoleMembers}
         projectId={projectId}
       />
-      <CreateRoleDialog
+      <ProjectTeamDialog
         open={createRoleOpen}
         onOpenChange={setCreateRoleOpen}
-        onSave={async (name) => {
-          const newRole = await createRole(name);
-          setAssignDialog({ open: true, role: newRole });
-        }}
+        roles={roles}
+        createRole={createRole}
+        updateRoleMembers={updateRoleMembers}
+        deleteRole={deleteRole}
       />
       {TeamConfirmDialog}
     </>
