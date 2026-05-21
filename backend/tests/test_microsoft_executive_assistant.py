@@ -99,6 +99,10 @@ def test_run_microsoft_assistant_uses_deep_agents_tools_memory_and_skills():
     )
     assert captured["memory"]
     assert captured["skills"]
+    assert "microsoft_executive_assistant/runtime/AGENTS.md" in captured["memory"][0]
+    assert "alleato-ai/skills" not in captured["memory"][0]
+    assert "microsoft_executive_assistant/runtime/skills" in captured["skills"][0]
+    assert "alleato-ai/skills" not in captured["skills"][0]
     assert captured["config"]["configurable"]["thread_id"] == "session-1"
     assert captured["config"]["configurable"]["mailbox_user_id"] == "megan@alleatogroup.com"
     prompt = captured["payload"]["messages"][0]["content"]

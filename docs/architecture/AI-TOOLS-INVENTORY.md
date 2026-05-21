@@ -74,7 +74,7 @@ USER ─chat─▶    │ FRONTEND (FE)                                         
 | Tool inventory introspection | `GET /api/intelligence/deep-agent/tool-inventory` | BE |
 | LangGraph SDK | `advisor` graph at `:2024` (local) | SA |
 
-**Where the three runtimes overlap:** SA's `alleato_ai/tools/` is duplicated almost verbatim as BE's `alleato_ai_tools/`. BE adds the FastAPI shell (`deep_project_intelligence.py`), a parallel Supabase-client copy of the four PM tools (`pm_advisor_tools.py`), and the content-builder/research agent subdirectories. FE does not import BE or SA Python code — when it wants those capabilities it calls the BE HTTP routes via `deep-agent-project-status.ts`.
+**Where the three runtimes overlap:** SA's `alleato_ai/tools/` is duplicated almost verbatim as BE's `alleato_ai_tools/`. BE adds the FastAPI shell (`deep_project_intelligence.py`) and the content-builder/research agent subdirectories. FE does not import BE or SA Python code — when it wants those capabilities it calls the BE HTTP routes via `deep-agent-project-status.ts`.
 
 ---
 
@@ -232,14 +232,10 @@ Sort: Layer, then File, then tool name. Status legend: `active` = wired into a l
 | query_db | backend/src/services/agents/alleato_ai_tools/db.py | supabase_table:* (PM APP via DATABASE_URL) | BE | active | merge with SA copy |
 | search_teams_messages | backend/src/services/agents/alleato_ai_tools/graph_api.py | document_chunks_rag (NOT live Graph) | BE | active, misleading-name | rename file to `rag_comms.py` (Tier 3) |
 | search_emails | backend/src/services/agents/alleato_ai_tools/graph_api.py | document_chunks_rag (NOT live Graph) | BE | active, misleading-name | rename file to `rag_comms.py` |
-| project_budget_summary | backend/src/services/agents/alleato_ai_tools/pm.py | multiple (projects + v_budget_lines + prime_contract_financial_summary) — SQLAlchemy | BE | active, duplicate | merge with `pm_advisor_tools.py` (Tier 2) |
-| project_briefing_snapshot | backend/src/services/agents/alleato_ai_tools/pm.py | multiple (projects + financial views + rfis + submittals + schedule_tasks + commitments_unified + change_events + document_metadata) — SQLAlchemy | BE | active, duplicate | merge with `pm_advisor_tools.py` |
-| project_risk_snapshot | backend/src/services/agents/alleato_ai_tools/pm.py | multiple (projects + rfis + submittals + schedule_tasks + change_events) — SQLAlchemy | BE | active, duplicate | merge with `pm_advisor_tools.py` |
-| portfolio_overview | backend/src/services/agents/alleato_ai_tools/pm.py | multiple (projects + prime_contract_financial_summary + project_issue_summary + document_metadata) — SQLAlchemy | BE | active, duplicate | merge with `pm_advisor_tools.py` |
-| project_budget_summary (closure) | backend/src/services/agents/pm_advisor_tools.py | same as pm.py — but Supabase Client | BE | active, duplicate | pick one DB access pattern; delete the other |
-| project_risk_snapshot (closure) | backend/src/services/agents/pm_advisor_tools.py | same as pm.py — Supabase Client | BE | active, duplicate | same |
-| project_briefing_snapshot (closure) | backend/src/services/agents/pm_advisor_tools.py | same as pm.py — Supabase Client | BE | active, duplicate | same |
-| portfolio_overview (closure) | backend/src/services/agents/pm_advisor_tools.py | same as pm.py — Supabase Client | BE | active, duplicate | same |
+| project_budget_summary | backend/src/services/agents/alleato_ai_tools/pm.py | multiple (projects + v_budget_lines + prime_contract_financial_summary) — SQLAlchemy | BE | active, canonical | canonical PM implementation |
+| project_briefing_snapshot | backend/src/services/agents/alleato_ai_tools/pm.py | multiple (projects + financial views + rfis + submittals + schedule_tasks + commitments_unified + change_events + document_metadata) — SQLAlchemy | BE | active, canonical | canonical PM implementation |
+| project_risk_snapshot | backend/src/services/agents/alleato_ai_tools/pm.py | multiple (projects + rfis + submittals + schedule_tasks + change_events) — SQLAlchemy | BE | active, canonical | canonical PM implementation |
+| portfolio_overview | backend/src/services/agents/alleato_ai_tools/pm.py | multiple (projects + prime_contract_financial_summary + project_issue_summary + document_metadata) — SQLAlchemy | BE | active, canonical | canonical PM implementation |
 | search_meeting_transcripts | backend/src/services/agents/alleato_ai_tools/rag.py | supabase_rpc:search_document_chunks (AI DB) | BE | active | merge with SA copy (but resolve embedding-client divergence first) |
 | list_recent_meetings | backend/src/services/agents/alleato_ai_tools/rag.py | supabase_table_rag:document_chunks | BE | active | merge with SA copy |
 | search_unstructured | backend/src/services/agents/alleato_ai_tools/rag.py | supabase_rpc:search_document_chunks | BE | active | merge with SA copy |
@@ -259,9 +255,9 @@ Sort: Layer, then File, then tool name. Status legend: `active` = wired into a l
 | generate_cover | backend/src/services/agents/content_builder/tools.py | external_api:gemini | BE | active | keep |
 | generate_social_image | backend/src/services/agents/content_builder/tools.py | external_api:gemini | BE | active | keep |
 | source_coverage (closure) | backend/src/services/agents/deep_project_intelligence.py | multiple (9 source probes per project) | BE | active | keep |
-| pm_budget_summary (closure) | backend/src/services/agents/deep_project_intelligence.py | delegates to pm_advisor_tools | BE | active, duplicate | merge with `pm_advisor_tools` consolidation |
-| pm_briefing_snapshot (closure) | backend/src/services/agents/deep_project_intelligence.py | delegates to pm_advisor_tools | BE | active, duplicate | merge |
-| pm_risk_snapshot (closure) | backend/src/services/agents/deep_project_intelligence.py | delegates to pm_advisor_tools | BE | active, duplicate | merge |
+| pm_budget_summary (closure) | backend/src/services/agents/deep_project_intelligence.py | binds request project_id and invokes canonical `alleato_ai_tools/pm.py` tool | BE | active, wrapper | keep as request-bound tool |
+| pm_briefing_snapshot (closure) | backend/src/services/agents/deep_project_intelligence.py | binds request project_id and invokes canonical `alleato_ai_tools/pm.py` tool | BE | active, wrapper | keep as request-bound tool |
+| pm_risk_snapshot (closure) | backend/src/services/agents/deep_project_intelligence.py | binds request project_id and invokes canonical `alleato_ai_tools/pm.py` tool | BE | active, wrapper | keep as request-bound tool |
 | draft_email | alleato-ai/alleato_ai/tools/actions.py | internal_state | SA | active, duplicate | designate SA as canonical; backend imports |
 | draft_teams_message | alleato-ai/alleato_ai/tools/actions.py | internal_state | SA | active, duplicate | same |
 | draft_rfi | alleato-ai/alleato_ai/tools/actions.py | internal_state | SA | active, duplicate | same |
@@ -432,14 +428,12 @@ All delegate to `services/workspace-artifact-service.ts`. Tables: PM APP `worksp
 
 Near-verbatim copy of `alleato-ai/alleato_ai/tools/`. See Tier 2 #1 for the consolidation plan. Per-tool fidelity:
 
-- `actions.py` (6 draft tools), `db.py` (2), `graph_api.py` (2 — misleading filename, see Tier 1 #3), `pm.py` (4 — duplicate of `pm_advisor_tools.py` with different DB driver), `rag.py` (3 — diverged from SA copy), `recent.py` (1), `resolvers.py` (4), `think.py` (1), `acumatica.py` (10), `rerank.py` (utility, not a tool), `_retry.py` (utility).
+- `actions.py` (6 draft tools), `db.py` (2), `graph_api.py` (2 — misleading filename, see Tier 1 #3), `pm.py` (4 — canonical backend PM implementation), `rag.py` (3 — diverged from SA copy), `recent.py` (1), `resolvers.py` (4), `think.py` (1), `acumatica.py` (10), `rerank.py` (utility, not a tool), `_retry.py` (utility).
 - All: `merge with SA copy` once a canonical source is picked.
 
-#### pm_advisor_tools.py — 4 PM functions
+#### pm_advisor_tools.py — removed
 
-Duplicate of `alleato_ai_tools/pm.py` using `supabase.Client` instead of SQLAlchemy. Currently used only by `deep_project_intelligence.py` closures.
-
-- All 4: `merge with pm.py`. Why: same logic, two DB drivers, same tables. Pick one and have the other delete-imported.
+The duplicate Supabase-client PM adapter was removed. `deep_project_intelligence.py` now invokes the canonical `alleato_ai_tools/pm.py` LangChain tools for project budget, briefing, risk, and portfolio summaries, matching the subagent runtime surface.
 
 #### memory/tools.py — 4 memory tools
 
@@ -455,10 +449,10 @@ Duplicate of `alleato_ai_tools/pm.py` using `supabase.Client` instead of SQLAlch
 
 #### deep_project_intelligence.py — 4 closure tools
 
-`source_coverage`, `pm_budget_summary`, `pm_briefing_snapshot`, `pm_risk_snapshot`. Defined inline inside `_run_deep_agents_runtime` and passed to `create_deep_agent()`. The PM ones delegate to `pm_advisor_tools.py`.
+`source_coverage`, `pm_budget_summary`, `pm_briefing_snapshot`, `pm_risk_snapshot`. Defined inline inside `_run_deep_agents_runtime` and passed to `create_deep_agent()`. The PM ones delegate to the canonical `alleato_ai_tools/pm.py` LangChain tools.
 
 - `keep source_coverage`. Why: bespoke for the coverage protocol.
-- `merge the 3 PM closures` with `pm_advisor_tools.py` consolidation.
+- `keep the 3 PM closures`. Why: they bind the current request/project context while reusing the canonical PM tool implementation.
 
 ---
 
@@ -515,7 +509,7 @@ Numbered for reference in the consolidation plan.
    - `getOutlookOperationsStatus` → status table
    This violates the principle the email-audit was supposed to fix: every tool in a "live operator" file should be live-first.
 
-4. **`pm_advisor_tools.py` (Supabase Client) vs `alleato_ai_tools/pm.py` (SQLAlchemy) — same four PM functions, different DB drivers.** Both are imported in BE. Closures in `deep_project_intelligence.py` use `pm_advisor_tools.py`; sub-agents in `subagents.py` use `alleato_ai_tools/pm.py`. Same SQL output. Two drivers, two failure modes, two maintenance burdens.
+4. **Resolved: `pm_advisor_tools.py` duplicate removed.** Project/executive Deep Agents closure tools and subagents now use `alleato_ai_tools/pm.py` as the canonical PM implementation.
 
 5. **`rag.py` divergence between BE and SA.** Backend uses `openai.OpenAI` + `get_rag_read_client()` (Supabase helper); standalone uses `langchain_openai.OpenAIEmbeddings` + its own SQLAlchemy engine. Both target the same AI Database `document_chunks` table and the same `search_document_chunks` RPC. Embedding output dimensions match (3072), but the embedding-call retry/timeout behaviour differs. Risk: a question that succeeds in one runtime can time out in the other.
 
@@ -567,7 +561,7 @@ Three tiers, ranked by impact.
 
 **2.1 Consolidate `backend/src/services/agents/alleato_ai_tools/` and `alleato-ai/alleato_ai/tools/` into a single package.** Pick one source of truth — SA is the natural choice because it owns the LangGraph deploy and has the cleanest layout. BE imports from SA via `pip install -e ../alleato-ai` or a published wheel. Eliminates ~3000 lines of duplicated code and the embedding-client divergence in `rag.py`.
 
-**2.2 Merge `pm_advisor_tools.py` (Supabase Client) and `alleato_ai_tools/pm.py` (SQLAlchemy).** Pick one DB access pattern. Recommendation: SQLAlchemy via `DATABASE_URL` for parity with `db.py` and `recent.py`, then change `deep_project_intelligence.py` closures to call those instead.
+**2.2 Merge `pm_advisor_tools.py` (Supabase Client) and `alleato_ai_tools/pm.py` (SQLAlchemy).** Complete. `pm_advisor_tools.py` was removed and `deep_project_intelligence.py` closure tools call `alleato_ai_tools/pm.py`.
 
 **2.3 Merge `backend/.../subagents.py` and `alleato-ai/.../subagents/__init__.py`.** Same four agents. Single source.
 
@@ -618,7 +612,7 @@ Three tiers, ranked by impact.
 - `dead`: 1 (`saveToKnowledgeBase`)
 - `unwired`: 1 (`getWeather`)
 - `misleading-name`: 4 (both `graph_api.py` files: `search_teams_messages` + `search_emails` × 2 layers)
-- `duplicate`: ~33 (entire `alleato_ai_tools/` ↔ `alleato-ai/.../tools/` mirror, plus the 4 PM functions duplicated as `pm_advisor_tools.py`, plus `searchMemories` vs `recallPastConversations`)
+- `duplicate`: ~29 (entire `alleato_ai_tools/` ↔ `alleato-ai/.../tools` mirror, plus `searchMemories` vs `recallPastConversations`)
 
 **Top consolidation wins by line-count:** Tier 2.1 (BE/SA tool dir merge) removes ~3000 duplicated lines. Tier 2.2 (PM driver merge) removes ~350 lines. Tier 3.1-3.4 cleanup removes ~600 lines. Tier 1.1-1.2 corrects ~2 documented production bugs (stale inbox reads, missing live-Graph email fallback).
 

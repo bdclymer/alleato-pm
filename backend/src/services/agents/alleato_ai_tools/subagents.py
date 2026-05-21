@@ -4,6 +4,10 @@ Each sub-agent is a focused investigator with its own context window and tool su
 The orchestrator delegates to them in parallel and integrates their reports.
 """
 
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
 from .prompts import (
     BUSINESS_DEVELOPMENT_ANALYST_PROMPT,
     COMMUNICATIONS_ANALYST_PROMPT,
@@ -35,6 +39,38 @@ from . import (
     search_unstructured,
     think_tool,
 )
+
+
+class _SubagentPacket(BaseModel):
+    """Structured packet returned by analyst subagents to the orchestrator."""
+
+    findings: list[str] = Field(
+        default_factory=list,
+        description="Specific facts or observations found by the subagent. No narrative synthesis.",
+    )
+    citations: list[str] = Field(
+        default_factory=list,
+        description="Source identifiers supporting the findings, such as table IDs, dates, or tool result labels.",
+    )
+    confidence: Literal["high", "medium", "low"] = Field(
+        description="Confidence based on data freshness, source coverage, and conflicting evidence.",
+    )
+    open_questions: list[str] = Field(
+        default_factory=list,
+        description="Specific unresolved gaps the orchestrator should disclose or investigate further.",
+    )
+
+
+class FinancialAnalystPacket(_SubagentPacket):
+    """Financial analyst structured output."""
+
+
+class RiskAnalystPacket(_SubagentPacket):
+    """Risk analyst structured output."""
+
+
+class CommunicationsAnalystPacket(_SubagentPacket):
+    """Communications analyst structured output."""
 
 def build_subagents(
     *,
@@ -126,6 +162,7 @@ def build_subagents(
             ),
             "system_prompt": FINANCIAL_ANALYST_PROMPT,
             "tools": financial_tools,
+            "response_format": FinancialAnalystPacket,
         },
         {
             "name": "schedule-analyst",
@@ -144,6 +181,7 @@ def build_subagents(
             ),
             "system_prompt": RISK_ANALYST_PROMPT,
             "tools": risk_tools,
+            "response_format": RiskAnalystPacket,
         },
         {
             "name": "communications-analyst",
@@ -153,6 +191,7 @@ def build_subagents(
             ),
             "system_prompt": COMMUNICATIONS_ANALYST_PROMPT,
             "tools": communications_tools,
+            "response_format": CommunicationsAnalystPacket,
         },
         {
             "name": "business-development-analyst",

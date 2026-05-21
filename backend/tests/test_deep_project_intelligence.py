@@ -308,6 +308,18 @@ def test_deep_agents_runtime_attaches_harness_options_and_subagent_skills(monkey
     assert kwargs["checkpointer"] is harness_options["checkpointer"]
     assert kwargs["subagents"]
     assert all(subagent["skills"] == ["/skills/"] for subagent in kwargs["subagents"])
+    structured_subagents = {
+        subagent["name"]: subagent.get("response_format")
+        for subagent in kwargs["subagents"]
+        if subagent["name"]
+        in {"financial-analyst", "risk-analyst", "communications-analyst"}
+    }
+    assert set(structured_subagents) == {
+        "financial-analyst",
+        "risk-analyst",
+        "communications-analyst",
+    }
+    assert all(response_format is not None for response_format in structured_subagents.values())
 
 
 def test_deep_agents_runtime_tool_inventory_is_gated(monkeypatch):
@@ -412,6 +424,12 @@ def test_deep_agents_runtime_subagents_respect_sql_and_acumatica_gates(monkeypat
     assert not any(name.startswith("acumatica_") for name in tool_names)
     assert "project_budget_summary" in tool_names
     assert "search_meeting_transcripts" in tool_names
+    structured = {
+        subagent["name"]: subagent.get("response_format")
+        for subagent in subagents
+        if subagent["name"] in {"financial-analyst", "risk-analyst", "communications-analyst"}
+    }
+    assert all(schema is not None for schema in structured.values())
 
 
 def test_deep_agents_runtime_inventory_reports_effective_surface(monkeypatch):

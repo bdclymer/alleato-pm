@@ -33,15 +33,13 @@ from src.services.agents.alleato_ai_tools import (
     READ_ONLY_PM_TOOLS,
     RESOLVERS,
     SQL_TOOLS,
+    portfolio_overview as pm_portfolio_overview_tool,
+    project_briefing_snapshot as pm_project_briefing_snapshot_tool,
+    project_budget_summary as pm_project_budget_summary_tool,
+    project_risk_snapshot as pm_project_risk_snapshot_tool,
 )
 from src.services.agents.alleato_ai_tools.prompts import ORCHESTRATOR_PROMPT
 from src.services.agents.alleato_ai_tools.subagents import build_subagents
-from src.services.agents.pm_advisor_tools import (
-    portfolio_overview,
-    project_briefing_snapshot,
-    project_budget_summary,
-    project_risk_snapshot,
-)
 
 
 REQUIRED_SOURCE_TYPES = (
@@ -1119,6 +1117,14 @@ def _resolve_deep_agents_model(model: Any) -> Any:
     return model
 
 
+def _invoke_canonical_pm_tool(tool_obj: Any, **kwargs: Any) -> str:
+    """Invoke canonical Alleato PM LangChain tools from runtime closure tools."""
+
+    if hasattr(tool_obj, "invoke"):
+        return str(tool_obj.invoke(kwargs))
+    return str(tool_obj(**kwargs))
+
+
 def _run_deep_agents_runtime(
     request: DeepProjectIntelligenceRequest,
     project: DeepProject,
@@ -1145,15 +1151,24 @@ def _run_deep_agents_runtime(
 
         def pm_budget_summary() -> str:
             """Return PM budget and prime-contract financials for this project."""
-            return project_budget_summary(_store_client(store), request.project_id)
+            return _invoke_canonical_pm_tool(
+                pm_project_budget_summary_tool,
+                project_id=request.project_id,
+            )
 
         def pm_briefing_snapshot() -> str:
             """Return the broad PM briefing snapshot for this project."""
-            return project_briefing_snapshot(_store_client(store), request.project_id)
+            return _invoke_canonical_pm_tool(
+                pm_project_briefing_snapshot_tool,
+                project_id=request.project_id,
+            )
 
         def pm_risk_snapshot() -> str:
             """Return structured risk, overdue, and chase-list context for this project."""
-            return project_risk_snapshot(_store_client(store), request.project_id)
+            return _invoke_canonical_pm_tool(
+                pm_project_risk_snapshot_tool,
+                project_id=request.project_id,
+            )
 
         memory_middleware = _runtime_memory_middleware()
         memory_tools: list[Any] = []
@@ -1248,7 +1263,11 @@ def _run_deep_agents_executive_runtime(
 
         def pm_portfolio_overview() -> str:
             """Return portfolio-level PM context across active projects."""
-            return portfolio_overview(_store_client(store), phase="Current", max_projects=25)
+            return _invoke_canonical_pm_tool(
+                pm_portfolio_overview_tool,
+                phase="Current",
+                max_projects=25,
+            )
 
         memory_middleware = _runtime_memory_middleware()
         memory_tools: list[Any] = []

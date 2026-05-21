@@ -25,6 +25,7 @@ from src.services.agents.microsoft_executive_assistant.tools import (
 
 
 ORCHESTRATOR_NAME = "microsoft-executive-assistant"
+RUNTIME_DIR = Path(__file__).resolve().parent / "runtime"
 
 
 def _repo_root() -> Path:
@@ -36,7 +37,7 @@ def _repo_root() -> Path:
 
 
 def _source_skill_dir() -> Path:
-    return _repo_root() / "alleato-ai" / "skills" / "Microsoft_Executive_Assistant"
+    return RUNTIME_DIR
 
 
 def _skill_roots() -> list[str]:
