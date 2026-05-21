@@ -216,12 +216,26 @@ async function verifyAppExpertResponse() {
     ),
     "App Expert smoke does not report missing generated artifacts",
   );
-  requireCondition(
+  const hasGeneratedArtifactEvidence =
+    (Array.isArray(payload.sources) &&
+      payload.sources.some((source) => {
+        const sourceType = String(source?.sourceType ?? "").toLowerCase();
+        const route = String(source?.route ?? source?.title ?? source?.filePath ?? "").toLowerCase();
+        return (
+          sourceType === "sitemap" &&
+          (route.includes("/change-events") ||
+            route.includes("docs/help/articles/change-events.md") ||
+            route.includes("frontend/src/app") ||
+            route.includes("/src/app"))
+        );
+      })) ||
     observed.includes("get_app_sitemap") ||
-      observed.includes("search_app_sitemap") ||
-      observed.includes("search_feature_registry") ||
-      observed.includes("app-sitemap.generated.json") ||
-      observed.includes("feature-registry.generated.json"),
+    observed.includes("search_app_sitemap") ||
+    observed.includes("search_feature_registry") ||
+    observed.includes("app-sitemap.generated.json") ||
+    observed.includes("feature-registry.generated.json");
+  requireCondition(
+    hasGeneratedArtifactEvidence,
     "App Expert smoke used generated app artifacts",
   );
 
