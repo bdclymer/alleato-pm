@@ -3,15 +3,31 @@
 ## What This Does
 
 The custom access token hook (`public.custom_access_token_hook`) runs at JWT issuance
-time and embeds two claims into every access token:
+time and embeds three claims into every access token:
 
-- `is_admin` — boolean, sourced from `user_profiles.is_admin`
+- `is_admin` — boolean. `true` if `user_profiles.is_admin` OR `user_profiles.is_developer`.
+  Developer implies admin, so any code path gated by `is_admin` automatically lets
+  developers through.
+- `is_developer` — boolean, sourced from `user_profiles.is_developer`. Use this
+  for surfaces that should be hidden from regular admins (internal diagnostics,
+  experimental features). Migration: `20260527000000_add_is_developer_role.sql`.
 - `app_role` — text, sourced from `user_profiles.role` (defaults to `'team'`)
 
 Before this hook, every page that needed to check admin status did a synchronous
 `SELECT is_admin FROM user_profiles WHERE id = auth.uid()`. After the hook is
 registered, `public.is_admin()` reads `auth.jwt() ->> 'is_admin'` instead — zero
-extra DB round-trips.
+extra DB round-trips. The same applies to `public.is_developer()`.
+
+## How to make a user a developer
+
+```sql
+update public.user_profiles
+   set is_developer = true
+ where email = 'megan@megankharrison.com';
+```
+
+Users do not need to log out — the new claim shows up on the next token refresh
+(within ~1 hour). To force it immediately, log out and back in.
 
 ## Step 1: Apply the Migrations (already done)
 

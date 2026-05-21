@@ -429,7 +429,11 @@ function EmptyTabState({ label }: { label: string }) {
    ProjectDetailsSidebar — right panel
 ───────────────────────────────────────────────────────────── */
 
-const SIDEBAR_ROLES = ["VP", "Project Manager", "Superintendent", "Architect"];
+interface TeamSlot {
+  key: string;
+  roleName: string;
+  displayName: string | null;
+}
 
 function SidebarTeamSection({
   projectId,
@@ -438,83 +442,110 @@ function SidebarTeamSection({
   projectId: string;
   team?: ProjectTeamMember[];
 }) {
-  const { roles, isLoading } = useProjectRoles(projectId, { enabled: false });
-  const rolesByName = React.useMemo(
-    () => new Map(roles.map((role) => [role.role_name.toLowerCase(), role])),
-    [roles],
-  );
-  const teamByRoleName = React.useMemo(() => {
-    const roleMap = new Map<string, ProjectTeamMember>();
-    for (const member of team) {
-      const roleName = member.role?.trim().toLowerCase();
-      if (roleName && !roleMap.has(roleName)) {
-        roleMap.set(roleName, member);
-      }
-    }
-    return roleMap;
-  }, [team]);
+  const { roles, isLoading } = useProjectRoles(projectId);
 
-  const slots = SIDEBAR_ROLES.map((roleName) => {
-    const dbRole = rolesByName.get(roleName.toLowerCase());
-    const firstMember = dbRole?.members[0] ?? null;
-    const initialMember = teamByRoleName.get(roleName.toLowerCase()) ?? null;
-    const person = firstMember?.person ?? initialMember;
-    return { roleName, person };
-  });
+  const slots = React.useMemo<TeamSlot[]>(() => {
+    // Source of truth: project_roles + project_role_members (what the Directory page writes to).
+    if (roles.length > 0) {
+      return roles
+        .filter((role) => role.members.length > 0)
+        .flatMap((role) =>
+          role.members.map((member) => {
+            const person = member.person;
+            const displayName = person
+              ? `${person.first_name} ${person.last_name}`.trim() || null
+              : null;
+            return {
+              key: `${role.id}:${member.id}`,
+              roleName: role.role_name,
+              displayName,
+            };
+          }),
+        );
+    }
+
+    // Fallback: project_directory_memberships / get_project_team RPC (server-provided).
+    const seen = new Set<string>();
+    return team
+      .map((member, index) => {
+        const roleName = member.role?.trim() || "Team Member";
+        const displayName = `${member.first_name} ${member.last_name}`.trim() || null;
+        return {
+          key: `${roleName}-${index}`,
+          roleName,
+          displayName,
+        };
+      })
+      .filter((slot) => {
+        const dedupeKey = `${slot.roleName}:${slot.displayName ?? ""}`;
+        if (seen.has(dedupeKey)) return false;
+        seen.add(dedupeKey);
+        return true;
+      });
+  }, [roles, team]);
+
+  if (isLoading && slots.length === 0) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-muted animate-pulse" />
+            <div className="flex-1 space-y-1">
+              <div className="h-2.5 w-24 rounded bg-muted animate-pulse" />
+              <div className="h-2 w-16 rounded bg-muted animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (slots.length === 0) {
+    return (
+      <Link
+        href={`/${projectId}/directory`}
+        prefetch={false}
+        className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        No team members assigned yet. <span className="text-primary">Add team →</span>
+      </Link>
+    );
+  }
 
   return (
-    <div>
-      {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-muted animate-pulse" />
-              <div className="flex-1 space-y-1">
-                <div className="h-2.5 w-24 rounded bg-muted animate-pulse" />
-                <div className="h-2 w-16 rounded bg-muted animate-pulse" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-0.5">
-          {slots.map(({ roleName, person }) => {
-            const displayName = person ? `${person.first_name} ${person.last_name}`.trim() : null;
-            return (
-              <Button
-                key={roleName}
-                asChild
-                variant="ghost"
-                className="h-auto w-full justify-start gap-2 px-2 py-1.5 text-left hover:bg-muted/40 -mx-2 rounded-md"
-              >
-                <Link href={`/${projectId}/directory`}>
-                {person ? (
-                  <>
-                    <Avatar className="h-6 w-6 shrink-0">
-                      <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                        {initials(displayName ?? roleName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1 text-left">
-                      <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
-                      <p className="text-[11px] text-muted-foreground">{roleName}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="h-6 w-6 shrink-0 rounded-full border border-dashed border-border/60" />
-                    <div className="min-w-0 flex-1 text-left">
-                      <p className="text-xs text-muted-foreground italic">Unassigned</p>
-                      <p className="text-[11px] text-muted-foreground">{roleName}</p>
-                    </div>
-                  </>
-                )}
-                </Link>
-              </Button>
-            );
-          })}
-        </div>
-      )}
+    <div className="space-y-0.5">
+      {slots.map(({ key, roleName, displayName }) => (
+        <Button
+          key={key}
+          asChild
+          variant="ghost"
+          className="h-auto w-full justify-start gap-2 px-2 py-1.5 text-left hover:bg-muted/40 -mx-2 rounded-md"
+        >
+          <Link href={`/${projectId}/directory`}>
+            {displayName ? (
+              <>
+                <Avatar className="h-6 w-6 shrink-0">
+                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                    {initials(displayName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
+                  <p className="text-[11px] text-muted-foreground">{roleName}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="h-6 w-6 shrink-0 rounded-full border border-dashed border-border/60" />
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-xs text-muted-foreground italic">Unassigned</p>
+                  <p className="text-[11px] text-muted-foreground">{roleName}</p>
+                </div>
+              </>
+            )}
+          </Link>
+        </Button>
+      ))}
     </div>
   );
 }
@@ -1216,14 +1247,6 @@ export function ProjectCommandCenter({
             ) : (
               meetingsContent("")
             )}
-          </div>
-
-          {/* Tasks */}
-          <div>
-            <SectionHeading href={`/${projectId}/tasks`}>
-              Tasks{openTasks.length > 0 ? ` (${openTasks.length})` : ""}
-            </SectionHeading>
-            {tasksContent("")}
           </div>
 
           {/* Daily Reports */}

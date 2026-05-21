@@ -183,8 +183,13 @@ export function DataTable<TData, TValue>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
+                    const width = header.column.columnDef.size;
                     return (
-                      <TableHead key={header.id} colSpan={header.colSpan}>
+                      <TableHead
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        style={typeof width === "number" ? { width, minWidth: width } : undefined}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -209,14 +214,20 @@ export function DataTable<TData, TValue>({
                     )}
                     onClick={() => onRowClick?.(row.original)}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      const width = cell.column.columnDef.size;
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          style={typeof width === "number" ? { width, minWidth: width } : undefined}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 ))
               ) : (

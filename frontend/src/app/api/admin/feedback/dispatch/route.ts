@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import {
+  addGitHubIssueComment,
+  createGitHubIssue,
+} from "@/lib/admin-feedback/github";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -24,6 +28,8 @@ type DispatchHistoryEntry = {
   by: string;
   status: string;
   annotationId: string | null;
+  trigger: "github" | "metadata_queue";
+  githubIssueUrl: string | null;
 };
 
 
@@ -101,7 +107,7 @@ export const POST = withApiGuardrails("/api/admin/feedback/dispatch#POST", async
 
   const { data: item, error: itemError } = await supabase
     .from("admin_feedback_items")
-    .select("id, title, comment, status, severity, page_url, page_path, metadata")
+    .select("*")
     .eq("id", id)
     .maybeSingle();
 
@@ -163,6 +169,60 @@ export const POST = withApiGuardrails("/api/admin/feedback/dispatch#POST", async
       ? `codex --print "${escapeDoubleQuotes(prompt)}"`
       : `claude --print "${escapeDoubleQuotes(prompt)}"`;
 
+  let githubIssue:
+    | { number: number; url: string; state: string }
+    | null = null;
+  let trigger: "github" | "metadata_queue" = "metadata_queue";
+
+  if (target === "claude_code") {
+    if (item.github_issue_number) {
+      const triggered = await addGitHubIssueComment(
+        item.github_issue_number,
+        ["@claude", "", "Please pick this up from the Feedback Inbox dispatch queue.", "", "```text", prompt, "```"].join("\n"),
+      );
+      if (!triggered) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "/api/admin/feedback/dispatch#POST",
+          message: "GitHub integration is not configured. Claude Code dispatch requires GITHUB_FEEDBACK_REPO_OWNER, GITHUB_FEEDBACK_REPO_NAME, and GITHUB_FEEDBACK_TOKEN.",
+        });
+      }
+      githubIssue = {
+        number: item.github_issue_number,
+        url: item.github_issue_url ?? "",
+        state: item.github_issue_state ?? "open",
+      };
+      trigger = "github";
+    } else {
+      githubIssue = await createGitHubIssue({
+        title: item.title,
+        comment: item.comment,
+        pageUrl: item.page_url,
+        pagePath: item.page_path,
+        pageTitle: item.page_title ?? null,
+        requestType: item.request_type as Parameters<typeof createGitHubIssue>[0]["requestType"],
+        severity: (item.severity ?? "medium") as Parameters<typeof createGitHubIssue>[0]["severity"],
+        targetId: item.target_id ?? null,
+        targetSelector: item.target_selector,
+        targetTag: item.target_tag ?? null,
+        targetText: item.target_text ?? null,
+        domPath: item.dom_path ?? null,
+        screenshotUrl: item.screenshot_url ?? null,
+        projectId: item.project_id ?? null,
+        metadata: (item.metadata as Record<string, unknown>) ?? {},
+      });
+
+      if (!githubIssue) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "/api/admin/feedback/dispatch#POST",
+          message: "GitHub integration is not configured. Claude Code dispatch requires GITHUB_FEEDBACK_REPO_OWNER, GITHUB_FEEDBACK_REPO_NAME, and GITHUB_FEEDBACK_TOKEN.",
+        });
+      }
+      trigger = "github";
+    }
+  }
+
   const currentMetadata =
     item.metadata && typeof item.metadata === "object"
       ? (item.metadata as Record<string, unknown>)
@@ -181,6 +241,9 @@ export const POST = withApiGuardrails("/api/admin/feedback/dispatch#POST", async
             status: typeof record.status === "string" ? record.status : item.status,
             annotationId:
               typeof record.annotationId === "string" ? record.annotationId : null,
+            trigger: record.trigger === "github" ? "github" : "metadata_queue",
+            githubIssueUrl:
+              typeof record.githubIssueUrl === "string" ? record.githubIssueUrl : null,
           } as DispatchHistoryEntry;
         }) as DispatchHistoryEntry[])
     : [];
@@ -191,6 +254,8 @@ export const POST = withApiGuardrails("/api/admin/feedback/dispatch#POST", async
     by: user.id,
     status: markInProgress ? "in_progress" : item.status,
     annotationId,
+    trigger,
+    githubIssueUrl: githubIssue?.url ?? item.github_issue_url ?? null,
   };
 
   const nextMetadata = {
@@ -199,6 +264,9 @@ export const POST = withApiGuardrails("/api/admin/feedback/dispatch#POST", async
     assignedAt: new Date().toISOString(),
     assignedBy: user.id,
     dispatchStatus: "dispatched",
+    dispatchTrigger: trigger,
+    dispatchPrompt: prompt,
+    dispatchCliCommand: cliCommand,
     dispatchedAt: new Date().toISOString(),
     dispatchedBy: user.id,
     lastDispatchTarget: target,
@@ -213,6 +281,9 @@ export const POST = withApiGuardrails("/api/admin/feedback/dispatch#POST", async
     .update({
       metadata: nextMetadata,
       status: nextStatus,
+      github_issue_number: githubIssue?.number ?? item.github_issue_number ?? null,
+      github_issue_url: githubIssue?.url ?? item.github_issue_url ?? null,
+      github_issue_state: githubIssue?.state ?? item.github_issue_state ?? null,
     })
     .eq("id", id);
 
@@ -226,6 +297,8 @@ export const POST = withApiGuardrails("/api/admin/feedback/dispatch#POST", async
     target,
     prompt,
     cliCommand,
+    trigger,
+    githubIssue,
     status: nextStatus,
     dispatchEvent,
   });

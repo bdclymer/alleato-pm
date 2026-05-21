@@ -962,7 +962,10 @@ function ProjectTeamSection({
       <CreateRoleDialog
         open={createRoleOpen}
         onOpenChange={setCreateRoleOpen}
-        onSave={async (name) => { await createRole(name); }}
+        onSave={async (name) => {
+          const newRole = await createRole(name);
+          setAssignDialog({ open: true, role: newRole });
+        }}
       />
       {TeamConfirmDialog}
     </>

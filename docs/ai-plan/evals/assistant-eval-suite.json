@@ -115,6 +115,7 @@
       "expectedToolFamilies": ["project", "semantic", "communications"],
       "expectedToolNames": [
         "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
         "getProjectBriefingSnapshot",
         "semanticSearch"
       ],
@@ -130,9 +131,334 @@
       "expectedToolFamilies": ["project", "semantic"],
       "expectedToolNames": [
         "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
         "getProjectBriefingSnapshot"
       ],
       "mustInclude": ["Vermillion"],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-uniqlo-phillipsburg",
+      "intent": "project_briefing",
+      "prompt": "Give me the current operating read for Uniqlo Phillipsburg NJ. What changed recently, what is exposed, and what should I do next?",
+      "selectedProjectId": 31,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "mustInclude": ["Uniqlo"],
+      "mustIncludeAny": [
+        ["Phillipsburg", "NJ"],
+        ["status", "current", "operating read", "stands"],
+        ["risk", "exposed", "blocked", "next", "action"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "Exol Wilmer",
+        "Exol Morrisville",
+        "Goodwill Noblesville",
+        "Goodwill Commons",
+        "Champaign Ace",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-exol-wilmer",
+      "intent": "project_briefing",
+      "prompt": "Give me the current owner-level status for Exol Wilmer. What is moving, what is stuck, and what needs attention this week?",
+      "selectedProjectId": 760,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "mustInclude": ["Exol"],
+      "mustIncludeAny": [
+        ["Wilmer", "26-103"],
+        ["status", "current", "moving", "stuck"],
+        ["risk", "attention", "blocked", "next", "action"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "Exol Morrisville",
+        "Pratt & Whitney",
+        "Superior Beverage",
+        "Superior Beverae",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-exol-morrisville",
+      "intent": "project_briefing",
+      "prompt": "Give me the current operating read for Exol Morrisville. What should Brandon know before the next owner or internal check-in?",
+      "selectedProjectId": 876,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "mustInclude": ["Exol"],
+      "mustIncludeAny": [
+        ["Morrisville", "PA"],
+        ["status", "current", "operating read", "check-in"],
+        ["risk", "blocked", "decision", "next", "attention"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "Exol Wilmer",
+        "Pratt & Whitney",
+        "Superior Beverage",
+        "Superior Beverae",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-gw-allisonville",
+      "intent": "project_briefing",
+      "prompt": "Give me the current project briefing for GW Allisonville Rd IN. Focus on current status, open risks, and the next practical move.",
+      "selectedProjectId": 754,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "mustInclude": ["Allisonville"],
+      "mustIncludeAny": [
+        ["GW", "Goodwill"],
+        ["IN", "Indiana"],
+        ["status", "risk", "open", "next", "move"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "Goodwill Noblesville",
+        "Goodwill Commons",
+        "Champaign Ace",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-ulta-beauty-fresno",
+      "intent": "project_briefing",
+      "prompt": "Give me the current operating status for Ulta Beauty Fresno. What matters most right now for cost, schedule, and owner communication?",
+      "selectedProjectId": 761,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch",
+        "searchMeetingsByTopic",
+        "searchEmails",
+        "searchTeamsMessages"
+      ],
+      "mustInclude": ["Ulta"],
+      "mustIncludeAny": [
+        ["Fresno", "25-127"],
+        ["cost", "schedule", "owner"],
+        ["status", "risk", "blocked", "next", "action"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "Exol Wilmer",
+        "Exol Morrisville",
+        "Goodwill Noblesville",
+        "Goodwill Commons",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
+      "minAnswerLength": 220
+    },
+    {
+      "id": "project-briefing-goodwill-noblesville",
+      "intent": "project_briefing",
+      "prompt": "Give me the current status briefing for Goodwill Noblesville. What is the real project intelligence, and what should we watch?",
+      "selectedProjectId": 25125,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "mustInclude": ["Goodwill"],
+      "mustIncludeAny": [
+        ["Noblesville"],
+        ["status", "current", "intelligence", "briefing"],
+        ["watch", "risk", "blocked", "open", "next"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "GW Allisonville",
+        "Allisonville",
+        "Goodwill Commons",
+        "Champaign Ace",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-champaign-ace-addition",
+      "intent": "project_briefing",
+      "prompt": "Give me the current project briefing for Champaign Ace Addition. What is the active status, where are the open issues, and what is the next move?",
+      "selectedProjectId": 1008,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "mustInclude": ["Champaign"],
+      "mustIncludeAny": [
+        ["Ace", "Addition"],
+        ["status", "active", "current", "briefing"],
+        ["open", "issue", "risk", "next", "move"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "Goodwill Noblesville",
+        "Goodwill Commons",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-superior-beverage-exotec",
+      "intent": "project_briefing",
+      "prompt": "Give me the current operating read for Superior Beverage Exotec. What does the project packet say is active, exposed, or waiting on someone?",
+      "selectedProjectId": 178,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "mustIncludeAny": [
+        ["Superior Beverage", "Superior Beverae"],
+        ["Exotec"],
+        ["active", "status", "operating read", "packet"],
+        ["exposed", "risk", "waiting", "blocked", "next"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "Exol Wilmer",
+        "Exol Morrisville",
+        "Pratt & Whitney",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-goodwill-commons",
+      "intent": "project_briefing",
+      "prompt": "Give me the current status briefing for Goodwill Commons. What is live right now, what is at risk, and what should we do next?",
+      "selectedProjectId": 764,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": [
+        "backendDeepAgentProjectStatus",
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "mustInclude": ["Goodwill"],
+      "mustIncludeAny": [
+        ["Commons"],
+        ["status", "current", "live", "briefing"],
+        ["risk", "next", "blocked", "open", "watch"]
+      ],
+      "mustExclude": [
+        "Westfield",
+        "Vermillion",
+        "Union Collective",
+        "GW Allisonville",
+        "Allisonville",
+        "Goodwill Noblesville",
+        "Champaign Ace",
+        "no access",
+        "I don't have access",
+        "I do not have access",
+        "no project data",
+        "no data for this project",
+        "no meeting transcripts",
+        "no project context"
+      ],
       "minAnswerLength": 200
     },
     {
@@ -429,6 +755,7 @@
       "expectedToolNames": [
         "clientProjectIntelligencePacket",
         "backendDeepAgentProjectStatus",
+        "getProjectBriefingSnapshot",
         "semanticSearch"
       ],
       "mustInclude": ["Union Collective"],

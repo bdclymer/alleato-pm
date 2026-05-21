@@ -94,6 +94,9 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
           onBulkDelete: () => setBulkDeleteDialogOpen(true),
+          // Stable, project-agnostic scope so a "Quick view" saved on project A
+          // also applies on project B. See user_table_views table.
+          savedViewsScope: "meetings",
         }}
         data={{
           items: pagedMeetings,

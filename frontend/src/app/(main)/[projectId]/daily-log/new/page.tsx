@@ -2,96 +2,545 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  CloudSun,
+  Mail,
+  PackageCheck,
+  Plus,
+  ShieldAlert,
+  StickyNote,
+  Timer,
+  Trash2,
+  Truck,
+  Users,
+  Wrench,
+} from "lucide-react";
 import { toast } from "sonner";
+
+import {
+  saveDailyLogWithCoreSections,
+  type DailyLogEquipmentInput,
+  type DailyLogManpowerInput,
+  type DailyLogNoteInput,
+  type DailyLogStatus,
+  type DailyLogWeatherInput,
+} from "@/app/(main)/actions/daily-log-actions";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PageShell } from "@/components/layout";
-import { createDailyLog } from "@/app/(main)/actions/daily-log-actions";
+import {
+  InlineTable as Table,
+  InlineTableBody as TableBody,
+  InlineTableCell as TableCell,
+  InlineTableHeader as TableHeader,
+  InlineTableHeaderCell as TableHead,
+  InlineTableRow as TableRow,
+} from "@/components/ds/inline-table";
+import { cn } from "@/lib/utils";
 
-const schema = z.object({
-  log_date: z.string().min(1, "Date is required"),
-  weather_conditions: z.string().optional(),
-});
+type WeatherRow = DailyLogWeatherInput & { id: string };
+type ManpowerRow = DailyLogManpowerInput & { id: string };
+type EquipmentRow = DailyLogEquipmentInput & { id: string };
+type NoteRow = DailyLogNoteInput & { id: string };
 
-type FormValues = z.infer<typeof schema>;
+const today = new Date().toISOString().split("T")[0];
+
+const pendingSections = [
+  { label: "Timecards", icon: Timer },
+  { label: "Visitors", icon: Users },
+  { label: "Phone Calls", icon: Mail },
+  { label: "Inspections", icon: ClipboardList },
+  { label: "Deliveries", icon: Truck },
+  { label: "Safety Violations", icon: ShieldAlert },
+  { label: "Accidents", icon: AlertTriangle },
+  { label: "Quantities", icon: PackageCheck },
+  { label: "Productivity", icon: CheckCircle2 },
+  { label: "Dumpster", icon: Truck },
+  { label: "Waste", icon: Truck },
+  { label: "Scheduled Work", icon: CalendarDays },
+  { label: "Photos", icon: PackageCheck },
+  { label: "Delays", icon: Timer },
+  { label: "Emails", icon: Mail },
+];
+
+function newId() {
+  return crypto.randomUUID();
+}
+
+function emptyWeather(): WeatherRow {
+  return {
+    id: newId(),
+    area: "All Areas",
+    timeObserved: "09:00",
+    delay: false,
+    location: "",
+    sky: "",
+    temperature: null,
+    calamity: "",
+    average: "",
+    precipitation: "",
+    wind: "",
+    groundOrSea: "",
+    comments: "",
+  };
+}
+
+function emptyManpower(): ManpowerRow {
+  return {
+    id: newId(),
+    area: "All Areas",
+    trade: "",
+    workersCount: 0,
+    hoursWorked: 0,
+    costCode: "",
+    location: "",
+    comments: "",
+    issueFlag: false,
+  };
+}
+
+function emptyEquipment(): EquipmentRow {
+  return {
+    id: newId(),
+    area: "All Areas",
+    equipmentName: "",
+    hoursOperated: 0,
+    hoursIdle: 0,
+    costCode: "",
+    location: "",
+    inspected: false,
+    inspectionTime: "",
+    comments: "",
+  };
+}
+
+function emptyNote(): NoteRow {
+  return {
+    id: newId(),
+    area: "All Areas",
+    category: "",
+    location: "",
+    description: "",
+    issueFlag: false,
+  };
+}
+
+function numericValue(value: string): number | null {
+  if (value.trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  meta,
+  action,
+}: {
+  icon: typeof CloudSun;
+  title: string;
+  meta?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <Icon className="h-4 w-4 shrink-0 text-primary" />
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-foreground">{title}</div>
+          {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function Field({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      <Label className="text-[11px] font-medium text-muted-foreground">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function SectionShell({ children }: { children: React.ReactNode }) {
+  return <section className="space-y-4 border-b border-border/70 pb-6">{children}</section>;
+}
 
 export default function NewDailyLogPage() {
   const router = useRouter();
   const params = useParams()! ?? {};
   const projectId = Number(params.projectId);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      log_date: new Date().toISOString().split("T")[0],
-      weather_conditions: "",
-    },
-  });
+  const [logDate, setLogDate] = React.useState(today);
+  const [status, setStatus] = React.useState<DailyLogStatus>("draft");
+  const [generalNotes, setGeneralNotes] = React.useState("");
+  const [weatherRows, setWeatherRows] = React.useState<WeatherRow[]>([emptyWeather()]);
+  const [manpowerRows, setManpowerRows] = React.useState<ManpowerRow[]>([emptyManpower()]);
+  const [equipmentRows, setEquipmentRows] = React.useState<EquipmentRow[]>([emptyEquipment()]);
+  const [noteRows, setNoteRows] = React.useState<NoteRow[]>([emptyNote()]);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const onSubmit = async (values: FormValues) => {
-    const result = await createDailyLog({
+  const manpowerTotals = React.useMemo(() => {
+    return manpowerRows.reduce(
+      (totals, row) => {
+        const workers = row.workersCount || 0;
+        const hours = row.hoursWorked || 0;
+        return {
+          workers: totals.workers + workers,
+          hours: totals.hours + workers * hours,
+        };
+      },
+      { workers: 0, hours: 0 },
+    );
+  }, [manpowerRows]);
+
+  const updateRow = <T extends { id: string }>(
+    rows: T[],
+    setRows: React.Dispatch<React.SetStateAction<T[]>>,
+    id: string,
+    patch: Partial<T>,
+  ) => {
+    setRows(rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  };
+
+  const removeRow = <T extends { id: string }>(
+    rows: T[],
+    setRows: React.Dispatch<React.SetStateAction<T[]>>,
+    id: string,
+  ) => {
+    if (rows.length === 1) return;
+    setRows(rows.filter((row) => row.id !== id));
+  };
+
+  const submit = async () => {
+    if (!logDate) {
+      toast.error("Daily log date is required.");
+      return;
+    }
+
+    const weather = weatherRows.filter((row) =>
+      Boolean(row.sky || row.temperature || row.precipitation || row.wind || row.comments),
+    );
+    const manpower = manpowerRows.filter((row) => row.workersCount > 0);
+    const equipment = equipmentRows.filter((row) => row.equipmentName.trim());
+    const notes = noteRows.filter((row) => row.description.trim());
+
+    setIsSubmitting(true);
+    const result = await saveDailyLogWithCoreSections({
       projectId,
-      logDate: values.log_date,
-      weatherConditions: values.weather_conditions || undefined,
+      logDate,
+      status,
+      generalNotes,
+      weather,
+      manpower,
+      equipment,
+      notes,
     });
+    setIsSubmitting(false);
 
     if (result.error) {
       toast.error(result.error);
       return;
     }
 
-    toast.success("Daily log created");
+    toast.success("Daily log saved");
     router.push(`/${projectId}/daily-log`);
   };
 
   return (
     <PageShell
-      variant="form"
-      title="New Daily Log"
-      description="Create a new daily construction log entry"
+      variant="detailXWide"
+      title="Daily Log"
+      description="Daily field record by date"
       onBack={() => router.push(`/${projectId}/daily-log`)}
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-lg">
-        <div className="space-y-2">
-          <Label htmlFor="log_date">Date</Label>
-          <Input id="log_date" type="date" {...register("log_date")} />
-          {errors.log_date && (
-            <p className="text-sm text-destructive">{errors.log_date.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="weather_conditions">Weather Conditions</Label>
-          <Textarea
-            id="weather_conditions"
-            placeholder="Describe weather conditions..."
-            rows={3}
-            {...register("weather_conditions")}
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Log Entry"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push(`/${projectId}/daily-log`)}
-          >
+      backLabel="Back to Daily Log"
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" type="button" onClick={() => router.push(`/${projectId}/daily-log`)}>
             Cancel
           </Button>
+          <Button size="sm" type="button" onClick={submit} disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save Daily Log"}
+          </Button>
         </div>
-      </form>
+      }
+    >
+      <div className="space-y-8">
+        <section className="grid gap-4 md:grid-cols-[180px_180px_1fr]">
+          <Field label="Date">
+            <Input type="date" value={logDate} onChange={(event) => setLogDate(event.target.value)} />
+          </Field>
+          <Field label="Status">
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value as DailyLogStatus)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="complete">Complete</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="General Notes">
+            <Input
+              value={generalNotes}
+              onChange={(event) => setGeneralNotes(event.target.value)}
+              placeholder="Overall daily summary"
+            />
+          </Field>
+        </section>
+
+        <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <aside className="hidden lg:block">
+            <nav className="sticky top-20 space-y-1 border-r border-border/70 pr-4">
+              {["Weather", "Manpower", "Notes", "Equipment", ...pendingSections.map((section) => section.label)].map((label) => (
+                <a
+                  key={label}
+                  href={`#${label.toLowerCase().replaceAll(" ", "-")}`}
+                  className="block rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
+          </aside>
+
+          <div className="min-w-0 space-y-6">
+            <SectionShell>
+              <div id="weather">
+                <SectionHeader
+                  icon={CloudSun}
+                  title="Observed Weather Conditions"
+                  action={
+                    <Button variant="outline" size="sm" type="button" onClick={() => setWeatherRows([...weatherRows, emptyWeather()])}>
+                      <Plus />
+                      Add
+                    </Button>
+                  }
+                />
+              </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Area</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Delay</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Sky</TableHead>
+                      <TableHead>Temp</TableHead>
+                      <TableHead>Precipitation</TableHead>
+                      <TableHead>Wind</TableHead>
+                      <TableHead>Comments</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {weatherRows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell><Input value={row.area ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { area: event.target.value })} /></TableCell>
+                        <TableCell><Input type="time" value={row.timeObserved ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { timeObserved: event.target.value })} /></TableCell>
+                        <TableCell><Checkbox checked={Boolean(row.delay)} onCheckedChange={(checked) => updateRow(weatherRows, setWeatherRows, row.id, { delay: checked === true })} /></TableCell>
+                        <TableCell><Input value={row.location ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { location: event.target.value })} /></TableCell>
+                        <TableCell><Input value={row.sky ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { sky: event.target.value })} /></TableCell>
+                        <TableCell><Input type="number" value={row.temperature ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { temperature: numericValue(event.target.value) })} /></TableCell>
+                        <TableCell><Input value={row.precipitation ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { precipitation: event.target.value })} /></TableCell>
+                        <TableCell><Input value={row.wind ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { wind: event.target.value })} /></TableCell>
+                        <TableCell><Input value={row.comments ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { comments: event.target.value })} /></TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" type="button" onClick={() => removeRow(weatherRows, setWeatherRows, row.id)}>
+                            <Trash2 />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </SectionShell>
+
+            <SectionShell>
+              <div id="manpower">
+                <SectionHeader
+                  icon={Users}
+                  title="Manpower"
+                  meta={`${manpowerTotals.workers} workers / ${manpowerTotals.hours} total hours`}
+                  action={
+                    <Button variant="outline" size="sm" type="button" onClick={() => setManpowerRows([...manpowerRows, emptyManpower()])}>
+                      <Plus />
+                      Add
+                    </Button>
+                  }
+                />
+              </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Area</TableHead>
+                      <TableHead>Company / Trade</TableHead>
+                      <TableHead>Workers</TableHead>
+                      <TableHead>Hours</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Cost Code</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Comments</TableHead>
+                      <TableHead>Issue</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {manpowerRows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell><Input value={row.area ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { area: event.target.value })} /></TableCell>
+                        <TableCell><Input value={row.trade ?? ""} placeholder="Trade or company" onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { trade: event.target.value })} /></TableCell>
+                        <TableCell><Input type="number" min={0} value={row.workersCount || ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { workersCount: numericValue(event.target.value) ?? 0 })} /></TableCell>
+                        <TableCell><Input type="number" min={0} step="0.25" value={row.hoursWorked ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { hoursWorked: numericValue(event.target.value) })} /></TableCell>
+                        <TableCell>{(row.workersCount || 0) * (row.hoursWorked || 0)}</TableCell>
+                        <TableCell><Input value={row.costCode ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { costCode: event.target.value })} /></TableCell>
+                        <TableCell><Input value={row.location ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { location: event.target.value })} /></TableCell>
+                        <TableCell><Input value={row.comments ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { comments: event.target.value })} /></TableCell>
+                        <TableCell><Checkbox checked={Boolean(row.issueFlag)} onCheckedChange={(checked) => updateRow(manpowerRows, setManpowerRows, row.id, { issueFlag: checked === true })} /></TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" type="button" onClick={() => removeRow(manpowerRows, setManpowerRows, row.id)}>
+                            <Trash2 />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </SectionShell>
+
+            <SectionShell>
+              <div id="notes">
+                <SectionHeader
+                  icon={StickyNote}
+                  title="Notes"
+                  action={
+                    <Button variant="outline" size="sm" type="button" onClick={() => setNoteRows([...noteRows, emptyNote()])}>
+                      <Plus />
+                      Add
+                    </Button>
+                  }
+                />
+              </div>
+              <div className="grid gap-3">
+                {noteRows.map((row) => (
+                  <div key={row.id} className="grid gap-3 border-b border-border/70 pb-3 md:grid-cols-[120px_160px_1fr_80px_40px]">
+                    <Input value={row.area ?? ""} onChange={(event) => updateRow(noteRows, setNoteRows, row.id, { area: event.target.value })} />
+                    <Input value={row.category ?? ""} placeholder="Category" onChange={(event) => updateRow(noteRows, setNoteRows, row.id, { category: event.target.value })} />
+                    <Textarea value={row.description} placeholder="Comment" onChange={(event) => updateRow(noteRows, setNoteRows, row.id, { description: event.target.value })} rows={2} />
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Checkbox checked={Boolean(row.issueFlag)} onCheckedChange={(checked) => updateRow(noteRows, setNoteRows, row.id, { issueFlag: checked === true })} />
+                      Issue
+                    </label>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => removeRow(noteRows, setNoteRows, row.id)}>
+                      <Trash2 />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </SectionShell>
+
+            <SectionShell>
+              <div id="equipment">
+                <SectionHeader
+                  icon={Wrench}
+                  title="Equipment"
+                  action={
+                    <Button variant="outline" size="sm" type="button" onClick={() => setEquipmentRows([...equipmentRows, emptyEquipment()])}>
+                      <Plus />
+                      Add
+                    </Button>
+                  }
+                />
+              </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Area</TableHead>
+                      <TableHead>Equipment</TableHead>
+                      <TableHead>Operating</TableHead>
+                      <TableHead>Idle</TableHead>
+                      <TableHead>Cost Code</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Inspected</TableHead>
+                      <TableHead>Comments</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {equipmentRows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell><Input value={row.area ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { area: event.target.value })} /></TableCell>
+                        <TableCell><Input value={row.equipmentName} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { equipmentName: event.target.value })} /></TableCell>
+                        <TableCell><Input type="number" min={0} step="0.25" value={row.hoursOperated ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { hoursOperated: numericValue(event.target.value) })} /></TableCell>
+                        <TableCell><Input type="number" min={0} step="0.25" value={row.hoursIdle ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { hoursIdle: numericValue(event.target.value) })} /></TableCell>
+                        <TableCell><Input value={row.costCode ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { costCode: event.target.value })} /></TableCell>
+                        <TableCell><Input value={row.location ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { location: event.target.value })} /></TableCell>
+                        <TableCell><Checkbox checked={Boolean(row.inspected)} onCheckedChange={(checked) => updateRow(equipmentRows, setEquipmentRows, row.id, { inspected: checked === true })} /></TableCell>
+                        <TableCell><Input value={row.comments ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { comments: event.target.value })} /></TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" type="button" onClick={() => removeRow(equipmentRows, setEquipmentRows, row.id)}>
+                            <Trash2 />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </SectionShell>
+
+            <section className="space-y-3">
+              <SectionHeader icon={ClipboardList} title="Pending Daily Log Sections" />
+              <div className="divide-y divide-border/70">
+                {pendingSections.map(({ label, icon: Icon }) => (
+                  <div key={label} id={label.toLowerCase().replaceAll(" ", "-")} className="flex items-center justify-between gap-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{label}</span>
+                    </div>
+                    <span className="text-xs text-destructive">Schema gap</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
     </PageShell>
   );
 }

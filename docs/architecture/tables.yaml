@@ -387,6 +387,16 @@ tables:
     relatedTables:
       - people
 
+  - name: user_table_views
+    db: MAIN
+    domain: auth
+    owner: core
+    status: live
+    purpose: "Per-user named presets for UnifiedTablePage — captures visible columns, column order, sort, and filters. Lets PMs/testers save 'Quick view', 'Full detail', etc."
+    gotchas: "scope_key is project-agnostic (e.g. 'meetings'), not 'meetings-25125'. A view created on project A's meetings page applies on project B's. is_default is enforced one-per-(user_id, scope_key) via partial unique index."
+    relatedTables: []
+    notesForAi: "Written/read only by /api/table-views routes (route.ts + [viewId]/route.ts). RLS scopes to auth.uid()."
+
   - name: user_directory_permissions
     db: MAIN
     domain: permissions
@@ -3485,6 +3495,16 @@ tables:
       - daily_log_equipment
       - daily_log_manpower
       - daily_log_notes
+      - daily_log_weather
+
+  - name: daily_log_weather
+    db: MAIN
+    domain: workflow
+    owner: core
+    status: live-empty
+    purpose: "Per-observation weather entries (sky, temperature, precipitation, wind) attached to a daily_log. Added by the daily-log expansion migration (20260521020000)."
+    relatedTables:
+      - daily_logs
 
   - name: observation_comments
     db: MAIN

@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ArrowLeft, BookOpen, ChevronRight, FileText, Search, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  BookOpen,
+  ChevronRight,
+  FileText,
+  Search,
+  Sparkles,
+} from "lucide-react";
 
 import { MarkdownRenderer } from "@/components/docs/markdown-renderer";
 import { EmptyState } from "@/components/ds";
@@ -109,6 +117,8 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
           </Button>
         </form>
 
+        {!query ? <AiOverviewCard /> : null}
+
         {filteredArticles.length === 0 ? (
           <EmptyState
             icon={<BookOpen />}
@@ -204,6 +214,41 @@ function formatSafetyLevel(level: string): string {
   if (level === "admin_confirm") return "Admin confirm";
   if (level === "preview_confirm") return "Preview confirm";
   return "Read only";
+}
+
+function AiOverviewCard() {
+  return (
+    <Link
+      href="/docs/ai-overview"
+      className="group mb-10 block rounded-xl bg-muted/50 p-6 transition-colors hover:bg-muted sm:p-7"
+    >
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold text-foreground transition-colors group-hover:text-primary">
+                How the AI works
+              </h2>
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary">
+                New
+              </span>
+            </div>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              A guided tour of the agents, tools, models, memory, and feedback loops behind the
+              assistant. Built for stakeholders.
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+          Take the tour
+          <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </span>
+      </div>
+    </Link>
+  );
 }
 
 function ArticleList({ articles }: { articles: HelpArticle[] }) {

@@ -185,7 +185,7 @@ async function addIssueComment(
   issueNumber: number,
   body: string,
 ) {
-  await fetch(
+  const response = await fetch(
     `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/comments`,
     {
       method: "POST",
@@ -198,6 +198,11 @@ async function addIssueComment(
       body: JSON.stringify({ body }),
     },
   );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`GitHub issue comment failed: ${response.status} ${errorText}`);
+  }
 }
 
 async function addLabels(
@@ -274,4 +279,14 @@ export async function createGitHubIssue(input: CreateGitHubIssueInput) {
   }
 
   return issue;
+}
+
+export async function addGitHubIssueComment(issueNumber: number, body: string) {
+  const config = getRepoConfig();
+  if (!config) {
+    return false;
+  }
+
+  await addIssueComment(config, issueNumber, body);
+  return true;
 }

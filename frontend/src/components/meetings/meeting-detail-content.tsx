@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowLeft,
   Calendar,
   ChevronDown,
   Clock,
@@ -364,8 +365,8 @@ export function MeetingDetailContent({
   allDecisions: _allDecisions,
   allOpportunities,
   transcriptContent,
-  backHref: _backHref,
-  backLabel: _backLabel,
+  backHref,
+  backLabel,
   relatedMeetings = [],
   relatedMeetingsBaseHref,
   digestSlot,
@@ -448,6 +449,16 @@ export function MeetingDetailContent({
 
   return (
     <PageContainer maxWidth="xl" className="pb-12">
+      {backHref ? (
+        <div className="mb-4">
+          <Button asChild size="sm" variant="ghost" className="-ml-2 h-auto px-2 py-1 text-muted-foreground hover:text-foreground">
+            <Link href={backHref}>
+              <ArrowLeft className="mr-1.5 h-4 w-4" />
+              {backLabel || "Back"}
+            </Link>
+          </Button>
+        </div>
+      ) : null}
       {/* Page header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         { }

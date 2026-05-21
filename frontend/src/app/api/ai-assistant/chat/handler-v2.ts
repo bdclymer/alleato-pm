@@ -14,6 +14,15 @@ import { executeRetrievalPlan } from "@/lib/ai/retrieval/executor";
 import { assembleSystemPromptFromContext } from "@/lib/ai/retrieval/system-prompt";
 import { buildExecutorDeps } from "@/lib/ai/retrieval/deps";
 import {
+  loadCurrentIntelligencePacket,
+  resolveIntelligenceTarget,
+} from "@/lib/ai/intelligence/packet-service";
+import { synthesizeAdvisorResponse } from "@/lib/ai/intelligence/advisor-synthesis";
+import {
+  projectPacketIsFastPathEligible,
+  shouldUseProjectPacketFastPath,
+} from "@/lib/ai/intelligence/packet-fast-path";
+import {
   assembleSystemPrompt,
   runPostResponseTasks,
   type MemoryUsageSummary,
@@ -55,7 +64,7 @@ import {
   isAiAssistantModelId,
 } from "@/lib/ai/assistant-models";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import type { Json } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 type HandlerArgs = {
   user: { id: string };
@@ -63,7 +72,7 @@ type HandlerArgs = {
   messages: UIMessage[];
   selectedProjectId?: number;
   activeModel: string;
-  supabase: SupabaseClient;
+  supabase: SupabaseClient<Database>;
 };
 
 type GeneratedTaskSummaryItem = TaskSummaryWidgetPayload["items"][number];
@@ -868,6 +877,183 @@ async function persistDirectDeepAgentResponse(params: {
   waitUntil(runPostResponseTasks(params.sessionId, params.userId));
 }
 
+function createClientPacketTrace(params: {
+  durationMs: number;
+  message: string;
+  projectId: number;
+  packet: Awaited<ReturnType<typeof loadCurrentIntelligencePacket>>;
+}) {
+  const packet = params.packet;
+  return {
+    tool: "clientProjectIntelligencePacket",
+    toolName: "clientProjectIntelligencePacket",
+    agent: "frontend-ai-assistant",
+    status: packet ? "success" : "failed",
+    durationMs: params.durationMs,
+    input: {
+      message: params.message.slice(0, 240),
+      selectedProjectId: params.projectId,
+    },
+    output: packet
+      ? {
+          packetId: packet.id,
+          compilerVersion: packet.compilerVersion,
+          freshnessStatus: packet.freshnessStatus,
+          generatedAt: packet.generatedAt,
+          ageHours: Math.round(packet.ageHours * 10) / 10,
+          cardCount: packet.cards.length,
+          evidenceCount: packet.cards.reduce(
+            (count, card) => count + card.evidence.length,
+            0,
+          ),
+          linkedEvidenceCount: packet.sourceCoverage.linkedEvidenceCount ?? null,
+          qualityGateStatus:
+            asString(asRecord(packet.sourceCoverage.qualityGate).status) ??
+            null,
+        }
+      : {
+          cardCount: 0,
+          error: "No current packet was available for the selected project.",
+        },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+async function tryWriteProjectPacketFastPath(params: {
+  supabase: SupabaseClient<Database>;
+  writer: Parameters<
+    Parameters<typeof createUIMessageStream>[0]["execute"]
+  >[0]["writer"];
+  userId: string;
+  sessionId: string;
+  selectedProjectId: number;
+  message: string;
+  plan: ReturnType<typeof planRetrieval>;
+}): Promise<boolean> {
+  if (
+    !shouldUseProjectPacketFastPath({
+      intent: params.plan.intent,
+      responseFormat: params.plan.responseFormat,
+      usesIntelligencePacket: Boolean(params.plan.sources.intelligencePacket),
+    })
+  ) {
+    return false;
+  }
+
+  const startedAt = Date.now();
+  const target = await resolveIntelligenceTarget({
+    query: String(params.selectedProjectId),
+    selectedProjectId: params.selectedProjectId,
+    supabase: params.supabase,
+  });
+
+  if (!target) return false;
+
+  const packet = await loadCurrentIntelligencePacket({
+    targetId: target.id,
+    supabase: params.supabase,
+    includeSourcePreview: false,
+  });
+  const trace = createClientPacketTrace({
+    durationMs: Date.now() - startedAt,
+    message: params.message,
+    projectId: params.selectedProjectId,
+    packet,
+  });
+
+  if (!packet || !projectPacketIsFastPathEligible(packet)) {
+    return false;
+  }
+
+  const content = synthesizeAdvisorResponse({
+    target,
+    packet,
+    intent: params.plan.intent,
+    query: params.message,
+  });
+  const toolTrace = [trace];
+  const sourceDebug = buildAnswerDebugMetadata({
+    orchestrator: "client-project-intelligence-packet-fast-path",
+    plan: params.plan,
+    toolTrace,
+    sourceCoverage: [
+      {
+        sourceType: "intelligence_packet",
+        status: "checked",
+        compilerVersion: packet.compilerVersion,
+        freshnessStatus: packet.freshnessStatus,
+        linkedEvidenceCount: packet.sourceCoverage.linkedEvidenceCount ?? null,
+        latestSourceAt: packet.sourceCoverage.latestSourceAt ?? null,
+      },
+    ],
+    evidenceCount: packet.cards.reduce(
+      (count, card) => count + card.evidence.length,
+      0,
+    ),
+  });
+
+  await persistDirectDeepAgentResponse({
+    supabase: params.supabase,
+    sessionId: params.sessionId,
+    userId: params.userId,
+    content,
+    responseLabel: "project-packet-fast-path",
+    sourceDebug,
+    trace: {
+      input: params.message,
+      intent: params.plan.intent,
+      modelId: "client-project-intelligence-packet",
+      selectedProjectId: params.selectedProjectId,
+      toolTrace,
+    },
+    metadata: {
+      architecture: "retrieval-planner-v2",
+      provider_path: "client-project-intelligence-packet",
+      packet_fast_path: {
+        packet_id: packet.id,
+        target_id: target.id,
+        target_name: target.name,
+        compiler_version: packet.compilerVersion,
+        freshness_status: packet.freshnessStatus,
+        generated_at: packet.generatedAt,
+        age_hours: packet.ageHours,
+        card_count: packet.cards.length,
+        linked_evidence_count: packet.sourceCoverage.linkedEvidenceCount ?? null,
+      },
+      retrieval_plan: {
+        intent: params.plan.intent,
+        reason: params.plan.reason,
+        responseFormat: params.plan.responseFormat,
+        sources: Object.keys(params.plan.sources),
+      },
+      tool_trace: toolTrace,
+      response_quality: buildResponseQualityMetadata({
+        toolTrace,
+        content,
+      }),
+      source_debug: sourceDebug,
+    } as Json,
+  });
+
+  params.writer.write({
+    type: "data-status",
+    id: "strategist-status",
+    data: {
+      stage: "complete",
+      message: "Current project intelligence packet answer returned",
+      status: "success",
+      timestamp: new Date().toISOString(),
+    },
+  } as never);
+  writeTextResponse(
+    params.writer,
+    "strategist-client-project-intelligence-packet",
+    content,
+  );
+
+  return true;
+}
+
 async function runChatV2(args: HandlerArgs): Promise<Response> {
   const lastUserMessage = [...args.messages]
     .reverse()
@@ -962,23 +1148,23 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             session_id: args.sessionId,
             user_id: args.user.id,
             role: "assistant",
-            content: answer.content,
-            metadata: {
-              architecture: "retrieval-planner-v2",
-              tool_trace: [
-                {
-                  tool: "getGeneratedTasksToday",
-                  input: {
-                    message: lastUserContent.slice(0, 240),
-                    selectedProjectId: args.selectedProjectId ?? null,
+              content: answer.content,
+              metadata: toJsonValue({
+                architecture: "retrieval-planner-v2",
+                tool_trace: [
+                  {
+                    tool: "getGeneratedTasksToday",
+                    input: {
+                      message: lastUserContent.slice(0, 240),
+                      selectedProjectId: args.selectedProjectId ?? null,
+                    },
+                    output: answer.traceOutput,
+                    timestamp: new Date().toISOString(),
                   },
-                  output: answer.traceOutput,
-                  timestamp: new Date().toISOString(),
-                },
-              ],
-              data_parts: [dataPart],
-            },
-          });
+                ],
+                data_parts: [dataPart],
+              }) as Json,
+            });
 
           await args.supabase
             .from("conversations")

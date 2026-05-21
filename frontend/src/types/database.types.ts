@@ -8576,31 +8576,55 @@ export type Database = {
       }
       daily_log_equipment: {
         Row: {
+          area: string | null
+          attachments_count: number
+          comments: string | null
+          cost_code: string | null
           created_at: string | null
           daily_log_id: string | null
           equipment_name: string
           hours_idle: number | null
           hours_operated: number | null
           id: string
+          inspected: boolean
+          inspection_time: string | null
+          location: string | null
           notes: string | null
+          related_items_count: number
         }
         Insert: {
+          area?: string | null
+          attachments_count?: number
+          comments?: string | null
+          cost_code?: string | null
           created_at?: string | null
           daily_log_id?: string | null
           equipment_name: string
           hours_idle?: number | null
           hours_operated?: number | null
           id?: string
+          inspected?: boolean
+          inspection_time?: string | null
+          location?: string | null
           notes?: string | null
+          related_items_count?: number
         }
         Update: {
+          area?: string | null
+          attachments_count?: number
+          comments?: string | null
+          cost_code?: string | null
           created_at?: string | null
           daily_log_id?: string | null
           equipment_name?: string
           hours_idle?: number | null
           hours_operated?: number | null
           id?: string
+          inspected?: boolean
+          inspection_time?: string | null
+          location?: string | null
           notes?: string | null
+          related_items_count?: number
         }
         Relationships: [
           {
@@ -8614,29 +8638,50 @@ export type Database = {
       }
       daily_log_manpower: {
         Row: {
+          area: string | null
+          attachments_count: number
+          comments: string | null
           company_id: string | null
+          cost_code: string | null
           created_at: string | null
           daily_log_id: string | null
           hours_worked: number | null
           id: string
+          issue_flag: boolean
+          location: string | null
+          related_items_count: number
           trade: string | null
           workers_count: number
         }
         Insert: {
+          area?: string | null
+          attachments_count?: number
+          comments?: string | null
           company_id?: string | null
+          cost_code?: string | null
           created_at?: string | null
           daily_log_id?: string | null
           hours_worked?: number | null
           id?: string
+          issue_flag?: boolean
+          location?: string | null
+          related_items_count?: number
           trade?: string | null
           workers_count: number
         }
         Update: {
+          area?: string | null
+          attachments_count?: number
+          comments?: string | null
           company_id?: string | null
+          cost_code?: string | null
           created_at?: string | null
           daily_log_id?: string | null
           hours_worked?: number | null
           id?: string
+          issue_flag?: boolean
+          location?: string | null
+          related_items_count?: number
           trade?: string | null
           workers_count?: number
         }
@@ -8659,25 +8704,40 @@ export type Database = {
       }
       daily_log_notes: {
         Row: {
+          area: string | null
+          attachments_count: number
           category: string | null
           created_at: string | null
           daily_log_id: string | null
           description: string
           id: string
+          issue_flag: boolean
+          location: string | null
+          related_items_count: number
         }
         Insert: {
+          area?: string | null
+          attachments_count?: number
           category?: string | null
           created_at?: string | null
           daily_log_id?: string | null
           description: string
           id?: string
+          issue_flag?: boolean
+          location?: string | null
+          related_items_count?: number
         }
         Update: {
+          area?: string | null
+          attachments_count?: number
           category?: string | null
           created_at?: string | null
           daily_log_id?: string | null
           description?: string
           id?: string
+          issue_flag?: boolean
+          location?: string | null
+          related_items_count?: number
         }
         Relationships: [
           {
@@ -8689,31 +8749,111 @@ export type Database = {
           },
         ]
       }
+      daily_log_weather: {
+        Row: {
+          area: string | null
+          attachments_count: number
+          average: string | null
+          calamity: string | null
+          comments: string | null
+          created_at: string | null
+          daily_log_id: string
+          delay: boolean
+          ground_or_sea: string | null
+          id: string
+          location: string | null
+          precipitation: string | null
+          related_items_count: number
+          sky: string | null
+          temperature: number | null
+          time_observed: string | null
+          wind: string | null
+        }
+        Insert: {
+          area?: string | null
+          attachments_count?: number
+          average?: string | null
+          calamity?: string | null
+          comments?: string | null
+          created_at?: string | null
+          daily_log_id: string
+          delay?: boolean
+          ground_or_sea?: string | null
+          id?: string
+          location?: string | null
+          precipitation?: string | null
+          related_items_count?: number
+          sky?: string | null
+          temperature?: number | null
+          time_observed?: string | null
+          wind?: string | null
+        }
+        Update: {
+          area?: string | null
+          attachments_count?: number
+          average?: string | null
+          calamity?: string | null
+          comments?: string | null
+          created_at?: string | null
+          daily_log_id?: string
+          delay?: boolean
+          ground_or_sea?: string | null
+          id?: string
+          location?: string | null
+          precipitation?: string | null
+          related_items_count?: number
+          sky?: string | null
+          temperature?: number | null
+          time_observed?: string | null
+          wind?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_log_weather_daily_log_id_fkey"
+            columns: ["daily_log_id"]
+            isOneToOne: false
+            referencedRelation: "daily_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_logs: {
         Row: {
+          completed_at: string | null
+          completed_by: string | null
           created_at: string | null
           created_by: string | null
+          general_notes: string | null
           id: string
           log_date: string
           project_id: number | null
+          status: string
           updated_at: string | null
           weather_conditions: Json | null
         }
         Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string | null
           created_by?: string | null
+          general_notes?: string | null
           id?: string
           log_date: string
           project_id?: number | null
+          status?: string
           updated_at?: string | null
           weather_conditions?: Json | null
         }
         Update: {
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string | null
           created_by?: string | null
+          general_notes?: string | null
           id?: string
           log_date?: string
           project_id?: number | null
+          status?: string
           updated_at?: string | null
           weather_conditions?: Json | null
         }
@@ -30935,6 +31075,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_table_views: {
+        Row: {
+          column_order: Json | null
+          created_at: string
+          filters: Json | null
+          id: string
+          is_default: boolean
+          name: string
+          scope_key: string
+          sort_by: string | null
+          sort_direction: string | null
+          updated_at: string
+          user_id: string
+          visible_columns: Json | null
+        }
+        Insert: {
+          column_order?: Json | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          is_default?: boolean
+          name: string
+          scope_key: string
+          sort_by?: string | null
+          sort_direction?: string | null
+          updated_at?: string
+          user_id: string
+          visible_columns?: Json | null
+        }
+        Update: {
+          column_order?: Json | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          scope_key?: string
+          sort_by?: string | null
+          sort_direction?: string | null
+          updated_at?: string
+          user_id?: string
+          visible_columns?: Json | null
+        }
+        Relationships: []
       }
       users_auth: {
         Row: {

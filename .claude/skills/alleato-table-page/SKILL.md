@@ -15,6 +15,48 @@ priority: 90
 
 # Alleato Table Page Pattern
 
+## Decision Checklist — answer BEFORE writing any JSX
+
+For every new table page, answer these three questions. Skipping this is how you ship dead checkboxes, missing detail routes, and broken delete flows.
+
+| Question | If "yes" you MUST wire | If "no" you MUST opt out |
+|---|---|---|
+| Can a row be deleted from this list? | `table.onDelete` **and** a `DELETE` API route. This is what makes both the row-level "⋯ → Delete" and the toolbar bulk-delete trash icon appear. | (do nothing — selection checkboxes will auto-hide; see "Selection requires a bulk action" below) |
+| Can a row be edited from this list? | `table.onEdit` (or `onRowClick` to a detail page that has its own edit mode) | (do nothing) |
+| Does a row open a detail page? | `table.onRowClick: (item) => router.push(...)` **and** create the matching `[entityId]/page.tsx` route | (do nothing) |
+| Does this entity have status/type/owner filters? | `toolbar.filters` + URL-synced `activeFilters` via `useUnifiedTableState` | (do nothing — search alone covers most read-only tables) |
+
+If the answer to "can be deleted" is yes, also confirm the DELETE API route updates the React Query cache (`queryClient.invalidateQueries`) so the row disappears after the bulk-delete confirmation.
+
+---
+
+## Selection requires a bulk action — the #1 mistake
+
+`UnifiedTablePage` auto-hides selection checkboxes when there is no bulk action wired. Checkboxes appear only if one of these is true:
+
+- `table.onDelete` is provided → bulk delete is auto-built (trash icon in toolbar opens a confirmation dialog)
+- `toolbar.onBulkDelete` is provided → your custom bulk handler runs
+- You explicitly pass `selection={{...}}` (URL-synced selection) or `features={{ enableRowSelection: true }}`
+
+**What this prevents:** building a table with checkboxes that the user can click but that don't do anything — the bug pattern that produced this rule.
+
+**If you need checkboxes for a custom bulk action other than delete** (e.g. "Approve selected", "Move to project"):
+
+```tsx
+<UnifiedTablePage
+  features={{ enableRowSelection: true }}     // explicit opt-in
+  toolbar={{
+    ...,
+    customActions: selectedIds.length > 0 ? (
+      <Button onClick={handleApproveSelected}>Approve {selectedIds.length}</Button>
+    ) : null,
+  }}
+  selection={{ selectedIds, onSelectAll, onSelectRow }}
+/>
+```
+
+---
+
 ## Imports
 
 ```ts
@@ -70,17 +112,29 @@ const tableState = useUnifiedTableState({
 
 ---
 
-## Features are ON by default — opt out, not in
+## What is automatic vs. what you must wire
 
-Every feature works with zero configuration. The only required props are `header`, `toolbar` (totalItems, filteredItems, searchValue, onSearchChange, currentView, onViewChange), `data`, `table.columns`, `table.getRowId`, and `emptyState`.
+The component handles most plumbing internally. Read this carefully — the word "automatic" only applies to the features below. Anything not listed here is **not** automatic.
 
-**What you do NOT need to wire manually:**
-- `toolbar.selectedCount` — derived from internal selection state automatically
-- `toolbar.onBulkDelete` — auto-built from `table.onDelete` (with confirmation dialog)
-- `toolbar.onExport` — auto-built CSV from columns that define `csvValue`
-- `sorting` prop — internal sort state; works as long as columns define `sortable`/`sortValue`
-- `pagination` prop — defaults to 25 rows/page client-side automatically
-- `toolbar.onColumnVisibilityChange` — auto-persists to localStorage by `header.title`
+**Truly automatic — works with zero configuration:**
+- Search — debounced internally, filters the rows you pass in `data.items`
+- Sorting — clicking column headers; works as long as columns define `sortable: true` + `sortValue`
+- Pagination — defaults to 25 rows/page client-side
+- Column visibility — persisted to localStorage by `header.title`
+- View switcher — table / card / list
+- Export — auto-built CSV from columns that define `csvValue`
+
+**Automatic ONLY when you wire the prerequisite handler:**
+| Feature | Prerequisite |
+|---|---|
+| Row "⋯ → Edit" menu item | `table.onEdit` |
+| Row "⋯ → Delete" menu item + single-row confirm dialog | `table.onDelete` |
+| Toolbar bulk-delete trash icon + bulk confirm dialog | `table.onDelete` (auto) OR `toolbar.onBulkDelete` (custom) |
+| **Selection checkboxes** | one of: `table.onDelete`, `toolbar.onBulkDelete`, explicit `selection={...}`, or `features.enableRowSelection: true` |
+| Filters | `toolbar.filters` + `toolbar.activeFilters` + `toolbar.onFilterChange` |
+| URL-synced state (page, sort, search, filters, view) | `useUnifiedTableState` |
+
+**Required props (no defaults):** `header`, `toolbar` (totalItems, filteredItems, searchValue, onSearchChange, currentView, onViewChange), `data`, `table.columns`, `table.getRowId`, `emptyState`.
 
 **To disable a feature:**
 ```tsx
@@ -131,7 +185,7 @@ This renders a "⋯" menu with Edit + Delete (separator between them) automatica
 />
 ```
 
-Sorting, pagination (25/page), export, bulk delete, row selection, column visibility — all automatic.
+In the example above: sorting, pagination (25/page), export, column visibility are automatic. Selection checkboxes + bulk delete appear because `table.onDelete` is wired. Drop `onDelete` and the checkboxes disappear (intentionally — see "Selection requires a bulk action").
 
 ---
 
@@ -355,7 +409,9 @@ Toolbar (`toolbar.customActions`) is where extra icon buttons go (e.g., ERP sync
 - Generic `[id]` route params — always use `[projectId]`, `[contractId]`, etc.
 
 ### Standard features are automatic — do NOT wire them manually unless you need URL-sync
-Row selection, bulk delete (with confirmation), search, column visibility (persisted to localStorage), pagination (25/page), export (CSV from `csvValue` columns), and sorting are all ON by default. You only need to wire these manually when you want URL-sync via `useUnifiedTableState`.
+Search, column visibility (persisted to localStorage), pagination (25/page), export (CSV from `csvValue` columns), and sorting are all ON by default. You only need to wire these manually when you want URL-sync via `useUnifiedTableState`.
+
+**Selection and delete are NOT in this list.** They require `table.onDelete` (or an explicit `selection`/`features.enableRowSelection` opt-in). See "Selection requires a bulk action" above. If you ship checkboxes that don't do anything, you have failed the Decision Checklist.
 
 ### Edit and Delete via `table.onEdit` / `table.onDelete` — no `rowActions` boilerplate
 Providing `table.onEdit` and/or `table.onDelete` auto-builds the "⋯" menu. Only use `table.rowActions` when you need custom menu items beyond Edit/Delete.

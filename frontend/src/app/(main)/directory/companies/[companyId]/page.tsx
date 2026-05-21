@@ -20,12 +20,17 @@ import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
 import { PageShell } from "@/components/layout";
-import { EntityAttachments, ErrorState, EmptyState as DsEmptyState, SectionHeader as DsSectionHeader } from "@/components/ds";
+import {
+  DataTable as DsDataTable,
+  EntityAttachments,
+  ErrorState,
+  EmptyState as DsEmptyState,
+  SectionHeader as DsSectionHeader,
+} from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Modal,
   ModalContent,
@@ -131,15 +136,6 @@ interface CompanyDetailsResponse {
     invoice_count: number;
     meeting_count: number;
   };
-}
-
-function formatCurrency(value: number | null | undefined): string {
-  const amount = typeof value === "number" ? value : 0;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 function statusVariant(status?: string | null): "default" | "secondary" | "outline" | "destructive" {
@@ -599,6 +595,12 @@ export default function CompanyDetailsPage() {
   const latestMeeting = meetings
     .filter((meeting) => meeting.date)
     .sort((a, b) => new Date(b.date || "").getTime() - new Date(a.date || "").getTime())[0];
+  const meetingRows = meetingsByProject.flatMap(({ project, items }) =>
+    items.slice(0, 6).map((meeting) => ({
+      ...meeting,
+      display_project_name: project?.name || meeting.project_name || "Unknown project",
+    })),
+  );
 
   return (
     <PageShell
@@ -633,19 +635,24 @@ export default function CompanyDetailsPage() {
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                               <Link
                                 href={`/directory/contacts/${contact.id}`}
                                 className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
                               >
                                 {contact.first_name} {contact.last_name}
                               </Link>
+                              {contact.email ? (
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {contact.email}
+                                </p>
+                              ) : null}
                               {isPrimary && (
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Primary</Badge>
                               )}
                             </div>
                             <p className="truncate text-xs text-muted-foreground">
-                              {contact.job_title || contact.email || "No title"}
+                              {contact.job_title || "No title"}
                             </p>
                           </div>
                           <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -692,7 +699,6 @@ export default function CompanyDetailsPage() {
               <section className="space-y-4">
                 <DsSectionHeader
                   title="Projects"
-                  count={associatedProjects.length > 0 ? associatedProjects.length : undefined}
                   action={{
                     label: "Add project",
                     onClick: () => {
@@ -708,46 +714,55 @@ export default function CompanyDetailsPage() {
                     <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
                   </div>
                 ) : (
-                  <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead>Project</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Number</TableHead>
-                          <TableHead className="text-right">State</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {associatedProjects.map((project) => (
-                          <TableRow key={project.id} className="hover:bg-muted/50/70">
-                            <TableCell>
-                              <Link
-                                href={`/${project.id}/home`}
-                                className="font-semibold text-foreground underline-offset-4 hover:underline"
-                              >
-                                {project.name || `Project ${project.id}`}
-                              </Link>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Badge variant={statusVariant(project.company_status)}>
-                                  {project.company_status || "Unknown"}
-                                </Badge>
-                                {project.archived ? <Badge variant="outline">Archived</Badge> : null}
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-mono text-muted-foreground">#{project.project_number || "-"}</TableCell>
-                            <TableCell className="text-right text-muted-foreground">{project.state || "No status"}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <DsDataTable<CompanyProjectItem>
+                    rows={associatedProjects}
+                    columns={[
+                      {
+                        key: "project",
+                        header: "Project",
+                        primary: true,
+                        render: (project) => (
+                          <Link
+                            href={`/${project.id}/home`}
+                            className="font-medium text-foreground underline-offset-4 hover:underline"
+                          >
+                            {project.name || `Project ${project.id}`}
+                          </Link>
+                        ),
+                      },
+                      {
+                        key: "status",
+                        header: "Status",
+                        render: (project) => (
+                          <div className="flex items-center gap-2">
+                            <Badge variant={statusVariant(project.company_status)}>
+                              {project.company_status || "Unknown"}
+                            </Badge>
+                            {project.archived ? <Badge variant="outline">Archived</Badge> : null}
+                          </div>
+                        ),
+                      },
+                      {
+                        key: "number",
+                        header: "Number",
+                        render: (project) => (
+                          <span className="font-mono">#{project.project_number || "-"}</span>
+                        ),
+                      },
+                      {
+                        key: "state",
+                        header: "State",
+                        align: "right",
+                        render: (project) => project.state || "No status",
+                      },
+                    ]}
+                  />
                 )}
               </section>
 
               <section className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <DsSectionHeader title="Invoices" count={filteredInvoices.length > 0 ? filteredInvoices.length : undefined} />
+                  <DsSectionHeader title="Invoices" />
                   <Tabs
                     value={invoiceFilter}
                     onValueChange={(value) => setInvoiceFilter(value as "open" | "all")}
@@ -766,84 +781,92 @@ export default function CompanyDetailsPage() {
                     />
                   </div>
                 ) : (
-                  <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead>Invoice</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Contract</TableHead>
-                          <TableHead>Project</TableHead>
-                          <TableHead className="text-right">Period</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredInvoices.map((invoice) => (
-                          <TableRow key={invoice.id} className="hover:bg-muted/50/70">
-                            <TableCell className="font-semibold text-foreground">{invoice.invoice_number || `Invoice ${invoice.id}`}</TableCell>
-                            <TableCell>
-                              <Badge variant={statusVariant(invoice.status)}>{invoice.status || "Unknown"}</Badge>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {invoice.contract_number || invoice.prime_contract_id}: {invoice.contract_title || "Untitled"}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {invoice.project_name || "Unknown project"} ({invoice.project_number || "-"})
-                            </TableCell>
-                            <TableCell className="text-right text-muted-foreground">
-                              {formatDate(invoice.period_start)} to {formatDate(invoice.period_end)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <DsDataTable<InvoiceItem>
+                    rows={filteredInvoices}
+                    columns={[
+                      {
+                        key: "invoice",
+                        header: "Invoice",
+                        primary: true,
+                        render: (invoice) => invoice.invoice_number || `Invoice ${invoice.id}`,
+                      },
+                      {
+                        key: "status",
+                        header: "Status",
+                        render: (invoice) => (
+                          <Badge variant={statusVariant(invoice.status)}>{invoice.status || "Unknown"}</Badge>
+                        ),
+                      },
+                      {
+                        key: "contract",
+                        header: "Contract",
+                        render: (invoice) =>
+                          `${invoice.contract_number || invoice.prime_contract_id}: ${invoice.contract_title || "Untitled"}`,
+                      },
+                      {
+                        key: "project",
+                        header: "Project",
+                        render: (invoice) =>
+                          `${invoice.project_name || "Unknown project"} (${invoice.project_number || "-"})`,
+                      },
+                      {
+                        key: "period",
+                        header: "Period",
+                        align: "right",
+                        render: (invoice) =>
+                          `${formatDate(invoice.period_start)} to ${formatDate(invoice.period_end)}`,
+                      },
+                    ]}
+                  />
                 )}
               </section>
 
               <section className="space-y-4">
-                <DsSectionHeader title="Meetings" count={meetingsByProject.length > 0 ? meetings.length : undefined} />
+                <DsSectionHeader title="Meetings" />
                 {meetingsByProject.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
                     <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
                   </div>
                 ) : (
-                  <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead>Meeting</TableHead>
-                          <TableHead>Project</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {meetingsByProject.flatMap(({ project, items }) =>
-                          items.slice(0, 6).map((meeting) => (
-                            <TableRow key={meeting.id} className="hover:bg-muted/50/70">
-                              <TableCell>
-                                <Link
-                                  href={`/${meeting.project_id}/meetings/${meeting.id}`}
-                                  className="font-semibold text-foreground underline-offset-4 hover:underline"
-                                >
-                                  {meeting.title || "Untitled meeting"}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {project?.name || meeting.project_name || "Unknown project"}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant={statusVariant(meeting.status)}>{meeting.status || "Unknown"}</Badge>
-                                  {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right text-muted-foreground">
-                                {formatDate(meeting.date)}
-                              </TableCell>
-                            </TableRow>
-                          )),
-                        )}
-                      </TableBody>
-                    </Table>
+                  <DsDataTable<(MeetingItem & { display_project_name: string })>
+                    rows={meetingRows}
+                    columns={[
+                      {
+                        key: "meeting",
+                        header: "Meeting",
+                        primary: true,
+                        render: (meeting) => (
+                          <Link
+                            href={`/${meeting.project_id}/meetings/${meeting.id}`}
+                            className="font-medium text-foreground underline-offset-4 hover:underline"
+                          >
+                            {meeting.title || "Untitled meeting"}
+                          </Link>
+                        ),
+                      },
+                      {
+                        key: "project",
+                        header: "Project",
+                        render: (meeting) => meeting.display_project_name,
+                      },
+                      {
+                        key: "status",
+                        header: "Status",
+                        render: (meeting) => (
+                          <div className="flex items-center gap-2">
+                            <Badge variant={statusVariant(meeting.status)}>{meeting.status || "Unknown"}</Badge>
+                            {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
+                          </div>
+                        ),
+                      },
+                      {
+                        key: "date",
+                        header: "Date",
+                        align: "right",
+                        render: (meeting) => formatDate(meeting.date),
+                      },
+                    ]}
+                  />
                 )}
               </section>
             </div>

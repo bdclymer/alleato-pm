@@ -196,6 +196,12 @@ export interface UnifiedTablePageProps<T> {
     mobilePanelActions?: ReactNode;
     /** Extra action buttons rendered in the toolbar icon row (e.g. ERP sync) */
     customActions?: ReactNode;
+    /**
+     * Stable identifier for this table when saving views (e.g. "meetings").
+     * Set this to enable the per-user "Saved views" picker. Project-agnostic —
+     * a view created on project A's page applies on project B's page too.
+     */
+    savedViewsScope?: string;
   };
   data: {
     items: T[];
@@ -437,7 +443,19 @@ export function UnifiedTablePage<T>({
   ]);
 
   const effectiveSelectedCount = toolbar.selectedCount ?? selectedIds.length;
-  const hasRowSelection = resolvedFeatures.enableRowSelection;
+  // Row selection (checkboxes) only renders when there is a usable bulk action.
+  // Empty checkboxes with no destination are a bug — see SKILL.md "Selection requires a bulk action".
+  // Parents can force-enable by either:
+  //   (a) explicitly passing a `selection` prop (URL-synced selection state), or
+  //   (b) setting `features.enableRowSelection` explicitly (true *or* false).
+  // Otherwise: checkboxes appear only when `table.onDelete` or `toolbar.onBulkDelete` is wired.
+  const parentOptedIntoSelection =
+    features?.enableRowSelection !== undefined || Boolean(selection);
+  const hasBulkAction =
+    Boolean(table.onDelete) || Boolean(toolbar.onBulkDelete);
+  const hasRowSelection = parentOptedIntoSelection
+    ? resolvedFeatures.enableRowSelection
+    : resolvedFeatures.enableRowSelection && hasBulkAction;
   const hasRowActions =
     resolvedFeatures.enableRowActions &&
     Boolean(table.rowActions || table.onDelete || table.onEdit);
@@ -1504,6 +1522,22 @@ export function UnifiedTablePage<T>({
       enableColumnToggle={resolvedFeatures.enableColumnToggle}
       enableExport={resolvedFeatures.enableExport}
       enableBulkDelete={resolvedFeatures.enableBulkDelete && hasRowSelection}
+      savedViewsScope={toolbar.savedViewsScope}
+      savedViewsDefaults={
+        toolbar.savedViewsScope
+          ? {
+              visibleColumns: toolbarColumns
+                .filter(
+                  (column) =>
+                    column.defaultVisible !== false || column.alwaysVisible,
+                )
+                .map((column) => column.id),
+              sortBy: effectiveSorting?.sortBy ?? null,
+              sortDirection: effectiveSorting?.sortDirection ?? "asc",
+              filters: {},
+            }
+          : undefined
+      }
     />
   );
 

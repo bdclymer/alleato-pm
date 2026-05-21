@@ -4,7 +4,13 @@ import { formatDate } from "@/lib/format";
 import {
   Download,
   Eye,
+  File,
+  FileCode,
+  FileImage,
   FilePen,
+  FileSpreadsheet,
+  FileText,
+  FileVideo,
   FolderOpen,
   Lock,
   MoreHorizontal,
@@ -56,11 +62,11 @@ const CATEGORY_OPTIONS = [
 export const projectDocumentColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
   { id: "file_name", label: "File Name", defaultVisible: true },
-  { id: "folder", label: "Folder", defaultVisible: true },
-  { id: "version", label: "Version", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
-  { id: "category", label: "Category", defaultVisible: true },
-  { id: "file_size", label: "File Size", defaultVisible: true },
+  { id: "folder", label: "Folder", defaultVisible: false },
+  { id: "version", label: "Version", defaultVisible: false },
+  { id: "status", label: "Status", defaultVisible: false },
+  { id: "category", label: "Category", defaultVisible: false },
+  { id: "file_size", label: "File Size", defaultVisible: false },
   { id: "uploaded_by", label: "Uploaded By", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
   { id: "content_type", label: "Content Type", defaultVisible: false },
@@ -266,35 +272,65 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
 }
 
 // =============================================================================
-// Card View
+// Card View — Dropbox-style preview
 // =============================================================================
+
+function getFileTypeInfo(fileName: string): {
+  icon: ReactElement;
+  bg: string;
+  ext: string;
+} {
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"].includes(ext))
+    return { icon: <FileImage className="h-10 w-10" />, bg: "bg-purple-500/10 text-purple-600 dark:text-purple-400", ext };
+  if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext))
+    return { icon: <FileVideo className="h-10 w-10" />, bg: "bg-pink-500/10 text-pink-600 dark:text-pink-400", ext };
+  if (["xls", "xlsx", "csv"].includes(ext))
+    return { icon: <FileSpreadsheet className="h-10 w-10" />, bg: "bg-green-500/10 text-green-600 dark:text-green-400", ext };
+  if (["doc", "docx", "txt", "rtf"].includes(ext))
+    return { icon: <FileText className="h-10 w-10" />, bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400", ext };
+  if (["pdf"].includes(ext))
+    return { icon: <FileText className="h-10 w-10" />, bg: "bg-red-500/10 text-red-600 dark:text-red-400", ext };
+  if (["js", "ts", "tsx", "jsx", "py", "rb", "json", "xml", "html", "css"].includes(ext))
+    return { icon: <FileCode className="h-10 w-10" />, bg: "bg-orange-500/10 text-orange-600 dark:text-orange-400", ext };
+
+  return { icon: <File className="h-10 w-10" />, bg: "bg-muted text-muted-foreground", ext };
+}
 
 export function renderDocumentCard(
   item: ProjectDocument,
   onClick: (doc: ProjectDocument) => void,
 ): ReactElement {
+  const { icon, bg, ext } = getFileTypeInfo(item.file_name ?? "");
+
   return (
     <div
-      className="cursor-pointer rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
+      className="group cursor-pointer overflow-hidden rounded-lg bg-card shadow-xs transition-shadow hover:shadow-sm"
       onClick={() => onClick(item)}
     >
-      <div className="mb-2 flex items-start justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{item.title}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {item.file_name}
-          </p>
-        </div>
-        <StatusBadge status={item.status} />
+      {/* Preview area */}
+      <div className={`flex h-32 items-center justify-center ${bg} relative`}>
+        {icon}
+        {ext && (
+          <span className="absolute bottom-2 right-2 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-background/80 text-foreground">
+            {ext}
+          </span>
+        )}
+        {item.is_private && (
+          <span className="absolute top-2 right-2">
+            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+          </span>
+        )}
       </div>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <FolderOpen className="h-3 w-3" />
+
+      {/* File info */}
+      <div className="px-3 py-2.5">
+        <p className="truncate text-sm font-medium leading-tight">{item.title}</p>
+        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+          <FolderOpen className="h-3 w-3 shrink-0" />
           {item.folder ?? "Root"}
-        </span>
-        <span>v{item.version ?? 1}</span>
-        {item.category && <span>{item.category}</span>}
-        <span>{formatFileSize(item.file_size)}</span>
+        </p>
       </div>
     </div>
   );

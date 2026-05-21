@@ -156,9 +156,9 @@ export function DocumentUploadDialog({
             className="space-y-4"
           >
             {/* File Upload Area */}
-            <div
+            <label
+              htmlFor="document-file-input"
               className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors hover:bg-muted/50"
-              onClick={() => fileInputRef.current?.click()}
             >
               {selectedFile ? (
                 <>
@@ -179,13 +179,14 @@ export function DocumentUploadDialog({
                   </p>
                 </>
               )}
-              <Input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
+            </label>
+            <Input
+              id="document-file-input"
+              ref={fileInputRef}
+              type="file"
+              className="sr-only"
+              onChange={handleFileSelect}
+            />
 
             <FormField
               control={form.control}

@@ -71,6 +71,11 @@ import { cn } from "@/lib/utils";
 
 import { ExpandableSearch } from "./expandable-search";
 import { TableCountIndicator } from "./table-primitives";
+import {
+  TableViewsMenu,
+  type TableViewsMenuCurrentState,
+} from "./table-views-menu";
+import type { SavedTableView } from "@/hooks/use-saved-table-views";
 
 export { ExpandableSearch };
 
@@ -147,6 +152,20 @@ export interface TableToolbarProps {
   onDensityChange?: (density: TableDensity) => void;
   /** Feature flags. Omitted flags default to enabled. */
   features?: TableToolbarFeatures;
+  /**
+   * Stable identifier for this table when saving views (e.g. "meetings"). When
+   * set, the toolbar renders a "Saved views" picker before the view switcher.
+   * Views are user-scoped via Supabase RLS, so they sync across browsers.
+   * Project-agnostic — a view created on project A applies on project B.
+   */
+  savedViewsScope?: string;
+  /** Defaults the toolbar will fall back to when "Reset to defaults" is picked. */
+  savedViewsDefaults?: {
+    visibleColumns: string[];
+    sortBy: string | null;
+    sortDirection: SortDirection;
+    filters: Record<string, FilterValue>;
+  };
   /** @deprecated Use `features.search` instead */
   enableSearch?: boolean;
   /** @deprecated Use `features.views` instead */
@@ -683,6 +702,8 @@ export function TableToolbar({
   density = "default",
   onDensityChange,
   features,
+  savedViewsScope,
+  savedViewsDefaults,
   enableSearch,
   enableViews,
   enableFilters,
@@ -691,6 +712,54 @@ export function TableToolbar({
   enableBulkDelete,
   className,
 }: TableToolbarProps): ReactElement {
+  // Track which saved view is currently applied. Local to TableToolbar — the
+  // backing presentation state (visibleColumns/sort/filters) is owned by the
+  // page hook, so the menu just fires the existing setters to apply a view.
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
+
+  const savedViewsCurrentState: TableViewsMenuCurrentState = {
+    visible_columns: visibleColumns,
+    column_order: visibleColumns,
+    sort_by: sortBy ?? null,
+    sort_direction: sortDirection,
+    filters: activeFilters as Record<
+      string,
+      string | number | boolean | string[] | null
+    >,
+  };
+
+  const applySavedView = (view: SavedTableView) => {
+    if (view.visible_columns && view.visible_columns.length > 0) {
+      onColumnVisibilityChange(view.visible_columns);
+    }
+    if (view.sort_by && onSortChange) {
+      onSortChange(view.sort_by, view.sort_direction ?? "asc");
+    }
+    if (view.filters) {
+      onFilterChange(
+        view.filters as Record<string, FilterValue>,
+      );
+    } else {
+      onClearFilters();
+    }
+    setActiveViewId(view.id);
+  };
+
+  const resetSavedViewToDefaults = () => {
+    if (savedViewsDefaults) {
+      onColumnVisibilityChange(savedViewsDefaults.visibleColumns);
+      if (savedViewsDefaults.sortBy && onSortChange) {
+        onSortChange(
+          savedViewsDefaults.sortBy,
+          savedViewsDefaults.sortDirection,
+        );
+      }
+      onFilterChange(savedViewsDefaults.filters);
+    } else {
+      onClearFilters();
+    }
+    setActiveViewId(null);
+  };
   // Resolve feature flags: new `features` object takes precedence,
   // legacy flat props are honoured for backwards-compatibility, default is enabled.
   const feat = {
@@ -1109,6 +1178,23 @@ export function TableToolbar({
   return (
     <div className={cn("py-2", className)}>
       <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {savedViewsScope ? (
+          <div className="shrink-0">
+            <TableViewsMenu
+              scopeKey={savedViewsScope}
+              currentState={savedViewsCurrentState}
+              activeViewId={activeViewId}
+              onApplyView={applySavedView}
+              onResetToDefaults={resetSavedViewToDefaults}
+              onAutoApplyDefault={applySavedView}
+            />
+          </div>
+        ) : null}
+
+        {savedViewsScope ? (
+          <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />
+        ) : null}
+
         {feat.views && (
           <div className="shrink-0">
             <ViewSwitcher

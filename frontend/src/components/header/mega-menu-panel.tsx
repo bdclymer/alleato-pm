@@ -27,9 +27,9 @@ interface MegaMenuPanelProps {
 // Featured tools per group (shown as large bold text in column 1)
 const FEATURED_TOOLS: Record<string, string[]> = {
   finance: ["Estimates", "Budget", "Prime Contracts", "Commitments", "Change Orders", "Direct Costs", "Invoicing", "Change Events"],
-  operations: ["Schedule", "Meetings", "Daily Log", "Punch List", "RFIs", "Submittals", "Transmittals", "Emails", "Project Directory", "Project Tasks"],
+  operations: ["Schedule", "Meetings", "Daily Log", "Punch List", "RFIs", "Submittals", "Transmittals", "Emails"],
   documents: ["Photos", "Drawings", "Specifications", "Documents", "Progress Reports"],
-  company: ["Projects", "Company Directory", "Progress Reports", "360 Reporting"],
+  company: ["Project Directory", "Project Tasks"],
 };
 
 // Display label for the featured column
@@ -37,7 +37,7 @@ const FEATURED_LABELS: Record<string, string> = {
   finance: "Explore Financial",
   operations: "Explore Operations",
   documents: "Explore Documents",
-  company: "Explore Company",
+  company: "Explore Project",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

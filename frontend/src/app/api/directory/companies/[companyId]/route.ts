@@ -72,6 +72,26 @@ export const PATCH = withApiGuardrails(
     // Parse request body
     const body = await request.json();
 
+    if (body.primary_contact_id !== undefined && body.primary_contact_id !== null) {
+      const { data: contact, error: contactError } = await supabase
+        .from("people")
+        .select("id")
+        .eq("id", body.primary_contact_id)
+        .eq("company_id", companyId)
+        .maybeSingle();
+
+      if (contactError) {
+        return apiErrorResponse(contactError);
+      }
+
+      if (!contact) {
+        return NextResponse.json(
+          { error: "Primary contact must be associated with this company" },
+          { status: 400 },
+        );
+      }
+    }
+
     // Update company
     const { data: company, error } = await supabase
       .from("companies")
@@ -83,6 +103,7 @@ export const PATCH = withApiGuardrails(
         ...(body.website !== undefined && { website: body.website }),
         ...(body.company_type !== undefined && { type: body.company_type }),
         ...(body.status !== undefined && { status: body.status }),
+        ...(body.primary_contact_id !== undefined && { primary_contact_id: body.primary_contact_id }),
         updated_at: new Date().toISOString(),
       })
       .eq("id", companyId)

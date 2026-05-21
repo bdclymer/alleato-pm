@@ -5,6 +5,63 @@ import type { Database } from "@/types/database.types";
 import { revalidatePath } from "next/cache";
 
 type DailyLogInsert = Database["public"]["Tables"]["daily_logs"]["Insert"];
+type DailyLogWeatherInsert =
+  Database["public"]["Tables"]["daily_log_weather"]["Insert"];
+type DailyLogManpowerInsert =
+  Database["public"]["Tables"]["daily_log_manpower"]["Insert"];
+type DailyLogEquipmentInsert =
+  Database["public"]["Tables"]["daily_log_equipment"]["Insert"];
+type DailyLogNoteInsert =
+  Database["public"]["Tables"]["daily_log_notes"]["Insert"];
+
+export type DailyLogStatus = "draft" | "pending" | "complete";
+
+export type DailyLogWeatherInput = {
+  area?: string;
+  timeObserved?: string;
+  delay?: boolean;
+  location?: string;
+  sky?: string;
+  temperature?: number | null;
+  calamity?: string;
+  average?: string;
+  precipitation?: string;
+  wind?: string;
+  groundOrSea?: string;
+  comments?: string;
+};
+
+export type DailyLogManpowerInput = {
+  area?: string;
+  companyId?: string;
+  trade?: string;
+  workersCount: number;
+  hoursWorked?: number | null;
+  costCode?: string;
+  location?: string;
+  comments?: string;
+  issueFlag?: boolean;
+};
+
+export type DailyLogEquipmentInput = {
+  area?: string;
+  equipmentName: string;
+  hoursOperated?: number | null;
+  hoursIdle?: number | null;
+  costCode?: string;
+  location?: string;
+  inspected?: boolean;
+  inspectionTime?: string;
+  comments?: string;
+};
+
+export type DailyLogNoteInput = {
+  area?: string;
+  category?: string;
+  location?: string;
+  description: string;
+  issueFlag?: boolean;
+};
 
 /** Normalizes weather payloads into a JSON-safe shape accepted by Supabase. */
 function normalizeWeatherConditions(
@@ -38,6 +95,173 @@ export async function createDailyLog(params: {
   if (error) return { error: error.message };
   revalidatePath(`/${params.projectId}/daily-log`);
   return { success: true, data } as const;
+}
+
+function cleanString(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function cleanTime(value: string | undefined): string | null {
+  const trimmed = cleanString(value);
+  if (!trimmed) return null;
+  return /^\d{2}:\d{2}$/.test(trimmed) ? trimmed : null;
+}
+
+function cleanNumber(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+async function deleteExistingSectionRows(dailyLogId: string) {
+  const supabase = await createClient();
+  const deleteResults = await Promise.all([
+    supabase.from("daily_log_weather").delete().eq("daily_log_id", dailyLogId),
+    supabase.from("daily_log_manpower").delete().eq("daily_log_id", dailyLogId),
+    supabase.from("daily_log_equipment").delete().eq("daily_log_id", dailyLogId),
+    supabase.from("daily_log_notes").delete().eq("daily_log_id", dailyLogId),
+  ]);
+
+  const failed = deleteResults.find((result) => result.error);
+  return failed?.error?.message ?? null;
+}
+
+export async function saveDailyLogWithCoreSections(params: {
+  projectId: number;
+  logDate: string;
+  status: DailyLogStatus;
+  generalNotes?: string;
+  weather: DailyLogWeatherInput[];
+  manpower: DailyLogManpowerInput[];
+  equipment: DailyLogEquipmentInput[];
+  notes: DailyLogNoteInput[];
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const completedAt = params.status === "complete" ? new Date().toISOString() : null;
+  const completedBy = params.status === "complete" ? user?.id ?? null : null;
+
+  const weatherSummary = params.weather
+    .map((entry) =>
+      [
+        cleanString(entry.sky),
+        cleanNumber(entry.temperature) == null ? null : `${entry.temperature}°`,
+        cleanString(entry.precipitation),
+        cleanString(entry.wind),
+        cleanString(entry.comments),
+      ]
+        .filter(Boolean)
+        .join(" / "),
+    )
+    .filter(Boolean)
+    .join("\n");
+
+  const { data: dailyLog, error: logError } = await supabase
+    .from("daily_logs")
+    .upsert(
+      {
+        project_id: params.projectId,
+        log_date: params.logDate,
+        status: params.status,
+        completed_at: completedAt,
+        completed_by: completedBy,
+        created_by: user?.id ?? undefined,
+        general_notes: cleanString(params.generalNotes),
+        weather_conditions: weatherSummary || null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "project_id,log_date" },
+    )
+    .select()
+    .single();
+
+  if (logError || !dailyLog) {
+    return { error: logError?.message ?? "Daily log was not saved." };
+  }
+
+  const deleteError = await deleteExistingSectionRows(dailyLog.id);
+  if (deleteError) {
+    return { error: `Daily log saved, but existing section rows were not replaced: ${deleteError}` };
+  }
+
+  const weatherRows: DailyLogWeatherInsert[] = params.weather.map((entry) => ({
+    daily_log_id: dailyLog.id,
+    area: cleanString(entry.area),
+    time_observed: cleanTime(entry.timeObserved),
+    delay: Boolean(entry.delay),
+    location: cleanString(entry.location),
+    sky: cleanString(entry.sky),
+    temperature: cleanNumber(entry.temperature),
+    calamity: cleanString(entry.calamity),
+    average: cleanString(entry.average),
+    precipitation: cleanString(entry.precipitation),
+    wind: cleanString(entry.wind),
+    ground_or_sea: cleanString(entry.groundOrSea),
+    comments: cleanString(entry.comments),
+  }));
+
+  const manpowerRows: DailyLogManpowerInsert[] = params.manpower.map((entry) => ({
+    daily_log_id: dailyLog.id,
+    area: cleanString(entry.area),
+    company_id: cleanString(entry.companyId),
+    trade: cleanString(entry.trade),
+    workers_count: entry.workersCount,
+    hours_worked: cleanNumber(entry.hoursWorked),
+    cost_code: cleanString(entry.costCode),
+    location: cleanString(entry.location),
+    comments: cleanString(entry.comments),
+    issue_flag: Boolean(entry.issueFlag),
+  }));
+
+  const equipmentRows: DailyLogEquipmentInsert[] = params.equipment.map((entry) => ({
+    daily_log_id: dailyLog.id,
+    area: cleanString(entry.area),
+    equipment_name: entry.equipmentName.trim(),
+    hours_operated: cleanNumber(entry.hoursOperated),
+    hours_idle: cleanNumber(entry.hoursIdle),
+    cost_code: cleanString(entry.costCode),
+    location: cleanString(entry.location),
+    inspected: Boolean(entry.inspected),
+    inspection_time: cleanTime(entry.inspectionTime),
+    comments: cleanString(entry.comments),
+    notes: cleanString(entry.comments),
+  }));
+
+  const noteRows: DailyLogNoteInsert[] = params.notes.map((entry) => ({
+    daily_log_id: dailyLog.id,
+    area: cleanString(entry.area),
+    category: cleanString(entry.category),
+    location: cleanString(entry.location),
+    description: entry.description.trim(),
+    issue_flag: Boolean(entry.issueFlag),
+  }));
+
+  const insertJobs = [
+    weatherRows.length > 0
+      ? supabase.from("daily_log_weather").insert(weatherRows)
+      : Promise.resolve({ error: null }),
+    manpowerRows.length > 0
+      ? supabase.from("daily_log_manpower").insert(manpowerRows)
+      : Promise.resolve({ error: null }),
+    equipmentRows.length > 0
+      ? supabase.from("daily_log_equipment").insert(equipmentRows)
+      : Promise.resolve({ error: null }),
+    noteRows.length > 0
+      ? supabase.from("daily_log_notes").insert(noteRows)
+      : Promise.resolve({ error: null }),
+  ];
+
+  const insertResults = await Promise.all(insertJobs);
+  const insertError = insertResults.find((result) => result.error);
+  if (insertError?.error) {
+    return { error: `Daily log saved, but section rows failed: ${insertError.error.message}` };
+  }
+
+  revalidatePath(`/${params.projectId}/daily-log`);
+  revalidatePath(`/${params.projectId}/daily-log/new`);
+  return { success: true, data: dailyLog } as const;
 }
 
 export async function createDailyLogManpower(params: {

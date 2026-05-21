@@ -496,6 +496,18 @@ export default async function ProjectHomePage({
   });
   const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
+  if (teamResult.error) {
+    console.error(
+      `[project-home] get_project_team RPC failed for project ${numericProjectId}:`,
+      teamResult.error,
+    );
+  }
+  if (teamDirectoryResult.error) {
+    console.error(
+      `[project-home] project_directory_memberships query failed for project ${numericProjectId}:`,
+      teamDirectoryResult.error,
+    );
+  }
   const teamFromRpc = teamResult.data || [];
   const teamFromDirectory = mapDirectoryTeamMembers(teamDirectoryResult.data || []);
   const teamFromProject = mapProjectTeamMembers(project.team_members);

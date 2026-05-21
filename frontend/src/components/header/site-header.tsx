@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
+  Building2,
   ChevronsLeft,
   ChevronsRight,
   ChevronRight,
@@ -27,6 +28,8 @@ import {
 import { cn } from "@/lib/utils";
 import {
   headerNavGroups,
+  companyWideHeaderTools,
+  meganCompanyAdminTools,
   buildToolUrl,
   filterToolsByPermission,
   type HeaderNavGroup,
@@ -312,6 +315,7 @@ export function SiteHeader() {
             permissions={permissions}
             isAppAdmin={isAppAdmin}
             userType={userType}
+            userEmail={user?.email ?? null}
           />
           <AiChatButton />
           <Link
@@ -425,6 +429,13 @@ function MobileNavOverlay({
       userType,
     ),
   }));
+  const companyTools = filterToolsByPermission(
+    companyWideHeaderTools,
+    projectId,
+    permissions,
+    isAppAdmin,
+    userType,
+  );
 
   return (
     <div
@@ -505,6 +516,41 @@ function MobileNavOverlay({
             </div>
           </div>
         ))}
+        <div className="flex w-full flex-col items-center gap-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Company Tools
+          </p>
+          <div className="flex w-full flex-col items-center gap-5">
+            {companyWideHeaderTools.map((tool) => {
+              const isDisabled = !companyTools.includes(tool);
+              const href = buildToolUrl(tool.path, projectId, tool.requiresProject);
+              const isActive = tool.name === activeToolName;
+              return (
+                <Link
+                  key={`${tool.path}:${tool.name}`}
+                  href={href}
+                  onClick={(e) => {
+                    if (isDisabled) {
+                      e.preventDefault();
+                      return;
+                    }
+                    onClose();
+                  }}
+                  className={cn(
+                    "w-full max-w-[22rem] truncate px-2 text-center text-lg tracking-tight transition-colors",
+                    isDisabled
+                      ? "pointer-events-none opacity-30"
+                      : isActive
+                        ? "font-semibold text-foreground"
+                        : "text-foreground/85",
+                  )}
+                >
+                  {tool.name}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </nav>
 
       {/* Bottom: project selector + user menu */}
@@ -548,14 +594,19 @@ function ToolsDropdown({
   permissions,
   isAppAdmin,
   userType,
+  userEmail,
 }: {
   projectId: number | null;
   activeToolName: string;
   permissions: Record<string, string[]>;
   isAppAdmin: boolean;
   userType: string | null;
+  userEmail: string | null;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [showCompanyTools, setShowCompanyTools] = React.useState(false);
+  const canViewMeganAdminTools =
+    userEmail?.trim().toLowerCase() === "megan@megankharrison.com";
 
   const groups = headerNavGroups.map((group) => ({
     ...group,
@@ -567,6 +618,22 @@ function ToolsDropdown({
       userType,
     ),
   }));
+  const visibleCompanyTools = filterToolsByPermission(
+    companyWideHeaderTools,
+    projectId,
+    permissions,
+    isAppAdmin,
+    userType,
+  );
+  const visibleMeganAdminTools = canViewMeganAdminTools
+    ? meganCompanyAdminTools
+    : [];
+
+  React.useEffect(() => {
+    if (!open) {
+      setShowCompanyTools(false);
+    }
+  }, [open]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -605,9 +672,23 @@ function ToolsDropdown({
       >
         {/* Panel header */}
         <div className="flex items-center justify-between border-b border-border/50 px-5 py-2.5">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Navigate to
-          </span>
+          <div className="flex items-center gap-2">
+            {showCompanyTools && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowCompanyTools(false)}
+                aria-label="Back to project tools"
+              >
+                <ChevronsLeft className="h-3.5 w-3.5" strokeWidth={1.6} />
+              </Button>
+            )}
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {showCompanyTools ? "Company tools" : "Project tools"}
+            </span>
+          </div>
           {!projectId && (
             <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-[10px] font-medium text-status-warning">
               Select a project to unlock more tools
@@ -616,22 +697,122 @@ function ToolsDropdown({
         </div>
 
         {/* Groups */}
-        <div className="overflow-x-auto">
-          <div className="flex divide-x divide-border/40" style={{ minWidth: 760 }}>
-            {groups.map((group) => (
-              <ToolsGroup
-                key={group.id}
-                group={group}
-                visibleTools={group.visibleTools}
-                projectId={projectId}
-                activeToolName={activeToolName}
-                onClose={() => setOpen(false)}
-              />
-            ))}
-          </div>
+        <div
+          key={showCompanyTools ? "company-tools" : "project-tools"}
+          className="animate-in fade-in duration-200"
+        >
+          {showCompanyTools ? (
+            <CompanyToolsPanel
+              tools={companyWideHeaderTools}
+              visibleTools={visibleCompanyTools}
+              adminTools={canViewMeganAdminTools ? meganCompanyAdminTools : []}
+              visibleAdminTools={visibleMeganAdminTools}
+              projectId={projectId}
+              activeToolName={activeToolName}
+              onClose={() => setOpen(false)}
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="flex divide-x divide-border/40" style={{ minWidth: 760 }}>
+                {groups.map((group) => (
+                  <ToolsGroup
+                    key={group.id}
+                    group={group}
+                    visibleTools={group.visibleTools}
+                    projectId={projectId}
+                    activeToolName={activeToolName}
+                    onClose={() => setOpen(false)}
+                  />
+                ))}
+              </div>
+              <div className="border-t border-border/50 px-5 py-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCompanyTools(true)}
+                  className="h-8 gap-2 px-2 text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <Building2 className="h-3.5 w-3.5" strokeWidth={1.6} />
+                  View company tools
+                  <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.6} />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+const COMPANY_TOOL_SECTIONS = [
+  {
+    label: "Company",
+    toolNames: ["Projects", "Company Directory", "AI Strategist", "Settings"],
+  },
+  {
+    label: "Work",
+    toolNames: ["Meetings", "Tasks", "Knowledge Base", "Documents"],
+  },
+  {
+    label: "Financial",
+    toolNames: ["Estimates", "Prime Contracts", "Change Events"],
+  },
+];
+
+function CompanyToolsPanel({
+  tools,
+  visibleTools,
+  adminTools,
+  visibleAdminTools,
+  projectId,
+  activeToolName,
+  onClose,
+}: {
+  tools: HeaderNavigationTool[];
+  visibleTools: HeaderNavigationTool[];
+  adminTools: HeaderNavigationTool[];
+  visibleAdminTools: HeaderNavigationTool[];
+  projectId: number | null;
+  activeToolName: string;
+  onClose: () => void;
+}) {
+  const sections = adminTools.length
+    ? [
+        ...COMPANY_TOOL_SECTIONS,
+        { label: "Admin", toolNames: adminTools.map((tool) => tool.name) },
+      ]
+    : COMPANY_TOOL_SECTIONS;
+  const allTools = [...tools, ...adminTools];
+  const allVisibleTools = [...visibleTools, ...visibleAdminTools];
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="flex divide-x divide-border/40" style={{ minWidth: 760 }}>
+        {sections.map((section) => (
+          <div key={section.label} className="flex flex-1 flex-col gap-0 p-4">
+            <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {section.label}
+            </p>
+            {section.toolNames.map((toolName) => {
+              const tool = allTools.find((candidate) => candidate.name === toolName);
+              if (!tool) return null;
+              return (
+                <ToolItem
+                  key={`${tool.path}:${tool.name}`}
+                  tool={tool}
+                  projectId={projectId}
+                  isActive={tool.name === activeToolName}
+                  isDisabled={!allVisibleTools.includes(tool)}
+                  onClose={onClose}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

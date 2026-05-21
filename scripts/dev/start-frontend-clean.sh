@@ -61,7 +61,6 @@ if [[ -n "${alleato_pids:-}" ]]; then
 fi
 
 cd "$FRONTEND_DIR"
-rm -rf .next
 echo "$$" > "$PID_FILE"
 export NODE_OPTIONS='--max-old-space-size=6144'
 exec npx next dev --port "$PORT"

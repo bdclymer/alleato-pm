@@ -37,6 +37,11 @@ export const getCurrentUser = cache(async () => {
  * The value comes from the custom_access_token_hook which embeds is_admin
  * from user_profiles at token issuance time — no extra DB round-trip.
  *
+ * NOTE: the is_admin claim is a SUPERSET of is_developer. Anyone with
+ * is_developer=true on their user_profile is automatically reported as admin
+ * here. To check "is this user a developer specifically (and not just an
+ * admin)" use getIsDeveloper().
+ *
  * NOTE: requires the custom_access_token_hook to be registered in Supabase
  * Dashboard → Auth → Hooks. See docs/deployment/AUTH-JWT-HOOK-RUNBOOK.md.
  * Until the hook is registered, this always returns false.
@@ -50,5 +55,25 @@ export const getIsAdmin = cache(async (): Promise<boolean> => {
   // claims set in the hook's event->claims object.
   return Boolean(
     (user.app_metadata as Record<string, unknown> | undefined)?.is_admin
+  );
+});
+
+/**
+ * Returns true if the current user has is_developer=true in their JWT.
+ *
+ * Developers are a strict subset of admins: every developer is also an admin
+ * (the JWT hook OR-s is_developer into the is_admin claim), but most admins
+ * are NOT developers. Use this for surfaces that should be visible only to
+ * the people actively building the site (internal diagnostics, schema dumps,
+ * experimental features, prompt tuning, etc.).
+ *
+ * The value comes from the custom_access_token_hook (same hook that emits
+ * is_admin) — no extra DB round-trip. See docs/deployment/AUTH-JWT-HOOK-RUNBOOK.md.
+ */
+export const getIsDeveloper = cache(async (): Promise<boolean> => {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  return Boolean(
+    (user.app_metadata as Record<string, unknown> | undefined)?.is_developer
   );
 });

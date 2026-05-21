@@ -919,6 +919,24 @@ A `<Card>` is NOT justified for:
 - A dropdown with empty items must be removed or implemented
 - Placeholder tabs showing no content must be hidden or implemented
 
+### Decorative icons & avatars (banned in front of titles and names)
+
+A leading icon or avatar in front of a title, heading, or name is decoration. It adds visual noise, fights with typography for prominence, and reads as cheap.
+
+**Never:**
+- Icon-in-a-tinted-circle next to a page title, sheet title, section heading, or modal title (e.g. a `Building2` puck next to a company name)
+- Avatar circles in front of contact / person names in dense lists, sidebars, sheets, or detail panels
+- Decorative icons in table-cell name columns (the column header already tells the user what they're looking at)
+- Building / file / folder icons in front of entity names — the page context already says what the entity is
+
+**Acceptable uses for icons and avatars:**
+- Icons inside buttons where the icon clarifies the action ("+ Add", "Download")
+- Avatars in the top app bar (user identity) and in true comment / activity feeds where multiple people are speaking
+- Icons in empty-state hero illustrations (single, large, low-contrast)
+- Status icons next to a status badge where the icon carries information (e.g. checkmark, warning)
+
+Rule of thumb: if removing the icon or avatar makes the layout calmer without losing meaning, remove it. The name itself is the affordance.
+
 ---
 
 ## 14a. MetricCard vs KpiBlock: When to Use Each

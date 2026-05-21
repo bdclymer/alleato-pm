@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
 import { ToastInstrumentation } from "./toast-instrumentation";
@@ -8,8 +10,13 @@ type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toaster = (
     <>
       <ToastInstrumentation />
       <Sonner
@@ -38,6 +45,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
       />
     </>
   );
+
+  if (!mounted || typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(toaster, document.body);
 };
 
 export { Toaster };

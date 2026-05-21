@@ -3,10 +3,12 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  companyWideHeaderTools,
   extractProjectId,
   headerNavGroups,
   getActiveGroupId,
   adminSettingsTools,
+  meganCompanyAdminTools,
   type HeaderNavigationTool,
 } from "@/lib/navigation-config";
 import { apiFetch } from "@/lib/api-client";
@@ -148,6 +150,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const allTools: HeaderNavigationTool[] = [
       ...headerNavGroups.flatMap((g) => g.tools),
+      ...companyWideHeaderTools,
+      ...meganCompanyAdminTools,
       ...adminSettingsTools,
     ];
 
@@ -217,6 +221,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const skippedIndexes = new Set<number>();
     const allTools: HeaderNavigationTool[] = [
       ...headerNavGroups.flatMap((g) => g.tools),
+      ...companyWideHeaderTools,
+      ...meganCompanyAdminTools,
       ...adminSettingsTools,
     ];
     const isMeetingDetailRoute =

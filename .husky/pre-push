@@ -1,6 +1,16 @@
 #!/usr/bin/env sh
 
-# Lightweight pre-push: only route conflicts (instant check).
-# Typecheck, lint, and unit tests run in CI — no need to block pushes.
+# Pre-push gate: catch missing-import build failures before they reach Vercel.
+# Typecheck (tsc --noEmit) is fast and catches the exact class of error that
+# caused repeated deploy failures: commits that import files not yet staged.
+
+cd frontend && npm run typecheck
+TYPECHECK_EXIT=$?
+cd ..
+
+if [ $TYPECHECK_EXIT -ne 0 ]; then
+  echo "ERROR: TypeScript errors found — push blocked to prevent broken Vercel build."
+  exit 1
+fi
 
 npm run check:routes
