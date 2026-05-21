@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { CompanyService } from "@/services/companyService";
 import { PermissionService } from "@/services/permissionService";
 
@@ -200,13 +201,13 @@ export const DELETE = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/companies/[companyId]#DELETE", message: "Authentication required." });
     }
 
-    // Check permissions (admin required for delete)
+    // Check permissions
     const permissionService = new PermissionService(supabase);
     const hasPermission = await permissionService.hasPermission(
       user.id,
       projectId,
       "directory",
-      "admin",
+      "write",
     );
 
     if (!hasPermission) {
@@ -220,11 +221,13 @@ export const DELETE = withApiGuardrails(
       );
     }
 
-    const companyService = new CompanyService(supabase);
+    const serviceSupabase = createServiceClient();
+    const companyService = new CompanyService(serviceSupabase);
 
     // Check if company exists
+    let company;
     try {
-      await companyService.getCompany(projectId, companyId);
+      company = await companyService.getCompany(projectId, companyId);
     } catch (getError) {
       if (
         getError instanceof Error &&
@@ -245,7 +248,7 @@ export const DELETE = withApiGuardrails(
     // Check if company can be deleted
     const canDelete = await companyService.canDeleteCompany(
       projectId,
-      companyId,
+      company.company_id,
     );
     if (!canDelete.canDelete) {
       return NextResponse.json(
@@ -260,9 +263,11 @@ export const DELETE = withApiGuardrails(
 
     // Delete the project company association
     // Note: We don't delete the global company record, just the project association
-    const { error: deleteError } = await (supabase as any)
+    const projectIdNum = Number.parseInt(projectId, 10);
+    const { error: deleteError } = await serviceSupabase
       .from("project_companies")
       .delete()
+      .eq("project_id", projectIdNum)
       .eq("id", companyId);
 
     if (deleteError) throw deleteError;
