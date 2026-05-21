@@ -42,8 +42,20 @@ export function formatDate(
   styleOrFormat: "short" | "long" | "numeric" | "relative" | (string & Record<never, never>) = "short",
 ): string {
   if (!value) return "--";
-  const date = typeof value === "string" ? parseDisplayDate(value) : value;
-  if (!isValid(date)) return "--";
+  // ISO date-only strings (YYYY-MM-DD) must be parsed as local midnight, not UTC.
+  // new Date("YYYY-MM-DD") and parseISO in date-fns v4 both treat them as UTC,
+  // which shifts the displayed date by -1 day in US timezones.
+  const date =
+    typeof value === "string"
+      ? /^\d{4}-\d{2}-\d{2}$/.test(value)
+        ? new Date(value + "T00:00:00")
+        : parseISO(value)
+      : value;
+  if (!isValid(date)) {
+    const fallback = typeof value === "string" ? new Date(value) : value;
+    if (!isValid(fallback)) return "--";
+    return _applyStyle(fallback, styleOrFormat);
+  }
   return _applyStyle(date, styleOrFormat);
 }
 

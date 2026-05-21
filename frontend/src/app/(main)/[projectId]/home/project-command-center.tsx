@@ -22,7 +22,6 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { parseDisplayDate } from "@/lib/date-utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useProjectRoles } from "@/hooks/use-project-roles";
 import {
@@ -220,16 +219,24 @@ function getDateMs(value: string | null | undefined): number {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+function parseLocalDate(value: string): Date {
+  // ISO date-only strings (YYYY-MM-DD) are parsed as UTC midnight by spec.
+  // Append local midnight so the date renders correctly in any timezone.
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(value + "T00:00:00")
+    : new Date(value);
+}
+
 function formatShortDate(value: string | null | undefined): string | null {
   if (!value) return null;
-  const date = parseDisplayDate(value);
+  const date = parseLocalDate(value);
   if (Number.isNaN(date.getTime())) return null;
   return format(date, "MMM d, yyyy");
 }
 
 function formatMonthDay(value: string | null | undefined): string | null {
   if (!value) return null;
-  const date = parseDisplayDate(value);
+  const date = parseLocalDate(value);
   if (Number.isNaN(date.getTime())) return null;
   return format(date, "MMM d");
 }

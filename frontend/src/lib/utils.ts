@@ -7,7 +7,6 @@ import type {
 import { clsx, type ClassValue } from "clsx";
 import { formatISO } from "date-fns";
 import { twMerge } from "tailwind-merge";
-import { parseDisplayDate } from "@/lib/date-utils";
 import type { DBMessage, Document } from "@/lib/db/schema";
 import { ChatbotError, type ErrorCode } from "./errors";
 import type { ChatMessage, ChatTools, CustomUIDataTypes } from "./types";
@@ -43,7 +42,14 @@ export function formatDate(
   locale: string = "en-US",
 ): string {
   if (!value) return "";
-  const date = parseDisplayDate(value);
+  // ISO date-only strings (YYYY-MM-DD) are parsed as UTC midnight by spec.
+  // Append local midnight to preserve the intended calendar date.
+  const date =
+    typeof value === "string"
+      ? /^\d{4}-\d{2}-\d{2}$/.test(value)
+        ? new Date(value + "T00:00:00")
+        : new Date(value)
+      : value;
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleDateString(locale, {
     year: "numeric",
