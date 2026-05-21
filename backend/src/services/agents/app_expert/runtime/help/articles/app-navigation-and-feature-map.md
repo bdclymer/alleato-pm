@@ -34,6 +34,12 @@ belongs to a single project, such as budget, commitments, change events, RFIs,
 submittals, drawings, daily logs, documents, photos, schedule, and project
 directory.
 
+If a project page is missing or hidden, the first checks are project context and
+permission scope. The user may be on a global page without a selected project,
+may not have project membership for that project, or may not have the permission
+level required for that page or action. Admin-only pages also stay hidden from
+standard project users.
+
 ## Ask Alleato For The Right Page
 
 Ask Alleato can answer navigation questions like:
