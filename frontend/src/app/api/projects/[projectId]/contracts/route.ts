@@ -224,6 +224,14 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
     }
 
+    // Business rule: approved contracts must have a non-zero contract value
+    if (validatedData.status === "approved" && (validatedData.original_contract_value ?? 0) <= 0) {
+      return NextResponse.json(
+        { error: "Cannot approve a contract with $0 contract value. Add line items with amounts before approving." },
+        { status: 400 },
+      );
+    }
+
     // Check for unique contract_number within project
     const { data: existingContract } = await supabase
       .from("prime_contracts")

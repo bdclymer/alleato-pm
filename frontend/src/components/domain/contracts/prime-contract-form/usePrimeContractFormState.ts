@@ -402,6 +402,21 @@ export function usePrimeContractFormState({
         return;
       }
 
+      // Business rule: cannot approve a contract with $0 value
+      if (formData.status === "approved") {
+        const baseItems = (formData.sovItems || []).filter((item) => !item.isGroup && !item.isMarkup);
+        const sovTotal = baseItems.reduce((sum, item) => {
+          if (formData.accountingMethod === "unit_quantity") {
+            return sum + (item.quantity ?? 0) * (item.unitCost ?? 0);
+          }
+          return sum + (item.amount || 0);
+        }, 0);
+        if (sovTotal <= 0) {
+          toast.error("Cannot approve a contract with $0 value. Add SOV line items with amounts before approving.");
+          return;
+        }
+      }
+
       const submitData: ContractFormData = {
         ...(formData as ContractFormData),
         // Include markup SOV items at the end of the SOV for line-item creation

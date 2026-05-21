@@ -162,7 +162,7 @@ export const PUT = withApiGuardrails(
     // Check if contract exists and belongs to this project
     const { data: existingContract } = await supabase
       .from("prime_contracts")
-      .select("id, contract_number")
+      .select("id, contract_number, original_contract_value")
       .eq("id", contractId)
       .eq("project_id", parseInt(projectId, 10))
       .maybeSingle();
@@ -172,6 +172,19 @@ export const PUT = withApiGuardrails(
         { error: "Contract not found" },
         { status: 404 },
       );
+    }
+
+    // Business rule: approved contracts must have a non-zero contract value
+    if (validatedData.status === "approved") {
+      const effectiveValue = validatedData.original_contract_value !== undefined
+        ? validatedData.original_contract_value
+        : (existingContract.original_contract_value ?? 0);
+      if (effectiveValue <= 0) {
+        return NextResponse.json(
+          { error: "Cannot approve a contract with $0 contract value. Add line items with amounts before approving." },
+          { status: 400 },
+        );
+      }
     }
 
     // If updating contract_number, check for uniqueness
