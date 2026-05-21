@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 import tempfile
 import threading
 import xml.etree.ElementTree as ET
@@ -8,6 +9,24 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+_PDF_NAME_RE = re.compile(r"^/[A-Za-z]")
+_PDF_NUMBER_RE = re.compile(r"^-?\d+\.?\d*$")
+
+
+def _is_pdf_token(name: str) -> bool:
+    """Return True if this string looks like a raw PDF internal object, not a task name."""
+    s = name.strip()
+    # PDF name objects: /FlateDecode, /TilingType, /Type, etc.
+    if _PDF_NAME_RE.match(s):
+        return True
+    # Bare floating-point coordinates (e.g. "751.439")
+    if _PDF_NUMBER_RE.match(s):
+        return True
+    # PDF dictionary delimiters embedded in the name
+    if "<<" in s or ">>" in s:
+        return True
+    return False
 
 
 class MicrosoftProjectParseError(Exception):
@@ -48,6 +67,11 @@ _jvm_lock = threading.Lock()
 
 
 def parse_microsoft_project_file(file_name: str, content: bytes) -> List[Dict[str, Any]]:
+    if content[:8].lstrip()[:4] == b"%PDF":
+        raise MicrosoftProjectParseError(
+            "This file is a PDF. Upload a Microsoft Project .mpp, .mpt, or XML file."
+        )
+
     suffix = Path(file_name).suffix.lower()
     if suffix == ".xml":
         tasks = _parse_mspdi_xml(content)
@@ -75,7 +99,7 @@ def _parse_mspdi_xml(content: bytes) -> List[ParsedScheduleTask]:
     for index, node in enumerate(task_nodes, start=1):
         name = _child_text(node, "Name")
         active = _child_text(node, "Active")
-        if not name or active == "0":
+        if not name or active == "0" or _is_pdf_token(name):
             continue
 
         uid = _child_text(node, "UID") or _child_text(node, "ID") or str(index)
@@ -147,7 +171,7 @@ def _parse_mpp_with_mpxj(file_name: str, content: bytes) -> List[ParsedScheduleT
     for index, task in enumerate(task_nodes, start=1):
         name = _java_string(_call(task, "getName"))
         active = _call(task, "getActive")
-        if not name or active is False:
+        if not name or active is False or _is_pdf_token(name):
             continue
 
         uid = _java_string(_call(task, "getUniqueID")) or _java_string(_call(task, "getID")) or str(index)

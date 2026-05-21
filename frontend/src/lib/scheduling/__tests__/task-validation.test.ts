@@ -52,4 +52,21 @@ describe("validateScheduleTaskCreateInput", () => {
       },
     ]);
   });
+
+  it("rejects task names that are PDF internal objects", () => {
+    const pdfNames = ["/TilingType 1", "/Filter/FlateDecode", "/Resources<<", "/XObject<<"];
+    for (const name of pdfNames) {
+      const errors = validateScheduleTaskCreateInput({ name });
+      expect(errors.some((e) => e.field === "name")).toBe(true);
+    }
+  });
+
+  it("accepts real task names that start with a slash-like character sequence in context", () => {
+    expect(
+      validateScheduleTaskCreateInput({ name: "Phase 1 - Foundation" }),
+    ).toEqual([]);
+    expect(
+      validateScheduleTaskCreateInput({ name: "100% Complete Review" }),
+    ).toEqual([]);
+  });
 });

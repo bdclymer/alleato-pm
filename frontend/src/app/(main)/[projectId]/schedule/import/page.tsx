@@ -83,7 +83,19 @@ function parentOutline(outline: string | null): string | null {
   return outline.split(".").slice(0, -1).join(".");
 }
 
+function looksLikePdfToken(name: string): boolean {
+  const s = name.trim();
+  if (/^\/[A-Za-z]/.test(s)) return true;
+  if (/^-?\d+\.?\d*$/.test(s)) return true;
+  if (s.includes("<<") || s.includes(">>")) return true;
+  return false;
+}
+
 function parseMicrosoftProjectXml(xml: string): MicrosoftProjectImportTask[] {
+  if (xml.trimStart().startsWith("%PDF")) {
+    throw new Error("This file is a PDF. Upload a Microsoft Project .mpp, .mpt, or XML file.");
+  }
+
   const document = new DOMParser().parseFromString(xml, "application/xml");
   const parserError = document.getElementsByTagName("parsererror")[0];
 
@@ -98,7 +110,7 @@ function parseMicrosoftProjectXml(xml: string): MicrosoftProjectImportTask[] {
       const name = getText(task, "Name");
       const active = getText(task, "Active");
 
-      if (!name || active === "0") return null;
+      if (!name || active === "0" || looksLikePdfToken(name)) return null;
 
       const uid = getText(task, "UID") || getText(task, "ID") || String(index + 1);
       const outline = getText(task, "OutlineNumber");

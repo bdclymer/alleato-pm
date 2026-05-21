@@ -43,6 +43,8 @@ export function validateScheduleTaskCreateInput(
 
   if (!isNonEmptyText(input.name)) {
     errors.push({ field: "name", error: "Task name is required" });
+  } else if (/^\/[A-Za-z]/.test(input.name.trim()) || input.name.includes("<<") || input.name.includes(">>")) {
+    errors.push({ field: "name", error: "Task name contains invalid characters" });
   }
 
   if (input.status != null && input.status !== "") {
