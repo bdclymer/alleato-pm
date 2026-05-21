@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Check, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -52,6 +53,7 @@ interface PersonOption {
   email: string | null;
   job_title: string | null;
   company_name: string | null;
+  person_type: string | null;
 }
 
 interface DirectoryPeopleResponse {
@@ -61,6 +63,7 @@ interface DirectoryPeopleResponse {
     last_name: string | null;
     email?: string | null;
     job_title?: string | null;
+    person_type?: string | null;
     company?: { name?: string | null } | null;
   }>;
   meta?: { total?: number };
@@ -104,6 +107,7 @@ export function ProjectTeamDialog({
   createRole,
   updateRoleMembers,
   deleteRole,
+  projectId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -111,8 +115,12 @@ export function ProjectTeamDialog({
   createRole: (name: string) => Promise<ProjectRole>;
   updateRoleMembers: (roleId: string, personIds: string[]) => Promise<void>;
   deleteRole: (roleId: string) => Promise<void>;
+  projectId: string;
 }) {
   const [people, setPeople] = React.useState<PersonOption[]>([]);
+  const [externalPeople, setExternalPeople] = React.useState<PersonOption[]>([]);
+  const [externalLoaded, setExternalLoaded] = React.useState(false);
+  const [externalLoading, setExternalLoading] = React.useState(false);
   const [addRoleOpen, setAddRoleOpen] = React.useState(false);
   const [customRoleMode, setCustomRoleMode] = React.useState(false);
   const [customRoleName, setCustomRoleName] = React.useState("");
@@ -124,6 +132,7 @@ export function ProjectTeamDialog({
     const load = async () => {
       try {
         const params = new URLSearchParams({
+          type: "employee",
           status: "active",
           page: "1",
           per_page: "1000",
@@ -139,6 +148,7 @@ export function ProjectTeamDialog({
             email: p.email ?? null,
             job_title: p.job_title ?? null,
             company_name: p.company?.name ?? null,
+            person_type: p.person_type ?? null,
           })),
         );
       } catch (error) {
@@ -151,6 +161,42 @@ export function ProjectTeamDialog({
     };
     void load();
   }, [open]);
+
+  const loadExternalPeople = React.useCallback(async () => {
+    if (externalLoaded || externalLoading) return;
+    setExternalLoading(true);
+    try {
+      const params = new URLSearchParams({
+        type: "contact",
+        status: "active",
+        page: "1",
+        per_page: "2000",
+      });
+      const result = await apiFetch<DirectoryPeopleResponse>(
+        `/api/people?${params}`,
+      );
+      setExternalPeople(
+        (result.data || []).map((p) => ({
+          id: p.id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          email: p.email ?? null,
+          job_title: p.job_title ?? null,
+          company_name: p.company?.name ?? null,
+          person_type: p.person_type ?? null,
+        })),
+      );
+      setExternalLoaded(true);
+    } catch (error) {
+      const message = reportProjectTeamDialogError(
+        "project_team_external_people_load_failed",
+        error,
+      );
+      toast.error(`External contacts did not load: ${message}`);
+    } finally {
+      setExternalLoading(false);
+    }
+  }, [externalLoaded, externalLoading]);
 
   const existingRoleNames = React.useMemo(
     () => new Set(roles.map((r) => r.role_name.toLowerCase())),
@@ -304,7 +350,11 @@ export function ProjectTeamDialog({
                     key={role.id}
                     role={role}
                     people={people}
+                    externalPeople={externalPeople}
+                    externalLoading={externalLoading}
+                    projectId={projectId}
                     saving={savingRoleId === role.id}
+                    onLoadExternalPeople={loadExternalPeople}
                     onTogglePerson={(personId) =>
                       handleTogglePerson(role, personId)
                     }
@@ -451,23 +501,35 @@ export function ProjectTeamDialog({
 function RoleRow({
   role,
   people,
+  externalPeople,
+  externalLoading,
+  projectId,
   saving,
+  onLoadExternalPeople,
   onTogglePerson,
   onRemovePerson,
   onDeleteRole,
 }: {
   role: ProjectRole;
   people: PersonOption[];
+  externalPeople: PersonOption[];
+  externalLoading: boolean;
+  projectId: string;
   saving: boolean;
+  onLoadExternalPeople: () => void;
   onTogglePerson: (personId: string) => void;
   onRemovePerson: (personId: string) => void;
   onDeleteRole: () => void;
 }) {
   const [assignOpen, setAssignOpen] = React.useState(false);
+  const [pickerMode, setPickerMode] = React.useState<"employees" | "external">(
+    "employees",
+  );
   const selectedIds = React.useMemo(
     () => new Set(role.members.map((m) => m.person_id)),
     [role.members],
   );
+  const pickerPeople = pickerMode === "external" ? externalPeople : people;
 
   return (
     <li className="flex items-start gap-3 rounded-md px-3 py-2 hover:bg-muted/40">
@@ -512,7 +574,13 @@ function RoleRow({
             </Badge>
           );
         })}
-        <Popover open={assignOpen} onOpenChange={setAssignOpen}>
+        <Popover
+          open={assignOpen}
+          onOpenChange={(open) => {
+            setAssignOpen(open);
+            if (!open) setPickerMode("employees");
+          }}
+        >
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
@@ -525,13 +593,23 @@ function RoleRow({
           <PopoverContent align="start" className="flex max-h-96 w-80 flex-col overflow-hidden p-0">
             <Command className="overflow-visible">
               <CommandInput
-                placeholder="Search people…"
+                placeholder={
+                  pickerMode === "external"
+                    ? "Search external contacts…"
+                    : "Search employees…"
+                }
                 className="h-9"
               />
               <CommandList className="max-h-80 overflow-y-auto overscroll-contain">
-                <CommandEmpty>No matching people.</CommandEmpty>
+                <CommandEmpty>
+                  {pickerMode === "external" && externalLoading
+                    ? "Loading contacts..."
+                    : pickerMode === "external"
+                      ? "No matching external contacts."
+                      : "No matching employees."}
+                </CommandEmpty>
                 <CommandGroup>
-                  {people.map((person) => {
+                  {pickerPeople.map((person) => {
                     const isSelected = selectedIds.has(person.id);
                     const display = personDisplayName(
                       person.first_name,
@@ -569,6 +647,40 @@ function RoleRow({
                 </CommandGroup>
               </CommandList>
             </Command>
+            <div className="border-t border-border/40 px-2 py-2">
+              {pickerMode === "employees" ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="xs"
+                  className="h-7 px-1 text-xs"
+                  onClick={() => {
+                    setPickerMode("external");
+                    onLoadExternalPeople();
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                  Add external contact
+                </Button>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="xs"
+                    className="h-7 px-1 text-xs"
+                    onClick={() => setPickerMode("employees")}
+                  >
+                    Back to employees
+                  </Button>
+                  <Button asChild type="button" variant="link" size="xs" className="h-7 px-1 text-xs">
+                    <Link href={`/${projectId}/directory/contacts`}>
+                      Add new contact
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </div>
           </PopoverContent>
         </Popover>
       </div>
