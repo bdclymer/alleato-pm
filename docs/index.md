@@ -23,6 +23,7 @@ Generated index of files under `docs/`. Descriptions are based on document headi
 - **[procore-skills-guide.md](./procore-skills-guide.md)** - Procore-Related Skills Guide
 - **[PRODUCT.md](./PRODUCT.md)** - Product
 - **[project-created-modal.md](./project-created-modal.md)** - Project Created Modal
+- **[README.md](./README.md)** - Alleato PM Docs
 - **[REALITY-MAP.md](./REALITY-MAP.md)** - Alleato-Procore Reality Map
 - **[RUNBOOK.md](./RUNBOOK.md)** - Alleato PM - Runbook
 - **[SAAS-NAVIGATION-DESIGN-RESEARCH.md](./SAAS-NAVIGATION-DESIGN-RESEARCH.md)** - Multi-Level SaaS Navigation Design Patterns
