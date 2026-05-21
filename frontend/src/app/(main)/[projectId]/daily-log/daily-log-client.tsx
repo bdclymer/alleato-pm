@@ -97,6 +97,13 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
     setLogs(dailyLogs);
   }, [dailyLogs]);
 
+  const handleEditLog = React.useCallback(
+    (log: DailyLogRow) => {
+      router.push(`/${projectId}/daily-log/${log.id}/edit`);
+    },
+    [projectId, router],
+  );
+
   const handleDeleteLog = React.useCallback(
     async (log: DailyLogRow) => {
       try {
@@ -201,6 +208,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id,
+        onEdit: handleEditLog,
         onDelete: handleDeleteLog,
       }}
       views={{
