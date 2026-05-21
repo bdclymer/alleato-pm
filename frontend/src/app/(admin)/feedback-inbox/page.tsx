@@ -17,15 +17,14 @@ import {
   ExternalLink,
   GitBranch,
   Github,
-  GripVertical,
   Hash,
   Image as ImageIcon,
   Link2,
-  List,
   Loader2,
-  PanelRightOpen,
   PauseCircle,
   Play,
+  Search,
+  Send,
   ShieldCheck,
   Trash2,
   Wrench,
@@ -33,24 +32,29 @@ import {
 } from "lucide-react";
 import { appToast as toast } from "@/lib/toast/app-toast";
 
-import { EmptyState, ErrorState } from "@/components/ds";
-import { PageShell } from "@/components/layout";
-import { SectionRuleHeading } from "@/components/layout/spacing";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  StatusBadge,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+} from "@/components/ds";
+import { PageShell, PageTabs } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { displayAdminFeedbackTitle } from "@/lib/admin-feedback/title";
@@ -146,9 +150,8 @@ type GitHubComment = {
   author_association: string;
 };
 
-type StatusFilter = "open" | "in_progress" | "deferred" | "resolved" | "all";
-type DisplayStatus = Exclude<StatusFilter, "all"> | "archived";
-type InboxViewMode = "triage" | "split";
+type StatusFilter = "open" | "in_progress" | "dispatched" | "deferred" | "resolved" | "all";
+type DisplayStatus = "open" | "in_progress" | "deferred" | "resolved" | "archived";
 type AgentTarget = "codex" | "claude_code";
 
 type DispatchHistoryEntry = {
@@ -171,7 +174,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "in_progress", label: "In Progress" },
   { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
-  { value: "all", label: "All" },
+  { value: "dispatched", label: "Dispatched" },
 ];
 
 const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
@@ -184,7 +187,7 @@ const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
 
 const FEEDBACK_INBOX_TABS: { value: FeedbackInboxTab; label: string }[] = [
   { value: "issues", label: "Issues" },
-  { value: "feature_requests", label: "Feature Requests" },
+  { value: "feature_requests", label: "Features" },
 ];
 
 const STATUS_META: Record<DisplayStatus, { icon: typeof Circle; className: string; dotClassName: string; label: string; showInList?: boolean }> = {
@@ -232,12 +235,6 @@ const REQUEST_TYPE_LABELS: Record<string, string> = {
   question: "Question",
 };
 
-
-const PANEL_MIN_WIDTH = 280;
-const PANEL_MAX_WIDTH = 600;
-const PANEL_DEFAULT_WIDTH = 480;
-const PANEL_STORAGE_KEY = "feedback-inbox-panel-width";
-const VIEW_MODE_STORAGE_KEY = "feedback-inbox-view-mode";
 const IN_PROGRESS_STATUSES = new Set([
   "in_progress",
   "triaged",
@@ -372,22 +369,6 @@ function agentLabel(target: AgentTarget) {
   return target === "codex" ? "Codex" : "Claude Code";
 }
 
-function getSavedViewMode(): InboxViewMode {
-  if (typeof window === "undefined") return "triage";
-  try {
-    const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-    return saved === "split" ? "split" : "triage";
-  } catch (error) {
-    reportNonCriticalFailure({
-      area: "feedback-inbox",
-      operation: "load-view-mode",
-      error,
-      userVisibleFallback: "Feedback inbox view reset to triage.",
-    });
-    return "triage";
-  }
-}
-
 function CollapsibleDetailSection({
   label,
   children,
@@ -430,25 +411,6 @@ function extractMentionIds(text: string, users: UserProfile[]): string[] {
     }
   }
   return ids;
-}
-
-function getSavedPanelWidth(): number {
-  if (typeof window === "undefined") return PANEL_DEFAULT_WIDTH;
-  try {
-    const saved = localStorage.getItem(PANEL_STORAGE_KEY);
-    if (saved) {
-      const w = parseInt(saved, 10);
-      if (w >= PANEL_MIN_WIDTH && w <= PANEL_MAX_WIDTH) return w;
-    }
-  } catch (error) {
-    reportNonCriticalFailure({
-      area: "feedback-inbox",
-      operation: "load-saved-panel-width",
-      error,
-      userVisibleFallback: "Feedback inbox panel width reset to the default.",
-    });
-  }
-  return PANEL_DEFAULT_WIDTH;
 }
 
 /** Render simple markdown: bold, italic, inline code, links, line breaks */
@@ -727,13 +689,13 @@ function CommentInput({
               }}
               onMouseEnter={() => setMentionIndex(i)}
             >
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-medium text-primary">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                 {getInitials(user)}
               </span>
               <span className="truncate text-xs font-medium text-foreground">
                 {displayName(user)}
               </span>
-              <span className="truncate text-[11px] text-muted-foreground">
+              <span className="truncate text-xs text-muted-foreground">
                 {user.email}
               </span>
             </Button>
@@ -771,41 +733,36 @@ function CommentInput({
         className="hidden"
         onChange={handleFileUpload}
       />
-      <div className="rounded-lg border border-border bg-background focus-within:ring-1 focus-within:ring-ring">
-        {/* eslint-disable-next-line design-system/no-raw-form-controls -- custom mention-aware textarea with imperative ref; DS Textarea does not support mention overlay */}
-        <textarea
+      <div className="rounded-md border border-border bg-background p-3 focus-within:ring-1 focus-within:ring-ring">
+        <Textarea
           ref={inputRef}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Add a comment... Use @ to mention someone"
-          rows={3}
-          className="w-full resize-none border-0 bg-transparent px-3 pt-3 pb-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+          placeholder="Add a comment"
+          rows={1}
+          className="max-h-24 min-h-10 resize-none border-0 bg-transparent p-0 shadow-none"
         />
-        <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
+        <div className="mt-2 flex items-center justify-between gap-3">
           <Button
             type="button"
             variant="ghost"
             size="xs"
             onClick={() => fileInputRef.current?.click()}
-            className="h-7 items-center gap-1.5 px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="gap-1.5 text-xs"
           >
             <ImageIcon className="h-3.5 w-3.5" />
             Attach image
           </Button>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              <kbd className="rounded border border-border px-1 py-0.5 text-xs">&#8984;Enter</kbd>
-            </span>
-            <Button
-              size="sm"
-              onClick={handleSubmit}
-              disabled={(!value.trim() && !screenshotDataUrl) || submitting}
-              className="h-7 px-3 text-xs"
-            >
-              {submitting ? "Sending..." : "Submit"}
-            </Button>
-          </div>
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            onClick={handleSubmit}
+            disabled={(!value.trim() && !screenshotDataUrl) || submitting}
+            aria-label={submitting ? "Sending comment" : "Send comment"}
+          >
+            {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+          </Button>
         </div>
       </div>
     </div>
@@ -936,11 +893,11 @@ function CommentsSection({
   }
 
   return (
-    <div>
-      <SectionRuleHeading label="Comments" />
+    <div className="space-y-6">
+      <SectionRuleHeading label="Comments" className="mb-0 pb-0" />
 
       {/* Comment list */}
-      <div ref={scrollRef} className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+      <div ref={scrollRef} className="space-y-6">
         {loading && (
           <div className="flex items-center justify-center py-4">
             <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
@@ -948,20 +905,20 @@ function CommentsSection({
         )}
 
         {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-2">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary mt-0.5">
+          <div key={comment.id} className="flex gap-4">
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
               {getInitials(comment.author)}
             </span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="text-xs font-medium text-foreground">
+            <div className="min-w-0 flex-1 rounded-md bg-muted/30 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
                   {displayName(comment.author)}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {relativeTime(comment.created_at)}
                 </span>
               </div>
-              <p className="mt-0.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+              <p className="mt-3 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
                 {renderBody(comment.body)}
               </p>
               {comment.screenshot_url && (
@@ -1385,71 +1342,6 @@ function ListItemContextMenu({
 }
 
 // ---------------------------------------------------------------------------
-// Resizable Panel Hook
-// ---------------------------------------------------------------------------
-
-function useResizablePanel() {
-  const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT_WIDTH);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const startWidth = useRef(0);
-
-  // Load saved width on mount
-  useEffect(() => {
-    setPanelWidth(getSavedPanelWidth());
-  }, []);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isDragging.current = true;
-    startX.current = e.clientX;
-    startWidth.current = panelWidth;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  }, [panelWidth]);
-
-  useEffect(() => {
-    function handleMouseMove(e: MouseEvent) {
-      if (!isDragging.current) return;
-      const delta = e.clientX - startX.current;
-      const newWidth = Math.min(
-        PANEL_MAX_WIDTH,
-        Math.max(PANEL_MIN_WIDTH, startWidth.current + delta),
-      );
-      setPanelWidth(newWidth);
-    }
-
-    function handleMouseUp() {
-      if (!isDragging.current) return;
-      isDragging.current = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      // Persist to localStorage
-      try {
-        localStorage.setItem(PANEL_STORAGE_KEY, String(panelWidth));
-      } catch (error) {
-        reportNonCriticalFailure({
-          area: "feedback-inbox",
-          operation: "save-panel-width",
-          error,
-          userVisibleFallback: "Feedback inbox panel width was not saved locally.",
-          metadata: { panelWidth },
-        });
-      }
-    }
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [panelWidth]);
-
-  return { panelWidth, handleMouseDown };
-}
-
-// ---------------------------------------------------------------------------
 // Tool Context Section
 // ---------------------------------------------------------------------------
 
@@ -1849,7 +1741,7 @@ function FeedbackDetail({
   return (
     <>
     {DetailConfirmDialog}
-    <div className="mx-auto max-w-5xl space-y-6 px-5 py-5 lg:px-8 lg:py-7">
+    <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-8 lg:px-0">
       {/* Mobile back button */}
       {onBack && (
         <Button
@@ -1866,93 +1758,56 @@ function FeedbackDetail({
 
       {/* Header + Actions */}
       <div>
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-8">
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-semibold text-foreground">
+            <h2 className="text-lg font-semibold leading-snug text-foreground">
               {displayTitle}
             </h2>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-foreground">
+              {item.github_issue_url && (
+                <a
+                  href={item.github_issue_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-foreground transition-colors hover:text-muted-foreground"
+                >
+                  <Github className="h-3.5 w-3.5" />
+                  {item.github_issue_number}
+                </a>
+              )}
               <Button
                 type="button"
                 variant="ghost"
                 size="xs"
-                className="inline-flex items-center gap-1 rounded px-1 -mx-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="h-auto rounded px-0 py-0 text-xs font-normal text-foreground transition-colors hover:bg-transparent hover:text-muted-foreground"
                 onClick={() => {
                   navigator.clipboard.writeText(item.id);
                   toast.success("ID copied to clipboard");
                 }}
                 title={`Copy full ID: ${item.id}`}
               >
-                <span className="font-sans text-xs font-medium text-muted-foreground">
+                <span className="font-sans text-xs font-normal text-foreground">
                   ID:
                 </span>
                 {item.id.slice(0, 8)}
               </Button>
-              <span className="text-border">·</span>
-              <span>
-                {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
-              </span>
-              <span className="text-border">·</span>
-              <span>Submitted by {submitterLabel(item)}</span>
-              {item.severity && (
-                <>
-                  <span className="text-border">·</span>
-                  <span className={cn(
-                    "font-medium",
-                    item.severity === "high" && "text-status-error",
-                    item.severity === "medium" && "text-status-warning",
-                    item.severity === "low" && "text-muted-foreground",
-                  )}>
-                    {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)} priority
-                  </span>
-                </>
-              )}
-              <span className="text-border">·</span>
-              <span>
-                {new Date(item.created_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </span>
-              <span className="text-border">·</span>
-              <a
-                href={item.page_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-medium text-foreground transition-colors hover:text-muted-foreground"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Open referenced page
-              </a>
             </div>
           </div>
+          <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-muted-foreground">
+            {new Date(item.created_at).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </span>
 
-          {/* Delete in corner */}
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            className="shrink-0 text-muted-foreground hover:text-status-error hover:bg-status-error/10"
-            onClick={async () => {
-              const ok = await confirmDetailDelete({
-                description: "Delete this feedback item? This cannot be undone.",
-                variant: "destructive",
-                confirmLabel: "Delete",
-              });
-              if (ok) onDelete(item.id);
-            }}
-            disabled={deletingId === item.id}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
         </div>
 
         {/* Inline actions */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-          <span className="inline-flex items-center gap-2 text-muted-foreground">
-            <span>Status</span>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
           <Select
               value={displayStatus}
             onValueChange={(value) => onUpdateStatus(item.id, value as DisplayStatus)}
@@ -1962,7 +1817,7 @@ function FeedbackDetail({
               aria-label="Feedback status"
               size="sm"
               className={cn(
-                "h-auto w-auto min-w-24 border-0 bg-transparent px-0 py-0 text-xs font-medium shadow-none hover:bg-transparent focus-visible:ring-1",
+                "h-auto w-auto min-w-0 border-0 bg-transparent px-0 py-0 text-xs font-normal shadow-none hover:bg-transparent focus-visible:ring-1",
                 displayStatus === "resolved" && "text-status-success",
                 displayStatus === "open" && "text-status-warning",
                 displayStatus === "in_progress" && "text-status-info",
@@ -1981,6 +1836,27 @@ function FeedbackDetail({
           </Select>
           </span>
 
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
+            <ChevronDown className="h-3 w-3" />
+          </span>
+
+          {item.severity && (
+            <span className={cn(
+              "inline-flex items-center gap-1 text-xs",
+              item.severity === "high" && "text-status-error",
+              item.severity === "medium" && "text-status-warning",
+              item.severity === "low" && "text-muted-foreground",
+            )}>
+              Priority: {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
+              <ChevronDown className="h-3 w-3" />
+            </span>
+          )}
+
+          <span className="text-xs text-foreground">
+            {submitterLabel(item)}
+          </span>
+
           {/* GitHub */}
           {!item.github_issue_number && (
             <Button
@@ -1993,19 +1869,10 @@ function FeedbackDetail({
               {sendingToGitHub ? "Sending..." : "Create Issue"}
             </Button>
           )}
-          {item.github_issue_url && (
-            <a
-              href={item.github_issue_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Github className="h-3 w-3" />
-              #{item.github_issue_number}
-            </a>
-          )}
         </div>
 
+        {/* Agent Dispatch — kept prominent (NOT inside Developer accordion) so
+            it's always one click away from any feedback item. */}
         <div className="mt-3">
           <AgentDispatchSection
             item={item}
@@ -2016,7 +1883,15 @@ function FeedbackDetail({
       </div>
 
       {/* Description */}
-      <div className="space-y-3">
+      <div className="space-y-8">
+        <a
+          href={item.page_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block break-all text-xs font-semibold text-primary underline underline-offset-2"
+        >
+          {item.page_url}
+        </a>
         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
           {item.comment}
         </p>
@@ -2027,104 +1902,130 @@ function FeedbackDetail({
             type="button"
             variant="ghost"
             onClick={() => setLightboxImage(item.screenshot_url)}
-            className="group block h-auto w-full overflow-hidden rounded-md border border-border/60 p-0 text-left transition-colors hover:border-border hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="group block h-auto w-full overflow-hidden rounded-lg p-0 text-left transition-colors hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Open feedback screenshot"
           >
             <img
               src={item.screenshot_url}
               alt="Feedback screenshot"
-              className="w-full max-h-75 object-cover object-top transition-opacity group-hover:opacity-95"
+              className="h-64 w-full object-cover object-top transition-opacity group-hover:opacity-95"
             />
           </Button>
         )}
       </div>
-
-      <CollapsibleDetailSection key={`${item.id}-page-context`} label="Page Context">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-16 shrink-0 text-muted-foreground">Page</span>
-            <a
-              href={item.page_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="truncate font-mono text-xs text-foreground hover:underline"
-            >
-              {item.page_path}
-            </a>
-          </div>
-          {item.page_title && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="w-16 shrink-0 text-muted-foreground">Title</span>
-              <span className="text-foreground">{item.page_title}</span>
-            </div>
-          )}
-          {item.target_text && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="w-16 shrink-0 text-muted-foreground">Element</span>
-              <span className="truncate text-foreground">{item.target_text}</span>
-            </div>
-          )}
-          {item.target_selector && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="w-16 shrink-0 text-muted-foreground">Selector</span>
-              <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
-                {item.target_selector}
-              </code>
-            </div>
-          )}
-          {item.project_id && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="w-16 shrink-0 text-muted-foreground">Project</span>
-              <span className="text-foreground">#{item.project_id}</span>
-            </div>
-          )}
-        </div>
-      </CollapsibleDetailSection>
-
-      <CollapsibleDetailSection key={`${item.id}-tool-context`} label="Tool Context">
-        <ToolContextSection item={item} />
-      </CollapsibleDetailSection>
-
-      {/* Source Metadata */}
-      {item.metadata && Object.keys(item.metadata).length > 0 && (
-        <CollapsibleDetailSection key={`${item.id}-source-metadata`} label="Source Metadata">
-          <div className="space-y-1.5">
-            {Object.entries(item.metadata as Record<string, unknown>).map(([key, value]) => {
-              const label = key
-                .replace(/([A-Z])/g, " $1")
-                .replace(/^./, (c) => c.toUpperCase())
-                .trim();
-              const displayValue =
-                value === null || value === undefined
-                  ? "—"
-                  : typeof value === "object"
-                  ? JSON.stringify(value)
-                  : String(value);
-              return (
-                <div key={key} className="flex items-start gap-2 text-xs">
-                  <span className="w-28 shrink-0 text-muted-foreground">{label}</span>
-                  <span className="text-foreground break-all">{displayValue}</span>
-                </div>
-              );
-            })}
-          </div>
-        </CollapsibleDetailSection>
-      )}
 
       {/* Comments */}
       <div>
         <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
       </div>
 
-      {/* GitHub Activity */}
-      {item.github_issue_number && (
-        <CollapsibleDetailSection
-          key={`${item.id}-github-activity`}
-          label={`GitHub Activity · #${item.github_issue_number}`}
-        >
-          <GitHubActivitySection issueNumber={item.github_issue_number} />
-        </CollapsibleDetailSection>
-      )}
+      <CollapsibleDetailSection key={`${item.id}-developer`} label="Developer">
+        <div className="space-y-8">
+          <section className="space-y-3">
+            <SectionRuleHeading label="Actions" className="mb-0 pb-0" />
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <Button
+                size="xs"
+                variant="ghost"
+                className="shrink-0 gap-1.5 text-xs text-muted-foreground hover:bg-status-error/10 hover:text-status-error"
+                onClick={async () => {
+                  const ok = await confirmDetailDelete({
+                    description: "Delete this feedback item? This cannot be undone.",
+                    variant: "destructive",
+                    confirmLabel: "Delete",
+                  });
+                  if (ok) onDelete(item.id);
+                }}
+                disabled={deletingId === item.id}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete item
+              </Button>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <SectionRuleHeading label="Page Context" className="mb-0 pb-0" />
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="w-16 shrink-0 text-muted-foreground">Page</span>
+                <a
+                  href={item.page_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate font-mono text-xs text-foreground hover:underline"
+                >
+                  {item.page_path}
+                </a>
+              </div>
+              {item.page_title && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-16 shrink-0 text-muted-foreground">Title</span>
+                  <span className="text-foreground">{item.page_title}</span>
+                </div>
+              )}
+              {item.target_text && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-16 shrink-0 text-muted-foreground">Element</span>
+                  <span className="truncate text-foreground">{item.target_text}</span>
+                </div>
+              )}
+              {item.target_selector && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-16 shrink-0 text-muted-foreground">Selector</span>
+                  <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
+                    {item.target_selector}
+                  </code>
+                </div>
+              )}
+              {item.project_id && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-16 shrink-0 text-muted-foreground">Project</span>
+                  <span className="text-foreground">#{item.project_id}</span>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <SectionRuleHeading label="Tool Context" className="mb-0 pb-0" />
+            <ToolContextSection item={item} />
+          </section>
+
+          {item.metadata && Object.keys(item.metadata).length > 0 && (
+            <section className="space-y-3">
+              <SectionRuleHeading label="Source Metadata" className="mb-0 pb-0" />
+              <div className="space-y-1.5">
+                {Object.entries(item.metadata as Record<string, unknown>).map(([key, value]) => {
+                  const label = key
+                    .replace(/([A-Z])/g, " $1")
+                    .replace(/^./, (c) => c.toUpperCase())
+                    .trim();
+                  const displayValue =
+                    value === null || value === undefined
+                      ? "—"
+                      : typeof value === "object"
+                      ? JSON.stringify(value)
+                      : String(value);
+                  return (
+                    <div key={key} className="flex items-start gap-2 text-xs">
+                      <span className="w-28 shrink-0 text-muted-foreground">{label}</span>
+                      <span className="break-all text-foreground">{displayValue}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {item.github_issue_number && (
+            <section className="space-y-3">
+              <SectionRuleHeading label={`GitHub Activity #${item.github_issue_number}`} className="mb-0 pb-0" />
+              <GitHubActivitySection issueNumber={item.github_issue_number} />
+            </section>
+          )}
+        </div>
+      </CollapsibleDetailSection>
     </div>
 
     {lightboxImage && (
@@ -2214,54 +2115,48 @@ function FeedbackQueueItem({
         size="default"
         onClick={() => onSelect(item.id)}
         className={cn(
-          "group h-auto w-full items-start justify-start gap-3 rounded-none border-b border-border/50 px-4 py-3 text-left transition-colors",
-          isSelected
-            ? "bg-card shadow-[inset_2px_0_0_hsl(var(--primary))]"
-            : "hover:bg-card/70",
-          isFocused && !isSelected && "bg-card/60",
+          "group h-auto w-full min-w-0 items-start justify-start gap-4 rounded-none px-4 py-3 text-left transition-colors",
+          isSelected ? "bg-background" : "hover:bg-background/70",
+          isFocused && !isSelected && "bg-background/60",
         )}
       >
-        <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted">
-          <span className={cn("h-2 w-2 rounded-full", meta.dotClassName)} />
-        </span>
-
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-start justify-between gap-3">
             <span className="min-w-0">
-              <span className="line-clamp-1 text-sm font-semibold leading-normal text-foreground">
+              <span className="line-clamp-1 min-w-0 text-sm font-medium leading-normal text-foreground">
                 {itemDisplayTitle}
               </span>
-              <span className="mt-1 line-clamp-2 text-sm font-normal leading-relaxed text-muted-foreground">
+              <span className="mt-1 line-clamp-2 text-xs font-normal leading-snug text-muted-foreground">
                 {item.comment}
               </span>
             </span>
-            <span className="shrink-0 text-xs text-muted-foreground">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">
               {relativeTime(item.created_at)}
             </span>
           </span>
 
-          <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-foreground">
+            <StatusBadge status={meta.label} variant="neutral" className="mr-1" />
             <span>{REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}</span>
             {toolLabel && (
               <>
-                <span className="text-border">/</span>
+                <span className="text-muted-foreground">/</span>
                 <span>{toolLabel}</span>
               </>
             )}
-            <span className="text-border">/</span>
-            <span>Submitted by {submitterLabel(item)}</span>
+            <span className="text-muted-foreground">/</span>
+            <span>{submitterLabel(item)}</span>
             {item.github_issue_number && (
               <>
-                <span className="text-border">/</span>
-                <span className="inline-flex items-center gap-1">
-                  <Github className="h-3 w-3" />
-                  #{item.github_issue_number}
+                <span className="ml-auto inline-flex items-center gap-1 text-muted-foreground">
+                  <Github className="h-2.5 w-2.5" />
+                  {item.github_issue_number}
                 </span>
               </>
             )}
             {item.severity === "high" && (
               <>
-                <span className="text-border">/</span>
+                <span className="text-muted-foreground">/</span>
                 <span className="font-medium text-status-error">High priority</span>
               </>
             )}
@@ -2316,14 +2211,12 @@ function FeedbackQueue({
   }
 
   return (
-    <div className="divide-y divide-border/50">
+    <div>
       {sections.map((section) => (
-        <section key={section.status} className="bg-background">
+        <section key={section.status}>
           {sections.length > 1 && (
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background/95 px-4 py-2 backdrop-blur">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {section.label}
-              </p>
+            <div className="sticky top-0 z-10 flex items-center justify-between bg-muted/95 px-4 py-2 backdrop-blur">
+              <SectionRuleHeading label={section.label} className="mb-0 pb-0" />
               <span className="text-xs text-muted-foreground">
                 {section.items.length}
               </span>
@@ -2367,31 +2260,9 @@ export default function FeedbackInboxPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<InboxViewMode>("triage");
 
   const listPanelRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
-
-  const { panelWidth, handleMouseDown } = useResizablePanel();
-
-  useEffect(() => {
-    setViewMode(getSavedViewMode());
-  }, []);
-
-  function changeViewMode(mode: InboxViewMode) {
-    setViewMode(mode);
-    try {
-      localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
-    } catch (error) {
-      reportNonCriticalFailure({
-        area: "feedback-inbox",
-        operation: "save-view-mode",
-        error,
-        userVisibleFallback: "Feedback inbox view preference was not saved.",
-        metadata: { mode },
-      });
-    }
-  }
 
   function showDetailOnMobileOnly() {
     const isMobileViewport =
@@ -2400,18 +2271,35 @@ export default function FeedbackInboxPage() {
     setMobileShowDetail(isMobileViewport);
   }
 
+  const dispatchScoped = useCallback(
+    (list: FeedbackItem[]) =>
+      filter === "dispatched"
+        ? list.filter(
+            (item) =>
+              getDispatchStatus(item) === "dispatched" ||
+              getAssignedAgent(item) !== null,
+          )
+        : list,
+    [filter],
+  );
+
   const issueItems = useMemo(
-    () => items.filter((item) => item.request_type !== "feature_request"),
-    [items],
+    () =>
+      dispatchScoped(
+        items.filter((item) => item.request_type !== "feature_request"),
+      ),
+    [items, dispatchScoped],
   );
   const featureRequestItems = useMemo(
-    () => items.filter((item) => item.request_type === "feature_request"),
-    [items],
+    () =>
+      dispatchScoped(
+        items.filter((item) => item.request_type === "feature_request"),
+      ),
+    [items, dispatchScoped],
   );
   const visibleItems = activeTab === "feature_requests" ? featureRequestItems : issueItems;
   const currentTabLabel =
     FEEDBACK_INBOX_TABS.find((tab) => tab.value === activeTab)?.label ?? "Issues";
-  const visibleTotal = visibleItems.length;
   const selected = useMemo(
     () => visibleItems.find((i) => i.id === selectedId) ?? null,
     [visibleItems, selectedId],
@@ -2430,6 +2318,10 @@ export default function FeedbackInboxPage() {
           params.set("status", "open,submitted,github_failed");
         } else if (filter === "in_progress") {
           params.set("status", "in_progress,triaged,diagnosing,fixing,verifying,in_review");
+        } else if (filter === "dispatched") {
+          // Dispatched items can sit in any non-archived status; we filter by
+          // metadata.dispatchStatus / assignedAgent client-side below.
+          params.set("status", "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,deferred,resolved,closed");
         } else if (filter === "deferred") {
           params.set("status", "deferred");
         } else if (filter === "resolved") {
@@ -2633,6 +2525,9 @@ export default function FeedbackInboxPage() {
       toast.success(`Dispatched to ${agentLabel(target)}`, {
         description: `${triggerLabel}${issueLabel}`,
       });
+      // Jump to the Dispatched tab so the user can see where the item went.
+      setFilter("dispatched");
+      setSelectedId(id);
       fetchItems();
     } catch (err) {
       notifyFeedbackInboxFailure({
@@ -2685,6 +2580,25 @@ export default function FeedbackInboxPage() {
   }
 
   const listSections = useMemo(() => {
+    if (filter === "dispatched") {
+      // Group dispatched items by their underlying display status so the
+      // queue keeps showing "In Progress" / "Resolved" / etc. headers.
+      const grouped = new Map<DisplayStatus, FeedbackItem[]>(
+        LIST_SECTION_ORDER.map((status) => [status, []]),
+      );
+      for (const item of visibleItems) {
+        const status = toDisplayStatus(item.status);
+        grouped.get(status)?.push(item);
+      }
+      return LIST_SECTION_ORDER
+        .map((status) => ({
+          status,
+          label: STATUS_META[status].label,
+          items: grouped.get(status) ?? [],
+        }))
+        .filter((section) => section.items.length > 0);
+    }
+
     if (filter !== "all") {
       return visibleItems.length > 0
         ? [{
@@ -2728,80 +2642,41 @@ export default function FeedbackInboxPage() {
     />
   );
 
+  const handleInboxTabClick = useCallback((value: string) => {
+    setActiveTab(value as FeedbackInboxTab);
+    setSelectedId(null);
+    setMobileShowDetail(false);
+    setFocusedIndex(0);
+  }, []);
+
+  const handleFilterTabClick = useCallback((value: string) => {
+    setFilter(value as StatusFilter);
+    setSelectedId(null);
+    setMobileShowDetail(false);
+  }, []);
+
   const inboxTabs = (
-    <Tabs
-      value={activeTab}
-      onValueChange={(value) => {
-        setActiveTab(value as FeedbackInboxTab);
-        setSelectedId(null);
-        setMobileShowDetail(false);
-        setFocusedIndex(0);
-      }}
-    >
-      <TabsList className="h-8 w-full justify-start gap-1 rounded-md bg-muted/70 p-1 sm:w-auto">
-        {FEEDBACK_INBOX_TABS.map((tab) => {
-          const tabCount = tab.value === "feature_requests" ? featureRequestItems.length : issueItems.length;
-          return (
-            <TabsTrigger key={tab.value} value={tab.value} className="h-6 rounded-sm px-3 text-xs">
-              {tab.label}
-              <span className="ml-1.5 text-muted-foreground">
-                {tabCount}
-              </span>
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
-    </Tabs>
+    <PageTabs
+      variant="inline"
+      tabs={FEEDBACK_INBOX_TABS.map((tab) => ({
+        label: `${tab.label} ${tab.value === "feature_requests" ? featureRequestItems.length : issueItems.length}`,
+        href: tab.value,
+        isActive: activeTab === tab.value,
+      }))}
+      onTabClick={handleInboxTabClick}
+    />
   );
 
   const filters = (
-    <Tabs
-      value={filter}
-      onValueChange={(v) => {
-        setFilter(v as StatusFilter);
-        setSelectedId(null);
-        setMobileShowDetail(false);
-      }}
-    >
-      <TabsList className="h-8 w-full justify-start gap-1 rounded-md bg-muted/70 p-1 sm:w-auto">
-        {STATUS_FILTERS.map((f) => (
-          <TabsTrigger key={f.value} value={f.value} className="h-6 rounded-sm px-3 text-xs">
-            {f.label}
+    <Tabs value={filter} onValueChange={handleFilterTabClick}>
+      <TabsList>
+        {STATUS_FILTERS.map((statusFilter) => (
+          <TabsTrigger key={statusFilter.value} value={statusFilter.value}>
+            {statusFilter.label}
           </TabsTrigger>
         ))}
       </TabsList>
     </Tabs>
-  );
-
-  const viewSwitcher = (
-    <div className="inline-flex rounded-md bg-muted/70 p-1">
-      <Button
-        type="button"
-        variant="ghost"
-        size="xs"
-        onClick={() => changeViewMode("triage")}
-        className={cn(
-          "h-6 gap-1.5 rounded-sm px-2 text-xs text-muted-foreground hover:bg-background hover:text-foreground",
-          viewMode === "triage" && "bg-background text-foreground shadow-xs",
-        )}
-      >
-        <List className="h-3.5 w-3.5" />
-        Triage
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="xs"
-        onClick={() => changeViewMode("split")}
-        className={cn(
-          "h-6 gap-1.5 rounded-sm px-2 text-xs text-muted-foreground hover:bg-background hover:text-foreground",
-          viewMode === "split" && "bg-background text-foreground shadow-xs",
-        )}
-      >
-        <PanelRightOpen className="h-3.5 w-3.5" />
-        Split pane
-      </Button>
-    </div>
   );
 
   return (
@@ -2814,27 +2689,7 @@ export default function FeedbackInboxPage() {
       fillHeight
       description="Review feedback, assign tools, and sync issues to GitHub."
     >
-      <div className="flex h-full min-h-0 flex-col bg-background">
-        <header className="border-b border-border/60 bg-background px-4 py-3 sm:px-6">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                  Feedback Inbox
-                </h1>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {visibleTotal} {visibleTotal === 1 ? "item" : "items"}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between xl:justify-end">
-              {inboxTabs}
-              {filters}
-              {viewSwitcher}
-            </div>
-          </div>
-        </header>
-
+      <div className="flex h-full min-h-0 bg-background">
         {mobileShowDetail && selected ? (
           <div className="flex flex-1 flex-col overflow-y-auto bg-background lg:hidden">
             <FeedbackDetail
@@ -2851,39 +2706,46 @@ export default function FeedbackInboxPage() {
               commentInputRef={commentInputRef}
             />
           </div>
-        ) : viewMode === "split" ? (
+        ) : (
           <div className="flex min-h-0 flex-1">
             <div
               ref={listPanelRef}
               className={cn(
-                "flex flex-col border-r border-border/60 bg-background",
+                "min-w-0 overflow-hidden flex flex-col bg-muted/35",
                 mobileShowDetail ? "hidden lg:flex" : "flex",
-                "w-full lg:w-auto lg:shrink-0",
+                "w-full lg:w-112 lg:max-w-lg lg:shrink-0",
               )}
-              style={{ width: panelWidth, minWidth: PANEL_MIN_WIDTH, maxWidth: PANEL_MAX_WIDTH }}
             >
-              <div className="flex items-center justify-between border-b border-border/60 px-4 py-2">
-                <p className="text-sm font-semibold text-foreground">
-                  {currentTabLabel}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {currentFilterLabel}
-                </p>
+              <div className="space-y-3 px-4 pb-4 pt-5">
+                {inboxTabs}
+                {filters}
               </div>
-              <div className="flex-1 overflow-y-auto bg-muted/20">
+              <div className="flex-1 overflow-y-auto">
                 {queue}
               </div>
             </div>
 
-            <div
-              className="group hidden w-1.5 shrink-0 cursor-col-resize items-center justify-center transition-colors hover:bg-muted/50 active:bg-muted lg:flex"
-              onMouseDown={handleMouseDown}
-              aria-hidden="true"
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground" />
-            </div>
-
-            <div className="hidden flex-1 overflow-y-auto bg-background lg:block">
+            <div className="hidden min-w-0 flex-1 overflow-y-auto bg-background lg:block">
+              <div className="sticky top-0 z-20 flex h-14 items-center justify-end gap-2 bg-background px-8">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Search feedback"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Create feedback"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
               {!selected && (
                 <div className="flex h-full items-center justify-center">
                   <p className="text-sm text-muted-foreground">
@@ -2906,55 +2768,6 @@ export default function FeedbackInboxPage() {
                   commentInputRef={commentInputRef}
                 />
               )}
-            </div>
-          </div>
-        ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20">
-            <div className="mx-auto grid w-full max-w-screen-2xl gap-6 px-4 py-4 lg:grid-cols-2 lg:px-6">
-              <section
-                ref={listPanelRef}
-                className="min-h-0 overflow-hidden rounded-lg bg-card shadow-xs"
-              >
-                <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {currentFilterLabel} {currentTabLabel}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Use arrow keys to move through the queue.
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {visibleTotal}
-                  </span>
-                </div>
-                {queue}
-              </section>
-
-              <section className="hidden min-h-0 overflow-hidden rounded-lg bg-card shadow-xs lg:block">
-                {selected ? (
-                  <div className="max-h-screen overflow-y-auto">
-                    <FeedbackDetail
-                      item={selected}
-                      updatingId={updatingId}
-                      sendingToGitHub={sendingToGitHub}
-                      dispatchingId={dispatchingId}
-                      deletingId={deletingId}
-                      onUpdateStatus={updateStatus}
-                      onSendToGitHub={sendToGitHub}
-                      onDispatchToAgent={dispatchToAgent}
-                      onDelete={deleteItem}
-                      commentInputRef={commentInputRef}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex h-full min-h-96 items-center justify-center">
-                    <p className="text-sm text-muted-foreground">
-                      Select an item to review
-                    </p>
-                  </div>
-                )}
-              </section>
             </div>
           </div>
         )}
