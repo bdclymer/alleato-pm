@@ -371,7 +371,10 @@ export default function ProjectContractsPage(): ReactElement {
       });
       toast.success(`Contract "${deletingTitle}" deleted successfully`);
     } catch (err) {
-      toast.error("Failed to delete contract. Please try again.");
+      const message = err instanceof Error
+        ? err.message
+        : "Failed to delete contract. Please try again.";
+      toast.error(message);
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);
