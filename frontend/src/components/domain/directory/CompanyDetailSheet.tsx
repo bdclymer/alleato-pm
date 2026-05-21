@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, MoreVertical, UserPlus } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +16,15 @@ import {
   SectionHeader as DsSectionHeader,
   Skeleton,
 } from "@/components/ds";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CompanyEditDialog } from "@/components/directory/CompanyEditDialog";
+import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
 import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -95,15 +104,19 @@ export function CompanyDetailSheet({
   companyId,
   open,
   onOpenChange,
+  projectId,
 }: {
   companyId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  projectId: string;
 }) {
   const [data, setData] = React.useState<CompanyDetailsResponse | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [settingPrimaryContactId, setSettingPrimaryContactId] = React.useState<string | null>(null);
+  const [editCompanyOpen, setEditCompanyOpen] = React.useState(false);
+  const [addContactOpen, setAddContactOpen] = React.useState(false);
 
   const loadDetails = React.useCallback(async (cancelledRef?: { current: boolean }) => {
     if (!companyId) return;
@@ -182,13 +195,34 @@ export function CompanyDetailSheet({
                 <p className="truncate text-xs text-muted-foreground">{location}</p>
               )}
             </div>
-            {companyId && (
-              <Link
-                href={`/directory/companies/${companyId}`}
-                className="shrink-0 text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-              >
-                View profile
-              </Link>
+            {companyId && company && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    aria-label="Company actions"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onSelect={() => setEditCompanyOpen(true)}>
+                    Edit company
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setAddContactOpen(true)}>
+                    <UserPlus className="mr-2 h-3.5 w-3.5" />
+                    Add contact
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={`/directory/companies/${companyId}`}>
+                      View full profile
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </SheetHeader>
@@ -242,11 +276,34 @@ export function CompanyDetailSheet({
               </section>
 
               <section className="space-y-3">
-                <DsSectionHeader title={`Contacts (${contacts.length})`} />
+                <DsSectionHeader
+                  title={`Contacts (${contacts.length})`}
+                  action={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setAddContactOpen(true)}
+                    >
+                      <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                      Add contact
+                    </Button>
+                  }
+                />
                 {contacts.length === 0 ? (
                   <DsEmptyState
                     title="No contacts"
                     description="No contacts associated with this company."
+                    action={
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setAddContactOpen(true)}
+                      >
+                        <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                        Add contact
+                      </Button>
+                    }
                   />
                 ) : (
                   <ul className="divide-y divide-border/60">
@@ -432,6 +489,27 @@ export function CompanyDetailSheet({
             </>
           )}
         </div>
+
+        {company && (
+          <CompanyEditDialog
+            open={editCompanyOpen}
+            onOpenChange={setEditCompanyOpen}
+            company={company}
+            projectId={projectId}
+            onSuccess={() => {
+              void loadDetails();
+            }}
+          />
+        )}
+
+        <ContactFormSheet
+          open={addContactOpen}
+          onOpenChange={setAddContactOpen}
+          defaultCompanyId={companyId ?? undefined}
+          onSuccess={() => {
+            void loadDetails();
+          }}
+        />
       </SheetContent>
     </Sheet>
   );

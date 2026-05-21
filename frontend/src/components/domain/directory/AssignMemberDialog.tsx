@@ -90,8 +90,14 @@ function cleanPersonText(value: string | null | undefined): string {
       if (parsed !== null && typeof parsed === "object" && "display" in parsed) {
         return cleanPersonText((parsed as { display?: unknown }).display as string | undefined);
       }
-    } catch {
-      // Fall through — treat as plain text
+    } catch (error) {
+      console.warn(
+        JSON.stringify({
+          event: "assign_member_clean_person_text_parse_failed",
+          error: error instanceof Error ? error.message : String(error),
+          value: trimmed.slice(0, 120),
+        }),
+      );
     }
   }
 
@@ -398,7 +404,16 @@ export function AssignMemberDialog({
           )
           .in("id", memberIds)
           .neq("person_type", "employee");
-        if (error || !data) return;
+        if (error || !data) {
+          console.warn(
+            JSON.stringify({
+              event: "assign_member_assigned_external_lookup_failed",
+              roleId: role.id,
+              error: error?.message ?? "No external contact data returned",
+            }),
+          );
+          return;
+        }
         setExternalPeople(
           data.map((p) => ({
             id: p.id,
@@ -409,9 +424,14 @@ export function AssignMemberDialog({
             company_name: p.company?.name ?? null,
           })),
         );
-      } catch {
-        // Already-assigned external contacts will reload once the user opens
-        // the external picker; failing here just delays their pill render.
+      } catch (error) {
+        console.warn(
+          JSON.stringify({
+            event: "assign_member_assigned_external_lookup_failed",
+            roleId: role.id,
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
       }
     };
 
@@ -461,8 +481,15 @@ export function AssignMemberDialog({
         return [...carryover, ...fetched];
       });
       setExternalLoaded(true);
-    } catch {
-      toast.error("Failed to load external contacts");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(
+        JSON.stringify({
+          event: "assign_member_external_contacts_load_failed",
+          error: message,
+        }),
+      );
+      toast.error(`External contacts did not load: ${message}`);
     } finally {
       setExternalLoading(false);
     }

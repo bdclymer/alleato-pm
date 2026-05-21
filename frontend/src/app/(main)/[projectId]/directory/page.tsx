@@ -2126,6 +2126,7 @@ export default function ProjectDirectoryPage() {
         onOpenChange={(open) =>
           setCompanySheet((prev) => ({ ...prev, open }))
         }
+        projectId={projectId}
       />
     </PageShell>
   );
