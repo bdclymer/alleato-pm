@@ -567,6 +567,14 @@ export default function ChangeEventDetailPage() {
       <Button
         variant="outline"
         size="sm"
+        onClick={() => setShowPrimePCODialog(true)}
+        disabled={!canEdit}
+      >
+        Create Prime PCO
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
         onClick={() => {
           setActiveTab("general");
           setIsEditing(true);

@@ -44,10 +44,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
+import {
+  buildPrimePcoSourceTitle,
+  parseChangeEventIdsParam,
+  resolveSourceChangeReason,
+  resolveSourcePrimeContractId,
+  type PrimePcoSourceChangeEvent,
+} from "@/lib/change-events/prime-pco-source";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -102,13 +110,7 @@ interface Contact {
   name: string;
 }
 
-interface ChangeEventSummary {
-  id: string;
-  number: string | null;
-  title: string;
-  reason: string | null;
-  prime_contract_id: string | null;
-}
+type ChangeEventSummary = PrimePcoSourceChangeEvent;
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -152,9 +154,7 @@ export default function NewPrimeContractPcoPage() {
   const contractContextId = contractIdFromRoute ?? contractIdFromQuery;
 
   const changeEventIdsParam = searchParams.get("changeEventIds");
-  const changeEventIds = changeEventIdsParam
-    ? changeEventIdsParam.split(",").filter(Boolean)
-    : [];
+  const changeEventIds = parseChangeEventIdsParam(changeEventIdsParam);
   const hasChangeEvents = changeEventIds.length > 0;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -162,6 +162,7 @@ export default function NewPrimeContractPcoPage() {
   const [isLoadingContracts, setIsLoadingContracts] = useState(true);
   const [changeEvents, setChangeEvents] = useState<ChangeEventSummary[]>([]);
   const [isLoadingChangeEvents, setIsLoadingChangeEvents] = useState(false);
+  const [sourceChangeEventError, setSourceChangeEventError] = useState<string | null>(null);
 
   // CO linkage state
   const [coLinkMode, setCoLinkMode] = useState<CoLinkMode>("none");
@@ -279,39 +280,49 @@ export default function NewPrimeContractPcoPage() {
     (events: ChangeEventSummary[], contractList: PrimeContract[]) => {
       if (events.length === 0) return;
 
-      const ceWithContract = events.find((ce) => ce.prime_contract_id);
-      if (ceWithContract?.prime_contract_id) {
-        const matchingContract = contractList.find(
-          (c) => c.id === ceWithContract.prime_contract_id,
-        );
-        if (matchingContract) {
-          form.setValue("prime_contract_id", matchingContract.id);
-        }
+      const sourceContractId = resolveSourcePrimeContractId(
+        events,
+        new Set(contractList.map((contract) => contract.id)),
+      );
+      if (sourceContractId) {
+        form.setValue("prime_contract_id", sourceContractId, {
+          shouldValidate: true,
+        });
       }
 
-      const ceWithReason = events.find((ce) => ce.reason);
-      if (ceWithReason?.reason) {
-        const matched = CHANGE_REASONS.find(
-          (r) => r.toLowerCase() === ceWithReason.reason!.toLowerCase(),
-        );
-        form.setValue("change_reason", matched ?? ceWithReason.reason);
+      const sourceReason = resolveSourceChangeReason(events, CHANGE_REASONS);
+      if (sourceReason) {
+        form.setValue("change_reason", sourceReason, {
+          shouldValidate: true,
+        });
       }
 
-      const count = events.length;
-      const ceLabel =
-        count === 1
-          ? `CE ${events[0].number ?? ""} — ${events[0].title}`
-          : `${count} change events`;
-      form.setValue("title", `PCO for ${ceLabel}`.trim());
+      form.setValue("title", buildPrimePcoSourceTitle(events), {
+        shouldValidate: true,
+      });
     },
     [form],
   );
 
   useEffect(() => {
     if (!hasChangeEvents) return;
+    if (form.getValues("title")) return;
+
+    form.setValue(
+      "title",
+      changeEventIds.length === 1
+        ? "PCO for change event"
+        : `PCO for ${changeEventIds.length} change events`,
+      { shouldValidate: true },
+    );
+  }, [changeEventIds.length, form, hasChangeEvents]);
+
+  useEffect(() => {
+    if (!hasChangeEvents) return;
 
     const fetchChangeEvents = async () => {
       setIsLoadingChangeEvents(true);
+      setSourceChangeEventError(null);
       try {
         const results = await Promise.all(
           changeEventIds.map(async (id) => {
@@ -335,9 +346,16 @@ export default function NewPrimeContractPcoPage() {
             }
           }),
         );
-        setChangeEvents(results.filter(Boolean) as ChangeEventSummary[]);
+        const resolvedEvents = results.filter(Boolean) as ChangeEventSummary[];
+        setChangeEvents(resolvedEvents);
+        if (resolvedEvents.length !== changeEventIds.length) {
+          setSourceChangeEventError(
+            `Loaded ${resolvedEvents.length} of ${changeEventIds.length} source change events.`,
+          );
+        }
       } catch {
-        toast.error("Could not load change event details.");
+        setSourceChangeEventError("Could not load source change events.");
+        toast.error("Could not load source change events.");
       } finally {
         setIsLoadingChangeEvents(false);
       }
@@ -370,7 +388,9 @@ export default function NewPrimeContractPcoPage() {
     if (!contractContextId || contracts.length === 0) return;
     const hasMatchingContract = contracts.some((c) => c.id === contractContextId);
     if (hasMatchingContract) {
-      form.setValue("prime_contract_id", contractContextId);
+      form.setValue("prime_contract_id", contractContextId, {
+        shouldValidate: true,
+      });
     }
   }, [contractContextId, contracts, form]);
 
@@ -488,6 +508,8 @@ export default function NewPrimeContractPcoPage() {
   };
 
   const isLoading = isLoadingContracts || isLoadingChangeEvents;
+  const hasMissingSourceChangeEvents =
+    hasChangeEvents && !isLoadingChangeEvents && changeEvents.length !== changeEventIds.length;
 
   return (
     <PageShell
@@ -511,7 +533,7 @@ export default function NewPrimeContractPcoPage() {
           <Button
             size="sm"
             onClick={form.handleSubmit(handleSubmit)}
-            disabled={isSubmitting || isLoading}
+            disabled={isSubmitting || isLoading || hasMissingSourceChangeEvents}
           >
             {isSubmitting ? (
               <>
@@ -537,32 +559,43 @@ export default function NewPrimeContractPcoPage() {
             className="space-y-8"
           >
             {/* Source Change Events */}
-            {hasChangeEvents && changeEvents.length > 0 && (
-              <section>
+            {hasChangeEvents && (
+              <section className="space-y-3">
                 <SectionRuleHeading
-                  label={`Source Change Event${changeEvents.length === 1 ? "" : "s"} (${changeEvents.length})`}
+                  label={`Source Change Event${changeEventIds.length === 1 ? "" : "s"} (${changeEventIds.length})`}
                   className="[&_span]:text-primary"
                 />
-                <div className="space-y-1.5">
-                  {changeEvents.map((ce) => (
-                    <div
-                      key={ce.id}
-                      className="flex items-center gap-3 rounded-md bg-muted/50 px-3 py-2 text-sm"
-                    >
-                      <span className="font-medium text-foreground">
-                        {ce.number ? `CE ${ce.number}` : "CE"}
-                      </span>
-                      <span className="text-muted-foreground truncate">
-                        {ce.title}
-                      </span>
-                      {ce.reason && (
-                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                          {ce.reason}
+                {isLoadingChangeEvents ? (
+                  <InfoAlert variant="info" className="text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading source change events...
+                  </InfoAlert>
+                ) : sourceChangeEventError ? (
+                  <InfoAlert variant="error" className="text-sm">
+                    {sourceChangeEventError} The PCO cannot be created until every selected source event is loaded.
+                  </InfoAlert>
+                ) : (
+                  <div className="divide-y divide-border/60">
+                    {changeEvents.map((ce) => (
+                      <div
+                        key={ce.id}
+                        className="flex items-center gap-3 py-2 text-sm"
+                      >
+                        <span className="font-medium text-foreground">
+                          {ce.number ? `CE ${ce.number}` : "CE"}
                         </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        <span className="text-muted-foreground truncate">
+                          {ce.title}
+                        </span>
+                        {ce.reason && (
+                          <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                            {ce.reason}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
             )}
 

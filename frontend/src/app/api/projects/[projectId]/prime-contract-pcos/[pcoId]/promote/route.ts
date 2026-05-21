@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
+import { mapPrimePcoLineItemToPccoLineItem } from "@/lib/change-events/pco-promotion-line-items";
 
 export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/prime-contract-pcos/[pcoId]/promote#POST",
@@ -134,14 +135,9 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
         .eq("pco_type", "prime");
 
       if (fullLineItems && fullLineItems.length > 0) {
-        const pccoLineItems = fullLineItems.map((item) => ({
-          pcco_id: pcco.id,
-          description: item.description,
-          cost_code: item.budget_code_id,
-          quantity: item.quantity,
-          unit_cost: item.unit_cost,
-          uom: item.unit_of_measure,
-        }));
+        const pccoLineItems = fullLineItems.map((item) =>
+          mapPrimePcoLineItemToPccoLineItem(pcco.id, item),
+        );
 
         const { error: lineItemCopyError } = await supabase
           .from("pcco_line_items")
