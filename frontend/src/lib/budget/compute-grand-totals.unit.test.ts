@@ -1,5 +1,6 @@
 import {
   EMPTY_GRAND_TOTALS,
+  normalizeBudgetCode,
   reduceGrandTotals,
   type BudgetLineItem,
   type GrandTotals,
@@ -32,6 +33,26 @@ function makeLine(overrides: Partial<BudgetLineItem>): BudgetLineItem {
     ...overrides,
   };
 }
+
+describe("normalizeBudgetCode", () => {
+  it("returns the code unchanged when there is no dot", () => {
+    expect(normalizeBudgetCode("03 00 00")).toBe("03 00 00");
+  });
+
+  it("strips the cost-type suffix added by the import route", () => {
+    expect(normalizeBudgetCode("03 00 00.L")).toBe("03 00 00");
+    expect(normalizeBudgetCode("01 00 00.M")).toBe("01 00 00");
+    expect(normalizeBudgetCode("16 00 00.E")).toBe("16 00 00");
+  });
+
+  it("trims whitespace from the result", () => {
+    expect(normalizeBudgetCode("03 00 00 .L")).toBe("03 00 00");
+  });
+
+  it("handles codes that are only a suffix (edge case)", () => {
+    expect(normalizeBudgetCode(".L")).toBe("");
+  });
+});
 
 describe("reduceGrandTotals", () => {
   it("returns all zeros for an empty line-item array", () => {

@@ -415,6 +415,23 @@ async function fetchCommitmentChangeOrderLinesByStatus(
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalizes a SOV item budget_code to a bare cost_code_id.
+ *
+ * When SOV items are imported from budget lines the stored budget_code is
+ * "cost_code_id.cost_type_code" (e.g. "03 00 00.L"). The costsByCode map
+ * is keyed by the bare cost_code_id ("03 00 00"). Strip the type suffix so
+ * lookups succeed.
+ */
+export function normalizeBudgetCode(budgetCode: string): string {
+  const dotIndex = budgetCode.indexOf(".");
+  return dotIndex === -1 ? budgetCode : budgetCode.substring(0, dotIndex).trim();
+}
+
+// ---------------------------------------------------------------------------
 // Pure reducers — tested directly, no DB dependency
 // ---------------------------------------------------------------------------
 
@@ -755,13 +772,13 @@ export async function computeBudgetGrandTotals(
 
   // Pending Cost Changes: subcontracts, POs, commitment COs
   for (const item of (subcontractSovRes.data || []) as SOVItem[]) {
-    const codeId = item.budget_code;
+    const codeId = item.budget_code ? normalizeBudgetCode(item.budget_code) : null;
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].pendingCostChanges += item.amount || 0;
   }
   for (const item of (poSovRes.data || []) as SOVItem[]) {
-    const codeId = item.budget_code;
+    const codeId = item.budget_code ? normalizeBudgetCode(item.budget_code) : null;
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].pendingCostChanges += item.amount || 0;
@@ -801,13 +818,13 @@ export async function computeBudgetGrandTotals(
 
   // Committed Costs: executed subs + POs + approved commitment COs
   for (const item of (executedSubcontractSovRes.data || []) as SOVItem[]) {
-    const codeId = item.budget_code;
+    const codeId = item.budget_code ? normalizeBudgetCode(item.budget_code) : null;
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].committedCosts += item.amount || 0;
   }
   for (const item of (executedPoSovRes.data || []) as SOVItem[]) {
-    const codeId = item.budget_code;
+    const codeId = item.budget_code ? normalizeBudgetCode(item.budget_code) : null;
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].committedCosts += item.amount || 0;
