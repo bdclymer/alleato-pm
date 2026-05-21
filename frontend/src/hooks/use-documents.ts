@@ -188,15 +188,43 @@ export function useUpdateDocument(projectId: number, documentId: string) {
   });
 }
 
+export function useUpdateDocumentInline(projectId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      documentId,
+      data,
+    }: {
+      documentId: string;
+      data: UpdateDocumentInput;
+    }) =>
+      apiFetch<ProjectDocument>(
+        `/api/projects/${projectId}/documents/${documentId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(data),
+        },
+      ),
+    onSuccess: (_updatedDocument, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.all(projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.detail(projectId, variables.documentId),
+      });
+    },
+  });
+}
+
 export function useDeleteDocument(projectId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (documentId: string) =>
-      apiFetch(
-        `/api/projects/${projectId}/documents/${documentId}`,
-        { method: "DELETE" },
-      ),
+      apiFetch(`/api/projects/${projectId}/documents/${documentId}`, {
+        method: "DELETE",
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: documentKeys.all(projectId),

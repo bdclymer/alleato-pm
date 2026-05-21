@@ -91,11 +91,48 @@ const INTERACTIVE_ROW_TARGET_SELECTOR = [
   "[data-row-interactive='true']",
 ].join(", ");
 
+const DATE_LIKE_COLUMN_PATTERN =
+  /(^|[_\s-])(date|created|updated|reviewed|submitted|received|sent|issued|due|completed|closed|opened|start|end)([_\s-]|$)/i;
+
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
     return false;
   }
   return Boolean(target.closest(INTERACTIVE_ROW_TARGET_SELECTOR));
+}
+
+function isDateLikeColumn(column: ColumnConfig): boolean {
+  if (column.id.endsWith("_by") || /\bby$/i.test(column.label)) {
+    return false;
+  }
+  return (
+    DATE_LIKE_COLUMN_PATTERN.test(column.id) ||
+    DATE_LIKE_COLUMN_PATTERN.test(column.label)
+  );
+}
+
+function parseFilterDate(
+  value: unknown,
+  boundary: "start" | "end",
+): number | null {
+  if (typeof value !== "string" || !value) return null;
+  const date = new Date(
+    boundary === "start" ? `${value}T00:00:00` : `${value}T23:59:59.999`,
+  );
+  const time = date.getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
+function parseColumnDateValue(
+  value: string | number | null | undefined,
+): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  const date = new Date(value);
+  const time = date.getTime();
+  return Number.isNaN(time) ? null : time;
 }
 
 // Compare string arrays by value to prevent redundant state updates that can trigger render loops.
@@ -631,6 +668,26 @@ export function UnifiedTablePage<T>({
       })),
     [table.columns, toolbar.columns],
   );
+  const effectiveToolbarFilters = React.useMemo<FilterConfig[]>(() => {
+    const providedFilters = toolbar.filters ?? [];
+    const providedFilterIds = new Set(
+      providedFilters.map((filter) => filter.id),
+    );
+    const autoDateRangeFilters = table.columns
+      .filter(
+        (column) =>
+          (column.defaultVisible !== false || column.alwaysVisible) &&
+          isDateLikeColumn(column) &&
+          !providedFilterIds.has(column.id),
+      )
+      .map((column) => ({
+        id: column.id,
+        label: column.label,
+        type: "dateRange" as const,
+      }));
+
+    return [...providedFilters, ...autoDateRangeFilters];
+  }, [table.columns, toolbar.filters]);
   // Internal column visibility — persisted to localStorage when the caller
   // does not supply toolbar.visibleColumns / toolbar.onColumnVisibilityChange.
   const colStorageKey = `alleato:cols:${header.title}`;
@@ -965,15 +1022,58 @@ export function UnifiedTablePage<T>({
     };
   }, [isSidePanelOpen, panelMounted, updatePanelTogglePosition]);
 
+  const dateRangeFilteredItems = React.useMemo(() => {
+    const dateRangeFilters = effectiveToolbarFilters.filter(
+      (filter) => filter.type === "dateRange",
+    );
+    const activeDateRangeFilters = dateRangeFilters
+      .map((filter) => {
+        const from = parseFilterDate(
+          activeFilters[`${filter.id}_from`],
+          "start",
+        );
+        const to = parseFilterDate(activeFilters[`${filter.id}_to`], "end");
+        if (from === null && to === null) return null;
+
+        const column = table.columns.find(
+          (candidate) => candidate.id === filter.id,
+        );
+        if (!column?.sortValue) return null;
+
+        return { column, from, to };
+      })
+      .filter(
+        (
+          filter,
+        ): filter is {
+          column: TableColumn<T>;
+          from: number | null;
+          to: number | null;
+        } => Boolean(filter),
+      );
+
+    if (activeDateRangeFilters.length === 0) return data.items;
+
+    return data.items.filter((item) =>
+      activeDateRangeFilters.every(({ column, from, to }) => {
+        const value = parseColumnDateValue(column.sortValue?.(item));
+        if (value === null) return false;
+        if (from !== null && value < from) return false;
+        if (to !== null && value > to) return false;
+        return true;
+      }),
+    );
+  }, [activeFilters, data.items, effectiveToolbarFilters, table.columns]);
+
   const sortedItems = React.useMemo(() => {
-    if (!effectiveSorting?.sortBy) return data.items;
+    if (!effectiveSorting?.sortBy) return dateRangeFilteredItems;
     const column = table.columns.find(
       (col) => col.id === effectiveSorting.sortBy,
     );
     const getSortValue = column?.sortValue;
-    if (!getSortValue) return data.items;
+    if (!getSortValue) return dateRangeFilteredItems;
 
-    const sorted = [...data.items].sort((a, b) => {
+    const sorted = [...dateRangeFilteredItems].sort((a, b) => {
       const valueA = getSortValue(a);
       const valueB = getSortValue(b);
 
@@ -997,7 +1097,7 @@ export function UnifiedTablePage<T>({
 
     return sorted;
   }, [
-    data.items,
+    dateRangeFilteredItems,
     effectiveSorting?.sortBy,
     effectiveSorting?.sortDirection,
     table.columns,
@@ -1491,7 +1591,11 @@ export function UnifiedTablePage<T>({
         className,
       )}
       totalItems={toolbar.totalItems}
-      filteredItems={toolbar.filteredItems}
+      filteredItems={
+        dateRangeFilteredItems.length === data.items.length
+          ? toolbar.filteredItems
+          : dateRangeFilteredItems.length
+      }
       selectedCount={effectiveSelectedCount}
       searchValue={toolbar.searchValue}
       onSearchChange={toolbar.onSearchChange}
@@ -1499,7 +1603,7 @@ export function UnifiedTablePage<T>({
       currentView={activeView}
       onViewChange={handleViewChange}
       enabledViews={effectiveEnabledViews}
-      filters={toolbar.filters}
+      filters={effectiveToolbarFilters}
       activeFilters={activeFilters}
       onFilterChange={handleFilterChange}
       onClearFilters={handleClearFilters}

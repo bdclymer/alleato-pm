@@ -249,9 +249,30 @@ function FilterFields({
     (filter) => filter.type === "select" && filter.options,
   );
   const dateFilters = filters.filter((filter) => filter.type === "date");
+  const dateRangeFilters = filters.filter(
+    (filter) => filter.type === "dateRange",
+  );
   const inputFilters = filters.filter(
     (filter) => filter.type === "number" || filter.type === "text",
   );
+
+  const formatDateValue = (date: Date): string => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const renderDateButtonLabel = (value: string, fallback: string) => {
+    if (!value) return fallback;
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return fallback;
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   return (
     <div className="space-y-2">
@@ -360,6 +381,90 @@ function FilterFields({
       })}
 
       {(selectFilters.length > 0 || dateFilters.length > 0) &&
+        dateRangeFilters.length > 0 && <div className="h-px bg-border/70" />}
+
+      {dateRangeFilters.map((filter) => {
+        const fromKey = `${filter.id}_from`;
+        const toKey = `${filter.id}_to`;
+        const fromValue =
+          typeof activeFilters[fromKey] === "string"
+            ? (activeFilters[fromKey] as string)
+            : "";
+        const toValue =
+          typeof activeFilters[toKey] === "string"
+            ? (activeFilters[toKey] as string)
+            : "";
+        const fromDate = fromValue
+          ? new Date(`${fromValue}T00:00:00`)
+          : undefined;
+        const toDate = toValue ? new Date(`${toValue}T00:00:00`) : undefined;
+
+        return (
+          <div key={filter.id} className="space-y-2 px-2 py-1.5">
+            <span className="text-sm text-foreground">{filter.label}</span>
+            <div className="grid grid-cols-2 gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-8 justify-start px-2 text-left text-sm font-normal",
+                      !fromValue && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {renderDateButtonLabel(fromValue, "From")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={fromDate}
+                    onSelect={(date) =>
+                      onFilterChange({
+                        ...activeFilters,
+                        [fromKey]: date ? formatDateValue(date) : undefined,
+                      })
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-8 justify-start px-2 text-left text-sm font-normal",
+                      !toValue && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {renderDateButtonLabel(toValue, "To")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={toDate}
+                    onSelect={(date) =>
+                      onFilterChange({
+                        ...activeFilters,
+                        [toKey]: date ? formatDateValue(date) : undefined,
+                      })
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        );
+      })}
+
+      {(selectFilters.length > 0 ||
+        dateFilters.length > 0 ||
+        dateRangeFilters.length > 0) &&
         inputFilters.length > 0 && <div className="h-px bg-border/70" />}
 
       {inputFilters.map((filter) => (
@@ -736,9 +841,7 @@ export function TableToolbar({
       onSortChange(view.sort_by, view.sort_direction ?? "asc");
     }
     if (view.filters) {
-      onFilterChange(
-        view.filters as Record<string, FilterValue>,
-      );
+      onFilterChange(view.filters as Record<string, FilterValue>);
     } else {
       onClearFilters();
     }

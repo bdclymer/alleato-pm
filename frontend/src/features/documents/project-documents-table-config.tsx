@@ -31,6 +31,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { ProjectDocument } from "@/hooks/use-documents";
 
 // =============================================================================
@@ -61,15 +68,15 @@ const CATEGORY_OPTIONS = [
 
 export const projectDocumentColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
-  { id: "file_name", label: "File Name", defaultVisible: true },
+  { id: "category", label: "Category", defaultVisible: true },
+  { id: "created_at", label: "Date", defaultVisible: true },
+  { id: "uploaded_by", label: "Uploaded By", defaultVisible: true },
+  { id: "content_type", label: "Format", defaultVisible: true },
+  { id: "file_name", label: "File Name", defaultVisible: false },
   { id: "folder", label: "Folder", defaultVisible: false },
   { id: "version", label: "Version", defaultVisible: false },
   { id: "status", label: "Status", defaultVisible: false },
-  { id: "category", label: "Category", defaultVisible: false },
   { id: "file_size", label: "File Size", defaultVisible: false },
-  { id: "uploaded_by", label: "Uploaded By", defaultVisible: true },
-  { id: "created_at", label: "Created", defaultVisible: true },
-  { id: "content_type", label: "Content Type", defaultVisible: false },
   { id: "is_private", label: "Private", defaultVisible: false },
   { id: "reviewed_by", label: "Reviewed By", defaultVisible: false },
   { id: "reviewed_at", label: "Reviewed At", defaultVisible: false },
@@ -119,14 +126,91 @@ function sortValueForDate(value: string | null | undefined): number {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+function getProjectDocumentColumn(id: string): ColumnConfig {
+  const column = projectDocumentColumns.find(
+    (candidate) => candidate.id === id,
+  );
+  if (!column) {
+    throw new Error(`Missing project document column config: ${id}`);
+  }
+  return column;
+}
+
+export function inferProjectDocumentFormat(item: ProjectDocument): {
+  label: string;
+  icon: ReactElement;
+} {
+  const contentType = item.content_type?.toLowerCase() ?? "";
+  const extension = item.file_name.split(".").pop()?.toLowerCase() ?? "";
+  const format = contentType || extension;
+
+  if (format.includes("pdf") || extension === "pdf") {
+    return { label: "PDF", icon: <FileText className="h-4 w-4" /> };
+  }
+  if (
+    format.includes("spreadsheet") ||
+    format.includes("excel") ||
+    ["xls", "xlsx", "csv"].includes(extension)
+  ) {
+    return {
+      label: "Spreadsheet",
+      icon: <FileSpreadsheet className="h-4 w-4" />,
+    };
+  }
+  if (
+    format.includes("image") ||
+    ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"].includes(extension)
+  ) {
+    return { label: "Image", icon: <FileImage className="h-4 w-4" /> };
+  }
+  if (
+    format.includes("video") ||
+    ["mp4", "mov", "avi", "mkv", "webm"].includes(extension)
+  ) {
+    return { label: "Video", icon: <FileVideo className="h-4 w-4" /> };
+  }
+  if (
+    format.includes("json") ||
+    format.includes("xml") ||
+    [
+      "js",
+      "ts",
+      "tsx",
+      "jsx",
+      "py",
+      "rb",
+      "json",
+      "xml",
+      "html",
+      "css",
+    ].includes(extension)
+  ) {
+    return { label: "Code", icon: <FileCode className="h-4 w-4" /> };
+  }
+  if (
+    format.includes("word") ||
+    format.includes("document") ||
+    ["doc", "docx", "txt", "rtf"].includes(extension)
+  ) {
+    return { label: "Document", icon: <FileText className="h-4 w-4" /> };
+  }
+
+  return { label: "File", icon: <File className="h-4 w-4" /> };
+}
+
 // =============================================================================
 // Table Columns Builder
 // =============================================================================
 
-export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
+export function buildDocumentTableColumns(opts?: {
+  onCategoryChange?: (
+    item: ProjectDocument,
+    category: string | null,
+  ) => void | Promise<void>;
+}): TableColumn<ProjectDocument>[] {
   return [
     {
-      ...projectDocumentColumns[0],
+      ...getProjectDocumentColumn("title"),
       width: 280,
       render: (item) => (
         <div className="flex items-center gap-1.5">
@@ -143,7 +227,91 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortable: true,
     },
     {
-      ...projectDocumentColumns[1],
+      ...getProjectDocumentColumn("category"),
+      width: 160,
+      render: (item) => (
+        <span className="text-muted-foreground">{item.category ?? "-"}</span>
+      ),
+      csvValue: (item) => item.category ?? "",
+      sortValue: (item) => item.category ?? "",
+      sortable: true,
+      editable: Boolean(opts?.onCategoryChange),
+      editValue: (item) => item.category ?? "",
+      onEdit: (item, value) => opts?.onCategoryChange?.(item, value || null),
+      renderEditor: ({ item, onCancel }) => (
+        <Select
+          open
+          defaultValue={item.category ?? "__none__"}
+          onOpenChange={(open) => {
+            if (!open) onCancel();
+          }}
+          onValueChange={(value) => {
+            void opts?.onCategoryChange?.(
+              item,
+              value === "__none__" ? null : value,
+            );
+            onCancel();
+          }}
+        >
+          <SelectTrigger
+            className="h-7 w-36 border-border bg-background px-2 text-xs"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">None</SelectItem>
+            {CATEGORY_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      ...getProjectDocumentColumn("created_at"),
+      width: 120,
+      render: (item) => (
+        <span className="text-muted-foreground">
+          {formatDate(item.created_at)}
+        </span>
+      ),
+      csvValue: (item) => item.created_at ?? "",
+      sortValue: (item) => sortValueForDate(item.created_at),
+      sortable: true,
+    },
+    {
+      ...getProjectDocumentColumn("uploaded_by"),
+      render: (item) => (
+        <span className="text-muted-foreground">{item.uploaded_by ?? "-"}</span>
+      ),
+      csvValue: (item) => item.uploaded_by ?? "",
+      sortValue: (item) => item.uploaded_by ?? "",
+      sortable: true,
+    },
+    {
+      ...getProjectDocumentColumn("content_type"),
+      width: 96,
+      align: "center",
+      render: (item) => {
+        const format = inferProjectDocumentFormat(item);
+        return (
+          <span
+            className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground"
+            title={format.label}
+            aria-label={format.label}
+          >
+            {format.icon}
+          </span>
+        );
+      },
+      csvValue: (item) => item.content_type ?? "",
+      sortValue: (item) => item.content_type ?? "",
+    },
+    {
+      ...getProjectDocumentColumn("file_name"),
       render: (item) => (
         <span className="text-muted-foreground">{item.file_name}</span>
       ),
@@ -152,7 +320,7 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortable: true,
     },
     {
-      ...projectDocumentColumns[2],
+      ...getProjectDocumentColumn("folder"),
       render: (item) => (
         <div className="flex items-center gap-1.5">
           <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
@@ -164,7 +332,7 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortable: true,
     },
     {
-      ...projectDocumentColumns[3],
+      ...getProjectDocumentColumn("version"),
       width: 90,
       render: (item) => (
         <span className="text-muted-foreground">v{item.version ?? 1}</span>
@@ -174,7 +342,7 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortable: true,
     },
     {
-      ...projectDocumentColumns[4],
+      ...getProjectDocumentColumn("status"),
       width: 120,
       render: (item) => <StatusBadge status={item.status} />,
       csvValue: (item) => item.status,
@@ -182,16 +350,7 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortable: true,
     },
     {
-      ...projectDocumentColumns[5],
-      render: (item) => (
-        <span className="text-muted-foreground">{item.category ?? "-"}</span>
-      ),
-      csvValue: (item) => item.category ?? "",
-      sortValue: (item) => item.category ?? "",
-      sortable: true,
-    },
-    {
-      ...projectDocumentColumns[6],
+      ...getProjectDocumentColumn("file_size"),
       width: 100,
       render: (item) => (
         <span className="text-muted-foreground tabular-nums">
@@ -203,34 +362,7 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortable: true,
     },
     {
-      ...projectDocumentColumns[7],
-      render: (item) => (
-        <span className="text-muted-foreground">{item.uploaded_by ?? "-"}</span>
-      ),
-      csvValue: (item) => item.uploaded_by ?? "",
-      sortValue: (item) => item.uploaded_by ?? "",
-      sortable: true,
-    },
-    {
-      ...projectDocumentColumns[8],
-      width: 120,
-      render: (item) => (
-        <span className="text-muted-foreground">{formatDate(item.created_at)}</span>
-      ),
-      csvValue: (item) => item.created_at ?? "",
-      sortValue: (item) => sortValueForDate(item.created_at),
-      sortable: true,
-    },
-    {
-      ...projectDocumentColumns[9],
-      render: (item) => (
-        <span className="text-muted-foreground">{item.content_type ?? "-"}</span>
-      ),
-      csvValue: (item) => item.content_type ?? "",
-      sortValue: (item) => item.content_type ?? "",
-    },
-    {
-      ...projectDocumentColumns[10],
+      ...getProjectDocumentColumn("is_private"),
       width: 80,
       render: (item) => (
         <span className="text-muted-foreground">
@@ -241,7 +373,7 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortValue: (item) => (item.is_private ? 1 : 0),
     },
     {
-      ...projectDocumentColumns[11],
+      ...getProjectDocumentColumn("reviewed_by"),
       render: (item) => (
         <span className="text-muted-foreground">{item.reviewed_by ?? "-"}</span>
       ),
@@ -249,7 +381,7 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortValue: (item) => item.reviewed_by ?? "",
     },
     {
-      ...projectDocumentColumns[12],
+      ...getProjectDocumentColumn("reviewed_at"),
       render: (item) => (
         <span className="text-muted-foreground">
           {formatDate(item.reviewed_at)}
@@ -259,7 +391,7 @@ export function buildDocumentTableColumns(): TableColumn<ProjectDocument>[] {
       sortValue: (item) => sortValueForDate(item.reviewed_at),
     },
     {
-      ...projectDocumentColumns[13],
+      ...getProjectDocumentColumn("description"),
       render: (item) => (
         <span className="text-muted-foreground line-clamp-2">
           {item.description ?? "-"}
@@ -283,19 +415,60 @@ function getFileTypeInfo(fileName: string): {
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
 
   if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"].includes(ext))
-    return { icon: <FileImage className="h-10 w-10" />, bg: "bg-purple-500/10 text-purple-600 dark:text-purple-400", ext };
+    return {
+      icon: <FileImage className="h-10 w-10" />,
+      bg: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+      ext,
+    };
   if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext))
-    return { icon: <FileVideo className="h-10 w-10" />, bg: "bg-pink-500/10 text-pink-600 dark:text-pink-400", ext };
+    return {
+      icon: <FileVideo className="h-10 w-10" />,
+      bg: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+      ext,
+    };
   if (["xls", "xlsx", "csv"].includes(ext))
-    return { icon: <FileSpreadsheet className="h-10 w-10" />, bg: "bg-green-500/10 text-green-600 dark:text-green-400", ext };
+    return {
+      icon: <FileSpreadsheet className="h-10 w-10" />,
+      bg: "bg-green-500/10 text-green-600 dark:text-green-400",
+      ext,
+    };
   if (["doc", "docx", "txt", "rtf"].includes(ext))
-    return { icon: <FileText className="h-10 w-10" />, bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400", ext };
+    return {
+      icon: <FileText className="h-10 w-10" />,
+      bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      ext,
+    };
   if (["pdf"].includes(ext))
-    return { icon: <FileText className="h-10 w-10" />, bg: "bg-red-500/10 text-red-600 dark:text-red-400", ext };
-  if (["js", "ts", "tsx", "jsx", "py", "rb", "json", "xml", "html", "css"].includes(ext))
-    return { icon: <FileCode className="h-10 w-10" />, bg: "bg-orange-500/10 text-orange-600 dark:text-orange-400", ext };
+    return {
+      icon: <FileText className="h-10 w-10" />,
+      bg: "bg-red-500/10 text-red-600 dark:text-red-400",
+      ext,
+    };
+  if (
+    [
+      "js",
+      "ts",
+      "tsx",
+      "jsx",
+      "py",
+      "rb",
+      "json",
+      "xml",
+      "html",
+      "css",
+    ].includes(ext)
+  )
+    return {
+      icon: <FileCode className="h-10 w-10" />,
+      bg: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+      ext,
+    };
 
-  return { icon: <File className="h-10 w-10" />, bg: "bg-muted text-muted-foreground", ext };
+  return {
+    icon: <File className="h-10 w-10" />,
+    bg: "bg-muted text-muted-foreground",
+    ext,
+  };
 }
 
 export function renderDocumentCard(
@@ -326,7 +499,9 @@ export function renderDocumentCard(
 
       {/* File info */}
       <div className="px-3 py-2.5">
-        <p className="truncate text-sm font-medium leading-tight">{item.title}</p>
+        <p className="truncate text-sm font-medium leading-tight">
+          {item.title}
+        </p>
         <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
           <FolderOpen className="h-3 w-3 shrink-0" />
           {item.folder ?? "Root"}
@@ -389,18 +564,19 @@ export function renderDocumentRowActions(
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Row actions">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Row actions"
+        >
           <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {(item.storage_path || item.file_url) && (
           <DropdownMenuItem asChild>
-            <a
-              href={documentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={documentUrl} target="_blank" rel="noopener noreferrer">
               <Eye className="mr-2 h-4 w-4" />
               View File
             </a>
