@@ -28,9 +28,10 @@ const TEST_EMAIL_PATTERNS: RegExp[] = [
   /@example\.com$/i,
   /^rls-test-/i,
   /^codex[-.](?:directory|subcontractor|ssov)/i,
-  /\+(?:alleato-(?:invite|template)-test|resend-user-invite-test)/i,
+  /\+(?:alleato-(?:invite|template)-test|resend-user-invite-test|confirm-flow|inspect-invite)/i,
   /^(?:debug|debug-resp|final-proof|working-chat|console-check|response-test|stream-test|verify|quick|demo)[-\d]/i,
   /^testadmin\d+@/i,
+  /^test\d+@/i,
   /^test\.user@/i,
 ];
 
