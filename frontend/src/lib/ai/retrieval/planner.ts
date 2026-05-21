@@ -119,7 +119,7 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     return {
       intent,
       responseFormat: "app_help",
-      sources: {},
+      sources: { appExpert: { question: message } },
       reason: "app_help_intent",
     };
   }

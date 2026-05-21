@@ -22,6 +22,7 @@ import { generateDailyBrief } from "@/lib/executive/daily-brief";
 import type { SourceSpecificRagKind } from "@/lib/ai/detect-rag-request";
 import { buildSourceSpecificRagAnswer } from "@/lib/ai/retrieval/source-specific-rag";
 import { loadReusableBriefingContext } from "@/lib/ai/retrieval/reusable-briefing";
+import { fetchDeepAgentAppExpert } from "@/lib/ai/deep-agent-project-status";
 
 import type { ExecutorDeps } from "./executor";
 import type { ExternalSource } from "./types";
@@ -76,9 +77,10 @@ function buildSyntheticRagRequest(kind: SourceSpecificRagKind, message?: string)
 export type BuildExecutorDepsInput = {
   supabase: SupabaseClient<Database>;
   userId: string;
+  sessionId?: string | null;
 };
 
-export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput): ExecutorDeps {
+export function buildExecutorDeps({ supabase, userId, sessionId }: BuildExecutorDepsInput): ExecutorDeps {
   // Lazy-initialized tool factories — createServiceClient() inside each factory
   // uses the module-level service client singleton, so calling them multiple times
   // is safe. We create them once per request inside the closure.
@@ -201,7 +203,26 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
     return generateDailyBrief({ windowDays: 2, preset: "brandon" });
   };
 
-  // 9. resolveProjectFromQuery
+  // 9. runAppExpert
+  //    Calls the backend read-only App Expert Deep Agents module for questions
+  //    about application navigation, feature status, permissions, and route/code
+  //    ownership. This keeps app expertise in the curated docs/sitemap corpus
+  //    instead of relying on generic model memory.
+  const runAppExpert = async (input: {
+    question: string;
+    currentRoute?: string | null;
+    projectId?: number | null;
+  }): Promise<unknown> => {
+    return fetchDeepAgentAppExpert({
+      userId,
+      sessionId,
+      question: input.question,
+      currentRoute: input.currentRoute ?? undefined,
+      projectId: input.projectId ?? undefined,
+    });
+  };
+
+  // 10. resolveProjectFromQuery
   //    When the planner emits project-scoped retrieval but no selectedProjectId
   //    was provided (e.g. user typed "What's the status of Vermillion Rise?"
   //    without selecting it from the dropdown), resolve the project from the
@@ -224,6 +245,7 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
     loadReusableBriefing,
     runSourceSpecificRag,
     buildBrandonDaily,
+    runAppExpert,
     resolveProjectFromQuery,
   };
 }

@@ -1,0 +1,50 @@
+---
+title: Understand Permissions And Visibility
+description: Learn why pages, records, employee information, or actions may be visible or hidden.
+audience: client
+visibility: published
+module: permissions
+category: Users & Permissions
+tags: [permissions, visibility, roles, privacy, app-expert]
+featured: false
+client_visible: true
+ai_visible: true
+order: 36
+related_routes:
+  - /user-management
+  - /[projectId]/user-management
+  - /settings
+related_actions:
+  - assign_permissions
+---
+
+<!-- allow-outside-documentation -->
+
+# Understand Permissions And Visibility
+
+Alleato PM uses role, project membership, and admin checks to decide what a
+person can see or change.
+
+If a page, button, project, company, contact, or employee record is hidden, the
+most likely reasons are:
+
+- the user is not assigned to the project,
+- the page is admin-only,
+- the action requires a stronger permission level,
+- the record is intentionally private or employee-sensitive,
+- the source system has not synced the expected record yet.
+
+## Employee And Email Privacy
+
+Employee email and inbox content should be treated as sensitive. Ask Alleato
+should not expose another employee's email surface just because synced data
+exists. If a user asks why they can see another employee's emails, the answer
+should identify it as a permissions issue and recommend removing or tightly
+gating that surface.
+
+## What Ask Alleato Should Do
+
+For permission questions, Ask Alleato should check route scope, role rules,
+project membership assumptions, and related help docs. If it cannot verify the
+exact user's access in the current context, it should say that clearly and
+explain the likely rule instead of giving a false certainty.

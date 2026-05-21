@@ -14,6 +14,11 @@ export type ExecutorDeps = {
   loadReusableBriefing: (sessionId: string) => Promise<unknown>;
   runSourceSpecificRag: (kind: string, message: string) => Promise<unknown>;
   buildBrandonDaily: () => Promise<unknown>;
+  runAppExpert: (input: {
+    question: string;
+    currentRoute?: string | null;
+    projectId?: number | null;
+  }) => Promise<unknown>;
   // Used when the plan asks for project-scoped retrieval but no explicit
   // selectedProjectId was provided. Returns null if no project can be
   // matched from the user's message text.
@@ -47,7 +52,7 @@ function isTimeout(value: unknown): value is TimeoutMarker {
 export async function executeRetrievalPlan(
   plan: RetrievalPlan,
   deps: ExecutorDeps,
-  ctx?: { sessionId?: string; message?: string },
+  ctx?: { sessionId?: string; message?: string; currentRoute?: string },
 ): Promise<RetrievalContext> {
   const warnings: RetrievalContext["warnings"] = [];
   const durations: Record<string, number> = {};
@@ -69,6 +74,19 @@ export async function executeRetrievalPlan(
     tasks.push(
       time("brandon_daily", async () => {
         result.brandonDailyUpdatePacket = await deps.buildBrandonDaily();
+      }),
+    );
+  }
+
+  if (plan.sources.appExpert) {
+    const question = plan.sources.appExpert.question;
+    tasks.push(
+      time("app_expert", async () => {
+        result.appExpertPacket = (await deps.runAppExpert({
+          question,
+          currentRoute: ctx?.currentRoute ?? null,
+          projectId: plan.selectedProjectId ?? null,
+        })) as never;
       }),
     );
   }

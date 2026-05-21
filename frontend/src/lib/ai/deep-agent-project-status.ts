@@ -14,6 +14,7 @@ import type { AssistantIntent } from "@/lib/ai/intent-router";
 const WHERE = "ai-assistant.deep-agent-project-status";
 const EXECUTIVE_WHERE = "ai-assistant.deep-agent-executive-briefing";
 const RESEARCH_WHERE = "ai-assistant.deep-agent-research";
+const APP_EXPERT_WHERE = "ai-assistant.deep-agent-app-expert";
 const DEFAULT_DEEP_AGENT_BRIDGE_TIMEOUT_MS = 120_000;
 
 const confidenceSchema = z.enum(["high", "medium", "low"]);
@@ -54,6 +55,20 @@ const researchSourceSchema = z.object({
   title: z.string(),
   url: z.string().nullable().optional(),
   sourceType: z.enum(["web", "alleato", "internal", "unknown"]),
+});
+
+const appExpertSourceSchema = z.object({
+  title: z.string(),
+  sourceType: z.enum([
+    "help_article",
+    "sitemap",
+    "feature_registry",
+    "source_map",
+    "unknown",
+  ]),
+  route: z.string().nullable().optional(),
+  filePath: z.string().nullable().optional(),
+  detail: z.string().nullable().optional(),
 });
 
 export const deepProjectIntelligenceResponseSchema = z.object({
@@ -120,6 +135,17 @@ export const deepResearchResponseSchema = z.object({
 
 export type DeepResearchResponse = z.infer<typeof deepResearchResponseSchema>;
 
+export const deepAppExpertResponseSchema = z.object({
+  answer: z.string(),
+  mode: z.enum(["deep_agents", "unavailable"]),
+  sources: z.array(appExpertSourceSchema),
+  toolTrace: z.array(toolTraceSchema),
+  skillsLoaded: z.array(z.string()),
+  orchestrator: z.string(),
+});
+
+export type DeepAppExpertResponse = z.infer<typeof deepAppExpertResponseSchema>;
+
 export type DeepAgentProjectStatusRequest = {
   userId: string;
   projectId: number;
@@ -141,6 +167,15 @@ export type DeepAgentResearchRequest = {
   question: string;
   projectId?: number | null;
   maxSearches?: number;
+  timeoutMs?: number;
+};
+
+export type DeepAgentAppExpertRequest = {
+  userId: string;
+  sessionId?: string | null;
+  question: string;
+  currentRoute?: string | null;
+  projectId?: number | null;
   timeoutMs?: number;
 };
 
@@ -214,6 +249,15 @@ export function shouldUseDeepAgentResearchBridge(params: {
   return (
     isDeepAgentProjectStatusBridgeEnabled() &&
     params.intent === "external_research"
+  );
+}
+
+export function shouldUseDeepAgentAppExpertBridge(params: {
+  intent: AssistantIntent;
+}): boolean {
+  return (
+    isDeepAgentProjectStatusBridgeEnabled() &&
+    params.intent === "app_help"
   );
 }
 
@@ -361,6 +405,40 @@ export async function fetchDeepAgentResearch(
   return deepResearchResponseSchema.parse(json);
 }
 
+export async function fetchDeepAgentAppExpert(
+  params: DeepAgentAppExpertRequest,
+): Promise<DeepAppExpertResponse> {
+  const headers = new Headers({
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Admin-Api-Key": getBackendAdminApiKey(),
+  });
+
+  const response = await fetchWithGuardrails(
+    `${getBackendUrl()}/api/intelligence/app-expert`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        userId: params.userId,
+        sessionId: params.sessionId ?? undefined,
+        question: params.question,
+        currentRoute: params.currentRoute ?? undefined,
+        projectId: params.projectId ?? undefined,
+      }),
+      requestId: params.sessionId ?? "deep-agent-app-expert",
+      where: APP_EXPERT_WHERE,
+      dependency: "backend.deep-agent-app-expert",
+      timeoutMs: params.timeoutMs ?? getDeepAgentBridgeTimeoutMs(),
+      retries: 0,
+      backoffMs: AI_CALL_POLICY.backoffMs,
+    },
+  );
+
+  const json = await response.json();
+  return deepAppExpertResponseSchema.parse(json);
+}
+
 export function formatDeepAgentProjectStatusContext(
   packet: DeepProjectIntelligenceResponse,
 ): string {
@@ -479,6 +557,39 @@ export function formatDeepAgentResearchContext(packet: DeepResearchResponse): st
     ...(traceLines.length > 0 ? traceLines : ["- No backend trace rows were returned."]),
     "",
     "Use this packet as checked backend research context. Do not treat uncited public claims as audit-ready evidence.",
+  ].join("\n");
+}
+
+export function formatDeepAgentAppExpertContext(packet: DeepAppExpertResponse): string {
+  const sourceLines = packet.sources.slice(0, 10).map((source) => {
+    const route = source.route ? ` route=${source.route}` : "";
+    const filePath = source.filePath ? ` file=${source.filePath}` : "";
+    const detail = source.detail ? ` - ${source.detail}` : "";
+    return `- [${source.sourceType}] ${source.title}${route}${filePath}${detail}`;
+  });
+  const traceLines = packet.toolTrace.slice(0, 8).map((trace) => {
+    return `- ${trace.agent}/${trace.tool}: ${trace.status}${trace.detail ? ` - ${trace.detail}` : ""}`;
+  });
+
+  return [
+    "# Backend Deep Agents App Expert Packet",
+    "",
+    `Mode: ${packet.mode}`,
+    `Orchestrator: ${packet.orchestrator}`,
+    `Skills loaded: ${packet.skillsLoaded.join(", ") || "none reported"}`,
+    "",
+    "Backend app answer:",
+    packet.answer,
+    "",
+    "Sources:",
+    ...(sourceLines.length > 0
+      ? sourceLines
+      : ["- No sitemap, feature registry, or help article sources were returned."]),
+    "",
+    "Backend trace:",
+    ...(traceLines.length > 0 ? traceLines : ["- No backend trace rows were returned."]),
+    "",
+    "Use this packet for questions about how the Alleato PM application works. Prefer its sitemap, feature registry, and help-article sources over guessing from generic product knowledge.",
   ].join("\n");
 }
 

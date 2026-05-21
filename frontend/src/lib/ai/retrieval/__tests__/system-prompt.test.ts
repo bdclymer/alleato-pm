@@ -17,6 +17,47 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).toContain("BASE_PROMPT");
   });
 
+  it("includes App Expert packets for app-help questions", () => {
+    const plan: RetrievalPlan = {
+      intent: "app_help",
+      responseFormat: "app_help",
+      sources: { appExpert: { question: "Where do I manage permissions in the app?" } },
+      reason: "app_help_intent",
+    };
+    const ctx: RetrievalContext = {
+      appExpertPacket: {
+        answer: "Use Settings > Team to review roles and visibility.",
+        mode: "deep_agents",
+        orchestrator: "alleato-app-expert",
+        skillsLoaded: ["permissions-and-visibility"],
+        sources: [
+          {
+            title: "App permissions and visibility",
+            sourceType: "help_article",
+            filePath: "docs/help/articles/app-permissions-and-visibility.md",
+            detail: "Published AI-visible help article.",
+          },
+        ],
+        toolTrace: [
+          {
+            agent: "alleato-app-expert",
+            tool: "search_feature_registry",
+            status: "success",
+            durationMs: 12,
+            detail: "Matched permissions feature docs.",
+          },
+        ],
+      },
+      warnings: [],
+      durationsMs: {},
+    };
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE_PROMPT");
+    expect(prompt).toContain("App Expert Packet");
+    expect(prompt).toContain("Use Settings > Team");
+    expect(prompt).toContain("app-permissions-and-visibility.md");
+    expect(prompt).toContain("Do not invent app behavior");
+  });
+
   it("includes only sections for sources that returned data", () => {
     const plan: RetrievalPlan = {
       intent: "latest_status",

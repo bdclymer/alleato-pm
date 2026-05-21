@@ -2146,7 +2146,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         }),
         executeRetrievalPlan(
           plan,
-          buildExecutorDeps({ supabase: args.supabase, userId: args.user.id }),
+          buildExecutorDeps({
+            supabase: args.supabase,
+            userId: args.user.id,
+            sessionId: args.sessionId,
+          }),
           { sessionId: args.sessionId, message: lastUserContent },
         ),
       ]);

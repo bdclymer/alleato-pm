@@ -71,6 +71,7 @@ from src.services.agents.microsoft_executive_assistant import (
     run_microsoft_executive_assistant,
 )
 from src.services.agents.research_agent import ResearchRequest, run_research_agent
+from src.services.agents.app_expert import AppExpertRequest, run_app_expert_agent
 from src.services.microsoft_project_parser import (
     MicrosoftProjectParseError,
     parse_microsoft_project_file,
@@ -1503,6 +1504,34 @@ async def run_deep_agent_llm_wiki(
     response = run_llm_wiki_agent(
         request,
         model=os.getenv("DEEP_AGENTS_LLM_WIKI_MODEL", "openai:gpt-5.4-mini"),
+    )
+    if response.mode == "unavailable":
+        raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
+    return response.model_dump(by_alias=True)
+
+
+@app.post(
+    "/api/intelligence/app-expert",
+    tags=["Intelligence"],
+    summary="Run the Alleato App Expert specialist agent",
+)
+async def run_deep_agent_app_expert(
+    request: AppExpertRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Run the read-only App Expert for questions about the Alleato PM web app."""
+    if not _env_flag_enabled("DEEP_AGENTS_APP_EXPERT_ENABLED"):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Deep Agents App Expert is disabled. Set "
+                "DEEP_AGENTS_APP_EXPERT_ENABLED=true to run the specialist."
+            ),
+        )
+
+    response = run_app_expert_agent(
+        request,
+        model=os.getenv("DEEP_AGENTS_APP_EXPERT_MODEL", "openai:gpt-5.4-mini"),
     )
     if response.mode == "unavailable":
         raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))

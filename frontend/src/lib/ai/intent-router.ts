@@ -79,6 +79,10 @@ const APP_HELP_PATTERNS = [
   /\bwhat button\b/i,
   /\bhelp me use\b/i,
   /\bin the app\b/i,
+  /\b(where|how|what|why)\b.{0,60}\b(in|inside|within)\b.{0,20}\b(the )?(app|alleato pm|alleato os)\b/i,
+  /\b(what table|which table|what route|which route|what page|which page)\b.{0,80}\b(app|feature|page|workflow|button|route|table|powers|backs)\b/i,
+  /\b(is this|is that|can the app|does the app)\b.{0,80}\b(implemented|live|planned|available|built|supported)\b/i,
+  /\bwhy can'?t i see\b/i,
 ];
 
 const OWNER_PORTFOLIO_BRIEFING_PATTERNS = [
@@ -147,6 +151,10 @@ export function classifyAssistantIntent(
     return "external_research";
   }
 
+  if (APP_HELP_PATTERNS.some((pattern) => pattern.test(text))) {
+    return "app_help";
+  }
+
   if (isExplicitSourceLookupPrompt(text)) {
     return "source_lookup";
   }
@@ -161,10 +169,6 @@ export function classifyAssistantIntent(
 
   if (SOURCE_LOOKUP_PATTERNS.some((pattern) => pattern.test(text))) {
     return "source_lookup";
-  }
-
-  if (APP_HELP_PATTERNS.some((pattern) => pattern.test(text))) {
-    return "app_help";
   }
 
   if (/\b(change order|pco|cco|change management|change issue)\b/i.test(text)) {

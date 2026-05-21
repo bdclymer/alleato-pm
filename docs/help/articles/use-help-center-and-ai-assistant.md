@@ -2,13 +2,13 @@
 title: Use Help Center and Ask Alleato Together
 description: Find written guides in Help Center and ask the AI assistant follow-up questions.
 audience: client
-visibility: draft
+visibility: published
 module: help
 category: Getting Started
 tags: [help-center, ai-assistant, ask-alleato, support]
 featured: false
-client_visible: false
-ai_visible: false
+client_visible: true
+ai_visible: true
 order: 60
 related_routes:
   - /docs

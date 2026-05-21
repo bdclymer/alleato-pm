@@ -27,6 +27,7 @@ export type RetrievalPlan = {
     sourceSpecificRag?: { kind: SourceSpecificRagKind };
     reusePriorBriefing?: boolean;
     brandonDailyUpdate?: boolean;
+    appExpert?: { question: string };
   };
   preconsult?: SubAgent[];
   selectedProjectId?: number;
@@ -42,6 +43,7 @@ export type RetrievalContext = {
   recentEmailInbox?: unknown;
   sourceSpecificRagAnswer?: { content: string; rows: unknown[] } | null;
   brandonDailyUpdatePacket?: unknown;
+  appExpertPacket?: unknown;
   reusedFromPriorBriefing?: boolean;
   warnings: Array<{ source: string; message: string }>;
   durationsMs: Record<string, number>;
