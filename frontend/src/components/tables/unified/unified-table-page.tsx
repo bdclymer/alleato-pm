@@ -197,7 +197,7 @@ export interface UnifiedTableFeatures {
 export interface UnifiedTablePageProps<T> {
   header: {
     title: string;
-    description?: string;
+    description?: ReactNode;
     actions?: ReactNode;
     variant?: "default" | "compact";
     mobileActionsInline?: boolean;

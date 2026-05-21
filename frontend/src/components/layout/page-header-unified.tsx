@@ -38,7 +38,7 @@ interface PageHeaderProps {
   title: string;
   titleContent?: React.ReactNode;
   eyebrow?: React.ReactNode;
-  description?: string;
+  description?: React.ReactNode;
 
   // Layout options
   variant?: "default" | "executive" | "compact" | "budget";
@@ -115,9 +115,6 @@ export function PageHeader({
   exportLabel = "Export",
   tabs,
 }: PageHeaderProps) {
-  // Subheadings are intentionally suppressed globally to keep page headers tighter.
-  void description;
-
   const projectContext = useOptionalProject();
   const selectedProject = projectContext?.selectedProject ?? null;
   const isLoading = projectContext?.isLoading ?? false;
@@ -244,6 +241,11 @@ export function PageHeader({
                 {title}
               </h1>
             )}
+            {description ? (
+              <div className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                {description}
+              </div>
+            ) : null}
 
             {/* Status badges — desktop: below title */}
             {statusBadge && (

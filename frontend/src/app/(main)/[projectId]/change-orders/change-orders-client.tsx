@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -56,6 +57,75 @@ function matchesStatus(itemStatus: string | null, filter: string): boolean {
   const normalized = (itemStatus ?? "").toLowerCase();
   if (filter === "pending") return normalized === "pending" || normalized === "submitted";
   return normalized === filter;
+}
+
+function escapeHtml(value: string | number | null | undefined): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function openPdfExportWindow({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: Array<Record<string, string | number | null | undefined>>;
+}) {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    toast.error("Could not open PDF export window", {
+      description: "Allow pop-ups for this site, then try exporting again.",
+    });
+    return;
+  }
+
+  const headers = Object.keys(rows[0] ?? { Notice: "No change orders found" });
+  const safeRows = rows.length > 0 ? rows : [{ Notice: "No change orders found" }];
+
+  printWindow.document.write(`<!doctype html>
+    <html>
+      <head>
+        <title>${escapeHtml(title)}</title>
+        <style>
+          body { font-family: Arial, sans-serif; color: #111827; margin: 32px; }
+          h1 { font-size: 22px; margin: 0 0 8px; }
+          p { color: #4b5563; font-size: 12px; margin: 0 0 20px; }
+          table { border-collapse: collapse; width: 100%; font-size: 11px; }
+          th, td { border-bottom: 1px solid #e5e7eb; padding: 8px; text-align: left; vertical-align: top; }
+          th { background: #f9fafb; color: #374151; font-weight: 600; }
+          td.amount { text-align: right; }
+        </style>
+      </head>
+      <body>
+        <h1>${escapeHtml(title)}</h1>
+        <p>Generated from the Change Orders view.</p>
+        <table>
+          <thead>
+            <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr>
+          </thead>
+          <tbody>
+            ${safeRows
+              .map(
+                (row) =>
+                  `<tr>${headers
+                    .map((header) => {
+                      const isAmount = header.toLowerCase().includes("amount");
+                      return `<td class="${isAmount ? "amount" : ""}">${escapeHtml(row[header])}</td>`;
+                    })
+                    .join("")}</tr>`,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </body>
+    </html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
 }
 
 // ---------------------------------------------------------------------------
@@ -309,6 +379,23 @@ export function ChangeOrdersClient({
     toast.success(`Exported ${filteredPrime.length} prime contract CO${filteredPrime.length === 1 ? "" : "s"}`);
   }, [filteredPrime]);
 
+  const handleExportPrimePdf = React.useCallback(() => {
+    openPdfExportWindow({
+      title: "Prime Contract Change Orders",
+      rows: filteredPrime.map((co) => ({
+        "PCCO #": co.pcco_number ?? "",
+        Title: co.title ?? "",
+        Status: co.status ?? "",
+        Amount: formatCurrency(co.total_amount ?? 0),
+        Executed: co.executed ? "Yes" : "No",
+        "Due Date": co.due_date ?? "",
+        Submitted: co.submitted_at ?? "",
+        Approved: co.approved_at ?? "",
+        Created: co.created_at ?? "",
+      })),
+    });
+  }, [filteredPrime]);
+
   const handleExportCommitment = React.useCallback(() => {
     const headers = ["CO #", "Title", "Status", "Amount", "Contract", "Due Date", "Requested", "Approved", "Created"];
     const rows = filteredCommitment.map((co) => [
@@ -331,6 +418,23 @@ export function ChangeOrdersClient({
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`Exported ${filteredCommitment.length} commitment CO${filteredCommitment.length === 1 ? "" : "s"}`);
+  }, [filteredCommitment]);
+
+  const handleExportCommitmentPdf = React.useCallback(() => {
+    openPdfExportWindow({
+      title: "Commitment Change Orders",
+      rows: filteredCommitment.map((co) => ({
+        "CO #": co.change_order_number ?? "",
+        Title: co.title ?? co.description ?? "",
+        Status: co.status ?? "",
+        Amount: formatCurrency(co.amount ?? 0),
+        Contract: co.contract_id ?? "",
+        "Due Date": co.due_date ?? "",
+        Requested: co.requested_date ?? "",
+        Approved: co.approved_date ?? "",
+        Created: co.created_at ?? "",
+      })),
+    });
   }, [filteredCommitment]);
 
   // --- Filter change handler -------------------------------------------------
@@ -357,8 +461,26 @@ export function ChangeOrdersClient({
       <UnifiedTablePage
         header={{
           title: "Change Orders",
-          description: "Track and manage contract change orders",
-          actions: <PageActions projectId={projectId} tab={activeTab} />,
+          description: (
+            <>
+              This view shows potential change orders and related Prime contract change orders.
+              {" "}
+              Manage all change orders directly from the{" "}
+              <Link
+                href={`/${projectId}/prime-contracts`}
+                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+              >
+                Prime contract tool
+              </Link>
+              .
+            </>
+          ),
+          actions: (
+            <PageActions
+              onExportCsv={handleExportPrime}
+              onExportPdf={handleExportPrimePdf}
+            />
+          ),
         }}
         tabs={tabs}
         toolbar={{
@@ -382,7 +504,7 @@ export function ChangeOrdersClient({
           columns: primeColumns,
           visibleColumns: primeTableState.visibleColumns,
           onColumnVisibilityChange: primeTableState.setVisibleColumns,
-          onExport: handleExportPrime,
+          onExport: undefined,
         }}
         data={{ items: filteredPrime, isLoading: false, isFetching: false }}
         table={{
@@ -422,7 +544,7 @@ export function ChangeOrdersClient({
           filteredDescription: "Try adjusting your search or filters.",
           isFiltered: isPrimeFiltered,
         }}
-        features={{ enableExport: true, enableBulkDelete: false }}
+        features={{ enableExport: false, enableBulkDelete: false }}
       />
     );
   }
@@ -435,8 +557,26 @@ export function ChangeOrdersClient({
     <UnifiedTablePage
       header={{
         title: "Change Orders",
-        description: "Track and manage contract change orders",
-        actions: <PageActions projectId={projectId} tab={activeTab} />,
+        description: (
+          <>
+            This view shows potential change orders and related Prime contract change orders.
+            {" "}
+            Manage all change orders directly from the{" "}
+            <Link
+              href={`/${projectId}/prime-contracts`}
+              className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+            >
+              Prime contract tool
+            </Link>
+            .
+          </>
+        ),
+        actions: (
+          <PageActions
+            onExportCsv={handleExportCommitment}
+            onExportPdf={handleExportCommitmentPdf}
+          />
+        ),
       }}
       tabs={tabs}
       toolbar={{
@@ -461,7 +601,7 @@ export function ChangeOrdersClient({
         columns: commitmentColumns,
         visibleColumns: commitmentTableState.visibleColumns,
         onColumnVisibilityChange: commitmentTableState.setVisibleColumns,
-        onExport: handleExportCommitment,
+        onExport: undefined,
       }}
       data={{ items: filteredCommitment, isLoading: false, isFetching: false }}
       table={{
@@ -508,7 +648,7 @@ export function ChangeOrdersClient({
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered: isCommitmentFiltered,
       }}
-      features={{ enableExport: true, enableBulkDelete: false }}
+      features={{ enableExport: false, enableBulkDelete: false }}
     />
   );
 }
