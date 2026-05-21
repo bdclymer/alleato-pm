@@ -297,17 +297,35 @@ export function AssignMemberDialog({
   projectId: string;
 }) {
   const [people, setPeople] = React.useState<PersonOption[]>([]);
+  const [externalPeople, setExternalPeople] = React.useState<PersonOption[]>([]);
+  const [externalLoaded, setExternalLoaded] = React.useState(false);
+  const [externalLoading, setExternalLoading] = React.useState(false);
   const [companies, setCompanies] = React.useState<CompanyOption[]>([]);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [search, setSearch] = React.useState("");
   const [saving, setSaving] = React.useState(false);
-  const [mode, setMode] = React.useState<"search" | "create">("search");
+  const [mode, setMode] = React.useState<"search" | "external" | "create">(
+    "search",
+  );
+
+  // Lookup that spans both employee and external-contact lists. Used for
+  // rendering the "Assigned" pills regardless of which list the person came
+  // from (an already-assigned external contact must still render correctly
+  // before the external list has been loaded).
+  const findPerson = React.useCallback(
+    (id: string): PersonOption | undefined =>
+      people.find((p) => p.id === id) ??
+      externalPeople.find((p) => p.id === id),
+    [people, externalPeople],
+  );
 
   React.useEffect(() => {
     if (!open || !role) return;
     setSelectedIds(role.members.map((m) => m.person_id));
     setSearch("");
     setMode("search");
+    setExternalLoaded(false);
+    setExternalPeople([]);
 
     const loadAllPeople = async () => {
       try {
@@ -364,9 +382,91 @@ export function AssignMemberDialog({
       }
     };
 
+    // If the role already has members who are external contacts (not in the
+    // employees fetch), eagerly load just those rows so their assigned-pills
+    // render immediately. We do this with a direct Supabase .in() call to
+    // avoid pulling the entire contacts list before the user opens that view.
+    const loadAssignedExternal = async () => {
+      const memberIds = role.members.map((m) => m.person_id);
+      if (memberIds.length === 0) return;
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("people")
+          .select(
+            "id, first_name, last_name, email, job_title, person_type, company:companies!people_company_id_fkey(id, name)",
+          )
+          .in("id", memberIds)
+          .neq("person_type", "employee");
+        if (error || !data) return;
+        setExternalPeople(
+          data.map((p) => ({
+            id: p.id,
+            first_name: p.first_name,
+            last_name: p.last_name,
+            email: p.email ?? null,
+            job_title: p.job_title ?? null,
+            company_name: p.company?.name ?? null,
+          })),
+        );
+      } catch {
+        // Already-assigned external contacts will reload once the user opens
+        // the external picker; failing here just delays their pill render.
+      }
+    };
+
     void loadAllPeople();
     void loadCompanies();
+    void loadAssignedExternal();
   }, [open, role, projectId]);
+
+  // Lazy-load the full external-contacts list the first time the user opens
+  // the "Add external contact" view. We pull a generous page so the Command
+  // component can filter client-side. (Current dataset: ~1100 contacts.)
+  const loadExternalPeople = React.useCallback(async () => {
+    if (externalLoaded || externalLoading) return;
+    setExternalLoading(true);
+    try {
+      const params = new URLSearchParams({
+        type: "contact",
+        status: "active",
+        page: "1",
+        per_page: "2000",
+      });
+      const result = await apiFetch<DirectoryPeopleResponse>(
+        `/api/people?${params}`,
+      );
+
+      const total = result.meta?.total;
+      const returned = result.data?.length ?? 0;
+      if (typeof total === "number" && total > returned) {
+
+        console.warn(
+          `[AssignMemberDialog] /api/people returned ${returned}/${total} external contacts — increase per_page or paginate.`,
+        );
+      }
+
+      const fetched = (result.data || []).map((p) => ({
+        id: p.id,
+        first_name: p.first_name,
+        last_name: p.last_name,
+        email: p.email ?? null,
+        job_title: p.job_title ?? null,
+        company_name: p.company?.name ?? null,
+      }));
+      // Merge with any already-loaded assigned externals so we don't lose them.
+      setExternalPeople((prev) => {
+        const seen = new Set(fetched.map((p) => p.id));
+        const carryover = prev.filter((p) => !seen.has(p.id));
+        return [...carryover, ...fetched];
+      });
+      setExternalLoaded(true);
+    } catch {
+      toast.error("Failed to load external contacts");
+    } finally {
+      setExternalLoading(false);
+    }
+  }, [externalLoaded, externalLoading]);
 
   const handleSelect = async (personId: string) => {
     if (!role || saving) return;
@@ -388,14 +488,16 @@ export function AssignMemberDialog({
 
   const handleCreated = async (newPerson: PersonOption) => {
     if (!role) return;
-    setPeople((prev) => [newPerson, ...prev]);
+    // Newly created people are person_type='contact', so they belong in the
+    // external list — not the employee list.
+    setExternalPeople((prev) => [newPerson, ...prev]);
     const next = [...selectedIds, newPerson.id];
     setSelectedIds(next);
     setSaving(true);
     try {
       await onSave(role.id, next);
       toast.success(`${getPersonDisplayName(newPerson)} added to ${role.role_name}`);
-      setMode("search");
+      setMode("external");
       setSearch("");
     } catch (err) {
       toast.error("Contact created, but failed to assign role");
@@ -442,65 +544,93 @@ export function AssignMemberDialog({
           <CreateContactForm
             initialName={search}
             companies={companies}
-            onCancel={() => setMode("search")}
+            onCancel={() => setMode("external")}
             onCreated={handleCreated}
           />
         ) : (
           <div className="flex-1 min-h-0 flex flex-col px-6 pb-6">
+            {mode === "external" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setMode("search");
+                  setSearch("");
+                }}
+                className="mb-3 -ml-2 self-start text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                Back to Alleato team
+              </Button>
+            )}
+
             <Command className="overflow-visible" shouldFilter={true}>
               <CommandInput
-                placeholder="Search people…"
+                placeholder={
+                  mode === "external"
+                    ? "Search external contacts…"
+                    : "Search Alleato team…"
+                }
                 value={search}
                 onValueChange={setSearch}
               />
               <CommandList className="mt-2 max-h-80 overflow-y-auto overscroll-contain -mx-1">
                 <CommandEmpty>
                   <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-                    {search ? `No matches for "${search}".` : "No people yet."}
+                    {mode === "external" && externalLoading
+                      ? "Loading contacts…"
+                      : search
+                        ? `No matches for "${search}".`
+                        : mode === "external"
+                          ? "No external contacts yet."
+                          : "No people yet."}
                   </div>
                 </CommandEmpty>
                 <CommandGroup className="p-0">
-                  {people.map((person) => {
-                    const displayName = getPersonDisplayName(person);
-                    const companyName = cleanPersonText(person.company_name);
-                    const jobTitle = cleanPersonText(person.job_title);
-                    const meta = [jobTitle, companyName].filter(Boolean).join(" · ");
-                    const isSelected = selectedIds.includes(person.id);
+                  {(mode === "external" ? externalPeople : people).map(
+                    (person) => {
+                      const displayName = getPersonDisplayName(person);
+                      const companyName = cleanPersonText(person.company_name);
+                      const jobTitle = cleanPersonText(person.job_title);
+                      const meta = [jobTitle, companyName].filter(Boolean).join(" · ");
+                      const isSelected = selectedIds.includes(person.id);
 
-                    return (
-                      <CommandItem
-                        key={person.id}
-                        value={`${displayName} ${meta}`}
-                        onSelect={() => void handleSelect(person.id)}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
-                          "data-[selected=true]:bg-accent/60",
-                        )}
-                        disabled={saving}
-                      >
-                        <div
+                      return (
+                        <CommandItem
+                          key={person.id}
+                          value={`${displayName} ${meta}`}
+                          onSelect={() => void handleSelect(person.id)}
                           className={cn(
-                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
-                            isSelected
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-muted-foreground/25 bg-transparent",
+                            "flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
+                            "data-[selected=true]:bg-accent/60",
                           )}
+                          disabled={saving}
                         >
-                          {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
-                        </div>
-                        <div className="min-w-0 flex-1 flex items-baseline gap-2">
-                          <span className="truncate text-sm text-foreground">
-                            {displayName}
-                          </span>
-                          {meta && (
-                            <span className="truncate text-xs text-muted-foreground">
-                              {meta}
+                          <div
+                            className={cn(
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                              isSelected
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-muted-foreground/25 bg-transparent",
+                            )}
+                          >
+                            {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                          </div>
+                          <div className="min-w-0 flex-1 flex items-baseline gap-2">
+                            <span className="truncate text-sm text-foreground">
+                              {displayName}
                             </span>
-                          )}
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
+                            {meta && (
+                              <span className="truncate text-xs text-muted-foreground">
+                                {meta}
+                              </span>
+                            )}
+                          </div>
+                        </CommandItem>
+                      );
+                    },
+                  )}
                 </CommandGroup>
               </CommandList>
             </Command>
@@ -512,7 +642,7 @@ export function AssignMemberDialog({
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedIds.map((id) => {
-                    const p = people.find((x) => x.id === id);
+                    const p = findPerson(id);
                     if (!p) return null;
                     return (
                       <span
@@ -541,16 +671,33 @@ export function AssignMemberDialog({
             )}
 
             <div className="mt-4 flex justify-end">
-              <Button
-                type="button"
-                variant="link"
-                size="xs"
-                onClick={() => setMode("create")}
-                className="text-xs font-medium"
-              >
-                <UserPlus className="h-3 w-3" />
-                Add external contact
-              </Button>
+              {mode === "search" ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="xs"
+                  onClick={() => {
+                    setMode("external");
+                    setSearch("");
+                    void loadExternalPeople();
+                  }}
+                  className="text-xs font-medium"
+                >
+                  <UserPlus className="h-3 w-3" />
+                  Add external contact
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="xs"
+                  onClick={() => setMode("create")}
+                  className="text-xs font-medium"
+                >
+                  <UserPlus className="h-3 w-3" />
+                  Create new contact
+                </Button>
+              )}
             </div>
           </div>
         )}
