@@ -9,6 +9,7 @@ import {
 import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -31,6 +32,7 @@ type MicrosoftProjectImportTask = {
 
 type ImportResult = {
   imported: number;
+  deletedExisting?: number;
   failed: number;
   errors?: Array<{ index: number; name: string; error: string }>;
 };
@@ -140,8 +142,23 @@ export default function MicrosoftProjectScheduleImportPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [isConverting, setIsConverting] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
+  const [existingTaskCount, setExistingTaskCount] = React.useState(0);
+  const [replaceExisting, setReplaceExisting] = React.useState(true);
   const [result, setResult] = React.useState<ImportResult | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const refreshExistingTaskCount = React.useCallback(async () => {
+    const payload = await apiFetch<{ pagination?: { total_records?: number } }>(
+      `/api/projects/${projectId}/scheduling/tasks?limit=1`,
+    );
+    setExistingTaskCount(payload.pagination?.total_records ?? 0);
+  }, [projectId]);
+
+  React.useEffect(() => {
+    refreshExistingTaskCount().catch((err) => {
+      setError(err instanceof Error ? err.message : "Unable to check the current schedule.");
+    });
+  }, [refreshExistingTaskCount]);
 
   const convertMicrosoftProjectFile = React.useCallback(
     async (file: File) => {
@@ -215,6 +232,11 @@ export default function MicrosoftProjectScheduleImportPage() {
       return;
     }
 
+    if (existingTaskCount > 0 && !replaceExisting) {
+      setError("This project already has schedule tasks. Choose replace before importing this Microsoft Project file.");
+      return;
+    }
+
     setIsImporting(true);
     setError(null);
     setResult(null);
@@ -222,13 +244,14 @@ export default function MicrosoftProjectScheduleImportPage() {
     try {
       const payload = await apiFetch<{ imported: number; failed: number }>(
         `/api/projects/${projectId}/scheduling/tasks/import`,
-        { method: "POST", body: JSON.stringify({ tasks }) },
+        { method: "POST", body: JSON.stringify({ tasks, replaceExisting }) },
       );
 
       setResult(payload);
       toast.success(`Imported ${payload?.imported ?? 0} Microsoft Project tasks`);
       setTasks([]);
       setFileName(null);
+      await refreshExistingTaskCount();
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -237,7 +260,7 @@ export default function MicrosoftProjectScheduleImportPage() {
     } finally {
       setIsImporting(false);
     }
-  }, [projectId, tasks]);
+  }, [existingTaskCount, projectId, refreshExistingTaskCount, replaceExisting, tasks]);
 
   const previewTasks = tasks.slice(0, 8);
 
@@ -275,6 +298,28 @@ export default function MicrosoftProjectScheduleImportPage() {
             {isConverting ? "Converting..." : "Import Tasks"}
           </Button>
         </div>
+        {existingTaskCount > 0 && (
+          <InfoAlert
+            variant="warning"
+            icon={
+              <Checkbox
+                id="replace-existing-schedule"
+                checked={replaceExisting}
+                onCheckedChange={(checked) => setReplaceExisting(checked === true)}
+                className="mt-0.5"
+              />
+            }
+          >
+            <div className="space-y-1">
+              <Label htmlFor="replace-existing-schedule" className="font-medium">
+                Replace current schedule
+              </Label>
+              <p>
+                This project already has {existingTaskCount} schedule tasks. Importing a Microsoft Project file will replace them instead of appending duplicates.
+              </p>
+            </div>
+          </InfoAlert>
+        )}
       </section>
 
       {error && (
@@ -283,7 +328,7 @@ export default function MicrosoftProjectScheduleImportPage() {
 
       {result && (
         <InfoAlert variant="success">
-          Imported {result.imported} tasks
+          {result.deletedExisting ? `Replaced ${result.deletedExisting} existing tasks and imported ${result.imported} tasks` : `Imported ${result.imported} tasks`}
           {result.failed > 0 ? `; ${result.failed} failed.` : "."}
         </InfoAlert>
       )}

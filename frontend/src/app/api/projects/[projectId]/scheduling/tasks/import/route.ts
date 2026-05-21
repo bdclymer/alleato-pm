@@ -35,6 +35,7 @@ interface ImportTaskData {
 
 interface ImportRequest {
   tasks: ImportTaskData[];
+  replaceExisting?: boolean;
 }
 
 export const POST = withApiGuardrails<{ projectId: string }>(
@@ -81,15 +82,59 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const service = new SchedulingService(supabase);
     const results = {
       imported: 0,
+      deletedExisting: 0,
       failed: 0,
       errors: [] as Array<{ index: number; name: string; error: string }>,
     };
 
     // Get current max sort order
-    const existingTasksResult = await service.listTasks(projectId, { limit: 1000 });
+    const existingTasksResult = await service.listTasks(projectId, { limit: 10000 });
     let maxSortOrder = 0;
     if (existingTasksResult.data && existingTasksResult.data.length > 0) {
       maxSortOrder = Math.max(...existingTasksResult.data.map((t: { sort_order?: number }) => t.sort_order || 0));
+    }
+
+    if (body.replaceExisting && existingTasksResult.data.length > 0) {
+      if (existingTasksResult.pagination.total_records > existingTasksResult.data.length) {
+        throw new Error("Schedule replacement is blocked because not all existing tasks could be loaded.");
+      }
+
+      const existingTaskIds = existingTasksResult.data.map((task) => task.id);
+
+      const { error: dependencyTaskError } = await supabase
+        .from("schedule_dependencies")
+        .delete()
+        .in("task_id", existingTaskIds);
+      if (dependencyTaskError) {
+        throw new Error(`Failed to clear existing schedule dependencies: ${dependencyTaskError.message}`);
+      }
+
+      const { error: dependencyPredecessorError } = await supabase
+        .from("schedule_dependencies")
+        .delete()
+        .in("predecessor_task_id", existingTaskIds);
+      if (dependencyPredecessorError) {
+        throw new Error(`Failed to clear existing schedule dependencies: ${dependencyPredecessorError.message}`);
+      }
+
+      const { error: deadlineError } = await supabase
+        .from("schedule_deadlines")
+        .delete()
+        .in("task_id", existingTaskIds);
+      if (deadlineError) {
+        throw new Error(`Failed to clear existing schedule deadlines: ${deadlineError.message}`);
+      }
+
+      const { error: deleteTasksError } = await supabase
+        .from("schedule_tasks")
+        .delete()
+        .eq("project_id", Number(projectId));
+      if (deleteTasksError) {
+        throw new Error(`Failed to replace existing schedule tasks: ${deleteTasksError.message}`);
+      }
+
+      results.deletedExisting = existingTaskIds.length;
+      maxSortOrder = 0;
     }
 
     const importedTaskIdsByExternalId = new Map<string, string>();
