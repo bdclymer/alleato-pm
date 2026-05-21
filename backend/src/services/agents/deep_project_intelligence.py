@@ -57,6 +57,7 @@ REQUIRED_SOURCE_TYPES = (
 REQUIRED_EXECUTIVE_SOURCE_TYPES = (
     "executive_briefing",
     "tasks",
+    "executive_follow_ups",
     "emails",
     "teams",
     "meetings",
@@ -492,6 +493,20 @@ EXECUTIVE_SOURCE_PROBES = (
     ),
     _SourceProbe(
         "tasks",
+        "tasks",
+        timestamp_fields=("updated_at", "created_at", "due_date"),
+        title_fields=(
+            "title",
+            "description",
+            "assignee_name",
+            "assignee_email",
+            "status",
+            "priority",
+        ),
+        source_id_fields=("id", "metadata_id"),
+    ),
+    _SourceProbe(
+        "executive_follow_ups",
         "executive_briefing_follow_ups",
         timestamp_fields=("updated_at", "source_date", "created_at"),
         title_fields=("title", "summary", "section"),
@@ -1068,6 +1083,15 @@ def _deep_agent_executive_prompt(
             *(evidence_lines or ["- No source evidence rows were available."]),
             "",
             "Write a concise business-wide executive synthesis for a construction operator.",
+            (
+                "When the user asks for tasks, action items, to-dos, or what someone needs to do, "
+                "treat the `tasks` source as the canonical PM task register from public.tasks."
+            ),
+            (
+                "Do not treat `executive_follow_ups`, schedule milestones, meetings, emails, or document "
+                "snippets as task-register rows unless the task register is missing or you explicitly label "
+                "them as non-canonical follow-ups."
+            ),
             "Prioritize today's meetings, urgent inbox/team follow-ups, important tasks, operational risks, and process recommendations when the evidence supports them.",
             "A source is only stale if its latest timestamp is more than 7 days behind today's date. Do not add staleness warnings for sources with recent data.",
             "Do not claim checked sources are available when source coverage says missing or failed.",

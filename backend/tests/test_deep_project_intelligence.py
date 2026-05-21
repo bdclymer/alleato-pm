@@ -597,6 +597,17 @@ def test_executive_contract_spike_reads_business_wide_source_coverage():
                     "created_at": "2026-05-14T10:00:00Z",
                 }
             ],
+            "tasks": [
+                {
+                    "id": "pm-task-1",
+                    "title": "Send owner decision list",
+                    "description": "Brandon owns the current task-register follow-up.",
+                    "assignee_name": "Brandon Clymer",
+                    "status": "open",
+                    "priority": "high",
+                    "updated_at": "2026-05-14T11:00:00Z",
+                }
+            ],
             "project_emails": [
                 {
                     "id": 1,
@@ -663,8 +674,55 @@ def test_executive_contract_spike_reads_business_wide_source_coverage():
     assert [source.source_type for source in response.sources_checked] == list(REQUIRED_EXECUTIVE_SOURCE_TYPES)
     assert all(source.status == "checked" for source in response.sources_checked)
     assert response.evidence[0].source_type == "executive_briefing"
+    assert response.evidence[1].source_type == "tasks"
+    assert response.evidence[2].source_type == "executive_follow_ups"
     assert response.tool_trace[0].tool == "executive_briefing_reader"
+    assert response.tool_trace[1].tool == "tasks_reader"
+    assert "`tasks`" in response.tool_trace[1].detail
+    assert response.tool_trace[2].tool == "executive_follow_ups_reader"
+    assert "`executive_briefing_follow_ups`" in response.tool_trace[2].detail
     assert response.recommended_actions[0].label == "Use executive Deep Agents packet for business-wide chat answers"
+
+
+def test_executive_task_source_uses_pm_task_register_not_briefing_followups():
+    client = _FakeSupabase(
+        {
+            "daily_recaps": [],
+            "tasks": [
+                {
+                    "id": "pm-task-1",
+                    "title": "Complete Best Buy survey",
+                    "description": "Real PM task row assigned to Brandon.",
+                    "assignee_name": "Brandon Clymer",
+                    "updated_at": "2026-05-21T12:00:00Z",
+                }
+            ],
+            "executive_briefing_follow_ups": [
+                {
+                    "id": "follow-up-1",
+                    "title": "Synthesized briefing follow-up",
+                    "summary": "This is not the PM task register.",
+                    "updated_at": "2026-05-21T11:00:00Z",
+                }
+            ],
+        }
+    )
+
+    response = build_executive_briefing_contract_spike(
+        _executive_request(),
+        _Store(client=client),
+    )
+
+    task_source = next(source for source in response.sources_checked if source.source_type == "tasks")
+    follow_up_source = next(
+        source for source in response.sources_checked if source.source_type == "executive_follow_ups"
+    )
+    assert task_source.record_count == 1
+    assert "`tasks`" in task_source.notes
+    assert follow_up_source.record_count == 1
+    assert "`executive_briefing_follow_ups`" in follow_up_source.notes
+    assert any(item.source_type == "tasks" and item.title == "Complete Best Buy survey" for item in response.evidence)
+    assert any(item.source_type == "executive_follow_ups" for item in response.evidence)
 
 
 def test_executive_deep_agents_runtime_can_synthesize_business_packet():
