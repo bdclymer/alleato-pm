@@ -5,6 +5,38 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const require = createRequire(import.meta.url);
 
+const sentryConfig = {
+  dsn: process.env.SENTRY_DSN ?? process.env.NEXT_PUBLIC_SENTRY_DSN,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+};
+
+const hasSentrySourceMapConfig = Boolean(
+  sentryConfig.org && sentryConfig.project && sentryConfig.authToken,
+);
+
+if (sentryConfig.dsn && process.env.CI && !hasSentrySourceMapConfig) {
+  const missing = [
+    ["SENTRY_ORG", sentryConfig.org],
+    ["SENTRY_PROJECT", sentryConfig.project],
+    ["SENTRY_AUTH_TOKEN", sentryConfig.authToken],
+  ]
+    .filter(([, value]) => !value)
+    .map(([name]) => name)
+    .join(", ");
+
+  throw new Error(
+    `Sentry DSN is configured, but source-map upload is incomplete. Missing: ${missing}.`,
+  );
+}
+
+if (sentryConfig.dsn && !hasSentrySourceMapConfig) {
+  console.warn(
+    "[sentry] DSN is configured, but source-map upload is disabled because SENTRY_ORG, SENTRY_PROJECT, or SENTRY_AUTH_TOKEN is missing.",
+  );
+}
+
 function resolvePdfjsDistPath(filePath: string) {
   const reactPdfPackageDir = path.dirname(require.resolve("react-pdf/package.json"));
   const pdfjsPackagePath = require.resolve("pdfjs-dist/package.json", {
@@ -140,6 +172,12 @@ const nextConfig: NextConfig = {
   },
   // Set the workspace root to silence Next.js warning about multiple lockfiles
   outputFileTracingRoot: path.join(__dirname, "../"),
+  // Explicitly include help articles — the dynamic fs.readdir path can't be
+  // statically traced by Next.js, so without this the docs page sees an empty
+  // directory in the Vercel deployment and returns "No documentation found".
+  outputFileTracingIncludes: {
+    "/**/*": ["../docs/help/**"],
+  },
   outputFileTracingExcludes: {
     // Exclude ALL non-runtime artifact directories from every serverless function.
     // Keys are route globs; use /**/* so nested routes such as
@@ -230,9 +268,9 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  authToken: process.env.SENTRY_AUTH_TOKEN,
+  org: sentryConfig.org,
+  project: sentryConfig.project,
+  authToken: sentryConfig.authToken,
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
   silent: !process.env.CI,
