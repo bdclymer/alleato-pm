@@ -451,6 +451,19 @@ def test_deep_agents_runtime_inventory_reports_effective_surface(monkeypatch):
     assert "query_db" in inventory["tools"]
     assert "draft_rfi" in inventory["tools"]
     assert "financial-analyst" in inventory["subagents"]
+    subagent_details = {
+        subagent["name"]: subagent for subagent in inventory["subagentDetails"]
+    }
+    assert subagent_details["financial-analyst"]["structuredOutput"] is True
+    assert subagent_details["financial-analyst"]["responseFormat"] == "FinancialAnalystPacket"
+    assert subagent_details["risk-analyst"]["structuredOutput"] is True
+    assert subagent_details["risk-analyst"]["responseFormat"] == "RiskAnalystPacket"
+    assert subagent_details["communications-analyst"]["structuredOutput"] is True
+    assert (
+        subagent_details["communications-analyst"]["responseFormat"]
+        == "CommunicationsAnalystPacket"
+    )
+    assert subagent_details["schedule-analyst"]["structuredOutput"] is False
     assert inventory["memory"]["enabled"] is True
     assert inventory["memory"]["middleware"] == "DbMemoryMiddleware"
     assert set(inventory["memory"]["tools"]) == {
@@ -880,6 +893,15 @@ def test_deep_agent_tool_inventory_endpoint_reports_active_tools(client, monkeyp
         "communications-analyst",
         "business-development-analyst",
     ]
+    subagent_details = {
+        subagent["name"]: subagent for subagent in data["subagentDetails"]
+    }
+    assert subagent_details["financial-analyst"]["responseFormat"] == "FinancialAnalystPacket"
+    assert subagent_details["risk-analyst"]["responseFormat"] == "RiskAnalystPacket"
+    assert (
+        subagent_details["communications-analyst"]["responseFormat"]
+        == "CommunicationsAnalystPacket"
+    )
 
 
 def test_deep_agent_endpoint_returns_404_for_missing_project(client, mock_supabase_store, monkeypatch):

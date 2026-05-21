@@ -203,6 +203,9 @@ async function main() {
       subagentCount: inventoryPayload.subagentCount ?? 0,
       tools: Array.isArray(inventoryPayload.tools) ? inventoryPayload.tools : [],
       subagents: Array.isArray(inventoryPayload.subagents) ? inventoryPayload.subagents : [],
+      subagentDetails: Array.isArray(inventoryPayload.subagentDetails)
+        ? inventoryPayload.subagentDetails
+        : [],
       knownMissing: Array.isArray(inventoryPayload.knownMissing) ? inventoryPayload.knownMissing : [],
     };
     const requiredTools = [
@@ -218,6 +221,30 @@ async function main() {
     }
     if (expectEnabled && toolInventory.subagentCount < 5) {
       fail(`Deep Agents enabled check requires 5 subagents; found ${toolInventory.subagentCount}.`);
+    }
+    const requiredStructuredSubagents = new Map([
+      ["financial-analyst", "FinancialAnalystPacket"],
+      ["risk-analyst", "RiskAnalystPacket"],
+      ["communications-analyst", "CommunicationsAnalystPacket"],
+    ]);
+    const subagentDetailsByName = new Map(
+      toolInventory.subagentDetails.map((subagent) => [subagent?.name, subagent]),
+    );
+    if (expectEnabled) {
+      for (const [name, responseFormat] of requiredStructuredSubagents) {
+        const detail = subagentDetailsByName.get(name);
+        if (!detail) {
+          fail(`Deep Agents enabled check is missing subagent inventory detail for ${name}.`);
+          continue;
+        }
+        if (detail.structuredOutput !== true || detail.responseFormat !== responseFormat) {
+          fail(
+            `Deep Agents enabled check requires ${name} structured output ${responseFormat}; found structuredOutput=${String(
+              detail.structuredOutput,
+            )}, responseFormat=${detail.responseFormat ?? "missing"}.`,
+          );
+        }
+      }
     }
 
     const response = await fetchWithTimeout(

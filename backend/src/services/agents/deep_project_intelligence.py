@@ -262,6 +262,21 @@ def deep_agents_runtime_subagent_names() -> tuple[str, ...]:
     return tuple(subagent["name"] for subagent in _runtime_subagents())
 
 
+def _subagent_inventory(subagents: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    details: list[dict[str, Any]] = []
+    for subagent in subagents:
+        response_format = subagent.get("response_format")
+        details.append(
+            {
+                "name": subagent["name"],
+                "toolCount": len(subagent.get("tools") or []),
+                "structuredOutput": response_format is not None,
+                "responseFormat": getattr(response_format, "__name__", None),
+            }
+        )
+    return details
+
+
 def _tool_names(tools: Sequence[Any]) -> list[str]:
     return [getattr(tool, "name", getattr(tool, "__name__", "")) for tool in tools]
 
@@ -312,7 +327,8 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         },
     ]
     active_tools = list(deep_agents_runtime_tool_names())
-    active_subagents = list(deep_agents_runtime_subagent_names())
+    runtime_subagents = _runtime_subagents()
+    active_subagents = [subagent["name"] for subagent in runtime_subagents]
     memory_middleware = _runtime_memory_middleware()
     memory_tool_names: list[str] = []
     if memory_middleware:
@@ -337,6 +353,7 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         "groups": groups,
         "subagentCount": len(active_subagents),
         "subagents": active_subagents,
+        "subagentDetails": _subagent_inventory(runtime_subagents),
         "memory": {
             "enabled": bool(memory_middleware),
             "middleware": "DbMemoryMiddleware" if memory_middleware else None,
