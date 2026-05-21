@@ -67,6 +67,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { InfoAlert } from "@/components/ds/InfoAlert";
+import { ScreenshotAnnotator } from "@/components/admin-feedback/ScreenshotAnnotator";
 
 type FeedbackType = "Issue" | "Wishlist" | "General thought";
 type PriorityLevel = "high" | "medium" | "low";
@@ -750,16 +751,20 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
           <Button
             variant="outline"
             size="icon"
-            onClick={toggleSelectMode}
+            onClick={isRecording ? () => setDialogOpen(true) : toggleSelectMode}
             className={cn(
               "h-12 w-12 rounded-full shadow-sm",
-              isSelecting
-                ? "bg-foreground text-background hover:bg-foreground/90 border-foreground"
-                : "bg-background text-foreground",
+              isRecording
+                ? "bg-destructive text-destructive-foreground border-destructive animate-pulse hover:bg-destructive/90"
+                : isSelecting
+                  ? "bg-foreground text-background hover:bg-foreground/90 border-foreground"
+                  : "bg-background text-foreground",
             )}
-            aria-label={isSelecting ? "Cancel feedback" : "Feedback mode"}
+            aria-label={isRecording ? "Stop recording" : isSelecting ? "Cancel feedback" : "Feedback mode"}
           >
-            {isSelecting ? (
+            {isRecording ? (
+              <CircleStop className="h-5 w-5" />
+            ) : isSelecting ? (
               <Sparkles className="h-5 w-5" />
             ) : (
               <ListFilter className="h-5 w-5" />
@@ -772,6 +777,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         open={dialogOpen}
         onOpenChange={(open) => {
           if (!open) {
+            // Keep modal open while recording so user can navigate the app
+            // to demonstrate the issue without killing the recording.
+            if (isRecording) return;
             resetComposer();
           }
           setDialogOpen(open);
@@ -964,16 +972,10 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                 </div>
 
                 {screenshotDataUrl && (
-                  <div className="w-full max-w-sm overflow-hidden rounded shadow-sm">
-                    <div className="aspect-video">
-                      { }
-                      <img
-                        src={screenshotDataUrl}
-                        alt="Selected area screenshot"
-                        className="h-full w-full object-contain object-top"
-                      />
-                    </div>
-                  </div>
+                  <ScreenshotAnnotator
+                    dataUrl={screenshotDataUrl}
+                    onChange={setScreenshotDataUrl}
+                  />
                 )}
               </div>
 
@@ -1049,7 +1051,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                         <span className="mt-1 inline-flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-destructive" />
                       }
                     >
-                      Recording — {Math.floor(recordingElapsedMs / 1000)}s / {Math.floor(MAX_RECORDING_DURATION_MS / 1000)}s
+                      Recording — {Math.floor(recordingElapsedMs / 1000)}s / {Math.floor(MAX_RECORDING_DURATION_MS / 1000)}s · Close this dialog to navigate the app, then reopen to stop.
                     </InfoAlert>
                   )}
 
