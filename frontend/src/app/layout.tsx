@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { HeaderProvider } from "@/components/layout/header-context";
 import { ProjectProvider } from "@/contexts/project-context";
 import { FavoritesProvider } from "@/contexts/favorites-context";
@@ -67,13 +68,15 @@ export default function RootLayout({
           >
             <Suspense fallback={null}>
               <Providers>
-                <ProjectProvider>
-                  <FavoritesProvider>
-                    <HeaderProvider>
-                      {children}
-                    </HeaderProvider>
-                  </FavoritesProvider>
-                </ProjectProvider>
+                <PostHogProvider>
+                  <ProjectProvider>
+                    <FavoritesProvider>
+                      <HeaderProvider>
+                        {children}
+                      </HeaderProvider>
+                    </FavoritesProvider>
+                  </ProjectProvider>
+                </PostHogProvider>
               </Providers>
             </Suspense>
             <Toaster />

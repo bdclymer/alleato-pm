@@ -710,7 +710,7 @@ function CommentInput({
     <div className="relative">
       {/* Mention dropdown */}
       {showMentions && filteredUsers.length > 0 && (
-        <div className="absolute bottom-full left-0 right-0 mb-1 max-h-40 overflow-y-auto rounded-lg border border-border bg-popover shadow-sm z-10">
+        <div className="absolute bottom-full left-0 right-0 mb-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-sm z-10">
           {filteredUsers.map((user, i) => (
             <Button
               key={user.id}
@@ -718,7 +718,7 @@ function CommentInput({
               variant="ghost"
               size="default"
               className={cn(
-                "h-auto w-full justify-start gap-2 rounded-none px-3 py-2 text-left text-sm font-normal",
+                "h-auto w-full justify-start gap-1.5 rounded-none px-2 py-1 text-left text-xs font-normal",
                 i === mentionIndex ? "bg-muted" : "hover:bg-muted/50",
               )}
               onMouseDown={(e) => {
@@ -727,13 +727,13 @@ function CommentInput({
               }}
               onMouseEnter={() => setMentionIndex(i)}
             >
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-medium text-primary">
                 {getInitials(user)}
               </span>
-              <span className="truncate font-medium text-foreground">
+              <span className="truncate text-xs font-medium text-foreground">
                 {displayName(user)}
               </span>
-              <span className="truncate text-xs text-muted-foreground">
+              <span className="truncate text-[11px] text-muted-foreground">
                 {user.email}
               </span>
             </Button>

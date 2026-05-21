@@ -13,6 +13,8 @@ import {
   ADMIN_FEEDBACK_SEVERITIES,
 } from "@/lib/admin-feedback/constants";
 import { createGitHubIssue } from "@/lib/admin-feedback/github";
+import { ensureAdminFeedbackBucket } from "@/lib/admin-feedback/storage";
+import { notifyTeamsWebhook } from "@/lib/admin-feedback/teams-webhook";
 import { buildAdminFeedbackTitle } from "@/lib/admin-feedback/title";
 import { matchFeedbackToTool, getToolById } from "@/lib/admin-feedback/tool-matcher";
 import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
@@ -111,73 +113,6 @@ function jsonError(status: number, payload: ApiErrorPayload): NextResponse<ApiEr
   return NextResponse.json(payload, { status });
 }
 
-async function ensureFeedbackBucket() {
-  const serviceSupabase = createServiceClient();
-  const { data: bucket, error: getBucketError } =
-    await serviceSupabase.storage.getBucket(ADMIN_FEEDBACK_BUCKET);
-
-  if (getBucketError) {
-    const details = toErrorDetails(getBucketError);
-    const message = details.message.toLowerCase();
-    const isNotFound =
-      message.includes("not found") || message.includes("does not exist");
-
-    if (!isNotFound) {
-      return {
-        ok: false as const,
-        response: jsonError(500, {
-          error: "Unable to verify feedback screenshot bucket",
-          code: details.code,
-          hint: "Check Supabase Storage permissions for the service role.",
-          details: details.message,
-        }),
-      };
-    }
-
-    const { error: createBucketError } =
-      await serviceSupabase.storage.createBucket(ADMIN_FEEDBACK_BUCKET, {
-        public: true,
-      });
-
-    if (createBucketError) {
-      const createDetails = toErrorDetails(createBucketError);
-      return {
-        ok: false as const,
-        response: jsonError(500, {
-          error: "Unable to create feedback screenshot bucket",
-          code: createDetails.code,
-          hint: `Create a public Storage bucket named '${ADMIN_FEEDBACK_BUCKET}'.`,
-          details: createDetails.message,
-        }),
-      };
-    }
-
-    return { ok: true as const };
-  }
-
-  if (!bucket.public) {
-    const { error: updateBucketError } =
-      await serviceSupabase.storage.updateBucket(ADMIN_FEEDBACK_BUCKET, {
-        public: true,
-      });
-
-    if (updateBucketError) {
-      const updateDetails = toErrorDetails(updateBucketError);
-      return {
-        ok: false as const,
-        response: jsonError(500, {
-          error: "Unable to configure feedback screenshot bucket visibility",
-          code: updateDetails.code,
-          hint: "Make sure the feedback screenshot bucket is public.",
-          details: updateDetails.message,
-        }),
-      };
-    }
-  }
-
-  return { ok: true as const };
-}
-
 function decodeScreenshot(dataUrl: string) {
   const matches = dataUrl.match(/^data:(image\/(?:png|jpeg|webp|gif|heic|heif|avif));base64,(.+)$/);
   if (!matches) {
@@ -191,10 +126,7 @@ function decodeScreenshot(dataUrl: string) {
 }
 
 async function uploadScreenshot(userId: string, screenshotDataUrl: string) {
-  const bucketReady = await ensureFeedbackBucket();
-  if (!bucketReady.ok) {
-    throw new Error("Feedback screenshot bucket is not available");
-  }
+  await ensureAdminFeedbackBucket("/api/admin/feedback#POST/uploadScreenshot");
 
   const serviceSupabase = createServiceClient();
   const screenshot = decodeScreenshot(screenshotDataUrl);
@@ -264,7 +196,7 @@ async function requireAdminUser(where: string) {
   return requestUser;
 }
 
-export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ request }) => {
+export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ request, requestId }) => {
   const requestUser = await getApiRouteUser();
   if (!requestUser) {
     throw new GuardrailError({ code: "UNAUTHORIZED", where: "/api/admin/feedback#POST", message: "Authentication required.", status: 401 });
@@ -405,6 +337,44 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
       .eq("id", inserted.id);
   }
 
+  const metadataRecord =
+    metadata && typeof metadata === "object" && !Array.isArray(metadata)
+      ? (metadata as Record<string, unknown>)
+      : {};
+  const submitterEmail =
+    typeof metadataRecord.submitterEmail === "string"
+      ? metadataRecord.submitterEmail
+      : null;
+  const submitterName =
+    typeof metadataRecord.submitterName === "string"
+      ? metadataRecord.submitterName
+      : null;
+  const videoRecordingUrl =
+    typeof metadataRecord.videoRecordingUrl === "string"
+      ? metadataRecord.videoRecordingUrl
+      : null;
+  const requestOrigin = new URL(request.url).origin;
+  const inboxBase =
+    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") || requestOrigin;
+
+  const teamsResult = await notifyTeamsWebhook({
+    requestId,
+    feedbackId: inserted.id,
+    title,
+    comment: payload.comment,
+    requestType: payload.requestType,
+    severity: payload.severity,
+    pageUrl: payload.pageUrl,
+    pagePath: payload.pagePath,
+    pageTitle: payload.pageTitle ?? null,
+    screenshotUrl,
+    videoRecordingUrl,
+    submitterEmail,
+    submitterName,
+    githubIssueUrl: githubIssue?.url ?? null,
+    inboxUrl: `${inboxBase}/feedback-inbox#item-${inserted.id}`,
+  });
+
   return NextResponse.json({
     feedbackId: inserted.id,
     title,
@@ -413,6 +383,10 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
     githubWarning:
       githubWarning ??
       (githubIssue ? null : "GitHub feedback integration is not configured in this environment."),
+    teamsWarning:
+      teamsResult.ok || teamsResult.reason === "not_configured"
+        ? null
+        : (teamsResult.details ?? "Teams webhook delivery failed."),
   });
 });
 
