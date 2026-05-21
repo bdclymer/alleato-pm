@@ -22,7 +22,7 @@ export const GET = withApiGuardrails(
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') || undefined;
-    const type = searchParams.get('type') as 'user' | 'contact' | 'all' | undefined;
+    const type = searchParams.get('type') as 'user' | 'contact' | 'employee' | 'all' | undefined;
     const status = searchParams.get('status') as 'active' | 'inactive' | 'all' | undefined;
     const perPage = parseInt(searchParams.get('per_page') || '200', 10);
     const page = parseInt(searchParams.get('page') || '1', 10);

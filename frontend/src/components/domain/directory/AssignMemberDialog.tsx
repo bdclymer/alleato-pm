@@ -1,13 +1,12 @@
 "use client";
 
 import React from "react";
-import { Check, UserPlus, ArrowLeft, X, Search } from "lucide-react";
+import { Check, UserPlus, ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Modal,
   ModalContent,
@@ -54,6 +53,12 @@ interface DirectoryPeopleResponse {
     job_title?: string | null;
     company?: { name?: string | null } | null;
   }>;
+  meta?: {
+    total?: number;
+    page?: number;
+    perPage?: number;
+    totalPages?: number;
+  };
 }
 
 interface CompanyOption {
@@ -104,16 +109,6 @@ function getPersonDisplayName(person: PersonOption): string {
   return name;
 }
 
-function getPersonInitials(person: PersonOption): string {
-  const f = cleanPersonText(person.first_name)?.[0] ?? "";
-  const l = cleanPersonText(person.last_name)?.[0] ?? "";
-  const initials = `${f}${l}`.toUpperCase();
-  if (initials) return initials;
-  const email = cleanPersonText(person.email);
-  return email ? email[0].toUpperCase() : "?";
-}
-
-// Split a typed search like "Andrew Cannon" into a sensible first/last guess
 function splitSearchName(search: string): { first: string; last: string } {
   const tokens = search.trim().split(/\s+/);
   if (tokens.length === 0) return { first: "", last: "" };
@@ -180,26 +175,20 @@ function CreateContactForm({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 px-6 pt-2 pb-4">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 -ml-2"
-          onClick={onCancel}
-          aria-label="Back to people search"
-          disabled={saving}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-foreground">New contact</span>
-          <span className="text-xs text-muted-foreground">Create and assign in one step</span>
-        </div>
-      </div>
+    <div className="px-6 pb-6">
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        onClick={onCancel}
+        disabled={saving}
+        className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-3 w-3" />
+        Back to search
+      </Button>
 
-      <div className="flex-1 space-y-4 px-6 pb-4">
+      <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="assign-create-first" className="text-xs font-medium text-muted-foreground">
@@ -278,15 +267,15 @@ function CreateContactForm({
             </Select>
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center justify-end gap-2 border-t border-border/50 px-6 py-3">
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>
-          Cancel
-        </Button>
-        <Button type="button" onClick={handleCreate} disabled={saving}>
-          {saving ? "Creating..." : "Create & assign"}
-        </Button>
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={saving}>
+            Cancel
+          </Button>
+          <Button type="button" size="sm" onClick={handleCreate} disabled={saving}>
+            {saving ? "Creating..." : "Create & assign"}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -322,8 +311,12 @@ export function AssignMemberDialog({
 
     const loadAllPeople = async () => {
       try {
+        // Project Team roles are Alleato-internal positions (Superintendent, PM, etc.),
+        // so the role-assignment dropdown only lists employees. External contributors
+        // (architects, engineers, subs) are added via the "Add external contact" flow
+        // below and live in the directory without polluting role dropdowns.
         const params = new URLSearchParams({
-          type: "all",
+          type: "employee",
           status: "active",
           page: "1",
           per_page: "1000",
@@ -331,6 +324,16 @@ export function AssignMemberDialog({
         const result = await apiFetch<DirectoryPeopleResponse>(
           `/api/people?${params}`,
         );
+
+        // Guardrail: surface silent truncation if the employee roster ever exceeds per_page.
+        const total = result.meta?.total;
+        const returned = result.data?.length ?? 0;
+        if (typeof total === "number" && total > returned) {
+           
+          console.warn(
+            `[AssignMemberDialog] /api/people returned ${returned}/${total} employees — increase per_page or paginate.`,
+          );
+        }
 
         setPeople(
           (result.data || []).map((p) => ({
@@ -421,11 +424,11 @@ export function AssignMemberDialog({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent
         size="lg"
-        className="flex flex-col overflow-hidden gap-0 p-0 border-border/60 shadow-sm"
+        className="flex flex-col overflow-hidden gap-0 p-0 border-border/60"
         style={{ maxHeight: "85vh" }}
       >
         <ModalHeader className="px-6 pt-6 pb-4 space-y-1">
-          <ModalTitle className="text-xl tracking-tight">
+          <ModalTitle className="text-lg tracking-tight">
             Assign members
           </ModalTitle>
           <ModalDescription>
@@ -443,149 +446,113 @@ export function AssignMemberDialog({
             onCreated={handleCreated}
           />
         ) : (
-          <>
-            <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pb-4">
-              <Command className="overflow-visible rounded-lg border border-border/60 focus-within:ring-2 focus-within:ring-ring/40" shouldFilter={true}>
-                <CommandInput
-                  placeholder="Search people by name, role, or company…"
-                  value={search}
-                  onValueChange={setSearch}
-                />
-                <CommandList className="mt-3 max-h-80 overflow-y-auto overscroll-contain -mx-1">
-                  <CommandEmpty>
-                    <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium text-foreground">
-                          {search ? `No matches for "${search}"` : "No people yet"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {search
-                            ? "Try a different name or create a new contact."
-                            : "Add a new contact to assign them to this role."}
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setMode("create")}
-                      >
-                        <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                        Create new contact
-                      </Button>
-                    </div>
-                  </CommandEmpty>
-                  <CommandGroup className="p-0">
-                    {people.map((person) => {
-                      const displayName = getPersonDisplayName(person);
-                      const companyName = cleanPersonText(person.company_name);
-                      const jobTitle = cleanPersonText(person.job_title);
-                      const meta = [jobTitle, companyName].filter(Boolean).join(" · ");
-                      const isSelected = selectedIds.includes(person.id);
-
-                      return (
-                        <CommandItem
-                          key={person.id}
-                          value={`${displayName} ${meta}`}
-                          onSelect={() => void handleSelect(person.id)}
-                          className={cn(
-                            "group flex min-h-12 cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors",
-                            "data-[selected=true]:bg-accent/60",
-                            isSelected && "bg-primary/[0.04]",
-                          )}
-                          disabled={saving}
-                        >
-                          <Avatar className="h-8 w-8 shrink-0">
-                            <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-medium">
-                              {getPersonInitials(person)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1 flex flex-col">
-                            <span className="truncate text-sm font-medium text-foreground">
-                              {displayName}
-                            </span>
-                            {meta && (
-                              <span className="truncate text-xs text-muted-foreground">
-                                {meta}
-                              </span>
-                            )}
-                          </div>
-                          <div
-                            className={cn(
-                              "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
-                              isSelected
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border/70 bg-background text-transparent group-hover:border-border",
-                            )}
-                          >
-                            <Check className="h-3 w-3" strokeWidth={3} />
-                          </div>
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-
-              {selectedIds.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-border/50">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2.5">
-                    Assigned · {selectedIds.length}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedIds.map((id) => {
-                      const p = people.find((x) => x.id === id);
-                      if (!p) return null;
-                      return (
-                        <span
-                          key={id}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-secondary py-1 pl-1 pr-2 text-xs"
-                        >
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback className="bg-primary/10 text-primary text-[9px] font-medium">
-                              {getPersonInitials(p)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium text-foreground">
-                            {getPersonDisplayName(p)}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => void handleRemoveSelected(id)}
-                            disabled={saving}
-                            aria-label={`Remove ${getPersonDisplayName(p)}`}
-                            className="ml-0.5 h-4 w-4 rounded-full text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-40"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </span>
-                      );
-                    })}
+          <div className="flex-1 min-h-0 flex flex-col px-6 pb-6">
+            <Command className="overflow-visible" shouldFilter={true}>
+              <CommandInput
+                placeholder="Search people…"
+                value={search}
+                onValueChange={setSearch}
+              />
+              <CommandList className="mt-2 max-h-80 overflow-y-auto overscroll-contain -mx-1">
+                <CommandEmpty>
+                  <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    {search ? `No matches for "${search}".` : "No people yet."}
                   </div>
-                </div>
-              )}
-            </div>
+                </CommandEmpty>
+                <CommandGroup className="p-0">
+                  {people.map((person) => {
+                    const displayName = getPersonDisplayName(person);
+                    const companyName = cleanPersonText(person.company_name);
+                    const jobTitle = cleanPersonText(person.job_title);
+                    const meta = [jobTitle, companyName].filter(Boolean).join(" · ");
+                    const isSelected = selectedIds.includes(person.id);
 
-            <div className="flex items-center justify-between border-t border-border/50 px-6 py-3">
-              <p className="text-xs text-muted-foreground">
-                Can&apos;t find them in the list?
-              </p>
+                    return (
+                      <CommandItem
+                        key={person.id}
+                        value={`${displayName} ${meta}`}
+                        onSelect={() => void handleSelect(person.id)}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
+                          "data-[selected=true]:bg-accent/60",
+                        )}
+                        disabled={saving}
+                      >
+                        <div
+                          className={cn(
+                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-muted-foreground/25 bg-transparent",
+                          )}
+                        >
+                          {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                        </div>
+                        <div className="min-w-0 flex-1 flex items-baseline gap-2">
+                          <span className="truncate text-sm text-foreground">
+                            {displayName}
+                          </span>
+                          {meta && (
+                            <span className="truncate text-xs text-muted-foreground">
+                              {meta}
+                            </span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+
+            {selectedIds.length > 0 && (
+              <div className="mt-4">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                  Assigned · {selectedIds.length}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedIds.map((id) => {
+                    const p = people.find((x) => x.id === id);
+                    if (!p) return null;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 rounded-full bg-secondary py-0.5 pl-2.5 pr-1 text-xs"
+                      >
+                        <span className="text-foreground">
+                          {getPersonDisplayName(p)}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => void handleRemoveSelected(id)}
+                          disabled={saving}
+                          aria-label={`Remove ${getPersonDisplayName(p)}`}
+                          className="ml-0.5 h-4 w-4 rounded-full text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-40"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex justify-end">
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
+                variant="link"
+                size="xs"
                 onClick={() => setMode("create")}
+                className="text-xs font-medium"
               >
-                <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                New contact
+                <UserPlus className="h-3 w-3" />
+                Add external contact
               </Button>
             </div>
-          </>
+          </div>
         )}
       </ModalContent>
     </Modal>
