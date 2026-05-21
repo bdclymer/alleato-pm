@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, CircleHelp, Loader2 } from "lucide-react";
 
 import { PageShell, SectionRuleHeading } from "@/components/layout";
 import { FileUploadField } from "@/components/forms/FileUploadField";
@@ -41,6 +42,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Text } from "@/components/ds/text";
@@ -119,6 +126,38 @@ type AttachmentFileInfo = {
   size: number;
   type: string;
 };
+
+function ProjectTeamReviewerTooltip({ projectId }: { projectId: string }) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Reviewer assignment help"
+          >
+            <CircleHelp className="h-3.5 w-3.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="start" className="max-w-xs text-left">
+          <span>
+            Select any user added to the{" "}
+            <Link
+              href={`/${projectId}/directory#project-team`}
+              className="underline underline-offset-2"
+            >
+              Project Team
+            </Link>
+            .
+          </span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -984,7 +1023,10 @@ export default function NewPrimeContractPcoPage() {
                   name="designated_reviewer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Designated Reviewer</FormLabel>
+                      <div className="flex items-center gap-1.5">
+                        <FormLabel>Designated Reviewer</FormLabel>
+                        <ProjectTeamReviewerTooltip projectId={projectId} />
+                      </div>
                       <Popover
                         open={reviewerSelectOpen}
                         onOpenChange={(open) => {
@@ -1088,7 +1130,10 @@ export default function NewPrimeContractPcoPage() {
                   name="reviewed_by"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Reviewed By</FormLabel>
+                      <div className="flex items-center gap-1.5">
+                        <FormLabel>Reviewed By</FormLabel>
+                        <ProjectTeamReviewerTooltip projectId={projectId} />
+                      </div>
                       <Popover
                         open={reviewedBySelectOpen}
                         onOpenChange={(open) => {

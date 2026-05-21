@@ -1,6 +1,5 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -10,12 +9,11 @@ import { logger } from "@/lib/logger";
 
 /**
  * GET /api/projects/[projectId]/employees
- * Returns active employees/users for project form dropdowns.
+ * Returns active employees/users assigned to the project's Project Team.
  */
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/employees#GET",
   async ({ params }) => {
-  
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -44,17 +42,56 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
     const service = createServiceClient();
     const { data, error } = await service
-      .from("people")
-      .select("id, first_name, last_name")
-      .in("person_type", ["employee", "user"])
-      .eq("status", "active")
-      .order("last_name", { ascending: true });
+      .from("project_role_members")
+      .select(
+        `
+        person:people!project_role_members_person_id_fkey!inner(
+          id,
+          first_name,
+          last_name,
+          person_type,
+          status
+        ),
+        project_role:project_roles!inner(project_id)
+      `,
+      )
+      .eq("project_role.project_id", projectIdNum)
+      .in("person.person_type", ["employee", "user"])
+      .eq("person.status", "active");
 
     if (error) {
-      logger.error({ msg: "Error fetching employees:", error: error instanceof Error ? error.message : String(error) });
+      logger.error({
+        msg: "Error fetching project team employees:",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data || []);
-    },
+    const employeeMap = new Map<
+      string,
+      {
+        id: string;
+        first_name: string | null;
+        last_name: string | null;
+      }
+    >();
+
+    for (const row of data ?? []) {
+      const person = row.person;
+      if (!person) continue;
+      employeeMap.set(person.id, {
+        id: person.id,
+        first_name: person.first_name,
+        last_name: person.last_name,
+      });
+    }
+
+    const employees = Array.from(employeeMap.values()).sort((a, b) => {
+      const aName = [a.last_name, a.first_name].filter(Boolean).join(" ");
+      const bName = [b.last_name, b.first_name].filter(Boolean).join(" ");
+      return aName.localeCompare(bName);
+    });
+
+    return NextResponse.json(employees);
+  },
 );

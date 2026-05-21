@@ -2037,7 +2037,7 @@ export default function ProjectDirectoryPage() {
       </section>
 
       {/* Section 2: Project Team */}
-      <section>
+      <section id="project-team" className="scroll-mt-24">
         <ProjectTeamSection
           projectId={projectId}
           manageRolesOpen={manageRolesOpen}
