@@ -137,6 +137,8 @@
     "rag:verify:deep-agents-executive-evals:prod": "AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:deep-agents-executive-evals",
     "rag:verify:app-expert-evals": "node scripts/verify/verify_app_expert_eval_suite.mjs",
     "rag:verify:app-expert-evals:prod": "APP_EXPERT_EVAL_BACKEND_URL=https://alleato-backend-rbnj.onrender.com APP_EXPERT_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:app-expert-evals",
+    "rag:verify:app-expert-smoke": "node scripts/verify/verify_app_expert_prod_smoke.mjs",
+    "rag:verify:app-expert-smoke:prod": "APP_EXPERT_SMOKE_BACKEND_URL=https://alleato-backend-rbnj.onrender.com APP_EXPERT_SMOKE_TIMEOUT_MS=45000 npm run rag:verify:app-expert-smoke",
     "rag:verify:strategic-advisor-evals": "node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle strategic-advisor-quality",
     "rag:verify:strategic-advisor-evals:prod": "AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:strategic-advisor-evals",
     "rag:verify:email-operator-evals": "node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle email-operator-quality",
