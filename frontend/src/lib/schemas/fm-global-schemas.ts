@@ -10,13 +10,8 @@ const asrsTypes = [
 
 const systemTypes = ["wet", "dry", "preaction", "both"] as const;
 
-const containerTypes = [
-  "Closed-Top",
-  "Open-Top",
-  "Noncombustible",
-  "Plastic",
-  "Mixed",
-] as const;
+// container_type accepts any string so the public form can capture
+// free-text values (e.g. "Other → specify"). The DB column is already text.
 
 const numberOrNull = z.preprocess((value) => {
   if (value === "" || value === undefined) return null;
@@ -49,7 +44,7 @@ export const fmGlobalSpecInputSchema = z.object({
   commodity_class: z.string().min(1).optional(),
   k_factor: z.number().min(0).optional(),
   tolerance_ft: z.number().min(0).default(5),
-  container_type: z.enum(containerTypes).optional(),
+  container_type: z.string().min(1).optional(),
   storage_height_ft: z.number().min(0).optional(),
   rack_row_depth_ft: z.number().min(0).optional(),
   building_heated: z.boolean().optional(),

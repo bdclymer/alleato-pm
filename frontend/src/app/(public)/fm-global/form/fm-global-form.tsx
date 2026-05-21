@@ -23,6 +23,7 @@ export interface FormState {
   commodityClass: string;
   kFactor: string;
   containerType: string;
+  containerTypeOther: string;
   storageHeight: string;
   rackRowDepth: string;
 }
@@ -40,6 +41,7 @@ export const defaultFormState: FormState = {
   commodityClass: "",
   kFactor: "",
   containerType: "unspecified",
+  containerTypeOther: "",
   storageHeight: "",
   rackRowDepth: "",
 };
@@ -52,13 +54,17 @@ const asrsOptions = [
   { value: "All", label: "All" },
 ];
 
+export const CONTAINER_TYPE_OTHER = "other";
+
 const containerOptions = [
   { value: "unspecified", label: "Not specified" },
   { value: "Closed-Top", label: "Closed-Top" },
   { value: "Open-Top", label: "Open-Top" },
   { value: "Noncombustible", label: "Noncombustible" },
   { value: "Plastic", label: "Plastic" },
+  { value: "Trays", label: "Trays" },
   { value: "Mixed", label: "Mixed" },
+  { value: CONTAINER_TYPE_OTHER, label: "Other (specify)" },
 ];
 
 /**
@@ -168,6 +174,17 @@ export function FmGlobalForm({
             onValueChange={(value) => update({ containerType: value })}
             placeholder="Select container type"
           />
+          {formState.containerType === CONTAINER_TYPE_OTHER ? (
+            <TextField
+              label="Container Type (specify)"
+              value={formState.containerTypeOther}
+              onChange={(event) =>
+                update({ containerTypeOther: event.target.value })
+              }
+              placeholder="Describe the container"
+              required
+            />
+          ) : null}
         </FormGrid>
       </FormSection>
 

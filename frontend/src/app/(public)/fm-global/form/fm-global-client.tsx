@@ -11,6 +11,7 @@ import type { FmGlobalSpecInput } from "@/types/fm-global";
 import {
   FmGlobalForm,
   defaultFormState,
+  CONTAINER_TYPE_OTHER,
   type FormState,
 } from "./fm-global-form";
 
@@ -48,6 +49,15 @@ function buildPayload(state: FormState): ValidatedPayload | string {
     return "Please select the existing ceiling sprinkler K-factor.";
   }
 
+  let containerType: string | undefined;
+  if (state.containerType === CONTAINER_TYPE_OTHER) {
+    const other = state.containerTypeOther.trim();
+    if (!other) return "Please describe the container type.";
+    containerType = other;
+  } else if (state.containerType && state.containerType !== "unspecified") {
+    containerType = state.containerType;
+  }
+
   const input: FmGlobalSpecInput = {
     asrs_type: state.asrsType as FmGlobalSpecInput["asrs_type"],
     system_type: "wet",
@@ -55,10 +65,7 @@ function buildPayload(state: FormState): ValidatedPayload | string {
     commodity_class: state.commodityClass || undefined,
     k_factor: kFactor,
     tolerance_ft: 5,
-    container_type:
-      state.containerType && state.containerType !== "unspecified"
-        ? (state.containerType as FmGlobalSpecInput["container_type"])
-        : undefined,
+    container_type: containerType,
     storage_height_ft: toNumber(state.storageHeight),
     rack_row_depth_ft: toNumber(state.rackRowDepth),
     building_heated: true,
