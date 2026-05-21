@@ -30,6 +30,8 @@ import type { CommitmentListItem } from "@/lib/validation/commitments";
 export const commitmentColumns: ColumnConfig[] = [
   { id: "number", label: "Number", alwaysVisible: true },
   { id: "contract_company", label: "Contract Company", defaultVisible: true },
+  { id: "trade_names", label: "Trade / Division", defaultVisible: true },
+  { id: "scope_summary", label: "Scope Summary", defaultVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
@@ -198,6 +200,30 @@ export function buildCommitmentTableColumns(
       render: (item) => <span>{item.contract_company?.name ?? "-"}</span>,
       csvValue: (item) => item.contract_company?.name ?? "",
       sortValue: (item) => item.contract_company?.name ?? "",
+    },
+    trade_names: {
+      render: (item) => {
+        const value = item.trade_names.length > 0 ? item.trade_names.join(", ") : "-";
+        return (
+          <span className="block max-w-48 truncate text-sm text-muted-foreground" title={value}>
+            {value}
+          </span>
+        );
+      },
+      csvValue: (item) => item.trade_names.join(", "),
+      sortValue: (item) => item.trade_names.join(", "),
+    },
+    scope_summary: {
+      render: (item) => (
+        <span
+          className="block max-w-72 truncate text-sm text-muted-foreground"
+          title={item.scope_summary ?? ""}
+        >
+          {item.scope_summary ?? "-"}
+        </span>
+      ),
+      csvValue: (item) => item.scope_summary ?? "",
+      sortValue: (item) => item.scope_summary ?? "",
     },
     title: {
       render: (item) => (

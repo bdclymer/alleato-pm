@@ -36,6 +36,8 @@ export const commitmentListItemSchema = z
     payments_issued: z.number(),
     percent_paid: z.number(),
     remaining_balance: z.number(),
+    trade_names: z.array(z.string()),
+    scope_summary: z.string().nullable(),
     is_private: z.boolean(),
   })
   .passthrough();
