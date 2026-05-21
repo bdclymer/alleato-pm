@@ -9,6 +9,8 @@ const CWD = process.cwd();
 const RUNS_ROOT = path.join(CWD, "tests", "agent-browser-runs");
 const DEFAULT_URL = process.env.PLAYWRIGHT_BASE_URL || process.env.BASE_URL || "http://localhost:3000";
 const DEFAULT_RETENTION_HOURS = 48;
+const AUTH_STATE_PATH = path.join(CWD, "frontend", "tests", ".auth", "user.json");
+const AUTH_TOKEN_MIN_TTL_MS = 5 * 60 * 1000;
 
 function loadEnvFile(relativePath) {
   const file = path.resolve(CWD, relativePath);
@@ -91,9 +93,10 @@ function parseArgs(argv) {
   return options;
 }
 
-function execute(cmd, args, { capture = false, allowFailure = false } = {}) {
+function execute(cmd, args, { capture = false, allowFailure = false, cwd = CWD, env = process.env } = {}) {
   const result = spawnSync(cmd, args, {
-    cwd: CWD,
+    cwd,
+    env,
     encoding: "utf8",
     stdio: capture ? "pipe" : "inherit",
   });
@@ -109,7 +112,8 @@ function execute(cmd, args, { capture = false, allowFailure = false } = {}) {
 }
 
 function runAgentBrowser(session, args, opts = {}) {
-  return execute("agent-browser", ["--session", session, ...args], opts);
+  const stateArgs = opts.statePath ? ["--state", opts.statePath] : [];
+  return execute("agent-browser", ["--session", session, ...stateArgs, ...args], opts);
 }
 
 function ensureDir(dir) {
@@ -145,6 +149,122 @@ function runActionLine(session, line) {
 
 function writeFile(filePath, contents) {
   fs.writeFileSync(filePath, contents, "utf8");
+}
+
+function parseAuthStateToken(authStatePath) {
+  if (!fs.existsSync(authStatePath)) return null;
+
+  const state = JSON.parse(fs.readFileSync(authStatePath, "utf8"));
+  const authCookie = (state.cookies ?? []).find((cookie) =>
+    /^sb-.*-auth-token$/.test(cookie.name),
+  );
+
+  if (!authCookie?.value) return null;
+
+  let sessionJson = authCookie.value;
+  if (sessionJson.startsWith("base64-")) {
+    sessionJson = Buffer.from(sessionJson.slice(7), "base64").toString("utf8");
+  }
+
+  const session = JSON.parse(sessionJson);
+  const jwt = session?.access_token;
+  if (typeof jwt !== "string") return null;
+
+  const parts = jwt.split(".");
+  if (parts.length !== 3) return null;
+
+  const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+  return {
+    email: typeof payload.email === "string" ? payload.email : "",
+    expiresAtMs: typeof payload.exp === "number" ? payload.exp * 1000 : 0,
+  };
+}
+
+function hasUsableAuthState(authStatePath) {
+  try {
+    const token = parseAuthStateToken(authStatePath);
+    return Boolean(token?.expiresAtMs && token.expiresAtMs > Date.now() + AUTH_TOKEN_MIN_TTL_MS);
+  } catch {
+    return false;
+  }
+}
+
+function getOrigin(url) {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return DEFAULT_URL;
+  }
+}
+
+function refreshAuthState(baseUrl, reason) {
+  console.log(`[agent-browser-verify] refreshing auth state (${reason})`);
+  execute(
+    "npx",
+    [
+      "playwright",
+      "test",
+      "tests/auth.setup.ts",
+      "--config",
+      "config/playwright/playwright.no-webserver.config.ts",
+      "--project",
+      "setup",
+    ],
+    {
+      cwd: path.join(CWD, "frontend"),
+      env: {
+        ...process.env,
+        PLAYWRIGHT_BASE_URL: baseUrl,
+        BASE_URL: baseUrl,
+      },
+    },
+  );
+}
+
+function ensureAuthState(baseUrl) {
+  if (hasUsableAuthState(AUTH_STATE_PATH)) return;
+  refreshAuthState(baseUrl, "missing or expired frontend/tests/.auth/user.json");
+}
+
+function currentBrowserUrl(session) {
+  const result = runAgentBrowser(session, ["get", "url"], {
+    capture: true,
+    allowFailure: true,
+  });
+  return (result.stdout || "").toString().trim();
+}
+
+function isLoginUrl(url) {
+  try {
+    return new URL(url).pathname.startsWith("/auth/login");
+  } catch {
+    return false;
+  }
+}
+
+function assertAuthenticatedLanding(session, targetUrl, baseUrl, authStatePath) {
+  const openedUrl = currentBrowserUrl(session);
+  if (!isLoginUrl(openedUrl)) return;
+
+  refreshAuthState(baseUrl, `agent-browser landed on login at ${openedUrl}`);
+  runAgentBrowser(session, ["close"], { allowFailure: true });
+  runAgentBrowser(session, ["open", targetUrl], { statePath: authStatePath });
+  runAgentBrowser(session, ["wait", "3000"]);
+
+  const retriedUrl = currentBrowserUrl(session);
+  if (!isLoginUrl(retriedUrl)) return;
+
+  throw new Error(
+    [
+      "Browser verification could not authenticate the protected route.",
+      `Target: ${targetUrl}`,
+      `Final URL: ${retriedUrl}`,
+      "Expected behavior: smoke verification opens protected pages as the test user by loading frontend/tests/.auth/user.json before page checks.",
+      "Cause: the refreshed Playwright auth state was not accepted by the app in agent-browser.",
+      "Detection gap: the verifier previously captured /auth/login as if it were a page-level smoke result.",
+      "Prevention: the verifier now refreshes stale auth, loads the saved state into agent-browser, retries once, and fails loudly if login still appears.",
+    ].join(" "),
+  );
 }
 
 function summarize(actionsOutput, metadata) {
@@ -201,6 +321,8 @@ function main() {
   const options = parseArgs(process.argv.slice(2));
   loadEnvFile(".env");
   loadEnvFile("frontend/.env.local");
+  const baseUrl = getOrigin(options.url);
+  ensureAuthState(baseUrl);
   ensureDir(RUNS_ROOT);
 
   if (!options.skipCleanup) {
@@ -235,10 +357,13 @@ function main() {
   try {
     runAgentBrowser(options.session, ["close"], { allowFailure: true });
 
-    runAgentBrowser(options.session, ["open", options.url]);
+    runAgentBrowser(options.session, ["open", options.url], { statePath: AUTH_STATE_PATH });
     runAgentBrowser(options.session, ["wait", "3000"]);
+    assertAuthenticatedLanding(options.session, options.url, baseUrl, AUTH_STATE_PATH);
 
-    const initialSnapshot = runAgentBrowser(options.session, ["snapshot", "-i"], { capture: true });
+    const initialSnapshot = runAgentBrowser(options.session, ["snapshot", "-i"], {
+      capture: true,
+    });
     writeFile(initialSnapshotPath, (initialSnapshot.stdout || "").toString());
 
     runAgentBrowser(options.session, ["screenshot", "--full", initialShotPath]);
@@ -252,16 +377,27 @@ function main() {
       }
     }
 
-    const consoleOutput = runAgentBrowser(options.session, ["console"], { capture: true, allowFailure: true });
+    const consoleOutput = runAgentBrowser(options.session, ["console"], {
+      capture: true,
+      allowFailure: true,
+    });
     writeFile(consoleLogPath, (consoleOutput.stdout || "").toString());
 
-    const errorsOutput = runAgentBrowser(options.session, ["errors"], { capture: true, allowFailure: true });
+    const errorsOutput = runAgentBrowser(options.session, ["errors"], {
+      capture: true,
+      allowFailure: true,
+    });
     writeFile(errorsLogPath, (errorsOutput.stdout || "").toString());
 
-    const finalSnapshot = runAgentBrowser(options.session, ["snapshot", "-i"], { capture: true, allowFailure: true });
+    const finalSnapshot = runAgentBrowser(options.session, ["snapshot", "-i"], {
+      capture: true,
+      allowFailure: true,
+    });
     writeFile(finalSnapshotPath, (finalSnapshot.stdout || "").toString());
 
-    runAgentBrowser(options.session, ["screenshot", "--full", finalShotPath], { allowFailure: true });
+    runAgentBrowser(options.session, ["screenshot", "--full", finalShotPath], {
+      allowFailure: true,
+    });
   } finally {
     runAgentBrowser(options.session, ["record", "stop"], { allowFailure: true });
     runAgentBrowser(options.session, ["close"], { allowFailure: true });
