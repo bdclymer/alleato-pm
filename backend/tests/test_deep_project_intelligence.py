@@ -725,6 +725,44 @@ def test_executive_task_source_uses_pm_task_register_not_briefing_followups():
     assert any(item.source_type == "executive_follow_ups" for item in response.evidence)
 
 
+def test_executive_task_source_filters_named_brandon_task_requests():
+    client = _FakeSupabase(
+        {
+            "daily_recaps": [],
+            "tasks": [
+                {
+                    "id": "pm-task-brandon",
+                    "title": "Complete Best Buy survey",
+                    "description": "Real PM task row assigned to Brandon.",
+                    "assignee_name": "Brandon Clymer",
+                    "updated_at": "2026-05-21T12:00:00Z",
+                },
+                {
+                    "id": "pm-task-other",
+                    "title": "Audit Casella invoices",
+                    "description": "Another recent PM task row.",
+                    "assignee_name": "Someone Else",
+                    "updated_at": "2026-05-21T13:00:00Z",
+                },
+            ],
+        }
+    )
+
+    response = build_executive_briefing_contract_spike(
+        DeepExecutiveIntelligenceRequest(
+            userId="user-1",
+            sessionId="session-1",
+            question="what are brandons tasks/action items",
+        ),
+        _Store(client=client),
+    )
+
+    task_source = next(source for source in response.sources_checked if source.source_type == "tasks")
+    task_titles = [item.title for item in response.evidence if item.source_type == "tasks"]
+    assert task_source.record_count == 1
+    assert task_titles == ["Complete Best Buy survey"]
+
+
 def test_executive_deep_agents_runtime_can_synthesize_business_packet():
     class _Agent:
         def invoke(self, payload):

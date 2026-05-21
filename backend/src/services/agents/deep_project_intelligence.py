@@ -422,6 +422,30 @@ def _matches_any(row: Dict[str, Any], *terms: str) -> bool:
     return any(term in haystack for term in terms)
 
 
+def _task_register_owner_terms(question: str) -> tuple[str, ...]:
+    normalized = question.lower()
+    if "brandon" in normalized or "clymer" in normalized:
+        return ("brandon", "clymer", "bclymer@alleatogroup.com")
+    return ()
+
+
+def _task_register_owner_filter(row: Dict[str, Any], owner_terms: Sequence[str]) -> bool:
+    if not owner_terms:
+        return True
+    haystack = " ".join(
+        str(row.get(field) or "")
+        for field in (
+            "assignee_name",
+            "assignee_email",
+            "assignee_person_id",
+            "owner",
+            "owner_name",
+            "owner_email",
+        )
+    ).lower()
+    return any(term in haystack for term in owner_terms)
+
+
 SOURCE_PROBES = (
     _SourceProbe(
         "teams",
@@ -830,17 +854,22 @@ def _source_probe_coverage(
 def _executive_source_probe_coverage(
     client: Any,
     probe: _SourceProbe,
+    *,
+    task_owner_terms: Sequence[str] = (),
 ) -> tuple[SourceCoverage, List[EvidenceItem], ToolTraceItem]:
     started = time.perf_counter()
     try:
+        limit = 500 if probe.source_type == "tasks" and task_owner_terms else 100
         rows = _query_recent_rows(
             client,
             probe.table,
-            limit=100,
+            limit=limit,
             order_by=probe.timestamp_fields[0] if probe.timestamp_fields else None,
         )
         if probe.local_filter:
             rows = [row for row in rows if probe.local_filter(row)]
+        if probe.source_type == "tasks" and task_owner_terms:
+            rows = [row for row in rows if _task_register_owner_filter(row, task_owner_terms)]
         coverage = _source_coverage_from_rows(probe, rows)
         coverage.notes = (
             f"Read-only executive probe found {len(rows)} {probe.source_type} row(s) "
@@ -923,6 +952,7 @@ def _missing_executive_sources() -> List[SourceCoverage]:
 
 def _collect_executive_source_coverage(
     store: Any,
+    request: Optional[DeepExecutiveIntelligenceRequest] = None,
 ) -> tuple[List[SourceCoverage], List[EvidenceItem], List[ToolTraceItem]]:
     client = _store_client(store)
     if client is None:
@@ -939,9 +969,14 @@ def _collect_executive_source_coverage(
     sources: List[SourceCoverage] = []
     evidence: List[EvidenceItem] = []
     traces: List[ToolTraceItem] = []
+    task_owner_terms = _task_register_owner_terms(request.question) if request else ()
 
     for probe in EXECUTIVE_SOURCE_PROBES:
-        coverage, probe_evidence, trace = _executive_source_probe_coverage(client, probe)
+        coverage, probe_evidence, trace = _executive_source_probe_coverage(
+            client,
+            probe,
+            task_owner_terms=task_owner_terms,
+        )
         sources.append(coverage)
         evidence.extend(probe_evidence)
         traces.append(trace)
@@ -1499,7 +1534,7 @@ def build_executive_briefing_contract_spike(
     """Return a typed business-wide packet with explicit source coverage."""
 
     organization = DeepOrganization(name=os.getenv("DEEP_AGENTS_ORGANIZATION_NAME", "Alleato"))
-    sources, evidence, source_traces = _collect_executive_source_coverage(store)
+    sources, evidence, source_traces = _collect_executive_source_coverage(store, request)
     checked_count = sum(1 for source in sources if source.status == "checked")
     failed_count = sum(1 for source in sources if source.status == "failed")
     missing_count = sum(1 for source in sources if source.status == "missing")
