@@ -80,6 +80,8 @@ def _parse_mspdi_xml(content: bytes) -> List[ParsedScheduleTask]:
 
         uid = _child_text(node, "UID") or _child_text(node, "ID") or str(index)
         outline = _child_text(node, "OutlineNumber")
+        if outline == "0":
+            continue
         external_id = outline or uid
         if outline:
             outline_to_external_id[outline] = external_id
@@ -146,6 +148,8 @@ def _parse_mpp_with_mpxj(file_name: str, content: bytes) -> List[ParsedScheduleT
 
         uid = _java_string(_call(task, "getUniqueID")) or _java_string(_call(task, "getID")) or str(index)
         outline = _java_string(_call(task, "getOutlineNumber"))
+        if outline == "0":
+            continue
         external_id = outline or uid
         if outline:
             outline_to_external_id[outline] = external_id
@@ -178,9 +182,10 @@ def _attach_parent_external_ids(
     tasks: List[ParsedScheduleTask],
     outline_to_external_id: Dict[str, str],
 ) -> List[ParsedScheduleTask]:
-    for task in tasks:
+    for index, task in enumerate(tasks, start=1):
         parent_outline = _parent_outline(task.wbs_code)
         task.parent_external_id = outline_to_external_id.get(parent_outline or "")
+        task.sort_order = index
     return tasks
 
 
