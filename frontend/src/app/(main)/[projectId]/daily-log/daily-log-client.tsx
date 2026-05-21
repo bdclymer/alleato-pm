@@ -16,6 +16,7 @@ interface DailyLogRow {
   log_date: string | null;
   weather_conditions: unknown;
   created_by: string | null;
+  creator_name: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -59,8 +60,8 @@ const tableColumns = [
     id: "created_by",
     label: "Created By",
     defaultVisible: true,
-    render: (row: DailyLogRow) => row.created_by ?? "—",
-    sortValue: (row: DailyLogRow) => row.created_by ?? "",
+    render: (row: DailyLogRow) => row.creator_name ?? "—",
+    sortValue: (row: DailyLogRow) => row.creator_name ?? "",
   },
   {
     id: "created_at",
@@ -136,7 +137,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
     return logs.filter(
       (log) =>
         (log.log_date ?? "").toLowerCase().includes(search) ||
-        (log.created_by ?? "").toLowerCase().includes(search),
+        (log.creator_name ?? "").toLowerCase().includes(search),
     );
   }, [logs, tableState.debouncedSearch]);
 
@@ -225,7 +226,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
                 : "No weather details"}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Created by {item.created_by ?? "Unknown"}
+              Created by {item.creator_name ?? "Unknown"}
             </p>
           </div>
         ),
@@ -242,7 +243,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
                   : "No date"}
               </p>
               <p className="line-clamp-1 text-xs text-muted-foreground">
-                {item.created_by ? `By ${item.created_by}` : "No author"}
+                {item.creator_name ? `By ${item.creator_name}` : "No author"}
               </p>
             </div>
           </div>
