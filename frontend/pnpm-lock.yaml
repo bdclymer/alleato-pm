@@ -154,6 +154,9 @@ importers:
       '@once-ui-system/core':
         specifier: ^1.6.0
         version: 1.6.0(next@15.5.12(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.97.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.97.3)(sharp@0.34.5)
+      '@opentelemetry/api':
+        specifier: 1.9.0
+        version: 1.9.0
       '@opentelemetry/core':
         specifier: ^2.7.1
         version: 2.7.1(@opentelemetry/api@1.9.0)
@@ -388,6 +391,9 @@ importers:
       immer:
         specifier: ^11.1.3
         version: 11.1.3
+      import-in-the-middle:
+        specifier: ^1.15.0
+        version: 1.15.0
       js-md5:
         specifier: ^0.8.3
         version: 0.8.3
@@ -589,6 +595,9 @@ importers:
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1
+      require-in-the-middle:
+        specifier: ^7.5.2
+        version: 7.5.2
       resend:
         specifier: ^6.9.4
         version: 6.9.4(@react-email/render@2.0.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
@@ -17713,9 +17722,9 @@ snapshots:
       mime-types: 3.0.2
       negotiator: 1.0.0
 
-  acorn-import-assertions@1.9.0(acorn@8.15.0):
+  acorn-import-assertions@1.9.0(acorn@8.16.0):
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.16.0
 
   acorn-import-attributes@1.9.5(acorn@8.16.0):
     dependencies:
@@ -20459,8 +20468,8 @@ snapshots:
 
   import-in-the-middle@1.7.1:
     dependencies:
-      acorn: 8.15.0
-      acorn-import-assertions: 1.9.0(acorn@8.15.0)
+      acorn: 8.16.0
+      acorn-import-assertions: 1.9.0(acorn@8.16.0)
       cjs-module-lexer: 1.4.3
       module-details-from-path: 1.0.4
 
