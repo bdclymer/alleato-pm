@@ -167,7 +167,7 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
   },
 ];
 
-export const meganCompanyAdminTools: HeaderNavigationTool[] = [
+export const developerCompanyAdminTools: HeaderNavigationTool[] = [
   {
     name: "Admin Dashboard",
     path: "admin",
