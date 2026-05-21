@@ -8,7 +8,12 @@ import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/ap
 /**
  * GET /api/users
  *
- * Returns all user profiles. Requires authenticated user.
+ * Returns user profiles for the mention/people picker. Filters out obvious
+ * test/system accounts that pollute the dropdown — without this, real
+ * teammates are buried under dozens of `*@test.com`, `*@alleato.test`,
+ * `final-proof-*`, `rls-test-*` etc. seed users.
+ *
+ * Requires authenticated user.
  */
 const UserSchema = z.object({
   id: z.string(),
@@ -16,6 +21,23 @@ const UserSchema = z.object({
   full_name: z.string().nullable().optional(),
   person_id: z.string().nullable().optional(),
 });
+
+const TEST_EMAIL_PATTERNS: RegExp[] = [
+  /@.*\.test$/i,
+  /@test\.com$/i,
+  /@example\.com$/i,
+  /^rls-test-/i,
+  /^codex[-.](?:directory|subcontractor|ssov)/i,
+  /\+(?:alleato-(?:invite|template)-test|resend-user-invite-test)/i,
+  /^(?:debug|debug-resp|final-proof|working-chat|console-check|response-test|stream-test|verify|quick|demo)[-\d]/i,
+  /^testadmin\d+@/i,
+  /^test\.user@/i,
+];
+
+function isTestAccount(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return TEST_EMAIL_PATTERNS.some((re) => re.test(email));
+}
 
 export const GET = withApiGuardrails("/api/users#GET", async () => {
   const requestUser = await getApiRouteUser();
@@ -33,7 +55,7 @@ export const GET = withApiGuardrails("/api/users#GET", async () => {
   const { data, error } = await supabase
     .from("user_profiles")
     .select("id, email, full_name")
-    .order("full_name", { ascending: true });
+    .order("full_name", { ascending: true, nullsFirst: false });
 
   if (error) {
     throw new GuardrailError({
@@ -45,7 +67,11 @@ export const GET = withApiGuardrails("/api/users#GET", async () => {
     });
   }
 
-  const users = data ?? [];
+  // Filter out test/system accounts but always keep the current user visible
+  // (so people see themselves in directory listings even on a test domain).
+  const users = (data ?? []).filter(
+    (user) => user.id === requestUser.id || !isTestAccount(user.email),
+  );
   const userIds = users.map((user) => user.id);
   const emails = users
     .map((user) => user.email)
