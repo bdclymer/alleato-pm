@@ -10,8 +10,8 @@ export interface PsrProjectInfo {
   projectNumber: string | null;
   startDate: string | null;
   completionDate: string | null; // from prime_contracts.end_date
-  contractBudget: number; // prime_contracts.original_contract_value
-  currentBudget: number; // prime_contracts.revised_contract_value
+  contractBudget: number; // prime_contracts.original_contract_value, or budget grandTotals.originalBudgetAmount if absent
+  currentBudget: number; // prime_contracts.revised_contract_value, or budget grandTotals.revisedBudget if absent
   currentProjectedProfit: number; // currentBudget - estimatedCostAtCompletion
   originalFee: number; // budget line 550500 original_amount
   currentFee: number; // budget line 550500 revised amount

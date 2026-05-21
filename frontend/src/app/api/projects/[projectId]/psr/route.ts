@@ -366,6 +366,7 @@ function buildProjectInfo(
   } | null,
   lineItems: BudgetLineItem[],
   grandTotals: {
+    originalBudgetAmount: number;
     revisedBudget: number;
     committedCosts: number;
     estimatedCostAtCompletion: number;
@@ -383,8 +384,12 @@ function buildProjectInfo(
   const sumRevised = (lines: BudgetLineItem[]) =>
     lines.reduce((sum, l) => sum + l.revisedBudget, 0);
 
-  const contractBudget = primeContract?.original_contract_value ?? 0;
-  const currentBudget = primeContract?.revised_contract_value ?? 0;
+  // Use prime contract values when available; fall back to budget tool totals so
+  // the PSR always shows meaningful numbers even when no prime contract is set up.
+  const contractBudget =
+    (primeContract?.original_contract_value || 0) || grandTotals.originalBudgetAmount;
+  const currentBudget =
+    (primeContract?.revised_contract_value || 0) || grandTotals.revisedBudget;
   const eca = grandTotals.estimatedCostAtCompletion;
   const currentProjectedProfit = currentBudget - eca;
   const remainingBuyout =
