@@ -304,6 +304,9 @@ importers:
       '@use-gesture/react':
         specifier: ^10.3.1
         version: 10.3.1(react@19.2.4)
+      '@veltdev/react':
+        specifier: 5.0.2-beta.30
+        version: 5.0.2-beta.30(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@vercel/functions':
         specifier: ^3.4.3
         version: 3.4.3
@@ -776,6 +779,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.54.0
         version: 8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      '@veltdev/types':
+        specifier: 5.0.2-beta.30
+        version: 5.0.2-beta.30
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@5.4.21(@types/node@22.19.8)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.47.1))
@@ -5637,6 +5643,15 @@ packages:
     resolution: {integrity: sha512-Yy19y6O2GJq8f7CHf7L0nxL8bf4PZCPaVOCgJrusOeFHY1LvHgYXnmnXg6N5iwAnbgbZCDjo60SiM6IPJi9C5g==}
     peerDependencies:
       react: '>= 16.8.0'
+
+  '@veltdev/react@5.0.2-beta.30':
+    resolution: {integrity: sha512-N4jJERuElh87Woi6ENnOxim8yo+Rmmr9ei59BUoUfyWSLDtl5ytU+PJ2dAapxIPDTNq70ZYWHDO/FyVGKXEEMA==}
+    peerDependencies:
+      react: ^19.0.0 || ^18.0.0 || ^17.0.0 || ^16.0.0
+      react-dom: ^19.0.0 || ^18.0.0 || ^17.0.0 || ^16.0.0
+
+  '@veltdev/types@5.0.2-beta.30':
+    resolution: {integrity: sha512-eVlOBIDYY3dFRStzZlwHrp10srm/Mpz6scWcDG1Gxg+raWyA5IiTV+3bOcQhNEnK5priB1iXsvAaMpWDJyCvZg==}
 
   '@vercel/functions@3.4.3':
     resolution: {integrity: sha512-kA14KIUVgAY6VXbhZ5jjY+s0883cV3cZqIU3WhrSRxuJ9KvxatMjtmzl0K23HK59oOUjYl7HaE/eYMmhmqpZzw==}
@@ -17549,6 +17564,13 @@ snapshots:
     dependencies:
       '@use-gesture/core': 10.3.1
       react: 19.2.4
+
+  '@veltdev/react@5.0.2-beta.30(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
+  '@veltdev/types@5.0.2-beta.30': {}
 
   '@vercel/functions@3.4.3':
     dependencies:

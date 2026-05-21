@@ -12,6 +12,14 @@ const AdminFeedbackWidget = dynamic(
   () => import("@/components/admin-feedback/AdminFeedbackWidget").then((mod) => mod.AdminFeedbackWidget),
   { ssr: false },
 );
+const VeltAuthProvider = dynamic(
+  () => import("@/components/velt/VeltAuthProvider").then((mod) => mod.VeltAuthProvider),
+  { ssr: false },
+);
+const VeltRecorderWidget = dynamic(
+  () => import("@/components/velt/VeltRecorderWidget").then((mod) => mod.VeltRecorderWidget),
+  { ssr: false },
+);
 const AgentationThemeSync = dynamic(
   () => import("@/components/dev/AgentationThemeSync").then((mod) => mod.AgentationThemeSync),
   { ssr: false },
@@ -46,7 +54,12 @@ export function RootClientWidgets() {
     <Suspense fallback={null}>
       <AppErrorTelemetryProvider />
       {shouldMountDeferredWidgets && <AskAlleatoRoot />}
-      {shouldMountDeferredWidgets && <AdminFeedbackWidget showLauncher={false} />}
+      {shouldMountDeferredWidgets && (
+        <VeltAuthProvider>
+          <AdminFeedbackWidget showLauncher={false} />
+          <VeltRecorderWidget />
+        </VeltAuthProvider>
+      )}
       {shouldMountDeferredWidgets && process.env.NODE_ENV === "development" && (
         <>
           <AgentationThemeSync />
