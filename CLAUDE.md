@@ -81,6 +81,25 @@ Do not burn a frontier/main conversation model on routine verification unless th
 
 ---
 
+## External Service Ownership (Mandatory)
+
+If a task requires an environment variable, provider key, deployment setting,
+migration, backend service change, or operational configuration, do not ask the
+user to do it when a CLI, API, MCP connector, or configured credential is
+available. Use the tool directly and verify the result.
+
+This applies to Vercel env vars/deployments, Sentry configuration, PostHog,
+Supabase migrations and type generation, Render services/logs/deployments,
+GitHub, Linear, Teams, Microsoft integrations, and similar configured systems.
+
+Only call the work blocked when the tool is unavailable, auth/permissions fail,
+or the needed secret value cannot be found in an existing secure source. When
+blocked, state the exact missing capability or credential, the command/tool that
+proved it, and the smallest setup action needed. Never expose secret values in
+logs, docs, commits, or final responses.
+
+---
+
 ## What the Toolchain Enforces
 
 **You do not need to remember these — violating them blocks your commit or build.**

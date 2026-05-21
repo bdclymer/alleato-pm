@@ -306,18 +306,6 @@ export function EmailDetailPanel({
           <div className="border-b border-border/70 px-4 pb-5 pt-5 text-left sm:px-6">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge status={email.status} />
-                  {email.sourceLabel ? (
-                    <Badge variant="secondary">{email.sourceLabel}</Badge>
-                  ) : null}
-                  {email.hasAttachments ? (
-                    <Badge variant="outline">
-                      <Paperclip className="h-3 w-3" />
-                      Attachments
-                    </Badge>
-                  ) : null}
-                </div>
                 <div className="break-words text-xl font-semibold leading-7 text-foreground">
                   {email.subject || "Untitled email"}
                 </div>
@@ -353,16 +341,34 @@ export function EmailDetailPanel({
 
           <ScrollArea className="min-h-0 flex-1">
             <div className="space-y-6 px-4 py-6 sm:px-6">
-              {email.projectLabel || email.relatedLabel ? (
-                <section className="space-y-2 text-sm">
-                  {email.projectLabel ? (
-                    <DetailItem label="Project" value={email.projectLabel} />
-                  ) : null}
-                  {email.relatedLabel ? (
-                    <DetailItem label="Related" value={email.relatedLabel} />
-                  ) : null}
-                </section>
-              ) : null}
+              <section className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                <StatusBadge status={email.status} />
+                {email.sourceLabel ? (
+                  <Badge variant="secondary">{email.sourceLabel}</Badge>
+                ) : null}
+                {email.hasAttachments ? (
+                  <Badge variant="outline">
+                    <Paperclip className="h-3 w-3" />
+                    Attachments
+                  </Badge>
+                ) : null}
+                {email.projectLabel ? (
+                  <span className="text-muted-foreground">
+                    <span className="text-xs font-medium uppercase tracking-wide">
+                      Project:
+                    </span>{" "}
+                    <span className="text-foreground">{email.projectLabel}</span>
+                  </span>
+                ) : null}
+                {email.relatedLabel ? (
+                  <span className="text-muted-foreground">
+                    <span className="text-xs font-medium uppercase tracking-wide">
+                      Related:
+                    </span>{" "}
+                    <span className="text-foreground">{email.relatedLabel}</span>
+                  </span>
+                ) : null}
+              </section>
 
               <section className="space-y-3">
                 <EmailContent blocks={contentBlocks} />

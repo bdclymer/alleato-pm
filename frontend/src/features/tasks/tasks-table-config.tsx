@@ -165,7 +165,7 @@ export function buildTasksTableColumns(
                   projectId={getTaskProjectId(item)}
                   taskId={taskId}
                   taskSnapshot={buildTaskFeedbackSnapshot(item)}
-                  onTrivial={onDelete ? () => onDelete(taskId) : undefined}
+                  onRemove={onDelete ? () => onDelete(taskId) : undefined}
                 />
               </div>
             );

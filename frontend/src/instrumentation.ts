@@ -15,6 +15,8 @@
  *   open http://localhost:6006
  */
 
+import * as Sentry from "@sentry/nextjs";
+
 const sentryDsnPresent = Boolean(
   process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN,
 );
@@ -83,6 +85,6 @@ export async function register() {
   }
 }
 
-export const onRequestError = sentryDsnPresent
-  ? require("@sentry/nextjs").captureRequestError
-  : undefined;
+// Capture errors from Server Components, middleware, and route handlers.
+// Sentry no-ops when the SDK was not initialized because no DSN is configured.
+export const onRequestError = Sentry.captureRequestError;

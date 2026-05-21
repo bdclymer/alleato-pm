@@ -1476,7 +1476,7 @@ function TaskDetail({
                   projectId={taskProjectId}
                   taskId={task.id}
                   taskSnapshot={taskFeedbackSnapshot}
-                  onTrivial={() => {
+                  onRemove={() => {
                     if (task.id) onDelete(task.id);
                   }}
                 />

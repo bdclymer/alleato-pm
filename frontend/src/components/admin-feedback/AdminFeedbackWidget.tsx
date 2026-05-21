@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  Camera,
   CircleStop,
-  ImagePlus,
   ListFilter,
+  Minimize2,
   RefreshCw,
   Sparkles,
   Trash2,
@@ -202,6 +201,14 @@ function getBestComposerTarget() {
   return document.body;
 }
 
+function waitForComposerToLeaveViewport() {
+  return new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: boolean }) {
   const pathname = usePathname()!;
   const isMobile = useIsMobile();
@@ -215,6 +222,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     null,
   );
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [draftActive, setDraftActive] = useState(false);
   const [form, setForm] = useState<SubmissionState>(() => getDefaultForm(pagePath));
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(
     null,
@@ -287,9 +295,10 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     [],
   );
 
-  const finalizeRecording = useCallback(async () => {
+  const finalizeRecording = useCallback(async (options?: { reopenComposer?: boolean }) => {
     const handle = recordingHandleRef.current;
     if (!handle) return;
+    const shouldReopenComposer = options?.reopenComposer ?? true;
     recordingHandleRef.current = null;
     if (recordingTimerRef.current) {
       window.clearInterval(recordingTimerRef.current);
@@ -301,6 +310,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       setIsRecording(false);
       if (blob.size === 0) {
         toast.error("Recording was empty — try again.");
+        if (shouldReopenComposer) {
+          setDialogOpen(true);
+        }
         return;
       }
       const previewUrl = URL.createObjectURL(blob);
@@ -311,6 +323,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         setVideoRecordingUrl(publicUrl);
         setVideoRecordingPath(path);
         toast.success("Screen recording attached.");
+        if (shouldReopenComposer) {
+          setDialogOpen(true);
+        }
       } catch (uploadError) {
         reportNonCriticalFailure({
           area: "admin-feedback-widget",
@@ -325,6 +340,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
           if (current) URL.revokeObjectURL(current);
           return null;
         });
+        if (shouldReopenComposer) {
+          setDialogOpen(true);
+        }
       } finally {
         setIsUploadingVideo(false);
       }
@@ -337,6 +355,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         userVisibleFallback: "Could not finalize the screen recording.",
       });
       toast.error("Recording failed", { description: getErrorDetail(error) });
+      if (shouldReopenComposer) {
+        setDialogOpen(true);
+      }
     }
   }, []);
 
@@ -346,6 +367,8 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     }
     try {
       setRecordingElapsedMs(0);
+      setDialogOpen(false);
+      await waitForComposerToLeaveViewport();
       const handle = await startScreenRecording();
       recordingHandleRef.current = handle;
       setIsRecording(true);
@@ -363,6 +386,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       });
     } catch (error) {
       setIsRecording(false);
+      setDialogOpen(true);
       const message = error instanceof Error ? error.message : String(error);
       if (/permission denied|not allowed/i.test(message)) {
         toast.error("Screen recording permission was denied.");
@@ -431,6 +455,15 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
   const hoveredRect = hoveredTarget ? getRectState(hoveredTarget) : null;
   const isImmersiveChatRoute =
     pagePath.startsWith("/ai-assistant") || pagePath.startsWith("/ai-avatar");
+  const hasRecoverableDraft =
+    draftActive ||
+    selectedElement !== null ||
+    selectedTarget !== null ||
+    Boolean(screenshotDataUrl) ||
+    Boolean(videoPreviewUrl) ||
+    Boolean(videoRecordingUrl) ||
+    form.title.trim().length > 0 ||
+    form.comment.trim().length > 0;
 
   useEffect(() => {
     if (!isSelecting || dialogOpen) {
@@ -469,6 +502,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       setSelectedElement(element);
       setSelectedTarget(buildFeedbackTargetSnapshot(element));
       setHoveredTarget(buildFeedbackTargetSnapshot(element));
+      setDraftActive(true);
       setDialogOpen(true);
       setIsSelecting(false);
     };
@@ -530,6 +564,12 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
 
   useEffect(() => {
     const openComposer = () => {
+      if (hasRecoverableDraft) {
+        setIsSelecting(false);
+        setDialogOpen(true);
+        return;
+      }
+
       const target = getBestComposerTarget();
 
       if (!(target instanceof HTMLElement)) {
@@ -546,6 +586,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       setHoveredTarget(snapshot);
       setScreenshotDataUrl(null);
       setForm(getDefaultForm(pagePath));
+      setDraftActive(true);
       setDialogOpen(true);
     };
 
@@ -555,7 +596,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT,
         openComposer,
       );
-  }, [pagePath]);
+  }, [hasRecoverableDraft, pagePath]);
 
   // Set cursor to crosshair when selecting
   useEffect(() => {
@@ -578,45 +619,60 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     setSelectedElement(null);
     setSelectedTarget(null);
     setHoveredTarget(null);
+    setDraftActive(false);
     setScreenshotDataUrl(null);
     setForm(getDefaultForm(pagePath));
     discardRecording();
   };
 
-  const refreshScreenshot = () => {
+  const minimizeComposer = () => {
+    setDialogOpen(false);
+  };
+
+  const refreshScreenshot = async () => {
     if (!selectedElement) {
       return;
     }
 
     setIsCapturingScreenshot(true);
-    captureTargetScreenshot(selectedElement)
-      .then((dataUrl) => {
-        setScreenshotDataUrl(dataUrl);
-      })
-      .catch((error) => {
-        reportNonCriticalFailure({
-          area: "admin-feedback-widget",
-          operation: "capture-selection-screenshot",
-          error,
-          userVisibleFallback: "Feedback screenshot capture failed.",
-          metadata: {
-            pagePath,
-            selectedTargetId: selectedTarget?.targetId ?? null,
-          },
-        });
-        toast.error("Could not capture screenshot", {
-          description: getErrorDetail(error),
-        });
-      })
-      .finally(() => {
-        setIsCapturingScreenshot(false);
+    const wasOpen = dialogOpen;
+
+    try {
+      if (wasOpen) {
+        setDialogOpen(false);
+        await waitForComposerToLeaveViewport();
+      }
+
+      const dataUrl = await captureTargetScreenshot(selectedElement);
+      setScreenshotDataUrl(dataUrl);
+      toast.success("Screenshot attached.");
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "admin-feedback-widget",
+        operation: "capture-selection-screenshot",
+        error,
+        userVisibleFallback: "Feedback screenshot capture failed.",
+        metadata: {
+          pagePath,
+          selectedTargetId: selectedTarget?.targetId ?? null,
+        },
       });
+      toast.error("Could not capture screenshot", {
+        description: getErrorDetail(error),
+      });
+    } finally {
+      setIsCapturingScreenshot(false);
+      if (wasOpen) {
+        setDialogOpen(true);
+      }
+    }
   };
 
   const toggleSelectMode = () => {
     setDialogOpen(false);
     setSelectedElement(null);
     setSelectedTarget(null);
+    setDraftActive(false);
     setScreenshotDataUrl(null);
     setIsSelecting((current) => !current);
   };
@@ -751,7 +807,13 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
           <Button
             variant="outline"
             size="icon"
-            onClick={isRecording ? () => setDialogOpen(true) : toggleSelectMode}
+            onClick={
+              isRecording
+                ? stopRecording
+                : hasRecoverableDraft && !dialogOpen
+                  ? () => setDialogOpen(true)
+                  : toggleSelectMode
+            }
             className={cn(
               "h-12 w-12 rounded-full shadow-sm",
               isRecording
@@ -760,7 +822,15 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                   ? "bg-foreground text-background hover:bg-foreground/90 border-foreground"
                   : "bg-background text-foreground",
             )}
-            aria-label={isRecording ? "Stop recording" : isSelecting ? "Cancel feedback" : "Feedback mode"}
+            aria-label={
+              isRecording
+                ? "Stop recording"
+                : hasRecoverableDraft && !dialogOpen
+                  ? "Resume feedback"
+                  : isSelecting
+                    ? "Cancel feedback"
+                    : "Feedback mode"
+            }
           >
             {isRecording ? (
               <CircleStop className="h-5 w-5" />
@@ -777,10 +847,8 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         open={dialogOpen}
         onOpenChange={(open) => {
           if (!open) {
-            // Keep modal open while recording so user can navigate the app
-            // to demonstrate the issue without killing the recording.
-            if (isRecording) return;
-            resetComposer();
+            minimizeComposer();
+            return;
           }
           setDialogOpen(open);
         }}
@@ -791,11 +859,29 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
           {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
         >
           <DialogHeader className="pb-4">
-            <DialogTitle>Submit Admin Feedback</DialogTitle>
-            <DialogDescription>
-              Describe what should change. The app will attach the page context
-              and selected element automatically.
-            </DialogDescription>
+            <div className="flex items-start justify-between gap-4 pr-8">
+              <div className="space-y-2">
+                <DialogTitle>Submit Admin Feedback</DialogTitle>
+                <DialogDescription>
+                  Describe what should change. The app will attach the page context
+                  and selected element automatically.
+                </DialogDescription>
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={minimizeComposer}
+                    aria-label="Minimize feedback form"
+                  >
+                    <Minimize2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Minimize feedback form</TooltipContent>
+              </Tooltip>
+            </div>
           </DialogHeader>
 
           {selectedTarget && (
@@ -940,7 +1026,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                           type="button"
                           variant="ghost"
                           size="icon-sm"
-                          onClick={refreshScreenshot}
+                          onClick={() => void refreshScreenshot()}
                           disabled={isCapturingScreenshot}
                           aria-label={isCapturingScreenshot ? "Capturing" : screenshotDataUrl ? "Retake screenshot" : "Capture screenshot"}
                         >
@@ -1051,7 +1137,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                         <span className="mt-1 inline-flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-destructive" />
                       }
                     >
-                      Recording — {Math.floor(recordingElapsedMs / 1000)}s / {Math.floor(MAX_RECORDING_DURATION_MS / 1000)}s · Close this dialog to navigate the app, then reopen to stop.
+                      Recording — {Math.floor(recordingElapsedMs / 1000)}s / {Math.floor(MAX_RECORDING_DURATION_MS / 1000)}s · Use the floating red feedback button to stop.
                     </InfoAlert>
                   )}
 

@@ -25,14 +25,17 @@ NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com   # or https://eu.i.posthog.co
 ```env
 NEXT_PUBLIC_SENTRY_DSN=https://xxx@oXXXX.ingest.us.sentry.io/XXXX
 # SENTRY_DSN=...   # optional server-side fallback if you don't want to expose the DSN
+SENTRY_ORG=your-org-slug
+SENTRY_PROJECT=your-project-slug
+SENTRY_AUTH_TOKEN=sntrys_xxx
 ```
 
 - The DSN must be `NEXT_PUBLIC_*` to enable the browser SDK. If you want to
   keep server-side Sentry separate, set `SENTRY_DSN` instead.
-- Source-map upload is intentionally NOT wired up — that needs
-  `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` and the
-  `withSentryConfig` next-config wrapper. Add that when you want symbolicated
-  stack traces in production builds.
+- Source-map upload is wired through `withSentryConfig`. Production/CI builds
+  fail loudly when a DSN is configured without `SENTRY_AUTH_TOKEN`,
+  `SENTRY_ORG`, and `SENTRY_PROJECT`, because events without source maps are
+  hard to debug.
 - Session Replay only fires on errors (`replaysOnErrorSampleRate: 1.0`,
   `replaysSessionSampleRate: 0`) so you don't double-pay with PostHog for
   steady-state recordings.

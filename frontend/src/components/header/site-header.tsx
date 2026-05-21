@@ -315,7 +315,10 @@ export function SiteHeader() {
             permissions={permissions}
             isAppAdmin={isAppAdmin}
             userType={userType}
-            userEmail={user?.email ?? null}
+            isDeveloper={
+              (user?.app_metadata as Record<string, unknown> | undefined)
+                ?.is_developer === true
+            }
           />
           <AiChatButton />
           <Link
@@ -594,19 +597,17 @@ function ToolsDropdown({
   permissions,
   isAppAdmin,
   userType,
-  userEmail,
+  isDeveloper,
 }: {
   projectId: number | null;
   activeToolName: string;
   permissions: Record<string, string[]>;
   isAppAdmin: boolean;
   userType: string | null;
-  userEmail: string | null;
+  isDeveloper: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const [showCompanyTools, setShowCompanyTools] = React.useState(false);
-  const canViewMeganAdminTools =
-    userEmail?.trim().toLowerCase() === "megan@megankharrison.com";
 
   const groups = headerNavGroups.map((group) => ({
     ...group,
@@ -625,7 +626,7 @@ function ToolsDropdown({
     isAppAdmin,
     userType,
   );
-  const visibleMeganAdminTools = canViewMeganAdminTools
+  const visibleDeveloperAdminTools = isDeveloper
     ? developerCompanyAdminTools
     : [];
 
@@ -660,11 +661,20 @@ function ToolsDropdown({
           />
         </Button>
       </PopoverTrigger>
+      {open && (
+        <Button
+          type="button"
+          variant="ghost"
+          aria-label="Close tools menu"
+          className="fixed inset-x-0 bottom-0 top-12 z-30 h-auto cursor-default rounded-none bg-background/55 p-0 backdrop-blur-sm animate-in fade-in duration-150 hover:bg-background/55 focus-visible:ring-0 focus-visible:ring-offset-0"
+          onClick={() => setOpen(false)}
+        />
+      )}
 
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="border border-border p-0 shadow-sm"
+        className="border border-border bg-popover p-0 shadow-sm"
         style={{
           width: "min(860px, calc(100vw - 1.5rem))",
           maxWidth: "calc(100vw - 1.5rem)",
@@ -705,8 +715,8 @@ function ToolsDropdown({
             <CompanyToolsPanel
               tools={companyWideHeaderTools}
               visibleTools={visibleCompanyTools}
-              adminTools={canViewMeganAdminTools ? developerCompanyAdminTools : []}
-              visibleAdminTools={visibleMeganAdminTools}
+              adminTools={isDeveloper ? developerCompanyAdminTools : []}
+              visibleAdminTools={visibleDeveloperAdminTools}
               projectId={projectId}
               activeToolName={activeToolName}
               onClose={() => setOpen(false)}

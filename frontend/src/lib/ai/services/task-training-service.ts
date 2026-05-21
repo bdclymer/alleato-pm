@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import {
   TASK_FEEDBACK_REASON_CATEGORIES,
   TASK_FEEDBACK_REASON_LABELS,
+  TASK_FEEDBACK_REMOVE_CATEGORIES,
   type FewShotTask,
   type TaskFeedbackReasonCategory,
   type TaskSnapshot,
@@ -102,10 +103,19 @@ async function extractBadTaskLearning({
     ? `Avoid tasks like this. User rated it negatively. ${feedbackReason} ${taskDescription}`
     : `Avoid generating tasks similar to this one. User rated it negatively. ${taskDescription}`;
 
+  // If the user explicitly told us "this task shouldn't exist" (trivial,
+  // not_actionable, duplicate, too_vague), trust them — activate the learning
+  // immediately rather than waiting for a second occurrence. Otherwise (e.g.
+  // wrong assignee) keep it as a candidate that needs more evidence.
+  const isRemovalCategory =
+    reasonCategory !== null &&
+    reasonCategory !== undefined &&
+    TASK_FEEDBACK_REMOVE_CATEGORIES.includes(reasonCategory);
+
   const learning = await upsertAgentLearning({
     title: `Bad task: "${taskSnapshot.name.slice(0, 80)}"`,
     source: "thumbs_down",
-    status: "candidate",
+    status: isRemovalCategory ? "active" : "candidate",
     problemSignature: `bad_task ${reasonCategory ?? "uncategorized"} ${taskSnapshot.name.toLowerCase().slice(0, 60)}`,
     symptoms: feedbackReason ? `${taskDescription}. ${feedbackReason}` : taskDescription,
     preventionPrompt,
@@ -116,7 +126,7 @@ async function extractBadTaskLearning({
       ...(reasonCategory ? [reasonCategory] : []),
     ],
     projectId,
-    confidence: 0.6,
+    confidence: isRemovalCategory ? 0.7 : 0.6,
     evidence: { feedbackId, reasonCategory, reason, taskSnapshot },
   });
 
@@ -179,15 +189,29 @@ export async function recordTaskFeedback(
   });
 
   if (params.signal === "bad") {
-    extractBadTaskLearning({
-      feedbackId: data.id,
-      taskSnapshot: params.taskSnapshot,
-      reasonCategory: params.reasonCategory,
-      reason: params.reason,
-      projectId: params.projectId,
-    }).catch((err: unknown) => {
-      logger.error({ msg: "[TaskFeedback] Learning extraction failed (non-fatal)", error: err });
-    });
+    // Await the learning extraction. The upsert itself is fast (no inline
+    // embedding) and the chunk sync to the RAG DB is already fire-and-forget
+    // inside upsertAgentLearning. Awaiting here ensures that:
+    //   1. learning_id gets linked on ai_task_feedback in the same request.
+    //   2. Failures (e.g. missing table, RLS misconfig) surface in API logs
+    //      instead of being swallowed by a fire-and-forget .catch().
+    try {
+      await extractBadTaskLearning({
+        feedbackId: data.id,
+        taskSnapshot: params.taskSnapshot,
+        reasonCategory: params.reasonCategory,
+        reason: params.reason,
+        projectId: params.projectId,
+      });
+    } catch (err) {
+      logger.error({
+        msg: "[TaskFeedback] Learning extraction failed",
+        error: err instanceof Error ? err.message : String(err),
+        feedbackId: data.id,
+      });
+      // Do NOT throw — feedback was still recorded successfully and the
+      // user-facing response should reflect that.
+    }
   }
 
   return { id: data.id };

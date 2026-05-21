@@ -18,6 +18,8 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 import requests
 
 from ..ai_transport import retry_ai_call
+from ..task_assignees import TaskAssigneeResolver
+from .fireflies_task_rewriter import REWRITER_PROMPT_VERSION, rewrite_action_items
 
 # Reason: Add parent directory to Python path so supabase_helpers can be imported
 # when running this script directly (not as a module). This works both when
@@ -377,14 +379,15 @@ class FirefliesIngestionPipeline:
 
         try:
             self.store.upsert_document_metadata(metadata)
-            for task in self._build_task_rows_from_action_items(
+            for task in self._build_task_rows_via_rewriter(
                 metadata_id=document_id,
+                meeting_title=parsed.title,
                 action_items=parsed.action_items,
                 project_id=effective_project_id,
+                participants=parsed.attendees,
                 speaker_email_map=parsed.speaker_email_map,
-                speakers_json=parsed.speakers_json,
-                attendees_json=parsed.attendees_json,
                 source_date=parsed.captured_at,
+                notes_context=parsed.raw_text,
             ):
                 self.store.upsert_task(task)
             embeddings = self.embedder.embed([chunk.text for chunk in chunks])
@@ -1791,6 +1794,106 @@ class FirefliesIngestionPipeline:
     def _is_low_value_task(cls, description: str) -> bool:
         """Return True for scheduling noise that shouldn't become tracked tasks."""
         return bool(cls._LOW_VALUE_TASK_RE.search(description or ""))
+
+    def _build_task_rows_via_rewriter(
+        self,
+        *,
+        metadata_id: str,
+        meeting_title: str,
+        action_items: List[str],
+        project_id: Optional[int],
+        participants: List[str],
+        speaker_email_map: Optional[Dict[str, str]] = None,
+        source_date: Optional[datetime | str] = None,
+        notes_context: str = "",
+    ) -> List[Dict[str, Any]]:
+        """LLM-rewritten task rows. Replaces the old regex-based extraction.
+
+        Each Fireflies action-item line is rewritten into an imperative task
+        (≤10-word title + description) and the owner is the *doer*, not the
+        person being talked about. Owners that don't resolve to an internal
+        Alleato employee are dropped — those actions show up elsewhere as
+        project intelligence, not as tracked tasks.
+        """
+        cleaned_items = [
+            self._strip_action_item_timestamp(item)
+            for item in action_items
+            if item and item.strip()
+        ]
+        cleaned_items = [item for item in cleaned_items if item and not self._is_low_value_task(item)]
+        if not cleaned_items:
+            return []
+
+        source_date_iso: Optional[str] = None
+        if isinstance(source_date, datetime):
+            source_date_iso = source_date.date().isoformat()
+        elif isinstance(source_date, str):
+            try:
+                source_date_iso = datetime.fromisoformat(source_date.replace("Z", "+00:00")).date().isoformat()
+            except ValueError:
+                source_date_iso = None
+
+        rewritten = rewrite_action_items(
+            meeting_title=meeting_title,
+            action_items=cleaned_items,
+            participants=participants or [],
+            speaker_email_map=speaker_email_map or {},
+            source_date=source_date_iso,
+            notes_context=notes_context or "",
+        )
+        if not rewritten:
+            return []
+
+        resolver = TaskAssigneeResolver(self.store._client)
+        rows: List[Dict[str, Any]] = []
+        seen_descriptions: set[str] = set()
+
+        for task in rewritten:
+            resolved = resolver.resolve(task.assignee_name, task.assignee_email)
+            if not resolved.is_employee:
+                logger.info(
+                    "[FirefliesRewriter] Dropping non-employee owner: %r (person_type=%r) title=%r",
+                    task.assignee_name,
+                    resolved.person_type,
+                    task.title,
+                )
+                continue
+
+            dedupe_key = (task.description or task.title or "").lower().strip()
+            if not dedupe_key or dedupe_key in seen_descriptions:
+                continue
+            seen_descriptions.add(dedupe_key)
+
+            row: Dict[str, Any] = {
+                "metadata_id": metadata_id,
+                "title": task.title,
+                "description": task.description or task.title,
+                "assignee_name": resolved.name or task.assignee_name,
+                "assignee_person_id": resolved.person_id,
+                "due_date": task.due_date,
+                "priority": task.priority or "medium",
+                "status": "open",
+                "source_system": "fireflies",
+                "project_id": project_id,
+                "project_ids": [project_id] if project_id is not None else [],
+                "extraction_source": "fireflies_rewriter",
+                "extraction_model": "gpt-5.5",
+                "extraction_prompt_version": REWRITER_PROMPT_VERSION,
+                "assigned_by": task.assigned_by,
+                "extraction_metadata": {
+                    "assignee_resolution_method": resolved.method,
+                    "assignee_resolution_confidence": resolved.confidence,
+                    "assignee_person_type": resolved.person_type,
+                    "rewriter_confidence": task.confidence,
+                    "source_action_item": task.source_action_item,
+                },
+            }
+            email = resolved.email or task.assignee_email
+            if email:
+                row["assignee_email"] = email
+            rows.append(row)
+
+        return rows
 
     @classmethod
     def _build_task_rows_from_action_items(

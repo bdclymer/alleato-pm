@@ -20,6 +20,7 @@
     "build:production": "node scripts/build/run-production-build.mjs",
     "start": "next start",
     "email:preview": "email dev --dir src/emails --port 3030",
+    "verify:sentry": "node scripts/verification/check-sentry-config.mjs",
     "lint": "eslint . --cache --cache-strategy content",
     "lint:errors": "eslint . --quiet --cache --cache-strategy content",
     "set-admin": "node scripts/set-admin.mjs",

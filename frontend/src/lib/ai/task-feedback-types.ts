@@ -13,6 +13,21 @@ export const TASK_FEEDBACK_REASON_CATEGORIES = [
 export type TaskFeedbackReasonCategory =
   (typeof TASK_FEEDBACK_REASON_CATEGORIES)[number];
 
+/**
+ * Categories that mean "this task should not exist in the user's inbox".
+ * When a user selects one of these as their reason for marking a task bad,
+ * the task itself is removed in addition to recording the feedback.
+ *
+ * Categories that describe a wrong _attribute_ (assignee, due date, priority)
+ * are NOT here — the task is still valid, just needs editing.
+ */
+export const TASK_FEEDBACK_REMOVE_CATEGORIES: readonly TaskFeedbackReasonCategory[] = [
+  "trivial",
+  "not_actionable",
+  "duplicate",
+  "too_vague",
+] as const;
+
 export const TASK_FEEDBACK_REASON_LABELS: Record<
   TaskFeedbackReasonCategory,
   string

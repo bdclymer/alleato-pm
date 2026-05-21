@@ -385,6 +385,17 @@ These are set automatically by Vercel — do not set them manually.
 |----------|----------|-----------|---------|-------|
 | `DISABLE_SCHEDULER` | No | Render | Set `true` to disable inline Python scheduler | Use when Render cron jobs handle all scheduling |
 
+### Sentry
+
+| Variable | Required | Where Set | Purpose | Notes |
+|----------|----------|-----------|---------|-------|
+| `NEXT_PUBLIC_SENTRY_DSN` | Yes for frontend monitoring | Vercel Production + Preview | Enables browser-side Sentry error capture and Replay-on-error | Must be public for the browser SDK |
+| `SENTRY_DSN` | No | Vercel / Render | Optional server-side DSN fallback | Use when server events should use a separate Sentry project |
+| `SENTRY_BACKEND_DSN` | Yes for backend monitoring | Render | Enables FastAPI backend Sentry capture | Backend also falls back to `SENTRY_DSN` |
+| `SENTRY_ORG` | Required when any frontend DSN is configured | Vercel Production + Preview | Sentry organization slug for source-map upload | `next.config.ts` fails CI if missing while DSN is set |
+| `SENTRY_PROJECT` | Required when any frontend DSN is configured | Vercel Production + Preview | Sentry project slug for source-map upload | Needed for readable production stack traces |
+| `SENTRY_AUTH_TOKEN` | Required when any frontend DSN is configured | Vercel Production + Preview | Sentry auth token for source-map upload | Secret token; never expose to the browser |
+
 ---
 
 ## Build Crash Prevention (Gate 17)

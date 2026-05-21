@@ -20,6 +20,14 @@ from ..task_assignees import TaskAssigneeResolver
 from .models import DecisionItem, OpportunityItem, RiskItem, TaskItem
 from . import llm
 
+# NOTE: `fireflies_task_rewriter` is imported lazily inside the functions that
+# use it. Top-level import here creates a circular load order under pytest /
+# FastAPI startup: ingestion/__init__.py eagerly loads fireflies_pipeline,
+# which now imports the rewriter; meanwhile pipeline/extractor.py is loaded
+# transitively via api.main, and Python sees `src.services.ingestion` as
+# mid-initialization when it tries to resolve the submodule. Lazy imports
+# avoid the cycle without restructuring the ingestion package.
+
 # Stateless parser instance for content re-parsing.
 _parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
 
@@ -134,45 +142,20 @@ def _task_overlap_score(left: str, right: str) -> float:
     return len(left_tokens & right_tokens) / max(len(left_tokens), len(right_tokens))
 
 
-def _enrich_fireflies_tasks_with_llm_context(
+def _enrich_fireflies_tasks_with_llm_context(  # noqa: D401 — kept for backward import compat
     direct_tasks: List[TaskItem],
     llm_tasks: List[TaskItem],
 ) -> List[TaskItem]:
-    """Keep Fireflies action-item text while preserving LLM owner/date enrichment.
+    """DEPRECATED — replaced by fireflies_task_rewriter.
 
-    Fireflies is the better source for "what action item existed"; the LLM pass is
-    better at normalizing owners, emails, and relative dates from the surrounding
-    notes/transcript context. This merge avoids dropping either signal.
+    The original implementation kept Fireflies' third-person narration as task
+    text, which produced tasks like "Provide support to Brandon Clymer..."
+    assigned to Brandon himself. The rewriter now runs upstream of this code
+    path, so this function is unused. Retained as a no-op to avoid breaking
+    legacy imports during the rollout window.
     """
-    enriched: List[TaskItem] = []
-    used_llm_indexes: set[int] = set()
-
-    for direct_task in direct_tasks:
-        best_index: int | None = None
-        best_score = 0.0
-        for index, llm_task in enumerate(llm_tasks):
-            if index in used_llm_indexes:
-                continue
-            score = _task_overlap_score(direct_task.description, llm_task.description)
-            if score > best_score:
-                best_score = score
-                best_index = index
-
-        matched = llm_tasks[best_index] if best_index is not None and best_score >= 0.45 else None
-        if matched and best_index is not None:
-            used_llm_indexes.add(best_index)
-
-        enriched.append(
-            TaskItem(
-                description=direct_task.description,
-                assignee=direct_task.assignee or (matched.assignee if matched else None),
-                assignee_email=direct_task.assignee_email or (matched.assignee_email if matched else None),
-                due_date=direct_task.due_date or (matched.due_date if matched else None),
-                priority=_normalize_task_priority(direct_task.priority or (matched.priority if matched else None)),
-            )
-        )
-
-    return enriched
+    _ = llm_tasks  # noqa: F841 — historical signature
+    return list(direct_tasks)
 
 
 def run_extractor(metadata_id: str) -> Dict[str, Any]:
@@ -277,7 +260,9 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     content = metadata.get("content") or metadata.get("raw_text") or ""
     notes_context = ""
     speaker_email_map: Dict[str, str] = {}
-    direct_fireflies_tasks: List[TaskItem] = []
+    fireflies_action_items: List[str] = []
+    parsed_attendees: List[str] = []
+    parsed_captured_at = None
     if content and is_meeting:
         try:
             parsed = _parser.parse_markdown(content)
@@ -290,23 +275,9 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
                 notes_parts.append(f"### Action Items\n{action_items_section}")
             notes_context = "\n\n".join(notes_parts)
             speaker_email_map = parsed.speaker_email_map or {}
-            direct_fireflies_tasks = [
-                TaskItem(
-                    description=row["description"],
-                    assignee=row.get("assignee_name"),
-                    assignee_email=row.get("assignee_email"),
-                    priority=row.get("priority"),
-                )
-                for row in _parser._build_task_rows_from_action_items(  # type: ignore[attr-defined]
-                    metadata_id=metadata_id,
-                    action_items=parsed.action_items,
-                    project_id=metadata.get("project_id"),
-                    speaker_email_map=parsed.speaker_email_map,
-                    speakers_json=parsed.speakers_json,
-                    attendees_json=parsed.attendees_json,
-                    source_date=parsed.captured_at or started_at,
-                )
-            ]
+            fireflies_action_items = list(parsed.action_items or [])
+            parsed_attendees = list(parsed.attendees or [])
+            parsed_captured_at = parsed.captured_at
             if speaker_email_map:
                 logger.info("[Extractor] Speaker-email map: %s", speaker_email_map)
         except Exception as exc:
@@ -344,14 +315,42 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         len(structured.tasks),
         len(structured.opportunities),
     )
-    if direct_fireflies_tasks:
-        structured.tasks = _enrich_fireflies_tasks_with_llm_context(
-            direct_fireflies_tasks,
-            structured.tasks,
+    rewritten_fireflies_tasks: List[Any] = []
+    if fireflies_action_items and is_meeting:
+        from ..ingestion.fireflies_task_rewriter import rewrite_action_items  # lazy: see top-of-module note
+
+        source_date_iso = None
+        if parsed_captured_at is not None:
+            if hasattr(parsed_captured_at, "date"):
+                source_date_iso = parsed_captured_at.date().isoformat()
+            elif isinstance(parsed_captured_at, str):
+                source_date_iso = parsed_captured_at[:10]
+        rewritten_fireflies_tasks = rewrite_action_items(
+            meeting_title=title,
+            action_items=fireflies_action_items,
+            participants=parsed_attendees,
+            speaker_email_map=speaker_email_map,
+            source_date=source_date_iso,
+            notes_context=notes_context,
         )
+        # Replace LLM-extractor tasks with the rewriter output. The rewriter is
+        # owner-aware and imperative-by-construction; the legacy LLM tasks
+        # double-count the same action items as third-person narration.
+        structured.tasks = [
+            TaskItem(
+                description=t.description or t.title,
+                assignee=t.assignee_name,
+                assignee_email=t.assignee_email,
+                due_date=t.due_date,
+                priority=t.priority,
+            )
+            for t in rewritten_fireflies_tasks
+        ]
         logger.info(
-            "[Extractor] Using %d enriched direct Fireflies action items for task upserts",
+            "[Extractor] Using %d rewritten Fireflies tasks (kept %d, dropped %d)",
             len(structured.tasks),
+            len(structured.tasks),
+            max(0, len(fireflies_action_items) - len(structured.tasks)),
         )
     else:
         structured.tasks = _apply_task_quality_gates(structured.tasks)
@@ -393,6 +392,12 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
                         details={"category": risk.category, "likelihood": risk.likelihood,
                                  "impact": risk.impact, "mitigation_plan": getattr(risk, "mitigation_plan", None)})
     tasks_to_persist = structured.tasks if is_meeting else []
+    # Build a lookup so _upsert_task can attach rewriter title + provenance
+    # without changing the TaskItem dataclass.
+    rewriter_lookup: Dict[str, Any] = {}
+    for r in rewritten_fireflies_tasks:
+        if r.title:
+            rewriter_lookup[(r.description or r.title).strip().lower()] = r
     # Replace task set for this meeting to avoid stale rows from prior runs
     # (for example tasks created before project assignment existed).
     # Guard deletion behind meeting classification so we never wipe existing
@@ -407,6 +412,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             metadata_id,
         )
     for task in tasks_to_persist:
+        rewriter_match = rewriter_lookup.get((task.description or "").strip().lower())
         _upsert_task(
             client,
             task,
@@ -414,6 +420,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             project_ids,
             doc_project_id,
             metadata.get("client_id"),
+            rewriter_match=rewriter_match,
         )
     for opportunity in structured.opportunities:
         _upsert_insight(client, "opportunity", opportunity, metadata_id,
@@ -495,6 +502,7 @@ def _upsert_task(
     project_ids: List[int] | None = None,
     project_id: int | None = None,
     client_id: int | None = None,
+    rewriter_match: Any = None,
 ) -> None:
     resolved_project_id = project_id
     if resolved_project_id is None and project_ids:
@@ -523,11 +531,40 @@ def _upsert_task(
         )
         return
 
+    title = (rewriter_match.title if rewriter_match else None) or _derive_title(task.description)
+    if not title:
+        logger.info(
+            "Skipping task with no derivable title: description=%r",
+            (task.description or "")[:120],
+        )
+        return
+
+    extraction_metadata: Dict[str, Any] = {
+        "assignee_resolution_method": assignee.method,
+        "assignee_resolution_confidence": assignee.confidence,
+        "assignee_person_type": assignee.person_type,
+    }
+    if rewriter_match is not None:
+        # Lazy import (see top-of-module note about the circular load order).
+        from ..ingestion.fireflies_task_rewriter import REWRITER_PROMPT_VERSION as _RPV
+
+        extraction_metadata.update(
+            {
+                "rewriter_confidence": rewriter_match.confidence,
+                "source_action_item": rewriter_match.source_action_item,
+            }
+        )
+        prompt_version = _RPV
+    else:
+        prompt_version = None
+
     data = {
         "metadata_id": metadata_id,
-        "title": _derive_title(task.description),
+        "title": title,
         "description": task.description,
-        "assignee_name": task.assignee,
+        "assignee_name": assignee.name or task.assignee,
+        "assignee_person_id": assignee.person_id,
+        "assigned_by": rewriter_match.assigned_by if rewriter_match else None,
         "due_date": task.due_date,
         "priority": task.priority,
         "embedding": task.embedding,
@@ -536,9 +573,14 @@ def _upsert_task(
         "project_ids": project_ids or [],
         "project_id": resolved_project_id,
         "client_id": client_id,
+        "extraction_source": "fireflies_rewriter" if rewriter_match else "fireflies_pipeline_legacy",
+        "extraction_model": "gpt-5.5" if rewriter_match else None,
+        "extraction_prompt_version": prompt_version,
+        "extraction_metadata": extraction_metadata,
     }
-    if task.assignee_email:
-        data["assignee_email"] = task.assignee_email
+    email = assignee.email or task.assignee_email
+    if email:
+        data["assignee_email"] = email
     client.table("tasks").upsert(
         data,
         on_conflict="metadata_id,description",

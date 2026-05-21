@@ -7,6 +7,7 @@ import { useTaskFeedback } from "@/hooks/use-task-feedback";
 import {
   TASK_FEEDBACK_REASON_LABELS,
   TASK_FEEDBACK_REASON_CATEGORIES,
+  TASK_FEEDBACK_REMOVE_CATEGORIES,
   type TaskFeedbackReasonCategory,
   type TaskSnapshot,
 } from "@/lib/ai/task-feedback-types";
@@ -35,10 +36,15 @@ interface TaskFeedbackButtonsProps {
   sessionId?: string | null;
   className?: string;
   /**
-   * Called after the user submits feedback with reasonCategory="trivial".
-   * Intended for the caller to delete the task — a trivial task is one that
-   * should never have existed, so leaving it open clutters the inbox.
+   * Called after the user submits bad feedback with a category that indicates
+   * the task should not exist (trivial, not_actionable, duplicate, too_vague).
+   * Caller should delete the task — leaving it in the inbox after this kind of
+   * feedback is exactly the clutter the loop is supposed to prevent.
+   *
+   * `onTrivial` kept as an alias for backwards compat with existing callsites.
    */
+  onRemove?: (category: TaskFeedbackReasonCategory) => void;
+  /** @deprecated use onRemove — kept for backwards compat */
   onTrivial?: () => void;
 }
 
@@ -48,6 +54,7 @@ export function TaskFeedbackButtons({
   taskSnapshot,
   sessionId,
   className,
+  onRemove,
   onTrivial,
 }: TaskFeedbackButtonsProps) {
   const { signal, isSubmitting, submitFeedback } = useTaskFeedback({
@@ -93,6 +100,7 @@ export function TaskFeedbackButtons({
     if (signal) return;
     try {
       await submitFeedback("good");
+      toast.success("Thanks — marked as a good example.");
     } catch (err) {
       handleFeedbackFailure(err, "good");
     }
@@ -106,14 +114,23 @@ export function TaskFeedbackButtons({
 
     setBadReasonOpen(false);
     const submittedCategory = badReasonCategory;
+    const removesTask = TASK_FEEDBACK_REMOVE_CATEGORIES.includes(submittedCategory);
     try {
       await submitFeedback(
         "bad",
         badReason.trim() || undefined,
         submittedCategory,
       );
-      if (submittedCategory === "trivial" && onTrivial) {
-        onTrivial();
+      if (removesTask) {
+        // Prefer the explicit onRemove handler; fall back to legacy onTrivial.
+        if (onRemove) {
+          onRemove(submittedCategory);
+        } else if (submittedCategory === "trivial" && onTrivial) {
+          onTrivial();
+        }
+        toast.success("Feedback saved. Removing this task from your inbox.");
+      } else {
+        toast.success("Feedback saved. The AI will use this to do better.");
       }
     } catch (err) {
       handleFeedbackFailure(err, "bad");

@@ -2024,6 +2024,175 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_learning_usages: {
+        Row: {
+          created_at: string
+          id: string
+          learning_id: string
+          message_excerpt: string | null
+          metadata: Json
+          outcome: string
+          response_quality_score: number | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          learning_id: string
+          message_excerpt?: string | null
+          metadata?: Json
+          outcome?: string
+          response_quality_score?: number | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          learning_id?: string
+          message_excerpt?: string | null
+          metadata?: Json
+          outcome?: string
+          response_quality_score?: number | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_learning_usages_learning_id_fkey"
+            columns: ["learning_id"]
+            isOneToOne: false
+            referencedRelation: "agent_learnings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_learnings: {
+        Row: {
+          activated_at: string | null
+          confidence: number
+          created_at: string
+          embedding: unknown
+          evidence: Json
+          fix_pattern: string | null
+          id: string
+          last_seen_at: string
+          learning_key: string
+          occurrences: number
+          page_path: string | null
+          prevention_prompt: string
+          problem_signature: string
+          project_id: number | null
+          root_cause: string | null
+          scope_tags: string[]
+          source: string
+          status: string
+          symptoms: string
+          title: string
+          tool_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          confidence?: number
+          created_at?: string
+          embedding?: unknown
+          evidence?: Json
+          fix_pattern?: string | null
+          id?: string
+          last_seen_at?: string
+          learning_key: string
+          occurrences?: number
+          page_path?: string | null
+          prevention_prompt: string
+          problem_signature: string
+          project_id?: number | null
+          root_cause?: string | null
+          scope_tags?: string[]
+          source: string
+          status?: string
+          symptoms: string
+          title: string
+          tool_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          confidence?: number
+          created_at?: string
+          embedding?: unknown
+          evidence?: Json
+          fix_pattern?: string | null
+          id?: string
+          last_seen_at?: string
+          learning_key?: string
+          occurrences?: number
+          page_path?: string | null
+          prevention_prompt?: string
+          problem_signature?: string
+          project_id?: number | null
+          root_cause?: string | null
+          scope_tags?: string[]
+          source?: string
+          status?: string
+          symptoms?: string
+          title?: string
+          tool_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_learnings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "agent_learnings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_learnings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "agent_learnings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_learnings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_learnings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_learnings_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_analysis_jobs: {
         Row: {
           completed_at: string | null
@@ -35116,6 +35285,28 @@ export type Database = {
         Returns: {
           remaining_count: number
           updated_count: number
+        }[]
+      }
+      search_agent_learnings: {
+        Args: {
+          filter_project_id?: number
+          filter_tool_id?: number
+          match_count?: number
+          match_threshold?: number
+          query_embedding: unknown
+        }
+        Returns: {
+          confidence: number
+          id: string
+          occurrences: number
+          prevention_prompt: string
+          project_id: number
+          scope_tags: string[]
+          similarity: number
+          source: string
+          status: string
+          title: string
+          tool_id: number
         }[]
       }
       search_ai_memories: {

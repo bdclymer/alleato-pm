@@ -23,6 +23,28 @@ Rule 9: Never ship band-aid fixes. If a change only satisfies the immediate erro
 - Default expectation: deliver working code, not just a plan. If details are missing, make reasonable assumptions and complete a working version.
 - Do not tell the user to perform actions that the agent can execute directly (e.g., migrations, type generation, lint/type checks, or local commands). Execute them and report the result.
 
+## External Service Ownership (MANDATORY)
+
+Do not ask or wait for the user to update environment variables, deployment
+settings, migration state, provider keys, or service configuration when Codex can
+do it through an available CLI, API, MCP connector, or configured credential.
+Execute the provider operation directly, then verify it with a read-back command,
+deployment log, migration ledger, or service status check.
+
+This explicitly includes:
+- Vercel environment variables, project settings, builds, and deployments
+- Sentry DSNs, org/project/token-backed source-map configuration, and test events
+- PostHog keys and capture/replay configuration
+- Supabase migrations, type generation, SQL verification, and migration ledger checks
+- Render services, env vars, deploy hooks, logs, and backend health checks
+- GitHub, Linear, Teams, Microsoft, and other configured integration surfaces
+
+Only mark the task blocked when the relevant CLI/API/MCP tool is unavailable,
+auth/permissions fail, or the secret value cannot be discovered from an existing
+secure source. In that case, report the exact missing capability or credential,
+the command/tool that proved the block, and the smallest next setup action.
+Never print secret values in logs, docs, commits, or final responses.
+
 ## Main Branch Finish Flow (MANDATORY)
 
 Default to completing finished Codex tasks directly on `main` and publishing them to `origin/main`; do not create branches or worktrees for routine completion.

@@ -320,6 +320,13 @@ export async function upsertAgentLearning(input: UpsertAgentLearningInput) {
     .maybeSingle();
 
   if (existingError) {
+    // Surface this — a missing table or RLS misconfig here means EVERY
+    // learning extraction silently fails (which is the bug we just fixed).
+    console.error(
+      "[agent-learning-service] Failed to read agent_learnings:",
+      existingError.message,
+      { learningKey, source: input.source },
+    );
     return null;
   }
 
@@ -370,6 +377,11 @@ export async function upsertAgentLearning(input: UpsertAgentLearningInput) {
     .single();
 
   if (error) {
+    console.error(
+      "[agent-learning-service] Failed to upsert agent_learnings:",
+      error.message,
+      { learningKey, source: input.source, title: input.title },
+    );
     return null;
   }
 

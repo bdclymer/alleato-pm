@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
-import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useProjectRoles } from "@/hooks/use-project-roles";
 import {
   Avatar,
@@ -115,11 +114,6 @@ type LazyHomeTabStatus = {
 
 const EditProjectSidebar = dynamic(
   () => import("@/components/project/edit-project-sidebar").then((mod) => mod.EditProjectSidebar),
-  { ssr: false },
-);
-
-const RealtimeCursors = dynamic(
-  () => import("@/components/realtime/realtime-cursors").then((mod) => mod.RealtimeCursors),
   { ssr: false },
 );
 
@@ -807,9 +801,6 @@ export function ProjectCommandCenter({
   const projectId = String(project.id);
   const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
   const [isSetupOpen, setIsSetupOpen] = React.useState(false);
-  const [showRealtimeCursors, setShowRealtimeCursors] = React.useState(false);
-  const roomName = `project-home:${projectId}`;
-  const currentUserName = useCurrentUserName();
   const [lazyTabData, setLazyTabData] = React.useState({
     meetings,
     projectDocuments,
@@ -822,10 +813,6 @@ export function ProjectCommandCenter({
     "daily-logs": { loaded: dailyLogs.length > 0, loading: false, error: null },
     submittals: { loaded: submittals.length > 0, loading: false, error: null },
   });
-  React.useEffect(() => {
-    const timeout = window.setTimeout(() => setShowRealtimeCursors(true), 1200);
-    return () => window.clearTimeout(timeout);
-  }, []);
   const loadLazyTabData = React.useCallback(
     async (kind: LazyHomeTabKind) => {
       const currentStatus = lazyTabStatus[kind];
@@ -1157,8 +1144,6 @@ export function ProjectCommandCenter({
 
   return (
     <>
-      {showRealtimeCursors ? <RealtimeCursors roomName={roomName} username={currentUserName} /> : null}
-
       <div className="min-h-full">
         {/* ── Main content ─────────────────────────────── */}
         <div className="min-w-0 py-6 space-y-7">
