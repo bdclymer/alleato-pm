@@ -23,7 +23,11 @@ import os
 import re
 import threading
 import time
-from datetime import datetime
+import base64
+import hashlib
+import hmac
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -175,10 +179,30 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
+
+def _configured_cors_origins() -> List[str]:
+    defaults = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "https://projects.alleatogroup.com",
+    ]
+    configured = os.getenv("FRONTEND_CORS_ORIGINS", "")
+    extra = [
+        origin.strip().rstrip("/")
+        for origin in configured.split(",")
+        if origin.strip()
+    ]
+    return sorted(set(defaults + extra))
+
+
 # CORS configuration (adjust as needed for deployment)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:3001", "http://127.0.0.1:3001"],
+    allow_origins=_configured_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*", "sentry-trace", "baggage"],
@@ -252,6 +276,53 @@ class MicrosoftProjectConvertResponse(BaseModel):
     tasks: List[Dict[str, Any]]
     source_format: str
     task_count: int
+
+
+def _base64url_decode_json(value: str) -> Dict[str, Any]:
+    padding = "=" * (-len(value) % 4)
+    try:
+        decoded = base64.urlsafe_b64decode(f"{value}{padding}".encode("ascii"))
+        payload = json.loads(decoded.decode("utf-8"))
+    except (ValueError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=401, detail="Invalid schedule conversion token.") from exc
+
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=401, detail="Invalid schedule conversion token.")
+
+    return payload
+
+
+def _verify_schedule_convert_token(token: Optional[str], project_id: int) -> None:
+    expected_secret = os.getenv("ADMIN_API_KEY")
+    if not expected_secret:
+        raise HTTPException(status_code=503, detail="ADMIN_API_KEY is not configured on the backend")
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing schedule conversion token.")
+
+    parts = token.split(".")
+    if len(parts) != 2:
+        raise HTTPException(status_code=401, detail="Invalid schedule conversion token.")
+
+    encoded_payload, supplied_signature = parts
+    expected_signature = hmac.new(
+        expected_secret.encode("utf-8"),
+        encoded_payload.encode("ascii"),
+        hashlib.sha256,
+    ).digest()
+    expected_signature_text = base64.urlsafe_b64encode(expected_signature).decode("ascii").rstrip("=")
+
+    if not hmac.compare_digest(supplied_signature, expected_signature_text):
+        raise HTTPException(status_code=401, detail="Invalid schedule conversion token.")
+
+    payload = _base64url_decode_json(encoded_payload)
+    if payload.get("project_id") != project_id:
+        raise HTTPException(status_code=401, detail="Schedule conversion token does not match this project.")
+
+    expires_at = payload.get("exp")
+    if not isinstance(expires_at, int):
+        raise HTTPException(status_code=401, detail="Invalid schedule conversion token.")
+    if expires_at < int(datetime.now(timezone.utc).timestamp()):
+        raise HTTPException(status_code=401, detail="Schedule conversion token expired.")
 
 
 def get_rag_store() -> SupabaseRagStore:
@@ -556,9 +627,19 @@ def rag_chat_api(payload: ChatRequest, store: SupabaseRagStore = Depends(get_rag
     response_model=MicrosoftProjectConvertResponse,
 )
 async def convert_microsoft_project_schedule(
+    request: Request,
+    project_id: int = Query(..., ge=1),
     file: UploadFile = File(...),
-    _: None = Depends(require_admin_api_key),
+    token: Optional[str] = Query(default=None),
 ) -> Dict[str, Any]:
+    if token:
+        _verify_schedule_convert_token(token, project_id)
+    else:
+        require_admin_api_key(
+            authorization=request.headers.get("authorization"),
+            x_admin_api_key=request.headers.get("x-admin-api-key"),
+        )
+
     file_name = file.filename or "schedule"
     suffix = Path(file_name).suffix.lower()
     if suffix not in {".mpp", ".mpt", ".xml"}:

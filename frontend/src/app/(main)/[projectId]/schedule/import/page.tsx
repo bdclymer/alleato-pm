@@ -37,6 +37,12 @@ type ImportResult = {
   errors?: Array<{ index: number; name: string; error: string }>;
 };
 
+const SCHEDULE_IMPORT_FILE_LIMIT_BYTES = 50 * 1024 * 1024;
+
+function formatFileSize(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+}
+
 function getText(parent: Element, tagName: string): string | null {
   return parent.getElementsByTagName(tagName)[0]?.textContent?.trim() || null;
 }
@@ -164,13 +170,38 @@ export default function MicrosoftProjectScheduleImportPage() {
     async (file: File) => {
       setIsConverting(true);
       try {
+        if (file.size > SCHEDULE_IMPORT_FILE_LIMIT_BYTES) {
+          throw new Error(
+            `Schedule files must be smaller than ${formatFileSize(SCHEDULE_IMPORT_FILE_LIMIT_BYTES)}.`,
+          );
+        }
+
         const formData = new FormData();
         formData.append("file", file);
 
-        const payload = await apiFetch<{ tasks: MicrosoftProjectImportTask[] }>(
-          `/api/projects/${projectId}/scheduling/tasks/convert`,
-          { method: "POST", body: formData },
+        const { convertUrl } = await apiFetch<{ convertUrl: string }>(
+          `/api/projects/${projectId}/scheduling/tasks/convert-token`,
+          { method: "POST" },
         );
+
+        const response = await fetch(convertUrl, {
+          method: "POST",
+          body: formData,
+        });
+
+        const payload = await response.json().catch(() => ({})) as {
+          tasks?: MicrosoftProjectImportTask[];
+          detail?: string;
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(
+            payload.detail ||
+              payload.error ||
+              `Microsoft Project conversion failed (HTTP ${response.status}).`,
+          );
+        }
 
         const convertedTasks = (payload?.tasks ?? []) as MicrosoftProjectImportTask[];
         if (!Array.isArray(convertedTasks) || convertedTasks.length === 0) {

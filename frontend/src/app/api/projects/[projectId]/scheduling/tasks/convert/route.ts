@@ -36,7 +36,8 @@ function parseBackendError(status: number, body: unknown): string {
 
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/scheduling/tasks/convert#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
+    const { projectId } = params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -83,7 +84,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const timeout = setTimeout(() => controller.abort(), 55_000);
     let response: Response;
     try {
-      response = await fetch(`${normalizeBackendUrl()}/api/scheduling/microsoft-project/convert`, {
+      const convertUrl = new URL("/api/scheduling/microsoft-project/convert", normalizeBackendUrl());
+      convertUrl.searchParams.set("project_id", projectId);
+      response = await fetch(convertUrl, {
         method: "POST",
         headers: {
           "x-admin-api-key": adminKey,
