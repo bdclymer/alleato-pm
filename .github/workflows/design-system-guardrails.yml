@@ -2,10 +2,7 @@ name: Design System Guardrails
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
-      - master
+  workflow_dispatch:
 
 jobs:
   design-system-guardrails:

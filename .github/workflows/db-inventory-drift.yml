@@ -1,15 +1,8 @@
 name: DB Inventory Drift Check
 
 on:
-  push:
-    paths:
-      - "supabase/migrations/**/*.sql"
-      - "frontend/src/**/*.ts"
-      - "frontend/src/**/*.tsx"
-      - "backend/src/**/*.py"
-      - "docs/architecture/tables.yaml"
   schedule:
-    - cron: "0 7 * * *"
+    - cron: "0 7 * * 1"
   workflow_dispatch:
 
 jobs:

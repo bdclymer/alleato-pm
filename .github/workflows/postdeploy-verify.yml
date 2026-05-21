@@ -2,8 +2,6 @@ name: Post-Deploy Verify
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 8 * * *"
 
 jobs:
   verify:

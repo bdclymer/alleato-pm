@@ -24,32 +24,3 @@ jobs:
           allowed_non_write_users: "*"
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-  deduplicate:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      issues: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-
-      - name: Check for duplicate issues
-        uses: anthropics/claude-code-action@v1
-        with:
-          prompt: |
-            Analyze this new issue and check if it's a duplicate of existing issues in the repository.
-
-            Issue: #${{ github.event.issue.number }}
-            Repository: ${{ github.repository }}
-
-            1. Use mcp__github__get_issue to get details of issue #${{ github.event.issue.number }}
-            2. Search for similar issues using mcp__github__search_issues with keywords from the title and body
-            3. If duplicates found: comment linking to the original and apply a "duplicate" label
-            4. If NOT a duplicate: do nothing
-
-            Be polite and concise. Only flag true duplicates, not just similar issues.
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          claude_args: |
-            --allowedTools "mcp__github__get_issue,mcp__github__search_issues,mcp__github__list_issues,mcp__github__create_issue_comment,mcp__github__update_issue"
