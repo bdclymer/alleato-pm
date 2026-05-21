@@ -104,6 +104,7 @@ interface PrimePcoOption {
   total_amount: number | null;
   revision: number | null;
   prime_contract_id: string | null;
+  linked_change_events_count?: number | null;
 }
 
 interface EmployeeOption {
@@ -421,7 +422,11 @@ export default function NewPrimeContractPcoPage() {
 
         const rows = Array.isArray(data) ? data : data.data ?? [];
         setPotentialChangeOrders(
-          rows.filter((pco) => pco.prime_contract_id === selectedContractId),
+          rows.filter(
+            (pco) =>
+              pco.prime_contract_id === selectedContractId &&
+              Number(pco.linked_change_events_count ?? 0) > 0,
+          ),
         );
       } catch {
         if (!active) return;
@@ -556,6 +561,46 @@ export default function NewPrimeContractPcoPage() {
   const handleSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
     try {
+      if (hasChangeEvents) {
+        const result = await apiFetch<{ pco?: { id?: string } }>(
+          `/api/projects/${projectId}/change-events/add-to-pco`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              change_event_ids: changeEventIds,
+              pco_type: "prime",
+              create_new: {
+                title: data.title,
+                prime_contract_id: data.prime_contract_id,
+                description: data.description || null,
+                status: data.status,
+                change_reason: data.change_reason || null,
+                revision: data.revision ?? null,
+                schedule_impact: data.schedule_impact ?? null,
+                due_date: data.due_date || null,
+                request_received_from: data.request_received_from || null,
+                location: data.location || null,
+                field_change: data.field_change,
+                reference: data.reference || null,
+                is_private: data.is_private,
+                executed: data.executed,
+                signed_co_received_date: data.signed_co_received_date || null,
+                paid_in_full: data.paid_in_full,
+              },
+            }),
+          },
+        );
+
+        toast.success("Prime Contract PCO created");
+        const pcoId = result.pco?.id;
+        router.push(
+          pcoId
+            ? `/${projectId}/prime-contract-pcos/${pcoId}`
+            : `/${projectId}/prime-contract-pcos`,
+        );
+        return;
+      }
+
       if (selectedPcoIds.length === 0) {
         toast.error("Select at least one potential change order.");
         return;
@@ -607,7 +652,16 @@ export default function NewPrimeContractPcoPage() {
   return (
     <PageShell
       variant="form"
-      title="New Prime Contract Change Order"
+      title={
+        hasChangeEvents
+          ? "Create Prime Contract PCO"
+          : "New Prime Contract Change Order"
+      }
+      description={
+        hasChangeEvents
+          ? "Create a potential change order from linked change events."
+          : "Assemble an official change order from linked potential change orders."
+      }
       onBack={() => router.back()}
       actions={
         <div className="flex items-center gap-2">
@@ -630,7 +684,7 @@ export default function NewPrimeContractPcoPage() {
               isSubmitting ||
               isLoading ||
               hasMissingSourceChangeEvents ||
-              selectedPcoIds.length === 0
+              (!hasChangeEvents && selectedPcoIds.length === 0)
             }
           >
             {isSubmitting ? (
@@ -704,6 +758,27 @@ export default function NewPrimeContractPcoPage() {
                 className="[&_span]:text-primary"
               />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+                <FormItem>
+                  <FormLabel>
+                    {hasChangeEvents ? "PCO Number" : "PCCO Number"}
+                  </FormLabel>
+                  <Input value="Auto-generated on save" disabled />
+                </FormItem>
+
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Change order title" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {/* Contract */}
                 <FormField
                   control={form.control}
@@ -758,6 +833,7 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
+                {!hasChangeEvents && (
                 <FormItem>
                   <FormLabel>Potential Change Orders *</FormLabel>
                   <Popover
@@ -803,7 +879,7 @@ export default function NewPrimeContractPcoPage() {
                         <CommandList>
                           <CommandEmpty>
                             {selectedContractId
-                              ? "No potential change orders found."
+                              ? "No linked potential change orders found."
                               : "Select a contract first."}
                           </CommandEmpty>
                           <CommandGroup>
@@ -840,25 +916,7 @@ export default function NewPrimeContractPcoPage() {
                     </PopoverContent>
                   </Popover>
                 </FormItem>
-
-                <FormItem>
-                  <FormLabel>PCCO #</FormLabel>
-                  <Input value="Auto-generated on save" disabled />
-                </FormItem>
-
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Change order title" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                )}
 
                 <FormField
                   control={form.control}
@@ -908,25 +966,6 @@ export default function NewPrimeContractPcoPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          value={field.value ?? ""}
-                          rows={4}
-                          placeholder="Describe the change order..."
-                        />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1318,6 +1357,24 @@ export default function NewPrimeContractPcoPage() {
                 className="[&_span]:text-primary"
               />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value ?? ""}
+                          rows={4}
+                          placeholder="Describe the change order..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="md:col-span-2">
                   <FileUploadField
                     label="Attachments"

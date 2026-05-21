@@ -76,6 +76,28 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
       );
     }
 
+    const { count: linkedChangeEventCount, error: linkedChangeEventError } =
+      await supabase
+        .from("change_event_pco_links")
+        .select("id", { count: "exact", head: true })
+        .eq("pco_id", pcoId)
+        .eq("pco_type", "prime");
+
+    if (linkedChangeEventError) {
+      return apiErrorResponse(linkedChangeEventError);
+    }
+
+    if (!linkedChangeEventCount) {
+      return NextResponse.json(
+        {
+          error: "Change Event required",
+          details:
+            "A PCO must be linked to at least one change event before it can be promoted to an official change order.",
+        },
+        { status: 409 },
+      );
+    }
+
     // Calculate total from line items
     const { data: lineItems } = await supabase
       .from("pco_line_items")

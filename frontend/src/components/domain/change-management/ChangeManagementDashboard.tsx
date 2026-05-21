@@ -42,20 +42,20 @@ const STAGE_CONFIG: Record<
 > = {
   change_event: {
     icon: FileText,
-    accent: "text-blue-600",
-    barColor: "bg-blue-500",
+    accent: "text-primary",
+    barColor: "bg-primary",
     href: (pid) => `/${pid}/change-events`,
   },
-  prime_co: {
+  potential_change_order: {
     icon: ScrollText,
-    accent: "text-amber-600",
-    barColor: "bg-amber-500",
-    href: (pid) => `/${pid}/change-orders`,
+    accent: "text-primary",
+    barColor: "bg-primary",
+    href: (pid) => `/${pid}/prime-contract-pcos`,
   },
-  commitment_co: {
+  official_change_order: {
     icon: FileCheck2,
-    accent: "text-green-600",
-    barColor: "bg-green-500",
+    accent: "text-primary",
+    barColor: "bg-primary",
     href: (pid) => `/${pid}/change-orders`,
   },
 };
@@ -104,10 +104,18 @@ function getItemHref(item: PipelineItem, projectId: string): string {
   if (item.stage === "change_event") {
     return `/${projectId}/change-events/${item.id.replace("ce-", "")}`;
   }
-  if (item.stage === "prime_co") {
-    return `/${projectId}/change-orders/prime/${item.id.replace("pco-", "")}`;
+  if (item.kind === "prime_pco") {
+    return `/${projectId}/prime-contract-pcos/${item.id.replace("prime-pco-", "")}`;
   }
-  // commitment_co — link to change orders list (no individual detail route)
+  if (item.kind === "commitment_pco") {
+    return `/${projectId}/commitment-pcos/${item.id.replace("commitment-pco-", "")}`;
+  }
+  if (item.kind === "prime_co") {
+    return `/${projectId}/change-orders/prime/${item.id.replace("prime-co-", "")}`;
+  }
+  if (item.kind === "commitment_co") {
+    return `/${projectId}/change-orders/commitment/${item.id.replace("commitment-co-", "")}`;
+  }
   return `/${projectId}/change-orders`;
 }
 
@@ -148,7 +156,7 @@ function PipelineFunnel({
                         config.accent,
                       )}
                     >
-                      <Icon className="h-4.5 w-4.5" />
+                      <Icon className="h-4 w-4" />
                     </div>
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -248,6 +256,11 @@ const WorkflowCard = React.memo(function WorkflowCard({
             </span>
           )}
         </div>
+        {item.stage === "potential_change_order" && (
+          <span className="text-xs text-muted-foreground">
+            {item.isConverted ? "Bundled into a CO" : "Awaiting formal CO"}
+          </span>
+        )}
       </Link>
     </motion.div>
   );
@@ -431,7 +444,7 @@ function ConversionMetrics({ metrics }: { metrics: ChangeManagementMetrics }) {
         className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3"
       >
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background">
-          <Zap className="h-4 w-4 text-amber-600" />
+          <Zap className="h-4 w-4 text-primary" />
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -448,7 +461,7 @@ function ConversionMetrics({ metrics }: { metrics: ChangeManagementMetrics }) {
         className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3"
       >
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background">
-          <Clock className="h-4 w-4 text-blue-600" />
+          <Clock className="h-4 w-4 text-primary" />
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -468,9 +481,9 @@ function ConversionMetrics({ metrics }: { metrics: ChangeManagementMetrics }) {
       >
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background">
           {metrics.netContractImpact >= 0 ? (
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-primary" />
           ) : (
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <TrendingDown className="h-4 w-4 text-destructive" />
           )}
         </div>
         <div>
@@ -534,8 +547,8 @@ export function ChangeManagementDashboard() {
       <KpiRow
         metrics={[
           { label: "Change Events", value: String(metrics.totalCEs) },
-          { label: "Prime COs", value: String(metrics.totalPrimeCOs) },
-          { label: "Commitment COs", value: String(metrics.totalCommitmentCOs) },
+          { label: "Potential Change Orders", value: String(metrics.totalPCOs) },
+          { label: "Official Change Orders", value: String(metrics.totalOfficialCOs) },
           {
             label: "Net Contract Impact",
             value: formatCurrency(metrics.netContractImpact),

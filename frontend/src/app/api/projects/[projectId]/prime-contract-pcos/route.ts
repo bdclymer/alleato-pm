@@ -136,6 +136,25 @@ export const GET = withApiGuardrails(
     // only references numeric potential_change_orders IDs. Use stored totals
     // until the UUID-compatible line-item table/migration is present.
     const lineItemTotals: Record<string, { count: number; amount: number }> = {};
+    const pcoIds = (pcos || []).map((pco) => pco.id);
+    const linkedChangeEventCounts: Record<string, number> = {};
+
+    if (pcoIds.length > 0) {
+      const { data: links, error: linksError } = await supabase
+        .from("change_event_pco_links")
+        .select("pco_id")
+        .in("pco_id", pcoIds)
+        .eq("pco_type", "prime");
+
+      if (linksError) {
+        return apiErrorResponse(linksError);
+      }
+
+      for (const link of links || []) {
+        linkedChangeEventCounts[link.pco_id] =
+          (linkedChangeEventCounts[link.pco_id] || 0) + 1;
+      }
+    }
 
     // Enrich PCOs with computed fields
     const enrichedPcos = (pcos || []).map((pco) => {
@@ -144,6 +163,7 @@ export const GET = withApiGuardrails(
         ...pco,
         line_items_count: totals.count,
         calculated_amount: pco.total_amount ?? totals.amount,
+        linked_change_events_count: linkedChangeEventCounts[pco.id] || 0,
       };
     });
 

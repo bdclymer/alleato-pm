@@ -26,7 +26,37 @@ export interface PrimeContractCO {
   updated_at: string | null;
 }
 
-export type PipelineStage = "change_event" | "prime_co" | "commitment_co";
+export interface PrimeContractPco {
+  id: string;
+  project_id: number;
+  prime_contract_id: string;
+  pco_number: string | null;
+  title: string;
+  status: string;
+  total_amount: number | null;
+  promoted_to_co_id: number | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface CommitmentPco {
+  id: string;
+  project_id: number;
+  commitment_id: string;
+  commitment_type: string;
+  pco_number: string | null;
+  title: string;
+  status: string;
+  total_amount: number | null;
+  promoted_to_co_id: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export type PipelineStage =
+  | "change_event"
+  | "potential_change_order"
+  | "official_change_order";
 
 export interface StageSummary {
   stage: PipelineStage;
@@ -40,16 +70,21 @@ export interface StageSummary {
 export interface PipelineItem {
   id: string;
   stage: PipelineStage;
+  kind?: "prime_pco" | "commitment_pco" | "prime_co" | "commitment_co";
   number: string;
   title: string;
   status: string;
   value: number;
   updatedAt: string;
+  sourceCount?: number;
+  isConverted?: boolean;
 }
 
 export interface ChangeManagementMetrics {
   totalCEs: number;
   openCEs: number;
+  totalPCOs: number;
+  totalOfficialCOs: number;
   totalPrimeCOs: number;
   approvedPrimeCOs: number;
   totalCommitmentCOs: number;
@@ -65,6 +100,14 @@ interface PrimeContractCOListResponse {
 
 interface CommitmentCOListResponse {
   data?: CommitmentCO[];
+}
+
+interface PrimePcoListResponse {
+  data?: PrimeContractPco[];
+}
+
+interface CommitmentPcoListResponse {
+  data?: CommitmentPco[];
 }
 
 // =============================================================================
@@ -114,6 +157,32 @@ function useCommitmentCOs(projectId: string) {
   });
 }
 
+function usePrimePcos(projectId: string) {
+  return useQuery<PrimeContractPco[]>({
+    queryKey: ["prime-contract-pcos", projectId],
+    queryFn: async () => {
+      const response = await apiFetch<PrimeContractPco[] | PrimePcoListResponse>(
+        `/api/projects/${projectId}/prime-contract-pcos`,
+      );
+      return Array.isArray(response) ? response : response.data ?? [];
+    },
+    enabled: !!projectId,
+  });
+}
+
+function useCommitmentPcos(projectId: string) {
+  return useQuery<CommitmentPco[]>({
+    queryKey: ["commitment-pcos", projectId],
+    queryFn: async () => {
+      const response = await apiFetch<CommitmentPco[] | CommitmentPcoListResponse>(
+        `/api/projects/${projectId}/commitment-pcos`,
+      );
+      return Array.isArray(response) ? response : response.data ?? [];
+    },
+    enabled: !!projectId,
+  });
+}
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -147,8 +216,9 @@ function ceToPipelineItem(ce: ChangeEvent): PipelineItem {
 
 function primeCOToPipelineItem(co: PrimeContractCO): PipelineItem {
   return {
-    id: `pco-${co.id}`,
-    stage: "prime_co",
+    id: `prime-co-${co.id}`,
+    stage: "official_change_order",
+    kind: "prime_co",
     number: co.pcco_number ?? `PCCO-${co.id}`,
     title: co.title ?? "Untitled",
     status: co.status ?? "Draft",
@@ -159,13 +229,42 @@ function primeCOToPipelineItem(co: PrimeContractCO): PipelineItem {
 
 function commitmentCOToPipelineItem(co: CommitmentCO): PipelineItem {
   return {
-    id: `cco-${co.id}`,
-    stage: "commitment_co",
+    id: `commitment-co-${co.id}`,
+    stage: "official_change_order",
+    kind: "commitment_co",
     number: co.change_order_number ?? `CCO-${co.id}`,
     title: co.title ?? "Untitled",
     status: co.status ?? "draft",
     value: co.amount ?? 0,
     updatedAt: co.updated_at ?? co.created_at ?? "",
+  };
+}
+
+function primePcoToPipelineItem(pco: PrimeContractPco): PipelineItem {
+  return {
+    id: `prime-pco-${pco.id}`,
+    stage: "potential_change_order",
+    kind: "prime_pco",
+    number: pco.pco_number ?? "Prime PCO",
+    title: pco.title ?? "Untitled",
+    status: pco.status ?? "draft",
+    value: pco.total_amount ?? 0,
+    updatedAt: pco.updated_at ?? pco.created_at ?? "",
+    isConverted: Boolean(pco.promoted_to_co_id),
+  };
+}
+
+function commitmentPcoToPipelineItem(pco: CommitmentPco): PipelineItem {
+  return {
+    id: `commitment-pco-${pco.id}`,
+    stage: "potential_change_order",
+    kind: "commitment_pco",
+    number: pco.pco_number ?? "Commitment PCO",
+    title: pco.title ?? "Untitled",
+    status: pco.status ?? "draft",
+    value: pco.total_amount ?? 0,
+    updatedAt: pco.updated_at ?? pco.created_at ?? "",
+    isConverted: Boolean(pco.promoted_to_co_id),
   };
 }
 
@@ -185,15 +284,27 @@ export function useChangeManagement(projectId: string) {
     usePrimeCOs(projectId);
   const { data: commitmentCOs, isLoading: commitmentCOsLoading } =
     useCommitmentCOs(projectId);
+  const { data: primePcos, isLoading: primePcosLoading } =
+    usePrimePcos(projectId);
+  const { data: commitmentPcos, isLoading: commitmentPcosLoading } =
+    useCommitmentPcos(projectId);
 
-  const isLoading = cesLoading || primeCOsLoading || commitmentCOsLoading;
+  const isLoading =
+    cesLoading ||
+    primeCOsLoading ||
+    commitmentCOsLoading ||
+    primePcosLoading ||
+    commitmentPcosLoading;
 
   const allCEs = changeEvents ?? [];
   const allPrimeCOs = primeCOs ?? [];
   const allCommitmentCOs = commitmentCOs ?? [];
+  const allPrimePcos = primePcos ?? [];
+  const allCommitmentPcos = commitmentPcos ?? [];
 
   const metrics: ChangeManagementMetrics = useMemo(() => {
     const openCEs = allCEs.filter(isOpenCE).length;
+    const allPcos = [...allPrimePcos, ...allCommitmentPcos];
     const approvedPrime = allPrimeCOs.filter(isApprovedPrimeCO);
     const approvedCommitment = allCommitmentCOs.filter(isApprovedCommitmentCO);
     const netImpact = approvedPrime.reduce(
@@ -221,6 +332,8 @@ export function useChangeManagement(projectId: string) {
     return {
       totalCEs: allCEs.length,
       openCEs,
+      totalPCOs: allPcos.length,
+      totalOfficialCOs: allPrimeCOs.length + allCommitmentCOs.length,
       totalPrimeCOs: allPrimeCOs.length,
       approvedPrimeCOs: approvedPrime.length,
       totalCommitmentCOs: allCommitmentCOs.length,
@@ -229,14 +342,19 @@ export function useChangeManagement(projectId: string) {
       conversionRate,
       avgCycleTimeDays: avgCycle !== null ? Math.round(avgCycle) : null,
     };
-  }, [allCEs, allPrimeCOs, allCommitmentCOs]);
+  }, [allCEs, allPrimeCOs, allCommitmentCOs, allPrimePcos, allCommitmentPcos]);
 
   const stages: StageSummary[] = useMemo(() => {
     const ceItems = allCEs.map(ceToPipelineItem).sort(sortByDate);
+    const pcoItems = [
+      ...allPrimePcos.map(primePcoToPipelineItem),
+      ...allCommitmentPcos.map(commitmentPcoToPipelineItem),
+    ].sort(sortByDate);
     const primeItems = allPrimeCOs.map(primeCOToPipelineItem).sort(sortByDate);
     const commitItems = allCommitmentCOs
       .map(commitmentCOToPipelineItem)
       .sort(sortByDate);
+    const officialItems = [...primeItems, ...commitItems].sort(sortByDate);
 
     return [
       {
@@ -248,27 +366,31 @@ export function useChangeManagement(projectId: string) {
         items: ceItems,
       },
       {
-        stage: "prime_co" as const,
-        label: "Prime Contract COs",
-        total: allPrimeCOs.length,
-        active: allPrimeCOs.filter(isApprovedPrimeCO).length,
-        value: primeItems.reduce((s, i) => s + i.value, 0),
-        items: primeItems,
+        stage: "potential_change_order" as const,
+        label: "Potential Change Orders",
+        total: pcoItems.length,
+        active: pcoItems.filter((item) => !item.isConverted).length,
+        value: pcoItems.reduce((s, i) => s + i.value, 0),
+        items: pcoItems,
       },
       {
-        stage: "commitment_co" as const,
-        label: "Commitment COs",
-        total: allCommitmentCOs.length,
-        active: allCommitmentCOs.filter(isApprovedCommitmentCO).length,
-        value: commitItems.reduce((s, i) => s + i.value, 0),
-        items: commitItems,
+        stage: "official_change_order" as const,
+        label: "Official Change Orders",
+        total: officialItems.length,
+        active:
+          allPrimeCOs.filter(isApprovedPrimeCO).length +
+          allCommitmentCOs.filter(isApprovedCommitmentCO).length,
+        value: officialItems.reduce((s, i) => s + i.value, 0),
+        items: officialItems,
       },
     ];
-  }, [allCEs, allPrimeCOs, allCommitmentCOs]);
+  }, [allCEs, allPrimeCOs, allCommitmentCOs, allPrimePcos, allCommitmentPcos]);
 
   const recentActivity: PipelineItem[] = useMemo(() => {
     const all = [
       ...allCEs.map(ceToPipelineItem),
+      ...allPrimePcos.map(primePcoToPipelineItem),
+      ...allCommitmentPcos.map(commitmentPcoToPipelineItem),
       ...allPrimeCOs.map(primeCOToPipelineItem),
       ...allCommitmentCOs.map(commitmentCOToPipelineItem),
     ];
@@ -276,7 +398,7 @@ export function useChangeManagement(projectId: string) {
       .filter((i) => i.updatedAt)
       .sort(sortByDate)
       .slice(0, 10);
-  }, [allCEs, allPrimeCOs, allCommitmentCOs]);
+  }, [allCEs, allPrimeCOs, allCommitmentCOs, allPrimePcos, allCommitmentPcos]);
 
   return { isLoading, metrics, stages, recentActivity };
 }

@@ -415,6 +415,31 @@ export default function NewCommitmentPcoPage() {
     !isLoadingChangeEvents &&
     changeEvents.length !== changeEventIds.length;
 
+  if (!hasSourceChangeEvents) {
+    return (
+      <PageShell
+        variant="form"
+        title="Create Commitment PCO"
+        description="Commitment PCOs must start from a linked change event."
+        onBack={() => router.back()}
+        actions={
+          <Button
+            size="sm"
+            onClick={() => router.push(`/${projectId}/change-events/new`)}
+          >
+            New Change Event
+          </Button>
+        }
+      >
+        <InfoAlert variant="info" className="text-sm">
+          Start with a change event, then use Price Impact or Add to Commitment
+          PCO from the selected event. Direct PCO creation is disabled for the
+          standard workflow.
+        </InfoAlert>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell
       variant="form"

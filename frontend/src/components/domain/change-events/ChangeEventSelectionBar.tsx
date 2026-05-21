@@ -43,7 +43,7 @@ export function ChangeEventSelectionBar({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5">
-                Add to
+                Price Impact
                 <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
@@ -76,7 +76,7 @@ export function ChangeEventSelectionBar({
                   );
                 }}
               >
-                Add to Commitment Change Order
+                Create Commitment PCO
               </DropdownMenuItem>
 
               <DropdownMenuItem
@@ -87,7 +87,7 @@ export function ChangeEventSelectionBar({
                   );
                 }}
               >
-                Add to Prime Contract PCO
+                Create Prime Contract PCO
               </DropdownMenuItem>
 
               {onAddToBudgetChange && (

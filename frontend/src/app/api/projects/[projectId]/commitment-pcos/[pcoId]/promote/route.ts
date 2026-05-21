@@ -69,6 +69,28 @@ export const POST = withApiGuardrails(
       );
     }
 
+    const { count: linkedChangeEventCount, error: linkedChangeEventError } =
+      await supabase
+        .from("change_event_pco_links")
+        .select("id", { count: "exact", head: true })
+        .eq("pco_id", pcoId)
+        .eq("pco_type", "commitment");
+
+    if (linkedChangeEventError) {
+      return apiErrorResponse(linkedChangeEventError);
+    }
+
+    if (!linkedChangeEventCount) {
+      return NextResponse.json(
+        {
+          error: "Change Event required",
+          details:
+            "A PCO must be linked to at least one change event before it can be promoted to an official change order.",
+        },
+        { status: 409 },
+      );
+    }
+
     // Generate a change order number
     // Count existing CCOs for this commitment to build the number
     const { count } = await supabase

@@ -76,6 +76,26 @@ export const POST = withApiGuardrails(
       );
     }
 
+    const { data: linkedRows, error: linkedRowsError } = await supabase
+      .from("change_event_pco_links")
+      .select("pco_id")
+      .in("pco_id", pcoIds)
+      .eq("pco_type", "commitment");
+
+    if (linkedRowsError) return apiErrorResponse(linkedRowsError);
+
+    const linkedPcoIds = new Set((linkedRows || []).map((row) => row.pco_id));
+    const unlinkedPco = pcos.find((pco) => !linkedPcoIds.has(pco.id));
+    if (unlinkedPco) {
+      return NextResponse.json(
+        {
+          error: "Cannot promote selected PCOs",
+          details: `PCO ${unlinkedPco.pco_number} is not linked to a change event`,
+        },
+        { status: 409 },
+      );
+    }
+
     const commitmentIds = [...new Set(pcos.map((pco) => pco.commitment_id))];
     const commitmentTypes = [...new Set(pcos.map((pco) => pco.commitment_type))];
     if (commitmentIds.length !== 1 || commitmentTypes.length !== 1) {
@@ -159,4 +179,3 @@ export const POST = withApiGuardrails(
     );
     },
 );
-

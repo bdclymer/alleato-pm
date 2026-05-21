@@ -625,16 +625,17 @@ export default function PrimeContractPcosPage(): ReactElement {
       <UnifiedTablePage
         header={{
           title: "Prime Contract PCOs",
-          description: "Potential change orders for prime contracts.",
+          description:
+            "Potential change orders are priced from linked change events. Start with a change event, then price the owner impact here.",
           actions: (
             <Button
               size="sm"
-              onClick={() => router.push(`/${projectId}/prime-contract-pcos/new`)}
+              onClick={() => router.push(`/${projectId}/change-events/new`)}
               className="gap-2"
               data-testid="pco-new-button"
             >
               <Plus />
-              Create
+              New Change Event
             </Button>
           ),
         }}
@@ -704,15 +705,16 @@ export default function PrimeContractPcosPage(): ReactElement {
         }}
         emptyState={{
           title: "No PCOs found",
-          description: "Create your first potential change order to get started.",
+          description:
+            "Create a change event first, then price it into a potential change order.",
           filteredDescription: "Try adjusting your search or filters.",
           isFiltered,
           action: (
             <Button
               size="sm"
-              onClick={() => router.push(`/${projectId}/prime-contract-pcos/new`)}
+              onClick={() => router.push(`/${projectId}/change-events/new`)}
             >
-              Create PCO
+              New Change Event
             </Button>
           ),
         }}
