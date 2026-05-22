@@ -400,7 +400,7 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
                       <TableHead>Time</TableHead>
                       <TableHead>Delay</TableHead>
                       <TableHead>Location</TableHead>
-                      <TableHead>Sky</TableHead>
+                      <TableHead className="min-w-32">Sky</TableHead>
                       <TableHead>Temp</TableHead>
                       <TableHead>Precipitation</TableHead>
                       <TableHead>Wind</TableHead>
