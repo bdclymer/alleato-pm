@@ -59,6 +59,7 @@ import { DataTable } from "@/components/tables/DataTable";
 import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
 import { CompanyDetailSheet } from "@/components/domain/directory/CompanyDetailSheet";
 import { ProjectTeamDialog } from "@/components/domain/directory/ProjectTeamDialog";
+import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
@@ -1548,6 +1549,7 @@ function ContactPickerCell({
   const [open, setOpen] = React.useState(false);
   const [people, setPeople] = React.useState<SubcontractorContact[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [addContactOpen, setAddContactOpen] = React.useState(false);
   const router = useRouter();
   const updateMutation = useUpdateProjectCompany(projectId);
 
@@ -1637,6 +1639,16 @@ function ContactPickerCell({
               )}
               <CommandGroup>
                 <CommandItem
+                  value="__add_new_contact__"
+                  onSelect={() => {
+                    setOpen(false);
+                    setAddContactOpen(true);
+                  }}
+                >
+                  <UserPlus className="mr-2 h-4 w-4 shrink-0" />
+                  Add new contact for {companyName}
+                </CommandItem>
+                <CommandItem
                   value="__manage_company_contacts__"
                   onSelect={() => {
                     setOpen(false);
@@ -1651,6 +1663,26 @@ function ContactPickerCell({
           </Command>
         </PopoverContent>
       </Popover>
+
+      <ContactFormSheet
+        open={addContactOpen}
+        onOpenChange={setAddContactOpen}
+        defaultCompanyId={companyId}
+        onContactCreated={async ({ id }) => {
+          await handleSelect(id);
+        }}
+        onSuccess={() => {
+          const supabase = createClient();
+          supabase
+            .from("people")
+            .select("id, first_name, last_name, email, phone_business, phone_mobile")
+            .eq("company_id", companyId)
+            .order("first_name", { ascending: true })
+            .then(({ data }) => {
+              setPeople((data ?? []) as SubcontractorContact[]);
+            });
+        }}
+      />
     </>
   );
 }
