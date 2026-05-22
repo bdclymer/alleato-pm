@@ -7,6 +7,7 @@ import {
   Camera,
   Check,
   CirclePause,
+  Clock,
   Loader2,
   Mic,
   MicOff,
@@ -30,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,13 @@ import {
   type SiteScribeTranscriptSegment,
 } from "@/lib/site-scribe/types";
 
-type SessionState = "idle" | "listening" | "thinking" | "speaking" | "paused" | "review";
+type SessionState =
+  | "idle"
+  | "listening"
+  | "thinking"
+  | "speaking"
+  | "paused"
+  | "review";
 
 interface SiteScribeClientProps {
   projectId: number;
@@ -105,20 +111,64 @@ function confidenceTone(value?: number) {
 
 function Confidence({ value }: { value?: number }) {
   const percent = Math.round((value ?? 0) * 100);
-  return <span className={cn("text-xs font-semibold", confidenceTone(value))}>{percent}%</span>;
+  return (
+    <span className={cn("text-xs font-semibold", confidenceTone(value))}>
+      {percent}%
+    </span>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function SectionLabel({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </div>
+      {description ? (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      ) : null}
+    </div>
+  );
 }
 
 function mergeStructuredLog(
   current: SiteScribeStructuredLog,
   patch: Partial<SiteScribeStructuredLog>,
 ): SiteScribeStructuredLog {
-  const bySub = new Map(current.manpower.map((row) => [row.subcontractorName.toLowerCase(), row]));
+  const bySub = new Map(
+    current.manpower.map((row) => [row.subcontractorName.toLowerCase(), row]),
+  );
   patch.manpower?.forEach((row) => {
     const key = row.subcontractorName.toLowerCase();
-    bySub.set(key, { ...bySub.get(key), ...row, id: bySub.get(key)?.id ?? row.id ?? newId() });
+    bySub.set(key, {
+      ...bySub.get(key),
+      ...row,
+      id: bySub.get(key)?.id ?? row.id ?? newId(),
+    });
   });
 
-  const existingNoteText = new Set(current.notes.map((note) => note.text.toLowerCase()));
+  const existingNoteText = new Set(
+    current.notes.map((note) => note.text.toLowerCase()),
+  );
   const mergedNotes = [
     ...current.notes,
     ...(patch.notes ?? [])
@@ -171,11 +221,17 @@ function buildHeuristicPatch(
           ? "Safety"
           : lower.includes("visitor") || lower.includes("owner came")
             ? "Visitor"
-            : lower.includes("issue") || lower.includes("problem") || lower.includes("delay")
+            : lower.includes("issue") ||
+                lower.includes("problem") ||
+                lower.includes("delay")
               ? "Issue"
-              : lower.includes("equipment") || lower.includes("lift") || lower.includes("excavator")
+              : lower.includes("equipment") ||
+                  lower.includes("lift") ||
+                  lower.includes("excavator")
                 ? "Equipment"
-                : lower.includes("progress") || lower.includes("installed") || lower.includes("finished")
+                : lower.includes("progress") ||
+                    lower.includes("installed") ||
+                    lower.includes("finished")
                   ? "Progress"
                   : null;
 
@@ -204,8 +260,11 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
   const [durationMs, setDurationMs] = React.useState(0);
   const [pendingSyncCount, setPendingSyncCount] = React.useState(0);
   const [isOnline, setIsOnline] = React.useState(true);
-  const [transcript, setTranscript] = React.useState<SiteScribeTranscriptSegment[]>([]);
-  const [structuredLog, setStructuredLog] = React.useState<SiteScribeStructuredLog>(emptyStructuredLog);
+  const [transcript, setTranscript] = React.useState<
+    SiteScribeTranscriptSegment[]
+  >([]);
+  const [structuredLog, setStructuredLog] =
+    React.useState<SiteScribeStructuredLog>(emptyStructuredLog);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const peerRef = React.useRef<RTCPeerConnection | null>(null);
@@ -230,7 +289,12 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
   }, []);
 
   React.useEffect(() => {
-    if (!startedAtRef.current || sessionState === "idle" || sessionState === "review") return;
+    if (
+      !startedAtRef.current ||
+      sessionState === "idle" ||
+      sessionState === "review"
+    )
+      return;
     const timer = window.setInterval(() => {
       setDurationMs(Date.now() - (startedAtRef.current ?? Date.now()));
     }, 1000);
@@ -241,25 +305,30 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
     return startedAtRef.current ? Date.now() - startedAtRef.current : 0;
   }, []);
 
-  const pairPhotos = React.useCallback((photos: SiteScribePhoto[], notes: SiteScribeNote[]) => {
-    return photos.map((photo) => {
-      const closest = notes
-        .map((note) => ({
-          note,
-          distance: Math.abs((note.sourceAudioStartMs ?? 0) - photo.audioTimestampMs),
-        }))
-        .sort((a, b) => a.distance - b.distance)[0];
+  const pairPhotos = React.useCallback(
+    (photos: SiteScribePhoto[], notes: SiteScribeNote[]) => {
+      return photos.map((photo) => {
+        const closest = notes
+          .map((note) => ({
+            note,
+            distance: Math.abs(
+              (note.sourceAudioStartMs ?? 0) - photo.audioTimestampMs,
+            ),
+          }))
+          .sort((a, b) => a.distance - b.distance)[0];
 
-      if (!closest || closest.distance > 120000) return photo;
+        if (!closest || closest.distance > 120000) return photo;
 
-      return {
-        ...photo,
-        pairedNoteId: closest.note.id,
-        pairingConfidence: Math.max(0.35, 1 - closest.distance / 120000),
-        caption: photo.caption || closest.note.text.slice(0, 120),
-      };
-    });
-  }, []);
+        return {
+          ...photo,
+          pairedNoteId: closest.note.id,
+          pairingConfidence: Math.max(0.35, 1 - closest.distance / 120000),
+          caption: photo.caption || closest.note.text.slice(0, 120),
+        };
+      });
+    },
+    [],
+  );
 
   const applyStructuredPatch = React.useCallback(
     (patch: Partial<SiteScribeStructuredLog>) => {
@@ -295,13 +364,15 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
     (event: RealtimeEvent) => {
       if (event.type?.includes("speech_started")) setSessionState("listening");
       if (event.type?.includes("response.created")) setSessionState("thinking");
-      if (event.type?.includes("response.audio.delta")) setSessionState("speaking");
+      if (event.type?.includes("response.audio.delta"))
+        setSessionState("speaking");
       if (event.type?.includes("response.done")) setSessionState("listening");
 
       const transcriptText =
         event.transcript ??
         event.text ??
-        event.response?.output?.flatMap((output) => output.content ?? [])
+        event.response?.output
+          ?.flatMap((output) => output.content ?? [])
           .map((content) => content.transcript ?? content.text ?? "")
           .join(" ");
 
@@ -313,13 +384,21 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
         addTranscript("crew", transcriptText);
       }
 
-      if (transcriptText && event.type?.includes("response.audio_transcript.done")) {
+      if (
+        transcriptText &&
+        event.type?.includes("response.audio_transcript.done")
+      ) {
         addTranscript("assistant", transcriptText);
       }
 
-      if (event.type?.includes("function_call_arguments.done") && event.name === "capture_daily_log_update") {
+      if (
+        event.type?.includes("function_call_arguments.done") &&
+        event.name === "capture_daily_log_update"
+      ) {
         try {
-          const parsed = JSON.parse(event.arguments ?? "{}") as Partial<SiteScribeStructuredLog>;
+          const parsed = JSON.parse(
+            event.arguments ?? "{}",
+          ) as Partial<SiteScribeStructuredLog>;
           applyStructuredPatch(parsed);
         } catch {
           toast.error("Site Scribe could not parse one AI extraction update.");
@@ -332,11 +411,15 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
   const startSession = async () => {
     try {
       setSessionState("thinking");
-      const tokenJson = await apiFetch<RealtimeSecretResponse>("/api/site-scribe/realtime-session", {
-        method: "POST",
-      });
+      const tokenJson = await apiFetch<RealtimeSecretResponse>(
+        "/api/site-scribe/realtime-session",
+        {
+          method: "POST",
+        },
+      );
       const clientSecret = tokenJson.value ?? tokenJson.client_secret?.value;
-      if (!clientSecret) throw new Error("Realtime session did not return a client secret.");
+      if (!clientSecret)
+        throw new Error("Realtime session did not return a client secret.");
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -382,10 +465,16 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
       );
 
       if (!sdpResponse.ok) throw new Error(await sdpResponse.text());
-      await peer.setRemoteDescription({ type: "answer", sdp: await sdpResponse.text() });
+      await peer.setRemoteDescription({
+        type: "answer",
+        sdp: await sdpResponse.text(),
+      });
     } catch (error) {
       setSessionState("idle");
-      toast.error(error instanceof Error ? error.message : "Site Scribe could not start.");
+      console.error("Site Scribe realtime session failed.", error);
+      toast.error(
+        "Site Scribe could not start. Check permissions and try again.",
+      );
       streamRef.current?.getTracks().forEach((track) => track.stop());
     }
   };
@@ -417,16 +506,23 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
     reader.readAsDataURL(file);
   };
 
-  const updateManpower = (id: string, patch: Partial<SiteScribeManpowerRow>) => {
+  const updateManpower = (
+    id: string,
+    patch: Partial<SiteScribeManpowerRow>,
+  ) => {
     setStructuredLog((current) => ({
       ...current,
-      manpower: current.manpower.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+      manpower: current.manpower.map((row) =>
+        row.id === id ? { ...row, ...patch } : row,
+      ),
     }));
   };
 
   const updateNote = (id: string, patch: Partial<SiteScribeNote>) => {
     setStructuredLog((current) => {
-      const notes = current.notes.map((note) => (note.id === id ? { ...note, ...patch } : note));
+      const notes = current.notes.map((note) =>
+        note.id === id ? { ...note, ...patch } : note,
+      );
       return { ...current, notes, photos: pairPhotos(current.photos, notes) };
     });
   };
@@ -461,10 +557,15 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
     };
 
     if (!navigator.onLine) {
-      localStorage.setItem(`site-scribe-queued-${payload.sessionId}`, JSON.stringify(payload));
+      localStorage.setItem(
+        `site-scribe-queued-${payload.sessionId}`,
+        JSON.stringify(payload),
+      );
       setPendingSyncCount((count) => count + 1);
       setIsSubmitting(false);
-      toast.warning("Offline. Site Scribe queued this log for sync when the connection returns.");
+      toast.warning(
+        "Offline. Site Scribe queued this log for sync when the connection returns.",
+      );
       return;
     }
 
@@ -479,7 +580,9 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
   };
 
   const syncQueuedLogs = async () => {
-    const keys = Object.keys(localStorage).filter((key) => key.startsWith("site-scribe-queued-"));
+    const keys = Object.keys(localStorage).filter((key) =>
+      key.startsWith("site-scribe-queued-"),
+    );
     let synced = 0;
     let failed = 0;
     for (const key of keys) {
@@ -487,24 +590,32 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
       if (!payload) continue;
       try {
         await apiFetch(`/api/projects/${projectId}/daily-log/site-scribe`, {
-        method: "POST",
-        body: payload,
+          method: "POST",
+          body: payload,
         });
         localStorage.removeItem(key);
         synced += 1;
       } catch (error) {
         failed += 1;
-        console.warn("Site Scribe queued sync failed; payload retained for retry.", error);
+        console.warn(
+          "Site Scribe queued sync failed; payload retained for retry.",
+          error,
+        );
       }
     }
     setPendingSyncCount(Math.max(0, keys.length - synced));
-    if (synced > 0) toast.success(`Synced ${synced} queued Site Scribe log${synced === 1 ? "" : "s"}.`);
-    if (failed > 0) toast.error(`${failed} queued Site Scribe log${failed === 1 ? "" : "s"} still need sync.`);
+    if (synced > 0)
+      toast.success(
+        `Synced ${synced} queued Site Scribe log${synced === 1 ? "" : "s"}.`,
+      );
+    if (failed > 0)
+      toast.error(
+        `${failed} queued Site Scribe log${failed === 1 ? "" : "s"} still need sync.`,
+      );
   };
 
   React.useEffect(() => {
     if (isOnline) void syncQueuedLogs();
-     
   }, [isOnline]);
 
   const statusLabel =
@@ -536,42 +647,66 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
         }}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
-        <section className="space-y-6">
-          <div className="rounded-lg bg-foreground p-5 text-background shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="text-sm font-medium text-background/80">Capture state</div>
-                <div className="mt-1 flex items-center gap-3 text-2xl font-semibold">
-                  {sessionState === "speaking" ? <Volume2 className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-                  {statusLabel}
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,0.65fr)]">
+        <section className="space-y-8">
+          <div className="space-y-6 bg-card p-6">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "flex size-12 items-center justify-center rounded-full",
+                      sessionState === "idle" || sessionState === "review"
+                        ? "bg-muted text-muted-foreground"
+                        : "bg-primary text-primary-foreground",
+                    )}
+                  >
+                    {sessionState === "speaking" ? (
+                      <Volume2 className="size-6" />
+                    ) : (
+                      <Mic className="size-6" />
+                    )}
+                  </span>
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Capture state
+                    </div>
+                    <div className="text-3xl font-semibold tracking-tight text-foreground">
+                      {statusLabel}
+                    </div>
+                  </div>
                 </div>
+                <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+                  Speak normally. Site Scribe listens, asks only for missing
+                  counts or hours, and keeps the log editable until approval.
+                </p>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div>
-                  <div className="text-xl font-semibold">{formatDuration(durationMs)}</div>
-                  <div className="text-xs text-background/60">Duration</div>
-                </div>
-                <div>
-                  <div className="text-xl font-semibold">{structuredLog.photos.length}</div>
-                  <div className="text-xs text-background/60">Photos</div>
-                </div>
-                <div>
-                  <div className="text-xl font-semibold">{pendingSyncCount}</div>
-                  <div className="text-xs text-background/60">Pending</div>
-                </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                <Metric label="Duration" value={formatDuration(durationMs)} />
+                <Metric label="Photos" value={structuredLog.photos.length} />
+                <Metric label="Queued" value={pendingSyncCount} />
               </div>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3">
               {sessionState === "idle" ? (
-                <Button size="lg" className="h-16 text-base" onClick={startSession}>
-                  <Mic />
+                <Button
+                  size="lg"
+                  className="h-16 text-base"
+                  onClick={startSession}
+                >
+                  <Mic className="size-5" />
                   Start talking
                 </Button>
               ) : (
-                <Button size="lg" className="h-16 text-base" variant="destructive" onClick={stopSession}>
-                  <Square />
+                <Button
+                  size="lg"
+                  className="h-16 text-base"
+                  variant="destructive"
+                  onClick={stopSession}
+                >
+                  <Square className="size-5" />
                   End session
                 </Button>
               )}
@@ -581,68 +716,94 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
                 className="h-16 text-base"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Camera />
+                <Camera className="size-5" />
                 Capture photo
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="h-16 border-background/20 bg-foreground text-base text-background hover:bg-foreground/90"
-                onClick={() => setSessionState(sessionState === "paused" ? "listening" : "paused")}
+                className="h-16 text-base"
+                onClick={() =>
+                  setSessionState(
+                    sessionState === "paused" ? "listening" : "paused",
+                  )
+                }
                 disabled={sessionState === "idle" || sessionState === "review"}
               >
-                {sessionState === "paused" ? <MicOff /> : <CirclePause />}
+                {sessionState === "paused" ? (
+                  <MicOff className="size-5" />
+                ) : (
+                  <CirclePause className="size-5" />
+                )}
                 {sessionState === "paused" ? "Resume" : "Pause"}
               </Button>
             </div>
 
             {!isOnline ? (
-              <InfoAlert variant="warning" className="mt-4">
+              <InfoAlert variant="warning">
                 <WifiOff className="h-4 w-4" />
                 Offline mode: audio and photos stay local until reconnect.
               </InfoAlert>
             ) : null}
           </div>
 
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <SectionRuleHeading label="Live transcript" className="mb-0 pb-0" />
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <SectionLabel
+                title="Live transcript"
+                description="Required audit trail of what the AI heard."
+              />
               <Badge variant="outline">{transcript.length} segments</Badge>
             </div>
-            <div className="min-h-96 space-y-3 rounded-lg border bg-background p-4">
+            <div className="min-h-96 bg-card">
               {transcript.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Start the session and speak naturally. The transcript appears here so the crew can
-                  correct what Site Scribe heard before submission.
-                </p>
+                <div className="flex min-h-96 items-center justify-center px-6 text-center">
+                  <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+                    Start the session and speak naturally. Transcript rows
+                    appear here with speaker and timestamp.
+                  </p>
+                </div>
               ) : (
-                transcript.map((segment) => (
-                  <div key={segment.id} className="grid gap-1 border-b pb-3 last:border-b-0">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant={segment.speaker === "crew" ? "secondary" : "outline"}>
-                        {segment.speaker === "crew" ? "Crew" : "AI"}
-                      </Badge>
-                      {formatDuration(segment.startMs)}
+                <div className="divide-y divide-border/50">
+                  {transcript.map((segment) => (
+                    <div key={segment.id} className="grid gap-2 px-4 py-4">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Badge
+                          variant={
+                            segment.speaker === "crew" ? "secondary" : "outline"
+                          }
+                        >
+                          {segment.speaker === "crew" ? "Crew" : "AI"}
+                        </Badge>
+                        <Clock className="size-3" />
+                        {formatDuration(segment.startMs)}
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground">
+                        {segment.text}
+                      </p>
                     </div>
-                    <p className="text-sm leading-6">{segment.text}</p>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </section>
         </section>
 
-        <section className="space-y-6">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <SectionRuleHeading label="Structured log" className="mb-0 pb-0" />
-              <p className="text-sm text-muted-foreground">Review and edit before approval.</p>
-            </div>
+        <section className="space-y-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between xl:flex-col xl:items-stretch">
+            <SectionLabel
+              title="Structured log"
+              description={
+                sessionState === "review"
+                  ? "Approve only after edits are complete."
+                  : "Extraction updates while the crew speaks."
+              }
+            />
             <Input
               type="date"
               value={logDate}
               onChange={(event) => setLogDate(event.target.value)}
-              className="w-40"
+              className="h-11 sm:w-44 xl:w-full"
             />
           </div>
 
@@ -651,16 +812,19 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
             <Textarea
               value={structuredLog.summary}
               onChange={(event) =>
-                setStructuredLog((current) => ({ ...current, summary: event.target.value }))
+                setStructuredLog((current) => ({
+                  ...current,
+                  summary: event.target.value,
+                }))
               }
               placeholder="AI-generated daily log summary"
-              className="min-h-24"
+              className="min-h-28"
             />
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <SectionRuleHeading label="Manpower" className="mb-0 pb-0" />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <SectionLabel title="Manpower" />
               <Button
                 size="sm"
                 variant="outline"
@@ -674,7 +838,11 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
                         subcontractorName: "",
                         workerCount: null,
                         hoursWorked: null,
-                        confidence: { subcontractorName: 0, workerCount: 0, hoursWorked: 0 },
+                        confidence: {
+                          subcontractorName: 0,
+                          workerCount: 0,
+                          hoursWorked: 0,
+                        },
                       },
                     ],
                   }))
@@ -683,29 +851,41 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
                 Add row
               </Button>
             </div>
-            <div className="space-y-3">
+            <div className="divide-y divide-border/50 bg-card">
               {structuredLog.manpower.map((row) => (
-                <div key={row.id} className="grid gap-3 rounded-md border p-3">
+                <div key={row.id} className="space-y-3 px-4 py-4">
                   <Input
                     value={row.subcontractorName}
-                    onChange={(event) => updateManpower(row.id, { subcontractorName: event.target.value })}
+                    onChange={(event) =>
+                      updateManpower(row.id, {
+                        subcontractorName: event.target.value,
+                      })
+                    }
                     placeholder="Subcontractor"
                   />
                   <div className="grid grid-cols-2 gap-3">
                     <Input
                       type="number"
                       value={row.workerCount ?? ""}
-                      onChange={(event) => updateManpower(row.id, { workerCount: Number(event.target.value) })}
+                      onChange={(event) =>
+                        updateManpower(row.id, {
+                          workerCount: Number(event.target.value),
+                        })
+                      }
                       placeholder="Workers"
                     />
                     <Input
                       type="number"
                       value={row.hoursWorked ?? ""}
-                      onChange={(event) => updateManpower(row.id, { hoursWorked: Number(event.target.value) })}
+                      onChange={(event) =>
+                        updateManpower(row.id, {
+                          hoursWorked: Number(event.target.value),
+                        })
+                      }
                       placeholder="Hours"
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex justify-between gap-3 text-xs text-muted-foreground">
                     <span>Sub / workers / hours confidence</span>
                     <span className="flex gap-2">
                       <Confidence value={row.confidence.subcontractorName} />
@@ -716,19 +896,25 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
                 </div>
               ))}
               {structuredLog.manpower.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No manpower rows captured yet.</p>
+                <p className="px-4 py-4 text-sm text-muted-foreground">
+                  No manpower rows captured yet.
+                </p>
               ) : null}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <SectionRuleHeading label="Notes" className="mb-0 pb-0" />
-            <div className="space-y-3">
+          <div className="space-y-4">
+            <SectionLabel title="Notes" />
+            <div className="divide-y divide-border/50 bg-card">
               {structuredLog.notes.map((note) => (
-                <div key={note.id} className="grid gap-3 rounded-md border p-3">
+                <div key={note.id} className="space-y-3 px-4 py-4">
                   <Select
                     value={note.tag}
-                    onValueChange={(value) => updateNote(note.id, { tag: value as SiteScribeNote["tag"] })}
+                    onValueChange={(value) =>
+                      updateNote(note.id, {
+                        tag: value as SiteScribeNote["tag"],
+                      })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Topic tag" />
@@ -743,10 +929,12 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
                   </Select>
                   <Textarea
                     value={note.text}
-                    onChange={(event) => updateNote(note.id, { text: event.target.value })}
+                    onChange={(event) =>
+                      updateNote(note.id, { text: event.target.value })
+                    }
                     className="min-h-20"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex justify-between gap-3 text-xs text-muted-foreground">
                     <span>Tag / text confidence</span>
                     <span className="flex gap-2">
                       <Confidence value={note.confidence.tag} />
@@ -756,41 +944,61 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
                 </div>
               ))}
               {structuredLog.notes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tagged notes captured yet.</p>
+                <p className="px-4 py-4 text-sm text-muted-foreground">
+                  No tagged notes captured yet.
+                </p>
               ) : null}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <SectionRuleHeading label="Photos paired to narration" className="mb-0 pb-0" />
-            <div className="grid grid-cols-2 gap-3">
-              {structuredLog.photos.map((photo) => (
-                <div key={photo.id} className="space-y-2">
-                  <Image
-                    src={photo.dataUrl}
-                    alt={photo.caption ?? "Captured site progress"}
-                    width={320}
-                    height={320}
-                    unoptimized
-                    className="aspect-square w-full rounded-md object-cover"
-                  />
-                  <div className="text-xs text-muted-foreground">
-                    {formatDuration(photo.audioTimestampMs)} · pair{" "}
-                    <Confidence value={photo.pairingConfidence ?? 0} />
+          <div className="space-y-4">
+            <SectionLabel title="Photos paired to narration" />
+            {structuredLog.photos.length === 0 ? (
+              <p className="bg-card px-4 py-4 text-sm text-muted-foreground">
+                Captured photos appear here with their audio timestamp.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {structuredLog.photos.map((photo) => (
+                  <div key={photo.id} className="space-y-2">
+                    <Image
+                      src={photo.dataUrl}
+                      alt={photo.caption ?? "Captured site progress"}
+                      width={320}
+                      height={320}
+                      unoptimized
+                      className="aspect-square w-full rounded-md object-cover"
+                    />
+                    <div className="text-xs text-muted-foreground">
+                      {formatDuration(photo.audioTimestampMs)} · pair{" "}
+                      <Confidence value={photo.pairingConfidence ?? 0} />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {sessionState === "review" ? (
-            <Button className="h-14 w-full text-base" onClick={submitApprovedLog} disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
-              Approve and submit daily log
+            <Button
+              className="h-14 w-full text-base"
+              onClick={submitApprovedLog}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <Send className="size-5" />
+              )}
+              Approve and submit
             </Button>
           ) : (
-            <Button variant="outline" className="h-14 w-full text-base" onClick={syncQueuedLogs}>
-              <RefreshCcw />
+            <Button
+              variant="outline"
+              className="h-14 w-full text-base"
+              onClick={syncQueuedLogs}
+            >
+              <RefreshCcw className="size-5" />
               Sync queued logs
             </Button>
           )}
@@ -798,7 +1006,7 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
           {sessionState === "review" ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Check className="h-4 w-4 text-success" />
-              Submission is blocked until the user explicitly approves this review.
+              Submission requires explicit approval.
             </div>
           ) : null}
         </section>
