@@ -58,11 +58,11 @@ describe("planRetrieval", () => {
     expect(plan.sources.sourceSpecificRag).toBeUndefined();
   });
 
-  it("app help question → app_help format with no retrieval", () => {
+  it("app help question → app_help format with App Expert retrieval", () => {
     const message = "How do I create a change order in the app?";
     const plan = planRetrieval({ message, messages: [userMsg(message)] });
     expect(plan.responseFormat).toBe("app_help");
-    expect(Object.keys(plan.sources).length).toBe(0);
+    expect(plan.sources.appExpert).toEqual({ question: message });
   });
 
   it("brandon daily update request → brandon_daily format", () => {

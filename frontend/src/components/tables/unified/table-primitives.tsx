@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/ds/status-badge";
+import { parseDisplayDate } from "@/lib/date-utils";
 
 export type TableBadgeVariant = "default" | "secondary" | "outline";
 
@@ -52,16 +53,6 @@ interface TableDateValueProps {
   className?: string;
 }
 
-/** Parse a date value treating date-only strings as local time (not UTC). */
-function parseDateValue(value: string | Date): Date {
-  if (value instanceof Date) return value;
-  // "YYYY-MM-DD" — treat as local midnight to avoid UTC-shift
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return new Date(`${value}T00:00:00`);
-  }
-  return new Date(value);
-}
-
 export function TableDateValue({
   value,
   showTime = false,
@@ -72,7 +63,7 @@ export function TableDateValue({
     return <span className={cn("text-xs text-muted-foreground", className)}>{emptyLabel}</span>;
   }
 
-  const parsed = parseDateValue(value);
+  const parsed = parseDisplayDate(value);
   if (Number.isNaN(parsed.getTime())) {
     return <span className={cn("text-xs text-muted-foreground", className)}>{emptyLabel}</span>;
   }

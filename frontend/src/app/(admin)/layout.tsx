@@ -1,9 +1,9 @@
 "use client";
 
-import { AppSidebar } from "@/components/nav/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { AppSidebar } from "@/components/nav/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 /**
  * Layout for admin pages.
@@ -21,7 +21,9 @@ export default function AdminLayout({
         <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
           <SiteHeader />
           <div className="flex flex-1 flex-col min-w-0 min-h-0">
-            <div className="flex-1">{children}</div>
+            <div className="flex-1">
+              {children}
+            </div>
             <SiteFooter />
           </div>
         </div>

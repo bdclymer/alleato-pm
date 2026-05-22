@@ -290,6 +290,65 @@ function renderRecentEmailInbox(raw: unknown): string {
   return renderCompactRecord(raw);
 }
 
+function renderAppExpertPacket(raw: unknown): string {
+  if (!raw || typeof raw !== "object") return "";
+  const record = raw as Record<string, unknown>;
+  const lines: string[] = [];
+
+  for (const key of ["mode", "orchestrator"]) {
+    const value = compactText(record[key], 240);
+    if (value) lines.push(`- ${key}: ${value}`);
+  }
+
+  const skillsLoaded = Array.isArray(record.skillsLoaded)
+    ? record.skillsLoaded.map((skill) => String(skill)).join(", ")
+    : compactText(record.skillsLoaded, 500);
+  if (skillsLoaded) lines.push(`- skillsLoaded: ${skillsLoaded}`);
+
+  const answer = compactText(record.answer, 2500);
+  if (answer) {
+    lines.push("", "## Backend Answer", answer);
+  }
+
+  const sources = Array.isArray(record.sources) ? record.sources.slice(0, 12) : [];
+  if (sources.length > 0) {
+    lines.push("", "## Sources");
+    sources.forEach((source, index) => {
+      if (!source || typeof source !== "object") return;
+      const sourceRecord = source as Record<string, unknown>;
+      const title = compactText(sourceRecord.title, 180) ?? `Source ${index + 1}`;
+      const sourceType = compactText(sourceRecord.sourceType, 80) ?? "unknown";
+      const route = compactText(sourceRecord.route, 120);
+      const filePath = compactText(sourceRecord.filePath, 180);
+      const detail = compactText(sourceRecord.detail, 360);
+      lines.push(
+        [
+          `${index + 1}. [${sourceType}] ${title}`,
+          route ? `   route: ${route}` : null,
+          filePath ? `   file: ${filePath}` : null,
+          detail ? `   detail: ${detail}` : null,
+        ].filter((line): line is string => Boolean(line)).join("\n"),
+      );
+    });
+  }
+
+  const trace = Array.isArray(record.toolTrace) ? record.toolTrace.slice(0, 8) : [];
+  if (trace.length > 0) {
+    lines.push("", "## Backend Trace");
+    for (const item of trace) {
+      if (!item || typeof item !== "object") continue;
+      const traceRecord = item as Record<string, unknown>;
+      const agent = compactText(traceRecord.agent, 120) ?? "unknown-agent";
+      const tool = compactText(traceRecord.tool, 120) ?? "unknown-tool";
+      const status = compactText(traceRecord.status, 80) ?? "unknown";
+      const detail = compactText(traceRecord.detail, 260);
+      lines.push(`- ${agent}/${tool}: ${status}${detail ? ` - ${detail}` : ""}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
 export function assembleSystemPromptFromContext(
   plan: RetrievalPlan,
   ctx: RetrievalContext,
@@ -363,6 +422,21 @@ export function assembleSystemPromptFromContext(
           "The server-side retrieval for this query found no matching records.",
           "Do NOT say 'no data available'. Instead, use your available tools to answer the question directly.",
           "Call the most relevant tool (e.g. getMeetingIntelligence, getMeetingsByDate, getActionItemsAndInsights, consultMicrosoftExecutiveAssistant) and report what you find.",
+        ].join("\n"),
+      );
+    }
+  }
+
+  if (ctx.appExpertPacket) {
+    const appExpert = renderAppExpertPacket(ctx.appExpertPacket);
+    if (appExpert) {
+      parts.push(
+        [
+          "# App Expert Packet",
+          "",
+          "This came from the backend read-only App Expert Deep Agents module. Use it for questions about app navigation, feature status, permissions, route ownership, and how Alleato PM works. Do not invent app behavior that is not supported by the sources below.",
+          "",
+          appExpert,
         ].join("\n"),
       );
     }

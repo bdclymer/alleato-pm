@@ -53,6 +53,10 @@ export default function RootLayout({
       className={`${inter.variable} font-sans`}
       data-scroll-behavior="smooth"
     >
+      <head>
+        <link rel="preconnect" href="https://cdn.velt.dev" />
+        <link rel="dns-prefetch" href="https://cdn.velt.dev" />
+      </head>
       <body
         className="font-sans antialiased text-foreground"
         suppressHydrationWarning

@@ -102,6 +102,19 @@ describe("intent router", () => {
     expect(shouldUsePacketFirstIntent(intent)).toBe(false);
   });
 
+  it("routes implementation and route-status app questions to app_help", () => {
+    const prompts = [
+      "What table powers the budget feature in the app?",
+      "Which page backs the directory workflow?",
+      "Is this feature implemented in Alleato PM?",
+      "Why can't I see the admin settings?",
+    ];
+
+    for (const prompt of prompts) {
+      expect(classifyAssistantIntent(prompt)).toBe("app_help");
+    }
+  });
+
   it("routes calendar invite prompts to the calendar action path before source lookup", () => {
     const prompts = [
       "Schedule a meeting with Brandon tomorrow at 2 and send an Outlook invite",

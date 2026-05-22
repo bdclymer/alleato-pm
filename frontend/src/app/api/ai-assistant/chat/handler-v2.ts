@@ -27,6 +27,7 @@ import {
   runPostResponseTasks,
   type MemoryUsageSummary,
 } from "@/lib/ai/bot-core";
+import { isPersonalTaskRegisterRequest } from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
@@ -82,6 +83,8 @@ type GeneratedTaskSummaryAnswer = {
   widget: TaskSummaryWidgetPayload;
   traceOutput: Record<string, unknown>;
 };
+
+const CLOSED_TASK_STATUSES = ["done", "completed", "cancelled", "canceled", "closed"];
 
 function microsoftAssistantBackendUrl(): string {
   const value = (
@@ -433,6 +436,19 @@ function isGeneratedTasksTodayRequest(message: string): boolean {
   return mentionsTasks && asksGenerated && mentionsToday;
 }
 
+function isBrandonTaskRegisterRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const mentionsBrandon = /\bbrandon(?:'s|s)?\b/.test(normalized);
+  const mentionsTasks = /\b(tasks?|to-?dos?|todos?|action items?|follow-?ups?|open loops?)\b/.test(
+    normalized,
+  );
+  return mentionsBrandon && mentionsTasks;
+}
+
+function shouldUsePersonalTaskRegisterFastPath(message: string): boolean {
+  return isPersonalTaskRegisterRequest(message) || isBrandonTaskRegisterRequest(message);
+}
+
 function getEasternDateString(date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
@@ -670,6 +686,150 @@ async function loadGeneratedTasksTodayAnswer(params: {
     startIso: range.startIso,
     endIso: range.endIso,
   });
+}
+
+async function resolveBrandonTaskOwnerIds(
+  supabase: SupabaseClient,
+): Promise<{
+  personIds: string[];
+  emails: string[];
+  names: string[];
+}> {
+  const { data, error } = await supabase
+    .from("people")
+    .select("id,first_name,last_name,email,person_type,status")
+    .ilike("email", "bclymer@alleatogroup.com")
+    .limit(5);
+
+  if (error) {
+    throw new Error(`Brandon task owner lookup failed: ${error.message}`);
+  }
+
+  const rows = (data ?? []) as Array<{
+    id?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+  }>;
+
+  return {
+    personIds: rows.map((row) => row.id).filter((id): id is string => Boolean(id)),
+    emails: [
+      "bclymer@alleatogroup.com",
+      ...rows.map((row) => row.email).filter((email): email is string => Boolean(email)),
+    ],
+    names: [
+      "Brandon Clymer",
+      ...rows
+        .map((row) => [row.first_name, row.last_name].filter(Boolean).join(" ").trim())
+        .filter(Boolean),
+    ],
+  };
+}
+
+async function loadPersonalTaskRegisterAnswer(params: {
+  supabase: SupabaseClient;
+  selectedProjectId?: number | null;
+  message: string;
+}): Promise<GeneratedTaskSummaryAnswer> {
+  const owner = await resolveBrandonTaskOwnerIds(params.supabase);
+  const orFilters = [
+    ...owner.personIds.map((id) => `assignee_person_id.eq.${id}`),
+    ...Array.from(new Set(owner.emails)).map((email) => `assignee_email.ilike.${email}`),
+    ...Array.from(new Set(owner.names)).map((name) => `assignee_name.ilike.%${name}%`),
+  ];
+
+  if (orFilters.length === 0) {
+    throw new Error("No Brandon task owner identity was available for task lookup.");
+  }
+
+  let query = params.supabase
+    .from("tasks")
+    .select(
+      `
+      id,
+      title,
+      description,
+      status,
+      due_date,
+      priority,
+      project_id,
+      assignee_name,
+      assignee_email,
+      source_system,
+      created_at,
+      updated_at,
+      file_name,
+      projects (id, name),
+      document_metadata:tasks_metadata_id_fkey (
+        id,
+        title,
+        source_system,
+        date,
+        captured_at,
+        created_at,
+        project_id
+      )
+    `,
+    )
+    .or(orFilters.join(","))
+    .not("status", "in", `(${CLOSED_TASK_STATUSES.map((status) => `"${status}"`).join(",")})`)
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(50);
+
+  if (params.selectedProjectId != null) {
+    query = query.eq("project_id", params.selectedProjectId);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`Personal task-register lookup failed: ${error.message}`);
+  }
+
+  const answer = createGeneratedTasksTodayAnswer({
+    rows: (data ?? []) as Record<string, unknown>[],
+    dateLabel: "Brandon open tasks",
+    startIso: "public.tasks direct lookup",
+    endIso: new Date().toISOString(),
+  });
+
+  const count = answer.widget.totalCount;
+  const contentLines = [
+    `I checked the Tasks page source of truth: \`public.tasks\` filtered to Brandon Clymer's open task owner identity.`,
+    "",
+    count === 0
+      ? "No open task rows are currently assigned to Brandon Clymer."
+      : `Found ${count} open Brandon task${count === 1 ? "" : "s"} in the Tasks table.`,
+    ...answer.widget.items.slice(0, 12).map((item) => {
+      const project = item.projectName ? ` | Project: ${item.projectName}` : "";
+      const due = item.dueDate ? ` | Due: ${formatShortDate(item.dueDate)}` : "";
+      const source = item.sourceTitle ? ` | Source: ${item.sourceTitle}` : "";
+      return `- **${item.title}**${project}${due}${source}`;
+    }),
+    "",
+    "This answer is a direct task-table lookup, not an executive briefing synthesis.",
+  ];
+
+  return {
+    content: contentLines.join("\n"),
+    widget: {
+      ...answer.widget,
+      id: "personal-task-register",
+      title: "Brandon open tasks",
+      subtitle: "Direct lookup from the Tasks page table",
+      dateLabel: "Open Tasks page rows",
+      emptyState: "No open task rows are currently assigned to Brandon Clymer.",
+    },
+    traceOutput: {
+      sourceOfTruth: "public.tasks",
+      filter: "Brandon Clymer task owner identity",
+      selectedProjectId: params.selectedProjectId ?? null,
+      message: params.message.slice(0, 240),
+      resultCount: count,
+      taskIds: answer.widget.items.map((item) => item.id),
+    },
+  };
 }
 
 function formatCmoWeeklyContentWorkflowResponse(
@@ -1211,6 +1371,139 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               tool_trace: [
                 {
                   tool: "getGeneratedTasksToday",
+                  input: {
+                    message: lastUserContent.slice(0, 240),
+                    selectedProjectId: args.selectedProjectId ?? null,
+                  },
+                  error: detail,
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+            },
+          });
+          responseAlreadyPersisted = true;
+        }
+        return;
+      }
+
+      if (shouldUsePersonalTaskRegisterFastPath(lastUserContent)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "knowledge",
+            message: "Checking the Tasks table for Brandon's open tasks",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+        }
+
+        try {
+          const answer = await loadPersonalTaskRegisterAnswer({
+            supabase: args.supabase,
+            selectedProjectId: args.selectedProjectId,
+            message: lastUserContent,
+          });
+          const dataPart = {
+            type: "data-assistant-widget",
+            id: "assistant-widget-personal-task-register",
+            data: { widget: answer.widget },
+          };
+          writer.write(dataPart as never);
+          writeTextResponse(
+            writer,
+            "strategist-personal-task-register-v1",
+            answer.content,
+          );
+
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content: answer.content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              retrieval_plan: {
+                intent: "task_followup",
+                reason: "personal_task_register_fast_path",
+                responseFormat: "task_register",
+                sources: ["public.tasks"],
+              },
+              tool_trace: [
+                {
+                  tool: "getPersonalTaskRegister",
+                  input: {
+                    message: lastUserContent.slice(0, 240),
+                    selectedProjectId: args.selectedProjectId ?? null,
+                  },
+                  output: answer.traceOutput,
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+              data_parts: [dataPart],
+            }) as Json,
+          });
+
+          await args.supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", args.sessionId)
+            .eq("user_id", args.user.id);
+          responseAlreadyPersisted = true;
+
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Brandon task register checked",
+              status: "success",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          const content = `I tried to check Brandon's Tasks page rows, but the task-register lookup failed: ${detail}`;
+          writeTextResponse(
+            writer,
+            "strategist-personal-task-register-error-v1",
+            content,
+          );
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "error",
+              message: "Brandon task register lookup failed",
+              status: "error",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: {
+              architecture: "retrieval-planner-v2",
+              retrieval_plan: {
+                intent: "task_followup",
+                reason: "personal_task_register_fast_path_error",
+                responseFormat: "task_register",
+                sources: ["public.tasks"],
+              },
+              tool_trace: [
+                {
+                  tool: "getPersonalTaskRegister",
                   input: {
                     message: lastUserContent.slice(0, 240),
                     selectedProjectId: args.selectedProjectId ?? null,
@@ -2146,7 +2439,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         }),
         executeRetrievalPlan(
           plan,
-          buildExecutorDeps({ supabase: args.supabase, userId: args.user.id }),
+          buildExecutorDeps({
+            supabase: args.supabase,
+            userId: args.user.id,
+            sessionId: args.sessionId,
+          }),
           { sessionId: args.sessionId, message: lastUserContent },
         ),
       ]);

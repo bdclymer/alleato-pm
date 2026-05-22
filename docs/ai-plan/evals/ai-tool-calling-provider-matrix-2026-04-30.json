@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-13T16:09:02.480Z",
+  "generatedAt": "2026-05-22T11:05:13.230Z",
   "prompt": "Use the getProjectSignal tool to identify the project id for Westfield Collective, then tell me the current risk in one sentence.",
   "environment": {
-    "hasAiGatewayApiKey": true,
+    "hasAiGatewayApiKey": false,
     "hasOpenAiApiKey": true,
     "gatewayModelId": "openai/gpt-5.4",
     "directModelId": "gpt-5.4"
@@ -17,90 +17,10 @@
       "providerPath": "ai_sdk_gateway_openai",
       "method": "generateText",
       "modelId": "openai/gpt-5.4",
-      "status": "pass",
-      "startedAt": "2026-05-13T16:08:39.956Z",
-      "finishedAt": "2026-05-13T16:08:46.936Z",
-      "durationMs": 6980,
-      "toolCallCount": 1,
-      "toolCallNames": [
-        "getProjectSignal"
-      ],
-      "toolResultCount": 1,
-      "toolExecutions": [
-        {
-          "toolName": "getProjectSignal",
-          "input": {
-            "projectName": "Westfield Collective"
-          },
-          "output": {
-            "projectName": "Westfield Collective",
-            "projectId": 43,
-            "risk": "TCO timeline and pending cost exposure need review before the next approval decision.",
-            "requestedProjectName": "Westfield Collective"
-          }
-        }
-      ],
-      "finalTextLength": 143,
-      "finalText": "Westfield Collective is project **43**; current risk: **TCO timeline and pending cost exposure need review before the next approval decision.**",
-      "finishReason": "stop",
-      "rawFinishReason": "stop",
-      "warnings": [],
-      "validationFailures": [],
-      "stepCount": 2,
-      "stepEvents": [
-        {
-          "event": "tool_call_start"
-        },
-        {
-          "event": "tool_call_finish",
-          "durationMs": 0.10320799999954033,
-          "error": null
-        },
-        {
-          "event": "step_finish",
-          "stepNumber": 0,
-          "finishReason": "tool-calls"
-        },
-        {
-          "event": "step_finish",
-          "stepNumber": 1,
-          "finishReason": "stop"
-        }
-      ],
-      "steps": [
-        {
-          "index": 0,
-          "finishReason": "tool-calls",
-          "rawFinishReason": "tool_calls",
-          "toolCallCount": 1,
-          "toolResultCount": 1,
-          "toolCallNames": [
-            "getProjectSignal"
-          ],
-          "textLength": 0,
-          "warnings": []
-        },
-        {
-          "index": 1,
-          "finishReason": "stop",
-          "rawFinishReason": "stop",
-          "toolCallCount": 0,
-          "toolResultCount": 0,
-          "toolCallNames": [],
-          "textLength": 143,
-          "warnings": []
-        }
-      ],
-      "error": null
-    },
-    {
-      "providerPath": "ai_sdk_direct_openai",
-      "method": "generateText",
-      "modelId": "gpt-5.4",
       "status": "fail",
-      "startedAt": "2026-05-13T16:08:46.936Z",
-      "finishedAt": "2026-05-13T16:08:54.371Z",
-      "durationMs": 7435,
+      "startedAt": "2026-05-22T11:05:10.980Z",
+      "finishedAt": "2026-05-22T11:05:12.070Z",
+      "durationMs": 1090,
       "toolCallCount": 0,
       "toolCallNames": [],
       "toolResultCount": 0,
@@ -115,9 +35,36 @@
       "stepEvents": [],
       "steps": [],
       "error": {
-        "name": "AI_RetryError",
-        "message": "Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
-        "stack": "AI_RetryError: Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\n    at _retryWithExponentialBackoff (/Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:2725:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async fn (/Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:4407:36)\n    at async /Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:2392:24\n    at async generateText (/Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:4246:12)"
+        "name": "AI_APICallError",
+        "message": "Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal",
+        "stack": "AI_APICallError: Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal\n    at /home/user/alleato-pm/frontend/node_modules/.pnpm/@ai-sdk+provider-utils@4.0.13_zod@4.3.6/node_modules/@ai-sdk/provider-utils/dist/index.js:2464:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async postToApi (/home/user/alleato-pm/frontend/node_modules/.pnpm/@ai-sdk+provider-utils@4.0.13_zod@4.3.6/node_modules/@ai-sdk/provider-utils/dist/index.js:2307:28)\n    at async OpenAIChatLanguageModel.doGenerate (/home/user/alleato-pm/frontend/node_modules/.pnpm/@ai-sdk+openai@3.0.25_zod@4.3.6/node_modules/@ai-sdk/openai/dist/index.js:849:9)\n    at async fn (/home/user/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:4449:36)"
+      }
+    },
+    {
+      "providerPath": "ai_sdk_direct_openai",
+      "method": "generateText",
+      "modelId": "gpt-5.4",
+      "status": "fail",
+      "startedAt": "2026-05-22T11:05:12.070Z",
+      "finishedAt": "2026-05-22T11:05:12.349Z",
+      "durationMs": 279,
+      "toolCallCount": 0,
+      "toolCallNames": [],
+      "toolResultCount": 0,
+      "toolExecutions": [],
+      "finalTextLength": 0,
+      "finalText": "",
+      "finishReason": null,
+      "rawFinishReason": null,
+      "warnings": [],
+      "validationFailures": [],
+      "stepCount": 0,
+      "stepEvents": [],
+      "steps": [],
+      "error": {
+        "name": "AI_APICallError",
+        "message": "Incorrect API key provided: sk-proj-********************************************************************************************************************************************************b7MA. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "stack": "AI_APICallError: Incorrect API key provided: sk-proj-********************************************************************************************************************************************************b7MA. You can find your API key at https://platform.openai.com/account/api-keys.\n    at /home/user/alleato-pm/frontend/node_modules/.pnpm/@ai-sdk+provider-utils@4.0.13_zod@4.3.6/node_modules/@ai-sdk/provider-utils/dist/index.js:2464:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async postToApi (/home/user/alleato-pm/frontend/node_modules/.pnpm/@ai-sdk+provider-utils@4.0.13_zod@4.3.6/node_modules/@ai-sdk/provider-utils/dist/index.js:2307:28)\n    at async OpenAIChatLanguageModel.doGenerate (/home/user/alleato-pm/frontend/node_modules/.pnpm/@ai-sdk+openai@3.0.25_zod@4.3.6/node_modules/@ai-sdk/openai/dist/index.js:849:9)\n    at async fn (/home/user/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:4449:36)"
       }
     },
     {
@@ -125,54 +72,9 @@
       "method": "streamText",
       "modelId": "openai/gpt-5.4",
       "status": "fail",
-      "startedAt": "2026-05-13T16:08:54.371Z",
-      "finishedAt": "2026-05-13T16:08:55.612Z",
-      "durationMs": 1241,
-      "toolCallCount": 0,
-      "toolCallNames": [],
-      "toolResultCount": 0,
-      "toolExecutions": [],
-      "finalTextLength": 0,
-      "finalText": "",
-      "finishReason": "other",
-      "rawFinishReason": "error",
-      "warnings": [],
-      "validationFailures": [
-        "Expected at least one getProjectSignal tool call.",
-        "Expected at least one getProjectSignal tool result.",
-        "Expected non-empty final text.",
-        "Finish reason was other."
-      ],
-      "stepCount": 1,
-      "stepEvents": [
-        {
-          "event": "step_finish",
-          "stepNumber": 0,
-          "finishReason": "other"
-        }
-      ],
-      "steps": [
-        {
-          "index": 0,
-          "finishReason": "other",
-          "rawFinishReason": "error",
-          "toolCallCount": 0,
-          "toolResultCount": 0,
-          "toolCallNames": [],
-          "textLength": 0,
-          "warnings": []
-        }
-      ],
-      "error": null
-    },
-    {
-      "providerPath": "ai_sdk_direct_openai",
-      "method": "streamText",
-      "modelId": "gpt-5.4",
-      "status": "fail",
-      "startedAt": "2026-05-13T16:08:55.612Z",
-      "finishedAt": "2026-05-13T16:09:02.480Z",
-      "durationMs": 6868,
+      "startedAt": "2026-05-22T11:05:12.349Z",
+      "finishedAt": "2026-05-22T11:05:12.519Z",
+      "durationMs": 170,
       "toolCallCount": 0,
       "toolCallNames": [],
       "toolResultCount": 0,
@@ -189,7 +91,61 @@
       "error": {
         "name": "AI_NoOutputGeneratedError",
         "message": "No output generated. Check the stream for errors.",
-        "stack": "AI_NoOutputGeneratedError: No output generated. Check the stream for errors.\n    at Object.flush (/Users/meganharrison/Documents/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:6864:103)\n    at invokePromiseCallback (node:internal/webstreams/util:172:10)\n    at Object.<anonymous> (node:internal/webstreams/util:177:23)\n    at transformStreamDefaultSinkCloseAlgorithm (node:internal/webstreams/transformstream:621:43)\n    at node:internal/webstreams/transformstream:379:11"
+        "stack": "AI_NoOutputGeneratedError: No output generated. Check the stream for errors.\n    at Object.flush (/home/user/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:6864:103)\n    at invokePromiseCallback (node:internal/webstreams/util:172:10)\n    at Object.<anonymous> (node:internal/webstreams/util:177:23)\n    at transformStreamDefaultSinkCloseAlgorithm (node:internal/webstreams/transformstream:621:43)\n    at node:internal/webstreams/transformstream:379:11"
+      }
+    },
+    {
+      "providerPath": "ai_sdk_direct_openai",
+      "method": "streamText",
+      "modelId": "gpt-5.4",
+      "status": "fail",
+      "startedAt": "2026-05-22T11:05:12.519Z",
+      "finishedAt": "2026-05-22T11:05:12.631Z",
+      "durationMs": 112,
+      "toolCallCount": 0,
+      "toolCallNames": [],
+      "toolResultCount": 0,
+      "toolExecutions": [],
+      "finalTextLength": 0,
+      "finalText": "",
+      "finishReason": null,
+      "rawFinishReason": null,
+      "warnings": [],
+      "validationFailures": [],
+      "stepCount": 0,
+      "stepEvents": [],
+      "steps": [],
+      "error": {
+        "name": "AI_NoOutputGeneratedError",
+        "message": "No output generated. Check the stream for errors.",
+        "stack": "AI_NoOutputGeneratedError: No output generated. Check the stream for errors.\n    at Object.flush (/home/user/alleato-pm/frontend/node_modules/.pnpm/ai@6.0.175_zod@4.3.6/node_modules/ai/dist/index.js:6864:103)\n    at invokePromiseCallback (node:internal/webstreams/util:172:10)\n    at Object.<anonymous> (node:internal/webstreams/util:177:23)\n    at transformStreamDefaultSinkCloseAlgorithm (node:internal/webstreams/transformstream:621:43)\n    at node:internal/webstreams/transformstream:379:11"
+      }
+    },
+    {
+      "providerPath": "raw_openai",
+      "method": "chat.completions",
+      "modelId": "gpt-5.4",
+      "status": "fail",
+      "startedAt": "2026-05-22T11:05:12.632Z",
+      "finishedAt": "2026-05-22T11:05:13.230Z",
+      "durationMs": 598,
+      "toolCallCount": 0,
+      "toolCallNames": [],
+      "toolResultCount": 0,
+      "toolExecutions": [],
+      "finalTextLength": 0,
+      "finalText": "",
+      "finishReason": null,
+      "rawFinishReason": null,
+      "warnings": [],
+      "validationFailures": [],
+      "stepCount": 0,
+      "stepEvents": [],
+      "steps": [],
+      "error": {
+        "name": "Error",
+        "message": "401 Incorrect API key provided: sk-proj-********************************************************************************************************************************************************b7MA. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "stack": "Error: 401 Incorrect API key provided: sk-proj-********************************************************************************************************************************************************b7MA. You can find your API key at https://platform.openai.com/account/api-keys.\n    at APIError.generate (/home/user/alleato-pm/frontend/node_modules/.pnpm/openai@6.17.0_ws@8.19.0_zod@4.3.6/node_modules/openai/core/error.js:48:20)\n    at OpenAI.makeStatusError (/home/user/alleato-pm/frontend/node_modules/.pnpm/openai@6.17.0_ws@8.19.0_zod@4.3.6/node_modules/openai/client.js:165:32)\n    at OpenAI.makeRequest (/home/user/alleato-pm/frontend/node_modules/.pnpm/openai@6.17.0_ws@8.19.0_zod@4.3.6/node_modules/openai/client.js:333:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async runRawOpenAICase (file:///home/user/alleato-pm/scripts/verify/verify_ai_tool_calling_provider_matrix.mjs:323:24)"
       }
     }
   ]

@@ -1,14 +1,24 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge, Tabs, TabsList, TabsTrigger } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
 import { appToast as toast } from "@/lib/toast/app-toast";
+import { cn } from "@/lib/utils";
 
 import { FeedbackDetail } from "./_components/feedback-detail";
 import { FeedbackQueue } from "./_components/feedback-queue";
+
+const VeltFeedbackComments = dynamic(
+  () => import("@/components/velt/VeltFeedbackComments").then((m) => m.VeltFeedbackComments),
+  { ssr: false },
+);
+const VeltCommentToolbar = dynamic(
+  () => import("@/components/velt/VeltFeedbackComments").then((m) => m.VeltCommentToolbar),
+  { ssr: false },
+);
 import {
   FEEDBACK_INBOX_TABS,
   LIST_SECTION_ORDER,
@@ -439,6 +449,10 @@ export default function FeedbackInboxPage() {
       fillHeight
       description="Review feedback, assign tools, and sync issues to GitHub."
     >
+      <VeltFeedbackComments
+        documentId="feedback-inbox"
+        documentName="Feedback Inbox"
+      />
       <div className="flex h-full min-h-0 bg-background">
         {mobileShowDetail && selected ? (
           <div className="flex flex-1 flex-col overflow-y-auto bg-background lg:hidden">
@@ -469,29 +483,32 @@ export default function FeedbackInboxPage() {
               {/* Unified filter bar — type axis on top, status axis below,
                   same component for both, tight stack. */}
               <div className="space-y-1 px-4 pb-4 pt-5">
-                <Tabs value={activeTab} onValueChange={handleInboxTabClick}>
-                  <TabsList>
-                    {FEEDBACK_INBOX_TABS.map((tab) => {
-                      const count =
-                        tab.value === "feature_requests"
-                          ? featureRequestItems.length
-                          : issueItems.length;
-                      return (
-                        <TabsTrigger key={tab.value} value={tab.value}>
-                          <span className="inline-flex items-center gap-1.5">
-                            {tab.label}
-                            <Badge
-                              variant="secondary"
-                              className="h-4 min-w-4 justify-center px-1 text-[10px] font-medium"
-                            >
-                              {count}
-                            </Badge>
-                          </span>
-                        </TabsTrigger>
-                      );
-                    })}
-                  </TabsList>
-                </Tabs>
+                <div className="flex items-center justify-between gap-2">
+                  <Tabs value={activeTab} onValueChange={handleInboxTabClick}>
+                    <TabsList>
+                      {FEEDBACK_INBOX_TABS.map((tab) => {
+                        const count =
+                          tab.value === "feature_requests"
+                            ? featureRequestItems.length
+                            : issueItems.length;
+                        return (
+                          <TabsTrigger key={tab.value} value={tab.value}>
+                            <span className="inline-flex items-center gap-1.5">
+                              {tab.label}
+                              <Badge
+                                variant="secondary"
+                                className="h-4 min-w-4 justify-center px-1 text-[10px] font-medium"
+                              >
+                                {count}
+                              </Badge>
+                            </span>
+                          </TabsTrigger>
+                        );
+                      })}
+                    </TabsList>
+                  </Tabs>
+                  <VeltCommentToolbar />
+                </div>
                 <Tabs value={filter} onValueChange={handleFilterTabClick}>
                   <TabsList>
                     {STATUS_FILTERS.map((statusFilter) => (

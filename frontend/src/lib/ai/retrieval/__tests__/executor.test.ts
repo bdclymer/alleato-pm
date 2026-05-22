@@ -27,6 +27,11 @@ function makeStubDeps(opts: {
     loadReusableBriefing: jest.fn(async () => null as never),
     runSourceSpecificRag: jest.fn(async () => null as never),
     buildBrandonDaily: jest.fn(async () => ({ packet: {} } as never)),
+    runAppExpert: jest.fn(async () => ({
+      answer: "Use the Change Orders page.",
+      mode: "deep_agents",
+      sources: [],
+    } as never)),
     resolveProjectFromQuery: jest.fn(async () =>
       opts.resolvedProjectId === undefined
         ? null
@@ -51,6 +56,31 @@ describe("executeRetrievalPlan", () => {
     expect(ctx.projectSnapshot).toBeUndefined();
     expect(ctx.semanticVectorResults).toBeUndefined();
     expect(ctx.warnings).toEqual([]);
+  });
+
+  it("runs app expert retrieval when requested", async () => {
+    const plan: RetrievalPlan = {
+      intent: "app_help",
+      responseFormat: "app_help",
+      sources: { appExpert: { question: "How do I create a change order in the app?" } },
+      selectedProjectId: 67,
+      reason: "app_help_intent",
+    };
+    const deps = makeStubDeps();
+    const ctx = await executeRetrievalPlan(plan, deps, {
+      currentRoute: "/67/change-orders",
+      message: "How do I create a change order in the app?",
+    });
+
+    expect(deps.runAppExpert).toHaveBeenCalledWith({
+      question: "How do I create a change order in the app?",
+      currentRoute: "/67/change-orders",
+      projectId: 67,
+    });
+    expect(ctx.appExpertPacket).toMatchObject({
+      answer: "Use the Change Orders page.",
+      mode: "deep_agents",
+    });
   });
 
   it("runs requested sources in parallel", async () => {

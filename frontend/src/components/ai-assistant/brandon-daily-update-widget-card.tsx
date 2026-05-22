@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ExternalLink, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SectionRuleHeading } from "@/components/layout";
+import { AiResponseFeedback } from "@/components/ai/AiResponseFeedback";
 import type {
   BrandonBriefItem,
   BrandonDailyUpdatePacket,
@@ -200,8 +201,29 @@ export function BrandonDailyUpdateWidgetCard({
             {startHere ??
               "What needs a decision, what is blocked on others, and what changed across the business."}
           </p>
-          <div className="mt-2 text-xs text-muted-foreground">
-            Updated {formatGeneratedAt(packet.generatedAt)} • last {packet.windowDays} day(s)
+          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+            <span>
+              Updated {formatGeneratedAt(packet.generatedAt)} • last {packet.windowDays} day(s)
+            </span>
+            <AiResponseFeedback
+              subject={{
+                surface: "daily_digest",
+                subjectType: "ceo_daily_brief",
+                subjectId: packet.generatedAt, // generation timestamp is the natural id
+                projectId: null,
+                sessionId: null,
+                contentSnapshot: {
+                  text: [
+                    brief?.startHere.join(" ") ?? "",
+                    ...(brief?.topExecutiveFocus ?? []).map((f) => f.item),
+                  ]
+                    .filter(Boolean)
+                    .join("\n\n")
+                    .slice(0, 1500),
+                  generatedAt: packet.generatedAt,
+                },
+              }}
+            />
           </div>
         </div>
         <Link

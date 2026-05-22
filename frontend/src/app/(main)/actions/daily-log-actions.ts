@@ -83,11 +83,25 @@ export async function createDailyLog(params: {
   weatherConditions?: unknown;
 }) {
   const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    return { error: `Could not verify daily log author: ${userError.message}` };
+  }
+
+  if (!user) {
+    return { error: "You must be signed in to create a daily log." };
+  }
+
   const { data, error } = await supabase
     .from("daily_logs")
     .insert({
       project_id: params.projectId,
       log_date: params.logDate,
+      created_by: user.id,
       weather_conditions: normalizeWeatherConditions(params.weatherConditions),
     })
     .select()
@@ -138,10 +152,19 @@ export async function saveDailyLogWithCoreSections(params: {
   const supabase = await createClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
+  if (userError) {
+    return { error: `Could not verify daily log author: ${userError.message}` };
+  }
+
+  if (!user) {
+    return { error: "You must be signed in to save a daily log." };
+  }
+
   const completedAt = params.status === "complete" ? new Date().toISOString() : null;
-  const completedBy = params.status === "complete" ? user?.id ?? null : null;
+  const completedBy = params.status === "complete" ? user.id : null;
 
   const weatherSummary = params.weather
     .map((entry) =>
@@ -167,7 +190,7 @@ export async function saveDailyLogWithCoreSections(params: {
         status: params.status,
         completed_at: completedAt,
         completed_by: completedBy,
-        created_by: user?.id ?? undefined,
+        created_by: user.id,
         general_notes: cleanString(params.generalNotes),
         weather_conditions: weatherSummary || null,
         updated_at: new Date().toISOString(),

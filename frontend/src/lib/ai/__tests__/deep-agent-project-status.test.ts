@@ -3,9 +3,11 @@ import {
   buildDeepAgentMemoryCandidateWidget,
   buildDeepAgentResearchEvidenceWidget,
   buildDeepAgentSourceEvidenceWidget,
+  fetchDeepAgentAppExpert,
   fetchDeepAgentResearch,
   fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentProjectStatus,
+  formatDeepAgentAppExpertContext,
   formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentExecutiveBriefingContext,
   formatDeepAgentProjectDirectResponse,
@@ -13,12 +15,14 @@ import {
   formatDeepAgentResearchContext,
   formatDeepAgentResearchDirectResponse,
   shouldUseDeepAgentExecutiveDirectResponse,
+  shouldUseDeepAgentAppExpertBridge,
   shouldUseDeepAgentExecutiveBridge,
   shouldUseDeepAgentProjectDirectResponse,
   shouldUseDeepAgentProjectStatusBridge,
   shouldUseDeepAgentResearchBridge,
   shouldUseDeepAgentResearchDirectResponse,
   type DeepResearchResponse,
+  type DeepAppExpertResponse,
   type DeepExecutiveIntelligenceResponse,
   type DeepProjectIntelligenceResponse,
 } from "../deep-agent-project-status";
@@ -176,6 +180,32 @@ const researchPacket: DeepResearchResponse = {
   orchestrator: "alleato-research-orchestrator",
 };
 
+const appExpertPacket: DeepAppExpertResponse = {
+  answer:
+    "Use the Change Orders page from the selected project's Financial navigation. The feature registry links that workflow to the change-order route and help article.",
+  mode: "deep_agents",
+  sources: [
+    {
+      title: "App navigation and feature map",
+      sourceType: "help_article",
+      route: "/[projectId]/change-orders",
+      filePath: "docs/help/articles/app-navigation-and-feature-map.md",
+      detail: "Published AI-visible app help article.",
+    },
+  ],
+  toolTrace: [
+    {
+      agent: "alleato-app-expert",
+      tool: "search_feature_registry",
+      status: "success",
+      durationMs: 42,
+      detail: "Matched change-order route and help article.",
+    },
+  ],
+  skillsLoaded: ["app-navigation-and-sitemap"],
+  orchestrator: "alleato-app-expert",
+};
+
 describe("Deep Agents project-status bridge", () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -299,6 +329,16 @@ describe("Deep Agents project-status bridge", () => {
     expect(
       shouldUseDeepAgentResearchBridge({ intent: "external_research" }),
     ).toBe(false);
+  });
+
+  it("enables the app expert bridge for app-help intents", () => {
+    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "true";
+
+    expect(shouldUseDeepAgentAppExpertBridge({ intent: "app_help" })).toBe(true);
+    expect(shouldUseDeepAgentAppExpertBridge({ intent: "latest_status" })).toBe(false);
+
+    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED = "false";
+    expect(shouldUseDeepAgentAppExpertBridge({ intent: "app_help" })).toBe(false);
   });
 
   it("formats backend packet coverage as additive AI SDK context", () => {
@@ -489,6 +529,16 @@ describe("Deep Agents project-status bridge", () => {
     expect(context).toContain("Do not treat uncited public claims as audit-ready evidence");
   });
 
+  it("formats app expert packets as additive AI SDK context", () => {
+    const context = formatDeepAgentAppExpertContext(appExpertPacket);
+
+    expect(context).toContain("Backend Deep Agents App Expert Packet");
+    expect(context).toContain("Mode: deep_agents");
+    expect(context).toContain("Skills loaded: app-navigation-and-sitemap");
+    expect(context).toContain("[help_article] App navigation and feature map");
+    expect(context).toContain("Prefer its sitemap, feature registry, and help-article sources");
+  });
+
   it("turns research sources into the existing source evidence widget", () => {
     const widget = buildDeepAgentResearchEvidenceWidget(researchPacket);
 
@@ -619,6 +669,44 @@ describe("Deep Agents project-status bridge", () => {
           question: "Research current zoning requirements and cite sources.",
           projectId: 43,
           maxSearches: 3,
+        }),
+      }),
+    );
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get("X-Admin-Api-Key")).toBe("admin-test-key");
+    expect(headers.get("x-request-id")).toBe("session-1");
+  });
+
+  it("posts the typed request to the backend app expert endpoint", async () => {
+    process.env.BACKEND_URL = "http://127.0.0.1:8000";
+    process.env.ADMIN_API_KEY = "admin-test-key";
+    const fetchMock = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify(appExpertPacket), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    global.fetch = fetchMock;
+
+    const response = await fetchDeepAgentAppExpert({
+      userId: "user-1",
+      sessionId: "session-1",
+      question: "How do I create a change order in the app?",
+      currentRoute: "/43/change-orders",
+      projectId: 43,
+    });
+
+    expect(response.mode).toBe("deep_agents");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/intelligence/app-expert",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          userId: "user-1",
+          sessionId: "session-1",
+          question: "How do I create a change order in the app?",
+          currentRoute: "/43/change-orders",
+          projectId: 43,
         }),
       }),
     );

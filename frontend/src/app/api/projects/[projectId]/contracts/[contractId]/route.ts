@@ -244,28 +244,69 @@ export const DELETE = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]#DELETE", message: "Authentication required." });
     }
 
-    // Guard: prevent delete when child records exist (test 3.2)
-    // A contract with SOV line items or prime contract change orders must be
-    // cleaned up by the user first — silent cascade would destroy financial history.
-    const [lineItemsResult, changeOrdersResult] = await Promise.all([
-      supabase
-        .from("contract_line_items")
-        .select("id", { count: "exact", head: true })
-        .eq("contract_id", contractId),
+    // Guard: SOV line items belong to the contract and are safe to cascade.
+    // Financial history must fail loudly so invoices, payments, and change
+    // orders are not silently destroyed by a broad delete.
+    const [
+      changeOrdersResult,
+      paymentApplicationsResult,
+      paymentsResult,
+      ownerInvoicesResult,
+    ] = await Promise.all([
       supabase
         .from("prime_contract_change_orders")
         .select("id", { count: "exact", head: true })
+        .or(`contract_id.eq.${contractId},prime_contract_id.eq.${contractId}`),
+      supabase
+        .from("prime_contract_payment_applications")
+        .select("id", { count: "exact", head: true })
         .eq("contract_id", contractId),
+      supabase
+        .from("prime_contract_payments")
+        .select("id", { count: "exact", head: true })
+        .eq("contract_id", contractId),
+      supabase
+        .from("owner_invoices")
+        .select("id", { count: "exact", head: true })
+        .eq("prime_contract_id", contractId),
     ]);
 
-    const lineItemCount = lineItemsResult.count ?? 0;
-    const changeOrderCount = changeOrdersResult.count ?? 0;
+    const blockerQueryError =
+      changeOrdersResult.error ??
+      paymentApplicationsResult.error ??
+      paymentsResult.error ??
+      ownerInvoicesResult.error;
 
-    if (lineItemCount > 0 || changeOrderCount > 0) {
+    if (blockerQueryError) {
+      return NextResponse.json(
+        {
+          error: "Failed to verify contract delete dependencies",
+          details: blockerQueryError.message,
+        },
+        { status: 400 },
+      );
+    }
+
+    const blockerCounts = {
+      changeOrders: changeOrdersResult.count ?? 0,
+      paymentApplications: paymentApplicationsResult.count ?? 0,
+      payments: paymentsResult.count ?? 0,
+      ownerInvoices: ownerInvoicesResult.count ?? 0,
+    };
+    const totalBlockers = Object.values(blockerCounts).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+
+    if (totalBlockers > 0) {
       return NextResponse.json(
         {
           error:
-            "Cannot delete contract with existing line items or change orders. Remove them first.",
+            "Cannot delete contract because it has financial history. Remove or void related change orders, payment applications, payments, and owner invoices first.",
+          details: {
+            code: "PRIME_CONTRACT_HAS_FINANCIAL_HISTORY",
+            blockerCounts,
+          },
         },
         { status: 409 },
       );

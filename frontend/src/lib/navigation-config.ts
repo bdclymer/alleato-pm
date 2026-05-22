@@ -235,6 +235,26 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
   },
 ];
 
+export interface CompanyWideToolSection {
+  label: string;
+  toolNames: string[];
+}
+
+export const companyWideToolSections: CompanyWideToolSection[] = [
+  {
+    label: "Company",
+    toolNames: ["Projects", "Company Directory", "AI Strategist", "Settings"],
+  },
+  {
+    label: "Work",
+    toolNames: ["Meetings", "Tasks", "Knowledge Base", "Documents"],
+  },
+  {
+    label: "Financial",
+    toolNames: ["Estimates", "Prime Contracts", "Change Events"],
+  },
+];
+
 export const coreTools: NavigationTool[] = [
   { name: "Projects", path: "", icon: Briefcase, requiresProject: false },
   { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
@@ -386,24 +406,13 @@ export const subcontractorSidebarGroup: SidebarNavGroup = {
 
 export const sidebarNavGroups: SidebarNavGroup[] = [
   {
-    id: "company",
-    label: "Company",
-    icon: Building2,
+    id: "project",
+    label: "Project",
+    icon: Briefcase,
     tools: [
-      { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
-      { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
-      { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: false, onlyWithoutProject: true, },
-      { name: "Tasks", path: "tasks", icon: CheckCircle, requiresProject: false, onlyWithoutProject: true, },
-      { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
-      { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
-      { name: "Files", path: "/files", icon: FolderOpen, requiresProject: false },
-      { name: "Estimates", path: "/estimates", icon: ClipboardList, requiresProject: false },
-      { name: "Prime Contracts", path: "/prime-contracts", icon: FileText, requiresProject: false },
-      { name: "Change Events", path: "/change-events", icon: Clock, requiresProject: false },
-      { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
-      { name: "Docs", path: "/docs", icon: BookOpen, requiresProject: false },
-      { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
+      { name: "Home", path: "home", icon: Home, requiresProject: true },
+      { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
+      { name: "Project Admin", path: "admin", icon: Shield, requiresProject: true, adminOnly: true },
     ],
   },
   {
@@ -417,29 +426,8 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     label: "Operations",
     icon: ClipboardList,
     tools: [
-      { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
       { name: "Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
       ...projectManagementTools,
-    ],
-  },
-  {
-    id: "admin",
-    label: "Admin",
-    icon: Settings,
-    tools: [
-      ...adminTools.filter(
-        (tool) =>
-          tool.path !== "/admin/documents/pipeline" &&
-          tool.path !== "/procore-docs" &&
-          tool.path !== "http://localhost:4983" &&
-          tool.path !== "/updates" &&
-          tool.path !== "/docs" &&
-          tool.path !== "/knowledge/manage"
-      ),
-      { name: "Executive Dashboard", path: "/executive", icon: LayoutDashboard, requiresProject: false, adminOnly: true },
-      { name: "Financial Insights", path: "/financial-insights", icon: TrendingUp, requiresProject: false, adminOnly: true },
-      { name: "Email Inbox", path: "/email-inbox", icon: Inbox, requiresProject: false },
-      { name: "Emails", path: "/emails", icon: Mail, requiresProject: false },
     ],
   },
 ];
@@ -517,9 +505,17 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "Billing and payments",
         module: "contracts",
       },
+      {
+        name: "Project Status Report",
+        path: "project-status-report",
+        requiresProject: true,
+        icon: ClipboardList,
+        description: "Monthly project status summary",
+        module: "budget",
+      },
     ],
     subGroups: [
-      { label: "Budgeting", toolNames: ["Estimates", "Budget", "Direct Costs"] },
+      { label: "Budgeting", toolNames: ["Estimates", "Budget", "Direct Costs", "Project Status Report"] },
       {
         label: "Contracts",
         toolNames: ["Prime Contracts", "Commitments", "Invoicing"],
@@ -533,10 +529,10 @@ export const headerNavGroups: HeaderNavGroup[] = [
     tools: [
       {
         name: "Schedule",
-        path: "schedule/import",
+        path: "schedule",
         requiresProject: true,
         icon: Calendar,
-        description: "Import schedule tasks from Microsoft Project",
+        description: "Project schedule management",
         module: "schedule",
       },
       {

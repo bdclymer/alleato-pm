@@ -641,6 +641,10 @@ services:
         value: true
       - key: DEEP_AGENTS_RESEARCH_MODEL
         value: gpt-5.4-mini
+      - key: DEEP_AGENTS_APP_EXPERT_ENABLED
+        value: true
+      - key: DEEP_AGENTS_APP_EXPERT_MODEL
+        value: gpt-5.4-mini
       - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED
         value: true
       - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL

@@ -7,8 +7,11 @@ import { usePathname, useRouter } from "next/navigation"
 import {
   Folder,
   Bell,
+  Building2,
   CalendarDays,
   ChevronDown,
+  ChevronRight,
+  ChevronsLeft,
   DollarSign,
   List,
   MessageSquare,
@@ -36,8 +39,10 @@ import type { User } from "@supabase/supabase-js"
 import {
   sidebarNavGroups,
   subcontractorSidebarGroup,
+  companyWideHeaderTools,
+  companyWideToolSections,
+  developerCompanyAdminTools,
   buildToolUrl,
-  isActivePath,
   extractProjectId,
   type NavigationTool,
   type SidebarNavGroup,
@@ -95,9 +100,9 @@ function SidebarFlyout({
               : tool.path.startsWith("/")
                 ? tool.path
                 : buildToolUrl(tool.path, projectId, tool.requiresProject)
-            const isActive = !isExternal && (tool.path.startsWith("/")
-              ? pathname === tool.path || pathname.startsWith(tool.path + "/")
-              : isActivePath(pathname, tool.path))
+            const isActive =
+              !isExternal &&
+              (pathname === href || (href !== "/" && pathname.startsWith(`${href}/`)))
             const Icon = tool.icon
             const linkClass = cn(
               "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors",
@@ -175,9 +180,9 @@ function CollapsedGroupIcon({
   }, [])
 
   const minimalIconByGroup: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
+    project: Folder,
     financial: DollarSign,
     operations: List,
-    company: Folder,
     admin: SlidersHorizontal,
   }
   const Icon = minimalIconByGroup[group.id] ?? List
@@ -266,9 +271,9 @@ function ExpandedNavGroup({
                 : tool.path.startsWith("/")
                   ? tool.path
                   : buildToolUrl(tool.path, projectId, tool.requiresProject)
-              const isActive = !isExternal && (tool.path.startsWith("/")
-                ? pathname === tool.path || pathname.startsWith(`${tool.path}/`)
-                : isActivePath(pathname, tool.path))
+              const isActive =
+                !isExternal &&
+                (pathname === href || (href !== "/" && pathname.startsWith(`${href}/`)))
               const Icon = tool.icon
               const linkClass = cn(
                 "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors duration-150",
@@ -306,6 +311,171 @@ function ExpandedNavGroup({
   )
 }
 
+function ExpandedCompanyWideTools({
+  tools,
+  visibleTools,
+  projectId,
+  pathname,
+  onBack,
+}: {
+  tools: NavigationTool[]
+  visibleTools: NavigationTool[]
+  projectId: number | null
+  pathname: string
+  onBack: () => void
+}) {
+  const visibleToolSet = React.useMemo(() => new Set(visibleTools), [visibleTools])
+  const sections = React.useMemo(() => {
+    const sectionToolNames = new Set(
+      companyWideToolSections.flatMap((section) => section.toolNames)
+    )
+    const extraToolNames = tools
+      .filter((tool) => !sectionToolNames.has(tool.name))
+      .map((tool) => tool.name)
+
+    return extraToolNames.length > 0
+      ? [...companyWideToolSections, { label: "Admin", toolNames: extraToolNames }]
+      : companyWideToolSections
+  }, [tools])
+
+  return (
+    <div className="flex flex-col">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onBack}
+        className="mb-3 h-8 justify-start gap-2 rounded-md px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+      >
+        <ChevronsLeft className="h-3.5 w-3.5" strokeWidth={1.6} />
+        Project tools
+      </Button>
+      {sections.map((section) => {
+        const sectionTools = section.toolNames
+          .map((toolName) => tools.find((tool) => tool.name === toolName))
+          .filter((tool): tool is NavigationTool => Boolean(tool))
+
+        if (sectionTools.length === 0) return null
+
+        return (
+          <div key={section.label} className="flex flex-col mt-4 first:mt-0">
+            <span className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
+              {section.label}
+            </span>
+            <div className="flex flex-col gap-0.5 pb-1">
+              {sectionTools.map((tool) => {
+                const isExternal = tool.path.startsWith("http")
+                const href = isExternal
+                  ? tool.path
+                  : tool.path.startsWith("/")
+                    ? tool.path
+                    : buildToolUrl(tool.path, projectId, tool.requiresProject)
+                const isActive =
+                  !isExternal &&
+                  (pathname === href || (href !== "/" && pathname.startsWith(`${href}/`)))
+                const Icon = tool.icon
+                const isDisabled = !visibleToolSet.has(tool)
+                const linkClass = cn(
+                  "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors duration-150",
+                  isDisabled
+                    ? "pointer-events-none opacity-30"
+                    : isActive
+                      ? "font-medium text-sidebar-foreground"
+                      : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                )
+
+                return isExternal ? (
+                  <a
+                    key={`${tool.path}:${tool.name}`}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={linkClass}
+                  >
+                    {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
+                    <span className="truncate">{tool.name}</span>
+                  </a>
+                ) : (
+                  <Link
+                    key={`${tool.path}:${tool.name}`}
+                    href={href}
+                    className={linkClass}
+                  >
+                    {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
+                    <span className="truncate">{tool.name}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function CompanyWideToolsButton({
+  tools,
+  projectId,
+  pathname,
+}: {
+  tools: NavigationTool[]
+  projectId: number | null
+  pathname: string
+}) {
+  const [isHovered, setIsHovered] = React.useState(false)
+  const leaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const companyGroup = React.useMemo<SidebarNavGroup>(
+    () => ({
+      id: "company-wide",
+      label: "Company-wide tools",
+      icon: Building2,
+      tools,
+    }),
+    [tools]
+  )
+
+  const handleMouseEnter = React.useCallback(() => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current)
+      leaveTimerRef.current = null
+    }
+    setIsHovered(true)
+  }, [])
+
+  const handleMouseLeave = React.useCallback(() => {
+    leaveTimerRef.current = setTimeout(() => setIsHovered(false), 150)
+  }, [])
+
+  React.useEffect(() => {
+    return () => {
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current)
+    }
+  }, [])
+
+  return (
+    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-sidebar-foreground/60 transition-all duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+        aria-label="View company-wide tools"
+      >
+        <Building2 className="h-3.5 w-3.5" strokeWidth={1.4} />
+      </Button>
+      <SidebarFlyout
+        group={companyGroup}
+        tools={tools}
+        projectId={projectId}
+        pathname={pathname}
+        isOpen={isHovered}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      />
+    </div>
+  )
+}
+
 // =============================================================================
 // Main AppSidebar
 // =============================================================================
@@ -317,6 +487,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [isHovering, setIsHovering] = React.useState(false)
   const [user, setUser] = React.useState<User | null>(null)
+  const [showCompanyWideTools, setShowCompanyWideTools] = React.useState(false)
 
   React.useEffect(() => {
     const supabase = createClient()
@@ -368,6 +539,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const nav = useHeaderNav()
 
   const isSubcontractor = userType === "subcontractor"
+  const isDeveloper =
+    (user?.app_metadata as Record<string, unknown> | undefined)?.is_developer === true ||
+    userType === "developer"
 
   // Filter tools by permission
   const filterTools = React.useCallback(
@@ -392,13 +566,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const groupHasActiveChild = React.useCallback(
     (tools: NavigationTool[]): boolean => {
       return tools.some((tool) => {
-        if (tool.path.startsWith("/")) {
-          return pathname === tool.path || pathname.startsWith(`${tool.path}/`)
-        }
-        return isActivePath(pathname, tool.path)
+        if (tool.path.startsWith("http")) return false
+        const href = tool.path.startsWith("/")
+          ? tool.path
+          : buildToolUrl(tool.path, projectId, tool.requiresProject)
+        return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`))
       })
     },
-    [pathname]
+    [pathname, projectId]
   )
 
   // Filtered groups — subcontractors get a focused single-group nav
@@ -415,12 +590,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .filter((group) => group.tools.length > 0)
   }, [filterTools, isSubcontractor, projectId])
 
-  // Collapsible section state — when no project selected, open both company and admin
+  const companyWideTools = React.useMemo<NavigationTool[]>(
+    () => [
+      ...companyWideHeaderTools,
+      ...(isDeveloper ? developerCompanyAdminTools : []),
+    ],
+    [isDeveloper]
+  )
+  const visibleCompanyWideTools = React.useMemo(
+    () => filterTools(companyWideTools),
+    [companyWideTools, filterTools]
+  )
+
+  // Collapsible section state for project-scoped sidebar groups.
   const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(() => {
     const initialProjectId = extractProjectId(pathname ?? "")
     return initialProjectId
-      ? new Set(["company"])
-      : new Set(["company", "admin"])
+      ? new Set(["project"])
+      : new Set(["project"])
   })
 
   const toggleGroup = React.useCallback((groupId: string) => {
@@ -443,15 +630,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [filteredGroups, groupHasActiveChild])
 
-  // When no project is selected, ensure both company and admin are open
   React.useEffect(() => {
-    if (!projectId) {
-      setOpenGroupIds((prev) => {
-        if (prev.has("company") && prev.has("admin")) return prev
-        return new Set([...prev, "company", "admin"])
-      })
-    }
+    setShowCompanyWideTools(false)
   }, [projectId])
+
+  React.useEffect(() => {
+    if (groupHasActiveChild(companyWideTools)) {
+      setShowCompanyWideTools(true)
+    }
+  }, [companyWideTools, groupHasActiveChild, pathname])
 
   const teamChatCollapsedShortcuts = React.useMemo(
     () => [
@@ -565,21 +752,58 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 hasActiveChild={groupHasActiveChild(group.tools)}
               />
             ))}
+            {visibleCompanyWideTools.length > 0 && (
+              <>
+                <div className="my-1 h-px w-7 bg-sidebar-border/70" />
+                <CompanyWideToolsButton
+                  tools={visibleCompanyWideTools}
+                  projectId={projectId}
+                  pathname={pathname}
+                />
+              </>
+            )}
           </div>
         ) : (
           // Expanded: full navigation
           <div className="flex flex-col">
-            {filteredGroups.map((group) => (
-              <ExpandedNavGroup
-                key={group.id}
-                group={group}
-                tools={group.tools}
+            {showCompanyWideTools ? (
+              <ExpandedCompanyWideTools
+                tools={companyWideTools}
+                visibleTools={visibleCompanyWideTools}
                 projectId={projectId}
                 pathname={pathname}
-                isOpen={openGroupIds.has(group.id)}
-                onToggle={() => toggleGroup(group.id)}
+                onBack={() => setShowCompanyWideTools(false)}
               />
-            ))}
+            ) : (
+              <>
+                {filteredGroups.map((group) => (
+                  <ExpandedNavGroup
+                    key={group.id}
+                    group={group}
+                    tools={group.tools}
+                    projectId={projectId}
+                    pathname={pathname}
+                    isOpen={openGroupIds.has(group.id)}
+                    onToggle={() => toggleGroup(group.id)}
+                  />
+                ))}
+                {visibleCompanyWideTools.length > 0 && (
+                  <div className="mt-4 border-t border-sidebar-border/70 pt-3">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCompanyWideTools(true)}
+                      className="h-8 w-full justify-start gap-2 px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                    >
+                      <Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <span className="truncate">View company-wide tools</span>
+                      <ChevronRight className="ml-auto h-3.5 w-3.5" strokeWidth={1.6} />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </SidebarContent>

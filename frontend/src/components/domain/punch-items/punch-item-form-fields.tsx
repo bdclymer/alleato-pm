@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { z } from "zod";
 import type { UseFormReturn } from "react-hook-form";
@@ -36,9 +37,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuthUsers } from "@/hooks/use-auth-users";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
+import {
+  flattenProjectTeamAssignees,
+  type ProjectTeamRole,
+} from "./project-team-assignee-options";
 
 type PunchItemRow = Database["public"]["Tables"]["punch_items"]["Row"];
 
@@ -79,6 +84,20 @@ export function buildPunchItemDefaults(
   };
 }
 
+function useProjectTeamAssignees(projectId: string) {
+  return useQuery({
+    queryKey: ["project-team-assignees", projectId],
+    queryFn: async () => {
+      const res = await apiFetch<{ data: ProjectTeamRole[] }>(
+        `/api/projects/${projectId}/directory/roles`,
+      );
+      return flattenProjectTeamAssignees(res.data ?? []);
+    },
+    enabled: !!projectId,
+    staleTime: 60_000,
+  });
+}
+
 interface PunchItemFormFieldsProps {
   form: UseFormReturn<PunchItemFormValues>;
   projectId?: number;
@@ -107,7 +126,11 @@ export function PunchItemFormFields({
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [bicOpen, setBicOpen] = useState(false);
 
-  const { users: projectMembers } = useAuthUsers(
+  const {
+    data: projectTeamAssignees = [],
+    isLoading: isLoadingAssignees,
+    error: assigneesError,
+  } = useProjectTeamAssignees(
     projectId ? String(projectId) : "",
   );
 
@@ -194,11 +217,14 @@ export function PunchItemFormFields({
         control={form.control}
         name="assignee_id"
         render={({ field }) => {
-          const selected = projectMembers.find((u) => u.id === field.value);
-          const displayName = selected
-            ? [selected.first_name, selected.last_name].filter(Boolean).join(" ") ||
-              selected.email
-            : null;
+          const selected = projectTeamAssignees.find((p) => p.id === field.value);
+          const displayName = selected?.full_name ?? null;
+          const displayCompany = selected?.company_name ?? null;
+          const emptyText = assigneesError
+            ? "Could not load project team contacts."
+            : isLoadingAssignees
+              ? "Loading project team contacts..."
+              : "No project team contacts found.";
           return (
             <FormItem>
               <FormLabel>Assignee</FormLabel>
@@ -214,7 +240,14 @@ export function PunchItemFormFields({
                         !field.value && "text-muted-foreground",
                       )}
                     >
-                      {displayName ?? "Select assignee..."}
+                      <span className="flex flex-col items-start min-w-0">
+                        <span className={cn(!displayName && "text-muted-foreground")}>
+                          {displayName ?? "Select assignee..."}
+                        </span>
+                        {displayCompany && (
+                          <span className="text-xs text-muted-foreground">{displayCompany}</span>
+                        )}
+                      </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
@@ -222,14 +255,15 @@ export function PunchItemFormFields({
                 {/* eslint-disable-next-line design-system/no-arbitrary-spacing */}
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
-                    <CommandInput placeholder="Search members..." />
+                    <CommandInput placeholder="Search project team contacts..." />
                     <CommandList>
-                      <CommandEmpty>No members found.</CommandEmpty>
+                      <CommandEmpty>{emptyText}</CommandEmpty>
                       <CommandGroup>
                         <CommandItem
                           value="__none__"
                           onSelect={() => {
                             field.onChange(null);
+                            form.setValue("assignee_company", "");
                             setAssigneeOpen(false);
                           }}
                         >
@@ -241,32 +275,40 @@ export function PunchItemFormFields({
                           />
                           <span className="text-muted-foreground italic">Unassigned</span>
                         </CommandItem>
-                        {projectMembers.map((user) => {
-                          const name =
-                            [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-                            user.email;
+                        {projectTeamAssignees.map((person) => {
+                          const name = person.full_name;
+                          const roleLabel = person.role_names.join(", ");
+                          const searchValue = [
+                            name,
+                            person.email,
+                            person.company_name,
+                            roleLabel,
+                          ]
+                            .filter(Boolean)
+                            .join(" ");
                           return (
                             <CommandItem
-                              key={user.id}
-                              value={name}
+                              key={person.id}
+                              value={searchValue}
                               onSelect={() => {
-                                field.onChange(user.id);
-                                if (user.company_name) {
-                                  form.setValue("assignee_company", user.company_name);
-                                }
+                                field.onChange(person.id);
+                                form.setValue("assignee_company", person.company_name ?? "");
                                 setAssigneeOpen(false);
                               }}
                             >
                               <Check
                                 className={cn(
                                   "mr-2 h-4 w-4",
-                                  field.value === user.id ? "opacity-100" : "opacity-0",
+                                  field.value === person.id ? "opacity-100" : "opacity-0",
                                 )}
                               />
                               <div>
                                 <p className="text-sm">{name}</p>
-                                {user.job_title && (
-                                  <p className="text-xs text-muted-foreground">{user.job_title}</p>
+                                {person.company_name && (
+                                  <p className="text-xs text-muted-foreground">{person.company_name}</p>
+                                )}
+                                {roleLabel && !person.company_name && (
+                                  <p className="text-xs text-muted-foreground">{roleLabel}</p>
                                 )}
                               </div>
                             </CommandItem>
@@ -284,20 +326,6 @@ export function PunchItemFormFields({
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="assignee_company"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Assignee Company</FormLabel>
-              <FormControl>
-                <Input placeholder="Company name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="ball_in_court"
@@ -324,9 +352,15 @@ export function PunchItemFormFields({
                 {/* eslint-disable-next-line design-system/no-arbitrary-spacing */}
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
-                    <CommandInput placeholder="Search members..." />
+                    <CommandInput placeholder="Search project team contacts..." />
                     <CommandList>
-                      <CommandEmpty>No members found.</CommandEmpty>
+                      <CommandEmpty>
+                        {assigneesError
+                          ? "Could not load project team contacts."
+                          : isLoadingAssignees
+                            ? "Loading project team contacts..."
+                            : "No project team contacts found."}
+                      </CommandEmpty>
                       <CommandGroup>
                         <CommandItem
                           value="__none__"
@@ -343,14 +377,21 @@ export function PunchItemFormFields({
                           />
                           <span className="text-muted-foreground italic">None</span>
                         </CommandItem>
-                        {projectMembers.map((user) => {
-                          const name =
-                            [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-                            user.email;
+                        {projectTeamAssignees.map((person) => {
+                          const name = person.full_name;
+                          const roleLabel = person.role_names.join(", ");
+                          const searchValue = [
+                            name,
+                            person.email,
+                            person.company_name,
+                            roleLabel,
+                          ]
+                            .filter(Boolean)
+                            .join(" ");
                           return (
                             <CommandItem
-                              key={user.id}
-                              value={name}
+                              key={person.id}
+                              value={searchValue}
                               onSelect={() => {
                                 field.onChange(name);
                                 setBicOpen(false);
@@ -375,9 +416,7 @@ export function PunchItemFormFields({
             </FormItem>
           )}
         />
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="due_date"
@@ -391,7 +430,9 @@ export function PunchItemFormFields({
             </FormItem>
           )}
         />
+      </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="location"
@@ -405,9 +446,7 @@ export function PunchItemFormFields({
             </FormItem>
           )}
         />
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="trade"
@@ -421,7 +460,9 @@ export function PunchItemFormFields({
             </FormItem>
           )}
         />
+      </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="type"
@@ -435,21 +476,21 @@ export function PunchItemFormFields({
             </FormItem>
           )}
         />
-      </div>
 
-      <FormField
-        control={form.control}
-        name="reference"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Reference</FormLabel>
-            <FormControl>
-              <Input placeholder="Reference number or link" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+        <FormField
+          control={form.control}
+          name="reference"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Reference</FormLabel>
+              <FormControl>
+                <Input placeholder="Reference number or link" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
     </div>
   );
 

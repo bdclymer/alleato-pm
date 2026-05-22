@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   BookOpen,
   ChevronRight,
+  Code2,
   FileText,
   Search,
   Sparkles,
@@ -24,6 +25,13 @@ import {
   getHelpArticles,
   type HelpArticle,
 } from "@/lib/help-articles";
+import {
+  filterTechnicalDocs,
+  getTechnicalDocBySlug,
+  getTechnicalDocCategories,
+  getTechnicalDocs,
+  type TechnicalDoc,
+} from "@/lib/technical-docs";
 
 interface DocPageProps {
   params: Promise<{
@@ -47,6 +55,21 @@ export async function generateMetadata({ params }: DocPageProps): Promise<Metada
     };
   }
 
+  if (slug.startsWith("technical/")) {
+    const technicalDoc = await getTechnicalDocBySlug(slug.replace(/^technical\//, ""));
+    if (!technicalDoc) {
+      return {
+        title: "Documentation",
+        description: "Controlled Alleato OS application documentation",
+      };
+    }
+
+    return {
+      title: technicalDoc.title,
+      description: technicalDoc.description,
+    };
+  }
+
   const article = await getHelpArticleBySlug(slug);
   if (!article) {
     return {
@@ -66,6 +89,14 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
   const slug = resolvedParams.slug?.join("/") ?? "";
 
   if (slug) {
+    if (slug.startsWith("technical/")) {
+      const technicalDoc = await getTechnicalDocBySlug(slug.replace(/^technical\//, ""));
+      if (!technicalDoc) {
+        notFound();
+      }
+      return <TechnicalArticlePage doc={technicalDoc} />;
+    }
+
     const article = await getHelpArticleBySlug(slug);
     if (!article) {
       notFound();
@@ -75,8 +106,12 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
 
   const resolvedSearchParams = await searchParams;
   const query = resolvedSearchParams?.q?.trim() ?? "";
-  const articles = await getHelpArticles();
+  const [articles, technicalDocs] = await Promise.all([
+    getHelpArticles(),
+    getTechnicalDocs(),
+  ]);
   const filteredArticles = filterArticles(articles, { query });
+  const filteredTechnicalDocs = filterTechnicalDocs(technicalDocs, query);
 
   return (
     <PageShell
@@ -118,8 +153,9 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
         </form>
 
         {!query ? <AiOverviewCard /> : null}
+        <TechnicalDocumentationSection docs={filteredTechnicalDocs} query={query} />
 
-        {filteredArticles.length === 0 ? (
+        {filteredArticles.length === 0 && filteredTechnicalDocs.length === 0 ? (
           <EmptyState
             icon={<BookOpen />}
             title="No documentation found"
@@ -132,6 +168,46 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
         )}
       </div>
     </PageShell>
+  );
+}
+
+function TechnicalArticlePage({
+  doc,
+}: {
+  doc: TechnicalDoc & { content: string };
+}) {
+  const contentWithoutTitle = doc.content.replace(/^#\s+.+\n+/, "");
+
+  return (
+    <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <Link
+          href="/docs"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Documentation
+        </Link>
+      </div>
+
+      <div className="mb-6 space-y-2 border-b border-border pb-6">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>{doc.category}</span>
+          <span>/</span>
+          <span>{doc.sourcePath}</span>
+        </div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          {doc.title}
+        </h1>
+        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          {doc.description}
+        </p>
+      </div>
+
+      <article>
+        <MarkdownRenderer content={contentWithoutTitle} />
+      </article>
+    </main>
   );
 }
 
@@ -247,6 +323,108 @@ function AiOverviewCard() {
           <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </span>
       </div>
+    </Link>
+  );
+}
+
+function TechnicalDocumentationSection({
+  docs,
+  query,
+}: {
+  docs: TechnicalDoc[];
+  query: string;
+}) {
+  if (docs.length === 0) return null;
+
+  const featuredDocs = docs.filter((doc) => doc.featured);
+  const categories = getTechnicalDocCategories(docs);
+
+  return (
+    <section className="mb-12 space-y-6">
+      <div className="space-y-1 border-b border-border pb-3">
+        <div className="flex items-center gap-2">
+          <Code2 className="h-4 w-4 text-primary" />
+          <h2 className="text-base font-semibold text-foreground">
+            Technical documentation
+          </h2>
+        </div>
+        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          Engineering references for architecture, AI tools, APIs, data contracts, design
+          standards, and implementation guardrails.
+        </p>
+      </div>
+
+      {!query && featuredDocs.length > 0 ? (
+        <div className="grid grid-cols-1 gap-x-8 gap-y-2 md:grid-cols-2">
+          {featuredDocs.map((doc) => (
+            <TechnicalDocLink key={doc.href} doc={doc} featured />
+          ))}
+        </div>
+      ) : null}
+
+      <div className="space-y-8">
+        {categories.map((category) => (
+          <section key={category.name} className="space-y-3">
+            <div className="flex flex-col gap-1 border-b border-border pb-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {category.name}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {category.description}
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {category.docs.length}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
+              {category.docs.map((doc) => (
+                <TechnicalDocLink key={doc.href} doc={doc} />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TechnicalDocLink({
+  doc,
+  featured = false,
+}: {
+  doc: TechnicalDoc;
+  featured?: boolean;
+}) {
+  return (
+    <Link
+      href={doc.href}
+      className="group -mx-3 flex min-h-12 items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
+    >
+      <IconBadge size="sm" className="mt-0.5">
+        <Code2 className="h-3.5 w-3.5" />
+      </IconBadge>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+            {doc.title}
+          </h3>
+          {featured ? (
+            <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase text-primary">
+              Key
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {doc.description}
+        </p>
+        <p className="mt-1 truncate text-[11px] text-muted-foreground/70">
+          {doc.sourcePath}
+        </p>
+      </div>
+      <ChevronRight className="mt-2 h-3.5 w-3.5 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
     </Link>
   );
 }

@@ -1,0 +1,52 @@
+---
+title: Acumatica ERP Integration
+description: Live connection to Acumatica accounting for AP/AR aging, cash position, and ERP project budget data.
+audience: client
+visibility: published
+module: integrations
+category: Integrations
+tags: [acumatica, erp, accounting, ap, ar, cash]
+featured: false
+client_visible: true
+ai_visible: true
+order: 1020
+related_routes:
+  - /settings/integrations
+related_actions: []
+---
+
+<!-- allow-outside-documentation -->
+
+# Acumatica ERP Integration
+
+Alleato OS connects to Acumatica to read live accounting data: accounts payable aging, accounts receivable aging, cash position, vendor balances, and project budgets recorded in the ERP.
+
+## What It Powers
+
+- **CFO advisor** — the AI assistant can answer questions about cash, AR aging, and AP aging using live ERP data.
+- **Budget reconciliation** — compare project budgets in Alleato to budgets recorded in Acumatica.
+- **Invoice status** — check whether invoices marked Approved in Alleato have been recorded in the ERP.
+
+## How It Works
+
+- The integration calls Acumatica's REST API on demand.
+- Data is read-only: Alleato does not write back to Acumatica.
+- Authentication uses a dedicated service account configured by an admin.
+
+## Common Questions to Ask
+
+Once connected, ask the [AI Assistant](/docs/ai-assistant-overview):
+
+- "What is our current cash position?"
+- "Show AR aging over 60 days."
+- "Which vendors have the largest open AP?"
+- "What is the ERP-recorded budget for Vermillion Rise?"
+
+## Configuration
+
+The Acumatica integration is configured by your admin. Individual users do not need to authenticate separately.
+
+## Related Articles
+
+- [AI Assistant Overview](/docs/ai-assistant-overview)
+- [Invoicing](/docs/invoicing)

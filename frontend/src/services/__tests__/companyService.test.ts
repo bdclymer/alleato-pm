@@ -209,5 +209,28 @@ describe('CompanyService', () => {
         reason: 'Cannot delete company: 5 users are still assigned to this company.',
       });
     });
+
+    it('should fail loudly when the user count query fails', async () => {
+      mockSupabase.from.mockReturnValue({
+        ...mockSupabase,
+        select: jest.fn().mockReturnValue({
+          ...mockSupabase,
+          eq: jest.fn().mockReturnValue({
+            ...mockSupabase,
+            eq: jest.fn().mockReturnValue({
+              ...mockSupabase,
+              eq: jest.fn().mockResolvedValue({
+                count: null,
+                error: { message: 'Could not find a relationship for project_directory_memberships' },
+              }),
+            }),
+          }),
+        }),
+      });
+
+      await expect(service.canDeleteCompany('1', 'company-1')).rejects.toMatchObject({
+        message: 'Could not find a relationship for project_directory_memberships',
+      });
+    });
   });
 });

@@ -8807,6 +8807,7 @@ export type Database = {
       }
       daily_log_manpower: {
         Row: {
+          ai_confidence: Json
           area: string | null
           attachments_count: number
           comments: string | null
@@ -8819,10 +8820,13 @@ export type Database = {
           issue_flag: boolean
           location: string | null
           related_items_count: number
+          source_audio_end_ms: number | null
+          source_audio_start_ms: number | null
           trade: string | null
           workers_count: number
         }
         Insert: {
+          ai_confidence?: Json
           area?: string | null
           attachments_count?: number
           comments?: string | null
@@ -8835,10 +8839,13 @@ export type Database = {
           issue_flag?: boolean
           location?: string | null
           related_items_count?: number
+          source_audio_end_ms?: number | null
+          source_audio_start_ms?: number | null
           trade?: string | null
           workers_count: number
         }
         Update: {
+          ai_confidence?: Json
           area?: string | null
           attachments_count?: number
           comments?: string | null
@@ -8851,6 +8858,8 @@ export type Database = {
           issue_flag?: boolean
           location?: string | null
           related_items_count?: number
+          source_audio_end_ms?: number | null
+          source_audio_start_ms?: number | null
           trade?: string | null
           workers_count?: number
         }
@@ -8873,6 +8882,7 @@ export type Database = {
       }
       daily_log_notes: {
         Row: {
+          ai_confidence: Json
           area: string | null
           attachments_count: number
           category: string | null
@@ -8883,8 +8893,12 @@ export type Database = {
           issue_flag: boolean
           location: string | null
           related_items_count: number
+          source_audio_end_ms: number | null
+          source_audio_start_ms: number | null
+          topic_tag: string | null
         }
         Insert: {
+          ai_confidence?: Json
           area?: string | null
           attachments_count?: number
           category?: string | null
@@ -8895,8 +8909,12 @@ export type Database = {
           issue_flag?: boolean
           location?: string | null
           related_items_count?: number
+          source_audio_end_ms?: number | null
+          source_audio_start_ms?: number | null
+          topic_tag?: string | null
         }
         Update: {
+          ai_confidence?: Json
           area?: string | null
           attachments_count?: number
           category?: string | null
@@ -8907,6 +8925,9 @@ export type Database = {
           issue_flag?: boolean
           location?: string | null
           related_items_count?: number
+          source_audio_end_ms?: number | null
+          source_audio_start_ms?: number | null
+          topic_tag?: string | null
         }
         Relationships: [
           {
@@ -8914,6 +8935,126 @@ export type Database = {
             columns: ["daily_log_id"]
             isOneToOne: false
             referencedRelation: "daily_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_log_photos: {
+        Row: {
+          audio_timestamp_ms: number
+          caption: string | null
+          captured_at: string
+          content_type: string | null
+          created_at: string
+          created_by: string | null
+          daily_log_id: string
+          file_name: string | null
+          file_size: number | null
+          id: string
+          metadata: Json
+          paired_note_id: string | null
+          pairing_confidence: number
+          project_id: number | null
+          public_url: string | null
+          storage_bucket: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          audio_timestamp_ms: number
+          caption?: string | null
+          captured_at: string
+          content_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          daily_log_id: string
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json
+          paired_note_id?: string | null
+          pairing_confidence?: number
+          project_id?: number | null
+          public_url?: string | null
+          storage_bucket?: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          audio_timestamp_ms?: number
+          caption?: string | null
+          captured_at?: string
+          content_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          daily_log_id?: string
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json
+          paired_note_id?: string | null
+          pairing_confidence?: number
+          project_id?: number | null
+          public_url?: string | null
+          storage_bucket?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_log_photos_daily_log_id_fkey"
+            columns: ["daily_log_id"]
+            isOneToOne: false
+            referencedRelation: "daily_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_log_photos_paired_note_id_fkey"
+            columns: ["paired_note_id"]
+            isOneToOne: false
+            referencedRelation: "daily_log_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_log_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "daily_log_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_log_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "daily_log_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_log_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_log_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -8988,6 +9129,10 @@ export type Database = {
       }
       daily_logs: {
         Row: {
+          ai_audio_storage_path: string | null
+          ai_extraction: Json
+          ai_field_confidence: Json
+          ai_transcript_storage_path: string | null
           completed_at: string | null
           completed_by: string | null
           created_at: string | null
@@ -8996,11 +9141,16 @@ export type Database = {
           id: string
           log_date: string
           project_id: number | null
+          site_scribe_session_id: string | null
           status: string
           updated_at: string | null
           weather_conditions: Json | null
         }
         Insert: {
+          ai_audio_storage_path?: string | null
+          ai_extraction?: Json
+          ai_field_confidence?: Json
+          ai_transcript_storage_path?: string | null
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string | null
@@ -9009,11 +9159,16 @@ export type Database = {
           id?: string
           log_date: string
           project_id?: number | null
+          site_scribe_session_id?: string | null
           status?: string
           updated_at?: string | null
           weather_conditions?: Json | null
         }
         Update: {
+          ai_audio_storage_path?: string | null
+          ai_extraction?: Json
+          ai_field_confidence?: Json
+          ai_transcript_storage_path?: string | null
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string | null
@@ -9022,6 +9177,7 @@ export type Database = {
           id?: string
           log_date?: string
           project_id?: number | null
+          site_scribe_session_id?: string | null
           status?: string
           updated_at?: string | null
           weather_conditions?: Json | null
