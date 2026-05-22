@@ -17,13 +17,7 @@
  * See: docs/AI-CSUITE-ARCHITECTURE.md
  */
 
-import {
-  ToolLoopAgent,
-  stepCountIs,
-  tool,
-  type ModelMessage,
-  type ToolSet,
-} from "ai";
+import { ToolLoopAgent, stepCountIs, tool, type ModelMessage, type ToolSet } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
