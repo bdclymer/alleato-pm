@@ -14,7 +14,6 @@ import {
   RefreshCcw,
   Send,
   Square,
-  Volume2,
   WifiOff,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -365,7 +364,7 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
       if (event.type?.includes("speech_started")) setSessionState("listening");
       if (event.type?.includes("response.created")) setSessionState("thinking");
       if (event.type?.includes("response.audio.delta"))
-        setSessionState("speaking");
+        setSessionState("thinking");
       if (event.type?.includes("response.done")) setSessionState("listening");
 
       const transcriptText =
@@ -382,13 +381,6 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
           event.type?.includes("input_audio_transcription.completed"))
       ) {
         addTranscript("crew", transcriptText);
-      }
-
-      if (
-        transcriptText &&
-        event.type?.includes("response.audio_transcript.done")
-      ) {
-        addTranscript("assistant", transcriptText);
       }
 
       if (
@@ -446,7 +438,6 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
       dataChannel.onopen = () => {
         setSessionState("listening");
         startedAtRef.current = Date.now();
-        dataChannel.send(JSON.stringify({ type: "response.create" }));
       };
 
       const offer = await peer.createOffer();
@@ -624,9 +615,9 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
       : sessionState === "listening"
         ? "Listening"
         : sessionState === "thinking"
-          ? "AI thinking"
+          ? "Structuring"
           : sessionState === "speaking"
-            ? "AI speaking"
+            ? "Processing"
             : sessionState === "paused"
               ? "Paused"
               : "Review";
@@ -661,11 +652,7 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
                         : "bg-primary text-primary-foreground",
                     )}
                   >
-                    {sessionState === "speaking" ? (
-                      <Volume2 className="size-6" />
-                    ) : (
-                      <Mic className="size-6" />
-                    )}
+                    <Mic className="size-6" />
                   </span>
                   <div>
                     <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -677,8 +664,8 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
                   </div>
                 </div>
                 <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-                  Speak normally. Site Scribe listens, asks only for missing
-                  counts or hours, and keeps the log editable until approval.
+                  Brain dump the day in your own words. Site Scribe transcribes
+                  first, then structures the report for review.
                 </p>
               </div>
 
@@ -751,7 +738,7 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
             <div className="flex items-center justify-between gap-4">
               <SectionLabel
                 title="Live transcript"
-                description="Required audit trail of what the AI heard."
+                description="User narration only, saved as the audit trail."
               />
               <Badge variant="outline">{transcript.length} segments</Badge>
             </div>
@@ -759,8 +746,8 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
               {transcript.length === 0 ? (
                 <div className="flex min-h-96 items-center justify-center px-6 text-center">
                   <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-                    Start the session and speak naturally. Transcript rows
-                    appear here with speaker and timestamp.
+                    Start the session and talk through the day. Transcript rows
+                    appear here with timestamped user narration.
                   </p>
                 </div>
               ) : (
@@ -796,7 +783,7 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
               description={
                 sessionState === "review"
                   ? "Approve only after edits are complete."
-                  : "Extraction updates while the crew speaks."
+                  : "Site Scribe separates the brain dump into job-report fields."
               }
             />
             <Input

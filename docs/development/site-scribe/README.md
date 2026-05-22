@@ -8,8 +8,8 @@ Browser responsibilities:
 
 - Captures microphone audio with `getUserMedia`.
 - Opens a WebRTC Realtime session with the ephemeral client secret returned by `/api/site-scribe/realtime-session`.
-- Plays AI audio output through the peer connection.
-- Displays the live transcript so field crews can correct what the AI heard before submission.
+- Uses realtime transcription for a user-led brain dump, with no assistant-led interview during capture.
+- Displays the live user transcript so field crews can correct what was heard before submission.
 - Captures progress photos with camera/file input.
 - Tags every photo with `capturedAt` and `audioTimestampMs`, then pairs photos to the nearest note by narration timestamp.
 - Keeps approved-but-unsynced log payloads in `localStorage` while offline and retries when the browser reconnects.
@@ -46,8 +46,8 @@ Then open `http://localhost:3000/<projectId>/daily-log/site-scribe`.
 
 - Idle: no peer connection or media stream exists.
 - Listening: microphone is active and the Realtime session is ready for speech.
-- AI thinking: the model has received input and is preparing a response.
-- AI speaking: audio output is playing through the peer connection.
+- Structuring: the model has received input and is refining it into daily-log fields.
+- Processing: a transient realtime processing state; the capture flow remains user-led.
 - Paused: UI-level pause state; the crew can resume or end the session.
 - Review: capture is stopped and the user must approve before Supabase persistence.
 
@@ -56,9 +56,9 @@ Do not send the long-lived `OPENAI_API_KEY` to the browser. The browser consumes
 ## Latency Notes
 
 - WebRTC is used for low-latency audio input/output.
-- The session uses server-side voice activity detection so the model responds after the crew finishes a turn.
-- The prompt tells the assistant not to interrupt mid-sentence and to ask only one critical clarifying question at a time.
-- Keep clarifying questions short. Long responses increase audio latency and frustrate field use.
+- The session uses server-side voice activity detection for realtime transcription.
+- The prompt tells the assistant not to interview, coach, interrupt, or ask clarifying questions during capture.
+- Missing or ambiguous structured fields are left blank or low-confidence for the review screen instead of being resolved through spoken follow-up.
 
 ## Permissions And Recovery
 
@@ -80,7 +80,7 @@ Do not send the long-lived `OPENAI_API_KEY` to the browser. The browser consumes
 - Camera permission: capture at least one photo from a mobile browser; confirm timestamp and audio timestamp are shown.
 - Connection recovery: start a session, toggle offline, approve the log, return online, and confirm queued sync clears.
 - Offline queue: inspect local storage for `site-scribe-queued-*`, then confirm the key is removed after successful sync.
-- Realtime transcript: speak over generator noise, hammer drill noise, and wind; confirm transcript remains visible and editable through the structured review.
-- Clarifying behavior: say "ABC was here all day" and confirm the assistant asks only for missing worker count and hours.
+- Realtime transcript: speak over generator noise, hammer drill noise, and wind; confirm user narration remains visible and editable through the structured review.
+- Passive capture behavior: say "ABC was here all day" and confirm the assistant does not ask a spoken follow-up. Missing worker count and hours should appear as blank or low-confidence review fields.
 - Extraction accuracy: compare manpower, notes, tags, confidence scores, and photo pairings against a ground-truth written daily log.
 - End-to-end quality: approve a log and verify rows in `daily_logs`, `daily_log_manpower`, `daily_log_notes`, `daily_log_photos`, and Supabase Storage audit files.
