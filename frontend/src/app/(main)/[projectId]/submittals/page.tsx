@@ -978,22 +978,25 @@ export default function SubmittalsPage(): ReactElement {
                   New Package
                 </Button>
               )}
+              <Button
+                size="sm"
+                onClick={() => router.push(`/${projectId}/submittals/new`)}
+                data-testid="submittals-create-button"
+              >
+                <Plus className="h-4 w-4" />
+                Create Submittal
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" data-testid="submittals-dropdown-create">
-                    <Plus className="h-4 w-4" />
-                    Create
-                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  <Button size="sm" variant="outline" data-testid="submittals-create-options" aria-label="More create options">
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/new`)}>
-                    Create Submittal
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPackagePickerOpen(true)}>
+                  <DropdownMenuItem onSelect={() => setPackagePickerOpen(true)}>
                     Create from Package
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSpecPickerOpen(true)}>
+                  <DropdownMenuItem onSelect={() => setSpecPickerOpen(true)}>
                     Create from Specifications
                   </DropdownMenuItem>
                 </DropdownMenuContent>
