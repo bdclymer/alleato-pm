@@ -1,68 +1,44 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { MessageCircle, X } from "lucide-react";
 import {
   VeltComments,
   VeltCommentsSidebar,
   VeltRecorderControlPanel,
   VeltRecorderNotes,
   VeltRecorderPlayer,
-  VeltRecorderTool,
   useRecorderAddHandler,
   useSetDocument,
   useVeltClient,
 } from "@veltdev/react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface VeltCommentElement {
-  onCommentModeChange?: () => { subscribe: (cb: (mode: boolean) => void) => { unsubscribe: () => void } };
-  enableFloatingCommentTool?: () => void;
-  disableFloatingCommentTool?: () => void;
+  enableAttachments?: () => void;
+  enableScreenshot?: () => void;
+  enableRecordingTranscription?: () => void;
+  enableRecordingCountdown?: () => void;
+  enablePersistentCommentMode?: () => void;
+  enableCommentPinHighlighter?: () => void;
+  enableSidebarButtonOnCommentDialog?: () => void;
 }
 
-function AnnotationToggle() {
+function VeltCommentConfiguration() {
   const { client } = useVeltClient();
-  const [active, setActive] = useState(false);
 
   useEffect(() => {
     if (!client) return;
     const commentElement = client.getCommentElement() as unknown as VeltCommentElement;
-    const sub = commentElement.onCommentModeChange?.()?.subscribe((mode: boolean) => {
-      setActive(!!mode);
-    });
-    return () => sub?.unsubscribe?.();
+    commentElement.enableAttachments?.();
+    commentElement.enableScreenshot?.();
+    commentElement.enableRecordingTranscription?.();
+    commentElement.enableRecordingCountdown?.();
+    commentElement.enablePersistentCommentMode?.();
+    commentElement.enableCommentPinHighlighter?.();
+    commentElement.enableSidebarButtonOnCommentDialog?.();
   }, [client]);
 
-  const toggle = useCallback(() => {
-    if (!client) return;
-    const commentElement = client.getCommentElement() as unknown as VeltCommentElement;
-    if (active) {
-      commentElement.disableFloatingCommentTool?.();
-    } else {
-      commentElement.enableFloatingCommentTool?.();
-    }
-  }, [client, active]);
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggle}
-      aria-label={active ? "Exit annotation mode" : "Annotate page"}
-      aria-pressed={active}
-      className={cn(
-        "fixed bottom-20 right-4 z-40 h-10 w-10 rounded-full transition-colors",
-        active
-          ? "bg-primary text-primary-foreground shadow-sm"
-          : "bg-card text-muted-foreground shadow-sm hover:text-foreground",
-      )}
-    >
-      {active ? <X className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
-    </Button>
-  );
+  return null;
 }
 
 export function VeltGlobalLayer() {
@@ -84,11 +60,24 @@ export function VeltGlobalLayer() {
 
   return (
     <>
-      <VeltComments shadowDom={false} />
-      <VeltCommentsSidebar groupConfig={{ enable: false }} />
+      <VeltCommentConfiguration />
+      <VeltComments
+        shadowDom={false}
+        textMode={false}
+        attachments
+        screenshot
+        recordings="all"
+        recordingTranscription
+        recordingCountdown
+        persistentCommentMode
+        commentPinHighlighter
+        sidebarButtonOnCommentDialog
+        attachmentNameInMessage
+        allowedElementIds={["app-main-content"]}
+        commentToNearestAllowedElement
+      />
+      <VeltCommentsSidebar groupConfig={{ enable: false }} shadowDom={false} />
 
-      {/* @ts-expect-error -- Velt recorder types lag behind live API */}
-      <VeltRecorderTool type="all" recordingTranscription summary />
       <VeltRecorderControlPanel mode="floating" />
       <VeltRecorderNotes />
 
@@ -97,8 +86,6 @@ export function VeltGlobalLayer() {
           <VeltRecorderPlayer recorderId={activeRecorderId} />
         </div>
       )}
-
-      <AnnotationToggle />
     </>
   );
 }

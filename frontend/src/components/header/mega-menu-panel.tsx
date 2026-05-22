@@ -108,7 +108,9 @@ export function MegaMenuPanel({
         >
           <SectionLabel label={featuredLabel} />
           <div>
-            {featuredTools.map((tool) => {
+            {featuredTools
+              .filter((tool) => !tool.developerOnly || visibleFeatured.includes(tool))
+              .map((tool) => {
               const href = buildToolUrl(tool.path, projectId, tool.requiresProject);
               const isActive = tool.name === activeToolName;
               const isDisabled =

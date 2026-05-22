@@ -12,10 +12,6 @@ const AdminFeedbackWidget = dynamic(
   () => import("@/components/admin-feedback/AdminFeedbackWidget").then((mod) => mod.AdminFeedbackWidget),
   { ssr: false },
 );
-const VeltAuthProvider = dynamic(
-  () => import("@/components/velt/VeltAuthProvider").then((mod) => mod.VeltAuthProvider),
-  { ssr: false },
-);
 const VeltGlobalLayer = dynamic(
   () => import("@/components/velt/VeltGlobalLayer").then((m) => m.VeltGlobalLayer),
   { ssr: false },
@@ -55,10 +51,10 @@ export function RootClientWidgets() {
       <AppErrorTelemetryProvider />
       {shouldMountDeferredWidgets && <AskAlleatoRoot />}
       {shouldMountDeferredWidgets && (
-        <VeltAuthProvider>
+        <>
           <AdminFeedbackWidget showLauncher={false} />
           <VeltGlobalLayer />
-        </VeltAuthProvider>
+        </>
       )}
       {shouldMountDeferredWidgets && process.env.NODE_ENV === "development" && (
         <>

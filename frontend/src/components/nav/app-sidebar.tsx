@@ -317,12 +317,14 @@ function ExpandedCompanyWideTools({
   projectId,
   pathname,
   onBack,
+  projectSelector,
 }: {
   tools: NavigationTool[]
   visibleTools: NavigationTool[]
   projectId: number | null
   pathname: string
   onBack: () => void
+  projectSelector?: React.ReactNode
 }) {
   const visibleToolSet = React.useMemo(() => new Set(visibleTools), [visibleTools])
   const sections = React.useMemo(() => {
@@ -340,15 +342,24 @@ function ExpandedCompanyWideTools({
 
   return (
     <div className="flex flex-col">
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={onBack}
-        className="mb-3 h-8 justify-start gap-2 rounded-md px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-      >
-        <ChevronsLeft className="h-3.5 w-3.5" strokeWidth={1.6} />
-        Project tools
-      </Button>
+      {projectId ? (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onBack}
+          className="mb-3 h-8 justify-start gap-2 rounded-md px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+        >
+          <ChevronsLeft className="h-3.5 w-3.5" strokeWidth={1.6} />
+          Project tools
+        </Button>
+      ) : (
+        <div className="mb-4 space-y-2 px-2">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
+            Select a project
+          </span>
+          {projectSelector}
+        </div>
+      )}
       {sections.map((section) => {
         const sectionTools = section.toolNames
           .map((toolName) => tools.find((tool) => tool.name === toolName))
@@ -549,6 +560,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return tools.filter((tool) => {
         if (tool.onlyWithoutProject && projectId) return false;
         if (tool.requiresProject && !projectId) return false
+        if (tool.developerOnly && !isDeveloper) return false
         if (tool.adminOnly && !isAppAdmin && userType !== "developer") return false
         // Subcontractor-only tools: only show for subcontractors
         if (tool.subcontractorOnly && !isSubcontractor) return false
@@ -559,7 +571,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         return true
       })
     },
-    [projectId, permissions, isAppAdmin, userType, isSubcontractor]
+    [projectId, permissions, isAppAdmin, userType, isSubcontractor, isDeveloper]
   )
 
   // Check if a group has any active child
@@ -631,7 +643,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [filteredGroups, groupHasActiveChild])
 
   React.useEffect(() => {
-    setShowCompanyWideTools(false)
+    setShowCompanyWideTools(!projectId)
   }, [projectId])
 
   React.useEffect(() => {
@@ -773,6 +785,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 projectId={projectId}
                 pathname={pathname}
                 onBack={() => setShowCompanyWideTools(false)}
+                projectSelector={
+                  <div className="[&_.project-selector-trigger]:w-full">
+                    <ProjectSelector
+                      projectId={nav.projectId}
+                      currentProject={nav.currentProject}
+                      projects={nav.projects}
+                      loadingProjects={nav.loadingProjects}
+                      onFetchProjects={nav.fetchProjects}
+                      onProjectSelect={nav.handleProjectSelect}
+                      onViewAll={() => router.push("/")}
+                    />
+                  </div>
+                }
               />
             ) : (
               <>

@@ -23,7 +23,10 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       <SidebarInset className="h-svh overflow-hidden">
         <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
           <SiteHeader />
-          <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 pt-0">
+          <main
+            id="app-main-content"
+            className="flex min-h-0 flex-1 flex-col gap-4 p-4 pt-0"
+          >
             {children}
           </main>
         </div>

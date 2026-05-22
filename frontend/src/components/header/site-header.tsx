@@ -138,6 +138,9 @@ export function SiteHeader() {
     nav.projectId,
   );
   const [user, setUser] = React.useState<User | null>(null);
+  const isDeveloper =
+    (user?.app_metadata as Record<string, unknown> | undefined)
+      ?.is_developer === true;
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [userManagementBreadcrumbTitle, setUserManagementBreadcrumbTitle] =
     React.useState<string | null>(null);
@@ -312,14 +315,17 @@ export function SiteHeader() {
           />
           <ToolsDropdown
             projectId={nav.projectId}
+            currentProject={nav.currentProject}
+            projects={nav.projects}
+            loadingProjects={nav.loadingProjects}
+            onFetchProjects={nav.fetchProjects}
+            onProjectSelect={nav.handleProjectSelect}
+            onViewAll={() => router.push("/")}
             activeToolName={nav.activeToolName}
             permissions={permissions}
             isAppAdmin={isAppAdmin}
             userType={userType}
-            isDeveloper={
-              (user?.app_metadata as Record<string, unknown> | undefined)
-                ?.is_developer === true
-            }
+            isDeveloper={isDeveloper}
           />
           <AiChatButton />
           <Link
@@ -371,6 +377,7 @@ export function SiteHeader() {
         permissions={permissions}
         isAppAdmin={isAppAdmin}
         userType={userType}
+        isDeveloper={isDeveloper}
         user={user}
       />
     </header>
@@ -390,6 +397,7 @@ function MobileNavOverlay({
   permissions,
   isAppAdmin,
   userType,
+  isDeveloper,
   user,
 }: {
   open: boolean;
@@ -408,6 +416,7 @@ function MobileNavOverlay({
   permissions: Record<string, string[]>;
   isAppAdmin: boolean;
   userType: string | null;
+  isDeveloper: boolean;
   user: User | null;
 }) {
   const [mounted, setMounted] = React.useState(false);
@@ -431,6 +440,7 @@ function MobileNavOverlay({
       permissions,
       isAppAdmin,
       userType,
+      isDeveloper,
     ),
   }));
   const companyTools = filterToolsByPermission(
@@ -439,6 +449,7 @@ function MobileNavOverlay({
     permissions,
     isAppAdmin,
     userType,
+    isDeveloper,
   );
 
   return (
@@ -594,6 +605,12 @@ function MobileNavOverlay({
 
 function ToolsDropdown({
   projectId,
+  currentProject,
+  projects,
+  loadingProjects,
+  onFetchProjects,
+  onProjectSelect,
+  onViewAll,
   activeToolName,
   permissions,
   isAppAdmin,
@@ -601,6 +618,16 @@ function ToolsDropdown({
   isDeveloper,
 }: {
   projectId: number | null;
+  currentProject: {
+    id: number;
+    name: string | null;
+    "job number": string | null;
+  } | null;
+  projects: { id: number; name: string | null; "job number": string | null }[];
+  loadingProjects: boolean;
+  onFetchProjects: () => void;
+  onProjectSelect: (projectId: number) => void;
+  onViewAll: () => void;
   activeToolName: string;
   permissions: Record<string, string[]>;
   isAppAdmin: boolean;
@@ -634,8 +661,12 @@ function ToolsDropdown({
   React.useEffect(() => {
     if (!open) {
       setShowCompanyTools(false);
+      return;
     }
-  }, [open]);
+    if (!projectId) {
+      setShowCompanyTools(true);
+    }
+  }, [open, projectId]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -684,7 +715,7 @@ function ToolsDropdown({
         {/* Panel header */}
         <div className="flex items-center justify-between border-b border-border/50 px-5 py-2.5">
           <div className="flex items-center gap-2">
-            {showCompanyTools && (
+            {showCompanyTools && projectId && (
               <Button
                 type="button"
                 variant="ghost"
@@ -697,10 +728,10 @@ function ToolsDropdown({
               </Button>
             )}
             <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {showCompanyTools ? "Company tools" : "Project tools"}
+              {showCompanyTools ? "Company-wide tools" : "Project tools"}
             </span>
           </div>
-          {!projectId && (
+          {!projectId && !showCompanyTools && (
             <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-[10px] font-medium text-status-warning">
               Select a project to unlock more tools
             </span>
@@ -713,15 +744,39 @@ function ToolsDropdown({
           className="animate-in fade-in duration-200"
         >
           {showCompanyTools ? (
-            <CompanyToolsPanel
-              tools={companyWideHeaderTools}
-              visibleTools={visibleCompanyTools}
-              adminTools={isDeveloper ? developerCompanyAdminTools : []}
-              visibleAdminTools={visibleDeveloperAdminTools}
-              projectId={projectId}
-              activeToolName={activeToolName}
-              onClose={() => setOpen(false)}
-            />
+            <>
+              <CompanyToolsPanel
+                tools={companyWideHeaderTools}
+                visibleTools={visibleCompanyTools}
+                adminTools={isDeveloper ? developerCompanyAdminTools : []}
+                visibleAdminTools={visibleDeveloperAdminTools}
+                projectId={projectId}
+                activeToolName={activeToolName}
+                onClose={() => setOpen(false)}
+              />
+              {!projectId && (
+                <div className="border-t border-border/50 px-5 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[13px] font-medium text-muted-foreground">
+                      Select a project
+                    </span>
+                    <ProjectSelector
+                      projectId={projectId}
+                      currentProject={currentProject}
+                      projects={projects}
+                      loadingProjects={loadingProjects}
+                      onFetchProjects={onFetchProjects}
+                      onProjectSelect={(nextProjectId) => {
+                        onProjectSelect(nextProjectId);
+                        setShowCompanyTools(false);
+                        setOpen(false);
+                      }}
+                      onViewAll={onViewAll}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="overflow-x-auto">
               <div className="flex divide-x divide-border/40" style={{ minWidth: 760 }}>
@@ -833,8 +888,10 @@ function ToolsGroup({
           {group.label}
         </p>
         {group.subGroups.map((subGroup) => {
-          const subTools = group.tools.filter((t) =>
-            subGroup.toolNames.includes(t.name),
+          const subTools = group.tools.filter(
+            (tool) =>
+              subGroup.toolNames.includes(tool.name) &&
+              (!tool.developerOnly || visibleTools.includes(tool)),
           );
           return (
             <div key={subGroup.label} className="mb-3 last:mb-0">
@@ -867,7 +924,9 @@ function ToolsGroup({
       <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         {group.label}
       </p>
-      {group.tools.map((tool) => (
+      {group.tools
+        .filter((tool) => !tool.developerOnly || visibleTools.includes(tool))
+        .map((tool) => (
         <ToolItem
           key={`${tool.path}:${tool.name}`}
           tool={tool}

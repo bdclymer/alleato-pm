@@ -23,6 +23,7 @@ async function getVeltToken(payload: {
 
 export function VeltAuthProvider({ children }: { children: React.ReactNode }) {
   const { profile } = useCurrentUserProfile();
+  const apiKey = process.env.NEXT_PUBLIC_VELT_API_KEY;
 
   const authProvider = useMemo(() => {
     if (!profile) return undefined;
@@ -46,15 +47,20 @@ export function VeltAuthProvider({ children }: { children: React.ReactNode }) {
           organizationId,
           email: profile.email,
           isAdmin: profile.isAdmin ?? false,
-        }),
+      }),
     };
   }, [profile]);
 
-  if (!authProvider) return <>{children}</>;
+  if (!apiKey) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[Velt] NEXT_PUBLIC_VELT_API_KEY is not configured.");
+    }
+    return <>{children}</>;
+  }
 
   return (
     <VeltProvider
-      apiKey={process.env.NEXT_PUBLIC_VELT_API_KEY!}
+      apiKey={apiKey}
       authProvider={authProvider}
     >
       {children}

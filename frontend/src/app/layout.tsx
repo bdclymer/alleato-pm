@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "./Providers";
 import { RootClientWidgets } from "./root-client-widgets";
 import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
+import { VeltAuthProvider } from "@/components/velt/VeltAuthProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
@@ -76,7 +77,10 @@ export default function RootLayout({
                   <ProjectProvider>
                     <FavoritesProvider>
                       <HeaderProvider>
-                        {children}
+                        <VeltAuthProvider>
+                          {children}
+                          <RootClientWidgets />
+                        </VeltAuthProvider>
                       </HeaderProvider>
                     </FavoritesProvider>
                   </ProjectProvider>
@@ -84,7 +88,6 @@ export default function RootLayout({
               </Providers>
             </Suspense>
             <Toaster />
-            <RootClientWidgets />
             <SpeedInsights />
           </ThemeProvider>
         </QueryProvider>

@@ -20,8 +20,11 @@ export default function AdminLayout({
       <SidebarInset className="h-svh overflow-hidden">
         <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
           <SiteHeader />
-          <div className="flex flex-1 flex-col min-w-0 min-h-0">
-            <div className="flex-1">
+          <div
+            id="app-main-content"
+            className="flex flex-1 flex-col min-w-0 min-h-0"
+          >
+            <div className="flex flex-1 flex-col min-h-0">
               {children}
             </div>
             <SiteFooter />

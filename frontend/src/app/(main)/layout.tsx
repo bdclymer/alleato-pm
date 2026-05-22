@@ -8,7 +8,6 @@ import { CreateProjectDevConfigProvider } from "@/components/project/create-proj
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { DeferredCommentsSidebarPanel } from "@/components/header/deferred-comments-sidebar-panel";
 import { useProject } from "@/contexts/project-context";
 import { useDeferredMount } from "@/hooks/use-deferred-mount";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
@@ -104,6 +103,7 @@ export default function MainLayout({
                 )
               )}
               <main
+                id="app-main-content"
                 key="main-content"
                 className="flex flex-1 flex-col min-w-0 min-h-0"
                 {...feedbackTargetProps("app.main-content")}
@@ -123,7 +123,6 @@ export default function MainLayout({
                 <ProcoreReferencePanel key="procore-reference-panel" />
               )}
             </div>
-            <DeferredCommentsSidebarPanel key="comments-sidebar-panel" />
           </div>
         </CreateProjectDevConfigProvider>
         <Overlays key="floating-overlays" />

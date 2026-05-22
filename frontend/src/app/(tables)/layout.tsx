@@ -4,7 +4,6 @@ import * as React from "react";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
-import { DeferredCommentsSidebarPanel } from "@/components/header/deferred-comments-sidebar-panel";
 import { SiteFooter } from "@/components/layout/site-footer";
 
 export default function TablesLayout({
@@ -19,12 +18,14 @@ export default function TablesLayout({
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
             <SiteHeader />
-            <main className="flex flex-1 flex-col gap-4 pt-2 pb-4 min-w-0">
+            <main
+              id="app-main-content"
+              className="flex flex-1 flex-col gap-4 pt-2 pb-4 min-w-0"
+            >
               {children}
             </main>
             <SiteFooter />
           </div>
-          <DeferredCommentsSidebarPanel />
         </div>
       </SidebarInset>
     </SidebarProvider>

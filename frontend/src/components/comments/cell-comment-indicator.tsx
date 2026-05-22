@@ -1,8 +1,7 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
-import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
-import { useCellThread } from "./cell-thread-context";
+import { MessageSquarePlus } from "lucide-react";
+import { VeltCommentTool } from "@veltdev/react";
 
 interface CellCommentIndicatorProps {
   rowId: string;
@@ -10,78 +9,31 @@ interface CellCommentIndicatorProps {
 }
 
 /**
- * Renders a small comment icon on a table cell.
- * - If a thread exists for this cell → shows FloatingThread on click
- * - If no thread → shows FloatingComposer on click to create one
- *
- * Uses the CellThreadContext to find matching threads by rowId + columnId metadata.
+ * Cell-level comment entry point backed by Velt.
+ * The global Velt document scopes the thread to the current page; row/column
+ * metadata lets the sidebar group and filter budget-cell comments later.
  */
 export function CellCommentIndicator({
   rowId,
   columnId,
 }: CellCommentIndicatorProps) {
-  const context = useCellThread();
-
-  // Gracefully degrade when not inside a CellThreadProvider
-  if (!context) return null;
-
-  const { threads, openCell, setOpenCell } = context;
-
-  const metadata = { rowId, columnId };
-  const isOpen =
-    openCell?.rowId === rowId && openCell?.columnId === columnId;
-
-  // Find thread for this specific cell
-  const thread = threads.find(
-    (t) =>
-      t.metadata.rowId === rowId &&
-      t.metadata.columnId === columnId &&
-      !t.metadata.resolved,
-  );
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setOpenCell(isOpen ? null : metadata);
-  };
-
-  if (thread) {
-    return (
-      <FloatingThread
-        thread={thread}
-        defaultOpen={false}
-        open={isOpen}
-        onOpenChange={(open) => setOpenCell(open ? metadata : null)}
-        style={{ zIndex: 50 }}
-      >
-        <button
-          type="button"
-          onClick={handleToggle}
-          className="inline-flex items-center justify-center h-5 w-5 rounded text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
-          aria-label="View comment"
-        >
-          <MessageSquare className="h-3 w-3 fill-primary" />
-        </button>
-      </FloatingThread>
-    );
-  }
-
   return (
-    <FloatingComposer
-      metadata={metadata}
-      defaultOpen={false}
-      open={isOpen}
-      onOpenChange={(open) => setOpenCell(open ? metadata : null)}
-      onComposerSubmit={() => setOpenCell(metadata)}
-      style={{ zIndex: 50 }}
+    <VeltCommentTool
+      sourceId={`budget-cell:${rowId}:${columnId}`}
+      targetElementId="app-main-content"
+      shadowDom={false}
+      context={{
+        surface: "budget-table-cell",
+        rowId,
+        columnId,
+      }}
     >
-      <button
-        type="button"
-        onClick={handleToggle}
-        className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground/30 hover:text-muted-foreground hover:bg-muted/50 transition-colors flex-shrink-0 opacity-0 group-hover/cell:opacity-100"
-        aria-label="Add comment"
+      <span
+        aria-label="Comment on cell"
+        className="inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-muted-foreground/30 opacity-0 transition-colors hover:bg-muted/50 hover:text-muted-foreground group-hover/cell:opacity-100"
       >
-        <MessageSquare className="h-3 w-3" />
-      </button>
-    </FloatingComposer>
+        <MessageSquarePlus className="h-3 w-3" />
+      </span>
+    </VeltCommentTool>
   );
 }

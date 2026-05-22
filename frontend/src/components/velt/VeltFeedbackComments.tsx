@@ -1,13 +1,13 @@
 "use client";
-
-import { useEffect } from "react";
 import {
-  VeltComments,
-  VeltCommentsSidebar,
   VeltCommentTool,
+  VeltRecorderTool,
   VeltSidebarButton,
   useSetDocument,
 } from "@veltdev/react";
+import { MessageSquare, MessageSquarePlus, Video } from "lucide-react";
+
+import { Button, buttonVariants } from "@/components/ui/button";
 
 /**
  * Adds Velt freestyle comments to any page.
@@ -20,7 +20,6 @@ import {
 export function VeltFeedbackComments({
   documentId,
   documentName,
-  showSidebar = true,
 }: {
   documentId: string;
   documentName?: string;
@@ -28,17 +27,7 @@ export function VeltFeedbackComments({
 }) {
   useSetDocument(documentId, { documentName: documentName ?? documentId });
 
-  return (
-    <>
-      {/* Enables click-to-pin commenting on the whole page */}
-      <VeltComments shadowDom={false} />
-
-      {/* Sidebar panel listing all threads */}
-      {showSidebar && (
-        <VeltCommentsSidebar groupConfig={{ enable: false }} />
-      )}
-    </>
-  );
+  return null;
 }
 
 /**
@@ -48,8 +37,37 @@ export function VeltFeedbackComments({
 export function VeltCommentToolbar() {
   return (
     <div className="flex items-center gap-1">
-      <VeltCommentTool />
-      <VeltSidebarButton />
+      <VeltCommentTool
+        sourceId="feedback-inbox-toolbar"
+        targetElementId="app-main-content"
+        shadowDom={false}
+      >
+        <span
+          aria-label="Comment mode"
+          className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+        >
+          <MessageSquarePlus className="h-4 w-4" />
+        </span>
+      </VeltCommentTool>
+      <VeltRecorderTool
+        type="all"
+        buttonLabel="Record comment"
+        shadowDom={false}
+        recordingCountdown
+        maxLength={120}
+      >
+        <Button type="button" variant="ghost" size="icon-sm" aria-label="Record comment">
+          <Video className="h-4 w-4" />
+        </Button>
+      </VeltRecorderTool>
+      <VeltSidebarButton shadowDom={false}>
+        <span
+          aria-label="Comments"
+          className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+        >
+          <MessageSquare className="h-4 w-4" />
+        </span>
+      </VeltSidebarButton>
     </div>
   );
 }

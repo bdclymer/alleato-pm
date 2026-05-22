@@ -108,6 +108,9 @@ export function HeaderMobileMenu({
                 isAppAdmin,
                 userType
               );
+              const renderedTools = group.tools.filter(
+                (tool) => !tool.developerOnly || visibleTools.includes(tool)
+              );
 
               return (
                 <div key={group.id}>
@@ -115,7 +118,7 @@ export function HeaderMobileMenu({
                     {group.label}
                   </h3>
                   <div className="space-y-0.5">
-                    {group.tools.map((tool) => {
+                    {renderedTools.map((tool) => {
                       const href = buildToolUrl(
                         tool.path,
                         projectId,

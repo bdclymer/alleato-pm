@@ -151,7 +151,8 @@ export function ToolsDropdownContent(props: ToolsDropdownProps) {
       .map((name) => allToolsMap.get(name))
       .filter(
         (t): t is HeaderNavGroup["tools"][0] => t !== undefined
-      );
+      )
+      .filter((tool) => !tool.developerOnly || allVisible.includes(tool));
 
     return tools.map((tool) => {
       const state = getToolState(

@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useCallback, type CSSProperties } from "react";
-import { LiveList, LiveObject } from "@liveblocks/client";
-import { RoomProvider, ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
-import { FloatingComposer, FloatingThread, CommentPin } from "@liveblocks/react-ui";
+import { useCallback, useState, type CSSProperties } from "react";
 import { MessageSquare, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { VeltCommentTool } from "@veltdev/react";
+
+import { Button, buttonVariants } from "@/components/ui/button";
 import { DrawingViewer } from "./DrawingViewer";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 interface PendingPin {
-  x: number; // percentage 0–100
-  y: number; // percentage 0–100
+  x: number;
+  y: number;
   page: number;
 }
 
@@ -40,90 +37,26 @@ interface DrawingViewerWithCommentsProps {
   visibleAnnotationTypes?: ("pen" | "highlighter" | "rectangle" | "arrow" | "text")[];
 }
 
-const INITIAL_STORAGE = {
-  meta: new LiveObject({ title: "" }),
-  properties: new LiveObject({
-    progress: "none" as const,
-    priority: "none" as const,
-    assignedTo: "none",
-  }),
-  labels: new LiveList<string>([]),
-  links: new LiveList<string>([]),
-};
-
-// ─── Root export (provides RoomProvider) ────────────────────────────────────
-
-export function DrawingViewerWithComments(props: DrawingViewerWithCommentsProps) {
-  const roomId = `alleato:drawing:${props.drawingId}`;
-
-  return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{ cursor: null }}
-      initialStorage={INITIAL_STORAGE}
-    >
-      <ClientSideSuspense
-        fallback={
-          <DrawingViewer
-            fileUrl={props.fileUrl}
-            fileName={props.fileName}
-            drawingNumber={props.drawingNumber}
-            title={props.title}
-            onError={props.onError}
-            onLoadSuccess={props.onLoadSuccess}
-            className={props.className}
-            showToolbar={props.showToolbar}
-            controlledTool={props.controlledTool}
-            controlledColor={props.controlledColor}
-            controlledStrokeWidth={props.controlledStrokeWidth}
-            onPageNumberChange={props.onPageNumberChange}
-            controlledScale={props.controlledScale}
-            onScaleChange={props.onScaleChange}
-            controlledRotation={props.controlledRotation}
-            onRotationChange={props.onRotationChange}
-            linkPinsOverlay={props.linkPinsOverlay}
-            onCommentClick={props.onCommentClick}
-            visibleAnnotationTypes={props.visibleAnnotationTypes}
-          />
-        }
-      >
-        <ViewerWithCommentState {...props} />
-      </ClientSideSuspense>
-    </RoomProvider>
-  );
-}
-
-// ─── Inner component — uses Liveblocks hooks ─────────────────────────────────
-
-function ViewerWithCommentState({
-  drawingId: _drawingId,
+export function DrawingViewerWithComments({
+  drawingId,
   onCommentClick: parentOnCommentClick,
   ...viewerProps
 }: DrawingViewerWithCommentsProps) {
-  const { threads } = useThreads();
   const [pendingPin, setPendingPin] = useState<PendingPin | null>(null);
-  const [isPendingComposerOpen, setIsPendingComposerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Route clicks: "comment" tool → Liveblocks pin; anything else → parent handler
   const handleCommentClick = useCallback((x: number, y: number, page: number) => {
     if (viewerProps.controlledTool === "comment") {
       setPendingPin({ x, y, page });
-      setIsPendingComposerOpen(true);
-    } else {
-      // "link" and any other tools forward to the parent handler
-      parentOnCommentClick?.(x, y, page);
+      return;
     }
-  }, [viewerProps.controlledTool, parentOnCommentClick]);
+
+    parentOnCommentClick?.(x, y, page);
+  }, [parentOnCommentClick, viewerProps.controlledTool]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
-
-  // Threads that have canvas coordinates (placed via the comment tool)
-  const pinnedThreads = threads.filter(
-    (t) => typeof t.metadata.x === "number" && typeof t.metadata.y === "number"
-  );
 
   const pendingPinStyle: CSSProperties | undefined = pendingPin
     ? {
@@ -135,72 +68,45 @@ function ViewerWithCommentState({
       }
     : undefined;
 
-  const commentOverlay = (
-    <>
-      {/* Pending pin — show a compact reply trigger until the composer is explicitly opened */}
-      {pendingPin && (
-        <FloatingComposer
-          defaultOpen={false}
-          metadata={{ x: pendingPin.x, y: pendingPin.y, page: pendingPin.page }}
-          open={isPendingComposerOpen}
-          onOpenChange={(open) => {
-            setIsPendingComposerOpen(open);
-          }}
-          onComposerSubmit={() => {
-            setPendingPin(null);
-            setIsPendingComposerOpen(false);
+  const commentOverlay =
+    pendingPin && pendingPin.page === currentPage ? (
+      <div className="inline-flex items-center gap-1" style={pendingPinStyle}>
+        <VeltCommentTool
+          sourceId={`drawing:${drawingId}:${pendingPin.page}:${pendingPin.x}:${pendingPin.y}`}
+          targetElementId="app-main-content"
+          shadowDom={false}
+          context={{
+            surface: "drawing-viewer",
+            drawingId,
+            page: pendingPin.page,
+            x: pendingPin.x,
+            y: pendingPin.y,
           }}
         >
-          <div
-            className="inline-flex items-center gap-1"
-            style={pendingPinStyle}
+          <span
+            className={buttonVariants({
+              variant: "secondary",
+              size: "sm",
+              className: "inline-flex h-auto items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium",
+            })}
+            onClick={() => setPendingPin(null)}
           >
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium h-auto"
-              onClick={() => setIsPendingComposerOpen(true)}
-            >
-              <MessageSquare className="h-3 w-3" />
-              <span>Reply</span>
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 rounded-full p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => setPendingPin(null)}
-              title="Cancel"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        </FloatingComposer>
-      )}
-
-      {/* Existing pins — only show for the current page */}
-      {viewerProps.showCommentPins !== false && pinnedThreads
-        .filter(
-          (t) => !t.resolved && ((t.metadata as Record<string, unknown>).page ?? 1) === currentPage
-        )
-        .map((thread) => (
-          <FloatingThread key={thread.id} thread={thread}>
-            <CommentPin
-              userId={thread.comments[0]?.userId}
-              style={{
-                position: "absolute",
-                left: `${thread.metadata.x}%`,
-                top: `${thread.metadata.y}%`,
-                transform: "translate(-50%, -100%)",
-                zIndex: 20,
-                cursor: "pointer",
-              }}
-            />
-          </FloatingThread>
-        ))}
-    </>
-  );
+            <MessageSquare className="h-3 w-3" />
+            <span>Comment</span>
+          </span>
+        </VeltCommentTool>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 rounded-full p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setPendingPin(null)}
+          title="Cancel"
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    ) : null;
 
   return (
     <DrawingViewer

@@ -41,6 +41,7 @@ export function MarkdownRenderer({
             ),
             h2: ({ children, ...props }) => (
               <h2
+                id={slugifyHeading(children)}
                 className="text-2xl font-semibold text-foreground dark:text-neutral-200 mt-6 mb-4"
                 {...props}
               >
@@ -49,6 +50,7 @@ export function MarkdownRenderer({
             ),
             h3: ({ children, ...props }) => (
               <h3
+                id={slugifyHeading(children)}
                 className="text-xl font-semibold text-foreground dark:text-neutral-200 mt-4 mb-2"
                 {...props}
               >
@@ -206,4 +208,31 @@ export function MarkdownRenderer({
       </ReactMarkdown>
     </div>
   );
+}
+
+function slugifyHeading(children: React.ReactNode): string | undefined {
+  const text = extractText(children);
+  if (!text) return undefined;
+
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+function extractText(node: React.ReactNode): string {
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node);
+  }
+
+  if (Array.isArray(node)) {
+    return node.map(extractText).join("");
+  }
+
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return extractText(node.props.children);
+  }
+
+  return "";
 }
