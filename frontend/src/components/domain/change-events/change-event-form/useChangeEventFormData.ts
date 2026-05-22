@@ -410,9 +410,12 @@ export function useChangeEventFormData({
     if (!formData.status) {
       nextErrors.status = "Status is required";
     }
+    if (!formData.type) {
+      nextErrors.type = "Type is required";
+    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
-  }, [formData.title, formData.status]);
+  }, [formData.title, formData.status, formData.type]);
 
   return {
     formData,

@@ -131,10 +131,12 @@ export function GeneralInfoSection({
         )}
         <SelectField
           label="Type"
+          required
           options={TYPE_OPTIONS}
           value={formData.type || ""}
           onValueChange={(value) => updateFormData({ type: value as ChangeEventType })}
           placeholder="Select Type"
+          error={errors.type}
         />
         <SelectField
           label="Change Reason"

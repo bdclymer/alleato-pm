@@ -37,7 +37,6 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, createClientWithToken } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createChangeEventSchema, changeEventQuerySchema } from './validation'
-import { ZodError } from 'zod'
 import type { Database } from '@/types/database.types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { apiErrorResponse } from "@/lib/api-error";
@@ -588,6 +587,29 @@ export const POST = withApiGuardrails(
     }
 
     // Validate request body
+    const parseResult = createChangeEventSchema.safeParse(body);
+    if (!parseResult.success) {
+      const FIELD_LABELS: Record<string, string> = {
+        type: "Type",
+        title: "Title",
+        scope: "Scope",
+      };
+      const fields = [...new Set(
+        parseResult.error.issues
+          .map((issue) => issue.path[0])
+          .filter((f): f is string => typeof f === "string"),
+      )];
+      const readableFields = fields.map((f) => FIELD_LABELS[f] ?? f);
+      const message =
+        readableFields.length > 0
+          ? `${readableFields.join(", ")} ${readableFields.length === 1 ? "is" : "are"} required.`
+          : "Invalid request data.";
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/change-events#POST",
+        message,
+      });
+    }
     const {
       title,
       type,
@@ -599,7 +621,7 @@ export const POST = withApiGuardrails(
       lineItemRevenueSource,
       primeContractId,
       description,
-    } = createChangeEventSchema.parse(body)
+    } = parseResult.data;
 
     const originId = typeof body.originId === "string" ? body.originId : null;
 
