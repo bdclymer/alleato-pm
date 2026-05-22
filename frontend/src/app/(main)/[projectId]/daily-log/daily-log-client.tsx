@@ -10,12 +10,14 @@ import {
   UnifiedTablePage,
   useUnifiedTableState,
 } from "@/components/tables/unified";
+import { formatDailyLogDate } from "@/lib/daily-log/creator-labels";
 
 interface DailyLogRow {
   id: string;
   log_date: string | null;
   weather_conditions: unknown;
   created_by: string | null;
+  creator_name: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -31,13 +33,7 @@ const tableColumns = [
     label: "Date",
     defaultVisible: true,
     render: (row: DailyLogRow) =>
-      row.log_date
-        ? new Date(row.log_date).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })
-        : "—",
+      row.log_date ? formatDailyLogDate(row.log_date) : "—",
     sortValue: (row: DailyLogRow) => row.log_date ?? "",
   },
   {
@@ -59,8 +55,8 @@ const tableColumns = [
     id: "created_by",
     label: "Created By",
     defaultVisible: true,
-    render: (row: DailyLogRow) => row.created_by ?? "—",
-    sortValue: (row: DailyLogRow) => row.created_by ?? "",
+    render: (row: DailyLogRow) => row.creator_name ?? "—",
+    sortValue: (row: DailyLogRow) => row.creator_name ?? "",
   },
   {
     id: "created_at",
@@ -136,7 +132,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
     return logs.filter(
       (log) =>
         (log.log_date ?? "").toLowerCase().includes(search) ||
-        (log.created_by ?? "").toLowerCase().includes(search),
+        (log.creator_name ?? "").toLowerCase().includes(search),
     );
   }, [logs, tableState.debouncedSearch]);
 
@@ -219,13 +215,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
             <p className="text-xs uppercase text-muted-foreground">Daily Log</p>
             {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="mt-1 font-medium">
-              {item.log_date
-                ? new Date(item.log_date).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })
-                : "No date"}
+              {formatDailyLogDate(item.log_date)}
             </h3>
             <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
               {item.weather_conditions
@@ -235,7 +225,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
                 : "No weather details"}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Created by {item.created_by ?? "Unknown"}
+              Created by {item.creator_name ?? "Unknown"}
             </p>
           </div>
         ),
@@ -243,16 +233,10 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
           <div className="flex items-center justify-between rounded-md px-4 py-2">
             <div>
               <p className="text-sm font-medium">
-                {item.log_date
-                  ? new Date(item.log_date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "No date"}
+                {formatDailyLogDate(item.log_date)}
               </p>
               <p className="line-clamp-1 text-xs text-muted-foreground">
-                {item.created_by ? `By ${item.created_by}` : "No author"}
+                {item.creator_name ? `By ${item.creator_name}` : "No author"}
               </p>
             </div>
           </div>

@@ -12,6 +12,8 @@ The Alleato AI system acts as a 24/7 business intelligence layer for constructio
 
 The architecture is a multi-agent system (C-Suite model) where a Chief Strategist routes questions to domain-specialist agents (CFO, COO, etc.), each of which has its own system prompt, tool set, and model config. All agents run server-side through Next.js API routes via the Vercel AI SDK.
 
+AI SDK public types used by app code, including `ModelMessage`, must be imported from the `ai` package. Do not import those public app-facing types from transitive `@ai-sdk/*` packages; those packages may be present in the lockfile without being directly resolvable by TypeScript.
+
 ---
 
 ## 2. Architecture Diagram
