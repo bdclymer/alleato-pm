@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { requireDeveloperApi } from "@/lib/auth/require-developer";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import {
   deleteProgressReport,
@@ -43,6 +44,9 @@ const updateSchema = z.object({
 export const GET = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]#GET",
   async ({ params }) => {
+    const developerGuard = await requireDeveloperApi();
+    if (developerGuard) return developerGuard;
+
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
@@ -76,6 +80,9 @@ export const GET = withApiGuardrails(
 export const PUT = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]#PUT",
   async ({ request, params }) => {
+    const developerGuard = await requireDeveloperApi();
+    if (developerGuard) return developerGuard;
+
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
@@ -115,6 +122,9 @@ export const PUT = withApiGuardrails(
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]#DELETE",
   async ({ params }) => {
+    const developerGuard = await requireDeveloperApi();
+    if (developerGuard) return developerGuard;
+
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({

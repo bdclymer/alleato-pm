@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { requireDeveloperApi } from "@/lib/auth/require-developer";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
 import {
@@ -47,6 +48,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         { status: 400 },
       );
     }
+
+    const developerGuard = await requireDeveloperApi();
+    if (developerGuard) return developerGuard;
 
     const guard = await requirePermission(projectIdNum, "budget", "read");
     if (guard.denied) return guard.response;

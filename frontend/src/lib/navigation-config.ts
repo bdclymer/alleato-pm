@@ -62,6 +62,8 @@ export interface NavigationTool {
   requiredPermission?: "read" | "write" | "admin";
   /** If true, only visible to app admins or developers. */
   adminOnly?: boolean;
+  /** If true, only visible to users with the developer role. */
+  developerOnly?: boolean;
   /** If true, only visible to users with user_type === "subcontractor". */
   subcontractorOnly?: boolean;
 }
@@ -94,6 +96,7 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Bot,
     description: "AI-powered project guidance",
+    developerOnly: true,
   },
   {
     name: "Projects",
@@ -123,6 +126,7 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Users,
     description: "Company-wide meetings and segments",
+    developerOnly: true,
   },
   {
     name: "Tasks",
@@ -130,6 +134,7 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Company task board",
+    developerOnly: true,
   },
   {
     name: "Knowledge Base",
@@ -137,6 +142,7 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Brain,
     description: "Team knowledge, insights, and lessons learned",
+    developerOnly: true,
   },
   {
     name: "Documents",
@@ -268,7 +274,7 @@ export const coreTools: NavigationTool[] = [
 
 export const projectManagementTools: NavigationTool[] = [
   { name: "Schedule", path: "schedule", icon: Calendar, requiresProject: true, module: "schedule" },
-  { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" },
+  { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents", developerOnly: true },
   { name: "Meetings", path: "meetings", icon: Users, requiresProject: true },
   { name: "Daily Log", path: "daily-log", icon: Clock, requiresProject: true },
   { name: "Punch List", path: "punch-list", icon: CheckCircle, requiresProject: true },
@@ -290,7 +296,7 @@ export const financialManagementTools: NavigationTool[] = [
   { name: "Change Events", path: "change-events", icon: Clock, requiresProject: true, module: "change_orders" },
   { name: "Direct Costs", path: "direct-costs", icon: DollarSign, requiresProject: true, module: "budget" },
   { name: "Invoicing", path: "invoices", icon: Receipt, requiresProject: true, module: "contracts" },
-  { name: "Project Status Report", path: "project-status-report", icon: ClipboardList, requiresProject: true, module: "budget" },
+  { name: "Project Status Report", path: "project-status-report", icon: ClipboardList, requiresProject: true, module: "budget", developerOnly: true },
 ];
 
 /**
@@ -366,12 +372,15 @@ export function filterToolsByPermission<T extends NavigationTool>(
   projectId: number | null,
   permissions: Record<string, string[]>,
   isAppAdmin: boolean,
-  userType: string | null
+  userType: string | null,
+  isDeveloper = userType === "developer",
 ): T[] {
   return tools.filter((tool) => {
     if (tool.onlyWithoutProject && projectId) return false;
     // Hide project-scoped tools when no project selected
     if (tool.requiresProject && !projectId) return false;
+    // Developer-only tools: only site developers can see experimental/internal report surfaces.
+    if (tool.developerOnly && !isDeveloper) return false;
     // Admin-only tools: only for app admins or developers
     if (tool.adminOnly && !isAppAdmin && userType !== "developer") return false;
     // Module-gated tools: check user has required permission
@@ -512,6 +521,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: ClipboardList,
         description: "Monthly project status summary",
         module: "budget",
+        developerOnly: true,
       },
     ],
     subGroups: [
@@ -642,6 +652,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
         requiresProject: true,
         icon: FileText,
         description: "Weekly client reports for this project",
+        developerOnly: true,
       },
     ],
   },

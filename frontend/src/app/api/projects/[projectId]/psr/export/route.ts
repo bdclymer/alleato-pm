@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import type React from "react";
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { requireDeveloperApi } from "@/lib/auth/require-developer";
 import { requirePermission } from "@/lib/permissions-guard";
 import { apiFetch } from "@/lib/api-client";
 import type { PsrApiResponse } from "@/types/psr.types";
@@ -30,6 +31,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const url = new URL(request.url);
     const month =
       url.searchParams.get("month") ?? new Date().toISOString().slice(0, 7);
+
+    const developerGuard = await requireDeveloperApi();
+    if (developerGuard) return developerGuard;
 
     const guard = await requirePermission(projectIdNum, "budget", "read");
     if (guard.denied) return guard.response;

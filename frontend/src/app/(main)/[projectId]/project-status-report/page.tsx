@@ -15,6 +15,7 @@ import type {
   PsrBudgetGrandTotals,
 } from "@/types/psr.types";
 import { notFound } from "next/navigation";
+import { requireDeveloper } from "@/lib/auth/require-developer";
 
 // ---------------------------------------------------------------------------
 // Helpers (duplicated from API route to avoid cross-layer import)
@@ -337,6 +338,8 @@ export default async function ProjectStatusReportPage({
   params: Promise<{ projectId: string }>;
   searchParams: Promise<{ month?: string }>;
 }) {
+  await requireDeveloper();
+
   const { projectId } = await params;
   const resolvedSearchParams = await searchParams;
   const month =

@@ -18,6 +18,7 @@
  */
 
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { getCurrentUser, getIsDeveloper } from "@/lib/auth/current-user";
 
 export async function requireDeveloper(): Promise<void> {
@@ -30,4 +31,24 @@ export async function requireDeveloper(): Promise<void> {
   if (!isDeveloper) {
     redirect("/access-denied?reason=developer-only");
   }
+}
+
+export async function requireDeveloperApi(): Promise<NextResponse | null> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const isDeveloper = await getIsDeveloper();
+  if (!isDeveloper) {
+    return NextResponse.json(
+      {
+        error: "Developer access required",
+        required: { role: "developer" },
+      },
+      { status: 403 },
+    );
+  }
+
+  return null;
 }

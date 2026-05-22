@@ -16,6 +16,8 @@ const REASON_MESSAGES: Record<string, string> = {
   "invalid-project": "The project you tried to access does not exist.",
   "insufficient-permissions":
     "You don't have permission to access this section. Contact your project administrator if you believe this is an error.",
+  "developer-only":
+    "This feature is currently in development and is only available to the Alleato development team.",
 };
 
 const DEFAULT_MESSAGE =

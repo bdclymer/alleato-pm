@@ -7,6 +7,7 @@ type SessionTokenData = {
   userId: string;
   email: string;
   expiresAtMs: number | null;
+  isDeveloper: boolean;
 };
 
 const AUTH_COOKIE_PATTERN = /^sb-[^-]+-auth-token(?:\.\d+)?$/;
@@ -104,6 +105,7 @@ function parseCookieValueToTokenData(rawValue: string): SessionTokenData | null 
       typeof payload.exp === "number" && Number.isFinite(payload.exp)
         ? payload.exp * 1000
         : null,
+    isDeveloper: payload.is_developer === true,
   };
 }
 

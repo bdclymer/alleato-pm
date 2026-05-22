@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { requireDeveloperApi } from "@/lib/auth/require-developer";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
 import { buildProgressReportHtml } from "@/lib/progress-reports/pdf";
 import {
@@ -17,6 +18,9 @@ export const dynamic = "force-dynamic";
 export const GET = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]/pdf#GET",
   async ({ request, params }) => {
+    const developerGuard = await requireDeveloperApi();
+    if (developerGuard) return developerGuard;
+
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({

@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
+
+const VeltFeedbackComments = dynamic(
+  () => import("@/components/velt/VeltFeedbackComments").then((m) => m.VeltFeedbackComments),
+  { ssr: false },
+);
 import { Project } from "@/types/portfolio";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1058,6 +1064,11 @@ export default function PortfolioPage() {
 
   return (
     <>
+      <VeltFeedbackComments
+        documentId="homepage-projects"
+        documentName="Projects"
+        showSidebar={false}
+      />
       <UnifiedTablePage
       header={{
         title: "Projects",

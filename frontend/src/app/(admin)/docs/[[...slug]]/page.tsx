@@ -1,24 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type React from "react";
 
 import {
-  ArrowLeft,
   ArrowUpRight,
   BookOpen,
+  Bot,
   ChevronRight,
   Code2,
   FileText,
+  FolderKanban,
+  LayoutList,
   Search,
   Sparkles,
+  Wrench,
 } from "lucide-react";
 
 import { MarkdownRenderer } from "@/components/docs/markdown-renderer";
-import { EmptyState } from "@/components/ds";
-import { IconBadge } from "@/components/ds";
-import { PageShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge, Button, EmptyState, IconBadge, Input } from "@/components/ds";
+import { cn } from "@/lib/utils";
 import { getHelpActionsForIds } from "@/lib/help-actions";
 import {
   getHelpArticleBySlug,
@@ -33,12 +34,21 @@ import {
   type TechnicalDoc,
 } from "@/lib/technical-docs";
 
+type DocsTab = "project-tools" | "ai-features";
+
+type TocItem = {
+  id: string;
+  label: string;
+  level?: 2 | 3;
+};
+
 interface DocPageProps {
   params: Promise<{
     slug?: string[];
   }>;
   searchParams?: Promise<{
     q?: string;
+    tab?: string;
   }>;
 }
 
@@ -86,7 +96,14 @@ export async function generateMetadata({ params }: DocPageProps): Promise<Metada
 
 export default async function DocPage({ params, searchParams }: DocPageProps) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const slug = resolvedParams.slug?.join("/") ?? "";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
+
+  const [articles, technicalDocs] = await Promise.all([
+    getHelpArticles(),
+    getTechnicalDocs(),
+  ]);
 
   if (slug) {
     if (slug.startsWith("technical/")) {
@@ -94,152 +111,201 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
       if (!technicalDoc) {
         notFound();
       }
-      return <TechnicalArticlePage doc={technicalDoc} />;
+      return (
+        <TechnicalArticlePage
+          doc={technicalDoc}
+          articles={articles}
+          technicalDocs={technicalDocs}
+        />
+      );
     }
 
     const article = await getHelpArticleBySlug(slug);
     if (!article) {
       notFound();
     }
-    return <ArticlePage article={article} />;
+    return (
+      <ArticlePage
+        article={article}
+        articles={articles}
+        technicalDocs={technicalDocs}
+      />
+    );
   }
 
-  const resolvedSearchParams = await searchParams;
-  const query = resolvedSearchParams?.q?.trim() ?? "";
-  const [articles, technicalDocs] = await Promise.all([
-    getHelpArticles(),
-    getTechnicalDocs(),
-  ]);
-  const filteredArticles = filterArticles(articles, { query });
-  const filteredTechnicalDocs = filterTechnicalDocs(technicalDocs, query);
+  const activeTab = resolvedSearchParams?.tab === "ai-features" ? "ai-features" : "project-tools";
+  const filteredArticles = filterArticles(articles, { query, activeTab });
+  const filteredTechnicalDocs = filterTechnicalDocsByTab(
+    filterTechnicalDocs(technicalDocs, query),
+    activeTab,
+  );
 
   return (
-    <PageShell
-      variant="content"
-      title="Documentation"
-      titleContent={
-        <div>
-          <div className="mb-3 inline-flex items-center gap-2 text-primary">
-            <Sparkles className="h-3 w-3 text-primary" />
-            <span className="text-xs font-medium text-primary">
-              Alleato OS
-            </span>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Documentation
-          </h1>
-        </div>
-      }
+    <DocsChrome
+      activeTab={activeTab}
+      articles={articles}
+      technicalDocs={technicalDocs}
+      tocItems={getHomeToc(activeTab)}
     >
-      <div>
-        <form action="/docs" className="mb-10 flex flex-col gap-2.5 sm:flex-row">
-          <label className="relative flex-1 sm:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
-            <span className="sr-only">Search documentation</span>
-            <Input
-              name="q"
-              defaultValue={query}
-              placeholder="Search documentation..."
-              className="h-9 border-border/50 bg-background pl-9 text-sm shadow-none placeholder:text-muted-foreground/50"
-            />
-          </label>
-          <Button
-            type="submit"
-            variant="outline"
-            className="h-9 border-border/50 bg-background px-4 text-sm shadow-none"
-          >
-            Search
-          </Button>
-        </form>
+      <div className="space-y-8">
+        <section id="overview" className="space-y-5">
+          <div className="space-y-2">
+            <Badge
+              variant="active"
+              className="rounded-md bg-primary/10 text-primary"
+            >
+              {activeTab === "project-tools" ? "Project tools" : "AI features"}
+            </Badge>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              {activeTab === "project-tools" ? "Documentation" : "AI features"}
+            </h1>
+            <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
+              {activeTab === "project-tools"
+                ? "Guides and technical references for working inside Alleato PM."
+                : "A practical map of the assistant, tools, memory, models, and feedback loops that power Alleato AI."}
+            </p>
+          </div>
 
-        {!query ? <AiOverviewCard /> : null}
-        <TechnicalDocumentationSection docs={filteredTechnicalDocs} query={query} />
+          <form action="/docs" className="flex flex-col gap-2.5 sm:flex-row">
+            <input type="hidden" name="tab" value={activeTab} />
+            <label className="relative flex-1 sm:max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
+              <span className="sr-only">Search documentation</span>
+              <Input
+                name="q"
+                defaultValue={query}
+                placeholder="Search documentation..."
+                className="h-10 border-border/70 bg-background pl-9 text-sm shadow-none placeholder:text-muted-foreground/50"
+              />
+            </label>
+            <Button
+              type="submit"
+              variant="outline"
+              className="h-10 border-border/70 bg-background px-4 text-sm shadow-none"
+            >
+              Search
+            </Button>
+          </form>
+        </section>
 
-        {filteredArticles.length === 0 && filteredTechnicalDocs.length === 0 ? (
-          <EmptyState
-            icon={<BookOpen />}
-            title="No documentation found"
-            description="Try a broader search phrase."
+        {activeTab === "ai-features" && !query ? <AiOverviewCard /> : null}
+        {activeTab === "project-tools" && !query ? <ProjectToolsHero /> : null}
+
+        <section id="featured-guides" className="space-y-4">
+          <SectionHeading
+            title={activeTab === "project-tools" ? "Featured guides" : "AI entry points"}
+            description={
+              activeTab === "project-tools"
+                ? "Start with the most common project workflows, then follow the related technical references."
+                : "Use these references to understand how the AI stack is wired and governed."
+            }
           />
+          {activeTab === "project-tools" ? (
+            <ArticleList articles={filteredArticles} compact />
+          ) : (
+            <TechnicalDocGrid docs={filteredTechnicalDocs.filter((doc) => doc.featured)} />
+          )}
+        </section>
+
+        {activeTab === "project-tools" ? (
+          <>
+            <TechnicalDocumentationSection docs={filteredTechnicalDocs} query={query} />
+            {filteredArticles.length === 0 && filteredTechnicalDocs.length === 0 ? (
+              <EmptyState
+                icon={<BookOpen />}
+                title="No documentation found"
+                description="Try a broader search phrase."
+              />
+            ) : null}
+          </>
         ) : (
-          <section>
-            <ArticleList articles={filteredArticles} />
-          </section>
+          <AiTechnicalSection docs={filteredTechnicalDocs} query={query} />
         )}
       </div>
-    </PageShell>
+    </DocsChrome>
   );
 }
 
 function TechnicalArticlePage({
   doc,
+  articles,
+  technicalDocs,
 }: {
   doc: TechnicalDoc & { content: string };
+  articles: HelpArticle[];
+  technicalDocs: TechnicalDoc[];
 }) {
   const contentWithoutTitle = doc.content.replace(/^#\s+.+\n+/, "");
+  const tocItems = getTocItems(contentWithoutTitle);
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <Link
-          href="/docs"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Documentation
-        </Link>
-      </div>
-
-      <div className="mb-6 space-y-2 border-b border-border pb-6">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{doc.category}</span>
-          <span>/</span>
-          <span>{doc.sourcePath}</span>
+    <DocsChrome
+      activeTab={isAiTechnicalDoc(doc) ? "ai-features" : "project-tools"}
+      articles={articles}
+      technicalDocs={technicalDocs}
+      currentHref={doc.href}
+      tocItems={tocItems}
+    >
+      <article className="space-y-6">
+        <div className="space-y-3 border-b border-border pb-6">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Link href="/docs" className="transition hover:text-foreground">
+              Documentation
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span>{doc.category}</span>
+          </div>
+          <div className="space-y-2">
+            <Badge variant="outline" className="rounded-md">
+              {doc.sourcePath}
+            </Badge>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              {doc.title}
+            </h1>
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              {doc.description}
+            </p>
+          </div>
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          {doc.title}
-        </h1>
-        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          {doc.description}
-        </p>
-      </div>
 
-      <article>
         <MarkdownRenderer content={contentWithoutTitle} />
       </article>
-    </main>
+    </DocsChrome>
   );
 }
 
-function ArticlePage({ article }: { article: HelpArticle }) {
+function ArticlePage({
+  article,
+  articles,
+  technicalDocs,
+}: {
+  article: HelpArticle;
+  articles: HelpArticle[];
+  technicalDocs: TechnicalDoc[];
+}) {
   const actions = getHelpActionsForIds(article.frontmatter.related_actions);
+  const tocItems = getTocItems(article.content);
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <Link
-          href="/docs"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Help Center
-        </Link>
-      </div>
-
-      <article>
+    <DocsChrome
+      activeTab={isAiHelpArticle(article) ? "ai-features" : "project-tools"}
+      articles={articles}
+      technicalDocs={technicalDocs}
+      currentHref={article.href}
+      tocItems={tocItems}
+    >
+      <article className="space-y-8">
         <MarkdownRenderer content={article.content} />
-      </article>
 
-      {actions.length > 0 ? (
-        <section className="mt-10 border-t border-border pt-6">
-          <div className="space-y-4">
+        {actions.length > 0 ? (
+          <section id="ai-action-readiness" className="space-y-4 border-t border-border pt-6">
             <div>
               <h2 className="text-sm font-semibold text-foreground">
                 AI Action Readiness
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The assistant can use this guide now. Write actions remain
-                gated until their preview and confirmation tools are ready.
+                The assistant can use this guide now. Write actions remain gated
+                until their preview and confirmation tools are ready.
               </p>
             </div>
             <div className="divide-y divide-border border-y border-border">
@@ -272,31 +338,276 @@ function ArticlePage({ article }: { article: HelpArticle }) {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-      ) : null}
-    </main>
+          </section>
+        ) : null}
+      </article>
+    </DocsChrome>
   );
 }
 
-function formatActionStatus(status: string): string {
-  return status
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function DocsChrome({
+  activeTab,
+  articles,
+  technicalDocs,
+  currentHref,
+  tocItems,
+  children,
+}: {
+  activeTab: DocsTab;
+  articles: HelpArticle[];
+  technicalDocs: TechnicalDoc[];
+  currentHref?: string;
+  tocItems: TocItem[];
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="border-b border-border/70 bg-background">
+        <div className="mx-auto flex w-full max-w-screen-2xl items-center gap-8 px-4 sm:px-6 lg:px-8">
+          <nav className="flex min-h-12 items-end gap-6 overflow-x-auto" aria-label="Documentation sections">
+            <DocsTabLink href="/docs" active={activeTab === "project-tools"}>
+              Project tools
+            </DocsTabLink>
+            <DocsTabLink href="/docs?tab=ai-features" active={activeTab === "ai-features"}>
+              AI features
+            </DocsTabLink>
+          </nav>
+        </div>
+      </div>
+
+      <div className="mx-auto grid w-full max-w-screen-2xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:px-8 xl:grid-cols-[16rem_minmax(0,48rem)_14rem]">
+        <DocsSidebar
+          activeTab={activeTab}
+          articles={articles}
+          technicalDocs={technicalDocs}
+          currentHref={currentHref}
+        />
+        <main className="min-w-0">{children}</main>
+        <DocsToc items={tocItems} />
+      </div>
+    </div>
+  );
 }
 
-function formatSafetyLevel(level: string): string {
-  if (level === "admin_confirm") return "Admin confirm";
-  if (level === "preview_confirm") return "Preview confirm";
-  return "Read only";
+function DocsTabLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "relative inline-flex min-h-12 items-center whitespace-nowrap text-sm font-medium transition-colors",
+        active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+      )}
+      aria-current={active ? "page" : undefined}
+    >
+      {children}
+      <span
+        className={cn(
+          "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
+          active ? "bg-emerald-600" : "bg-transparent",
+        )}
+      />
+    </Link>
+  );
+}
+
+function DocsSidebar({
+  activeTab,
+  articles,
+  technicalDocs,
+  currentHref,
+}: {
+  activeTab: DocsTab;
+  articles: HelpArticle[];
+  technicalDocs: TechnicalDoc[];
+  currentHref?: string;
+}) {
+  const projectArticles = articles.filter((article) => !isAiHelpArticle(article));
+  const aiDocs = technicalDocs.filter(isAiTechnicalDoc).slice(0, 10);
+  const projectCategories = groupArticlesByCategory(projectArticles).slice(0, 5);
+
+  return (
+    <aside className="hidden min-w-0 lg:block">
+      <div className="sticky top-6 space-y-8">
+        <div className="space-y-1">
+          <SidebarTopLink href="/docs" active={activeTab === "project-tools"} icon={<FolderKanban />}>
+            Project tools
+          </SidebarTopLink>
+          <SidebarTopLink href="/docs?tab=ai-features" active={activeTab === "ai-features"} icon={<Bot />}>
+            AI features
+          </SidebarTopLink>
+        </div>
+
+        {activeTab === "project-tools" ? (
+          <div className="space-y-6">
+            {projectCategories.map((category) => (
+              <div key={category.name} className="space-y-2">
+                <h2 className="px-2 text-xs font-semibold text-foreground">
+                  {category.name}
+                </h2>
+                <div className="space-y-1">
+                  {category.articles.slice(0, 6).map((article) => (
+                    <SidebarDocLink
+                      key={article.href}
+                      href={article.href}
+                      active={currentHref === article.href}
+                    >
+                      {article.frontmatter.title}
+                    </SidebarDocLink>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <h2 className="px-2 text-xs font-semibold text-foreground">
+              AI features
+            </h2>
+            <SidebarDocLink href="/docs/ai-overview" active={currentHref === "/docs/ai-overview"}>
+              AI overview
+            </SidebarDocLink>
+            {aiDocs.map((doc) => (
+              <SidebarDocLink key={doc.href} href={doc.href} active={currentHref === doc.href}>
+                {doc.title}
+              </SidebarDocLink>
+            ))}
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function SidebarTopLink({
+  href,
+  active,
+  icon,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex min-h-10 items-center gap-3 rounded-md px-2 text-sm font-medium transition-colors",
+        active ? "bg-emerald-50 text-emerald-700" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-6 w-6 items-center justify-center rounded-md [&>svg]:h-3.5 [&>svg]:w-3.5",
+          active ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground",
+        )}
+      >
+        {icon}
+      </span>
+      {children}
+    </Link>
+  );
+}
+
+function SidebarDocLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "block rounded-md px-2 py-1.5 text-sm leading-5 transition-colors",
+        active ? "bg-emerald-50 font-medium text-emerald-700" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function DocsToc({ items }: { items: TocItem[] }) {
+  if (items.length === 0) return <aside className="hidden xl:block" />;
+
+  return (
+    <aside className="hidden xl:block">
+      <div className="sticky top-6 space-y-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <LayoutList className="h-4 w-4 text-muted-foreground" />
+          On this page
+        </div>
+        <nav className="space-y-1" aria-label="On this page">
+          {items.map((item) => (
+            <a
+              key={`${item.id}-${item.label}`}
+              href={`#${item.id}`}
+              className={cn(
+                "block rounded-md py-1 text-sm transition-colors hover:text-foreground",
+                item.level === 3 ? "pl-3 text-muted-foreground" : "text-muted-foreground",
+              )}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      </div>
+    </aside>
+  );
+}
+
+function ProjectToolsHero() {
+  return (
+    <section id="project-tool-map" className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
+      <div className="grid gap-0 md:grid-cols-[1.1fr_0.9fr]">
+        <div className="space-y-4 p-6 sm:p-7">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <Wrench className="h-5 w-5" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-foreground">
+              Find the tool, then follow the workflow
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              The left rail keeps core project documentation nearby while the
+              right rail tracks sections inside the guide you are reading.
+            </p>
+          </div>
+        </div>
+        <div className="border-t border-border/70 p-6 md:border-l md:border-t-0">
+          <div className="space-y-3">
+            {["Budget", "Commitments", "Change management"].map((label) => (
+              <div key={label} className="flex items-center gap-3 rounded-md bg-background px-3 py-2 text-sm">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                <span className="font-medium text-foreground">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function AiOverviewCard() {
   return (
     <Link
+      id="ai-overview"
       href="/docs/ai-overview"
-      className="group mb-10 block rounded-xl bg-muted/50 p-6 transition-colors hover:bg-muted sm:p-7"
+      className="group block rounded-lg border border-border/70 bg-muted/30 p-6 transition-colors hover:bg-muted/50 sm:p-7"
     >
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
@@ -308,7 +619,7 @@ function AiOverviewCard() {
               <h2 className="text-base font-semibold text-foreground transition-colors group-hover:text-primary">
                 How the AI works
               </h2>
-              <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary">
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase text-primary">
                 New
               </span>
             </div>
@@ -340,26 +651,14 @@ function TechnicalDocumentationSection({
   const categories = getTechnicalDocCategories(docs);
 
   return (
-    <section className="mb-12 space-y-6">
-      <div className="space-y-1 border-b border-border pb-3">
-        <div className="flex items-center gap-2">
-          <Code2 className="h-4 w-4 text-primary" />
-          <h2 className="text-base font-semibold text-foreground">
-            Technical documentation
-          </h2>
-        </div>
-        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Engineering references for architecture, AI tools, APIs, data contracts, design
-          standards, and implementation guardrails.
-        </p>
-      </div>
+    <section id="technical-references" className="space-y-6">
+      <SectionHeading
+        title="Technical references"
+        description="Engineering references for architecture, APIs, data contracts, design standards, and implementation guardrails."
+      />
 
       {!query && featuredDocs.length > 0 ? (
-        <div className="grid grid-cols-1 gap-x-8 gap-y-2 md:grid-cols-2">
-          {featuredDocs.map((doc) => (
-            <TechnicalDocLink key={doc.href} doc={doc} featured />
-          ))}
-        </div>
+        <TechnicalDocGrid docs={featuredDocs} featured />
       ) : null}
 
       <div className="space-y-8">
@@ -379,15 +678,76 @@ function TechnicalDocumentationSection({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
-              {category.docs.map((doc) => (
-                <TechnicalDocLink key={doc.href} doc={doc} />
-              ))}
-            </div>
+            <TechnicalDocGrid docs={category.docs} />
           </section>
         ))}
       </div>
     </section>
+  );
+}
+
+function AiTechnicalSection({
+  docs,
+  query,
+}: {
+  docs: TechnicalDoc[];
+  query: string;
+}) {
+  if (docs.length === 0) {
+    return (
+      <EmptyState
+        icon={<Bot />}
+        title="No AI documentation found"
+        description={query ? "Try a broader search phrase." : "AI documentation has not been indexed yet."}
+      />
+    );
+  }
+
+  return (
+    <section id="ai-reference-library" className="space-y-6">
+      <SectionHeading
+        title="AI reference library"
+        description="Architecture, RAG, tool inventory, evaluation, memory, and source-pipeline references."
+      />
+      <TechnicalDocGrid docs={docs} />
+    </section>
+  );
+}
+
+function SectionHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="space-y-1 border-b border-border pb-3">
+      <h2 className="text-base font-semibold text-foreground">
+        {title}
+      </h2>
+      <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function TechnicalDocGrid({
+  docs,
+  featured = false,
+}: {
+  docs: TechnicalDoc[];
+  featured?: boolean;
+}) {
+  if (docs.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
+      {docs.map((doc) => (
+        <TechnicalDocLink key={doc.href} doc={doc} featured={featured || doc.featured} />
+      ))}
+    </div>
   );
 }
 
@@ -403,7 +763,7 @@ function TechnicalDocLink({
       href={doc.href}
       className="group -mx-3 flex min-h-12 items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
     >
-      <IconBadge size="sm" className="mt-0.5">
+      <IconBadge size="sm" className="mt-0.5 bg-primary/10 text-primary">
         <Code2 className="h-3.5 w-3.5" />
       </IconBadge>
       <div className="min-w-0 flex-1">
@@ -429,11 +789,27 @@ function TechnicalDocLink({
   );
 }
 
-function ArticleList({ articles }: { articles: HelpArticle[] }) {
+function ArticleList({
+  articles,
+  compact = false,
+}: {
+  articles: HelpArticle[];
+  compact?: boolean;
+}) {
   const categories = groupArticlesByCategory(articles);
 
+  if (articles.length === 0) {
+    return (
+      <EmptyState
+        icon={<FileText />}
+        title="No guides found"
+        description="Try a broader search phrase."
+      />
+    );
+  }
+
   return (
-    <div className="space-y-10">
+    <div className={compact ? "space-y-8" : "space-y-10"}>
       {categories.map((category) => (
         <section key={category.name} className="space-y-3">
           <div className="flex items-baseline justify-between border-b border-border pb-2">
@@ -452,7 +828,7 @@ function ArticleList({ articles }: { articles: HelpArticle[] }) {
                 href={article.href}
                 className="group -mx-3 flex min-h-12 items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
               >
-                <IconBadge size="sm" className="mt-0.5">
+                <IconBadge size="sm" className="mt-0.5 bg-primary/10 text-primary">
                   <FileText className="h-3.5 w-3.5" />
                 </IconBadge>
                 <div className="min-w-0 flex-1">
@@ -489,10 +865,12 @@ function groupArticlesByCategory(articles: HelpArticle[]) {
 
 function filterArticles(
   articles: HelpArticle[],
-  filters: { query: string },
+  filters: { query: string; activeTab: DocsTab },
 ) {
   const query = filters.query.toLowerCase();
   return articles.filter((article) => {
+    if (filters.activeTab === "ai-features" && !isAiHelpArticle(article)) return false;
+    if (filters.activeTab === "project-tools" && isAiHelpArticle(article)) return false;
     if (!query) return true;
 
     const searchable = [
@@ -508,4 +886,98 @@ function filterArticles(
 
     return searchable.includes(query);
   });
+}
+
+function filterTechnicalDocsByTab(docs: TechnicalDoc[], activeTab: DocsTab) {
+  if (activeTab === "ai-features") {
+    return docs.filter(isAiTechnicalDoc);
+  }
+
+  return docs.filter((doc) => !isAiTechnicalDoc(doc));
+}
+
+function isAiHelpArticle(article: HelpArticle) {
+  const tokens = [
+    article.frontmatter.module,
+    article.frontmatter.category,
+    article.frontmatter.tags.join(" "),
+    article.frontmatter.title,
+  ].join(" ").toLowerCase();
+
+  return tokens.includes("ai") || tokens.includes("assistant");
+}
+
+function isAiTechnicalDoc(doc: TechnicalDoc) {
+  const tokens = [
+    doc.category,
+    doc.title,
+    doc.description,
+    doc.sourcePath,
+  ].join(" ").toLowerCase();
+
+  return tokens.includes("ai") || tokens.includes("rag") || tokens.includes("assistant");
+}
+
+function getHomeToc(activeTab: DocsTab): TocItem[] {
+  if (activeTab === "ai-features") {
+    return [
+      { id: "overview", label: "Overview" },
+      { id: "ai-overview", label: "How the AI works" },
+      { id: "featured-guides", label: "AI entry points" },
+      { id: "ai-reference-library", label: "Reference library" },
+    ];
+  }
+
+  return [
+    { id: "overview", label: "Overview" },
+    { id: "project-tool-map", label: "Project tool map" },
+    { id: "featured-guides", label: "Featured guides" },
+    { id: "technical-references", label: "Technical references" },
+  ];
+}
+
+function getTocItems(content: string): TocItem[] {
+  const seen = new Set<string>();
+  const items: TocItem[] = [];
+
+  for (const line of content.split("\n")) {
+    if (items.length >= 12) break;
+
+      const match = /^(#{2,3})\s+(.+)$/.exec(line.trim());
+    if (!match) continue;
+
+      const label = match[2].replace(/[#*_`]/g, "").trim();
+      const baseId = slugifyHeading(label);
+      const id = seen.has(baseId) ? `${baseId}-${seen.size + 1}` : baseId;
+      seen.add(id);
+
+    items.push({
+      id,
+      label,
+      level: match[1].length as 2 | 3,
+    });
+  }
+
+  return items;
+}
+
+function slugifyHeading(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+function formatActionStatus(status: string): string {
+  return status
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatSafetyLevel(level: string): string {
+  if (level === "admin_confirm") return "Admin confirm";
+  if (level === "preview_confirm") return "Preview confirm";
+  return "Read only";
 }
