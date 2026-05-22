@@ -10,6 +10,9 @@ const repoRoot = path.resolve(path.dirname(__filename), "../..");
 const appRoot = path.join(repoRoot, "frontend/src/app");
 const helpRoot = path.join(repoRoot, "docs/help/articles");
 const outputRoot = path.join(repoRoot, "docs/architecture/generated");
+const runtimeRoot = path.join(repoRoot, "backend/src/services/agents/app_expert/runtime");
+const runtimeGeneratedRoot = path.join(runtimeRoot, "generated");
+const runtimeHelpRoot = path.join(runtimeRoot, "help/articles");
 
 function titleCase(value) {
   return value
@@ -287,14 +290,31 @@ function enrichRoutes(routes, features) {
 
 async function writeJson(fileName, value) {
   await fs.mkdir(outputRoot, { recursive: true });
+  await fs.mkdir(runtimeGeneratedRoot, { recursive: true });
   const target = path.join(outputRoot, fileName);
+  const runtimeTarget = path.join(runtimeGeneratedRoot, fileName);
   await fs.writeFile(target, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  await fs.writeFile(runtimeTarget, `${JSON.stringify(value, null, 2)}\n`, "utf8");
   return target;
+}
+
+async function syncRuntimeHelpArticles() {
+  if (!existsSync(helpRoot)) return;
+  await fs.rm(runtimeHelpRoot, { recursive: true, force: true });
+  await fs.mkdir(runtimeHelpRoot, { recursive: true });
+  await fs.cp(helpRoot, runtimeHelpRoot, {
+    recursive: true,
+    filter: (source) => {
+      const name = path.basename(source);
+      return !name.startsWith(".") && (existsSync(source) ? true : false);
+    },
+  });
 }
 
 async function main() {
   const routes = await discoverRoutes();
   const articles = await readHelpArticles();
+  await syncRuntimeHelpArticles();
   const features = buildFeatureRegistry(routes, articles);
   const enrichedRoutes = enrichRoutes(routes, features);
   const generatedAt = new Date().toISOString();

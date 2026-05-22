@@ -57,6 +57,7 @@ REQUIRED_SOURCE_TYPES = (
 REQUIRED_EXECUTIVE_SOURCE_TYPES = (
     "executive_briefing",
     "tasks",
+    "executive_follow_ups",
     "emails",
     "teams",
     "meetings",
@@ -262,6 +263,21 @@ def deep_agents_runtime_subagent_names() -> tuple[str, ...]:
     return tuple(subagent["name"] for subagent in _runtime_subagents())
 
 
+def _subagent_inventory(subagents: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    details: list[dict[str, Any]] = []
+    for subagent in subagents:
+        response_format = subagent.get("response_format")
+        details.append(
+            {
+                "name": subagent["name"],
+                "toolCount": len(subagent.get("tools") or []),
+                "structuredOutput": response_format is not None,
+                "responseFormat": getattr(response_format, "__name__", None),
+            }
+        )
+    return details
+
+
 def _tool_names(tools: Sequence[Any]) -> list[str]:
     return [getattr(tool, "name", getattr(tool, "__name__", "")) for tool in tools]
 
@@ -312,7 +328,8 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         },
     ]
     active_tools = list(deep_agents_runtime_tool_names())
-    active_subagents = list(deep_agents_runtime_subagent_names())
+    runtime_subagents = _runtime_subagents()
+    active_subagents = [subagent["name"] for subagent in runtime_subagents]
     memory_middleware = _runtime_memory_middleware()
     memory_tool_names: list[str] = []
     if memory_middleware:
@@ -337,6 +354,7 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         "groups": groups,
         "subagentCount": len(active_subagents),
         "subagents": active_subagents,
+        "subagentDetails": _subagent_inventory(runtime_subagents),
         "memory": {
             "enabled": bool(memory_middleware),
             "middleware": "DbMemoryMiddleware" if memory_middleware else None,
@@ -402,6 +420,30 @@ def _matches_any(row: Dict[str, Any], *terms: str) -> bool:
         for field in ("source", "source_system", "type", "category", "file_name", "title")
     ).lower()
     return any(term in haystack for term in terms)
+
+
+def _task_register_owner_terms(question: str) -> tuple[str, ...]:
+    normalized = question.lower()
+    if "brandon" in normalized or "clymer" in normalized:
+        return ("brandon", "clymer", "bclymer@alleatogroup.com")
+    return ()
+
+
+def _task_register_owner_filter(row: Dict[str, Any], owner_terms: Sequence[str]) -> bool:
+    if not owner_terms:
+        return True
+    haystack = " ".join(
+        str(row.get(field) or "")
+        for field in (
+            "assignee_name",
+            "assignee_email",
+            "assignee_person_id",
+            "owner",
+            "owner_name",
+            "owner_email",
+        )
+    ).lower()
+    return any(term in haystack for term in owner_terms)
 
 
 SOURCE_PROBES = (
@@ -475,6 +517,20 @@ EXECUTIVE_SOURCE_PROBES = (
     ),
     _SourceProbe(
         "tasks",
+        "tasks",
+        timestamp_fields=("updated_at", "created_at", "due_date"),
+        title_fields=(
+            "title",
+            "description",
+            "assignee_name",
+            "assignee_email",
+            "status",
+            "priority",
+        ),
+        source_id_fields=("id", "metadata_id"),
+    ),
+    _SourceProbe(
+        "executive_follow_ups",
         "executive_briefing_follow_ups",
         timestamp_fields=("updated_at", "source_date", "created_at"),
         title_fields=("title", "summary", "section"),
@@ -798,17 +854,22 @@ def _source_probe_coverage(
 def _executive_source_probe_coverage(
     client: Any,
     probe: _SourceProbe,
+    *,
+    task_owner_terms: Sequence[str] = (),
 ) -> tuple[SourceCoverage, List[EvidenceItem], ToolTraceItem]:
     started = time.perf_counter()
     try:
+        limit = 500 if probe.source_type == "tasks" and task_owner_terms else 100
         rows = _query_recent_rows(
             client,
             probe.table,
-            limit=100,
+            limit=limit,
             order_by=probe.timestamp_fields[0] if probe.timestamp_fields else None,
         )
         if probe.local_filter:
             rows = [row for row in rows if probe.local_filter(row)]
+        if probe.source_type == "tasks" and task_owner_terms:
+            rows = [row for row in rows if _task_register_owner_filter(row, task_owner_terms)]
         coverage = _source_coverage_from_rows(probe, rows)
         coverage.notes = (
             f"Read-only executive probe found {len(rows)} {probe.source_type} row(s) "
@@ -891,6 +952,7 @@ def _missing_executive_sources() -> List[SourceCoverage]:
 
 def _collect_executive_source_coverage(
     store: Any,
+    request: Optional[DeepExecutiveIntelligenceRequest] = None,
 ) -> tuple[List[SourceCoverage], List[EvidenceItem], List[ToolTraceItem]]:
     client = _store_client(store)
     if client is None:
@@ -907,9 +969,14 @@ def _collect_executive_source_coverage(
     sources: List[SourceCoverage] = []
     evidence: List[EvidenceItem] = []
     traces: List[ToolTraceItem] = []
+    task_owner_terms = _task_register_owner_terms(request.question) if request else ()
 
     for probe in EXECUTIVE_SOURCE_PROBES:
-        coverage, probe_evidence, trace = _executive_source_probe_coverage(client, probe)
+        coverage, probe_evidence, trace = _executive_source_probe_coverage(
+            client,
+            probe,
+            task_owner_terms=task_owner_terms,
+        )
         sources.append(coverage)
         evidence.extend(probe_evidence)
         traces.append(trace)
@@ -1051,6 +1118,15 @@ def _deep_agent_executive_prompt(
             *(evidence_lines or ["- No source evidence rows were available."]),
             "",
             "Write a concise business-wide executive synthesis for a construction operator.",
+            (
+                "When the user asks for tasks, action items, to-dos, or what someone needs to do, "
+                "treat the `tasks` source as the canonical PM task register from public.tasks."
+            ),
+            (
+                "Do not treat `executive_follow_ups`, schedule milestones, meetings, emails, or document "
+                "snippets as task-register rows unless the task register is missing or you explicitly label "
+                "them as non-canonical follow-ups."
+            ),
             "Prioritize today's meetings, urgent inbox/team follow-ups, important tasks, operational risks, and process recommendations when the evidence supports them.",
             "A source is only stale if its latest timestamp is more than 7 days behind today's date. Do not add staleness warnings for sources with recent data.",
             "Do not claim checked sources are available when source coverage says missing or failed.",
@@ -1458,7 +1534,7 @@ def build_executive_briefing_contract_spike(
     """Return a typed business-wide packet with explicit source coverage."""
 
     organization = DeepOrganization(name=os.getenv("DEEP_AGENTS_ORGANIZATION_NAME", "Alleato"))
-    sources, evidence, source_traces = _collect_executive_source_coverage(store)
+    sources, evidence, source_traces = _collect_executive_source_coverage(store, request)
     checked_count = sum(1 for source in sources if source.status == "checked")
     failed_count = sum(1 for source in sources if source.status == "failed")
     missing_count = sum(1 for source in sources if source.status == "missing")

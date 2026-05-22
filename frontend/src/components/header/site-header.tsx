@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import {
   headerNavGroups,
   companyWideHeaderTools,
+  companyWideToolSections,
   developerCompanyAdminTools,
   buildToolUrl,
   filterToolsByPermission,
@@ -744,7 +745,7 @@ function ToolsDropdown({
                   className="h-8 gap-2 px-2 text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <Building2 className="h-3.5 w-3.5" strokeWidth={1.6} />
-                  View company tools
+                  View company-wide tools
                   <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.6} />
                 </Button>
               </div>
@@ -755,21 +756,6 @@ function ToolsDropdown({
     </Popover>
   );
 }
-
-const COMPANY_TOOL_SECTIONS = [
-  {
-    label: "Company",
-    toolNames: ["Projects", "Company Directory", "AI Strategist", "Settings"],
-  },
-  {
-    label: "Work",
-    toolNames: ["Meetings", "Tasks", "Knowledge Base", "Documents"],
-  },
-  {
-    label: "Financial",
-    toolNames: ["Estimates", "Prime Contracts", "Change Events"],
-  },
-];
 
 function CompanyToolsPanel({
   tools,
@@ -790,10 +776,10 @@ function CompanyToolsPanel({
 }) {
   const sections = adminTools.length
     ? [
-        ...COMPANY_TOOL_SECTIONS,
+        ...companyWideToolSections,
         { label: "Admin", toolNames: adminTools.map((tool) => tool.name) },
       ]
-    : COMPANY_TOOL_SECTIONS;
+    : companyWideToolSections;
   const allTools = [...tools, ...adminTools];
   const allVisibleTools = [...visibleTools, ...visibleAdminTools];
 

@@ -44,7 +44,9 @@ export const GET = withApiGuardrails(
       `, { count: 'exact' });
 
     // Apply type filter
-    if (type && type !== 'all') {
+    if (type === 'employee') {
+      query = query.in('person_type', ['employee', 'user']);
+    } else if (type && type !== 'all') {
       query = query.eq('person_type', type);
     }
 

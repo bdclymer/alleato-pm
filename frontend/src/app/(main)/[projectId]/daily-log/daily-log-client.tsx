@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Mic, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +10,7 @@ import {
   UnifiedTablePage,
   useUnifiedTableState,
 } from "@/components/tables/unified";
+import { formatDailyLogDate } from "@/lib/daily-log/creator-labels";
 
 interface DailyLogRow {
   id: string;
@@ -32,13 +33,7 @@ const tableColumns = [
     label: "Date",
     defaultVisible: true,
     render: (row: DailyLogRow) =>
-      row.log_date
-        ? new Date(row.log_date).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })
-        : "—",
+      row.log_date ? formatDailyLogDate(row.log_date) : "—",
     sortValue: (row: DailyLogRow) => row.log_date ?? "",
   },
   {
@@ -97,6 +92,13 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
   React.useEffect(() => {
     setLogs(dailyLogs);
   }, [dailyLogs]);
+
+  const handleEditLog = React.useCallback(
+    (log: DailyLogRow) => {
+      router.push(`/${projectId}/daily-log/${log.id}/edit`);
+    },
+    [projectId, router],
+  );
 
   const handleDeleteLog = React.useCallback(
     async (log: DailyLogRow) => {
@@ -165,13 +167,23 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
         title: "Daily Log",
         description: "Daily construction logs and site reports",
         actions: (
-          <Button
-            size="sm"
-            onClick={() => router.push(`/${projectId}/daily-log/new`)}
-          >
-            <Plus />
-            New Log Entry
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push(`/${projectId}/daily-log/site-scribe`)}
+            >
+              <Mic />
+              Site Scribe
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => router.push(`/${projectId}/daily-log/new`)}
+            >
+              <Plus />
+              New Log Entry
+            </Button>
+          </div>
         ),
       }}
       toolbar={{
@@ -202,6 +214,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id,
+        onEdit: handleEditLog,
         onDelete: handleDeleteLog,
       }}
       views={{
@@ -210,13 +223,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
             <p className="text-xs uppercase text-muted-foreground">Daily Log</p>
             {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="mt-1 font-medium">
-              {item.log_date
-                ? new Date(item.log_date).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })
-                : "No date"}
+              {formatDailyLogDate(item.log_date)}
             </h3>
             <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
               {item.weather_conditions
@@ -234,13 +241,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
           <div className="flex items-center justify-between rounded-md px-4 py-2">
             <div>
               <p className="text-sm font-medium">
-                {item.log_date
-                  ? new Date(item.log_date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "No date"}
+                {formatDailyLogDate(item.log_date)}
               </p>
               <p className="line-clamp-1 text-xs text-muted-foreground">
                 {item.creator_name ? `By ${item.creator_name}` : "No author"}

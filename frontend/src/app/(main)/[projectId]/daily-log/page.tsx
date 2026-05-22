@@ -1,6 +1,7 @@
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { DailyLogClient } from "./daily-log-client";
 import { PageShell } from "@/components/layout";
+import { getDailyLogCreatorLabel } from "@/lib/daily-log/creator-labels";
 
 export default async function ProjectDailyLogPage({
   params,

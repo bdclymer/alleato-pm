@@ -435,14 +435,19 @@ export class CompanyService {
   ): Promise<number> {
     const { count, error } = await this.supabase
       .from("people")
-      .select("id", { count: "exact", head: true })
+      .select(
+        `
+        id,
+        project_directory_memberships!inner(id)
+      `,
+        { count: "exact", head: true },
+      )
       .eq("company_id", companyId)
       .eq("project_directory_memberships.project_id", projectId)
       .eq("project_directory_memberships.status", "active");
 
     if (error) {
-      // Fall back to 0 if there's an error (e.g., no RLS access)
-      return 0;
+      throw error;
     }
     return count || 0;
   }

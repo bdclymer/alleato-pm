@@ -47,6 +47,11 @@ describe("personal daily brief routing", () => {
     expect(isPersonalTaskRegisterRequest("What do I need to do today?")).toBe(true);
   });
 
+  it("keeps named Brandon task wording out of generic project task routing", () => {
+    expect(isPersonalTaskRegisterRequest("what are brandons tasks/action items")).toBe(false);
+    expect(isPersonalTaskRegisterRequest("what are Brandon's tasks")).toBe(false);
+  });
+
   it("does not treat unrelated questions as personal task register requests", () => {
     // These should NOT route to the personal task register even though they share keywords.
     expect(isPersonalTaskRegisterRequest("What tasks are open on Westfield?")).toBe(false);

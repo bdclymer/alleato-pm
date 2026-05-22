@@ -36,6 +36,10 @@
         {
             "filePath": "docs/project-overview",
             "group": "Default"
+        },
+        {
+            "filePath": "docs/architecture/ai-rag-architecture.html",
+            "group": "Default"
         }
     ],
     "files.exclude": {

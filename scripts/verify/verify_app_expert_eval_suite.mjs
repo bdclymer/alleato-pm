@@ -99,6 +99,9 @@ async function postCase(testCase) {
       durationMs: Date.now() - startedAt,
       question: testCase.question,
       expected: testCase.expected,
+      mustInclude: testCase.mustInclude,
+      mustExclude: testCase.mustExclude,
+      preferredTools: testCase.preferredTools,
       response: json,
       failure: response.ok ? null : bodyText.slice(0, 1000),
     };
@@ -110,6 +113,9 @@ async function postCase(testCase) {
       durationMs: Date.now() - startedAt,
       question: testCase.question,
       expected: testCase.expected,
+      mustInclude: testCase.mustInclude,
+      mustExclude: testCase.mustExclude,
+      preferredTools: testCase.preferredTools,
       response: null,
       failure: error instanceof Error ? error.message : String(error),
     };
@@ -138,12 +144,28 @@ function scoreShape(result) {
     JSON.stringify(sources),
     JSON.stringify(toolTrace),
   ].join("\n").toLowerCase();
-  for (const expected of result.expected?.mustInclude ?? []) {
+  const mustInclude = result.expected?.mustInclude ?? result.mustInclude ?? [];
+  const mustExclude = result.expected?.mustExclude ?? result.mustExclude ?? [];
+  const preferredTools = result.expected?.preferredTools ?? result.preferredTools ?? [];
+
+  for (const expected of mustInclude) {
     if (!observedText.includes(String(expected).toLowerCase())) {
       semanticIssues.push(`missing required text: ${expected}`);
     }
   }
-  const missingPreferredTools = (result.expected?.preferredTools ?? []).filter(
+  for (const excluded of mustExclude) {
+    if (observedText.includes(String(excluded).toLowerCase())) {
+      semanticIssues.push(`included forbidden text: ${excluded}`);
+    }
+  }
+  if (
+    /\b(required generated artifacts are missing|artifact status:\s*missing|APP_EXPERT_ARTIFACT_MISSING)\b/iu.test(
+      observedText,
+    )
+  ) {
+    semanticIssues.push("reported missing generated artifacts");
+  }
+  const missingPreferredTools = preferredTools.filter(
     (toolName) => !observedText.includes(String(toolName).toLowerCase()),
   );
 

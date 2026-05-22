@@ -19,10 +19,24 @@ def _repo_root() -> Path:
     return Path.cwd()
 
 
-GENERATED_DIR = _repo_root() / "docs" / "architecture" / "generated"
-HELP_ROOT = _repo_root() / "docs" / "help" / "articles"
-SITEMAP_PATH = GENERATED_DIR / "app-sitemap.generated.json"
-FEATURE_REGISTRY_PATH = GENERATED_DIR / "feature-registry.generated.json"
+RUNTIME_DIR = Path(__file__).resolve().parent / "runtime"
+GENERATED_DIRS = [
+    _repo_root() / "docs" / "architecture" / "generated",
+    RUNTIME_DIR / "generated",
+]
+HELP_ROOTS = [
+    _repo_root() / "docs" / "help" / "articles",
+    RUNTIME_DIR / "help" / "articles",
+]
+SITEMAP_PATHS = [directory / "app-sitemap.generated.json" for directory in GENERATED_DIRS]
+FEATURE_REGISTRY_PATHS = [directory / "feature-registry.generated.json" for directory in GENERATED_DIRS]
+
+
+def _first_existing_path(paths: list[Path]) -> Path:
+    for path in paths:
+        if path.exists():
+            return path
+    return paths[0]
 
 
 def _normalize(value: str) -> str:
@@ -88,11 +102,11 @@ def _load_json(path: str) -> dict[str, Any]:
 
 
 def _sitemap() -> dict[str, Any]:
-    return _load_json(str(SITEMAP_PATH))
+    return _load_json(str(_first_existing_path(SITEMAP_PATHS)))
 
 
 def _feature_registry() -> dict[str, Any]:
-    return _load_json(str(FEATURE_REGISTRY_PATH))
+    return _load_json(str(_first_existing_path(FEATURE_REGISTRY_PATHS)))
 
 
 def _json_result(payload: dict[str, Any]) -> str:
@@ -103,12 +117,26 @@ def _safe_help_article_path(file_path: str) -> Path | None:
     raw = file_path.strip()
     if not raw:
         return None
-    candidate = (_repo_root() / raw).resolve() if raw.startswith("docs/") else (HELP_ROOT / raw).resolve()
+    relative = raw.removeprefix("docs/help/articles/")
+    candidates: list[Path] = []
+    if raw.startswith("docs/"):
+        candidates.append((_repo_root() / raw).resolve())
+    for help_root in HELP_ROOTS:
+        candidates.append((help_root / relative).resolve())
+    for candidate in candidates:
+        if candidate.exists() and candidate.suffix in {".md", ".mdx"} and any(
+            _is_relative_to(candidate, help_root.resolve()) for help_root in HELP_ROOTS
+        ):
+            return candidate
+    return None
+
+
+def _is_relative_to(candidate: Path, parent: Path) -> bool:
     try:
-        candidate.relative_to(HELP_ROOT.resolve())
+        candidate.relative_to(parent)
+        return True
     except ValueError:
-        return None
-    return candidate if candidate.exists() and candidate.suffix in {".md", ".mdx"} else None
+        return False
 
 
 @tool
@@ -272,6 +300,8 @@ def get_help_article(file_path_or_slug: str, max_chars: int = 6000) -> str:
 @tool
 def get_app_expert_artifact_status() -> str:
     """Return generated artifact availability and freshness for App Expert answers."""
+    sitemap_path = _first_existing_path(SITEMAP_PATHS)
+    registry_path = _first_existing_path(FEATURE_REGISTRY_PATHS)
     sitemap = _sitemap()
     registry = _feature_registry()
     return _json_result(
@@ -280,7 +310,7 @@ def get_app_expert_artifact_status() -> str:
             "artifacts": [
                 {
                     "name": "app-sitemap.generated.json",
-                    "path": str(SITEMAP_PATH.relative_to(_repo_root())),
+                    "path": str(sitemap_path),
                     "ok": not sitemap.get("error"),
                     "error": sitemap.get("error"),
                     "generatedAt": sitemap.get("generatedAt"),
@@ -288,7 +318,7 @@ def get_app_expert_artifact_status() -> str:
                 },
                 {
                     "name": "feature-registry.generated.json",
-                    "path": str(FEATURE_REGISTRY_PATH.relative_to(_repo_root())),
+                    "path": str(registry_path),
                     "ok": not registry.get("error"),
                     "error": registry.get("error"),
                     "generatedAt": registry.get("generatedAt"),

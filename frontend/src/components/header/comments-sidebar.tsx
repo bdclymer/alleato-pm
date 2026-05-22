@@ -13,7 +13,7 @@ import { getRoomId, type CommentableEntityType } from "@/lib/liveblocks/rooms";
 import { useCommentsSidebarStore } from "@/lib/stores/comments-sidebar-store";
 import { cn } from "@/lib/utils";
 import { useEntityContext } from "./use-entity-context";
-export { openCommentsSidebar } from "./comments-sidebar-button";
+
 
 // ── Error boundary ──────────────────────────────────────────────────────────
 

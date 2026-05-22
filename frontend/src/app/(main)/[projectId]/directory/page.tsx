@@ -903,6 +903,7 @@ function ProjectTeamSection({
       <ProjectTeamDialog
         open={createRoleOpen}
         onOpenChange={setCreateRoleOpen}
+        projectId={projectId}
         roles={roles}
         createRole={createRole}
         updateRoleMembers={updateRoleMembers}

@@ -84,7 +84,9 @@ function FeedbackQueueItem({
           </span>
 
           <span className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-foreground">
-            <StatusBadge status={meta.label} variant="neutral" className="mr-1" />
+            {meta.showInList && (
+              <StatusBadge status={meta.label} variant="neutral" className="mr-1" />
+            )}
             <span>{REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}</span>
             {toolLabel && (
               <>
@@ -96,7 +98,7 @@ function FeedbackQueueItem({
             <span>{submitterLabel(item)}</span>
             {item.github_issue_number && (
               <span className="ml-auto inline-flex items-center gap-1 text-muted-foreground">
-                <Github className="h-2.5 w-2.5" />
+                <Github className="h-2 w-2" />
                 {item.github_issue_number}
               </span>
             )}

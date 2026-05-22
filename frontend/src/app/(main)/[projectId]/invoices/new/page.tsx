@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { FormActions } from "@/components/forms/FormActions";
 import { FormGrid, FormSection } from "@/components/forms";
 import { PageShell } from "@/components/layout";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { apiFetch } from "@/lib/api-client";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCommitments } from "@/hooks/use-commitments-query";
@@ -186,6 +187,7 @@ export default function NewInvoicePage() {
   const parsedProjectId = Number.parseInt(projectId, 10);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const initialContractType: ContractType =
     searchParams.get("contractType") === "commitment" ? "commitment" : "prime";
@@ -241,6 +243,7 @@ export default function NewInvoicePage() {
   const updateForm = useCallback(
     (patch: Partial<InvoiceFormData>) => {
       setFormData((previous) => ({ ...previous, ...patch }));
+      setFormError(null);
     },
     [],
   );
@@ -298,6 +301,7 @@ export default function NewInvoicePage() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setFormError(null);
 
     if (!Number.isFinite(parsedProjectId)) {
       toast.error(
@@ -421,6 +425,7 @@ export default function NewInvoicePage() {
         contractId: formData.contractId,
         message,
       });
+      setFormError(message);
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -441,6 +446,11 @@ export default function NewInvoicePage() {
       backLabel="Back to Invoices"
     >
       <form onSubmit={handleSubmit} className="space-y-8">
+        {formError ? (
+          <InfoAlert variant="error" role="alert">
+            {formError}
+          </InfoAlert>
+        ) : null}
         <FormSection
           title="Invoice Information"
           description="Define invoice metadata, billing period, and contract source."

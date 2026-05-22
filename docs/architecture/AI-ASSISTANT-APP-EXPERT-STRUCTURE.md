@@ -129,10 +129,12 @@ If the evidence conflicts, the App Expert should say what conflicts and avoid pr
 ## Current Baseline
 
 - Generated artifacts: 283 routes, 290 features, 58 help articles, 51 documented routes.
-- Strict App Expert eval: 50/50 passed against local backend on 2026-05-21.
-- Eval artifact: `docs/ai-plan/evals/runs/2026-05-21T18-24-33-960Z-app-expert/summary.md`.
-- Latency baseline: p50 6.7s, p90 12.2s, max 20.7s.
-- Production caveat: keep `DEEP_AGENTS_APP_EXPERT_ENABLED=true` and `DEEP_AGENTS_APP_EXPERT_MODEL=gpt-5.4-mini` configured on the backend service before relying on production chat routing.
+- Strict App Expert eval: 50/50 passed against production backend on 2026-05-21.
+- Production eval artifact: `docs/ai-plan/evals/runs/2026-05-21T19-18-58-162Z-app-expert/summary.md`.
+- Production latency baseline: p50 4.3s, p90 7.9s, max 12.0s.
+- Production smoke gate: `npm run rag:verify:app-expert-smoke:prod` checks active backend health, OpenAPI exposure, Render flags, and one grounded App Expert answer.
+- Full production quality gate: `npm run rag:verify:app-expert-evals:prod`.
+- Production requirement: keep `DEEP_AGENTS_APP_EXPERT_ENABLED=true` and `DEEP_AGENTS_APP_EXPERT_MODEL=gpt-5.4-mini` configured on the active Render backend service before relying on production chat routing.
 
 ## Definition Of Done
 
