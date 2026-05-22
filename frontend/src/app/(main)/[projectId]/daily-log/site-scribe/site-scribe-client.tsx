@@ -77,6 +77,10 @@ interface RealtimeEvent {
   arguments?: string;
 }
 
+interface RefineLogResponse {
+  structuredLog: SiteScribeStructuredLog;
+}
+
 const nowIsoDate = () => new Date().toISOString().split("T")[0];
 
 function newId() {
@@ -475,6 +479,7 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     dataChannelRef.current?.close();
     peerRef.current?.close();
+    await refineBrainDumpForReview();
     setSessionState("review");
   };
 
@@ -516,6 +521,40 @@ export function SiteScribeClient({ projectId }: SiteScribeClientProps) {
       );
       return { ...current, notes, photos: pairPhotos(current.photos, notes) };
     });
+  };
+
+  const refineBrainDumpForReview = async () => {
+    if (
+      !transcript.some(
+        (segment) => segment.speaker === "crew" && segment.text.trim(),
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setSessionState("thinking");
+      const response = await apiFetch<RefineLogResponse>(
+        "/api/site-scribe/refine-log",
+        {
+          method: "POST",
+          body: JSON.stringify({ transcript, structuredLog }),
+        },
+      );
+
+      setStructuredLog((current) => {
+        const refined = response.structuredLog;
+        return {
+          ...refined,
+          photos: pairPhotos(current.photos, refined.notes),
+        };
+      });
+    } catch (error) {
+      console.error("Site Scribe transcript refinement failed.", error);
+      toast.error(
+        "Site Scribe could not refine the transcript. Review the current draft.",
+      );
+    }
   };
 
   const submitApprovedLog = async () => {

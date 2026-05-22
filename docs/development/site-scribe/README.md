@@ -17,6 +17,7 @@ Browser responsibilities:
 Server responsibilities:
 
 - `/api/site-scribe/realtime-session` mints short-lived OpenAI Realtime client secrets using `OPENAI_API_KEY`.
+- `/api/site-scribe/refine-log` runs the full user transcript through a structured Responses API pass before review.
 - `/api/projects/[projectId]/daily-log/site-scribe` persists only user-approved logs.
 - Finalized logs write to `daily_logs`, `daily_log_manpower`, `daily_log_notes`, and `daily_log_photos`.
 - Raw audio and full transcript are uploaded to Supabase Storage bucket `project-files` under `projects/<projectId>/daily-logs/site-scribe/<sessionId>/`.
@@ -29,9 +30,10 @@ Required local environment:
 OPENAI_API_KEY=sk-...
 OPENAI_REALTIME_MODEL=gpt-realtime-2
 OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-realtime-whisper
+OPENAI_SITE_SCRIBE_REFINE_MODEL=gpt-5.4-mini
 ```
 
-`OPENAI_REALTIME_MODEL` and `OPENAI_REALTIME_TRANSCRIPTION_MODEL` are optional overrides. Defaults follow the current OpenAI model guidance for realtime voice agents and realtime transcription.
+The model environment variables are optional overrides. Defaults follow the current OpenAI model guidance for realtime voice agents, realtime transcription, and structured text refinement.
 
 Local development:
 
@@ -49,7 +51,7 @@ Then open `http://localhost:3000/<projectId>/daily-log/site-scribe`.
 - Structuring: the model has received input and is refining it into daily-log fields.
 - Processing: a transient realtime processing state; the capture flow remains user-led.
 - Paused: UI-level pause state; the crew can resume or end the session.
-- Review: capture is stopped and the user must approve before Supabase persistence.
+- Review: capture is stopped, the full transcript refinement pass has completed or failed loudly, and the user must approve before Supabase persistence.
 
 Do not send the long-lived `OPENAI_API_KEY` to the browser. The browser consumes only the ephemeral Realtime client secret.
 
@@ -59,6 +61,7 @@ Do not send the long-lived `OPENAI_API_KEY` to the browser. The browser consumes
 - The session uses server-side voice activity detection for realtime transcription.
 - The prompt tells the assistant not to interview, coach, interrupt, or ask clarifying questions during capture.
 - Missing or ambiguous structured fields are left blank or low-confidence for the review screen instead of being resolved through spoken follow-up.
+- When the user ends capture, the browser asks the server to refine the whole transcript into the daily-log schema with Structured Outputs before showing the approval state.
 
 ## Permissions And Recovery
 
@@ -66,6 +69,7 @@ Do not send the long-lived `OPENAI_API_KEY` to the browser. The browser consumes
 - Camera denial affects photo capture only; the voice session can continue.
 - If Realtime session minting fails, the error is loud and includes the upstream status in the API response.
 - If transcript, audio, or photo upload fails during approval, the submit route returns a specific failure code and does not claim success.
+- If final transcript refinement fails, the UI shows a loud toast and keeps the current draft editable instead of blocking review.
 - Offline approval stores the full payload locally and increments the pending sync count.
 
 ## Offline Queue Behavior
