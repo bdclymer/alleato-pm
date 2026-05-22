@@ -40,6 +40,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
+import {
+  flattenProjectTeamAssignees,
+  type ProjectTeamRole,
+} from "./project-team-assignee-options";
 
 type PunchItemRow = Database["public"]["Tables"]["punch_items"]["Row"];
 
@@ -80,23 +84,14 @@ export function buildPunchItemDefaults(
   };
 }
 
-interface DirectoryPerson {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email?: string | null;
-  job_title?: string | null;
-  company?: { id: string; name: string } | null;
-}
-
-function useProjectDirectoryMembers(projectId: string) {
+function useProjectTeamAssignees(projectId: string) {
   return useQuery({
-    queryKey: ["project-directory-members", projectId],
+    queryKey: ["project-team-assignees", projectId],
     queryFn: async () => {
-      const res = await apiFetch<{ data: DirectoryPerson[] }>(
-        `/api/projects/${projectId}/directory/people?per_page=500&status=active`,
+      const res = await apiFetch<{ data: ProjectTeamRole[] }>(
+        `/api/projects/${projectId}/directory/roles`,
       );
-      return res.data ?? [];
+      return flattenProjectTeamAssignees(res.data ?? []);
     },
     enabled: !!projectId,
     staleTime: 60_000,
@@ -131,7 +126,11 @@ export function PunchItemFormFields({
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [bicOpen, setBicOpen] = useState(false);
 
-  const { data: projectMembers = [] } = useProjectDirectoryMembers(
+  const {
+    data: projectTeamAssignees = [],
+    isLoading: isLoadingAssignees,
+    error: assigneesError,
+  } = useProjectTeamAssignees(
     projectId ? String(projectId) : "",
   );
 
@@ -218,12 +217,14 @@ export function PunchItemFormFields({
         control={form.control}
         name="assignee_id"
         render={({ field }) => {
-          const selected = projectMembers.find((p) => p.id === field.value);
-          const displayName = selected
-            ? [selected.first_name, selected.last_name].filter(Boolean).join(" ") ||
-              selected.email
-            : null;
-          const displayCompany = selected?.company?.name ?? null;
+          const selected = projectTeamAssignees.find((p) => p.id === field.value);
+          const displayName = selected?.full_name ?? null;
+          const displayCompany = selected?.company_name ?? null;
+          const emptyText = assigneesError
+            ? "Could not load project team contacts."
+            : isLoadingAssignees
+              ? "Loading project team contacts..."
+              : "No project team contacts found.";
           return (
             <FormItem>
               <FormLabel>Assignee</FormLabel>
@@ -254,9 +255,9 @@ export function PunchItemFormFields({
                 {/* eslint-disable-next-line design-system/no-arbitrary-spacing */}
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
-                    <CommandInput placeholder="Search members..." />
+                    <CommandInput placeholder="Search project team contacts..." />
                     <CommandList>
-                      <CommandEmpty>No members found.</CommandEmpty>
+                      <CommandEmpty>{emptyText}</CommandEmpty>
                       <CommandGroup>
                         <CommandItem
                           value="__none__"
@@ -274,18 +275,24 @@ export function PunchItemFormFields({
                           />
                           <span className="text-muted-foreground italic">Unassigned</span>
                         </CommandItem>
-                        {projectMembers.map((person) => {
-                          const name =
-                            [person.first_name, person.last_name].filter(Boolean).join(" ") ||
-                            person.email ||
-                            "";
+                        {projectTeamAssignees.map((person) => {
+                          const name = person.full_name;
+                          const roleLabel = person.role_names.join(", ");
+                          const searchValue = [
+                            name,
+                            person.email,
+                            person.company_name,
+                            roleLabel,
+                          ]
+                            .filter(Boolean)
+                            .join(" ");
                           return (
                             <CommandItem
                               key={person.id}
-                              value={name}
+                              value={searchValue}
                               onSelect={() => {
                                 field.onChange(person.id);
-                                form.setValue("assignee_company", person.company?.name ?? "");
+                                form.setValue("assignee_company", person.company_name ?? "");
                                 setAssigneeOpen(false);
                               }}
                             >
@@ -297,11 +304,11 @@ export function PunchItemFormFields({
                               />
                               <div>
                                 <p className="text-sm">{name}</p>
-                                {person.company?.name && (
-                                  <p className="text-xs text-muted-foreground">{person.company.name}</p>
+                                {person.company_name && (
+                                  <p className="text-xs text-muted-foreground">{person.company_name}</p>
                                 )}
-                                {person.job_title && !person.company?.name && (
-                                  <p className="text-xs text-muted-foreground">{person.job_title}</p>
+                                {roleLabel && !person.company_name && (
+                                  <p className="text-xs text-muted-foreground">{roleLabel}</p>
                                 )}
                               </div>
                             </CommandItem>
@@ -345,9 +352,15 @@ export function PunchItemFormFields({
                 {/* eslint-disable-next-line design-system/no-arbitrary-spacing */}
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
-                    <CommandInput placeholder="Search members..." />
+                    <CommandInput placeholder="Search project team contacts..." />
                     <CommandList>
-                      <CommandEmpty>No members found.</CommandEmpty>
+                      <CommandEmpty>
+                        {assigneesError
+                          ? "Could not load project team contacts."
+                          : isLoadingAssignees
+                            ? "Loading project team contacts..."
+                            : "No project team contacts found."}
+                      </CommandEmpty>
                       <CommandGroup>
                         <CommandItem
                           value="__none__"
@@ -364,15 +377,21 @@ export function PunchItemFormFields({
                           />
                           <span className="text-muted-foreground italic">None</span>
                         </CommandItem>
-                        {projectMembers.map((person) => {
-                          const name =
-                            [person.first_name, person.last_name].filter(Boolean).join(" ") ||
-                            person.email ||
-                            "";
+                        {projectTeamAssignees.map((person) => {
+                          const name = person.full_name;
+                          const roleLabel = person.role_names.join(", ");
+                          const searchValue = [
+                            name,
+                            person.email,
+                            person.company_name,
+                            roleLabel,
+                          ]
+                            .filter(Boolean)
+                            .join(" ");
                           return (
                             <CommandItem
                               key={person.id}
-                              value={name}
+                              value={searchValue}
                               onSelect={() => {
                                 field.onChange(name);
                                 setBicOpen(false);
