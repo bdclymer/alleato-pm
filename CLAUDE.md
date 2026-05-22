@@ -244,6 +244,33 @@ After any deep research session, save a new snapshot to the memory directory fol
 
 ---
 
+## Git Workflow
+
+**General work** (refactors, features, infrastructure): commit directly to `main`, push to `origin/main`.
+
+**GitHub issue fixes**: use a branch + PR so the fix is reviewable and traceable to the issue.
+
+```bash
+# 1. Create branch
+git checkout -b fix/issue-{number}-{short-slug}
+
+# 2. Fix, commit
+git add <files>
+git commit -m "fix: <description>"
+
+# 3. Push + open PR
+git push -u origin fix/issue-{number}-{short-slug}
+gh pr create --title "fix: <description>" --body "Closes #{number}" --base main
+```
+
+Branch naming: `fix/issue-{number}-{slug}` (e.g. `fix/issue-427-direct-costs-panel`).
+PR body must contain `Closes #{number}` so GitHub auto-closes the issue on merge.
+After PR is merged, delete the branch.
+
+**Never** push a `fix/issue-*` branch to main directly — the PR is the record.
+
+---
+
 ## Behavioral Rules
 
 - Use MCP, CLI, or Bash — never tell the user to do something manually.
