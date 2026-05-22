@@ -28,39 +28,27 @@ export default async function ProjectDailyLogPage({
   }
 
   const logs = dailyLogs || [];
+
   const creatorIds = [
-    ...new Set(logs.map((log) => log.created_by).filter(Boolean) as string[]),
+    ...new Set(logs.map((l) => l.created_by).filter(Boolean) as string[]),
   ];
 
-  const creatorLabelsById = new Map<string, string>();
-
+  let profileMap: Record<string, string> = {};
   if (creatorIds.length > 0) {
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles } = await supabase
       .from("user_profiles")
       .select("id, full_name, email")
       .in("id", creatorIds);
-
-    if (profilesError) {
-      return (
-        <PageShell variant="table" title="Daily Log">
-          <p className="py-6 text-center text-destructive">
-            Could not load Daily Log creator names. Please refresh the page.
-          </p>
-        </PageShell>
-      );
-    }
-
-    for (const profile of profiles || []) {
-      const label = getDailyLogCreatorLabel(profile);
-      if (label) creatorLabelsById.set(profile.id, label);
+    if (profiles) {
+      for (const p of profiles) {
+        profileMap[p.id] = p.full_name || p.email;
+      }
     }
   }
 
-  const enrichedLogs = logs.map((log) => ({
-    ...log,
-    creator_name: log.created_by
-      ? (creatorLabelsById.get(log.created_by) ?? null)
-      : null,
+  const enrichedLogs = logs.map((l) => ({
+    ...l,
+    creator_name: l.created_by ? (profileMap[l.created_by] ?? null) : null,
   }));
 
   return <DailyLogClient projectId={projectId} dailyLogs={enrichedLogs} />;
