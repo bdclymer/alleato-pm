@@ -163,7 +163,7 @@ export function TransmittalFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-3xl">
+      <DialogContent size="form" className="max-h-dvh overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Transmittal" : "Create Transmittal"}
