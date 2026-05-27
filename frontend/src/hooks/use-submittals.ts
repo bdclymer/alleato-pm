@@ -291,6 +291,7 @@ export function useAddWorkflowStep(projectId: number, submittalId: string) {
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
       toast.success("Workflow step added");
     },
     onError: (err: Error) => {
@@ -319,6 +320,7 @@ export function useRespondToWorkflowStep(
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
       toast.success("Response recorded");
     },
     onError: (err: Error) => {

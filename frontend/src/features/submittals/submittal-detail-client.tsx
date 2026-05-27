@@ -158,6 +158,7 @@ interface WorkflowBuilderProps {
 }
 
 function WorkflowBuilder({ projectId, submittalId, users, currentSteps }: WorkflowBuilderProps) {
+  const router = useRouter();
   const [userId, setUserId] = React.useState("");
   const [stepType, setStepType] = React.useState<string>("Approver");
   const [required, setRequired] = React.useState(true);
@@ -174,18 +175,24 @@ function WorkflowBuilder({ projectId, submittalId, users, currentSteps }: Workfl
     setUserId("");
     setStepType("Approver");
     setRequired(true);
+    router.refresh();
   }
 
   async function handleApplyTemplate(templateId: string) {
     const tpl = templates.find((t) => t.id === templateId);
     if (!tpl) return;
-    for (const step of tpl.steps) {
+    const assignableSteps = tpl.steps.filter((s) => s.user_id);
+    if (assignableSteps.length === 0) {
+      return;
+    }
+    for (const step of assignableSteps) {
       await mutation.mutateAsync({
         user_id: step.user_id ?? "",
         step_type: step.step_type,
         required: step.required,
       });
     }
+    router.refresh();
   }
 
   async function handleSaveTemplate(e: React.FormEvent) {
