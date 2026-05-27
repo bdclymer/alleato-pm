@@ -6,8 +6,10 @@ import {
   AlertTriangle,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   ClipboardList,
   CloudSun,
+  LayoutList,
   Mail,
   PackageCheck,
   Plus,
@@ -18,6 +20,7 @@ import {
   Truck,
   Users,
   Wrench,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +36,11 @@ import {
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -75,6 +83,8 @@ const pendingSections = [
   { label: "Delays", icon: Timer },
   { label: "Emails", icon: Mail },
 ];
+
+const QUICK_LOG_SECTIONS = ["Weather", "Manpower", "Notes"];
 
 function newId() {
   return crypto.randomUUID();
@@ -144,31 +154,6 @@ function numericValue(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  meta,
-  action,
-}: {
-  icon: typeof CloudSun;
-  title: string;
-  meta?: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <Icon className="h-4 w-4 shrink-0 text-primary" />
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-foreground">{title}</div>
-          {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
-        </div>
-      </div>
-      {action}
-    </div>
-  );
-}
-
 function Field({
   label,
   children,
@@ -186,8 +171,50 @@ function Field({
   );
 }
 
-function SectionShell({ children }: { children: React.ReactNode }) {
-  return <section className="space-y-4 border-b border-border/70 pb-6">{children}</section>;
+function CollapsibleSectionShell({
+  id,
+  icon: Icon,
+  title,
+  meta,
+  action,
+  defaultOpen = false,
+  children,
+}: {
+  id: string;
+  icon: typeof CloudSun;
+  title: string;
+  meta?: string;
+  action?: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="border-b border-border/70 pb-1">
+      <CollapsibleTrigger className="flex w-full items-center justify-between gap-4 rounded-md px-1 py-3 text-left hover:bg-muted/50 -mx-1">
+        <div id={id} className="flex min-w-0 items-center gap-3">
+          <Icon className="h-4 w-4 shrink-0 text-primary" />
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-foreground">{title}</div>
+            {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
+          </div>
+        </div>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            open && "rotate-180",
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="space-y-4 pb-5 pt-2">
+          {action && <div className="flex justify-end">{action}</div>}
+          {children}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }
 
 export type DailyLogInitialData = {
@@ -227,6 +254,7 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
     initialData?.notes && initialData.notes.length > 0 ? initialData.notes : [emptyNote()],
   );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [quickLog, setQuickLog] = React.useState(false);
 
   const manpowerTotals = React.useMemo(() => {
     return manpowerRows.reduce(
@@ -314,7 +342,11 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
 
   const backPath = `/${projectId}/daily-log`;
   const title = mode === "edit" ? "Edit Daily Log" : "Daily Log";
-  const saveLabel = mode === "edit" ? "Save Changes" : "Save Daily Log";
+  const saveLabel = mode === "edit" ? "Save Changes" : "Save Log";
+
+  const navSections = quickLog
+    ? QUICK_LOG_SECTIONS
+    : ["Weather", "Manpower", "Notes", "Equipment", ...pendingSections.map((s) => s.label)];
 
   return (
     <PageShell
@@ -325,6 +357,24 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
       backLabel="Back to Daily Log"
       actions={
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            onClick={() => setQuickLog((v) => !v)}
+          >
+            {quickLog ? (
+              <>
+                <LayoutList className="mr-1 h-3.5 w-3.5" />
+                Full Log
+              </>
+            ) : (
+              <>
+                <Zap className="mr-1 h-3.5 w-3.5" />
+                Quick Log
+              </>
+            )}
+          </Button>
           <Button variant="outline" size="sm" type="button" onClick={() => router.push(backPath)}>
             Cancel
           </Button>
@@ -334,16 +384,21 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
         </div>
       }
     >
-      <div className="space-y-8">
+      <div className="space-y-6">
+        {quickLog && (
+          <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+            <Zap className="h-3.5 w-3.5 shrink-0" />
+            Quick Log — showing Weather, Manpower, and Notes only. Switch to Full Log to access all
+            sections.
+          </div>
+        )}
+
         <section className="grid gap-4 md:grid-cols-[180px_180px_1fr]">
           <Field label="Date">
             <Input type="date" value={logDate} onChange={(event) => setLogDate(event.target.value)} />
           </Field>
           <Field label="Status">
-            <Select
-              value={status}
-              onValueChange={(value) => setStatus(value as DailyLogStatus)}
-            >
+            <Select value={status} onValueChange={(value) => setStatus(value as DailyLogStatus)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -366,7 +421,7 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
         <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
             <nav className="sticky top-20 space-y-1 border-r border-border/70 pr-4">
-              {["Weather", "Manpower", "Notes", "Equipment", ...pendingSections.map((section) => section.label)].map((label) => (
+              {navSections.map((label) => (
                 <a
                   key={label}
                   href={`#${label.toLowerCase().replaceAll(" ", "-")}`}
@@ -378,20 +433,24 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
             </nav>
           </aside>
 
-          <div className="min-w-0 space-y-6">
-            <SectionShell>
-              <div id="weather">
-                <SectionHeader
-                  icon={CloudSun}
-                  title="Observed Weather Conditions"
-                  action={
-                    <Button variant="outline" size="sm" type="button" onClick={() => setWeatherRows([...weatherRows, emptyWeather()])}>
-                      <Plus />
-                      Add
-                    </Button>
-                  }
-                />
-              </div>
+          <div className="min-w-0 space-y-2">
+            <CollapsibleSectionShell
+              id="weather"
+              icon={CloudSun}
+              title="Observed Weather Conditions"
+              defaultOpen
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => setWeatherRows([...weatherRows, emptyWeather()])}
+                >
+                  <Plus />
+                  Add
+                </Button>
+              }
+            >
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -411,17 +470,105 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
                   <TableBody>
                     {weatherRows.map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell><Input value={row.area ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { area: event.target.value })} /></TableCell>
-                        <TableCell><Input type="time" value={row.timeObserved ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { timeObserved: event.target.value })} /></TableCell>
-                        <TableCell><Checkbox checked={Boolean(row.delay)} onCheckedChange={(checked) => updateRow(weatherRows, setWeatherRows, row.id, { delay: checked === true })} /></TableCell>
-                        <TableCell><Input value={row.location ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { location: event.target.value })} /></TableCell>
-                        <TableCell><Input value={row.sky ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { sky: event.target.value })} /></TableCell>
-                        <TableCell><Input type="number" value={row.temperature ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { temperature: numericValue(event.target.value) })} /></TableCell>
-                        <TableCell><Input value={row.precipitation ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { precipitation: event.target.value })} /></TableCell>
-                        <TableCell><Input value={row.wind ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { wind: event.target.value })} /></TableCell>
-                        <TableCell><Input value={row.comments ?? ""} onChange={(event) => updateRow(weatherRows, setWeatherRows, row.id, { comments: event.target.value })} /></TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" type="button" onClick={() => removeRow(weatherRows, setWeatherRows, row.id)}>
+                          <Input
+                            value={row.area ?? ""}
+                            onChange={(event) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                area: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="time"
+                            value={row.timeObserved ?? ""}
+                            onChange={(event) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                timeObserved: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Checkbox
+                            checked={Boolean(row.delay)}
+                            onCheckedChange={(checked) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                delay: checked === true,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.location ?? ""}
+                            onChange={(event) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                location: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.sky ?? ""}
+                            onChange={(event) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                sky: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={row.temperature ?? ""}
+                            onChange={(event) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                temperature: numericValue(event.target.value),
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.precipitation ?? ""}
+                            onChange={(event) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                precipitation: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.wind ?? ""}
+                            onChange={(event) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                wind: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.comments ?? ""}
+                            onChange={(event) =>
+                              updateRow(weatherRows, setWeatherRows, row.id, {
+                                comments: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={() => removeRow(weatherRows, setWeatherRows, row.id)}
+                          >
                             <Trash2 />
                           </Button>
                         </TableCell>
@@ -430,22 +577,26 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
                   </TableBody>
                 </Table>
               </div>
-            </SectionShell>
+            </CollapsibleSectionShell>
 
-            <SectionShell>
-              <div id="manpower">
-                <SectionHeader
-                  icon={Users}
-                  title="Manpower"
-                  meta={`${manpowerTotals.workers} workers / ${manpowerTotals.hours} total hours`}
-                  action={
-                    <Button variant="outline" size="sm" type="button" onClick={() => setManpowerRows([...manpowerRows, emptyManpower()])}>
-                      <Plus />
-                      Add
-                    </Button>
-                  }
-                />
-              </div>
+            <CollapsibleSectionShell
+              id="manpower"
+              icon={Users}
+              title="Manpower"
+              meta={`${manpowerTotals.workers} workers / ${manpowerTotals.hours} total hours`}
+              defaultOpen
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => setManpowerRows([...manpowerRows, emptyManpower()])}
+                >
+                  <Plus />
+                  Add
+                </Button>
+              }
+            >
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -465,17 +616,100 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
                   <TableBody>
                     {manpowerRows.map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell><Input value={row.area ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { area: event.target.value })} /></TableCell>
-                        <TableCell><Input value={row.trade ?? ""} placeholder="Trade or company" onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { trade: event.target.value })} /></TableCell>
-                        <TableCell><Input type="number" min={0} value={row.workersCount || ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { workersCount: numericValue(event.target.value) ?? 0 })} /></TableCell>
-                        <TableCell><Input type="number" min={0} step="0.25" value={row.hoursWorked ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { hoursWorked: numericValue(event.target.value) })} /></TableCell>
-                        <TableCell>{(row.workersCount || 0) * (row.hoursWorked || 0)}</TableCell>
-                        <TableCell><Input value={row.costCode ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { costCode: event.target.value })} /></TableCell>
-                        <TableCell><Input value={row.location ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { location: event.target.value })} /></TableCell>
-                        <TableCell><Input value={row.comments ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { comments: event.target.value })} /></TableCell>
-                        <TableCell><Checkbox checked={Boolean(row.issueFlag)} onCheckedChange={(checked) => updateRow(manpowerRows, setManpowerRows, row.id, { issueFlag: checked === true })} /></TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" type="button" onClick={() => removeRow(manpowerRows, setManpowerRows, row.id)}>
+                          <Input
+                            value={row.area ?? ""}
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                area: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.trade ?? ""}
+                            placeholder="Trade or company"
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                trade: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={row.workersCount || ""}
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                workersCount: numericValue(event.target.value) ?? 0,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.25"
+                            value={row.hoursWorked ?? ""}
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                hoursWorked: numericValue(event.target.value),
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>{(row.workersCount || 0) * (row.hoursWorked || 0)}</TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.costCode ?? ""}
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                costCode: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.location ?? ""}
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                location: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.comments ?? ""}
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                comments: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Checkbox
+                            checked={Boolean(row.issueFlag)}
+                            onCheckedChange={(checked) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                issueFlag: checked === true,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={() => removeRow(manpowerRows, setManpowerRows, row.id)}
+                          >
                             <Trash2 />
                           </Button>
                         </TableCell>
@@ -484,104 +718,243 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
                   </TableBody>
                 </Table>
               </div>
-            </SectionShell>
+            </CollapsibleSectionShell>
 
-            <SectionShell>
-              <div id="notes">
-                <SectionHeader
-                  icon={StickyNote}
-                  title="Notes"
-                  action={
-                    <Button variant="outline" size="sm" type="button" onClick={() => setNoteRows([...noteRows, emptyNote()])}>
-                      <Plus />
-                      Add
-                    </Button>
-                  }
-                />
-              </div>
+            <CollapsibleSectionShell
+              id="notes"
+              icon={StickyNote}
+              title="Notes"
+              defaultOpen
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => setNoteRows([...noteRows, emptyNote()])}
+                >
+                  <Plus />
+                  Add
+                </Button>
+              }
+            >
               <div className="grid gap-3">
                 {noteRows.map((row) => (
-                  <div key={row.id} className="grid gap-3 border-b border-border/70 pb-3 md:grid-cols-[120px_160px_1fr_80px_40px]">
-                    <Input value={row.area ?? ""} onChange={(event) => updateRow(noteRows, setNoteRows, row.id, { area: event.target.value })} />
-                    <Input value={row.category ?? ""} placeholder="Category" onChange={(event) => updateRow(noteRows, setNoteRows, row.id, { category: event.target.value })} />
-                    <Textarea value={row.description} placeholder="Comment" onChange={(event) => updateRow(noteRows, setNoteRows, row.id, { description: event.target.value })} rows={2} />
+                  <div
+                    key={row.id}
+                    className="grid gap-3 border-b border-border/70 pb-3 md:grid-cols-[120px_160px_1fr_80px_40px]"
+                  >
+                    <Input
+                      value={row.area ?? ""}
+                      onChange={(event) =>
+                        updateRow(noteRows, setNoteRows, row.id, { area: event.target.value })
+                      }
+                    />
+                    <Input
+                      value={row.category ?? ""}
+                      placeholder="Category"
+                      onChange={(event) =>
+                        updateRow(noteRows, setNoteRows, row.id, { category: event.target.value })
+                      }
+                    />
+                    <Textarea
+                      value={row.description}
+                      placeholder="Comment"
+                      onChange={(event) =>
+                        updateRow(noteRows, setNoteRows, row.id, {
+                          description: event.target.value,
+                        })
+                      }
+                      rows={2}
+                    />
                     <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Checkbox checked={Boolean(row.issueFlag)} onCheckedChange={(checked) => updateRow(noteRows, setNoteRows, row.id, { issueFlag: checked === true })} />
+                      <Checkbox
+                        checked={Boolean(row.issueFlag)}
+                        onCheckedChange={(checked) =>
+                          updateRow(noteRows, setNoteRows, row.id, { issueFlag: checked === true })
+                        }
+                      />
                       Issue
                     </label>
-                    <Button variant="ghost" size="icon" type="button" onClick={() => removeRow(noteRows, setNoteRows, row.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      onClick={() => removeRow(noteRows, setNoteRows, row.id)}
+                    >
                       <Trash2 />
                     </Button>
                   </div>
                 ))}
               </div>
-            </SectionShell>
+            </CollapsibleSectionShell>
 
-            <SectionShell>
-              <div id="equipment">
-                <SectionHeader
+            {!quickLog && (
+              <>
+                <CollapsibleSectionShell
+                  id="equipment"
                   icon={Wrench}
                   title="Equipment"
+                  defaultOpen={false}
                   action={
-                    <Button variant="outline" size="sm" type="button" onClick={() => setEquipmentRows([...equipmentRows, emptyEquipment()])}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      onClick={() => setEquipmentRows([...equipmentRows, emptyEquipment()])}
+                    >
                       <Plus />
                       Add
                     </Button>
                   }
-                />
-              </div>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Area</TableHead>
-                      <TableHead>Equipment</TableHead>
-                      <TableHead>Operating</TableHead>
-                      <TableHead>Idle</TableHead>
-                      <TableHead>Cost Code</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Inspected</TableHead>
-                      <TableHead>Comments</TableHead>
-                      <TableHead />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {equipmentRows.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell><Input value={row.area ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { area: event.target.value })} /></TableCell>
-                        <TableCell><Input value={row.equipmentName} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { equipmentName: event.target.value })} /></TableCell>
-                        <TableCell><Input type="number" min={0} step="0.25" value={row.hoursOperated ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { hoursOperated: numericValue(event.target.value) })} /></TableCell>
-                        <TableCell><Input type="number" min={0} step="0.25" value={row.hoursIdle ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { hoursIdle: numericValue(event.target.value) })} /></TableCell>
-                        <TableCell><Input value={row.costCode ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { costCode: event.target.value })} /></TableCell>
-                        <TableCell><Input value={row.location ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { location: event.target.value })} /></TableCell>
-                        <TableCell><Checkbox checked={Boolean(row.inspected)} onCheckedChange={(checked) => updateRow(equipmentRows, setEquipmentRows, row.id, { inspected: checked === true })} /></TableCell>
-                        <TableCell><Input value={row.comments ?? ""} onChange={(event) => updateRow(equipmentRows, setEquipmentRows, row.id, { comments: event.target.value })} /></TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" type="button" onClick={() => removeRow(equipmentRows, setEquipmentRows, row.id)}>
-                            <Trash2 />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </SectionShell>
-
-            <section className="space-y-3">
-              <SectionHeader icon={ClipboardList} title="Pending Daily Log Sections" />
-              <div className="divide-y divide-border/70">
-                {pendingSections.map(({ label, icon: Icon }) => (
-                  <div key={label} id={label.toLowerCase().replaceAll(" ", "-")} className="flex items-center justify-between gap-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{label}</span>
-                    </div>
-                    <span className="text-xs text-destructive">Schema gap</span>
+                >
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Area</TableHead>
+                          <TableHead>Equipment</TableHead>
+                          <TableHead>Operating</TableHead>
+                          <TableHead>Idle</TableHead>
+                          <TableHead>Cost Code</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Inspected</TableHead>
+                          <TableHead>Comments</TableHead>
+                          <TableHead />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {equipmentRows.map((row) => (
+                          <TableRow key={row.id}>
+                            <TableCell>
+                              <Input
+                                value={row.area ?? ""}
+                                onChange={(event) =>
+                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
+                                    area: event.target.value,
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={row.equipmentName}
+                                onChange={(event) =>
+                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
+                                    equipmentName: event.target.value,
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                step="0.25"
+                                value={row.hoursOperated ?? ""}
+                                onChange={(event) =>
+                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
+                                    hoursOperated: numericValue(event.target.value),
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                step="0.25"
+                                value={row.hoursIdle ?? ""}
+                                onChange={(event) =>
+                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
+                                    hoursIdle: numericValue(event.target.value),
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={row.costCode ?? ""}
+                                onChange={(event) =>
+                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
+                                    costCode: event.target.value,
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={row.location ?? ""}
+                                onChange={(event) =>
+                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
+                                    location: event.target.value,
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Checkbox
+                                checked={Boolean(row.inspected)}
+                                onCheckedChange={(checked) =>
+                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
+                                    inspected: checked === true,
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={row.comments ?? ""}
+                                onChange={(event) =>
+                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
+                                    comments: event.target.value,
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={() =>
+                                  removeRow(equipmentRows, setEquipmentRows, row.id)
+                                }
+                              >
+                                <Trash2 />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                ))}
-              </div>
-            </section>
+                </CollapsibleSectionShell>
+
+                <CollapsibleSectionShell
+                  id="additional-sections"
+                  icon={ClipboardList}
+                  title="Additional Sections"
+                  meta={`${pendingSections.length} sections available`}
+                  defaultOpen={false}
+                >
+                  <div className="divide-y divide-border/70">
+                    {pendingSections.map(({ label, icon: Icon }) => (
+                      <div
+                        key={label}
+                        id={label.toLowerCase().replaceAll(" ", "-")}
+                        className="flex items-center justify-between gap-4 py-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">{label}</span>
+                        </div>
+                        <span className="text-xs text-destructive">Coming soon</span>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleSectionShell>
+              </>
+            )}
           </div>
         </div>
       </div>
