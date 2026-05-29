@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   CalendarDays,
+  Check,
   CheckCircle2,
   ChevronDown,
   ClipboardList,
   CloudSun,
-  LayoutList,
+  ChevronsUpDown,
   Mail,
   PackageCheck,
   Plus,
@@ -37,12 +38,16 @@ import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -59,6 +64,7 @@ import {
   InlineTableHeaderCell as TableHead,
   InlineTableRow as TableRow,
 } from "@/components/ds/inline-table";
+import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { cn } from "@/lib/utils";
 
 type WeatherRow = DailyLogWeatherInput & { id: string };
@@ -154,6 +160,136 @@ function numericValue(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+interface TradeOption {
+  id: string;
+  name: string;
+}
+
+function TradeCombobox({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: TradeOption[];
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+
+  const filtered = React.useMemo(
+    () =>
+      search
+        ? options.filter((opt) => opt.name.toLowerCase().includes(search.toLowerCase()))
+        : options,
+    [options, search],
+  );
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && search.trim() && search.trim() !== value) {
+      onChange(search.trim());
+    }
+    if (!nextOpen) setSearch("");
+    setOpen(nextOpen);
+  };
+
+  const handleSelect = (companyName: string) => {
+    onChange(companyName);
+    setSearch("");
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          className={cn(
+            "h-8 w-full min-w-[140px] justify-between text-sm font-normal",
+            !value && "text-muted-foreground",
+          )}
+        >
+          <span className="truncate">{value || "Select or type..."}</span>
+          <ChevronsUpDown className="ml-1 h-3.5 w-3.5 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search project directory..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            {filtered.length === 0 ? (
+              <CommandEmpty>
+                {search.trim() ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-xs"
+                    onClick={() => handleSelect(search.trim())}
+                  >
+                    Use &quot;{search.trim()}&quot;
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">No companies found.</span>
+                )}
+              </CommandEmpty>
+            ) : (
+              <CommandGroup>
+                {filtered.map((opt) => (
+                  <CommandItem
+                    key={opt.id}
+                    value={opt.name}
+                    onSelect={() => handleSelect(opt.name)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-3.5 w-3.5",
+                        value === opt.name ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {opt.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  meta,
+  action,
+}: {
+  icon: typeof CloudSun;
+  title: string;
+  meta?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <Icon className="h-4 w-4 shrink-0 text-primary" />
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-foreground">{title}</div>
+          {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 function Field({
   label,
   children,
@@ -237,6 +373,15 @@ interface DailyLogFormClientProps {
 export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFormClientProps) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
+
+  const { companies } = useProjectCompanies(String(projectId), { per_page: 500 });
+  const tradeOptions: TradeOption[] = React.useMemo(
+    () =>
+      companies
+        .filter((c) => c.company?.name)
+        .map((c) => ({ id: c.company_id, name: c.company!.name })),
+    [companies],
+  );
 
   const [logDate, setLogDate] = React.useState(initialData?.logDate ?? today);
   const [status, setStatus] = React.useState<DailyLogStatus>(initialData?.status ?? "draft");
@@ -616,52 +761,16 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
                   <TableBody>
                     {manpowerRows.map((row) => (
                       <TableRow key={row.id}>
+                        <TableCell><Input value={row.area ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { area: event.target.value })} /></TableCell>
                         <TableCell>
-                          <Input
-                            value={row.area ?? ""}
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                area: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
+                          <TradeCombobox
                             value={row.trade ?? ""}
-                            placeholder="Trade or company"
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                trade: event.target.value,
-                              })
-                            }
+                            onChange={(val) => updateRow(manpowerRows, setManpowerRows, row.id, { trade: val })}
+                            options={tradeOptions}
                           />
                         </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            value={row.workersCount || ""}
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                workersCount: numericValue(event.target.value) ?? 0,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.25"
-                            value={row.hoursWorked ?? ""}
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                hoursWorked: numericValue(event.target.value),
-                              })
-                            }
-                          />
-                        </TableCell>
+                        <TableCell><Input type="number" min={0} value={row.workersCount || ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { workersCount: numericValue(event.target.value) ?? 0 })} /></TableCell>
+                        <TableCell><Input type="number" min={0} step="0.25" value={row.hoursWorked ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { hoursWorked: numericValue(event.target.value) })} /></TableCell>
                         <TableCell>{(row.workersCount || 0) * (row.hoursWorked || 0)}</TableCell>
                         <TableCell>
                           <Input
