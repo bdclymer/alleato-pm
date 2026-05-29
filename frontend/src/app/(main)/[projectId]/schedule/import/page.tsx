@@ -83,11 +83,25 @@ function parentOutline(outline: string | null): string | null {
   return outline.split(".").slice(0, -1).join(".");
 }
 
+// PDF structural keywords that can never appear as legitimate task names.
+// "obj endobj xref" is the reported pattern (PDF cross-reference table content).
+const PDF_STRUCTURAL_KEYWORDS = new Set([
+  "obj", "endobj", "xref", "trailer", "startxref",
+  "stream", "endstream",
+]);
+
 function looksLikePdfToken(name: string): boolean {
   const s = name.trim();
   if (/^\/[A-Za-z]/.test(s)) return true;
   if (/^-?\d+\.?\d*$/.test(s)) return true;
   if (s.includes("<<") || s.includes(">>")) return true;
+  // Single PDF structural keyword (e.g. "obj", "endobj", "xref")
+  if (PDF_STRUCTURAL_KEYWORDS.has(s.toLowerCase())) return true;
+  // PDF indirect object reference: "1 0 obj", "5 2 R"
+  if (/^\d+\s+\d+\s+(obj|R)\b/i.test(s)) return true;
+  // Compound PDF keyword sequence: "obj endobj xref" — all words are PDF keywords
+  const words = s.toLowerCase().split(/\s+/);
+  if (words.length >= 2 && words.every((w) => PDF_STRUCTURAL_KEYWORDS.has(w))) return true;
   return false;
 }
 

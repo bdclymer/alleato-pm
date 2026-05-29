@@ -80,12 +80,39 @@ class TestIsPdfToken:
     def test_rejects_pdf_dictionary_syntax(self):
         assert _is_pdf_token("/ExtGState<</R7 7 0 R") is True
 
+    def test_rejects_pdf_structural_keywords(self):
+        # Single PDF cross-reference / body keywords
+        assert _is_pdf_token("obj") is True
+        assert _is_pdf_token("endobj") is True
+        assert _is_pdf_token("xref") is True
+        assert _is_pdf_token("trailer") is True
+        assert _is_pdf_token("startxref") is True
+        assert _is_pdf_token("stream") is True
+        assert _is_pdf_token("endstream") is True
+        # Case-insensitive
+        assert _is_pdf_token("OBJ") is True
+        assert _is_pdf_token("Xref") is True
+
+    def test_rejects_compound_pdf_keyword_sequences(self):
+        # The exact pattern reported in issue #448
+        assert _is_pdf_token("obj endobj xref") is True
+        assert _is_pdf_token("stream endstream") is True
+        assert _is_pdf_token("xref trailer startxref") is True
+
+    def test_rejects_pdf_object_references(self):
+        assert _is_pdf_token("1 0 obj") is True
+        assert _is_pdf_token("5 2 R") is True
+        assert _is_pdf_token("10 0 obj") is True
+
     def test_accepts_real_task_names(self):
         assert _is_pdf_token("Site Preparation") is False
         assert _is_pdf_token("Install HVAC") is False
         assert _is_pdf_token("Phase 1 - Foundation") is False
         assert _is_pdf_token("Task A") is False
         assert _is_pdf_token("100% Complete") is False
+        # Construction tasks that contain PDF-adjacent words but are legitimate
+        assert _is_pdf_token("Stream Crossing Installation") is False
+        assert _is_pdf_token("Trailer Mobilization") is False
 
 
 def test_parse_microsoft_project_file_rejects_pdf_bytes():
@@ -103,12 +130,21 @@ def test_parse_microsoft_project_xml_filters_pdf_tokens():
     <Task><UID>3</UID><OutlineNumber>3</OutlineNumber><Name>/Filter/FlateDecode</Name><Active>1</Active></Task>
     <Task><UID>4</UID><OutlineNumber>4</OutlineNumber><Name>Install HVAC</Name><Active>1</Active></Task>
     <Task><UID>5</UID><OutlineNumber>5</OutlineNumber><Name>751.439</Name><Active>1</Active></Task>
+    <Task><UID>6</UID><OutlineNumber>6</OutlineNumber><Name>obj endobj xref</Name><Active>1</Active></Task>
+    <Task><UID>7</UID><OutlineNumber>7</OutlineNumber><Name>obj</Name><Active>1</Active></Task>
+    <Task><UID>8</UID><OutlineNumber>8</OutlineNumber><Name>1 0 obj</Name><Active>1</Active></Task>
+    <Task><UID>9</UID><OutlineNumber>9</OutlineNumber><Name>Stream Crossing</Name><Active>1</Active></Task>
   </Tasks>
 </Project>"""
     tasks = parse_microsoft_project_file("schedule.xml", xml)
     names = [t["name"] for t in tasks]
     assert "Site Preparation" in names
     assert "Install HVAC" in names
+    assert "Stream Crossing" in names
     assert "/TilingType 1" not in names
     assert "/Filter/FlateDecode" not in names
     assert "751.439" not in names
+    # Issue #448: PDF cross-reference table fragments must be filtered
+    assert "obj endobj xref" not in names
+    assert "obj" not in names
+    assert "1 0 obj" not in names

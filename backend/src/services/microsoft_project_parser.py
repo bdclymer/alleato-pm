@@ -12,6 +12,14 @@ from typing import Any, Dict, List, Optional
 
 _PDF_NAME_RE = re.compile(r"^/[A-Za-z]")
 _PDF_NUMBER_RE = re.compile(r"^-?\d+\.?\d*$")
+_PDF_OBJ_REF_RE = re.compile(r"^\d+\s+\d+\s+(obj|R)\b", re.IGNORECASE)
+
+# PDF structural keywords that can never appear as legitimate task names.
+# "obj endobj xref" is the reported pattern (PDF cross-reference table content).
+_PDF_STRUCTURAL_KEYWORDS = frozenset({
+    "obj", "endobj", "xref", "trailer", "startxref",
+    "stream", "endstream",
+})
 
 
 def _is_pdf_token(name: str) -> bool:
@@ -25,6 +33,16 @@ def _is_pdf_token(name: str) -> bool:
         return True
     # PDF dictionary delimiters embedded in the name
     if "<<" in s or ">>" in s:
+        return True
+    # Single PDF structural keyword (e.g. "obj", "endobj", "xref")
+    if s.lower() in _PDF_STRUCTURAL_KEYWORDS:
+        return True
+    # PDF indirect object reference: "1 0 obj", "5 2 R"
+    if _PDF_OBJ_REF_RE.match(s):
+        return True
+    # Compound PDF keyword sequence: "obj endobj xref" — all words are PDF keywords
+    words = s.lower().split()
+    if len(words) >= 2 and all(w in _PDF_STRUCTURAL_KEYWORDS for w in words):
         return True
     return False
 
