@@ -16,10 +16,10 @@ import {
 import { FormGrid, FormSection } from "@/components/forms";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiComboboxField";
 import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
-import { Input } from "@/components/ui/input";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { apiFetch } from "@/lib/api-client";
 import { RFI_IMPACT_OPTIONS, type RfiFormValues } from "@/lib/schemas/rfi-schema";
@@ -182,66 +182,50 @@ export function RfiFormFields({
       </FormSection>
 
       <FormSection title="Assignment">
-        <FormField
+        <RHFMultiComboboxField
           control={form.control}
           name="assignees"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Assignees (required for Open)</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter assignee names (comma-separated)"
-                  value={(field.value ?? []).join(", ")}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    field.onChange(
-                      val ? val.split(",").map((s) => s.trim()).filter(Boolean) : [],
-                    );
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Assignees (required for Open)"
+          options={rfiManagerOptions}
+          placeholder="Select assignees from project directory"
+          searchPlaceholder="Search project members..."
+          emptyMessage="No matching project member found."
+          disabled={isLoadingManagerOptions}
         />
 
         <FormGrid columns={2}>
-          <RHFTextField
+          <RHFComboboxField
             control={form.control}
             name="received_from"
             label="Received From"
-            placeholder="Enter sender name"
+            placeholder="Select from project directory"
+            searchPlaceholder="Search project members..."
+            emptyMessage="No matching project member found."
+            options={rfiManagerOptions}
+            disabled={isLoadingManagerOptions}
           />
 
-          <RHFTextField
+          <RHFComboboxField
             control={form.control}
             name="responsible_contractor"
             label="Responsible Contractor"
-            placeholder="Enter contractor name"
+            placeholder="Select from project directory"
+            searchPlaceholder="Search project members..."
+            emptyMessage="No matching project member found."
+            options={rfiManagerOptions}
+            disabled={isLoadingManagerOptions}
           />
         </FormGrid>
 
-        <FormField
+        <RHFMultiComboboxField
           control={form.control}
           name="distribution_list"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Distribution List</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter distribution list (comma-separated)"
-                  value={(field.value ?? []).join(", ")}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    field.onChange(
-                      val ? val.split(",").map((s) => s.trim()).filter(Boolean) : [],
-                    );
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Distribution List"
+          options={rfiManagerOptions}
+          placeholder="Select from project directory"
+          searchPlaceholder="Search project members..."
+          emptyMessage="No matching project member found."
+          disabled={isLoadingManagerOptions}
         />
       </FormSection>
 
@@ -338,25 +322,35 @@ export function RfiFormFields({
 }
 
 /**
- * Default RHF defaultValues for an empty RFI form. Exported so callers stay
- * consistent without duplicating the field list.
+ * Returns fresh RHF defaultValues for an empty RFI form. Called at render
+ * time so date-relative defaults (due date = today + 14 days) are always
+ * current rather than frozen at module load time.
  */
-export const RFI_FORM_DEFAULTS: RfiFormValues = {
-  subject: "",
-  question: "",
-  due_date: null,
-  assignees: [],
-  rfi_manager: null,
-  received_from: null,
-  responsible_contractor: null,
-  distribution_list: [],
-  location: null,
-  specification: null,
-  cost_code: null,
-  schedule_impact: null,
-  cost_impact: null,
-  reference: null,
-  is_private: false,
-  rfi_stage: null,
-  drawing_number: null,
-};
+export function getRfiFormDefaults(): RfiFormValues {
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 14);
+  const dueDateStr = dueDate.toISOString().split("T")[0];
+
+  return {
+    subject: "",
+    question: "",
+    due_date: dueDateStr,
+    assignees: [],
+    rfi_manager: null,
+    received_from: null,
+    responsible_contractor: null,
+    distribution_list: [],
+    location: null,
+    specification: null,
+    cost_code: null,
+    schedule_impact: "no",
+    cost_impact: "no",
+    reference: null,
+    is_private: false,
+    rfi_stage: "Open",
+    drawing_number: null,
+  };
+}
+
+/** @deprecated Use getRfiFormDefaults() so date-relative fields stay current. */
+export const RFI_FORM_DEFAULTS: RfiFormValues = getRfiFormDefaults();

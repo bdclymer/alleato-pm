@@ -8,7 +8,7 @@ import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { FormActions } from "@/components/forms/FormActions";
 import {
-  RFI_FORM_DEFAULTS,
+  getRfiFormDefaults,
   RfiFormFields,
 } from "@/components/rfis/rfi-form-fields";
 import { useCreateRfi } from "@/hooks/use-rfis";
@@ -26,7 +26,7 @@ export default function NewRfiPage() {
   const createRfi = useCreateRfi(projectId);
 
   const form = useForm<RfiFormValues>({
-    defaultValues: RFI_FORM_DEFAULTS,
+    defaultValues: getRfiFormDefaults(),
   });
 
   const submitRfi = async (status: "draft" | "open") => {

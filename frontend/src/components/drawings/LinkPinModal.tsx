@@ -31,7 +31,7 @@ import type { DrawingMarkupPin, CreatePinInput } from "@/hooks/use-drawing-pins"
 import { FileText, Wrench, AlertTriangle, CheckSquare, Link2, Image as ImageIcon } from "lucide-react";
 import {
   RfiFormFields,
-  RFI_FORM_DEFAULTS,
+  getRfiFormDefaults,
 } from "@/components/rfis/rfi-form-fields";
 import {
   rfiDraftSchema,
@@ -424,7 +424,7 @@ function RfiContent({
   // Same form contract as `/[projectId]/rfis/new`. Reusing RfiFormFields keeps
   // the field set, validation rules, and dropdown sources in lockstep with the
   // canonical RFI create page.
-  const form = useForm<RfiFormValues>({ defaultValues: RFI_FORM_DEFAULTS });
+  const form = useForm<RfiFormValues>({ defaultValues: getRfiFormDefaults() });
 
   const handleLink = () => {
     if (!position || !selectedRfiId) return;

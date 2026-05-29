@@ -72,7 +72,7 @@ export const RFI_STATUS_VARIANT_MAP: Record<
 
 export const RFI_IMPACT_OPTIONS = [
   { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
+  { value: "no", label: "No Impact" },
   { value: "tbd", label: "TBD" },
   { value: "n/a", label: "N/A" },
 ] as const;
