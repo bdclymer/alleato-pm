@@ -11,6 +11,7 @@ import {
   ClipboardList,
   CloudSun,
   ChevronsUpDown,
+  LayoutList,
   Mail,
   PackageCheck,
   Plus,
@@ -56,6 +57,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   InlineTable as Table,
   InlineTableBody as TableBody,
