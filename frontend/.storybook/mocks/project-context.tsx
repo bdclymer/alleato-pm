@@ -12,6 +12,10 @@ export function useProject() {
   return useContext(ProjectContext);
 }
 
+export function useOptionalProject() {
+  return useContext(ProjectContext);
+}
+
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
   return <ProjectContext.Provider value={{
     selectedProject: { id: 67, name: "Vermillion Rise Warehouse", number: "PRJ-67", status: "active" },

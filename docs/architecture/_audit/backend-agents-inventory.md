@@ -6,6 +6,22 @@
 
 ---
 
+- **File:** `backend/src/services/agents/deep_project_intelligence.py`
+- **File:** `backend/src/services/agents/deep_project_intelligence_contracts.py`
+- **File:** `backend/src/services/agents/pm_advisor_tools.py`
+
+**2. `alleato_ai_tools/` Directory Deep-Dive**
+- `identity.md`, `soul.md`
+- `orchestrator.md`
+- `_subagent_output_rule.md`
+- `financial_analyst.md`
+- `schedule_analyst.md`
+- `risk_analyst.md`
+- `communications_analyst.md`
+- **Exports:** `ORCHESTRATOR_PROMPT`, `FINANCIAL_ANALYST_PROMPT`, `SCHEDULE_ANALYST_PROMPT`, `RISK_ANALYST_PROMPT`, `COMMUNICATIONS_ANALYST_PROMPT`
+
+---
+
 ## 1. Top-Level Files
 
 ### `deep_project_intelligence.py`
@@ -176,6 +192,8 @@ When `runtime == "deep_agents"` and `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=tr
 - **Exports:** `with_db_retry`
 
 ### `alleato_ai_tools/subagents.py`
+
+- `alleato_ai_tools/subagents.py`
 
 - **Lines:** 121
 - **Role:** agent-definition (sub-agent definitions)

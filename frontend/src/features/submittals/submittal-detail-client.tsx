@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Copy, MoreHorizontal, Send, Trash2 } from "lucide-react";
+import { Copy, Mail, MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
 import { EntityAttachments, StatusBadge, EmptyState } from "@/components/ds";
@@ -40,6 +40,7 @@ import {
   type WorkflowTemplateStep,
 } from "@/hooks/use-submittals";
 import { formatDate } from "@/lib/format";
+import { SubmittalFormPage } from "./submittal-form-page";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -345,13 +346,13 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   const [respondingStep, setRespondingStep] = React.useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
 
   const { users } = useAuthUsers(String(projectId));
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
   const distributions = submittal.submittal_distributions ?? [];
   const history = submittal.submittal_history ?? [];
-  const linkedDrawings = submittal.submittal_linked_drawings ?? [];
 
   React.useEffect(() => {
     let isMounted = true;
@@ -379,12 +380,12 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
     <div className="flex items-center gap-1.5">
       {submittal.status !== "Closed" && !submittal.deleted_at && (
         <Button
-          variant="outline"
+          variant="default"
           size="sm"
           onClick={() => setDistributeOpen(true)}
         >
-          <Send className="mr-1.5 h-3.5 w-3.5" />
-          Distribute
+          <Mail className="mr-1.5 h-3.5 w-3.5" />
+          Email
         </Button>
       )}
       <DropdownMenu>
@@ -394,7 +395,8 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/${submittal.id}/edit`)}>
+          <DropdownMenuItem onClick={() => setIsEditing(true)}>
+            <SquarePen className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleDuplicate} disabled={duplicateMutation.isPending}>
@@ -418,6 +420,113 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   const specSection = submittal.specification_section
     ? `Spec §${submittal.specification_section}`
     : null;
+
+  const workflowSection = (
+    <section className="space-y-3">
+      <SectionLabel>Workflow ({workflowSteps.length})</SectionLabel>
+      {workflowSteps.length === 0 ? (
+        <EmptyState
+          title="No workflow steps configured"
+          description="Add a step below to begin routing this submittal."
+        />
+      ) : (
+        workflowSteps
+          .slice()
+          .sort((a, b) => a.step_order - b.step_order)
+          .map((step) => (
+            <div key={step.id} className="rounded-lg bg-muted/50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Step {step.step_order}
+                </span>
+                <StatusBadge status={step.step_type} variant="neutral" />
+                {(step as { required?: boolean }).required === false && (
+                  <StatusBadge status="Optional" variant="neutral" />
+                )}
+              </div>
+
+              {step.submittal_responses?.length === 0 && (
+                <p className="text-xs text-muted-foreground py-1">No responses yet</p>
+              )}
+
+              <div className="space-y-2">
+                {step.submittal_responses?.map((resp) => (
+                  <div key={resp.id}>
+                    <div className="flex items-start justify-between gap-4 rounded-md bg-background px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {resolveUserName(users, resp.responder_id)}
+                        </p>
+                        {resp.comments && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {resp.comments}
+                          </p>
+                        )}
+                        {resp.responded_at && (
+                          <p className="text-xs text-muted-foreground/60 mt-0.5">
+                            {formatDate(resp.responded_at)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <StatusBadge status={resp.response_status} />
+                        {resp.response_status === "Pending" && resp.responder_id === currentUserId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-7"
+                            onClick={() =>
+                              setRespondingStep(
+                                respondingStep === `${step.id}-${resp.id}`
+                                  ? null
+                                  : `${step.id}-${resp.id}`,
+                              )
+                            }
+                          >
+                            Respond
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {respondingStep === `${step.id}-${resp.id}` && (
+                      <RespondForm
+                        projectId={projectId}
+                        submittalId={submittal.id}
+                        stepId={step.id}
+                        onDone={(didSubmit) => {
+                          setRespondingStep(null);
+                          if (didSubmit) {
+                            router.refresh();
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+      )}
+
+      <WorkflowBuilder
+        projectId={projectId}
+        submittalId={submittal.id}
+        users={users}
+        currentSteps={workflowSteps}
+      />
+    </section>
+  );
+
+  const relatedItemsSection = (
+    <section className="space-y-3">
+      <SectionLabel>Related Items</SectionLabel>
+      <RelatedItemsPanel
+        entityType="submittal"
+        entityId={submittal.id}
+        projectId={projectId}
+      />
+    </section>
+  );
 
   return (
     <>
@@ -450,10 +559,6 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
         <Tabs defaultValue="general" className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="workflow">
-              Workflow ({workflowSteps.length})
-            </TabsTrigger>
-            <TabsTrigger value="related">Related Items</TabsTrigger>
             <TabsTrigger value="history">
               Change History ({history.length})
             </TabsTrigger>
@@ -461,6 +566,19 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
 
           {/* ── General ── */}
           <TabsContent value="general" className="space-y-6">
+            {isEditing ? (
+              <SubmittalFormPage
+                projectId={projectId}
+                submittal={submittal}
+                mode="inline"
+                onCancel={() => setIsEditing(false)}
+                onSaved={() => {
+                  setIsEditing(false);
+                  router.refresh();
+                }}
+              />
+            ) : (
+              <>
             <div className="grid gap-8 lg:gap-10 md:grid-cols-[minmax(0,1fr)_22rem] lg:grid-cols-[minmax(0,1fr)_24rem]">
               {/* Left: content */}
               <div className="space-y-4">
@@ -583,109 +701,12 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                 )}
               </div>
             </div>
-          </TabsContent>
-
-          {/* ── Workflow ── */}
-          <TabsContent value="workflow" className="space-y-3">
-            {workflowSteps.length === 0 ? (
-              <EmptyState
-                title="No workflow steps configured"
-                description="Add a step below to begin routing this submittal."
-              />
-            ) : (
-              workflowSteps
-                .slice()
-                .sort((a, b) => a.step_order - b.step_order)
-                .map((step) => (
-                  <div key={step.id} className="rounded-lg bg-muted/50 p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Step {step.step_order}
-                      </span>
-                      <StatusBadge status={step.step_type} variant="neutral" />
-                      {(step as { required?: boolean }).required === false && (
-                        <StatusBadge status="Optional" variant="neutral" />
-                      )}
-                    </div>
-
-                    {step.submittal_responses?.length === 0 && (
-                      <p className="text-xs text-muted-foreground py-1">No responses yet</p>
-                    )}
-
-                    <div className="space-y-2">
-                      {step.submittal_responses?.map((resp) => (
-                        <div key={resp.id}>
-                          <div className="flex items-start justify-between gap-4 rounded-md bg-background px-3 py-2.5">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">
-                                {resolveUserName(users, resp.responder_id)}
-                              </p>
-                              {resp.comments && (
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {resp.comments}
-                                </p>
-                              )}
-                              {resp.responded_at && (
-                                <p className="text-xs text-muted-foreground/60 mt-0.5">
-                                  {formatDate(resp.responded_at)}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex flex-col items-end gap-2 shrink-0">
-                              <StatusBadge status={resp.response_status} />
-                              {resp.response_status === "Pending" && resp.responder_id === currentUserId && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs h-7"
-                                  onClick={() =>
-                                    setRespondingStep(
-                                      respondingStep === `${step.id}-${resp.id}`
-                                        ? null
-                                        : `${step.id}-${resp.id}`,
-                                    )
-                                  }
-                                >
-                                  Respond
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                          {respondingStep === `${step.id}-${resp.id}` && (
-                            <RespondForm
-                              projectId={projectId}
-                              submittalId={submittal.id}
-                              stepId={step.id}
-                              onDone={(didSubmit) => {
-                                setRespondingStep(null);
-                                if (didSubmit) {
-                                  router.refresh();
-                                }
-                              }}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
+            <div className="space-y-8 pt-2">
+              {workflowSection}
+              {relatedItemsSection}
+            </div>
+              </>
             )}
-
-            <WorkflowBuilder
-              projectId={projectId}
-              submittalId={submittal.id}
-              users={users}
-              currentSteps={workflowSteps}
-            />
-          </TabsContent>
-
-          {/* ── Related Items ── */}
-          <TabsContent value="related">
-            <RelatedItemsPanel
-              entityType="submittal"
-              entityId={submittal.id}
-              projectId={projectId}
-            />
           </TabsContent>
 
           {/* ── Change History ── */}

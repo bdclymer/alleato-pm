@@ -55,8 +55,8 @@ import { PageShell } from "@/components/layout";
 |---------|-----------|---------|---------|
 | `dashboard` | full | standard | Home/overview, KPI cards, charts, summaries |
 | `table` | full | tight | Data tables, UnifiedTablePage goes inside |
-| `form` | max-w-5xl | standard | Create/edit forms |
 | `detail` | max-w-6xl | standard | Record detail pages with tabs |
+| `form` | max-w-5xl | standard | Create/edit forms |
 | `content` | max-w-4xl | standard | Settings, documents, read-heavy pages |
 
 ### PageShell props

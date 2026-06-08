@@ -65,6 +65,10 @@ const TABLE_ROUTE_ALIASES: Record<string, string> = {
 function getCreateRouteBreadcrumbLabel(segments: string[], index: number): string | null {
   if (segments[index] !== "new") return null;
 
+  if (segments[index - 1] === "prime-contracts") {
+    return "New Prime Contract";
+  }
+
   if (segments[index - 1] === "prime-contract-pcos") {
     return "New Prime Contract Change Order";
   }

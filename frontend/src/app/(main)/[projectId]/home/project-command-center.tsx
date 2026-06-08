@@ -365,7 +365,7 @@ function TabSection({
 
   return (
     <div className="rounded-lg bg-card overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+      <div className="flex items-center justify-between gap-2 px-3 py-2">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="inline-block">
           <TabsList>
             {tabs.map((tab) => (
@@ -625,7 +625,7 @@ function ProjectDetailsSidebar({
             { label: "Est. Completion", value: formatShortDate(completionDate) },
             { label: "Substantial Completion", value: formatShortDate(substantialCompletion) },
           ].map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between gap-2">
+            <div key={label} className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{label}</span>
               <span className={cn("text-xs font-medium", value ? "text-foreground" : "text-muted-foreground/50")}>
                 {value ?? "—"}
@@ -1160,16 +1160,13 @@ export function ProjectCommandCenter({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               {jobNumber && (
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Job #{jobNumber}
                 </p>
               )}
               <h1 className="text-2xl font-semibold leading-tight text-foreground">
                 {project.name ?? "Untitled Project"}
               </h1>
-              {project.stage && (
-                <p className="mt-0.5 text-sm text-muted-foreground">{project.stage}</p>
-              )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <ReadinessIndicator
@@ -1177,9 +1174,6 @@ export function ProjectCommandCenter({
                 totalCount={setupTotal}
                 onOpen={() => setIsSetupOpen(true)}
               />
-              <Button variant="outline" size="sm" onClick={() => setIsEditProjectSidebarOpen(true)}>
-                Edit Project
-              </Button>
             </div>
           </div>
 
@@ -1210,11 +1204,12 @@ export function ProjectCommandCenter({
               )}
               <dl className="space-y-2">
                 {[
+                  { label: "Stage", value: project.stage ?? null },
                   { label: "Start Date", value: formatShortDate(projStartDate) },
                   { label: "Est. Completion", value: formatShortDate(projCompletionDate) },
                   { label: "Substantial Completion", value: formatShortDate(substantialCompletion) },
                 ].map(({ label, value }) => (
-                  <div key={label} className="flex items-center justify-between gap-2">
+                  <div key={label} className="flex items-center gap-2">
                     <dt className="text-xs text-muted-foreground">{label}</dt>
                     <dd className={cn("text-xs font-medium", value ? "text-foreground" : "text-muted-foreground/40")}>
                       {value ?? "—"}

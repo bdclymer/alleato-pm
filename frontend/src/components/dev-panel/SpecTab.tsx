@@ -8,7 +8,7 @@ interface ManifestState {
   description?: string;
   columns?: Array<{ label: string }>;
   columnGroups?: Array<{ label: string; columns?: Array<{ label: string }> }>;
-  formSections?: Array<{ title?: string; fields?: Array<{ label: string; type?: string }> }>;
+  formSections?: Array<{ title?: string; fields?: Array<{ label: string; type?: string; description?: string; required?: boolean }> }>;
   toolbarActions?: Array<{ label: string; type?: string }>;
   filters?: Array<{ label: string; type?: string }>;
   rowActions?: Array<{ label: string }>;
@@ -113,21 +113,35 @@ function StateBlock({ id, state }: { id: string; state: ManifestState }) {
 
       {hasForm && (
         <div>
-          <p className="text-[10px] font-medium text-muted-foreground mb-1">Form Fields</p>
-          <div className="space-y-1">
+          <p className="text-[10px] font-medium text-muted-foreground mb-1.5">Form Fields</p>
+          <div className="space-y-2">
             {(state.formSections ?? []).map((section) => (
               <div key={section.title ?? "default"}>
                 {section.title && (
-                  <p className="text-[10px] text-muted-foreground/70 italic mb-0.5">{section.title}</p>
+                  <p className="text-[10px] text-muted-foreground/70 italic mb-1">{section.title}</p>
                 )}
-                <div className="flex flex-wrap gap-1">
-                  {(section.fields ?? []).map((f) => (
-                    <Pill
-                      key={f.label}
-                      label={f.type ? `${f.label} (${f.type})` : f.label}
-                    />
-                  ))}
-                </div>
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="border-b border-border/40">
+                      <th className="pb-1 pr-3 text-left font-medium text-muted-foreground">Name</th>
+                      <th className="pb-1 pr-3 text-left font-medium text-muted-foreground">Type</th>
+                      <th className="pb-1 pr-3 text-left font-medium text-muted-foreground">Description</th>
+                      <th className="pb-1 text-left font-medium text-muted-foreground">Required</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(section.fields ?? []).map((f) => (
+                      <tr key={f.label} className="border-b border-border/20 last:border-0">
+                        <td className="py-1 pr-3 font-medium text-foreground">{f.label}</td>
+                        <td className="py-1 pr-3 text-muted-foreground">{f.type ?? "—"}</td>
+                        <td className="py-1 pr-3 text-muted-foreground">{f.description ?? "—"}</td>
+                        <td className="py-1 text-muted-foreground">
+                          {f.required === true ? "Required" : f.required === false ? "Optional" : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ))}
           </div>

@@ -23,7 +23,11 @@ export function PasswordInput({
         id={id}
         type={isVisible ? "text" : "password"}
         disabled={disabled}
-        className={cn("pr-11", className)}
+        className={cn(
+          "pr-11",
+          "[&::-ms-reveal]:hidden [&::-ms-clear]:hidden",
+          className
+        )}
         {...props}
       />
       <Button
@@ -35,7 +39,7 @@ export function PasswordInput({
         aria-pressed={isVisible}
         aria-controls={id}
         onClick={() => setIsVisible((current) => !current)}
-        className="absolute right-1 top-1/2 size-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        className="absolute right-1 top-1/2 z-10 size-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
       >
         {isVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </Button>

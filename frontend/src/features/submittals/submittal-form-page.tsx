@@ -32,7 +32,12 @@ import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { useAuthUsers } from "@/hooks/use-auth-users";
-import { useCreateSubmittal, useUpdateSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
+import {
+  useCreateSubmittal,
+  useUpdateSubmittal,
+  type SubmittalDetail,
+  type SubmittalSummary,
+} from "@/hooks/use-submittals";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 
@@ -120,6 +125,7 @@ const submittalFormSchema = z.object({
 });
 
 type SubmittalFormValues = z.infer<typeof submittalFormSchema>;
+type EditableSubmittal = SubmittalSummary & Partial<SubmittalDetail>;
 
 const STATUS_OPTIONS = ["Draft", "Open", "Distributed", "Closed"] as const;
 
@@ -129,43 +135,32 @@ function getSubmittalTypeId(v: SubmittalSummary["submittal_type"] | undefined): 
   return null;
 }
 
-// The edit page passes the full DB record cast to SubmittalSummary; use an
-// extended type to safely access fields that aren't on SubmittalSummary.
-type ExtendedSubmittal = SubmittalSummary & {
-  lead_time?: number | null;
-  required_on_site_date?: string | null;
-  description?: string | null;
-  received_from_id?: string | null;
-  submittal_manager_id?: string | null;
-};
-
 function buildDefaults(
-  submittal: SubmittalSummary | undefined,
+  submittal: EditableSubmittal | undefined,
   overrides?: { submittal_package_id?: string; specification_section?: string },
 ): SubmittalFormValues {
-  const s = submittal as ExtendedSubmittal | undefined;
   return {
-    title: s?.title ?? "",
-    submittal_number: s?.submittal_number ?? "",
-    revision: s?.revision ?? 0,
-    status: (s?.status as "Draft" | "Open" | "Distributed" | "Closed") ?? "Draft",
+    title: submittal?.title ?? "",
+    submittal_number: submittal?.submittal_number ?? "",
+    revision: submittal?.revision ?? 0,
+    status: (submittal?.status as "Draft" | "Open" | "Distributed" | "Closed") ?? "Draft",
     specification_section:
-      overrides?.specification_section ?? s?.specification_section ?? "",
-    submittal_type_id: getSubmittalTypeId(s?.submittal_type),
-    division: s?.division ?? "",
-    final_due_date: s?.final_due_date ?? "",
-    lead_time: s?.lead_time ?? null,
-    required_on_site_date: s?.required_on_site_date ?? "",
-    description: s?.description ?? "",
-    is_private: s?.is_private ?? false,
-    ball_in_court: s?.ball_in_court ?? "",
-    responsible_contractor_id: null,
-    received_from_id: s?.received_from_id ?? null,
-    submittal_manager_id: s?.submittal_manager_id ?? null,
+      overrides?.specification_section ?? submittal?.specification_section ?? "",
+    submittal_type_id: getSubmittalTypeId(submittal?.submittal_type),
+    division: submittal?.division ?? "",
+    final_due_date: submittal?.final_due_date ?? "",
+    lead_time: submittal?.lead_time ?? null,
+    required_on_site_date: submittal?.required_on_site_date ?? "",
+    description: submittal?.description ?? "",
+    is_private: submittal?.is_private ?? false,
+    ball_in_court: submittal?.ball_in_court ?? "",
+    responsible_contractor_id: submittal?.responsible_contractor_id ?? null,
+    received_from_id: submittal?.received_from_id ?? null,
+    submittal_manager_id: submittal?.submittal_manager_id ?? null,
     submittal_package_id:
       overrides?.submittal_package_id ??
-      (typeof s?.submittal_package === "object"
-        ? (s?.submittal_package as { id?: string } | null)?.id
+      (typeof submittal?.submittal_package === "object"
+        ? (submittal?.submittal_package as { id?: string } | null)?.id
         : null) ??
       null,
   };
@@ -175,8 +170,11 @@ function buildDefaults(
 
 interface SubmittalFormPageProps {
   projectId: number;
-  submittal?: SubmittalSummary;
+  submittal?: EditableSubmittal;
   defaultOverrides?: { submittal_package_id?: string; specification_section?: string };
+  mode?: "page" | "inline";
+  onCancel?: () => void;
+  onSaved?: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -185,6 +183,9 @@ export function SubmittalFormPage({
   projectId,
   submittal,
   defaultOverrides,
+  mode = "page",
+  onCancel,
+  onSaved,
 }: SubmittalFormPageProps) {
   const router = useRouter();
   const isEditing = Boolean(submittal);
@@ -309,7 +310,11 @@ export function SubmittalFormPage({
 
     if (isEditing && submittal) {
       await updateMutation.mutateAsync(payload);
-      router.push(`/${projectId}/submittals/${submittal.id}`);
+      if (onSaved) {
+        onSaved();
+      } else {
+        router.push(`/${projectId}/submittals/${submittal.id}`);
+      }
     } else {
       const result = await createMutation.mutateAsync(payload);
       const newId = (result as { id?: string } | null)?.id;
@@ -321,326 +326,84 @@ export function SubmittalFormPage({
     }
   }
 
-  return (
-    <PageShell
-      variant="form"
-      title={isEditing ? "Edit Submittal" : "Create Submittal"}
-      onBack={() => {
-        if (isEditing && submittal) {
-          router.push(`/${projectId}/submittals/${submittal.id}`);
-        } else {
-          router.push(`/${projectId}/submittals`);
-        }
-      }}
-    >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* ── General Information ── */}
-          <section className="space-y-4">
-            <SectionRuleHeading label="General Information" />
+  function handleCancel() {
+    if (onCancel) {
+      onCancel();
+      return;
+    }
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="submittal_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. 08-1113-1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="revision"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Revision *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+    if (isEditing && submittal) {
+      router.push(`/${projectId}/submittals/${submittal.id}`);
+    } else {
+      router.push(`/${projectId}/submittals`);
+    }
+  }
 
+  const formContent = (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* ── General Information ── */}
+        <section className="space-y-4">
+          <SectionRuleHeading label="General Information" />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
-              name="title"
+              name="submittal_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title *</FormLabel>
+                  <FormLabel>Number *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Doors, Frames, Hardware" {...field} />
+                    <Input placeholder="e.g. 08-1113-1" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="specification_section"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Specification Section</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. 08-1113 - Doors, Frames"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="division"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Division</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. Division 8"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="submittal_type_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Submittal Type</FormLabel>
-                    <Select
-                      onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                      value={field.value ?? "__none__"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={typesLoading ? "Loading..." : "Select type"}
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="__none__">None</SelectItem>
-                        {(submittalTypes ?? []).map((t) => (
-                          <SelectItem key={t.id} value={t.id}>
-                            {t.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             <FormField
               control={form.control}
-              name="submittal_package_id"
+              name="revision"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Submittal Package</FormLabel>
-                  <Select
-                    onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                    value={field.value ?? "__none__"}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={packagesLoading ? "Loading..." : "Select package"}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {(packages ?? []).map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </section>
-
-          {/* ── People & Companies ── */}
-          <section className="space-y-4">
-            <SectionRuleHeading label="People & Companies" />
-
-            <RHFComboboxField
-              control={form.control}
-              name="responsible_contractor_id"
-              label="Responsible Contractor"
-              placeholder={companiesLoading ? "Loading..." : "Select company"}
-              searchPlaceholder="Search companies..."
-              emptyMessage="No matching company found."
-              options={companyOptions}
-              disabled={companiesLoading}
-              clearable
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <RHFComboboxField
-                control={form.control}
-                name="received_from_id"
-                label="Received From"
-                placeholder={usersLoading ? "Loading..." : "Select person"}
-                searchPlaceholder="Search by name or email..."
-                emptyMessage="No matching person found."
-                options={userOptions}
-                disabled={usersLoading}
-                clearable
-              />
-
-              <RHFComboboxField
-                control={form.control}
-                name="submittal_manager_id"
-                label="Submittal Manager"
-                placeholder={usersLoading ? "Loading..." : "Select person"}
-                searchPlaceholder="Search by name or email..."
-                emptyMessage="No matching person found."
-                options={userOptions}
-                disabled={usersLoading}
-                clearable
-              />
-            </div>
-          </section>
-
-          {/* ── Distribution & Scheduling ── */}
-          <section className="space-y-4">
-            <SectionRuleHeading label="Distribution & Scheduling" />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="final_due_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Final Due Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} value={field.value ?? ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lead_time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lead Time (days)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === "" ? null : parseInt(e.target.value, 10),
-                          )
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="required_on_site_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Required On-Site Date</FormLabel>
+                  <FormLabel>Revision *</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} value={field.value ?? ""} />
+                    <Input
+                      type="number"
+                      min={0}
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
 
-            <RHFComboboxField
-              control={form.control}
-              name="ball_in_court"
-              label="Ball In Court"
-              placeholder={usersLoading ? "Loading..." : "Select person"}
-              searchPlaceholder="Search by name or email..."
-              emptyMessage="No matching person found."
-              options={userOptions}
-              disabled={usersLoading}
-              clearable
-            />
-          </section>
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title *</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Doors, Frames, Hardware" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          {/* ── Content ── */}
-          <section className="space-y-4">
-            <SectionRuleHeading label="Content" />
-
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
-              name="description"
+              name="specification_section"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Specification Section</FormLabel>
                   <FormControl>
-                    <Textarea
-                      rows={4}
-                      placeholder="Describe this submittal..."
+                    <Input
+                      placeholder="e.g. 08-1113 - Doors, Frames"
                       {...field}
                       value={field.value ?? ""}
                     />
@@ -649,51 +412,302 @@ export function SubmittalFormPage({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="is_private"
+              name="division"
               render={({ field }) => (
-                <FormItem className="flex items-center gap-2 space-y-0">
+                <FormItem>
+                  <FormLabel>Division</FormLabel>
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    <Input
+                      placeholder="e.g. Division 8"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
                   </FormControl>
-                  <FormLabel className="cursor-pointer font-normal">
-                    Private (visible only to admins and distribution list)
-                  </FormLabel>
+                  <FormMessage />
                 </FormItem>
               )}
             />
-          </section>
-
-          {/* ── Actions ── */}
-          <div className="flex items-center gap-3 pt-2">
-            <Button type="submit" disabled={isPending}>
-              {isPending
-                ? isEditing
-                  ? "Updating..."
-                  : "Creating..."
-                : isEditing
-                  ? "Update Submittal"
-                  : "Create Submittal"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => {
-                if (isEditing && submittal) {
-                  router.push(`/${projectId}/submittals/${submittal.id}`);
-                } else {
-                  router.push(`/${projectId}/submittals`);
-                }
-              }}
-            >
-              Cancel
-            </Button>
           </div>
-        </form>
-      </Form>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="submittal_type_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Submittal Type</FormLabel>
+                  <Select
+                    onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                    value={field.value ?? "__none__"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={typesLoading ? "Loading..." : "Select type"}
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {(submittalTypes ?? []).map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="submittal_package_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Submittal Package</FormLabel>
+                <Select
+                  onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                  value={field.value ?? "__none__"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={packagesLoading ? "Loading..." : "Select package"}
+                      />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {(packages ?? []).map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </section>
+
+        {/* ── People & Companies ── */}
+        <section className="space-y-4">
+          <SectionRuleHeading label="People & Companies" />
+
+          <RHFComboboxField
+            control={form.control}
+            name="responsible_contractor_id"
+            label="Responsible Contractor"
+            placeholder={companiesLoading ? "Loading..." : "Select company"}
+            searchPlaceholder="Search companies..."
+            emptyMessage="No matching company found."
+            options={companyOptions}
+            disabled={companiesLoading}
+            clearable
+          />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <RHFComboboxField
+              control={form.control}
+              name="received_from_id"
+              label="Received From"
+              placeholder={usersLoading ? "Loading..." : "Select person"}
+              searchPlaceholder="Search by name or email..."
+              emptyMessage="No matching person found."
+              options={userOptions}
+              disabled={usersLoading}
+              clearable
+            />
+
+            <RHFComboboxField
+              control={form.control}
+              name="submittal_manager_id"
+              label="Submittal Manager"
+              placeholder={usersLoading ? "Loading..." : "Select person"}
+              searchPlaceholder="Search by name or email..."
+              emptyMessage="No matching person found."
+              options={userOptions}
+              disabled={usersLoading}
+              clearable
+            />
+          </div>
+        </section>
+
+        {/* ── Distribution & Scheduling ── */}
+        <section className="space-y-4">
+          <SectionRuleHeading label="Distribution & Scheduling" />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="final_due_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Final Due Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lead_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lead Time (days)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === "" ? null : parseInt(e.target.value, 10),
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="required_on_site_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Required On-Site Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <RHFComboboxField
+            control={form.control}
+            name="ball_in_court"
+            label="Ball In Court"
+            placeholder={usersLoading ? "Loading..." : "Select person"}
+            searchPlaceholder="Search by name or email..."
+            emptyMessage="No matching person found."
+            options={userOptions}
+            disabled={usersLoading}
+            clearable
+          />
+        </section>
+
+        {/* ── Content ── */}
+        <section className="space-y-4">
+          <SectionRuleHeading label="Content" />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    rows={4}
+                    placeholder="Describe this submittal..."
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="is_private"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-2 space-y-0">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <FormLabel className="cursor-pointer font-normal">
+                  Private (visible only to admins and distribution list)
+                </FormLabel>
+              </FormItem>
+            )}
+          />
+        </section>
+
+        {/* ── Actions ── */}
+        <div className="flex items-center gap-3 pt-2">
+          <Button type="submit" disabled={isPending}>
+            {isPending
+              ? isEditing
+                ? "Updating..."
+                : "Creating..."
+              : isEditing
+                ? "Update Submittal"
+                : "Create Submittal"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={handleCancel}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+
+  if (mode === "inline") {
+    return formContent;
+  }
+
+  return (
+    <PageShell
+      variant="form"
+      title={isEditing ? "Edit Submittal" : "Create Submittal"}
+      onBack={handleCancel}
+    >
+      {formContent}
     </PageShell>
   );
 }

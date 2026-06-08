@@ -610,7 +610,7 @@ Hard go/no-go checkpoints that prevent runaway investment in underperforming cap
 **R3 — LLM Cost Escalation:**
 
 - Implement cost tracking from day one — every LLM call tagged with feature name and token count. Weekly cost dashboard visible to the team.
-- Use model tiering: GPT-4.1-mini for routine summarization and digest generation, GPT-5.1 only for strategic synthesis and complex pattern analysis. This alone could cut costs 60-70%.
+- Use model tiering: GPT-4.1-mini for routine summarization and digest generation, GPT-5.4 only for strategic synthesis and complex pattern analysis. This alone could cut costs 60-70%.
 - Implement aggressive caching: if two meetings discuss the same project, reuse embeddings and context rather than recomputing.
 - Set a hard monthly budget ceiling ($1,500/month) with automatic alerts at 50%, 75%, 90% thresholds. If any single feature exceeds its cost allocation, optimize before expanding.
 - Explore local/open-source models for routine tasks once Phase 2 proves the architecture works.

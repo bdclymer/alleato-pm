@@ -182,7 +182,7 @@ def extract_insights_with_ai(
     )
 
     response = openai_client.chat.completions.create(
-        model="gpt-5.1",
+        model="GPT-5.4",
         messages=[
             {
                 "role": "system",

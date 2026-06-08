@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Extract actionable tasks from meeting documents using GPT-5.1.
+Extract actionable tasks from meeting documents using GPT-5.4.
 
 Usage:
     cd backend
@@ -12,7 +12,7 @@ Usage:
 This script:
 1. Fetches all projects with meeting documents (document_metadata)
 2. Analyzes meeting content to extract actionable tasks
-3. Uses GPT-5.1 to parse action items, decisions, and commitments
+3. Uses GPT-5.4 to parse action items, decisions, and commitments
 4. Outputs structured task data (can be saved to database or exported)
 """
 
@@ -128,7 +128,7 @@ def get_meeting_documents(client, project_id: int, limit: int = 20, days_back: i
 
 
 def extract_tasks_with_gpt5(project_name: str, documents: str) -> List[Dict]:
-    """Extract tasks using GPT-5.1."""
+    """Extract tasks using GPT-5.4."""
     openai_client = OpenAI()
 
     prompt = TASK_EXTRACTION_PROMPT.format(
@@ -137,7 +137,7 @@ def extract_tasks_with_gpt5(project_name: str, documents: str) -> List[Dict]:
     )
 
     response = openai_client.chat.completions.create(
-        model="gpt-5.1",
+        model="gpt-5.4",
         messages=[
             {
                 "role": "system",
@@ -156,13 +156,13 @@ def extract_tasks_with_gpt5(project_name: str, documents: str) -> List[Dict]:
     print(f"Debug: Response length: {len(content) if content else 0} characters")
 
     if not content or content.strip() == "":
-        print("Error: Empty response from GPT-5.1")
+        print("Error: Empty response from GPT-5.4")
         print(f"Full response object: {response}")
         return []
 
     # Parse JSON response
     try:
-        # GPT-5.1 might wrap in a JSON object, extract the array
+        # GPT-5.4 might wrap in a JSON object, extract the array
         result = json.loads(content)
         if isinstance(result, dict) and 'tasks' in result:
             return result['tasks']
@@ -269,7 +269,7 @@ async def process_project(supabase, project: Dict, save_output: bool = False, da
         documents_text = documents_text[:max_chars]
 
     # Extract tasks
-    print(f"\nExtracting tasks with GPT-5.1...")
+    print(f"\nExtracting tasks with GPT-5.4...")
     try:
         tasks = extract_tasks_with_gpt5(project_name, documents_text)
     except Exception as e:
@@ -307,7 +307,7 @@ async def process_project(supabase, project: Dict, save_output: bool = False, da
 
 async def main():
     parser = argparse.ArgumentParser(
-        description='Extract actionable tasks from meeting documents using GPT-5.1'
+        description='Extract actionable tasks from meeting documents using GPT-5.4'
     )
     parser.add_argument(
         '--project-id',
@@ -334,7 +334,7 @@ async def main():
     args = parser.parse_args()
 
     print(f"\n{'='*80}")
-    print(f"Task Extraction from Meeting Documents (GPT-5.1)")
+    print(f"Task Extraction from Meeting Documents (GPT-5.4)")
     print(f"{'='*80}\n")
 
     supabase = get_supabase_client()

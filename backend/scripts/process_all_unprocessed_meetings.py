@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Process ALL unprocessed meetings with GPT-5.1 insight extraction.
+Process ALL unprocessed meetings with GPT-5.4 insight extraction.
 Runs in batches to handle the large volume.
 """
 
@@ -29,7 +29,7 @@ from extract_meeting_insights import process_meeting
 
 async def main():
     print("=" * 60)
-    print("Processing ALL Unprocessed Meetings with GPT-5.1")
+    print("Processing ALL Unprocessed Meetings with GPT-5.4")
     print("=" * 60)
     
     client = get_supabase_client()
@@ -119,7 +119,7 @@ async def main():
     print(f"  - Opportunities: {total_insights['opportunity']}")
     print(f"  - Tasks: {total_insights['task']}")
     print(f"  - Grand total: {sum(total_insights.values())}")
-    print(f"\nAll meetings processed with GPT-5.1!")
+    print(f"\nAll meetings processed with GPT-5.4!")
 
 if __name__ == '__main__':
     asyncio.run(main())
