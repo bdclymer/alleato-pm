@@ -167,7 +167,6 @@ export function PrimeContractSovSection({
     <>
       <FormSection
         title="Schedule of Values"
-        description="Build line items that define contract value and billing progress."
         actions={
           <div className="flex items-center gap-6">
             <Button

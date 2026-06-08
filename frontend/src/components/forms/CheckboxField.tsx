@@ -23,19 +23,21 @@ export function CheckboxField({
   disabled = false,
   className,
 }: CheckboxFieldProps) {
+  const hasDetail = Boolean(hint || error);
+
   return (
-    <div className={cn("flex items-start", className)}>
-      <div className="flex h-5 items-center">
+    <div className={cn("flex gap-3", hasDetail ? "items-start" : "items-center", className)}>
+      <div className={cn("flex h-5 items-center", hasDetail && "pt-0.5")}>
         <Checkbox
           checked={checked}
-          onCheckedChange={onCheckedChange}
+          onCheckedChange={(nextChecked) => onCheckedChange?.(nextChecked === true)}
           disabled={disabled}
           className={cn(error && "border-destructive/50")}
           aria-invalid={!!error}
         />
       </div>
-      <div className="ml-4">
-        <label className="text-sm font-medium text-foreground">{label}</label>
+      <div className={cn("min-w-0", hasDetail && "space-y-1")}>
+        <label className="text-sm font-medium leading-5 text-foreground">{label}</label>
         {hint && !error && <p className="text-sm text-muted-foreground">{hint}</p>}
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>

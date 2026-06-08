@@ -154,6 +154,11 @@ export function ContractForm({
             onUpdateFormData={updateFormData}
           />
 
+          <PrimeContractDescriptionSection
+            formData={formData}
+            onUpdateFormData={updateFormData}
+          />
+
           {mode === "create" ? (
             <PrimeContractAttachmentsSection
               attachments={formData.attachments || []}
@@ -164,11 +169,6 @@ export function ContractForm({
           ) : null}
 
           <PrimeContractDatesSection
-            formData={formData}
-            onUpdateFormData={updateFormData}
-          />
-
-          <PrimeContractDescriptionSection
             formData={formData}
             onUpdateFormData={updateFormData}
           />

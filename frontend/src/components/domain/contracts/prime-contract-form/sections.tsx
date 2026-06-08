@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { CheckboxField } from "@/components/forms/CheckboxField";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { DateField } from "@/components/forms/DateField";
 import { FormGrid } from "@/components/forms";
@@ -49,10 +50,7 @@ export function PrimeContractGeneralInfoSection({
   onUpdateFormData: (updates: Partial<ContractFormData>) => void;
 }) {
   return (
-    <FormSection
-      title="General Information"
-      description="Set the core contract details and assign primary companies."
-    >
+    <FormSection title="General Information">
       <FormGrid columns={2} className="gap-y-8">
         <TextField
           label="Contract #"
@@ -129,7 +127,7 @@ export function PrimeContractGeneralInfoSection({
           max={100}
         />
         <div className="flex items-start gap-x-2">
-          <Label className="w-28 shrink-0 pt-2 text-sm font-medium text-foreground">
+          <Label className="w-28 shrink-0 pt-2 text-[13px] font-medium text-foreground">
             Executed
           </Label>
           <div className="flex h-10 min-w-0 flex-1 items-center">
@@ -158,10 +156,7 @@ export function PrimeContractDatesSection({
   onUpdateFormData: (updates: Partial<ContractFormData>) => void;
 }) {
   return (
-    <FormSection
-      title="Contract Dates"
-      description="Track key schedule and execution milestones for this contract."
-    >
+    <FormSection title="Contract Dates">
       <FormGrid columns={2} className="gap-y-8">
         <DateField
           label="Start Date"
@@ -213,10 +208,7 @@ export function PrimeContractDescriptionSection({
   onUpdateFormData: (updates: Partial<ContractFormData>) => void;
 }) {
   return (
-    <FormSection
-      title="Description"
-      description="Capture narrative context for the agreement."
-    >
+    <FormSection title="Description">
       <FormGrid columns={12} className="gap-y-8">
         <div className="col-span-12">
           <RichTextField
@@ -244,10 +236,7 @@ export function PrimeContractAttachmentsSection({
   onFilesSelected: (files: File[]) => void;
 }) {
   return (
-    <FormSection
-      title="Attachments"
-      description="Attach contract documents, exhibits, or supporting files before creating the record."
-    >
+    <FormSection title="Attachments">
       <FileUploadField
         label=""
         value={attachments}
@@ -272,10 +261,7 @@ export function PrimeContractScopeSection({
   onUpdateFormData: (updates: Partial<ContractFormData>) => void;
 }) {
   return (
-    <FormSection
-      title="Inclusions & Exclusions"
-      description="Clarify scope boundaries that are included and excluded."
-    >
+    <FormSection title="Inclusions & Exclusions">
       <FormGrid columns={12}>
         <div className="col-span-12">
           <RichTextField
@@ -316,18 +302,11 @@ export function PrimeContractPrivacySection({
       className="border-b-0 pb-0"
     >
       <div className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="private"
-            checked={formData.isPrivate || false}
-            onCheckedChange={(checked) =>
-              onUpdateFormData({ isPrivate: checked === true })
-            }
-          />
-          <Label htmlFor="private" className="text-sm font-medium">
-            Private
-          </Label>
-        </div>
+        <CheckboxField
+          label="Private"
+          checked={formData.isPrivate || false}
+          onCheckedChange={(checked) => onUpdateFormData({ isPrivate: checked })}
+        />
 
         <div className="space-y-4 border-l-2 border-border pl-6">
           <MultiSelectField
@@ -344,19 +323,14 @@ export function PrimeContractPrivacySection({
             disabled={!formData.isPrivate}
           />
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="allow-sov-access"
-              checked={formData.allowedUsersCanSeeSov || false}
-              onCheckedChange={(checked) =>
-                onUpdateFormData({ allowedUsersCanSeeSov: checked === true })
-              }
-              disabled={!formData.isPrivate}
-            />
-            <Label htmlFor="allow-sov-access" className="text-sm font-normal">
-              Allow these non-admin users to view the SOV items.
-            </Label>
-          </div>
+          <CheckboxField
+            label="Allow these non-admin users to view the SOV items."
+            checked={formData.allowedUsersCanSeeSov || false}
+            onCheckedChange={(checked) =>
+              onUpdateFormData({ allowedUsersCanSeeSov: checked })
+            }
+            disabled={!formData.isPrivate}
+          />
         </div>
       </div>
     </FormSection>

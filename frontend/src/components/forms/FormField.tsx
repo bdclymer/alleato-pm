@@ -77,7 +77,7 @@ export function FormField({
         <div className={cn("flex items-start gap-x-2", className)}>
           <label
             htmlFor={inputId}
-            className="w-28 shrink-0 pt-2 text-sm font-medium text-foreground"
+            className="w-28 shrink-0 pt-2 text-[13px] font-medium text-foreground"
           >
             {label}
             {required && <span className="ml-1 text-destructive">*</span>}
