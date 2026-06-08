@@ -143,6 +143,59 @@ function renderStrategicReport(packet: Record<string, unknown>): string {
   ].join("\n\n");
 }
 
+function renderDocumentIntelligence(packet: Record<string, unknown>): string {
+  const coverage = asRecord(packet.sourceCoverage ?? packet.source_coverage);
+  const packetJson = asRecord(packet.packetJson ?? packet.packet_json);
+  const strategicReport = asRecord(packetJson.strategicReport);
+  const documentIntelligence = asRecord(
+    coverage.documentIntelligence ?? strategicReport.documentIntelligence,
+  );
+  if (Object.keys(documentIntelligence).length === 0) return "";
+
+  const latest = asArray(documentIntelligence.latestByCategory)
+    .slice(0, 6)
+    .map((item) => {
+      const record = asRecord(item);
+      const latestRecord = asRecord(record.latest);
+      const label = compactText(record.label ?? record.category, 120);
+      const title = compactText(latestRecord.title, 180);
+      const impact = compactText(record.projectImpact, 260);
+      if (!label || !title) return null;
+      return `- ${label}: ${title}${impact ? ` — ${impact}` : ""}`;
+    })
+    .filter((line): line is string => Boolean(line));
+
+  const obligations = asArray(documentIntelligence.obligations)
+    .slice(0, 4)
+    .map((item) => {
+      const record = asRecord(item);
+      const title = compactText(record.title, 160);
+      const obligation = compactText(record.obligation, 280);
+      return title && obligation ? `- ${title}: ${obligation}` : null;
+    })
+    .filter((line): line is string => Boolean(line));
+
+  const conflicts = asArray(documentIntelligence.conflictSignals)
+    .slice(0, 4)
+    .map((item) => {
+      const record = asRecord(item);
+      const title = compactText(record.title, 160);
+      const signal = compactText(record.conflictSignal, 280);
+      return title && signal ? `- ${title}: ${signal}` : null;
+    })
+    .filter((line): line is string => Boolean(line));
+
+  const lines: string[] = ["## Document Intelligence"];
+  if (latest.length > 0) lines.push("### Latest Document Signals", latest.join("\n"));
+  if (obligations.length > 0) lines.push("### Obligations", obligations.join("\n"));
+  if (conflicts.length > 0) lines.push("### Conflict / Revision Signals", conflicts.join("\n"));
+  if (lines.length === 1) return "";
+  lines.push(
+    "Use this as the document baseline. Use document/source-specific RAG only when the user asks for exact clauses, excerpts, attachments, or proof.",
+  );
+  return lines.join("\n");
+}
+
 function renderIntelligencePacket(raw: unknown): string {
   if (!raw || typeof raw !== "object") return "";
   const packet = raw as Record<string, unknown>;
@@ -197,6 +250,11 @@ function renderIntelligencePacket(raw: unknown): string {
   const strategicReport = renderStrategicReport(packet);
   if (strategicReport) {
     lines.push(strategicReport);
+  }
+
+  const documentIntelligence = renderDocumentIntelligence(packet);
+  if (documentIntelligence) {
+    lines.push(documentIntelligence);
   }
 
   const cards = Array.isArray(packet.cards) ? packet.cards.slice(0, MAX_PACKET_CARDS) : [];
@@ -349,12 +407,34 @@ function renderAppExpertPacket(raw: unknown): string {
   return lines.join("\n");
 }
 
+function renderProjectOperatingContextContract(ctx: RetrievalContext): string {
+  const hasPacket = Boolean(ctx.intelligencePacket);
+  const hasSnapshot = Boolean(ctx.projectSnapshot);
+  if (!hasPacket && !hasSnapshot) return "";
+
+  return [
+    "# Project Operating Context",
+    "",
+    "You have preloaded project operating context. Treat this as the baseline expert read for the selected project before using search results or runtime tools.",
+    "",
+    "- Use the intelligence packet for current status, risks, decisions, promises, recommended actions, confidence, source coverage, and document-intelligence signals.",
+    "- Use the project briefing snapshot for structured project facts, team, financial, schedule, and record-system context.",
+    "- Use vector/source-specific RAG as drilldown for exact documents, transcript passages, email/Teams evidence, specifications, drawings, RFIs, or source citations.",
+    "- If packet freshness, coverage, or a requested source is missing, say which layer is missing and continue with the strongest available evidence.",
+  ].join("\n");
+}
+
 export function assembleSystemPromptFromContext(
   plan: RetrievalPlan,
   ctx: RetrievalContext,
   basePrompt: string,
 ): string {
   const parts: string[] = [];
+
+  const operatingContextContract = renderProjectOperatingContextContract(ctx);
+  if (operatingContextContract) {
+    parts.push(operatingContextContract);
+  }
 
   if (ctx.intelligencePacket) {
     const packet = renderIntelligencePacket(ctx.intelligencePacket);

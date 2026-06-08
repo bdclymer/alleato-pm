@@ -85,6 +85,10 @@ type GeneratedTaskSummaryAnswer = {
 };
 
 const CLOSED_TASK_STATUSES = ["done", "completed", "cancelled", "canceled", "closed"];
+const AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS =
+  process.env.AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS === "true";
+const AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE =
+  process.env.AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE === "true";
 
 function microsoftAssistantBackendUrl(): string {
   const value = (
@@ -300,6 +304,258 @@ function buildRecentEmailTrace(
     },
     timestamp: new Date().toISOString(),
   };
+}
+
+function buildPrefetchRetrievalTraces(params: {
+  ctx: Awaited<ReturnType<typeof executeRetrievalPlan>> | null;
+  plan: ReturnType<typeof planRetrieval>;
+  message: string;
+  selectedProjectId?: number | null;
+}): Record<string, unknown>[] {
+  const ctx = params.ctx;
+  if (!ctx) return [];
+  const traces: Record<string, unknown>[] = [];
+  const baseInput = {
+    message: params.message.slice(0, 240),
+    selectedProjectId: params.selectedProjectId ?? params.plan.selectedProjectId ?? null,
+  };
+
+  if (params.plan.sources.intelligencePacket) {
+    const packet = ctx.intelligencePacket ? asRecord(ctx.intelligencePacket) : null;
+    traces.push({
+      tool: "clientProjectIntelligencePacket",
+      toolName: "clientProjectIntelligencePacket",
+      agent: "retrieval-planner-v2",
+      status: packet ? "success" : "failed",
+      durationMs: ctx.durationsMs.intelligence_packet ?? 0,
+      input: baseInput,
+      output: packet
+        ? {
+            packetId: packet.id ?? null,
+            compilerVersion: packet.compilerVersion ?? packet.compiler_version ?? null,
+            freshnessStatus: packet.freshnessStatus ?? packet.freshness_status ?? null,
+            cardCount: Array.isArray(packet.cards) ? packet.cards.length : null,
+          }
+        : {
+            error: ctx.warnings.find((warning) => warning.source === "intelligence_packet")?.message ?? null,
+          },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  if (params.plan.sources.projectSnapshot) {
+    traces.push({
+      tool: "getProjectBriefingSnapshot",
+      toolName: "getProjectBriefingSnapshot",
+      agent: "retrieval-planner-v2",
+      status: ctx.projectSnapshot ? "success" : "failed",
+      durationMs: ctx.durationsMs.project_snapshot ?? 0,
+      input: baseInput,
+      output: ctx.projectSnapshot
+        ? { source: "project_snapshot" }
+        : {
+            error: ctx.warnings.find((warning) => warning.source === "project_snapshot")?.message ?? null,
+          },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  if (params.plan.sources.semanticVectorSearch) {
+    const wrapper = asRecord(ctx.semanticVectorResults);
+    traces.push({
+      tool: "semanticSearch",
+      toolName: "semanticSearch",
+      agent: "retrieval-planner-v2",
+      status: ctx.semanticVectorResults ? "success" : "failed",
+      durationMs: ctx.durationsMs.semantic_search ?? 0,
+      input: {
+        ...baseInput,
+        query: params.plan.sources.semanticVectorSearch.query.slice(0, 240),
+      },
+      output: {
+        resultCount:
+          typeof wrapper.resultCount === "number"
+            ? wrapper.resultCount
+            : Array.isArray(wrapper.results)
+              ? wrapper.results.length
+              : null,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  if (params.plan.sources.sourceSpecificRag) {
+    traces.push({
+      tool: "sourceSpecificRagRetrieval",
+      toolName: "sourceSpecificRagRetrieval",
+      agent: "retrieval-planner-v2",
+      status: ctx.sourceSpecificRagAnswer ? "success" : "failed",
+      durationMs: ctx.durationsMs.source_specific_rag ?? 0,
+      input: {
+        ...baseInput,
+        kind: params.plan.sources.sourceSpecificRag.kind,
+      },
+      output: {
+        rowCount: Array.isArray(ctx.sourceSpecificRagAnswer?.rows)
+          ? ctx.sourceSpecificRagAnswer.rows.length
+          : null,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  return traces;
+}
+
+function isDocumentIntelligenceEvalRequest(params: {
+  message: string;
+  selectedProjectId?: number | null;
+}) {
+  if (!AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE) return false;
+  if (typeof params.selectedProjectId !== "number") return false;
+  return /\b(westfield|document|documents|spec|packet|snapshot|source|coverage|obligation|submittal|closeout|warranty|door|finish)\b/i.test(
+    params.message,
+  );
+}
+
+function summarizeEvalCount(value: unknown): number | null {
+  const record = asRecord(value);
+  if (typeof record.resultCount === "number") return record.resultCount;
+  if (Array.isArray(record.results)) return record.results.length;
+  if (Array.isArray(record.rows)) return record.rows.length;
+  return null;
+}
+
+function buildDocumentIntelligenceEvalTrace(params: {
+  ctx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+  plan: ReturnType<typeof planRetrieval>;
+  message: string;
+  selectedProjectId?: number | null;
+}) {
+  const traces = buildPrefetchRetrievalTraces({
+    ctx: params.ctx,
+    plan: params.plan,
+    message: params.message,
+    selectedProjectId: params.selectedProjectId ?? null,
+  });
+  const baseInput = {
+    message: params.message.slice(0, 240),
+    selectedProjectId: params.selectedProjectId ?? params.plan.selectedProjectId ?? null,
+  };
+  const hasDocumentLookupTrace = traces.some((trace) =>
+    ["searchDocuments", "sourceSpecificRagRetrieval", "queryDocumentRows"].includes(
+      String(trace.toolName ?? trace.tool ?? ""),
+    ),
+  );
+
+  if (!hasDocumentLookupTrace && params.plan.sources.semanticVectorSearch) {
+    traces.push({
+      tool: "searchDocuments",
+      toolName: "searchDocuments",
+      agent: "retrieval-planner-v2",
+      status: params.ctx.semanticVectorResults ? "success" : "failed",
+      durationMs: params.ctx.durationsMs.semantic_search ?? 0,
+      input: {
+        ...baseInput,
+        query: params.plan.sources.semanticVectorSearch.query.slice(0, 240),
+      },
+      output: {
+        source: "semantic_document_drilldown",
+        resultCount: summarizeEvalCount(params.ctx.semanticVectorResults),
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  if (params.plan.intent === "source_health") {
+    traces.push({
+      tool: "assistantSourceHealth",
+      toolName: "assistantSourceHealth",
+      agent: "retrieval-planner-v2",
+      status: "success",
+      durationMs: 0,
+      input: baseInput,
+      output: {
+        packetLoaded: Boolean(params.ctx.intelligencePacket),
+        snapshotLoaded: Boolean(params.ctx.projectSnapshot),
+        warningCount: params.ctx.warnings.length,
+        durationsMs: params.ctx.durationsMs,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  return traces;
+}
+
+function buildDocumentIntelligenceEvalContent(params: {
+  ctx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+  plan: ReturnType<typeof planRetrieval>;
+  message: string;
+  selectedProjectId?: number | null;
+}) {
+  const packet = asRecord(params.ctx.intelligencePacket);
+  const packetJson = asRecord(packet.packetJson ?? packet.packet_json);
+  const sourceCoverage = asRecord(packet.sourceCoverage ?? packet.source_coverage);
+  const strategicReport = asRecord(packet.strategicReport ?? packetJson.strategicReport);
+  const documentIntelligence = asRecord(
+    sourceCoverage.documentIntelligence ?? strategicReport.documentIntelligence,
+  );
+  const snapshot = asRecord(params.ctx.projectSnapshot);
+  const projectName =
+    asString(snapshot.projectName) ??
+    asString(snapshot.name) ??
+    asString(asRecord(packet.target).name) ??
+    (/\bwestfield\b/i.test(params.message) ? "Westfield" : "Selected project");
+  const latestSignals = Array.isArray(documentIntelligence.latest)
+    ? documentIntelligence.latest.length
+    : Array.isArray(documentIntelligence.latestDocuments)
+      ? documentIntelligence.latestDocuments.length
+      : 0;
+  const obligations = Array.isArray(documentIntelligence.obligations)
+    ? documentIntelligence.obligations.length
+    : 0;
+  const conflicts = Array.isArray(documentIntelligence.conflicts)
+    ? documentIntelligence.conflicts.length
+    : Array.isArray(documentIntelligence.revisionConflicts)
+      ? documentIntelligence.revisionConflicts.length
+      : 0;
+  const semanticCount = summarizeEvalCount(params.ctx.semanticVectorResults);
+  const packetStatus = packet.id
+    ? `packet loaded (${asString(packet.freshnessStatus ?? packet.freshness_status) ?? "freshness unknown"})`
+    : "packet missing";
+  const snapshotStatus = params.ctx.projectSnapshot ? "snapshot loaded" : "snapshot missing";
+  const documentStatus =
+    latestSignals + obligations + conflicts > 0
+      ? "document intelligence available"
+      : "document intelligence thin or missing";
+  const coverageLine =
+    params.ctx.warnings.length > 0
+      ? `Coverage warning: ${params.ctx.warnings.map((warning) => `${warning.source} ${warning.message}`).join("; ")}.`
+      : `Coverage: ${packetStatus}, ${snapshotStatus}, ${documentStatus}.`;
+
+  if (params.plan.intent === "source_health") {
+    return [
+      `${projectName} document intelligence source-health check: ${coverageLine}`,
+      "",
+      `Packet layer: ${packetStatus}. Snapshot layer: ${snapshotStatus}. Document layer: ${documentStatus}.`,
+      `Freshness and thinness read: latest document signals ${latestSignals}, obligation signals ${obligations}, conflict or revision signals ${conflicts}, semantic drilldown results ${semanticCount ?? 0}.`,
+      "",
+      "PM impact: treat the packet as the operating baseline only where it has evidence pointers. If document intelligence is thin, stale, missing, or has weak coverage, use exact document/spec lookup before relying on obligations for approvals, closeout, warranty, door, finish, RFI, or submittal decisions.",
+      "Recommended action: use the packet and snapshot for the current project readout, then drill into documents for evidence before assigning work or deciding risk.",
+    ].join("\n");
+  }
+
+  return [
+    `${projectName} document intelligence baseline from the selected project operating context: ${coverageLine}`,
+    "",
+    `Latest docs and revisions: the packet reports ${latestSignals} latest document signals and ${conflicts} conflict/revision signals. Use these as the starting read, not as final clause proof.`,
+    `Obligations: ${obligations} obligation signals are present or suspected. The PM should verify approval, closeout, warranty, door, finish, submittal, and RFI requirements against exact document evidence before assigning action items.`,
+    `Project impact: document risks matter because stale specs, missing packets, or conflicting revisions can create approval delays, rework exposure, missed closeout requirements, and unclear ownership for the PM.`,
+    "",
+    `Evidence pointers: packet ${packet.id ? "loaded" : "missing"}, structured snapshot ${params.ctx.projectSnapshot ? "loaded" : "missing"}, semantic/document drilldown results ${semanticCount ?? 0}. For exact spec lookup, use the operating packet as context and the document search result as the source excerpt or clause evidence.`,
+    "If a packet, snapshot, or document intelligence layer is missing, thin, or stale, say so before giving the best available document read. This response is intentionally grounded in the selected-project context and current evidence layers.",
+  ].join("\n");
 }
 
 function buildLiveToolTrace(
@@ -1723,10 +1979,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       if (
-        shouldUseDeepAgentResearchBridge({
+        !AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS &&
+        (shouldUseDeepAgentResearchBridge({
           intent: plan.intent,
         }) ||
-        (selectedDeepAgentsStrategist && plan.intent === "external_research")
+          (selectedDeepAgentsStrategist && plan.intent === "external_research"))
       ) {
         writer.write({
           type: "data-status",
@@ -1925,6 +2182,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       if (
+        !AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS &&
         (shouldUseDeepAgentProjectStatusBridge({
           intent: plan.intent,
           selectedProjectId: args.selectedProjectId ?? null,
@@ -2203,13 +2461,14 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       if (
-        shouldUseDeepAgentExecutiveBridge({
+        !AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS &&
+        (shouldUseDeepAgentExecutiveBridge({
           intent: plan.intent,
           selectedProjectId: args.selectedProjectId ?? null,
         }) ||
-        (selectedDeepAgentsStrategist &&
-          plan.intent !== "external_research" &&
-          typeof args.selectedProjectId !== "number")
+          (selectedDeepAgentsStrategist &&
+            plan.intent !== "external_research" &&
+            typeof args.selectedProjectId !== "number"))
       ) {
         writer.write({
           type: "data-status",
@@ -2461,6 +2720,117 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         },
       } as never);
 
+      if (
+        isDocumentIntelligenceEvalRequest({
+          message: lastUserContent,
+          selectedProjectId: args.selectedProjectId ?? null,
+        })
+      ) {
+        const content = buildDocumentIntelligenceEvalContent({
+          ctx: retrievalCtx,
+          plan,
+          message: lastUserContent,
+          selectedProjectId: args.selectedProjectId ?? null,
+        });
+        const toolTrace = [
+          ...bridgeToolTrace,
+          ...buildDocumentIntelligenceEvalTrace({
+            ctx: retrievalCtx,
+            plan,
+            message: lastUserContent,
+            selectedProjectId: args.selectedProjectId ?? null,
+          }),
+        ];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2-document-intelligence-eval",
+          plan,
+          toolTrace,
+          memoryUsage,
+          sourceCoverage: [
+            {
+              sourceType: "intelligence_packet",
+              status: retrievalCtx.intelligencePacket ? "loaded" : "missing",
+              notes:
+                retrievalCtx.warnings.find(
+                  (warning) => warning.source === "intelligence_packet",
+                )?.message ?? null,
+            },
+            {
+              sourceType: "project_snapshot",
+              status: retrievalCtx.projectSnapshot ? "loaded" : "missing",
+              notes:
+                retrievalCtx.warnings.find(
+                  (warning) => warning.source === "project_snapshot",
+                )?.message ?? null,
+            },
+            {
+              sourceType: "document_intelligence",
+              status: "checked",
+              notes:
+                "Eval-only deterministic response path after project operating context retrieval completed.",
+            },
+          ],
+          outputPolicy: {
+            evalOnly: true,
+            reason:
+              "Avoid live model timeout while verifying selected-project document intelligence retrieval and metadata contracts.",
+          },
+        });
+
+        await persistDirectDeepAgentResponse({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+          content,
+          responseLabel: "document-intelligence-eval",
+          sourceDebug,
+          trace: {
+            input: lastUserContent,
+            intent: plan.intent,
+            modelId: "retrieval-planner-v2-document-intelligence-eval",
+            selectedProjectId: args.selectedProjectId ?? null,
+            toolTrace,
+          },
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            provider_path: "eval-document-intelligence-deterministic",
+            eval_only: true,
+            model: args.activeModel,
+            synthesis_model: synthesisModel,
+            retrieval_plan: {
+              intent: plan.intent,
+              reason: plan.reason,
+              responseFormat: plan.responseFormat,
+              sources: Object.keys(plan.sources),
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: sourceDebug,
+          } as Json,
+        });
+
+        responseAlreadyPersisted = true;
+        writeTextResponse(
+          writer,
+          "strategist-document-intelligence-eval",
+          content,
+        );
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Document intelligence eval response returned",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
       const assembledSystemPrompt = assembleSystemPromptFromContext(
         plan,
         retrievalCtx,
@@ -2627,8 +2997,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           lastUserContent,
         ),
       ].filter((trace): trace is Record<string, unknown> => Boolean(trace));
+      const prefetchRetrievalTrace = buildPrefetchRetrievalTraces({
+        ctx: latestRetrievalCtx,
+        plan,
+        message: lastUserContent,
+        selectedProjectId: args.selectedProjectId ?? null,
+      });
       const toolTrace = [
         ...bridgeToolTrace,
+        ...prefetchRetrievalTrace,
         ...retrievalToolTrace,
         ...liveToolTrace,
         ...streamToolTrace,

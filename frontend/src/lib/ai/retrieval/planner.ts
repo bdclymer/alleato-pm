@@ -100,11 +100,52 @@ function isBrandonDaily(message: string): boolean {
   return /brandon.{0,12}(daily|update|brief)/i.test(message);
 }
 
+function isSelectedProjectSourceHealthRequest(
+  message: string,
+  selectedProjectId?: number,
+): boolean {
+  if (typeof selectedProjectId !== "number") return false;
+  if (
+    /\b(find|exact|evidence|clause|excerpt|drill|answer from|best available document read)\b/i.test(
+      message,
+    )
+  ) {
+    return false;
+  }
+  return (
+    /\b(packet|snapshot|source|sources|coverage|context|document intelligence)\b/i.test(message) &&
+    /\b(stale|missing|thin|fresh|current|trust|available|loaded|health)\b/i.test(message)
+  );
+}
+
+function projectOperatingContextSources(selectedProjectId?: number): {
+  intelligencePacket?: { mode: "additive" };
+  projectSnapshot?: { reason: "intent" };
+} {
+  if (typeof selectedProjectId !== "number") return {};
+  return {
+    intelligencePacket: { mode: "additive" },
+    projectSnapshot: { reason: "intent" },
+  };
+}
+
 export function planRetrieval(input: PlanInput): RetrievalPlan {
   const { message, selectedProjectId, messages } = input;
   const intent = classifyAssistantIntent(message, { selectedProjectId });
   const recentEmailInbox = detectRecentEmailInboxRequest(message);
   const sourceSpecific = detectSourceSpecificRagRequest(message);
+
+  if (isSelectedProjectSourceHealthRequest(message, selectedProjectId)) {
+    return {
+      intent: "source_health",
+      responseFormat: "briefing_template",
+      sources: {
+        ...projectOperatingContextSources(selectedProjectId),
+      },
+      selectedProjectId,
+      reason: "project_context_source_health",
+    };
+  }
 
   if (isBrandonDaily(message)) {
     return {
@@ -164,8 +205,14 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     return {
       intent,
       responseFormat: "source_specific_rag",
-      sources: { sourceSpecificRag: { kind: sourceSpecific.kind } },
-      reason: `source_specific_rag_${sourceSpecific.kind}`,
+      sources: {
+        ...projectOperatingContextSources(selectedProjectId),
+        sourceSpecificRag: { kind: sourceSpecific.kind },
+      },
+      selectedProjectId,
+      reason: selectedProjectId
+        ? `project_context_source_specific_rag_${sourceSpecific.kind}`
+        : `source_specific_rag_${sourceSpecific.kind}`,
     };
   }
 
@@ -173,8 +220,14 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     return {
       intent,
       responseFormat: "source_lookup",
-      sources: { semanticVectorSearch: { query: message } },
-      reason: "source_lookup_intent",
+      sources: {
+        ...projectOperatingContextSources(selectedProjectId),
+        semanticVectorSearch: { query: message },
+      },
+      selectedProjectId,
+      reason: selectedProjectId
+        ? "project_context_source_lookup_intent"
+        : "source_lookup_intent",
     };
   }
 

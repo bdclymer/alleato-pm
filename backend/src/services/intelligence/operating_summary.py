@@ -62,6 +62,48 @@ SOURCE_QUALITY_LABELS = {
     "stale_or_failed",
 }
 
+DOCUMENT_INTELLIGENCE_CATEGORIES = {
+    "document",
+    "drawing",
+    "specification",
+    "rfi",
+    "submittal",
+    "daily_report",
+}
+
+OBLIGATION_KEYWORDS = (
+    "approval",
+    "approve",
+    "approved",
+    "submit",
+    "submittal",
+    "due",
+    "deadline",
+    "permit",
+    "inspection",
+    "certificate",
+    "insurance",
+    "warranty",
+    "closeout",
+    "retainage",
+    "must",
+    "required",
+    "shall",
+)
+
+CONFLICT_KEYWORDS = (
+    "conflict",
+    "conflicting",
+    "discrepancy",
+    "mismatch",
+    "revise",
+    "revised",
+    "superseded",
+    "void",
+    "outdated",
+    "wrong",
+)
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -149,6 +191,16 @@ def _truncate(value: str, max_length: int) -> str:
 
 def _normalized_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip().lower()
+
+
+def _compact_words(value: Any, *, max_words: int = 28) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if not text:
+        return ""
+    words = text.split(" ")
+    if len(words) <= max_words:
+        return text
+    return " ".join(words[:max_words]).rstrip(" ,.;:") + "..."
 
 
 def _looks_metadata_only(text: str) -> bool:
@@ -336,6 +388,166 @@ def _select_operating_sources(sources: List[Dict[str, Any]]) -> List[Dict[str, A
         )
 
     return sorted(selected_pool, key=sort_key)[:MAX_SOURCES]
+
+
+def _document_kind_label(category: str) -> str:
+    return CATEGORY_LABELS.get(category, category.replace("_", " ").title())
+
+
+def _document_evidence_pointer(source: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "sourceId": source.get("id"),
+        "recordId": source.get("recordId"),
+        "category": source.get("category"),
+        "title": source.get("title") or source.get("recordId"),
+        "capturedAt": source.get("capturedAt"),
+        "sourceUrl": source.get("sourceUrl"),
+    }
+
+
+def _document_project_impact(source: Dict[str, Any]) -> str:
+    category = str(source.get("category") or "document")
+    text = _normalized_text(" ".join([str(source.get("title") or ""), str(source.get("text") or "")]))
+    if category == "drawing":
+        return "Drawing/revision context can affect scope coordination, field install sequence, and change exposure."
+    if category == "specification":
+        return "Specification context can affect required materials, submittals, inspections, and scope compliance."
+    if category == "rfi":
+        return "RFI context can affect owner/architect decisions, change entitlement, and schedule release."
+    if category == "submittal":
+        return "Submittal context can affect procurement release, approval flow, and schedule risk."
+    if category == "daily_report":
+        return "Daily-report context can affect field progress, delay support, and issue documentation."
+    if any(token in text for token in ("cost", "budget", "invoice", "pay app", "payment", "change order")):
+        return "Financial document context can affect exposure, billing, payment timing, and margin protection."
+    if any(token in text for token in ("permit", "inspection", "certificate", "insurance", "warranty", "closeout")):
+        return "Compliance/closeout document context can affect approvals, turnover, and owner acceptance."
+    return "Document context can affect source-of-truth confidence and follow-up priority."
+
+
+def _document_obligation(source: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    text = " ".join([str(source.get("title") or ""), str(source.get("text") or "")])
+    normalized = _normalized_text(text)
+    if not any(keyword in normalized for keyword in OBLIGATION_KEYWORDS):
+        return None
+    return {
+        "title": _compact_words(source.get("title") or source.get("recordId"), max_words=12),
+        "obligation": _compact_words(source.get("text"), max_words=34),
+        "projectImpact": _document_project_impact(source),
+        "sourceIds": [source["id"]],
+        "evidence": [_document_evidence_pointer(source)],
+    }
+
+
+def _document_conflict(source: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    text = " ".join([str(source.get("title") or ""), str(source.get("text") or "")])
+    normalized = _normalized_text(text)
+    if not any(keyword in normalized for keyword in CONFLICT_KEYWORDS):
+        return None
+    return {
+        "title": _compact_words(source.get("title") or source.get("recordId"), max_words=12),
+        "conflictSignal": _compact_words(source.get("text"), max_words=34),
+        "projectImpact": _document_project_impact(source),
+        "sourceIds": [source["id"]],
+        "evidence": [_document_evidence_pointer(source)],
+    }
+
+
+def _build_document_intelligence(sources: List[Dict[str, Any]]) -> Dict[str, Any]:
+    document_sources = [
+        source
+        for source in sources
+        if source.get("category") in DOCUMENT_INTELLIGENCE_CATEGORIES
+    ]
+
+    def latest_key(source: Dict[str, Any]) -> tuple[float, str]:
+        captured_at = _source_timestamp(source)
+        timestamp = captured_at.timestamp() if captured_at else 0.0
+        return (-timestamp, str(source.get("title") or source.get("id") or ""))
+
+    sorted_docs = sorted(document_sources, key=latest_key)
+    latest_by_category: List[Dict[str, Any]] = []
+    for category in sorted(
+        DOCUMENT_INTELLIGENCE_CATEGORIES,
+        key=lambda value: (SOURCE_CATEGORY_PRIORITY.get(value, 99), value),
+    ):
+        rows = [source for source in sorted_docs if source.get("category") == category]
+        if not rows:
+            continue
+        latest = rows[0]
+        latest_by_category.append(
+            {
+                "category": category,
+                "label": _document_kind_label(category),
+                "availableCount": len(rows),
+                "latest": _document_evidence_pointer(latest),
+                "projectImpact": _document_project_impact(latest),
+            }
+        )
+
+    duplicate_groups: Dict[str, List[Dict[str, Any]]] = {}
+    for source in document_sources:
+        title_key = _normalized_text(source.get("title") or source.get("recordId"))
+        if not title_key:
+            continue
+        group_key = f"{source.get('category')}:{title_key}"
+        duplicate_groups.setdefault(group_key, []).append(source)
+
+    revision_signals = []
+    for rows in duplicate_groups.values():
+        if len(rows) < 2:
+            continue
+        ordered = sorted(rows, key=latest_key)
+        revision_signals.append(
+            {
+                "title": ordered[0].get("title") or ordered[0].get("recordId"),
+                "category": ordered[0].get("category"),
+                "latest": _document_evidence_pointer(ordered[0]),
+                "priorCount": len(ordered) - 1,
+                "priorEvidence": [_document_evidence_pointer(source) for source in ordered[1:4]],
+            }
+        )
+
+    obligations = [
+        item
+        for item in (_document_obligation(source) for source in sorted_docs)
+        if item
+    ][:12]
+    conflicts = [
+        item
+        for item in (_document_conflict(source) for source in sorted_docs)
+        if item
+    ][:12]
+
+    missing_categories = [
+        {
+            "category": category,
+            "label": _document_kind_label(category),
+            "reason": "No selected operating-summary source capsule was available for this document category.",
+        }
+        for category in sorted(DOCUMENT_INTELLIGENCE_CATEGORIES)
+        if not any(source.get("category") == category for source in document_sources)
+    ]
+
+    return {
+        "schema": "project_document_intelligence_v1",
+        "documentSourceCount": len(document_sources),
+        "latestByCategory": latest_by_category,
+        "revisionSignals": revision_signals[:12],
+        "conflictSignals": conflicts,
+        "obligations": obligations,
+        "projectImpact": [
+            {
+                "category": row["category"],
+                "label": row["label"],
+                "impact": row["projectImpact"],
+                "sourceIds": [row["latest"]["sourceId"]],
+            }
+            for row in latest_by_category
+        ],
+        "evidencePointers": [_document_evidence_pointer(source) for source in sorted_docs[:24]],
+        "missingCategories": missing_categories,
+    }
 
 
 def _quality_counts(sources: List[Dict[str, Any]]) -> Dict[str, int]:
@@ -605,6 +817,7 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
 
     all_sources = sources
     sources = _select_operating_sources(all_sources)
+    document_intelligence = _build_document_intelligence(sources)
     coverage = []
     for category, label in CATEGORY_LABELS.items():
         all_category_sources = [source for source in all_sources if source["category"] == category]
@@ -630,6 +843,7 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
         "generatedAt": _utc_now(),
         "sources": sources,
         "coverage": coverage,
+        "documentIntelligence": document_intelligence,
         "missingCategories": [row for row in coverage if row["availableCount"] == 0],
     }
 
@@ -800,7 +1014,54 @@ def _find_source(sources: Dict[str, Dict[str, Any]], source_id: str) -> Optional
     return sources.get(source_id)
 
 
-def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _document_intelligence_card(source_set: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    document_intelligence = source_set.get("documentIntelligence") or {}
+    if not isinstance(document_intelligence, dict):
+        return None
+    source_ids = [
+        str(pointer.get("sourceId"))
+        for pointer in document_intelligence.get("evidencePointers") or []
+        if pointer.get("sourceId")
+    ]
+    if not source_ids:
+        return None
+
+    latest = document_intelligence.get("latestByCategory") or []
+    obligations = document_intelligence.get("obligations") or []
+    conflicts = document_intelligence.get("conflictSignals") or []
+    latest_labels = [
+        f"{item.get('label')}: {(item.get('latest') or {}).get('title') or 'latest source'}"
+        for item in latest[:4]
+        if isinstance(item, dict)
+    ]
+    summary_parts = []
+    if latest_labels:
+        summary_parts.append("Latest document signals: " + "; ".join(latest_labels))
+    if obligations:
+        summary_parts.append(f"{len(obligations)} obligation/compliance signals need PM awareness.")
+    if conflicts:
+        summary_parts.append(f"{len(conflicts)} conflict/revision signals need verification.")
+    if not summary_parts:
+        summary_parts.append("Document intelligence has source pointers, but no obligation or conflict signals were detected.")
+
+    return {
+        "key": "operating-document-intelligence",
+        "section": "documents",
+        "rank": 9,
+        "type": "requirement",
+        "title": "Document intelligence",
+        "summary": " ".join(summary_parts),
+        "why": "Gives the assistant a project-document baseline before it drills into exact specs, drawings, RFIs, submittals, or source clauses.",
+        "nextAction": (
+            "Verify document conflicts and obligations against exact source passages before acting."
+            if conflicts or obligations
+            else "Use document RAG for exact clauses or attachments when needed."
+        ),
+        "sourceIds": source_ids[:16],
+    }
+
+
+def _card_defs(summary: Dict[str, Any], source_set: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     controls = summary.get("projectControls") or {}
     what_changed = summary.get("whatChanged") or summary.get("recentChanges") or []
     risks = summary.get("risks") or []
@@ -929,7 +1190,7 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
         {
             "key": "operating-schedule-procurement",
             "section": "schedule",
-            "rank": 9,
+            "rank": 10,
             "type": "schedule_risk",
             "title": "Schedule and procurement",
             "summary": (summary.get("scheduleAndProcurement") or {}).get("summary") or "",
@@ -947,6 +1208,9 @@ def _card_defs(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "sourceIds": (summary.get("scheduleAndProcurement") or {}).get("sourceIds", [])[:12],
         },
     ]
+    document_card = _document_intelligence_card(source_set or {})
+    if document_card:
+        cards.append(document_card)
     return [card for card in cards if card["sourceIds"]]
 
 
@@ -1001,7 +1265,7 @@ def refresh_project_operating_packet(
     source_by_id = {source["id"]: source for source in source_set["sources"]}
     latest_dates = sorted(s["capturedAt"] for s in source_set["sources"] if s.get("capturedAt"))
     confidence = summary.get("confidence") if summary.get("confidence") in {"low", "medium", "high"} else "medium"
-    cards = _card_defs(summary)
+    cards = _card_defs(summary, source_set)
     coverage_card = _source_coverage_card(source_set)
     if coverage_card:
         cards.append(coverage_card)
@@ -1019,6 +1283,7 @@ def refresh_project_operating_packet(
         "operatingSummarySourceCount": len(source_set["sources"]),
         "operatingSummarySelectedSourceCount": len(source_set["sources"]),
         "categoryCoverage": source_set["coverage"],
+        "documentIntelligence": source_set.get("documentIntelligence") or {},
         "latestSourceAt": latest_dates[-1] if latest_dates else None,
         "linkedEvidenceCount": linked_evidence_count,
         "sourceQualityCounts": source_quality_counts,
@@ -1078,6 +1343,7 @@ def refresh_project_operating_packet(
                 "moneyImpact": summary.get("moneyImpact") or summary.get("financialPosition") or {},
                 "promisesMade": promises_made,
                 "recommendedActions": recommended_actions,
+                "documentIntelligence": source_set.get("documentIntelligence") or {},
                 "evidenceQuality": summary.get("evidenceQuality") or {},
             },
         },

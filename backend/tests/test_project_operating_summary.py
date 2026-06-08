@@ -4,6 +4,7 @@ import pytest
 
 from src.services.intelligence.operating_summary import (
     _assert_summary_quality,
+    _build_document_intelligence,
     _card_defs,
     _make_source,
     _quality_counts,
@@ -183,3 +184,71 @@ def test_card_defs_do_not_duplicate_one_next_action_across_every_section():
 def test_source_aliases_accept_common_model_citation_formats():
     assert _source_aliases(1) == ["S001", "S01", "S1"]
     assert _source_aliases(12) == ["S012", "S12"]
+
+
+def test_document_intelligence_extracts_latest_obligations_conflicts_and_evidence():
+    drawing_old = _make_source(
+        category="drawing",
+        source_id="drawing:A201-old",
+        record_id="A201-old",
+        title="A-201 Floor Plan",
+        project_name="Union Collective",
+        captured_at=_iso(10),
+        text="Drawing: A-201 Floor Plan. Status: superseded by revised owner plan.",
+    )
+    drawing_new = _make_source(
+        category="drawing",
+        source_id="drawing:A201-new",
+        record_id="A201-new",
+        title="A-201 Floor Plan",
+        project_name="Union Collective",
+        captured_at=_iso(1),
+        text="Drawing: A-201 Floor Plan. Revision Date: current.",
+    )
+    specification = _make_source(
+        category="specification",
+        source_id="specification:081113",
+        record_id="081113",
+        title="08 11 13 Hollow Metal Doors",
+        project_name="Union Collective",
+        captured_at=_iso(2),
+        text="Specification requires approved door hardware submittals before fabrication and inspection.",
+    )
+
+    doc_intel = _build_document_intelligence([drawing_old, drawing_new, specification])
+
+    assert doc_intel["schema"] == "project_document_intelligence_v1"
+    assert doc_intel["documentSourceCount"] == 3
+    assert doc_intel["latestByCategory"][0]["latest"]["sourceId"] == "drawing:A201-new"
+    assert doc_intel["revisionSignals"][0]["latest"]["sourceId"] == "drawing:A201-new"
+    assert doc_intel["conflictSignals"][0]["sourceIds"] == ["drawing:A201-old"]
+    assert doc_intel["obligations"][0]["sourceIds"] == ["specification:081113"]
+    assert doc_intel["evidencePointers"][0]["sourceId"] == "drawing:A201-new"
+
+
+def test_card_defs_adds_document_intelligence_card_from_source_set():
+    source = _make_source(
+        category="specification",
+        source_id="specification:081113",
+        record_id="081113",
+        title="08 11 13 Hollow Metal Doors",
+        project_name="Union Collective",
+        captured_at=_iso(2),
+        text="Specification requires approved door hardware submittals before fabrication.",
+    )
+    source_set = {"documentIntelligence": _build_document_intelligence([source])}
+
+    cards = _card_defs(
+        {
+            "headline": "Union Collective has document obligations.",
+            "currentExecutiveRead": "Spec obligations need to be tracked.",
+            "context": "Document intelligence is needed.",
+            "sourceIds": ["specification:081113"],
+        },
+        source_set,
+    )
+
+    doc_card = next(card for card in cards if card["key"] == "operating-document-intelligence")
+    assert doc_card["type"] == "requirement"
+    assert doc_card["section"] == "documents"
+    assert "obligation" in doc_card["summary"].lower()

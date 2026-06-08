@@ -38,6 +38,18 @@
         "Answers must give a direct operational read instead of generic AI/RAG caveats."
       ]
     },
+    "project-document-intelligence-regression": {
+      "description": "Agentic-eval guardrail for selected-project document intelligence. The assistant must preload the project operating packet/snapshot, use document/source lookup only as drilldown, and disclose stale or missing context layers instead of answering from a cold search.",
+      "filter": "project-document-(broad-briefing|exact-spec-lookup|stale-packet-check|missing-context-disclosure)$",
+      "warnDurationMs": 30000,
+      "maxDurationMs": 90000,
+      "criteria": [
+        "Selected-project document questions must preload clientProjectIntelligencePacket and getProjectBriefingSnapshot.",
+        "Exact document/spec questions must also use semanticSearch, sourceSpecificRagRetrieval, searchDocuments, or another document-capable lookup.",
+        "Answers must separate the project operating baseline from exact source proof.",
+        "Answers must disclose stale, missing, or thin packet/snapshot/document coverage when relevant."
+      ]
+    },
     "task-action-items-regression": {
       "description": "Agentic-eval guardrail for task and action-item prompts. The assistant must recognize common owner phrasing for tasks, action items, open loops, and waiting-on-team questions without requiring exact wording.",
       "filter": "(tasks-list-of-action-items-canonical|tasks-what-do-i-need-to-do-today|tasks-open-loops-all|tasks-whats-on-my-list|realworld-most-important-tasks|realworld-waiting-on-team)$",
@@ -803,6 +815,141 @@
       ],
       "mustInclude": [],
       "minAnswerLength": 120
+    },
+    {
+      "id": "project-document-broad-briefing",
+      "intent": "document_question",
+      "prompt": "For Westfield, give me the document intelligence baseline before we drill into exact files: latest docs, document risks, obligations, conflicts, and what matters to the PM.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["project", "documents", "semantic"],
+      "expectedAllToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot"
+      ],
+      "expectedToolNames": [
+        "semanticSearch",
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "mustInclude": ["Westfield"],
+      "mustIncludeAny": [
+        ["document", "documents", "drawing", "spec", "RFI", "submittal"],
+        ["obligation", "required", "approval", "due", "conflict", "revision"],
+        ["PM", "risk", "action", "impact", "matters"]
+      ],
+      "mustExclude": [
+        "I will search",
+        "I don't have enough context",
+        "no project context"
+      ],
+      "requiredMetadataPaths": [
+        "tool_trace",
+        "retrieval_plan",
+        "source_debug"
+      ],
+      "minAnswerLength": 220,
+      "notes": "Broad selected-project document intelligence should start from packet/snapshot context and use document search only as drilldown."
+    },
+    {
+      "id": "project-document-exact-spec-lookup",
+      "intent": "document_question",
+      "prompt": "For Westfield, find the exact spec or document evidence behind any current door, finish, warranty, closeout, or submittal obligation. Start with the project operating context, then drill into the source.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["project", "documents", "semantic"],
+      "expectedAllToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot",
+        "semanticSearch"
+      ],
+      "expectedToolNames": [
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "mustInclude": ["Westfield"],
+      "mustIncludeAny": [
+        ["spec", "document", "source", "evidence", "clause", "excerpt"],
+        ["door", "finish", "warranty", "closeout", "submittal"],
+        ["packet", "context", "baseline", "operating"]
+      ],
+      "mustExclude": [
+        "I will search",
+        "generic document guidance",
+        "no project context"
+      ],
+      "requiredMetadataPaths": [
+        "tool_trace",
+        "retrieval_plan",
+        "source_debug"
+      ],
+      "minAnswerLength": 220,
+      "notes": "Exact selected-project document questions must keep the operating baseline loaded and then use RAG/search as source proof."
+    },
+    {
+      "id": "project-document-stale-packet-check",
+      "intent": "source_health",
+      "prompt": "For Westfield document intelligence, before I trust the AI readout, tell me whether the project packet, snapshot, and document sources look stale, missing, thin, or current enough.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["project", "source_health"],
+      "expectedAllToolNames": [
+        "assistantSourceHealth"
+      ],
+      "expectedToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot"
+      ],
+      "mustInclude": ["Westfield"],
+      "mustIncludeAny": [
+        ["packet", "snapshot", "document", "source"],
+        ["stale", "missing", "thin", "fresh", "current", "coverage"]
+      ],
+      "mustExclude": [
+        "everything is current",
+        "complete evidence coverage",
+        "I cannot access"
+      ],
+      "requiredMetadataPaths": [
+        "tool_trace",
+        "response_quality",
+        "source_debug"
+      ],
+      "minAnswerLength": 180,
+      "notes": "Selected-project stale-packet behavior: the answer must expose freshness/coverage state instead of pretending document intelligence is complete."
+    },
+    {
+      "id": "project-document-missing-context-disclosure",
+      "intent": "document_question",
+      "prompt": "For Westfield, answer from the operating packet if it exists. If the current packet, structured snapshot, or document intelligence is missing or thin, say exactly which layer is missing before giving the best available document read.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["project", "documents", "semantic"],
+      "expectedAllToolNames": [
+        "clientProjectIntelligencePacket",
+        "getProjectBriefingSnapshot"
+      ],
+      "expectedToolNames": [
+        "semanticSearch",
+        "searchDocuments",
+        "sourceSpecificRagRetrieval",
+        "queryDocumentRows"
+      ],
+      "mustInclude": ["Westfield"],
+      "mustIncludeAny": [
+        ["packet", "snapshot", "document intelligence", "operating context"],
+        ["missing", "thin", "available", "loaded", "coverage"]
+      ],
+      "mustExclude": [
+        "I will search",
+        "I don't have enough context",
+        "no project context"
+      ],
+      "requiredMetadataPaths": [
+        "tool_trace",
+        "retrieval_plan",
+        "source_debug"
+      ],
+      "minAnswerLength": 200,
+      "notes": "Missing-context disclosure eval: live state may have context, but the answer must name the packet/snapshot/document-intelligence layers and disclose gaps when present."
     },
     {
       "id": "action-items",

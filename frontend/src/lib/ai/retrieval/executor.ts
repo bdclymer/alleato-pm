@@ -121,6 +121,12 @@ export async function executeRetrievalPlan(
     tasks.push(
       time("intelligence_packet", async () => {
         result.intelligencePacket = (await deps.loadIntelligencePacket(projectId)) as never;
+        if (!result.intelligencePacket) {
+          warnings.push({
+            source: "intelligence_packet",
+            message: `requested project operating context packet was unavailable for project ${projectId}`,
+          });
+        }
       }),
     );
   }
@@ -130,6 +136,12 @@ export async function executeRetrievalPlan(
     tasks.push(
       time("project_snapshot", async () => {
         result.projectSnapshot = (await deps.loadProjectSnapshot(projectId)) as never;
+        if (!result.projectSnapshot) {
+          warnings.push({
+            source: "project_snapshot",
+            message: `requested structured project briefing snapshot was unavailable for project ${projectId}`,
+          });
+        }
       }),
     );
   }

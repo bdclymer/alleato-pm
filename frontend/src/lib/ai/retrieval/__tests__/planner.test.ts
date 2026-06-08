@@ -44,6 +44,65 @@ describe("planRetrieval", () => {
     expect(plan.sources.intelligencePacket).toBeUndefined();
   });
 
+  it("source lookup with selected project preloads the project operating context before vector drilldown", () => {
+    const message = "Show me the meeting where we discussed the slab pour timeline";
+    const plan = planRetrieval({
+      message,
+      selectedProjectId: 67,
+      messages: [userMsg(message)],
+    });
+    expect(plan.responseFormat).toBe("source_lookup");
+    expect(plan.selectedProjectId).toBe(67);
+    expect(plan.sources.intelligencePacket).toBeDefined();
+    expect(plan.sources.projectSnapshot).toBeDefined();
+    expect(plan.sources.semanticVectorSearch).toBeDefined();
+    expect(plan.reason).toBe("project_context_source_lookup_intent");
+  });
+
+  it("source-specific RAG with selected project keeps the project operating context loaded", () => {
+    const message = "What did recent Teams discussions say about Vermillion Rise?";
+    const plan = planRetrieval({
+      message,
+      selectedProjectId: 67,
+      messages: [userMsg(message)],
+    });
+    expect(plan.responseFormat).toBe("source_specific_rag");
+    expect(plan.selectedProjectId).toBe(67);
+    expect(plan.sources.intelligencePacket).toBeDefined();
+    expect(plan.sources.projectSnapshot).toBeDefined();
+    expect(plan.sources.sourceSpecificRag).toBeDefined();
+    expect(plan.reason).toContain("project_context_source_specific_rag");
+  });
+
+  it("routes selected-project source-health wording to packet and snapshot checks", () => {
+    const message =
+      "Before I trust the AI readout, tell me whether the project packet, snapshot, and document sources look stale, missing, thin, or current enough.";
+    const plan = planRetrieval({
+      message,
+      selectedProjectId: 67,
+      messages: [userMsg(message)],
+    });
+    expect(plan.intent).toBe("source_health");
+    expect(plan.reason).toBe("project_context_source_health");
+    expect(plan.sources.intelligencePacket).toBeDefined();
+    expect(plan.sources.projectSnapshot).toBeDefined();
+    expect(plan.sources.semanticVectorSearch).toBeUndefined();
+  });
+
+  it("does not let source-health wording steal exact selected-project document lookup", () => {
+    const message =
+      "Find the exact spec or document evidence behind any current closeout obligation. Start with the project operating context, then drill into the source.";
+    const plan = planRetrieval({
+      message,
+      selectedProjectId: 67,
+      messages: [userMsg(message)],
+    });
+    expect(plan.reason).toBe("project_context_source_lookup_intent");
+    expect(plan.sources.intelligencePacket).toBeDefined();
+    expect(plan.sources.projectSnapshot).toBeDefined();
+    expect(plan.sources.semanticVectorSearch).toBeDefined();
+  });
+
   it.each([
     "What is the highest priority Brandon should focus on right now across the business?",
     "What are Brandon's must-do items today?",

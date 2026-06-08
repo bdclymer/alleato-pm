@@ -7,16 +7,22 @@ function makeStubDeps(opts: {
   externalSourceHangsMs?: number;
   externalTimeoutMs?: number;
   resolvedProjectId?: number | null;
+  intelligencePacket?: unknown;
+  projectSnapshot?: unknown;
 } = {}): ExecutorDeps {
   const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
   return {
     loadIntelligencePacket: jest.fn(async () => {
       await delay(opts.delayEachMs ?? 0);
-      return { id: "p1", cards: [], freshnessStatus: "fresh" } as never;
+      return opts.intelligencePacket === undefined
+        ? ({ id: "p1", cards: [], freshnessStatus: "fresh" } as never)
+        : (opts.intelligencePacket as never);
     }),
     loadProjectSnapshot: jest.fn(async () => {
       await delay(opts.delayEachMs ?? 0);
-      return { sourceRef: "snap" } as never;
+      return opts.projectSnapshot === undefined
+        ? ({ sourceRef: "snap" } as never)
+        : (opts.projectSnapshot as never);
     }),
     runSemanticSearch: jest.fn(async () => ({ results: [] } as never)),
     runExternalSourceSearch: jest.fn(async () => {
@@ -100,6 +106,38 @@ describe("executeRetrievalPlan", () => {
     expect(elapsed).toBeLessThan(380); // parallel ~200ms, not sequential 400ms
     expect(ctx.intelligencePacket).toBeDefined();
     expect(ctx.projectSnapshot).toBeDefined();
+  });
+
+  it("warns when requested project operating context is missing", async () => {
+    const plan: RetrievalPlan = {
+      intent: "latest_status",
+      responseFormat: "briefing_template",
+      sources: {
+        intelligencePacket: { mode: "additive" },
+        projectSnapshot: { reason: "intent" },
+      },
+      selectedProjectId: 67,
+      reason: "test",
+    };
+    const ctx = await executeRetrievalPlan(
+      plan,
+      makeStubDeps({ intelligencePacket: null, projectSnapshot: null }),
+    );
+
+    expect(ctx.intelligencePacket).toBeNull();
+    expect(ctx.projectSnapshot).toBeNull();
+    expect(ctx.warnings).toEqual(
+      expect.arrayContaining([
+        {
+          source: "intelligence_packet",
+          message: "requested project operating context packet was unavailable for project 67",
+        },
+        {
+          source: "project_snapshot",
+          message: "requested structured project briefing snapshot was unavailable for project 67",
+        },
+      ]),
+    );
   });
 
   it("resolves project-scoped retrieval from message text when selectedProjectId is absent", async () => {

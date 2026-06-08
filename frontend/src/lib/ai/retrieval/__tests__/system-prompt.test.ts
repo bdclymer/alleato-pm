@@ -77,6 +77,35 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).not.toContain("Vector Search Results");
   });
 
+  it("frames preloaded packet and snapshot as project operating context with RAG as drilldown", () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "source_lookup",
+      sources: {
+        intelligencePacket: { mode: "additive" },
+        projectSnapshot: { reason: "intent" },
+        semanticVectorSearch: { query: "show me the spec evidence" },
+      },
+      selectedProjectId: 67,
+      reason: "project_context_source_lookup_intent",
+    };
+    const ctx: RetrievalContext = {
+      intelligencePacket: { id: "p1", executiveSummary: "baseline read" } as never,
+      projectSnapshot: { projectName: "Vermillion Rise" },
+      semanticVectorResults: { results: [{ content: "spec passage", sourceTable: "document_chunks" }] } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE_PROMPT");
+
+    expect(prompt).toContain("Project Operating Context");
+    expect(prompt).toContain("baseline expert read");
+    expect(prompt).toContain("Use vector/source-specific RAG as drilldown");
+    expect(prompt.indexOf("Project Operating Context")).toBeLessThan(
+      prompt.indexOf("Current Project Intelligence Packet"),
+    );
+  });
+
   it("includes warnings list when sources timed out", () => {
     const plan: RetrievalPlan = {
       intent: "latest_status",
@@ -398,5 +427,57 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).toContain("Scope growth needs current estimate reconciliation");
     expect(prompt).not.toContain("packetJson");
     expect(prompt).not.toContain("xxxxxxxxxx");
+  });
+
+  it("renders compact document intelligence from the packet source coverage", () => {
+    const plan: RetrievalPlan = {
+      intent: "latest_status",
+      responseFormat: "briefing_template",
+      sources: { intelligencePacket: { mode: "additive" } },
+      reason: "test",
+    };
+    const ctx: RetrievalContext = {
+      intelligencePacket: {
+        id: "p1",
+        executiveSummary: "Union Collective has document risk.",
+        sourceCoverage: {
+          documentIntelligence: {
+            latestByCategory: [
+              {
+                category: "specification",
+                label: "Specifications",
+                latest: { title: "08 11 13 Hollow Metal Doors", sourceId: "specification:081113" },
+                projectImpact: "Specification context can affect required materials and inspections.",
+              },
+            ],
+            obligations: [
+              {
+                title: "08 11 13 Hollow Metal Doors",
+                obligation: "Specification requires approved door hardware submittals before fabrication.",
+                sourceIds: ["specification:081113"],
+              },
+            ],
+            conflictSignals: [
+              {
+                title: "A-201 Floor Plan",
+                conflictSignal: "Drawing was superseded by a revised owner plan.",
+                sourceIds: ["drawing:A201-old"],
+              },
+            ],
+          },
+        },
+        cards: [],
+      } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE");
+
+    expect(prompt).toContain("Document Intelligence");
+    expect(prompt).toContain("08 11 13 Hollow Metal Doors");
+    expect(prompt).toContain("Specification requires approved door hardware submittals");
+    expect(prompt).toContain("A-201 Floor Plan");
+    expect(prompt).toContain("Use this as the document baseline");
   });
 });
