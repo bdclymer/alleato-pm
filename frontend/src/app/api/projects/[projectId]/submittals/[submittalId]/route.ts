@@ -121,9 +121,43 @@ export const GET = withApiGuardrails(
       }
     }
 
+    // Fetch linked RFIs via the junction table
+    const { data: rfiLinks } = await supabase
+      .from("rfis_submittals_links")
+      .select(`
+        id,
+        link_type,
+        note,
+        created_at,
+        created_by,
+        rfi:rfis(
+          id,
+          number,
+          subject,
+          question,
+          status,
+          rfi_stage,
+          date_initiated,
+          due_date,
+          ball_in_court,
+          created_by,
+          created_at
+        )
+      `)
+      .eq("submittal_id", submittalId)
+      .eq("project_id", parseInt(projectId, 10));
+
     return NextResponse.json({
       ...data,
       responsible_contractor,
+      linked_rfis: (rfiLinks ?? []).map((link) => ({
+        link_id: link.id,
+        link_type: link.link_type,
+        note: link.note,
+        linked_at: link.created_at,
+        linked_by: link.created_by,
+        ...(link.rfi as object),
+      })),
       attachments: attachments.map((attachment) => ({
         id: attachment.document_metadata_id,
         file_name: attachment.file_name ?? attachment.title ?? "Attachment",

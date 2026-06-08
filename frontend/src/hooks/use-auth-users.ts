@@ -55,47 +55,41 @@ export function useAuthUsers(projectId: string) {
 
       // Raw data fetched from users_auth
 
-      // Transform the data for easier consumption
-      // Filter users who are members of this specific project
-      const transformedUsers: AuthUser[] = (data || [])
-        .map((userAuth) => {
-          // Find membership for this specific project
-          const projectMembership = userAuth.person?.project_directory_memberships?.find(
-            (membership) => membership.project_id === projectIdNum
-          );
+      // Build two lists from the same fetch:
+      // - allUsers: every auth user, for name resolution (histories, workflow, distributions)
+      // - projectMembers: only those with a membership for this project, for pickers/dropdowns
+      const allUsers: AuthUser[] = (data || []).map((userAuth) => {
+        const projectMembership = userAuth.person?.project_directory_memberships?.find(
+          (membership) => membership.project_id === projectIdNum
+        );
 
-          return {
-            id: userAuth.auth_user_id,
-            email: userAuth.person?.email || "",
-            first_name: userAuth.person?.first_name || null,
-            last_name: userAuth.person?.last_name || null,
-            job_title: userAuth.person?.job_title || null,
-            company_name: userAuth.person?.company?.name || null,
-            last_login_at: userAuth.last_login_at,
-            created_at: userAuth.person?.created_at || "",
-            person_id: userAuth.person_id,
-            membership_status: projectMembership?.status || null,
-            invite_status: projectMembership?.invite_status || null,
-            has_project_membership: !!projectMembership,
-          };
-        })
-        .filter((user) => {
-          const included = user.has_project_membership;
-          if (!included) {
-            // Filtered out - no project membership
-          }
-          return included;
-        })
-        .map(({ has_project_membership, ...user }) => user); // Remove the helper field
+        return {
+          id: userAuth.auth_user_id,
+          email: userAuth.person?.email || "",
+          first_name: userAuth.person?.first_name || null,
+          last_name: userAuth.person?.last_name || null,
+          job_title: userAuth.person?.job_title || null,
+          company_name: userAuth.person?.company?.name || null,
+          last_login_at: userAuth.last_login_at,
+          created_at: userAuth.person?.created_at || "",
+          person_id: userAuth.person_id,
+          membership_status: projectMembership?.status || null,
+          invite_status: projectMembership?.invite_status || null,
+        };
+      });
 
-      // Filtered users ready
-      return transformedUsers;
+      const projectMembers = allUsers.filter((u) => u.membership_status !== null);
+
+      return { allUsers, projectMembers };
     },
     enabled: !!projectId,
   });
 
   return {
-    users: query.data || [],
+    // All auth users — use for name resolution (histories, workflow responses, distributions)
+    allUsers: query.data?.allUsers ?? [],
+    // Only current project members — use for assignment pickers/dropdowns
+    users: query.data?.projectMembers ?? [],
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

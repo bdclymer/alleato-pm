@@ -8,6 +8,7 @@ import type {
   TableColumn,
 } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ds";
 
 export interface SubmittalTableRow {
   id: string;
@@ -31,18 +32,25 @@ export interface SubmittalTableRow {
   deleted_at: string | null;
 }
 
+// ─── Urgency helper ───────────────────────────────────────────────────────────
+
+function getDaysUntil(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  return Math.ceil(
+    (new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+  );
+}
+
 // ─── Status / Response badge maps ────────────────────────────────────────────
 
 const statusVariantMap: Record<
   string,
   "default" | "secondary" | "destructive" | "outline" | "success"
 > = {
-  // Form enum values
   Draft: "secondary",
   Open: "default",
   Distributed: "outline",
   Closed: "success",
-  // Legacy / seeded values
   approved: "success",
   "approved as noted": "success",
   requires_revision: "destructive",
@@ -51,18 +59,6 @@ const statusVariantMap: Record<
   under_review: "default",
   submitted: "secondary",
   pending: "outline",
-};
-
-const responseVariantMap: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline" | "success"
-> = {
-  Submitted: "default",
-  Pending: "outline",
-  Approved: "success",
-  "Approved as Noted": "success",
-  Revise: "destructive",
-  Rejected: "destructive",
 };
 
 // ─── Column definitions ───────────────────────────────────────────────────────
@@ -79,7 +75,8 @@ export const submittalColumns: ColumnConfig[] = [
   { id: "ball_in_court", label: "Ball In Court", defaultVisible: true },
   { id: "approvers", label: "Approvers", defaultVisible: false },
   { id: "latest_response", label: "Response", defaultVisible: true },
-  { id: "sent_date", label: "Sent Date", defaultVisible: true },
+  { id: "final_due_date", label: "Due Date", defaultVisible: true },
+  { id: "sent_date", label: "Sent Date", defaultVisible: false },
 ];
 
 export const submittalDefaultVisibleColumns = submittalColumns
@@ -154,7 +151,9 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
     },
     {
       ...submittalColumns[4],
-      render: (item) => <span>{item.submittal_type_name || "-"}</span>,
+      render: (item) => (
+        <span>{item.submittal_type_name || "-"}</span>
+      ),
       sortValue: (item) => item.submittal_type_name ?? "",
     },
     {
@@ -168,7 +167,9 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
     },
     {
       ...submittalColumns[6],
-      render: (item) => <span>{item.responsible_contractor || "-"}</span>,
+      render: (item) => (
+        <span>{item.responsible_contractor || "-"}</span>
+      ),
       sortValue: (item) => item.responsible_contractor ?? "",
     },
     {
@@ -178,7 +179,15 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
     },
     {
       ...submittalColumns[8],
-      render: (item) => <span>{item.ball_in_court || "-"}</span>,
+      render: (item) =>
+        item.ball_in_court ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+            {item.ball_in_court}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        ),
       sortValue: (item) => item.ball_in_court ?? "",
     },
     {
@@ -190,9 +199,7 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
       ...submittalColumns[10],
       render: (item) =>
         item.latest_response ? (
-          <Badge variant={responseVariantMap[item.latest_response] ?? "outline"}>
-            {item.latest_response}
-          </Badge>
+          <StatusBadge status={item.latest_response} />
         ) : (
           <span className="text-muted-foreground">-</span>
         ),
@@ -200,6 +207,31 @@ export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
     },
     {
       ...submittalColumns[11],
+      render: (item) => {
+        if (!item.final_due_date)
+          return <span className="text-muted-foreground">-</span>;
+        const days = getDaysUntil(item.final_due_date);
+        const isOverdue = days !== null && days < 0;
+        const isSoon = days !== null && days >= 0 && days <= 5;
+        return (
+          <span
+            className={
+              isOverdue
+                ? "text-destructive font-medium"
+                : isSoon
+                  ? "text-destructive/80"
+                  : "text-foreground"
+            }
+          >
+            {formatDate(item.final_due_date)}
+          </span>
+        );
+      },
+      sortValue: (item) =>
+        item.final_due_date ? new Date(item.final_due_date).getTime() : 0,
+    },
+    {
+      ...submittalColumns[12],
       render: (item) => <span>{formatDate(item.sent_date)}</span>,
       sortValue: (item) =>
         item.sent_date ? new Date(item.sent_date).getTime() : 0,
@@ -215,7 +247,7 @@ export function renderSubmittalCard(
 ): ReactElement {
   return (
     <div
-      className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/50"
+      className="cursor-pointer rounded-lg bg-muted/30 p-4 transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="mb-2 flex items-start justify-between gap-4">
@@ -234,8 +266,14 @@ export function renderSubmittalCard(
         {item.specification_section || item.submittal_type_name || "-"}
       </p>
       {item.ball_in_court && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Ball In Court: {item.ball_in_court}
+        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-foreground">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+          {item.ball_in_court}
+        </p>
+      )}
+      {item.final_due_date && (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Due {formatDate(item.final_due_date)}
         </p>
       )}
     </div>
@@ -258,6 +296,7 @@ export function renderSubmittalList(
         <p className="text-xs text-muted-foreground">
           Rev.&nbsp;{item.revision ?? 0} &middot;{" "}
           {item.specification_section || item.submittal_type_name || "-"}
+          {item.ball_in_court && ` · ${item.ball_in_court}`}
         </p>
       </div>
       <Badge variant={statusVariantMap[item.status] ?? "outline"}>

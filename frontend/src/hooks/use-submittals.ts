@@ -74,6 +74,24 @@ export interface SubmittalDetail extends SubmittalSummary {
     changes: unknown;
     occurred_at: string | null;
   }>;
+  linked_rfis: Array<{
+    link_id: string;
+    link_type: string;
+    note: string | null;
+    linked_at: string;
+    linked_by: string | null;
+    id: string;
+    number: number;
+    subject: string;
+    question: string;
+    status: string;
+    rfi_stage: string | null;
+    date_initiated: string | null;
+    due_date: string | null;
+    ball_in_court: string | null;
+    created_by: string | null;
+    created_at: string;
+  }>;
 }
 
 export type SubmittalAttachment = {

@@ -7,6 +7,7 @@ import { ChevronDown, FileText, MoreVertical, Plus, RotateCcw } from "lucide-rea
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -94,9 +95,8 @@ function PackagePickerDialog({
   React.useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetch(`/api/projects/${projectId}/submittals/packages`)
-      .then((r) => r.json())
-      .then((data: PackageItem[]) => setPackages(data ?? []))
+    apiFetch<PackageItem[]>(`/api/projects/${projectId}/submittals/packages`)
+      .then((data) => setPackages(data ?? []))
       .catch(() => setPackages([]))
       .finally(() => setLoading(false));
   }, [open, projectId]);
@@ -179,9 +179,8 @@ function SpecPickerDialog({
   React.useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetch(`/api/projects/${projectId}/submittals/specs`)
-      .then((r) => r.json())
-      .then((data: SpecItem[]) => setSpecs(data ?? []))
+    apiFetch<SpecItem[]>(`/api/projects/${projectId}/submittals/specs`)
+      .then((data) => setSpecs(data ?? []))
       .catch(() => setSpecs([]))
       .finally(() => setLoading(false));
   }, [open, projectId]);
@@ -359,7 +358,7 @@ function GroupedSubmittalView({
             </div>
 
             {/* Simple table */}
-            <div className="overflow-x-auto rounded-md border border-border">
+            <div className="overflow-x-auto rounded-lg bg-card">
               <table className="w-full text-sm">
                 <thead className="bg-muted">
                   <tr>
@@ -505,7 +504,7 @@ export default function SubmittalsPage(): ReactElement {
   const qc = useQueryClient();
 
   const projectId = parseInt(params.projectId ?? "", 10);
-  const activeTab = searchParams.get("tab") || "items";
+  const activeTab = searchParams.get("tab") || "packages";
 
   useProjectTitle("Submittals");
 
@@ -690,16 +689,16 @@ export default function SubmittalsPage(): ReactElement {
 
   const tabs = [
     {
-      label: "Items",
+      label: "Packages",
       href: `/${projectId}/submittals`,
+      isActive: activeTab === "packages",
+    },
+    {
+      label: "All Items",
+      href: `/${projectId}/submittals?tab=items`,
       count: activeTab === "items" ? filteredItems.length : undefined,
       isActive: activeTab === "items",
       testId: "submittals-tab-items",
-    },
-    {
-      label: "Packages",
-      href: `/${projectId}/submittals?tab=packages`,
-      isActive: activeTab === "packages",
     },
     {
       label: "Spec Sections",

@@ -13,7 +13,7 @@ interface Props {
 
 type SubmittalDetailBase = Omit<
   SubmittalDetail,
-  "attachments" | "responsible_contractor" | "responsible_contractor_id"
+  "attachments" | "responsible_contractor" | "responsible_contractor_id" | "linked_rfis"
 >;
 
 type SubmittalDetailRow = SubmittalDetailBase & {
@@ -85,6 +85,7 @@ export default async function SubmittalDetailPage({ params }: Props) {
         ? null
         : String(submittalRow.responsible_contractor_id),
     responsible_contractor: null,
+    linked_rfis: [],
     attachments: attachments.map((attachment) => ({
       id: attachment.document_metadata_id,
       file_name: attachment.file_name ?? attachment.title ?? "Attachment",
