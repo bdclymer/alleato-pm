@@ -152,6 +152,13 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     description: "Company files and documents",
   },
   {
+    name: "Assignment Inbox",
+    path: "assignment-inbox",
+    requiresProject: false,
+    icon: Inbox,
+    description: "Unassigned meetings, emails, Teams messages, and documents",
+  },
+  {
     name: "Estimates",
     path: "estimates",
     requiresProject: false,
@@ -253,7 +260,13 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
   },
   {
     label: "Work",
-    toolNames: ["Meetings", "Tasks", "Knowledge Base", "Documents"],
+    toolNames: [
+      "Assignment Inbox",
+      "Meetings",
+      "Tasks",
+      "Knowledge Base",
+      "Documents",
+    ],
   },
   {
     label: "Financial",

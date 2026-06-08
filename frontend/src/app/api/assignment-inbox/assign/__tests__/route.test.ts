@@ -1,0 +1,196 @@
+import { NextRequest } from "next/server";
+
+import { POST } from "../route";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import { recordAttributionAssignmentFeedback } from "@/lib/ai/services/feedback-event-service";
+
+jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
+}));
+
+jest.mock("@/lib/supabase/service", () => ({
+  createServiceClient: jest.fn(),
+}));
+
+jest.mock("@/lib/ai/services/feedback-event-service", () => ({
+  recordAttributionAssignmentFeedback: jest.fn().mockResolvedValue(undefined),
+  extractTitleKeywords: jest.fn(() => ["danville", "theatre"]),
+}));
+
+const getUserMock = getApiRouteUser as jest.Mock;
+const createServiceClientMock = createServiceClient as jest.Mock;
+const recordFeedbackMock = recordAttributionAssignmentFeedback as jest.Mock;
+
+function makeRequest(body: Record<string, unknown>): NextRequest {
+  return new NextRequest("http://localhost/api/assignment-inbox/assign", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
+  getUserMock.mockResolvedValue({ id: "11111111-1111-4111-8111-111111111111" });
+});
+
+describe("assignment-inbox assign POST route", () => {
+  it("assigns a document_metadata item and records accepted feedback when the suggestion matched", async () => {
+    const docUpdateEq = jest.fn().mockResolvedValue({ error: null });
+    const docUpdate = jest.fn().mockReturnValue({ eq: docUpdateEq });
+
+    const from = jest.fn((table: string) => {
+      if (table === "projects") {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: jest
+                .fn()
+                .mockResolvedValue({ data: { id: 42, name: "Danville Theatre" }, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === "document_metadata") {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: {
+                  id: "meeting-1",
+                  title: "Danville Theatre kickoff",
+                  file_name: null,
+                  type: "meeting",
+                  category: null,
+                  host_email: "pm@acme.com",
+                  organizer_email: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+          update: docUpdate,
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    createServiceClientMock.mockReturnValue({ from });
+
+    const response = await POST(
+      makeRequest({
+        sourceTable: "document_metadata",
+        itemId: "meeting-1",
+        projectId: 42,
+        suggestedProjectId: 42,
+      }),
+      { params: Promise.resolve({}) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(docUpdate).toHaveBeenCalledWith({ project_id: 42, project: "Danville Theatre" });
+    expect(docUpdateEq).toHaveBeenCalledWith("id", "meeting-1");
+    expect(recordFeedbackMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceTable: "document_metadata",
+        projectId: 42,
+        contentType: "meeting",
+        fromEmail: "pm@acme.com",
+        matchedSuggestion: true,
+      }),
+    );
+  });
+
+  it("assigns an outlook_email_intake item with manual matching metadata and records corrected feedback", async () => {
+    const emailUpdateEq = jest.fn().mockResolvedValue({ error: null });
+    const emailUpdate = jest.fn().mockReturnValue({ eq: emailUpdateEq });
+
+    const from = jest.fn((table: string) => {
+      if (table === "projects") {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: jest
+                .fn()
+                .mockResolvedValue({ data: { id: 7, name: "Acme HQ" }, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === "outlook_email_intake") {
+        return {
+          select: () => ({
+            eq: () => ({
+              is: () => ({
+                maybeSingle: jest.fn().mockResolvedValue({
+                  data: { id: 99, subject: "RFI response", from_email: "gc@builder.com" },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+          update: emailUpdate,
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    createServiceClientMock.mockReturnValue({ from });
+
+    const response = await POST(
+      makeRequest({
+        sourceTable: "outlook_email_intake",
+        itemId: "99",
+        projectId: 7,
+        suggestedProjectId: null,
+      }),
+      { params: Promise.resolve({}) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(emailUpdate).toHaveBeenCalledWith({
+      project_id: 7,
+      match_status: "matched",
+      assignment_method: "manual",
+      assignment_confidence: 1.0,
+    });
+    expect(emailUpdateEq).toHaveBeenCalledWith("id", 99);
+    expect(recordFeedbackMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceTable: "outlook_email_intake",
+        contentType: "email",
+        matchedSuggestion: false,
+      }),
+    );
+  });
+
+  it("rejects assignment to a non-existent project", async () => {
+    const from = jest.fn((table: string) => {
+      if (table === "projects") {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: jest
+                .fn()
+                .mockResolvedValue({ data: null, error: { message: "not found" } }),
+            }),
+          }),
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    createServiceClientMock.mockReturnValue({ from });
+
+    const response = await POST(
+      makeRequest({ sourceTable: "document_metadata", itemId: "x", projectId: 9999 }),
+      { params: Promise.resolve({}) },
+    );
+
+    expect(response.status).toBe(400);
+    expect(recordFeedbackMock).not.toHaveBeenCalled();
+  });
+});

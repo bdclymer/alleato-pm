@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-05-21
+Last verified: 2026-06-08
 
 ---
 
@@ -531,7 +531,7 @@ These are not hypothetical — they are confirmed missing based on Phase 1 compl
 | Smart template pre-filling | RFI and change order forms have no AI pre-fill | 3D |
 | Predictive analytics | No project completion probability or budget overrun prediction models | 4B |
 | `conversation_memory` admin UI | `/admin/users/[id]` profile editor designed but not confirmed built | — |
-| Low-confidence email attribution UI | `document_attribution_candidates` review queue has no frontend | — |
+| Low-confidence email attribution UI | Now surfaced in the **Assignment Inbox** (`/assignment-inbox`) — unified worklist of unassigned meetings, emails, Teams messages, and documents with AI suggestions from `document_attribution_candidates`. | Done |
 
 The `ai_insights` table schema exists and is ready for Phase 2 insert operations. The `project_health_dashboard` and `project_issue_summary` views exist and are queried by risk tools.
 
@@ -644,7 +644,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `frontend/src/lib/ai/services/ai-memory-service.ts` | Core read/write layer for PM APP `ai_memories` plus AI Database memory chunks. Handles exact-content dedupe, commitment bridge to `ai_insights`, active/expiry hydration filters, owner/team visibility scoping, selected-project recall, default 183-day semantic lookback, freshness-first ranking, and AI Database chunk sync/delete for `source_type='ai_memory'`. | conversation-memory.ts, memory-extraction.ts |
 | `frontend/src/lib/ai/services/memory-extraction.ts` | Extracts typed memories (fact, preference, lesson, commitment, context) from the latest 40 chat messages after conversation response persistence via gpt-4.1-nano. Scheduled by `handler-v2.ts` through `runPostResponseTasks()`. | ai-memory-service.ts |
 | `frontend/src/lib/ai/services/agent-learning-service.ts` | Records agent-learning events (thumbs_down, admin_feedback, eval_failure) and trains few-shot examples for future routing. | feedback-event-service.ts, task-training-service.ts |
-| `frontend/src/lib/ai/services/feedback-event-service.ts` | Records AI feedback events and writes corresponding memories. Single entry point from feedback API route. Brandon email draft feedback stores the active voice profile version and points future agents to the companion operating profile and drafting playbook under `docs/ai-plan/`. | agent-learning-service.ts, ai-memory-service.ts |
+| `frontend/src/lib/ai/services/feedback-event-service.ts` | Records AI feedback events and writes corresponding memories. Single entry point from feedback API route. Brandon email draft feedback stores the active voice profile version and points future agents to the companion operating profile and drafting playbook under `docs/ai-plan/`. **Project-attribution learning loop:** `recordAttributionAssignmentFeedback` logs every manual Assignment-Inbox assignment (event_family `attribution`); `generateAttributionRulePromotionCandidates` mines those events for recurring sender-domain / sender-email / title-keyword → project patterns and proposes `attribution_rule` promotions; `applyAttributionRulePromotion` branches on `proposed_learning.ruleKind` to upsert generalizable rules into `project_attribution_rules` (the table the backend ProjectAssigner reads at highest priority). | agent-learning-service.ts, ai-memory-service.ts |
 | `frontend/src/lib/ai/services/task-training-service.ts` | Task-specific feedback training — categorized reasons (wrong_project, wrong_owner, etc.) for task extraction failures. | task-feedback-types.ts |
 | `frontend/src/lib/ai/services/marketing-service.ts` | CRUD for marketing intelligence items, content calendar, content assets. Backs CMO agent and marketing routes. | cmo.ts, marketing.ts |
 | `frontend/src/lib/ai/services/project-intelligence-summary.ts` | `summarizeProjectIntelligence` — runs `generateObject` over project sources to produce a cited summary with confidence scores. | project-operating-summary-sources.ts |
@@ -769,6 +769,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `frontend/src/lib/ai/tools/__tests__/project-tools-barrel.test.ts` | All project tools are exported and have expected signatures. | project-tools.ts |
 | `frontend/src/lib/ai/tools/__tests__/tool-utils.test.ts` | Embedding config + helper coverage. | tool-utils.ts |
 | `frontend/src/lib/ai/services/__tests__/feedback-event-service.test.ts` | Feedback event persistence + memory bridge. | feedback-event-service.ts |
+| `frontend/src/lib/ai/services/__tests__/attribution-learning.test.ts` | Attribution rule mining from manual assignments + title keyword extraction. | feedback-event-service.ts |
 | `frontend/src/lib/ai/services/__tests__/marketing-service.test.ts` | Marketing CRUD service. | marketing-service.ts |
 | `frontend/src/lib/ai/services/__tests__/project-intelligence-summary.test.ts` | Summary `generateObject` output shape. | project-intelligence-summary.ts |
 | `frontend/src/lib/ai/services/__tests__/source-sync-summary.test.ts` | Source sync summary generation. | source-sync-summary.ts |

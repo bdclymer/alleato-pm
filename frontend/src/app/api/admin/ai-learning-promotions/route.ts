@@ -185,7 +185,8 @@ export const POST = withApiGuardrails(
           ok: true,
           action: body.action,
           promotion: result.promotion,
-          attributionCandidate: result.attributionCandidate,
+          attributionCandidate: result.attributionCandidate ?? null,
+          attributionRule: result.attributionRule ?? null,
         });
       }
 

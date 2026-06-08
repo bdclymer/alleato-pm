@@ -33,7 +33,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; drawingId: string }>
   }
 
   // Record change history (best-effort — don't fail the request if this errors)
-  void Promise.resolve(supabase.from("drawing_change_history" as Parameters<typeof supabase.from>[0]).insert({
+  void Promise.resolve(supabase.from("drawing_change_history").insert({
     drawing_id: drawingId,
     project_id: projectIdNum,
     changed_by: user.id,
@@ -74,7 +74,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; drawingId: string }
   }
 
   // Record change history (best-effort — don't fail the request if this errors)
-  void Promise.resolve(supabase.from("drawing_change_history" as Parameters<typeof supabase.from>[0]).insert({
+  void Promise.resolve(supabase.from("drawing_change_history").insert({
     drawing_id: drawingId,
     project_id: projectIdNum,
     changed_by: user.id,

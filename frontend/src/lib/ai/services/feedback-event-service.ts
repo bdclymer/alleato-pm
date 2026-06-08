@@ -31,6 +31,10 @@ export type DocumentAttributionCandidateRow =
   Tables["document_attribution_candidates"]["Row"];
 export type DocumentAttributionCandidateInsert =
   Tables["document_attribution_candidates"]["Insert"];
+export type ProjectAttributionRuleRow =
+  Tables["project_attribution_rules"]["Row"];
+export type ProjectAttributionRuleInsert =
+  Tables["project_attribution_rules"]["Insert"];
 
 export type AiFeedbackEventFamily =
   | "retrieval"
@@ -364,7 +368,78 @@ export interface ApplyAttributionRulePromotionParams {
 
 export interface ApplyAttributionRulePromotionResult {
   promotion: AiLearningPromotionRow;
-  attributionCandidate: DocumentAttributionCandidateRow;
+  /** Set when the promotion applied a single document attribution candidate. */
+  attributionCandidate?: DocumentAttributionCandidateRow;
+  /**
+   * Set when the promotion applied a generalizable project attribution rule
+   * (proposed_learning.ruleKind === "project_attribution_rule"). This is the
+   * destination the backend ProjectAssigner reads at highest priority.
+   */
+  attributionRule?: ProjectAttributionRuleRow;
+}
+
+/**
+ * Rule kinds the AI proposes from manual project assignments. These map directly
+ * onto `project_attribution_rules.rule_type`.
+ */
+export type AttributionRuleKind =
+  | "domain"
+  | "email"
+  | "title_keyword";
+
+export interface RecordAttributionAssignmentFeedbackParams {
+  userId?: string | null;
+  /** Project the item was assigned to. */
+  projectId: number;
+  projectName?: string | null;
+  /** Underlying table the item lives in. */
+  sourceTable: "document_metadata" | "outlook_email_intake";
+  /** Primary key of the assigned row (stringified for numeric ids). */
+  sourceRecordId: string;
+  /** meeting | email | teams | document */
+  contentType: string;
+  /** Sender / organizer email when known — used to mine domain + email rules. */
+  fromEmail?: string | null;
+  /** Salient keywords from the title/subject — used to mine title rules. */
+  titleKeywords?: string[];
+  /** The project the AI suggested, if any. */
+  suggestedProjectId?: number | null;
+  /** True when the assigned project equals the AI suggestion. */
+  matchedSuggestion: boolean;
+  surface?: string;
+  sessionId?: string | null;
+}
+
+export interface GenerateAttributionRulePromotionCandidatesParams {
+  windowDays?: number;
+  /** Minimum consistent assignments for a pattern to become a candidate. */
+  minSignals?: number;
+  /** Minimum share of assignments that must agree on one project (0-1). */
+  minConsistency?: number;
+  limit?: number;
+  dryRun?: boolean;
+}
+
+export interface AttributionRulePromotionCandidatePreview {
+  signature: string;
+  promotionType: Extract<AiLearningPromotionType, "attribution_rule">;
+  projectId: number;
+  confidence: number;
+  riskLevel: AiLearningRiskLevel;
+  destinationTable: "project_attribution_rules";
+  destinationRecordId: null;
+  sourceEventIds: string[];
+  proposedLearning: Json;
+}
+
+export interface GenerateAttributionRulePromotionCandidatesResult {
+  inspectedRows: number;
+  groupsInspected: number;
+  candidatesFound: number;
+  candidatesCreated: number;
+  candidatesSkipped: number;
+  dryRun: boolean;
+  candidates: AttributionRulePromotionCandidatePreview[];
 }
 
 export type AiRetrievalWeightStatus = "active" | "paused" | "superseded";
@@ -2403,6 +2478,493 @@ export async function applyMemoryPromotion(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Project attribution learning loop
+//
+// Every manual project assignment in the Assignment Inbox records an
+// `ai_feedback_events` row (event_family "attribution"). The generator below
+// mines those events for repeatable patterns (sender domain, sender email,
+// title keyword) and proposes generalizable `project_attribution_rules` for
+// admin review. Once approved + applied, the backend ProjectAssigner reads the
+// rule at highest priority — so future items auto-match without manual work.
+// ---------------------------------------------------------------------------
+
+const ATTRIBUTION_EVENT_TYPE = "project_assignment_recorded";
+
+/** Public / first-party domains that must never become an attribution rule. */
+const ATTRIBUTION_DOMAIN_EXCLUSIONS = new Set([
+  "alleatogroup.com",
+  "gmail.com",
+  "googlemail.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "yahoo.com",
+  "icloud.com",
+  "me.com",
+  "aol.com",
+  "msn.com",
+  "proton.me",
+  "protonmail.com",
+]);
+
+const ATTRIBUTION_TITLE_STOPWORDS = new Set([
+  "the", "and", "for", "with", "from", "this", "that", "have", "has", "are",
+  "was", "were", "you", "your", "our", "their", "his", "her", "its", "meeting",
+  "call", "email", "re", "fwd", "fw", "update", "weekly", "daily", "notes",
+  "discussion", "review", "sync", "catch", "general", "team", "project",
+  "regarding", "about", "please", "thanks", "thank", "hi", "hello", "all",
+]);
+
+function extractEmailDomain(email: string | null | undefined): string | null {
+  if (!email) return null;
+  const at = email.lastIndexOf("@");
+  if (at < 0) return null;
+  const domain = email.slice(at + 1).trim().toLowerCase();
+  if (!domain || !domain.includes(".")) return null;
+  return domain;
+}
+
+/** Pull salient lowercase tokens from a title/subject for keyword rule mining. */
+export function extractTitleKeywords(
+  title: string | null | undefined,
+  max = 6,
+): string[] {
+  if (!title) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of title.toLowerCase().split(/[^a-z0-9]+/)) {
+    const token = raw.trim();
+    if (token.length < 4) continue;
+    if (ATTRIBUTION_TITLE_STOPWORDS.has(token)) continue;
+    if (/^\d+$/.test(token)) continue;
+    if (seen.has(token)) continue;
+    seen.add(token);
+    out.push(token);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+function normalizeAttributionPattern(pattern: string): string {
+  return pattern
+    .toLowerCase()
+    .replace(/[^a-z0-9@.]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function attributionRuleSignature(
+  ruleType: AttributionRuleKind,
+  pattern: string,
+  projectId: number,
+): string {
+  return `project_attribution_rule|${ruleType}|${normalizeAttributionPattern(pattern)}|${projectId}`;
+}
+
+/** Lower priority value = matched first by the backend ProjectAssigner. */
+function attributionRulePriority(ruleType: AttributionRuleKind): number {
+  if (ruleType === "email") return 12;
+  if (ruleType === "domain") return 22;
+  return 42; // title_keyword — broadest, lowest precedence
+}
+
+function attributionRuleConfidence(signalCount: number, consistency: number): number {
+  const volume = Math.min(0.2, signalCount * 0.04);
+  return Math.min(0.97, Math.max(0.7, 0.6 + volume + (consistency - 0.8)));
+}
+
+/**
+ * Record one manual project assignment as an attribution feedback event. Safe to
+ * call from request handlers — failures are surfaced via AiFeedbackEventError.
+ */
+export async function recordAttributionAssignmentFeedback(
+  params: RecordAttributionAssignmentFeedbackParams,
+): Promise<AiFeedbackEventRow> {
+  const domain = extractEmailDomain(params.fromEmail);
+  const titleKeywords = (params.titleKeywords ?? []).filter(
+    (keyword) => typeof keyword === "string" && keyword.trim().length > 0,
+  );
+
+  return recordAiFeedbackEvent({
+    userId: params.userId,
+    projectId: params.projectId,
+    sessionId: params.sessionId ?? null,
+    sourceTable: params.sourceTable,
+    sourceRecordId: params.sourceRecordId,
+    eventType: ATTRIBUTION_EVENT_TYPE,
+    eventFamily: "attribution",
+    surface: params.surface ?? "assignment_inbox",
+    subjectType: params.contentType,
+    subjectId: params.sourceRecordId,
+    signal: params.matchedSuggestion ? "accepted" : "corrected",
+    reasonCategory: params.matchedSuggestion
+      ? "suggestion_accepted"
+      : "manual_assignment",
+    sourceContext: {
+      sourceTable: params.sourceTable,
+      sourceRecordId: params.sourceRecordId,
+      contentType: params.contentType,
+      projectId: params.projectId,
+      projectName: params.projectName ?? null,
+      suggestedProjectId: params.suggestedProjectId ?? null,
+      fromEmail: params.fromEmail?.trim().toLowerCase() ?? null,
+      fromDomain: domain,
+      titleKeywords,
+    },
+    metadata: {
+      action: "assign",
+      matchedSuggestion: params.matchedSuggestion,
+      signals: {
+        domain,
+        email: params.fromEmail?.trim().toLowerCase() ?? null,
+        titleKeywords,
+      },
+    },
+  });
+}
+
+interface AttributionPatternGroup {
+  ruleType: AttributionRuleKind;
+  pattern: string;
+  byProject: Map<number, { count: number; eventIds: string[]; projectName: string | null }>;
+  total: number;
+}
+
+function attributionGroupKey(ruleType: AttributionRuleKind, pattern: string): string {
+  return `${ruleType}|${normalizeAttributionPattern(pattern)}`;
+}
+
+export async function generateAttributionRulePromotionCandidates(
+  params: GenerateAttributionRulePromotionCandidatesParams = {},
+): Promise<GenerateAttributionRulePromotionCandidatesResult> {
+  const windowDays = Math.min(180, Math.max(1, params.windowDays ?? 60));
+  const minSignals = Math.min(25, Math.max(2, params.minSignals ?? 3));
+  const minConsistency = Math.min(1, Math.max(0.5, params.minConsistency ?? 0.8));
+  const limit = Math.min(100, Math.max(1, params.limit ?? 25));
+  const dryRun = params.dryRun ?? false;
+  const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from("ai_feedback_events")
+    .select("*")
+    .eq("event_family", "attribution")
+    .eq("event_type", ATTRIBUTION_EVENT_TYPE)
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(5_000);
+
+  if (error) {
+    throw new AiFeedbackEventError("ai_feedback_events", "select", error.message);
+  }
+
+  const rows = (data ?? []) as AiFeedbackEventRow[];
+  const groups = new Map<string, AttributionPatternGroup>();
+
+  const register = (
+    ruleType: AttributionRuleKind,
+    pattern: string,
+    projectId: number,
+    projectName: string | null,
+    eventId: string,
+  ) => {
+    const normalized = normalizeAttributionPattern(pattern);
+    if (!normalized) return;
+    if (ruleType === "domain" && ATTRIBUTION_DOMAIN_EXCLUSIONS.has(normalized)) return;
+    if (ruleType === "email") {
+      const domain = extractEmailDomain(normalized);
+      if (domain && ATTRIBUTION_DOMAIN_EXCLUSIONS.has(domain)) return;
+    }
+    const key = attributionGroupKey(ruleType, pattern);
+    let group = groups.get(key);
+    if (!group) {
+      group = { ruleType, pattern: normalized, byProject: new Map(), total: 0 };
+      groups.set(key, group);
+    }
+    const bucket = group.byProject.get(projectId) ?? {
+      count: 0,
+      eventIds: [],
+      projectName,
+    };
+    bucket.count += 1;
+    bucket.eventIds.push(eventId);
+    if (projectName && !bucket.projectName) bucket.projectName = projectName;
+    group.byProject.set(projectId, bucket);
+    group.total += 1;
+  };
+
+  for (const row of rows) {
+    const context = jsonRecord(row.source_context);
+    const projectId = optionalLearningNumber(context, "projectId") ?? row.project_id;
+    if (!projectId || projectId <= 0) continue;
+    const projectName = optionalLearningString(context, "projectName");
+
+    const domain = optionalLearningString(context, "fromDomain");
+    if (domain) register("domain", domain, projectId, projectName, row.id);
+
+    const email = optionalLearningString(context, "fromEmail");
+    if (email) register("email", email, projectId, projectName, row.id);
+
+    for (const keyword of optionalLearningStringArray(context, "titleKeywords")) {
+      register("title_keyword", keyword, projectId, projectName, row.id);
+    }
+  }
+
+  const existingPromotionSigs = await existingPromotionSignaturesForType(
+    supabase,
+    "attribution_rule",
+  );
+
+  // Skip patterns already covered by an active rule.
+  const { data: activeRules } = await supabase
+    .from("project_attribution_rules")
+    .select("project_id, rule_type, pattern_normalized")
+    .eq("status", "active")
+    .limit(5_000);
+  const activeRuleSigs = new Set(
+    (activeRules ?? []).map((rule) =>
+      attributionRuleSignature(
+        rule.rule_type as AttributionRuleKind,
+        rule.pattern_normalized,
+        rule.project_id,
+      ),
+    ),
+  );
+
+  const candidates: AttributionRulePromotionCandidatePreview[] = [];
+
+  for (const group of groups.values()) {
+    if (candidates.length >= limit) break;
+    if (group.total < minSignals) continue;
+
+    let dominantProjectId = 0;
+    let dominant = { count: 0, eventIds: [] as string[], projectName: null as string | null };
+    for (const [projectId, bucket] of group.byProject) {
+      if (bucket.count > dominant.count) {
+        dominant = bucket;
+        dominantProjectId = projectId;
+      }
+    }
+    if (dominantProjectId <= 0) continue;
+    if (dominant.count < minSignals) continue;
+
+    const consistency = dominant.count / group.total;
+    if (consistency < minConsistency) continue;
+
+    const signature = attributionRuleSignature(
+      group.ruleType,
+      group.pattern,
+      dominantProjectId,
+    );
+    if (existingPromotionSigs.has(signature)) continue;
+    if (activeRuleSigs.has(signature)) continue;
+
+    const confidence = attributionRuleConfidence(dominant.count, consistency);
+    const proposedLearning: Json = {
+      signature,
+      ruleKind: "project_attribution_rule",
+      ruleType: group.ruleType,
+      pattern: group.pattern,
+      patternNormalized: normalizeAttributionPattern(group.pattern),
+      projectId: dominantProjectId,
+      projectName: dominant.projectName,
+      priority: attributionRulePriority(group.ruleType),
+      title: `Auto-assign ${group.ruleType.replace("_", " ")} "${group.pattern}" → ${
+        dominant.projectName ?? `Project ${dominantProjectId}`
+      }`,
+      signalCount: dominant.count,
+      totalSignals: group.total,
+      consistency: Math.round(consistency * 100) / 100,
+      evidenceWindowDays: windowDays,
+      rationale:
+        `You assigned ${dominant.count} item(s) matching ${group.ruleType.replace("_", " ")} ` +
+        `"${group.pattern}" to ${dominant.projectName ?? `Project ${dominantProjectId}`}. ` +
+        "Approve to let the matcher auto-route future items with this pattern.",
+    };
+
+    candidates.push({
+      signature,
+      promotionType: "attribution_rule",
+      projectId: dominantProjectId,
+      confidence,
+      riskLevel: group.ruleType === "title_keyword" ? "medium" : "low",
+      destinationTable: "project_attribution_rules",
+      destinationRecordId: null,
+      sourceEventIds: dominant.eventIds.slice(0, 50),
+      proposedLearning,
+    });
+  }
+
+  if (dryRun || candidates.length === 0) {
+    return {
+      inspectedRows: rows.length,
+      groupsInspected: groups.size,
+      candidatesFound: candidates.length,
+      candidatesCreated: 0,
+      candidatesSkipped: candidates.length,
+      dryRun,
+      candidates,
+    };
+  }
+
+  const payload: AiLearningPromotionInsert[] = candidates.map((candidate) => ({
+    status: "candidate",
+    promotion_type: candidate.promotionType,
+    project_id: candidate.projectId,
+    target_id: null,
+    source_event_ids: candidate.sourceEventIds,
+    destination_table: candidate.destinationTable,
+    destination_record_id: null,
+    confidence: candidate.confidence,
+    risk_level: candidate.riskLevel,
+    proposed_learning: candidate.proposedLearning,
+    review_notes: null,
+  }));
+
+  const { data: created, error: insertError } = await supabase
+    .from("ai_learning_promotions")
+    .insert(payload)
+    .select("*");
+
+  if (insertError || !created) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "insert_batch",
+      insertError?.message ?? "batch insert returned no rows",
+    );
+  }
+
+  return {
+    inspectedRows: rows.length,
+    groupsInspected: groups.size,
+    candidatesFound: candidates.length,
+    candidatesCreated: created.length,
+    candidatesSkipped: candidates.length - created.length,
+    dryRun,
+    candidates,
+  };
+}
+
+/**
+ * Apply an approved attribution_rule promotion whose proposed_learning describes
+ * a generalizable rule (ruleKind === "project_attribution_rule"). Upserts into
+ * `project_attribution_rules` — the table the backend ProjectAssigner reads.
+ */
+async function applyProjectAttributionRulePromotion(
+  promotion: AiLearningPromotionRow,
+  learning: Record<string, unknown>,
+  params: ApplyAttributionRulePromotionParams,
+): Promise<ApplyAttributionRulePromotionResult> {
+  const supabase = createServiceClient();
+  const reviewedBy = optionalUuid(
+    params.reviewedBy,
+    "reviewedBy",
+    "project_attribution_rules",
+  );
+
+  const ruleType = (optionalLearningString(learning, "ruleType") ??
+    "title_keyword") as AttributionRuleKind;
+  const pattern = requiredLearningString(learning, "pattern");
+  const projectId =
+    optionalLearningNumber(learning, "projectId") ?? promotion.project_id;
+  if (!projectId || projectId <= 0) {
+    throw new AiFeedbackEventError(
+      "project_attribution_rules",
+      "validate",
+      "proposed_learning.projectId is required",
+    );
+  }
+  const patternNormalized = normalizeAttributionPattern(pattern);
+  if (!patternNormalized) {
+    throw new AiFeedbackEventError(
+      "project_attribution_rules",
+      "validate",
+      "attribution rule pattern must contain searchable text",
+    );
+  }
+
+  const priority =
+    optionalLearningNumber(learning, "priority") ??
+    attributionRulePriority(ruleType);
+
+  const { data: rule, error: ruleError } = await supabase
+    .from("project_attribution_rules")
+    .upsert(
+      {
+        project_id: projectId,
+        rule_type: ruleType,
+        pattern,
+        pattern_normalized: patternNormalized,
+        confidence: clampConfidence(promotion.confidence),
+        priority,
+        source: "ai_learning_promotion",
+        notes: optionalLearningString(learning, "rationale"),
+        status: "active",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "project_id,rule_type,pattern_normalized" },
+    )
+    .select("*")
+    .single();
+
+  if (ruleError || !rule) {
+    throw new AiFeedbackEventError(
+      "project_attribution_rules",
+      "upsert",
+      ruleError?.message ?? "rule upsert returned no row",
+    );
+  }
+
+  const { data: updatedPromotion, error: updateError } = await supabase
+    .from("ai_learning_promotions")
+    .update({
+      status: "applied",
+      destination_table: "project_attribution_rules",
+      destination_record_id: rule.id,
+    })
+    .eq("id", promotion.id)
+    .select("*")
+    .single();
+
+  if (updateError || !updatedPromotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "update",
+      updateError?.message ?? "promotion status update returned no row",
+    );
+  }
+
+  await recordAiFeedbackEvent({
+    userId: params.reviewedBy,
+    projectId,
+    sourceTable: "ai_learning_promotions",
+    sourceRecordId: promotion.id,
+    eventType: "attribution_rule_applied",
+    eventFamily: "attribution",
+    surface: "admin_ai_learning_promotions",
+    subjectType: "project_attribution_rule",
+    subjectId: rule.id,
+    signal: "accepted",
+    reasonCategory: "attribution_rule_apply",
+    freeText: params.reviewNotes ?? null,
+    sourceContext: {
+      promotionId: promotion.id,
+      promotionType: promotion.promotion_type,
+      proposedLearning: promotion.proposed_learning,
+    },
+    metadata: {
+      action: "apply",
+      ruleKind: "project_attribution_rule",
+      ruleId: rule.id,
+      ruleType,
+      pattern: patternNormalized,
+    },
+  });
+
+  return { promotion: updatedPromotion, attributionRule: rule };
+}
+
 export async function applyAttributionRulePromotion(
   params: ApplyAttributionRulePromotionParams,
 ): Promise<ApplyAttributionRulePromotionResult> {
@@ -2453,6 +3015,12 @@ export async function applyAttributionRulePromotion(
   }
 
   const learning = jsonRecord(promotion.proposed_learning);
+
+  // Generalizable rule mined from manual assignments → project_attribution_rules.
+  if (optionalLearningString(learning, "ruleKind") === "project_attribution_rule") {
+    return applyProjectAttributionRulePromotion(promotion, learning, params);
+  }
+
   const candidateId = optionalLearningString(learning, "candidateId");
   const reviewedBy = optionalUuid(
     params.reviewedBy,
