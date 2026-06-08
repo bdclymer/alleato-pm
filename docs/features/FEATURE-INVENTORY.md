@@ -72,6 +72,7 @@
 61. [Help Article System](#61-help-article-system)
 62. [Live Component Gallery & Design Lab](#62-live-component-gallery--design-lab)
 63. [Subcontractor Navigation Mode](#63-subcontractor-navigation-mode)
+64. [Progress Reports Generation](#64-progress-reports-generation)
 
 ---
 
@@ -1095,6 +1096,28 @@
 - `frontend/src/lib/navigation-config.ts` — `subcontractorTools` array, `subcontractorSidebarGroup`
 - `frontend/src/components/app-sidebar.tsx`
 
+---
+
+## 64. Progress Reports Generation
+
+**What it is:** Weekly project progress report generation, including idempotent draft creation, deterministic source-based report sections, optional AI narrative enrichment, editor updates, PDF generation, and email delivery.
+
+**URL:** `/{projectId}/progress-reports`
+
+| Component | File |
+|-----------|------|
+| Generation doc | `docs/features/progress-reports-generation.md` |
+| Persistence/service layer | `frontend/src/lib/progress-reports/server.ts` |
+| Deterministic draft builder | `frontend/src/lib/progress-reports/report-builder.ts` |
+| AI narrative enrichment | `frontend/src/lib/progress-reports/ai-generate.ts` |
+| Project API | `frontend/src/app/api/projects/[projectId]/progress-reports/route.ts` |
+| Manual AI regenerate API | `frontend/src/app/api/projects/[projectId]/progress-reports/[reportId]/ai-generate/route.ts` |
+| Cron API | `frontend/src/app/api/cron/progress-reports/route.ts` |
+| Editor | `frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/progress-report-editor.tsx` |
+| PDF/email output | `frontend/src/lib/progress-reports/pdf.ts` |
+
+**Tables:** `project_progress_reports`, `project_progress_report_photos`, `project_photos`, `document_metadata`, `project_emails`
+
 
 1. [AI Assistant (C-Suite Multi-Agent Chat)](#1-ai-assistant-c-suite-multi-agent-chat)
 2. [RAG Pipeline & Semantic Search](#2-rag-pipeline--semantic-search)
@@ -1152,6 +1175,7 @@
 61. [Help Article System](#61-help-article-system)
 62. [Live Component Gallery & Design Lab](#62-live-component-gallery--design-lab)
 63. [Subcontractor Navigation Mode](#63-subcontractor-navigation-mode)
+64. [Progress Reports Generation](#64-progress-reports-generation)
 
 
 1. [AI Assistant (C-Suite Multi-Agent Chat)](#1-ai-assistant-c-suite-multi-agent-chat)

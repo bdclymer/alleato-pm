@@ -15,6 +15,22 @@ import type {
   ProgressReportPhotoSelection,
 } from "@/lib/progress-reports/types";
 
+/**
+ * Progress report persistence/service layer.
+ *
+ * This file owns the database contract for progress reports:
+ * - reads/writes `project_progress_reports`
+ * - manages selected photo links in `project_progress_report_photos`
+ * - gathers project team contacts for the report contact block
+ * - calls the deterministic builder to create the first draft content
+ *
+ * AI enrichment is intentionally not owned here. API routes may call
+ * `generateProgressReportSections()` after `createProgressReportDraft()`, but
+ * this service keeps draft creation deterministic and retry-safe.
+ */
+
+// Raw Supabase row shapes used before coercing JSON/unknown columns into the
+// stricter progress-report API types consumed by pages and route handlers.
 interface ProgressReportRow {
   id: string;
   project_id: number;
@@ -92,6 +108,8 @@ interface ProgressReportProjectRow {
   project_number: string | null;
 }
 
+// JSON columns are not trusted at runtime. These parsers keep corrupt or older
+// rows from crashing the editor/list pages and provide conservative defaults.
 function parseContacts(value: unknown): ProgressReportContact[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -194,6 +212,8 @@ function mapReport(row: ProgressReportRow): ProgressReportRecord {
   };
 }
 
+// Supabase accepts JSON-compatible objects for `contacts`, but the app should
+// only persist the stable public shape used by the editor/PDF/email surfaces.
 function contactsToJson(contacts: ProgressReportContact[]): Json {
   return contacts.map((contact) => ({
     role: contact.role,
@@ -228,6 +248,16 @@ export function mergeProgressReportContacts(
   return contacts;
 }
 
+/**
+ * Builds the default contact list shown on new progress reports.
+ *
+ * Source priority:
+ * 1. `project_roles` + `project_role_members`, which the Directory role UI owns.
+ * 2. `project_directory_memberships`, for legacy/direct membership role labels.
+ *
+ * The merge step dedupes by email/name/phone/role so the same person can appear
+ * through both systems without duplicating on the report.
+ */
 export async function listProjectTeamContacts(projectId: number): Promise<ProgressReportContact[]> {
   const db = createServiceClient();
 
@@ -310,6 +340,9 @@ export async function listProjectTeamContacts(projectId: number): Promise<Progre
   return mergeProgressReportContacts(contacts, []);
 }
 
+// Convert the draft builder's typed source snapshot back into the DB JSON shape.
+// This snapshot is an audit/debug aid: it records which meetings, emails, and
+// photos contributed to the initial deterministic draft.
 function sourceSnapshotToJson(snapshot: ProgressReportSourceSnapshot): Json {
   return {
     generatedAt: snapshot.generatedAt,
@@ -368,6 +401,9 @@ export async function listProgressReports(
   }));
 }
 
+// Returns the cross-project progress report table view. This intentionally
+// enriches reports with project identity in one batch instead of joining through
+// the report query, keeping the JSON parsing path shared with project lists.
 export async function listAllProgressReports(): Promise<ProgressReportAllListItem[]> {
   const db = createServiceClient();
 
@@ -426,6 +462,8 @@ export async function listAllProgressReports(): Promise<ProgressReportAllListIte
   });
 }
 
+// Detail payload for the editor: persisted report, currently selected photos,
+// and the available project photo library used to change selections.
 export async function getProgressReportDetail(
   projectId: number,
   reportId: string,
@@ -493,6 +531,23 @@ function dateInRange(dateValue: string | null | undefined, start: string, end: s
   return value >= start && value <= end;
 }
 
+/**
+ * Creates a weekly draft report if one does not already exist for the same
+ * project/week range.
+ *
+ * Idempotency is important because this function is called by both manual UI
+ * actions and scheduled/admin cron endpoints. If the report already exists, the
+ * existing ID is returned and no source data is rebuilt or overwritten.
+ *
+ * Draft generation flow:
+ * 1. Resolve or default the weekly date range.
+ * 2. Check for an existing `project_progress_reports` row for that range.
+ * 3. Load recent project source data in parallel.
+ * 4. Filter source rows to the week, falling back to recent rows when the week
+ *    is empty so the draft is useful instead of blank.
+ * 5. Build deterministic client-facing sections with `buildProgressReportDraft`.
+ * 6. Persist the report and selected photo links.
+ */
 export async function createProgressReportDraft({
   projectId,
   userId,
@@ -509,6 +564,8 @@ export async function createProgressReportDraft({
   const db = createServiceClient();
   const range = weekStart && weekEnd ? { weekStart, weekEnd } : defaultWeeklyReportRange();
 
+  // This lookup is the idempotency gate. It prevents cron retries and repeated
+  // button clicks from creating duplicate weekly progress reports.
   const { data: existing } = await db
     .from("project_progress_reports")
     .select("id")
@@ -521,6 +578,8 @@ export async function createProgressReportDraft({
     return { reportId: existing.id as string };
   }
 
+  // Pull all source inputs in parallel. The builder receives already-loaded data
+  // and stays pure/deterministic; this service owns all Supabase access.
   const [
     projectResult,
     meetingsResult,
@@ -571,6 +630,9 @@ export async function createProgressReportDraft({
   if (emailsResult.error) throw new Error(emailsResult.error.message);
   if (photosResult.error) throw new Error(photosResult.error.message);
 
+  // Prefer source material inside the requested reporting week. If a source type
+  // has no weekly rows, fall back to the recent query result so the generated
+  // draft still gives the PM something concrete to edit.
   const meetings = ((meetingsResult.data ?? []) as Array<Record<string, unknown>>).filter(
     (meeting) => dateInRange(meeting.date as string | null, range.weekStart, range.weekEnd),
   );
@@ -607,6 +669,8 @@ export async function createProgressReportDraft({
     projectContacts,
   });
 
+  // Persist the report body first. Photo selections are stored in a separate
+  // link table so editors can reorder/caption images without mutating photo rows.
   const { data: created, error: createError } = await db
     .from("project_progress_reports")
     .insert({
@@ -635,6 +699,8 @@ export async function createProgressReportDraft({
     throw new Error(createError?.message ?? "Could not create progress report");
   }
 
+  // Initial photo picks come from the builder's deterministic top-photo choice.
+  // Later editor saves replace these links in `saveProgressReport()`.
   if (draft.selectedPhotos.length > 0) {
     const { error: photosInsertError } = await db
       .from("project_progress_report_photos")
@@ -657,6 +723,13 @@ export async function createProgressReportDraft({
   return { reportId: created.id as string };
 }
 
+/**
+ * Saves manual editor changes.
+ *
+ * This function does not regenerate deterministic or AI content. It trusts the
+ * editor payload as the current report of record, then replaces photo links as a
+ * full set to keep ordering simple and deterministic.
+ */
 export async function saveProgressReport({
   projectId,
   reportId,
@@ -688,6 +761,8 @@ export async function saveProgressReport({
 }) {
   const db = createServiceClient();
 
+  // Main report update: client-facing text, date range, contacts, status, and
+  // send timestamp. The `sent_at` value mirrors the editor status transition.
   const { error: updateError } = await db
     .from("project_progress_reports")
     .update({
@@ -712,6 +787,8 @@ export async function saveProgressReport({
 
   if (updateError) throw new Error(updateError.message);
 
+  // Photo links are replaced wholesale because the editor sends the intended
+  // final ordered list. This avoids diff bugs around removed/reordered photos.
   const { error: deleteLinksError } = await db
     .from("project_progress_report_photos")
     .delete()

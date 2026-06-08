@@ -6,6 +6,19 @@ import {
   buildProgressReportUserMessage,
 } from "@/lib/ai/prompts/progress-report";
 
+/**
+ * AI progress report enrichment.
+ *
+ * This file owns the optional narrative rewrite/enrichment pass for the three
+ * editable report sections. It does not create report rows. Callers first create
+ * or load a report through `server.ts`, then use this function to produce better
+ * client-facing copy and persist those fields.
+ *
+ * Output is deliberately constrained to JSON with exactly:
+ * - past_week_highlights
+ * - upcoming_week_activities
+ * - open_items
+ */
 const MODEL_ID = "openai/gpt-5.5";
 
 export interface AiGeneratedSections {
@@ -18,6 +31,10 @@ export interface AiGeneratedSections {
  * Generates the three progress report sections using AI.
  * Queries source data fresh from the DB for the given week range.
  * Falls back to most recent project data when nothing falls in range.
+ *
+ * This is separate from `buildProgressReportDraft()` because the deterministic
+ * draft should work without an AI provider, while this pass can use broader
+ * context and cleaner prose when the provider succeeds.
  */
 export async function generateProgressReportSections({
   projectId,
@@ -30,6 +47,9 @@ export async function generateProgressReportSections({
 }): Promise<AiGeneratedSections> {
   const db = createServiceClient();
 
+  // Pull source context in parallel. Week-bounded meetings/emails/photos tell
+  // the model what actually happened during this report period; financial and
+  // workflow counts give it client-visible risk/open-item context.
   const [
     projectResult,
     meetingsResult,
@@ -102,7 +122,9 @@ export async function generateProgressReportSections({
   const projectName =
     (projectResult.data as { name: string | null } | null)?.name ?? "Project";
 
-  // Fall back to most recent data when nothing falls in the date range
+  // Fall back to recent project data when the week has no rows for a source
+  // type. This prevents the AI output from becoming generic just because the
+  // selected week was quiet or source dates were not populated cleanly.
   const meetings =
     (meetingsResult.data ?? []).length > 0
       ? (meetingsResult.data ?? [])
@@ -139,6 +161,9 @@ export async function generateProgressReportSections({
           .limit(10)
           .then((r) => r.data ?? []);
 
+  // The prompt builder is the schema boundary between raw DB rows and the model.
+  // Keep formatting/prompt changes there so this file stays focused on source
+  // selection, provider invocation, and output validation.
   const userMessage = buildProgressReportUserMessage({
     projectName,
     weekStart,
@@ -154,6 +179,8 @@ export async function generateProgressReportSections({
     submittals: (submittalsResult.data ?? []) as Parameters<typeof buildProgressReportUserMessage>[0]["submittals"],
   });
 
+  // Use a low temperature because progress reports are operational documents:
+  // concise, grounded, and repeatable is more valuable than creative variation.
   const result = await generateText({
     model: getLanguageModel(MODEL_ID),
     system: PROGRESS_REPORT_SYSTEM_PROMPT,
@@ -162,6 +189,8 @@ export async function generateProgressReportSections({
   });
 
   const raw = result.text.trim();
+  // The model is instructed to return JSON, but providers may wrap it in a
+  // markdown fence. Strip only the wrapper before parsing.
   const jsonText = raw
     .replace(/^```(?:json)?\n?/, "")
     .replace(/\n?```$/, "")
@@ -174,6 +203,8 @@ export async function generateProgressReportSections({
     throw new Error("AI returned an unstructured response. Try again.");
   }
 
+  // Fail loudly if the model returns partial or malformed JSON. Persisting a
+  // partial response would silently erase one of the editor's report sections.
   if (
     typeof parsed.past_week_highlights !== "string" ||
     typeof parsed.upcoming_week_activities !== "string" ||
@@ -182,6 +213,8 @@ export async function generateProgressReportSections({
     throw new Error("AI response was missing required fields. Try again.");
   }
 
+  // Trim model output at the boundary so downstream save/PDF/email code receives
+  // clean strings and does not need to know this content came from AI.
   return {
     past_week_highlights: parsed.past_week_highlights.trim(),
     upcoming_week_activities: parsed.upcoming_week_activities.trim(),
