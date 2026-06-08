@@ -2127,39 +2127,41 @@ tables:
     db: MAIN
     domain: intelligence
     owner: core
-    status: live-empty
-    purpose: "Human review queue for intelligence decisions. Insert paths exist but no UI shipped."
+    status: archive-candidate
+    purpose: "Human review queue for intelligence decisions. Insert/read paths exist, but no complete review UI is shipped. Keep only if the review workflow is built now; otherwise archive."
+    gotchas: "Do not let this become a silent junk drawer for AI corrections. It needs either a real owner/UI or an archive decision."
+    cleanupPriority: medium
     relatedTables:
       - insight_cards
 
-  - name: source_signal_candidates
+  - name: source_signal_candidates_archive_20260609
     db: MAIN
     domain: intelligence
     owner: pipeline
-    status: orphan-mirror
-    purpose: "STALE copy of RAG pre-promotion candidates. 6,670 rows. RAG.source_signal_candidates is canonical."
-    gotchas: "RAG project is canonical. Do not write to MAIN copy."
+    status: archived
+    purpose: "Archived former MAIN copy of RAG pre-promotion candidates. The live MAIN table name was removed on 2026-06-09 so hidden dependencies fail loudly instead of reading stale data."
+    gotchas: "RAG is canonical. This archive exists only for recovery or one-time audit work and should not be read by application code."
     cleanupPriority: high
     relatedTables:
       - insight_cards
 
-  - name: source_intelligence_jobs
+  - name: source_intelligence_jobs_archive_20260609
     db: MAIN
     domain: intelligence
     owner: pipeline
-    status: orphan-mirror
-    purpose: "STALE copy of RAG compiler job queue. 10,587 rows. RAG.source_intelligence_jobs is canonical."
-    gotchas: "RAG project is canonical. Do not write to MAIN copy."
+    status: archived
+    purpose: "Archived former MAIN compiler job queue. The live MAIN table name was removed on 2026-06-09 because RAG is the canonical queue."
+    gotchas: "This table is archived state, not active infrastructure. Any live read or write path should use the RAG database instead."
     cleanupPriority: high
     relatedTables: []
 
-  - name: packet_refresh_jobs
+  - name: packet_refresh_jobs_archive_20260609
     db: MAIN
     domain: intelligence
     owner: pipeline
-    status: orphan-mirror
-    purpose: "STALE copy of RAG packet refresh queue. 1,373 rows. RAG.packet_refresh_jobs is canonical."
-    gotchas: "RAG project is canonical. Do not write to MAIN copy."
+    status: archived
+    purpose: "Archived former MAIN packet refresh queue. The live MAIN table name was removed on 2026-06-09 because RAG is the canonical queue."
+    gotchas: "Keep only for recovery or audit. Application code should never depend on this archived name."
     cleanupPriority: high
     relatedTables:
       - intelligence_packets
@@ -2189,8 +2191,10 @@ tables:
     db: MAIN
     domain: pipeline
     owner: pipeline
-    status: live
-    purpose: "Source sync health rollup snapshots. 330 rows. Written every 30 min by alleato-source-sync-health cron."
+    status: duplicate-read-model
+    purpose: "App-side source sync health read model. RAG.source_sync_health_snapshots is canonical; keep this only if an app/admin path needs a compact local summary."
+    gotchas: "Do not use this as project intelligence content. Prefer RAG-backed source health reads unless a deliberate local read model is documented."
+    cleanupPriority: medium
     relatedTables:
       - system_alerts
 

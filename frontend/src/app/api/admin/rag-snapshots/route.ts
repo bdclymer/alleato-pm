@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createClient } from "@/lib/supabase/server";
+import { createRagServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 const WHERE = "/api/admin/rag-snapshots#GET";
@@ -71,6 +72,7 @@ function addSourceTotals(
 
 export const GET = withApiGuardrails(WHERE, async ({ request }) => {
   const supabase = await createClient();
+  const ragSupabase = createRagServiceClient();
 
   const {
     data: { user },
@@ -90,7 +92,7 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   since.setUTCHours(0, 0, 0, 0);
 
-  const { data, error } = await supabase
+  const { data, error } = await ragSupabase
     .from("source_sync_runs")
     .select("source,started_at,items_synced,items_failed,status")
     .gte("started_at", since.toISOString())

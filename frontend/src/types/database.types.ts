@@ -18375,7 +18375,7 @@ export type Database = {
           },
         ]
       }
-      packet_refresh_jobs: {
+      packet_refresh_jobs_archive_20260609: {
         Row: {
           attempt_count: number
           compiler_version: string
@@ -26435,7 +26435,7 @@ export type Database = {
           },
         ]
       }
-      source_intelligence_jobs: {
+      source_intelligence_jobs_archive_20260609: {
         Row: {
           attempt_count: number
           compiler_version: string
@@ -26604,7 +26604,7 @@ export type Database = {
           },
         ]
       }
-      source_signal_candidates: {
+      source_signal_candidates_archive_20260609: {
         Row: {
           compiler_version: string
           confidence: string

@@ -71,6 +71,63 @@ function hydrateSupabaseDbPasswordFromDatabaseUrl() {
   }
 }
 
+function projectRefFromEnv() {
+  const candidates = [
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_URL,
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      const url = new URL(candidate);
+      const host = url.hostname;
+      const match = host.match(/^([^.]+)\.supabase\.co$/);
+      if (match?.[1]) return match[1];
+    } catch {
+      // Ignore malformed URLs and let the caller fall back to CLI output.
+    }
+  }
+
+  return null;
+}
+
+async function loadRemoteVersionsViaManagementApi() {
+  const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
+  const projectRef = projectRefFromEnv();
+
+  if (!accessToken || !projectRef) {
+    throw new Error("Management API fallback is unavailable: missing SUPABASE_ACCESS_TOKEN or project ref.");
+  }
+
+  const response = await fetch(
+    `https://api.supabase.com/v1/projects/${projectRef}/database/query`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query:
+          "select version from supabase_migrations.schema_migrations order by version",
+        read_only: true,
+      }),
+    }
+  );
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Management API remote ledger query failed (${response.status}): ${text}`);
+  }
+
+  const rows = text ? JSON.parse(text) : [];
+  return new Set(
+    rows
+      .map((row) => row.version)
+      .filter((value) => typeof value === "string" && value.length > 0)
+  );
+}
+
 const args = process.argv.slice(2);
 const assertClean = args.includes("--all") || args.includes("--assert-clean");
 const localFiles = localMigrationFiles();
@@ -94,23 +151,33 @@ if (versions.length === 0) {
   process.exit(0);
 }
 
-let listOutput;
-try {
-  listOutput = run("npx", ["supabase", "migration", "list", "--linked"]);
-} catch (error) {
-  process.stderr.write(error.stderr || error.message);
-  process.exit(1);
-}
+let remoteVersions = new Set();
+let localRows = new Set();
 
-const remoteVersions = new Set();
-const localRows = new Set();
-for (const line of listOutput.split(/\r?\n/)) {
-  const match = line.match(/^\s*(\d{14})\s+\|\s*(\d{14})?\s+\|/);
-  if (match?.[1]) {
-    localRows.add(match[1]);
+try {
+  const listOutput = run("npx", ["supabase", "migration", "list", "--linked"]);
+  for (const line of listOutput.split(/\r?\n/)) {
+    const match = line.match(/^\s*(\d{14})\s+\|\s*(\d{14})?\s+\|/);
+    if (match?.[1]) {
+      localRows.add(match[1]);
+    }
+    if (match?.[2]) {
+      remoteVersions.add(match[2]);
+    }
   }
-  if (match?.[2]) {
-    remoteVersions.add(match[2]);
+} catch (error) {
+  try {
+    remoteVersions = await loadRemoteVersionsViaManagementApi();
+    localRows = new Set(localVersions);
+    console.warn(
+      "Supabase CLI linked migration list failed; used Management API fallback for remote migration ledger."
+    );
+  } catch (fallbackError) {
+    process.stderr.write(error.stderr || error.message);
+    process.stderr.write("\n");
+    process.stderr.write(fallbackError.message);
+    process.stderr.write("\n");
+    process.exit(1);
   }
 }
 
