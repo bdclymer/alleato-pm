@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/form";
 import { FormGrid, FormSection } from "@/components/forms";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
-import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiComboboxField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
@@ -203,6 +203,7 @@ export function RfiFormFields({
             emptyMessage="No matching project member found."
             options={rfiManagerOptions}
             disabled={isLoadingManagerOptions}
+            clearable
           />
 
           <RHFComboboxField
@@ -214,6 +215,7 @@ export function RfiFormFields({
             emptyMessage="No matching project member found."
             options={rfiManagerOptions}
             disabled={isLoadingManagerOptions}
+            clearable
           />
         </FormGrid>
 

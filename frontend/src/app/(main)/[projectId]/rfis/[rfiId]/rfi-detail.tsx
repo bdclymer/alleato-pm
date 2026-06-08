@@ -27,6 +27,9 @@ import {
   EmptyState,
 } from "@/components/ds";
 import { RfiResponses } from "@/components/rfis/rfi-responses";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
+import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiComboboxField";
+import { useRfiManagerOptions } from "@/components/rfis/rfi-form-fields";
 import { useUpdateRfi } from "@/hooks/use-rfis";
 import {
   RFI_IMPACT_OPTIONS,
@@ -132,6 +135,8 @@ interface RfiDetailProps {
 export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps) {
   const router = useRouter();
   const updateRfi = useUpdateRfi(projectId);
+  const { options: rfiManagerOptions, isLoading: isLoadingManagerOptions } =
+    useRfiManagerOptions(projectId);
 
   const form = useForm<RfiEditValues>({
     resolver: zodResolver(rfiEditSchema),
@@ -252,72 +257,51 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
                   </FormItem>
                 )}
               />
-              <FormField
+              <RHFComboboxField
                 control={form.control}
                 name="rfi_manager"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>RFI Manager</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="RFI Manager"
+                placeholder="Select from directory"
+                searchPlaceholder="Search project members..."
+                emptyMessage="No matching project member found."
+                options={rfiManagerOptions}
+                disabled={isLoadingManagerOptions}
+                clearable
               />
-              <FormField
+              <RHFComboboxField
                 control={form.control}
                 name="received_from"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Received From</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Received From"
+                placeholder="Select from directory"
+                searchPlaceholder="Search project members..."
+                emptyMessage="No matching project member found."
+                options={rfiManagerOptions}
+                disabled={isLoadingManagerOptions}
+                clearable
               />
-              <FormField
+              <RHFComboboxField
                 control={form.control}
                 name="responsible_contractor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Responsible Contractor</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Responsible Contractor"
+                placeholder="Select from directory"
+                searchPlaceholder="Search project members..."
+                emptyMessage="No matching project member found."
+                options={rfiManagerOptions}
+                disabled={isLoadingManagerOptions}
+                clearable
               />
-              <FormField
-                control={form.control}
-                name="assignees"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Assignees</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Comma-separated names"
-                        value={(field.value ?? []).join(", ")}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          field.onChange(
-                            val
-                              ? val
-                                  .split(",")
-                                  .map((s) => s.trim())
-                                  .filter(Boolean)
-                              : [],
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="sm:col-span-2">
+                <RHFMultiComboboxField
+                  control={form.control}
+                  name="assignees"
+                  label="Assignees"
+                  options={rfiManagerOptions}
+                  placeholder="Select assignees from directory"
+                  searchPlaceholder="Search project members..."
+                  emptyMessage="No matching project member found."
+                  disabled={isLoadingManagerOptions}
+                />
+              </div>
             </div>
           </div>
 

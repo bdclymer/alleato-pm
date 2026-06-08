@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,6 +33,7 @@ import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { useAuthUsers } from "@/hooks/use-auth-users";
 import { useCreateSubmittal, useUpdateSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -155,6 +157,31 @@ export function SubmittalFormPage({
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const companyOptions = useMemo(
+    () =>
+      companies.map((c) => ({
+        value: c.id,
+        label: c.company?.name ?? c.id,
+      })),
+    [companies],
+  );
+
+  const userOptions = useMemo(
+    () =>
+      users.map((u) => {
+        const name =
+          u.first_name || u.last_name
+            ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
+            : u.email;
+        return {
+          value: u.id,
+          label: name,
+          keywords: [u.email].filter(Boolean) as string[],
+        };
+      }),
+    [users],
+  );
 
   async function onSubmit(values: SubmittalFormValues) {
     const payload = {
@@ -383,110 +410,41 @@ export function SubmittalFormPage({
           <section className="space-y-4">
             <SectionRuleHeading label="People & Companies" />
 
-            <FormField
+            <RHFComboboxField
               control={form.control}
               name="responsible_contractor_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Responsible Contractor</FormLabel>
-                  <Select
-                    onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                    value={field.value != null ? String(field.value) : "__none__"}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={companiesLoading ? "Loading..." : "Select company"}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {companies.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.company?.name ?? c.id}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Responsible Contractor"
+              placeholder={companiesLoading ? "Loading..." : "Select company"}
+              searchPlaceholder="Search companies..."
+              emptyMessage="No matching company found."
+              options={companyOptions}
+              disabled={companiesLoading}
+              clearable
             />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField
+              <RHFComboboxField
                 control={form.control}
                 name="received_from_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Received From</FormLabel>
-                    <Select
-                      onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                      value={field.value ?? "__none__"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={usersLoading ? "Loading..." : "Select person"}
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="__none__">None</SelectItem>
-                        {users.map((u) => {
-                          const name =
-                            u.first_name || u.last_name
-                              ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
-                              : u.email;
-                          return (
-                            <SelectItem key={u.id} value={u.id}>
-                              {name} ({u.email})
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Received From"
+                placeholder={usersLoading ? "Loading..." : "Select person"}
+                searchPlaceholder="Search by name or email..."
+                emptyMessage="No matching person found."
+                options={userOptions}
+                disabled={usersLoading}
+                clearable
               />
 
-              <FormField
+              <RHFComboboxField
                 control={form.control}
                 name="submittal_manager_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Submittal Manager</FormLabel>
-                    <Select
-                      onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                      value={field.value ?? "__none__"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={usersLoading ? "Loading..." : "Select person"}
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="__none__">None</SelectItem>
-                        {users.map((u) => {
-                          const name =
-                            u.first_name || u.last_name
-                              ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
-                              : u.email;
-                          return (
-                            <SelectItem key={u.id} value={u.id}>
-                              {name} ({u.email})
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Submittal Manager"
+                placeholder={usersLoading ? "Loading..." : "Select person"}
+                searchPlaceholder="Search by name or email..."
+                emptyMessage="No matching person found."
+                options={userOptions}
+                disabled={usersLoading}
+                clearable
               />
             </div>
           </section>
@@ -548,41 +506,16 @@ export function SubmittalFormPage({
               )}
             />
 
-            <FormField
+            <RHFComboboxField
               control={form.control}
               name="ball_in_court"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ball In Court</FormLabel>
-                  <Select
-                    onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                    value={field.value ?? "__none__"}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={usersLoading ? "Loading..." : "Select person"}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {users.map((u) => {
-                        const name =
-                          u.first_name || u.last_name
-                            ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
-                            : u.email;
-                        return (
-                          <SelectItem key={u.id} value={u.id}>
-                            {name} ({u.email})
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Ball In Court"
+              placeholder={usersLoading ? "Loading..." : "Select person"}
+              searchPlaceholder="Search by name or email..."
+              emptyMessage="No matching person found."
+              options={userOptions}
+              disabled={usersLoading}
+              clearable
             />
           </section>
 

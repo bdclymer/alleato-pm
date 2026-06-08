@@ -54,6 +54,8 @@ interface Props<TFieldValues extends FieldValues> {
   emptyMessage?: string
   description?: string
   disabled?: boolean
+  /** Allow deselecting by clicking the selected option again (sets value to null). */
+  clearable?: boolean
 }
 
 export function RHFComboboxField<TFieldValues extends FieldValues>({
@@ -67,6 +69,7 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
   emptyMessage = "No results found.",
   description,
   disabled,
+  clearable,
 }: Props<TFieldValues>) {
   const [open, setOpen] = React.useState(false)
   const isMobile = useIsMobile()
@@ -113,7 +116,7 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
                     ].join(" ")}
                     className="min-h-11"
                     onSelect={() => {
-                      field.onChange(option.value)
+                      field.onChange(clearable && option.value === field.value ? null : option.value)
                       setOpen(false)
                     }}
                   >

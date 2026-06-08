@@ -70,6 +70,7 @@ import {
   InlineTableHeaderCell as TableHead,
   InlineTableRow as TableRow,
 } from "@/components/ds/inline-table";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { cn } from "@/lib/utils";
 
@@ -537,11 +538,14 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
     >
       <div className="space-y-6">
         {quickLog && (
-          <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            <Zap className="h-3.5 w-3.5 shrink-0" />
+          <InfoAlert
+            variant="info"
+            icon={<Zap className="mt-px h-3.5 w-3.5 shrink-0" />}
+            className="items-center py-2 text-xs"
+          >
             Quick Log — showing Weather, Manpower, and Notes only. Switch to Full Log to access all
             sections.
-          </div>
+          </InfoAlert>
         )}
 
         <section className="grid gap-4 md:grid-cols-[180px_180px_1fr]">
