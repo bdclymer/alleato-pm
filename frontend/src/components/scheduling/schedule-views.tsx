@@ -14,7 +14,7 @@
  */
 
 import { useMemo, useState, useCallback } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, isToday, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   ScheduleTask,
@@ -1062,27 +1062,28 @@ export function ScheduleCalendarView({
   const calendarEnd = endOfWeek(monthEnd);
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  // Group tasks by date
+  // Group tasks by date.
+  // Use the raw "yyyy-MM-dd" date string directly as the map key instead of
+  // going through parseISO → format, which shifts date-only strings to UTC
+  // midnight and then formats them in local time — causing tasks stored as
+  // "2026-05-21" to map to "2026-05-20" in negative-offset timezones and
+  // never match any day in the calendar grid.
   const tasksByDate = useMemo(() => {
     const map = new Map<string, ScheduleTaskWithHierarchy[]>();
 
     flatTasks.forEach(task => {
-      const startDate = task.start_date ? parseISO(task.start_date) : null;
-      const finishDate = task.finish_date ? parseISO(task.finish_date) : null;
+      const startKey = task.start_date ? task.start_date.slice(0, 10) : null;
+      const finishKey = task.finish_date ? task.finish_date.slice(0, 10) : null;
 
-      // Add task to its start date
-      if (startDate) {
-        const key = format(startDate, "yyyy-MM-dd");
-        if (!map.has(key)) map.set(key, []);
-        map.get(key)!.push(task);
+      if (startKey) {
+        if (!map.has(startKey)) map.set(startKey, []);
+        map.get(startKey)!.push(task);
       }
 
       // Also show on finish date if different from start
-      if (finishDate && startDate && !isSameDay(startDate, finishDate)) {
-        const key = format(finishDate, "yyyy-MM-dd");
-        if (!map.has(key)) map.set(key, []);
-        // Avoid duplicates
-        const existing = map.get(key)!;
+      if (finishKey && startKey && finishKey !== startKey) {
+        if (!map.has(finishKey)) map.set(finishKey, []);
+        const existing = map.get(finishKey)!;
         if (!existing.find(t => t.id === task.id)) {
           existing.push(task);
         }
