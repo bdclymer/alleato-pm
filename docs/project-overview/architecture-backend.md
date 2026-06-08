@@ -490,7 +490,6 @@ Utility scripts for data management, processing, and maintenance tasks.
 | `extract_tasks_from_meetings.py` | Identify and extract tasks/action items from meeting data |
 | `generate_project_summaries_batch.py` | Batch-generate AI summaries for all projects |
 | `generate_daily_recap.py` | Generate daily activity recaps across projects |
-| `process_all_unprocessed_meetings.py` | Run the full ingestion pipeline on all pending meetings |
 | `validate_schema.py` | Validate database schema integrity and consistency |
 
 ---

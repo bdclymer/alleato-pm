@@ -50,7 +50,6 @@ backend/
 │   │
 │   ├── scripts/                      # One-off data migration / backfill scripts
 │   │   ├── backfill_3072_embeddings.py              # Re-embed all chunks at 3072 dims
-│   │   ├── backfill_meeting_summary_embeddings.py   # Embed document_metadata summaries
 │   │   ├── backfill_missing_chunk_embeddings.py     # Find and fill null-embedding chunks
 │   │   ├── backfill_missing_embeddings.py           # Generic missing-embedding backfill
 │   │   ├── backfill_segment_embeddings.py           # Embed transcript segments
@@ -65,7 +64,6 @@ backend/
 │   │   ├── fix_document_statuses.py                 # Repair stuck document statuses
 │   │   ├── fix_vector_search_functions.py           # Redeploy RPC functions to Supabase
 │   │   ├── list_projects.py                         # Print all project IDs/names
-│   │   ├── migrate_to_unified_chunks.py             # Migrate old per-source tables → document_chunks
 │   │   ├── process_existing_documents.py            # Re-run pipeline on existing docs
 │   │   ├── quick_status_fix.py                      # Patch specific document statuses
 │   │   ├── rag_answer_eval.py                       # Evaluate LLM answer quality
@@ -154,7 +152,6 @@ backend/
 │   ├── import_budget_from_excel.py           # Import budget data from Excel files
 │   ├── migrate_to_insights.py                # Migrate from old format → ai_insights table
 │   ├── preview_budget.py                     # Preview an Excel budget before importing
-│   ├── process_all_unprocessed_meetings.py   # Re-run pipeline on all pending meetings
 │   ├── reprocess_recent_fireflies_tasks.py   # Re-extract tasks from recent meetings
 │   ├── run_acumatica_financial_sync.py        # Trigger Acumatica → Supabase sync
 │   ├── seed_cost_codes.py                    # Seed cost code data
@@ -500,7 +497,7 @@ Interactive API docs: `http://localhost:8051/docs`
 ```bash
 cd backend
 source .venv/bin/activate
-python -m src.scripts.process_all_unprocessed_meetings   # example
+python -m src.scripts.process_existing_documents   # example
 ```
 
 ### Running Tests

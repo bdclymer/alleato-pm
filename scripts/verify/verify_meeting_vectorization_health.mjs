@@ -43,6 +43,12 @@ const MEETING_SIGNAL_LIMIT = 2_000;
 const RECENT_MIN_EMBEDDED_RATIO = 0.5;
 const RECENT_MIN_CHUNK_RATIO = 0.5;
 const RECENT_MIN_TRANSCRIPT_CHUNK_RATIO = 0.9;
+const EXCLUDED_DOCUMENT_STATUSES = [
+  "intentionally_excluded",
+  "metadata_only",
+  "not_vectorizable",
+  "skipped_low_content",
+];
 
 const appSql = postgres(databaseUrl, { max: 1, ssl: "require" });
 const ragSql = postgres(ragDatabaseUrl, { max: 1, ssl: "require", prepare: false });
@@ -155,6 +161,13 @@ try {
       or category = 'meeting'
       or fireflies_id is not null
     )
+      and coalesce(status, '') not in ${appSql(EXCLUDED_DOCUMENT_STATUSES)}
+      and lower(coalesce(title, '')) not like '%interview%'
+      and lower(coalesce(title, '')) not like '%inteview%'
+      and lower(coalesce(category, '')) not like '%interview%'
+      and lower(coalesce(category, '')) not like '%inteview%'
+      and lower(coalesce(type, '')) not like '%interview%'
+      and lower(coalesce(type, '')) not like '%inteview%'
       and coalesce(captured_at, date, created_at::timestamptz) >= now() - (${RECENT_WINDOW_DAYS} || ' days')::interval
     order by meeting_at desc
   `;
@@ -165,6 +178,13 @@ try {
       select id from (
         select id from public.document_metadata
         where source = 'fireflies'
+          and coalesce(status, '') not in ${appSql(EXCLUDED_DOCUMENT_STATUSES)}
+          and lower(coalesce(title, '')) not like '%interview%'
+          and lower(coalesce(title, '')) not like '%inteview%'
+          and lower(coalesce(category, '')) not like '%interview%'
+          and lower(coalesce(category, '')) not like '%inteview%'
+          and lower(coalesce(type, '')) not like '%interview%'
+          and lower(coalesce(type, '')) not like '%inteview%'
         order by created_at desc
         limit ${MEETING_SIGNAL_LIMIT}
       ) source_rows
@@ -172,6 +192,13 @@ try {
       select id from (
         select id from public.document_metadata
         where type in ('meeting', 'meeting_transcript')
+          and coalesce(status, '') not in ${appSql(EXCLUDED_DOCUMENT_STATUSES)}
+          and lower(coalesce(title, '')) not like '%interview%'
+          and lower(coalesce(title, '')) not like '%inteview%'
+          and lower(coalesce(category, '')) not like '%interview%'
+          and lower(coalesce(category, '')) not like '%inteview%'
+          and lower(coalesce(type, '')) not like '%interview%'
+          and lower(coalesce(type, '')) not like '%inteview%'
         order by created_at desc
         limit ${MEETING_SIGNAL_LIMIT}
       ) type_rows
@@ -179,6 +206,13 @@ try {
       select id from (
         select id from public.document_metadata
         where category = 'meeting'
+          and coalesce(status, '') not in ${appSql(EXCLUDED_DOCUMENT_STATUSES)}
+          and lower(coalesce(title, '')) not like '%interview%'
+          and lower(coalesce(title, '')) not like '%inteview%'
+          and lower(coalesce(category, '')) not like '%interview%'
+          and lower(coalesce(category, '')) not like '%inteview%'
+          and lower(coalesce(type, '')) not like '%interview%'
+          and lower(coalesce(type, '')) not like '%inteview%'
         order by created_at desc
         limit ${MEETING_SIGNAL_LIMIT}
       ) category_rows
@@ -186,6 +220,13 @@ try {
       select id from (
         select id from public.document_metadata
         where fireflies_id is not null
+          and coalesce(status, '') not in ${appSql(EXCLUDED_DOCUMENT_STATUSES)}
+          and lower(coalesce(title, '')) not like '%interview%'
+          and lower(coalesce(title, '')) not like '%inteview%'
+          and lower(coalesce(category, '')) not like '%interview%'
+          and lower(coalesce(category, '')) not like '%inteview%'
+          and lower(coalesce(type, '')) not like '%interview%'
+          and lower(coalesce(type, '')) not like '%inteview%'
         order by created_at desc
         limit ${MEETING_SIGNAL_LIMIT}
       ) fireflies_rows
