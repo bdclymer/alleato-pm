@@ -201,6 +201,28 @@ export const POST = withApiGuardrails(
       );
     }
 
+    // ── Server-side smart defaults ────────────────────────────────────────────
+
+    // submittal_manager_id: default to current user if not provided
+    const resolvedManagerId = validatedData.submittal_manager_id ?? user.id;
+
+    // ball_in_court: when Draft and not provided, default to the submittal manager
+    const resolvedBallInCourt =
+      validatedData.ball_in_court ??
+      (validatedData.status === "Draft" ? resolvedManagerId : null);
+
+    // final_due_date: auto-compute from required_on_site_date − lead_time if not provided
+    let resolvedFinalDueDate = validatedData.final_due_date ?? null;
+    if (!resolvedFinalDueDate && validatedData.required_on_site_date && validatedData.lead_time != null) {
+      try {
+        const onSite = new Date(validatedData.required_on_site_date);
+        onSite.setUTCDate(onSite.getUTCDate() - validatedData.lead_time);
+        resolvedFinalDueDate = onSite.toISOString().split("T")[0];
+      } catch {
+        resolvedFinalDueDate = null;
+      }
+    }
+
     const { data, error } = await supabase
       .from("submittals")
       .insert({
@@ -209,6 +231,9 @@ export const POST = withApiGuardrails(
         submitted_by: user.id,
         created_by: user.id,
         submittal_type_id: resolvedSubmittalTypeId,
+        submittal_manager_id: resolvedManagerId,
+        ball_in_court: resolvedBallInCourt,
+        final_due_date: resolvedFinalDueDate,
       })
       .select(
         `*,

@@ -29,11 +29,54 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { useAuthUsers } from "@/hooks/use-auth-users";
 import { useCreateSubmittal, useUpdateSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
+
+// ─── Division lead time defaults (days) ──────────────────────────────────────
+
+const DIVISION_LEAD_TIMES: Record<string, number> = {
+  "01": 14,  // General requirements
+  "02": 21,  // Existing conditions
+  "03": 56,  // Concrete
+  "04": 56,  // Masonry
+  "05": 56,  // Metals
+  "06": 42,  // Wood/plastics/composites
+  "07": 42,  // Thermal & moisture protection
+  "08": 84,  // Openings — doors, frames, hardware (12 weeks typical)
+  "09": 28,  // Finishes
+  "10": 42,  // Specialties
+  "11": 56,  // Equipment
+  "12": 56,  // Furnishings
+  "13": 84,  // Special construction
+  "14": 84,  // Conveying equipment (elevators)
+  "21": 42,  // Fire suppression
+  "22": 42,  // Plumbing
+  "23": 42,  // HVAC
+  "25": 42,  // Integrated automation
+  "26": 42,  // Electrical
+  "27": 42,  // Communications
+  "28": 42,  // Electronic safety
+  "31": 21,  // Earthwork
+  "32": 21,  // Exterior improvements
+  "33": 21,  // Utilities
+};
+
+function getDivisionLeadTime(specSection: string | null | undefined): number | null {
+  if (!specSection) return null;
+  const match = specSection.trim().match(/^(\d{2})/);
+  if (!match) return null;
+  return DIVISION_LEAD_TIMES[match[1]] ?? null;
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().split("T")[0];
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,32 +129,43 @@ function getSubmittalTypeId(v: SubmittalSummary["submittal_type"] | undefined): 
   return null;
 }
 
+// The edit page passes the full DB record cast to SubmittalSummary; use an
+// extended type to safely access fields that aren't on SubmittalSummary.
+type ExtendedSubmittal = SubmittalSummary & {
+  lead_time?: number | null;
+  required_on_site_date?: string | null;
+  description?: string | null;
+  received_from_id?: string | null;
+  submittal_manager_id?: string | null;
+};
+
 function buildDefaults(
   submittal: SubmittalSummary | undefined,
   overrides?: { submittal_package_id?: string; specification_section?: string },
 ): SubmittalFormValues {
+  const s = submittal as ExtendedSubmittal | undefined;
   return {
-    title: submittal?.title ?? "",
-    submittal_number: submittal?.submittal_number ?? "",
-    revision: submittal?.revision ?? 0,
-    status: (submittal?.status as "Draft" | "Open" | "Distributed" | "Closed") ?? "Draft",
+    title: s?.title ?? "",
+    submittal_number: s?.submittal_number ?? "",
+    revision: s?.revision ?? 0,
+    status: (s?.status as "Draft" | "Open" | "Distributed" | "Closed") ?? "Draft",
     specification_section:
-      overrides?.specification_section ?? submittal?.specification_section ?? "",
-    submittal_type_id: getSubmittalTypeId(submittal?.submittal_type),
-    division: submittal?.division ?? "",
-    final_due_date: submittal?.final_due_date ?? "",
-    lead_time: null,
-    required_on_site_date: "",
-    description: "",
-    is_private: submittal?.is_private ?? false,
-    ball_in_court: submittal?.ball_in_court ?? "",
+      overrides?.specification_section ?? s?.specification_section ?? "",
+    submittal_type_id: getSubmittalTypeId(s?.submittal_type),
+    division: s?.division ?? "",
+    final_due_date: s?.final_due_date ?? "",
+    lead_time: s?.lead_time ?? null,
+    required_on_site_date: s?.required_on_site_date ?? "",
+    description: s?.description ?? "",
+    is_private: s?.is_private ?? false,
+    ball_in_court: s?.ball_in_court ?? "",
     responsible_contractor_id: null,
-    received_from_id: null,
-    submittal_manager_id: null,
+    received_from_id: s?.received_from_id ?? null,
+    submittal_manager_id: s?.submittal_manager_id ?? null,
     submittal_package_id:
       overrides?.submittal_package_id ??
-      (typeof submittal?.submittal_package === "object"
-        ? (submittal?.submittal_package as { id?: string } | null)?.id
+      (typeof s?.submittal_package === "object"
+        ? (s?.submittal_package as { id?: string } | null)?.id
         : null) ??
       null,
   };
@@ -155,6 +209,60 @@ export function SubmittalFormPage({
     resolver: zodResolver(submittalFormSchema),
     defaultValues: buildDefaults(submittal, defaultOverrides),
   });
+
+  const watchedStatus = form.watch("status");
+  const watchedSubmittalManager = form.watch("submittal_manager_id");
+  const watchedRequiredOnSite = form.watch("required_on_site_date");
+  const watchedLeadTime = form.watch("lead_time");
+  const watchedSpecSection = form.watch("specification_section");
+
+  // When creating new: default submittal_manager_id to the current logged-in user.
+  // Run once on mount — supabase client is a stable singleton, safe to omit from deps.
+  const formSetValue = form.setValue;
+  const formGetValues = form.getValues;
+  React.useEffect(() => {
+    if (isEditing) return;
+    const current = formGetValues("submittal_manager_id");
+    if (current) return;
+    const client = createClient();
+    client.auth.getUser().then(({ data }) => {
+      if (data.user?.id) {
+        formSetValue("submittal_manager_id", data.user.id, { shouldDirty: false });
+      }
+    });
+  }, [isEditing, formGetValues, formSetValue]);
+
+  // When creating new: ball_in_court defaults to the submittal manager when status is Draft
+  React.useEffect(() => {
+    if (isEditing) return;
+    const currentBic = form.getValues("ball_in_court");
+    if (currentBic) return;
+    if (watchedStatus === "Draft" && watchedSubmittalManager) {
+      form.setValue("ball_in_court", watchedSubmittalManager, { shouldDirty: false });
+    }
+  }, [isEditing, watchedStatus, watchedSubmittalManager, form]);
+
+  // Auto-compute final_due_date = required_on_site_date minus lead_time days
+  React.useEffect(() => {
+    if (!watchedRequiredOnSite || !watchedLeadTime) return;
+    try {
+      const computed = addDays(watchedRequiredOnSite, -watchedLeadTime);
+      form.setValue("final_due_date", computed, { shouldDirty: true });
+    } catch {
+      // Invalid date — leave as-is
+    }
+  }, [watchedRequiredOnSite, watchedLeadTime, form]);
+
+  // Auto-set lead_time default when spec section changes (new forms or empty lead_time)
+  React.useEffect(() => {
+    if (!watchedSpecSection) return;
+    const currentLeadTime = form.getValues("lead_time");
+    if (currentLeadTime != null) return;
+    const defaultDays = getDivisionLeadTime(watchedSpecSection);
+    if (defaultDays != null) {
+      form.setValue("lead_time", defaultDays, { shouldDirty: false });
+    }
+  }, [watchedSpecSection, form]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
