@@ -32,6 +32,42 @@ MIN_EMBEDDABLE_CHARS_BY_TYPE = {
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072
 AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
+INTENTIONAL_EMBEDDING_EXCLUSION_STATUS = "intentionally_excluded"
+
+
+def _is_interview_title(title: Optional[str]) -> bool:
+    return "interview" in str(title or "").lower()
+
+
+def _mark_intentionally_excluded(supabase_client, rag_client, doc: Dict[str, Any], reason: str) -> None:
+    metadata_id = str(doc.get("id") or "")
+    if not metadata_id:
+        return
+    supabase_client.from_("document_metadata").update(
+        {"status": INTENTIONAL_EMBEDDING_EXCLUSION_STATUS}
+    ).eq("id", metadata_id).execute()
+    try:
+        rag_client.from_("document_chunks").delete().eq("document_id", metadata_id).execute()
+        rag_client.from_("rag_document_metadata").upsert(
+            {
+                "id": metadata_id,
+                "app_document_id": metadata_id,
+                "title": doc.get("title"),
+                "source": doc.get("source"),
+                "type": doc.get("type"),
+                "category": doc.get("category"),
+                "embedding_status": INTENTIONAL_EMBEDDING_EXCLUSION_STATUS,
+                "processing_metadata": {
+                    "embedding_exclusion": {
+                        "code": "interview_title_excluded",
+                        "message": reason,
+                        "intentional": True,
+                    }
+                },
+            }
+        ).execute()
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Could not persist intentional exclusion for %s: %s", metadata_id, exc)
 
 
 def _run_source_intelligence_compiler(supabase_client, metadata_id: str) -> None:
@@ -259,6 +295,17 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         logger.warning("[GraphEmbed] Document %s not found", metadata_id)
         return 0
 
+    title = doc.get("title") or "Untitled"
+    if _is_interview_title(title):
+        reason = (
+            'INTENTIONALLY_EXCLUDED: Document title contains "Interview", '
+            "so it is intentionally excluded from embedding/vectorization."
+        )
+        _mark_intentionally_excluded(supabase_client, rag_client, doc, reason)
+        _clear_ingestion_error("done")
+        logger.info("[GraphEmbed] %s intentionally excluded from embedding: interview title", metadata_id)
+        return 0
+
     try:
         rag_doc = (
             get_rag_read_client()
@@ -297,7 +344,6 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         _clear_ingestion_error("embedded")
         return 0
 
-    title = doc.get("title") or "Untitled"
     # Prepend title for better retrieval context
     full_text = f"[{title}]\n\n{content}"
     chunks = _split_text(full_text)

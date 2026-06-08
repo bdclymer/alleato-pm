@@ -380,6 +380,7 @@ async function candidateRows() {
     where (dm.source = 'fireflies'
        or dm.fireflies_id is not null
        or dm.type in ('meeting', 'meeting_transcript', 'Interview'))
+      and position('interview' in lower(coalesce(dm.title, ''))) = 0
       and coalesce(dm.date, dm.captured_at, dm.created_at::timestamptz) >= ${start}::timestamptz
       and coalesce(dm.date, dm.captured_at, dm.created_at::timestamptz) < ${end}::timestamptz
       and dm.deleted_at is null

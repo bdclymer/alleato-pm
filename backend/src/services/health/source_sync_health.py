@@ -709,7 +709,7 @@ def _document_health(
         status = str(document.get("status") or "unknown")
         source_counts[source][f"status:{status}"] += 1
         document_id = str(document.get("id"))
-        if document_id not in chunk_document_ids:
+        if status != "intentionally_excluded" and document_id not in chunk_document_ids:
             source_counts[source]["unembedded"] += 1
         compiler_metadata = _metadata_dict(document.get("source_metadata")).get("intelligence_compiler") or {}
         compiler_status = str(compiler_metadata.get("status") or "")
@@ -800,13 +800,25 @@ def _stuck_item_rows(
         source = _source_key(document) if document else "fireflies"
         error_message = job.get("error_message")
         is_non_vectorizable = isinstance(error_message, str) and error_message.startswith("NON_VECTORIZABLE")
+        is_intentionally_excluded = (
+            isinstance(error_message, str)
+            and error_message.startswith("INTENTIONALLY_EXCLUDED")
+        ) or str(document.get("status") or "") == "intentionally_excluded"
         stuck.append(
             {
                 "source": source,
                 "resourceId": metadata_id or str(job.get("fireflies_id") or ""),
                 "resourceName": document.get("title") or job.get("fireflies_id") or metadata_id or "Fireflies item",
                 "stage": stage,
-                "status": "not_vectorizable" if is_non_vectorizable else "failed" if stage == "error" else "stale",
+                "status": (
+                    "intentionally_excluded"
+                    if is_intentionally_excluded
+                    else "not_vectorizable"
+                    if is_non_vectorizable
+                    else "failed"
+                    if stage == "error"
+                    else "stale"
+                ),
                 "ageMinutes": age,
                 "lastAttemptAt": job.get("last_attempt_at") or job.get("updated_at"),
                 "errorMessage": error_message,

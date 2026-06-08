@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-06-08
+Last verified: 2026-06-09
 
 ---
 
@@ -415,6 +415,16 @@ Source
 → digest.py (Stage 4, non-blocking)
 ```
 
+Embedding exclusion rule: any source row with `Interview` in the title is an
+intentional non-RAG source. Fireflies backlog replay, the Fireflies sync path,
+the full pipeline embedder, Microsoft Graph embedding, and manual meeting
+backfill scripts must skip provider calls for those rows. The app catalog row is
+marked `status='intentionally_excluded'`, and the AI Database
+`rag_document_metadata.embedding_status` is marked `intentionally_excluded` with
+`processing_metadata.embedding_exclusion.code='interview_title_excluded'`. These
+rows are not vectorization failures and health checks must not count them as
+unembedded backlog.
+
 The estimating preset stamps files as `category=financial_document` and
 `workflow_target=estimating`, stores raw files under `local/estimating`, and uses
 stable source IDs derived from source label + source directory + relative path.
@@ -465,7 +475,7 @@ The backend pipeline (`embedder.py`) uses `text-embedding-3-small` (1536 dim) by
 
 ### Fireflies Sync
 
-Runs automatically every 30 minutes via the `alleato-graph-sync` Render cron. The Fireflies pipeline (`fireflies_pipeline.py`) fetches transcripts, normalizes to markdown, uploads to Supabase Storage (`meetings` bucket), upserts `document_metadata`, and enqueues the ingestion job.
+Runs automatically every 30 minutes via the `alleato-graph-sync` Render cron. The Fireflies pipeline (`fireflies_pipeline.py`) fetches transcripts, normalizes to markdown, uploads to Supabase Storage (`meetings` bucket), upserts `document_metadata`, and enqueues the ingestion job. Interview-title transcripts are marked `intentionally_excluded` before chunk or summary embeddings are requested.
 
 ### Graph Embed Candidate Query — post-RAG-split rule
 

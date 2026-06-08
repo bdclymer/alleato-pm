@@ -101,7 +101,12 @@ def fetch_all_candidates(
         )
         rows = result.data or []
         # Keep only rows that have text to embed
-        embeddable = [r for r in rows if get_embedding_text(r).strip()]
+        embeddable = [
+            r
+            for r in rows
+            if get_embedding_text(r).strip()
+            and "interview" not in str(r.get("title") or "").lower()
+        ]
         all_candidates.extend(embeddable)
 
         if limit and len(all_candidates) >= limit:

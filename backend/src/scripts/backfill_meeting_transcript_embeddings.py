@@ -86,7 +86,7 @@ def fetch_unvectorized_meeting_ids(client, since: str, limit: int) -> List[str]:
     # Fetch candidate meetings (meetings view filters to type='meeting' rows)
     resp = (
         client.table("document_metadata")
-        .select("id")
+        .select("id,title")
         .gte("date", since)
         .not_.is_("content", "null")
         .neq("content", "")
@@ -98,6 +98,7 @@ def fetch_unvectorized_meeting_ids(client, since: str, limit: int) -> List[str]:
     ids = [
         row["id"] for row in rows
         if row["id"] not in already_done
+        and "interview" not in str(row.get("title") or "").lower()
     ][:limit]
 
     logger.info(

@@ -45,6 +45,8 @@ FIREFLIES_RETRYABLE_ERROR_MARKERS = (
 )
 
 NON_VECTORIZABLE_ERROR_PREFIX = "NON_VECTORIZABLE"
+INTENTIONAL_EMBEDDING_EXCLUSION_PREFIX = "INTENTIONALLY_EXCLUDED"
+INTENTIONAL_EMBEDDING_EXCLUSION_STATUS = "intentionally_excluded"
 SHARED_PIPELINE_BACKLOG_SOURCE = "document_pipeline"
 SHARED_PIPELINE_BACKLOG_RESOURCE_NAME = "Shared document pipeline backlog"
 TEXT_COMPATIBLE_EXTENSIONS = {
@@ -75,6 +77,10 @@ NON_TEXT_EXTENSIONS = {
     ".webp",
     ".zip",
 }
+
+
+def _is_interview_title(title: Optional[str]) -> bool:
+    return "interview" in str(title or "").lower()
 
 
 class ConfigurationError(RuntimeError):
@@ -789,6 +795,18 @@ def _classify_non_vectorizable_fireflies_item(client, metadata_id: str) -> Optio
         return None
 
     title = metadata.get("title") or ""
+    if _is_interview_title(title):
+        return {
+            "code": "interview_title_excluded",
+            "intentional": True,
+            "embedding_status": INTENTIONAL_EMBEDDING_EXCLUSION_STATUS,
+            "message": (
+                f"{INTENTIONAL_EMBEDDING_EXCLUSION_PREFIX}: Meeting title contains "
+                '"Interview", so it is intentionally excluded from embedding/vectorization.'
+            ),
+            "metadata": {"title": title},
+        }
+
     file_name = metadata.get("file_name") or title
     file_path = metadata.get("file_path") or ""
     url = metadata.get("url") or ""
@@ -862,16 +880,47 @@ def _mark_fireflies_item_non_vectorizable(
     from .supabase_helpers import get_rag_write_client
 
     error_message = str(reason.get("message") or NON_VECTORIZABLE_ERROR_PREFIX)[:500]
-    get_rag_write_client().table("fireflies_ingestion_jobs").update(
-        {"stage": "error", "error_message": error_message}
+    intentional = bool(reason.get("intentional"))
+    embedding_status = (
+        str(reason.get("embedding_status"))
+        if reason.get("embedding_status")
+        else INTENTIONAL_EMBEDDING_EXCLUSION_STATUS
+        if intentional
+        else "not_vectorizable"
+    )
+    rag_client = get_rag_write_client()
+    rag_client.table("fireflies_ingestion_jobs").update(
+        {
+            "stage": "done" if intentional else "error",
+            "error_message": None if intentional else error_message,
+        }
     ).eq("metadata_id", metadata_id).execute()
     try:
-        client.table("document_metadata").update(
+        rag_client.table("rag_document_metadata").upsert(
             {
-                "status": "not_vectorizable",
-                "overview": error_message,
+                "id": metadata_id,
+                "app_document_id": metadata_id,
+                "embedding_status": embedding_status,
+                "processing_metadata": {
+                    "embedding_exclusion": {
+                        "code": reason.get("code"),
+                        "message": error_message,
+                        "intentional": intentional,
+                    }
+                },
             }
-        ).eq("id", metadata_id).execute()
+        ).execute()
+    except Exception:
+        logger.warning(
+            "[Scheduler] Could not mark rag_document_metadata embedding_status for %s",
+            metadata_id,
+            exc_info=True,
+        )
+    try:
+        app_update = {"status": embedding_status}
+        if not intentional:
+            app_update["overview"] = error_message
+        client.table("document_metadata").update(app_update).eq("id", metadata_id).execute()
     except Exception:
         logger.warning(
             "[Scheduler] Could not mark document_metadata non-vectorizable for %s",

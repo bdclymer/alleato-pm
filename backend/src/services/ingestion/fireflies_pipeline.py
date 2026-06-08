@@ -252,6 +252,10 @@ class FirefliesIngestionPipeline:
             parts.append(summary)
         return "\n".join(parts).strip()
 
+    @staticmethod
+    def _is_interview_title(title: Optional[str]) -> bool:
+        return "interview" in str(title or "").lower()
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -379,6 +383,36 @@ class FirefliesIngestionPipeline:
 
         try:
             self.store.upsert_document_metadata(metadata)
+            if self._is_interview_title(parsed.title):
+                reason = (
+                    'INTENTIONALLY_EXCLUDED: Meeting title contains "Interview", '
+                    "so it is intentionally excluded from embedding/vectorization."
+                )
+                self.store.delete_chunks_for_document(document_id)
+                self.store.upsert_document_metadata(
+                    {
+                        **metadata,
+                        "status": "intentionally_excluded",
+                        "embedding_status": "intentionally_excluded",
+                        "processing_metadata": {
+                            "embedding_exclusion": {
+                                "code": "interview_title_excluded",
+                                "message": reason,
+                                "intentional": True,
+                            }
+                        },
+                    }
+                )
+                self.store.complete_ingestion_job(job_id, status="completed")
+                return IngestionResult(
+                    document_id=document_id,
+                    chunk_count=0,
+                    action_item_count=0,
+                    content_hash=content_hash,
+                    skipped=True,
+                    dry_run=False,
+                )
+
             for task in self._build_task_rows_via_rewriter(
                 metadata_id=document_id,
                 meeting_title=parsed.title,

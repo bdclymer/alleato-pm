@@ -118,6 +118,10 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function isInterviewTitle(title) {
+  return String(title || "").toLowerCase().includes("interview");
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -172,7 +176,7 @@ async function main() {
     // skip rows that shift into lower positions after each batch.
     let q = supabase
       .from("document_metadata")
-      .select("id, summary, overview")
+      .select("id, title, summary, overview")
       .is("summary_embedding", null)
       .or("summary.not.is.null,overview.not.is.null")
       .or(MEETING_FILTER)
@@ -194,15 +198,21 @@ async function main() {
 
     if (!rows || rows.length === 0) break;
 
+    for (const row of rows) {
+      if (isInterviewTitle(row.title)) skippedIds.add(row.id);
+    }
+
+    const eligibleRows = rows.filter((row) => !isInterviewTitle(row.title));
+
     // Build texts — prefer summary, fall back to overview
-    const texts = rows.map((r) =>
+    const texts = eligibleRows.map((r) =>
       (r.summary || r.overview || "").trim().substring(0, 8000)
     );
 
     // Skip rows with no usable text
-    const validRows = rows.filter((_, i) => texts[i].length >= 20);
+    const validRows = eligibleRows.filter((_, i) => texts[i].length >= 20);
     const validTexts = texts.filter((t) => t.length >= 20);
-    rows.forEach((r, i) => {
+    eligibleRows.forEach((r, i) => {
       if (texts[i].length < 20) skippedIds.add(r.id);
     });
     skipped += rows.length - validRows.length;

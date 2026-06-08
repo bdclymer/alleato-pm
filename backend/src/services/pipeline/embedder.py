@@ -47,6 +47,10 @@ def _build_summary_embedding_text(title: str, meeting_date: Optional[str], summa
     return "\n".join(parts).strip()
 
 
+def _is_interview_title(title: Optional[str]) -> bool:
+    return "interview" in str(title or "").lower()
+
+
 def _split_sentences(text: str) -> List[str]:
     parts = re.split(r"(?<=[.!?])\s+(?=[A-Z])", text)
     return [p.strip() for p in parts if p.strip()]
@@ -256,6 +260,44 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     participants = metadata.get("participants_array") or []
 
     logger.info("[Embedder] Processing: %s (%s)", title, metadata_id)
+
+    if _is_interview_title(title):
+        reason = (
+            'INTENTIONALLY_EXCLUDED: Document title contains "Interview", '
+            "so it is intentionally excluded from embedding/vectorization."
+        )
+        rag_client.table("document_chunks").delete().eq("document_id", metadata_id).execute()
+        client.table("document_metadata").update(
+            {"status": "intentionally_excluded"}
+        ).eq("id", metadata_id).execute()
+        rag_client.table("rag_document_metadata").upsert(
+            {
+                "id": metadata_id,
+                "app_document_id": metadata_id,
+                "title": title,
+                "source": metadata.get("source"),
+                "type": metadata.get("type"),
+                "category": metadata.get("category"),
+                "embedding_status": "intentionally_excluded",
+                "processing_metadata": {
+                    "embedding_exclusion": {
+                        "code": "interview_title_excluded",
+                        "message": reason,
+                        "intentional": True,
+                    }
+                },
+            }
+        ).execute()
+        rag_client.table("fireflies_ingestion_jobs").update(
+            {"stage": "done", "error_message": None}
+        ).eq("metadata_id", metadata_id).execute()
+        return {
+            "metadataId": metadata_id,
+            "chunkCount": 0,
+            "segmentCount": 0,
+            "skipped": True,
+            "skipReason": "interview_title_excluded",
+        }
 
     # 2. Fetch segments
     seg_resp = (

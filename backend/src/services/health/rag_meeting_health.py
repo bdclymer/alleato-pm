@@ -269,13 +269,19 @@ def run_health_check(
             app_headers,
             "document_metadata",
             {
-                "select": "id,captured_at,date,created_at",
+                "select": "id,title,status,captured_at,date,created_at",
                 "or": "(source.eq.fireflies,type.in.(meeting,meeting_transcript),category.eq.meeting,fireflies_id.not.is.null)",
                 "created_at": f"gte.{signal_cutoff.isoformat()}",
                 "order": "created_at.desc",
             },
             limit=MEETING_SIGNAL_LIMIT,
         )
+        meeting_rows = [
+            row
+            for row in meeting_rows
+            if "interview" not in str(row.get("title") or "").lower()
+            and str(row.get("status") or "") != "intentionally_excluded"
+        ]
         meeting_timestamps = [
             timestamp
             for row in meeting_rows
