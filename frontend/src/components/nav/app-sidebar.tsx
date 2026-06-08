@@ -470,7 +470,7 @@ function CompanyWideToolsButton({
         variant="ghost"
         size="icon"
         className="flex h-9 w-9 items-center justify-center rounded-lg text-sidebar-foreground/60 transition-all duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-        aria-label="View company-wide tools"
+        aria-label="View Company Tools"
       >
         <Building2 className="h-3.5 w-3.5" strokeWidth={1.4} />
       </Button>
@@ -822,7 +822,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       className="h-8 w-full justify-start gap-2 px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                     >
                       <Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-                      <span className="truncate">View company-wide tools</span>
+                      <span className="truncate">View Company Tools</span>
                       <ChevronRight className="ml-auto h-3.5 w-3.5" strokeWidth={1.6} />
                     </Button>
                   </div>

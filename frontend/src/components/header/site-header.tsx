@@ -800,7 +800,7 @@ function ToolsDropdown({
                   className="h-8 gap-2 px-2 text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <Building2 className="h-3.5 w-3.5" strokeWidth={1.6} />
-                  View company-wide tools
+                  View Company Tools
                   <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.6} />
                 </Button>
               </div>
